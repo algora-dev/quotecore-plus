@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
 inputDocuments:
   - '{output_folder}/planning-artifacts/prd.md'
   - '{output_folder}/project-context.md'
@@ -9,9 +9,12 @@ inputDocuments:
   - 'docs/data-models.md'
   - 'docs/component-inventory.md'
 workflowType: 'architecture'
+lastStep: 8
+status: 'complete'
 project_name: 'quotecore-app'
 user_name: 'Shaun'
 date: '2026-03-30'
+completedAt: '2026-03-30'
 ---
 
 # Architecture Decision Document
