@@ -1,5 +1,5 @@
 ---
-stepsCompleted: ['step-01-init', 'step-02-discovery', 'step-02b-vision', 'step-02c-executive-summary', 'step-03-success', 'step-04-journeys', 'step-05-domain', 'step-06-innovation', 'step-07-project-type']
+stepsCompleted: ['step-01-init', 'step-02-discovery', 'step-02b-vision', 'step-02c-executive-summary', 'step-03-success', 'step-04-journeys', 'step-05-domain', 'step-06-innovation', 'step-07-project-type', 'step-08-scoping', 'step-09-functional', 'step-10-nonfunctional', 'step-11-polish']
 classification:
   projectType: 'B2B SaaS web application'
   domain: 'roofing / construction quoting'
@@ -20,26 +20,25 @@ documentCounts:
 workflowType: 'prd'
 ---
 
-# Product Requirements Document - quotecore-app
+# Product Requirements Document - QuoteCore+
 
-**Author:** Shaun
+**Author:** Shaun  
 **Date:** 2026-03-30
 
 ## Executive Summary
 
-QuoteCore+ is a brownfield B2B SaaS web application for roofing measurement and quoting. Its goal is to become the easiest-to-use, most accurate, and most accessible roof measurement and quoting system available, while remaining flexible enough to support users with different workflows, experience levels, and quoting complexity needs.
+QuoteCore+ is a brownfield B2B SaaS platform for roofing measurement and quoting. Its objective is to become the easiest-to-use, most accurate, and most accessible roof measurement and quoting system available while still supporting the complexity real roofing businesses require.
 
-The current platform already contains meaningful foundations: company-scoped authentication, template-driven quote configuration, pricing logic, and a structured domain model for templates, measurement keys, items, modifiers, quotes, and related records. However, the product is still incomplete in the areas that matter most to end users: the quote creation flow is not yet fully realized, the UX is still rough, and the future AI-assisted roof measurement workflow is not yet implemented in the application layer.
+The current product foundation is meaningful: tenant-aware authentication, template-driven quote configuration, pricing logic, and a structured domain model for templates, measurement keys, items, modifiers, quotes, and related records already exist. What is missing is the cohesive end-user workflow that turns those foundations into a superior quoting experience.
 
-This PRD treats QuoteCore+ as a brownfield product that should be clarified, structured, and extended — not restarted. The work ahead is to turn the existing technical foundation into a cohesive end-user product that reduces quoting friction, centralizes the workflow, and creates a credible path to AI-assisted plan measurement.
+The product strategy is now clear:
+- support **manual measurement input** as a complete fallback workflow
+- add **calibrated digital takeoff** through a shared measurement canvas so users can measure directly on plans without printing
+- later add **AI-assisted takeoff** on top of that same measurement framework
 
-### What Makes This Special
+This matters because the real industry pain is not only that measuring roofs is slow. The deeper problem is that the workflow is fragmented across printed plans, ruler-based measurement, handwritten notes, spreadsheets, pricing tools, quoting tools, and communication tools. QuoteCore+ aims to replace that fragmentation with one trustworthy system.
 
-QuoteCore+ is designed to solve a deeper problem than “roof measurement is tedious.” The real pain is that measurement, quoting, pricing logic, records, and customer-ready outputs are often fragmented across paper plans, manual markups, disconnected tools, and inconsistent workflows. That fragmentation slows teams down, increases error rates, and makes the process harder to scale.
-
-The product’s core differentiator is its planned AI-assisted roof-plan measurement workflow. Users will be able to upload roof plans, have the system identify and classify relevant roof elements, confirm or correct those detections, review generated measurements, and then convert those results into quote-ready data. The intended outcome is a system that is faster, easier, more accurate, and keeps everything in one place.
-
-The key differentiation moment for users is expected to occur when they create their first complete template and then generate their first successful test quote from it. That moment demonstrates that QuoteCore+ is not just another admin tool or estimator spreadsheet replacement — it is a structured operational system that can guide users from setup to output with less friction and greater consistency than the alternatives.
+The strongest near-term product value is workflow replacement. The strongest long-term differentiator is AI-assisted roof-plan measurement built on the same shared measurement canvas used for manual digital takeoff.
 
 ## Project Classification
 
@@ -52,25 +51,23 @@ The key differentiation moment for users is expected to occur when they create t
 
 ### User Success
 
-A successful new user creates an account, creates at least one usable template, generates a first test quote, and understands the basic QuoteCore+ workflow without feeling lost or blocked by the system. Within the first 30 days, the product should give users enough confidence that shifting a meaningful portion of their quoting workflow into QuoteCore+ feels like an obvious next step.
+A successful new user can create an account, build at least one usable template, generate a first test quote, and understand the basic QuoteCore+ workflow without feeling lost or blocked. Within 30 days, the product should give users enough confidence that moving a meaningful portion of their quoting workflow into QuoteCore+ feels like the obvious next step.
 
-User success is not just account activation; it is workflow confidence. The user should feel that QuoteCore+ is easier to understand than their previous system, faster to operate, and capable of supporting more complexity when needed without becoming overwhelming.
+Users should feel that QuoteCore+ is easier to understand than their previous system, faster to operate, and capable of supporting more complexity when needed without becoming overwhelming.
 
 ### Business Success
 
-At 3 months, the product should have at least 50 real subscribed users using the system daily. The most important signal at this stage is not subscription tier mix, but retention and repeat use — evidence that the product is becoming part of real quoting workflows.
+At 3 months, the product should have at least 50 real subscribed users using the system daily. The key signal at this stage is retention and repeat use, not subscription tier mix.
 
-At 12 months, the product should exceed 1,000 daily active paying users across multiple subscription levels. By that stage, the core platform should be broadly operational, and the AI measurement capability should exist in a high-quality form that materially improves quoting speed and user perception of product value.
+At 12 months, the product should exceed 1,000 daily active paying users across multiple subscription levels. By that stage, the platform should be broadly operational and the AI measurement capability should exist in a high-quality form that materially improves speed and perceived value.
 
 ### Technical Success
 
-Quote calculations must be consistently correct, excluding mistakes in user-provided inputs. End-to-end quote generation must be fast whether the workflow is fully manual or accelerated through AI-assisted measurement. The system must support reliable quote storage, editing, cloning, and customer-facing output control without introducing confusion or data integrity issues.
-
-Technical success also means that the product can support real business use, not just demo use: the workflow must be stable, repeatable, and trustworthy enough that users are comfortable moving real quoting activity into the system.
+Quote calculations must remain correct, excluding mistakes in user-provided inputs. End-to-end quote generation must be fast whether the workflow is manual, calibrated-digital, or AI-assisted. The system must support reliable quote storage, editing, cloning, and customer-facing output control without introducing confusion or data integrity issues.
 
 ### Measurable Outcomes
 
-- New users can complete the path: account creation -> template creation -> first test quote
+- Users can complete the path: account creation -> template creation -> first test quote
 - Users understand the core workflow well enough to continue refining templates and using the system without heavy hand-holding
 - Within 30 days, users are shifting meaningful quoting activity into QuoteCore+
 - 3-month target: 50 real subscribed daily users with strong retention
@@ -83,133 +80,62 @@ Technical success also means that the product can support real business use, not
 ### MVP - Minimum Viable Product
 
 - Full manual measurement input workflow
-- Price calculation workflow
-- Ability to fully control/edit what appears in the customer-facing quote output
-- Quote storage in an easily searchable/findable way
-- Quote editing
-- Quote cloning
-- Clear enough UX for users to understand the basics and reach a first successful quote
+- Calibrated digital takeoff through the shared measurement canvas
+- Full template creation and editing
+- Quote generation from templates and measurements
+- Full quote adjustment before customer delivery
+- Customer-ready quote sharing
+- Quote storage, retrieval, editing, and cloning
+- Clear enough UX for users to reach a first successful quote without excessive hand-holding
 
 ### Growth Features (Post-MVP)
 
-- AI measurement tool for roof-plan measurement and workflow acceleration
+- AI-assisted roof-plan takeoff built on the same shared measurement canvas
+- Stronger dashboard experience
+- Deeper owner/worker workflow refinement
+- Better integrations, trust signals, and operational polish
 
 ### Vision (Future)
 
 - Continue improving the roof measurement and quote system over time
-- Expand beyond roofing into additional trades such as bricklaying, driveways, cladding, and related trade workflows
-- Introduce “services” capabilities that help service providers reach customers more efficiently
+- Expand beyond roofing into additional trades such as bricklaying, driveways, cladding, and related workflows
+- Introduce service-oriented capabilities that help providers reach customers more efficiently
 
 ## User Journeys
 
-### Journey 1 - Primary User Success Path: Roofer / Roofing Supplier Moves from Manual Workflow to QuoteCore+
+### Journey 1 - Primary User Success Path
 
-We meet a roofer or roofing supplier who already has a working process, but that process is fragmented and manual. They receive roof plans, print the relevant pages, check for hidden details across multiple sheets, measure areas and roof units by hand using a ruler, write those measurements down, and then move through multiple tools to calculate pricing, prepare a customer-facing quote, and finally send it.
+A roofer or roofing supplier starts from a fragmented manual process: printed plans, ruler-based measurement, handwritten notes, multiple tools, and customer quote creation elsewhere. They create a QuoteCore+ account, build a template, add pricing logic, and generate a first test quote. As they move through setup, measurement, and quote generation, the system replaces the manual glue that used to live between paper, calculators, spreadsheets, and separate quoting tools.
 
-They do not necessarily hate their current process, but it is slow, fragile, and dependent on memory, manual accuracy, and too many disconnected systems.
+The breakthrough moment is the first successful quote generated from a complete template. That proves the system is not just another admin tool — it is a repeatable operational framework.
 
-They create a QuoteCore+ account and are guided into building their first template. Instead of learning the whole system at once, they learn it through a practical outcome: define the structure once, then use it to generate a quote. As they move through template setup, pricing logic, and test quote generation, the system gradually replaces the mental glue that used to live between paper, calculators, spreadsheets, and separate quoting tools.
+### Journey 2 - Change-Resistant User
 
-The climax of this journey is the first successful test quote generated from a complete template. That is the moment they realize the system is not just another tool — it is a repeatable framework for producing quotes faster and with fewer moving parts.
+Some users already have a “working” system and associate new software with pain. They need low-friction onboarding, clear language, and visible trust signals. If the system feels complicated too early, they disengage. The product succeeds when they realize the learning curve is lower than expected and the workflow is genuinely easier.
 
-The resolution is confidence. They begin refining templates, building additional ones, and shifting real quoting work into QuoteCore+ because the process now feels easier, faster, and more reliable than what they were doing before.
+### Journey 3 - Owner/Admin Journey
 
-**Capability areas revealed:**
-- guided onboarding
-- template creation flow
-- measurement key setup
-- pricing configuration
-- first-quote experience
-- editable customer-facing quote output
-- quote storage and retrieval
+The owner configures templates, pricing, and output rules. Their main need is control. They need to create the quoting framework once, refine it over time, and protect it from accidental damage. The system succeeds when they can delegate quote-generation work without risking the core pricing/template setup.
 
-### Journey 2 - Primary User Edge Case: Comfortable User Resists Change
+### Journey 4 - Worker Journey
 
-We meet a user whose existing system “works,” even if it is clunky. Their real resistance is not logic — it is comfort. They associate new systems with disruption, pain, and risk. They worry they will have to relearn too much, trust calculations they did not create, or lose time before gaining any advantage.
+A worker uses the approved quoting framework to generate quotes efficiently without being able to alter protected template or pricing logic. The system succeeds when the worker can do productive work safely and the owner does not fear unintended system changes.
 
-This user signs up cautiously, often with skepticism. If the system feels complicated too early, they disengage. If it asks them to abandon their current mental model before proving value, they retreat to old habits.
+### Journey 5 - AI-Assisted Takeoff Journey
 
-The rising action in this journey is not feature discovery but trust-building. They need to see that QuoteCore+ can mirror enough of their existing logic to feel safe, while still reducing friction. They need language, setup flow, and quote outputs that feel understandable rather than abstract.
+A user uploads a plan, reviews AI-suggested geometry and roof-element interpretation, corrects what is wrong, confirms the resulting measurements, and flows directly into quote generation. The product succeeds when AI removes low-level labor without removing user control.
 
-The climax is not just generating a quote, but realizing that the path to getting there was easier than expected. The product succeeds when the user feels, “This was less painful to learn than I feared, and it actually reduces my workload.”
+### Journey Implications
 
-The resolution is reduced resistance to adoption. The user becomes willing to continue learning because the product has lowered both workflow friction and emotional friction.
-
-**Capability areas revealed:**
-- low-friction onboarding
-- intuitive information architecture
-- confidence-building setup flow
-- trust signals around calculations and outputs
-- progressive complexity instead of overwhelming upfront configuration
-
-### Journey 3 - Admin / Owner Journey: Configure, Control, and Protect the System
-
-We meet the account owner — the person responsible for setting up how quoting works for their business. They are not just generating quotes; they are defining the logic behind them. They create the account, configure templates, pricing, and structure, and decide how the business should use the platform.
-
-Their problem is not only speed. It is control. If the wrong person changes a template, pricing rule, or output structure, it can create mistakes that affect live quoting. So the owner needs a system that lets them build the quoting framework once, refine it over time, and protect it from accidental damage.
-
-In this journey, the owner creates templates, validates the pricing structure, and then prepares the account for operational use. The key turning point is when they can lock down the sensitive parts of the system and delegate quote generation to others without fearing that the core setup will be broken.
-
-The resolution is operational leverage. The owner is no longer the only person who can produce quotes safely, because the system allows controlled delegation.
-
-**Capability areas revealed:**
-- owner/admin role
-- template and pricing management
-- permission model
-- locked configuration mode
-- safe delegation to non-admin users
-- auditability of important settings changes
-
-### Journey 4 - Worker Journey: Generate Quotes Without Breaking the System
-
-We meet a worker who is not responsible for defining pricing logic or template architecture. Their job is to use the framework that the owner has already established to create quotes efficiently and consistently.
-
-Today, in many companies, giving someone access to the full quoting process also gives them too many opportunities to break it. That creates fear, inconsistency, and training overhead.
-
-In QuoteCore+, this worker should be able to log in, select from approved templates, enter or review measurements, generate quotes, edit quote-specific details where allowed, and send work forward — all without the ability to alter the protected system logic underneath.
-
-The climax is operational confidence: the worker can do real productive work, and the owner does not have to worry that the core quoting framework has been accidentally modified.
-
-The resolution is safer scale. The business can involve more people in quote generation without increasing risk.
-
-**Capability areas revealed:**
-- worker-restricted accounts
-- template selection from approved options
-- quote generation within guardrails
-- limited editing rights
-- clear boundary between operational use and system configuration
-
-### Journey 5 - Future AI-Assisted Journey: From Roof Plan to Quote-Ready Measurements
-
-We meet a user who has plans ready and wants to avoid the traditional print-measure-write-transfer workflow. Instead of printing and measuring manually, they upload roof plans into QuoteCore+.
-
-The system identifies likely roof elements, labels what it believes each part is, and presents those detections for confirmation. The user reviews the proposed understanding of the plan, corrects anything that is wrong, and then lets the system measure the identified elements. The user reviews the resulting measurements, confirms accuracy, and then flows directly into quote generation.
-
-The climax is the moment the user sees that the system has removed the most labor-intensive part of the process without removing their control. They still validate the result, but they no longer have to do every low-level step manually.
-
-The resolution is dramatic workflow compression: faster throughput, less paper handling, fewer mechanical steps, and tighter integration between measurement and quoting.
-
-**Capability areas revealed:**
-- plan upload
-- AI detection and labeling
-- human confirmation and correction
-- AI-assisted measurement generation
-- measurement-to-quote handoff
-- confidence and review workflow for AI output
-
-### Journey Requirements Summary
-
-These journeys imply the product must support:
-- guided onboarding that leads quickly to a first successful quote
-- progressive learning rather than overwhelming setup
-- strong trust signals around pricing and calculations
+These journeys require:
+- guided onboarding to first value
 - reusable template-driven quoting
-- editable customer-facing quote output
-- searchable, editable, cloneable quote records
-- owner/admin configuration control
-- worker-safe execution roles with locked template/pricing rules
-- future AI-assisted measurement with explicit human confirmation
-- a system architecture that reduces tool fragmentation rather than recreating it inside one app
+- strong trust signals around measurement and pricing
+- customer-ready quote output
+- stored, editable, cloneable quotes
+- owner/admin control with worker-safe execution
+- calibrated digital takeoff
+- future AI-assisted takeoff with explicit human confirmation
 
 ## Domain-Specific Requirements
 
@@ -220,28 +146,24 @@ QuoteCore+ must support variation in:
 - currency
 - language
 
-These are the core market-level differences that matter most for roofing and quoting workflows. The product should allow users to operate in the measurement system, pricing structure, and customer-facing language that matches their market, while still preserving a consistent internal quoting framework.
+These are the primary market-level differences that matter for roofing and quoting workflows.
 
 ### Calculation Integrity Requirements
 
-Any issue that affects quote price is critical. The system must protect the integrity of:
+Any issue that affects quote price is critical. The system must protect:
 - unit handling
 - pricing rule execution
 - item inclusion/exclusion
 - customer-facing quote output
-- any content that protects the user legally or financially
-
-The product cannot treat quote output as cosmetic. If something is missing from the quote that users rely on for commercial, legal, or expectation-setting reasons, that is a serious product failure.
+- any content users rely on legally or financially
 
 ### Workflow Constraint
 
-QuoteCore+ must never make the user’s workflow harder than a like-for-like existing process. The minimum standard is parity with current tools; the real target is a workflow that is easier, faster, and more consolidated.
-
-That means the product must reduce steps, reduce system switching, and reduce friction without removing the user’s sense of control.
+QuoteCore+ must never make the user’s workflow harder than a like-for-like existing process. The target is a workflow that is easier, faster, and more consolidated while still preserving user control.
 
 ### Domain Modeling Requirement
 
-The product must not oversimplify roofing quotes into a single area × price model. Real quoting must account for multiple factors, including:
+The product must not oversimplify roofing quotes into a single area × price model. Real quoting must account for factors such as:
 - individual item lines
 - pitch
 - height
@@ -252,126 +174,277 @@ The product must not oversimplify roofing quotes into a single area × price mod
 - timing restrictions
 - other pricing modifiers required by real-world jobs
 
-The domain model and quote engine must remain flexible enough to support this layered complexity.
-
 ### Risk Mitigations
 
-To be trusted in this domain, the product should avoid:
+The product should avoid:
 - hidden quote logic users cannot understand
 - incorrect or ambiguous unit handling
-- outputs that omit commercially important quote content
+- outputs that omit commercially important content
 - workflows that feel slower than current manual methods
 - oversimplified assumptions that break real-world job pricing
 
 ## Innovation & Novel Patterns
 
-### Detected Innovation Areas
+### Innovation Areas
 
-The primary innovation in QuoteCore+ is the challenge to a deeply embedded industry assumption: that roof-plan interpretation and measurement must remain human-led because AI cannot be trusted to identify roof elements, measure them accurately, and present the result in a usable quoting format.
+QuoteCore+ challenges a strong industry assumption: that roof-plan interpretation and measurement must remain human-led because AI cannot be trusted to identify roof elements, measure them accurately, and produce commercially safe quote-ready data.
 
-QuoteCore+ does not treat AI as a cosmetic assistant. The innovation is the combination of:
-- AI-assisted roof-plan interpretation
-- AI-assisted measurement generation
-- human confirmation and correction
-- direct handoff into a structured quoting workflow
-- a unified system that keeps setup, calculation, quote generation, and future AI support in one place
+The key innovation is not “AI bolted onto quoting software.” The key innovation is a **shared digital measurement workflow**:
+- calibrated digital takeoff on a shared measurement canvas
+- AI-assisted roof-plan interpretation and measurement on the same framework
+- human confirmation and correction before quote generation
+- direct handoff from measurement into structured quoting
 
-This is not merely “roof quoting software with AI added on.” The novel pattern is the compression of a fragmented manual workflow into one guided system where AI reduces labor but the user remains in control.
+### Market Context
 
-### Market Context & Competitive Landscape
-
-The current market appears fragmented. Existing tools may handle parts of the process, but users often still move between printed plans, manual ruler measurement, pricing tools, spreadsheets, quote builders, and communication tools. The practical market opportunity is not only better measurement, but fewer workflow handoffs.
-
-QuoteCore+ is differentiated by aiming to unify:
-- quote system configuration
-- pricing and calculation structure
-- quote creation workflow
-- future AI-assisted plan measurement
-
-That matters because users do not merely want a clever feature; they want fewer steps, less system switching, and more confidence in the end result.
+The current market is fragmented. Existing tools may handle parts of the process, but users still move between printed plans, manual measurement, pricing tools, spreadsheets, quote builders, and communication tools. QuoteCore+ is differentiated by aiming to unify configuration, pricing, measurement, quote generation, and future AI assistance in one system.
 
 ### Validation Approach
 
-The AI innovation should be validated against realistic mid-complexity roofing scenarios, not idealized demos.
+The AI workflow should be validated against realistic mid-complexity roofing scenarios, not demos. A strong validation target is:
+- medium-complexity plan upload
+- ~90% correct component identification
+- only 2–3 minor human corrections
+- final measurements within a 3.5% tolerance threshold
 
-A strong validation target is:
-- user uploads a medium-complexity roof plan
-- AI correctly identifies roughly 90% of components
-- user only needs 2–3 minor corrections
-- final measurements land within a 3.5% tolerance threshold
-
-This validation approach reflects real commercial constraints. In this domain, a small pricing error can materially damage margin. The system therefore needs to be evaluated not only on “AI feels impressive,” but on whether the resulting quote data is commercially safe enough for real business use.
-
-QuoteCore+ should explicitly communicate expected tolerance ranges to users so that AI-assisted output is framed responsibly rather than as magical infallibility.
+This reflects real commercial constraints: small pricing errors can materially damage margin.
 
 ### Risk Mitigation
 
-The main risk is that the AI workflow underperforms before the rest of the platform is strong enough to carry adoption.
+If AI underperforms, the product must still win on non-AI value. The fallback strategy is deliberate:
+1. full quoting system with manual input
+2. calibrated digital takeoff
+3. AI-assisted takeoff
 
-The mitigation is strategic: the product must still win on non-AI value. Even if the AI layer takes longer to perfect, QuoteCore+ should still be competitive because it centralizes workflow, improves quote generation, reduces fragmentation, and provides a better quoting system than existing manual/multi-tool processes.
-
-If the AI performs well, it becomes the breakthrough differentiator. If it lags, the rest of the platform must still be strong enough to gain market share and establish the product as the go-to construction quoting system over time.
+That makes the AI roadmap ambitious without making the product dependent on early AI perfection.
 
 ## B2B SaaS Specific Requirements
 
-### Project-Type Overview
-
-QuoteCore+ is a multi-tenant B2B SaaS application where each business/company must remain fully isolated from every other one. The product is designed primarily for owner/admin users and worker users, with a clear distinction between configuration authority and operational quote-generation use.
-
-### Technical Architecture Considerations
-
-The tenancy model must enforce full company isolation at both the application and data levels. This is not optional platform behavior; it is core to product trust.
-
-The permission model is intentionally narrow:
-- **Owner/Admin** configures templates, pricing, and core quoting logic
-- **Worker** uses the approved framework to generate quotes without changing protected system rules
-
-This simpler RBAC structure is a product advantage because it reduces accidental system damage while keeping operations usable.
-
 ### Tenant Model
 
-- Each company is fully isolated from other companies
-- Company-specific templates, pricing rules, quotes, and outputs must not leak across tenants
-- Tenant separation should hold at both application logic and database-access levels
+Each company must remain fully isolated from every other company. Company-specific templates, pricing rules, quotes, files, and outputs must not leak across tenants.
 
-### Permission Structure
+### Permission Model
 
-- Owner/Admin can configure and manage the quoting framework
-- Worker can generate quotes within approved guardrails
-- Worker should not be able to alter protected template/pricing logic
-- No broader role hierarchy is currently required
+The role model is intentionally narrow:
+- **Owner/Admin** configures templates, pricing, and system rules
+- **Worker** generates quotes using approved frameworks without altering protected logic
+
+This simpler model reduces accidental system damage while keeping operations usable.
 
 ### Subscription & Commercial Model
 
-Subscription tiers are expected, but the exact structure is not yet fixed. The product should therefore be built with future tier differentiation in mind, even if initial commercial packaging remains simple.
-
-This implies the system should avoid hard-coding assumptions that make future tiering difficult.
+Subscription tiers are expected, but exact packaging is not yet fixed. The product should be built so future tier differentiation can be added without structural rework.
 
 ### Integration Requirements
 
-Current likely integration areas:
+Likely integration areas include:
 - payment
 - email
-- cloud storage (potentially)
+- cloud storage
 
-These should be treated as integration-ready areas, even if they are not all required at MVP stage.
+These should be treated as integration-ready areas even if not all are required at MVP stage.
 
-### Compliance & Operational Expectations
+### Operational Expectations
 
-No special regulated-domain compliance model is currently required beyond normal SaaS expectations:
+No special regulated-domain compliance model is required beyond normal SaaS expectations:
 - strong account security
 - tenant data protection
 - reliable access control
 - sound operational data handling
 
-### Implementation Considerations
-
-The product should be built as a real SaaS platform, not just a quoting app with logins added on. Multi-tenancy, role separation, commercial tiering potential, integration readiness, and a shared measurement canvas that supports both manual and AI-assisted workflows are all structural product requirements that should influence implementation decisions early.
-
 ## Shared Measurement Canvas Strategy
 
-QuoteCore+ should add a first-class shared measurement canvas subsystem. In the near term, this supports **calibrated digital takeoff**: the user uploads a plan, calibrates it using a known measurement, clicks point-to-point or area boundaries directly on the plan, assigns those measurements to quote-relevant categories, and saves a persistent editable overlay.
+QuoteCore+ should add a first-class shared measurement canvas subsystem.
 
-The same subsystem should later support **AI-assisted takeoff**. In that mode, AI proposes geometry and classification into the same measurement model, and the user reviews, corrects, accepts, or rejects the output.
+### Near-Term Mode: Calibrated Digital Takeoff
 
-This means the roadmap should treat manual digital takeoff and AI-assisted takeoff as two interaction modes over one shared measurement framework, not as separate product systems.
+Users upload a plan, calibrate it using a known measurement, click point-to-point or boundary geometry directly on the plan, assign those measurements to quote-relevant categories, and save a persistent editable overlay.
+
+### Future Mode: AI-Assisted Takeoff
+
+AI proposes geometry and classification into the same measurement model. The user reviews, corrects, accepts, or rejects the output.
+
+### Strategic Rule
+
+Manual digital takeoff and AI-assisted takeoff must be treated as two interaction modes over one shared measurement framework, not as separate product systems.
+
+## Project Scoping & Phased Development
+
+### MVP Strategy & Philosophy
+
+QuoteCore+ should launch as a **problem-solving / workflow-replacement MVP**, not an AI demo. The MVP should prove that a roofing business can configure its quoting framework, move measurements into the system, generate a customer-ready quote, and manage quotes in a way that already feels better than a fragmented analog/manual workflow.
+
+### MVP Feature Set (Phase 1)
+
+Core journeys supported:
+- owner/admin creates and edits templates
+- user performs manual analog-to-digital measurement entry
+- user performs calibrated digital takeoff on the shared measurement canvas
+- user generates, edits, stores, clones, and shares customer-facing quotes
+- user completes a real quoting workflow without printing plans or relying on fragmented external tools
+
+### Post-MVP Features (Phase 2)
+
+- AI-assisted roof-plan takeoff on the shared measurement canvas
+- stronger dashboard experience
+- deeper owner/worker workflow refinement
+- improved polish, trust signals, and operational UX
+- broader commercial tiering and integrations as needed
+
+### Expansion (Phase 3)
+
+- highly capable AI takeoff as a primary market differentiator
+- expansion into additional trades
+- services-oriented business capabilities
+- broader ecosystem growth
+
+### Risk Mitigation Strategy
+
+**Technical risk:** measurement canvas UX and accuracy are the riskiest near-term technical areas.  
+**Market risk:** users may not switch unless the workflow clearly beats the current process.  
+**Resource risk:** if scope must be reduced, cut AI takeoff first, then digital takeoff after core manual-input quoting.
+
+## Functional Requirements
+
+### Account, Company & Access Management
+
+- FR1: A business owner can create a company account in QuoteCore+.
+- FR2: An authenticated company owner can manage their company’s access to the platform.
+- FR3: A company owner can create additional user accounts for their company.
+- FR4: A company owner can assign users to owner/admin or worker-style access levels.
+- FR5: A worker can access company-approved quoting workflows without being able to modify protected template or pricing configuration.
+- FR6: The system can keep each company’s users, templates, quotes, and related data isolated from other companies.
+
+### Template & Quote Framework Management
+
+- FR7: A company owner can create quote templates.
+- FR8: A company owner can edit quote templates.
+- FR9: A company owner can define the measurement inputs required by a template.
+- FR10: A company owner can define quote item groups and item structures within a template.
+- FR11: A company owner can configure pricing logic and modifiers within a template.
+- FR12: A company owner can control the customer-facing output structure associated with a template.
+- FR13: The system can preserve reusable template logic so that multiple quotes can be generated from the same configured framework.
+- FR62: A company owner can control whether a user is allowed to create or edit templates versus only generate quotes from approved templates.
+
+### Quote Creation & Lifecycle
+
+- FR14: A user can create a quote from an approved template.
+- FR15: A user can enter or update quote-specific measurement data.
+- FR16: A user can generate quote results from template logic and measurement inputs.
+- FR17: A user can edit quote-specific values and output details before sharing with a customer.
+- FR18: A user can save quotes for later retrieval.
+- FR19: A user can search for and reopen previously created quotes.
+- FR20: A user can clone an existing quote to speed up repeat work.
+- FR21: A user can update an existing quote after it has been created.
+- FR22: A user can share a customer-ready quote output.
+- FR53: A user can distinguish between draft quote versions and customer-ready quote versions.
+- FR54: A user can update a quote after sharing while preserving a clear current version for customer use.
+- FR60: A user can review the measurement inputs and source context that contributed to a generated quote.
+- FR61: The system can preserve enough quote-measurement linkage that users can understand how measured values influenced quote output.
+
+### Manual Measurement Input
+
+- FR23: A user can manually enter measurement values and item-related quantities into the system.
+- FR24: A user can use manually entered measurements as valid input for quote generation.
+- FR25: The system can support manual measurement entry as a complete fallback workflow when digital or AI-assisted takeoff is not used.
+
+### Shared Measurement Canvas / Digital Takeoff
+
+- FR26: A user can upload a roof plan or similar source document for measurement.
+- FR27: A user can calibrate a plan using a known measurement reference.
+- FR28: A user can specify the unit context used for plan calibration.
+- FR29: A user can create digital point-to-point measurements directly on the plan.
+- FR30: A user can create grouped measurement overlays representing quote-relevant roof elements or boundaries.
+- FR31: A user can assign measured lines, areas, or related geometry to quote-relevant categories or item types.
+- FR32: A user can view previously created measurement overlays on the uploaded plan.
+- FR33: A user can edit or delete saved digital measurements and overlays.
+- FR34: The system can convert calibrated digital measurements into quote-usable values without requiring separate analog-to-digital transfer.
+- FR35: A user can attach or apply a saved measurement set to a quote workflow.
+- FR55: A user can save a measurement session independently of immediate quote generation.
+- FR56: A user can reopen a saved measurement session and continue working from the existing calibration and overlay state.
+- FR57: The system can maintain the relationship between an uploaded plan, its calibration, and its associated measurement overlay.
+- FR58: A user can map measured elements to template-defined measurement keys or quote-relevant categories.
+- FR59: The system can preserve those mappings so quote generation uses the intended template logic consistently.
+
+### AI-Assisted Measurement
+
+- FR36: The system can analyze an uploaded plan and propose roof elements or measurement geometry for user review.
+- FR37: A user can review, correct, accept, or reject AI-generated measurement suggestions.
+- FR38: The system can use accepted AI-assisted measurement results as input to quote generation.
+- FR39: The system can preserve human control over AI-assisted measurement outcomes before quote generation proceeds.
+- FR40: The system can support AI-assisted measurement through the same shared measurement framework used by manual digital takeoff.
+
+### Localization, Pricing Trust & Output Integrity
+
+- FR41: A company can operate using supported measurement units appropriate to its market.
+- FR42: A company can operate using supported currency settings appropriate to its market.
+- FR43: A company can operate using supported customer-facing language settings appropriate to its market.
+- FR44: The system can apply pricing logic without oversimplifying quoting into a single area-times-price model.
+- FR45: The system can include quote-relevant pricing factors such as itemized components, modifiers, and related job variables.
+- FR46: The system can preserve commercially important quote content in customer-facing outputs.
+
+### Integration-Ready Business Operations
+
+- FR47: The platform can support payment-related business workflows as the product matures.
+- FR48: The platform can support email-based quote delivery or related communication workflows.
+- FR49: The platform can support external document or cloud-storage-linked workflows where needed.
+
+### Governance, Safety & Operational Control
+
+- FR50: A company owner can protect core quoting logic from accidental worker changes.
+- FR51: The system can support controlled delegation of quote-generation work without exposing protected system configuration.
+- FR52: The system can maintain a consistent relationship between template logic, measurement inputs, and quote outputs so users can trust the workflow.
+
+## Non-Functional Requirements
+
+### Performance
+
+- The system must feel responsive across all core workflows, including template editing, quote generation, quote retrieval, plan loading, measurement canvas interaction, and quote saving.
+- Core user actions should complete quickly enough that the product feels meaningfully faster than fragmented manual workflows.
+- Interactive measurement work on uploaded plans must remain smooth enough that users do not feel slowed down compared with physical ruler-based processes.
+
+### Security
+
+- The system must enforce strict tenant isolation so one company can never access another company’s quotes, templates, files, measurements, or related data.
+- The system must enforce role-appropriate access so users can only view or modify authorized information.
+- Sensitive business data, including quotes, uploaded plan files, and measurement data, must be protected in transit and at rest.
+- Authentication should support stronger account-protection controls, including future MFA or equivalent protection.
+- Data exposure across users, companies, or permission boundaries must be treated as a critical-severity failure.
+- The system should resist common unauthorized access attempts against accounts and tenant-scoped data.
+- Repeated access failures or suspicious access behavior should be supportable by future security controls.
+
+### Scalability
+
+- The system must be designed to support at least the near-term target of 1,000+ daily active paying users.
+- The architecture should support growth without fundamental redesign.
+- Growth planning should assume adoption across multiple regions rather than dependence on a single market.
+
+### Reliability
+
+- The system must preserve calculation integrity so quote outputs remain consistent with configured pricing logic and measurement inputs.
+- The system must not lose saved quotes, uploaded plans, measurement sessions, or other core business records during normal use.
+- Failures that result in incorrect quote values, corrupted measurements, broken quote data, or inaccessible saved work must be treated as unacceptable.
+- The product must maintain trust by ensuring that saved business data remains recoverable, stable, and internally consistent.
+- The system should reduce the risk of users losing in-progress quote or measurement work during normal interaction.
+- The system should preserve enough saved state that users can return to important business work without unreasonable reconstruction effort.
+- The system must preserve the integrity of stored calibrations, overlays, and measurement-session data so quote generation is not based on silently corrupted source inputs.
+
+### Accessibility & Usability
+
+- The browser experience must prioritize usability and clarity from first release.
+- The system must be understandable and operable for users transitioning from older or more manual workflows.
+- The product should avoid interaction patterns that make digital quoting feel more complex than the analog process it replaces.
+- The architecture and UX direction should preserve a path toward strong mobile usability later, even if mobile-first workflows are not part of the initial release.
+- The product should present advanced quoting complexity in a way that does not overwhelm first-time or lower-confidence users.
+- The system should support progressive disclosure of complexity so users can succeed at basic workflows before needing advanced controls.
+
+### Integration Readiness
+
+- The system should be built so future integration with payment, email, and cloud-storage workflows can be added without major architectural rework.
+- External integration points should not compromise data isolation, quote integrity, or user trust.
+
+### Auditability
+
+- The system should preserve auditability for sensitive configuration changes affecting templates, pricing logic, and access permissions.
+- The system should preserve enough traceability that significant quote outcomes can be reviewed after the fact.
