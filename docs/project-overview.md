@@ -47,7 +47,8 @@ QuoteCore is a browser-based SaaS roofing measurement and quoting platform. The 
 - Real quote builder / quote creation workflow
 - Polished dashboard experience
 - Customer-facing quote presentation flow inside the app
-- AI-assisted roof-plan measurement
+- Shared measurement canvas / calibrated digital takeoff workflow
+- AI-assisted roof-plan measurement built on the shared measurement canvas
 - Mature component system / design system
 - End-to-end tests and deployment docs
 - Production hardening and final architecture cleanup
@@ -102,3 +103,4 @@ For detailed information, see:
 ---
 
 _Generated using BMAD Method `document-project` workflow_
+ing BMAD Method `document-project` workflow_

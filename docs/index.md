@@ -28,6 +28,7 @@ QuoteCore is a brownfield SaaS roofing measurement and quoting application. The 
 - [Development Guide](./development-guide.md) - Local setup and BMAD-oriented workflow guidance
 - [API Contracts](./api-contracts.md) - Current server-action and mutation surface
 - [Data Models](./data-models.md) - Domain schema overview
+- [Shared Measurement Canvas Spec](../{output_folder}/planning-artifacts/measurement-canvas-spec.md) - Manual digital takeoff + future AI measurement shared framework
 
 ### Existing Documentation
 

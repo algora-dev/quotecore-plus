@@ -366,4 +366,12 @@ No special regulated-domain compliance model is currently required beyond normal
 
 ### Implementation Considerations
 
-The product should be built as a real SaaS platform, not just a quoting app with logins added on. Multi-tenancy, role separation, commercial tiering potential, and integration readiness are all structural product requirements that should influence implementation decisions early.
+The product should be built as a real SaaS platform, not just a quoting app with logins added on. Multi-tenancy, role separation, commercial tiering potential, integration readiness, and a shared measurement canvas that supports both manual and AI-assisted workflows are all structural product requirements that should influence implementation decisions early.
+
+## Shared Measurement Canvas Strategy
+
+QuoteCore+ should add a first-class shared measurement canvas subsystem. In the near term, this supports **calibrated digital takeoff**: the user uploads a plan, calibrates it using a known measurement, clicks point-to-point or area boundaries directly on the plan, assigns those measurements to quote-relevant categories, and saves a persistent editable overlay.
+
+The same subsystem should later support **AI-assisted takeoff**. In that mode, AI proposes geometry and classification into the same measurement model, and the user reviews, corrects, accepts, or rejects the output.
+
+This means the roadmap should treat manual digital takeoff and AI-assisted takeoff as two interaction modes over one shared measurement framework, not as separate product systems.

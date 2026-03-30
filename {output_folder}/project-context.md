@@ -4,7 +4,7 @@ user_name: 'Shaun'
 date: '2026-03-30'
 sections_completed: ['technology_stack', 'language_rules', 'framework_rules', 'testing_rules', 'quality_rules', 'workflow_rules', 'anti_patterns']
 status: 'complete'
-rule_count: 44
+rule_count: 46
 optimized_for_llm: true
 ---
 
@@ -97,6 +97,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Do **not** overfit early UI work to placeholder layouts that are likely to be replaced.
 - Do **not** use the Supabase service role in normal request flows unless the operation is explicitly privileged.
 - Do **not** silently coerce pricing or measurement values in ways that hide data errors.
+- Do **not** build separate manual-measurement and AI-measurement systems if one shared measurement canvas can serve both.
 - Do **not** skip documenting meaningful architectural or workflow shifts once implementation starts moving faster.
 
 ---
@@ -116,5 +117,8 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Update when the technology stack or core patterns change.
 - Review periodically to remove stale or obvious rules.
 - Use this as the implementation guardrail, not as a substitute for PRD/architecture/story artifacts.
+
+Last Updated: 2026-03-30
+rchitecture/story artifacts.
 
 Last Updated: 2026-03-30

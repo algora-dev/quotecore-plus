@@ -161,11 +161,22 @@ For BMAD-driven progress, the best next architecture path is:
 1. preserve the existing schema and pricing foundations
 2. generate strong project-context documentation
 3. define the end-to-end quote creation flow clearly
-4. break the product into epics/stories around real user journeys
-5. gradually separate domain/service concerns from route-local action code
-6. only then push hard on UX polish and AI measurement integration
+4. define the shared measurement canvas as a first-class subsystem for calibrated digital takeoff
+5. break the product into epics/stories around real user journeys
+6. gradually separate domain/service concerns from route-local action code
+7. then layer AI-assisted measurement onto the same measurement framework rather than building a separate AI-only path
 
 In short: **the system should be treated as a real brownfield foundation, not rewritten from scratch — but it does need structural clarification before rapid feature expansion.**
+
+---
+
+_Generated using BMAD Method `document-project` workflow_
+dation, not rewritten from scratch — but it does need structural clarification before rapid feature expansion.**
+
+---
+
+_Generated using BMAD Method `document-project` workflow_
+, not rewritten from scratch — but it does need structural clarification before rapid feature expansion.**
 
 ---
 
