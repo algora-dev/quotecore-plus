@@ -1,5 +1,7 @@
 
-'use server';
+'use server'
+import { normalizeLanguage } from '../lib/i18n/languages';
+;
 
 import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
@@ -25,7 +27,8 @@ function getAdminClient() {
 }
 
 export async function signupWithCompany(input: SignupInput) {
-  const companyName = input.companyName.trim();
+  
+  const defaultLanguage = normalizeLanguage(formData.get('defaultLanguage')?.toString());
   const fullName = input.fullName.trim();
   const email = input.email.trim().toLowerCase();
   const password = input.password;
@@ -99,3 +102,4 @@ export async function signupWithCompany(input: SignupInput) {
 
   redirect('/login?signup=success');
 }
+
