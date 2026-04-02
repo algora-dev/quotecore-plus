@@ -950,11 +950,11 @@ function ExpandableComponent({
             <div key={entry.id} className="flex items-center gap-2 text-xs">
               <span className="text-slate-400 w-6">#{idx + 1}</span>
               <span className="text-slate-700">
-                {String(displayValue(Number(entry.raw_value)))}
+                {displayValue(entry.raw_value)}
               </span>
               {comp.waste_type !== 'none' && (
                 <span className="text-slate-400">
-                  → {displayValue(Number(entry.value_after_waste))}{' '}
+                  → {displayValue(entry.value_after_waste)}{' '}
                   <span className="text-slate-300">(+waste)</span>
                 </span>
               )}
