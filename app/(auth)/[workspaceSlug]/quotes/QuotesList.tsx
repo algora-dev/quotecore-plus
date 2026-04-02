@@ -224,5 +224,3 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
     </>
   );
 }
- );
-}
