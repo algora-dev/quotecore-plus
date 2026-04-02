@@ -5,7 +5,7 @@ import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaL
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { unitForMeasurement, entryLabel, addMoreLabel } from '@/app/lib/types';
 import { convertArea } from '@/app/lib/measurements/conversions';
-import { formatArea } from '@/app/lib/measurements/displayHelpers';
+import { formatArea, formatLinear } from '@/app/lib/measurements/displayHelpers';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow, InputMode } from '@/app/lib/types';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
@@ -267,6 +267,7 @@ export function QuoteBuilder({
               key={area.id}
               area={area}
               entries={roofAreaEntries[area.id] ?? []}
+              quote={quote}
               onUpdate={handleUpdateArea}
               onToggleLock={handleToggleLock}
               onAddEntry={handleAddRoofAreaEntry}
@@ -311,7 +312,7 @@ export function QuoteBuilder({
                 <h3 className="font-semibold text-slate-900">
                   {area.label}{' '}
                   <span className="text-sm font-normal text-slate-500">
-                    ({(area.computed_sqm ?? 0).toFixed(1)} m²
+                    ({formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
                     {area.calc_pitch_degrees ? ` @ ${area.calc_pitch_degrees}°` : ''})
                   </span>
                 </h3>
@@ -398,7 +399,7 @@ export function QuoteBuilder({
             return (
               <div key={area.id} className="rounded-xl border border-slate-200 bg-white p-4">
                 <h3 className="font-semibold text-slate-900 mb-2">
-                  {area.label} — {(area.computed_sqm ?? 0).toFixed(1)} m²
+                  {area.label} — {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
                 </h3>
                 {areaComps.length > 0 ? (
                   <table className="w-full text-sm">
@@ -527,6 +528,7 @@ export function QuoteBuilder({
 function RoofAreaCard({
   area,
   entries,
+  quote,
   onUpdate,
   onToggleLock,
   onAddEntry,
@@ -535,6 +537,7 @@ function RoofAreaCard({
 }: {
   area: QuoteRoofAreaRow;
   entries: QuoteRoofAreaEntryRow[];
+  quote: QuoteRow;
   onUpdate: (id: string, updates: Parameters<typeof updateQuoteRoofArea>[1]) => Promise<void>;
   onToggleLock: (id: string, locked: boolean) => Promise<void>;
   onAddEntry: (areaId: string, widthM: number, lengthM: number) => Promise<void>;
@@ -636,7 +639,7 @@ function RoofAreaCard({
                 <div key={entry.id} className="flex items-center gap-2 text-xs mb-1">
                   <span className="text-slate-400 w-6">#{idx + 1}</span>
                   <span className="text-slate-700">
-                    {entry.width_m.toFixed(1)}m × {entry.length_m.toFixed(1)}m = {entry.sqm.toFixed(1)} m²
+                    {formatLinear(entry.width_m, quote.measurement_system)} × {formatLinear(entry.length_m, quote.measurement_system)} = {formatArea(entry.sqm, quote.measurement_system)}
                   </span>
                   <button
                     onClick={() => onRemoveEntry(entry.id, area.id)}
