@@ -17,10 +17,10 @@ export function convertLinear(meters: number): number {
 /**
  * Convert area measurement from metric to imperial
  * @param sqm Value in square meters
- * @returns Value in roofing squares (3 decimal precision)
+ * @returns Value in roofing squares (3 decimal precision, formatted as string)
  */
-export function convertArea(sqm: number): number {
-  return Number((sqm * SQM_TO_RS).toFixed(3));
+export function convertArea(sqm: number): string {
+  return (sqm * SQM_TO_RS).toFixed(3);
 }
 
 /**
