@@ -9,6 +9,7 @@ type Quote = {
   customer_name: string;
   job_name: string | null;
   status: string;
+  quote_number: number | null;
   created_at: string;
 };
 
@@ -24,7 +25,9 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
   const router = useRouter();
 
   const drafts = quotes.filter(q => q.status === 'draft');
-  const confirmed = quotes.filter(q => q.status === 'confirmed' || q.status === 'sent' || q.status === 'accepted');
+  const confirmed = quotes
+    .filter(q => q.status === 'confirmed' || q.status === 'sent' || q.status === 'accepted')
+    .sort((a, b) => (b.quote_number || 0) - (a.quote_number || 0)); // Sort by quote number desc
   const displayQuotes = activeTab === 'draft' ? drafts : confirmed;
 
   async function handleDelete() {
@@ -77,6 +80,9 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
               className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 hover:shadow-md transition"
             >
               <div className="flex-1">
+                {q.quote_number && (
+                  <span className="font-semibold text-blue-600 mr-3">Quote #{q.quote_number}</span>
+                )}
                 <span className="font-medium text-slate-900">{q.customer_name}</span>
                 {q.job_name && <span className="text-slate-500 ml-2">— {q.job_name}</span>}
                 <span className="text-xs text-slate-400 ml-3">
@@ -115,20 +121,12 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
 
                 {/* Confirmed actions */}
                 {q.status !== 'draft' && (
-                  <>
-                    <Link
-                      href={`/${workspaceSlug}/quotes/${q.id}/summary`}
-                      className="px-3 py-1 text-sm rounded-lg border border-slate-300 bg-white hover:bg-slate-50"
-                    >
-                      View
-                    </Link>
-                    <Link
-                      href={`/${workspaceSlug}/quotes/${q.id}/customer`}
-                      className="px-3 py-1 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-                    >
-                      Customer Quote
-                    </Link>
-                  </>
+                  <Link
+                    href={`/${workspaceSlug}/quotes/${q.id}/summary`}
+                    className="px-3 py-1 text-sm rounded-lg border border-slate-300 bg-white hover:bg-slate-50"
+                  >
+                    View
+                  </Link>
                 )}
               </div>
             </div>
