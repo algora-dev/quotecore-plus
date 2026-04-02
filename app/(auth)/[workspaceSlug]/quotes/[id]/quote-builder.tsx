@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal } from '../actions';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { unitForMeasurement, entryLabel, addMoreLabel } from '@/app/lib/types';
+import { convertArea } from '@/app/lib/measurements/conversions';
+import { formatArea } from '@/app/lib/measurements/displayHelpers';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow, InputMode } from '@/app/lib/types';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
@@ -252,7 +254,7 @@ export function QuoteBuilder({
       </nav>
 
       <div className="flex gap-4 p-3 bg-slate-50 rounded-lg text-sm">
-        <span>Roof: <strong>{totalRoofSqm.toFixed(1)} m²</strong></span>
+        <span>Roof: <strong>{formatArea(totalRoofSqm, quote.measurement_system)}</strong></span>
         <span>Materials: <strong>${totals.totalMaterials.toFixed(2)}</strong></span>
         <span>Labour: <strong>${totals.totalLabour.toFixed(2)}</strong></span>
         <span className="ml-auto font-semibold">Total: ${totals.grandTotal.toFixed(2)}</span>
