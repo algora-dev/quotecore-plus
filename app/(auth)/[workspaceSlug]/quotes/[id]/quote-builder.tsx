@@ -796,7 +796,7 @@ function ExpandableComponent({
   const [adding, setAdding] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const unit = unitForMeasurement(comp.measurement_type);
+  const unit = getUnitLabel(comp.measurement_type as any, quote.measurement_system);
   const label = entryLabel(comp.measurement_type);
   const addLabel = addMoreLabel(comp.measurement_type);
   const totalCost = (comp.material_cost ?? 0) + (comp.labour_cost ?? 0);
