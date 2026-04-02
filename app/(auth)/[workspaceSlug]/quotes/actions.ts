@@ -287,6 +287,23 @@ export async function convertQuoteMeasurementSystem(id: string, newSystem: 'metr
   revalidatePath(`/quotes/${id}`);
 }
 
+export async function updateQuoteNames(id: string, customerName: string, jobName: string | null) {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+  
+  const { error } = await supabase
+    .from('quotes')
+    .update({ 
+      customer_name: customerName,
+      job_name: jobName 
+    })
+    .eq('id', id)
+    .eq('company_id', profile.company_id);
+    
+  if (error) throw new Error(error.message);
+  revalidatePath(`/quotes/${id}`);
+}
+
 export async function deleteQuote(id: string) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();

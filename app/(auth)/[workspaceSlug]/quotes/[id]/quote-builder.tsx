@@ -8,6 +8,7 @@ import { convertArea, convertLinearToMetric, convertAreaToMetric } from '@/app/l
 import { formatArea, formatLinear, getUnitLabel } from '@/app/lib/measurements/displayHelpers';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow, InputMode } from '@/app/lib/types';
 import { MeasurementSystemToggle } from './MeasurementSystemToggle';
+import { QuoteNameEditor } from './QuoteNameEditor';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
 
