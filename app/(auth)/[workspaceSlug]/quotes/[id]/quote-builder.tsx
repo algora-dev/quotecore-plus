@@ -184,10 +184,8 @@ export function QuoteBuilder({
 
   async function handleUseRoofArea(compId: string, roofAreaSqm: number) {
     const comp = components.find(c => c.id === compId);
-    const areaPitch = comp?.quote_roof_area_id
-      ? roofAreas.find(a => a.id === comp.quote_roof_area_id)?.calc_pitch_degrees ?? null
-      : null;
-    const entry = await useRoofAreaTotal(compId, roofAreaSqm, areaPitch);
+    // Roof area total is already pitched - don't apply pitch again
+    const entry = await useRoofAreaTotal(compId, roofAreaSqm, null);
     setEntries(prev => ({ ...prev, [compId]: [...(prev[compId] ?? []), entry] }));
     const compEntries = [...(entries[compId] ?? []), entry];
     const totalQty = compEntries.reduce((s, e) => s + Number(e.value_after_waste), 0);
