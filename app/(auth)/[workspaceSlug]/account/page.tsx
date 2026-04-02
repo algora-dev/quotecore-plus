@@ -1,4 +1,5 @@
 import { loadCompanyContext } from '@/app/lib/data/company-context';
+import { MeasurementSystemSelector } from './MeasurementSystemSelector';
 
 export default async function AccountPage() {
   const { company, profile } = await loadCompanyContext();
@@ -12,38 +13,44 @@ export default async function AccountPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold">Company</h2>
-          <dl className="mt-3 space-y-2 text-sm text-slate-600">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-6">
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Company Details</h2>
+          <dl className="space-y-3 text-sm">
             <div>
-              <dt className="font-medium text-slate-900">Name</dt>
-              <dd>{company.name}</dd>
+              <dt className="text-slate-500">Company Name</dt>
+              <dd className="font-medium text-slate-900">{company.name}</dd>
             </div>
             <div>
-              <dt className="font-medium text-slate-900">Slug</dt>
-              <dd className="font-mono">{company.slug}</dd>
+              <dt className="text-slate-500">Default Tax Rate</dt>
+              <dd className="font-medium text-slate-900">{company.default_tax_rate}%</dd>
             </div>
           </dl>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold">Primary contact</h2>
-          <dl className="mt-3 space-y-2 text-sm text-slate-600">
-            <div>
-              <dt className="font-medium text-slate-900">Name</dt>
-              <dd>{profile.full_name ?? 'Owner'}</dd>
-            </div>
-            <div>
-              <dt className="font-medium text-slate-900">Email</dt>
-              <dd>{profile.email}</dd>
-            </div>
-          </dl>
+        <div className="border-t pt-6">
+          <MeasurementSystemSelector currentSystem={company.default_measurement_system} />
         </div>
       </div>
 
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-        Additional permissions, roles, and billing controls will live here in the next iteration.
+      <div className="rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="text-xl font-semibold mb-4">Primary Contact</h2>
+        <dl className="space-y-3 text-sm">
+          <div>
+            <dt className="text-slate-500">Name</dt>
+            <dd className="font-medium text-slate-900">{profile.full_name || '—'}</dd>
+          </div>
+          <div>
+            <dt className="text-slate-500">Email</dt>
+            <dd className="font-medium text-slate-900">{profile.email}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+        <p className="text-sm text-amber-800">
+          <strong>Coming soon:</strong> Invite teammates, manage permissions, and customize company branding.
+        </p>
       </div>
     </section>
   );

@@ -45,7 +45,12 @@ export async function loadCompanyContext(): Promise<CompanyContext> {
 
       return {
         profile,
-        company: { ...fallback, default_language: null, default_tax_rate: 0 },
+        company: { 
+          ...fallback, 
+          default_language: null, 
+          default_tax_rate: 0,
+          default_measurement_system: 'metric' as const
+        },
       };
     }
 
