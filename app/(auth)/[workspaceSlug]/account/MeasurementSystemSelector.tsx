@@ -15,6 +15,8 @@ export function MeasurementSystemSelector({ currentSystem }: Props) {
     try {
       await updateCompanyMeasurementSystem(newSystem);
       setSystem(newSystem);
+      // Force page reload to sync server state
+      window.location.reload();
     } catch (err) {
       console.error('Failed to update measurement system:', err);
       alert('Failed to update system. Please try again.');

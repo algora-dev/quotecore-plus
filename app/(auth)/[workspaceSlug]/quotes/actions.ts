@@ -11,7 +11,9 @@ export async function createQuoteFromTemplate(templateId: string, customerName: 
   const supabase = await createSupabaseServerClient();
   const { data: quote, error: qErr } = await supabase.from('quotes').insert({
     company_id: profile.company_id, template_id: templateId, customer_name: customerName,
-    tax_rate: company.default_tax_rate ?? 0, created_by_user_id: profile.id,
+    tax_rate: company.default_tax_rate ?? 0, 
+    measurement_system: company.default_measurement_system,
+    created_by_user_id: profile.id,
   }).select().single();
   if (qErr || !quote) throw new Error(qErr?.message || 'Failed to create quote');
   const { data: templateAreas } = await supabase.from('template_roof_areas').select('*').eq('template_id', templateId).order('sort_order');
@@ -48,10 +50,16 @@ export async function createQuoteFromTemplate(templateId: string, customerName: 
 
 export async function createBlankQuote(customerName: string) {
   const { profile, company } = await loadCompanyContext();
+  console.log('createBlankQuote - company.default_measurement_system:', company.default_measurement_system);
   const supabase = await createSupabaseServerClient();
   const { data: quote, error } = await supabase.from('quotes').insert({
-    company_id: profile.company_id, customer_name: customerName, tax_rate: company.default_tax_rate ?? 0, created_by_user_id: profile.id,
+    company_id: profile.company_id, 
+    customer_name: customerName, 
+    tax_rate: company.default_tax_rate ?? 0, 
+    measurement_system: company.default_measurement_system,
+    created_by_user_id: profile.id,
   }).select().single();
+  console.log('createBlankQuote - created quote measurement_system:', quote?.measurement_system);
   if (error || !quote) throw new Error(error?.message || 'Failed to create quote');
   redirect(`/${company.slug}/quotes/${quote.id}`);
 }
