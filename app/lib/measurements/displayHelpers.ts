@@ -12,7 +12,7 @@ export function formatLinear(meters: number, system: MeasurementSystem): string 
   if (system === 'imperial') {
     return `${convertLinear(meters)} ft`;
   }
-  return `${meters.toFixed(1)} m`;
+  return `${meters.toFixed(2)} m`;
 }
 
 /**
