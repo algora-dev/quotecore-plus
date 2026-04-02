@@ -7,6 +7,7 @@ import { unitForMeasurement, entryLabel, addMoreLabel } from '@/app/lib/types';
 import { convertArea, convertLinearToMetric, convertAreaToMetric } from '@/app/lib/measurements/conversions';
 import { formatArea, formatLinear, getUnitLabel } from '@/app/lib/measurements/displayHelpers';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow, InputMode } from '@/app/lib/types';
+import { MeasurementSystemToggle } from './MeasurementSystemToggle';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
 
@@ -255,11 +256,18 @@ export function QuoteBuilder({
             {quote.job_name && <span className="text-slate-500 font-normal"> — {quote.job_name}</span>}
           </h1>
         </div>
-        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-          quote.status === 'draft' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'
-        }`}>
-          {quote.status}
-        </span>
+        <div className="flex items-center gap-3">
+          <MeasurementSystemToggle 
+            quoteId={quote.id} 
+            currentSystem={quote.measurement_system}
+            isDraft={quote.status === 'draft'}
+          />
+          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            quote.status === 'draft' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'
+          }`}>
+            {quote.status}
+          </span>
+        </div>
       </div>
 
       <nav className="flex gap-1 p-1 bg-slate-100 rounded-lg">
