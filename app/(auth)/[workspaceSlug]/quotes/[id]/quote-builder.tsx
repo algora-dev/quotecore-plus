@@ -813,7 +813,8 @@ function ExpandableComponent({
     if (comp.measurement_type === 'linear') {
       return formatLinear(value, quote.measurement_system);
     }
-    return `${value.toFixed(1)} ${unit}`;
+    // quantity/fixed types - no unit conversion
+    return `${value.toFixed(1)} ${getUnitLabel(comp.measurement_type as any, quote.measurement_system)}`;
   }
 
   async function handleSubmitEntry() {
@@ -845,7 +846,7 @@ function ExpandableComponent({
           {compEntries.length} {compEntries.length === 1 ? 'entry' : 'entries'}
         </span>
         <span className="text-xs text-slate-500 w-20 text-right">
-          {(comp.final_quantity ?? 0).toFixed(1)} {unit}
+          {displayValue(comp.final_quantity ?? 0)}
         </span>
         <span className="text-xs font-medium w-20 text-right">${totalCost.toFixed(2)}</span>
         <button
