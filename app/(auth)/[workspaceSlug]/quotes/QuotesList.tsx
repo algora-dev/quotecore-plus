@@ -22,13 +22,27 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
   const [activeTab, setActiveTab] = useState<'draft' | 'confirmed'>('draft');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
 
   const drafts = quotes.filter(q => q.status === 'draft');
   const confirmed = quotes
     .filter(q => q.status === 'confirmed' || q.status === 'sent' || q.status === 'accepted')
     .sort((a, b) => (b.quote_number || 0) - (a.quote_number || 0)); // Sort by quote number desc
-  const displayQuotes = activeTab === 'draft' ? drafts : confirmed;
+  
+  // Filter by search query
+  const filteredDrafts = drafts.filter(q => 
+    q.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (q.job_name && q.job_name.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+  
+  const filteredConfirmed = confirmed.filter(q => 
+    (q.quote_number && q.quote_number.toString().includes(searchQuery)) ||
+    q.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (q.job_name && q.job_name.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+  
+  const displayQuotes = activeTab === 'draft' ? filteredDrafts : filteredConfirmed;
 
   async function handleDelete() {
     if (!deleteId) return;
@@ -47,6 +61,33 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
 
   return (
     <>
+      {/* Search */}
+      <div className="relative max-w-md">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={activeTab === 'confirmed' ? 'Search by quote #, client, or job reference...' : 'Search by client or job reference...'}
+          className="w-full pl-10 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-blue-500 focus:outline-none"
+        />
+        <svg 
+          className="absolute left-3 top-2.5 w-4 h-4 text-slate-400"
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
       {/* Tabs */}
       <div className="flex gap-1 p-1 bg-slate-100 rounded-lg w-fit">
         <button
@@ -57,7 +98,7 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
               : 'text-slate-500 hover:text-slate-700'
           }`}
         >
-          Drafts ({drafts.length})
+          Drafts ({searchQuery ? `${filteredDrafts.length}/${drafts.length}` : drafts.length})
         </button>
         <button
           onClick={() => setActiveTab('confirmed')}
@@ -121,12 +162,20 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
 
                 {/* Confirmed actions */}
                 {q.status !== 'draft' && (
-                  <Link
-                    href={`/${workspaceSlug}/quotes/${q.id}/summary`}
-                    className="px-3 py-1 text-sm rounded-lg border border-slate-300 bg-white hover:bg-slate-50"
-                  >
-                    View
-                  </Link>
+                  <>
+                    <Link
+                      href={`/${workspaceSlug}/quotes/${q.id}/summary`}
+                      className="px-3 py-1 text-sm rounded-lg border border-slate-300 bg-white hover:bg-slate-50"
+                    >
+                      View
+                    </Link>
+                    <button
+                      onClick={() => setDeleteId(q.id)}
+                      className="px-3 py-1 text-sm rounded-lg border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+                    >
+                      Delete
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -174,4 +223,6 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
       )}
     </>
   );
+}
+ );
 }
