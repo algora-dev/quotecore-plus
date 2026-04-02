@@ -51,13 +51,14 @@ export async function createQuoteFromTemplate(templateId: string, customerName: 
   redirect(`/${company.slug}/quotes/${quote.id}`);
 }
 
-export async function createBlankQuote(customerName: string) {
+export async function createBlankQuote(customerName: string, jobReference?: string | null) {
   const { profile, company } = await loadCompanyContext();
   console.log('createBlankQuote - company.default_measurement_system:', company.default_measurement_system);
   const supabase = await createSupabaseServerClient();
   const { data: quote, error } = await supabase.from('quotes').insert({
     company_id: profile.company_id, 
-    customer_name: customerName, 
+    customer_name: customerName,
+    job_name: jobReference || null,
     tax_rate: company.default_tax_rate ?? 0, 
     measurement_system: company.default_measurement_system,
     created_by_user_id: profile.id,
