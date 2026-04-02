@@ -263,7 +263,38 @@ export async function updateQuoteSettings(quoteId: string, input: any) {
 export async function confirmQuote(id: string) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from('quotes').update({ status: 'confirmed' }).eq('id', id).eq('company_id', profile.company_id);
+  
+  // Check if quote already has a number (prevent reassignment)
+  const { data: existing } = await supabase
+    .from('quotes')
+    .select('quote_number, status')
+    .eq('id', id)
+    .eq('company_id', profile.company_id)
+    .single();
+    
+  if (!existing) throw new Error('Quote not found');
+  if (existing.status !== 'draft') throw new Error('Only draft quotes can be confirmed');
+  
+  // Get next quote number if not already assigned
+  let quoteNumber = existing.quote_number;
+  if (!quoteNumber) {
+    const { data: numberData, error: numError } = await supabase.rpc('get_next_quote_number', {
+      p_company_id: profile.company_id
+    });
+    if (numError) throw new Error(`Failed to generate quote number: ${numError.message}`);
+    quoteNumber = numberData;
+  }
+  
+  // Update quote with confirmed status and number
+  const { error } = await supabase
+    .from('quotes')
+    .update({ 
+      status: 'confirmed',
+      quote_number: quoteNumber
+    })
+    .eq('id', id)
+    .eq('company_id', profile.company_id);
+    
   if (error) throw new Error(error.message);
   revalidatePath('/quotes');
 }
