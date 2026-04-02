@@ -4,6 +4,7 @@ import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadAllEntriesForQu
 import { loadComponentLibrary } from '../../../components/actions';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { unitForMeasurement } from '@/app/lib/types';
+import { ConvertSystemButton } from './ConvertSystemButton';
 
 export default async function QuoteSummaryPage({
   params,
@@ -18,9 +19,7 @@ export default async function QuoteSummaryPage({
     loadAllEntriesForQuote(id),
   ]);
 
-  if (quote.status === 'draft') {
-    await confirmQuote(id);
-  }
+
 
   const mainComps = components.filter(c => c.quote_roof_area_id);
   const extraComps = components.filter(c => !c.quote_roof_area_id);
@@ -51,6 +50,9 @@ export default async function QuoteSummaryPage({
       </div>
 
       <div className="flex gap-3 p-4 bg-slate-50 rounded-lg">
+        {quote.status === 'draft' && (
+          <ConvertSystemButton quoteId={id} currentSystem={quote.measurement_system} workspaceSlug={workspaceSlug} />
+        )}
         <Link href={`/${workspaceSlug}/quotes/${id}`} className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white hover:bg-slate-50">
           Edit Quote
         </Link>

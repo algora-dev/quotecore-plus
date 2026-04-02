@@ -264,6 +264,25 @@ export async function confirmQuote(id: string) {
   revalidatePath('/quotes');
 }
 
+export async function convertQuoteMeasurementSystem(id: string, newSystem: 'metric' | 'imperial') {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+  
+  // Verify quote is draft
+  const { data: quote } = await supabase.from('quotes').select('status').eq('id', id).eq('company_id', profile.company_id).single();
+  if (!quote || quote.status !== 'draft') {
+    throw new Error('Only draft quotes can be converted');
+  }
+  
+  const { error } = await supabase.from('quotes')
+    .update({ measurement_system: newSystem })
+    .eq('id', id)
+    .eq('company_id', profile.company_id);
+    
+  if (error) throw new Error(error.message);
+  revalidatePath(`/quotes/${id}`);
+}
+
 export async function cloneQuote(id: string, newCustomerName: string) {
   const { profile, company } = await loadCompanyContext();
   const supabase = await createSupabaseServerClient();
