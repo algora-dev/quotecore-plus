@@ -21,12 +21,10 @@ export function QuoteNameEditor({ quoteId, customerName, jobName }: Props) {
     setSaving(true);
     try {
       await updateQuoteNames(quoteId, client.trim(), reference.trim() || null);
-      setEditing(false);
-      router.refresh();
+      window.location.reload();
     } catch (err) {
       console.error('Failed to update quote names:', err);
       alert('Failed to save changes. Please try again.');
-    } finally {
       setSaving(false);
     }
   }
