@@ -19,9 +19,10 @@ export default function LoginPage() {
           const formData = new FormData(e.currentTarget);
 
           startTransition(async () => {
-            const result = await loginAction(formData);
-            if (result && !result.ok) {
-              setError(result.error);
+            try {
+              await loginAction(formData);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Login failed');
             }
           });
         }}

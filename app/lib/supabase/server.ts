@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
@@ -46,18 +47,23 @@ export async function requireUser() {
   return user;
 }
 
-export async function getCurrentProfile() {
-  const supabase = await createSupabaseServerClient();
+export async function getCurrentProfile(existingClient?: SupabaseClient) {
+  const supabase = existingClient ?? (await createSupabaseServerClient());
   const user = await requireUser();
 
   const { data, error } = await supabase
     .from('users')
     .select('id, email, full_name, role, company_id')
     .eq('id', user.id)
-    .single();
+    .limit(1)
+    .maybeSingle();
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  if (!data) {
+    throw new Error('Profile not found');
   }
 
   return data;

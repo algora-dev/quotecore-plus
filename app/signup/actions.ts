@@ -1,7 +1,5 @@
 
 'use server'
-import { normalizeLanguage } from '../lib/i18n/languages';
-;
 
 import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
@@ -28,7 +26,8 @@ function getAdminClient() {
 
 export async function signupWithCompany(input: SignupInput) {
   
-  const defaultLanguage = normalizeLanguage(formData.get('defaultLanguage')?.toString());
+  
+  const companyName = input.companyName.trim();
   const fullName = input.fullName.trim();
   const email = input.email.trim().toLowerCase();
   const password = input.password;
@@ -72,7 +71,6 @@ export async function signupWithCompany(input: SignupInput) {
     .insert({
       name: companyName,
       slug: companySlug,
-      rounding_precision: 2,
       default_currency: 'NZD',
       default_tax_rate: 15.0,
     })
@@ -102,4 +100,6 @@ export async function signupWithCompany(input: SignupInput) {
 
   redirect('/login?signup=success');
 }
+
+
 
