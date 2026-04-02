@@ -633,23 +633,7 @@ function RoofAreaCard({
               </button>
             </div>
           </div>
-          <div className="flex gap-2">
-            {(['final', 'calculated'] as InputMode[]).map(mode => (
-              <button
-                key={mode}
-                onClick={() => onUpdate(area.id, { input_mode: mode })}
-                className={`px-3 py-1 text-xs rounded-full font-medium ${
-                  area.input_mode === mode
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {mode === 'final' ? 'Final Value' : 'Calculated'}
-              </button>
-            ))}
-          </div>
-          {area.input_mode === 'calculated' && (
-            <div>
+          <div>
               <div className="flex items-center gap-2 mb-2">
                 <label className="text-xs text-slate-500">Pitch (°)</label>
                 <input
@@ -744,7 +728,6 @@ function RoofAreaCard({
                 </button>
               )}
             </div>
-          )}
           <div className="flex justify-end pt-2">
             <button
               onClick={() => onToggleLock(area.id, true)}
