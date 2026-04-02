@@ -299,6 +299,13 @@ export async function confirmQuote(id: string) {
   revalidatePath('/quotes');
 }
 
+export async function confirmQuoteAndRedirect(id: string, workspaceSlug: string) {
+  'use server';
+  await confirmQuote(id);
+  const { redirect } = await import('next/navigation');
+  redirect(`/${workspaceSlug}/quotes/${id}/summary`);
+}
+
 export async function convertQuoteMeasurementSystem(id: string, newSystem: 'metric' | 'imperial') {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
