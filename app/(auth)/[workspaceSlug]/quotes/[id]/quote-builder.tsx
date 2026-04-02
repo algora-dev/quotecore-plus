@@ -972,7 +972,7 @@ function ExpandableComponent({
               <input
                 ref={inputRef}
                 type="number"
-                step="0.1"
+                step="0.01"
                 value={inputValue}
                 onChange={e => setInputValue(e.target.value)}
                 onKeyDown={e => {

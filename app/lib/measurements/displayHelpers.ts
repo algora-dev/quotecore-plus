@@ -25,7 +25,7 @@ export function formatArea(sqm: number, system: MeasurementSystem): string {
   if (system === 'imperial') {
     return `${convertArea(sqm)} Rs`;
   }
-  return `${sqm.toFixed(1)} m²`;
+  return `${sqm.toFixed(2)} m²`;
 }
 
 /**
