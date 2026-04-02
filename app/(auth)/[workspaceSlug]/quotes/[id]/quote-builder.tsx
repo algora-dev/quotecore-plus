@@ -9,6 +9,7 @@ import { formatArea, formatLinear, getUnitLabel } from '@/app/lib/measurements/d
 import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow, InputMode } from '@/app/lib/types';
 import { MeasurementSystemToggle } from './MeasurementSystemToggle';
 import { QuoteNameEditor } from './QuoteNameEditor';
+import { ConfirmQuoteButton } from './ConfirmQuoteButton';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
 
@@ -549,12 +550,7 @@ export function QuoteBuilder({
             >
               ← Back to Extras
             </button>
-            <Link
-              href={`/${workspaceSlug}/quotes/${quote.id}/summary`}
-              className="px-6 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
-            >
-              Confirm Quote →
-            </Link>
+            <ConfirmQuoteButton quoteId={quote.id} workspaceSlug={workspaceSlug} />
           </div>
         </div>
       )}
