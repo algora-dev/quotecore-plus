@@ -19,11 +19,11 @@ export function MeasurementSystemToggle({ quoteId, currentSystem, isDraft }: Pro
     setSwitching(true);
     try {
       await convertQuoteMeasurementSystem(quoteId, newSystem);
-      router.refresh();
+      // Force hard refresh to update all displays
+      window.location.reload();
     } catch (err) {
       console.error('Failed to switch system:', err);
       alert('Failed to switch measurement system. Please try again.');
-    } finally {
       setSwitching(false);
     }
   }

@@ -356,6 +356,7 @@ export function QuoteBuilder({
                     entries={entries[comp.id] ?? []}
                     roofAreas={roofAreas}
                     roofArea={area}
+                    quote={quote}
                     onAddEntry={handleAddEntry}
                     onUseRoofArea={handleUseRoofArea}
                     onRemoveEntry={handleRemoveEntry}
@@ -397,6 +398,7 @@ export function QuoteBuilder({
                 comp={comp}
                 entries={entries[comp.id] ?? []}
                 roofAreas={roofAreas}
+                quote={quote}
                 onAddEntry={handleAddEntry}
                 onRemoveEntry={handleRemoveEntry}
                 onRemove={handleRemoveComponent}
@@ -764,6 +766,7 @@ function ExpandableComponent({
   entries: compEntries,
   roofAreas,
   roofArea,
+  quote,
   onAddEntry,
   onUseRoofArea,
   onRemoveEntry,
@@ -774,6 +777,7 @@ function ExpandableComponent({
   entries: QuoteComponentEntryRow[];
   roofAreas: QuoteRoofAreaRow[];
   roofArea?: QuoteRoofAreaRow;
+  quote: QuoteRow;
   onAddEntry: (compId: string, rawValue: number) => Promise<void>;
   onUseRoofArea?: (compId: string, roofAreaSqm: number) => Promise<void>;
   onRemoveEntry: (entryId: string, compId: string) => Promise<void>;
@@ -800,6 +804,17 @@ function ExpandableComponent({
   const isAreaBased = comp.measurement_type === 'area';
   const assignedArea = roofAreas.find(a => a.id === comp.quote_roof_area_id);
   const areaPitch = assignedArea?.calc_pitch_degrees ?? 0;
+
+  // Helper to display values with correct units
+  function displayValue(value: number): string {
+    if (comp.measurement_type === 'area') {
+      return formatArea(value, quote.measurement_system);
+    }
+    if (comp.measurement_type === 'linear') {
+      return formatLinear(value, quote.measurement_system);
+    }
+    return `${value.toFixed(1)} ${unit}`;
+  }
 
   async function handleSubmitEntry() {
     const val = Number(inputValue);
@@ -926,7 +941,7 @@ function ExpandableComponent({
               onClick={() => onUseRoofArea(comp.id, roofArea.computed_sqm ?? 0)}
               className="text-xs text-emerald-600 hover:text-emerald-800 font-medium"
             >
-              → Use roof area total ({(roofArea.computed_sqm ?? 0).toFixed(1)} m²)
+              → Use roof area total ({formatArea(roofArea.computed_sqm ?? 0, quote.measurement_system)})
             </button>
           )}
 
@@ -934,11 +949,11 @@ function ExpandableComponent({
             <div key={entry.id} className="flex items-center gap-2 text-xs">
               <span className="text-slate-400 w-6">#{idx + 1}</span>
               <span className="text-slate-700">
-                {Number(entry.raw_value).toFixed(1)} {unit}
+                {displayValue(Number(entry.raw_value))}
               </span>
               {comp.waste_type !== 'none' && (
                 <span className="text-slate-400">
-                  → {Number(entry.value_after_waste).toFixed(1)} {unit}{' '}
+                  → {displayValue(Number(entry.value_after_waste))}{' '}
                   <span className="text-slate-300">(+waste)</span>
                 </span>
               )}
