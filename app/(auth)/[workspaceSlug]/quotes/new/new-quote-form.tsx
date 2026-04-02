@@ -38,7 +38,7 @@ export function NewQuoteForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Customer Name *</label>
+        <label className="block text-sm font-medium text-slate-700 mb-1">Client *</label>
         <input
           value={customerName}
           onChange={(e) => setCustomerName(e.target.value)}
@@ -46,6 +46,18 @@ export function NewQuoteForm({
           className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-500 focus:outline-none"
           placeholder="e.g. John Smith"
         />
+        <p className="text-xs text-slate-500 mt-1">Customer or client name</p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">Job Reference</label>
+        <input
+          value={jobReference}
+          onChange={(e) => setJobReference(e.target.value)}
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-500 focus:outline-none"
+          placeholder="e.g. 123 Main St, Lot #45, Project Alpha"
+        />
+        <p className="text-xs text-slate-500 mt-1">Address, lot number, or project reference (optional)</p>
       </div>
 
       <div>
