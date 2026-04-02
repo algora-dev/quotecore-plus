@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal } from '../actions';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { unitForMeasurement, entryLabel, addMoreLabel } from '@/app/lib/types';
-import { convertArea } from '@/app/lib/measurements/conversions';
+import { convertArea, convertLinearToMetric, convertAreaToMetric } from '@/app/lib/measurements/conversions';
 import { formatArea, formatLinear, getUnitLabel } from '@/app/lib/measurements/displayHelpers';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow, InputMode } from '@/app/lib/types';
 
@@ -96,9 +96,12 @@ export function QuoteBuilder({
     setRoofAreas(prev => prev.map(a => a.id === id ? { ...a, is_locked: locked } : a));
   }
 
-  async function handleAddRoofAreaEntry(areaId: string, widthM: number, lengthM: number) {
+  async function handleAddRoofAreaEntry(areaId: string, widthInput: number, lengthInput: number) {
     const area = roofAreas.find(a => a.id === areaId);
     if (!area) return;
+    // Convert imperial inputs to metric for storage
+    const widthM = quote.measurement_system === 'imperial' ? convertLinearToMetric(widthInput) : widthInput;
+    const lengthM = quote.measurement_system === 'imperial' ? convertLinearToMetric(lengthInput) : lengthInput;
     const entry = await addRoofAreaEntry(areaId, widthM, lengthM, area.calc_pitch_degrees ?? 0);
     setRoofAreaEntries(prev => ({ ...prev, [areaId]: [...(prev[areaId] ?? []), entry] }));
     const areaEnts = [...(roofAreaEntries[areaId] ?? []), entry];
@@ -151,8 +154,18 @@ export function QuoteBuilder({
     });
   }
 
-  async function handleAddEntry(compId: string, rawValue: number) {
+  async function handleAddEntry(compId: string, rawInputValue: number) {
     const comp = components.find(c => c.id === compId);
+    // Convert imperial inputs to metric for storage
+    let rawValue = rawInputValue;
+    if (quote.measurement_system === 'imperial') {
+      if (comp?.measurement_type === 'area') {
+        rawValue = convertAreaToMetric(rawInputValue);
+      } else if (comp?.measurement_type === 'linear') {
+        rawValue = convertLinearToMetric(rawInputValue);
+      }
+      // quantity/fixed pass through unchanged
+    }
     const areaPitch = comp?.quote_roof_area_id
       ? roofAreas.find(a => a.id === comp.quote_roof_area_id)?.calc_pitch_degrees ?? null
       : null;
