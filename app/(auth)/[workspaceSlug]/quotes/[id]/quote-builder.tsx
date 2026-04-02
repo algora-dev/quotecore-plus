@@ -572,7 +572,7 @@ function RoofAreaCard({
             <h3 className="font-semibold text-slate-900">{area.label}</h3>
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-blue-600">
-                {(area.computed_sqm ?? 0).toFixed(1)} m²
+                {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
                 {area.calc_pitch_degrees ? ` @ ${area.calc_pitch_degrees}°` : ''}
               </span>
               <button
@@ -593,7 +593,7 @@ function RoofAreaCard({
             <h3 className="font-semibold text-slate-900">{area.label}</h3>
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-blue-600">
-                {(area.computed_sqm ?? 0).toFixed(1)} m²
+                {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
               </span>
               <button onClick={() => onRemove(area.id)} className="text-xs text-red-500">
                 ×
@@ -657,7 +657,7 @@ function RoofAreaCard({
                     step="0.01"
                     value={widthInput}
                     onChange={e => setWidthInput(e.target.value)}
-                    placeholder="Width (m)"
+                    placeholder={quote.measurement_system === "imperial" ? "Width (ft)" : "Width (m)"}
                     onKeyDown={e => {
                       if (e.key === 'Enter') handleSubmit();
                       if (e.key === 'Escape') {
@@ -674,7 +674,7 @@ function RoofAreaCard({
                     step="0.01"
                     value={lengthInput}
                     onChange={e => setLengthInput(e.target.value)}
-                    placeholder="Length (m)"
+                    placeholder={quote.measurement_system === "imperial" ? "Length (ft)" : "Length (m)"}
                     onKeyDown={e => {
                       if (e.key === 'Enter') handleSubmit();
                       if (e.key === 'Escape') {
