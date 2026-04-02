@@ -55,7 +55,7 @@ export interface TemplateComponentRow {
 export interface QuoteRow {
   id: string; company_id: string; template_id: string | null; customer_name: string;
   customer_email: string | null; customer_phone: string | null; job_name: string | null; site_address: string | null;
-  status: QuoteStatus; material_margin_pct: number; labour_margin_pct: number; tax_rate: number;
+  status: QuoteStatus; quote_number: number | null; material_margin_pct: number; labour_margin_pct: number; tax_rate: number;
   global_pitch_degrees: number | null; measurement_system: MeasurementSystem; notes_internal: string | null; created_by_user_id: string | null;
   created_at: string; updated_at: string;
 }
