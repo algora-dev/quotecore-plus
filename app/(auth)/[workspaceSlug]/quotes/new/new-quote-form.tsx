@@ -14,6 +14,7 @@ export function NewQuoteForm({
   workspaceSlug: string;
 }) {
   const [customerName, setCustomerName] = useState('');
+  const [jobReference, setJobReference] = useState('');
   const [templateId, setTemplateId] = useState(preselectedTemplateId || '');
   const [creating, setCreating] = useState(false);
 
@@ -24,9 +25,9 @@ export function NewQuoteForm({
 
     try {
       if (templateId) {
-        await createQuoteFromTemplate(templateId, customerName.trim());
+        await createQuoteFromTemplate(templateId, customerName.trim(), jobReference.trim() || null);
       } else {
-        await createBlankQuote(customerName.trim());
+        await createBlankQuote(customerName.trim(), jobReference.trim() || null);
       }
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to create quote');

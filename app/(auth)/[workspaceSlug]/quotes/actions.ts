@@ -6,11 +6,14 @@ import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 import type { InputMode, WasteType, PitchType } from '@/app/lib/types';
 
-export async function createQuoteFromTemplate(templateId: string, customerName: string) {
+export async function createQuoteFromTemplate(templateId: string, customerName: string, jobReference?: string | null) {
   const { profile, company } = await loadCompanyContext();
   const supabase = await createSupabaseServerClient();
   const { data: quote, error: qErr } = await supabase.from('quotes').insert({
-    company_id: profile.company_id, template_id: templateId, customer_name: customerName,
+    company_id: profile.company_id, 
+    template_id: templateId, 
+    customer_name: customerName,
+    job_name: jobReference || null,
     tax_rate: company.default_tax_rate ?? 0, 
     measurement_system: company.default_measurement_system,
     created_by_user_id: profile.id,
