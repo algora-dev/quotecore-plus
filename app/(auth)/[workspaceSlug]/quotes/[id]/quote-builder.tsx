@@ -5,7 +5,7 @@ import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaL
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { unitForMeasurement, entryLabel, addMoreLabel } from '@/app/lib/types';
 import { convertArea } from '@/app/lib/measurements/conversions';
-import { formatArea, formatLinear } from '@/app/lib/measurements/displayHelpers';
+import { formatArea, formatLinear, getUnitLabel } from '@/app/lib/measurements/displayHelpers';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow, InputMode } from '@/app/lib/types';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
@@ -209,6 +209,18 @@ export function QuoteBuilder({
   ) {
     await updateComponentSettings(compId, updates);
     setComponents(prev => prev.map(c => c.id === compId ? { ...c, ...updates } : c));
+  }
+
+
+  // Helper to format component quantity with correct units
+  function formatQuantity(qty: number, measurementType: string): string {
+    if (measurementType === 'area') {
+      return formatArea(qty, quote.measurement_system);
+    }
+    if (measurementType === 'linear') {
+      return formatLinear(qty, quote.measurement_system);
+    }
+    return `${qty.toFixed(1)} ${getUnitLabel(measurementType as any, quote.measurement_system)}`;
   }
 
   const phases: { key: Phase; label: string }[] = [
@@ -424,7 +436,7 @@ export function QuoteBuilder({
                           </td>
                           <td className="py-1.5 text-right">{(entries[c.id] ?? []).length}</td>
                           <td className="py-1.5 text-right">
-                            {(c.final_quantity ?? 0).toFixed(1)} {unitForMeasurement(c.measurement_type)}
+                            {formatQuantity(c.final_quantity ?? 0, c.measurement_type)}
                           </td>
                           <td className="py-1.5 text-right">${(c.material_cost ?? 0).toFixed(2)}</td>
                           <td className="py-1.5 text-right">${(c.labour_cost ?? 0).toFixed(2)}</td>
