@@ -1,6 +1,7 @@
-import { requireCompanyContext } from '@/app/lib/supabase/server';
+import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadQuote, loadCustomerQuoteLines } from '../../actions';
 import Link from 'next/link';
+import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
 export default async function CustomerQuotePage({
   params,
@@ -14,6 +15,16 @@ export default async function CustomerQuotePage({
     loadQuote(id),
     loadCustomerQuoteLines(id),
   ]);
+
+  // Load company default currency
+  const supabase = await createSupabaseServerClient();
+  const { data: company } = await supabase
+    .from('companies')
+    .select('default_currency')
+    .eq('id', quote.company_id)
+    .single();
+  const companyDefaultCurrency = company?.default_currency || 'NZD';
+  const effectiveCurrency = getEffectiveCurrency(quote.currency, companyDefaultCurrency);
 
   // Calculate totals from visible lines
   const visibleLines = savedLines.filter(l => l.is_visible);
@@ -119,7 +130,7 @@ export default async function CustomerQuotePage({
                   {line.show_price && (
                     <div className="ml-4">
                       <p className="text-slate-900 font-medium whitespace-nowrap">
-                        ${line.custom_amount?.toFixed(2)}
+                        {formatCurrency(line.custom_amount || 0, effectiveCurrency)}
                       </p>
                     </div>
                   )}
@@ -133,17 +144,17 @@ export default async function CustomerQuotePage({
             <div className="space-y-3 pt-4 border-t-2 border-slate-300">
               <div className="flex justify-between text-base">
                 <span className="text-slate-700">Subtotal</span>
-                <span className="font-medium text-slate-900">${subtotal.toFixed(2)}</span>
+                <span className="font-medium text-slate-900">{formatCurrency(subtotal, effectiveCurrency)}</span>
               </div>
               {quote.tax_rate > 0 && (
                 <div className="flex justify-between text-base">
                   <span className="text-slate-700">Tax ({quote.tax_rate}%)</span>
-                  <span className="font-medium text-slate-900">${tax.toFixed(2)}</span>
+                  <span className="font-medium text-slate-900">{formatCurrency(tax, effectiveCurrency)}</span>
                 </div>
               )}
               <div className="flex justify-between text-xl font-bold border-t-2 border-slate-300 pt-3">
                 <span className="text-slate-900">Total</span>
-                <span className="text-slate-900">${total.toFixed(2)}</span>
+                <span className="text-slate-900">{formatCurrency(total, effectiveCurrency)}</span>
               </div>
             </div>
           )}

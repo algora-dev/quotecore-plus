@@ -7,6 +7,7 @@ import { unitForMeasurement } from '@/app/lib/types';
 import { ConvertSystemButton } from './ConvertSystemButton';
 import { CurrencySelector } from './CurrencySelector';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
 export default async function QuoteSummaryPage({
   params,
@@ -29,6 +30,7 @@ export default async function QuoteSummaryPage({
     .eq('id', quote.company_id)
     .single();
   const companyDefaultCurrency = company?.default_currency || 'NZD';
+  const effectiveCurrency = getEffectiveCurrency(quote.currency, companyDefaultCurrency);
 
 
 
@@ -113,9 +115,9 @@ export default async function QuoteSummaryPage({
                       <td className="py-1.5">{c.name}</td>
                       <td className="py-1.5 text-right">{(entries[c.id] ?? []).length}</td>
                       <td className="py-1.5 text-right">{(c.final_quantity ?? 0).toFixed(1)} {unitForMeasurement(c.measurement_type)}</td>
-                      <td className="py-1.5 text-right">${(c.material_cost ?? 0).toFixed(2)}</td>
-                      <td className="py-1.5 text-right">${(c.labour_cost ?? 0).toFixed(2)}</td>
-                      <td className="py-1.5 text-right font-medium">${((c.material_cost ?? 0) + (c.labour_cost ?? 0)).toFixed(2)}</td>
+                      <td className="py-1.5 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
+                      <td className="py-1.5 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
+                      <td className="py-1.5 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
                     </tr>
                   ))}</tbody>
                 </table>
@@ -137,9 +139,9 @@ export default async function QuoteSummaryPage({
                   <td className="py-1.5">{c.name}</td>
                   <td className="py-1.5 text-right">{(entries[c.id] ?? []).length}</td>
                   <td className="py-1.5 text-right">{(c.final_quantity ?? 0).toFixed(1)}</td>
-                  <td className="py-1.5 text-right">${(c.material_cost ?? 0).toFixed(2)}</td>
-                  <td className="py-1.5 text-right">${(c.labour_cost ?? 0).toFixed(2)}</td>
-                  <td className="py-1.5 text-right font-medium">${((c.material_cost ?? 0) + (c.labour_cost ?? 0)).toFixed(2)}</td>
+                  <td className="py-1.5 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
+                  <td className="py-1.5 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
+                  <td className="py-1.5 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
                 </tr>
               ))}</tbody>
             </table>
@@ -147,12 +149,12 @@ export default async function QuoteSummaryPage({
         )}
 
         <div className="rounded-xl border border-slate-300 bg-white p-4 space-y-2">
-          <div className="flex justify-between text-sm"><span>Total Materials</span><span>${totals.totalMaterials.toFixed(2)}</span></div>
-          <div className="flex justify-between text-sm"><span>Total Labour</span><span>${totals.totalLabour.toFixed(2)}</span></div>
-          {(totals.materialMargin > 0 || totals.labourMargin > 0) && <div className="flex justify-between text-sm text-slate-500"><span>Margins</span><span>+${(totals.materialMargin + totals.labourMargin).toFixed(2)}</span></div>}
-          <div className="flex justify-between text-sm border-t pt-2"><span>Subtotal</span><span>${totals.subtotalWithMargins.toFixed(2)}</span></div>
-          {totals.tax > 0 && <div className="flex justify-between text-sm"><span>Tax ({quote.tax_rate}%)</span><span>${totals.tax.toFixed(2)}</span></div>}
-          <div className="flex justify-between text-lg font-bold border-t pt-2"><span>Grand Total</span><span>${totals.grandTotal.toFixed(2)}</span></div>
+          <div className="flex justify-between text-sm"><span>Total Materials</span><span>{formatCurrency(totals.totalMaterials, effectiveCurrency)}</span></div>
+          <div className="flex justify-between text-sm"><span>Total Labour</span><span>{formatCurrency(totals.totalLabour, effectiveCurrency)}</span></div>
+          {(totals.materialMargin > 0 || totals.labourMargin > 0) && <div className="flex justify-between text-sm text-slate-500"><span>Margins</span><span>+{formatCurrency(totals.materialMargin + totals.labourMargin, effectiveCurrency)}</span></div>}
+          <div className="flex justify-between text-sm border-t pt-2"><span>Subtotal</span><span>{formatCurrency(totals.subtotalWithMargins, effectiveCurrency)}</span></div>
+          {totals.tax > 0 && <div className="flex justify-between text-sm"><span>Tax ({quote.tax_rate}%)</span><span>{formatCurrency(totals.tax, effectiveCurrency)}</span></div>}
+          <div className="flex justify-between text-lg font-bold border-t pt-2"><span>Grand Total</span><span>{formatCurrency(totals.grandTotal, effectiveCurrency)}</span></div>
         </div>
       </div>
     </div>

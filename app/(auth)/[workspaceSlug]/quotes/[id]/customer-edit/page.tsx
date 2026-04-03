@@ -1,6 +1,7 @@
-import { requireCompanyContext } from '@/app/lib/supabase/server';
+import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadCustomerQuoteLines, loadCustomerQuoteTemplates } from '../../actions';
 import { CustomerQuoteEditor } from './CustomerQuoteEditor';
+import { getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
 export default async function CustomerQuoteEditPage({
   params,
@@ -17,6 +18,16 @@ export default async function CustomerQuoteEditPage({
     loadCustomerQuoteLines(id),
     loadCustomerQuoteTemplates(),
   ]);
+  
+  // Load company default currency
+  const supabase = await createSupabaseServerClient();
+  const { data: company } = await supabase
+    .from('companies')
+    .select('default_currency')
+    .eq('id', quote.company_id)
+    .single();
+  const companyDefaultCurrency = company?.default_currency || 'NZD';
+  const effectiveCurrency = getEffectiveCurrency(quote.currency, companyDefaultCurrency);
 
   return (
     <CustomerQuoteEditor
@@ -26,6 +37,7 @@ export default async function CustomerQuoteEditPage({
       savedLines={savedLines}
       templates={templates}
       workspaceSlug={workspaceSlug}
+      currency={effectiveCurrency}
     />
   );
 }

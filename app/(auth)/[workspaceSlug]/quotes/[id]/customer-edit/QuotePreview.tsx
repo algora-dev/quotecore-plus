@@ -1,4 +1,5 @@
 import type { QuoteRow } from '@/app/lib/types';
+import { formatCurrency } from '@/app/lib/currency/currencies';
 import { LineEditForm } from './LineEditForm';
 
 interface QuoteLine {
@@ -27,6 +28,7 @@ interface Props {
   onEditHeader?: () => void;
   onEditFooter?: () => void;
   showEditButtons?: boolean;
+  currency: string;
 }
 
 export function QuotePreview({ 
@@ -47,7 +49,8 @@ export function QuotePreview({
   onCancelEdit,
   onEditHeader,
   onEditFooter,
-  showEditButtons = true 
+  showEditButtons = true,
+  currency, 
 }: Props) {
   return (
     <div className="space-y-6">
@@ -127,7 +130,7 @@ export function QuotePreview({
                 <div className="flex items-center gap-2">
                   {line.showPrice && (
                     <p className="text-sm font-medium text-slate-900">
-                      ${line.amount.toFixed(2)}
+                      {formatCurrency(line.amount, currency)}
                     </p>
                   )}
                   {showEditButtons && onEditLine && (
@@ -151,15 +154,15 @@ export function QuotePreview({
       <div className="space-y-2 pt-4 border-t">
         <div className="flex justify-between text-sm">
           <span className="text-slate-600">Subtotal</span>
-          <span className="font-medium text-slate-900">${subtotal.toFixed(2)}</span>
+          <span className="font-medium text-slate-900">{formatCurrency(subtotal, currency)}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-slate-600">Tax ({quote.tax_rate}%)</span>
-          <span className="font-medium text-slate-900">${tax.toFixed(2)}</span>
+          <span className="font-medium text-slate-900">{formatCurrency(tax, currency)}</span>
         </div>
         <div className="flex justify-between text-lg font-bold border-t pt-2">
           <span className="text-slate-900">Total</span>
-          <span className="text-slate-900">${total.toFixed(2)}</span>
+          <span className="text-slate-900">{formatCurrency(total, currency)}</span>
         </div>
       </div>
 

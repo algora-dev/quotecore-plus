@@ -8,6 +8,7 @@ import { AddCustomLineModal } from './AddCustomLineModal';
 import { EditHeaderModal } from './EditHeaderModal';
 import { EditFooterModal } from './EditFooterModal';
 import { saveCustomerQuoteLines, saveCustomerQuoteBranding } from '../../actions';
+import { formatCurrency } from '@/app/lib/currency/currencies';
 import { createCustomerQuoteTemplate } from '../../../customer-quote-templates/create/build/actions';
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
   savedLines: any[];
   templates: CustomerQuoteTemplateRow[];
   workspaceSlug: string;
+  currency: string;
 }
 
 interface QuoteLine {
@@ -31,7 +33,7 @@ interface QuoteLine {
   sortOrder: number;
 }
 
-export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug }: Props) {
+export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency }: Props) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [isDirty, setIsDirty] = useState(false);
@@ -307,7 +309,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                             {line.text}
                           </p>
                           <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
-                            ${line.amount.toFixed(2)}
+                            {formatCurrency(line.amount, currency)}
                           </p>
                         </div>
                         <div className="flex flex-col gap-1">
@@ -354,7 +356,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                           {line.text}
                         </p>
                         <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
-                          ${line.amount.toFixed(2)}
+                          {formatCurrency(line.amount, currency)}
                         </p>
                       </div>
                       <div className="flex flex-col gap-1">
@@ -457,6 +459,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 onCancelEdit={() => setEditingLineId(null)}
                 onEditHeader={() => setShowEditHeader(true)}
                 onEditFooter={() => setShowEditFooter(true)}
+                currency={currency}
               />
             </div>
           </div>
@@ -498,6 +501,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 companyLogoUrl={companyLogoUrl}
                 footerText={footerText}
                 showEditButtons={false}
+                currency={currency}
               />
             </div>
           </div>
