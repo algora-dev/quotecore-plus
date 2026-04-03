@@ -463,3 +463,31 @@ export async function saveCustomerQuoteLines(
 
   revalidatePath(`/quotes/${quoteId}/customer-edit`);
 }
+
+export async function loadCustomerQuoteLines(quoteId: string) {
+  'use server';
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  // Verify quote belongs to company
+  const { data: quote } = await supabase
+    .from('quotes')
+    .select('company_id')
+    .eq('id', quoteId)
+    .single();
+
+  if (!quote || quote.company_id !== profile.company_id) {
+    throw new Error('Quote not found');
+  }
+
+  // Load saved lines
+  const { data: lines, error } = await supabase
+    .from('customer_quote_lines')
+    .select('*')
+    .eq('quote_id', quoteId)
+    .order('sort_order', { ascending: true });
+
+  if (error) throw new Error(error.message);
+
+  return lines || [];
+}

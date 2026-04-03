@@ -11,6 +11,7 @@ interface Props {
   quote: QuoteRow;
   roofAreas: QuoteRoofAreaRow[];
   components: QuoteComponentRow[];
+  savedLines: any[];
   workspaceSlug: string;
 }
 
@@ -26,7 +27,7 @@ interface QuoteLine {
   sortOrder: number;
 }
 
-export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlug }: Props) {
+export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, workspaceSlug }: Props) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [isDirty, setIsDirty] = useState(false);
@@ -37,23 +38,43 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
   const [showAddCustomLine, setShowAddCustomLine] = useState(false);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
 
-  // Initialize lines from components on mount
+  // Initialize lines: use saved lines if available, otherwise from components
   useEffect(() => {
-    const initialLines: QuoteLine[] = components
-      .filter(c => c.is_customer_visible)
-      .map((c, idx) => ({
-        id: c.id,
-        type: 'component' as const,
-        componentId: c.id,
-        roofAreaId: c.quote_roof_area_id || undefined,
-        text: generateDefaultText(c),
-        amount: (c.material_cost || 0) + (c.labour_cost || 0),
-        showPrice: true,
-        isVisible: true,
-        sortOrder: idx,
-      }));
-    setLines(initialLines);
-  }, [components]);
+    if (savedLines.length > 0) {
+      // Load from saved lines
+      const loadedLines: QuoteLine[] = savedLines.map(saved => {
+        const component = components.find(c => c.id === saved.quote_component_id);
+        return {
+          id: saved.quote_component_id || saved.id,
+          type: saved.line_type as 'component' | 'custom',
+          componentId: saved.quote_component_id || undefined,
+          roofAreaId: component?.quote_roof_area_id || undefined,
+          text: saved.custom_text || '',
+          amount: saved.custom_amount || 0,
+          showPrice: saved.show_price ?? true,
+          isVisible: saved.is_visible ?? true,
+          sortOrder: saved.sort_order,
+        };
+      });
+      setLines(loadedLines);
+    } else {
+      // Initialize from components (first time)
+      const initialLines: QuoteLine[] = components
+        .filter(c => c.is_customer_visible)
+        .map((c, idx) => ({
+          id: c.id,
+          type: 'component' as const,
+          componentId: c.id,
+          roofAreaId: c.quote_roof_area_id || undefined,
+          text: generateDefaultText(c),
+          amount: (c.material_cost || 0) + (c.labour_cost || 0),
+          showPrice: true,
+          isVisible: true,
+          sortOrder: idx,
+        }));
+      setLines(initialLines);
+    }
+  }, [savedLines, components]);
 
   function generateDefaultText(component: QuoteComponentRow): string {
     const qty = component.final_quantity?.toFixed(1) || '0.0';

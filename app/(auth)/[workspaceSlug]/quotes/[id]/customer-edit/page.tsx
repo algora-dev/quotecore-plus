@@ -1,5 +1,5 @@
 import { requireCompanyContext } from '@/app/lib/supabase/server';
-import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents } from '../../actions';
+import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadCustomerQuoteLines } from '../../actions';
 import { CustomerQuoteEditor } from './CustomerQuoteEditor';
 
 export default async function CustomerQuoteEditPage({
@@ -10,10 +10,11 @@ export default async function CustomerQuoteEditPage({
   const { workspaceSlug, id } = await params;
   await requireCompanyContext();
 
-  const [quote, roofAreas, components] = await Promise.all([
+  const [quote, roofAreas, components, savedLines] = await Promise.all([
     loadQuote(id),
     loadQuoteRoofAreas(id),
     loadQuoteComponents(id),
+    loadCustomerQuoteLines(id),
   ]);
 
   return (
@@ -21,6 +22,7 @@ export default async function CustomerQuoteEditPage({
       quote={quote}
       roofAreas={roofAreas}
       components={components}
+      savedLines={savedLines}
       workspaceSlug={workspaceSlug}
     />
   );
