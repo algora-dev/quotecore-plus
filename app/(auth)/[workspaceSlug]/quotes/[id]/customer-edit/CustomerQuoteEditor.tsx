@@ -29,6 +29,7 @@ interface QuoteLine {
 export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlug }: Props) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
+  const [isDirty, setIsDirty] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -64,6 +65,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
     setLines(prev => prev.map(l => 
       l.id === lineId ? { ...l, isVisible: !l.isVisible } : l
     ));
+    setIsDirty(true);
   }
 
   function moveUp(lineId: string) {
@@ -74,6 +76,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
       [newLines[idx - 1], newLines[idx]] = [newLines[idx], newLines[idx - 1]];
       return newLines.map((l, i) => ({ ...l, sortOrder: i }));
     });
+    setIsDirty(true);
   }
 
   function moveDown(lineId: string) {
@@ -84,6 +87,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
       [newLines[idx], newLines[idx + 1]] = [newLines[idx + 1], newLines[idx]];
       return newLines.map((l, i) => ({ ...l, sortOrder: i }));
     });
+    setIsDirty(true);
   }
 
   function addCustomLine(text: string, amount: number, showPrice: boolean) {
@@ -97,6 +101,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
       sortOrder: lines.length,
     };
     setLines(prev => [...prev, newLine]);
+    setIsDirty(true);
   }
 
   function updateLine(lineId: string, text: string, amount: number, showPrice: boolean) {
@@ -104,6 +109,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
       l.id === lineId ? { ...l, text, amount, showPrice } : l
     ));
     setEditingLineId(null);
+    setIsDirty(true);
   }
 
   const handleSave = useCallback(async () => {
@@ -123,6 +129,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
         }))
       );
       setLastSaved(new Date());
+      setIsDirty(false);
     } catch (err) {
       console.error('Failed to save:', err);
       alert('Failed to save changes. Please try again.');
@@ -131,16 +138,16 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
     }
   }, [quote.id, lines]);
 
-  // Auto-save effect (3 seconds after last change)
+  // Auto-save effect (3 seconds after last change, only if dirty)
   useEffect(() => {
-    if (lines.length === 0) return;
+    if (!isDirty || lines.length === 0) return;
     
     const timer = setTimeout(() => {
       handleSave();
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [lines, handleSave]);
+  }, [isDirty, handleSave]);
 
   // Group lines by roof area
   const linesByArea = lines.reduce((acc, line) => {
