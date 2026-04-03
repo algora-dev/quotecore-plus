@@ -18,14 +18,35 @@ export default async function QuoteBuilderPage({
     loadAllEntriesForQuote(id),
   ]);
   
-  // Load company default currency
   const supabase = await createSupabaseServerClient();
+  
+  // Load company default currency
   const { data: company } = await supabase
     .from('companies')
     .select('default_currency')
     .eq('id', quote.company_id)
     .single();
   const companyDefaultCurrency = company?.default_currency || 'NZD';
+  
+  // Load roof plan (if exists)
+  const { data: planFile } = await supabase
+    .from('quote_files')
+    .select('storage_path, file_name')
+    .eq('quote_id', id)
+    .eq('file_type', 'plan')
+    .order('uploaded_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  
+  let planUrl: string | null = null;
+  let planName: string | null = null;
+  if (planFile) {
+    const { data: urlData } = supabase.storage
+      .from('quote-documents')
+      .getPublicUrl(planFile.storage_path);
+    planUrl = urlData.publicUrl;
+    planName = planFile.file_name;
+  }
 
   return (
     <QuoteBuilder
@@ -37,6 +58,8 @@ export default async function QuoteBuilderPage({
       libraryComponents={libraryComponents}
       workspaceSlug={workspaceSlug}
       companyDefaultCurrency={companyDefaultCurrency}
+      planUrl={planUrl}
+      planName={planName}
     />
   );
 }

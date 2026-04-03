@@ -6,7 +6,6 @@ import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { unitForMeasurement } from '@/app/lib/types';
 import { ConvertSystemButton } from './ConvertSystemButton';
 import { CurrencySelector } from './CurrencySelector';
-import { PlanUploader } from '../PlanUploader';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
@@ -33,26 +32,6 @@ export default async function QuoteSummaryPage({
     .single();
   const companyDefaultCurrency = company?.default_currency || 'NZD';
   const effectiveCurrency = getEffectiveCurrency(quote.currency, companyDefaultCurrency);
-  
-  // Load roof plan (if exists)
-  const { data: planFile } = await supabase
-    .from('quote_files')
-    .select('storage_path, file_name')
-    .eq('quote_id', id)
-    .eq('file_type', 'plan')
-    .order('uploaded_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  
-  let planUrl: string | null = null;
-  let planName: string | null = null;
-  if (planFile) {
-    const { data: urlData } = supabase.storage
-      .from('quote-documents')
-      .getPublicUrl(planFile.storage_path);
-    planUrl = urlData.publicUrl;
-    planName = planFile.file_name;
-  }
 
 
 
@@ -118,16 +97,6 @@ export default async function QuoteSummaryPage({
         <Link href={`/${workspaceSlug}/quotes/${id}/labour`} className="px-4 py-2 text-sm font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700">
           Labour Sheet
         </Link>
-      </div>
-
-      {/* Roof Plan Upload */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
-        <PlanUploader 
-          quoteId={id} 
-          companyId={quote.company_id} 
-          currentPlanUrl={planUrl}
-          currentPlanName={planName}
-        />
       </div>
 
       <div className="space-y-6">

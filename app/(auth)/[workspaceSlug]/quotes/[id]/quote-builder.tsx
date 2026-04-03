@@ -11,6 +11,7 @@ import { MeasurementSystemToggle } from './MeasurementSystemToggle';
 import { QuoteNameEditor } from './QuoteNameEditor';
 import { ConfirmQuoteButton } from './ConfirmQuoteButton';
 import { CurrencySelector } from './CurrencySelector';
+import { PlanUploader } from './PlanUploader';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
@@ -24,6 +25,8 @@ interface Props {
   libraryComponents: ComponentLibraryRow[];
   workspaceSlug: string;
   companyDefaultCurrency: string;
+  planUrl: string | null;
+  planName: string | null;
 }
 
 export function QuoteBuilder({
@@ -34,7 +37,9 @@ export function QuoteBuilder({
   initialEntries,
   libraryComponents,
   workspaceSlug,
-  companyDefaultCurrency
+  companyDefaultCurrency,
+  planUrl,
+  planName
 }: Props) {
   const [phase, setPhase] = useState<Phase>('areas');
   const [quote, setQuote] = useState(initialQuote);
@@ -293,6 +298,16 @@ export function QuoteBuilder({
             {quote.status}
           </span>
         </div>
+      </div>
+
+      {/* Roof Plan Upload - First Step */}
+      <div className="rounded-xl border border-blue-200 bg-blue-50 p-6">
+        <PlanUploader 
+          quoteId={quote.id}
+          companyId={quote.company_id}
+          currentPlanUrl={planUrl}
+          currentPlanName={planName}
+        />
       </div>
 
       <nav className="flex gap-1 p-1 bg-slate-100 rounded-lg">
