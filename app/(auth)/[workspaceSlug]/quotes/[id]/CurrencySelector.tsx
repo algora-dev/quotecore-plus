@@ -17,6 +17,20 @@ export function CurrencySelector({ quoteId, currentCurrency, companyDefaultCurre
   const router = useRouter();
 
   async function handleChange(newCurrency: string) {
+    // Warn if changing away from company default
+    if (newCurrency !== companyDefaultCurrency) {
+      const confirmed = window.confirm(
+        `⚠️ Warning: Changing Currency\n\n` +
+        `Your component library prices are in ${companyDefaultCurrency}.\n` +
+        `Changing this quote to ${newCurrency} will only change the display symbol.\n\n` +
+        `Prices will NOT be converted automatically.\n\n` +
+        `Recommended: Keep quotes in ${companyDefaultCurrency} or manually adjust component rates if needed.\n\n` +
+        `Change anyway?`
+      );
+      
+      if (!confirmed) return;
+    }
+    
     startTransition(async () => {
       try {
         // If selecting company default, set to null (inherit)
