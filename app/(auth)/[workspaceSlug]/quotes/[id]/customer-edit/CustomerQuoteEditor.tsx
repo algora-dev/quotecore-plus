@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow } from '@/app/lib/types';
 import { QuotePreview } from './QuotePreview';
+import { AddCustomLineModal } from './AddCustomLineModal';
 
 interface Props {
   quote: QuoteRow;
@@ -15,6 +16,7 @@ interface QuoteLine {
   id: string;
   type: 'component' | 'custom';
   componentId?: string;
+  roofAreaId?: string;
   text: string;
   amount: number;
   isVisible: boolean;
@@ -26,6 +28,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showAddCustomLine, setShowAddCustomLine] = useState(false);
 
   // Initialize lines from components on mount
   useEffect(() => {
@@ -35,6 +38,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
         id: c.id,
         type: 'component' as const,
         componentId: c.id,
+        roofAreaId: c.quote_roof_area_id || undefined,
         text: generateDefaultText(c),
         amount: (c.material_cost || 0) + (c.labour_cost || 0),
         isVisible: true,
@@ -76,6 +80,26 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
     });
   }
 
+  function addCustomLine(text: string, amount: number) {
+    const newLine: QuoteLine = {
+      id: `custom-${Date.now()}`,
+      type: 'custom',
+      text,
+      amount,
+      isVisible: true,
+      sortOrder: lines.length,
+    };
+    setLines(prev => [...prev, newLine]);
+  }
+
+  // Group lines by roof area
+  const linesByArea = lines.reduce((acc, line) => {
+    const areaId = line.roofAreaId || 'extras';
+    if (!acc[areaId]) acc[areaId] = [];
+    acc[areaId].push(line);
+    return acc;
+  }, {} as Record<string, QuoteLine[]>);
+
   const visibleLines = lines.filter(l => l.isVisible);
   const subtotal = visibleLines.reduce((sum, l) => sum + l.amount, 0);
   const tax = subtotal * (quote.tax_rate / 100);
@@ -109,49 +133,108 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
           <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
             <h2 className="text-lg font-semibold text-slate-900">Components & Items</h2>
             
-            <div className="space-y-2">
-              {lines.map(line => (
-                <div
-                  key={line.id}
-                  className={`flex items-center gap-3 p-3 rounded-lg border ${
-                    line.isVisible ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={line.isVisible}
-                    onChange={() => toggleVisibility(line.id)}
-                    className="w-4 h-4 text-blue-600 rounded"
-                  />
-                  <div className="flex-1">
-                    <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
-                      {line.text}
-                    </p>
-                    <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
-                      ${line.amount.toFixed(2)}
-                    </p>
+            <div className="space-y-4">
+              {/* Grouped by roof areas */}
+              {roofAreas.map(area => {
+                const areaLines = linesByArea[area.id] || [];
+                if (areaLines.length === 0) return null;
+                return (
+                  <div key={area.id} className="space-y-2">
+                    <h3 className="text-sm font-semibold text-slate-700 px-2">{area.label}</h3>
+                    {areaLines.map(line => (
+                      <div
+                        key={line.id}
+                        className={`flex items-center gap-3 p-3 rounded-lg border ${
+                          line.isVisible ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={line.isVisible}
+                          onChange={() => toggleVisibility(line.id)}
+                          className="w-4 h-4 text-blue-600 rounded"
+                        />
+                        <div className="flex-1">
+                          <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
+                            {line.text}
+                          </p>
+                          <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
+                            ${line.amount.toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <button
+                            onClick={() => moveUp(line.id)}
+                            className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                            disabled={line.sortOrder === 0}
+                          >
+                            ↑
+                          </button>
+                          <button
+                            onClick={() => moveDown(line.id)}
+                            className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                            disabled={line.sortOrder === lines.length - 1}
+                          >
+                            ↓
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <button
-                      onClick={() => moveUp(line.id)}
-                      className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"
-                      disabled={line.sortOrder === 0}
+                );
+              })}
+
+              {/* Extras / ungrouped */}
+              {linesByArea['extras'] && linesByArea['extras'].length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-slate-700 px-2">Extras & Custom</h3>
+                  {linesByArea['extras'].map(line => (
+                    <div
+                      key={line.id}
+                      className={`flex items-center gap-3 p-3 rounded-lg border ${
+                        line.isVisible ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50'
+                      }`}
                     >
-                      ↑
-                    </button>
-                    <button
-                      onClick={() => moveDown(line.id)}
-                      className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"
-                      disabled={line.sortOrder === lines.length - 1}
-                    >
-                      ↓
-                    </button>
-                  </div>
+                      <input
+                        type="checkbox"
+                        checked={line.isVisible}
+                        onChange={() => toggleVisibility(line.id)}
+                        className="w-4 h-4 text-blue-600 rounded"
+                      />
+                      <div className="flex-1">
+                        <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
+                          {line.text}
+                        </p>
+                        <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
+                          ${line.amount.toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <button
+                          onClick={() => moveUp(line.id)}
+                          className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                          disabled={line.sortOrder === 0}
+                        >
+                          ↑
+                        </button>
+                        <button
+                          onClick={() => moveDown(line.id)}
+                          className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                          disabled={line.sortOrder === lines.length - 1}
+                        >
+                          ↓
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
 
-            <button className="w-full py-2 text-sm text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50">
+            <button 
+              onClick={() => setShowAddCustomLine(true)}
+              className="w-full py-2 text-sm text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50"
+            >
               + Add Custom Line
             </button>
 
@@ -223,6 +306,14 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
             </div>
           </div>
         </div>
+      )}
+
+      {/* Add Custom Line Modal */}
+      {showAddCustomLine && (
+        <AddCustomLineModal
+          onAdd={addCustomLine}
+          onClose={() => setShowAddCustomLine(false)}
+        />
       )}
     </div>
   );
