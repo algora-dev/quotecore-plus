@@ -5,6 +5,7 @@ export type InputMode = 'final' | 'calculated';
 export type WasteType = 'percent' | 'fixed' | 'none';
 export type PitchType = 'none' | 'rafter' | 'valley_hip';
 export type QuoteStatus = 'draft' | 'confirmed' | 'sent' | 'accepted' | 'declined' | 'expired' | 'archived';
+export type LineType = 'component' | 'custom' | 'roof_area_header';
 
 export function unitForMeasurement(mt: MeasurementType): string {
   switch (mt) { case 'area': return 'm²'; case 'linear': return 'm'; case 'quantity': return 'each'; case 'fixed': return 'fixed'; }
@@ -86,4 +87,17 @@ export interface QuoteComponentRow {
 
 export interface QuoteComponentEntryRow {
   id: string; quote_component_id: string; raw_value: number; value_after_waste: number; sort_order: number; created_at: string;
+}
+
+export interface CustomerQuoteLineRow {
+  id: string;
+  quote_id: string;
+  line_type: LineType;
+  quote_component_id: string | null;
+  custom_text: string | null;
+  custom_amount: number | null;
+  sort_order: number;
+  is_visible: boolean;
+  created_at: string;
+  updated_at: string;
 }
