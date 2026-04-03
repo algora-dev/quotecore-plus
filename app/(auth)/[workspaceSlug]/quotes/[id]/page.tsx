@@ -47,6 +47,27 @@ export default async function QuoteBuilderPage({
     planUrl = urlData.publicUrl;
     planName = planFile.file_name;
   }
+  
+  // Load supporting files
+  const { data: supportingFilesData } = await supabase
+    .from('quote_files')
+    .select('id, file_name, file_size, storage_path, uploaded_at')
+    .eq('quote_id', id)
+    .eq('file_type', 'supporting')
+    .order('uploaded_at', { ascending: false });
+  
+  const supportingFiles = (supportingFilesData || []).map(file => {
+    const { data: urlData } = supabase.storage
+      .from('QUOTE-DOCUMENTS')
+      .getPublicUrl(file.storage_path);
+    return {
+      id: file.id,
+      fileName: file.file_name,
+      fileSize: file.file_size,
+      url: urlData.publicUrl,
+      uploadedAt: file.uploaded_at,
+    };
+  });
 
   return (
     <QuoteBuilder
@@ -60,6 +81,7 @@ export default async function QuoteBuilderPage({
       companyDefaultCurrency={companyDefaultCurrency}
       planUrl={planUrl}
       planName={planName}
+      supportingFiles={supportingFiles}
     />
   );
 }

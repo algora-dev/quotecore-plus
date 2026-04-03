@@ -12,9 +12,18 @@ import { QuoteNameEditor } from './QuoteNameEditor';
 import { ConfirmQuoteButton } from './ConfirmQuoteButton';
 import { CurrencySelector } from './CurrencySelector';
 import { PlanUploader } from './PlanUploader';
+import { SupportingFilesManager } from './SupportingFilesManager';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
+
+interface SupportingFile {
+  id: string;
+  fileName: string;
+  fileSize: number;
+  url: string;
+  uploadedAt: string;
+}
 
 interface Props {
   quote: QuoteRow;
@@ -27,6 +36,7 @@ interface Props {
   companyDefaultCurrency: string;
   planUrl: string | null;
   planName: string | null;
+  supportingFiles: SupportingFile[];
 }
 
 export function QuoteBuilder({
@@ -39,7 +49,8 @@ export function QuoteBuilder({
   workspaceSlug,
   companyDefaultCurrency,
   planUrl,
-  planName
+  planName,
+  supportingFiles
 }: Props) {
   const [phase, setPhase] = useState<Phase>('areas');
   const [quote, setQuote] = useState(initialQuote);
@@ -307,6 +318,15 @@ export function QuoteBuilder({
           companyId={quote.company_id}
           currentPlanUrl={planUrl}
           currentPlanName={planName}
+        />
+      </div>
+
+      {/* Supporting Files */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6">
+        <SupportingFilesManager 
+          quoteId={quote.id}
+          companyId={quote.company_id}
+          initialFiles={supportingFiles}
         />
       </div>
 
