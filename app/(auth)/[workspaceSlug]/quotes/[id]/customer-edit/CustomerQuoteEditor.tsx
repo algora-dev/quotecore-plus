@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow } from '@/app/lib/types';
+import { QuotePreview } from './QuotePreview';
 
 interface Props {
   quote: QuoteRow;
@@ -24,6 +25,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   // Initialize lines from components on mount
   useEffect(() => {
@@ -165,64 +167,63 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
 
           {/* Right Panel: Live Preview */}
           <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900">Customer Quote Preview</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">Customer Quote Preview</h2>
+              <button
+                onClick={() => setShowPreviewModal(true)}
+                className="px-3 py-1.5 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50"
+              >
+                🔍 Preview Full Size
+              </button>
+            </div>
             
-            <div className="space-y-4 border-t pt-4">
-              {/* Header */}
-              <div className="space-y-1">
-                <h3 className="text-xl font-bold text-slate-900">
-                  QUOTE #{quote.quote_number || 'DRAFT'}
-                </h3>
-                <p className="text-sm text-slate-600">Client: {quote.customer_name}</p>
-                {quote.job_name && (
-                  <p className="text-sm text-slate-600">Job: {quote.job_name}</p>
-                )}
-              </div>
-
-              {/* Line items */}
-              <div className="space-y-2 border-t pt-4">
-                {visibleLines.length === 0 ? (
-                  <p className="text-sm text-slate-400 italic">No items selected</p>
-                ) : (
-                  visibleLines.map(line => (
-                    <div key={line.id} className="flex items-start justify-between py-2 border-b border-slate-100">
-                      <div className="flex-1">
-                        <p className="text-sm text-slate-900">{line.text}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-slate-900">
-                          ${line.amount.toFixed(2)}
-                        </p>
-                        <button className="p-1 text-slate-400 hover:text-slate-600">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              {/* Totals */}
-              <div className="space-y-2 pt-4 border-t">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Subtotal</span>
-                  <span className="font-medium text-slate-900">${subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Tax ({quote.tax_rate}%)</span>
-                  <span className="font-medium text-slate-900">${tax.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-lg font-bold border-t pt-2">
-                  <span className="text-slate-900">Total</span>
-                  <span className="text-slate-900">${total.toFixed(2)}</span>
-                </div>
-              </div>
+            <div className="border-t pt-4">
+              <QuotePreview
+                quote={quote}
+                lines={visibleLines}
+                subtotal={subtotal}
+                tax={tax}
+                total={total}
+              />
             </div>
           </div>
         </div>
       </div>
+
+      {/* Full-size Preview Modal */}
+      {showPreviewModal && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6"
+          onClick={() => setShowPreviewModal(false)}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-slate-900">Full Size Preview</h2>
+              <button
+                onClick={() => setShowPreviewModal(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-8">
+              <QuotePreview
+                quote={quote}
+                lines={visibleLines}
+                subtotal={subtotal}
+                tax={tax}
+                total={total}
+                showEditButtons={false}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
