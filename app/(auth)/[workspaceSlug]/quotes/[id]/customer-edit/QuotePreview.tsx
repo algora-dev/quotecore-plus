@@ -4,6 +4,7 @@ interface QuoteLine {
   id: string;
   text: string;
   amount: number;
+  showPrice: boolean;
 }
 
 interface Props {
@@ -49,9 +50,11 @@ export function QuotePreview({
                 <p className="text-sm text-slate-900">{line.text}</p>
               </div>
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-slate-900">
-                  ${line.amount.toFixed(2)}
-                </p>
+                {line.showPrice && (
+                  <p className="text-sm font-medium text-slate-900">
+                    ${line.amount.toFixed(2)}
+                  </p>
+                )}
                 {showEditButtons && onEditLine && (
                   <button 
                     onClick={() => onEditLine(line.id)}

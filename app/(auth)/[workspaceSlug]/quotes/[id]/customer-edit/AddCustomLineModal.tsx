@@ -9,6 +9,7 @@ interface Props {
 export function AddCustomLineModal({ onAdd, onClose }: Props) {
   const [text, setText] = useState('');
   const [amount, setAmount] = useState('');
+  const [showPrice, setShowPrice] = useState(true);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,6 +65,19 @@ export function AddCustomLineModal({ onAdd, onClose }: Props) {
               className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-blue-500 focus:outline-none"
               required
             />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="showPrice"
+              checked={showPrice}
+              onChange={(e) => setShowPrice(e.target.checked)}
+              className="w-4 h-4 text-blue-600 rounded"
+            />
+            <label htmlFor="showPrice" className="text-sm text-slate-700">
+              Show price in customer quote
+            </label>
           </div>
 
           <div className="flex gap-3 pt-4">

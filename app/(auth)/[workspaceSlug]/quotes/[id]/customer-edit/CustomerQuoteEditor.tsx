@@ -19,6 +19,7 @@ interface QuoteLine {
   roofAreaId?: string;
   text: string;
   amount: number;
+  showPrice: boolean;
   isVisible: boolean;
   sortOrder: number;
 }
@@ -41,6 +42,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
         roofAreaId: c.quote_roof_area_id || undefined,
         text: generateDefaultText(c),
         amount: (c.material_cost || 0) + (c.labour_cost || 0),
+        showPrice: true,
         isVisible: true,
         sortOrder: idx,
       }));
@@ -80,12 +82,13 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
     });
   }
 
-  function addCustomLine(text: string, amount: number) {
+  function addCustomLine(text: string, amount: number, showPrice: boolean) {
     const newLine: QuoteLine = {
       id: `custom-${Date.now()}`,
       type: 'custom',
       text,
       amount,
+      showPrice,
       isVisible: true,
       sortOrder: lines.length,
     };
@@ -101,7 +104,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
   }, {} as Record<string, QuoteLine[]>);
 
   const visibleLines = lines.filter(l => l.isVisible);
-  const subtotal = visibleLines.reduce((sum, l) => sum + l.amount, 0);
+  const subtotal = visibleLines.reduce((sum, l) => sum + (l.showPrice ? l.amount : 0), 0);
   const tax = subtotal * (quote.tax_rate / 100);
   const total = subtotal + tax;
 
