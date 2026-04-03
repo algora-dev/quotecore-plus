@@ -46,10 +46,12 @@ COMMENT ON COLUMN companies.onboarding_completed_at IS
 -- STEP 3: Mark existing companies as onboarded (migration)
 -- =============================================================================
 
--- Set all existing companies as already onboarded (they bypassed this flow)
+-- Set all existing companies (created before this patch) as already onboarded
+-- Only update companies created more than 1 minute ago (to avoid catching new signups during patch execution)
 UPDATE companies 
 SET onboarding_completed_at = COALESCE(created_at, NOW())
-WHERE onboarding_completed_at IS NULL;
+WHERE onboarding_completed_at IS NULL
+  AND created_at < (NOW() - INTERVAL '1 minute');
 
 -- =============================================================================
 -- Verification Queries
