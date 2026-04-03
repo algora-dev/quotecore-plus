@@ -88,12 +88,10 @@ export function QuotePreview({
         {showEditButtons && onEditHeader && (
           <button
             onClick={onEditHeader}
-            className="absolute top-0 right-0 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
+            className="absolute -top-2 -right-2 px-2 py-1 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700 shadow-sm"
             title="Edit header details"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
+            ✏️ Edit Header
           </button>
         )}
       </div>
@@ -170,12 +168,10 @@ export function QuotePreview({
           {showEditButtons && onEditFooter && (
             <button
               onClick={onEditFooter}
-              className="absolute top-4 right-0 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
+              className="absolute -top-2 -right-2 px-2 py-1 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700 shadow-sm"
               title="Edit footer"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-              </svg>
+              ✏️ Edit Footer
             </button>
           )}
         </div>

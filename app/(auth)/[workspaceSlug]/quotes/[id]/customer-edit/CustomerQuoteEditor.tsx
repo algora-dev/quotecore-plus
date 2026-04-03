@@ -477,11 +477,51 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 subtotal={subtotal}
                 tax={tax}
                 total={total}
+                companyName={companyName}
+                companyAddress={companyAddress}
+                companyPhone={companyPhone}
+                companyEmail={companyEmail}
+                companyLogoUrl={companyLogoUrl}
+                footerText={footerText}
                 showEditButtons={false}
               />
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Header Modal */}
+      {showEditHeader && (
+        <EditHeaderModal
+          companyName={companyName}
+          companyAddress={companyAddress}
+          companyPhone={companyPhone}
+          companyEmail={companyEmail}
+          companyLogoUrl={companyLogoUrl}
+          onSave={(data) => {
+            setCompanyName(data.companyName);
+            setCompanyAddress(data.companyAddress);
+            setCompanyPhone(data.companyPhone);
+            setCompanyEmail(data.companyEmail);
+            setCompanyLogoUrl(data.companyLogoUrl);
+            setIsDirty(true);
+            setShowEditHeader(false);
+          }}
+          onCancel={() => setShowEditHeader(false)}
+        />
+      )}
+
+      {/* Edit Footer Modal */}
+      {showEditFooter && (
+        <EditFooterModal
+          footerText={footerText}
+          onSave={(text) => {
+            setFooterText(text);
+            setIsDirty(true);
+            setShowEditFooter(false);
+          }}
+          onCancel={() => setShowEditFooter(false)}
+        />
       )}
 
       {/* Add Custom Line Modal */}
