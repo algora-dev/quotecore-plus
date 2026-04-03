@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow } from '@/app/lib/types';
+import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
 import { QuotePreview } from './QuotePreview';
 import { AddCustomLineModal } from './AddCustomLineModal';
 import { saveCustomerQuoteLines, saveCustomerQuoteBranding } from '../../actions';
@@ -12,6 +12,7 @@ interface Props {
   roofAreas: QuoteRoofAreaRow[];
   components: QuoteComponentRow[];
   savedLines: any[];
+  templates: CustomerQuoteTemplateRow[];
   workspaceSlug: string;
 }
 
@@ -27,7 +28,7 @@ interface QuoteLine {
   sortOrder: number;
 }
 
-export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, workspaceSlug }: Props) {
+export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug }: Props) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [isDirty, setIsDirty] = useState(false);
@@ -176,6 +177,19 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     }
   }, [quote.id, lines, companyName, companyAddress, companyPhone, companyEmail, footerText]);
 
+  // Apply template branding
+  function applyTemplate(templateId: string) {
+    const template = templates.find(t => t.id === templateId);
+    if (!template) return;
+
+    setCompanyName(template.company_name || '');
+    setCompanyAddress(template.company_address || '');
+    setCompanyPhone(template.company_phone || '');
+    setCompanyEmail(template.company_email || '');
+    setFooterText(template.footer_text || '');
+    setIsDirty(true);
+  }
+
   // Auto-save effect (3 seconds after last change, only if dirty and enabled)
   useEffect(() => {
     if (!autoSaveEnabled || !isDirty || lines.length === 0) return;
@@ -238,7 +252,27 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
 
         {/* Branding Section */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-slate-900">Company Details & Footer</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900">Company Details & Footer</h2>
+            {templates.length > 0 && (
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    applyTemplate(e.target.value);
+                    e.target.value = ''; // Reset dropdown
+                  }
+                }}
+                className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Load Template...</option>
+                {templates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div>
