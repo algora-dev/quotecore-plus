@@ -45,6 +45,13 @@ export default function LoginPage() {
           {error ? <p style={{ color: 'crimson' }}>{error}</p> : null}
         </div>
       </form>
+
+      <p style={{ marginTop: 24, textAlign: 'center', fontSize: 14, color: '#64748b' }}>
+        Don't have an account?{' '}
+        <a href="/signup" style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 500 }}>
+          Sign up
+        </a>
+      </p>
     </main>
   );
 }
