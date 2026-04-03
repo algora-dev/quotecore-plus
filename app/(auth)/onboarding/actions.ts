@@ -9,14 +9,22 @@ interface OnboardingData {
 }
 
 export async function completeOnboarding(companyId: string, data: OnboardingData) {
-  const profile = await requireCompanyContext();
+  const profile = await requireCompanyContext({ skipOnboardingCheck: true });
   
   // Security: ensure user owns this company
   if (profile.company_id !== companyId) {
+    console.error('[completeOnboarding] Unauthorized:', { profileCompanyId: profile.company_id, requestedCompanyId: companyId });
     throw new Error('Unauthorized');
   }
 
   const supabase = await createSupabaseServerClient();
+  
+  console.log('[completeOnboarding] Updating company:', {
+    companyId,
+    currency: data.currency,
+    language: data.language,
+    measurement: data.measurement,
+  });
   
   const { error } = await supabase
     .from('companies')
@@ -29,8 +37,11 @@ export async function completeOnboarding(companyId: string, data: OnboardingData
     .eq('id', companyId);
 
   if (error) {
+    console.error('[completeOnboarding] Database error:', error);
     throw new Error(error.message);
   }
+
+  console.log('[completeOnboarding] Success! Onboarding completed.');
 
   revalidatePath('/onboarding');
   revalidatePath('/');
