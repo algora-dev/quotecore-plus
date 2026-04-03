@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
 import { QuotePreview } from './QuotePreview';
 import { AddCustomLineModal } from './AddCustomLineModal';
+import { EditHeaderModal } from './EditHeaderModal';
+import { EditFooterModal } from './EditFooterModal';
 import { saveCustomerQuoteLines, saveCustomerQuoteBranding } from '../../actions';
 
 interface Props {
@@ -37,6 +39,8 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [saving, setSaving] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showAddCustomLine, setShowAddCustomLine] = useState(false);
+  const [showEditHeader, setShowEditHeader] = useState(false);
+  const [showEditFooter, setShowEditFooter] = useState(false);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   
   // Branding state
@@ -44,6 +48,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [companyAddress, setCompanyAddress] = useState(quote.cq_company_address || '');
   const [companyPhone, setCompanyPhone] = useState(quote.cq_company_phone || '');
   const [companyEmail, setCompanyEmail] = useState(quote.cq_company_email || '');
+  const [companyLogoUrl, setCompanyLogoUrl] = useState(quote.cq_company_logo_url || '');
   const [footerText, setFooterText] = useState(quote.cq_footer_text || '');
 
   // Initialize lines: use saved lines if available, otherwise from components
@@ -175,7 +180,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     } finally {
       setSaving(false);
     }
-  }, [quote.id, lines, companyName, companyAddress, companyPhone, companyEmail, footerText]);
+  }, [quote.id, lines, companyName, companyAddress, companyPhone, companyEmail, companyLogoUrl, footerText]);
 
   // Apply template branding
   function applyTemplate(templateId: string) {
@@ -186,6 +191,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     setCompanyAddress(template.company_address || '');
     setCompanyPhone(template.company_phone || '');
     setCompanyEmail(template.company_email || '');
+    setCompanyLogoUrl(template.company_logo_url || '');
     setFooterText(template.footer_text || '');
     setIsDirty(true);
   }

@@ -544,6 +544,7 @@ export async function saveCustomerQuoteBranding(
     companyAddress: string;
     companyPhone: string;
     companyEmail: string;
+    companyLogoUrl: string;
     footerText: string;
   }
 ) {
@@ -570,6 +571,7 @@ export async function saveCustomerQuoteBranding(
       cq_company_address: branding.companyAddress || null,
       cq_company_phone: branding.companyPhone || null,
       cq_company_email: branding.companyEmail || null,
+      cq_company_logo_url: branding.companyLogoUrl || null,
       cq_footer_text: branding.footerText || null,
     })
     .eq('id', quoteId);

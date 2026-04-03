@@ -14,10 +14,18 @@ interface Props {
   subtotal: number;
   tax: number;
   total: number;
+  companyName: string;
+  companyAddress: string;
+  companyPhone: string;
+  companyEmail: string;
+  companyLogoUrl: string;
+  footerText: string;
   editingLineId?: string | null;
   onEditLine?: (lineId: string) => void;
   onSaveLine?: (lineId: string, text: string, amount: number, showPrice: boolean) => void;
   onCancelEdit?: () => void;
+  onEditHeader?: () => void;
+  onEditFooter?: () => void;
   showEditButtons?: boolean;
 }
 
@@ -27,22 +35,66 @@ export function QuotePreview({
   subtotal, 
   tax, 
   total,
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyEmail,
+  companyLogoUrl,
+  footerText,
   editingLineId,
   onEditLine,
   onSaveLine,
   onCancelEdit,
+  onEditHeader,
+  onEditFooter,
   showEditButtons = true 
 }: Props) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-1">
-        <h3 className="text-xl font-bold text-slate-900">
-          QUOTE #{quote.quote_number || 'DRAFT'}
-        </h3>
-        <p className="text-sm text-slate-600">Client: {quote.customer_name}</p>
-        {quote.job_name && (
-          <p className="text-sm text-slate-600">Job: {quote.job_name}</p>
+      <div className="flex justify-between items-start border-b pb-4 relative">
+        {/* Left Side */}
+        <div className="space-y-1">
+          <h3 className="text-2xl font-bold text-slate-900">
+            QUOTE #{quote.quote_number || 'DRAFT'}
+          </h3>
+          <p className="text-sm text-slate-600">
+            <span className="font-medium">Client:</span> {quote.customer_name}
+          </p>
+          {quote.job_name && (
+            <p className="text-sm text-slate-600">
+              <span className="font-medium">Job:</span> {quote.job_name}
+            </p>
+          )}
+          <p className="text-sm text-slate-600">
+            <span className="font-medium">Date:</span> {new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+
+        {/* Right Side - Company Details */}
+        <div className="text-right space-y-1">
+          {companyLogoUrl && (
+            <div className="mb-2">
+              <img src={companyLogoUrl} alt="Company Logo" className="h-12 ml-auto" />
+            </div>
+          )}
+          {companyName && <p className="font-semibold text-slate-900">{companyName}</p>}
+          {companyAddress && <p className="text-sm text-slate-600">{companyAddress}</p>}
+          {companyPhone && <p className="text-sm text-slate-600">{companyPhone}</p>}
+          {companyEmail && <p className="text-sm text-slate-600">{companyEmail}</p>}
+        </div>
+
+        {/* Edit Header Button */}
+        {showEditButtons && onEditHeader && (
+          <button
+            onClick={onEditHeader}
+            className="absolute top-0 right-0 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
+            title="Edit header details"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
         )}
       </div>
 
@@ -105,6 +157,29 @@ export function QuotePreview({
           <span className="text-slate-900">${total.toFixed(2)}</span>
         </div>
       </div>
+
+      {/* Footer */}
+      {(footerText || (showEditButtons && onEditFooter)) && (
+        <div className="pt-4 border-t relative">
+          {footerText && (
+            <p className="text-sm text-slate-600 italic whitespace-pre-wrap">{footerText}</p>
+          )}
+          {!footerText && showEditButtons && (
+            <p className="text-sm text-slate-400 italic">No footer text. Click edit to add terms & conditions.</p>
+          )}
+          {showEditButtons && onEditFooter && (
+            <button
+              onClick={onEditFooter}
+              className="absolute top-4 right-0 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
+              title="Edit footer"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
