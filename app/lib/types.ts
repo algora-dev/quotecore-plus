@@ -27,6 +27,7 @@ export interface ComponentLibraryRow {
   id: string; company_id: string; name: string; component_type: ComponentType; measurement_type: MeasurementType;
   default_material_rate: number; default_labour_rate: number; default_waste_type: WasteType;
   default_waste_percent: number; default_waste_fixed: number; default_pitch_type: PitchType;
+  show_price_default: boolean; show_dimensions_default: boolean;
   is_active: boolean; sort_order: number; created_at: string; updated_at: string;
 }
 
@@ -96,6 +97,8 @@ export interface CustomerQuoteLineRow {
   quote_component_id: string | null;
   custom_text: string | null;
   custom_amount: number | null;
+  show_price: boolean;
+  show_dimensions: boolean;
   sort_order: number;
   is_visible: boolean;
   created_at: string;
