@@ -11,8 +11,7 @@ import { MeasurementSystemToggle } from './MeasurementSystemToggle';
 import { QuoteNameEditor } from './QuoteNameEditor';
 import { ConfirmQuoteButton } from './ConfirmQuoteButton';
 import { CurrencySelector } from './CurrencySelector';
-import { PlanUploader } from './PlanUploader';
-import { SupportingFilesManager } from './SupportingFilesManager';
+import { FilesManager } from './FilesManager';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
@@ -311,24 +310,14 @@ export function QuoteBuilder({
         </div>
       </div>
 
-      {/* Roof Plan Upload - First Step */}
-      <div className="rounded-xl border border-blue-200 bg-blue-50 p-6">
-        <PlanUploader 
-          quoteId={quote.id}
-          companyId={quote.company_id}
-          currentPlanUrl={planUrl}
-          currentPlanName={planName}
-        />
-      </div>
-
-      {/* Supporting Files */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
-        <SupportingFilesManager 
-          quoteId={quote.id}
-          companyId={quote.company_id}
-          initialFiles={supportingFiles}
-        />
-      </div>
+      {/* Files & Documents (Roof Plan + Supporting) */}
+      <FilesManager 
+        quoteId={quote.id}
+        companyId={quote.company_id}
+        planUrl={planUrl}
+        planName={planName}
+        supportingFiles={supportingFiles}
+      />
 
       <nav className="flex gap-1 p-1 bg-slate-100 rounded-lg">
         {phases.map(p => (

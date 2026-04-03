@@ -15,6 +15,7 @@ interface Props {
 export function PlanUploader({ quoteId, companyId, currentPlanUrl, currentPlanName }: Props) {
   const [planUrl, setPlanUrl] = useState(currentPlanUrl);
   const [planName, setPlanName] = useState(currentPlanName);
+  const [expanded, setExpanded] = useState(!currentPlanUrl); // Auto-expand if no plan yet
   const router = useRouter();
 
   async function handleUpload(file: File) {
