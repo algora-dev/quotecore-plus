@@ -491,3 +491,48 @@ export async function loadCustomerQuoteLines(quoteId: string) {
 
   return lines || [];
 }
+
+export async function loadCustomerQuoteTemplates() {
+  'use server';
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  // Load all templates: company-owned + starter template
+  const { data: templates, error } = await supabase
+    .from('customer_quote_templates')
+    .select('*')
+    .or(`company_id.eq.${profile.company_id},is_starter_template.eq.true`)
+    .order('name');
+
+  if (error) throw new Error(error.message);
+
+  return templates || [];
+}
+
+export async function loadCustomerQuoteTemplate(templateId: string) {
+  'use server';
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  // Load template
+  const { data: template, error: templateError } = await supabase
+    .from('customer_quote_templates')
+    .select('*')
+    .eq('id', templateId)
+    .single();
+
+  if (templateError || !template) {
+    throw new Error('Template not found');
+  }
+
+  // Load template lines
+  const { data: lines, error: linesError } = await supabase
+    .from('customer_quote_template_lines')
+    .select('*')
+    .eq('template_id', templateId)
+    .order('sort_order');
+
+  if (linesError) throw new Error(linesError.message);
+
+  return { template, lines: lines || [] };
+}
