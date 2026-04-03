@@ -484,7 +484,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 </svg>
               </button>
             </div>
-            <div className="p-8">
+            <div className="p-8 pt-12">
               <QuotePreview
                 quote={quote}
                 lines={visibleLines}
