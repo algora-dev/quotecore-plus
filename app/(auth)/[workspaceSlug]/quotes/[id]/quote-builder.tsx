@@ -11,6 +11,7 @@ import { MeasurementSystemToggle } from './MeasurementSystemToggle';
 import { QuoteNameEditor } from './QuoteNameEditor';
 import { ConfirmQuoteButton } from './ConfirmQuoteButton';
 import { CurrencySelector } from './CurrencySelector';
+import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
 
@@ -51,6 +52,9 @@ export function QuoteBuilder({
   const mainComps = components.filter(c => c.component_type === 'main');
   const extraComps = components.filter(c => c.component_type === 'extra');
   const totalRoofSqm = roofAreas.reduce((sum, a) => sum + (a.computed_sqm ?? 0), 0);
+  
+  // Get effective currency for display
+  const effectiveCurrency = getEffectiveCurrency(quote.currency, companyDefaultCurrency);
 
   const engineComps = components.map(c => ({
     id: c.id,
@@ -309,9 +313,9 @@ export function QuoteBuilder({
 
       <div className="flex gap-4 p-3 bg-slate-50 rounded-lg text-sm">
         <span>Roof: <strong>{formatArea(totalRoofSqm, quote.measurement_system)}</strong></span>
-        <span>Materials: <strong>${totals.totalMaterials.toFixed(2)}</strong></span>
-        <span>Labour: <strong>${totals.totalLabour.toFixed(2)}</strong></span>
-        <span className="ml-auto font-semibold">Total: ${totals.grandTotal.toFixed(2)}</span>
+        <span>Materials: <strong>{formatCurrency(totals.totalMaterials, effectiveCurrency)}</strong></span>
+        <span>Labour: <strong>{formatCurrency(totals.totalLabour, effectiveCurrency)}</strong></span>
+        <span className="ml-auto font-semibold">Total: {formatCurrency(totals.grandTotal, effectiveCurrency)}</span>
       </div>
 
       {phase === 'areas' && (
