@@ -8,6 +8,7 @@ import { AddCustomLineModal } from './AddCustomLineModal';
 import { EditHeaderModal } from './EditHeaderModal';
 import { EditFooterModal } from './EditFooterModal';
 import { saveCustomerQuoteLines, saveCustomerQuoteBranding } from '../../actions';
+import { createCustomerQuoteTemplate } from '../../../customer-quote-templates/create/build/actions';
 
 interface Props {
   quote: QuoteRow;
@@ -400,10 +401,23 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 {saving ? 'Saving...' : 'Save & Return to Summary'}
               </button>
               <button 
-                onClick={() => {
+                onClick={async () => {
                   const name = prompt('Template name:', `${quote.customer_name} - Branding Template`);
                   if (!name) return;
-                  router.push(`/${workspaceSlug}/customer-quote-templates/save-from-quote?quoteId=${quote.id}&name=${encodeURIComponent(name)}`);
+                  
+                  try {
+                    await createCustomerQuoteTemplate({
+                      name,
+                      companyName,
+                      companyAddress,
+                      companyPhone,
+                      companyEmail,
+                      footerText,
+                    });
+                    alert(`Template "${name}" saved successfully!`);
+                  } catch (error) {
+                    alert('Failed to save template: ' + (error as Error).message);
+                  }
                 }}
                 className="w-full py-2 text-sm font-medium border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50"
               >

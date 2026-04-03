@@ -72,12 +72,17 @@ export function QuotePreview({
         </div>
 
         {/* Right Side - Company Details */}
-        <div className="text-right space-y-1">
-          {companyLogoUrl && (
-            <div className="mb-2">
-              <img src={companyLogoUrl} alt="Company Logo" className="h-12 ml-auto" />
-            </div>
-          )}
+        <div className="text-right space-y-2">
+          {/* Logo - always show placeholder or image */}
+          <div className="mb-3">
+            {companyLogoUrl ? (
+              <img src={companyLogoUrl} alt="Company Logo" className="h-16 ml-auto object-contain" />
+            ) : (
+              <div className="w-32 h-16 ml-auto border-2 border-dashed border-slate-300 rounded flex items-center justify-center bg-slate-50">
+                <span className="text-xs text-slate-400">Logo</span>
+              </div>
+            )}
+          </div>
           {companyName && <p className="font-semibold text-slate-900">{companyName}</p>}
           {companyAddress && <p className="text-sm text-slate-600">{companyAddress}</p>}
           {companyPhone && <p className="text-sm text-slate-600">{companyPhone}</p>}
