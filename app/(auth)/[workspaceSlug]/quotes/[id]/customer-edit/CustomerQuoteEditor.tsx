@@ -237,6 +237,24 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             </h1>
           </div>
           <div className="flex items-center gap-4">
+            {templates.length > 0 && (
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    applyTemplate(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+                className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Load Template...</option>
+                {templates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name}
+                  </option>
+                ))}
+              </select>
+            )}
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -253,85 +271,6 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               {saving ? 'Saving...' : lastSaved ? `Last saved ${lastSaved.toLocaleTimeString()}` : 'Not saved yet'}
               {isDirty && !saving && ' (unsaved changes)'}
             </div>
-          </div>
-        </div>
-
-        {/* Branding Section */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-900">Company Details & Footer</h2>
-            {templates.length > 0 && (
-              <select
-                onChange={(e) => {
-                  if (e.target.value) {
-                    applyTemplate(e.target.value);
-                    e.target.value = ''; // Reset dropdown
-                  }
-                }}
-                className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Load Template...</option>
-                {templates.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Company Name</label>
-              <input
-                type="text"
-                value={companyName}
-                onChange={(e) => { setCompanyName(e.target.value); setIsDirty(true); }}
-                placeholder="Your Company Name"
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-              <input
-                type="tel"
-                value={companyPhone}
-                onChange={(e) => { setCompanyPhone(e.target.value); setIsDirty(true); }}
-                placeholder="+64 21 123 4567"
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-              <input
-                type="email"
-                value={companyEmail}
-                onChange={(e) => { setCompanyEmail(e.target.value); setIsDirty(true); }}
-                placeholder="info@yourcompany.com"
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
-              <input
-                type="text"
-                value={companyAddress}
-                onChange={(e) => { setCompanyAddress(e.target.value); setIsDirty(true); }}
-                placeholder="123 Main Street, City"
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Footer / Terms & Conditions</label>
-            <textarea
-              value={footerText}
-              onChange={(e) => { setFooterText(e.target.value); setIsDirty(true); }}
-              placeholder="Payment terms, disclaimers, etc."
-              rows={3}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
           </div>
         </div>
 
@@ -492,10 +431,18 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 subtotal={subtotal}
                 tax={tax}
                 total={total}
+                companyName={companyName}
+                companyAddress={companyAddress}
+                companyPhone={companyPhone}
+                companyEmail={companyEmail}
+                companyLogoUrl={companyLogoUrl}
+                footerText={footerText}
                 editingLineId={editingLineId}
                 onEditLine={setEditingLineId}
                 onSaveLine={updateLine}
                 onCancelEdit={() => setEditingLineId(null)}
+                onEditHeader={() => setShowEditHeader(true)}
+                onEditFooter={() => setShowEditFooter(true)}
               />
             </div>
           </div>
