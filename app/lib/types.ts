@@ -101,3 +101,32 @@ export interface CustomerQuoteLineRow {
   created_at: string;
   updated_at: string;
 }
+
+export interface CustomerQuoteTemplateRow {
+  id: string;
+  company_id: string;
+  name: string;
+  is_starter_template: boolean;
+  company_name: string | null;
+  company_address: string | null;
+  company_phone: string | null;
+  company_email: string | null;
+  company_logo_url: string | null;
+  footer_text: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomerQuoteTemplateLineRow {
+  id: string;
+  template_id: string;
+  line_type: LineType;
+  component_library_id: string | null;
+  custom_text: string | null;
+  custom_amount: number | null;
+  show_price: boolean;
+  sort_order: number;
+  is_visible: boolean;
+  created_at: string;
+  updated_at: string;
+}
