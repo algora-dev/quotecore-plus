@@ -69,11 +69,28 @@ export async function getCurrentProfile(existingClient?: SupabaseClient) {
   return data;
 }
 
-export async function requireCompanyContext() {
+export async function requireCompanyContext(options?: { skipOnboardingCheck?: boolean }) {
   const profile = await getCurrentProfile();
 
   if (!profile.company_id) {
     throw new Error('No company context found for user');
+  }
+
+  // Skip onboarding check if explicitly requested (e.g., from onboarding page itself)
+  if (!options?.skipOnboardingCheck) {
+    const { redirect } = await import('next/navigation');
+    const supabase = await createSupabaseServerClient();
+    
+    const { data: company } = await supabase
+      .from('companies')
+      .select('onboarding_completed_at')
+      .eq('id', profile.company_id)
+      .single();
+    
+    // If onboarding not complete, redirect to onboarding page
+    if (!company?.onboarding_completed_at) {
+      redirect('/onboarding');
+    }
   }
 
   return profile;
