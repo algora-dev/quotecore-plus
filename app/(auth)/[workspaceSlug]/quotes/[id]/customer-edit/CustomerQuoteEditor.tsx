@@ -19,6 +19,7 @@ interface Props {
   templates: CustomerQuoteTemplateRow[];
   workspaceSlug: string;
   currency: string;
+  defaultLogoUrl: string | null;
 }
 
 interface QuoteLine {
@@ -33,7 +34,7 @@ interface QuoteLine {
   sortOrder: number;
 }
 
-export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency }: Props) {
+export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl }: Props) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [isDirty, setIsDirty] = useState(false);
@@ -46,12 +47,12 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [showEditFooter, setShowEditFooter] = useState(false);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   
-  // Branding state
+  // Branding state - use uploaded logo if quote doesn't have one yet
   const [companyName, setCompanyName] = useState(quote.cq_company_name || '');
   const [companyAddress, setCompanyAddress] = useState(quote.cq_company_address || '');
   const [companyPhone, setCompanyPhone] = useState(quote.cq_company_phone || '');
   const [companyEmail, setCompanyEmail] = useState(quote.cq_company_email || '');
-  const [companyLogoUrl, setCompanyLogoUrl] = useState(quote.cq_company_logo_url || '');
+  const [companyLogoUrl, setCompanyLogoUrl] = useState(quote.cq_company_logo_url || defaultLogoUrl || '');
   const [footerText, setFooterText] = useState(quote.cq_footer_text || '');
 
   // Initialize lines: use saved lines if available, otherwise from components

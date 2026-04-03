@@ -19,8 +19,9 @@ export default async function CustomerQuoteEditPage({
     loadCustomerQuoteTemplates(),
   ]);
   
-  // Load company default currency
   const supabase = await createSupabaseServerClient();
+  
+  // Load company default currency
   const { data: company } = await supabase
     .from('companies')
     .select('default_currency')
@@ -28,6 +29,26 @@ export default async function CustomerQuoteEditPage({
     .single();
   const companyDefaultCurrency = company?.default_currency || 'NZD';
   const effectiveCurrency = getEffectiveCurrency(quote.currency, companyDefaultCurrency);
+  
+  // Load company logo (if exists)
+  let companyLogoUrl: string | null = null;
+  if (!quote.cq_company_logo_url) {
+    const { data: logoFile } = await supabase
+      .from('quote_files')
+      .select('storage_path')
+      .eq('company_id', quote.company_id)
+      .eq('file_type', 'logo')
+      .order('uploaded_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (logoFile) {
+      const { data: urlData } = supabase.storage
+        .from('company-logos')
+        .getPublicUrl(logoFile.storage_path);
+      companyLogoUrl = urlData.publicUrl;
+    }
+  }
 
   return (
     <CustomerQuoteEditor
@@ -38,6 +59,7 @@ export default async function CustomerQuoteEditPage({
       templates={templates}
       workspaceSlug={workspaceSlug}
       currency={effectiveCurrency}
+      defaultLogoUrl={companyLogoUrl}
     />
   );
 }
