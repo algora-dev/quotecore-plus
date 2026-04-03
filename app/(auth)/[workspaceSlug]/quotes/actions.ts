@@ -325,6 +325,25 @@ export async function convertQuoteMeasurementSystem(id: string, newSystem: 'metr
   revalidatePath(`/quotes/${id}`);
 }
 
+export async function updateQuoteCurrency(id: string, currency: string | null) {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+  
+  // Verify quote is draft
+  const { data: quote } = await supabase.from('quotes').select('status').eq('id', id).eq('company_id', profile.company_id).single();
+  if (!quote || quote.status !== 'draft') {
+    throw new Error('Only draft quotes can change currency');
+  }
+  
+  const { error } = await supabase.from('quotes')
+    .update({ currency })
+    .eq('id', id)
+    .eq('company_id', profile.company_id);
+    
+  if (error) throw new Error(error.message);
+  revalidatePath(`/quotes/${id}`);
+}
+
 export async function updateQuoteNames(id: string, customerName: string, jobName: string | null) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();

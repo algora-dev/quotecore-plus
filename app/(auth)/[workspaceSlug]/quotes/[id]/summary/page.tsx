@@ -5,6 +5,8 @@ import { loadComponentLibrary } from '../../../components/actions';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { unitForMeasurement } from '@/app/lib/types';
 import { ConvertSystemButton } from './ConvertSystemButton';
+import { CurrencySelector } from './CurrencySelector';
+import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 
 export default async function QuoteSummaryPage({
   params,
@@ -18,6 +20,15 @@ export default async function QuoteSummaryPage({
     loadQuoteComponents(id),
     loadAllEntriesForQuote(id),
   ]);
+  
+  // Load company default currency
+  const supabase = await createSupabaseServerClient();
+  const { data: company } = await supabase
+    .from('companies')
+    .select('default_currency')
+    .eq('id', quote.company_id)
+    .single();
+  const companyDefaultCurrency = company?.default_currency || 'NZD';
 
 
 
@@ -49,9 +60,17 @@ export default async function QuoteSummaryPage({
         </span>
       </div>
 
-      <div className="flex gap-3 p-4 bg-slate-50 rounded-lg">
+      <div className="flex gap-3 p-4 bg-slate-50 rounded-lg flex-wrap">
         {quote.status === 'draft' && (
-          <ConvertSystemButton quoteId={id} currentSystem={quote.measurement_system} workspaceSlug={workspaceSlug} />
+          <>
+            <ConvertSystemButton quoteId={id} currentSystem={quote.measurement_system} workspaceSlug={workspaceSlug} />
+            <CurrencySelector 
+              quoteId={id} 
+              currentCurrency={quote.currency} 
+              companyDefaultCurrency={companyDefaultCurrency}
+              workspaceSlug={workspaceSlug} 
+            />
+          </>
         )}
         <Link href={`/${workspaceSlug}/quotes/${id}`} className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white hover:bg-slate-50">
           Edit Quote
