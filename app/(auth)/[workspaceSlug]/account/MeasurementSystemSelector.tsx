@@ -13,7 +13,7 @@ export function MeasurementSystemSelector({ currentSystem }: Props) {
   async function handleChange(newSystem: 'metric' | 'imperial') {
     setSaving(true);
     try {
-      await updateCompanyMeasurementSystem(newSystem);
+      await updateDefaultMeasurementSystem(newSystem);
       setSystem(newSystem);
       // Force page reload to sync server state
       window.location.reload();
