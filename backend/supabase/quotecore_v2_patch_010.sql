@@ -126,5 +126,5 @@ COMMENT ON COLUMN public.customer_quote_templates.footer_text IS
 COMMENT ON TABLE public.customer_quote_template_lines IS 
   'Line items in customer quote templates. Defines which components are visible and their default display.';
 
-COMMENT ON COLUMN public.quote_templates.customer_quote_template_id IS 
-  'Customer quote template to use when creating quotes from this template.';
+-- COMMENT ON COLUMN public.quote_templates.customer_quote_template_id IS 
+--   'Customer quote template to use when creating quotes from this template.';
