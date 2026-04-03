@@ -53,27 +53,18 @@ export function QuotePreview({
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b pb-4 relative">
-        {/* Logo + Company Details (Right Side) */}
-        <div className="flex justify-end mb-4">
-          <div className="text-right space-y-2">
-            {/* Logo - always show placeholder or image */}
-            <div className="mb-2">
-              {companyLogoUrl ? (
-                <img src={companyLogoUrl} alt="Company Logo" className="h-16 ml-auto object-contain" />
-              ) : (
-                <div className="w-32 h-16 ml-auto border-2 border-dashed border-slate-300 rounded flex items-center justify-center bg-slate-50">
-                  <span className="text-xs text-slate-400">Logo</span>
-                </div>
-              )}
+        {/* Logo (Above everything, right-aligned) */}
+        <div className="flex justify-end mb-3">
+          {companyLogoUrl ? (
+            <img src={companyLogoUrl} alt="Company Logo" className="h-16 object-contain" />
+          ) : (
+            <div className="w-32 h-16 border-2 border-dashed border-slate-300 rounded flex items-center justify-center bg-slate-50">
+              <span className="text-xs text-slate-400">Logo</span>
             </div>
-            {companyName && <p className="font-semibold text-base text-slate-900">{companyName}</p>}
-            {companyAddress && <p className="text-sm text-slate-600">{companyAddress}</p>}
-            {companyPhone && <p className="text-sm text-slate-600">{companyPhone}</p>}
-            {companyEmail && <p className="text-sm text-slate-600">{companyEmail}</p>}
-          </div>
+          )}
         </div>
 
-        {/* Quote Info (Below Logo, Aligned with Company Name) */}
+        {/* Quote Info (Left) + Company Details (Right) - Side by Side */}
         <div className="flex justify-between items-start">
           <div className="space-y-1">
             <h3 className="text-xl font-bold text-slate-900">
@@ -90,6 +81,13 @@ export function QuotePreview({
             <p className="text-base text-slate-900">
               <span className="font-semibold">Date:</span> {new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' })}
             </p>
+          </div>
+
+          <div className="text-right space-y-1">
+            {companyName && <p className="font-semibold text-base text-slate-900">{companyName}</p>}
+            {companyAddress && <p className="text-sm text-slate-600">{companyAddress}</p>}
+            {companyPhone && <p className="text-sm text-slate-600">{companyPhone}</p>}
+            {companyEmail && <p className="text-sm text-slate-600">{companyEmail}</p>}
           </div>
         </div>
 
