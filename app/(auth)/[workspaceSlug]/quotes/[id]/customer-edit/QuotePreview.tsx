@@ -1,4 +1,5 @@
 import type { QuoteRow } from '@/app/lib/types';
+import { LineEditForm } from './LineEditForm';
 
 interface QuoteLine {
   id: string;
@@ -13,7 +14,10 @@ interface Props {
   subtotal: number;
   tax: number;
   total: number;
+  editingLineId?: string | null;
   onEditLine?: (lineId: string) => void;
+  onSaveLine?: (lineId: string, text: string, amount: number, showPrice: boolean) => void;
+  onCancelEdit?: () => void;
   showEditButtons?: boolean;
 }
 
@@ -22,8 +26,11 @@ export function QuotePreview({
   lines, 
   subtotal, 
   tax, 
-  total, 
+  total,
+  editingLineId,
   onEditLine,
+  onSaveLine,
+  onCancelEdit,
   showEditButtons = true 
 }: Props) {
   return (
@@ -44,30 +51,42 @@ export function QuotePreview({
         {lines.length === 0 ? (
           <p className="text-sm text-slate-400 italic">No items selected</p>
         ) : (
-          lines.map(line => (
-            <div key={line.id} className="flex items-start justify-between py-2 border-b border-slate-100">
-              <div className="flex-1">
-                <p className="text-sm text-slate-900">{line.text}</p>
+          lines.map(line => 
+            editingLineId === line.id && onSaveLine && onCancelEdit ? (
+              <div key={line.id} className="py-2">
+                <LineEditForm
+                  initialText={line.text}
+                  initialAmount={line.amount}
+                  initialShowPrice={line.showPrice}
+                  onSave={(text, amount, showPrice) => onSaveLine(line.id, text, amount, showPrice)}
+                  onCancel={onCancelEdit}
+                />
               </div>
-              <div className="flex items-center gap-2">
-                {line.showPrice && (
-                  <p className="text-sm font-medium text-slate-900">
-                    ${line.amount.toFixed(2)}
-                  </p>
-                )}
-                {showEditButtons && onEditLine && (
-                  <button 
-                    onClick={() => onEditLine(line.id)}
-                    className="p-1 text-slate-400 hover:text-slate-600"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </button>
-                )}
+            ) : (
+              <div key={line.id} className="flex items-start justify-between py-2 border-b border-slate-100">
+                <div className="flex-1">
+                  <p className="text-sm text-slate-900">{line.text}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {line.showPrice && (
+                    <p className="text-sm font-medium text-slate-900">
+                      ${line.amount.toFixed(2)}
+                    </p>
+                  )}
+                  {showEditButtons && onEditLine && (
+                    <button 
+                      onClick={() => onEditLine(line.id)}
+                      className="p-1 text-slate-400 hover:text-slate-600"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            )
+          )
         )}
       </div>
 

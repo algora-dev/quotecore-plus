@@ -30,6 +30,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
   const [saving, setSaving] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showAddCustomLine, setShowAddCustomLine] = useState(false);
+  const [editingLineId, setEditingLineId] = useState<string | null>(null);
 
   // Initialize lines from components on mount
   useEffect(() => {
@@ -93,6 +94,13 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
       sortOrder: lines.length,
     };
     setLines(prev => [...prev, newLine]);
+  }
+
+  function updateLine(lineId: string, text: string, amount: number, showPrice: boolean) {
+    setLines(prev => prev.map(l => 
+      l.id === lineId ? { ...l, text, amount, showPrice } : l
+    ));
+    setEditingLineId(null);
   }
 
   // Group lines by roof area
@@ -270,6 +278,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
                 subtotal={subtotal}
                 tax={tax}
                 total={total}
+                editingLineId={editingLineId}
+                onEditLine={setEditingLineId}
+                onSaveLine={updateLine}
+                onCancelEdit={() => setEditingLineId(null)}
               />
             </div>
           </div>
