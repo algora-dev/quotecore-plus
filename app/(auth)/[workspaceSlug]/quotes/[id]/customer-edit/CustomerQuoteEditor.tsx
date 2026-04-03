@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow } from '@/app/lib/types';
 import { QuotePreview } from './QuotePreview';
 import { AddCustomLineModal } from './AddCustomLineModal';
-import { saveCustomerQuoteLines } from '../actions';
+import { saveCustomerQuoteLines } from '../../actions';
 
 interface Props {
   quote: QuoteRow;
