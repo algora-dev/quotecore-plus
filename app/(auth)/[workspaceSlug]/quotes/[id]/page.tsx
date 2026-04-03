@@ -1,6 +1,7 @@
 import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadAllEntriesForQuote, loadAllRoofAreaEntriesForQuote } from '../actions';
 import { loadComponentLibrary } from '../../components/actions';
 import { QuoteBuilder } from './quote-builder';
+import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 
 export default async function QuoteBuilderPage({
   params,
@@ -16,6 +17,15 @@ export default async function QuoteBuilderPage({
     loadComponentLibrary(),
     loadAllEntriesForQuote(id),
   ]);
+  
+  // Load company default currency
+  const supabase = await createSupabaseServerClient();
+  const { data: company } = await supabase
+    .from('companies')
+    .select('default_currency')
+    .eq('id', quote.company_id)
+    .single();
+  const companyDefaultCurrency = company?.default_currency || 'NZD';
 
   return (
     <QuoteBuilder
@@ -26,6 +36,7 @@ export default async function QuoteBuilderPage({
       initialEntries={entries}
       libraryComponents={libraryComponents}
       workspaceSlug={workspaceSlug}
+      companyDefaultCurrency={companyDefaultCurrency}
     />
   );
 }

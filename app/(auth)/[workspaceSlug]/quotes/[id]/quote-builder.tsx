@@ -10,6 +10,7 @@ import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentR
 import { MeasurementSystemToggle } from './MeasurementSystemToggle';
 import { QuoteNameEditor } from './QuoteNameEditor';
 import { ConfirmQuoteButton } from './ConfirmQuoteButton';
+import { CurrencySelector } from './CurrencySelector';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
 
@@ -21,6 +22,7 @@ interface Props {
   initialEntries: Record<string, QuoteComponentEntryRow[]>;
   libraryComponents: ComponentLibraryRow[];
   workspaceSlug: string;
+  companyDefaultCurrency: string;
 }
 
 export function QuoteBuilder({
@@ -30,7 +32,8 @@ export function QuoteBuilder({
   initialComponents,
   initialEntries,
   libraryComponents,
-  workspaceSlug
+  workspaceSlug,
+  companyDefaultCurrency
 }: Props) {
   const [phase, setPhase] = useState<Phase>('areas');
   const [quote, setQuote] = useState(initialQuote);
@@ -260,11 +263,21 @@ export function QuoteBuilder({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <MeasurementSystemToggle 
-            quoteId={quote.id} 
-            currentSystem={quote.measurement_system}
-            isDraft={quote.status === 'draft'}
-          />
+          {quote.status === 'draft' && (
+            <>
+              <MeasurementSystemToggle 
+                quoteId={quote.id} 
+                currentSystem={quote.measurement_system}
+                isDraft={quote.status === 'draft'}
+              />
+              <CurrencySelector 
+                quoteId={quote.id}
+                currentCurrency={quote.currency}
+                companyDefaultCurrency={companyDefaultCurrency}
+                workspaceSlug={workspaceSlug}
+              />
+            </>
+          )}
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
             quote.status === 'draft' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'
           }`}>
