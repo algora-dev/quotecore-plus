@@ -345,6 +345,16 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               >
                 {saving ? 'Saving...' : 'Save & Return to Summary'}
               </button>
+              <button 
+                onClick={() => {
+                  const name = prompt('Template name:', `${quote.customer_name} - Customer Quote`);
+                  if (!name) return;
+                  router.push(`/${workspaceSlug}/customer-quote-templates/save-from-quote?quoteId=${quote.id}&name=${encodeURIComponent(name)}`);
+                }}
+                className="w-full py-2 text-sm font-medium border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50"
+              >
+                💾 Save as Template
+              </button>
             </div>
           </div>
 
