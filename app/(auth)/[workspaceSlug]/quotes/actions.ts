@@ -536,3 +536,43 @@ export async function loadCustomerQuoteTemplate(templateId: string) {
 
   return { template, lines: lines || [] };
 }
+
+export async function saveCustomerQuoteBranding(
+  quoteId: string,
+  branding: {
+    companyName: string;
+    companyAddress: string;
+    companyPhone: string;
+    companyEmail: string;
+    footerText: string;
+  }
+) {
+  'use server';
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  // Verify quote belongs to company
+  const { data: quote } = await supabase
+    .from('quotes')
+    .select('company_id')
+    .eq('id', quoteId)
+    .single();
+
+  if (!quote || quote.company_id !== profile.company_id) {
+    throw new Error('Quote not found');
+  }
+
+  // Update branding
+  const { error } = await supabase
+    .from('quotes')
+    .update({
+      cq_company_name: branding.companyName || null,
+      cq_company_address: branding.companyAddress || null,
+      cq_company_phone: branding.companyPhone || null,
+      cq_company_email: branding.companyEmail || null,
+      cq_footer_text: branding.footerText || null,
+    })
+    .eq('id', quoteId);
+
+  if (error) throw new Error(error.message);
+}

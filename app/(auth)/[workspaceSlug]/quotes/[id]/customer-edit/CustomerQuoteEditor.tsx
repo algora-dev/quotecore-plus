@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow } from '@/app/lib/types';
 import { QuotePreview } from './QuotePreview';
 import { AddCustomLineModal } from './AddCustomLineModal';
-import { saveCustomerQuoteLines } from '../../actions';
+import { saveCustomerQuoteLines, saveCustomerQuoteBranding } from '../../actions';
 
 interface Props {
   quote: QuoteRow;
@@ -37,6 +37,13 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showAddCustomLine, setShowAddCustomLine] = useState(false);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  
+  // Branding state
+  const [companyName, setCompanyName] = useState(quote.cq_company_name || '');
+  const [companyAddress, setCompanyAddress] = useState(quote.cq_company_address || '');
+  const [companyPhone, setCompanyPhone] = useState(quote.cq_company_phone || '');
+  const [companyEmail, setCompanyEmail] = useState(quote.cq_company_email || '');
+  const [footerText, setFooterText] = useState(quote.cq_footer_text || '');
 
   // Initialize lines: use saved lines if available, otherwise from components
   useEffect(() => {
@@ -137,19 +144,28 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      await saveCustomerQuoteLines(
-        quote.id,
-        lines.map(line => ({
-          id: line.id,
-          lineType: line.type,
-          componentId: line.componentId,
-          text: line.text,
-          amount: line.amount,
-          showPrice: line.showPrice,
-          sortOrder: line.sortOrder,
-          isVisible: line.isVisible,
-        }))
-      );
+      await Promise.all([
+        saveCustomerQuoteLines(
+          quote.id,
+          lines.map(line => ({
+            id: line.id,
+            lineType: line.type,
+            componentId: line.componentId,
+            text: line.text,
+            amount: line.amount,
+            showPrice: line.showPrice,
+            sortOrder: line.sortOrder,
+            isVisible: line.isVisible,
+          }))
+        ),
+        saveCustomerQuoteBranding(quote.id, {
+          companyName,
+          companyAddress,
+          companyPhone,
+          companyEmail,
+          footerText,
+        }),
+      ]);
       setLastSaved(new Date());
       setIsDirty(false);
     } catch (err) {
@@ -158,7 +174,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     } finally {
       setSaving(false);
     }
-  }, [quote.id, lines]);
+  }, [quote.id, lines, companyName, companyAddress, companyPhone, companyEmail, footerText]);
 
   // Auto-save effect (3 seconds after last change, only if dirty and enabled)
   useEffect(() => {
@@ -217,6 +233,65 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               {saving ? 'Saving...' : lastSaved ? `Last saved ${lastSaved.toLocaleTimeString()}` : 'Not saved yet'}
               {isDirty && !saving && ' (unsaved changes)'}
             </div>
+          </div>
+        </div>
+
+        {/* Branding Section */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-slate-900">Company Details & Footer</h2>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Company Name</label>
+              <input
+                type="text"
+                value={companyName}
+                onChange={(e) => { setCompanyName(e.target.value); setIsDirty(true); }}
+                placeholder="Your Company Name"
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+              <input
+                type="tel"
+                value={companyPhone}
+                onChange={(e) => { setCompanyPhone(e.target.value); setIsDirty(true); }}
+                placeholder="+64 21 123 4567"
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+              <input
+                type="email"
+                value={companyEmail}
+                onChange={(e) => { setCompanyEmail(e.target.value); setIsDirty(true); }}
+                placeholder="info@yourcompany.com"
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
+              <input
+                type="text"
+                value={companyAddress}
+                onChange={(e) => { setCompanyAddress(e.target.value); setIsDirty(true); }}
+                placeholder="123 Main Street, City"
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Footer / Terms & Conditions</label>
+            <textarea
+              value={footerText}
+              onChange={(e) => { setFooterText(e.target.value); setIsDirty(true); }}
+              placeholder="Payment terms, disclaimers, etc."
+              rows={3}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         </div>
 

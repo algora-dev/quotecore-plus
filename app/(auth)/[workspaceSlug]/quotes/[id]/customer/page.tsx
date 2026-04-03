@@ -43,28 +43,48 @@ export default async function CustomerQuotePage({
         {/* Quote Document */}
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-8 space-y-6">
           {/* Quote Header */}
-          <div className="border-b pb-6">
-            <h1 className="text-3xl font-bold text-slate-900">
-              QUOTE #{quote.quote_number || 'DRAFT'}
-            </h1>
-            <div className="mt-4 space-y-1">
-              <p className="text-sm text-slate-600">
-                <span className="font-medium">Client:</span> {quote.customer_name}
-              </p>
-              {quote.job_name && (
+          <div className="border-b pb-6 flex justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">
+                QUOTE #{quote.quote_number || 'DRAFT'}
+              </h1>
+              <div className="mt-4 space-y-1">
                 <p className="text-sm text-slate-600">
-                  <span className="font-medium">Job:</span> {quote.job_name}
+                  <span className="font-medium">Client:</span> {quote.customer_name}
                 </p>
-              )}
-              {quote.site_address && (
+                {quote.job_name && (
+                  <p className="text-sm text-slate-600">
+                    <span className="font-medium">Job:</span> {quote.job_name}
+                  </p>
+                )}
+                {quote.site_address && (
+                  <p className="text-sm text-slate-600">
+                    <span className="font-medium">Site:</span> {quote.site_address}
+                  </p>
+                )}
                 <p className="text-sm text-slate-600">
-                  <span className="font-medium">Site:</span> {quote.site_address}
+                  <span className="font-medium">Date:</span> {new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' })}
                 </p>
-              )}
-              <p className="text-sm text-slate-600">
-                <span className="font-medium">Date:</span> {new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' })}
-              </p>
+              </div>
             </div>
+            
+            {/* Company Details */}
+            {(quote.cq_company_name || quote.cq_company_address || quote.cq_company_phone || quote.cq_company_email) && (
+              <div className="text-right text-sm">
+                {quote.cq_company_name && (
+                  <p className="font-semibold text-slate-900">{quote.cq_company_name}</p>
+                )}
+                {quote.cq_company_address && (
+                  <p className="text-slate-600">{quote.cq_company_address}</p>
+                )}
+                {quote.cq_company_phone && (
+                  <p className="text-slate-600">{quote.cq_company_phone}</p>
+                )}
+                {quote.cq_company_email && (
+                  <p className="text-slate-600">{quote.cq_company_email}</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Line Items */}
@@ -114,10 +134,10 @@ export default async function CustomerQuotePage({
             </div>
           )}
 
-          {/* Footer Notes */}
-          {quote.notes_internal && (
+          {/* Footer */}
+          {quote.cq_footer_text && (
             <div className="pt-6 border-t">
-              <p className="text-sm text-slate-600 whitespace-pre-wrap">{quote.notes_internal}</p>
+              <p className="text-sm text-slate-600 italic whitespace-pre-wrap">{quote.cq_footer_text}</p>
             </div>
           )}
         </div>
