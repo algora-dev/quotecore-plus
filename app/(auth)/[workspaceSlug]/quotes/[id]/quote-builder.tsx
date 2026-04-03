@@ -382,6 +382,7 @@ export function QuoteBuilder({
                     roofAreas={roofAreas}
                     roofArea={area}
                     quote={quote}
+                    currency={effectiveCurrency}
                     onAddEntry={handleAddEntry}
                     onUseRoofArea={handleUseRoofArea}
                     onRemoveEntry={handleRemoveEntry}
@@ -424,6 +425,7 @@ export function QuoteBuilder({
                 entries={entries[comp.id] ?? []}
                 roofAreas={roofAreas}
                 quote={quote}
+                currency={effectiveCurrency}
                 onAddEntry={handleAddEntry}
                 onRemoveEntry={handleRemoveEntry}
                 onRemove={handleRemoveComponent}
@@ -770,6 +772,7 @@ function ExpandableComponent({
   roofAreas,
   roofArea,
   quote,
+  currency,
   onAddEntry,
   onUseRoofArea,
   onRemoveEntry,
@@ -781,6 +784,7 @@ function ExpandableComponent({
   roofAreas: QuoteRoofAreaRow[];
   roofArea?: QuoteRoofAreaRow;
   quote: QuoteRow;
+  currency: string;
   onAddEntry: (compId: string, rawValue: number) => Promise<void>;
   onUseRoofArea?: (compId: string, roofAreaSqm: number) => Promise<void>;
   onRemoveEntry: (entryId: string, compId: string) => Promise<void>;
@@ -851,7 +855,7 @@ function ExpandableComponent({
         <span className="text-xs text-slate-500 w-20 text-right">
           {displayValue(comp.final_quantity ?? 0)}
         </span>
-        <span className="text-xs font-medium w-20 text-right">${totalCost.toFixed(2)}</span>
+        <span className="text-xs font-medium w-20 text-right">{formatCurrency(totalCost, currency)}</span>
         <button
           onClick={e => {
             e.stopPropagation();
