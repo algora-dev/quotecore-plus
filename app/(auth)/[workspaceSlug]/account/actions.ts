@@ -115,10 +115,15 @@ export async function saveFileMetadata(data: {
     throw new Error('Unauthorized');
   }
 
-  const supabase = await createSupabaseServerClient();
+  // Use service role client to bypass RLS
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
   
-  // Use service role to bypass RLS for insert
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('quote_files')
     .upsert({
       company_id: data.companyId,
