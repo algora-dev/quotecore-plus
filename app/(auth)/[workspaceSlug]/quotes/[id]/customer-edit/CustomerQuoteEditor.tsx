@@ -30,6 +30,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [isDirty, setIsDirty] = useState(false);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -138,16 +139,16 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
     }
   }, [quote.id, lines]);
 
-  // Auto-save effect (3 seconds after last change, only if dirty)
+  // Auto-save effect (3 seconds after last change, only if dirty and enabled)
   useEffect(() => {
-    if (!isDirty || lines.length === 0) return;
+    if (!autoSaveEnabled || !isDirty || lines.length === 0) return;
     
     const timer = setTimeout(() => {
       handleSave();
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [isDirty, handleSave]);
+  }, [autoSaveEnabled, isDirty, handleSave]);
 
   // Group lines by roof area
   const linesByArea = lines.reduce((acc, line) => {
@@ -178,9 +179,23 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
               Customer Quote Editor — Quote #{quote.quote_number || 'Draft'}
             </h1>
           </div>
-          <div className="text-sm text-slate-500">
-            {lastSaved && `Last saved ${lastSaved.toLocaleTimeString()}`}
-            {saving && ' (saving...)'}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="autoSave"
+                checked={autoSaveEnabled}
+                onChange={(e) => setAutoSaveEnabled(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded"
+              />
+              <label htmlFor="autoSave" className="text-sm text-slate-700 cursor-pointer">
+                Auto-save
+              </label>
+            </div>
+            <div className="text-sm text-slate-500">
+              {saving ? 'Saving...' : lastSaved ? `Last saved ${lastSaved.toLocaleTimeString()}` : 'Not saved yet'}
+              {isDirty && !saving && ' (unsaved changes)'}
+            </div>
           </div>
         </div>
 
