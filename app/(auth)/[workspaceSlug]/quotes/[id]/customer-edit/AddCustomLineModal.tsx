@@ -18,7 +18,7 @@ export function AddCustomLineModal({ onAdd, onClose }: Props) {
       alert('Please enter valid description and amount');
       return;
     }
-    onAdd(text.trim(), amountNum);
+    onAdd(text.trim(), amountNum, showPrice);
     onClose();
   }
 

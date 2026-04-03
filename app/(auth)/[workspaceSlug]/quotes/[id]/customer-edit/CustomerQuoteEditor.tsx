@@ -104,7 +104,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
   }, {} as Record<string, QuoteLine[]>);
 
   const visibleLines = lines.filter(l => l.isVisible);
-  const subtotal = visibleLines.reduce((sum, l) => sum + (l.showPrice ? l.amount : 0), 0);
+  const subtotal = visibleLines.reduce((sum, l) => sum + l.amount, 0); // Include ALL amounts in total
   const tax = subtotal * (quote.tax_rate / 100);
   const total = subtotal + tax;
 
