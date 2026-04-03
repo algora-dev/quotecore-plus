@@ -9,7 +9,7 @@ interface Props {
   initialTab: string;
 }
 
-export function TemplatesPageClient({ workspaceSlug, customerQuoteTemplates, initialTab }: Props) {
+export function TemplatesPageClient({ workspaceSlug, quoteTemplates, customerQuoteTemplates, initialTab }: Props) {
   const [activeTab, setActiveTab] = useState<'quote' | 'customer'>(
     initialTab === 'customer' ? 'customer' : 'quote'
   );
