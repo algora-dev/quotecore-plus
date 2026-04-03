@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal } from '../actions';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
@@ -40,9 +40,9 @@ export function QuoteBuilder({
   const [quote, setQuote] = useState(initialQuote);
   
   // Update quote state when props change (e.g., after currency change)
-  if (initialQuote.currency !== quote.currency) {
+  useEffect(() => {
     setQuote(initialQuote);
-  }
+  }, [initialQuote.currency, initialQuote.measurement_system]);
   const [roofAreas, setRoofAreas] = useState(initialRoofAreas);
   const [roofAreaEntries, setRoofAreaEntries] = useState(initialRoofAreaEntries);
   const [components, setComponents] = useState(initialComponents);
