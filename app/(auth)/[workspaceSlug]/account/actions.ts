@@ -109,20 +109,20 @@ export async function saveFileMetadata(data: {
   storagePath: string;
   quoteId?: string;
 }): Promise<void> {
+  console.log('[saveFileMetadata] Starting with data:', data);
+  
   const profile = await requireCompanyContext();
+  console.log('[saveFileMetadata] Profile loaded:', profile.id, profile.company_id);
   
   if (profile.company_id !== data.companyId) {
     throw new Error('Unauthorized');
   }
 
-  // Use service role client to bypass RLS
-  const { createClient } = await import('@supabase/supabase-js');
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
+  // Use admin client to bypass RLS
+  const { createAdminClient } = await import('@/app/lib/supabase/admin');
+  const supabaseAdmin = createAdminClient();
   
+  console.log('[saveFileMetadata] Attempting upsert...');
   const { error } = await supabaseAdmin
     .from('quote_files')
     .upsert({
@@ -137,9 +137,10 @@ export async function saveFileMetadata(data: {
     }, { onConflict: 'storage_path' });
 
   if (error) {
-    console.error('[saveFileMetadata] Error:', error);
+    console.error('[saveFileMetadata] Database error:', error);
     throw new Error(error.message);
   }
 
+  console.log('[saveFileMetadata] Success! Revalidating...');
   revalidatePath('/account');
 }
