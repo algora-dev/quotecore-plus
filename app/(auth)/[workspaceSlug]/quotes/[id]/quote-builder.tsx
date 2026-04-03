@@ -37,6 +37,11 @@ export function QuoteBuilder({
 }: Props) {
   const [phase, setPhase] = useState<Phase>('areas');
   const [quote, setQuote] = useState(initialQuote);
+  
+  // Update quote state when props change (e.g., after currency change)
+  if (initialQuote.currency !== quote.currency) {
+    setQuote(initialQuote);
+  }
   const [roofAreas, setRoofAreas] = useState(initialRoofAreas);
   const [roofAreaEntries, setRoofAreaEntries] = useState(initialRoofAreaEntries);
   const [components, setComponents] = useState(initialComponents);

@@ -32,7 +32,7 @@ export function CurrencySelector({ quoteId, currentCurrency, companyDefaultCurre
 
   return (
     <div className="flex items-center gap-2">
-      <label htmlFor="currency-selector" className="text-sm font-medium text-slate-700">
+      <label htmlFor="currency-selector" className="text-sm font-medium text-slate-700" title="Currency display format (prices are NOT auto-converted)">
         Currency:
       </label>
       <select
@@ -41,6 +41,7 @@ export function CurrencySelector({ quoteId, currentCurrency, companyDefaultCurre
         onChange={(e) => handleChange(e.target.value)}
         disabled={isPending}
         className="px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+        title="⚠️ Changes display symbol only - prices are NOT converted"
       >
         {/* Show company default with indicator */}
         <option value={companyDefaultCurrency}>
