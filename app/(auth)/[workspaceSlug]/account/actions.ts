@@ -78,7 +78,7 @@ export async function updateDefaultMeasurementSystem(system: 'metric' | 'imperia
   revalidatePath('/account');
 }
 
-export async function uploadCompanyLogo(companyId: string, file: File): Promise<string> {
+export async function checkStorageQuota(companyId: string, fileSize: number): Promise<boolean> {
   const profile = await requireCompanyContext();
   
   if (profile.company_id !== companyId) {
@@ -87,53 +87,54 @@ export async function uploadCompanyLogo(companyId: string, file: File): Promise<
 
   const supabase = await createSupabaseServerClient();
   
-  // Check storage quota
   const { data: company } = await supabase
     .from('companies')
     .select('storage_used_bytes, storage_limit_bytes')
     .eq('id', companyId)
     .single();
   
-  if (company && (company.storage_used_bytes + file.size) > company.storage_limit_bytes) {
-    throw new Error('Storage quota exceeded. Please upgrade your plan.');
+  if (!company) {
+    throw new Error('Company not found');
   }
-
-  // Upload to Supabase Storage
-  const fileName = `logo.${file.name.split('.').pop()}`;
-  const storagePath = `${companyId}/${fileName}`;
   
-  const { error: uploadError } = await supabase.storage
-    .from('company-logos')
-    .upload(storagePath, file, { upsert: true });
+  return (company.storage_used_bytes + fileSize) <= company.storage_limit_bytes;
+}
 
-  if (uploadError) {
-    throw new Error(uploadError.message);
+export async function saveFileMetadata(data: {
+  companyId: string;
+  fileType: 'logo' | 'plan' | 'supporting';
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  storagePath: string;
+  quoteId?: string;
+}): Promise<void> {
+  const profile = await requireCompanyContext();
+  
+  if (profile.company_id !== data.companyId) {
+    throw new Error('Unauthorized');
   }
 
-  // Get public URL
-  const { data: urlData } = supabase.storage
-    .from('company-logos')
-    .getPublicUrl(storagePath);
-
-  const publicUrl = urlData.publicUrl;
-
-  // Save to quote_files table
-  const { error: dbError } = await supabase
+  const supabase = await createSupabaseServerClient();
+  
+  // Use service role to bypass RLS for insert
+  const { error } = await supabase
     .from('quote_files')
     .upsert({
-      company_id: companyId,
-      file_type: 'logo',
-      file_name: fileName,
-      file_size: file.size,
-      mime_type: file.type,
-      storage_path: storagePath,
+      company_id: data.companyId,
+      quote_id: data.quoteId || null,
+      file_type: data.fileType,
+      file_name: data.fileName,
+      file_size: data.fileSize,
+      mime_type: data.mimeType,
+      storage_path: data.storagePath,
       uploaded_by: profile.id,
     }, { onConflict: 'storage_path' });
 
-  if (dbError) {
-    throw new Error(dbError.message);
+  if (error) {
+    console.error('[saveFileMetadata] Error:', error);
+    throw new Error(error.message);
   }
 
   revalidatePath('/account');
-  return publicUrl;
 }

@@ -1,8 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/app/lib/supabase/client';
 import { FileUploader } from '@/app/components/FileUploader';
-import { uploadCompanyLogo } from './actions';
+import { checkStorageQuota, saveFileMetadata } from './actions';
 
 interface Props {
   companyId: string;
@@ -14,7 +15,42 @@ export function LogoUploader({ companyId, currentLogoUrl }: Props) {
   const router = useRouter();
 
   async function handleUpload(file: File) {
-    const publicUrl = await uploadCompanyLogo(companyId, file);
+    // Check quota
+    const hasQuota = await checkStorageQuota(companyId, file.size);
+    if (!hasQuota) {
+      throw new Error('Storage quota exceeded. Please upgrade your plan.');
+    }
+
+    // Upload to Supabase Storage (client-side)
+    const supabase = createClient();
+    const fileName = `logo.${file.name.split('.').pop()}`;
+    const storagePath = `${companyId}/${fileName}`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from('company-logos')
+      .upload(storagePath, file, { upsert: true });
+
+    if (uploadError) {
+      throw new Error(uploadError.message);
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('company-logos')
+      .getPublicUrl(storagePath);
+
+    const publicUrl = urlData.publicUrl;
+
+    // Save metadata
+    await saveFileMetadata({
+      companyId,
+      fileType: 'logo',
+      fileName,
+      fileSize: file.size,
+      mimeType: file.type,
+      storagePath,
+    });
+
     setLogoUrl(publicUrl);
     router.refresh();
   }
