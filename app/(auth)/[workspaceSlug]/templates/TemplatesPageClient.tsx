@@ -1,10 +1,11 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import type { CustomerQuoteTemplateRow } from '@/app/lib/types';
+import type { CustomerQuoteTemplateRow, TemplateRow } from '@/app/lib/types';
 
 interface Props {
   workspaceSlug: string;
+  quoteTemplates: TemplateRow[];
   customerQuoteTemplates: CustomerQuoteTemplateRow[];
   initialTab: string;
 }
@@ -53,11 +54,68 @@ export function TemplatesPageClient({ workspaceSlug, quoteTemplates, customerQuo
 
         {/* Tab Content */}
         {activeTab === 'quote' ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
-            <p className="text-slate-400 mb-4">Quote template management coming soon</p>
-            <p className="text-sm text-slate-500">
-              (Future: Create reusable quote structures with components)
-            </p>
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <p className="text-sm text-slate-500">(Quote template creation coming soon)</p>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              {quoteTemplates.length === 0 ? (
+                <div className="p-8 text-center">
+                  <p className="text-slate-400 mb-4">No quote templates created yet</p>
+                  <p className="text-sm text-slate-500">Quote templates will appear here</p>
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                        Template Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                        Description
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {quoteTemplates.map((template) => (
+                      <tr key={template.id} className="hover:bg-slate-50">
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-medium text-slate-900">{template.name}</div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-600">
+                          {template.description || '—'}
+                        </td>
+                        <td className="px-6 py-4">
+                          {template.is_active ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Active
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              Inactive
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right space-x-2">
+                          <Link
+                            href={`/${workspaceSlug}/quotes/create?template=${template.id}`}
+                            className="text-sm text-blue-600 hover:text-blue-700"
+                          >
+                            Use
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
