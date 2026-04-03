@@ -15,7 +15,7 @@ export async function saveQuoteAsTemplate(data: SaveTemplateData) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
-  // 1. Create template
+  // Create template (branding only - no line items)
   const { data: template, error: templateError } = await supabase
     .from('customer_quote_templates')
     .insert({
@@ -33,34 +33,6 @@ export async function saveQuoteAsTemplate(data: SaveTemplateData) {
     .single();
 
   if (templateError) throw new Error(templateError.message);
-
-  // 2. Copy customer quote lines to template lines
-  const { data: quoteLines, error: loadError } = await supabase
-    .from('customer_quote_lines')
-    .select('*')
-    .eq('quote_id', data.quoteId)
-    .order('sort_order');
-
-  if (loadError) throw new Error(loadError.message);
-
-  if (quoteLines && quoteLines.length > 0) {
-    const templateLines = quoteLines.map(line => ({
-      template_id: template.id,
-      line_type: line.line_type,
-      component_library_id: null, // TODO: Map quote_component_id to component_library_id when component library exists
-      custom_text: line.custom_text,
-      custom_amount: line.custom_amount,
-      show_price: line.show_price,
-      sort_order: line.sort_order,
-      is_visible: line.is_visible,
-    }));
-
-    const { error: insertError } = await supabase
-      .from('customer_quote_template_lines')
-      .insert(templateLines);
-
-    if (insertError) throw new Error(insertError.message);
-  }
 
   return template.id;
 }

@@ -55,10 +55,10 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines, templateName }
             ← Back to Quote Editor
           </Link>
           <h1 className="text-2xl font-semibold text-slate-900 mt-2">
-            Save as Template: {templateName}
+            Save Branding as Template: {templateName}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            This will save your current customer quote layout ({savedLines.length} items) as a reusable template
+            This will save company details and footer as a reusable template
           </p>
         </div>
 
@@ -117,25 +117,12 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines, templateName }
           />
         </div>
 
-        {/* Line Items Preview */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Template will include {savedLines.length} items
-          </h2>
-          <div className="space-y-1">
-            {savedLines.slice(0, 5).map((line, idx) => (
-              <div key={idx} className="text-sm text-slate-600 flex items-center gap-2">
-                <span className="text-slate-400">•</span>
-                <span className="flex-1">{line.custom_text}</span>
-                {line.show_price && (
-                  <span className="font-medium">${line.custom_amount?.toFixed(2)}</span>
-                )}
-              </div>
-            ))}
-            {savedLines.length > 5 && (
-              <p className="text-sm text-slate-400 italic">...and {savedLines.length - 5} more</p>
-            )}
-          </div>
+        {/* Info Note */}
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+          <p className="text-sm text-blue-800">
+            <span className="font-medium">Note:</span> This template saves branding only (company details + footer). 
+            Component display preferences are controlled by component library defaults.
+          </p>
         </div>
 
         {/* Actions */}
