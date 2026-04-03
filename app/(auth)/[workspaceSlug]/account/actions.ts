@@ -77,3 +77,63 @@ export async function updateDefaultMeasurementSystem(system: 'metric' | 'imperia
 
   revalidatePath('/account');
 }
+
+export async function uploadCompanyLogo(companyId: string, file: File): Promise<string> {
+  const profile = await requireCompanyContext();
+  
+  if (profile.company_id !== companyId) {
+    throw new Error('Unauthorized');
+  }
+
+  const supabase = await createSupabaseServerClient();
+  
+  // Check storage quota
+  const { data: company } = await supabase
+    .from('companies')
+    .select('storage_used_bytes, storage_limit_bytes')
+    .eq('id', companyId)
+    .single();
+  
+  if (company && (company.storage_used_bytes + file.size) > company.storage_limit_bytes) {
+    throw new Error('Storage quota exceeded. Please upgrade your plan.');
+  }
+
+  // Upload to Supabase Storage
+  const fileName = `logo.${file.name.split('.').pop()}`;
+  const storagePath = `${companyId}/${fileName}`;
+  
+  const { error: uploadError } = await supabase.storage
+    .from('company-logos')
+    .upload(storagePath, file, { upsert: true });
+
+  if (uploadError) {
+    throw new Error(uploadError.message);
+  }
+
+  // Get public URL
+  const { data: urlData } = supabase.storage
+    .from('company-logos')
+    .getPublicUrl(storagePath);
+
+  const publicUrl = urlData.publicUrl;
+
+  // Save to quote_files table
+  const { error: dbError } = await supabase
+    .from('quote_files')
+    .upsert({
+      company_id: companyId,
+      file_type: 'logo',
+      file_name: fileName,
+      file_size: file.size,
+      mime_type: file.type,
+      storage_path: storagePath,
+      uploaded_by: profile.id,
+    }, { onConflict: 'storage_path' });
+
+  if (dbError) {
+    throw new Error(dbError.message);
+  }
+
+  revalidatePath('/account');
+  return publicUrl;
+}

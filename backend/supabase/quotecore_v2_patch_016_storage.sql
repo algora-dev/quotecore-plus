@@ -222,11 +222,11 @@ COMMENT ON FUNCTION check_storage_quota IS
 -- Bucket 1: company-logos
 --   - Public: YES (logos visible in customer quotes)
 --   - Allowed MIME types: image/jpeg, image/png, image/webp
---   - Max file size: 5 MB
+--   - Max file size: 2 MB
 --   - RLS Policy: Authenticated users can upload/delete own company logo
 
 -- Bucket 2: quote-documents
 --   - Public: NO (private files)
 --   - Allowed MIME types: image/*, application/pdf
---   - Max file size: 50 MB (plans can be large)
+--   - Max file size: 10 MB (plans can be large)
 --   - RLS Policy: Users can only access files from their company_id folder
