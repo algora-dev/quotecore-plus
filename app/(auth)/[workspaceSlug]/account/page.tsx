@@ -21,7 +21,7 @@ export default async function AccountPage() {
   let logoUrl = null;
   if (logoFile) {
     const { data: urlData } = supabase.storage
-      .from('company-logos')
+      .from('COMPANY-LOGOS')
       .getPublicUrl(logoFile.storage_path);
     logoUrl = urlData.publicUrl;
   }

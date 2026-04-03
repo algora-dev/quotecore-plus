@@ -42,7 +42,7 @@ export default async function QuoteBuilderPage({
   let planName: string | null = null;
   if (planFile) {
     const { data: urlData } = supabase.storage
-      .from('quote-documents')
+      .from('QUOTE-DOCUMENTS')
       .getPublicUrl(planFile.storage_path);
     planUrl = urlData.publicUrl;
     planName = planFile.file_name;

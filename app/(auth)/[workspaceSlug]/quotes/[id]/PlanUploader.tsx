@@ -31,7 +31,7 @@ export function PlanUploader({ quoteId, companyId, currentPlanUrl, currentPlanNa
     const storagePath = `${companyId}/${quoteId}/${fileName}`;
     
     const { error: uploadError } = await supabase.storage
-      .from('quote-documents')
+      .from('QUOTE-DOCUMENTS')
       .upload(storagePath, file, { upsert: true });
 
     if (uploadError) {
@@ -40,7 +40,7 @@ export function PlanUploader({ quoteId, companyId, currentPlanUrl, currentPlanNa
 
     // Get public URL (even though bucket is private, we get a signed URL via action)
     const { data: urlData } = supabase.storage
-      .from('quote-documents')
+      .from('QUOTE-DOCUMENTS')
       .getPublicUrl(storagePath);
 
     const publicUrl = urlData.publicUrl;

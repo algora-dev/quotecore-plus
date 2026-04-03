@@ -27,7 +27,7 @@ export function LogoUploader({ companyId, currentLogoUrl }: Props) {
     const storagePath = `${companyId}/${fileName}`;
     
     const { error: uploadError } = await supabase.storage
-      .from('company-logos')
+      .from('COMPANY-LOGOS')
       .upload(storagePath, file, { upsert: true });
 
     if (uploadError) {
@@ -36,7 +36,7 @@ export function LogoUploader({ companyId, currentLogoUrl }: Props) {
 
     // Get public URL
     const { data: urlData } = supabase.storage
-      .from('company-logos')
+      .from('COMPANY-LOGOS')
       .getPublicUrl(storagePath);
 
     const publicUrl = urlData.publicUrl;
