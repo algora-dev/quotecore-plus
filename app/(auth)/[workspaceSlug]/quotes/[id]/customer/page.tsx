@@ -44,12 +44,16 @@ export default async function CustomerQuotePage({
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-8 space-y-6">
           {/* Quote Header */}
           <div className="border-b pb-6">
-            {/* Logo (Top Right) */}
-            {quote.cq_company_logo_url && (
-              <div className="flex justify-end mb-3">
+            {/* Logo (Top Right) - Always show placeholder or image */}
+            <div className="flex justify-end mb-3">
+              {quote.cq_company_logo_url ? (
                 <img src={quote.cq_company_logo_url} alt="Company Logo" className="h-16 object-contain" />
-              </div>
-            )}
+              ) : (
+                <div className="w-32 h-16 border-2 border-dashed border-slate-300 rounded flex items-center justify-center bg-slate-50">
+                  <span className="text-xs text-slate-400">Logo</span>
+                </div>
+              )}
+            </div>
 
             {/* Quote Info + Company Details (Side by Side) */}
             <div className="flex justify-between items-start">
