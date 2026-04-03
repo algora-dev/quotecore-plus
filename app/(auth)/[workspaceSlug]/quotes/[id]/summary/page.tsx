@@ -66,6 +66,9 @@ export default async function QuoteSummaryPage({
             Clone Quote
           </button>
         </form>
+        <Link href={`/${workspaceSlug}/quotes/${id}/customer-edit`} className="px-4 py-2 text-sm font-medium rounded-lg bg-purple-600 text-white hover:bg-purple-700">
+          Edit Customer Quote
+        </Link>
         <Link href={`/${workspaceSlug}/quotes/${id}/customer`} className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700">
           Customer Quote
         </Link>
