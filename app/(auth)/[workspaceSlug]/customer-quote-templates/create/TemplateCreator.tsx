@@ -24,19 +24,13 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
     if (!mode) return;
 
     if (mode === 'scratch') {
-      router.push(`/${workspaceSlug}/customer-quote-templates/create/scratch?name=${encodeURIComponent(templateName)}`);
+      router.push(`/${workspaceSlug}/customer-quote-templates/create/build?name=${encodeURIComponent(templateName)}`);
     } else if (mode === 'starter') {
       if (!starterTemplate) {
         alert('Starter template not found. Please contact support.');
         return;
       }
-      router.push(`/${workspaceSlug}/customer-quote-templates/create/from-starter?name=${encodeURIComponent(templateName)}`);
-    } else if (mode === 'copy') {
-      if (!selectedTemplateId) {
-        alert('Please select a template to copy');
-        return;
-      }
-      router.push(`/${workspaceSlug}/customer-quote-templates/create/copy?template=${selectedTemplateId}&name=${encodeURIComponent(templateName)}`);
+      router.push(`/${workspaceSlug}/customer-quote-templates/create/build?name=${encodeURIComponent(templateName)}&starter=true`);
     }
   };
 
@@ -200,6 +194,16 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
           <button
             onClick={handleContinue}
             disabled={!mode || !templateName.trim()}
+            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+|| !templateName.trim()}
             className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Continue
