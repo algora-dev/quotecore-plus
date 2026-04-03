@@ -33,8 +33,9 @@ CREATE TABLE IF NOT EXISTS public.customer_quote_template_lines (
 );
 
 -- Add customer_quote_template_id to quote_templates
-ALTER TABLE public.quote_templates
-  ADD COLUMN IF NOT EXISTS customer_quote_template_id uuid REFERENCES public.customer_quote_templates(id) ON DELETE SET NULL;
+-- TODO: Uncomment when quote_templates table is created
+-- ALTER TABLE public.quote_templates
+--   ADD COLUMN IF NOT EXISTS customer_quote_template_id uuid REFERENCES public.customer_quote_templates(id) ON DELETE SET NULL;
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_cqt_company_id 
