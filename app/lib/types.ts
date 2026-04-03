@@ -135,3 +135,20 @@ export interface CustomerQuoteTemplateLineRow {
   created_at: string;
   updated_at: string;
 }
+
+// File Storage Types
+export type FileType = 'logo' | 'plan' | 'supporting';
+
+export interface QuoteFileRow {
+  id: string;
+  company_id: string;
+  quote_id: string | null;
+  file_type: FileType;
+  file_name: string;
+  file_size: number;
+  mime_type: string;
+  storage_path: string;
+  description: string | null;
+  uploaded_by: string | null;
+  uploaded_at: string;
+}
