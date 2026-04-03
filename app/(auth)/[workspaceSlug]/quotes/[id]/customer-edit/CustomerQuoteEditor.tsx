@@ -1,9 +1,11 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow } from '@/app/lib/types';
 import { QuotePreview } from './QuotePreview';
 import { AddCustomLineModal } from './AddCustomLineModal';
+import { saveCustomerQuoteLines } from '../actions';
 
 interface Props {
   quote: QuoteRow;
@@ -25,6 +27,7 @@ interface QuoteLine {
 }
 
 export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlug }: Props) {
+  const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
@@ -102,6 +105,42 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
     ));
     setEditingLineId(null);
   }
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    try {
+      await saveCustomerQuoteLines(
+        quote.id,
+        lines.map(line => ({
+          id: line.id,
+          lineType: line.type,
+          componentId: line.componentId,
+          text: line.text,
+          amount: line.amount,
+          showPrice: line.showPrice,
+          sortOrder: line.sortOrder,
+          isVisible: line.isVisible,
+        }))
+      );
+      setLastSaved(new Date());
+    } catch (err) {
+      console.error('Failed to save:', err);
+      alert('Failed to save changes. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }, [quote.id, lines]);
+
+  // Auto-save effect (3 seconds after last change)
+  useEffect(() => {
+    if (lines.length === 0) return;
+    
+    const timer = setTimeout(() => {
+      handleSave();
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [lines, handleSave]);
 
   // Group lines by roof area
   const linesByArea = lines.reduce((acc, line) => {
@@ -251,10 +290,17 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, workspaceSlu
 
             <div className="pt-4 border-t space-y-2">
               <p className="text-xs text-slate-500">
-                {lastSaved ? `Auto-saved ${Math.floor((Date.now() - lastSaved.getTime()) / 1000)}s ago` : 'Not saved yet'}
+                {saving ? 'Saving...' : lastSaved ? `Auto-saved ${Math.floor((Date.now() - lastSaved.getTime()) / 1000)}s ago` : 'Not saved yet'}
               </p>
-              <button className="w-full py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
-                Save & Generate PDF
+              <button 
+                onClick={async () => {
+                  await handleSave();
+                  router.push(`/${workspaceSlug}/quotes/${quote.id}/summary`);
+                }}
+                disabled={saving}
+                className="w-full py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save & Return to Summary'}
               </button>
             </div>
           </div>
