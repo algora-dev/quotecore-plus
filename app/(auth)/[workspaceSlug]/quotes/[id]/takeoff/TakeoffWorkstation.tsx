@@ -270,6 +270,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   // Refs to access current state in event handlers
   const calibrationModeRef = useRef(calibrationMode);
   const calibrationPointsRef = useRef(calibrationPoints);
+  const calibrationsRef = useRef(calibrations);
   const areaModeRef = useRef(areaMode);
   const areaPointsRef = useRef(areaPoints);
   const lineModeRef = useRef(lineMode);
@@ -279,12 +280,13 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   useEffect(() => {
     calibrationModeRef.current = calibrationMode;
     calibrationPointsRef.current = calibrationPoints;
+    calibrationsRef.current = calibrations;
     areaModeRef.current = areaMode;
     areaPointsRef.current = areaPoints;
     lineModeRef.current = lineMode;
     linePointsRef.current = linePoints;
     pointModeRef.current = pointMode;
-  }, [calibrationMode, calibrationPoints, areaMode, areaPoints, lineMode, linePoints, pointMode]);
+  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, lineMode, linePoints, pointMode]);
 
   // Initialize Fabric canvas
   useEffect(() => {
@@ -388,9 +390,12 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
             Math.pow(newPoint.y - firstPoint.y, 2)
           );
           
-          // Convert to real-world using calibration scale
-          const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / calibrations.length;
+          // Convert to real-world using calibration scale (use ref to avoid stale closure)
+          const currentCalibrations = calibrationsRef.current;
+          const avgScale = currentCalibrations.reduce((s, cal) => s + cal.scale, 0) / currentCalibrations.length;
           const realDistance = pixelDistance * avgScale;
+          
+          console.log('[Line] Calculated:', { pixelDistance, avgScale, realDistance, calibrationCount: currentCalibrations.length });
           
           // Show confirmation modal
           setPendingLineMeasurement({ 
