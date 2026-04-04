@@ -2,14 +2,16 @@
 import { useState } from 'react';
 import type { CustomerQuoteTemplateRow } from '@/app/lib/types';
 import { updateCustomerQuoteTemplate } from './actions';
+import { CustomerTemplateLogoUploader } from './CustomerTemplateLogoUploader';
 
 interface Props {
   template: CustomerQuoteTemplateRow;
+  companyId: string;
   onClose: () => void;
   onSaved: () => void;
 }
 
-export function EditCustomerTemplateModal({ template, onClose, onSaved }: Props) {
+export function EditCustomerTemplateModal({ template, companyId, onClose, onSaved }: Props) {
   const [name, setName] = useState(template.name);
   const [companyName, setCompanyName] = useState(template.company_name || '');
   const [companyAddress, setCompanyAddress] = useState(template.company_address || '');
@@ -111,7 +113,7 @@ export function EditCustomerTemplateModal({ template, onClose, onSaved }: Props)
                 />
               </div>
 
-              <div>
+              <div className="col-span-2">
                 <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
                 <input
                   type="email"
@@ -120,28 +122,17 @@ export function EditCustomerTemplateModal({ template, onClose, onSaved }: Props)
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Logo URL</label>
-                <input
-                  type="text"
-                  value={companyLogoUrl}
-                  onChange={(e) => setCompanyLogoUrl(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
             </div>
 
-            {companyLogoUrl && (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Logo Preview</label>
-                <img 
-                  src={companyLogoUrl} 
-                  alt="Company Logo" 
-                  className="h-16 object-contain border border-slate-200 rounded p-2"
-                />
-              </div>
-            )}
+            {/* Logo Uploader */}
+            <div className="pt-4 border-t border-slate-200">
+              <CustomerTemplateLogoUploader
+                companyId={companyId}
+                templateId={template.id}
+                currentLogoUrl={companyLogoUrl}
+                onUploadComplete={(url) => setCompanyLogoUrl(url)}
+              />
+            </div>
           </div>
 
           {/* Footer Section */}

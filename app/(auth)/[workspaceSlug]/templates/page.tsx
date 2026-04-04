@@ -27,6 +27,7 @@ export default async function TemplatesPage({
   return (
     <TemplatesPageClient
       workspaceSlug={workspaceSlug}
+      companyId={profile.company_id}
       quoteTemplates={quoteTemplates || []}
       customerQuoteTemplates={customerQuoteTemplates}
       initialTab={tab || 'quote'}

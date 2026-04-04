@@ -9,12 +9,13 @@ import { EditCustomerTemplateModal } from './EditCustomerTemplateModal';
 
 interface Props {
   workspaceSlug: string;
+  companyId: string;
   quoteTemplates: TemplateRow[];
   customerQuoteTemplates: CustomerQuoteTemplateRow[];
   initialTab: string;
 }
 
-export function TemplatesPageClient({ workspaceSlug, quoteTemplates, customerQuoteTemplates, initialTab }: Props) {
+export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, customerQuoteTemplates, initialTab }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'quote' | 'customer'>(
     initialTab === 'customer' ? 'customer' : 'quote'
@@ -296,6 +297,7 @@ export function TemplatesPageClient({ workspaceSlug, quoteTemplates, customerQuo
       {editingCustomerTemplate && (
         <EditCustomerTemplateModal
           template={editingCustomerTemplate}
+          companyId={companyId}
           onClose={() => setEditingCustomerTemplate(null)}
           onSaved={() => {
             setEditingCustomerTemplate(null);
