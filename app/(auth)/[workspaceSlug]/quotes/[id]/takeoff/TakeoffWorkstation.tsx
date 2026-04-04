@@ -297,18 +297,13 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
                 ⚠️ Calibrate first to continue
               </div>
             ) : calibrationConfirmed ? (
-              /* Confirmed - Show only scale */
+              /* Confirmed - Show only scale (minimal) */
               <div className="space-y-2">
                 <div className="p-3 rounded bg-green-600/20 border border-green-600">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="text-green-400 font-bold">✓ Confirmed</div>
-                  </div>
+                  <div className="text-green-400 font-bold mb-2">✓ Confirmed</div>
                   <div className="text-xs text-slate-400 mb-1">Scale</div>
                   <div className="font-bold text-green-400">
                     {(calibrations.reduce((sum, cal) => sum + cal.scale, 0) / calibrations.length).toFixed(4)} {calibrations[0].unit}/px
-                  </div>
-                  <div className="text-xs text-slate-400 mt-1">
-                    {calibrations.length} measurement{calibrations.length > 1 ? 's' : ''}
                   </div>
                 </div>
               </div>
@@ -440,7 +435,10 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
 
           {/* Canvas */}
           <div className="flex-1 flex items-center justify-center">
-            <div className="border-2 border-slate-700 rounded">
+            <div 
+              className="border-2 border-slate-700 rounded"
+              style={{ cursor: calibrationMode ? 'crosshair' : 'default' }}
+            >
               <canvas ref={canvasRef} />
             </div>
           </div>
