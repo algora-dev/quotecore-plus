@@ -217,7 +217,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
     }
   };
 
-  const handleSaveCalibration = (actualDistance: number, unit: 'feet' | 'meters') => {
+  const handleSaveCalibration = (actualDistance: number, unit: 'feet' | 'meters', addAnother: boolean) => {
     if (calibrationPoints.length !== 2) return;
     
     const [point1, point2] = calibrationPoints;
@@ -236,11 +236,22 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
       scale,
     };
     
-    setCalibrations([...calibrations, newCalibration]);
+    const updatedCalibrations = [...calibrations, newCalibration];
+    setCalibrations(updatedCalibrations);
+    
+    // Calculate average scale
+    const avgScale = updatedCalibrations.reduce((sum, cal) => sum + cal.scale, 0) / updatedCalibrations.length;
     setActiveCalibrationId(newCalibration.id);
-    setCalibrationMode(false);
+    
     setCalibrationPoints([]);
     setShowCalibrationModal(false);
+    
+    // Prompt for another calibration if < 3 and user wants
+    if (addAnother && updatedCalibrations.length < 3) {
+      setCalibrationMode(true);
+    } else {
+      setCalibrationMode(false);
+    }
   };
 
   return (
@@ -256,7 +267,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
           </Link>
           <h1 className="text-xl font-semibold">{quote.customer_name} - Digital Takeoff</h1>
         </div>
-        <button className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded">
+        <button
+          disabled={calibrations.length === 0}
+          className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          title={calibrations.length === 0 ? 'Calibrate the plan first' : ''}
+        >
           Save & Continue to Components
         </button>
       </div>
@@ -268,29 +283,34 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
           <div>
             <h2 className="text-sm font-semibold mb-3 text-slate-400">Calibration</h2>
             {calibrations.length === 0 ? (
-              <div className="text-sm text-slate-500">
-                Click "Calibrate" to set scale
+              <div className="text-sm text-yellow-400 font-medium">
+                ⚠️ Calibrate first to continue
               </div>
             ) : (
               <div className="space-y-2">
-                {calibrations.map((cal) => (
+                {/* Average Scale Display */}
+                <div className="p-3 rounded bg-yellow-600/20 border border-yellow-600">
+                  <div className="text-xs text-slate-400 mb-1">Average Scale</div>
+                  <div className="font-bold text-yellow-400">
+                    {(calibrations.reduce((sum, cal) => sum + cal.scale, 0) / calibrations.length).toFixed(4)} {calibrations[0].unit}/px
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1">
+                    Based on {calibrations.length} measurement{calibrations.length > 1 ? 's' : ''}
+                  </div>
+                </div>
+                
+                {/* Individual Calibrations */}
+                {calibrations.map((cal, idx) => (
                   <div
                     key={cal.id}
-                    className={`p-2 rounded text-sm ${
-                      activeCalibrationId === cal.id
-                        ? 'bg-yellow-600/20 border border-yellow-600'
-                        : 'bg-slate-700'
-                    }`}
+                    className="p-2 rounded text-sm bg-slate-700"
                   >
                     <div className="font-medium">
-                      {cal.actualDistance} {cal.unit}
+                      #{idx + 1}: {cal.actualDistance} {cal.unit}
                     </div>
                     <div className="text-xs text-slate-400">
-                      Scale: {cal.scale.toFixed(4)} {cal.unit}/px
+                      {cal.scale.toFixed(4)} {cal.unit}/px
                     </div>
-                    {activeCalibrationId === cal.id && (
-                      <div className="text-xs text-yellow-400 mt-1">Active</div>
-                    )}
                   </div>
                 ))}
               </div>
@@ -329,20 +349,23 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
                 📐 Calibrate
               </button>
               <button
-                disabled={calibrationMode}
+                disabled={calibrationMode || calibrations.length === 0}
                 className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={calibrations.length === 0 ? 'Calibrate first' : ''}
               >
                 📏 Line
               </button>
               <button
-                disabled={calibrationMode}
+                disabled={calibrationMode || calibrations.length === 0}
                 className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={calibrations.length === 0 ? 'Calibrate first' : ''}
               >
                 📐 Area
               </button>
               <button
-                disabled={calibrationMode}
+                disabled={calibrationMode || calibrations.length === 0}
                 className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={calibrations.length === 0 ? 'Calibrate first' : ''}
               >
                 📍 Point
               </button>
@@ -395,6 +418,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
       {/* Calibration Modal */}
       {showCalibrationModal && (
         <CalibrationModal
+          calibrationNumber={calibrations.length + 1}
           onSave={handleSaveCalibration}
           onCancel={handleCancelCalibration}
         />
@@ -405,28 +429,38 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
 
 // Calibration Modal Component
 function CalibrationModal({
+  calibrationNumber,
   onSave,
   onCancel,
 }: {
-  onSave: (distance: number, unit: 'feet' | 'meters') => void;
+  calibrationNumber: number;
+  onSave: (distance: number, unit: 'feet' | 'meters', addAnother: boolean) => void;
   onCancel: () => void;
 }) {
   const [distance, setDistance] = useState('');
   const [unit, setUnit] = useState<'feet' | 'meters'>('feet');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (addAnother: boolean) => {
     const num = parseFloat(distance);
     if (!isNaN(num) && num > 0) {
-      onSave(num, unit);
+      onSave(num, unit, addAnother);
     }
   };
+
+  const canAddAnother = calibrationNumber < 3;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-slate-800 rounded-lg p-6 w-96 border border-slate-700">
-        <h2 className="text-xl font-semibold mb-4">Enter Actual Distance</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <h2 className="text-xl font-semibold mb-2">
+          Calibration {calibrationNumber} of 3
+        </h2>
+        <p className="text-sm text-slate-400 mb-4">
+          {calibrationNumber === 1
+            ? 'At least 1 calibration required. More = better accuracy.'
+            : `Add ${3 - calibrationNumber + 1} more for best accuracy, or skip.`}
+        </p>
+        <div className="space-y-4">
           <div>
             <label className="block text-sm mb-2">Distance</label>
             <input
@@ -459,14 +493,25 @@ function CalibrationModal({
             >
               Cancel
             </button>
+            {canAddAnother && calibrationNumber > 1 && (
+              <button
+                type="button"
+                onClick={() => handleSubmit(false)}
+                className="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded"
+              >
+                Skip
+              </button>
+            )}
             <button
-              type="submit"
+              type="button"
+              onClick={() => handleSubmit(canAddAnother)}
               className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded"
+              disabled={!distance || parseFloat(distance) <= 0}
             >
-              Save Calibration
+              {canAddAnother && calibrationNumber < 3 ? 'Save & Add Another' : 'Save'}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
