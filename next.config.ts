@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['canvas', 'konva'],
+  // No serverExternalPackages needed for fabric.js
 };
 
 export default nextConfig;

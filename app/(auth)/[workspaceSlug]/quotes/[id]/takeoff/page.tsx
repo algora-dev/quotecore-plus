@@ -42,7 +42,7 @@ export default async function Page({
 
   // Get public URL
   const { data: urlData } = supabase.storage
-    .from('quote-documents')
+    .from('QUOTE-DOCUMENTS')
     .getPublicUrl(planFile.storage_path);
 
   return (
