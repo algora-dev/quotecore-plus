@@ -162,6 +162,15 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
     };
   }, [planUrl]);
 
+  // Update cursor when calibration mode changes
+  useEffect(() => {
+    if (fabricRef.current) {
+      const cursor = calibrationMode ? 'crosshair' : 'default';
+      fabricRef.current.defaultCursor = cursor;
+      fabricRef.current.hoverCursor = cursor;
+    }
+  }, [calibrationMode]);
+
   // Zoom controls
   const handleZoomIn = () => {
     if (!fabricRef.current) return;
@@ -435,10 +444,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
 
           {/* Canvas */}
           <div className="flex-1 flex items-center justify-center">
-            <div 
-              className="border-2 border-slate-700 rounded"
-              style={{ cursor: calibrationMode ? 'crosshair' : 'default' }}
-            >
+            <div className="border-2 border-slate-700 rounded">
               <canvas ref={canvasRef} />
             </div>
           </div>
@@ -533,18 +539,30 @@ function CalibrationModal({
                 type="button"
                 onClick={() => handleSubmit(false)}
                 className="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded"
+                disabled={!distance || parseFloat(distance) <= 0}
               >
                 Skip
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => handleSubmit(canAddAnother)}
-              className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded"
-              disabled={!distance || parseFloat(distance) <= 0}
-            >
-              {canAddAnother && calibrationNumber < 3 ? 'Save & Add Another' : 'Save'}
-            </button>
+            {canAddAnother ? (
+              <button
+                type="button"
+                onClick={() => handleSubmit(true)}
+                className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded"
+                disabled={!distance || parseFloat(distance) <= 0}
+              >
+                Save & Add Another
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleSubmit(false)}
+                className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded"
+                disabled={!distance || parseFloat(distance) <= 0}
+              >
+                Save
+              </button>
+            )}
           </div>
         </div>
       </div>
