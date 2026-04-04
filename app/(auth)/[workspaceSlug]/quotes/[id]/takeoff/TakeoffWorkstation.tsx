@@ -1111,6 +1111,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                     return;
                   }
                   setLineMode(!lineMode);
+                  setAreaMode(false);
+                  setPointMode(false);
                   setLinePoints([]);
                 }}
                 disabled={calibrationMode || calibrations.length === 0}
@@ -1124,6 +1126,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
               <button
                 onClick={() => {
                   setAreaMode(!areaMode);
+                  setLineMode(false);
+                  setPointMode(false);
                   setAreaPoints([]);
                 }}
                 disabled={calibrationMode || calibrations.length === 0}
@@ -1141,6 +1145,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                     return;
                   }
                   setPointMode(!pointMode);
+                  setLineMode(false);
+                  setAreaMode(false);
                 }}
                 disabled={calibrationMode || calibrations.length === 0}
                 className={`px-3 py-2 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
