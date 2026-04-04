@@ -10,8 +10,8 @@ interface Props {
   planUrl: string;
 }
 
-const CANVAS_WIDTH = 1000;
-const CANVAS_HEIGHT = 700;
+const CANVAS_WIDTH = 800;
+const CANVAS_HEIGHT = 600;
 
 export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -148,72 +148,77 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar - Tools */}
-        <div className="w-64 bg-slate-800 border-r border-slate-700 p-4 space-y-4 overflow-y-auto">
+        {/* Left Sidebar - Roof Areas & Components */}
+        <div className="w-80 bg-slate-800 border-r border-slate-700 p-4 overflow-y-auto space-y-6">
           <div>
-            <h2 className="text-sm font-semibold mb-2 text-slate-400">Tools</h2>
-            <div className="space-y-2">
-              <button className="w-full px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-left text-sm">
-                📏 Line Measurement
-              </button>
-              <button className="w-full px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-left text-sm">
-                📐 Area (Polygon)
-              </button>
-              <button className="w-full px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-left text-sm">
-                📍 Point Marker
-              </button>
+            <h2 className="text-sm font-semibold mb-3 text-slate-400">Roof Areas</h2>
+            <div className="text-sm text-slate-500">
+              No areas defined yet
             </div>
           </div>
 
-          <div>
-            <h2 className="text-sm font-semibold mb-2 text-slate-400">Measurements</h2>
+          <div className="border-t border-slate-700 pt-4">
+            <h2 className="text-sm font-semibold mb-3 text-slate-400">Components</h2>
             <div className="text-sm text-slate-500">
-              No measurements yet
+              No components assigned yet
             </div>
           </div>
         </div>
 
         {/* Center - Canvas */}
-        <div className="flex-1 flex flex-col items-center justify-center p-6 relative">
-          {/* Zoom Controls */}
-          <div className="absolute top-4 right-4 flex gap-2 bg-slate-800 rounded-lg p-2 shadow-lg">
-            <button
-              onClick={handleZoomOut}
-              className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-sm"
-            >
-              −
-            </button>
-            <span className="px-3 py-1 text-sm">{Math.round(zoom * 100)}%</span>
-            <button
-              onClick={handleZoomIn}
-              className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-sm"
-            >
-              +
-            </button>
-            <button
-              onClick={handleResetZoom}
-              className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-sm"
-            >
-              Reset
-            </button>
-            <button
-              onClick={handleFitToScreen}
-              className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-sm"
-            >
-              Fit
-            </button>
+        <div className="flex-1 flex flex-col p-6 relative">
+          {/* Top Toolbar */}
+          <div className="mb-4 flex items-center justify-between bg-slate-800 rounded-lg p-3 shadow-lg">
+            {/* Tools - Left Side */}
+            <div className="flex gap-2">
+              <button className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm flex items-center gap-2">
+                📏 Line
+              </button>
+              <button className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm flex items-center gap-2">
+                📐 Area
+              </button>
+              <button className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm flex items-center gap-2">
+                📍 Point
+              </button>
+            </div>
+
+            {/* Zoom Controls - Right Side */}
+            <div className="flex gap-2">
+              <button
+                onClick={handleZoomOut}
+                className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-sm"
+              >
+                −
+              </button>
+              <span className="px-3 py-1 text-sm">{Math.round(zoom * 100)}%</span>
+              <button
+                onClick={handleZoomIn}
+                className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-sm"
+              >
+                +
+              </button>
+              <button
+                onClick={handleResetZoom}
+                className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-sm"
+              >
+                Reset
+              </button>
+              <button
+                onClick={handleFitToScreen}
+                className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-sm"
+              >
+                Fit
+              </button>
+            </div>
           </div>
 
-          <canvas ref={canvasRef} />
-          <p className="mt-4 text-sm text-slate-500">Hold Alt + Drag to pan</p>
-        </div>
-
-        {/* Right Sidebar - Components */}
-        <div className="w-80 bg-slate-800 border-l border-slate-700 p-4 overflow-y-auto">
-          <h2 className="text-sm font-semibold mb-2 text-slate-400">Components</h2>
-          <div className="text-sm text-slate-500">
-            No components assigned yet
+          {/* Canvas */}
+          <div className="flex-1 flex items-center justify-center">
+            <div className="border-2 border-slate-700 rounded">
+              <canvas ref={canvasRef} />
+            </div>
           </div>
+          <p className="mt-4 text-center text-sm text-slate-500">Hold Alt + Drag to pan</p>
         </div>
       </div>
     </div>
