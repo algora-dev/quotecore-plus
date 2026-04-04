@@ -185,6 +185,26 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     }));
   };
   
+  const handleDeleteMeasurement = (componentId: string, measurementId: string) => {
+    setComponentMeasurements(componentMeasurements.map(comp => {
+      if (comp.componentId === componentId) {
+        const measurement = comp.measurements.find(m => m.id === measurementId);
+        
+        // Remove from canvas
+        if (measurement && fabricRef.current) {
+          measurement.canvasObjects?.forEach(obj => fabricRef.current!.remove(obj));
+          fabricRef.current.renderAll();
+        }
+        
+        return {
+          ...comp,
+          measurements: comp.measurements.filter(m => m.id !== measurementId),
+        };
+      }
+      return comp;
+    }));
+  };
+  
   // Calculate area using Shoelace formula
   const calculatePolygonArea = (points: { x: number; y: number }[]) => {
     let sum = 0;
@@ -833,36 +853,90 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 {activeComponentIds.length > 0 && (
                   <div>
                     <h3 className="text-xs font-semibold text-slate-500 mb-2">Active ({activeComponentIds.length})</h3>
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       {activeComponentIds.map((id) => {
                         const comp = displayComponents.find(c => c.id === id);
                         const assignment = componentColors.find(c => c.componentId === id);
-                        if (!comp) return null;
+                        const compData = componentMeasurements.find(c => c.componentId === id);
                         const isSelected = selectedComponentId === comp.id;
+                        
+                        if (!comp) return null;
+                        
                         return (
-                          <div
-                            key={comp.id}
-                            onClick={() => setSelectedComponentId(comp.id)}
-                            className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-all ${
-                              isSelected 
-                                ? 'bg-slate-600 ring-2 ring-blue-500' 
-                                : 'bg-slate-700 hover:bg-slate-650'
-                            }`}
-                          >
+                          <div key={comp.id}>
+                            {/* Component header */}
                             <div
-                              className="w-6 h-6 rounded border-2 border-slate-600 flex-shrink-0"
-                              style={{ backgroundColor: assignment?.color }}
-                            />
-                            <div className="flex-1 text-sm font-medium">{comp.name}</div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveComponent(comp.id);
-                              }}
-                              className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-600/20 rounded"
+                              onClick={() => setSelectedComponentId(comp.id)}
+                              className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-all ${
+                                isSelected 
+                                  ? 'bg-slate-600 ring-2 ring-blue-500' 
+                                  : 'bg-slate-700 hover:bg-slate-650'
+                              }`}
                             >
-                              ×
-                            </button>
+                              <div
+                                className="w-6 h-6 rounded border-2 border-slate-600 flex-shrink-0"
+                                style={{ backgroundColor: assignment?.color }}
+                              />
+                              <div className="flex-1 text-sm font-medium">{comp.name}</div>
+                              
+                              {/* Measurement count badge */}
+                              {compData && compData.measurements.length > 0 && (
+                                <span className="text-xs bg-blue-600 px-2 py-1 rounded">
+                                  {compData.measurements.length}
+                                </span>
+                              )}
+                              
+                              {/* Expand/collapse button */}
+                              {compData && compData.measurements.length > 0 && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setComponentMeasurements(componentMeasurements.map(c =>
+                                      c.componentId === id ? { ...c, expanded: !c.expanded } : c
+                                    ));
+                                  }}
+                                  className="text-slate-400 hover:text-white"
+                                >
+                                  {compData.expanded ? '▼' : '▶'}
+                                </button>
+                              )}
+                              
+                              {/* Remove component button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveComponent(comp.id);
+                                }}
+                                className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-600/20 rounded"
+                              >
+                                ×
+                              </button>
+                            </div>
+                            
+                            {/* Measurement list (expanded) */}
+                            {compData && compData.expanded && compData.measurements.length > 0 && (
+                              <div className="ml-8 mt-1 space-y-1">
+                                {compData.measurements.map((m) => (
+                                  <div
+                                    key={m.id}
+                                    className="flex items-center gap-2 p-1 text-xs text-slate-300 bg-slate-800/50 rounded"
+                                  >
+                                    <span className="flex-1">
+                                      {m.type === 'line' && `📏 ${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'}`}
+                                      {m.type === 'area' && `📐 ${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
+                                      {m.type === 'point' && `📍 1 item`}
+                                    </span>
+                                    <button
+                                      onClick={() => handleDeleteMeasurement(id, m.id)}
+                                      className="text-red-400 hover:text-red-300"
+                                      title="Delete measurement"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
