@@ -24,23 +24,26 @@ export default async function Page({
   }
 
   // Load roof plan
-  const { data: planFile } = await supabase
+  const { data: planFile, error: planError } = await supabase
     .from('quote_files')
-    .select('file_path')
+    .select('storage_path')
     .eq('quote_id', quoteId)
     .eq('file_type', 'plan')
     .order('uploaded_at', { ascending: false })
     .limit(1)
     .single();
 
+  console.log('[Takeoff] Plan file query result:', { planFile, planError, quoteId });
+
   if (!planFile) {
+    console.log('[Takeoff] No plan file found, returning 404');
     notFound();
   }
 
   // Get public URL
   const { data: urlData } = supabase.storage
     .from('quote-documents')
-    .getPublicUrl(planFile.file_path);
+    .getPublicUrl(planFile.storage_path);
 
   return (
     <TakeoffPage
