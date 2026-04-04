@@ -74,7 +74,7 @@ export function QuoteBuilder({
   useEffect(() => {
     if (takeoffPopulated || !takeoffData || takeoffData.length === 0) return;
     
-    console.log('[QuoteBuilder] Checking takeoff components against existing...');
+    console.log('[QuoteBuilder] Checking takeoff against existing components:', components.length, components);
     setTakeoffPopulated(true); // Set flag immediately to prevent re-runs
     
     (async () => {
@@ -102,23 +102,28 @@ export function QuoteBuilder({
         
         console.log('[QuoteBuilder] Adding new component from takeoff:', item.componentName);
         
-        const created = await addQuoteComponent(quote.id, {
-          component_library_id: item.componentId,
-          name: item.componentName,
-          component_type: 'main',
-          measurement_type: 'linear',
-          material_rate: libComp.material_rate || 0,
-          labour_rate: libComp.labour_rate || 0,
-          waste_type: 'none',
-        });
-        
-        newComponents.push(created);
+        try {
+          const created = await addQuoteComponent(quote.id, {
+            component_library_id: item.componentId,
+            name: item.componentName,
+            component_type: 'main',
+            measurement_type: 'linear',
+            material_rate: libComp.material_rate || 0,
+            labour_rate: libComp.labour_rate || 0,
+            waste_type: 'none',
+          });
+          
+          console.log('[QuoteBuilder] Component created:', created);
+          newComponents.push(created);
+        } catch (err) {
+          console.error('[QuoteBuilder] Failed to add component:', err);
+        }
       }
       
       if (newComponents.length > 0) {
-        console.log('[QuoteBuilder] Added', newComponents.length, 'components to DB, refreshing page...');
-        router.refresh(); // Reload server data to show new components
-        setPhase('components'); // Switch to components tab
+        console.log('[QuoteBuilder] Added', newComponents.length, 'components to DB, reloading page...');
+        // Full page reload to show new components
+        window.location.href = `/${workspaceSlug}/quotes/${quote.id}`;
       } else {
         console.log('[QuoteBuilder] No new components to add');
       }
