@@ -297,8 +297,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         calibrations[0]?.unit || 'feet'
       );
       
-      // Navigate to Components tab
-      router.push(`/${workspaceSlug}/quotes/${quote.id}?tab=components`);
+      // Navigate to quote builder (will need to auto-load takeoff data)
+      router.push(`/${workspaceSlug}/quotes/${quote.id}`);
     } catch (error) {
       console.error('[SaveTakeoff] Error:', error);
       alert('Failed to save measurements. Please try again.');
