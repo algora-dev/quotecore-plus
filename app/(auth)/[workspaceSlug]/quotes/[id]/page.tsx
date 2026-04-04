@@ -2,6 +2,7 @@ import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadAllEntriesForQu
 import { loadComponentLibrary } from '../../components/actions';
 import { QuoteBuilder } from './quote-builder';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { loadTakeoffMeasurements } from './takeoff/actions';
 
 export default async function QuoteBuilderPage({
   params,
@@ -9,13 +10,14 @@ export default async function QuoteBuilderPage({
   params: Promise<{ workspaceSlug: string; id: string }>;
 }) {
   const { workspaceSlug, id } = await params;
-  const [quote, roofAreas, roofAreaEntries, components, libraryComponents, entries] = await Promise.all([
+  const [quote, roofAreas, roofAreaEntries, components, libraryComponents, entries, takeoffData] = await Promise.all([
     loadQuote(id),
     loadQuoteRoofAreas(id),
     loadAllRoofAreaEntriesForQuote(id),
     loadQuoteComponents(id),
     loadComponentLibrary(),
     loadAllEntriesForQuote(id),
+    loadTakeoffMeasurements(id),
   ]);
   
   const supabase = await createSupabaseServerClient();
@@ -82,6 +84,7 @@ export default async function QuoteBuilderPage({
       planUrl={planUrl}
       planName={planName}
       supportingFiles={supportingFiles}
+      takeoffData={takeoffData}
     />
   );
 }
