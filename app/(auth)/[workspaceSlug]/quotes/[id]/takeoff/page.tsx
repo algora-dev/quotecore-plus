@@ -48,7 +48,7 @@ export default async function Page({
   // Load components from component library
   const { data: components, error: componentsError } = await supabase
     .from('component_library')
-    .select('id, name, category')
+    .select('id, name')
     .eq('company_id', profile.company_id)
     .order('name');
   

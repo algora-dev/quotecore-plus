@@ -17,7 +17,6 @@ const TakeoffWorkstation = dynamic(
 interface Component {
   id: string;
   name: string;
-  category: string;
 }
 
 interface Props {

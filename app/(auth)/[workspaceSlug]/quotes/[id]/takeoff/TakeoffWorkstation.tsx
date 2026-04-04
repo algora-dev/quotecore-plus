@@ -7,7 +7,6 @@ import type { QuoteRow } from '@/app/lib/types';
 interface Component {
   id: string;
   name: string;
-  category: string;
 }
 
 interface ComponentColor {
@@ -423,10 +422,10 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         Math.pow(pointer.y - firstPoint.y, 2)
       );
       
-      // Change cursor when near first point
+      // Change cursor when near first point (to close polygon)
       if (distance < 15) {
-        canvas.defaultCursor = 'pointer';
-        canvas.hoverCursor = 'pointer';
+        canvas.defaultCursor = 'alias'; // connecting/link cursor
+        canvas.hoverCursor = 'alias';
       } else {
         canvas.defaultCursor = 'crosshair';
         canvas.hoverCursor = 'crosshair';
@@ -670,15 +669,19 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                       <div className="flex gap-1">
                         <button
                           onClick={() => handleToggleAreaVisibility(area.id)}
-                          className="w-6 h-6 flex items-center justify-center hover:bg-blue-600/30 rounded text-lg"
-                          title={area.visible ? 'Hide' : 'Show'}
+                          className={`w-6 h-6 flex items-center justify-center rounded text-lg transition-colors ${
+                            area.visible 
+                              ? 'text-green-500 hover:bg-green-600/20' 
+                              : 'text-green-500 hover:bg-green-600/20'
+                          }`}
+                          title={area.visible ? 'Hide area' : 'Show area'}
                         >
                           {area.visible ? '●' : '○'}
                         </button>
                         <button
                           onClick={() => handleDeleteArea(area.id)}
                           className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-600/20 rounded"
-                          title="Delete"
+                          title="Delete area"
                         >
                           ×
                         </button>
@@ -748,10 +751,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                               className="w-6 h-6 rounded border-2 border-slate-600 flex-shrink-0"
                               style={{ backgroundColor: assignment?.color }}
                             />
-                            <div className="flex-1 text-sm">
-                              <div className="font-medium">{comp.name}</div>
-                              <div className="text-xs text-slate-400">{comp.category}</div>
-                            </div>
+                            <div className="flex-1 text-sm font-medium">{comp.name}</div>
                             <button
                               onClick={() => handleAddComponent(comp.id)}
                               className="w-6 h-6 flex items-center justify-center text-green-400 hover:bg-green-600/20 rounded font-bold"
