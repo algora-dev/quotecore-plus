@@ -1,8 +1,20 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { TakeoffWorkstation } from './TakeoffWorkstation';
+import dynamic from 'next/dynamic';
 import type { QuoteRow } from '@/app/lib/types';
+
+const TakeoffWorkstation = dynamic(
+  () => import('./TakeoffWorkstation').then(mod => ({ default: mod.TakeoffWorkstation })),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-white">Loading canvas...</div>
+      </div>
+    )
+  }
+);
 
 interface Props {
   workspaceSlug: string;
