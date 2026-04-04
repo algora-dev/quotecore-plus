@@ -41,6 +41,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
   const [showCalibrationModal, setShowCalibrationModal] = useState(false);
   const [tempCalibrationLine, setTempCalibrationLine] = useState<any>(null);
   const [calibrationConfirmed, setCalibrationConfirmed] = useState(false);
+  const [showConfirmedFlash, setShowConfirmedFlash] = useState(false);
   
   // Refs to access current state in event handlers
   const calibrationModeRef = useRef(calibrationMode);
@@ -222,6 +223,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
 
   const handleConfirmCalibration = () => {
     setCalibrationConfirmed(true);
+    setShowConfirmedFlash(true);
+    // Hide calibration section after 0.5s flash
+    setTimeout(() => {
+      setShowConfirmedFlash(false);
+    }, 500);
   };
 
   const handleCancelCalibration = () => {
@@ -298,25 +304,24 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar - Calibration, Roof Areas & Components */}
         <div className="w-80 bg-slate-800 border-r border-slate-700 p-4 overflow-y-auto space-y-6">
-          {/* Calibration Section */}
-          <div>
-            <h2 className="text-sm font-semibold mb-3 text-slate-400">Calibration</h2>
-            {calibrations.length === 0 ? (
-              <div className="text-sm text-yellow-400 font-medium">
-                ⚠️ Calibrate first to continue
-              </div>
-            ) : calibrationConfirmed ? (
-              /* Confirmed - Show only scale (minimal) */
-              <div className="space-y-2">
-                <div className="p-3 rounded bg-green-600/20 border border-green-600">
+          {/* Calibration Section - Show if: not confirmed, calibration mode, or showing flash */}
+          {(!calibrationConfirmed || calibrationMode || showConfirmedFlash) && (
+            <div>
+              <h2 className="text-sm font-semibold mb-3 text-slate-400">Calibration</h2>
+              {calibrations.length === 0 ? (
+                <div className="text-sm text-yellow-400 font-medium">
+                  ⚠️ Calibrate first to continue
+                </div>
+              ) : showConfirmedFlash ? (
+                /* Flash green confirmation briefly */
+                <div className="p-3 rounded bg-green-600/20 border border-green-600 animate-pulse">
                   <div className="text-green-400 font-bold mb-2">✓ Confirmed</div>
                   <div className="text-xs text-slate-400 mb-1">Scale</div>
                   <div className="font-bold text-green-400">
                     {(calibrations.reduce((sum, cal) => sum + cal.scale, 0) / calibrations.length).toFixed(4)} {calibrations[0].unit}/px
                   </div>
                 </div>
-              </div>
-            ) : (
+              ) : (
               /* Not confirmed - Show details + Confirm button */
               <div className="space-y-2">
                 {/* Average Scale Display */}
@@ -353,8 +358,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
                   ✓ Confirm Calibration
                 </button>
               </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           <div className="border-t border-slate-700 pt-4">
             <h2 className="text-sm font-semibold mb-3 text-slate-400">Roof Areas</h2>
