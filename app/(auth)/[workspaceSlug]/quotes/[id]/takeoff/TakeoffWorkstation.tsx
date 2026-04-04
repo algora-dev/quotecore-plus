@@ -40,6 +40,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
   const [activeCalibrationId, setActiveCalibrationId] = useState<string | null>(null);
   const [showCalibrationModal, setShowCalibrationModal] = useState(false);
   const [tempCalibrationLine, setTempCalibrationLine] = useState<any>(null);
+  const [calibrationConfirmed, setCalibrationConfirmed] = useState(false);
   
   // Refs to access current state in event handlers
   const calibrationModeRef = useRef(calibrationMode);
@@ -201,8 +202,17 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
   };
 
   const handleStartCalibration = () => {
+    // If recalibrating, clear confirmation
+    if (calibrationConfirmed) {
+      setCalibrationConfirmed(false);
+      setCalibrations([]);
+    }
     setCalibrationMode(true);
     setCalibrationPoints([]);
+  };
+
+  const handleConfirmCalibration = () => {
+    setCalibrationConfirmed(true);
   };
 
   const handleCancelCalibration = () => {
@@ -286,7 +296,24 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
               <div className="text-sm text-yellow-400 font-medium">
                 ⚠️ Calibrate first to continue
               </div>
+            ) : calibrationConfirmed ? (
+              /* Confirmed - Show only scale */
+              <div className="space-y-2">
+                <div className="p-3 rounded bg-green-600/20 border border-green-600">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="text-green-400 font-bold">✓ Confirmed</div>
+                  </div>
+                  <div className="text-xs text-slate-400 mb-1">Scale</div>
+                  <div className="font-bold text-green-400">
+                    {(calibrations.reduce((sum, cal) => sum + cal.scale, 0) / calibrations.length).toFixed(4)} {calibrations[0].unit}/px
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1">
+                    {calibrations.length} measurement{calibrations.length > 1 ? 's' : ''}
+                  </div>
+                </div>
+              </div>
             ) : (
+              /* Not confirmed - Show details + Confirm button */
               <div className="space-y-2">
                 {/* Average Scale Display */}
                 <div className="p-3 rounded bg-yellow-600/20 border border-yellow-600">
@@ -313,6 +340,14 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
                     </div>
                   </div>
                 ))}
+                
+                {/* Confirm Button */}
+                <button
+                  onClick={handleConfirmCalibration}
+                  className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 rounded text-sm font-medium"
+                >
+                  ✓ Confirm Calibration
+                </button>
               </div>
             )}
           </div>
@@ -343,10 +378,12 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
                 className={`px-3 py-2 rounded text-sm flex items-center gap-2 ${
                   calibrationMode
                     ? 'bg-yellow-600 hover:bg-yellow-700'
+                    : calibrationConfirmed
+                    ? 'bg-slate-600 hover:bg-slate-500'
                     : 'bg-slate-700 hover:bg-slate-600'
                 }`}
               >
-                📐 Calibrate
+                📐 {calibrationConfirmed ? 'Recalibrate' : 'Calibrate'}
               </button>
               <button
                 disabled={calibrationMode || calibrations.length === 0}
