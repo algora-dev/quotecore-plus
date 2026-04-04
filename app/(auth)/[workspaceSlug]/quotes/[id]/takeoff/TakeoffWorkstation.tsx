@@ -72,15 +72,27 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   
   // Component colors (auto-assign on mount)
   const [componentColors, setComponentColors] = useState<ComponentColor[]>([]);
+  const [activeComponentIds, setActiveComponentIds] = useState<string[]>([]);
   
   // Auto-assign colors to components
   useEffect(() => {
+    console.log('[Components] Loaded from library:', components.length, components);
     const colors = components.map((comp, idx) => ({
       componentId: comp.id,
       color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
     }));
     setComponentColors(colors);
   }, [components]);
+  
+  const handleAddComponent = (componentId: string) => {
+    if (!activeComponentIds.includes(componentId)) {
+      setActiveComponentIds([...activeComponentIds, componentId]);
+    }
+  };
+  
+  const handleRemoveComponent = (componentId: string) => {
+    setActiveComponentIds(activeComponentIds.filter(id => id !== componentId));
+  };
   
   // Refs to access current state in event handlers
   const calibrationModeRef = useRef(calibrationMode);
@@ -447,27 +459,71 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 No components in library
               </div>
             ) : (
-              <div className="space-y-2">
-                {components.map((comp) => {
-                  const assignment = componentColors.find(c => c.componentId === comp.id);
-                  return (
-                    <div
-                      key={comp.id}
-                      className="flex items-center gap-2 p-2 rounded bg-slate-700/50 hover:bg-slate-700"
-                    >
-                      {/* Color swatch */}
-                      <div
-                        className="w-6 h-6 rounded border-2 border-slate-600 flex-shrink-0"
-                        style={{ backgroundColor: assignment?.color }}
-                      />
-                      {/* Component name */}
-                      <div className="flex-1 text-sm">
-                        <div className="font-medium">{comp.name}</div>
-                        <div className="text-xs text-slate-400">{comp.category}</div>
-                      </div>
+              <div className="space-y-4">
+                {/* Active Components */}
+                {activeComponentIds.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-slate-500 mb-2">Active ({activeComponentIds.length})</h3>
+                    <div className="space-y-1">
+                      {activeComponentIds.map((id) => {
+                        const comp = components.find(c => c.id === id);
+                        const assignment = componentColors.find(c => c.componentId === id);
+                        if (!comp) return null;
+                        return (
+                          <div
+                            key={comp.id}
+                            className="flex items-center gap-2 p-2 rounded bg-slate-700"
+                          >
+                            <div
+                              className="w-6 h-6 rounded border-2 border-slate-600 flex-shrink-0"
+                              style={{ backgroundColor: assignment?.color }}
+                            />
+                            <div className="flex-1 text-sm font-medium">{comp.name}</div>
+                            <button
+                              onClick={() => handleRemoveComponent(comp.id)}
+                              className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-600/20 rounded"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
+                  </div>
+                )}
+
+                {/* Available Components */}
+                <div>
+                  <h3 className="text-xs font-semibold text-slate-500 mb-2">Available</h3>
+                  <div className="space-y-1">
+                    {components
+                      .filter(comp => !activeComponentIds.includes(comp.id))
+                      .map((comp) => {
+                        const assignment = componentColors.find(c => c.componentId === comp.id);
+                        return (
+                          <div
+                            key={comp.id}
+                            className="flex items-center gap-2 p-2 rounded bg-slate-700/50 hover:bg-slate-700"
+                          >
+                            <div
+                              className="w-6 h-6 rounded border-2 border-slate-600 flex-shrink-0"
+                              style={{ backgroundColor: assignment?.color }}
+                            />
+                            <div className="flex-1 text-sm">
+                              <div className="font-medium">{comp.name}</div>
+                              <div className="text-xs text-slate-400">{comp.category}</div>
+                            </div>
+                            <button
+                              onClick={() => handleAddComponent(comp.id)}
+                              className="w-6 h-6 flex items-center justify-center text-green-400 hover:bg-green-600/20 rounded font-bold"
+                            >
+                              +
+                            </button>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
               </div>
             )}
           </div>
