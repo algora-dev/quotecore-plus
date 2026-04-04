@@ -46,11 +46,18 @@ export default async function Page({
     .getPublicUrl(planFile.storage_path);
 
   // Load components from component library
-  const { data: components } = await supabase
+  const { data: components, error: componentsError } = await supabase
     .from('component_library')
     .select('id, name, category')
     .eq('company_id', profile.company_id)
     .order('name');
+  
+  console.log('[Takeoff] Component query result:', { 
+    count: components?.length || 0, 
+    error: componentsError,
+    companyId: profile.company_id,
+    sample: components?.[0] 
+  });
 
   return (
     <TakeoffPage

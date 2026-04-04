@@ -22,6 +22,7 @@ interface RoofArea {
   area: number; // in square feet or meters
   visible: boolean;
   polygon?: any; // fabric.js polygon object
+  markers?: any[]; // fabric.js marker objects
 }
 
 interface Props {
@@ -93,7 +94,12 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   
   // Auto-assign colors to components
   useEffect(() => {
-    console.log('[Components] Loaded from library:', components.length, components);
+    console.log('[Components] Raw prop received:', components);
+    console.log('[Components] Count:', components.length);
+    console.log('[Components] Calibration confirmed:', calibrationConfirmed);
+    if (components.length > 0) {
+      console.log('[Components] Sample component:', components[0]);
+    }
     const colors = components.map((comp, idx) => ({
       componentId: comp.id,
       color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
@@ -113,8 +119,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   
   const handleDeleteArea = (areaId: string) => {
     const area = roofAreas.find(a => a.id === areaId);
-    if (area && area.polygon && fabricRef.current) {
-      fabricRef.current.remove(area.polygon);
+    if (area && fabricRef.current) {
+      if (area.polygon) fabricRef.current.remove(area.polygon);
+      area.markers?.forEach(marker => fabricRef.current!.remove(marker));
     }
     setRoofAreas(roofAreas.filter(a => a.id !== areaId));
   };
@@ -125,8 +132,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         const newVisible = !area.visible;
         if (area.polygon) {
           area.polygon.set('visible', newVisible);
-          fabricRef.current?.renderAll();
         }
+        area.markers?.forEach(marker => marker.set('visible', newVisible));
+        fabricRef.current?.renderAll();
         return { ...area, visible: newVisible };
       }
       return area;
@@ -155,8 +163,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     
     const area = calculatePolygonArea(pendingAreaPoints);
     
-    // Draw polygon on canvas
+    // Draw polygon on canvas and collect current markers
     let polygon;
+    const markers: any[] = [];
     if (fabricRef.current) {
       polygon = new Polygon(pendingAreaPoints, {
         fill: 'rgba(59, 130, 246, 0.2)', // blue with transparency
@@ -166,6 +175,15 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         evented: false,
       });
       fabricRef.current.add(polygon);
+      
+      // Find and store all blue/green markers for this polygon
+      const objects = fabricRef.current.getObjects();
+      objects.forEach(obj => {
+        if (obj.get('type') === 'circle' && 
+            (obj.fill === '#3b82f6' || obj.fill === '#10b981')) {
+          markers.push(obj);
+        }
+      });
     }
     
     const newArea: RoofArea = {
@@ -175,6 +193,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       area,
       visible: true,
       polygon,
+      markers,
     };
     
     setRoofAreas([...roofAreas, newArea]);
@@ -266,12 +285,13 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         console.log('[Area] Added point', currentPoints.length + 1);
         setAreaPoints([...currentPoints, newPoint]);
         
-        // Draw marker
+        // Draw marker (green for first point, blue for rest)
+        const isFirstPoint = currentPoints.length === 0;
         const marker = new Circle({
           left: newPoint.x,
           top: newPoint.y,
           radius: 4,
-          fill: '#3b82f6',
+          fill: isFirstPoint ? '#10b981' : '#3b82f6', // green first, blue rest
           stroke: '#000',
           strokeWidth: 2,
           originX: 'center',
@@ -389,6 +409,35 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       fabricRef.current.hoverCursor = cursor;
     }
   }, [calibrationMode, areaMode]);
+  
+  // Update cursor when hovering near first point (to close loop)
+  useEffect(() => {
+    if (!fabricRef.current || !areaMode || areaPoints.length < 3) return;
+    
+    const canvas = fabricRef.current;
+    const handleMouseMove = (opt: any) => {
+      const pointer = canvas.getPointer(opt.e);
+      const firstPoint = areaPoints[0];
+      const distance = Math.sqrt(
+        Math.pow(pointer.x - firstPoint.x, 2) + 
+        Math.pow(pointer.y - firstPoint.y, 2)
+      );
+      
+      // Change cursor when near first point
+      if (distance < 15) {
+        canvas.defaultCursor = 'pointer';
+        canvas.hoverCursor = 'pointer';
+      } else {
+        canvas.defaultCursor = 'crosshair';
+        canvas.hoverCursor = 'crosshair';
+      }
+    };
+    
+    canvas.on('mouse:move', handleMouseMove);
+    return () => {
+      canvas.off('mouse:move', handleMouseMove);
+    };
+  }, [areaMode, areaPoints]);
 
   // Zoom controls
   const handleZoomIn = () => {
@@ -621,10 +670,10 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                       <div className="flex gap-1">
                         <button
                           onClick={() => handleToggleAreaVisibility(area.id)}
-                          className="w-6 h-6 flex items-center justify-center hover:bg-blue-600/30 rounded"
+                          className="w-6 h-6 flex items-center justify-center hover:bg-blue-600/30 rounded text-lg"
                           title={area.visible ? 'Hide' : 'Show'}
                         >
-                          {area.visible ? '👁️' : '👁️‍🗨️'}
+                          {area.visible ? '●' : '○'}
                         </button>
                         <button
                           onClick={() => handleDeleteArea(area.id)}
