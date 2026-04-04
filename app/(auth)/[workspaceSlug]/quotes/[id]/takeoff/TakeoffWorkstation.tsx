@@ -276,6 +276,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const lineModeRef = useRef(lineMode);
   const linePointsRef = useRef(linePoints);
   const pointModeRef = useRef(pointMode);
+  const selectedComponentIdRef = useRef(selectedComponentId);
+  const componentColorsRef = useRef(componentColors);
   
   useEffect(() => {
     calibrationModeRef.current = calibrationMode;
@@ -286,7 +288,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     lineModeRef.current = lineMode;
     linePointsRef.current = linePoints;
     pointModeRef.current = pointMode;
-  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, lineMode, linePoints, pointMode]);
+    selectedComponentIdRef.current = selectedComponentId;
+    componentColorsRef.current = componentColors;
+  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, lineMode, linePoints, pointMode, selectedComponentId, componentColors]);
 
   // Initialize Fabric canvas
   useEffect(() => {
@@ -336,17 +340,20 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         const newPoint = { x: pointer.x, y: pointer.y };
         const currentPoints = linePointsRef.current;
         
+        // Get component color
+        const componentColor = componentColorsRef.current.find(c => c.componentId === selectedComponentIdRef.current)?.color || '#10b981';
+        
         if (currentPoints.length === 0) {
           // First point
           console.log('[Line] First point');
           setLinePoints([newPoint]);
           
-          // Draw marker (green)
+          // Draw marker (component color)
           const marker = new Circle({
             left: newPoint.x,
             top: newPoint.y,
             radius: 4,
-            fill: '#10b981',
+            fill: componentColor,
             stroke: '#000',
             strokeWidth: 2,
             originX: 'center',
@@ -360,12 +367,12 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           console.log('[Line] Second point');
           const firstPoint = currentPoints[0];
           
-          // Draw marker (blue)
+          // Draw marker (component color)
           const marker = new Circle({
             left: newPoint.x,
             top: newPoint.y,
             radius: 4,
-            fill: '#3b82f6',
+            fill: componentColor,
             stroke: '#000',
             strokeWidth: 2,
             originX: 'center',
@@ -375,9 +382,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           });
           canvas.add(marker);
           
-          // Draw line
+          // Draw line (component color)
           const line = new Line([firstPoint.x, firstPoint.y, newPoint.x, newPoint.y], {
-            stroke: '#10b981',
+            stroke: componentColor,
             strokeWidth: 2,
             selectable: false,
             evented: false,
@@ -1143,12 +1150,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           onConfirm={() => {
             if (!selectedComponentId) return;
             
-            // Collect canvas objects (line + markers)
+            // Collect canvas objects (line + markers) - last 3 objects added
             const objects = fabricRef.current?.getObjects() || [];
-            const canvasObjects = objects.filter(obj => 
-              (obj.get('type') === 'line' && obj.stroke === '#10b981') ||
-              (obj.get('type') === 'circle' && (obj.fill === '#10b981' || obj.fill === '#3b82f6'))
-            ).slice(-3); // Last 3 objects (2 markers + 1 line)
+            const canvasObjects = objects.slice(-3); // Last 3 objects (2 markers + 1 line)
             
             // Create measurement
             const newMeasurement: ComponentMeasurement = {
@@ -1185,13 +1189,10 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
             setLinePoints([]);
           }}
           onCancel={() => {
-            // Remove line and markers from canvas
+            // Remove line and markers from canvas (last 3 objects)
             if (fabricRef.current) {
               const objects = fabricRef.current.getObjects();
-              const toRemove = objects.filter(obj => 
-                (obj.get('type') === 'line' && obj.stroke === '#10b981') ||
-                (obj.get('type') === 'circle' && (obj.fill === '#10b981' || obj.fill === '#3b82f6'))
-              ).slice(-3);
+              const toRemove = objects.slice(-3); // Last 3: 2 markers + 1 line
               toRemove.forEach(obj => fabricRef.current!.remove(obj));
               fabricRef.current.renderAll();
             }
