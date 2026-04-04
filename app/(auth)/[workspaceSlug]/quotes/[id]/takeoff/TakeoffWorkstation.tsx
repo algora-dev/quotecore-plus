@@ -24,6 +24,21 @@ interface RoofArea {
   markers?: any[]; // fabric.js marker objects
 }
 
+interface ComponentMeasurement {
+  id: string;
+  type: 'line' | 'area' | 'point';
+  value: number; // length (ft/m) or area (sq ft/m)
+  points?: { x: number; y: number }[];
+  visible: boolean;
+  canvasObjects?: any[]; // fabric.js objects
+}
+
+interface ComponentWithMeasurements {
+  componentId: string;
+  measurements: ComponentMeasurement[];
+  expanded: boolean;
+}
+
 interface Props {
   workspaceSlug: string;
   quote: QuoteRow;
@@ -82,6 +97,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   // Component colors (auto-assign on mount)
   const [componentColors, setComponentColors] = useState<ComponentColor[]>([]);
   const [activeComponentIds, setActiveComponentIds] = useState<string[]>([]);
+  const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
   
   // Roof Areas
   const [roofAreas, setRoofAreas] = useState<RoofArea[]>([]);
@@ -90,6 +106,18 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [tempAreaPolygon, setTempAreaPolygon] = useState<any>(null);
   const [showAreaNamePrompt, setShowAreaNamePrompt] = useState(false);
   const [pendingAreaPoints, setPendingAreaPoints] = useState<{ x: number; y: number }[]>([]);
+  
+  // Component measurements
+  const [componentMeasurements, setComponentMeasurements] = useState<ComponentWithMeasurements[]>([]);
+  const [lineMode, setLineMode] = useState(false);
+  const [linePoints, setLinePoints] = useState<{ x: number; y: number }[]>([]);
+  const [pointMode, setPointMode] = useState(false);
+  const [showLineMeasurementPrompt, setShowLineMeasurementPrompt] = useState(false);
+  const [pendingLineMeasurement, setPendingLineMeasurement] = useState<{ points: { x: number; y: number }[], length: number } | null>(null);
+  const [showAreaMeasurementPrompt, setShowAreaMeasurementPrompt] = useState(false);
+  const [pendingAreaMeasurement, setPendingAreaMeasurement] = useState<{ points: { x: number; y: number }[], area: number } | null>(null);
+  const [showPointMeasurementPrompt, setShowPointMeasurementPrompt] = useState(false);
+  const [pendingPointLocation, setPendingPointLocation] = useState<{ x: number; y: number } | null>(null);
   
   // Component display state (may include test components)
   const [displayComponents, setDisplayComponents] = useState<Component[]>([]);
