@@ -337,11 +337,6 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar - Calibration, Roof Areas & Components */}
         <div className="w-80 bg-slate-800 border-r border-slate-700 p-4 overflow-y-auto space-y-6">
-          {/* DEBUG: State values */}
-          <div className="text-xs text-slate-500 mb-2">
-            DEBUG: confirmed={calibrationConfirmed.toString()} mode={calibrationMode.toString()} flash={showConfirmedFlash.toString()}
-          </div>
-
           {/* Calibration Section - Show if: not confirmed, calibration mode, or showing flash */}
           {(!calibrationConfirmed || calibrationMode || showConfirmedFlash) && (
             <div>
