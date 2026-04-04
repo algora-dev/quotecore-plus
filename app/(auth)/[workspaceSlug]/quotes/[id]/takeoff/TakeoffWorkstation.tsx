@@ -304,9 +304,85 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     };
     imgElement.src = planUrl;
 
-    // Pan on drag OR calibration click OR area click
+    // Pan on drag OR calibration click OR area click OR line click
     canvas.on('mouse:down', (opt) => {
       const evt = opt.e;
+      
+      // Line mode: measure distance (2 points)
+      if (lineModeRef.current && !evt.altKey) {
+        const pointer = canvas.getPointer(opt.e);
+        const newPoint = { x: pointer.x, y: pointer.y };
+        const currentPoints = linePointsRef.current;
+        
+        if (currentPoints.length === 0) {
+          // First point
+          console.log('[Line] First point');
+          setLinePoints([newPoint]);
+          
+          // Draw marker (green)
+          const marker = new Circle({
+            left: newPoint.x,
+            top: newPoint.y,
+            radius: 4,
+            fill: '#10b981',
+            stroke: '#000',
+            strokeWidth: 2,
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            evented: false,
+          });
+          canvas.add(marker);
+        } else if (currentPoints.length === 1) {
+          // Second point - draw line, calculate length, prompt
+          console.log('[Line] Second point');
+          const firstPoint = currentPoints[0];
+          
+          // Draw marker (blue)
+          const marker = new Circle({
+            left: newPoint.x,
+            top: newPoint.y,
+            radius: 4,
+            fill: '#3b82f6',
+            stroke: '#000',
+            strokeWidth: 2,
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            evented: false,
+          });
+          canvas.add(marker);
+          
+          // Draw line
+          const line = new Line([firstPoint.x, firstPoint.y, newPoint.x, newPoint.y], {
+            stroke: '#10b981',
+            strokeWidth: 2,
+            selectable: false,
+            evented: false,
+          });
+          canvas.add(line);
+          
+          // Calculate pixel distance
+          const pixelDistance = Math.sqrt(
+            Math.pow(newPoint.x - firstPoint.x, 2) + 
+            Math.pow(newPoint.y - firstPoint.y, 2)
+          );
+          
+          // Convert to real-world using calibration scale
+          const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / calibrations.length;
+          const realDistance = pixelDistance * avgScale;
+          
+          // Show confirmation modal
+          setPendingLineMeasurement({ 
+            points: [firstPoint, newPoint], 
+            length: realDistance 
+          });
+          setShowLineMeasurementPrompt(true);
+          setLinePoints([firstPoint, newPoint]);
+        }
+        
+        return;
+      }
       
       // Area mode: add polygon points
       if (areaModeRef.current && !evt.altKey) {
@@ -451,14 +527,14 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     };
   }, [planUrl]);
 
-  // Update cursor when calibration/area mode changes
+  // Update cursor when calibration/area/line mode changes
   useEffect(() => {
     if (fabricRef.current) {
-      const cursor = (calibrationMode || areaMode) ? 'crosshair' : 'default';
+      const cursor = (calibrationMode || areaMode || lineMode) ? 'crosshair' : 'default';
       fabricRef.current.defaultCursor = cursor;
       fabricRef.current.hoverCursor = cursor;
     }
-  }, [calibrationMode, areaMode]);
+  }, [calibrationMode, areaMode, lineMode]);
   
   // Update cursor when hovering near first point (to close loop)
   useEffect(() => {
@@ -979,6 +1055,75 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           }}
         />
       )}
+
+      {/* Line Measurement Prompt */}
+      {showLineMeasurementPrompt && pendingLineMeasurement && (
+        <LineMeasurementModal
+          length={pendingLineMeasurement.length}
+          unit={calibrations[0]?.unit || 'feet'}
+          onConfirm={() => {
+            if (!selectedComponentId) return;
+            
+            // Collect canvas objects (line + markers)
+            const objects = fabricRef.current?.getObjects() || [];
+            const canvasObjects = objects.filter(obj => 
+              (obj.get('type') === 'line' && obj.stroke === '#10b981') ||
+              (obj.get('type') === 'circle' && (obj.fill === '#10b981' || obj.fill === '#3b82f6'))
+            ).slice(-3); // Last 3 objects (2 markers + 1 line)
+            
+            // Create measurement
+            const newMeasurement: ComponentMeasurement = {
+              id: `line-${Date.now()}`,
+              type: 'line',
+              value: pendingLineMeasurement.length,
+              points: pendingLineMeasurement.points,
+              visible: true,
+              canvasObjects,
+            };
+            
+            // Add to component measurements
+            const compData = componentMeasurements.find(c => c.componentId === selectedComponentId);
+            if (compData) {
+              setComponentMeasurements(componentMeasurements.map(c =>
+                c.componentId === selectedComponentId
+                  ? { ...c, measurements: [...c.measurements, newMeasurement] }
+                  : c
+              ));
+            } else {
+              setComponentMeasurements([
+                ...componentMeasurements,
+                { 
+                  componentId: selectedComponentId, 
+                  measurements: [newMeasurement],
+                  expanded: true 
+                }
+              ]);
+            }
+            
+            // Clear state (keep lineMode active for repeat)
+            setShowLineMeasurementPrompt(false);
+            setPendingLineMeasurement(null);
+            setLinePoints([]);
+          }}
+          onCancel={() => {
+            // Remove line and markers from canvas
+            if (fabricRef.current) {
+              const objects = fabricRef.current.getObjects();
+              const toRemove = objects.filter(obj => 
+                (obj.get('type') === 'line' && obj.stroke === '#10b981') ||
+                (obj.get('type') === 'circle' && (obj.fill === '#10b981' || obj.fill === '#3b82f6'))
+              ).slice(-3);
+              toRemove.forEach(obj => fabricRef.current!.remove(obj));
+              fabricRef.current.renderAll();
+            }
+            
+            // Clear state
+            setShowLineMeasurementPrompt(false);
+            setPendingLineMeasurement(null);
+            setLinePoints([]);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -1034,6 +1179,62 @@ function AreaNameModal({
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// Line Measurement Modal
+function LineMeasurementModal({
+  length,
+  unit,
+  onConfirm,
+  onCancel,
+}: {
+  length: number;
+  unit: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      onConfirm();
+    } else if (e.key === 'Escape') {
+      onCancel();
+    }
+  };
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onKeyDown={handleKeyDown}
+      tabIndex={-1}
+    >
+      <div className="bg-slate-800 rounded-lg p-6 w-96 border border-slate-700">
+        <h2 className="text-xl font-semibold mb-4">Line Measurement</h2>
+        <div className="mb-6">
+          <div className="text-3xl font-bold text-green-400">
+            {length.toFixed(2)} {unit}
+          </div>
+          <div className="text-sm text-slate-400 mt-2">
+            Press Enter to add, or Esc to cancel
+          </div>
+        </div>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded"
+          >
+            Cancel (Esc)
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded"
+            autoFocus
+          >
+            Add Line (Enter)
+          </button>
+        </div>
       </div>
     </div>
   );
