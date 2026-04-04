@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { CustomerQuoteTemplateRow, TemplateRow } from '@/app/lib/types';
 import { deleteTemplate, deleteCustomerQuoteTemplate } from './actions';
+import { ViewCustomerTemplateModal } from './ViewCustomerTemplateModal';
+import { EditCustomerTemplateModal } from './EditCustomerTemplateModal';
 
 interface Props {
   workspaceSlug: string;
@@ -18,6 +20,8 @@ export function TemplatesPageClient({ workspaceSlug, quoteTemplates, customerQuo
     initialTab === 'customer' ? 'customer' : 'quote'
   );
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [viewingCustomerTemplate, setViewingCustomerTemplate] = useState<CustomerQuoteTemplateRow | null>(null);
+  const [editingCustomerTemplate, setEditingCustomerTemplate] = useState<CustomerQuoteTemplateRow | null>(null);
 
   async function handleDeleteQuoteTemplate(id: string, name: string) {
     if (!confirm(`Delete template "${name}"? This cannot be undone.`)) {
@@ -247,20 +251,20 @@ export function TemplatesPageClient({ workspaceSlug, quoteTemplates, customerQuo
                           {template.company_name || '—'}
                         </td>
                         <td className="px-6 py-4 text-right space-x-2">
-                          <Link
-                            href={`/${workspaceSlug}/customer-quote-templates/${template.id}`}
+                          <button
+                            onClick={() => setViewingCustomerTemplate(template)}
                             className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200"
                           >
                             View
-                          </Link>
+                          </button>
                           {!template.is_starter_template && (
                             <>
-                              <Link
-                                href={`/${workspaceSlug}/customer-quote-templates/${template.id}/edit`}
+                              <button
+                                onClick={() => setEditingCustomerTemplate(template)}
                                 className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200"
                               >
                                 Edit
-                              </Link>
+                              </button>
                               <button
                                 onClick={() => handleDeleteCustomerTemplate(template.id, template.name)}
                                 disabled={deleting === template.id}
@@ -280,6 +284,25 @@ export function TemplatesPageClient({ workspaceSlug, quoteTemplates, customerQuo
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      {viewingCustomerTemplate && (
+        <ViewCustomerTemplateModal
+          template={viewingCustomerTemplate}
+          onClose={() => setViewingCustomerTemplate(null)}
+        />
+      )}
+
+      {editingCustomerTemplate && (
+        <EditCustomerTemplateModal
+          template={editingCustomerTemplate}
+          onClose={() => setEditingCustomerTemplate(null)}
+          onSaved={() => {
+            setEditingCustomerTemplate(null);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }

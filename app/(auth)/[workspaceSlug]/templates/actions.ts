@@ -245,6 +245,57 @@ export async function deleteTemplate(templateId: string) {
   revalidatePath('/templates');
 }
 
+export async function updateCustomerQuoteTemplate(
+  templateId: string,
+  data: {
+    name: string;
+    companyName: string;
+    companyAddress: string;
+    companyPhone: string;
+    companyEmail: string;
+    companyLogoUrl: string;
+    footerText: string;
+  }
+) {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  // Verify ownership and not starter template
+  const { data: template } = await supabase
+    .from('customer_quote_templates')
+    .select('company_id, is_starter_template')
+    .eq('id', templateId)
+    .single();
+
+  if (!template || template.company_id !== profile.company_id) {
+    throw new Error('Unauthorized');
+  }
+
+  if (template.is_starter_template) {
+    throw new Error('Cannot edit starter template');
+  }
+
+  // Update template
+  const { error } = await supabase
+    .from('customer_quote_templates')
+    .update({
+      name: data.name,
+      company_name: data.companyName || null,
+      company_address: data.companyAddress || null,
+      company_phone: data.companyPhone || null,
+      company_email: data.companyEmail || null,
+      company_logo_url: data.companyLogoUrl || null,
+      footer_text: data.footerText || null,
+    })
+    .eq('id', templateId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath('/templates');
+}
+
 export async function deleteCustomerQuoteTemplate(templateId: string) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
