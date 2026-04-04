@@ -231,45 +231,107 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     
     const area = calculatePolygonArea(pendingAreaPoints);
     
-    // Draw polygon on canvas and collect current markers
-    let polygon;
-    const markers: any[] = [];
-    if (fabricRef.current) {
-      polygon = new Polygon(pendingAreaPoints, {
-        fill: 'rgba(59, 130, 246, 0.2)', // blue with transparency
-        stroke: '#3b82f6',
-        strokeWidth: 2,
-        strokeDashArray: [5, 5], // dotted line to differentiate from component areas
-        selectable: false,
-        evented: false,
-      });
-      fabricRef.current.add(polygon);
+    // Check if a component is selected - if yes, assign area to component instead of Roof Areas
+    if (selectedComponentId) {
+      // Get component color
+      const componentColor = componentColors.find(c => c.componentId === selectedComponentId)?.color || '#3b82f6';
       
-      // Find and store all blue/green markers for this polygon
-      const objects = fabricRef.current.getObjects();
-      objects.forEach(obj => {
-        if (obj.get('type') === 'circle' && 
-            (obj.fill === '#3b82f6' || obj.fill === '#10b981')) {
-          markers.push(obj);
-        }
-      });
+      // Draw polygon with component color
+      let polygon;
+      const markers: any[] = [];
+      if (fabricRef.current) {
+        polygon = new Polygon(pendingAreaPoints, {
+          fill: `${componentColor}33`, // component color with transparency
+          stroke: componentColor,
+          strokeWidth: 2,
+          selectable: false,
+          evented: false,
+        });
+        fabricRef.current.add(polygon);
+        
+        // Collect markers
+        const objects = fabricRef.current.getObjects();
+        objects.forEach(obj => {
+          if (obj.get('type') === 'circle' && 
+              (obj.fill === '#3b82f6' || obj.fill === '#10b981')) {
+            markers.push(obj);
+          }
+        });
+      }
+      
+      // Add to component measurements
+      const newMeasurement: ComponentMeasurement = {
+        id: `area-${Date.now()}`,
+        type: 'area',
+        value: area,
+        points: pendingAreaPoints,
+        visible: true,
+        canvasObjects: polygon ? [polygon, ...markers] : markers,
+      };
+      
+      const compData = componentMeasurements.find(c => c.componentId === selectedComponentId);
+      if (compData) {
+        setComponentMeasurements(componentMeasurements.map(c =>
+          c.componentId === selectedComponentId
+            ? { ...c, measurements: [...c.measurements, newMeasurement] }
+            : c
+        ));
+      } else {
+        setComponentMeasurements([
+          ...componentMeasurements,
+          { 
+            componentId: selectedComponentId, 
+            measurements: [newMeasurement],
+            expanded: true 
+          }
+        ]);
+      }
+      
+      setAreaPoints([]);
+      setPendingAreaPoints([]);
+      setShowAreaNamePrompt(false);
+      // Keep areaMode active for repeat
+    } else {
+      // No component selected - add to Roof Areas
+      let polygon;
+      const markers: any[] = [];
+      if (fabricRef.current) {
+        polygon = new Polygon(pendingAreaPoints, {
+          fill: 'rgba(59, 130, 246, 0.2)', // blue with transparency
+          stroke: '#3b82f6',
+          strokeWidth: 2,
+          strokeDashArray: [5, 5], // dotted line to differentiate from component areas
+          selectable: false,
+          evented: false,
+        });
+        fabricRef.current.add(polygon);
+        
+        // Find and store all blue/green markers for this polygon
+        const objects = fabricRef.current.getObjects();
+        objects.forEach(obj => {
+          if (obj.get('type') === 'circle' && 
+              (obj.fill === '#3b82f6' || obj.fill === '#10b981')) {
+            markers.push(obj);
+          }
+        });
+      }
+      
+      const newArea: RoofArea = {
+        id: `area-${Date.now()}`,
+        name,
+        points: pendingAreaPoints,
+        area,
+        visible: true,
+        polygon,
+        markers,
+      };
+      
+      setRoofAreas([...roofAreas, newArea]);
+      setAreaPoints([]);
+      setPendingAreaPoints([]);
+      setShowAreaNamePrompt(false);
+      setAreaMode(false);
     }
-    
-    const newArea: RoofArea = {
-      id: `area-${Date.now()}`,
-      name,
-      points: pendingAreaPoints,
-      area,
-      visible: true,
-      polygon,
-      markers,
-    };
-    
-    setRoofAreas([...roofAreas, newArea]);
-    setAreaPoints([]);
-    setPendingAreaPoints([]);
-    setShowAreaNamePrompt(false);
-    setAreaMode(false);
   };
   
   // Refs to access current state in event handlers
@@ -1032,12 +1094,15 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 📏 Line
               </button>
               <button
-                onClick={() => setAreaMode(!areaMode)}
+                onClick={() => {
+                  setAreaMode(!areaMode);
+                  setAreaPoints([]);
+                }}
                 disabled={calibrationMode || calibrations.length === 0}
                 className={`px-3 py-2 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   areaMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-700 hover:bg-slate-600'
                 }`}
-                title={calibrations.length === 0 ? 'Calibrate first' : ''}
+                title={calibrations.length === 0 ? 'Calibrate first' : selectedComponentId ? 'Measure area for component' : 'Measure roof area'}
               >
                 📐 Area
               </button>
@@ -1138,6 +1203,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       {/* Area Name Prompt */}
       {showAreaNamePrompt && (
         <AreaNameModal
+          componentName={selectedComponentId ? displayComponents.find(c => c.id === selectedComponentId)?.name : null}
+          calculatedArea={pendingAreaPoints.length > 0 ? calculatePolygonArea(pendingAreaPoints) : 0}
+          unit={calibrations[0]?.unit || 'feet'}
           onSave={handleSaveArea}
           onCancel={() => {
             setShowAreaNamePrompt(false);
@@ -1215,9 +1283,15 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
 
 // Area Name Modal
 function AreaNameModal({
+  componentName,
+  calculatedArea,
+  unit,
   onSave,
   onCancel,
 }: {
+  componentName: string | null;
+  calculatedArea: number;
+  unit: string;
   onSave: (name: string) => void;
   onCancel: () => void;
 }) {
@@ -1225,28 +1299,43 @@ function AreaNameModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim()) {
-      onSave(name.trim());
+    if (componentName || name.trim()) {
+      onSave(name.trim() || 'Area');
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-slate-800 rounded-lg p-6 w-96 border border-slate-700">
-        <h2 className="text-xl font-semibold mb-4">Name This Area</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm mb-2">Area Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded"
-              placeholder="e.g. Main Roof"
-              autoFocus
-              required
-            />
+        <h2 className="text-xl font-semibold mb-4">
+          {componentName ? 'Add Area to Component' : 'Name This Area'}
+        </h2>
+        
+        {componentName && (
+          <div className="mb-4 p-3 bg-blue-600/20 border border-blue-600 rounded">
+            <div className="text-sm text-slate-400 mb-1">Component:</div>
+            <div className="font-semibold">{componentName}</div>
+            <div className="text-2xl font-bold text-blue-400 mt-2">
+              {calculatedArea.toFixed(2)} sq {unit}
+            </div>
           </div>
+        )}
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {!componentName && (
+            <div>
+              <label className="block text-sm mb-2">Area Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded"
+                placeholder="e.g. Main Roof"
+                autoFocus
+                required
+              />
+            </div>
+          )}
           <div className="flex gap-2 justify-end">
             <button
               type="button"
@@ -1258,9 +1347,9 @@ function AreaNameModal({
             <button
               type="submit"
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded"
-              disabled={!name.trim()}
+              disabled={!componentName && !name.trim()}
             >
-              Save Area
+              {componentName ? 'Add to Component' : 'Save Area'}
             </button>
           </div>
         </form>
