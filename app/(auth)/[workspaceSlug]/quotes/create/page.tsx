@@ -1,6 +1,4 @@
 import { redirect } from 'next/navigation';
-import { requireCompanyContext } from '@/app/lib/supabase/server';
-import { createQuoteFromTemplate } from '../actions';
 
 export default async function CreateQuotePage({
   params,
@@ -12,16 +10,8 @@ export default async function CreateQuotePage({
   const { workspaceSlug } = await params;
   const { template: templateId } = await searchParams;
   
-  await requireCompanyContext();
-
-  if (!templateId) {
-    // No template specified, redirect to quotes list
-    redirect(`/${workspaceSlug}/quotes`);
-  }
-
-  // Create quote from template with placeholder name
-  const quoteId = await createQuoteFromTemplate(templateId, 'New Customer', null);
-
-  // Redirect to quote builder where user can edit name
-  redirect(`/${workspaceSlug}/quotes/${quoteId}`);
+  // Redirect to new job details form
+  // Preserve template param if provided
+  const url = `/${workspaceSlug}/quotes/new${templateId ? `?template=${templateId}` : ''}`;
+  redirect(url);
 }

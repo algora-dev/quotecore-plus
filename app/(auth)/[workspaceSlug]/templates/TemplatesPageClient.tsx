@@ -173,7 +173,7 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
                             Edit
                           </Link>
                           <Link
-                            href={`/${workspaceSlug}/quotes/create?template=${template.id}`}
+                            href={`/${workspaceSlug}/quotes/new?template=${template.id}`}
                             className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 hover:bg-green-200"
                           >
                             Use
