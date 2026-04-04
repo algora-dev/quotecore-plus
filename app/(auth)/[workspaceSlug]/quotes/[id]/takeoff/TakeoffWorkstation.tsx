@@ -15,6 +15,13 @@ interface ComponentColor {
   color: string;
 }
 
+interface RoofArea {
+  id: string;
+  name: string;
+  points: { x: number; y: number }[];
+  area: number; // in square feet or meters
+}
+
 interface Props {
   workspaceSlug: string;
   quote: QuoteRow;
@@ -73,6 +80,12 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   // Component colors (auto-assign on mount)
   const [componentColors, setComponentColors] = useState<ComponentColor[]>([]);
   const [activeComponentIds, setActiveComponentIds] = useState<string[]>([]);
+  
+  // Roof Areas
+  const [roofAreas, setRoofAreas] = useState<RoofArea[]>([]);
+  const [areaMode, setAreaMode] = useState(false);
+  const [areaPoints, setAreaPoints] = useState<{ x: number; y: number }[]>([]);
+  const [tempAreaPolygon, setTempAreaPolygon] = useState<any>(null);
   
   // Auto-assign colors to components
   useEffect(() => {
@@ -305,7 +318,19 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     setCalibrationConfirmed(true);
     setShowConfirmedFlash(true);
     setCalibrationMode(false); // Turn off calibration mode!
-    console.log('[Calibration] State updated to confirmed');
+    
+    // Remove all calibration lines and markers from canvas
+    if (fabricRef.current) {
+      const objects = fabricRef.current.getObjects();
+      const calibrationObjects = objects.filter(obj => 
+        obj.stroke === '#facc15' || // Yellow lines
+        (obj.fill === '#facc15' && obj.type === 'Circle') // Yellow markers
+      );
+      calibrationObjects.forEach(obj => fabricRef.current!.remove(obj));
+      fabricRef.current.renderAll();
+    }
+    
+    console.log('[Calibration] State updated to confirmed, lines removed');
     // Hide calibration section after 0.5s flash
     setTimeout(() => {
       console.log('[Calibration] Hiding flash, confirmed should stay true');
@@ -452,9 +477,10 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
             </div>
           </div>
 
-          <div className="border-t border-slate-700 pt-4">
-            <h2 className="text-sm font-semibold mb-3 text-slate-400">Components</h2>
-            {components.length === 0 ? (
+          {calibrationConfirmed && (
+            <div className="border-t border-slate-700 pt-4">
+              <h2 className="text-sm font-semibold mb-3 text-slate-400">Components</h2>
+              {components.length === 0 ? (
               <div className="text-sm text-slate-500">
                 No components in library
               </div>
@@ -525,8 +551,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Center - Canvas */}
