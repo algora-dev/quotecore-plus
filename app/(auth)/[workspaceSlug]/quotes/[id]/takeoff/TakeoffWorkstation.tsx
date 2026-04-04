@@ -239,6 +239,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         fill: 'rgba(59, 130, 246, 0.2)', // blue with transparency
         stroke: '#3b82f6',
         strokeWidth: 2,
+        strokeDashArray: [5, 5], // dotted line to differentiate from component areas
         selectable: false,
         evented: false,
       });
