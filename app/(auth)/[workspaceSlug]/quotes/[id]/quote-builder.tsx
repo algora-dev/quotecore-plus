@@ -314,6 +314,7 @@ export function QuoteBuilder({
       <FilesManager 
         quoteId={quote.id}
         companyId={quote.company_id}
+        workspaceSlug={workspaceSlug}
         planUrl={planUrl}
         planName={planName}
         supportingFiles={supportingFiles}
