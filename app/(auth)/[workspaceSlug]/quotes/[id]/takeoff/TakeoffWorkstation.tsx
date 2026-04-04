@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Canvas, FabricImage, Line, Circle } from 'fabric';
+import { Canvas, FabricImage, Line, Circle, Polygon } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 
 interface Component {
@@ -86,6 +86,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [areaMode, setAreaMode] = useState(false);
   const [areaPoints, setAreaPoints] = useState<{ x: number; y: number }[]>([]);
   const [tempAreaPolygon, setTempAreaPolygon] = useState<any>(null);
+  const [showAreaNamePrompt, setShowAreaNamePrompt] = useState(false);
+  const [pendingAreaPoints, setPendingAreaPoints] = useState<{ x: number; y: number }[]>([]);
   
   // Auto-assign colors to components
   useEffect(() => {
@@ -107,14 +109,65 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     setActiveComponentIds(activeComponentIds.filter(id => id !== componentId));
   };
   
+  // Calculate area using Shoelace formula
+  const calculatePolygonArea = (points: { x: number; y: number }[]) => {
+    let sum = 0;
+    for (let i = 0; i < points.length; i++) {
+      const j = (i + 1) % points.length;
+      sum += points[i].x * points[j].y;
+      sum -= points[j].x * points[i].y;
+    }
+    const pixelArea = Math.abs(sum / 2);
+    
+    // Convert to real-world units using calibration scale
+    const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / calibrations.length;
+    const realArea = pixelArea * avgScale * avgScale; // scale² for area
+    
+    return realArea;
+  };
+  
+  const handleSaveArea = (name: string) => {
+    if (pendingAreaPoints.length < 3) return;
+    
+    const area = calculatePolygonArea(pendingAreaPoints);
+    const newArea: RoofArea = {
+      id: `area-${Date.now()}`,
+      name,
+      points: pendingAreaPoints,
+      area,
+    };
+    
+    // Draw polygon on canvas
+    if (fabricRef.current) {
+      const polygon = new Polygon(pendingAreaPoints, {
+        fill: 'rgba(59, 130, 246, 0.2)', // blue with transparency
+        stroke: '#3b82f6',
+        strokeWidth: 2,
+        selectable: false,
+        evented: false,
+      });
+      fabricRef.current.add(polygon);
+    }
+    
+    setRoofAreas([...roofAreas, newArea]);
+    setAreaPoints([]);
+    setPendingAreaPoints([]);
+    setShowAreaNamePrompt(false);
+    setAreaMode(false);
+  };
+  
   // Refs to access current state in event handlers
   const calibrationModeRef = useRef(calibrationMode);
   const calibrationPointsRef = useRef(calibrationPoints);
+  const areaModeRef = useRef(areaMode);
+  const areaPointsRef = useRef(areaPoints);
   
   useEffect(() => {
     calibrationModeRef.current = calibrationMode;
     calibrationPointsRef.current = calibrationPoints;
-  }, [calibrationMode, calibrationPoints]);
+    areaModeRef.current = areaMode;
+    areaPointsRef.current = areaPoints;
+  }, [calibrationMode, calibrationPoints, areaMode, areaPoints]);
 
   // Initialize Fabric canvas
   useEffect(() => {
@@ -154,9 +207,54 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     };
     imgElement.src = planUrl;
 
-    // Pan on drag OR calibration click
+    // Pan on drag OR calibration click OR area click
     canvas.on('mouse:down', (opt) => {
       const evt = opt.e;
+      
+      // Area mode: add polygon points
+      if (areaModeRef.current && !evt.altKey) {
+        const pointer = canvas.getPointer(opt.e);
+        const newPoint = { x: pointer.x, y: pointer.y };
+        const currentPoints = areaPointsRef.current;
+        
+        // Check if click is near start point (close polygon)
+        if (currentPoints.length >= 3) {
+          const startPoint = currentPoints[0];
+          const distance = Math.sqrt(
+            Math.pow(newPoint.x - startPoint.x, 2) + 
+            Math.pow(newPoint.y - startPoint.y, 2)
+          );
+          
+          if (distance < 15) {
+            // Close polygon - prompt for name
+            console.log('[Area] Closing polygon with', currentPoints.length, 'points');
+            setPendingAreaPoints(currentPoints);
+            setShowAreaNamePrompt(true);
+            return;
+          }
+        }
+        
+        // Add point
+        console.log('[Area] Added point', currentPoints.length + 1);
+        setAreaPoints([...currentPoints, newPoint]);
+        
+        // Draw marker
+        const marker = new Circle({
+          left: newPoint.x,
+          top: newPoint.y,
+          radius: 4,
+          fill: '#3b82f6',
+          stroke: '#000',
+          strokeWidth: 2,
+          originX: 'center',
+          originY: 'center',
+          selectable: false,
+          evented: false,
+        });
+        canvas.add(marker);
+        
+        return;
+      }
       
       // Calibration mode: capture points
       if (calibrationModeRef.current && !evt.altKey) {
@@ -255,14 +353,14 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     };
   }, [planUrl]);
 
-  // Update cursor when calibration mode changes
+  // Update cursor when calibration/area mode changes
   useEffect(() => {
     if (fabricRef.current) {
-      const cursor = calibrationMode ? 'crosshair' : 'default';
+      const cursor = (calibrationMode || areaMode) ? 'crosshair' : 'default';
       fabricRef.current.defaultCursor = cursor;
       fabricRef.current.hoverCursor = cursor;
     }
-  }, [calibrationMode]);
+  }, [calibrationMode, areaMode]);
 
   // Zoom controls
   const handleZoomIn = () => {
@@ -472,9 +570,28 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
 
           <div className="border-t border-slate-700 pt-4">
             <h2 className="text-sm font-semibold mb-3 text-slate-400">Roof Areas</h2>
-            <div className="text-sm text-slate-500">
-              No areas defined yet
-            </div>
+            {roofAreas.length === 0 ? (
+              <div className="text-sm text-slate-500">
+                {calibrationConfirmed ? 'Click "Area" to draw' : 'Calibrate first'}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {roofAreas.map((area) => {
+                  const unit = calibrations[0]?.unit || 'feet';
+                  return (
+                    <div
+                      key={area.id}
+                      className="p-2 rounded bg-blue-600/20 border border-blue-600"
+                    >
+                      <div className="font-medium text-sm">{area.name}</div>
+                      <div className="text-xs text-slate-300">
+                        {area.area.toFixed(2)} sq {unit}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {calibrationConfirmed && (
@@ -582,8 +699,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 📏 Line
               </button>
               <button
+                onClick={() => setAreaMode(!areaMode)}
                 disabled={calibrationMode || calibrations.length === 0}
-                className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`px-3 py-2 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  areaMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-700 hover:bg-slate-600'
+                }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : ''}
               >
                 📐 Area
@@ -681,6 +801,74 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           </div>
         </div>
       )}
+
+      {/* Area Name Prompt */}
+      {showAreaNamePrompt && (
+        <AreaNameModal
+          onSave={handleSaveArea}
+          onCancel={() => {
+            setShowAreaNamePrompt(false);
+            setPendingAreaPoints([]);
+            setAreaPoints([]);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// Area Name Modal
+function AreaNameModal({
+  onSave,
+  onCancel,
+}: {
+  onSave: (name: string) => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (name.trim()) {
+      onSave(name.trim());
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-slate-800 rounded-lg p-6 w-96 border border-slate-700">
+        <h2 className="text-xl font-semibold mb-4">Name This Area</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm mb-2">Area Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded"
+              placeholder="e.g. Main Roof"
+              autoFocus
+              required
+            />
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded"
+              disabled={!name.trim()}
+            >
+              Save Area
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
