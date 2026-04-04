@@ -151,6 +151,21 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     setIsDirty(true);
   }
 
+  function applyTemplate(templateId: string) {
+    const template = templates.find(t => t.id === templateId);
+    if (!template) return;
+
+    // Apply branding from template
+    setCompanyName(template.company_name || '');
+    setCompanyAddress(template.company_address || '');
+    setCompanyPhone(template.company_phone || '');
+    setCompanyEmail(template.company_email || '');
+    setCompanyLogoUrl(template.company_logo_url || defaultLogoUrl || '');
+    setFooterText(template.footer_text || '');
+    
+    setIsDirty(true);
+  }
+
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
@@ -173,6 +188,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           companyAddress,
           companyPhone,
           companyEmail,
+          companyLogoUrl,
           footerText,
         }),
       ]);
