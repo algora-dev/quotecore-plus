@@ -91,6 +91,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [showAreaNamePrompt, setShowAreaNamePrompt] = useState(false);
   const [pendingAreaPoints, setPendingAreaPoints] = useState<{ x: number; y: number }[]>([]);
   
+  // Component display state (may include test components)
+  const [displayComponents, setDisplayComponents] = useState<Component[]>([]);
+  
   // Auto-assign colors to components
   useEffect(() => {
     console.log('[Components] Raw prop received:', components);
@@ -99,12 +102,26 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     if (components.length > 0) {
       console.log('[Components] Sample component:', components[0]);
     }
-    const colors = components.map((comp, idx) => ({
+    
+    // Add test components if none exist (for debugging)
+    let componentsToUse = [...components];
+    if (components.length === 0) {
+      console.log('[Components] No real components - adding TEST entries');
+      componentsToUse = [
+        { id: 'test-1', name: '[TEST] Clay Tiles' },
+        { id: 'test-2', name: '[TEST] Ridge Capping' },
+        { id: 'test-3', name: '[TEST] Guttering' },
+      ];
+    }
+    
+    setDisplayComponents(componentsToUse);
+    
+    const colors = componentsToUse.map((comp, idx) => ({
       componentId: comp.id,
       color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
     }));
     setComponentColors(colors);
-  }, [components]);
+  }, [components, calibrationConfirmed]);
   
   const handleAddComponent = (componentId: string) => {
     if (!activeComponentIds.includes(componentId)) {
@@ -696,7 +713,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           {calibrationConfirmed && (
             <div className="border-t border-slate-700 pt-4">
               <h2 className="text-sm font-semibold mb-3 text-slate-400">Components</h2>
-              {components.length === 0 ? (
+              {displayComponents.length === 0 ? (
               <div className="text-sm text-slate-500">
                 No components in library
               </div>
@@ -708,7 +725,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                     <h3 className="text-xs font-semibold text-slate-500 mb-2">Active ({activeComponentIds.length})</h3>
                     <div className="space-y-1">
                       {activeComponentIds.map((id) => {
-                        const comp = components.find(c => c.id === id);
+                        const comp = displayComponents.find(c => c.id === id);
                         const assignment = componentColors.find(c => c.componentId === id);
                         if (!comp) return null;
                         return (
@@ -738,7 +755,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 <div>
                   <h3 className="text-xs font-semibold text-slate-500 mb-2">Available</h3>
                   <div className="space-y-1">
-                    {components
+                    {displayComponents
                       .filter(comp => !activeComponentIds.includes(comp.id))
                       .map((comp) => {
                         const assignment = componentColors.find(c => c.componentId === comp.id);
