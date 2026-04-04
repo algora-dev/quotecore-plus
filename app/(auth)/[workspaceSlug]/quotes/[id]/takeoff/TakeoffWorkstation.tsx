@@ -42,6 +42,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
   const [tempCalibrationLine, setTempCalibrationLine] = useState<any>(null);
   const [calibrationConfirmed, setCalibrationConfirmed] = useState(false);
   const [showConfirmedFlash, setShowConfirmedFlash] = useState(false);
+  const [showCalibrationHelp, setShowCalibrationHelp] = useState(true);
   
   // Refs to access current state in event handlers
   const calibrationModeRef = useRef(calibrationMode);
@@ -222,10 +223,12 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
   };
 
   const handleConfirmCalibration = () => {
+    console.log('[Calibration] Confirming...');
     setCalibrationConfirmed(true);
     setShowConfirmedFlash(true);
     // Hide calibration section after 0.5s flash
     setTimeout(() => {
+      console.log('[Calibration] Hiding flash');
       setShowConfirmedFlash(false);
     }, 500);
   };
@@ -469,6 +472,34 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
           onSave={handleSaveCalibration}
           onCancel={handleCancelCalibration}
         />
+      )}
+
+      {/* Initial Calibration Help */}
+      {showCalibrationHelp && calibrations.length === 0 && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-lg p-6 max-w-md border border-slate-700">
+            <h2 className="text-xl font-semibold mb-4">📐 Calibrate Your Plan</h2>
+            <div className="space-y-3 text-sm">
+              <p>Before you can measure, you need to set the scale:</p>
+              <ol className="list-decimal list-inside space-y-2 text-slate-300">
+                <li>Click the <span className="font-bold text-yellow-400">"Calibrate"</span> button</li>
+                <li>Click <span className="font-bold">two points</span> on the plan with a known distance</li>
+                <li>Enter the <span className="font-bold">actual distance</span> between those points</li>
+                <li>Add 2-3 calibrations for best accuracy</li>
+                <li>Click <span className="font-bold text-green-400">"Confirm Calibration"</span> when done</li>
+              </ol>
+              <p className="text-slate-400 text-xs mt-4">
+                Tip: Use dimensions shown on the plan (like wall lengths or roof spans).
+              </p>
+            </div>
+            <button
+              onClick={() => setShowCalibrationHelp(false)}
+              className="mt-6 w-full px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded font-medium"
+            >
+              Got it, let's calibrate!
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
