@@ -24,6 +24,8 @@ export async function createTemplate(data: TemplateData) {
       name: data.name,
       description: data.description || null,
       roofing_profile: data.roofingProfile || null,
+      customer_template_id: data.customerTemplateId || null,
+      notes: data.notes || null,
       is_active: true,
     })
     .select()
@@ -105,6 +107,8 @@ export async function updateTemplate(templateId: string, data: TemplateData) {
       name: data.name,
       description: data.description || null,
       roofing_profile: data.roofingProfile || null,
+      customer_template_id: data.customerTemplateId || null,
+      notes: data.notes || null,
     })
     .eq('id', templateId);
 
@@ -211,4 +215,64 @@ export async function loadTemplate(templateId: string) {
   }
 
   return template;
+}
+
+export async function deleteTemplate(templateId: string) {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  // Verify ownership
+  const { data: template } = await supabase
+    .from('templates')
+    .select('company_id')
+    .eq('id', templateId)
+    .single();
+
+  if (!template || template.company_id !== profile.company_id) {
+    throw new Error('Unauthorized');
+  }
+
+  // Delete template (cascade will delete components and roof areas)
+  const { error } = await supabase
+    .from('templates')
+    .delete()
+    .eq('id', templateId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath('/templates');
+}
+
+export async function deleteCustomerQuoteTemplate(templateId: string) {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  // Verify ownership and not starter template
+  const { data: template } = await supabase
+    .from('customer_quote_templates')
+    .select('company_id, is_starter_template')
+    .eq('id', templateId)
+    .single();
+
+  if (!template || template.company_id !== profile.company_id) {
+    throw new Error('Unauthorized');
+  }
+
+  if (template.is_starter_template) {
+    throw new Error('Cannot delete starter template');
+  }
+
+  // Delete template
+  const { error } = await supabase
+    .from('customer_quote_templates')
+    .delete()
+    .eq('id', templateId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath('/templates');
 }

@@ -1,7 +1,9 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { CustomerQuoteTemplateRow, TemplateRow } from '@/app/lib/types';
+import { deleteTemplate, deleteCustomerQuoteTemplate } from './actions';
 
 interface Props {
   workspaceSlug: string;
@@ -11,9 +13,43 @@ interface Props {
 }
 
 export function TemplatesPageClient({ workspaceSlug, quoteTemplates, customerQuoteTemplates, initialTab }: Props) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'quote' | 'customer'>(
     initialTab === 'customer' ? 'customer' : 'quote'
   );
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  async function handleDeleteQuoteTemplate(id: string, name: string) {
+    if (!confirm(`Delete template "${name}"? This cannot be undone.`)) {
+      return;
+    }
+
+    setDeleting(id);
+    try {
+      await deleteTemplate(id);
+      router.refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete template');
+    } finally {
+      setDeleting(null);
+    }
+  }
+
+  async function handleDeleteCustomerTemplate(id: string, name: string) {
+    if (!confirm(`Delete template "${name}"? This cannot be undone.`)) {
+      return;
+    }
+
+    setDeleting(id);
+    try {
+      await deleteCustomerQuoteTemplate(id);
+      router.refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete template');
+    } finally {
+      setDeleting(null);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -120,16 +156,23 @@ export function TemplatesPageClient({ workspaceSlug, quoteTemplates, customerQuo
                         <td className="px-6 py-4 text-right space-x-2">
                           <Link
                             href={`/${workspaceSlug}/templates/${template.id}/edit`}
-                            className="text-sm text-slate-600 hover:text-slate-700"
+                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200"
                           >
                             Edit
                           </Link>
                           <Link
                             href={`/${workspaceSlug}/quotes/create?template=${template.id}`}
-                            className="text-sm text-blue-600 hover:text-blue-700"
+                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 hover:bg-green-200"
                           >
                             Use
                           </Link>
+                          <button
+                            onClick={() => handleDeleteQuoteTemplate(template.id, template.name)}
+                            disabled={deleting === template.id}
+                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 hover:bg-red-200 disabled:opacity-50"
+                          >
+                            {deleting === template.id ? 'Deleting...' : 'Delete'}
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -204,13 +247,22 @@ export function TemplatesPageClient({ workspaceSlug, quoteTemplates, customerQuo
                           {template.company_name || '—'}
                         </td>
                         <td className="px-6 py-4 text-right space-x-2">
-                          <button className="text-sm text-blue-600 hover:text-blue-700">
+                          <button className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200">
                             View
                           </button>
                           {!template.is_starter_template && (
-                            <button className="text-sm text-slate-600 hover:text-slate-700">
-                              Edit
-                            </button>
+                            <>
+                              <button className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200">
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCustomerTemplate(template.id, template.name)}
+                                disabled={deleting === template.id}
+                                className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 hover:bg-red-200 disabled:opacity-50"
+                              >
+                                {deleting === template.id ? 'Deleting...' : 'Delete'}
+                              </button>
+                            </>
                           )}
                         </td>
                       </tr>

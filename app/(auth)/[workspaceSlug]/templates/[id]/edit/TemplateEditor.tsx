@@ -48,8 +48,8 @@ export function TemplateEditor({ workspaceSlug, template, componentLibrary, cust
 
   const [selectedComponents, setSelectedComponents] = useState<SelectedComponent[]>(initialComponents);
   const [selectedExtras, setSelectedExtras] = useState<SelectedComponent[]>(initialExtras);
-  const [customerTemplateId, setCustomerTemplateId] = useState('');
-  const [notes, setNotes] = useState('');
+  const [customerTemplateId, setCustomerTemplateId] = useState(template.customer_template_id || '');
+  const [notes, setNotes] = useState(template.notes || '');
   const [saving, setSaving] = useState(false);
 
   const mainComponents = componentLibrary.filter(c => c.component_type === 'main' && c.is_active);
