@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Canvas, FabricImage, Line } from 'fabric';
+import { Canvas, FabricImage, Line, Circle } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 
 interface Props {
@@ -101,14 +101,42 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
         const newPoint = { x: pointer.x, y: pointer.y };
         
         if (calibrationPointsRef.current.length === 0) {
-          // First point
+          // First point - add visual marker
           console.log('[Calibration] First point:', newPoint);
+          const marker = new Circle({
+            left: newPoint.x,
+            top: newPoint.y,
+            radius: 5,
+            fill: '#facc15',
+            stroke: '#000',
+            strokeWidth: 2,
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            evented: false,
+          });
+          canvas.add(marker);
           setCalibrationPoints([newPoint]);
         } else if (calibrationPointsRef.current.length === 1) {
-          // Second point - draw line and show modal
+          // Second point - add marker, draw line, and show modal
           const point1 = calibrationPointsRef.current[0];
           const point2 = newPoint;
           console.log('[Calibration] Second point:', newPoint);
+          
+          // Add marker for second point
+          const marker2 = new Circle({
+            left: newPoint.x,
+            top: newPoint.y,
+            radius: 5,
+            fill: '#facc15',
+            stroke: '#000',
+            strokeWidth: 2,
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            evented: false,
+          });
+          canvas.add(marker2);
           
           // Draw calibration line
           const line = new Line([point1.x, point1.y, point2.x, point2.y], {
@@ -223,12 +251,13 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
   };
 
   const handleConfirmCalibration = () => {
-    console.log('[Calibration] Confirming...');
+    console.log('[Calibration] Confirming... current state:', { calibrationConfirmed, showConfirmedFlash });
     setCalibrationConfirmed(true);
     setShowConfirmedFlash(true);
+    console.log('[Calibration] State updated to confirmed');
     // Hide calibration section after 0.5s flash
     setTimeout(() => {
-      console.log('[Calibration] Hiding flash');
+      console.log('[Calibration] Hiding flash, confirmed should stay true');
       setShowConfirmedFlash(false);
     }, 500);
   };
@@ -493,7 +522,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
               </p>
             </div>
             <button
-              onClick={() => setShowCalibrationHelp(false)}
+              onClick={() => {
+                setShowCalibrationHelp(false);
+                // Auto-start calibration mode
+                setCalibrationMode(true);
+              }}
               className="mt-6 w-full px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded font-medium"
             >
               Got it, let's calibrate!
