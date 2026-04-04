@@ -256,7 +256,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   };
   
   const handleSaveTakeoff = async () => {
-    if (componentMeasurements.length === 0) {
+    if (componentMeasurements.length === 0 && roofAreas.length === 0) {
       alert('No measurements to save. Please add some measurements first.');
       return;
     }
@@ -266,6 +266,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     try {
       // Flatten component measurements
       const allMeasurements: any[] = [];
+      
+      // Add component measurements
       componentMeasurements.forEach(comp => {
         comp.measurements.forEach(m => {
           allMeasurements.push({
@@ -278,14 +280,25 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         });
       });
       
+      // Add roof areas as measurements (with null componentId for informational areas)
+      roofAreas.forEach(area => {
+        allMeasurements.push({
+          componentId: null,
+          type: 'area' as const,
+          value: area.area,
+          points: area.points,
+          visible: area.visible,
+        });
+      });
+      
       await saveTakeoffMeasurements(
         quote.id,
         allMeasurements,
         calibrations[0]?.unit || 'feet'
       );
       
-      // Navigate to quote detail page
-      router.push(`/${workspaceSlug}/quotes/${quote.id}`);
+      // Navigate to Components tab
+      router.push(`/${workspaceSlug}/quotes/${quote.id}?tab=components`);
     } catch (error) {
       console.error('[SaveTakeoff] Error:', error);
       alert('Failed to save measurements. Please try again.');

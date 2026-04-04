@@ -4,7 +4,7 @@ import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
 interface TakeoffMeasurement {
-  componentId: string;
+  componentId: string | null; // null for informational roof areas
   type: 'line' | 'area' | 'point';
   value: number;
   points?: { x: number; y: number }[];
