@@ -247,14 +247,20 @@ export function TemplatesPageClient({ workspaceSlug, quoteTemplates, customerQuo
                           {template.company_name || '—'}
                         </td>
                         <td className="px-6 py-4 text-right space-x-2">
-                          <button className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200">
+                          <Link
+                            href={`/${workspaceSlug}/customer-quote-templates/${template.id}`}
+                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200"
+                          >
                             View
-                          </button>
+                          </Link>
                           {!template.is_starter_template && (
                             <>
-                              <button className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200">
+                              <Link
+                                href={`/${workspaceSlug}/customer-quote-templates/${template.id}/edit`}
+                                className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200"
+                              >
                                 Edit
-                              </button>
+                              </Link>
                               <button
                                 onClick={() => handleDeleteCustomerTemplate(template.id, template.name)}
                                 disabled={deleting === template.id}
