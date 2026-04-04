@@ -19,8 +19,8 @@ export function CustomerTemplateLogoUploader({ companyId, templateId, currentLog
     try {
       // Upload to Supabase Storage (client-side)
       const supabase = createClient();
-      const fileName = `template-logo-${Date.now()}.${file.name.split('.').pop()}`;
-      const storagePath = `${companyId}/customer-templates/${templateId}/${fileName}`;
+      const fileName = `template-${templateId}-logo.${file.name.split('.').pop()}`;
+      const storagePath = `${companyId}/${fileName}`;
       
       const { error: uploadError } = await supabase.storage
         .from('COMPANY-LOGOS')
