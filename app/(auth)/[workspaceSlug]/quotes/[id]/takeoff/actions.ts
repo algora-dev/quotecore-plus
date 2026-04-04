@@ -71,8 +71,7 @@ export async function loadTakeoffMeasurements(quoteId: string) {
       *,
       component_library (
         id,
-        name,
-        category
+        name
       )
     `)
     .eq('quote_id', quoteId)

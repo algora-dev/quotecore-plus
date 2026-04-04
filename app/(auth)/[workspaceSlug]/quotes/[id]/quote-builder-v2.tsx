@@ -48,26 +48,13 @@ export function QuoteBuilder({ quote: initialQuote, initialRoofAreas, initialRoo
   // Auto-populate from takeoff data
   useEffect(() => {
     if (!takeoffPopulated && takeoffData.length > 0 && roofAreas.length === 0) {
-      console.log('[QuoteBuilder] Auto-populating from takeoff:', takeoffData);
-      
-      // Filter roof areas (null componentId) from takeoff
-      const takeoffRoofAreas = takeoffData.filter(t => !t.componentId && t.totalArea > 0);
-      
-      // Create roof areas
-      takeoffRoofAreas.forEach(async (area) => {
-        const areaName = `Roof Area ${roofAreas.length + 1}`; // Simple naming since we don't store names
-        const created = await addQuoteRoofArea(quote.id, areaName);
-        await updateQuoteRoofArea(created.id, {
-          input_mode: 'manual',
-          manual_sqm: area.totalArea,
-        });
-        setRoofAreas(prev => [...prev, created]);
-        setRoofAreaEntries(prev => ({ ...prev, [created.id]: [] }));
-      });
-      
+      console.log('[QuoteBuilder] Takeoff data received:', takeoffData);
       setTakeoffPopulated(true);
+      
+      // Note: Actual population happens after we have the structure
+      // For now just log - we need to understand the data format first
     }
-  }, [takeoffData, roofAreas, takeoffPopulated, quote.id]);
+  }, [takeoffData, roofAreas, takeoffPopulated]);
 
   async function handleAddArea() { if (!newAreaLabel.trim()) return; const created = await addQuoteRoofArea(quote.id, newAreaLabel.trim()); setRoofAreas(prev => [...prev, created]); setRoofAreaEntries(prev => ({ ...prev, [created.id]: [] })); setNewAreaLabel(''); }
   
