@@ -20,6 +20,8 @@ export default async function QuoteBuilderPage({
     loadTakeoffMeasurements(id),
   ]);
   
+  console.log('[QuoteBuilderPage] Loaded components:', components.length, components.map(c => c.name));
+  
   const supabase = await createSupabaseServerClient();
   
   // Load company default currency

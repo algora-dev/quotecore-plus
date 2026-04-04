@@ -53,6 +53,7 @@ export function QuoteBuilder({
   supportingFiles,
   takeoffData = []
 }: Props) {
+  console.log('[QuoteBuilder] Received components:', initialComponents.length, initialComponents.map(c => ({ name: c.name, type: c.component_type })));
   const [phase, setPhase] = useState<Phase>('areas');
   const [quote, setQuote] = useState(initialQuote);
   
@@ -68,6 +69,7 @@ export function QuoteBuilder({
 
   const mainComps = components.filter(c => c.component_type === 'main');
   const extraComps = components.filter(c => c.component_type === 'extra');
+  console.log('[QuoteBuilder] Filtered - mainComps:', mainComps.length, 'extraComps:', extraComps.length);
   const totalRoofSqm = roofAreas.reduce((sum, a) => sum + (a.computed_sqm ?? 0), 0);
   
   // Get effective currency for display

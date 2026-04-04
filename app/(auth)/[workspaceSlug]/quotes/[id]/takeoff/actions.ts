@@ -56,7 +56,23 @@ export async function saveTakeoffMeasurements(
       throw new Error(`Failed to save measurements: ${error.message}`);
     }
     
-    // Auto-populate components from measurements
+    // Auto-create roof areas
+    const roofAreaMeasurements = measurements.filter(m => !m.componentId && m.type === 'area');
+    let firstRoofAreaId: string | null = null;
+    
+    for (let i = 0; i < roofAreaMeasurements.length; i++) {
+      const { data: roofArea } = await supabase.from('quote_roof_areas').insert({
+        quote_id: quoteId,
+        label: `Roof Area ${i + 1}`,
+        input_mode: 'manual',
+        manual_sqm: roofAreaMeasurements[i].value,
+        is_locked: true,
+      }).select().single();
+      
+      if (i === 0 && roofArea) firstRoofAreaId = roofArea.id;
+    }
+    
+    // Auto-populate components linked to first roof area
     const componentIds = [...new Set(measurements.filter(m => m.componentId).map(m => m.componentId!))];
     
     for (const componentId of componentIds) {
@@ -79,7 +95,7 @@ export async function saveTakeoffMeasurements(
       
       await supabase.from('quote_components').insert({
         quote_id: quoteId,
-        quote_roof_area_id: null,
+        quote_roof_area_id: firstRoofAreaId,
         component_library_id: componentId,
         name: libComp.name,
         component_type: 'main',
