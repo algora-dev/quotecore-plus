@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Canvas, FabricImage, Line, Circle, Polygon } from 'fabric';
+import { Canvas, FabricImage, Line, Circle, Polygon, Triangle } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 
 interface Component {
@@ -483,6 +483,34 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         return;
       }
       
+      // Point mode: add single-click marker
+      if (pointModeRef.current && !evt.altKey) {
+        const pointer = canvas.getPointer(opt.e);
+        const componentColor = componentColorsRef.current.find(c => c.componentId === selectedComponentIdRef.current)?.color || '#8b5cf6';
+        
+        // Draw larger triangle marker
+        const marker = new Triangle({
+          left: pointer.x,
+          top: pointer.y,
+          width: 12,
+          height: 12,
+          fill: componentColor,
+          stroke: '#000',
+          strokeWidth: 2,
+          originX: 'center',
+          originY: 'center',
+          selectable: false,
+          evented: false,
+        });
+        canvas.add(marker);
+        
+        // Show confirmation
+        setPendingPointLocation({ x: pointer.x, y: pointer.y });
+        setShowPointMeasurementPrompt(true);
+        
+        return;
+      }
+      
       // Area mode: add polygon points
       if (areaModeRef.current && !evt.altKey) {
         const pointer = canvas.getPointer(opt.e);
@@ -626,14 +654,14 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     };
   }, [planUrl]);
 
-  // Update cursor when calibration/area/line mode changes
+  // Update cursor when calibration/area/line/point mode changes
   useEffect(() => {
     if (fabricRef.current) {
-      const cursor = (calibrationMode || areaMode || lineMode) ? 'crosshair' : 'default';
+      const cursor = (calibrationMode || areaMode || lineMode || pointMode) ? 'crosshair' : 'default';
       fabricRef.current.defaultCursor = cursor;
       fabricRef.current.hoverCursor = cursor;
     }
-  }, [calibrationMode, areaMode, lineMode]);
+  }, [calibrationMode, areaMode, lineMode, pointMode]);
   
   // Update cursor when hovering near first point (to close loop)
   useEffect(() => {
@@ -1107,9 +1135,18 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 📐 Area
               </button>
               <button
+                onClick={() => {
+                  if (!selectedComponentId) {
+                    alert('Select a component first');
+                    return;
+                  }
+                  setPointMode(!pointMode);
+                }}
                 disabled={calibrationMode || calibrations.length === 0}
-                className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                title={calibrations.length === 0 ? 'Calibrate first' : ''}
+                className={`px-3 py-2 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  pointMode ? 'bg-purple-600 hover:bg-purple-700' : 'bg-slate-700 hover:bg-slate-600'
+                }`}
+                title={calibrations.length === 0 ? 'Calibrate first' : selectedComponentId ? 'Add point marker' : 'Select component first'}
               >
                 📍 Point
               </button>
@@ -1211,6 +1248,60 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
             setShowAreaNamePrompt(false);
             setPendingAreaPoints([]);
             setAreaPoints([]);
+          }}
+        />
+      )}
+
+      {/* Point Measurement Prompt */}
+      {showPointMeasurementPrompt && pendingPointLocation && selectedComponentId && (
+        <PointMeasurementModal
+          componentName={displayComponents.find(c => c.id === selectedComponentId)?.name || 'Component'}
+          onConfirm={() => {
+            // Add point measurement
+            const marker = fabricRef.current?.getObjects().slice(-1)[0]; // Last object added
+            
+            const newMeasurement: ComponentMeasurement = {
+              id: `point-${Date.now()}`,
+              type: 'point',
+              value: 1,
+              points: [pendingPointLocation],
+              visible: true,
+              canvasObjects: marker ? [marker] : [],
+            };
+            
+            const compData = componentMeasurements.find(c => c.componentId === selectedComponentId);
+            if (compData) {
+              setComponentMeasurements(componentMeasurements.map(c =>
+                c.componentId === selectedComponentId
+                  ? { ...c, measurements: [...c.measurements, newMeasurement] }
+                  : c
+              ));
+            } else {
+              setComponentMeasurements([
+                ...componentMeasurements,
+                { 
+                  componentId: selectedComponentId, 
+                  measurements: [newMeasurement],
+                  expanded: true 
+                }
+              ]);
+            }
+            
+            // Clear state (keep pointMode active for repeat)
+            setShowPointMeasurementPrompt(false);
+            setPendingPointLocation(null);
+          }}
+          onCancel={() => {
+            // Remove marker from canvas
+            if (fabricRef.current) {
+              const objects = fabricRef.current.getObjects();
+              const marker = objects[objects.length - 1];
+              fabricRef.current.remove(marker);
+              fabricRef.current.renderAll();
+            }
+            
+            setShowPointMeasurementPrompt(false);
+            setPendingPointLocation(null);
           }}
         />
       )}
@@ -1353,6 +1444,57 @@ function AreaNameModal({
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// Point Measurement Modal
+function PointMeasurementModal({
+  componentName,
+  onConfirm,
+  onCancel,
+}: {
+  componentName: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      onConfirm();
+    } else if (e.key === 'Escape') {
+      onCancel();
+    }
+  };
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onKeyDown={handleKeyDown}
+      tabIndex={-1}
+    >
+      <div className="bg-slate-800 rounded-lg p-6 w-96 border border-slate-700">
+        <h2 className="text-xl font-semibold mb-4">Add Point</h2>
+        <div className="mb-6">
+          <div className="text-lg">
+            Add 1 item to <strong className="text-purple-400">{componentName}</strong>?
+          </div>
+        </div>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded"
+          >
+            Cancel (Esc)
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded"
+            autoFocus
+          >
+            Add Point (Enter)
+          </button>
+        </div>
       </div>
     </div>
   );
