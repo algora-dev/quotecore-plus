@@ -55,14 +55,29 @@ export function TemplatesPageClient({ workspaceSlug, quoteTemplates, customerQuo
         {/* Tab Content */}
         {activeTab === 'quote' ? (
           <div className="space-y-4">
-            <div className="flex justify-end">
-              <p className="text-sm text-slate-500">(Quote template creation coming soon)</p>
+            {/* Header for Quote Templates Tab */}
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-slate-600">
+                Reusable roof quote structures with predefined components
+              </p>
+              <Link
+                href={`/${workspaceSlug}/templates/create`}
+                className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                + Create Template
+              </Link>
             </div>
+
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
               {quoteTemplates.length === 0 ? (
                 <div className="p-8 text-center">
                   <p className="text-slate-400 mb-4">No quote templates created yet</p>
-                  <p className="text-sm text-slate-500">Quote templates will appear here</p>
+                  <Link
+                    href={`/${workspaceSlug}/templates/create`}
+                    className="inline-block px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    Create Your First Template
+                  </Link>
                 </div>
               ) : (
                 <table className="w-full">
