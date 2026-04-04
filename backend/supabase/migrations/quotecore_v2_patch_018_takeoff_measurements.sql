@@ -19,37 +19,5 @@ CREATE TABLE IF NOT EXISTS quote_takeoff_measurements (
 CREATE INDEX idx_takeoff_quote ON quote_takeoff_measurements(quote_id);
 CREATE INDEX idx_takeoff_component ON quote_takeoff_measurements(component_library_id);
 
--- RLS Policies
-ALTER TABLE quote_takeoff_measurements ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view takeoff measurements for their company's quotes"
-  ON quote_takeoff_measurements FOR SELECT
-  USING (
-    company_id IN (
-      SELECT company_id FROM user_profiles WHERE user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "Users can insert takeoff measurements for their company's quotes"
-  ON quote_takeoff_measurements FOR INSERT
-  WITH CHECK (
-    company_id IN (
-      SELECT company_id FROM user_profiles WHERE user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "Users can update takeoff measurements for their company's quotes"
-  ON quote_takeoff_measurements FOR UPDATE
-  USING (
-    company_id IN (
-      SELECT company_id FROM user_profiles WHERE user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "Users can delete takeoff measurements for their company's quotes"
-  ON quote_takeoff_measurements FOR DELETE
-  USING (
-    company_id IN (
-      SELECT company_id FROM user_profiles WHERE user_id = auth.uid()
-    )
-  );
+-- Note: RLS policies omitted - access controlled via server actions with company_id ownership checks
+-- All mutations go through server actions which verify company_id matches the authenticated user's company
