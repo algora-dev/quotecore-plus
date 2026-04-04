@@ -28,7 +28,7 @@ export default async function Page({
     .from('quote_files')
     .select('file_path')
     .eq('quote_id', quoteId)
-    .eq('file_type', 'roof_plan')
+    .eq('file_type', 'plan')
     .order('uploaded_at', { ascending: false })
     .limit(1)
     .single();
