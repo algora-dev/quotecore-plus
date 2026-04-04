@@ -252,13 +252,19 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const calibrationPointsRef = useRef(calibrationPoints);
   const areaModeRef = useRef(areaMode);
   const areaPointsRef = useRef(areaPoints);
+  const lineModeRef = useRef(lineMode);
+  const linePointsRef = useRef(linePoints);
+  const pointModeRef = useRef(pointMode);
   
   useEffect(() => {
     calibrationModeRef.current = calibrationMode;
     calibrationPointsRef.current = calibrationPoints;
     areaModeRef.current = areaMode;
     areaPointsRef.current = areaPoints;
-  }, [calibrationMode, calibrationPoints, areaMode, areaPoints]);
+    lineModeRef.current = lineMode;
+    linePointsRef.current = linePoints;
+    pointModeRef.current = pointMode;
+  }, [calibrationMode, calibrationPoints, areaMode, areaPoints, lineMode, linePoints, pointMode]);
 
   // Initialize Fabric canvas
   useEffect(() => {
@@ -756,10 +762,16 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                         const comp = displayComponents.find(c => c.id === id);
                         const assignment = componentColors.find(c => c.componentId === id);
                         if (!comp) return null;
+                        const isSelected = selectedComponentId === comp.id;
                         return (
                           <div
                             key={comp.id}
-                            className="flex items-center gap-2 p-2 rounded bg-slate-700"
+                            onClick={() => setSelectedComponentId(comp.id)}
+                            className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-all ${
+                              isSelected 
+                                ? 'bg-slate-600 ring-2 ring-blue-500' 
+                                : 'bg-slate-700 hover:bg-slate-650'
+                            }`}
                           >
                             <div
                               className="w-6 h-6 rounded border-2 border-slate-600 flex-shrink-0"
@@ -767,7 +779,10 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                             />
                             <div className="flex-1 text-sm font-medium">{comp.name}</div>
                             <button
-                              onClick={() => handleRemoveComponent(comp.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveComponent(comp.id);
+                              }}
                               className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-600/20 rounded"
                             >
                               ×
@@ -833,9 +848,19 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 📐 {calibrationConfirmed ? 'Recalibrate' : 'Calibrate'}
               </button>
               <button
+                onClick={() => {
+                  if (!selectedComponentId) {
+                    alert('Select a component first');
+                    return;
+                  }
+                  setLineMode(!lineMode);
+                  setLinePoints([]);
+                }}
                 disabled={calibrationMode || calibrations.length === 0}
-                className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                title={calibrations.length === 0 ? 'Calibrate first' : ''}
+                className={`px-3 py-2 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  lineMode ? 'bg-green-600 hover:bg-green-700' : 'bg-slate-700 hover:bg-slate-600'
+                }`}
+                title={calibrations.length === 0 ? 'Calibrate first' : selectedComponentId ? 'Measure line' : 'Select component first'}
               >
                 📏 Line
               </button>
