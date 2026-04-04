@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { ComponentLibraryRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
-import { createTemplate } from '../actions';
+import { updateTemplate } from '../../actions';
 
 interface SelectedComponent {
   id: string;
@@ -14,17 +14,40 @@ interface SelectedComponent {
 
 interface Props {
   workspaceSlug: string;
+  template: any; // TODO: Add proper type
   componentLibrary: ComponentLibraryRow[];
   customerTemplates: CustomerQuoteTemplateRow[];
 }
 
-export function TemplateBuilder({ workspaceSlug, componentLibrary, customerTemplates }: Props) {
+export function TemplateEditor({ workspaceSlug, template, componentLibrary, customerTemplates }: Props) {
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [roofingProfile, setRoofingProfile] = useState('');
-  const [selectedComponents, setSelectedComponents] = useState<SelectedComponent[]>([]);
-  const [selectedExtras, setSelectedExtras] = useState<SelectedComponent[]>([]);
+
+  // Initialize with template data
+  const [name, setName] = useState(template.name || '');
+  const [description, setDescription] = useState(template.description || '');
+  const [roofingProfile, setRoofingProfile] = useState(template.roofing_profile || '');
+  
+  // Load existing components
+  const initialComponents = (template.template_components || [])
+    .filter((tc: any) => tc.component_type === 'main')
+    .map((tc: any) => ({
+      id: tc.id,
+      libraryId: tc.component_library_id,
+      name: tc.component_library?.name || 'Unknown',
+      type: 'main' as const,
+    }));
+
+  const initialExtras = (template.template_components || [])
+    .filter((tc: any) => tc.component_type === 'extra')
+    .map((tc: any) => ({
+      id: tc.id,
+      libraryId: tc.component_library_id,
+      name: tc.component_library?.name || 'Unknown',
+      type: 'extra' as const,
+    }));
+
+  const [selectedComponents, setSelectedComponents] = useState<SelectedComponent[]>(initialComponents);
+  const [selectedExtras, setSelectedExtras] = useState<SelectedComponent[]>(initialExtras);
   const [customerTemplateId, setCustomerTemplateId] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
@@ -74,17 +97,16 @@ export function TemplateBuilder({ workspaceSlug, componentLibrary, customerTempl
       return;
     }
 
-    // Validation modal for empty components/extras
     if (selectedComponents.length === 0 && selectedExtras.length === 0) {
       const confirmed = confirm(
-        'You have not added any roof components or extras. Are you sure you want to continue? You can still add components/extras when building a quote, adding them here will just save you time when building each quote.'
+        'You have not added any roof components or extras. Are you sure you want to continue?'
       );
       if (!confirmed) return;
     }
 
     setSaving(true);
     try {
-      await createTemplate({
+      await updateTemplate(template.id, {
         name,
         description,
         roofingProfile,
@@ -96,7 +118,7 @@ export function TemplateBuilder({ workspaceSlug, componentLibrary, customerTempl
 
       router.push(`/${workspaceSlug}/templates`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to save template');
+      alert(err instanceof Error ? err.message : 'Failed to update template');
     } finally {
       setSaving(false);
     }
@@ -114,11 +136,11 @@ export function TemplateBuilder({ workspaceSlug, componentLibrary, customerTempl
             >
               ← Back to Templates
             </Link>
-            <h1 className="text-2xl font-semibold text-slate-900 mt-1">Create Quote Template</h1>
+            <h1 className="text-2xl font-semibold text-slate-900 mt-1">Edit Template</h1>
           </div>
         </div>
 
-        {/* Form */}
+        {/* Form (same structure as create) */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-6">
           {/* Template Details */}
           <div className="space-y-4">
@@ -303,7 +325,7 @@ export function TemplateBuilder({ workspaceSlug, componentLibrary, customerTempl
               disabled={saving}
               className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              {saving ? 'Saving...' : 'Save Template'}
+              {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>

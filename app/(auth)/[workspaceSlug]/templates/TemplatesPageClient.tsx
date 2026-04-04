@@ -119,6 +119,12 @@ export function TemplatesPageClient({ workspaceSlug, quoteTemplates, customerQuo
                         </td>
                         <td className="px-6 py-4 text-right space-x-2">
                           <Link
+                            href={`/${workspaceSlug}/templates/${template.id}/edit`}
+                            className="text-sm text-slate-600 hover:text-slate-700"
+                          >
+                            Edit
+                          </Link>
+                          <Link
                             href={`/${workspaceSlug}/quotes/create?template=${template.id}`}
                             className="text-sm text-blue-600 hover:text-blue-700"
                           >
