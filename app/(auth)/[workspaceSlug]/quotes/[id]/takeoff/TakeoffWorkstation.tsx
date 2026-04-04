@@ -49,18 +49,18 @@ interface Props {
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
 
-// Color palette for components (10 distinct colors)
+// Color palette for components (10 highly distinct colors)
 const COLOR_PALETTE = [
-  '#ef4444', // red-500
-  '#3b82f6', // blue-500
-  '#10b981', // green-500
-  '#f59e0b', // amber-500
-  '#8b5cf6', // violet-500
-  '#ec4899', // pink-500
-  '#14b8a6', // teal-500
-  '#f97316', // orange-500
-  '#06b6d4', // cyan-500
-  '#84cc16', // lime-500
+  '#ef4444', // red
+  '#3b82f6', // blue
+  '#10b981', // emerald-green
+  '#eab308', // yellow
+  '#8b5cf6', // purple
+  '#ec4899', // pink
+  '#14b8a6', // teal
+  '#fb923c', // bright orange
+  '#6366f1', // indigo
+  '#a855f7', // vibrant purple
 ];
 
 interface CalibrationPoint {
@@ -143,13 +143,17 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     }
     
     setDisplayComponents(componentsToUse);
-    
-    const colors = componentsToUse.map((comp, idx) => ({
-      componentId: comp.id,
+  }, [components, calibrationConfirmed]);
+  
+  // Assign colors ONLY to active components (when activeComponentIds changes)
+  useEffect(() => {
+    const colors = activeComponentIds.map((id, idx) => ({
+      componentId: id,
       color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
     }));
     setComponentColors(colors);
-  }, [components, calibrationConfirmed]);
+    console.log('[Components] Colors assigned to', activeComponentIds.length, 'active components');
+  }, [activeComponentIds]);
   
   const handleAddComponent = (componentId: string) => {
     if (!activeComponentIds.includes(componentId)) {
