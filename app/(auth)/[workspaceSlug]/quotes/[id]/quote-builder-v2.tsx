@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal } from '../actions';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
@@ -14,9 +14,10 @@ interface Props {
   quote: QuoteRow; initialRoofAreas: QuoteRoofAreaRow[]; initialRoofAreaEntries: Record<string, QuoteRoofAreaEntryRow[]>;
   initialComponents: QuoteComponentRow[]; initialEntries: Record<string, QuoteComponentEntryRow[]>;
   libraryComponents: ComponentLibraryRow[]; workspaceSlug: string;
+  takeoffData?: any[];
 }
 
-export function QuoteBuilder({ quote: initialQuote, initialRoofAreas, initialRoofAreaEntries, initialComponents, initialEntries, libraryComponents, workspaceSlug }: Props) {
+export function QuoteBuilder({ quote: initialQuote, initialRoofAreas, initialRoofAreaEntries, initialComponents, initialEntries, libraryComponents, workspaceSlug, takeoffData = [] }: Props) {
   const [phase, setPhase] = useState<Phase>('areas');
   const [quote, setQuote] = useState(initialQuote);
   const [roofAreas, setRoofAreas] = useState(initialRoofAreas);
@@ -24,6 +25,7 @@ export function QuoteBuilder({ quote: initialQuote, initialRoofAreas, initialRoo
   const [components, setComponents] = useState(initialComponents);
   const [entries, setEntries] = useState(initialEntries);
   const [newAreaLabel, setNewAreaLabel] = useState('');
+  const [takeoffPopulated, setTakeoffPopulated] = useState(false);
   
   const system: MeasurementSystem = quote.measurement_system;
   const mainComps = components.filter(c => c.component_type === 'main');
@@ -42,6 +44,30 @@ export function QuoteBuilder({ quote: initialQuote, initialRoofAreas, initialRoo
   }));
   const totals = computeQuoteTotals(engineComps, { materialMarginPct: quote.material_margin_pct, labourMarginPct: quote.labour_margin_pct, taxRate: quote.tax_rate });
   const allAreasLocked = roofAreas.every(a => a.is_locked);
+
+  // Auto-populate from takeoff data
+  useEffect(() => {
+    if (!takeoffPopulated && takeoffData.length > 0 && roofAreas.length === 0) {
+      console.log('[QuoteBuilder] Auto-populating from takeoff:', takeoffData);
+      
+      // Filter roof areas (null componentId) from takeoff
+      const takeoffRoofAreas = takeoffData.filter(t => !t.componentId && t.totalArea > 0);
+      
+      // Create roof areas
+      takeoffRoofAreas.forEach(async (area) => {
+        const areaName = `Roof Area ${roofAreas.length + 1}`; // Simple naming since we don't store names
+        const created = await addQuoteRoofArea(quote.id, areaName);
+        await updateQuoteRoofArea(created.id, {
+          input_mode: 'manual',
+          manual_sqm: area.totalArea,
+        });
+        setRoofAreas(prev => [...prev, created]);
+        setRoofAreaEntries(prev => ({ ...prev, [created.id]: [] }));
+      });
+      
+      setTakeoffPopulated(true);
+    }
+  }, [takeoffData, roofAreas, takeoffPopulated, quote.id]);
 
   async function handleAddArea() { if (!newAreaLabel.trim()) return; const created = await addQuoteRoofArea(quote.id, newAreaLabel.trim()); setRoofAreas(prev => [...prev, created]); setRoofAreaEntries(prev => ({ ...prev, [created.id]: [] })); setNewAreaLabel(''); }
   
