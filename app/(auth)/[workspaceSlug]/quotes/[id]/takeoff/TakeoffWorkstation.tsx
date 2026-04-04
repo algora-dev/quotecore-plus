@@ -1,8 +1,10 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
+import { saveTakeoffMeasurements } from './actions';
 
 interface Component {
   id: string;
@@ -79,6 +81,7 @@ interface Calibration {
 }
 
 export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }: Props) {
+  const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<Canvas | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -118,6 +121,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [pendingAreaMeasurement, setPendingAreaMeasurement] = useState<{ points: { x: number; y: number }[], area: number } | null>(null);
   const [showPointMeasurementPrompt, setShowPointMeasurementPrompt] = useState(false);
   const [pendingPointLocation, setPendingPointLocation] = useState<{ x: number; y: number } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Component display state (may include test components)
   const [displayComponents, setDisplayComponents] = useState<Component[]>([]);
@@ -249,6 +253,45 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       }
       return comp;
     }));
+  };
+  
+  const handleSaveTakeoff = async () => {
+    if (componentMeasurements.length === 0) {
+      alert('No measurements to save. Please add some measurements first.');
+      return;
+    }
+    
+    setIsSaving(true);
+    
+    try {
+      // Flatten component measurements
+      const allMeasurements: any[] = [];
+      componentMeasurements.forEach(comp => {
+        comp.measurements.forEach(m => {
+          allMeasurements.push({
+            componentId: comp.componentId,
+            type: m.type,
+            value: m.value,
+            points: m.points,
+            visible: m.visible,
+          });
+        });
+      });
+      
+      await saveTakeoffMeasurements(
+        quote.id,
+        allMeasurements,
+        calibrations[0]?.unit || 'feet'
+      );
+      
+      // Navigate to quote edit page (will auto-redirect to components tab)
+      router.push(`/${workspaceSlug}/quotes/${quote.id}/edit`);
+    } catch (error) {
+      console.error('[SaveTakeoff] Error:', error);
+      alert('Failed to save measurements. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
   
   // Calculate area using Shoelace formula
@@ -872,11 +915,12 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           <h1 className="text-xl font-semibold">{quote.customer_name} - Digital Takeoff</h1>
         </div>
         <button
-          disabled={calibrations.length === 0}
+          onClick={handleSaveTakeoff}
+          disabled={calibrations.length === 0 || isSaving}
           className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded disabled:opacity-50 disabled:cursor-not-allowed"
           title={calibrations.length === 0 ? 'Calibrate the plan first' : ''}
         >
-          Save & Continue to Components
+          {isSaving ? 'Saving...' : 'Save & Continue to Components'}
         </button>
       </div>
 
