@@ -36,6 +36,7 @@ interface Props {
   planUrl: string | null;
   planName: string | null;
   supportingFiles: SupportingFile[];
+  takeoffData?: any[];
 }
 
 export function QuoteBuilder({
@@ -49,8 +50,10 @@ export function QuoteBuilder({
   companyDefaultCurrency,
   planUrl,
   planName,
-  supportingFiles
+  supportingFiles,
+  takeoffData = []
 }: Props) {
+  console.log('[QuoteBuilder] Mounted with takeoff data:', takeoffData);
   const [phase, setPhase] = useState<Phase>('areas');
   const [quote, setQuote] = useState(initialQuote);
   
@@ -63,6 +66,61 @@ export function QuoteBuilder({
   const [components, setComponents] = useState(initialComponents);
   const [entries, setEntries] = useState(initialEntries);
   const [newAreaLabel, setNewAreaLabel] = useState('');
+  const [takeoffPopulated, setTakeoffPopulated] = useState(false);
+
+  // Auto-populate from takeoff on mount
+  useEffect(() => {
+    if (takeoffPopulated || !takeoffData || takeoffData.length === 0) return;
+    
+    console.log('[QuoteBuilder] Checking takeoff components against existing...');
+    setTakeoffPopulated(true); // Set flag immediately to prevent re-runs
+    
+    (async () => {
+      const newComponents = [];
+      
+      for (const item of takeoffData) {
+        if (!item.componentId) continue;
+        
+        // Check if this component already exists
+        const existingComp = components.find(c => c.component_library_id === item.componentId);
+        
+        if (existingComp) {
+          console.log('[QuoteBuilder] Component exists, would update with:', item.totalLength, 'feet');
+          console.log('[QuoteBuilder] SKIPPING AUTO-UPDATE - user should see takeoff measurements in sidebar instead');
+          // TODO: Display takeoff measurements in component sidebar
+          continue;
+        }
+        
+        // Component doesn't exist, create it
+        const libComp = libraryComponents.find(c => c.id === item.componentId);
+        if (!libComp) {
+          console.warn('[QuoteBuilder] Component not found in library:', item.componentId);
+          continue;
+        }
+        
+        console.log('[QuoteBuilder] Adding new component from takeoff:', item.componentName);
+        
+        const created = await addQuoteComponent(quote.id, {
+          component_library_id: item.componentId,
+          name: item.componentName,
+          component_type: 'main',
+          measurement_type: 'linear',
+          material_rate: libComp.material_rate || 0,
+          labour_rate: libComp.labour_rate || 0,
+          waste_type: 'none',
+        });
+        
+        newComponents.push(created);
+      }
+      
+      if (newComponents.length > 0) {
+        console.log('[QuoteBuilder] Adding', newComponents.length, 'new components');
+        setComponents(prev => [...prev, ...newComponents]);
+      } else {
+        console.log('[QuoteBuilder] No new components to add');
+      }
+    })();
+  }, [takeoffData, takeoffPopulated, quote.id, libraryComponents, components]);
 
   const mainComps = components.filter(c => c.component_type === 'main');
   const extraComps = components.filter(c => c.component_type === 'extra');

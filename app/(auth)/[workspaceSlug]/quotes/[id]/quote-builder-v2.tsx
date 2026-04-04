@@ -47,12 +47,16 @@ export function QuoteBuilder({ quote: initialQuote, initialRoofAreas, initialRoo
 
   // Auto-populate from takeoff data
   useEffect(() => {
+    console.log('[QuoteBuilder] Mount check:', {
+      takeoffDataLength: takeoffData.length,
+      roofAreasLength: roofAreas.length,
+      takeoffPopulated,
+      takeoffData
+    });
+    
     if (!takeoffPopulated && takeoffData.length > 0 && roofAreas.length === 0) {
-      console.log('[QuoteBuilder] Takeoff data received:', takeoffData);
+      console.log('[QuoteBuilder] AUTO-POPULATING from takeoff!');
       setTakeoffPopulated(true);
-      
-      // Note: Actual population happens after we have the structure
-      // For now just log - we need to understand the data format first
     }
   }, [takeoffData, roofAreas, takeoffPopulated]);
 

@@ -256,6 +256,10 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   };
   
   const handleSaveTakeoff = async () => {
+    console.log('[SaveTakeoff] Starting save for quote:', quote.id);
+    console.log('[SaveTakeoff] Component measurements:', componentMeasurements.length);
+    console.log('[SaveTakeoff] Roof areas:', roofAreas.length);
+    
     if (componentMeasurements.length === 0 && roofAreas.length === 0) {
       alert('No measurements to save. Please add some measurements first.');
       return;
@@ -291,11 +295,15 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         });
       });
       
+      console.log('[SaveTakeoff] Saving', allMeasurements.length, 'measurements to quote:', quote.id);
+      
       await saveTakeoffMeasurements(
         quote.id,
         allMeasurements,
         calibrations[0]?.unit || 'feet'
       );
+      
+      console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}`);
       
       // Navigate to quote builder (will need to auto-load takeoff data)
       router.push(`/${workspaceSlug}/quotes/${quote.id}`);
