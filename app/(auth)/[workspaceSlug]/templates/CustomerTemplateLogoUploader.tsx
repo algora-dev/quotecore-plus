@@ -22,17 +22,22 @@ export function CustomerTemplateLogoUploader({ companyId, templateId, currentLog
       const fileName = `template-${templateId}-logo.${file.name.split('.').pop()}`;
       const storagePath = `${companyId}/${fileName}`;
       
+      console.log('Uploading to bucket: company-logos, path:', storagePath);
+      
       const { error: uploadError } = await supabase.storage
-        .from('COMPANY-LOGOS')
+        .from('company-logos')
         .upload(storagePath, file, { upsert: true });
 
       if (uploadError) {
+        console.error('Upload error:', uploadError);
         throw new Error(uploadError.message);
       }
+      
+      console.log('Upload successful!');
 
       // Get public URL
       const { data: urlData } = supabase.storage
-        .from('COMPANY-LOGOS')
+        .from('company-logos')
         .getPublicUrl(storagePath);
 
       const publicUrl = urlData.publicUrl;
