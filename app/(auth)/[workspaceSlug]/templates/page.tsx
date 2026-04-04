@@ -24,6 +24,8 @@ export default async function TemplatesPage({
 
   const customerQuoteTemplates = await loadCustomerQuoteTemplates();
 
+  console.log('Customer templates loaded:', customerQuoteTemplates.length);
+
   return (
     <TemplatesPageClient
       workspaceSlug={workspaceSlug}

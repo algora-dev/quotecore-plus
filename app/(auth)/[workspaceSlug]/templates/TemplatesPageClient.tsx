@@ -16,6 +16,11 @@ interface Props {
 }
 
 export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, customerQuoteTemplates, initialTab }: Props) {
+  console.log('TemplatesPageClient render:', { 
+    quoteTemplates: quoteTemplates.length, 
+    customerQuoteTemplates: customerQuoteTemplates.length 
+  });
+  
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'quote' | 'customer'>(
     initialTab === 'customer' ? 'customer' : 'quote'
