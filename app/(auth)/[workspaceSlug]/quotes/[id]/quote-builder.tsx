@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal } from '../actions';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { unitForMeasurement, entryLabel, addMoreLabel } from '@/app/lib/types';
@@ -54,6 +55,7 @@ export function QuoteBuilder({
   takeoffData = []
 }: Props) {
   console.log('[QuoteBuilder] Mounted with takeoff data:', takeoffData);
+  const router = useRouter();
   const [phase, setPhase] = useState<Phase>('areas');
   const [quote, setQuote] = useState(initialQuote);
   
@@ -114,13 +116,14 @@ export function QuoteBuilder({
       }
       
       if (newComponents.length > 0) {
-        console.log('[QuoteBuilder] Adding', newComponents.length, 'new components');
-        setComponents(prev => [...prev, ...newComponents]);
+        console.log('[QuoteBuilder] Added', newComponents.length, 'components to DB, refreshing page...');
+        router.refresh(); // Reload server data to show new components
+        setPhase('components'); // Switch to components tab
       } else {
         console.log('[QuoteBuilder] No new components to add');
       }
     })();
-  }, [takeoffData, takeoffPopulated, quote.id, libraryComponents, components]);
+  }, [takeoffData, takeoffPopulated, quote.id, libraryComponents, components, router]);
 
   const mainComps = components.filter(c => c.component_type === 'main');
   const extraComps = components.filter(c => c.component_type === 'extra');
