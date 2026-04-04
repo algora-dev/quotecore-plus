@@ -209,6 +209,48 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     }));
   };
   
+  const handleToggleMeasurementVisibility = (componentId: string, measurementId: string) => {
+    setComponentMeasurements(componentMeasurements.map(comp => {
+      if (comp.componentId === componentId) {
+        return {
+          ...comp,
+          measurements: comp.measurements.map(m => {
+            if (m.id === measurementId) {
+              const newVisible = !m.visible;
+              // Toggle canvas objects
+              m.canvasObjects?.forEach(obj => obj.set('visible', newVisible));
+              fabricRef.current?.renderAll();
+              return { ...m, visible: newVisible };
+            }
+            return m;
+          }),
+        };
+      }
+      return comp;
+    }));
+  };
+  
+  const handleToggleComponentVisibility = (componentId: string) => {
+    setComponentMeasurements(componentMeasurements.map(comp => {
+      if (comp.componentId === componentId) {
+        // Check if all measurements are visible
+        const allVisible = comp.measurements.every(m => m.visible);
+        const newVisible = !allVisible;
+        
+        return {
+          ...comp,
+          measurements: comp.measurements.map(m => {
+            // Toggle canvas objects
+            m.canvasObjects?.forEach(obj => obj.set('visible', newVisible));
+            fabricRef.current?.renderAll();
+            return { ...m, visible: newVisible };
+          }),
+        };
+      }
+      return comp;
+    }));
+  };
+  
   // Calculate area using Shoelace formula
   const calculatePolygonArea = (points: { x: number; y: number }[]) => {
     let sum = 0;
@@ -993,6 +1035,20 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                                 </span>
                               )}
                               
+                              {/* Hide/show all measurements button */}
+                              {compData && compData.measurements.length > 0 && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleToggleComponentVisibility(id);
+                                  }}
+                                  className="text-green-500 hover:bg-green-600/20 rounded text-lg transition-colors"
+                                  title={compData.measurements.every(m => m.visible) ? 'Hide all' : 'Show all'}
+                                >
+                                  {compData.measurements.every(m => m.visible) ? '●' : '○'}
+                                </button>
+                              )}
+                              
                               {/* Expand/collapse button */}
                               {compData && compData.measurements.length > 0 && (
                                 <button
@@ -1033,6 +1089,13 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                                       {m.type === 'area' && `📐 ${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
                                       {m.type === 'point' && `📍 1 item`}
                                     </span>
+                                    <button
+                                      onClick={() => handleToggleMeasurementVisibility(id, m.id)}
+                                      className="text-green-500 hover:bg-green-600/20 rounded"
+                                      title={m.visible ? 'Hide' : 'Show'}
+                                    >
+                                      {m.visible ? '●' : '○'}
+                                    </button>
                                     <button
                                       onClick={() => handleDeleteMeasurement(id, m.id)}
                                       className="text-red-400 hover:text-red-300"
