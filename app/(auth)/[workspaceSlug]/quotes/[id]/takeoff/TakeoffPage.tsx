@@ -14,19 +14,27 @@ const TakeoffWorkstation = dynamic(
   }
 );
 
+interface Component {
+  id: string;
+  name: string;
+  category: string;
+}
+
 interface Props {
   workspaceSlug: string;
   quoteId: string;
   quote: QuoteRow;
   planUrl: string;
+  components: Component[];
 }
 
-export function TakeoffPage({ workspaceSlug, quote, planUrl }: Props) {
+export function TakeoffPage({ workspaceSlug, quote, planUrl, components }: Props) {
   return (
     <TakeoffWorkstation
       workspaceSlug={workspaceSlug}
       quote={quote}
       planUrl={planUrl}
+      components={components}
     />
   );
 }

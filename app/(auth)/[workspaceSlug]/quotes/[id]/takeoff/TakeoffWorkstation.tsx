@@ -4,14 +4,40 @@ import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 
+interface Component {
+  id: string;
+  name: string;
+  category: string;
+}
+
+interface ComponentColor {
+  componentId: string;
+  color: string;
+}
+
 interface Props {
   workspaceSlug: string;
   quote: QuoteRow;
   planUrl: string;
+  components: Component[];
 }
 
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
+
+// Color palette for components (10 distinct colors)
+const COLOR_PALETTE = [
+  '#ef4444', // red-500
+  '#3b82f6', // blue-500
+  '#10b981', // green-500
+  '#f59e0b', // amber-500
+  '#8b5cf6', // violet-500
+  '#ec4899', // pink-500
+  '#14b8a6', // teal-500
+  '#f97316', // orange-500
+  '#06b6d4', // cyan-500
+  '#84cc16', // lime-500
+];
 
 interface CalibrationPoint {
   x: number;
@@ -28,7 +54,7 @@ interface Calibration {
   scale: number;
 }
 
-export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
+export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<Canvas | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -43,6 +69,18 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
   const [calibrationConfirmed, setCalibrationConfirmed] = useState(false);
   const [showConfirmedFlash, setShowConfirmedFlash] = useState(false);
   const [showCalibrationHelp, setShowCalibrationHelp] = useState(true);
+  
+  // Component colors (auto-assign on mount)
+  const [componentColors, setComponentColors] = useState<ComponentColor[]>([]);
+  
+  // Auto-assign colors to components
+  useEffect(() => {
+    const colors = components.map((comp, idx) => ({
+      componentId: comp.id,
+      color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
+    }));
+    setComponentColors(colors);
+  }, [components]);
   
   // Refs to access current state in event handlers
   const calibrationModeRef = useRef(calibrationMode);
@@ -404,9 +442,34 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
 
           <div className="border-t border-slate-700 pt-4">
             <h2 className="text-sm font-semibold mb-3 text-slate-400">Components</h2>
-            <div className="text-sm text-slate-500">
-              No components assigned yet
-            </div>
+            {components.length === 0 ? (
+              <div className="text-sm text-slate-500">
+                No components in library
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {components.map((comp) => {
+                  const assignment = componentColors.find(c => c.componentId === comp.id);
+                  return (
+                    <div
+                      key={comp.id}
+                      className="flex items-center gap-2 p-2 rounded bg-slate-700/50 hover:bg-slate-700"
+                    >
+                      {/* Color swatch */}
+                      <div
+                        className="w-6 h-6 rounded border-2 border-slate-600 flex-shrink-0"
+                        style={{ backgroundColor: assignment?.color }}
+                      />
+                      {/* Component name */}
+                      <div className="flex-1 text-sm">
+                        <div className="font-medium">{comp.name}</div>
+                        <div className="text-xs text-slate-400">{comp.category}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 

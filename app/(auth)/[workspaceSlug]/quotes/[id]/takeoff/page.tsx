@@ -45,12 +45,20 @@ export default async function Page({
     .from('QUOTE-DOCUMENTS')
     .getPublicUrl(planFile.storage_path);
 
+  // Load components from component library
+  const { data: components } = await supabase
+    .from('component_library')
+    .select('id, name, category')
+    .eq('company_id', profile.company_id)
+    .order('name');
+
   return (
     <TakeoffPage
       workspaceSlug={workspaceSlug}
       quoteId={quoteId}
       quote={quote}
       planUrl={urlData.publicUrl}
+      components={components || []}
     />
   );
 }
