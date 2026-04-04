@@ -16,15 +16,17 @@ interface Props {
 }
 
 export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, customerQuoteTemplates, initialTab }: Props) {
-  console.log('TemplatesPageClient render:', { 
-    quoteTemplates: quoteTemplates.length, 
-    customerQuoteTemplates: customerQuoteTemplates.length 
-  });
+  console.log('TemplatesPageClient render - Quote templates:', quoteTemplates.length);
+  console.log('TemplatesPageClient render - Customer templates:', customerQuoteTemplates.length);
+  console.log('TemplatesPageClient render - Customer templates array:', customerQuoteTemplates);
+  console.log('TemplatesPageClient render - initialTab:', initialTab);
   
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'quote' | 'customer'>(
     initialTab === 'customer' ? 'customer' : 'quote'
   );
+  
+  console.log('TemplatesPageClient render - activeTab:', activeTab);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [viewingCustomerTemplate, setViewingCustomerTemplate] = useState<CustomerQuoteTemplateRow | null>(null);
   const [editingCustomerTemplate, setEditingCustomerTemplate] = useState<CustomerQuoteTemplateRow | null>(null);
@@ -208,6 +210,11 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
 
             {/* Customer Quote Templates List */}
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              {(() => {
+                console.log('Render check - customerQuoteTemplates.length:', customerQuoteTemplates.length);
+                console.log('Render check - showing empty state?', customerQuoteTemplates.length === 0);
+                return null;
+              })()}
               {customerQuoteTemplates.length === 0 ? (
                 <div className="p-8 text-center">
                   <p className="text-slate-400 mb-4">No customer quote templates created yet</p>
