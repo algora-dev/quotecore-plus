@@ -55,6 +55,44 @@ export async function saveTakeoffMeasurements(
     if (error) {
       throw new Error(`Failed to save measurements: ${error.message}`);
     }
+    
+    // Auto-populate components from measurements
+    const componentIds = [...new Set(measurements.filter(m => m.componentId).map(m => m.componentId!))];
+    
+    for (const componentId of componentIds) {
+      const { data: existing } = await supabase
+        .from('quote_components')
+        .select('id')
+        .eq('quote_id', quoteId)
+        .eq('component_library_id', componentId)
+        .maybeSingle();
+      
+      if (existing) continue;
+      
+      const { data: libComp } = await supabase
+        .from('component_library')
+        .select('*')
+        .eq('id', componentId)
+        .single();
+      
+      if (!libComp) continue;
+      
+      await supabase.from('quote_components').insert({
+        quote_id: quoteId,
+        quote_roof_area_id: null,
+        component_library_id: componentId,
+        name: libComp.name,
+        component_type: 'main',
+        measurement_type: 'linear',
+        input_mode: 'calculated',
+        material_rate: libComp.material_rate || 0,
+        labour_rate: libComp.labour_rate || 0,
+        waste_type: 'none',
+        waste_percent: 0,
+        waste_fixed: 0,
+        pitch_type: 'none',
+      });
+    }
   }
   
   revalidatePath(`/[workspaceSlug]/quotes/${quoteId}`);
