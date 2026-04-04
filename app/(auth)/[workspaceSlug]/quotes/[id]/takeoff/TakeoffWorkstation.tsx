@@ -20,6 +20,8 @@ interface RoofArea {
   name: string;
   points: { x: number; y: number }[];
   area: number; // in square feet or meters
+  visible: boolean;
+  polygon?: any; // fabric.js polygon object
 }
 
 interface Props {
@@ -109,6 +111,28 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     setActiveComponentIds(activeComponentIds.filter(id => id !== componentId));
   };
   
+  const handleDeleteArea = (areaId: string) => {
+    const area = roofAreas.find(a => a.id === areaId);
+    if (area && area.polygon && fabricRef.current) {
+      fabricRef.current.remove(area.polygon);
+    }
+    setRoofAreas(roofAreas.filter(a => a.id !== areaId));
+  };
+  
+  const handleToggleAreaVisibility = (areaId: string) => {
+    setRoofAreas(roofAreas.map(area => {
+      if (area.id === areaId) {
+        const newVisible = !area.visible;
+        if (area.polygon) {
+          area.polygon.set('visible', newVisible);
+          fabricRef.current?.renderAll();
+        }
+        return { ...area, visible: newVisible };
+      }
+      return area;
+    }));
+  };
+  
   // Calculate area using Shoelace formula
   const calculatePolygonArea = (points: { x: number; y: number }[]) => {
     let sum = 0;
@@ -130,16 +154,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     if (pendingAreaPoints.length < 3) return;
     
     const area = calculatePolygonArea(pendingAreaPoints);
-    const newArea: RoofArea = {
-      id: `area-${Date.now()}`,
-      name,
-      points: pendingAreaPoints,
-      area,
-    };
     
     // Draw polygon on canvas
+    let polygon;
     if (fabricRef.current) {
-      const polygon = new Polygon(pendingAreaPoints, {
+      polygon = new Polygon(pendingAreaPoints, {
         fill: 'rgba(59, 130, 246, 0.2)', // blue with transparency
         stroke: '#3b82f6',
         strokeWidth: 2,
@@ -148,6 +167,15 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       });
       fabricRef.current.add(polygon);
     }
+    
+    const newArea: RoofArea = {
+      id: `area-${Date.now()}`,
+      name,
+      points: pendingAreaPoints,
+      area,
+      visible: true,
+      polygon,
+    };
     
     setRoofAreas([...roofAreas, newArea]);
     setAreaPoints([]);
@@ -422,8 +450,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       const objects = fabricRef.current.getObjects();
       const calibrationObjects = objects.filter(obj => 
         obj.stroke === '#facc15' || // Yellow lines
-        (obj.fill === '#facc15' && obj.type === 'Circle') // Yellow markers
+        (obj.fill === '#facc15' && obj.get('type') === 'circle') // Yellow markers
       );
+      console.log('[Calibration] Removing', calibrationObjects.length, 'calibration objects');
       calibrationObjects.forEach(obj => fabricRef.current!.remove(obj));
       fabricRef.current.renderAll();
     }
@@ -581,11 +610,29 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   return (
                     <div
                       key={area.id}
-                      className="p-2 rounded bg-blue-600/20 border border-blue-600"
+                      className="p-2 rounded bg-blue-600/20 border border-blue-600 flex items-center gap-2"
                     >
-                      <div className="font-medium text-sm">{area.name}</div>
-                      <div className="text-xs text-slate-300">
-                        {area.area.toFixed(2)} sq {unit}
+                      <div className="flex-1">
+                        <div className="font-medium text-sm">{area.name}</div>
+                        <div className="text-xs text-slate-300">
+                          {area.area.toFixed(2)} sq {unit}
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleToggleAreaVisibility(area.id)}
+                          className="w-6 h-6 flex items-center justify-center hover:bg-blue-600/30 rounded"
+                          title={area.visible ? 'Hide' : 'Show'}
+                        >
+                          {area.visible ? '👁️' : '👁️‍🗨️'}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteArea(area.id)}
+                          className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-600/20 rounded"
+                          title="Delete"
+                        >
+                          ×
+                        </button>
                       </div>
                     </div>
                   );
