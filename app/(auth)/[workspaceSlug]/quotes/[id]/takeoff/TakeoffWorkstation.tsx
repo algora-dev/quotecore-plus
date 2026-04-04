@@ -40,6 +40,15 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
   const [activeCalibrationId, setActiveCalibrationId] = useState<string | null>(null);
   const [showCalibrationModal, setShowCalibrationModal] = useState(false);
   const [tempCalibrationLine, setTempCalibrationLine] = useState<any>(null);
+  
+  // Refs to access current state in event handlers
+  const calibrationModeRef = useRef(calibrationMode);
+  const calibrationPointsRef = useRef(calibrationPoints);
+  
+  useEffect(() => {
+    calibrationModeRef.current = calibrationMode;
+    calibrationPointsRef.current = calibrationPoints;
+  }, [calibrationMode, calibrationPoints]);
 
   // Initialize Fabric canvas
   useEffect(() => {
@@ -84,17 +93,19 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl }: Props) {
       const evt = opt.e;
       
       // Calibration mode: capture points
-      if (calibrationMode && !evt.altKey) {
+      if (calibrationModeRef.current && !evt.altKey) {
         const pointer = canvas.getPointer(opt.e);
         const newPoint = { x: pointer.x, y: pointer.y };
         
-        if (calibrationPoints.length === 0) {
+        if (calibrationPointsRef.current.length === 0) {
           // First point
+          console.log('[Calibration] First point:', newPoint);
           setCalibrationPoints([newPoint]);
-        } else if (calibrationPoints.length === 1) {
+        } else if (calibrationPointsRef.current.length === 1) {
           // Second point - draw line and show modal
-          const point1 = calibrationPoints[0];
+          const point1 = calibrationPointsRef.current[0];
           const point2 = newPoint;
+          console.log('[Calibration] Second point:', newPoint);
           
           // Draw calibration line
           const line = new Line([point1.x, point1.y, point2.x, point2.y], {
