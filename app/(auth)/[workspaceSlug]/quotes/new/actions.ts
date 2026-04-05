@@ -50,7 +50,7 @@ export async function uploadRoofPlanFile(quoteId: string, file: File): Promise<v
   const fileName = `plan-${Date.now()}.${fileExt}`;
   const storagePath = `${company.id}/${quoteId}/${fileName}`;
 
-  // Upload to Supabase Storage (client-side)
+  // Upload to Supabase Storage (client-side, public bucket)
   const { error: uploadError } = await supabase.storage
     .from('QUOTE-DOCUMENTS')
     .upload(storagePath, file, {
@@ -62,13 +62,29 @@ export async function uploadRoofPlanFile(quoteId: string, file: File): Promise<v
     throw new Error(`Failed to upload roof plan: ${uploadError.message}`);
   }
 
-  // Save file metadata via server action
-  const serverSupabase = await createSupabaseServerClient();
-  await serverSupabase.from('quote_files').insert({
-    quote_id: quoteId,
-    file_name: file.name,
-    file_type: 'plan',
-    file_size: file.size,
-    storage_path: storagePath,
+  // Save metadata via server action (bypasses RLS)
+  await saveRoofPlanMetadata(quoteId, {
+    fileName: file.name,
+    fileSize: file.size,
+    storagePath,
   });
+}
+
+async function saveRoofPlanMetadata(
+  quoteId: string,
+  metadata: { fileName: string; fileSize: number; storagePath: string }
+): Promise<void> {
+  const supabase = await createSupabaseServerClient();
+  
+  const { error } = await supabase.from('quote_files').insert({
+    quote_id: quoteId,
+    file_name: metadata.fileName,
+    file_type: 'plan',
+    file_size: metadata.fileSize,
+    storage_path: metadata.storagePath,
+  });
+
+  if (error) {
+    throw new Error(`Failed to save file metadata: ${error.message}`);
+  }
 }
