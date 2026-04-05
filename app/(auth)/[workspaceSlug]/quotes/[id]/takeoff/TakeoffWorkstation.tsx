@@ -940,9 +940,10 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm">
+    <div className="min-h-screen bg-gray-100 text-gray-900 flex flex-col p-4">
+      <div className="flex-1 flex flex-col bg-white rounded-xl shadow-lg overflow-hidden">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link
             href={`/${workspaceSlug}/quotes/${quote.id}`}
@@ -1232,7 +1233,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         </div>
 
         {/* Center - Canvas */}
-        <div className="flex-1 flex flex-col p-6 relative">
+        <div className="flex-1 flex flex-col p-6 relative bg-gray-50">
           {/* Top Toolbar */}
           <div className="mb-4 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
             {/* Tools - Left Side */}
@@ -1569,6 +1570,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           }}
         />
       )}
+      </div>
     </div>
   );
 }
