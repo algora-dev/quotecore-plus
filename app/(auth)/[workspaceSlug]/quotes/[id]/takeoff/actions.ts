@@ -58,19 +58,30 @@ export async function saveTakeoffMeasurements(
     
     // Auto-create roof areas
     const roofAreaMeasurements = measurements.filter(m => !m.componentId && m.type === 'area');
+    console.log('[SaveTakeoff] Found roof areas to create:', roofAreaMeasurements.length);
+    console.log('[SaveTakeoff] Roof area measurements:', roofAreaMeasurements);
     let firstRoofAreaId: string | null = null;
     
     for (let i = 0; i < roofAreaMeasurements.length; i++) {
-      const { data: roofArea } = await supabase.from('quote_roof_areas').insert({
+      console.log(`[SaveTakeoff] Creating roof area ${i + 1} with value:`, roofAreaMeasurements[i].value);
+      const { data: roofArea, error: roofAreaError } = await supabase.from('quote_roof_areas').insert({
         quote_id: quoteId,
         label: `Roof Area ${i + 1}`,
         input_mode: 'manual',
-        manual_sqm: roofAreaMeasurements[i].value,
+        final_value_sqm: roofAreaMeasurements[i].value,
         is_locked: true,
       }).select().single();
       
+      if (roofAreaError) {
+        console.error('[SaveTakeoff] Error creating roof area:', roofAreaError);
+      } else {
+        console.log('[SaveTakeoff] Created roof area:', roofArea);
+      }
+      
       if (i === 0 && roofArea) firstRoofAreaId = roofArea.id;
     }
+    
+    console.log('[SaveTakeoff] First roof area ID:', firstRoofAreaId);
     
     // Auto-populate components linked to first roof area
     const componentIds = [...new Set(measurements.filter(m => m.componentId).map(m => m.componentId!))];

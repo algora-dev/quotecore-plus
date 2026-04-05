@@ -168,8 +168,8 @@ function RoofAreasTab({
               <div>
                 <span className="text-slate-600">Area:</span>
                 <span className="ml-2 font-medium">
-                  {area.manual_sqm?.toFixed(2)} m² (
-                  {((area.manual_sqm || 0) * 10.764).toFixed(2)} sq ft)
+                  {area.final_value_sqm?.toFixed(2)} m² (
+                  {((area.final_value_sqm || 0) * 10.764).toFixed(2)} sq ft)
                 </span>
               </div>
               <div>
