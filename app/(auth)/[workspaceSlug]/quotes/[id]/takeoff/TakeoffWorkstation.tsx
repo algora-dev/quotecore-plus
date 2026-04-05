@@ -1240,9 +1240,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
             <div className="flex gap-2">
               <button
                 onClick={handleStartCalibration}
-                className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${
+                className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 ${
                   calibrationMode
-                    ? 'bg-blue-100 hover:bg-blue-200 text-blue-700 border border-blue-400'
+                    ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border-2 border-orange-500'
                     : calibrationConfirmed
                     ? 'bg-gray-200 hover:bg-gray-300'
                     : 'bg-gray-100 hover:bg-gray-200'
@@ -1268,7 +1268,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  lineMode ? 'bg-emerald-400 hover:bg-emerald-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                  lineMode ? 'bg-orange-100 border-2 border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)) ? 'Create roof area with pitch first' : selectedComponentId ? 'Measure line' : 'Select component first'}
               >
@@ -1283,7 +1283,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 }}
                 disabled={calibrationMode || calibrations.length === 0}
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  areaMode ? 'bg-blue-400 hover:bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                  areaMode ? 'bg-orange-100 border-2 border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : selectedComponentId ? 'Measure area for component' : 'Measure roof area (required first!)'}
               >
@@ -1306,7 +1306,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  pointMode ? 'bg-purple-400 hover:bg-purple-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                  pointMode ? 'bg-orange-100 border-2 border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)) ? 'Create roof area with pitch first' : selectedComponentId ? 'Add point marker' : 'Select component first'}
               >
@@ -1399,7 +1399,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 setLineMode(false);
                 setPointMode(false);
               }}
-              className="mt-6 w-full px-4 py-2 bg-blue-400 hover:bg-blue-500 text-white rounded-full font-medium"
+              className="mt-6 w-full px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
               Got it, let's create a roof area!
             </button>
