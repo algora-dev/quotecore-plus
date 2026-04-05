@@ -955,7 +955,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         <button
           onClick={handleSaveTakeoff}
           disabled={calibrations.length === 0 || isSaving}
-          className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           title={calibrations.length === 0 ? 'Calibrate the plan first' : ''}
         >
           {isSaving ? 'Saving...' : 'Save & Continue to Components'}
@@ -975,7 +975,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 </div>
               ) : showConfirmedFlash ? (
                 /* Flash green confirmation briefly */
-                <div className="p-3 rounded bg-emerald-50 border border-emerald-300 animate-pulse">
+                <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-300 animate-pulse">
                   <div className="text-green-400 font-bold mb-2">✓ Confirmed</div>
                   <div className="text-xs text-gray-600 mb-1">Scale</div>
                   <div className="font-bold text-green-400">
@@ -986,7 +986,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
               /* Not confirmed - Show details + Confirm button */
               <div className="space-y-2">
                 {/* Average Scale Display */}
-                <div className="p-3 rounded bg-amber-50 border border-amber-300">
+                <div className="p-3 rounded-lg bg-amber-50 border border-amber-300">
                   <div className="text-xs text-gray-600 mb-1">Average Scale</div>
                   <div className="font-bold text-amber-700">
                     {(calibrations.reduce((sum, cal) => sum + cal.scale, 0) / calibrations.length).toFixed(4)} {calibrations[0].unit}/px
@@ -1000,7 +1000,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 {calibrations.map((cal, idx) => (
                   <div
                     key={cal.id}
-                    className="p-2 rounded text-sm bg-gray-100"
+                    className="p-2 rounded-lg text-sm bg-gray-100"
                   >
                     <div className="font-medium">
                       #{idx + 1}: {cal.actualDistance} {cal.unit}
@@ -1014,7 +1014,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 {/* Confirm Button */}
                 <button
                   onClick={handleConfirmCalibration}
-                  className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 rounded text-sm font-medium"
+                  className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium"
                 >
                   ✓ Confirm Calibration
                 </button>
@@ -1036,7 +1036,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   return (
                     <div
                       key={area.id}
-                      className="p-2 rounded bg-blue-50 border border-blue-300 flex items-center gap-2"
+                      className="p-2 rounded-lg bg-blue-50 border border-blue-300 flex items-center gap-2"
                     >
                       <div className="flex-1">
                         <div className="font-medium text-sm">{area.name}</div>
@@ -1047,7 +1047,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                       <div className="flex gap-1">
                         <button
                           onClick={() => handleToggleAreaVisibility(area.id)}
-                          className={`w-6 h-6 flex items-center justify-center rounded text-lg transition-colors ${
+                          className={`w-6 h-6 flex items-center justify-center rounded-lg text-lg transition-colors ${
                             area.visible 
                               ? 'text-green-500 hover:bg-green-600/20' 
                               : 'text-green-500 hover:bg-green-600/20'
@@ -1058,7 +1058,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                         </button>
                         <button
                           onClick={() => handleDeleteArea(area.id)}
-                          className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-600/20 rounded"
+                          className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-600/20 rounded-md"
                           title="Delete area"
                         >
                           ×
@@ -1112,7 +1112,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                               
                               {/* Measurement count badge */}
                               {compData && compData.measurements.length > 0 && (
-                                <span className="text-xs bg-blue-600 px-2 py-1 rounded">
+                                <span className="text-xs bg-blue-600 px-2 py-1 rounded-md">
                                   {compData.measurements.length}
                                 </span>
                               )}
@@ -1124,7 +1124,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                                     e.stopPropagation();
                                     handleToggleComponentVisibility(id);
                                   }}
-                                  className="text-green-500 hover:bg-green-600/20 rounded text-lg transition-colors"
+                                  className="text-green-500 hover:bg-green-600/20 rounded-lg text-lg transition-colors"
                                   title={compData.measurements.every(m => m.visible) ? 'Hide all' : 'Show all'}
                                 >
                                   {compData.measurements.every(m => m.visible) ? '●' : '○'}
@@ -1152,7 +1152,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                                   e.stopPropagation();
                                   handleRemoveComponent(comp.id);
                                 }}
-                                className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-600/20 rounded"
+                                className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-600/20 rounded-md"
                               >
                                 ×
                               </button>
@@ -1173,7 +1173,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                                     </span>
                                     <button
                                       onClick={() => handleToggleMeasurementVisibility(id, m.id)}
-                                      className="text-green-500 hover:bg-green-600/20 rounded"
+                                      className="text-green-500 hover:bg-green-600/20 rounded-md"
                                       title={m.visible ? 'Hide' : 'Show'}
                                     >
                                       {m.visible ? '●' : '○'}
@@ -1216,7 +1216,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                             <div className="flex-1 text-sm font-medium">{comp.name}</div>
                             <button
                               onClick={() => handleAddComponent(comp.id)}
-                              className="w-6 h-6 flex items-center justify-center text-green-400 hover:bg-green-600/20 rounded font-bold"
+                              className="w-6 h-6 flex items-center justify-center text-green-400 hover:bg-green-600/20 rounded-md font-bold"
                             >
                               +
                             </button>
@@ -1239,7 +1239,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
             <div className="flex gap-2">
               <button
                 onClick={handleStartCalibration}
-                className={`px-3 py-2 rounded text-sm flex items-center gap-2 ${
+                className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${
                   calibrationMode
                     ? 'bg-yellow-600 hover:bg-yellow-700'
                     : calibrationConfirmed
@@ -1266,7 +1266,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   setLinePoints([]);
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
-                className={`px-3 py-2 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   lineMode ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-100 hover:bg-gray-200'
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)) ? 'Create roof area with pitch first' : selectedComponentId ? 'Measure line' : 'Select component first'}
@@ -1281,7 +1281,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   setAreaPoints([]);
                 }}
                 disabled={calibrationMode || calibrations.length === 0}
-                className={`px-3 py-2 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   areaMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-100 hover:bg-gray-200'
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : selectedComponentId ? 'Measure area for component' : 'Measure roof area (required first!)'}
@@ -1304,7 +1304,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   setAreaMode(false);
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
-                className={`px-3 py-2 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   pointMode ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-100 hover:bg-gray-200'
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)) ? 'Create roof area with pitch first' : selectedComponentId ? 'Add point marker' : 'Select component first'}
@@ -1317,26 +1317,26 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
             <div className="flex gap-2">
               <button
                 onClick={handleZoomOut}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm"
+                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
               >
                 −
               </button>
               <span className="px-3 py-1 text-sm">{Math.round(zoom * 100)}%</span>
               <button
                 onClick={handleZoomIn}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm"
+                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
               >
                 +
               </button>
               <button
                 onClick={handleResetZoom}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm"
+                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
               >
                 Reset
               </button>
               <button
                 onClick={handleFitToScreen}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm"
+                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
               >
                 Fit
               </button>
@@ -1345,7 +1345,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
 
           {/* Canvas */}
           <div className="flex-1 flex items-center justify-center">
-            <div className="border-2 border-gray-200 rounded">
+            <div className="border-2 border-gray-200 rounded-lg">
               <canvas ref={canvasRef} />
             </div>
           </div>
@@ -1398,7 +1398,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 setLineMode(false);
                 setPointMode(false);
               }}
-              className="mt-6 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-medium"
+              className="mt-6 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium"
             >
               Got it, let's create a roof area!
             </button>
@@ -1430,7 +1430,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 // Auto-start calibration mode
                 setCalibrationMode(true);
               }}
-              className="mt-6 w-full px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded font-medium"
+              className="mt-6 w-full px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-medium"
             >
               Got it, let's calibrate!
             </button>
@@ -1611,7 +1611,7 @@ function AreaNameModal({
         </h2>
         
         {componentName && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-300 rounded">
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-300 rounded-lg-lg">
             <div className="text-sm text-gray-600 mb-1">Component:</div>
             <div className="font-semibold">{componentName}</div>
             <div className="text-2xl font-bold text-blue-400 mt-2">
@@ -1652,7 +1652,7 @@ function AreaNameModal({
                   Used to calculate component lengths (rafters, hips, valleys)
                 </p>
               </div>
-              <div className="p-3 bg-amber-900/20 border border-amber-600 rounded">
+              <div className="p-3 bg-amber-900/20 border border-amber-600 rounded-lg">
                 <p className="text-xs text-amber-200">
                   ⚠️ Area: {calculatedArea.toFixed(2)} sq {unit}
                 </p>
