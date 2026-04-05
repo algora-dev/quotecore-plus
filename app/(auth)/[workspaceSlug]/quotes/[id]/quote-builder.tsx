@@ -37,6 +37,8 @@ interface Props {
   planName: string | null;
   supportingFiles: SupportingFile[];
   takeoffData?: any[];
+  externalPhase?: Phase; // NEW: For URL-based navigation (v2)
+  onPhaseChange?: (phase: Phase) => void; // NEW: Callback when phase changes
 }
 
 export function QuoteBuilder({
@@ -51,10 +53,22 @@ export function QuoteBuilder({
   planUrl,
   planName,
   supportingFiles,
-  takeoffData = []
+  takeoffData = [],
+  externalPhase,
+  onPhaseChange
 }: Props) {
   console.log('[QuoteBuilder] Received components:', initialComponents.length, initialComponents.map(c => ({ name: c.name, type: c.component_type })));
-  const [phase, setPhase] = useState<Phase>('areas');
+  const [internalPhase, setInternalPhase] = useState<Phase>('areas');
+  
+  // Use external phase if provided, otherwise use internal
+  const phase = externalPhase ?? internalPhase;
+  const setPhase = (newPhase: Phase) => {
+    if (onPhaseChange) {
+      onPhaseChange(newPhase);
+    } else {
+      setInternalPhase(newPhase);
+    }
+  };
   const [quote, setQuote] = useState(initialQuote);
   
   // Update quote state when props change (e.g., after currency change)
