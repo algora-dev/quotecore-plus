@@ -67,7 +67,7 @@ export async function saveTakeoffMeasurements(
       const { data: roofArea, error: roofAreaError } = await supabase.from('quote_roof_areas').insert({
         quote_id: quoteId,
         label: `Roof Area ${i + 1}`,
-        input_mode: 'manual',
+        input_mode: 'final',
         final_value_sqm: roofAreaMeasurements[i].value,
         is_locked: true,
       }).select().single();
