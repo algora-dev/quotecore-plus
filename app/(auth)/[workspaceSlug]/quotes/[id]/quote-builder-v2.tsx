@@ -155,9 +155,9 @@ export function QuoteBuilder({ quote: initialQuote, initialRoofAreas, initialRoo
         <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${quote.status === 'draft' ? 'bg-slate-100 text-slate-600' : 'bg-orange-100 text-orange-700'}`}>{quote.status}</span>
       </div>
       <nav className="flex gap-1 p-1 bg-slate-100 rounded-lg">
-        {phases.map(p => <button key={p.key} onClick={() => setPhase(p.key)} className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition ${phase === p.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>{p.label}</button>)}
+        {phases.map(p => <button key={p.key} onClick={() => setPhase(p.key)} className={`flex-1 py-2 px-3 text-sm font-medium rounded-full transition ${phase === p.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>{p.label}</button>)}
       </nav>
-      <div className="flex gap-4 p-3 bg-slate-50 rounded-lg text-sm">
+      <div className="flex gap-4 p-3 bg-slate-50 rounded-full text-sm">
         <span>Roof: <strong>{formatArea(totalRoofSqm, system)} {areaUnit(system)}</strong></span>
         <span>Materials: <strong>${totals.totalMaterials.toFixed(2)}</strong></span>
         <span>Labour: <strong>${totals.totalLabour.toFixed(2)}</strong></span>

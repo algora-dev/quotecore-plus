@@ -197,7 +197,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
               setPlanUploaded(false);
               setUploadedPlanPath(null);
             }}
-            className={`relative p-4 rounded-lg border-2 transition-all ${
+            className={`relative p-4 rounded-full border-2 transition-all ${
               entryMode === 'manual'
                 ? 'border-orange-500 bg-blue-50'
                 : 'border-slate-300 hover:border-slate-400'
@@ -217,7 +217,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
           <button
             type="button"
             onClick={() => setEntryMode('digital')}
-            className={`relative p-4 rounded-lg border-2 transition-all ${
+            className={`relative p-4 rounded-full border-2 transition-all ${
               entryMode === 'digital'
                 ? 'border-orange-500 bg-blue-50'
                 : 'border-slate-300 hover:border-slate-400'
@@ -276,7 +276,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
         <button
           type="submit"
           disabled={creating || !customerName.trim() || !entryMode || (entryMode === 'digital' && !planUploaded)}
-          className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-3 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowe transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
         >
           {creating ? 'Creating...' : entryMode === 'digital' ? 'Start Digital Takeoff' : 'Create Quote'}
         </button>

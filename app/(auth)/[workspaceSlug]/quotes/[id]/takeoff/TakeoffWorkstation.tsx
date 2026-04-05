@@ -956,7 +956,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         <button
           onClick={handleSaveTakeoff}
           disabled={calibrations.length === 0 || isSaving}
-          className="px-4 py-2 bg-emerald-400 hover:bg-emerald-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-emerald-400 hover:bg-emerald-500 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowe transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           title={calibrations.length === 0 ? 'Calibrate the plan first' : ''}
         >
           {isSaving ? 'Saving...' : 'Save & Continue to Components'}
@@ -1015,7 +1015,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 {/* Confirm Button */}
                 <button
                   onClick={handleConfirmCalibration}
-                  className="w-full px-3 py-2 bg-emerald-400 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium"
+                  className="w-full px-3 py-2 bg-emerald-400 hover:bg-emerald-500 text-white rounded-full text-sm font-mediu transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
                 >
                   ✓ Confirm Calibration
                 </button>
@@ -1059,7 +1059,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                         </button>
                         <button
                           onClick={() => handleDeleteArea(area.id)}
-                          className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-600/20 rounded-md"
+                          className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-600/20 rounded-full"
                           title="Delete area"
                         >
                           ×
@@ -1125,7 +1125,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                                     e.stopPropagation();
                                     handleToggleComponentVisibility(id);
                                   }}
-                                  className="text-green-500 hover:bg-green-600/20 rounded-lg text-lg transition-colors"
+                                  className="text-green-500 hover:bg-green-600/20 rounded-full text-lg transition-colors"
                                   title={compData.measurements.every(m => m.visible) ? 'Hide all' : 'Show all'}
                                 >
                                   {compData.measurements.every(m => m.visible) ? '●' : '○'}
@@ -1153,7 +1153,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                                   e.stopPropagation();
                                   handleRemoveComponent(comp.id);
                                 }}
-                                className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-600/20 rounded-md"
+                                className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-600/20 rounded-full"
                               >
                                 ×
                               </button>
@@ -1174,7 +1174,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                                     </span>
                                     <button
                                       onClick={() => handleToggleMeasurementVisibility(id, m.id)}
-                                      className="text-green-500 hover:bg-green-600/20 rounded-md"
+                                      className="text-green-500 hover:bg-green-600/20 rounded-full"
                                       title={m.visible ? 'Hide' : 'Show'}
                                     >
                                       {m.visible ? '●' : '○'}
@@ -1267,7 +1267,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   setLinePoints([]);
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
-                className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   lineMode ? 'bg-emerald-400 hover:bg-emerald-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)) ? 'Create roof area with pitch first' : selectedComponentId ? 'Measure line' : 'Select component first'}
@@ -1282,7 +1282,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   setAreaPoints([]);
                 }}
                 disabled={calibrationMode || calibrations.length === 0}
-                className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   areaMode ? 'bg-blue-400 hover:bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : selectedComponentId ? 'Measure area for component' : 'Measure roof area (required first!)'}
@@ -1305,7 +1305,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   setAreaMode(false);
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
-                className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   pointMode ? 'bg-purple-400 hover:bg-purple-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)) ? 'Create roof area with pitch first' : selectedComponentId ? 'Add point marker' : 'Select component first'}
@@ -1325,19 +1325,19 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
               <span className="px-3 py-1 text-sm">{Math.round(zoom * 100)}%</span>
               <button
                 onClick={handleZoomIn}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
+                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
               >
                 +
               </button>
               <button
                 onClick={handleResetZoom}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
+                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
               >
                 Reset
               </button>
               <button
                 onClick={handleFitToScreen}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
+                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
               >
                 Fit
               </button>
@@ -1399,7 +1399,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 setLineMode(false);
                 setPointMode(false);
               }}
-              className="mt-6 w-full px-4 py-2 bg-blue-400 hover:bg-blue-500 text-white rounded-lg font-medium"
+              className="mt-6 w-full px-4 py-2 bg-blue-400 hover:bg-blue-500 text-white rounded-full font-medium"
             >
               Got it, let's create a roof area!
             </button>
@@ -1431,7 +1431,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 // Auto-start calibration mode
                 setCalibrationMode(true);
               }}
-              className="mt-6 w-full px-4 py-2 bg-blue-400 hover:bg-blue-500 text-white rounded-lg font-medium"
+              className="mt-6 w-full px-4 py-2 bg-blue-400 hover:bg-blue-500 text-white rounded-full font-medium"
             >
               Got it, let's calibrate!
             </button>

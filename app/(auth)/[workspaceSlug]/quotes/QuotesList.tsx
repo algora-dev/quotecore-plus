@@ -102,7 +102,7 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
         </button>
         <button
           onClick={() => setActiveTab('confirmed')}
-          className={`px-4 py-2 text-sm font-medium rounded-md transition ${
+          className={`px-4 py-2 text-sm font-medium rounded-full transition ${
             activeTab === 'confirmed'
               ? 'bg-white text-slate-900 shadow-sm'
               : 'text-slate-500 hover:text-slate-700'
@@ -147,13 +147,13 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
                   <>
                     <Link
                       href={`/${workspaceSlug}/quotes/${q.id}`}
-                      className="px-3 py-1 text-sm rounded-lg border border-slate-300 bg-white hover:bg-slate-50"
+                      className="px-3 py-1 text-sm rounded-full border border-slate-300 bg-white hover:bg-slate-50"
                     >
                       Edit
                     </Link>
                     <button
                       onClick={() => setDeleteId(q.id)}
-                      className="px-3 py-1 text-sm rounded-lg border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+                      className="px-3 py-1 text-sm rounded-full border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
                     >
                       Delete
                     </button>
@@ -165,13 +165,13 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
                   <>
                     <Link
                       href={`/${workspaceSlug}/quotes/${q.id}/summary`}
-                      className="px-3 py-1 text-sm rounded-lg border border-slate-300 bg-white hover:bg-slate-50"
+                      className="px-3 py-1 text-sm rounded-full border border-slate-300 bg-white hover:bg-slate-50"
                     >
                       View
                     </Link>
                     <button
                       onClick={() => setDeleteId(q.id)}
-                      className="px-3 py-1 text-sm rounded-lg border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+                      className="px-3 py-1 text-sm rounded-full border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
                     >
                       Delete
                     </button>
@@ -212,7 +212,7 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 text-sm font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
                 disabled={deleting}
               >
                 {deleting ? 'Deleting...' : 'Delete Forever'}

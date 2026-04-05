@@ -402,7 +402,7 @@ export function QuoteBuilder({
           <button
             key={p.key}
             onClick={() => setPhase(p.key)}
-            className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition ${
+            className={`flex-1 py-2 px-3 text-sm font-medium rounded-full transition ${
               phase === p.key
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
@@ -446,7 +446,7 @@ export function QuoteBuilder({
             <button
               onClick={handleAddArea}
               disabled={!newAreaLabel.trim()}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium rounded-full bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50"
             >
               Add Roof Area
             </button>
@@ -455,7 +455,7 @@ export function QuoteBuilder({
             <button
               onClick={() => setPhase('components')}
               disabled={!allAreasLocked}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
             >
               {allAreasLocked ? 'Next: Components →' : 'Confirm all areas to continue'}
             </button>
@@ -508,7 +508,7 @@ export function QuoteBuilder({
             </button>
             <button
               onClick={() => setPhase('extras')}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+              className="px-4 py-2 text-sm font-medium rounded-full bg-blue-600 text-white hover:bg-blue-700"
             >
               Next: Extras →
             </button>
@@ -548,7 +548,7 @@ export function QuoteBuilder({
             </button>
             <button
               onClick={() => setPhase('review')}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+              className="px-4 py-2 text-sm font-medium rounded-full bg-blue-600 text-white hover:bg-blue-700"
             >
               Next: Review →
             </button>
@@ -648,7 +648,7 @@ export function QuoteBuilder({
               <button
                 onClick={handleSaveMargins}
                 disabled={marginSaving}
-                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium disabled:opacity-50 text-sm"
+                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-full font-medium disabled:opacity-50 text-s transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               >
                 {marginSaving ? 'Saving...' : 'Apply Changes'}
               </button>
