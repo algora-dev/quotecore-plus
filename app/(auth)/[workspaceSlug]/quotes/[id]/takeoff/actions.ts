@@ -153,7 +153,7 @@ export async function saveTakeoffMeasurements(
         const wasteFixed = libComp.default_waste_fixed || 0;
         
         // Apply pitch and waste to get final value
-        const valueAfterWaste = applyPitchAndWaste(
+        const result = applyPitchAndWaste(
           m.value,
           true, // isPlan (from takeoff)
           pitchType as any,
@@ -163,12 +163,12 @@ export async function saveTakeoffMeasurements(
           wasteFixed
         );
         
-        console.log(`[SaveTakeoff] Entry ${index + 1}: raw=${m.value.toFixed(2)}, pitch=${roofPitch}°, type=${pitchType}, after=${valueAfterWaste.toFixed(2)}`);
+        console.log(`[SaveTakeoff] Entry ${index + 1}: raw=${m.value.toFixed(2)}, pitch=${roofPitch}°, type=${pitchType}, factor=${result.pitchFactorUsed.toFixed(3)}, afterPitch=${result.afterPitch.toFixed(2)}, afterWaste=${result.afterWaste.toFixed(2)}`);
         
         return {
           quote_component_id: newComponent.id,
           raw_value: m.value,
-          value_after_waste: valueAfterWaste,
+          value_after_waste: result.afterWaste,
           sort_order: index,
         };
       });
