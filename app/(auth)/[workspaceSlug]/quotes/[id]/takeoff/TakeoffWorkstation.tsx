@@ -1419,7 +1419,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 <li>Click <span className="font-bold">two points</span> on the plan with a known distance</li>
                 <li>Enter the <span className="font-bold">actual distance</span> between those points</li>
                 <li>Add 2-3 calibrations for best accuracy</li>
-                <li>Click <span className="font-bold text-green-400">"Confirm Calibration"</span> when done</li>
+                <li>Click <span className="font-bold text-blue-600">"Confirm Calibration"</span> when done</li>
               </ol>
               <p className="text-gray-600 text-xs mt-4">
                 Tip: Use dimensions shown on the plan (like wall lengths or roof spans).
@@ -1431,7 +1431,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 // Auto-start calibration mode
                 setCalibrationMode(true);
               }}
-              className="mt-6 w-full px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-medium"
+              className="mt-6 w-full px-4 py-2 bg-blue-400 hover:bg-blue-500 text-white rounded-lg font-medium"
             >
               Got it, let's calibrate!
             </button>
