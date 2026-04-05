@@ -1217,7 +1217,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                             <div className="flex-1 text-sm font-medium">{comp.name}</div>
                             <button
                               onClick={() => handleAddComponent(comp.id)}
-                              className="w-6 h-6 flex items-center justify-center text-green-400 hover:bg-green-600/20 rounded-md font-bold"
+                              className="w-6 h-6 flex items-center justify-center text-orange-500 hover:bg-orange-100 rounded-md font-bold transition-colors"
                             >
                               +
                             </button>
