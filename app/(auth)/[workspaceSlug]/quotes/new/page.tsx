@@ -31,6 +31,7 @@ export default async function NewQuotePage({
         <QuoteDetailsForm
           workspaceSlug={workspaceSlug}
           templates={templates || []}
+          companyId={profile.company_id}
         />
       </div>
     </div>

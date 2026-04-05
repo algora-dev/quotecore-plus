@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createQuoteWithDetails } from './actions';
+import { FileUploader } from '@/app/components/FileUploader';
+import { createClient } from '@/app/lib/supabase/client';
+import { checkStorageQuota, saveFileMetadata } from '../../account/actions';
 
 interface Template {
   id: string;
@@ -13,15 +16,18 @@ interface Template {
 interface Props {
   workspaceSlug: string;
   templates: Template[];
+  companyId: string;
 }
 
-export function QuoteDetailsForm({ workspaceSlug, templates }: Props) {
+export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [customerName, setCustomerName] = useState('');
   const [jobName, setJobName] = useState('');
   const [templateId, setTemplateId] = useState('');
   const [entryMode, setEntryMode] = useState<'manual' | 'digital' | null>(null);
+  const [planUploaded, setPlanUploaded] = useState(false);
+  const [uploadedPlanPath, setUploadedPlanPath] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
   // Pre-select template from URL param
@@ -31,6 +37,39 @@ export function QuoteDetailsForm({ workspaceSlug, templates }: Props) {
       setTemplateId(urlTemplateId);
     }
   }, [searchParams, templates]);
+
+  async function handlePlanUpload(file: File, tempQuoteId: string) {
+    const hasQuota = await checkStorageQuota(companyId, file.size);
+    if (!hasQuota) {
+      throw new Error('Storage quota exceeded. Please upgrade your plan.');
+    }
+
+    const supabase = createClient();
+    const fileExt = file.name.split('.').pop();
+    const fileName = `plan-${Date.now()}.${fileExt}`;
+    const storagePath = `${companyId}/${tempQuoteId}/${fileName}`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from('QUOTE-DOCUMENTS')
+      .upload(storagePath, file, { upsert: true });
+
+    if (uploadError) {
+      throw new Error(uploadError.message);
+    }
+
+    await saveFileMetadata({
+      companyId,
+      quoteId: tempQuoteId,
+      fileType: 'plan',
+      fileName,
+      fileSize: file.size,
+      mimeType: file.type,
+      storagePath,
+    });
+
+    setUploadedPlanPath(storagePath);
+    setPlanUploaded(true);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,6 +84,11 @@ export function QuoteDetailsForm({ workspaceSlug, templates }: Props) {
       return;
     }
 
+    if (entryMode === 'digital' && !planUploaded) {
+      alert('Please upload a roof plan for digital takeoff');
+      return;
+    }
+
     setCreating(true);
     try {
       const quoteId = await createQuoteWithDetails({
@@ -54,8 +98,13 @@ export function QuoteDetailsForm({ workspaceSlug, templates }: Props) {
         entryMode,
       });
 
-      // Always redirect to quote builder - FilesManager handles file upload
-      router.push(`/${workspaceSlug}/quotes/${quoteId}`);
+      // If digital mode with uploaded plan, redirect to takeoff
+      if (entryMode === 'digital' && uploadedPlanPath) {
+        router.push(`/${workspaceSlug}/quotes/${quoteId}/takeoff`);
+      } else {
+        // Manual mode goes to quote builder
+        router.push(`/${workspaceSlug}/quotes/${quoteId}`);
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to create quote');
       setCreating(false);
@@ -168,12 +217,37 @@ export function QuoteDetailsForm({ workspaceSlug, templates }: Props) {
         </div>
       </div>
 
-      {/* Info message for digital mode */}
+      {/* Roof Plan Upload (Digital Mode Only) */}
       {entryMode === 'digital' && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-900">
-            <strong>Next step:</strong> Upload your roof plan in the quote builder to enable digital takeoff.
-          </p>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900 mb-1">Upload Roof Plan</h3>
+            <p className="text-xs text-slate-600 mb-3">
+              Upload roof plan (PDF or image) for digital takeoff. Max 10 MB.
+            </p>
+          </div>
+          
+          {planUploaded ? (
+            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-sm text-green-900 font-medium">Roof plan uploaded successfully!</span>
+            </div>
+          ) : (
+            <FileUploader
+              accept="image/*,application/pdf"
+              maxSize={10485760}
+              onUpload={async (file) => {
+                // Create temp quote ID for upload path
+                const tempId = crypto.randomUUID();
+                await handlePlanUpload(file, tempId);
+              }}
+              currentFileUrl={null}
+              label="Upload Roof Plan"
+              description="PDF or image (max 10 MB)"
+            />
+          )}
         </div>
       )}
 
@@ -187,10 +261,10 @@ export function QuoteDetailsForm({ workspaceSlug, templates }: Props) {
         </Link>
         <button
           type="submit"
-          disabled={creating || !customerName.trim() || !entryMode}
+          disabled={creating || !customerName.trim() || !entryMode || (entryMode === 'digital' && !planUploaded)}
           className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {creating ? 'Creating...' : 'Create Quote'}
+          {creating ? 'Creating...' : entryMode === 'digital' ? 'Start Digital Takeoff' : 'Create Quote'}
         </button>
       </div>
     </form>
