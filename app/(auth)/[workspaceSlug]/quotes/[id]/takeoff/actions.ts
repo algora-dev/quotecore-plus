@@ -123,8 +123,8 @@ export async function saveTakeoffMeasurements(
         component_type: 'main',
         measurement_type: 'linear',
         input_mode: 'calculated',
-        material_rate: libComp.material_rate || 0,
-        labour_rate: libComp.labour_rate || 0,
+        material_rate: libComp.default_material_rate || 0,
+        labour_rate: libComp.default_labour_rate || 0,
         waste_type: libComp.default_waste_type || 'none',
         waste_percent: libComp.default_waste_percent || 0,
         waste_fixed: libComp.default_waste_fixed || 0,
@@ -184,8 +184,8 @@ export async function saveTakeoffMeasurements(
         
         // Calculate totals and update component
         const totalQuantity = entries.reduce((sum, e) => sum + e.value_after_waste, 0);
-        const materialCost = totalQuantity * (libComp.material_rate || 0);
-        const labourCost = totalQuantity * (libComp.labour_rate || 0);
+        const materialCost = totalQuantity * (libComp.default_material_rate || 0);
+        const labourCost = totalQuantity * (libComp.default_labour_rate || 0);
         
         await supabase.from('quote_components').update({
           final_quantity: totalQuantity,
