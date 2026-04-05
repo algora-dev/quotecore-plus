@@ -29,14 +29,14 @@ export default async function WorkspaceHome({
             <Link
               href={`/${workspaceSlug}/templates`}
               prefetch={false}
-              className="inline-flex items-center rounded-full border border-transparent bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+              className="inline-flex items-center rounded-full border-2 border-transparent bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
               Manage templates
             </Link>
             <Link
               href={`/${workspaceSlug}/templates/new`}
               prefetch={false}
-              className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-900"
+              className="inline-flex items-center rounded-full border-2 border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 pill-shimmer"
             >
               + New template
             </Link>
@@ -52,7 +52,7 @@ export default async function WorkspaceHome({
             <Link
               href={`/${workspaceSlug}/quotes`}
               prefetch={false}
-              className="inline-flex items-center rounded-full border border-transparent bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+              className="inline-flex items-center rounded-full border-2 border-transparent bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
               Open quotes workspace
             </Link>

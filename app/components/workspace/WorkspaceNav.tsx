@@ -33,9 +33,8 @@ export function WorkspaceNav({ workspaceSlug }: { workspaceSlug: string }) {
             className={`rounded-full px-3 py-1 transition-all duration-200 ease-in-out ${
               isActive
                 ? 'bg-black text-white border-2 border-black'
-                : 'text-slate-600 border-2 border-transparent hover:border-orange-500 hover:shadow-[0_0_8px_rgba(255,107,53,0.3)] hover:scale-102'
+                : 'text-slate-600 border-2 border-slate-200 pill-shimmer'
             }`}
-            style={!isActive ? { transform: 'scale(1)' } : undefined}
           >
             {item.label}
           </Link>
