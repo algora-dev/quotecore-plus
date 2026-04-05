@@ -1431,7 +1431,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 // Auto-start calibration mode
                 setCalibrationMode(true);
               }}
-              className="mt-6 w-full px-4 py-2 bg-blue-400 hover:bg-blue-500 text-white rounded-full font-medium"
+              className="mt-6 w-full px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
               Got it, let's calibrate!
             </button>
