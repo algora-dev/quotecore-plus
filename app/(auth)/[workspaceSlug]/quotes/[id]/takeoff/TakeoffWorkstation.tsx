@@ -1334,6 +1334,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       {showCalibrationModal && (
         <CalibrationModal
           calibrationNumber={calibrations.length + 1}
+          defaultUnit={quote.measurement_system === 'metric' ? 'meters' : 'feet'}
           onSave={handleSaveCalibration}
           onCancel={handleCancelCalibration}
         />
@@ -1693,15 +1694,17 @@ function LineMeasurementModal({
 // Calibration Modal Component
 function CalibrationModal({
   calibrationNumber,
+  defaultUnit,
   onSave,
   onCancel,
 }: {
   calibrationNumber: number;
+  defaultUnit: 'feet' | 'meters';
   onSave: (distance: number, unit: 'feet' | 'meters', addAnother: boolean) => void;
   onCancel: () => void;
 }) {
   const [distance, setDistance] = useState('');
-  const [unit, setUnit] = useState<'feet' | 'meters'>('feet');
+  const [unit, setUnit] = useState<'feet' | 'meters'>(defaultUnit);
 
   const handleSubmit = (addAnother: boolean) => {
     const num = parseFloat(distance);
