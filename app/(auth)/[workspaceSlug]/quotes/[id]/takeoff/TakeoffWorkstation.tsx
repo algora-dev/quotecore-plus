@@ -173,16 +173,6 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     console.log('[Components] Colors assigned to', activeComponentIds.length, 'active components');
   }, [activeComponentIds]);
   
-  const handleAddComponent = (componentId: string) => {
-    if (!activeComponentIds.includes(componentId)) {
-      setActiveComponentIds([...activeComponentIds, componentId]);
-    }
-  };
-  
-  const handleRemoveComponent = (componentId: string) => {
-    setActiveComponentIds(activeComponentIds.filter(id => id !== componentId));
-  };
-  
   const handleDeleteArea = (areaId: string) => {
     const area = roofAreas.find(a => a.id === areaId);
     if (area && fabricRef.current) {
