@@ -1015,7 +1015,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 {/* Confirm Button */}
                 <button
                   onClick={handleConfirmCalibration}
-                  className="w-full px-3 py-2 bg-emerald-400 hover:bg-emerald-500 text-white rounded-full text-sm font-mediu transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                  className="w-full px-3 py-2 bg-black hover:bg-slate-800 text-white rounded-full text-sm font-mediu transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
                 >
                   ✓ Confirm Calibration
                 </button>
@@ -1726,7 +1726,7 @@ function PointMeasurementModal({
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 bg-purple-400 hover:bg-purple-500 text-white rounded"
+            className="px-4 py-2 bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             autoFocus
           >
             Add Point (Enter)
@@ -1782,7 +1782,7 @@ function LineMeasurementModal({
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 bg-emerald-400 hover:bg-emerald-500 text-white rounded"
+            className="px-4 py-2 bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             autoFocus
           >
             Add Line (Enter)
