@@ -303,10 +303,10 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         calibrations[0]?.unit || 'feet'
       );
       
-      console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}`);
+      console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
       
-      // Navigate to quote builder (will need to auto-load takeoff data)
-      router.push(`/${workspaceSlug}/quotes/${quote.id}`);
+      // Navigate to Quote Builder v2 (digital takeoff mode)
+      router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
     } catch (error) {
       console.error('[SaveTakeoff] Error:', error);
       alert('Failed to save measurements. Please try again.');

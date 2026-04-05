@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadAllEntriesForQuote, loadAllRoofAreaEntriesForQuote } from '../actions';
 import { loadComponentLibrary } from '../../components/actions';
 import { QuoteBuilder } from './quote-builder';
@@ -10,8 +11,14 @@ export default async function QuoteBuilderPage({
   params: Promise<{ workspaceSlug: string; id: string }>;
 }) {
   const { workspaceSlug, id } = await params;
-  const [quote, roofAreas, roofAreaEntries, components, libraryComponents, entries, takeoffData] = await Promise.all([
-    loadQuote(id),
+  
+  // Check entry mode and redirect to v2 if digital
+  const quote = await loadQuote(id);
+  if (quote.entry_mode === 'digital') {
+    redirect(`/${workspaceSlug}/quotes/${id}/build?step=roof-areas`);
+  }
+  // Load remaining data for v1 (manual mode)
+  const [roofAreas, roofAreaEntries, components, libraryComponents, entries, takeoffData] = await Promise.all([
     loadQuoteRoofAreas(id),
     loadAllRoofAreaEntriesForQuote(id),
     loadQuoteComponents(id),
