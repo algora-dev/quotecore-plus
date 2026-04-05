@@ -136,20 +136,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     console.log('[Components] Calibration confirmed:', calibrationConfirmed);
     if (components.length > 0) {
       console.log('[Components] Sample component:', components[0]);
+    } else {
+      console.warn('[Components] No components found in component library for this company');
     }
     
-    // Add test components if none exist (for debugging)
-    let componentsToUse = [...components];
-    if (components.length === 0) {
-      console.log('[Components] No real components - adding TEST entries');
-      componentsToUse = [
-        { id: 'test-1', name: '[TEST] Clay Tiles' },
-        { id: 'test-2', name: '[TEST] Ridge Capping' },
-        { id: 'test-3', name: '[TEST] Guttering' },
-      ];
-    }
-    
-    setDisplayComponents(componentsToUse);
+    setDisplayComponents(components);
   }, [components, calibrationConfirmed]);
   
   // Assign colors ONLY to active components (when activeComponentIds changes)
@@ -977,7 +968,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           {/* Calibration Section - Show if: not confirmed, calibration mode, or showing flash */}
           {(!calibrationConfirmed || calibrationMode || showConfirmedFlash) && (
             <div>
-              <h2 className="text-sm font-semibold mb-3 text-gray-700 uppercase tracking-wide">Calibration</h2>
+              <h2 className="text-sm font-semibold mb-3 text-gray-900 uppercase tracking-wide">Calibration</h2>
               {calibrations.length === 0 ? (
                 <div className="text-sm text-amber-600 font-medium bg-amber-50 border border-amber-200 rounded-lg p-3">
                   ⚠️ Calibrate first to continue
@@ -1049,7 +1040,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                     >
                       <div className="flex-1">
                         <div className="font-medium text-sm">{area.name}</div>
-                        <div className="text-xs text-gray-700">
+                        <div className="text-xs text-gray-900">
                           {area.area.toFixed(2)} sq {unit}
                         </div>
                       </div>
@@ -1092,7 +1083,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 {/* Active Components */}
                 {activeComponentIds.length > 0 && (
                   <div>
-                    <h3 className="text-xs font-semibold text-gray-500 mb-2">Active ({activeComponentIds.length})</h3>
+                    <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Active ({activeComponentIds.length})</h3>
                     <div className="space-y-2">
                       {activeComponentIds.map((id) => {
                         const comp = displayComponents.find(c => c.id === id);
@@ -1173,7 +1164,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                                 {compData.measurements.map((m) => (
                                   <div
                                     key={m.id}
-                                    className="flex items-center gap-2 p-1 text-xs text-gray-700 bg-white/50 rounded"
+                                    className="flex items-center gap-2 p-1 text-xs text-gray-900 bg-white/50 rounded"
                                   >
                                     <span className="flex-1">
                                       {m.type === 'line' && `📏 ${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'}`}
@@ -1207,7 +1198,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
 
                 {/* Available Components */}
                 <div>
-                  <h3 className="text-xs font-semibold text-gray-500 mb-2">Available</h3>
+                  <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Available</h3>
                   <div className="space-y-1">
                     {displayComponents
                       .filter(comp => !activeComponentIds.includes(comp.id))
@@ -1383,12 +1374,12 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
             <h2 className="text-xl font-semibold mb-4">✅ Calibration Complete!</h2>
             <h3 className="text-lg font-semibold mb-3 text-amber-700">Next: Create Your First Roof Area</h3>
             <div className="space-y-3 text-sm">
-              <p className="text-gray-700">
+              <p className="text-gray-900">
                 Before measuring components, you must define at least one <span className="font-bold">roof area with a pitch angle</span>.
               </p>
               <div className="bg-gray-50/50 border border-gray-200 rounded p-3 space-y-2">
                 <p className="font-semibold text-blue-400">How to create a roof area:</p>
-                <ol className="list-decimal list-inside space-y-1.5 text-gray-700 ml-2">
+                <ol className="list-decimal list-inside space-y-1.5 text-gray-900 ml-2">
                   <li>Click the <span className="font-bold text-blue-400">"Area"</span> button in the toolbar above</li>
                   <li>Click to place <span className="font-bold">at least 4 points</span> around the roof outline</li>
                   <li>Close the shape by clicking <span className="font-bold">near your starting point</span></li>
@@ -1422,7 +1413,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
             <h2 className="text-xl font-semibold mb-4">📐 Calibrate Your Plan</h2>
             <div className="space-y-3 text-sm">
               <p>Before you can measure, you need to set the scale:</p>
-              <ol className="list-decimal list-inside space-y-2 text-gray-700">
+              <ol className="list-decimal list-inside space-y-2 text-gray-900">
                 <li>Click the <span className="font-bold text-amber-700">"Calibrate"</span> button</li>
                 <li>Click <span className="font-bold">two points</span> on the plan with a known distance</li>
                 <li>Enter the <span className="font-bold">actual distance</span> between those points</li>
