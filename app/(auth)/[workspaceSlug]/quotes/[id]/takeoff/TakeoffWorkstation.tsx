@@ -987,7 +987,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
               /* Not confirmed - Show details + Confirm button */
               <div className="space-y-2">
                 {/* Average Scale Display */}
-                <div className="p-3 rounded-lg bg-white border-2 border-orange-400">
+                <div className="p-3 rounded-lg bg-white border border-orange-400">
                   <div className="text-xs text-gray-600 mb-1">Average Scale</div>
                   <div className="font-bold text-gray-700">
                     {(calibrations.reduce((sum, cal) => sum + cal.scale, 0) / calibrations.length).toFixed(4)} {calibrations[0].unit}/px
@@ -1101,7 +1101,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                               onClick={() => setSelectedComponentId(comp.id)}
                               className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-all ${
                                 isSelected 
-                                  ? 'bg-gray-200 ring-2 ring-orange-500' 
+                                  ? 'bg-gray-200 ring-1 ring-orange-500' 
                                   : 'bg-gray-100 hover:bg-slate-650'
                               }`}
                             >
@@ -1242,7 +1242,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 onClick={handleStartCalibration}
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 ${
                   calibrationMode
-                    ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border-2 border-orange-500'
+                    ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-500'
                     : calibrationConfirmed
                     ? 'bg-gray-200 hover:bg-gray-300'
                     : 'bg-gray-100 hover:bg-gray-200'
@@ -1268,7 +1268,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  lineMode ? 'bg-orange-100 border-2 border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
+                  lineMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)) ? 'Create roof area with pitch first' : selectedComponentId ? 'Measure line' : 'Select component first'}
               >
@@ -1283,7 +1283,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 }}
                 disabled={calibrationMode || calibrations.length === 0}
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  areaMode ? 'bg-orange-100 border-2 border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
+                  areaMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : selectedComponentId ? 'Measure area for component' : 'Measure roof area (required first!)'}
               >
@@ -1306,7 +1306,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  pointMode ? 'bg-orange-100 border-2 border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
+                  pointMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)) ? 'Create roof area with pitch first' : selectedComponentId ? 'Add point marker' : 'Select component first'}
               >
@@ -1654,7 +1654,7 @@ function AreaNameModal({
                   Used to calculate component lengths (rafters, hips, valleys)
                 </p>
               </div>
-              <div className="p-3 bg-gray-50 border-2 border-orange-400 rounded-lg">
+              <div className="p-3 bg-gray-50 border border-orange-400 rounded-lg">
                 <p className="text-xs text-gray-900 font-medium">
                   ⚠️ Plan Area: {calculatedArea.toFixed(2)} sq {unit} (before pitch adjustment)
                 </p>
