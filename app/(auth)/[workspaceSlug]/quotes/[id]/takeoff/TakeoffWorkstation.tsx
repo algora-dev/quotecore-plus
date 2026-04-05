@@ -1674,7 +1674,7 @@ function AreaNameModal({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-400 hover:bg-blue-500 text-white rounded"
+              className="px-4 py-2 bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               disabled={!componentName && (!name.trim() || !pitch.trim())}
             >
               {componentName ? 'Add to Component' : 'Create Roof Area'}
