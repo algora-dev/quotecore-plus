@@ -137,9 +137,6 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
                       <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
                         Description
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                        Status
-                      </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">
                         Actions
                       </th>
@@ -153,17 +150,6 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-600">
                           {template.description || '—'}
-                        </td>
-                        <td className="px-6 py-4">
-                          {template.is_active ? (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              Active
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                              Inactive
-                            </span>
-                          )}
                         </td>
                         <td className="px-6 py-4 text-right space-x-2">
                           <Link

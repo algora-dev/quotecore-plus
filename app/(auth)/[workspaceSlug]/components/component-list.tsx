@@ -152,7 +152,7 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
         ))}
         <button
           onClick={() => setShowForm(true)}
-          className="ml-auto px-4 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800"
+          className="ml-auto px-4 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
         >
           + Add Component
         </button>
@@ -230,7 +230,7 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
               </div>
             )}
             <div className="flex gap-2 pt-2">
-              <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50">
+              <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50">
                 {saving ? 'Saving...' : 'Create'}
               </button>
               <button type="button" onClick={() => { setShowForm(false); setFormWasteType('none'); setFormMeasurementType('area'); setFormPitchEnabled(false); }} className="px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50">
