@@ -276,7 +276,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
         <button
           type="submit"
           disabled={creating || !customerName.trim() || !entryMode || (entryMode === 'digital' && !planUploaded)}
-          className="px-6 py-3 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowe transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          className="px-6 py-3 bg-orange-500 text-white font-medium rounded-full hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
         >
           {creating ? 'Creating...' : entryMode === 'digital' ? 'Start Digital Takeoff' : 'Create Quote'}
         </button>
