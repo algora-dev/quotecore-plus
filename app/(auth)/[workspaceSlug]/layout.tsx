@@ -36,7 +36,7 @@ export default async function WorkspaceLayout({
             <div className="flex items-center gap-3">
               <LanguageSwitcher currentLanguage={languageLabel} />
               <Link
-                href={`/${slug}/account`}
+                href={`/${slug}/settings`}
                 prefetch={false}
                 className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-900 transition hover:border-slate-300 hover:bg-slate-50"
               >
