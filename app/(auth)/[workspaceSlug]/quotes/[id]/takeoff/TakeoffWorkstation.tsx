@@ -1113,7 +1113,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                               
                               {/* Measurement count badge */}
                               {compData && compData.measurements.length > 0 && (
-                                <span className="text-xs bg-blue-600 px-2 py-1 rounded-md">
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-md">
                                   {compData.measurements.length}
                                 </span>
                               )}
@@ -1242,7 +1242,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 onClick={handleStartCalibration}
                 className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${
                   calibrationMode
-                    ? 'bg-yellow-600 hover:bg-yellow-700'
+                    ? 'bg-blue-100 hover:bg-blue-200 text-blue-700 border border-blue-400'
                     : calibrationConfirmed
                     ? 'bg-gray-200 hover:bg-gray-300'
                     : 'bg-gray-100 hover:bg-gray-200'
@@ -1654,8 +1654,8 @@ function AreaNameModal({
                   Used to calculate component lengths (rafters, hips, valleys)
                 </p>
               </div>
-              <div className="p-3 bg-amber-900/20 border border-amber-600 rounded-lg">
-                <p className="text-xs text-amber-200">
+              <div className="p-3 bg-gray-50 border-2 border-orange-400 rounded-lg">
+                <p className="text-xs text-gray-900 font-medium">
                   ⚠️ Area: {calculatedArea.toFixed(2)} sq {unit}
                 </p>
                 <p className="text-xs text-gray-600 mt-1">
@@ -1875,7 +1875,7 @@ function CalibrationModal({
               <button
                 type="button"
                 onClick={() => handleSubmit(true)}
-                className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded"
+                className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 border border-blue-400 rounded"
                 disabled={!distance || parseFloat(distance) <= 0}
               >
                 Save & Add Another
@@ -1884,7 +1884,7 @@ function CalibrationModal({
               <button
                 type="button"
                 onClick={() => handleSubmit(false)}
-                className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded"
+                className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 border border-blue-400 rounded"
                 disabled={!distance || parseFloat(distance) <= 0}
               >
                 Save

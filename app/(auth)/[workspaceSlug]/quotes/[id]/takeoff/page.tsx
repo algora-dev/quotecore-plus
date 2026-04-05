@@ -56,8 +56,15 @@ export default async function Page({
     count: components?.length || 0, 
     error: componentsError,
     companyId: profile.company_id,
-    sample: components?.[0] 
+    sample: components?.[0],
+    allComponents: components 
   });
+  
+  if (components && components.length > 0) {
+    console.log('[Takeoff] ✅ Successfully loaded', components.length, 'components');
+  } else {
+    console.warn('[Takeoff] ⚠️ NO COMPONENTS FOUND - Check component_library table for company:', profile.company_id);
+  }
 
   return (
     <TakeoffPage
