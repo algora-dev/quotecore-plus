@@ -58,7 +58,7 @@ export function OnboardingForm({
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
-            className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+            className="w-full px-4 py-3 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
             disabled={isPending}
           >
             {CURRENCY_GROUPS.map(group => (
@@ -72,7 +72,7 @@ export function OnboardingForm({
             ))}
           </select>
         </label>
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+        <div className="bg-amber-50 border border-amber-200 rounded-full p-3">
           <p className="text-xs text-amber-800">
             ⚠️ <strong>Important:</strong> Choose carefully! Changing this later won't convert existing component prices.
           </p>
@@ -89,7 +89,7 @@ export function OnboardingForm({
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+            className="w-full px-4 py-3 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
             disabled={isPending}
           >
             <option value="en">English</option>
@@ -140,7 +140,7 @@ export function OnboardingForm({
       <button
         type="submit"
         disabled={isPending}
-        className="w-full py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        className="w-full py-4 bg-black text-white font-semibold rounded-full hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
         {isPending ? 'Completing Setup...' : 'Complete Setup →'}
       </button>

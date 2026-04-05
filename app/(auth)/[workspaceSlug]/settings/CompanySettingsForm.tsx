@@ -77,7 +77,7 @@ export function CompanySettingsForm({
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+            className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
             disabled={isPending}
           >
             {CURRENCY_GROUPS.map(group => (
@@ -91,7 +91,7 @@ export function CompanySettingsForm({
             ))}
           </select>
         </label>
-        <div className="bg-amber-50 border-2 border-orange-400 rounded-lg p-3">
+        <div className="bg-amber-50 border-2 border-orange-400 rounded-full p-3">
           <p className="text-xs text-gray-900">
             ⚠️ <strong>Important:</strong> Changing currency won't convert existing component prices
           </p>
@@ -108,7 +108,7 @@ export function CompanySettingsForm({
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+            className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
             disabled={isPending}
           >
             <option value="en">English</option>
@@ -124,7 +124,7 @@ export function CompanySettingsForm({
             Default units for quotes and measurements
           </p>
           <div className="flex gap-4">
-            <label className="flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+            <label className="flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-full cursor-pointer hover:bg-gray-50">
               <input
                 type="radio"
                 value="metric"
@@ -135,7 +135,7 @@ export function CompanySettingsForm({
               />
               <span className="text-sm">Metric (meters, square meters)</span>
             </label>
-            <label className="flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+            <label className="flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-full cursor-pointer hover:bg-gray-50">
               <input
                 type="radio"
                 value="imperial"
@@ -173,7 +173,7 @@ export function CompanySettingsForm({
                   step="0.1"
                   value={materialMargin}
                   onChange={(e) => setMaterialMargin(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="15"
                   disabled={isPending}
                 />
@@ -202,7 +202,7 @@ export function CompanySettingsForm({
                   step="0.1"
                   value={laborMargin}
                   onChange={(e) => setLaborMargin(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="20"
                   disabled={isPending}
                 />
@@ -217,7 +217,7 @@ export function CompanySettingsForm({
           </div>
         </div>
 
-        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-full p-4">
           <p className="text-sm text-blue-900">
             <strong>💡 Note:</strong> Margins are hidden from customers. They only see the final total price including your profit.
           </p>
@@ -242,7 +242,7 @@ export function CompanySettingsForm({
         <button
           type="submit"
           disabled={isPending}
-          className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isPending ? 'Saving...' : 'Save Settings'}
         </button>

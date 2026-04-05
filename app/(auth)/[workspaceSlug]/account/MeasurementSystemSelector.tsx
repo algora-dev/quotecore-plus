@@ -37,7 +37,7 @@ export function MeasurementSystemSelector({ currentSystem }: Props) {
         <button
           onClick={() => handleChange('metric')}
           disabled={saving || system === 'metric'}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
+          className={`px-4 py-2 text-sm font-medium rounded-full transition ${
             system === 'metric'
               ? 'bg-slate-900 text-white'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -48,7 +48,7 @@ export function MeasurementSystemSelector({ currentSystem }: Props) {
         <button
           onClick={() => handleChange('imperial')}
           disabled={saving || system === 'imperial'}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
+          className={`px-4 py-2 text-sm font-medium rounded-full transition ${
             system === 'imperial'
               ? 'bg-slate-900 text-white'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200'

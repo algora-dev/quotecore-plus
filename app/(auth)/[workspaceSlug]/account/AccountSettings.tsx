@@ -92,7 +92,7 @@ export function AccountSettings({ company, profile }: Props) {
               type="text"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500"
               disabled={isPending}
             />
           </div>
@@ -108,7 +108,7 @@ export function AccountSettings({ company, profile }: Props) {
               max="100"
               value={taxRate}
               onChange={(e) => setTaxRate(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500"
               disabled={isPending}
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -123,7 +123,7 @@ export function AccountSettings({ company, profile }: Props) {
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500"
               disabled={isPending}
             >
               <optgroup label="Dollar Currencies">
@@ -151,7 +151,7 @@ export function AccountSettings({ company, profile }: Props) {
           <button
             onClick={saveCompanySettings}
             disabled={isPending}
-            className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 bg-black text-white font-medium rounded-full hover:bg-slate-800 disabled:opacity-5 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             {isPending ? 'Saving...' : 'Save Company Settings'}
           </button>
@@ -171,7 +171,7 @@ export function AccountSettings({ company, profile }: Props) {
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500"
               disabled={isPending}
             />
           </div>
@@ -184,7 +184,7 @@ export function AccountSettings({ company, profile }: Props) {
               type="email"
               value={email}
               disabled
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-500 cursor-not-allowed"
+              className="w-full px-3 py-2 border border-slate-300 rounded-full bg-slate-50 text-slate-500 cursor-not-allowed"
             />
             <p className="text-xs text-slate-500 mt-1">
               Email cannot be changed (contact support if needed)
@@ -194,7 +194,7 @@ export function AccountSettings({ company, profile }: Props) {
           <button
             onClick={saveUserProfile}
             disabled={isPending}
-            className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 bg-black text-white font-medium rounded-full hover:bg-slate-800 disabled:opacity-5 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             {isPending ? 'Saving...' : 'Save Profile'}
           </button>
