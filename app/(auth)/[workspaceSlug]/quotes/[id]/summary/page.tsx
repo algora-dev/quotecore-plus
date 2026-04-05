@@ -95,7 +95,7 @@ export default async function QuoteSummaryPage({
             />
           </>
         )}
-        <Link href={`/${workspaceSlug}/quotes/${id}`} className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white hover:bg-slate-50">
+        <Link href={`/${workspaceSlug}/quotes/${id}`} className="px-4 py-2 text-sm font-medium rounded-full border-2 border-slate-300 bg-white pill-shimmer">
           Edit Quote
         </Link>
         <form action={async () => {
@@ -104,17 +104,17 @@ export default async function QuoteSummaryPage({
           const newId = await cloneQuote(id, quote.customer_name + ' (Copy)');
           redirect(`/${workspaceSlug}/quotes/${newId}`);
         }}>
-          <button type="submit" className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white hover:bg-slate-50">
+          <button type="submit" className="px-4 py-2 text-sm font-medium rounded-full border-2 border-slate-300 bg-white pill-shimmer">
             Clone Quote
           </button>
         </form>
-        <Link href={`/${workspaceSlug}/quotes/${id}/customer-edit`} className="px-4 py-2 text-sm font-medium rounded-lg bg-purple-600 text-white hover:bg-purple-700">
+        <Link href={`/${workspaceSlug}/quotes/${id}/customer-edit`} className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">
           Edit Customer Quote
         </Link>
-        <Link href={`/${workspaceSlug}/quotes/${id}/customer`} className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+        <Link href={`/${workspaceSlug}/quotes/${id}/customer`} className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">
           Customer Quote
         </Link>
-        <Link href={`/${workspaceSlug}/quotes/${id}/labour`} className="px-4 py-2 text-sm font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700">
+        <Link href={`/${workspaceSlug}/quotes/${id}/labour`} className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">
           Labour Sheet
         </Link>
       </div>

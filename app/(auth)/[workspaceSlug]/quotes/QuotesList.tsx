@@ -88,28 +88,37 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-slate-100 rounded-lg w-fit">
-        <button
-          onClick={() => setActiveTab('draft')}
-          className={`px-4 py-2 text-sm font-medium rounded-md transition ${
-            activeTab === 'draft'
-              ? 'bg-white text-slate-900 shadow-sm'
-              : 'text-slate-500 hover:text-slate-700'
-          }`}
+      {/* Tabs + New Quote Button */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1 p-1 bg-slate-100 rounded-lg w-fit">
+          <button
+            onClick={() => setActiveTab('draft')}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition ${
+              activeTab === 'draft'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Drafts ({searchQuery ? `${filteredDrafts.length}/${drafts.length}` : drafts.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('confirmed')}
+            className={`px-4 py-2 text-sm font-medium rounded-full transition ${
+              activeTab === 'confirmed'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Confirmed ({confirmed.length})
+          </button>
+        </div>
+        
+        <Link
+          href={`/${workspaceSlug}/quotes/new`}
+          className="inline-flex items-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
         >
-          Drafts ({searchQuery ? `${filteredDrafts.length}/${drafts.length}` : drafts.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('confirmed')}
-          className={`px-4 py-2 text-sm font-medium rounded-full transition ${
-            activeTab === 'confirmed'
-              ? 'bg-white text-slate-900 shadow-sm'
-              : 'text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          Confirmed ({confirmed.length})
-        </button>
+          + New Quote
+        </Link>
       </div>
 
       {/* Quote List */}

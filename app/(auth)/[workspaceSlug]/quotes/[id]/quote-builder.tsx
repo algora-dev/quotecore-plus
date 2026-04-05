@@ -455,7 +455,7 @@ export function QuoteBuilder({
             <button
               onClick={() => setPhase('components')}
               disabled={!allAreasLocked}
-              className="px-4 py-2 text-sm font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
               {allAreasLocked ? 'Next: Components →' : 'Confirm all areas to continue'}
             </button>
@@ -508,7 +508,7 @@ export function QuoteBuilder({
             </button>
             <button
               onClick={() => setPhase('extras')}
-              className="px-4 py-2 text-sm font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
               Next: Extras →
             </button>
@@ -548,7 +548,7 @@ export function QuoteBuilder({
             </button>
             <button
               onClick={() => setPhase('review')}
-              className="px-4 py-2 text-sm font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
               Next: Review →
             </button>

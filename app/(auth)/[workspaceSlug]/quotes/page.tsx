@@ -19,17 +19,9 @@ export default async function QuotesPage({
 
   return (
     <section className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold text-slate-900">Quotes</h1>
-          <p className="text-base text-slate-600">Create and manage roofing quotes.</p>
-        </div>
-        <Link
-          href={`/${workspaceSlug}/quotes/new`}
-          className="inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-        >
-          + New Quote
-        </Link>
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-semibold text-slate-900">Quotes</h1>
+        <p className="text-base text-slate-600">Create and manage roofing quotes.</p>
       </div>
 
       <QuotesList quotes={quotes ?? []} workspaceSlug={workspaceSlug} />
