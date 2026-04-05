@@ -315,7 +315,7 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium text-slate-900">{comp.name}</h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${comp.component_type === 'main' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${comp.component_type === 'main' ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700'}`}>
                       {comp.component_type}
                     </span>
                     <span className="text-xs text-slate-400">{MEASUREMENT_LABELS[comp.measurement_type]}</span>

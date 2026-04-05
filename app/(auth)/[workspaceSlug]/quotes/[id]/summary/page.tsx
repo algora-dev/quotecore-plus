@@ -211,7 +211,7 @@ export default async function QuoteSummaryPage({
                     href={file.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                    className="text-xs text-orange-600 hover:text-blue-800 font-medium"
                   >
                     View →
                   </a>

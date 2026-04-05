@@ -47,7 +47,7 @@ export function QuoteNameEditor({ quoteId, customerName, jobName }: Props) {
               if (e.key === 'Escape') handleCancel();
             }}
             placeholder="Client name"
-            className="flex-1 px-2 py-1 text-xl font-semibold border border-slate-300 rounded focus:border-blue-500 focus:outline-none"
+            className="flex-1 px-2 py-1 text-xl font-semibold border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
             autoFocus
             disabled={saving}
           />
@@ -61,7 +61,7 @@ export function QuoteNameEditor({ quoteId, customerName, jobName }: Props) {
               if (e.key === 'Escape') handleCancel();
             }}
             placeholder="Job reference (optional)"
-            className="flex-1 px-2 py-1 text-sm text-slate-500 border border-slate-300 rounded focus:border-blue-500 focus:outline-none"
+            className="flex-1 px-2 py-1 text-sm text-slate-500 border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
             disabled={saving}
           />
         </div>

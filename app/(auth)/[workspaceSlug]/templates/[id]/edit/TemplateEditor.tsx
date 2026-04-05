@@ -155,7 +155,7 @@ export function TemplateEditor({ workspaceSlug, template, componentLibrary, cust
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., Standard Residential Roof"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 required
               />
             </div>
@@ -169,7 +169,7 @@ export function TemplateEditor({ workspaceSlug, template, componentLibrary, cust
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="e.g., Standard setup for residential roofing jobs"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
@@ -182,7 +182,7 @@ export function TemplateEditor({ workspaceSlug, template, componentLibrary, cust
                 value={roofingProfile}
                 onChange={(e) => setRoofingProfile(e.target.value)}
                 placeholder="e.g., Tile, Metal, Shingle"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
           </div>
@@ -202,7 +202,7 @@ export function TemplateEditor({ workspaceSlug, template, componentLibrary, cust
                     e.target.value = '';
                   }
                 }}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               >
                 <option value="">Select component to add...</option>
                 {mainComponents.map(comp => (
@@ -248,7 +248,7 @@ export function TemplateEditor({ workspaceSlug, template, componentLibrary, cust
                     e.target.value = '';
                   }
                 }}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               >
                 <option value="">Select extra to add...</option>
                 {extraComponents.map(comp => (
@@ -289,7 +289,7 @@ export function TemplateEditor({ workspaceSlug, template, componentLibrary, cust
             <select
               value={customerTemplateId}
               onChange={(e) => setCustomerTemplateId(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             >
               <option value="">None (use default branding)</option>
               {customerTemplates.map(template => (
@@ -308,7 +308,7 @@ export function TemplateEditor({ workspaceSlug, template, componentLibrary, cust
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add any notes about this template..."
               rows={4}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
           </div>
 

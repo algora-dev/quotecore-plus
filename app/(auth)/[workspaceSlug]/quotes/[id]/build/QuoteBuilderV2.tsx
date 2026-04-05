@@ -59,7 +59,7 @@ export function QuoteBuilderV2({
             )}
           </h1>
           <div className="flex items-center gap-2 mt-2">
-            <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">
+            <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-700 rounded">
               🤖 Digital Takeoff
             </span>
             <span className="px-2 py-1 text-xs font-medium bg-slate-100 text-slate-700 rounded">

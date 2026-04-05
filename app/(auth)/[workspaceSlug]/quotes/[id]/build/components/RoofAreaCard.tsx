@@ -62,7 +62,7 @@ export function RoofAreaCard({
               )}
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-blue-600">
+              <span className="text-sm font-medium text-orange-600">
                 {formatArea(area.final_value_sqm ?? area.computed_sqm ?? 0, quote.measurement_system)}
                 {area.calc_pitch_degrees ? ` @ ${area.calc_pitch_degrees}°` : ''}
               </span>
@@ -87,7 +87,7 @@ export function RoofAreaCard({
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-slate-900">{area.label}</h3>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-blue-600">
+              <span className="text-sm font-medium text-orange-600">
                 {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
               </span>
               <button onClick={() => onRemove(area.id)} className="text-xs text-red-500">
@@ -184,7 +184,7 @@ export function RoofAreaCard({
             ) : (
               <button
                 onClick={startAdding}
-                className="text-xs text-blue-600 hover:text-blue-800 font-medium mt-1"
+                className="text-xs text-orange-600 hover:text-blue-800 font-medium mt-1"
               >
                 + Add area measurement
               </button>

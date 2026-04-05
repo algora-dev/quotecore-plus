@@ -81,7 +81,7 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
               onClick={() => setActiveTab('quote')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'quote'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-orange-500 text-orange-600'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
               }`}
             >
@@ -91,7 +91,7 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
               onClick={() => setActiveTab('customer')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'customer'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-orange-500 text-orange-600'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
               }`}
             >

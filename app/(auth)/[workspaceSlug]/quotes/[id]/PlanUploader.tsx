@@ -110,7 +110,7 @@ export function PlanUploader({ quoteId, companyId, currentPlanUrl, currentPlanNa
               href={planUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-blue-600 hover:text-blue-800"
+              className="text-xs text-orange-600 hover:text-blue-800"
             >
               View Plan →
             </a>

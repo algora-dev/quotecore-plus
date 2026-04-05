@@ -77,7 +77,7 @@ export function CompanySettingsForm({
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
             disabled={isPending}
           >
             {CURRENCY_GROUPS.map(group => (
@@ -108,7 +108,7 @@ export function CompanySettingsForm({
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
             disabled={isPending}
           >
             <option value="en">English</option>
@@ -173,7 +173,7 @@ export function CompanySettingsForm({
                   step="0.1"
                   value={materialMargin}
                   onChange={(e) => setMaterialMargin(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="15"
                   disabled={isPending}
                 />
@@ -202,7 +202,7 @@ export function CompanySettingsForm({
                   step="0.1"
                   value={laborMargin}
                   onChange={(e) => setLaborMargin(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="20"
                   disabled={isPending}
                 />
@@ -242,7 +242,7 @@ export function CompanySettingsForm({
         <button
           type="submit"
           disabled={isPending}
-          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isPending ? 'Saving...' : 'Save Settings'}
         </button>

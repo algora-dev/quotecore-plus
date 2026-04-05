@@ -125,7 +125,7 @@ export function SupportingFilesManager({ quoteId, companyId, initialFiles }: Pro
         {expanded && (
           <button
             onClick={() => setShowUploader(!showUploader)}
-            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+            className="text-xs text-orange-600 hover:text-blue-800 font-medium"
           >
             {showUploader ? 'Cancel' : '+ Add File'}
           </button>
@@ -178,7 +178,7 @@ export function SupportingFilesManager({ quoteId, companyId, initialFiles }: Pro
                       href={file.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-blue-600 hover:text-blue-800"
+                      className="text-xs text-orange-600 hover:text-blue-800"
                     >
                       View
                     </a>

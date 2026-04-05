@@ -38,7 +38,7 @@ export function EditHeaderModal({ companyName, companyAddress, companyPhone, com
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your Company Name"
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -48,7 +48,7 @@ export function EditHeaderModal({ companyName, companyAddress, companyPhone, com
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+64 21 123 4567"
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -58,7 +58,7 @@ export function EditHeaderModal({ companyName, companyAddress, companyPhone, com
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="info@yourcompany.com"
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -68,7 +68,7 @@ export function EditHeaderModal({ companyName, companyAddress, companyPhone, com
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="123 Main Street, City"
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
             </div>
           </div>
@@ -80,7 +80,7 @@ export function EditHeaderModal({ companyName, companyAddress, companyPhone, com
               value={logoUrl}
               onChange={(e) => setLogoUrl(e.target.value)}
               placeholder="https://example.com/logo.png"
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
             />
             <p className="text-xs text-slate-500 mt-1">Enter a direct URL to your company logo image</p>
           </div>

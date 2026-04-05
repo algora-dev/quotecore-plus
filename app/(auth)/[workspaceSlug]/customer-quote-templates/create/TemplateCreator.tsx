@@ -61,7 +61,7 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
             value={templateName}
             onChange={(e) => setTemplateName(e.target.value)}
             placeholder="e.g. Standard Roofing Quote"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           />
         </div>
 
@@ -72,7 +72,7 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
             onClick={() => setMode('scratch')}
             className={`w-full text-left p-6 rounded-xl border-2 transition-all ${
               mode === 'scratch'
-                ? 'border-blue-500 bg-blue-50'
+                ? 'border-orange-500 bg-blue-50'
                 : 'border-slate-200 bg-white hover:border-slate-300'
             }`}
           >
@@ -86,7 +86,7 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
                 </p>
               </div>
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                mode === 'scratch' ? 'border-blue-500 bg-blue-500' : 'border-slate-300'
+                mode === 'scratch' ? 'border-orange-500 bg-blue-500' : 'border-slate-300'
               }`}>
                 {mode === 'scratch' && (
                   <div className="w-2 h-2 bg-white rounded-full" />
@@ -100,7 +100,7 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
             onClick={() => setMode('starter')}
             className={`w-full text-left p-6 rounded-xl border-2 transition-all ${
               mode === 'starter'
-                ? 'border-blue-500 bg-blue-50'
+                ? 'border-orange-500 bg-blue-50'
                 : 'border-slate-200 bg-white hover:border-slate-300'
             }`}
           >
@@ -119,7 +119,7 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
                 )}
               </div>
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                mode === 'starter' ? 'border-blue-500 bg-blue-500' : 'border-slate-300'
+                mode === 'starter' ? 'border-orange-500 bg-blue-500' : 'border-slate-300'
               }`}>
                 {mode === 'starter' && (
                   <div className="w-2 h-2 bg-white rounded-full" />
@@ -133,7 +133,7 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
             <div
               className={`rounded-xl border-2 transition-all ${
                 mode === 'copy'
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-orange-500 bg-blue-50'
                   : 'border-slate-200 bg-white'
               }`}
             >
@@ -151,7 +151,7 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
                     </p>
                   </div>
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    mode === 'copy' ? 'border-blue-500 bg-blue-500' : 'border-slate-300'
+                    mode === 'copy' ? 'border-orange-500 bg-blue-500' : 'border-slate-300'
                   }`}>
                     {mode === 'copy' && (
                       <div className="w-2 h-2 bg-white rounded-full" />
@@ -168,7 +168,7 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
                   <select
                     value={selectedTemplateId}
                     onChange={(e) => setSelectedTemplateId(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                   >
                     <option value="">Choose a template...</option>
                     {customTemplates.map((template) => (

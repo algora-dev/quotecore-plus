@@ -57,7 +57,7 @@ export function MeasurementSystemSelector({ currentSystem }: Props) {
           Imperial (ft, Rs)
         </button>
       </div>
-      {saving && <p className="text-xs text-blue-600">Saving...</p>}
+      {saving && <p className="text-xs text-orange-600">Saving...</p>}
     </div>
   );
 }

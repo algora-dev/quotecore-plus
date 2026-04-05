@@ -45,7 +45,7 @@ export function AddCustomLineModal({ onAdd, onClose }: Props) {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="e.g. Additional materials, Custom work"
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-blue-500 focus:outline-none"
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
               autoFocus
               required
             />
@@ -62,7 +62,7 @@ export function AddCustomLineModal({ onAdd, onClose }: Props) {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-blue-500 focus:outline-none"
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
               required
             />
           </div>
@@ -73,7 +73,7 @@ export function AddCustomLineModal({ onAdd, onClose }: Props) {
               id="showPrice"
               checked={showPrice}
               onChange={(e) => setShowPrice(e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded"
+              className="w-4 h-4 text-orange-600 rounded"
             />
             <label htmlFor="showPrice" className="text-sm text-slate-700">
               Show price in customer quote

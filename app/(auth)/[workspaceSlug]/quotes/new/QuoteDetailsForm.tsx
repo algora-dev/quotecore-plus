@@ -140,7 +140,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
           value={customerName}
           onChange={(e) => setCustomerName(e.target.value)}
           placeholder="e.g., John Smith"
-          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
           required
           autoFocus
         />
@@ -156,7 +156,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
           value={jobName}
           onChange={(e) => setJobName(e.target.value)}
           placeholder="e.g., Residential Re-roof, 123 Main St"
-          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
         />
       </div>
 
@@ -168,7 +168,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
         <select
           value={templateId}
           onChange={(e) => setTemplateId(e.target.value)}
-          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
         >
           <option value="">Start from scratch</option>
           {templates.map((template) => (
@@ -199,7 +199,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
             }}
             className={`relative p-4 rounded-lg border-2 transition-all ${
               entryMode === 'manual'
-                ? 'border-blue-500 bg-blue-50'
+                ? 'border-orange-500 bg-blue-50'
                 : 'border-slate-300 hover:border-slate-400'
             }`}
             title="Transfer already sourced measurements directly into Roof Areas and Components"
@@ -219,7 +219,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
             onClick={() => setEntryMode('digital')}
             className={`relative p-4 rounded-lg border-2 transition-all ${
               entryMode === 'digital'
-                ? 'border-blue-500 bg-blue-50'
+                ? 'border-orange-500 bg-blue-50'
                 : 'border-slate-300 hover:border-slate-400'
             }`}
             title="Upload your roof plan, measure and assign roof areas, roof component items (Faster)"

@@ -92,7 +92,7 @@ export function AccountSettings({ company, profile }: Props) {
               type="text"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               disabled={isPending}
             />
           </div>
@@ -108,7 +108,7 @@ export function AccountSettings({ company, profile }: Props) {
               max="100"
               value={taxRate}
               onChange={(e) => setTaxRate(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               disabled={isPending}
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -123,7 +123,7 @@ export function AccountSettings({ company, profile }: Props) {
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               disabled={isPending}
             >
               <optgroup label="Dollar Currencies">
@@ -171,7 +171,7 @@ export function AccountSettings({ company, profile }: Props) {
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               disabled={isPending}
             />
           </div>

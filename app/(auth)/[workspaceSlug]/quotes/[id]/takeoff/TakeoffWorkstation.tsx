@@ -1101,7 +1101,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                               onClick={() => setSelectedComponentId(comp.id)}
                               className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-all ${
                                 isSelected 
-                                  ? 'bg-gray-200 ring-2 ring-blue-500' 
+                                  ? 'bg-gray-200 ring-2 ring-orange-500' 
                                   : 'bg-gray-100 hover:bg-slate-650'
                               }`}
                             >
@@ -1113,7 +1113,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                               
                               {/* Measurement count badge */}
                               {compData && compData.measurements.length > 0 && (
-                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-md">
+                                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-md">
                                   {compData.measurements.length}
                                 </span>
                               )}
@@ -1419,7 +1419,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 <li>Click <span className="font-bold">two points</span> on the plan with a known distance</li>
                 <li>Enter the <span className="font-bold">actual distance</span> between those points</li>
                 <li>Add 2-3 calibrations for best accuracy</li>
-                <li>Click <span className="font-bold text-blue-600">"Confirm Calibration"</span> when done</li>
+                <li>Click <span className="font-bold text-orange-600">"Confirm Calibration"</span> when done</li>
               </ol>
               <p className="text-gray-600 text-xs mt-4">
                 Tip: Use dimensions shown on the plan (like wall lengths or roof spans).

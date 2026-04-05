@@ -152,7 +152,7 @@ export function QuoteBuilder({ quote: initialQuote, initialRoofAreas, initialRoo
           <Link href={`/${workspaceSlug}/quotes`} className="text-sm text-slate-500 hover:text-slate-700">← Quotes</Link>
           <h1 className="text-2xl font-semibold text-slate-900 mt-1">{quote.customer_name}{quote.job_name && <span className="text-slate-500 font-normal"> — {quote.job_name}</span>}</h1>
         </div>
-        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${quote.status === 'draft' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'}`}>{quote.status}</span>
+        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${quote.status === 'draft' ? 'bg-slate-100 text-slate-600' : 'bg-orange-100 text-orange-700'}`}>{quote.status}</span>
       </div>
       <nav className="flex gap-1 p-1 bg-slate-100 rounded-lg">
         {phases.map(p => <button key={p.key} onClick={() => setPhase(p.key)} className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition ${phase === p.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>{p.label}</button>)}
@@ -172,7 +172,7 @@ export function QuoteBuilder({ quote: initialQuote, initialRoofAreas, initialRoo
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-slate-900">{area.label}</h3>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-blue-600">{formatArea(area.computed_sqm ?? 0, system)} {areaUnit(system)}</span>
+                  <span className="text-sm font-medium text-orange-600">{formatArea(area.computed_sqm ?? 0, system)} {areaUnit(system)}</span>
                   <button onClick={() => handleRemoveArea(area.id)} className="text-xs text-red-500">×</button>
                 </div>
               </div>

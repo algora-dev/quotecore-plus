@@ -97,7 +97,7 @@ export function FileUploader({
         onClick={() => inputRef.current?.click()}
         className={`
           relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition
-          ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-slate-300 hover:border-slate-400 bg-white'}
+          ${isDragging ? 'border-orange-500 bg-blue-50' : 'border-slate-300 hover:border-slate-400 bg-white'}
           ${uploading ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >
@@ -113,7 +113,7 @@ export function FileUploader({
         <div className="space-y-2">
           {uploading ? (
             <>
-              <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              <div className="inline-block w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
               <p className="text-sm text-slate-600">Uploading...</p>
             </>
           ) : (

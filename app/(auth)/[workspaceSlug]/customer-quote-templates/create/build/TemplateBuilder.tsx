@@ -88,7 +88,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="Your Company Name"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
@@ -101,7 +101,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
                 value={companyPhone}
                 onChange={(e) => setCompanyPhone(e.target.value)}
                 placeholder="+64 21 123 4567"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
@@ -114,7 +114,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
                 value={companyEmail}
                 onChange={(e) => setCompanyEmail(e.target.value)}
                 placeholder="info@yourcompany.com"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
@@ -127,7 +127,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
                 value={companyAddress}
                 onChange={(e) => setCompanyAddress(e.target.value)}
                 placeholder="123 Main Street, City, Country"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -155,7 +155,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
             onChange={(e) => setFooterText(e.target.value)}
             placeholder="e.g. Payment due within 30 days. Quote valid for 30 days. All work carried out to industry standards."
             rows={4}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           />
         </div>
 

@@ -380,7 +380,7 @@ export function QuoteBuilder({
             </>
           )}
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            quote.status === 'draft' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'
+            quote.status === 'draft' ? 'bg-slate-100 text-slate-600' : 'bg-orange-100 text-orange-700'
           }`}>
             {quote.status}
           </span>
@@ -648,7 +648,7 @@ export function QuoteBuilder({
               <button
                 onClick={handleSaveMargins}
                 disabled={marginSaving}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 text-sm"
+                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium disabled:opacity-50 text-sm"
               >
                 {marginSaving ? 'Saving...' : 'Apply Changes'}
               </button>
@@ -828,7 +828,7 @@ function RoofAreaCard({
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-slate-900">{area.label}</h3>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-blue-600">
+              <span className="text-sm font-medium text-orange-600">
                 {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
                 {area.calc_pitch_degrees ? ` @ ${area.calc_pitch_degrees}°` : ''}
               </span>
@@ -849,7 +849,7 @@ function RoofAreaCard({
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-slate-900">{area.label}</h3>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-blue-600">
+              <span className="text-sm font-medium text-orange-600">
                 {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
               </span>
               <button onClick={() => onRemove(area.id)} className="text-xs text-red-500">
@@ -946,7 +946,7 @@ function RoofAreaCard({
               ) : (
                 <button
                   onClick={startAdding}
-                  className="text-xs text-blue-600 hover:text-blue-800 font-medium mt-1"
+                  className="text-xs text-orange-600 hover:text-blue-800 font-medium mt-1"
                 >
                   + Add area measurement
                 </button>
@@ -1190,7 +1190,7 @@ function ExpandableComponent({
                   }
                 }}
                 placeholder={`Enter ${label}`}
-                className="w-32 px-2 py-1 text-xs border border-slate-300 rounded focus:border-blue-500 focus:outline-none"
+                className="w-32 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
               />
               <span className="text-xs text-slate-400">{unit}</span>
               <button
@@ -1212,7 +1212,7 @@ function ExpandableComponent({
           ) : (
             <button
               onClick={startAdding}
-              className="text-xs text-blue-600 hover:text-blue-800 font-medium mt-1"
+              className="text-xs text-orange-600 hover:text-blue-800 font-medium mt-1"
             >
               + {addLabel}
             </button>

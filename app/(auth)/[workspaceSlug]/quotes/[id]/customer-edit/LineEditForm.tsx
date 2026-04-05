@@ -31,7 +31,7 @@ export function LineEditForm({ initialText, initialAmount, initialShowPrice, onS
           type="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:border-blue-500 focus:outline-none"
+          className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
           placeholder="Line text"
           autoFocus
           required
@@ -48,7 +48,7 @@ export function LineEditForm({ initialText, initialAmount, initialShowPrice, onS
               min="0"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:border-blue-500 focus:outline-none"
+              className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
               required
             />
           </div>
@@ -60,7 +60,7 @@ export function LineEditForm({ initialText, initialAmount, initialShowPrice, onS
             id="edit-showPrice"
             checked={showPrice}
             onChange={(e) => setShowPrice(e.target.checked)}
-            className="w-4 h-4 text-blue-600 rounded"
+            className="w-4 h-4 text-orange-600 rounded"
           />
           <label htmlFor="edit-showPrice" className="text-xs text-slate-600 whitespace-nowrap">
             Show $

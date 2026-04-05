@@ -84,7 +84,7 @@ export default async function CustomerQuoteTemplatesPage({
                     <td className="px-6 py-4 text-right space-x-2">
                       <Link
                         href={`/${workspaceSlug}/customer-quote-templates/${template.id}`}
-                        className="text-sm text-blue-600 hover:text-blue-700"
+                        className="text-sm text-orange-600 hover:text-blue-700"
                       >
                         View
                       </Link>

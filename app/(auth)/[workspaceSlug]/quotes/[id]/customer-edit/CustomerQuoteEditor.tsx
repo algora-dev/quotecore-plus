@@ -265,7 +265,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                     e.target.value = '';
                   }
                 }}
-                className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               >
                 <option value="">Load Template...</option>
                 {templates.map((template) => (
@@ -281,7 +281,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 id="autoSave"
                 checked={autoSaveEnabled}
                 onChange={(e) => setAutoSaveEnabled(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-orange-600 rounded"
               />
               <label htmlFor="autoSave" className="text-sm text-slate-700 cursor-pointer">
                 Auto-save
@@ -319,7 +319,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                           type="checkbox"
                           checked={line.isVisible}
                           onChange={() => toggleVisibility(line.id)}
-                          className="w-4 h-4 text-blue-600 rounded"
+                          className="w-4 h-4 text-orange-600 rounded"
                         />
                         <div className="flex-1">
                           <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
@@ -366,7 +366,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                         type="checkbox"
                         checked={line.isVisible}
                         onChange={() => toggleVisibility(line.id)}
-                        className="w-4 h-4 text-blue-600 rounded"
+                        className="w-4 h-4 text-orange-600 rounded"
                       />
                       <div className="flex-1">
                         <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
@@ -400,7 +400,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
 
             <button 
               onClick={() => setShowAddCustomLine(true)}
-              className="w-full py-2 text-sm text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50"
+              className="w-full py-2 text-sm text-orange-600 border border-blue-200 rounded-lg hover:bg-blue-50"
             >
               + Add Custom Line
             </button>
@@ -451,7 +451,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               <h2 className="text-lg font-semibold text-slate-900">Customer Quote Preview</h2>
               <button
                 onClick={() => setShowPreviewModal(true)}
-                className="px-3 py-1.5 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50"
+                className="px-3 py-1.5 text-sm font-medium text-orange-600 border border-blue-200 rounded-lg hover:bg-blue-50"
               >
                 🔍 Preview Full Size
               </button>

@@ -58,7 +58,7 @@ export function OnboardingForm({
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
-            className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
             disabled={isPending}
           >
             {CURRENCY_GROUPS.map(group => (
@@ -89,7 +89,7 @@ export function OnboardingForm({
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
             disabled={isPending}
           >
             <option value="en">English</option>
@@ -113,7 +113,7 @@ export function OnboardingForm({
             disabled={isPending}
             className={`p-4 rounded-lg border-2 transition ${
               measurement === 'metric'
-                ? 'border-blue-500 bg-blue-50 text-blue-900'
+                ? 'border-orange-500 bg-blue-50 text-blue-900'
                 : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
             }`}
           >
@@ -126,7 +126,7 @@ export function OnboardingForm({
             disabled={isPending}
             className={`p-4 rounded-lg border-2 transition ${
               measurement === 'imperial'
-                ? 'border-blue-500 bg-blue-50 text-blue-900'
+                ? 'border-orange-500 bg-blue-50 text-blue-900'
                 : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
             }`}
           >
