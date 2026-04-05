@@ -38,37 +38,32 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
     }
   }, [searchParams, templates]);
 
-  async function handlePlanUpload(file: File, tempQuoteId: string) {
+  async function handlePlanUpload(file: File) {
     const hasQuota = await checkStorageQuota(companyId, file.size);
     if (!hasQuota) {
       throw new Error('Storage quota exceeded. Please upgrade your plan.');
     }
 
+    // Upload to storage only (don't save metadata yet - quote doesn't exist)
     const supabase = createClient();
     const fileExt = file.name.split('.').pop();
     const fileName = `plan-${Date.now()}.${fileExt}`;
-    const storagePath = `${companyId}/${tempQuoteId}/${fileName}`;
+    const tempPath = `temp/${companyId}/${fileName}`;
     
     const { error: uploadError } = await supabase.storage
       .from('QUOTE-DOCUMENTS')
-      .upload(storagePath, file, { upsert: true });
+      .upload(tempPath, file, { upsert: true });
 
     if (uploadError) {
       throw new Error(uploadError.message);
     }
 
-    await saveFileMetadata({
-      companyId,
-      quoteId: tempQuoteId,
-      fileType: 'plan',
-      fileName,
-      fileSize: file.size,
-      mimeType: file.type,
-      storagePath,
-    });
-
-    setUploadedPlanPath(storagePath);
+    // Store file info in state - will save metadata after quote creation
+    setUploadedPlanPath(tempPath);
     setPlanUploaded(true);
+    
+    // Store file details for later metadata save
+    (window as any).__pendingPlanFile = { fileName, fileSize: file.size, mimeType: file.type, tempPath };
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -98,8 +93,30 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
         entryMode,
       });
 
-      // If digital mode with uploaded plan, redirect to takeoff
+      // If digital mode with uploaded plan, move file and save metadata
       if (entryMode === 'digital' && uploadedPlanPath) {
+        const pendingFile = (window as any).__pendingPlanFile;
+        if (pendingFile) {
+          const supabase = createClient();
+          
+          // Move file from temp to final location
+          const finalPath = `${companyId}/${quoteId}/${pendingFile.fileName}`;
+          await supabase.storage.from('QUOTE-DOCUMENTS').move(pendingFile.tempPath, finalPath);
+          
+          // Save metadata now that quote exists
+          await saveFileMetadata({
+            companyId,
+            quoteId,
+            fileType: 'plan',
+            fileName: pendingFile.fileName,
+            fileSize: pendingFile.fileSize,
+            mimeType: pendingFile.mimeType,
+            storagePath: finalPath,
+          });
+          
+          delete (window as any).__pendingPlanFile;
+        }
+        
         router.push(`/${workspaceSlug}/quotes/${quoteId}/takeoff`);
       } else {
         // Manual mode goes to quote builder
@@ -238,11 +255,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
             <FileUploader
               accept="image/*,application/pdf"
               maxSize={10485760}
-              onUpload={async (file) => {
-                // Create temp quote ID for upload path
-                const tempId = crypto.randomUUID();
-                await handlePlanUpload(file, tempId);
-              }}
+              onUpload={handlePlanUpload}
               currentFileUrl={null}
               label="Upload Roof Plan"
               description="PDF or image (max 10 MB)"
