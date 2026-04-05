@@ -368,6 +368,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           type: 'area' as const,
           value: area.area,
           pitch: area.pitch, // Include pitch for roof areas
+          name: area.name, // Include user's name for roof area
           points: area.points,
           visible: area.visible,
         });

@@ -9,6 +9,7 @@ interface TakeoffMeasurement {
   type: 'line' | 'area' | 'point';
   value: number;
   pitch?: number; // Pitch in degrees (for roof areas)
+  name?: string; // Name (for roof areas)
   points?: { x: number; y: number }[];
   visible: boolean;
 }
@@ -76,7 +77,7 @@ export async function saveTakeoffMeasurements(
       
       const { data: roofArea, error: roofAreaError } = await supabase.from('quote_roof_areas').insert({
         quote_id: quoteId,
-        label: `Roof Area ${i + 1}`,
+        label: measurement.name || `Roof Area ${i + 1}`, // Use user's name or fallback to default
         input_mode: 'final',
         final_value_sqm: pitchedArea, // Store pitched area
         computed_sqm: pitchedArea, // Copy to computed for v1 builder display
