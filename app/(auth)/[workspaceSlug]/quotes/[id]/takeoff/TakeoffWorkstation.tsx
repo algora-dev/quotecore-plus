@@ -97,6 +97,18 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [calibrationConfirmed, setCalibrationConfirmed] = useState(false);
   const [showConfirmedFlash, setShowConfirmedFlash] = useState(false);
   const [showCalibrationHelp, setShowCalibrationHelp] = useState(true);
+  const [showRoofAreaInstructions, setShowRoofAreaInstructions] = useState(false);
+  
+  // Show roof area instructions after first calibration confirmed
+  useEffect(() => {
+    if (calibrationConfirmed && calibrations.length > 0 && roofAreas.length === 0) {
+      // Delay slightly to show after calibration flash
+      const timer = setTimeout(() => {
+        setShowRoofAreaInstructions(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [calibrationConfirmed, calibrations.length, roofAreas.length]);
   
   // Component colors (auto-assign on mount)
   const [componentColors, setComponentColors] = useState<ComponentColor[]>([]);
@@ -1321,6 +1333,45 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           onSave={handleSaveCalibration}
           onCancel={handleCancelCalibration}
         />
+      )}
+
+      {/* Roof Area Instructions (after first calibration) */}
+      {showRoofAreaInstructions && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-lg p-6 max-w-md border border-slate-700">
+            <h2 className="text-xl font-semibold mb-4">✅ Calibration Complete!</h2>
+            <h3 className="text-lg font-semibold mb-3 text-yellow-400">Next: Create Your First Roof Area</h3>
+            <div className="space-y-3 text-sm">
+              <p className="text-slate-300">
+                Before measuring components, you must define at least one <span className="font-bold">roof area with a pitch angle</span>.
+              </p>
+              <div className="bg-slate-900/50 border border-slate-700 rounded p-3 space-y-2">
+                <p className="font-semibold text-blue-400">How to create a roof area:</p>
+                <ol className="list-decimal list-inside space-y-1.5 text-slate-300 ml-2">
+                  <li>Click the <span className="font-bold text-blue-400">"Area"</span> button in the toolbar above</li>
+                  <li>Click to place <span className="font-bold">at least 4 points</span> around the roof outline</li>
+                  <li>Close the shape by clicking <span className="font-bold">near your starting point</span></li>
+                  <li>Enter a <span className="font-bold">name</span> and <span className="font-bold text-orange-400">pitch angle</span> (in degrees)</li>
+                </ol>
+              </div>
+              <p className="text-slate-400 text-xs mt-3">
+                💡 The pitch angle is essential for accurate material calculations and component measurements.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setShowRoofAreaInstructions(false);
+                // Auto-activate Area mode to help user
+                setAreaMode(true);
+                setLineMode(false);
+                setPointMode(false);
+              }}
+              className="mt-6 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-medium"
+            >
+              Got it, let's create a roof area!
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Initial Calibration Help */}
