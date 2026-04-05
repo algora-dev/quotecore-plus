@@ -940,7 +940,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900 flex flex-col p-4">
+    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col p-4">
       <div className="flex-1 flex flex-col bg-white rounded-xl shadow-lg overflow-hidden">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
