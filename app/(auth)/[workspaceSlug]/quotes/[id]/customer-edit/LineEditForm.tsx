@@ -25,7 +25,7 @@ export function LineEditForm({ initialText, initialAmount, initialShowPrice, onS
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-2 p-3 bg-slate-50 rounded-lg border border-slate-300">
+    <form onSubmit={handleSubmit} className="space-y-2 p-3 bg-slate-50 rounded-full border border-slate-300">
       <div>
         <input
           type="text"
@@ -71,7 +71,7 @@ export function LineEditForm({ initialText, initialAmount, initialShowPrice, onS
       <div className="flex gap-2 pt-1">
         <button
           type="submit"
-          className="flex-1 px-3 py-1 text-xs font-medium bg-emerald-600 text-white rounded hover:bg-emerald-700"
+          className="flex-1 px-3 py-1 text-xs font-medium bg-black text-white rounded hover:bg-slate-800"
         >
           Save
         </button>

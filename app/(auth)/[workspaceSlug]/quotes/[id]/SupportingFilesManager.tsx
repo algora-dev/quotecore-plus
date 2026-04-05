@@ -154,7 +154,7 @@ export function SupportingFilesManager({ quoteId, companyId, initialFiles }: Pro
               {files.map(file => (
                 <div
                   key={file.id}
-                  className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200"
+                  className="flex items-center gap-3 p-3 bg-slate-50 rounded-full border border-slate-200"
                 >
                   <div className="flex-shrink-0">
                     {file.fileName.toLowerCase().endsWith('.pdf') ? (

@@ -90,7 +90,7 @@ export function PlanUploader({ quoteId, companyId, currentPlanUrl, currentPlanNa
       </p>
 
       {planUrl && planName ? (
-        <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+        <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-full border border-slate-200">
           <div className="flex-shrink-0">
             {planName.toLowerCase().endsWith('.pdf') ? (
               <svg className="w-12 h-12 text-red-500" fill="currentColor" viewBox="0 0 20 20">

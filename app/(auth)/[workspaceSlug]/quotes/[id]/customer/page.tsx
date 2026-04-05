@@ -45,7 +45,7 @@ export default async function CustomerQuotePage({
           </Link>
           <Link
             href={`/${workspaceSlug}/quotes/${id}/customer-edit`}
-            className="px-3 py-1.5 text-sm font-medium text-purple-600 border border-purple-200 rounded-lg hover:bg-purple-50"
+            className="px-3 py-1.5 text-sm font-medium text-purple-600 border border-purple-200 rounded-full hover:bg-purple-50"
           >
             Edit Customer Quote
           </Link>
@@ -169,10 +169,10 @@ export default async function CustomerQuotePage({
 
         {/* Action Buttons */}
         <div className="flex gap-3 justify-end">
-          <button className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-lg hover:bg-slate-50">
+          <button className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50">
             Download PDF
           </button>
-          <button className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          <button className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-80 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">
             Email Quote
           </button>
         </div>

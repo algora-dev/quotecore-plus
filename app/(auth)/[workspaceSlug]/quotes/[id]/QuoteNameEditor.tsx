@@ -69,14 +69,14 @@ export function QuoteNameEditor({ quoteId, customerName, jobName }: Props) {
           <button
             onClick={handleSave}
             disabled={saving || !client.trim()}
-            className="px-3 py-1 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="px-3 py-1 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Save'}
           </button>
           <button
             onClick={handleCancel}
             disabled={saving}
-            className="px-3 py-1 text-xs rounded-lg border border-slate-300 hover:bg-slate-50"
+            className="px-3 py-1 text-xs rounded-full border border-slate-300 hover:bg-slate-50"
           >
             Cancel
           </button>

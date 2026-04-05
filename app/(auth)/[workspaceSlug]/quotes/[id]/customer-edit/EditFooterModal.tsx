@@ -20,19 +20,19 @@ export function EditFooterModal({ footerText, onSave, onCancel }: Props) {
           onChange={(e) => setText(e.target.value)}
           placeholder="Payment terms, disclaimers, etc."
           rows={6}
-          className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+          className="w-full px-3 py-2 text-sm border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500"
         />
 
         <div className="flex gap-3 justify-end mt-4">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-lg hover:bg-slate-50"
+            className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50"
           >
             Cancel
           </button>
           <button
             onClick={() => onSave(text)}
-            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-80 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Save
           </button>

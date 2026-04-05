@@ -83,7 +83,7 @@ export default async function QuoteSummaryPage({
         </span>
       </div>
 
-      <div className="flex gap-3 p-4 bg-slate-50 rounded-lg flex-wrap">
+      <div className="flex gap-3 p-4 bg-slate-50 rounded-full flex-wrap">
         {quote.status === 'draft' && (
           <>
             <ConvertSystemButton quoteId={id} currentSystem={quote.measurement_system} workspaceSlug={workspaceSlug} />
@@ -186,7 +186,7 @@ export default async function QuoteSummaryPage({
               {allFiles.map(file => (
                 <div
                   key={file.id}
-                  className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg"
+                  className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-full"
                 >
                   <div className="flex-shrink-0">
                     {file.file_name.toLowerCase().endsWith('.pdf') ? (

@@ -265,7 +265,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                     e.target.value = '';
                   }
                 }}
-                className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                className="px-3 py-1.5 text-sm border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500"
               >
                 <option value="">Load Template...</option>
                 {templates.map((template) => (
@@ -400,7 +400,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
 
             <button 
               onClick={() => setShowAddCustomLine(true)}
-              className="w-full py-2 text-sm text-orange-600 border border-blue-200 rounded-lg hover:bg-blue-50"
+              className="w-full py-2 text-sm text-orange-600 border border-blue-200 rounded-full hover:bg-blue-50"
             >
               + Add Custom Line
             </button>
@@ -415,7 +415,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                   router.push(`/${workspaceSlug}/quotes/${quote.id}/summary`);
                 }}
                 disabled={saving}
-                className="w-full py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                className="w-full py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-5 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               >
                 {saving ? 'Saving...' : 'Save & Return to Summary'}
               </button>
@@ -438,7 +438,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                     alert('Failed to save template: ' + (error as Error).message);
                   }
                 }}
-                className="w-full py-2 text-sm font-medium border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50"
+                className="w-full py-2 text-sm font-medium border border-purple-300 text-purple-700 rounded-full hover:bg-purple-50"
               >
                 💾 Save Branding as Template
               </button>
@@ -451,7 +451,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               <h2 className="text-lg font-semibold text-slate-900">Customer Quote Preview</h2>
               <button
                 onClick={() => setShowPreviewModal(true)}
-                className="px-3 py-1.5 text-sm font-medium text-orange-600 border border-blue-200 rounded-lg hover:bg-blue-50"
+                className="px-3 py-1.5 text-sm font-medium text-orange-600 border border-blue-200 rounded-full hover:bg-blue-50"
               >
                 🔍 Preview Full Size
               </button>
@@ -497,7 +497,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               <h2 className="text-xl font-semibold text-slate-900">Full Size Preview</h2>
               <button
                 onClick={() => setShowPreviewModal(false)}
-                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

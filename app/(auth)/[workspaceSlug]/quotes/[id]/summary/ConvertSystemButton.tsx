@@ -46,14 +46,14 @@ export function ConvertSystemButton({ quoteId, currentSystem, workspaceSlug }: P
           <div className="flex gap-3 justify-end">
             <button
               onClick={() => setShowConfirm(false)}
-              className="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50"
+              className="px-4 py-2 text-sm rounded-full border border-slate-300 hover:bg-slate-50"
               disabled={converting}
             >
               Cancel
             </button>
             <button
               onClick={handleConvert}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50"
               disabled={converting}
             >
               {converting ? 'Converting...' : `Convert to ${targetLabel}`}
@@ -67,7 +67,7 @@ export function ConvertSystemButton({ quoteId, currentSystem, workspaceSlug }: P
   return (
     <button
       onClick={() => setShowConfirm(true)}
-      className="px-4 py-2 text-sm font-medium rounded-lg border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
+      className="px-4 py-2 text-sm font-medium rounded-full border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
     >
       Convert to {targetLabel}
     </button>

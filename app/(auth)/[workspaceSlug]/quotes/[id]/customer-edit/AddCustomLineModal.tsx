@@ -45,7 +45,7 @@ export function AddCustomLineModal({ onAdd, onClose }: Props) {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="e.g. Additional materials, Custom work"
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-full focus:border-orange-500 focus:outline-none"
               autoFocus
               required
             />
@@ -62,7 +62,7 @@ export function AddCustomLineModal({ onAdd, onClose }: Props) {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-full focus:border-orange-500 focus:outline-none"
               required
             />
           </div>
@@ -84,13 +84,13 @@ export function AddCustomLineModal({ onAdd, onClose }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 text-sm font-medium border border-slate-300 rounded-lg hover:bg-slate-50"
+              className="flex-1 px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="flex-1 px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-80 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
               Add Line
             </button>
