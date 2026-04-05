@@ -194,7 +194,8 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
             type="button"
             onClick={() => {
               setEntryMode('manual');
-              setRoofPlanFile(null);
+              setPlanUploaded(false);
+              setUploadedPlanPath(null);
             }}
             className={`relative p-4 rounded-lg border-2 transition-all ${
               entryMode === 'manual'

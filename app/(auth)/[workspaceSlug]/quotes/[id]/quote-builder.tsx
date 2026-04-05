@@ -730,14 +730,20 @@ export function QuoteBuilder({
               <span>Total Materials</span>
               <span>{formatCurrency(totals.totalMaterials, effectiveCurrency)}</span>
             </div>
+            {totals.materialMargin > 0 && (
+              <div className="flex justify-between text-sm text-emerald-600 font-medium">
+                <span className="ml-4">+ Material Margin ({materialMarginPercent}%)</span>
+                <span>+{formatCurrency(totals.materialMargin, effectiveCurrency)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-sm">
               <span>Total Labour</span>
               <span>{formatCurrency(totals.totalLabour, effectiveCurrency)}</span>
             </div>
-            {(totals.materialMargin > 0 || totals.labourMargin > 0) && (
-              <div className="flex justify-between text-sm text-slate-500">
-                <span>Margins</span>
-                <span>+{formatCurrency(totals.materialMargin + totals.labourMargin, effectiveCurrency)}</span>
+            {totals.labourMargin > 0 && (
+              <div className="flex justify-between text-sm text-emerald-600 font-medium">
+                <span className="ml-4">+ Labor Margin ({laborMarginPercent}%)</span>
+                <span>+{formatCurrency(totals.labourMargin, effectiveCurrency)}</span>
               </div>
             )}
             <div className="flex justify-between text-sm border-t pt-2">
