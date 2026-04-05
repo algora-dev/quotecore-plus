@@ -109,12 +109,14 @@ export function QuoteBuilderV2({
           <div className="p-6">
             {currentStep === 'roof-areas' && (
               <RoofAreasTab
+                quote={quote}
                 roofAreas={roofAreas}
                 onNext={() => navigateToStep('components')}
               />
             )}
             {currentStep === 'components' && (
               <ComponentsTab
+                quote={quote}
                 components={components}
                 roofAreas={roofAreas}
                 onNext={() => navigateToStep('extras')}
@@ -135,9 +137,11 @@ export function QuoteBuilderV2({
 
 // Tab Components (Placeholders for now)
 function RoofAreasTab({
+  quote,
   roofAreas,
   onNext,
 }: {
+  quote: QuoteRow;
   roofAreas: QuoteRoofAreaRow[];
   onNext: () => void;
 }) {
@@ -201,10 +205,12 @@ function RoofAreasTab({
 }
 
 function ComponentsTab({
+  quote,
   components,
   roofAreas,
   onNext,
 }: {
+  quote: QuoteRow;
   components: QuoteComponentRow[];
   roofAreas: QuoteRoofAreaRow[];
   onNext: () => void;
