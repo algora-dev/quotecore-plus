@@ -34,5 +34,5 @@ export async function loginAction(formData: FormData) {
   
   const workspaceSlug = company?.slug || 'workspace';
   
-  redirect(`/${workspaceSlug}/quotes`);
+  redirect(`/${workspaceSlug}`);
 }
