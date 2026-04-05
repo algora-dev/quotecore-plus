@@ -100,17 +100,6 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [showCalibrationHelp, setShowCalibrationHelp] = useState(true);
   const [showRoofAreaInstructions, setShowRoofAreaInstructions] = useState(false);
   
-  // Show roof area instructions after first calibration confirmed
-  useEffect(() => {
-    if (calibrationConfirmed && calibrations.length > 0 && roofAreas.length === 0) {
-      // Delay slightly to show after calibration flash
-      const timer = setTimeout(() => {
-        setShowRoofAreaInstructions(true);
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [calibrationConfirmed, calibrations.length, roofAreas.length]);
-  
   // Component colors (auto-assign on mount)
   const [componentColors, setComponentColors] = useState<ComponentColor[]>([]);
   const [activeComponentIds, setActiveComponentIds] = useState<string[]>([]);
@@ -172,6 +161,17 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     setComponentColors(colors);
     console.log('[Components] Colors assigned to', activeComponentIds.length, 'active components');
   }, [activeComponentIds]);
+  
+  // Show roof area instructions after first calibration confirmed
+  useEffect(() => {
+    if (calibrationConfirmed && calibrations.length > 0 && roofAreas.length === 0) {
+      // Delay slightly to show after calibration flash
+      const timer = setTimeout(() => {
+        setShowRoofAreaInstructions(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [calibrationConfirmed, calibrations.length, roofAreas.length]);
   
   const handleDeleteArea = (areaId: string) => {
     const area = roofAreas.find(a => a.id === areaId);
