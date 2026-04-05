@@ -7,7 +7,6 @@ interface CreateQuoteParams {
   jobName: string | null;
   templateId: string | null;
   entryMode: 'manual' | 'digital';
-  roofPlanFile?: File;
 }
 
 export async function createQuoteWithDetails(params: CreateQuoteParams): Promise<string> {
@@ -39,33 +38,37 @@ export async function createQuoteWithDetails(params: CreateQuoteParams): Promise
     throw new Error(error?.message || 'Failed to create quote');
   }
 
-  // If digital mode and file provided, upload roof plan
-  if (params.entryMode === 'digital' && params.roofPlanFile) {
-    const fileExt = params.roofPlanFile.name.split('.').pop();
-    const fileName = `plan-${Date.now()}.${fileExt}`;
-    const storagePath = `${company.id}/${quote.id}/${fileName}`;
+  return quote.id;
+}
 
-    // Upload to Supabase Storage
-    const { error: uploadError } = await supabase.storage
-      .from('QUOTE-DOCUMENTS')
-      .upload(storagePath, params.roofPlanFile, {
-        contentType: params.roofPlanFile.type,
-        upsert: false,
-      });
+export async function uploadRoofPlanFile(quoteId: string, file: File): Promise<void> {
+  const { company } = await loadCompanyContext();
+  const { createClient } = await import('@/app/lib/supabase/client');
+  const supabase = createClient();
 
-    if (uploadError) {
-      throw new Error(`Failed to upload roof plan: ${uploadError.message}`);
-    }
+  const fileExt = file.name.split('.').pop();
+  const fileName = `plan-${Date.now()}.${fileExt}`;
+  const storagePath = `${company.id}/${quoteId}/${fileName}`;
 
-    // Save file metadata
-    await supabase.from('quote_files').insert({
-      quote_id: quote.id,
-      file_name: params.roofPlanFile.name,
-      file_type: 'plan',
-      file_size: params.roofPlanFile.size,
-      storage_path: storagePath,
+  // Upload to Supabase Storage (client-side)
+  const { error: uploadError } = await supabase.storage
+    .from('QUOTE-DOCUMENTS')
+    .upload(storagePath, file, {
+      contentType: file.type,
+      upsert: false,
     });
+
+  if (uploadError) {
+    throw new Error(`Failed to upload roof plan: ${uploadError.message}`);
   }
 
-  return quote.id;
+  // Save file metadata via server action
+  const serverSupabase = await createSupabaseServerClient();
+  await serverSupabase.from('quote_files').insert({
+    quote_id: quoteId,
+    file_name: file.name,
+    file_type: 'plan',
+    file_size: file.size,
+    storage_path: storagePath,
+  });
 }

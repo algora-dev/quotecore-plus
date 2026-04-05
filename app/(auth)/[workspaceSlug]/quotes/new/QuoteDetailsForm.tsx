@@ -53,13 +53,19 @@ export function QuoteDetailsForm({ workspaceSlug, templates }: Props) {
 
     setCreating(true);
     try {
+      // Create quote first
       const quoteId = await createQuoteWithDetails({
         customerName: customerName.trim(),
         jobName: jobName.trim() || null,
         templateId: templateId || null,
         entryMode,
-        roofPlanFile: roofPlanFile || undefined,
       });
+
+      // If digital mode, upload file from client
+      if (entryMode === 'digital' && roofPlanFile) {
+        const { uploadRoofPlanFile } = await import('./actions');
+        await uploadRoofPlanFile(quoteId, roofPlanFile);
+      }
 
       // Redirect based on entry mode
       if (entryMode === 'digital') {
