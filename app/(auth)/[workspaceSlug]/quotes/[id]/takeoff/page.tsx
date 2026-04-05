@@ -46,9 +46,10 @@ export default async function Page({
     .getPublicUrl(planFile.storage_path);
 
   // Load components from component library
+  // Note: default_measurement_type is optional - if missing, auto-tool-selection won't work
   const { data: components, error: componentsError } = await supabase
     .from('component_library')
-    .select('id, name, default_measurement_type')
+    .select('id, name')
     .eq('company_id', profile.company_id)
     .order('name');
   

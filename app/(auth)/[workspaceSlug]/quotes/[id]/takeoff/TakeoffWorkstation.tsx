@@ -1656,7 +1656,7 @@ function AreaNameModal({
               </div>
               <div className="p-3 bg-gray-50 border-2 border-orange-400 rounded-lg">
                 <p className="text-xs text-gray-900 font-medium">
-                  ⚠️ Area: {calculatedArea.toFixed(2)} sq {unit}
+                  ⚠️ Plan Area: {calculatedArea.toFixed(2)} sq {unit} (before pitch adjustment)
                 </p>
                 <p className="text-xs text-gray-600 mt-1">
                   This pitch will be used for all components in this roof area
