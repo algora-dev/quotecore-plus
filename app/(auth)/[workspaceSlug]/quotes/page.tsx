@@ -26,7 +26,7 @@ export default async function QuotesPage({
         </div>
         <Link
           href={`/${workspaceSlug}/quotes/new`}
-          className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+          className="inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
         >
           + New Quote
         </Link>
