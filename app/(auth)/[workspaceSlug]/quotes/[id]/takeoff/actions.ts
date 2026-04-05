@@ -2,6 +2,7 @@
 
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 
 interface TakeoffMeasurement {
   componentId: string | null; // null for informational roof areas
@@ -71,6 +72,7 @@ export async function saveTakeoffMeasurements(
         label: `Roof Area ${i + 1}`,
         input_mode: 'final',
         final_value_sqm: measurement.value,
+        computed_sqm: measurement.value, // Copy to computed for v1 builder display
         calc_pitch_degrees: measurement.pitch || null,
         is_locked: true,
       }).select().single();
@@ -134,13 +136,42 @@ export async function saveTakeoffMeasurements(
         continue;
       }
       
-      // Create entries for each measurement
-      const entries = componentMeasurements.map((m, index) => ({
-        quote_component_id: newComponent.id,
-        raw_value: m.value,
-        value_after_waste: m.value, // Will be recalculated by pricing engine
-        sort_order: index,
-      }));
+      // Get roof area pitch for calculations
+      const { data: roofAreaData } = await supabase
+        .from('quote_roof_areas')
+        .select('calc_pitch_degrees')
+        .eq('id', firstRoofAreaId)
+        .single();
+      
+      const roofPitch = roofAreaData?.calc_pitch_degrees || 0;
+      
+      // Create entries with pitch and waste applied
+      const entries = componentMeasurements.map((m, index) => {
+        const pitchType = libComp.default_pitch_type || 'none';
+        const wasteType = libComp.default_waste_type || 'none';
+        const wastePercent = libComp.default_waste_percent || 0;
+        const wasteFixed = libComp.default_waste_fixed || 0;
+        
+        // Apply pitch and waste to get final value
+        const valueAfterWaste = applyPitchAndWaste(
+          m.value,
+          true, // isPlan (from takeoff)
+          pitchType as any,
+          roofPitch,
+          wasteType as any,
+          wastePercent,
+          wasteFixed
+        );
+        
+        console.log(`[SaveTakeoff] Entry ${index + 1}: raw=${m.value.toFixed(2)}, pitch=${roofPitch}°, type=${pitchType}, after=${valueAfterWaste.toFixed(2)}`);
+        
+        return {
+          quote_component_id: newComponent.id,
+          raw_value: m.value,
+          value_after_waste: valueAfterWaste,
+          sort_order: index,
+        };
+      });
       
       const { error: entriesError } = await supabase
         .from('quote_component_entries')
@@ -150,6 +181,19 @@ export async function saveTakeoffMeasurements(
         console.error('[SaveTakeoff] Error creating entries:', entriesError);
       } else {
         console.log(`[SaveTakeoff] Created ${entries.length} entries for ${libComp.name}`);
+        
+        // Calculate totals and update component
+        const totalQuantity = entries.reduce((sum, e) => sum + e.value_after_waste, 0);
+        const materialCost = totalQuantity * (libComp.material_rate || 0);
+        const labourCost = totalQuantity * (libComp.labour_rate || 0);
+        
+        await supabase.from('quote_components').update({
+          final_quantity: totalQuantity,
+          material_cost: materialCost,
+          labour_cost: labourCost,
+        }).eq('id', newComponent.id);
+        
+        console.log(`[SaveTakeoff] Updated component totals: qty=${totalQuantity.toFixed(2)}, mat=$${materialCost.toFixed(2)}, lab=$${labourCost.toFixed(2)}`);
       }
     }
   }
