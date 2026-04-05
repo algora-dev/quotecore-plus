@@ -7,6 +7,7 @@ interface TakeoffMeasurement {
   componentId: string | null; // null for informational roof areas
   type: 'line' | 'area' | 'point';
   value: number;
+  pitch?: number; // Pitch in degrees (for roof areas)
   points?: { x: number; y: number }[];
   visible: boolean;
 }
@@ -63,12 +64,14 @@ export async function saveTakeoffMeasurements(
     let firstRoofAreaId: string | null = null;
     
     for (let i = 0; i < roofAreaMeasurements.length; i++) {
-      console.log(`[SaveTakeoff] Creating roof area ${i + 1} with value:`, roofAreaMeasurements[i].value);
+      const measurement = roofAreaMeasurements[i];
+      console.log(`[SaveTakeoff] Creating roof area ${i + 1} with value:`, measurement.value, 'pitch:', measurement.pitch);
       const { data: roofArea, error: roofAreaError } = await supabase.from('quote_roof_areas').insert({
         quote_id: quoteId,
         label: `Roof Area ${i + 1}`,
         input_mode: 'final',
-        final_value_sqm: roofAreaMeasurements[i].value,
+        final_value_sqm: measurement.value,
+        calc_pitch_degrees: measurement.pitch || null,
         is_locked: true,
       }).select().single();
       

@@ -21,6 +21,7 @@ interface RoofArea {
   name: string;
   points: { x: number; y: number }[];
   area: number; // in square feet or meters
+  pitch: number; // in degrees
   visible: boolean;
   polygon?: any; // fabric.js polygon object
   markers?: any[]; // fabric.js marker objects
@@ -178,6 +179,38 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     setRoofAreas(roofAreas.filter(a => a.id !== areaId));
   };
   
+  const handleSaveArea = (name: string, pitch?: number) => {
+    const calculatedArea = calculatePolygonArea(pendingAreaPoints);
+    
+    // Create polygon on canvas
+    const polygon = new Polygon(pendingAreaPoints, {
+      fill: 'rgba(59, 130, 246, 0.2)',
+      stroke: '#3b82f6',
+      strokeWidth: 2,
+      selectable: false,
+      evented: false,
+    });
+    fabricRef.current?.add(polygon);
+    
+    // Store area with pitch
+    const newArea: RoofArea = {
+      id: `area-${Date.now()}`,
+      name: name || 'Area',
+      points: pendingAreaPoints,
+      area: calculatedArea,
+      pitch: pitch || 0, // Store pitch (default 0 for component areas)
+      visible: true,
+      polygon,
+      markers: [],
+    };
+    
+    setRoofAreas([...roofAreas, newArea]);
+    setShowAreaNamePrompt(false);
+    setPendingAreaPoints([]);
+    setAreaPoints([]);
+    setAreaMode(false);
+  };
+  
   const handleToggleAreaVisibility = (areaId: string) => {
     setRoofAreas(roofAreas.map(area => {
       if (area.id === areaId) {
@@ -290,6 +323,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           componentId: null,
           type: 'area' as const,
           value: area.area,
+          pitch: area.pitch, // Include pitch for roof areas
           points: area.points,
           visible: area.visible,
         });
@@ -1234,6 +1268,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
               </button>
               <button
                 onClick={() => {
+                  const hasRoofAreaWithPitch = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0);
+                  if (!hasRoofAreaWithPitch) {
+                    alert('Create a roof area with pitch first! This is required for component calculations.');
+                    return;
+                  }
                   if (!selectedComponentId) {
                     alert('Select a component first');
                     return;
@@ -1243,11 +1282,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   setPointMode(false);
                   setLinePoints([]);
                 }}
-                disabled={calibrationMode || calibrations.length === 0}
+                disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
                 className={`px-3 py-2 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   lineMode ? 'bg-green-600 hover:bg-green-700' : 'bg-slate-700 hover:bg-slate-600'
                 }`}
-                title={calibrations.length === 0 ? 'Calibrate first' : selectedComponentId ? 'Measure line' : 'Select component first'}
+                title={calibrations.length === 0 ? 'Calibrate first' : (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)) ? 'Create roof area with pitch first' : selectedComponentId ? 'Measure line' : 'Select component first'}
               >
                 📏 Line
               </button>
@@ -1262,12 +1301,17 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 className={`px-3 py-2 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   areaMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-700 hover:bg-slate-600'
                 }`}
-                title={calibrations.length === 0 ? 'Calibrate first' : selectedComponentId ? 'Measure area for component' : 'Measure roof area'}
+                title={calibrations.length === 0 ? 'Calibrate first' : selectedComponentId ? 'Measure area for component' : 'Measure roof area (required first!)'}
               >
                 📐 Area
               </button>
               <button
                 onClick={() => {
+                  const hasRoofAreaWithPitch = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0);
+                  if (!hasRoofAreaWithPitch) {
+                    alert('Create a roof area with pitch first! This is required for component calculations.');
+                    return;
+                  }
                   if (!selectedComponentId) {
                     alert('Select a component first');
                     return;
@@ -1276,11 +1320,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   setLineMode(false);
                   setAreaMode(false);
                 }}
-                disabled={calibrationMode || calibrations.length === 0}
+                disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
                 className={`px-3 py-2 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   pointMode ? 'bg-purple-600 hover:bg-purple-700' : 'bg-slate-700 hover:bg-slate-600'
                 }`}
-                title={calibrations.length === 0 ? 'Calibrate first' : selectedComponentId ? 'Add point marker' : 'Select component first'}
+                title={calibrations.length === 0 ? 'Calibrate first' : (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)) ? 'Create roof area with pitch first' : selectedComponentId ? 'Add point marker' : 'Select component first'}
               >
                 📍 Point
               </button>
@@ -1507,7 +1551,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   );
 }
 
-// Area Name Modal
+// Area Name Modal (now includes pitch for roof areas)
 function AreaNameModal({
   componentName,
   calculatedArea,
@@ -1518,15 +1562,22 @@ function AreaNameModal({
   componentName: string | null;
   calculatedArea: number;
   unit: string;
-  onSave: (name: string) => void;
+  onSave: (name: string, pitch?: number) => void;
   onCancel: () => void;
 }) {
   const [name, setName] = useState('');
+  const [pitch, setPitch] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (componentName || name.trim()) {
-      onSave(name.trim() || 'Area');
+    if (componentName) {
+      // Component area - no pitch needed
+      onSave('');
+    } else {
+      // Roof area - require name and pitch
+      if (name.trim() && pitch.trim()) {
+        onSave(name.trim(), Number(pitch));
+      }
     }
   };
 
@@ -1534,7 +1585,7 @@ function AreaNameModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-slate-800 rounded-lg p-6 w-96 border border-slate-700">
         <h2 className="text-xl font-semibold mb-4">
-          {componentName ? 'Add Area to Component' : 'Name This Area'}
+          {componentName ? 'Add Area to Component' : 'Create Roof Area'}
         </h2>
         
         {componentName && (
@@ -1549,18 +1600,45 @@ function AreaNameModal({
         
         <form onSubmit={handleSubmit} className="space-y-4">
           {!componentName && (
-            <div>
-              <label className="block text-sm mb-2">Area Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded"
-                placeholder="e.g. Main Roof"
-                autoFocus
-                required
-              />
-            </div>
+            <>
+              <div>
+                <label className="block text-sm mb-2">Area Name <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded"
+                  placeholder="e.g. Main Roof"
+                  autoFocus
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-2">Roof Pitch (degrees) <span className="text-red-400">*</span></label>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  max="90"
+                  value={pitch}
+                  onChange={(e) => setPitch(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded"
+                  placeholder="e.g. 30"
+                  required
+                />
+                <p className="text-xs text-slate-400 mt-1">
+                  Used to calculate component lengths (rafters, hips, valleys)
+                </p>
+              </div>
+              <div className="p-3 bg-amber-900/20 border border-amber-600 rounded">
+                <p className="text-xs text-amber-200">
+                  ⚠️ Area: {calculatedArea.toFixed(2)} sq {unit}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  This pitch will be used for all components in this roof area
+                </p>
+              </div>
+            </>
           )}
           <div className="flex gap-2 justify-end">
             <button
@@ -1573,9 +1651,9 @@ function AreaNameModal({
             <button
               type="submit"
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded"
-              disabled={!componentName && !name.trim()}
+              disabled={!componentName && (!name.trim() || !pitch.trim())}
             >
-              {componentName ? 'Add to Component' : 'Save Area'}
+              {componentName ? 'Add to Component' : 'Create Roof Area'}
             </button>
           </div>
         </form>
