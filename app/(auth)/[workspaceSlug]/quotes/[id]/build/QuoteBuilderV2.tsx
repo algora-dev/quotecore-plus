@@ -83,7 +83,7 @@ export function QuoteBuilderV2({
                   disabled={isDisabled}
                   className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
+                      ? 'bg-orange-50 text-orange-700 border-b-2 border-orange-500'
                       : isPast
                       ? 'text-slate-700 hover:bg-slate-50 cursor-pointer'
                       : 'text-slate-400 cursor-not-allowed'
@@ -93,7 +93,7 @@ export function QuoteBuilderV2({
                     <span
                       className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
                         isActive
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-orange-500 text-white'
                           : isPast
                           ? 'bg-green-500 text-white'
                           : 'bg-slate-200 text-slate-500'
@@ -199,7 +199,7 @@ function RoofAreasTab({
       <div className="flex justify-end pt-4 border-t border-slate-200">
         <button
           onClick={onNext}
-          className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700"
+          className="px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
         >
           Next: Components →
         </button>
@@ -313,7 +313,7 @@ function ComponentsTab({
       <div className="flex justify-end pt-4 border-t border-slate-200">
         <button
           onClick={onNext}
-          className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700"
+          className="px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
         >
           Next: Extras →
         </button>
@@ -333,7 +333,7 @@ function ExtrasTab({ onNext }: { onNext: () => void }) {
       <div className="flex justify-end pt-4 border-t border-slate-200">
         <button
           onClick={onNext}
-          className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700"
+          className="px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
         >
           Next: Review →
         </button>
@@ -358,7 +358,7 @@ function ReviewTab({
       </p>
 
       <div className="flex justify-end pt-4 border-t border-slate-200">
-        <button className="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700">
+        <button className="px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">
           Confirm Quote
         </button>
       </div>
