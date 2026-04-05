@@ -9,6 +9,7 @@ import { saveTakeoffMeasurements } from './actions';
 interface Component {
   id: string;
   name: string;
+  default_measurement_type?: string;
 }
 
 interface ComponentColor {
@@ -280,6 +281,56 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       }
       return area;
     }));
+  };
+  
+  const handleAddComponent = (componentId: string) => {
+    // Add to active list
+    setActiveComponentIds([...activeComponentIds, componentId]);
+    
+    // Auto-select the newly added component
+    setSelectedComponentId(componentId);
+    
+    // Auto-select tool based on component's default measurement type
+    const component = components.find(c => c.id === componentId);
+    if (component && component.default_measurement_type) {
+      const measurementType = component.default_measurement_type.toLowerCase();
+      
+      // Reset all tools first
+      setLineMode(false);
+      setAreaMode(false);
+      setPointMode(false);
+      
+      // Activate appropriate tool
+      if (measurementType === 'linear') {
+        setLineMode(true);
+      } else if (measurementType === 'area') {
+        setAreaMode(true);
+      } else if (measurementType === 'quantity' || measurementType === 'fixed') {
+        setPointMode(true);
+      }
+    }
+  };
+  
+  const handleRemoveComponent = (componentId: string) => {
+    // Remove from active list
+    setActiveComponentIds(activeComponentIds.filter(id => id !== componentId));
+    
+    // Remove all measurements for this component from canvas
+    const compData = componentMeasurements.find(c => c.componentId === componentId);
+    if (compData && fabricRef.current) {
+      compData.measurements.forEach(m => {
+        m.canvasObjects?.forEach(obj => fabricRef.current!.remove(obj));
+      });
+      fabricRef.current.renderAll();
+    }
+    
+    // Remove from measurements state
+    setComponentMeasurements(componentMeasurements.filter(c => c.componentId !== componentId));
+    
+    // Deselect if this was selected
+    if (selectedComponentId === componentId) {
+      setSelectedComponentId(null);
+    }
   };
   
   const handleDeleteMeasurement = (componentId: string, measurementId: string) => {
