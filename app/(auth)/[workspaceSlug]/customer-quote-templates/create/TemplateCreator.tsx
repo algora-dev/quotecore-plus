@@ -61,7 +61,7 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
             value={templateName}
             onChange={(e) => setTemplateName(e.target.value)}
             placeholder="e.g. Standard Roofing Quote"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           />
         </div>
 
@@ -86,7 +86,7 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
                 </p>
               </div>
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                mode === 'scratch' ? 'border-orange-500 bg-blue-500' : 'border-slate-300'
+                mode === 'scratch' ? 'border-orange-500 bg-black' : 'border-slate-300'
               }`}>
                 {mode === 'scratch' && (
                   <div className="w-2 h-2 bg-white rounded-full" />
@@ -119,7 +119,7 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
                 )}
               </div>
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                mode === 'starter' ? 'border-orange-500 bg-blue-500' : 'border-slate-300'
+                mode === 'starter' ? 'border-orange-500 bg-black' : 'border-slate-300'
               }`}>
                 {mode === 'starter' && (
                   <div className="w-2 h-2 bg-white rounded-full" />
@@ -151,7 +151,7 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
                     </p>
                   </div>
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    mode === 'copy' ? 'border-orange-500 bg-blue-500' : 'border-slate-300'
+                    mode === 'copy' ? 'border-orange-500 bg-black' : 'border-slate-300'
                   }`}>
                     {mode === 'copy' && (
                       <div className="w-2 h-2 bg-white rounded-full" />
@@ -168,7 +168,7 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
                   <select
                     value={selectedTemplateId}
                     onChange={(e) => setSelectedTemplateId(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500"
                   >
                     <option value="">Choose a template...</option>
                     {customTemplates.map((template) => (
@@ -187,14 +187,14 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
         <div className="flex gap-3 justify-end pt-4">
           <Link
             href={`/${workspaceSlug}/customer-quote-templates`}
-            className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-lg hover:bg-slate-50"
+            className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50"
           >
             Cancel
           </Link>
           <button
             onClick={handleContinue}
             disabled={!mode || !templateName.trim()}
-            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowe transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Continue
           </button>

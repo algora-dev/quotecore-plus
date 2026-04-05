@@ -73,7 +73,7 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines, templateName }
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -82,7 +82,7 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines, templateName }
                 type="tel"
                 value={companyPhone}
                 onChange={(e) => setCompanyPhone(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -91,7 +91,7 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines, templateName }
                 type="email"
                 value={companyEmail}
                 onChange={(e) => setCompanyEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -100,7 +100,7 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines, templateName }
                 type="text"
                 value={companyAddress}
                 onChange={(e) => setCompanyAddress(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500"
               />
             </div>
           </div>
@@ -113,7 +113,7 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines, templateName }
             value={footerText}
             onChange={(e) => setFooterText(e.target.value)}
             rows={4}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+            className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500"
           />
         </div>
 
@@ -129,14 +129,14 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines, templateName }
         <div className="flex gap-3 justify-end">
           <Link
             href={`/${workspaceSlug}/quotes/${quote.id}/customer-edit`}
-            className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-lg hover:bg-slate-50"
+            className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50"
           >
             Cancel
           </Link>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 text-sm font-medium bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-5 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             {saving ? 'Saving Template...' : 'Save Template'}
           </button>

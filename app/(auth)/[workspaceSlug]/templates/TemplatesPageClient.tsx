@@ -110,7 +110,7 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
               </p>
               <Link
                 href={`/${workspaceSlug}/templates/create`}
-                className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-80 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               >
                 + Create Template
               </Link>
@@ -122,7 +122,7 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
                   <p className="text-slate-400 mb-4">No quote templates created yet</p>
                   <Link
                     href={`/${workspaceSlug}/templates/create`}
-                    className="inline-block px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="inline-block px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-80 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
                   >
                     Create Your First Template
                   </Link>
@@ -202,7 +202,7 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
               </p>
               <Link
                 href={`/${workspaceSlug}/customer-quote-templates/create`}
-                className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-80 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               >
                 + Create Template
               </Link>
@@ -220,7 +220,7 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
                   <p className="text-slate-400 mb-4">No customer quote templates created yet</p>
                   <Link
                     href={`/${workspaceSlug}/customer-quote-templates/create`}
-                    className="inline-block px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="inline-block px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-80 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
                   >
                     Create Your First Template
                   </Link>

@@ -73,7 +73,7 @@ export function EditCustomerTemplateModal({ template, companyId, onClose, onSave
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               required
             />
           </div>
@@ -89,7 +89,7 @@ export function EditCustomerTemplateModal({ template, companyId, onClose, onSave
                   type="text"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
 
@@ -99,7 +99,7 @@ export function EditCustomerTemplateModal({ template, companyId, onClose, onSave
                   type="text"
                   value={companyPhone}
                   onChange={(e) => setCompanyPhone(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
 
@@ -109,7 +109,7 @@ export function EditCustomerTemplateModal({ template, companyId, onClose, onSave
                   type="text"
                   value={companyAddress}
                   onChange={(e) => setCompanyAddress(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
 
@@ -119,7 +119,7 @@ export function EditCustomerTemplateModal({ template, companyId, onClose, onSave
                   type="email"
                   value={companyEmail}
                   onChange={(e) => setCompanyEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
             </div>
@@ -142,7 +142,7 @@ export function EditCustomerTemplateModal({ template, companyId, onClose, onSave
               value={footerText}
               onChange={(e) => setFooterText(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
           </div>
         </div>
@@ -151,14 +151,14 @@ export function EditCustomerTemplateModal({ template, companyId, onClose, onSave
         <div className="sticky bottom-0 bg-slate-50 border-t border-slate-200 px-6 py-4 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium bg-white border border-slate-300 rounded-lg hover:bg-slate-50"
+            className="px-4 py-2 text-sm font-medium bg-white border border-slate-300 rounded-full hover:bg-slate-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-5 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>

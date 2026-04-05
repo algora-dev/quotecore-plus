@@ -88,7 +88,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="Your Company Name"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
@@ -101,7 +101,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
                 value={companyPhone}
                 onChange={(e) => setCompanyPhone(e.target.value)}
                 placeholder="+64 21 123 4567"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
@@ -114,7 +114,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
                 value={companyEmail}
                 onChange={(e) => setCompanyEmail(e.target.value)}
                 placeholder="info@yourcompany.com"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
@@ -127,7 +127,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
                 value={companyAddress}
                 onChange={(e) => setCompanyAddress(e.target.value)}
                 placeholder="123 Main Street, City, Country"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -137,7 +137,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Company Logo
             </label>
-            <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+            <div className="border-2 border-dashed border-slate-300 rounded-full p-6 text-center">
               <p className="text-sm text-slate-500">Logo upload coming soon</p>
             </div>
           </div>
@@ -155,7 +155,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
             onChange={(e) => setFooterText(e.target.value)}
             placeholder="e.g. Payment due within 30 days. Quote valid for 30 days. All work carried out to industry standards."
             rows={4}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           />
         </div>
 
@@ -163,7 +163,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
         <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
           <h2 className="text-lg font-semibold text-slate-900">Preview</h2>
           
-          <div className="border border-slate-200 rounded-lg p-6 bg-slate-50 space-y-4">
+          <div className="border border-slate-200 rounded-full p-6 bg-slate-50 space-y-4">
             {/* Header */}
             <div className="flex justify-between items-start border-b pb-4">
               <div>
@@ -223,14 +223,14 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
         <div className="flex gap-3 justify-end pt-4">
           <Link
             href={`/${workspaceSlug}/customer-quote-templates/create`}
-            className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-lg hover:bg-slate-50"
+            className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50"
           >
             Cancel
           </Link>
           <button
             onClick={handleSave}
             disabled={saving || !companyName.trim()}
-            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowe transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             {saving ? 'Saving...' : 'Save Template'}
           </button>

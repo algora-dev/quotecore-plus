@@ -141,7 +141,7 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 text-sm rounded-lg font-medium transition ${
+            className={`px-3 py-1.5 text-sm rounded-full font-medium transition ${
               filter === f
                 ? 'bg-slate-900 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -152,7 +152,7 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
         ))}
         <button
           onClick={() => setShowForm(true)}
-          className="ml-auto px-4 py-1.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+          className="ml-auto px-4 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800"
         >
           + Add Component
         </button>
@@ -230,10 +230,10 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
               </div>
             )}
             <div className="flex gap-2 pt-2">
-              <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
+              <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50">
                 {saving ? 'Saving...' : 'Create'}
               </button>
-              <button type="button" onClick={() => { setShowForm(false); setFormWasteType('none'); setFormMeasurementType('area'); setFormPitchEnabled(false); }} className="px-3 py-1.5 text-sm rounded-lg border border-slate-300 hover:bg-slate-50">
+              <button type="button" onClick={() => { setShowForm(false); setFormWasteType('none'); setFormMeasurementType('area'); setFormPitchEnabled(false); }} className="px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50">
                 Cancel
               </button>
             </div>
@@ -301,10 +301,10 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
                     </div>
                   )}
                   <div className="flex gap-2 pt-2">
-                    <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
+                    <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50">
                       {saving ? 'Saving...' : 'Save'}
                     </button>
-                    <button type="button" onClick={cancelEdit} className="px-3 py-1.5 text-sm rounded-lg border border-slate-300 hover:bg-slate-50">
+                    <button type="button" onClick={cancelEdit} className="px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50">
                       Cancel
                     </button>
                   </div>
@@ -328,7 +328,7 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
                     {comp.default_pitch_type !== 'none' && <> · {PITCH_LABELS[comp.default_pitch_type]}</>}
                   </p>
                 </div>
-                <button onClick={() => startEdit(comp)} className="px-3 py-1 text-xs font-medium rounded-lg border border-slate-300 hover:bg-slate-50">
+                <button onClick={() => startEdit(comp)} className="px-3 py-1 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50">
                   Edit
                 </button>
                 <button onClick={() => handleDelete(comp.id)} className="text-xs text-red-500 hover:text-red-700">
