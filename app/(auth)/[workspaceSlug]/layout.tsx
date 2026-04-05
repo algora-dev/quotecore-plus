@@ -30,8 +30,8 @@ export default async function WorkspaceLayout({
       <header className="border-b border-slate-200 bg-white shadow-sm">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href={`/${slug}`} prefetch={false} className="text-lg font-semibold">
-              QuoteCore
+            <Link href={`/${slug}`} prefetch={false} className="flex items-center">
+              <img src="/logo.png" alt="QuoteCore" className="h-8" />
             </Link>
             <div className="flex items-center gap-3">
               <LanguageSwitcher currentLanguage={languageLabel} />

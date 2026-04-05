@@ -10,6 +10,9 @@ export default function SignupPage() {
 
   return (
     <main style={{ maxWidth: 420, margin: '40px auto', padding: 16 }}>
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <img src="/logo.png" alt="QuoteCore" style={{ height: 48, display: 'inline-block' }} />
+      </div>
       <h1>Create your QuoteCore account</h1>
       <p>Create your company and owner account in one step.</p>
 

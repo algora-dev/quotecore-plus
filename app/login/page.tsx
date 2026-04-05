@@ -10,6 +10,9 @@ export default function LoginPage() {
 
   return (
     <main style={{ maxWidth: 420, margin: '40px auto', padding: 16 }}>
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <img src="/logo.png" alt="QuoteCore" style={{ height: 48, display: 'inline-block' }} />
+      </div>
       <h1>Log in to QuoteCore</h1>
 
       <form
