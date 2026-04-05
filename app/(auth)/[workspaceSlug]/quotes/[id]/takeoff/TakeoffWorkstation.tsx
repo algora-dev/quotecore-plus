@@ -956,7 +956,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         <button
           onClick={handleSaveTakeoff}
           disabled={calibrations.length === 0 || isSaving}
-          className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-emerald-400 hover:bg-emerald-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           title={calibrations.length === 0 ? 'Calibrate the plan first' : ''}
         >
           {isSaving ? 'Saving...' : 'Save & Continue to Components'}
@@ -971,7 +971,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
             <div>
               <h2 className="text-sm font-semibold mb-3 text-gray-900 uppercase tracking-wide">Calibration</h2>
               {calibrations.length === 0 ? (
-                <div className="text-sm text-amber-600 font-medium bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="text-sm text-gray-700 font-medium bg-amber-50 border border-amber-200 rounded-lg p-3">
                   ⚠️ Calibrate first to continue
                 </div>
               ) : showConfirmedFlash ? (
@@ -987,9 +987,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
               /* Not confirmed - Show details + Confirm button */
               <div className="space-y-2">
                 {/* Average Scale Display */}
-                <div className="p-3 rounded-lg bg-amber-50 border border-amber-300">
+                <div className="p-3 rounded-lg bg-white border-2 border-orange-400">
                   <div className="text-xs text-gray-600 mb-1">Average Scale</div>
-                  <div className="font-bold text-amber-700">
+                  <div className="font-bold text-gray-700">
                     {(calibrations.reduce((sum, cal) => sum + cal.scale, 0) / calibrations.length).toFixed(4)} {calibrations[0].unit}/px
                   </div>
                   <div className="text-xs text-gray-600 mt-1">
@@ -1015,7 +1015,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 {/* Confirm Button */}
                 <button
                   onClick={handleConfirmCalibration}
-                  className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium"
+                  className="w-full px-3 py-2 bg-emerald-400 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium"
                 >
                   ✓ Confirm Calibration
                 </button>
@@ -1268,7 +1268,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
                 className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  lineMode ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-100 hover:bg-gray-200'
+                  lineMode ? 'bg-emerald-400 hover:bg-emerald-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)) ? 'Create roof area with pitch first' : selectedComponentId ? 'Measure line' : 'Select component first'}
               >
@@ -1283,7 +1283,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 }}
                 disabled={calibrationMode || calibrations.length === 0}
                 className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  areaMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-100 hover:bg-gray-200'
+                  areaMode ? 'bg-blue-400 hover:bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : selectedComponentId ? 'Measure area for component' : 'Measure roof area (required first!)'}
               >
@@ -1306,7 +1306,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
                 className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  pointMode ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-100 hover:bg-gray-200'
+                  pointMode ? 'bg-purple-400 hover:bg-purple-500 text-white' : 'bg-gray-100 hover:bg-gray-200'
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)) ? 'Create roof area with pitch first' : selectedComponentId ? 'Add point marker' : 'Select component first'}
               >
@@ -1373,7 +1373,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md border border-gray-200">
             <h2 className="text-xl font-semibold mb-4">✅ Calibration Complete!</h2>
-            <h3 className="text-lg font-semibold mb-3 text-amber-700">Next: Create Your First Roof Area</h3>
+            <h3 className="text-lg font-semibold mb-3 text-gray-700">Next: Create Your First Roof Area</h3>
             <div className="space-y-3 text-sm">
               <p className="text-gray-900">
                 Before measuring components, you must define at least one <span className="font-bold">roof area with a pitch angle</span>.
@@ -1399,7 +1399,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 setLineMode(false);
                 setPointMode(false);
               }}
-              className="mt-6 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium"
+              className="mt-6 w-full px-4 py-2 bg-blue-400 hover:bg-blue-500 text-white rounded-lg font-medium"
             >
               Got it, let's create a roof area!
             </button>
@@ -1415,7 +1415,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
             <div className="space-y-3 text-sm">
               <p>Before you can measure, you need to set the scale:</p>
               <ol className="list-decimal list-inside space-y-2 text-gray-900">
-                <li>Click the <span className="font-bold text-amber-700">"Calibrate"</span> button</li>
+                <li>Click the <span className="font-bold text-gray-700">"Calibrate"</span> button</li>
                 <li>Click <span className="font-bold">two points</span> on the plan with a known distance</li>
                 <li>Enter the <span className="font-bold">actual distance</span> between those points</li>
                 <li>Add 2-3 calibrations for best accuracy</li>
@@ -1674,7 +1674,7 @@ function AreaNameModal({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded"
+              className="px-4 py-2 bg-blue-400 hover:bg-blue-500 text-white rounded"
               disabled={!componentName && (!name.trim() || !pitch.trim())}
             >
               {componentName ? 'Add to Component' : 'Create Roof Area'}
@@ -1726,7 +1726,7 @@ function PointMeasurementModal({
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded"
+            className="px-4 py-2 bg-purple-400 hover:bg-purple-500 text-white rounded"
             autoFocus
           >
             Add Point (Enter)
@@ -1782,7 +1782,7 @@ function LineMeasurementModal({
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded"
+            className="px-4 py-2 bg-emerald-400 hover:bg-emerald-500 text-white rounded"
             autoFocus
           >
             Add Line (Enter)
