@@ -597,3 +597,51 @@ export async function saveCustomerQuoteBranding(
 
   if (error) throw new Error(error.message);
 }
+
+export async function updateQuoteMargins(
+  quoteId: string,
+  settings: {
+    materialMarginPercent: number | null;
+    laborMarginPercent: number | null;
+    materialMarginEnabled: boolean;
+    laborMarginEnabled: boolean;
+  }
+) {
+  'use server';
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  // Verify quote belongs to company
+  const { data: quote } = await supabase
+    .from('quotes')
+    .select('company_id')
+    .eq('id', quoteId)
+    .single();
+
+  if (!quote || quote.company_id !== profile.company_id) {
+    throw new Error('Quote not found');
+  }
+
+  // Update margins
+  const { error } = await supabase
+    .from('quotes')
+    .update({
+      material_margin_percent: settings.materialMarginPercent,
+      labor_margin_percent: settings.laborMarginPercent,
+      material_margin_enabled: settings.materialMarginEnabled,
+      labor_margin_enabled: settings.laborMarginEnabled,
+    })
+    .eq('id', quoteId);
+
+  if (error) throw new Error(error.message);
+
+  console.log('[Margins] Quote margins updated:', {
+    quoteId,
+    materialMarginPercent: settings.materialMarginPercent,
+    laborMarginPercent: settings.laborMarginPercent,
+    materialEnabled: settings.materialMarginEnabled,
+    laborEnabled: settings.laborMarginEnabled,
+  });
+
+  revalidatePath(`/`);
+}

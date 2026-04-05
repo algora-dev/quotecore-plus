@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal } from '../actions';
+import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins } from '../actions';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { unitForMeasurement, entryLabel, addMoreLabel } from '@/app/lib/types';
 import { convertArea, convertLinearToMetric, convertAreaToMetric } from '@/app/lib/measurements/conversions';
@@ -75,6 +75,18 @@ export function QuoteBuilder({
   useEffect(() => {
     setQuote(initialQuote);
   }, [initialQuote.currency, initialQuote.measurement_system]);
+  
+  // Margin controls state
+  const [materialMarginEnabled, setMaterialMarginEnabled] = useState(quote.material_margin_enabled ?? true);
+  const [laborMarginEnabled, setLaborMarginEnabled] = useState(quote.labor_margin_enabled ?? true);
+  const [materialMarginPercent, setMaterialMarginPercent] = useState<string>(
+    (quote.material_margin_percent ?? 0).toString()
+  );
+  const [laborMarginPercent, setLaborMarginPercent] = useState<string>(
+    (quote.labor_margin_percent ?? 0).toString()
+  );
+  const [marginSaving, setMarginSaving] = useState(false);
+  
   const [roofAreas, setRoofAreas] = useState(initialRoofAreas);
   const [roofAreaEntries, setRoofAreaEntries] = useState(initialRoofAreaEntries);
   const [components, setComponents] = useState(initialComponents);
@@ -288,6 +300,49 @@ export function QuoteBuilder({
     { key: 'extras', label: '3. Extras' },
     { key: 'review', label: '4. Review' },
   ];
+
+  // Save margin settings
+  const handleSaveMargins = async () => {
+    const matPercent = parseFloat(materialMarginPercent);
+    const labPercent = parseFloat(laborMarginPercent);
+
+    if (isNaN(matPercent) || matPercent < 0 || matPercent > 100) {
+      alert('Material margin must be between 0 and 100%');
+      return;
+    }
+
+    if (isNaN(labPercent) || labPercent < 0 || labPercent > 100) {
+      alert('Labor margin must be between 0 and 100%');
+      return;
+    }
+
+    setMarginSaving(true);
+    try {
+      await updateQuoteMargins(quote.id, {
+        materialMarginPercent: materialMarginEnabled ? matPercent : null,
+        laborMarginPercent: laborMarginEnabled ? labPercent : null,
+        materialMarginEnabled,
+        laborMarginEnabled,
+      });
+
+      // Update local quote state
+      setQuote({
+        ...quote,
+        material_margin_percent: matPercent,
+        labor_margin_percent: labPercent,
+        material_margin_enabled: materialMarginEnabled,
+        labor_margin_enabled: laborMarginEnabled,
+      });
+
+      // Refresh to recalculate totals
+      window.location.reload();
+    } catch (err) {
+      console.error('Failed to save margins:', err);
+      alert('Failed to save margins. Please try again.');
+    } finally {
+      setMarginSaving(false);
+    }
+  };
 
   return (
     <section className="space-y-6">
@@ -578,6 +633,93 @@ export function QuoteBuilder({
               </table>
             </div>
           )}
+
+          {/* Profit Margin Controls */}
+          <div className="rounded-xl border border-blue-200 bg-blue-50 p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-gray-900 text-lg">💸 Profit Margins</h3>
+                <p className="text-sm text-gray-600 mt-1">Adjust your profit margins for this quote</p>
+              </div>
+              <button
+                onClick={handleSaveMargins}
+                disabled={marginSaving}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 text-sm"
+              >
+                {marginSaving ? 'Saving...' : 'Apply Changes'}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Material Margin */}
+              <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <label className="flex items-center gap-2 mb-3">
+                  <input
+                    type="checkbox"
+                    checked={materialMarginEnabled}
+                    onChange={(e) => setMaterialMarginEnabled(e.target.checked)}
+                    className="w-4 h-4 rounded"
+                  />
+                  <span className="font-semibold text-gray-900">Material Margin</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={materialMarginPercent}
+                    onChange={(e) => setMaterialMarginPercent(e.target.value)}
+                    disabled={!materialMarginEnabled}
+                    className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:text-gray-500"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">%</span>
+                </div>
+                {materialMarginEnabled && (
+                  <p className="text-xs text-gray-600 mt-2">
+                    +{formatCurrency(totals.totalMaterials * (parseFloat(materialMarginPercent) || 0) / 100, effectiveCurrency)} profit
+                  </p>
+                )}
+              </div>
+
+              {/* Labor Margin */}
+              <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <label className="flex items-center gap-2 mb-3">
+                  <input
+                    type="checkbox"
+                    checked={laborMarginEnabled}
+                    onChange={(e) => setLaborMarginEnabled(e.target.checked)}
+                    className="w-4 h-4 rounded"
+                  />
+                  <span className="font-semibold text-gray-900">Labor Margin</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={laborMarginPercent}
+                    onChange={(e) => setLaborMarginPercent(e.target.value)}
+                    disabled={!laborMarginEnabled}
+                    className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:text-gray-500"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">%</span>
+                </div>
+                {laborMarginEnabled && (
+                  <p className="text-xs text-gray-600 mt-2">
+                    +{formatCurrency(totals.totalLabour * (parseFloat(laborMarginPercent) || 0) / 100, effectiveCurrency)} profit
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg p-3 border border-blue-200">
+              <p className="text-sm text-blue-900">
+                <strong>💡 Note:</strong> Margins are hidden from customers. They only see the final total price.
+              </p>
+            </div>
+          </div>
 
           <div className="rounded-xl border border-slate-300 bg-white p-4 space-y-2">
             <div className="flex justify-between text-sm">
