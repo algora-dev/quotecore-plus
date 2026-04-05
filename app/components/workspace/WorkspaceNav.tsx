@@ -30,11 +30,12 @@ export function WorkspaceNav({ workspaceSlug }: { workspaceSlug: string }) {
             key={item.key}
             href={item.href}
             prefetch={false}
-            className={`rounded-full px-3 py-1 transition ${
+            className={`rounded-full px-3 py-1 transition-all duration-200 ease-in-out ${
               isActive
-                ? 'bg-slate-900 text-white'
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                ? 'bg-black text-white border-2 border-black'
+                : 'text-slate-600 border-2 border-transparent hover:border-orange-500 hover:shadow-[0_0_8px_rgba(255,107,53,0.3)] hover:scale-102'
             }`}
+            style={!isActive ? { transform: 'scale(1)' } : undefined}
           >
             {item.label}
           </Link>
