@@ -158,29 +158,34 @@ function RoofAreasTab({
       </div>
 
       <div className="space-y-4">
-        {roofAreas.map((area) => (
-          <div
-            key={area.id}
-            className="bg-white border border-slate-200 rounded-lg p-4"
-          >
-            <h3 className="font-semibold text-slate-900 mb-2">{area.label}</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-slate-600">Area:</span>
-                <span className="ml-2 font-medium">
-                  {area.final_value_sqm?.toFixed(2)} m² (
-                  {((area.final_value_sqm || 0) * 10.764).toFixed(2)} sq ft)
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-600">Status:</span>
-                <span className="ml-2 px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded">
-                  🔒 Locked
-                </span>
+        {roofAreas.map((area) => {
+          const sqm = area.final_value_sqm || 0;
+          const sqft = sqm * 10.764;
+          const displayArea = quote.measurement_system === 'metric'
+            ? `${sqm.toFixed(2)} m²`
+            : `${sqft.toFixed(2)} sq ft`;
+          
+          return (
+            <div
+              key={area.id}
+              className="bg-white border border-slate-200 rounded-lg p-4"
+            >
+              <h3 className="font-semibold text-slate-900 mb-2">{area.label}</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-slate-600">Area:</span>
+                  <span className="ml-2 font-medium">{displayArea}</span>
+                </div>
+                <div>
+                  <span className="text-slate-600">Status:</span>
+                  <span className="ml-2 px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded">
+                    🔒 Locked
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="flex justify-end pt-4 border-t border-slate-200">
@@ -231,24 +236,33 @@ function ComponentsTab({
             <div key={area.id}>
               <h3 className="font-semibold text-slate-900 mb-3">{area.label}</h3>
               <div className="space-y-3">
-                {areaComps.map((comp) => (
-                  <div
-                    key={comp.id}
-                    className="bg-white border border-slate-200 rounded-lg p-4"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="font-medium text-slate-900">{comp.name}</h4>
-                        <p className="text-sm text-slate-600 mt-1">
-                          Value: {comp.final_value?.toFixed(2)} {comp.measurement_type === 'linear' ? 'ft' : 'units'}
-                        </p>
+                {areaComps.map((comp) => {
+                  // Display value with proper unit (stored in feet from takeoff)
+                  const valueInFeet = comp.final_value || 0;
+                  const valueInMeters = valueInFeet * 0.3048;
+                  const displayValue = quote.measurement_system === 'metric' 
+                    ? `${valueInMeters.toFixed(2)} m`
+                    : `${valueInFeet.toFixed(2)} ft`;
+                  
+                  return (
+                    <div
+                      key={comp.id}
+                      className="bg-white border border-slate-200 rounded-lg p-4"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-medium text-slate-900">{comp.name}</h4>
+                          <p className="text-sm text-slate-600 mt-1">
+                            Value: {displayValue}
+                          </p>
+                        </div>
+                        <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">
+                          🔒 From Takeoff
+                        </span>
                       </div>
-                      <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">
-                        🔒 From Takeoff
-                      </span>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );

@@ -104,6 +104,12 @@ export async function saveTakeoffMeasurements(
       
       if (!libComp) continue;
       
+      // Calculate total value from all measurements for this component
+      const componentMeasurements = measurements.filter(m => m.componentId === componentId);
+      const totalValue = componentMeasurements.reduce((sum, m) => sum + m.value, 0);
+      
+      console.log(`[SaveTakeoff] Creating component ${libComp.name} with total value:`, totalValue);
+      
       await supabase.from('quote_components').insert({
         quote_id: quoteId,
         quote_roof_area_id: firstRoofAreaId,
@@ -111,7 +117,8 @@ export async function saveTakeoffMeasurements(
         name: libComp.name,
         component_type: 'main',
         measurement_type: 'linear',
-        input_mode: 'calculated',
+        input_mode: 'final',
+        final_value: totalValue,
         material_rate: libComp.material_rate || 0,
         labour_rate: libComp.labour_rate || 0,
         waste_type: 'none',
