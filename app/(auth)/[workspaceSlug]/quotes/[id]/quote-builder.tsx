@@ -128,8 +128,12 @@ export function QuoteBuilder({
   }));
 
   const totals = computeQuoteTotals(engineComps, {
-    materialMarginPct: quote.material_margin_pct,
-    labourMarginPct: quote.labour_margin_pct,
+    materialMarginPct: (quote.material_margin_enabled ?? true) 
+      ? (quote.material_margin_percent ?? 0) 
+      : 0,
+    labourMarginPct: (quote.labor_margin_enabled ?? true) 
+      ? (quote.labor_margin_percent ?? 0) 
+      : 0,
     taxRate: quote.tax_rate
   });
 
