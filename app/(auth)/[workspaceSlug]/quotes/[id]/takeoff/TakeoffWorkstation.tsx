@@ -182,33 +182,77 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const handleSaveArea = (name: string, pitch?: number) => {
     const calculatedArea = calculatePolygonArea(pendingAreaPoints);
     
-    // Create polygon on canvas
-    const polygon = new Polygon(pendingAreaPoints, {
-      fill: 'rgba(59, 130, 246, 0.2)',
-      stroke: '#3b82f6',
-      strokeWidth: 2,
-      selectable: false,
-      evented: false,
-    });
-    fabricRef.current?.add(polygon);
-    
-    // Store area with pitch
-    const newArea: RoofArea = {
-      id: `area-${Date.now()}`,
-      name: name || 'Area',
-      points: pendingAreaPoints,
-      area: calculatedArea,
-      pitch: pitch || 0, // Store pitch (default 0 for component areas)
-      visible: true,
-      polygon,
-      markers: [],
-    };
-    
-    setRoofAreas([...roofAreas, newArea]);
-    setShowAreaNamePrompt(false);
-    setPendingAreaPoints([]);
-    setAreaPoints([]);
-    setAreaMode(false);
+    // If pitch is provided, this is a roof area
+    if (pitch !== undefined) {
+      // Create polygon on canvas
+      const polygon = new Polygon(pendingAreaPoints, {
+        fill: 'rgba(59, 130, 246, 0.2)',
+        stroke: '#3b82f6',
+        strokeWidth: 2,
+        selectable: false,
+        evented: false,
+      });
+      fabricRef.current?.add(polygon);
+      
+      // Store roof area with pitch
+      const newArea: RoofArea = {
+        id: `area-${Date.now()}`,
+        name: name || 'Area',
+        points: pendingAreaPoints,
+        area: calculatedArea,
+        pitch: pitch,
+        visible: true,
+        polygon,
+        markers: [],
+      };
+      
+      setRoofAreas([...roofAreas, newArea]);
+      setShowAreaNamePrompt(false);
+      setPendingAreaPoints([]);
+      setAreaPoints([]);
+      setAreaMode(false);
+    } else {
+      // Component area (after roof area exists)
+      if (!selectedComponentId) return;
+      
+      const componentColor = componentColors.find(c => c.componentId === selectedComponentId)?.color || '#3b82f6';
+      
+      const polygon = new Polygon(pendingAreaPoints, {
+        fill: `${componentColor}33`,
+        stroke: componentColor,
+        strokeWidth: 2,
+        selectable: false,
+        evented: false,
+      });
+      fabricRef.current?.add(polygon);
+      
+      const newMeasurement: ComponentMeasurement = {
+        id: `area-${Date.now()}`,
+        type: 'area',
+        value: calculatedArea,
+        points: pendingAreaPoints,
+        visible: true,
+        canvasObjects: [polygon],
+      };
+      
+      const compData = componentMeasurements.find(c => c.componentId === selectedComponentId);
+      if (compData) {
+        setComponentMeasurements(componentMeasurements.map(c =>
+          c.componentId === selectedComponentId
+            ? { ...c, measurements: [...c.measurements, newMeasurement] }
+            : c
+        ));
+      } else {
+        setComponentMeasurements([
+          ...componentMeasurements,
+          { componentId: selectedComponentId, measurements: [newMeasurement], expanded: true }
+        ]);
+      }
+      
+      setShowAreaNamePrompt(false);
+      setPendingAreaPoints([]);
+      setAreaPoints([]);
+    }
   };
   
   const handleToggleAreaVisibility = (areaId: string) => {
@@ -1313,7 +1357,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       {/* Area Name Prompt */}
       {showAreaNamePrompt && (
         <AreaNameModal
-          componentName={selectedComponentId ? displayComponents.find(c => c.id === selectedComponentId)?.name : null}
+          componentName={roofAreas.length === 0 ? null : (selectedComponentId ? displayComponents.find(c => c.id === selectedComponentId)?.name : null)}
           calculatedArea={pendingAreaPoints.length > 0 ? calculatePolygonArea(pendingAreaPoints) : 0}
           unit={calibrations[0]?.unit || 'feet'}
           onSave={handleSaveArea}
