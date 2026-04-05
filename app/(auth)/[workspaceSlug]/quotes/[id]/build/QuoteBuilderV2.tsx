@@ -1,7 +1,8 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow } from '@/app/lib/types';
+import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow } from '@/app/lib/types';
+import { QuoteBuilder } from '../quote-builder';
 
 type Step = 'roof-areas' | 'components' | 'extras' | 'review';
 
