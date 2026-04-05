@@ -36,7 +36,7 @@ export default async function WorkspaceHome({
             <Link
               href={`/${workspaceSlug}/templates/new`}
               prefetch={false}
-              className="inline-flex items-center rounded-full border-2 border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 pill-shimmer"
+              className="inline-flex items-center rounded-full border-2 border-transparent bg-white px-4 py-2 text-sm font-semibold text-slate-900 pill-shimmer"
             >
               + New template
             </Link>

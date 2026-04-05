@@ -33,7 +33,7 @@ export function WorkspaceNav({ workspaceSlug }: { workspaceSlug: string }) {
             className={`rounded-full px-3 py-1 transition-all duration-200 ease-in-out ${
               isActive
                 ? 'bg-black text-white border-2 border-black'
-                : 'text-slate-600 border-2 border-slate-200 pill-shimmer'
+                : 'text-slate-600 border-2 border-transparent pill-shimmer'
             }`}
           >
             {item.label}
