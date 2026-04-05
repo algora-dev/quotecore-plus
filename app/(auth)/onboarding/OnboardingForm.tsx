@@ -36,9 +36,9 @@ export function OnboardingForm({
           measurement,
         });
         
-        // Redirect to quotes page
+        // Redirect to overview page
         const slug = companyName.toLowerCase().replace(/\s+/g, '-');
-        router.push(`/${slug}/quotes`);
+        router.push(`/${slug}`);
       } catch (err) {
         console.error('Onboarding failed:', err);
         alert('Failed to complete setup. Please try again.');

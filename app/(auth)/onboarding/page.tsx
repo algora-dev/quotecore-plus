@@ -13,9 +13,9 @@ export default async function OnboardingPage() {
     .eq('id', profile.company_id)
     .single();
 
-  // If already onboarded, redirect to quotes
+  // If already onboarded, redirect to overview
   if (company?.onboarding_completed_at) {
-    redirect(`/${company.name.toLowerCase().replace(/\s+/g, '-')}/quotes`);
+    redirect(`/${company.name.toLowerCase().replace(/\s+/g, '-')}`);
   }
 
   return (
