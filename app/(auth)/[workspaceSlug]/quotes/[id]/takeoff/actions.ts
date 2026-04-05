@@ -2,7 +2,7 @@
 
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
+import { applyPitchAndWaste, rafterPitchFactor } from '@/app/lib/pricing/engine';
 
 interface TakeoffMeasurement {
   componentId: string | null; // null for informational roof areas
@@ -66,14 +66,21 @@ export async function saveTakeoffMeasurements(
     
     for (let i = 0; i < roofAreaMeasurements.length; i++) {
       const measurement = roofAreaMeasurements[i];
-      console.log(`[SaveTakeoff] Creating roof area ${i + 1} with value:`, measurement.value, 'pitch:', measurement.pitch);
+      const pitchDegrees = measurement.pitch || 0;
+      
+      // Apply pitch to roof area (rafter factor for area calculations)
+      const pitchFactor = pitchDegrees > 0 ? rafterPitchFactor(pitchDegrees) : 1;
+      const pitchedArea = measurement.value * pitchFactor;
+      
+      console.log(`[SaveTakeoff] Creating roof area ${i + 1} - plan: ${measurement.value.toFixed(2)}, pitch: ${pitchDegrees}°, factor: ${pitchFactor.toFixed(3)}, actual: ${pitchedArea.toFixed(2)}`);
+      
       const { data: roofArea, error: roofAreaError } = await supabase.from('quote_roof_areas').insert({
         quote_id: quoteId,
         label: `Roof Area ${i + 1}`,
         input_mode: 'final',
-        final_value_sqm: measurement.value,
-        computed_sqm: measurement.value, // Copy to computed for v1 builder display
-        calc_pitch_degrees: measurement.pitch || null,
+        final_value_sqm: pitchedArea, // Store pitched area
+        computed_sqm: pitchedArea, // Copy to computed for v1 builder display
+        calc_pitch_degrees: pitchDegrees,
         is_locked: true,
       }).select().single();
       
