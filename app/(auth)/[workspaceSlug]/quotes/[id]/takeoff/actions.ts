@@ -104,28 +104,50 @@ export async function saveTakeoffMeasurements(
       
       if (!libComp) continue;
       
-      // Calculate total value from all measurements for this component
+      // Get all measurements for this component
       const componentMeasurements = measurements.filter(m => m.componentId === componentId);
-      const totalValue = componentMeasurements.reduce((sum, m) => sum + m.value, 0);
       
-      console.log(`[SaveTakeoff] Creating component ${libComp.name} with total value:`, totalValue);
+      console.log(`[SaveTakeoff] Creating component ${libComp.name} with ${componentMeasurements.length} entries`);
       
-      await supabase.from('quote_components').insert({
+      // Create component (without final_value - will be calculated from entries)
+      const { data: newComponent, error: compError } = await supabase.from('quote_components').insert({
         quote_id: quoteId,
         quote_roof_area_id: firstRoofAreaId,
         component_library_id: componentId,
         name: libComp.name,
         component_type: 'main',
         measurement_type: 'linear',
-        input_mode: 'final',
-        final_value: totalValue,
+        input_mode: 'calculated',
         material_rate: libComp.material_rate || 0,
         labour_rate: libComp.labour_rate || 0,
-        waste_type: 'none',
-        waste_percent: 0,
-        waste_fixed: 0,
-        pitch_type: 'none',
-      });
+        waste_type: libComp.default_waste_type || 'none',
+        waste_percent: libComp.default_waste_percent || 0,
+        waste_fixed: libComp.default_waste_fixed || 0,
+        pitch_type: libComp.default_pitch_type || 'none',
+      }).select().single();
+      
+      if (compError || !newComponent) {
+        console.error('[SaveTakeoff] Error creating component:', compError);
+        continue;
+      }
+      
+      // Create entries for each measurement
+      const entries = componentMeasurements.map((m, index) => ({
+        quote_component_id: newComponent.id,
+        raw_value: m.value,
+        value_after_waste: m.value, // Will be recalculated by pricing engine
+        sort_order: index,
+      }));
+      
+      const { error: entriesError } = await supabase
+        .from('quote_component_entries')
+        .insert(entries);
+      
+      if (entriesError) {
+        console.error('[SaveTakeoff] Error creating entries:', entriesError);
+      } else {
+        console.log(`[SaveTakeoff] Created ${entries.length} entries for ${libComp.name}`);
+      }
     }
   }
   

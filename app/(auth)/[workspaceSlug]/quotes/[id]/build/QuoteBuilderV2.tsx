@@ -1,7 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, ComponentLibraryRow } from '@/app/lib/types';
+import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow } from '@/app/lib/types';
 
 type Step = 'roof-areas' | 'components' | 'extras' | 'review';
 
@@ -9,6 +9,7 @@ interface Props {
   quote: QuoteRow;
   roofAreas: QuoteRoofAreaRow[];
   components: QuoteComponentRow[];
+  entries: Record<string, QuoteComponentEntryRow[]>;
   libraryComponents: ComponentLibraryRow[];
   workspaceSlug: string;
   initialStep: string;
@@ -18,6 +19,7 @@ export function QuoteBuilderV2({
   quote,
   roofAreas,
   components,
+  entries,
   libraryComponents,
   workspaceSlug,
   initialStep,
@@ -118,6 +120,7 @@ export function QuoteBuilderV2({
               <ComponentsTab
                 quote={quote}
                 components={components}
+                entries={entries}
                 roofAreas={roofAreas}
                 onNext={() => navigateToStep('extras')}
               />
@@ -207,11 +210,13 @@ function RoofAreasTab({
 function ComponentsTab({
   quote,
   components,
+  entries,
   roofAreas,
   onNext,
 }: {
   quote: QuoteRow;
   components: QuoteComponentRow[];
+  entries: Record<string, QuoteComponentEntryRow[]>;
   roofAreas: QuoteRoofAreaRow[];
   onNext: () => void;
 }) {
@@ -241,30 +246,59 @@ function ComponentsTab({
           return (
             <div key={area.id}>
               <h3 className="font-semibold text-slate-900 mb-3">{area.label}</h3>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {areaComps.map((comp) => {
-                  // Display value with proper unit (stored in feet from takeoff)
-                  const valueInFeet = comp.final_value || 0;
-                  const valueInMeters = valueInFeet * 0.3048;
-                  const displayValue = quote.measurement_system === 'metric' 
-                    ? `${valueInMeters.toFixed(2)} m`
-                    : `${valueInFeet.toFixed(2)} ft`;
+                  const compEntries = entries[comp.id] || [];
+                  const totalRaw = compEntries.reduce((sum, e) => sum + e.raw_value, 0);
+                  
+                  // Convert based on measurement system
+                  const isMetric = quote.measurement_system === 'metric';
+                  const unit = isMetric ? 'm' : 'ft';
                   
                   return (
                     <div
                       key={comp.id}
-                      className="bg-white border border-slate-200 rounded-lg p-4"
+                      className="bg-white border border-slate-200 rounded-lg overflow-hidden"
                     >
-                      <div className="flex items-start justify-between">
+                      {/* Component Header */}
+                      <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
                         <div>
-                          <h4 className="font-medium text-slate-900">{comp.name}</h4>
-                          <p className="text-sm text-slate-600 mt-1">
-                            Value: {displayValue}
+                          <h4 className="font-semibold text-slate-900">{comp.name}</h4>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {compEntries.length} measurement(s)
                           </p>
                         </div>
-                        <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">
+                        <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded font-medium">
                           🔒 From Takeoff
                         </span>
+                      </div>
+                      
+                      {/* Entries List */}
+                      <div className="divide-y divide-slate-100">
+                        {compEntries.map((entry, index) => (
+                          <div key={entry.id} className="px-4 py-3 flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-3">
+                              <span className="text-slate-400 font-mono text-xs">#{index + 1}</span>
+                              <span className="text-slate-600">Length:</span>
+                              <span className="font-medium text-slate-900">
+                                {entry.raw_value.toFixed(2)} {unit}
+                              </span>
+                            </div>
+                            <div className="text-xs text-slate-500">
+                              Raw (pitch adjustment pending)
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Total */}
+                      <div className="bg-blue-50 border-t border-blue-200 px-4 py-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-slate-700">Total Raw:</span>
+                          <span className="text-lg font-bold text-blue-900">
+                            {totalRaw.toFixed(2)} {unit}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   );

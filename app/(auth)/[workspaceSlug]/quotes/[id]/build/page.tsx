@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents } from '../../actions';
+import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadAllEntriesForQuote } from '../../actions';
 import { loadComponentLibrary } from '../../../components/actions';
 import { QuoteBuilderV2 } from './QuoteBuilderV2';
 
@@ -14,11 +14,12 @@ export default async function QuoteBuilderV2Page({
   const { step = 'roof-areas' } = await searchParams;
 
   // Load quote data
-  const [quote, roofAreas, components, libraryComponents] = await Promise.all([
+  const [quote, roofAreas, components, libraryComponents, entries] = await Promise.all([
     loadQuote(id),
     loadQuoteRoofAreas(id),
     loadQuoteComponents(id),
     loadComponentLibrary(),
+    loadAllEntriesForQuote(id),
   ]);
 
   // Validate entry mode
@@ -31,6 +32,7 @@ export default async function QuoteBuilderV2Page({
       quote={quote}
       roofAreas={roofAreas}
       components={components}
+      entries={entries}
       libraryComponents={libraryComponents}
       workspaceSlug={workspaceSlug}
       initialStep={step}
