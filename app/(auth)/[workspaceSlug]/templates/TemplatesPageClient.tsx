@@ -168,20 +168,20 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
                         <td className="px-6 py-4 text-right space-x-2">
                           <Link
                             href={`/${workspaceSlug}/templates/${template.id}/edit`}
-                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200"
+                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white pill-shimmer"
                           >
                             Edit
                           </Link>
                           <Link
                             href={`/${workspaceSlug}/quotes/new?template=${template.id}`}
-                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 hover:bg-green-200"
+                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
                           >
                             Use
                           </Link>
                           <button
                             onClick={() => handleDeleteQuoteTemplate(template.id, template.name)}
                             disabled={deleting === template.id}
-                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 hover:bg-red-200 disabled:opacity-50"
+                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-red-300 bg-white text-red-600 hover:bg-red-50 disabled:opacity-50"
                           >
                             {deleting === template.id ? 'Deleting...' : 'Delete'}
                           </button>
@@ -266,7 +266,7 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
                         <td className="px-6 py-4 text-right space-x-2">
                           <button
                             onClick={() => setViewingCustomerTemplate(template)}
-                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200"
+                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white pill-shimmer"
                           >
                             View
                           </button>
@@ -274,14 +274,14 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
                             <>
                               <button
                                 onClick={() => setEditingCustomerTemplate(template)}
-                                className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200"
+                                className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white pill-shimmer"
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => handleDeleteCustomerTemplate(template.id, template.name)}
                                 disabled={deleting === template.id}
-                                className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 hover:bg-red-200 disabled:opacity-50"
+                                className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-red-300 bg-white text-red-600 hover:bg-red-50 disabled:opacity-50"
                               >
                                 {deleting === template.id ? 'Deleting...' : 'Delete'}
                               </button>
