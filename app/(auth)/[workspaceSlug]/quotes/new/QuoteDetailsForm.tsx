@@ -22,7 +22,6 @@ export function QuoteDetailsForm({ workspaceSlug, templates }: Props) {
   const [jobName, setJobName] = useState('');
   const [templateId, setTemplateId] = useState('');
   const [entryMode, setEntryMode] = useState<'manual' | 'digital' | null>(null);
-  const [roofPlanFile, setRoofPlanFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
 
   // Pre-select template from URL param
@@ -46,14 +45,8 @@ export function QuoteDetailsForm({ workspaceSlug, templates }: Props) {
       return;
     }
 
-    if (entryMode === 'digital' && !roofPlanFile) {
-      alert('Please upload a roof plan for digital takeoff');
-      return;
-    }
-
     setCreating(true);
     try {
-      // Create quote first
       const quoteId = await createQuoteWithDetails({
         customerName: customerName.trim(),
         jobName: jobName.trim() || null,
@@ -61,29 +54,8 @@ export function QuoteDetailsForm({ workspaceSlug, templates }: Props) {
         entryMode,
       });
 
-      // If digital mode, upload file via FormData
-      if (entryMode === 'digital' && roofPlanFile) {
-        const formData = new FormData();
-        formData.append('file', roofPlanFile);
-        formData.append('quoteId', quoteId);
-        
-        const response = await fetch(`/${workspaceSlug}/quotes/new/upload-plan`, {
-          method: 'POST',
-          body: formData,
-        });
-        
-        if (!response.ok) {
-          const error = await response.text();
-          throw new Error(error || 'Failed to upload roof plan');
-        }
-      }
-
-      // Redirect based on entry mode
-      if (entryMode === 'digital') {
-        router.push(`/${workspaceSlug}/quotes/${quoteId}/takeoff`);
-      } else {
-        router.push(`/${workspaceSlug}/quotes/${quoteId}`);
-      }
+      // Always redirect to quote builder - FilesManager handles file upload
+      router.push(`/${workspaceSlug}/quotes/${quoteId}`);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to create quote');
       setCreating(false);
@@ -196,31 +168,11 @@ export function QuoteDetailsForm({ workspaceSlug, templates }: Props) {
         </div>
       </div>
 
-      {/* Conditional Roof Plan Upload (Digital Mode Only) */}
+      {/* Info message for digital mode */}
       {entryMode === 'digital' && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Upload Roof Plan <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="file"
-            accept="image/*,.pdf"
-            onChange={(e) => setRoofPlanFile(e.target.files?.[0] || null)}
-            className="block w-full text-sm text-slate-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-lg file:border-0
-              file:text-sm file:font-semibold
-              file:bg-blue-600 file:text-white
-              hover:file:bg-blue-700
-              cursor-pointer"
-          />
-          {roofPlanFile && (
-            <p className="text-xs text-green-600 mt-2">
-              ✓ {roofPlanFile.name} selected
-            </p>
-          )}
-          <p className="text-xs text-slate-500 mt-2">
-            Accepted formats: JPG, PNG, PDF
+          <p className="text-sm text-blue-900">
+            <strong>Next step:</strong> Upload your roof plan in the quote builder to enable digital takeoff.
           </p>
         </div>
       )}
@@ -235,10 +187,10 @@ export function QuoteDetailsForm({ workspaceSlug, templates }: Props) {
         </Link>
         <button
           type="submit"
-          disabled={creating || !customerName.trim() || !entryMode || (entryMode === 'digital' && !roofPlanFile)}
+          disabled={creating || !customerName.trim() || !entryMode}
           className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {creating ? 'Creating...' : entryMode === 'digital' ? 'Start Digital Takeoff' : 'Start Quote'}
+          {creating ? 'Creating...' : 'Create Quote'}
         </button>
       </div>
     </form>

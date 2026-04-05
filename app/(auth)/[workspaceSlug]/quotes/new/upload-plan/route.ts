@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Save metadata
-    await supabase.from('quote_files').insert({
+    const { error: metadataError } = await supabase.from('quote_files').insert({
       quote_id: quoteId,
       file_name: file.name,
       file_type: 'plan',
@@ -43,6 +43,12 @@ export async function POST(request: NextRequest) {
       storage_path: storagePath,
     });
 
+    if (metadataError) {
+      console.error('[Upload] Metadata insert error:', metadataError);
+      return NextResponse.json({ error: `Metadata error: ${metadataError.message}` }, { status: 500 });
+    }
+
+    console.log('[Upload] Success! File saved:', storagePath);
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
