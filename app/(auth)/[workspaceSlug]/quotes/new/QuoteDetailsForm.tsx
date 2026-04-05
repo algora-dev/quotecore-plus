@@ -61,10 +61,21 @@ export function QuoteDetailsForm({ workspaceSlug, templates }: Props) {
         entryMode,
       });
 
-      // If digital mode, upload file from client
+      // If digital mode, upload file via FormData
       if (entryMode === 'digital' && roofPlanFile) {
-        const { uploadRoofPlanFile } = await import('./actions');
-        await uploadRoofPlanFile(quoteId, roofPlanFile);
+        const formData = new FormData();
+        formData.append('file', roofPlanFile);
+        formData.append('quoteId', quoteId);
+        
+        const response = await fetch(`/${workspaceSlug}/quotes/new/upload-plan`, {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(error || 'Failed to upload roof plan');
+        }
       }
 
       // Redirect based on entry mode
