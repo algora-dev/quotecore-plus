@@ -956,7 +956,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         <button
           onClick={handleSaveTakeoff}
           disabled={calibrations.length === 0 || isSaving}
-          className="px-4 py-2 bg-emerald-400 hover:bg-emerald-500 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowe transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          className="px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           title={calibrations.length === 0 ? 'Calibrate the plan first' : ''}
         >
           {isSaving ? 'Saving...' : 'Save & Continue to Components'}
@@ -1668,7 +1668,7 @@ function AreaNameModal({
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded"
+              className="px-4 py-2 bg-white border-2 border-slate-300 rounded-full pill-shimmer"
             >
               Cancel
             </button>
@@ -1720,7 +1720,7 @@ function PointMeasurementModal({
         <div className="flex gap-2 justify-end">
           <button
             onClick={onCancel}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded"
+            className="px-4 py-2 bg-white border-2 border-slate-300 rounded-full pill-shimmer"
           >
             Cancel (Esc)
           </button>
@@ -1776,7 +1776,7 @@ function LineMeasurementModal({
         <div className="flex gap-2 justify-end">
           <button
             onClick={onCancel}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded"
+            className="px-4 py-2 bg-white border-2 border-slate-300 rounded-full pill-shimmer"
           >
             Cancel (Esc)
           </button>
@@ -1857,7 +1857,7 @@ function CalibrationModal({
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded"
+              className="px-4 py-2 bg-white border-2 border-slate-300 rounded-full pill-shimmer"
             >
               Cancel
             </button>
@@ -1865,7 +1865,7 @@ function CalibrationModal({
               <button
                 type="button"
                 onClick={() => handleSubmit(false)}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
+                className="px-4 py-2 bg-white border-2 border-slate-300 rounded-full pill-shimmer"
                 disabled={!distance || parseFloat(distance) <= 0}
               >
                 Skip
@@ -1875,7 +1875,7 @@ function CalibrationModal({
               <button
                 type="button"
                 onClick={() => handleSubmit(true)}
-                className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 border border-blue-400 rounded"
+                className="px-4 py-2 bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
                 disabled={!distance || parseFloat(distance) <= 0}
               >
                 Save & Add Another
@@ -1884,7 +1884,7 @@ function CalibrationModal({
               <button
                 type="button"
                 onClick={() => handleSubmit(false)}
-                className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 border border-blue-400 rounded"
+                className="px-4 py-2 bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
                 disabled={!distance || parseFloat(distance) <= 0}
               >
                 Save
