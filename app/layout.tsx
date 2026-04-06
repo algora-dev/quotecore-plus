@@ -16,7 +16,10 @@ export const metadata: Metadata = {
   title: "QuoteCore+",
   description: "Roofing measurement and quoting platform",
   icons: {
-    icon: '/favicon.png',
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/icon.png', type: 'image/png' },
+    ],
   },
 };
 
