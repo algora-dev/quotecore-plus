@@ -10,7 +10,7 @@ async function handleCreate(formData: FormData) {
     notes: '',
     customerTemplateId: null,
     components: [],
-    areas: [],
+    extras: [],
   });
 }
 
