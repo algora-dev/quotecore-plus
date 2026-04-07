@@ -93,6 +93,9 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
         entryMode,
       });
 
+      // If template mode, redirect happens inside createQuoteWithDetails (quoteId will be void)
+      if (!quoteId) return;
+
       // If digital mode with uploaded plan, move file and save metadata
       if (entryMode === 'digital' && uploadedPlanPath) {
         const pendingFile = (window as any).__pendingPlanFile;

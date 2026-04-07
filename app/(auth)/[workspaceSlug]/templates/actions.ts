@@ -8,7 +8,7 @@ interface TemplateData {
   roofingProfile: string;
   components: { libraryId: string; type: 'main' | 'extra' }[];
   extras: { libraryId: string; type: 'main' | 'extra' }[];
-  customerTemplateId: string;
+  customerTemplateId: string | null;
   notes: string;
 }
 
