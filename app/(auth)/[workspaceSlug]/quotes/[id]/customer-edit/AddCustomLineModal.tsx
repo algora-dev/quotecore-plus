@@ -2,7 +2,7 @@
 import { useState } from 'react';
 
 interface Props {
-  onAdd: (text: string, amount: number) => void;
+  onAdd: (text: string, amount: number, showPrice: boolean) => void;
   onClose: () => void;
 }
 
