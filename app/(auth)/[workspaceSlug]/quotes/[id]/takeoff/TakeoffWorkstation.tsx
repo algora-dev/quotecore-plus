@@ -758,8 +758,10 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       if (evt.altKey) {
         canvas.isDragging = true;
         canvas.selection = false;
-        canvas.lastPosX = evt.clientX;
-        canvas.lastPosY = evt.clientY;
+        const clientX = 'clientX' in evt ? evt.clientX : (evt as TouchEvent).touches?.[0]?.clientX ?? 0;
+        const clientY = 'clientY' in evt ? evt.clientY : (evt as TouchEvent).touches?.[0]?.clientY ?? 0;
+        canvas.lastPosX = clientX;
+        canvas.lastPosY = clientY;
       }
     });
 
@@ -767,11 +769,13 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       if (canvas.isDragging) {
         const e = opt.e;
         const vpt = canvas.viewportTransform!;
-        vpt[4] += e.clientX - canvas.lastPosX;
-        vpt[5] += e.clientY - canvas.lastPosY;
+        const clientX = 'clientX' in e ? e.clientX : (e as TouchEvent).touches?.[0]?.clientX ?? 0;
+        const clientY = 'clientY' in e ? e.clientY : (e as TouchEvent).touches?.[0]?.clientY ?? 0;
+        vpt[4] += clientX - (canvas.lastPosX ?? 0);
+        vpt[5] += clientY - (canvas.lastPosY ?? 0);
         canvas.requestRenderAll();
-        canvas.lastPosX = e.clientX;
-        canvas.lastPosY = e.clientY;
+        canvas.lastPosX = clientX;
+        canvas.lastPosY = clientY;
       }
     });
 
