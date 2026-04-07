@@ -1101,11 +1101,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                     <div className="space-y-2">
                       {activeComponentIds.map((id) => {
                         const comp = displayComponents.find(c => c.id === id);
+                        if (!comp) return null;
+                        
                         const assignment = componentColors.find(c => c.componentId === id);
                         const compData = componentMeasurements.find(c => c.componentId === id);
                         const isSelected = selectedComponentId === comp.id;
-                        
-                        if (!comp) return null;
                         
                         return (
                           <div key={comp.id}>
