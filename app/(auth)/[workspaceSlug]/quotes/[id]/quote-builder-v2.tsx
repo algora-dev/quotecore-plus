@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal } from '../actions';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { entryLabel, addMoreLabel } from '@/app/lib/types';
-import { formatValueByType, getUnitByType, formatArea } from '@/app/lib/measurements/displayHelpers';
+import { formatArea } from '@/app/lib/measurements/displayHelpers';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow, InputMode, MeasurementSystem } from '@/app/lib/types';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
