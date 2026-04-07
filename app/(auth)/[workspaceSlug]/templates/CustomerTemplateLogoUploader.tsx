@@ -66,7 +66,7 @@ export function CustomerTemplateLogoUploader({ companyId, templateId, currentLog
 
       <FileUploader
         onUpload={handleUpload}
-        maxSizeMB={2}
+        maxSize={2 * 1024 * 1024}
         accept="image/*"
         label="Drop logo here or click to browse"
       />

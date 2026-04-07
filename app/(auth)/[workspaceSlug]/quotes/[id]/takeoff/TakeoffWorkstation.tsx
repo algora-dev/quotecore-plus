@@ -1455,7 +1455,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       {/* Area Name Prompt */}
       {showAreaNamePrompt && (
         <AreaNameModal
-          componentName={roofAreas.length === 0 ? null : (selectedComponentId ? displayComponents.find(c => c.id === selectedComponentId)?.name : null)}
+          componentName={roofAreas.length === 0 ? null : (selectedComponentId ? displayComponents.find(c => c.id === selectedComponentId)?.name ?? null : null)}
           calculatedArea={pendingAreaPoints.length > 0 ? calculatePolygonArea(pendingAreaPoints) : 0}
           unit={calibrations[0]?.unit || 'feet'}
           onSave={handleSaveArea}

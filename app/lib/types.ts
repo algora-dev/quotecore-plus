@@ -9,7 +9,13 @@ export type QuoteStatus = 'draft' | 'confirmed' | 'sent' | 'accepted' | 'decline
 export type LineType = 'component' | 'custom' | 'roof_area_header';
 
 export function unitForMeasurement(mt: MeasurementType): string {
-  switch (mt) { case 'area': return 'm²'; case 'linear': return 'm'; case 'quantity': return 'each'; case 'fixed': return 'fixed'; }
+  switch (mt) {
+    case 'area': return 'm²';
+    case 'lineal': return 'm';
+    case 'quantity': return 'each';
+    case 'fixed': return 'fixed';
+    default: return '';
+  }
 }
 
 export function wasteAmountSuffix(wt: WasteType, mt: MeasurementType): string {
@@ -17,11 +23,23 @@ export function wasteAmountSuffix(wt: WasteType, mt: MeasurementType): string {
 }
 
 export function entryLabel(mt: MeasurementType): string {
-  switch (mt) { case 'area': return 'area'; case 'lineal': return 'length'; case 'quantity': return 'items'; case 'fixed': return 'value'; }
+  switch (mt) {
+    case 'area': return 'area';
+    case 'lineal': return 'length';
+    case 'quantity': return 'items';
+    case 'fixed': return 'value';
+    default: return '';
+  }
 }
 
 export function addMoreLabel(mt: MeasurementType): string {
-  switch (mt) { case 'area': return 'Add more areas'; case 'linear': return 'Add more lengths'; case 'quantity': return 'Add more items'; case 'fixed': return 'Add entry'; }
+  switch (mt) {
+    case 'area': return 'Add more areas';
+    case 'lineal': return 'Add more lengths';
+    case 'quantity': return 'Add more items';
+    case 'fixed': return 'Add entry';
+    default: return 'Add entry';
+  }
 }
 
 export interface ComponentLibraryRow {

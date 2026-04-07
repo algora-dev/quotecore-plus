@@ -9,14 +9,15 @@ interface CreateQuoteParams {
   entryMode: 'manual' | 'digital';
 }
 
-export async function createQuoteWithDetails(params: CreateQuoteParams): Promise<string> {
+export async function createQuoteWithDetails(params: CreateQuoteParams): Promise<string | void> {
   const { profile, company } = await loadCompanyContext();
   const supabase = await createSupabaseServerClient();
 
   // If template specified, use existing createQuoteFromTemplate
   if (params.templateId) {
     const { createQuoteFromTemplate } = await import('../actions');
-    return createQuoteFromTemplate(params.templateId, params.customerName, params.jobName);
+    await createQuoteFromTemplate(params.templateId, params.customerName, params.jobName);
+    return; // redirect() is called inside createQuoteFromTemplate
   }
 
   // Otherwise, create blank quote

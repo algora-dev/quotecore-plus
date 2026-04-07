@@ -1,11 +1,25 @@
 import { createTemplate } from '../actions';
 
+async function handleCreate(formData: FormData) {
+  'use server';
+  // This page appears to be unused/deprecated - wrapping for type safety
+  await createTemplate({
+    name: formData.get('name') as string,
+    description: formData.get('description') as string || '',
+    roofingProfile: formData.get('roofingProfile') as string || '',
+    notes: '',
+    customerTemplateId: null,
+    components: [],
+    areas: [],
+  });
+}
+
 export default function NewTemplatePage() {
   return (
     <section className="max-w-2xl mx-auto space-y-6">
       <h1 className="text-3xl font-semibold text-slate-900">New Template</h1>
 
-      <form action={createTemplate} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
+      <form action={handleCreate} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Template Name *</label>
           <input
