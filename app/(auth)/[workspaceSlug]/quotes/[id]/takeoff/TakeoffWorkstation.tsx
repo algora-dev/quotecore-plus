@@ -6,6 +6,15 @@ import { Canvas, FabricImage, Line, Circle, Polygon, Triangle } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { saveTakeoffMeasurements } from './actions';
 
+// Extend Fabric.js Canvas type with custom properties
+declare module 'fabric' {
+  interface Canvas {
+    isDragging?: boolean;
+    lastPosX?: number;
+    lastPosY?: number;
+  }
+}
+
 interface Component {
   id: string;
   name: string;
