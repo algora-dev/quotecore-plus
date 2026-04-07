@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal } from '../actions';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { entryLabel, addMoreLabel } from '@/app/lib/types';
-import { areaUnit } from '@/app/lib/measurements/conversions';
 import { formatValueByType, getUnitByType, formatArea } from '@/app/lib/measurements/displayHelpers';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow, InputMode, MeasurementSystem } from '@/app/lib/types';
 
@@ -158,7 +157,7 @@ export function QuoteBuilder({ quote: initialQuote, initialRoofAreas, initialRoo
         {phases.map(p => <button key={p.key} onClick={() => setPhase(p.key)} className={`flex-1 py-2 px-3 text-sm font-medium rounded-full transition ${phase === p.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>{p.label}</button>)}
       </nav>
       <div className="flex gap-4 p-3 bg-slate-50 rounded-full text-sm">
-        <span>Roof: <strong>{formatArea(totalRoofSqm, system)} {areaUnit(system)}</strong></span>
+        <span>Roof: <strong>{formatArea(totalRoofSqm, system)}</strong></span>
         <span>Materials: <strong>${totals.totalMaterials.toFixed(2)}</strong></span>
         <span>Labour: <strong>${totals.totalLabour.toFixed(2)}</strong></span>
         <span className="ml-auto font-semibold">Total: ${totals.grandTotal.toFixed(2)}</span>
@@ -172,7 +171,7 @@ export function QuoteBuilder({ quote: initialQuote, initialRoofAreas, initialRoo
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-slate-900">{area.label}</h3>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-orange-600">{formatArea(area.computed_sqm ?? 0, system)} {areaUnit(system)}</span>
+                  <span className="text-sm font-medium text-orange-600">{formatArea(area.computed_sqm ?? 0, system)}</span>
                   <button onClick={() => handleRemoveArea(area.id)} className="text-xs text-red-500">×</button>
                 </div>
               </div>
