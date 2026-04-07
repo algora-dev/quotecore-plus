@@ -14,7 +14,7 @@ import { unitForMeasurement, wasteAmountSuffix } from '@/app/lib/types';
 
 const MEASUREMENT_LABELS: Record<MeasurementType, string> = {
   area: 'Area (m²)',
-  linear: 'Linear (m)',
+  lineal: 'Linear (m)',
   quantity: 'Quantity',
   fixed: 'Fixed',
 };
