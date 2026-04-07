@@ -202,20 +202,6 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     }
   }, [quote.id, lines, companyName, companyAddress, companyPhone, companyEmail, companyLogoUrl, footerText]);
 
-  // Apply template branding
-  function applyTemplate(templateId: string) {
-    const template = templates.find(t => t.id === templateId);
-    if (!template) return;
-
-    setCompanyName(template.company_name || '');
-    setCompanyAddress(template.company_address || '');
-    setCompanyPhone(template.company_phone || '');
-    setCompanyEmail(template.company_email || '');
-    setCompanyLogoUrl(template.company_logo_url || '');
-    setFooterText(template.footer_text || '');
-    setIsDirty(true);
-  }
-
   // Auto-save effect (3 seconds after last change, only if dirty and enabled)
   useEffect(() => {
     if (!autoSaveEnabled || !isDirty || lines.length === 0) return;
