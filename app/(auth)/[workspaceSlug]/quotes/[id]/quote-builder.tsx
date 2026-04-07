@@ -225,7 +225,7 @@ export function QuoteBuilder({
     if (quote.measurement_system === 'imperial') {
       if (comp?.measurement_type === 'area') {
         rawValue = convertAreaToMetric(rawInputValue);
-      } else if (comp?.measurement_type === 'linear') {
+      } else if (comp?.measurement_type === 'lineal') {
         rawValue = convertLinearToMetric(rawInputValue);
       }
       // quantity/fixed pass through unchanged
@@ -1017,7 +1017,7 @@ function ExpandableComponent({
     if (comp.measurement_type === 'area') {
       return formatArea(value, quote.measurement_system);
     }
-    if (comp.measurement_type === 'linear') {
+    if (comp.measurement_type === 'lineal') {
       return formatLinear(value, quote.measurement_system);
     }
     // quantity/fixed types - no unit conversion

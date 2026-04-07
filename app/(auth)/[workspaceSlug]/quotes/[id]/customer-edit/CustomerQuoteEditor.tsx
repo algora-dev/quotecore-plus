@@ -96,7 +96,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   function generateDefaultText(component: QuoteComponentRow): string {
     const qty = component.final_quantity?.toFixed(1) || '0.0';
     const unit = component.measurement_type === 'area' ? 'm²' : 
-                 component.measurement_type === 'linear' ? 'm' : 'units';
+                 component.measurement_type === 'lineal' ? 'm' : 'units';
     return `${component.name} — ${qty} ${unit}`;
   }
 
