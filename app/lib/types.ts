@@ -1,6 +1,7 @@
 // QuoteCore+ v2 shared types
 export type ComponentType = 'main' | 'extra';
 export type MeasurementType = 'area' | 'lineal' | 'quantity' | 'fixed';
+export type MeasurementSystem = 'metric' | 'imperial';
 export type InputMode = 'final' | 'calculated';
 export type WasteType = 'percent' | 'fixed' | 'none';
 export type PitchType = 'none' | 'rafter' | 'valley_hip';
