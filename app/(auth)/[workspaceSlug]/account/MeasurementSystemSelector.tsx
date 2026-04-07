@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { updateCompanyMeasurementSystem } from './actions';
+import { updateDefaultMeasurementSystem } from './actions';
 
 interface Props {
   currentSystem: 'metric' | 'imperial';
