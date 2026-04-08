@@ -31,6 +31,7 @@ interface QuoteLine {
   amount: number;
   showPrice: boolean;
   isVisible: boolean;
+  includeInTotal: boolean;
   sortOrder: number;
 }
 
@@ -70,6 +71,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           amount: saved.custom_amount || 0,
           showPrice: saved.show_price ?? true,
           isVisible: saved.is_visible ?? true,
+          includeInTotal: saved.include_in_total ?? true,
           sortOrder: saved.sort_order,
         };
       });
@@ -87,6 +89,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           amount: (c.material_cost || 0) + (c.labour_cost || 0),
           showPrice: true,
           isVisible: true,
+          includeInTotal: true,
           sortOrder: idx,
         }));
       setLines(initialLines);
@@ -110,6 +113,13 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   function toggleShowPrice(lineId: string) {
     setLines(prev => prev.map(l => 
       l.id === lineId ? { ...l, showPrice: !l.showPrice } : l
+    ));
+    setIsDirty(true);
+  }
+
+  function toggleIncludeInTotal(lineId: string) {
+    setLines(prev => prev.map(l => 
+      l.id === lineId ? { ...l, includeInTotal: !l.includeInTotal } : l
     ));
     setIsDirty(true);
   }
@@ -144,6 +154,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       amount,
       showPrice,
       isVisible: true,
+      includeInTotal: true,
       sortOrder: lines.length,
     };
     setLines(prev => [...prev, newLine]);
@@ -188,6 +199,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             showPrice: line.showPrice,
             sortOrder: line.sortOrder,
             isVisible: line.isVisible,
+            includeInTotal: line.includeInTotal,
           }))
         ),
         saveCustomerQuoteBranding(quote.id, {
@@ -229,7 +241,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   }, {} as Record<string, QuoteLine[]>);
 
   const visibleLines = lines.filter(l => l.isVisible);
-  const subtotal = visibleLines.reduce((sum, l) => sum + l.amount, 0); // Include ALL amounts in total
+  const subtotal = lines.filter(l => l.includeInTotal).reduce((sum, l) => sum + l.amount, 0); // Only include items with "Add $" checked
   const tax = subtotal * (quote.tax_rate / 100);
   const total = subtotal + tax;
 
@@ -328,6 +340,15 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                             />
                             Price
                           </label>
+                          <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={line.includeInTotal}
+                              onChange={() => toggleIncludeInTotal(line.id)}
+                              className="w-4 h-4 text-orange-600 rounded"
+                            />
+                            Add $
+                          </label>
                         </div>
                         <div className="flex-1">
                           <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
@@ -370,12 +391,36 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                         line.isVisible ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50'
                       }`}
                     >
-                      <input
-                        type="checkbox"
-                        checked={line.isVisible}
-                        onChange={() => toggleVisibility(line.id)}
-                        className="w-4 h-4 text-orange-600 rounded"
-                      />
+                      <div className="flex flex-col gap-2">
+                        <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={line.isVisible}
+                            onChange={() => toggleVisibility(line.id)}
+                            className="w-4 h-4 text-orange-600 rounded"
+                          />
+                          Show
+                        </label>
+                        <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={line.showPrice}
+                            onChange={() => toggleShowPrice(line.id)}
+                            disabled={!line.isVisible}
+                            className="w-4 h-4 text-orange-600 rounded disabled:opacity-30"
+                          />
+                          Price
+                        </label>
+                        <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={line.includeInTotal}
+                            onChange={() => toggleIncludeInTotal(line.id)}
+                            className="w-4 h-4 text-orange-600 rounded"
+                          />
+                          Add $
+                        </label>
+                      </div>
                       <div className="flex-1">
                         <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
                           {line.text}
