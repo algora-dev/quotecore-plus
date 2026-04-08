@@ -24,11 +24,8 @@ export async function loadComponentLibrary() {
     throw new Error(`Failed to load components: ${error.message}`);
   }
   
-  // Transform 'linear' to 'lineal' for TypeScript consistency
-  return data.map(c => ({
-    ...c,
-    measurement_type: c.measurement_type === 'linear' ? 'lineal' as any : c.measurement_type,
-  }));
+  // Note: After migration 022, database uses 'lineal' (no transform needed)
+  return data;
 }
 
 export async function createComponent(input: ComponentLibraryInsert) {
@@ -43,16 +40,11 @@ export async function createComponent(input: ComponentLibraryInsert) {
   console.log('[createComponent] Creating component for company:', profile.company_id);
   console.log('[createComponent] Input data:', input);
 
-  // Transform 'lineal' to 'linear' for database compatibility
-  const dbInput = {
-    ...input,
-    measurement_type: input.measurement_type === 'lineal' ? 'linear' as any : input.measurement_type,
-  };
-
+  // Note: After migration 022, database accepts 'lineal' directly (no transform needed)
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('component_library')
-    .insert({ ...dbInput, company_id: profile.company_id })
+    .insert({ ...input, company_id: profile.company_id })
     .select()
     .single();
   
@@ -62,12 +54,6 @@ export async function createComponent(input: ComponentLibraryInsert) {
   }
   
   console.log('[createComponent] Component created successfully:', data.id);
-  
-  // Transform 'linear' back to 'lineal' for TypeScript
-  if (data.measurement_type === 'linear') {
-    data.measurement_type = 'lineal' as any;
-  }
-  
   revalidatePath('/components');
   return data;
 }
@@ -75,27 +61,17 @@ export async function createComponent(input: ComponentLibraryInsert) {
 export async function updateComponent(id: string, input: Partial<ComponentLibraryInsert>) {
   const profile = await requireCompanyContext();
   
-  // Transform 'lineal' to 'linear' for database compatibility
-  const dbInput = input.measurement_type === 'lineal'
-    ? { ...input, measurement_type: 'linear' as any }
-    : input;
-  
+  // Note: After migration 022, database accepts 'lineal' directly (no transform needed)
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('component_library')
-    .update(dbInput)
+    .update(input)
     .eq('id', id)
     .eq('company_id', profile.company_id)
     .select()
     .single();
   
   if (error) throw new Error(error.message);
-  
-  // Transform 'linear' back to 'lineal' for TypeScript
-  if (data.measurement_type === 'linear') {
-    data.measurement_type = 'lineal' as any;
-  }
-  
   revalidatePath('/components');
   return data;
 }
