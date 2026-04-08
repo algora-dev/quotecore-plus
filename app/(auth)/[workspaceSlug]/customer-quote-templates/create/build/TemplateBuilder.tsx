@@ -63,7 +63,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
       const storagePath = fileName;
       
       const { error: uploadError } = await supabase.storage
-        .from('COMPANY-LOGOS')
+        .from('company-logos')
         .upload(storagePath, file, { upsert: true });
 
       if (uploadError) {
@@ -72,7 +72,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
 
       // Get public URL
       const { data: urlData } = supabase.storage
-        .from('COMPANY-LOGOS')
+        .from('company-logos')
         .getPublicUrl(storagePath);
 
       setLogoUrl(urlData.publicUrl);
