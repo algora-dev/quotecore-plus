@@ -46,7 +46,7 @@ export function LaborSheetEditorWrapper({
           </Link>
         </div>
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-slate-900">Labor Sheet</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Edit Labor Sheet</h1>
           <p className="text-sm text-slate-600 mt-1">
             Quote #{quote.quote_number || 'DRAFT'} • {quote.customer_name}
           </p>

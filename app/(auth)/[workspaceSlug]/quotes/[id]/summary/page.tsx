@@ -108,13 +108,16 @@ export default async function QuoteSummaryPage({
             Clone Quote
           </button>
         </form>
-        <Link href={`/${workspaceSlug}/quotes/${id}/customer-edit`} className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">
+        <Link href={`/${workspaceSlug}/quotes/${id}/customer-edit`} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 bg-white pill-shimmer">
           Edit Customer Quote
         </Link>
         <Link href={`/${workspaceSlug}/quotes/${id}/customer`} className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">
           Customer Quote
         </Link>
-        <Link href={`/${workspaceSlug}/quotes/${id}/labor-sheet`} className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">
+        <Link href={`/${workspaceSlug}/quotes/${id}/labor-sheet`} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 bg-white pill-shimmer">
+          Edit Labor Sheet
+        </Link>
+        <Link href={`/${workspaceSlug}/quotes/${id}/labor`} className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">
           Labor Sheet
         </Link>
       </div>
