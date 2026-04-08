@@ -61,6 +61,7 @@ export function LaborSheetEditorWrapper({
           workspaceSlug={workspaceSlug}
           currency={currency}
           defaultLogoUrl={defaultLogoUrl}
+          disableAutoSave={true}
         />
       </div>
     </div>

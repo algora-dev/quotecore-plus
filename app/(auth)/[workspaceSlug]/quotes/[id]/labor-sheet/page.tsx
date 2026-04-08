@@ -14,7 +14,7 @@ export default async function LaborSheetPage({
   const quote = await loadQuote(id);
   const roofAreas = await loadQuoteRoofAreas(id);
   const components = await loadQuoteComponents(id);
-  const savedLines = await loadCustomerQuoteLines(id);
+  // Don't load savedLines for labor sheet - generate fresh from components
   const templates = await loadCustomerQuoteTemplates();
   
   const supabase = await createSupabaseServerClient();
@@ -41,7 +41,7 @@ export default async function LaborSheetPage({
       quote={quote}
       roofAreas={roofAreas}
       components={components}
-      savedLines={savedLines}
+      savedLines={[]} // Always start fresh for labor sheet (no saved state)
       templates={templates}
       workspaceSlug={workspaceSlug}
       currency={currency}

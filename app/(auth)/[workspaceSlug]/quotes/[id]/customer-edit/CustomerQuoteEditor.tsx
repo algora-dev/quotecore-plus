@@ -20,6 +20,7 @@ interface Props {
   workspaceSlug: string;
   currency: string;
   defaultLogoUrl: string | null;
+  disableAutoSave?: boolean; // For labor sheet - no persistence
 }
 
 interface QuoteLine {
@@ -36,11 +37,11 @@ interface QuoteLine {
   sortOrder: number;
 }
 
-export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl }: Props) {
+export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave = false }: Props) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [isDirty, setIsDirty] = useState(false);
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(!disableAutoSave);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -292,22 +293,26 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 ))}
               </select>
             )}
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="autoSave"
-                checked={autoSaveEnabled}
-                onChange={(e) => setAutoSaveEnabled(e.target.checked)}
-                className="w-4 h-4 text-orange-600 rounded"
-              />
-              <label htmlFor="autoSave" className="text-sm text-slate-700 cursor-pointer">
-                Auto-save
-              </label>
-            </div>
-            <div className="text-sm text-slate-500">
-              {saving ? 'Saving...' : lastSaved ? `Last saved ${lastSaved.toLocaleTimeString()}` : 'Not saved yet'}
-              {isDirty && !saving && ' (unsaved changes)'}
-            </div>
+            {!disableAutoSave && (
+              <>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="autoSave"
+                    checked={autoSaveEnabled}
+                    onChange={(e) => setAutoSaveEnabled(e.target.checked)}
+                    className="w-4 h-4 text-orange-600 rounded"
+                  />
+                  <label htmlFor="autoSave" className="text-sm text-slate-700 cursor-pointer">
+                    Auto-save
+                  </label>
+                </div>
+                <div className="text-sm text-slate-500">
+                  {saving ? 'Saving...' : lastSaved ? `Last saved ${lastSaved.toLocaleTimeString()}` : 'Not saved yet'}
+                  {isDirty && !saving && ' (unsaved changes)'}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
