@@ -328,76 +328,78 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                     {areaLines.map(line => (
                       <div
                         key={line.id}
-                        className={`p-3 rounded-lg border ${
+                        className={`px-2 py-1.5 rounded-lg border ${
                           line.isVisible ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50'
                         }`}
                       >
-                        <div className="flex items-center gap-3 mb-2">
+                        <div className="flex items-start gap-2">
                           <div className="flex-1">
-                            <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
-                              {line.text}
-                            </p>
-                            <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
-                              {formatCurrency(line.amount, currency)}
-                            </p>
+                            <div className="flex items-baseline justify-between gap-2">
+                              <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
+                                {line.text}
+                              </p>
+                              <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
+                                {formatCurrency(line.amount, currency)}
+                              </p>
+                            </div>
+                            {/* Horizontal checkbox row - directly below component details */}
+                            <div className="flex items-center gap-4 mt-1">
+                              <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={line.isVisible}
+                                  onChange={() => toggleVisibility(line.id)}
+                                  className="w-3.5 h-3.5 text-orange-600 rounded"
+                                />
+                                Show
+                              </label>
+                              <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={line.showPrice}
+                                  onChange={() => toggleShowPrice(line.id)}
+                                  disabled={!line.isVisible}
+                                  className="w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-30"
+                                />
+                                Price
+                              </label>
+                              <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={line.showUnits}
+                                  onChange={() => toggleShowUnits(line.id)}
+                                  disabled={!line.isVisible}
+                                  className="w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-30"
+                                />
+                                Units
+                              </label>
+                              <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={line.includeInTotal}
+                                  onChange={() => toggleIncludeInTotal(line.id)}
+                                  className="w-3.5 h-3.5 text-orange-600 rounded"
+                                />
+                                Add $
+                              </label>
+                            </div>
                           </div>
-                          <div className="flex flex-col gap-1">
+                          <div className="flex flex-col gap-0.5">
                             <button
                               onClick={() => moveUp(line.id)}
-                              className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                              className="p-0.5 text-slate-400 hover:text-slate-600 disabled:opacity-30"
                               disabled={line.sortOrder === 0}
                             >
                               ↑
                             </button>
                             <button
                               onClick={() => moveDown(line.id)}
-                              className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                              className="p-0.5 text-slate-400 hover:text-slate-600 disabled:opacity-30"
                               disabled={line.sortOrder === lines.length - 1}
                             >
                               ↓
                             </button>
                           </div>
-                        </div>
-                        {/* Horizontal checkbox row */}
-                        <div className="flex items-center gap-4 pl-2">
-                          <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={line.isVisible}
-                              onChange={() => toggleVisibility(line.id)}
-                              className="w-3.5 h-3.5 text-orange-600 rounded"
-                            />
-                            Show
-                          </label>
-                          <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={line.showPrice}
-                              onChange={() => toggleShowPrice(line.id)}
-                              disabled={!line.isVisible}
-                              className="w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-30"
-                            />
-                            Price
-                          </label>
-                          <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={line.showUnits}
-                              onChange={() => toggleShowUnits(line.id)}
-                              disabled={!line.isVisible}
-                              className="w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-30"
-                            />
-                            Units
-                          </label>
-                          <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={line.includeInTotal}
-                              onChange={() => toggleIncludeInTotal(line.id)}
-                              className="w-3.5 h-3.5 text-orange-600 rounded"
-                            />
-                            Add $
-                          </label>
                         </div>
                       </div>
                     ))}
@@ -412,76 +414,78 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                   {linesByArea['extras'].map(line => (
                     <div
                       key={line.id}
-                      className={`p-3 rounded-lg border ${
+                      className={`px-2 py-1.5 rounded-lg border ${
                         line.isVisible ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50'
                       }`}
                     >
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-start gap-2">
                         <div className="flex-1">
-                        <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
-                          {line.text}
-                        </p>
-                        <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
-                          {formatCurrency(line.amount, currency)}
-                        </p>
-                      </div>
-                        <div className="flex flex-col gap-1">
+                          <div className="flex items-baseline justify-between gap-2">
+                            <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
+                              {line.text}
+                            </p>
+                            <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
+                              {formatCurrency(line.amount, currency)}
+                            </p>
+                          </div>
+                          {/* Horizontal checkbox row - directly below component details */}
+                          <div className="flex items-center gap-4 mt-1">
+                            <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={line.isVisible}
+                                onChange={() => toggleVisibility(line.id)}
+                                className="w-3.5 h-3.5 text-orange-600 rounded"
+                              />
+                              Show
+                            </label>
+                            <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={line.showPrice}
+                                onChange={() => toggleShowPrice(line.id)}
+                                disabled={!line.isVisible}
+                                className="w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-30"
+                              />
+                              Price
+                            </label>
+                            <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={line.showUnits}
+                                onChange={() => toggleShowUnits(line.id)}
+                                disabled={!line.isVisible}
+                                className="w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-30"
+                              />
+                              Units
+                            </label>
+                            <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={line.includeInTotal}
+                                onChange={() => toggleIncludeInTotal(line.id)}
+                                className="w-3.5 h-3.5 text-orange-600 rounded"
+                              />
+                              Add $
+                            </label>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
                           <button
                             onClick={() => moveUp(line.id)}
-                            className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                            className="p-0.5 text-slate-400 hover:text-slate-600 disabled:opacity-30"
                             disabled={line.sortOrder === 0}
                           >
                             ↑
                           </button>
                           <button
                             onClick={() => moveDown(line.id)}
-                            className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                            className="p-0.5 text-slate-400 hover:text-slate-600 disabled:opacity-30"
                             disabled={line.sortOrder === lines.length - 1}
                           >
                             ↓
                           </button>
                         </div>
-                      </div>
-                      {/* Horizontal checkbox row */}
-                      <div className="flex items-center gap-4 pl-2">
-                        <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={line.isVisible}
-                            onChange={() => toggleVisibility(line.id)}
-                            className="w-3.5 h-3.5 text-orange-600 rounded"
-                          />
-                          Show
-                        </label>
-                        <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={line.showPrice}
-                            onChange={() => toggleShowPrice(line.id)}
-                            disabled={!line.isVisible}
-                            className="w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-30"
-                          />
-                          Price
-                        </label>
-                        <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={line.showUnits}
-                            onChange={() => toggleShowUnits(line.id)}
-                            disabled={!line.isVisible}
-                            className="w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-30"
-                          />
-                          Units
-                        </label>
-                        <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={line.includeInTotal}
-                            onChange={() => toggleIncludeInTotal(line.id)}
-                            className="w-3.5 h-3.5 text-orange-600 rounded"
-                          />
-                          Add $
-                        </label>
                       </div>
                     </div>
                   ))}
