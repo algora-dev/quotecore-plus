@@ -114,8 +114,8 @@ export default async function QuoteSummaryPage({
         <Link href={`/${workspaceSlug}/quotes/${id}/customer`} className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">
           Customer Quote
         </Link>
-        <Link href={`/${workspaceSlug}/quotes/${id}/labour`} className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">
-          Labour Sheet
+        <Link href={`/${workspaceSlug}/quotes/${id}/labor-sheet`} className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">
+          Labor Sheet
         </Link>
       </div>
 
