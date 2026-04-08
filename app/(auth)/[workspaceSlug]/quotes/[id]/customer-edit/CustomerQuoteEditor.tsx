@@ -256,16 +256,17 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     }
   }, [quote.id, lines, companyName, companyAddress, companyPhone, companyEmail, companyLogoUrl, footerText]);
 
-  // Auto-save effect (3 seconds after last change, only if dirty and enabled)
+  // Auto-save effect (10 seconds after last change, only if dirty and enabled)
+  // Increased delay to prevent race conditions with rapid checkbox changes
   useEffect(() => {
-    if (!autoSaveEnabled || !isDirty || lines.length === 0) return;
+    if (!autoSaveEnabled || !isDirty || lines.length === 0 || saving) return;
     
     const timer = setTimeout(() => {
       handleSave();
-    }, 3000);
+    }, 10000); // Increased from 3s to 10s
 
     return () => clearTimeout(timer);
-  }, [autoSaveEnabled, isDirty, handleSave]);
+  }, [autoSaveEnabled, isDirty, handleSave, saving]);
 
   // Group lines by roof area
   const linesByArea = lines.reduce((acc, line) => {
