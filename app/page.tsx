@@ -1,10 +1,18 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Home() {
   return (
     <div className="flex flex-col flex-1 items-center justify-center min-h-screen bg-slate-50">
       <main className="flex flex-col items-center gap-8 py-20 px-6 text-center">
-        <h1 className="text-4xl font-bold text-slate-900">QuoteCore+</h1>
+        <Image 
+          src="/logo.png" 
+          alt="QuoteCore+" 
+          width={320} 
+          height={80} 
+          priority
+          className="h-16 w-auto"
+        />
         <p className="text-lg text-slate-600 max-w-md">
           Roofing measurement and quoting — built for estimators.
         </p>
