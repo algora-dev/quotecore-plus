@@ -435,8 +435,10 @@ export async function saveCustomerQuoteLines(
     text: string;
     amount: number;
     showPrice: boolean;
+    showUnits: boolean;
     sortOrder: number;
     isVisible: boolean;
+    includeInTotal: boolean;
   }>
 ) {
   'use server';
@@ -469,8 +471,10 @@ export async function saveCustomerQuoteLines(
       custom_text: line.text,
       custom_amount: line.amount,
       show_price: line.showPrice,
+      show_units: line.showUnits,
       sort_order: line.sortOrder,
       is_visible: line.isVisible,
+      include_in_total: line.includeInTotal,
     }));
 
     const { error } = await supabase
