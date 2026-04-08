@@ -63,29 +63,43 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   // Initialize lines: use saved lines if available, otherwise from components
   useEffect(() => {
     if (savedLines.length > 0) {
-      // Load from saved lines
+      // Load from saved lines, but ALWAYS rebuild component data from current components
       const loadedLines: QuoteLine[] = savedLines.map(saved => {
-        const component = components.find(c => c.id === saved.quote_component_id);
-        // For component lines, ALWAYS recalculate amount from component costs
-        // For custom lines, use saved amount
-        const amount = saved.line_type === 'component' && component
-          ? (component.material_cost || 0) + (component.labour_cost || 0)
-          : saved.custom_amount || 0;
-        
-        return {
-          id: saved.quote_component_id || saved.id,
-          type: saved.line_type as 'component' | 'custom',
-          componentId: saved.quote_component_id || undefined,
-          roofAreaId: component?.quote_roof_area_id || undefined,
-          text: saved.custom_text || '',
-          amount,
-          showPrice: saved.show_price ?? true,
-          showUnits: saved.show_units ?? true,
-          isVisible: saved.is_visible ?? true,
-          includeInTotal: saved.include_in_total ?? true,
-          sortOrder: saved.sort_order,
-        };
-      });
+        if (saved.line_type === 'component') {
+          // Component line: rebuild everything from component data
+          const component = components.find(c => c.id === saved.quote_component_id);
+          if (!component) return null; // Component was deleted
+          
+          return {
+            id: component.id,
+            type: 'component' as const,
+            componentId: component.id,
+            roofAreaId: component.quote_roof_area_id || undefined,
+            text: generateDefaultText(component),
+            amount: (component.material_cost || 0) + (component.labour_cost || 0),
+            showPrice: saved.show_price ?? true,
+            showUnits: saved.show_units ?? true,
+            isVisible: saved.is_visible ?? true,
+            includeInTotal: saved.include_in_total ?? true,
+            sortOrder: saved.sort_order,
+          };
+        } else {
+          // Custom line: use saved data
+          return {
+            id: saved.id,
+            type: 'custom' as const,
+            componentId: undefined,
+            roofAreaId: undefined,
+            text: saved.custom_text || '',
+            amount: saved.custom_amount || 0,
+            showPrice: saved.show_price ?? true,
+            showUnits: saved.show_units ?? true,
+            isVisible: saved.is_visible ?? true,
+            includeInTotal: saved.include_in_total ?? true,
+            sortOrder: saved.sort_order,
+          };
+        }
+      }).filter(Boolean) as QuoteLine[];
       setLines(loadedLines);
     } else {
       // Initialize from components (first time)
