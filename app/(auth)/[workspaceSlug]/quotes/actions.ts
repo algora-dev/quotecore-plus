@@ -6,7 +6,7 @@ import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 import type { InputMode, WasteType, PitchType } from '@/app/lib/types';
 
-export async function createQuoteFromTemplate(templateId: string, customerName: string, jobReference?: string | null) {
+export async function createQuoteFromTemplate(templateId: string, customerName: string, jobReference?: string | null, entryMode?: 'manual' | 'digital') {
   const { profile, company } = await loadCompanyContext();
   const supabase = await createSupabaseServerClient();
   const { data: quote, error: qErr } = await supabase.from('quotes').insert({
@@ -17,6 +17,7 @@ export async function createQuoteFromTemplate(templateId: string, customerName: 
     tax_rate: company.default_tax_rate ?? 0, 
     measurement_system: company.default_measurement_system,
     created_by_user_id: profile.id,
+    entry_mode: entryMode || null,
   }).select().single();
   if (qErr || !quote) throw new Error(qErr?.message || 'Failed to create quote');
   const { data: templateAreas } = await supabase.from('template_roof_areas').select('*').eq('template_id', templateId).order('sort_order');

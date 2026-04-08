@@ -16,7 +16,7 @@ export async function createQuoteWithDetails(params: CreateQuoteParams): Promise
   // If template specified, use existing createQuoteFromTemplate
   if (params.templateId) {
     const { createQuoteFromTemplate } = await import('../actions');
-    await createQuoteFromTemplate(params.templateId, params.customerName, params.jobName);
+    await createQuoteFromTemplate(params.templateId, params.customerName, params.jobName, params.entryMode);
     return; // redirect() is called inside createQuoteFromTemplate
   }
 
