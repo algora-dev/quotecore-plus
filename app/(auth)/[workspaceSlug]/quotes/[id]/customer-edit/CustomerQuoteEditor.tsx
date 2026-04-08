@@ -21,6 +21,8 @@ interface Props {
   currency: string;
   defaultLogoUrl: string | null;
   disableAutoSave?: boolean; // For labor sheet - no persistence
+  editorTitle?: string; // Custom title (default: "Customer Quote Editor")
+  previewTitle?: string; // Custom preview title (default: "Customer Quote Preview")
 }
 
 interface QuoteLine {
@@ -37,7 +39,7 @@ interface QuoteLine {
   sortOrder: number;
 }
 
-export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave = false }: Props) {
+export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview" }: Props) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [isDirty, setIsDirty] = useState(false);
@@ -277,7 +279,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               ← Back to Summary
             </Link>
             <h1 className="text-2xl font-semibold text-slate-900 mt-1">
-              Customer Quote Editor — Quote #{quote.quote_number || 'Draft'}
+              {editorTitle} — Quote #{quote.quote_number || 'Draft'}
             </h1>
           </div>
           <div className="flex items-center gap-4">
@@ -554,7 +556,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           {/* Right Panel: Live Preview */}
           <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">Customer Quote Preview</h2>
+              <h2 className="text-lg font-semibold text-slate-900">{previewTitle}</h2>
               <button
                 onClick={() => setShowPreviewModal(true)}
                 className="px-3 py-1.5 text-sm font-medium text-orange-600 border border-blue-200 rounded-full hover:bg-blue-50"

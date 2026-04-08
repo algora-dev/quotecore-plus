@@ -35,24 +35,7 @@ export function LaborSheetEditorWrapper({
   }, [allComponents]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="mb-4">
-          <Link
-            href={`/${workspaceSlug}/quotes/${quote.id}`}
-            className="text-sm text-slate-600 hover:text-slate-900"
-          >
-            ← Back to Quote
-          </Link>
-        </div>
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-slate-900">Edit Labor Sheet</h1>
-          <p className="text-sm text-slate-600 mt-1">
-            Quote #{quote.quote_number || 'DRAFT'} • {quote.customer_name}
-          </p>
-        </div>
-        
-        <CustomerQuoteEditor
+    <CustomerQuoteEditor
           quote={quote}
           roofAreas={roofAreas}
           components={laborOnlyComponents}
@@ -62,8 +45,8 @@ export function LaborSheetEditorWrapper({
           currency={currency}
           defaultLogoUrl={defaultLogoUrl}
           disableAutoSave={true}
+          editorTitle="Labor Sheet Editor"
+          previewTitle="Labor Sheet Preview"
         />
-      </div>
-    </div>
   );
 }
