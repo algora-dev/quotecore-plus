@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
-import { loadQuote, loadQuoteComponents } from '../../actions';
-import { LaborSheetEditor } from './LaborSheetEditor';
+import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadCustomerQuoteLines, loadCustomerQuoteTemplates } from '../../actions';
+
+import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { LaborSheetEditorWrapper } from './LaborSheetEditorWrapper';
 
 export default async function LaborSheetPage({
   params,
@@ -10,16 +12,40 @@ export default async function LaborSheetPage({
   const { workspaceSlug, id } = await params;
   
   const quote = await loadQuote(id);
+  const roofAreas = await loadQuoteRoofAreas(id);
   const components = await loadQuoteComponents(id);
+  const savedLines = await loadCustomerQuoteLines(id);
+  const templates = await loadCustomerQuoteTemplates();
   
-  // Filter to only components with labor costs
-  const laborComponents = components.filter(c => (c.labour_cost || 0) > 0);
+  const supabase = await createSupabaseServerClient();
+  
+  // Load company default logo
+  const { data: company } = await supabase
+    .from('companies')
+    .select('default_logo_url')
+    .eq('id', quote.company_id)
+    .single();
+  
+  const defaultLogoUrl = company?.default_logo_url || null;
+  
+  // Use company's default currency
+  const { data: companyData } = await supabase
+    .from('companies')
+    .select('default_currency')
+    .eq('id', quote.company_id)
+    .single();
+  const currency = quote.currency || companyData?.default_currency || 'NZD';
   
   return (
-    <LaborSheetEditor
+    <LaborSheetEditorWrapper
       quote={quote}
-      components={laborComponents}
+      roofAreas={roofAreas}
+      components={components}
+      savedLines={savedLines}
+      templates={templates}
       workspaceSlug={workspaceSlug}
+      currency={currency}
+      defaultLogoUrl={defaultLogoUrl}
     />
   );
 }
