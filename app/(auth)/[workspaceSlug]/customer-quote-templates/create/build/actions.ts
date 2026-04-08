@@ -8,6 +8,7 @@ interface CreateTemplateData {
   companyPhone: string;
   companyEmail: string;
   footerText: string;
+  companyLogoUrl: string | null;
 }
 
 export async function createCustomerQuoteTemplate(data: CreateTemplateData) {
@@ -24,7 +25,7 @@ export async function createCustomerQuoteTemplate(data: CreateTemplateData) {
       company_address: data.companyAddress || null,
       company_phone: data.companyPhone || null,
       company_email: data.companyEmail || null,
-      company_logo_url: null,
+      company_logo_url: data.companyLogoUrl || null,
       footer_text: data.footerText || null,
     })
     .select('id')

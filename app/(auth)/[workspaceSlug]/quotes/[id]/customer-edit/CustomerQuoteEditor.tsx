@@ -554,6 +554,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                       companyPhone,
                       companyEmail,
                       footerText,
+                      companyLogoUrl: companyLogoUrl || null,
                     });
                     alert(`Template "${name}" saved successfully!`);
                   } catch (error) {

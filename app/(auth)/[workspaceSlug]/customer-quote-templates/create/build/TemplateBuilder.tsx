@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { CustomerQuoteTemplateRow } from '@/app/lib/types';
 import { createCustomerQuoteTemplate } from './actions';
+import { createClient } from '@/app/lib/supabase/client';
 
 interface Props {
   workspaceSlug: string;
@@ -32,6 +33,59 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
   const [footerText, setFooterText] = useState(
     useStarter && starterTemplate ? starterTemplate.footer_text || '' : ''
   );
+  const [logoUrl, setLogoUrl] = useState<string | null>(
+    useStarter && starterTemplate ? starterTemplate.company_logo_url || null : null
+  );
+  const [uploading, setUploading] = useState(false);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File too large. Maximum size is 2MB.');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const supabase = createClient();
+      
+      // Use a temporary filename (will be renamed after template creation if needed)
+      const fileName = `temp-${Date.now()}.${file.name.split('.').pop()}`;
+      const storagePath = fileName;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('COMPANY-LOGOS')
+        .upload(storagePath, file, { upsert: true });
+
+      if (uploadError) {
+        throw new Error(uploadError.message);
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('COMPANY-LOGOS')
+        .getPublicUrl(storagePath);
+
+      setLogoUrl(urlData.publicUrl);
+    } catch (error) {
+      alert('Logo upload failed: ' + (error as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleLogoRemove = () => {
+    setLogoUrl(null);
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -43,6 +97,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
         companyPhone,
         companyEmail,
         footerText,
+        companyLogoUrl: logoUrl,
       });
 
       router.push(`/${workspaceSlug}/customer-quote-templates`);
@@ -132,14 +187,58 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
             </div>
           </div>
 
-          {/* Logo Upload (Future) */}
+          {/* Logo Upload */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Company Logo
             </label>
-            <div className="border-2 border-dashed border-slate-300 rounded-full p-6 text-center">
-              <p className="text-sm text-slate-500">Logo upload coming soon</p>
-            </div>
+            
+            {!logoUrl ? (
+              <div className="space-y-2">
+                <label
+                  htmlFor="logo-upload"
+                  className={`block border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-orange-400 transition-colors ${
+                    uploading ? 'opacity-50 pointer-events-none' : ''
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-slate-700">
+                      {uploading ? 'Uploading...' : 'Click to upload logo'}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      PNG, JPG up to 2MB
+                    </p>
+                  </div>
+                  <input
+                    id="logo-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    disabled={uploading}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="border border-slate-200 rounded-lg p-4 bg-white">
+                  <div className="flex items-center gap-4">
+                    <img 
+                      src={logoUrl} 
+                      alt="Company Logo" 
+                      className="h-16 w-auto object-contain"
+                    />
+                    <button
+                      onClick={handleLogoRemove}
+                      type="button"
+                      className="ml-auto px-3 py-1.5 text-xs font-medium text-red-600 border border-red-300 rounded-full hover:bg-red-50"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -167,6 +266,9 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
             {/* Header */}
             <div className="flex justify-between items-start border-b pb-4">
               <div>
+                {logoUrl && (
+                  <img src={logoUrl} alt="Company Logo" className="h-16 w-auto object-contain mb-3" />
+                )}
                 <h3 className="text-xl font-bold text-slate-900">QUOTE #1000</h3>
                 <div className="mt-2 space-y-1 text-sm text-slate-600">
                   <p><span className="font-medium">Client:</span> Sample Client</p>
