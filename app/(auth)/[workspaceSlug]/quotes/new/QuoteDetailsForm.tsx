@@ -186,7 +186,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
         </select>
         <p className="text-xs text-slate-500 mt-1">
           {entryMode === 'digital' 
-            ? 'Templates are not available in digital mode (measurements drawn on canvas)'
+            ? 'Templates are not available in digital mode (Components added in process)'
             : 'Templates pre-load roof areas and components'}
         </p>
       </div>
