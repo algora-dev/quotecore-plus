@@ -64,13 +64,19 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       // Load from saved lines
       const loadedLines: QuoteLine[] = savedLines.map(saved => {
         const component = components.find(c => c.id === saved.quote_component_id);
+        // For component lines, ALWAYS recalculate amount from component costs
+        // For custom lines, use saved amount
+        const amount = saved.line_type === 'component' && component
+          ? (component.material_cost || 0) + (component.labour_cost || 0)
+          : saved.custom_amount || 0;
+        
         return {
           id: saved.quote_component_id || saved.id,
           type: saved.line_type as 'component' | 'custom',
           componentId: saved.quote_component_id || undefined,
           roofAreaId: component?.quote_roof_area_id || undefined,
           text: saved.custom_text || '',
-          amount: saved.custom_amount || 0,
+          amount,
           showPrice: saved.show_price ?? true,
           showUnits: saved.show_units ?? true,
           isVisible: saved.is_visible ?? true,
