@@ -107,6 +107,13 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     setIsDirty(true);
   }
 
+  function toggleShowPrice(lineId: string) {
+    setLines(prev => prev.map(l => 
+      l.id === lineId ? { ...l, showPrice: !l.showPrice } : l
+    ));
+    setIsDirty(true);
+  }
+
   function moveUp(lineId: string) {
     setLines(prev => {
       const idx = prev.findIndex(l => l.id === lineId);
@@ -301,12 +308,27 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                           line.isVisible ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50'
                         }`}
                       >
-                        <input
-                          type="checkbox"
-                          checked={line.isVisible}
-                          onChange={() => toggleVisibility(line.id)}
-                          className="w-4 h-4 text-orange-600 rounded"
-                        />
+                        <div className="flex flex-col gap-2">
+                          <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={line.isVisible}
+                              onChange={() => toggleVisibility(line.id)}
+                              className="w-4 h-4 text-orange-600 rounded"
+                            />
+                            Show
+                          </label>
+                          <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={line.showPrice}
+                              onChange={() => toggleShowPrice(line.id)}
+                              disabled={!line.isVisible}
+                              className="w-4 h-4 text-orange-600 rounded disabled:opacity-30"
+                            />
+                            Price
+                          </label>
+                        </div>
                         <div className="flex-1">
                           <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
                             {line.text}
