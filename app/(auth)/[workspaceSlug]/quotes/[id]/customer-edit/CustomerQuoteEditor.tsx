@@ -30,6 +30,7 @@ interface QuoteLine {
   text: string;
   amount: number;
   showPrice: boolean;
+  showUnits: boolean;
   isVisible: boolean;
   includeInTotal: boolean;
   sortOrder: number;
@@ -70,6 +71,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           text: saved.custom_text || '',
           amount: saved.custom_amount || 0,
           showPrice: saved.show_price ?? true,
+          showUnits: saved.show_units ?? true,
           isVisible: saved.is_visible ?? true,
           includeInTotal: saved.include_in_total ?? true,
           sortOrder: saved.sort_order,
@@ -88,6 +90,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           text: generateDefaultText(c),
           amount: (c.material_cost || 0) + (c.labour_cost || 0),
           showPrice: true,
+          showUnits: true,
           isVisible: true,
           includeInTotal: true,
           sortOrder: idx,
@@ -124,6 +127,13 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     setIsDirty(true);
   }
 
+  function toggleShowUnits(lineId: string) {
+    setLines(prev => prev.map(l => 
+      l.id === lineId ? { ...l, showUnits: !l.showUnits } : l
+    ));
+    setIsDirty(true);
+  }
+
   function moveUp(lineId: string) {
     setLines(prev => {
       const idx = prev.findIndex(l => l.id === lineId);
@@ -153,6 +163,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       text,
       amount,
       showPrice,
+      showUnits: true,
       isVisible: true,
       includeInTotal: true,
       sortOrder: lines.length,
@@ -197,6 +208,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             text: line.text,
             amount: line.amount,
             showPrice: line.showPrice,
+            showUnits: line.showUnits,
             sortOrder: line.sortOrder,
             isVisible: line.isVisible,
             includeInTotal: line.includeInTotal,
@@ -316,48 +328,103 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                     {areaLines.map(line => (
                       <div
                         key={line.id}
-                        className={`flex items-center gap-3 p-3 rounded-lg border ${
+                        className={`p-3 rounded-lg border ${
                           line.isVisible ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50'
                         }`}
                       >
-                        <div className="flex flex-col gap-2">
-                          <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="flex-1">
+                            <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
+                              {line.text}
+                            </p>
+                            <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
+                              {formatCurrency(line.amount, currency)}
+                            </p>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <button
+                              onClick={() => moveUp(line.id)}
+                              className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                              disabled={line.sortOrder === 0}
+                            >
+                              ↑
+                            </button>
+                            <button
+                              onClick={() => moveDown(line.id)}
+                              className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                              disabled={line.sortOrder === lines.length - 1}
+                            >
+                              ↓
+                            </button>
+                          </div>
+                        </div>
+                        {/* Horizontal checkbox row */}
+                        <div className="flex items-center gap-4 pl-2">
+                          <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={line.isVisible}
                               onChange={() => toggleVisibility(line.id)}
-                              className="w-4 h-4 text-orange-600 rounded"
+                              className="w-3.5 h-3.5 text-orange-600 rounded"
                             />
                             Show
                           </label>
-                          <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                          <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={line.showPrice}
                               onChange={() => toggleShowPrice(line.id)}
                               disabled={!line.isVisible}
-                              className="w-4 h-4 text-orange-600 rounded disabled:opacity-30"
+                              className="w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-30"
                             />
                             Price
                           </label>
-                          <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                          <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={line.showUnits}
+                              onChange={() => toggleShowUnits(line.id)}
+                              disabled={!line.isVisible}
+                              className="w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-30"
+                            />
+                            Units
+                          </label>
+                          <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={line.includeInTotal}
                               onChange={() => toggleIncludeInTotal(line.id)}
-                              className="w-4 h-4 text-orange-600 rounded"
+                              className="w-3.5 h-3.5 text-orange-600 rounded"
                             />
                             Add $
                           </label>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+
+              {/* Extras / ungrouped */}
+              {linesByArea['extras'] && linesByArea['extras'].length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-slate-700 px-2">Extras & Custom</h3>
+                  {linesByArea['extras'].map(line => (
+                    <div
+                      key={line.id}
+                      className={`p-3 rounded-lg border ${
+                        line.isVisible ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 mb-2">
                         <div className="flex-1">
-                          <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
-                            {line.text}
-                          </p>
-                          <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
-                            {formatCurrency(line.amount, currency)}
-                          </p>
-                        </div>
+                        <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
+                          {line.text}
+                        </p>
+                        <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
+                          {formatCurrency(line.amount, currency)}
+                        </p>
+                      </div>
                         <div className="flex flex-col gap-1">
                           <button
                             onClick={() => moveUp(line.id)}
@@ -375,75 +442,46 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                           </button>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                );
-              })}
-
-              {/* Extras / ungrouped */}
-              {linesByArea['extras'] && linesByArea['extras'].length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-slate-700 px-2">Extras & Custom</h3>
-                  {linesByArea['extras'].map(line => (
-                    <div
-                      key={line.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg border ${
-                        line.isVisible ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex flex-col gap-2">
-                        <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                      {/* Horizontal checkbox row */}
+                      <div className="flex items-center gap-4 pl-2">
+                        <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={line.isVisible}
                             onChange={() => toggleVisibility(line.id)}
-                            className="w-4 h-4 text-orange-600 rounded"
+                            className="w-3.5 h-3.5 text-orange-600 rounded"
                           />
                           Show
                         </label>
-                        <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                        <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={line.showPrice}
                             onChange={() => toggleShowPrice(line.id)}
                             disabled={!line.isVisible}
-                            className="w-4 h-4 text-orange-600 rounded disabled:opacity-30"
+                            className="w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-30"
                           />
                           Price
                         </label>
-                        <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                        <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={line.showUnits}
+                            onChange={() => toggleShowUnits(line.id)}
+                            disabled={!line.isVisible}
+                            className="w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-30"
+                          />
+                          Units
+                        </label>
+                        <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={line.includeInTotal}
                             onChange={() => toggleIncludeInTotal(line.id)}
-                            className="w-4 h-4 text-orange-600 rounded"
+                            className="w-3.5 h-3.5 text-orange-600 rounded"
                           />
                           Add $
                         </label>
-                      </div>
-                      <div className="flex-1">
-                        <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
-                          {line.text}
-                        </p>
-                        <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
-                          {formatCurrency(line.amount, currency)}
-                        </p>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <button
-                          onClick={() => moveUp(line.id)}
-                          className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"
-                          disabled={line.sortOrder === 0}
-                        >
-                          ↑
-                        </button>
-                        <button
-                          onClick={() => moveDown(line.id)}
-                          className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"
-                          disabled={line.sortOrder === lines.length - 1}
-                        >
-                          ↓
-                        </button>
                       </div>
                     </div>
                   ))}

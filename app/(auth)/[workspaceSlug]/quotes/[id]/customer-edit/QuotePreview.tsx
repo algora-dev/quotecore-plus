@@ -7,6 +7,7 @@ interface QuoteLine {
   text: string;
   amount: number;
   showPrice: boolean;
+  showUnits: boolean;
 }
 
 interface Props {
@@ -52,6 +53,13 @@ export function QuotePreview({
   showEditButtons = true,
   currency, 
 }: Props) {
+  // Helper to remove units from text (everything after "—")
+  function removeUnits(text: string): string {
+    const dashIndex = text.indexOf('—');
+    if (dashIndex === -1) return text;
+    return text.substring(0, dashIndex).trim();
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -125,7 +133,7 @@ export function QuotePreview({
             ) : (
               <div key={line.id} className="flex items-start justify-between py-2 border-b border-slate-100">
                 <div className="flex-1">
-                  <p className="text-sm text-slate-900">{line.text}</p>
+                  <p className="text-sm text-slate-900">{line.showUnits ? line.text : removeUnits(line.text)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   {line.showPrice && (
