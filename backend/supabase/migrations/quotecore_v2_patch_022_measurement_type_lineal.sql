@@ -11,6 +11,5 @@ ALTER TYPE measurement_type ADD VALUE IF NOT EXISTS 'lineal';
 -- STEP 2: After committing step 1, run these updates in a new transaction:
 -- UPDATE component_library SET measurement_type = 'lineal' WHERE measurement_type = 'linear';
 -- UPDATE quote_components SET measurement_type = 'lineal' WHERE measurement_type = 'linear';
--- UPDATE template_components SET measurement_type = 'lineal' WHERE measurement_type = 'linear';
 
 -- Note: We leave both 'linear' and 'lineal' in the enum for backward compatibility.
