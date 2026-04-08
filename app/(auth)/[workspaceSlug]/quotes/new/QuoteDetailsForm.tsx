@@ -171,7 +171,10 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
         <select
           value={templateId}
           onChange={(e) => setTemplateId(e.target.value)}
-          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          disabled={entryMode === 'digital'}
+          className={`w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+            entryMode === 'digital' ? 'opacity-50 cursor-not-allowed bg-slate-100' : ''
+          }`}
         >
           <option value="">Start from scratch</option>
           {templates.map((template) => (
@@ -182,7 +185,9 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
           ))}
         </select>
         <p className="text-xs text-slate-500 mt-1">
-          Templates pre-load roof areas and components
+          {entryMode === 'digital' 
+            ? 'Templates are not available in digital mode (measurements drawn on canvas)'
+            : 'Templates pre-load roof areas and components'}
         </p>
       </div>
 
@@ -219,7 +224,10 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
           {/* Digital Mode Button */}
           <button
             type="button"
-            onClick={() => setEntryMode('digital')}
+            onClick={() => {
+              setEntryMode('digital');
+              setTemplateId(''); // Auto-switch to "Start from scratch"
+            }}
             className={`relative p-4 rounded-full border-2 transition-all ${
               entryMode === 'digital'
                 ? 'border-orange-500 bg-blue-50'
