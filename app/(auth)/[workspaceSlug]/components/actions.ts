@@ -4,14 +4,26 @@ import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/sup
 import type { ComponentLibraryInsert } from '@/app/lib/types';
 
 export async function loadComponentLibrary() {
-  const profile = await requireCompanyContext();
+  let profile;
+  try {
+    profile = await requireCompanyContext();
+  } catch (err) {
+    console.error('Failed to get company context:', err);
+    throw new Error('Account setup incomplete. Please ensure you are logged in and have a company workspace.');
+  }
+  
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('component_library')
     .select('*')
     .eq('company_id', profile.company_id)
     .order('name');
-  if (error) throw new Error(error.message);
+  
+  if (error) {
+    console.error('Database error loading components:', error);
+    throw new Error(`Failed to load components: ${error.message}`);
+  }
+  
   return data;
 }
 
