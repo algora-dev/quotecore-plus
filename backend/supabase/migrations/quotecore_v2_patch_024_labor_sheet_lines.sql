@@ -24,49 +24,38 @@ CREATE INDEX IF NOT EXISTS labor_sheet_lines_component_id_idx ON labor_sheet_lin
 -- RLS policies
 ALTER TABLE labor_sheet_lines ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view labor sheet lines for their company's quotes"
-  ON labor_sheet_lines FOR SELECT
+DROP POLICY IF EXISTS "lsl_company_access" ON labor_sheet_lines;
+CREATE POLICY "lsl_company_access" ON labor_sheet_lines
+  FOR ALL TO authenticated
   USING (
     EXISTS (
       SELECT 1 FROM quotes q
-      JOIN profiles p ON p.company_id = q.company_id
       WHERE q.id = labor_sheet_lines.quote_id
-        AND p.id = auth.uid()
+      AND q.company_id = current_company_id()
     )
-  );
-
-CREATE POLICY "Users can insert labor sheet lines for their company's quotes"
-  ON labor_sheet_lines FOR INSERT
+  )
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM quotes q
-      JOIN profiles p ON p.company_id = q.company_id
       WHERE q.id = labor_sheet_lines.quote_id
-        AND p.id = auth.uid()
+      AND q.company_id = current_company_id()
     )
   );
 
-CREATE POLICY "Users can update labor sheet lines for their company's quotes"
-  ON labor_sheet_lines FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM quotes q
-      JOIN profiles p ON p.company_id = q.company_id
-      WHERE q.id = labor_sheet_lines.quote_id
-        AND p.id = auth.uid()
-    )
-  );
+-- Trigger for updated_at
+CREATE OR REPLACE FUNCTION update_labor_sheet_lines_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-CREATE POLICY "Users can delete labor sheet lines for their company's quotes"
-  ON labor_sheet_lines FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM quotes q
-      JOIN profiles p ON p.company_id = q.company_id
-      WHERE q.id = labor_sheet_lines.quote_id
-        AND p.id = auth.uid()
-    )
-  );
+DROP TRIGGER IF EXISTS labor_sheet_lines_updated_at ON labor_sheet_lines;
+CREATE TRIGGER labor_sheet_lines_updated_at
+  BEFORE UPDATE ON labor_sheet_lines
+  FOR EACH ROW
+  EXECUTE FUNCTION update_labor_sheet_lines_updated_at();
 
 COMMENT ON TABLE labor_sheet_lines IS 'Stores customized line items for labor sheets (separate from customer quotes)';
 COMMENT ON COLUMN labor_sheet_lines.line_type IS 'Either component (from quote_components) or custom (user-added)';
