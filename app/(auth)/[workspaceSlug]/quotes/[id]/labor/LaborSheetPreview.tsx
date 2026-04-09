@@ -18,7 +18,7 @@ export function LaborSheetPreview({ quote, roofAreas, components, savedLines, wo
   const currency = quote.currency || 'NZD';
   const [isGenerating, setIsGenerating] = useState(false);
   
-  // Use saved lines if available, otherwise fall back to components
+  // Display: only visible lines
   const visibleLines = savedLines.filter(l => l.is_visible);
   
   // Group components by roof area (for fallback display)
@@ -29,9 +29,9 @@ export function LaborSheetPreview({ quote, roofAreas, components, savedLines, wo
     return acc;
   }, {} as Record<string, QuoteComponentRow[]>);
 
-  // Calculate totals from visible saved lines (if any), otherwise from components
-  const subtotal = visibleLines.length > 0
-    ? visibleLines.filter(l => l.include_in_total).reduce((sum, l) => sum + (l.custom_amount || 0), 0)
+  // Total: ALL lines where "Add $" is checked (regardless of visibility)
+  const subtotal = savedLines.length > 0
+    ? savedLines.filter(l => l.include_in_total).reduce((sum, l) => sum + (l.custom_amount || 0), 0)
     : components.reduce((sum, c) => sum + (c.labour_cost || 0), 0);
   const tax = subtotal * (quote.tax_rate / 100);
   const total = subtotal + tax;
