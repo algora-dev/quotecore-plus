@@ -59,16 +59,16 @@ export default async function CustomerQuotePage({
         </div>
 
         {/* Quote Document */}
-        <div data-pdf-content className="bg-white rounded-xl shadow-lg border border-slate-200 p-12 space-y-8">
+        <div data-pdf-content className="bg-white rounded-xl border border-black p-12 space-y-8">
           {/* Quote Header */}
-          <div className="border-b-2 pb-6 mb-6">
+          <div className="border-b-2 border-black pb-6 mb-6">
             {/* Logo (Top Right) - Always show placeholder or image */}
             <div className="flex justify-end mb-6">
               {quote.cq_company_logo_url ? (
                 <img src={quote.cq_company_logo_url} alt="Company Logo" className="h-16 object-contain" />
               ) : (
-                <div className="w-32 h-16 border-2 border-dashed border-slate-300 rounded flex items-center justify-center bg-slate-50">
-                  <span className="text-xs text-slate-400">Logo</span>
+                <div className="w-32 h-16 border-2 border-dashed border-black rounded flex items-center justify-center bg-white">
+                  <span className="text-xs text-black">Logo</span>
                 </div>
               )}
             </div>
@@ -76,24 +76,24 @@ export default async function CustomerQuotePage({
             {/* Quote Info + Company Details (Side by Side) */}
             <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-xl font-bold text-slate-900 mb-4">
+                <h1 className="text-xl font-bold text-black mb-4">
                   QUOTE #{quote.quote_number || 'DRAFT'}
                 </h1>
                 <div className="space-y-2">
-                  <p className="text-base text-slate-900">
+                  <p className="text-base text-black">
                     <span className="font-semibold">Client:</span> {quote.customer_name}
                   </p>
                   {quote.job_name && (
-                    <p className="text-base text-slate-900">
+                    <p className="text-base text-black">
                       <span className="font-semibold">Job:</span> {quote.job_name}
                     </p>
                   )}
                   {quote.site_address && (
-                    <p className="text-base text-slate-900">
+                    <p className="text-base text-black">
                       <span className="font-semibold">Site:</span> {quote.site_address}
                     </p>
                   )}
-                  <p className="text-base text-slate-900">
+                  <p className="text-base text-black">
                     <span className="font-semibold">Date:</span> {new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' })}
                   </p>
                 </div>
@@ -103,16 +103,16 @@ export default async function CustomerQuotePage({
               {(quote.cq_company_name || quote.cq_company_address || quote.cq_company_phone || quote.cq_company_email) && (
                 <div className="text-right space-y-1">
                   {quote.cq_company_name && (
-                    <p className="font-semibold text-base text-slate-900">{quote.cq_company_name}</p>
+                    <p className="font-semibold text-base text-black">{quote.cq_company_name}</p>
                   )}
                   {quote.cq_company_address && (
-                    <p className="text-sm text-slate-600">{quote.cq_company_address}</p>
+                    <p className="text-sm text-black">{quote.cq_company_address}</p>
                   )}
                   {quote.cq_company_phone && (
-                    <p className="text-sm text-slate-600">{quote.cq_company_phone}</p>
+                    <p className="text-sm text-black">{quote.cq_company_phone}</p>
                   )}
                   {quote.cq_company_email && (
-                    <p className="text-sm text-slate-600">{quote.cq_company_email}</p>
+                    <p className="text-sm text-black">{quote.cq_company_email}</p>
                   )}
                 </div>
               )}
@@ -122,21 +122,21 @@ export default async function CustomerQuotePage({
           {/* Line Items */}
           <div className="space-y-3">
             {visibleLines.length === 0 ? (
-              <p className="text-slate-400 italic text-center py-8">
+              <p className="text-black italic text-center py-8">
                 No items in this quote. Edit the customer quote to add items.
               </p>
             ) : (
               visibleLines.map((line, idx) => (
                 <div
                   key={line.id}
-                  className="flex items-start justify-between py-3 border-b border-slate-100"
+                  className="flex items-start justify-between py-3 border-b border-black"
                 >
                   <div className="flex-1">
-                    <p className="text-slate-900">{line.custom_text}</p>
+                    <p className="text-black">{line.custom_text}</p>
                   </div>
                   {line.show_price && (
                     <div className="ml-4">
-                      <p className="text-slate-900 font-medium whitespace-nowrap">
+                      <p className="text-black font-medium whitespace-nowrap">
                         {formatCurrency(line.custom_amount || 0, effectiveCurrency)}
                       </p>
                     </div>
@@ -148,28 +148,28 @@ export default async function CustomerQuotePage({
 
           {/* Totals */}
           {visibleLines.length > 0 && (
-            <div className="space-y-3 pt-4 border-t-2 border-slate-300">
+            <div className="space-y-3 pt-4 border-t-2 border-black">
               <div className="flex justify-between text-base">
-                <span className="text-slate-700">Subtotal</span>
-                <span className="font-medium text-slate-900">{formatCurrency(subtotal, effectiveCurrency)}</span>
+                <span className="text-black">Subtotal</span>
+                <span className="font-medium text-black">{formatCurrency(subtotal, effectiveCurrency)}</span>
               </div>
               {quote.tax_rate > 0 && (
                 <div className="flex justify-between text-base">
-                  <span className="text-slate-700">Tax ({quote.tax_rate}%)</span>
-                  <span className="font-medium text-slate-900">{formatCurrency(tax, effectiveCurrency)}</span>
+                  <span className="text-black">Tax ({quote.tax_rate}%)</span>
+                  <span className="font-medium text-black">{formatCurrency(tax, effectiveCurrency)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-xl font-bold border-t-2 border-slate-300 pt-3">
-                <span className="text-slate-900">Total</span>
-                <span className="text-slate-900">{formatCurrency(total, effectiveCurrency)}</span>
+              <div className="flex justify-between text-xl font-bold border-t-2 border-black pt-3">
+                <span className="text-black">Total</span>
+                <span className="text-black">{formatCurrency(total, effectiveCurrency)}</span>
               </div>
             </div>
           )}
 
           {/* Footer */}
           {quote.cq_footer_text && (
-            <div className="pt-6 border-t">
-              <p className="text-sm text-slate-600 italic whitespace-pre-wrap">{quote.cq_footer_text}</p>
+            <div className="pt-6 border-t border-black">
+              <p className="text-sm text-black italic whitespace-pre-wrap">{quote.cq_footer_text}</p>
             </div>
           )}
         </div>

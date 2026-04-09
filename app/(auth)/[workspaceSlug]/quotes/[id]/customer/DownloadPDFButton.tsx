@@ -27,7 +27,7 @@ export function DownloadPDFButton({ quoteNumber, customerName }: Props) {
       console.log('[PDF] Found element, generating PDF...');
 
       try {
-        // Convert HTML to canvas with onclone to strip lab() colors
+        // Convert HTML to canvas with onclone to fix lab() colors only
         const canvas = await html2canvas(element, {
           scale: 1,
           useCORS: true,
@@ -36,12 +36,16 @@ export function DownloadPDFButton({ quoteNumber, customerName }: Props) {
           allowTaint: true,
           foreignObjectRendering: false,
           onclone: (clonedDoc) => {
-            // Force all elements to use RGB colors in the cloned document
+            // Only fix lab/lch colors, don't force all backgrounds
             const allElements = clonedDoc.querySelectorAll('*');
             allElements.forEach((el: any) => {
-              el.style.color = 'rgb(0, 0, 0)';
-              el.style.backgroundColor = 'rgb(255, 255, 255)';
-              el.style.borderColor = 'rgb(203, 213, 225)';
+              const computed = window.getComputedStyle(el);
+              if (computed.color && (computed.color.includes('lab') || computed.color.includes('lch'))) {
+                el.style.color = 'rgb(0, 0, 0)';
+              }
+              if (computed.borderColor && (computed.borderColor.includes('lab') || computed.borderColor.includes('lch'))) {
+                el.style.borderColor = 'rgb(0, 0, 0)';
+              }
             });
           },
         });
