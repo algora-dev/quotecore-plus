@@ -70,13 +70,24 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           const component = components.find(c => c.id === saved.quote_component_id);
           if (!component) return null; // Component was deleted
           
+          // Calculate amount WITH margins applied
+          const baseMaterialCost = component.material_cost || 0;
+          const baseLabourCost = component.labour_cost || 0;
+          const materialMargin = quote.material_margin_enabled && quote.material_margin_percent 
+            ? baseMaterialCost * (quote.material_margin_percent / 100) 
+            : 0;
+          const labourMargin = quote.labor_margin_enabled && quote.labor_margin_percent 
+            ? baseLabourCost * (quote.labor_margin_percent / 100) 
+            : 0;
+          const amountWithMargins = baseMaterialCost + baseLabourCost + materialMargin + labourMargin;
+
           return {
             id: component.id,
             type: 'component' as const,
             componentId: component.id,
             roofAreaId: component.quote_roof_area_id || undefined,
             text: generateDefaultText(component),
-            amount: (component.material_cost || 0) + (component.labour_cost || 0),
+            amount: amountWithMargins,
             showPrice: saved.show_price ?? true,
             showUnits: saved.show_units ?? true,
             isVisible: saved.is_visible ?? true,
@@ -102,22 +113,34 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       }).filter(Boolean) as QuoteLine[];
       setLines(loadedLines);
     } else {
-      // Initialize from components (first time)
+      // Initialize from components (first time) - include margins
       const initialLines: QuoteLine[] = components
         .filter(c => c.is_customer_visible)
-        .map((c, idx) => ({
-          id: c.id,
-          type: 'component' as const,
-          componentId: c.id,
-          roofAreaId: c.quote_roof_area_id || undefined,
-          text: generateDefaultText(c),
-          amount: (c.material_cost || 0) + (c.labour_cost || 0),
-          showPrice: true,
-          showUnits: true,
-          isVisible: true,
-          includeInTotal: true,
-          sortOrder: idx,
-        }));
+        .map((c, idx) => {
+          const baseMaterialCost = c.material_cost || 0;
+          const baseLabourCost = c.labour_cost || 0;
+          const materialMargin = quote.material_margin_enabled && quote.material_margin_percent 
+            ? baseMaterialCost * (quote.material_margin_percent / 100) 
+            : 0;
+          const labourMargin = quote.labor_margin_enabled && quote.labor_margin_percent 
+            ? baseLabourCost * (quote.labor_margin_percent / 100) 
+            : 0;
+          const amountWithMargins = baseMaterialCost + baseLabourCost + materialMargin + labourMargin;
+
+          return {
+            id: c.id,
+            type: 'component' as const,
+            componentId: c.id,
+            roofAreaId: c.quote_roof_area_id || undefined,
+            text: generateDefaultText(c),
+            amount: amountWithMargins,
+            showPrice: true,
+            showUnits: true,
+            isVisible: true,
+            includeInTotal: true,
+            sortOrder: idx,
+          };
+        });
       setLines(initialLines);
     }
   }, [savedLines, components]);
