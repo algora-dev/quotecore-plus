@@ -83,6 +83,7 @@ export interface QuoteRow {
   global_pitch_degrees: number | null; measurement_system: MeasurementSystem; currency: string | null; notes_internal: string | null; created_by_user_id: string | null;
   cq_company_name: string | null; cq_company_address: string | null; cq_company_phone: string | null;
   cq_company_email: string | null; cq_company_logo_url: string | null; cq_footer_text: string | null;
+  takeoff_canvas_url: string | null;
   created_at: string; updated_at: string;
 }
 
