@@ -24,53 +24,70 @@ export function DownloadSummaryPDFButton({ quoteNumber, customerName }: Props) {
         return;
       }
 
-      console.log('[PDF] Found element, generating canvas...');
+      console.log('[PDF] Found element, preparing for conversion...');
 
-      // Convert HTML to canvas
-      const canvas = await html2canvas(element, {
-        scale: 2, // Higher quality
-        useCORS: true,
-        logging: true,
-        backgroundColor: '#f8fafc', // slate-50
-        allowTaint: false,
-      });
+      // Clone element to avoid modifying the original
+      const clone = element.cloneNode(true) as HTMLElement;
+      clone.style.color = 'rgb(0, 0, 0)';
+      clone.style.backgroundColor = 'rgb(248, 250, 252)'; // slate-50
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      document.body.appendChild(clone);
 
-      console.log('[PDF] Canvas generated, creating PDF...');
+      try {
+        // Convert HTML to canvas
+        const canvas = await html2canvas(clone, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#f8fafc',
+          allowTaint: false,
+        });
 
-      // Calculate PDF dimensions
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      // Create PDF
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
+        document.body.removeChild(clone);
 
-      const imgData = canvas.toDataURL('image/png');
-      
-      // If content is taller than one page, add multiple pages
-      let heightLeft = imgHeight;
-      let position = 0;
-      const pageHeight = 297; // A4 height in mm
+        console.log('[PDF] Canvas generated, creating PDF...');
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+        // Calculate PDF dimensions
+        const imgWidth = 210; // A4 width in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        // Create PDF
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+        });
 
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
+        const imgData = canvas.toDataURL('image/png');
+        
+        // If content is taller than one page, add multiple pages
+        let heightLeft = imgHeight;
+        let position = 0;
+        const pageHeight = 297; // A4 height in mm
+
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
-      }
 
-      // Generate filename
-      const filename = `Master-Quote-${quoteNumber || 'DRAFT'}-${customerName.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-      
-      // Download
-      console.log('[PDF] Downloading:', filename);
-      pdf.save(filename);
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+
+        // Generate filename
+        const filename = `Master-Quote-${quoteNumber || 'DRAFT'}-${customerName.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+        
+        // Download
+        console.log('[PDF] Downloading:', filename);
+        pdf.save(filename);
+      } catch (conversionError) {
+        if (document.body.contains(clone)) {
+          document.body.removeChild(clone);
+        }
+        throw conversionError;
+      }
     } catch (error) {
       console.error('[PDF] Generation failed:', error);
       alert(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);

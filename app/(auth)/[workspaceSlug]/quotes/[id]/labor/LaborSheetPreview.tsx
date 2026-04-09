@@ -41,33 +41,50 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
         return;
       }
 
-      console.log('[PDF] Found element, generating canvas...');
+      console.log('[PDF] Found element, preparing for conversion...');
 
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: true,
-        backgroundColor: '#ffffff',
-        allowTaint: false,
-      });
+      // Clone element to avoid modifying the original
+      const clone = element.cloneNode(true) as HTMLElement;
+      clone.style.color = 'rgb(0, 0, 0)';
+      clone.style.backgroundColor = 'rgb(255, 255, 255)';
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      document.body.appendChild(clone);
 
-      console.log('[PDF] Canvas generated, creating PDF...');
+      try {
+        const canvas = await html2canvas(clone, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          allowTaint: false,
+        });
 
-      const imgWidth = 210;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      const pdf = new jsPDF({
-        orientation: imgHeight > imgWidth ? 'portrait' : 'landscape',
-        unit: 'mm',
-        format: 'a4',
-      });
+        document.body.removeChild(clone);
 
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        console.log('[PDF] Canvas generated, creating PDF...');
 
-      const filename = `Labor-Sheet-${quote.quote_number || 'DRAFT'}-${quote.customer_name.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-      console.log('[PDF] Downloading:', filename);
-      pdf.save(filename);
+        const imgWidth = 210;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        const pdf = new jsPDF({
+          orientation: imgHeight > imgWidth ? 'portrait' : 'landscape',
+          unit: 'mm',
+          format: 'a4',
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+
+        const filename = `Labor-Sheet-${quote.quote_number || 'DRAFT'}-${quote.customer_name.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+        console.log('[PDF] Downloading:', filename);
+        pdf.save(filename);
+      } catch (conversionError) {
+        if (document.body.contains(clone)) {
+          document.body.removeChild(clone);
+        }
+        throw conversionError;
+      }
     } catch (error) {
       console.error('[PDF] Generation failed:', error);
       alert(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
