@@ -26,39 +26,25 @@ export function DownloadPDFButton({ quoteNumber, customerName }: Props) {
 
       console.log('[PDF] Found element, generating PDF...');
 
-      // Inject temporary CSS to override any lab() colors
-      const styleId = 'pdf-color-override';
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = `
-        [data-pdf-content] * {
-          color: rgb(0, 0, 0) !important;
-          background-color: rgb(255, 255, 255) !important;
-          border-color: rgb(203, 213, 225) !important;
-        }
-        [data-pdf-content] .border-b,
-        [data-pdf-content] .border-t {
-          border-color: rgb(203, 213, 225) !important;
-        }
-      `;
-      document.head.appendChild(style);
-
       try {
-        // Wait a tick for styles to apply
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Convert HTML to canvas directly (high quality)
+        // Convert HTML to canvas with onclone to strip lab() colors
         const canvas = await html2canvas(element, {
-          scale: 2, // High quality for clear text
+          scale: 2,
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
           allowTaint: true,
           foreignObjectRendering: false,
+          onclone: (clonedDoc) => {
+            // Force all elements to use RGB colors in the cloned document
+            const allElements = clonedDoc.querySelectorAll('*');
+            allElements.forEach((el: any) => {
+              el.style.color = 'rgb(0, 0, 0)';
+              el.style.backgroundColor = 'rgb(255, 255, 255)';
+              el.style.borderColor = 'rgb(203, 213, 225)';
+            });
+          },
         });
-        
-        // Remove temporary styles
-        document.getElementById(styleId)?.remove();
 
         console.log('[PDF] Canvas generated, creating PDF...');
 
@@ -103,8 +89,6 @@ export function DownloadPDFButton({ quoteNumber, customerName }: Props) {
         console.log('[PDF] Downloading:', filename);
         pdf.save(filename);
       } catch (error) {
-        // Clean up styles even if conversion fails
-        document.getElementById(styleId)?.remove();
         console.error('[PDF] Generation failed:', error);
         alert(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
