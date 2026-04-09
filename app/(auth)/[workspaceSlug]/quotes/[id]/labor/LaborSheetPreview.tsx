@@ -51,6 +51,20 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
           backgroundColor: '#ffffff',
           allowTaint: true,
           foreignObjectRendering: false,
+          onclone: (clonedDoc) => {
+            // Force RGB colors to prevent lab() errors - but DON'T force backgrounds
+            const allElements = clonedDoc.querySelectorAll('*');
+            allElements.forEach((el: any) => {
+              const computed = window.getComputedStyle(el);
+              // Only override if current color uses lab/lch
+              if (computed.color && (computed.color.includes('lab') || computed.color.includes('lch'))) {
+                el.style.color = 'rgb(0, 0, 0)';
+              }
+              if (computed.borderColor && (computed.borderColor.includes('lab') || computed.borderColor.includes('lch'))) {
+                el.style.borderColor = 'rgb(0, 0, 0)';
+              }
+            });
+          },
         });
 
         console.log('[PDF] Canvas generated, creating PDF...');
