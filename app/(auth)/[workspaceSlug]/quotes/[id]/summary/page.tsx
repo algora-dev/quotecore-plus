@@ -145,11 +145,11 @@ export default async function QuoteSummaryPage({
       <div data-pdf-content className="p-12 bg-white">
         {/* PDF Header */}
         <div className="mb-8 pb-4 border-b border-slate-200">
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">
+          <h1 className="text-2xl font-bold text-slate-900 mb-4">
             Quote #{quote.quote_number || 'DRAFT'} — Summary
           </h1>
-          <p className="text-base text-slate-700">{quote.customer_name}</p>
-          {quote.job_name && <p className="text-sm text-slate-500">{quote.job_name}</p>}
+          <p className="text-base text-slate-700 mb-2">{quote.customer_name}</p>
+          {quote.job_name && <p className="text-sm text-slate-500 mb-2">{quote.job_name}</p>}
         </div>
 
       <div className="space-y-10">
