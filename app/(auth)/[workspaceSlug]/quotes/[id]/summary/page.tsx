@@ -152,26 +152,26 @@ export default async function QuoteSummaryPage({
           {quote.job_name && <p className="text-sm text-slate-600 mb-2">{quote.job_name}</p>}
         </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {roofAreas.map(area => {
           const areaComps = mainComps.filter(c => c.quote_roof_area_id === area.id);
           return (
-            <div key={area.id} className="rounded-xl border border-slate-200 bg-white p-4">
-              <h3 className="font-semibold text-slate-900 mb-2">{area.label} — {(area.computed_sqm ?? 0).toFixed(1)} m²</h3>
+            <div key={area.id} className="mb-6">
+              <h3 className="font-semibold text-slate-900 mb-3">{area.label} — {(area.computed_sqm ?? 0).toFixed(1)} m²</h3>
               {areaComps.length > 0 ? (
-                <table className="w-full text-sm">
-                  <thead><tr className="text-left text-xs text-slate-500 border-b">
-                    <th className="py-1">Component</th><th className="py-1 text-right">Entries</th><th className="py-1 text-right">Total Qty</th>
-                    <th className="py-1 text-right">Material</th><th className="py-1 text-right">Labour</th><th className="py-1 text-right">Total</th>
+                <table className="w-full text-sm border-collapse">
+                  <thead><tr className="text-left text-xs text-slate-500 border-b-2 border-slate-300">
+                    <th className="py-2 font-semibold">Component</th><th className="py-2 text-right font-semibold">Entries</th><th className="py-2 text-right font-semibold">Total Qty</th>
+                    <th className="py-2 text-right font-semibold">Material</th><th className="py-2 text-right font-semibold">Labour</th><th className="py-2 text-right font-semibold">Total</th>
                   </tr></thead>
                   <tbody>{areaComps.map(c => (
-                    <tr key={c.id} className="border-b border-slate-100">
-                      <td className="py-1.5">{c.name}</td>
-                      <td className="py-1.5 text-right">{(entries[c.id] ?? []).length}</td>
-                      <td className="py-1.5 text-right">{(c.final_quantity ?? 0).toFixed(1)} {unitForMeasurement(c.measurement_type)}</td>
-                      <td className="py-1.5 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
-                      <td className="py-1.5 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
-                      <td className="py-1.5 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
+                    <tr key={c.id} className="border-b border-slate-200">
+                      <td className="py-2">{c.name}</td>
+                      <td className="py-2 text-right">{(entries[c.id] ?? []).length}</td>
+                      <td className="py-2 text-right">{(c.final_quantity ?? 0).toFixed(1)} {unitForMeasurement(c.measurement_type)}</td>
+                      <td className="py-2 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
+                      <td className="py-2 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
+                      <td className="py-2 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
                     </tr>
                   ))}</tbody>
                 </table>
@@ -181,34 +181,34 @@ export default async function QuoteSummaryPage({
         })}
 
         {extraComps.length > 0 && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-            <h3 className="font-semibold text-slate-900 mb-2">Extras</h3>
-            <table className="w-full text-sm">
-              <thead><tr className="text-left text-xs text-slate-500 border-b">
-                <th className="py-1">Extra</th><th className="py-1 text-right">Entries</th><th className="py-1 text-right">Total Qty</th>
-                <th className="py-1 text-right">Material</th><th className="py-1 text-right">Labour</th><th className="py-1 text-right">Total</th>
+          <div className="mb-6">
+            <h3 className="font-semibold text-slate-900 mb-3">Extras</h3>
+            <table className="w-full text-sm border-collapse">
+              <thead><tr className="text-left text-xs text-slate-500 border-b-2 border-slate-300">
+                <th className="py-2 font-semibold">Extra</th><th className="py-2 text-right font-semibold">Entries</th><th className="py-2 text-right font-semibold">Total Qty</th>
+                <th className="py-2 text-right font-semibold">Material</th><th className="py-2 text-right font-semibold">Labour</th><th className="py-2 text-right font-semibold">Total</th>
               </tr></thead>
               <tbody>{extraComps.map(c => (
-                <tr key={c.id} className="border-b border-amber-100">
-                  <td className="py-1.5">{c.name}</td>
-                  <td className="py-1.5 text-right">{(entries[c.id] ?? []).length}</td>
-                  <td className="py-1.5 text-right">{(c.final_quantity ?? 0).toFixed(1)}</td>
-                  <td className="py-1.5 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
-                  <td className="py-1.5 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
-                  <td className="py-1.5 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
+                <tr key={c.id} className="border-b border-slate-200">
+                  <td className="py-2">{c.name}</td>
+                  <td className="py-2 text-right">{(entries[c.id] ?? []).length}</td>
+                  <td className="py-2 text-right">{(c.final_quantity ?? 0).toFixed(1)}</td>
+                  <td className="py-2 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
+                  <td className="py-2 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
+                  <td className="py-2 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
                 </tr>
               ))}</tbody>
             </table>
           </div>
         )}
 
-        <div className="rounded-xl border border-slate-300 bg-white p-4 space-y-2">
-          <div className="flex justify-between text-sm"><span>Total Materials</span><span>{formatCurrency(totals.totalMaterials, effectiveCurrency)}</span></div>
-          <div className="flex justify-between text-sm"><span>Total Labour</span><span>{formatCurrency(totals.totalLabour, effectiveCurrency)}</span></div>
-          {(totals.materialMargin > 0 || totals.labourMargin > 0) && <div className="flex justify-between text-sm text-slate-500"><span>Margins</span><span>+{formatCurrency(totals.materialMargin + totals.labourMargin, effectiveCurrency)}</span></div>}
-          <div className="flex justify-between text-sm border-t pt-2"><span>Subtotal</span><span>{formatCurrency(totals.subtotalWithMargins, effectiveCurrency)}</span></div>
-          {totals.tax > 0 && <div className="flex justify-between text-sm"><span>Tax ({quote.tax_rate}%)</span><span>{formatCurrency(totals.tax, effectiveCurrency)}</span></div>}
-          <div className="flex justify-between text-lg font-bold border-t pt-2"><span>Grand Total</span><span>{formatCurrency(totals.grandTotal, effectiveCurrency)}</span></div>
+        <div className="mt-8 pt-4 border-t-2 border-slate-300 space-y-3">
+          <div className="flex justify-between text-base"><span className="text-slate-900">Total Materials</span><span className="text-slate-900">{formatCurrency(totals.totalMaterials, effectiveCurrency)}</span></div>
+          <div className="flex justify-between text-base"><span className="text-slate-900">Total Labour</span><span className="text-slate-900">{formatCurrency(totals.totalLabour, effectiveCurrency)}</span></div>
+          {(totals.materialMargin > 0 || totals.labourMargin > 0) && <div className="flex justify-between text-base text-slate-600"><span>Margins</span><span>+{formatCurrency(totals.materialMargin + totals.labourMargin, effectiveCurrency)}</span></div>}
+          <div className="flex justify-between text-base border-t-2 border-slate-300 pt-3"><span className="text-slate-900">Subtotal</span><span className="text-slate-900">{formatCurrency(totals.subtotalWithMargins, effectiveCurrency)}</span></div>
+          {totals.tax > 0 && <div className="flex justify-between text-base"><span className="text-slate-900">Tax ({quote.tax_rate}%)</span><span className="text-slate-900">{formatCurrency(totals.tax, effectiveCurrency)}</span></div>}
+          <div className="flex justify-between text-xl font-bold border-t-2 border-slate-300 pt-3"><span className="text-slate-900">Grand Total</span><span className="text-slate-900">{formatCurrency(totals.grandTotal, effectiveCurrency)}</span></div>
         </div>
 
         {/* Files & Documents */}
