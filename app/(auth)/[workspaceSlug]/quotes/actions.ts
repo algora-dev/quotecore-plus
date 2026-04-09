@@ -386,7 +386,7 @@ export async function cloneQuote(id: string, newCustomerName: string) {
   const { data: newQuote, error: qErr } = await supabase.from('quotes').insert({
     company_id: profile.company_id, template_id: originalQuote.template_id, customer_name: newCustomerName,
     customer_email: originalQuote.customer_email, customer_phone: originalQuote.customer_phone, job_name: originalQuote.job_name,
-    site_address: originalQuote.site_address, material_margin_pct: originalQuote.material_margin_pct, labour_margin_pct: originalQuote.labour_margin_pct,
+    site_address: originalQuote.site_address, material_margin_percent: originalQuote.material_margin_percent, labor_margin_percent: originalQuote.labor_margin_percent,
     tax_rate: originalQuote.tax_rate, global_pitch_degrees: originalQuote.global_pitch_degrees, created_by_user_id: profile.id,
   }).select().single();
   if (qErr || !newQuote) throw new Error(qErr?.message || 'Failed to clone quote');
