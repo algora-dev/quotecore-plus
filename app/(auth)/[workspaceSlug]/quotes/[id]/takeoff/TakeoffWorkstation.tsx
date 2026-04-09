@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { saveTakeoffMeasurements } from './actions';
+import { uploadCanvasImage } from './uploadCanvasImage';
 
 // Extend Fabric.js Canvas type with custom properties
 declare module 'fabric' {
@@ -429,10 +430,31 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       
       console.log('[SaveTakeoff] Saving', allMeasurements.length, 'measurements to quote:', quote.id);
       
+      // Export canvas as PNG
+      let canvasImageUrl: string | undefined;
+      if (fabricRef.current) {
+        console.log('[SaveTakeoff] Exporting canvas image...');
+        const dataUrl = fabricRef.current.toDataURL({
+          format: 'png',
+          quality: 0.9,
+          multiplier: 1, // Use 1x resolution (original canvas size)
+        });
+        
+        // Upload canvas image
+        try {
+          canvasImageUrl = await uploadCanvasImage(quote.id, dataUrl);
+          console.log('[SaveTakeoff] Canvas image uploaded:', canvasImageUrl);
+        } catch (uploadError) {
+          console.error('[SaveTakeoff] Failed to upload canvas image:', uploadError);
+          // Continue anyway - don't block the save
+        }
+      }
+      
       await saveTakeoffMeasurements(
         quote.id,
         allMeasurements,
-        calibrations[0]?.unit || 'feet'
+        calibrations[0]?.unit || 'feet',
+        canvasImageUrl
       );
       
       console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
@@ -1246,9 +1268,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         </div>
 
         {/* Center - Canvas */}
-        <div className="flex-1 flex flex-col p-6 relative bg-gray-50">
+        <div className="flex-1 flex flex-col relative bg-gray-50">
           {/* Top Toolbar */}
-          <div className="mb-4 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
+          <div className="flex-shrink-0 m-6 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
             {/* Tools - Left Side */}
             <div className="flex gap-2">
               <button
@@ -1358,12 +1380,12 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           </div>
 
           {/* Canvas */}
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-start justify-center p-6 pt-4 overflow-auto">
             <div className="border-2 border-gray-200 rounded-lg">
               <canvas ref={canvasRef} />
             </div>
           </div>
-          <p className="mt-4 text-center text-sm text-gray-500">
+          <p className="flex-shrink-0 pb-4 text-center text-sm text-gray-500">
             {calibrationMode
               ? `Click ${calibrationPoints.length === 0 ? 'first' : 'second'} point to calibrate`
               : 'Hold Alt + Drag to pan'}
