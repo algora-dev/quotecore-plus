@@ -27,9 +27,9 @@ export default async function CustomerQuotePage({
   const companyDefaultCurrency = company?.default_currency || 'NZD';
   const effectiveCurrency = getEffectiveCurrency(quote.currency, companyDefaultCurrency);
 
-  // Calculate totals from visible lines
+  // Calculate totals from visible lines that are included in total
   const visibleLines = savedLines.filter(l => l.is_visible);
-  const subtotal = visibleLines.reduce((sum, l) => sum + (l.custom_amount || 0), 0);
+  const subtotal = savedLines.filter(l => l.is_visible && l.include_in_total).reduce((sum, l) => sum + (l.custom_amount || 0), 0);
   const tax = subtotal * (quote.tax_rate / 100);
   const total = subtotal + tax;
 
