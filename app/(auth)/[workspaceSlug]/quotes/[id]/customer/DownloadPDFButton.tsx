@@ -29,7 +29,7 @@ export function DownloadPDFButton({ quoteNumber, customerName }: Props) {
       try {
         // Convert HTML to canvas with onclone to strip lab() colors
         const canvas = await html2canvas(element, {
-          scale: 2,
+          scale: 1, // Reduced for smaller file size
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',

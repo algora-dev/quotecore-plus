@@ -28,7 +28,7 @@ export function DownloadSummaryPDFButton({ quoteNumber, customerName }: Props) {
 
       try {
         const canvas = await html2canvas(element, {
-          scale: 2,
+          scale: 1, // Reduced for smaller file size
           useCORS: true,
           logging: false,
           backgroundColor: '#f8fafc',
