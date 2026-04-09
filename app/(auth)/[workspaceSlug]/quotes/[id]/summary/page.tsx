@@ -224,14 +224,23 @@ export default async function QuoteSummaryPage({
                       {file.file_size > 0 && ` • ${(file.file_size / 1024 / 1024).toFixed(2)} MB`}
                     </p>
                   </div>
-                  <a
-                    href={file.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-orange-600 hover:text-blue-800 font-medium"
-                  >
-                    View →
-                  </a>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-orange-600 hover:text-orange-800 font-medium"
+                    >
+                      View →
+                    </a>
+                    <a
+                      href={file.url}
+                      download={file.file_name}
+                      className="px-3 py-1.5 text-xs font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                    >
+                      Download
+                    </a>
+                  </div>
                 </div>
               ))}
             </div>
