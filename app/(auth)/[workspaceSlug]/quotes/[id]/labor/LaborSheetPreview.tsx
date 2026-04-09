@@ -78,17 +78,39 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
 
         console.log('[PDF] Canvas generated, creating PDF...');
 
-        const imgWidth = 210;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        
+        // Create PDF with proper margins
         const pdf = new jsPDF({
-          orientation: imgHeight > imgWidth ? 'portrait' : 'landscape',
+          orientation: 'portrait',
           unit: 'mm',
           format: 'a4',
         });
 
         const imgData = canvas.toDataURL('image/png');
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        
+        // Add margins (15mm on all sides)
+        const margin = 15;
+        const pageWidth = 210;
+        const pageHeight = 297;
+        const printableWidth = pageWidth - (margin * 2);
+        const printableHeight = pageHeight - (margin * 2);
+        
+        // Calculate scaled dimensions
+        const imgWidth = printableWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        // Handle multi-page content
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', margin, margin + position, imgWidth, imgHeight);
+        heightLeft -= printableHeight;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', margin, margin + position, imgWidth, imgHeight);
+          heightLeft -= printableHeight;
+        }
 
         const filename = `Labor-Sheet-${quote.quote_number || 'DRAFT'}-${quote.customer_name.replace(/[^a-z0-9]/gi, '_')}.pdf`;
         console.log('[PDF] Downloading:', filename);
@@ -130,12 +152,12 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
         {/* Document */}
         <div data-pdf-content className="bg-white rounded-xl border border-slate-200 p-12 shadow-sm">
           {/* Title */}
-          <div className="border-b pb-6 mb-6">
-            <h1 className="text-3xl font-bold text-slate-900">LABOR SHEET</h1>
-            <p className="text-lg text-slate-700 mt-2">
+          <div className="border-b-2 pb-6 mb-8">
+            <h1 className="text-3xl font-bold text-slate-900 mb-4">LABOR SHEET</h1>
+            <p className="text-lg text-slate-700 mb-2">
               Quote #{quote.quote_number || 'DRAFT'}
             </p>
-            <p className="text-base text-slate-900 mt-1">
+            <p className="text-base text-slate-900 mb-2">
               <span className="font-semibold">Client:</span> {quote.customer_name}
             </p>
             {quote.job_name && (

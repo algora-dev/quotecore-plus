@@ -65,19 +65,39 @@ export function DownloadPDFButton({ quoteNumber, customerName }: Props) {
 
         console.log('[PDF] Canvas generated, creating PDF...');
 
-        // Calculate PDF dimensions
-        const imgWidth = 210; // A4 width in mm
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        
-        // Create PDF
+        // Create PDF with proper margins
         const pdf = new jsPDF({
-          orientation: imgHeight > imgWidth ? 'portrait' : 'landscape',
+          orientation: 'portrait',
           unit: 'mm',
           format: 'a4',
         });
 
         const imgData = canvas.toDataURL('image/png');
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        
+        // Add margins (15mm on all sides)
+        const margin = 15;
+        const pageWidth = 210;
+        const pageHeight = 297;
+        const printableWidth = pageWidth - (margin * 2);
+        const printableHeight = pageHeight - (margin * 2);
+        
+        // Calculate scaled dimensions
+        const imgWidth = printableWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        // Handle multi-page content
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', margin, margin + position, imgWidth, imgHeight);
+        heightLeft -= printableHeight;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', margin, margin + position, imgWidth, imgHeight);
+          heightLeft -= printableHeight;
+        }
 
         // Generate filename
         const filename = `Quote-${quoteNumber || 'DRAFT'}-${customerName.replace(/[^a-z0-9]/gi, '_')}.pdf`;

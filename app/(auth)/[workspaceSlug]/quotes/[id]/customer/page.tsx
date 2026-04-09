@@ -59,11 +59,11 @@ export default async function CustomerQuotePage({
         </div>
 
         {/* Quote Document */}
-        <div data-pdf-content className="bg-white rounded-xl shadow-lg border border-slate-200 p-8 space-y-6">
+        <div data-pdf-content className="bg-white rounded-xl shadow-lg border border-slate-200 p-12 space-y-8">
           {/* Quote Header */}
-          <div className="border-b pb-6">
+          <div className="border-b-2 pb-6 mb-6">
             {/* Logo (Top Right) - Always show placeholder or image */}
-            <div className="flex justify-end mb-3">
+            <div className="flex justify-end mb-6">
               {quote.cq_company_logo_url ? (
                 <img src={quote.cq_company_logo_url} alt="Company Logo" className="h-16 object-contain" />
               ) : (
@@ -76,10 +76,10 @@ export default async function CustomerQuotePage({
             {/* Quote Info + Company Details (Side by Side) */}
             <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-xl font-bold text-slate-900">
+                <h1 className="text-xl font-bold text-slate-900 mb-4">
                   QUOTE #{quote.quote_number || 'DRAFT'}
                 </h1>
-                <div className="mt-2 space-y-1">
+                <div className="space-y-2">
                   <p className="text-base text-slate-900">
                     <span className="font-semibold">Client:</span> {quote.customer_name}
                   </p>
