@@ -31,7 +31,7 @@ export function DownloadSummaryPDFButton({ quoteNumber, customerName }: Props) {
           scale: 1, // Reduced for smaller file size
           useCORS: true,
           logging: false,
-          backgroundColor: '#f8fafc',
+          backgroundColor: '#ffffff',
           allowTaint: true,
           foreignObjectRendering: false,
           ignoreElements: (el) => {
@@ -41,13 +41,8 @@ export function DownloadSummaryPDFButton({ quoteNumber, customerName }: Props) {
             const allElements = clonedDoc.querySelectorAll('*');
             allElements.forEach((el: any) => {
               el.style.color = 'rgb(0, 0, 0)';
-              el.style.backgroundColor = 'rgb(248, 250, 252)';
-              el.style.borderColor = 'rgb(203, 213, 225)';
-            });
-            // White backgrounds for card elements
-            const whiteElements = clonedDoc.querySelectorAll('.bg-white');
-            whiteElements.forEach((el: any) => {
               el.style.backgroundColor = 'rgb(255, 255, 255)';
+              el.style.borderColor = 'rgb(203, 213, 225)';
             });
           },
         });
