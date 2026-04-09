@@ -44,7 +44,7 @@ export function LaborSheetEditorWrapper({
           workspaceSlug={workspaceSlug}
           currency={currency}
           defaultLogoUrl={defaultLogoUrl}
-          disableAutoSave={true}
+          disableAutoSave={false}
           editorTitle="Labor Sheet Editor"
           previewTitle="Labor Sheet Preview"
           includeMargins={false}
