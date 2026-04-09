@@ -142,36 +142,36 @@ export default async function QuoteSummaryPage({
         </Link>
       </div>
 
-      <div data-pdf-content className="p-12 bg-white space-y-8">
+      <div data-pdf-content className="p-12 bg-white">
         {/* PDF Header */}
-        <div className="mb-8 pb-6 border-b-2 border-slate-300">
-          <h1 className="text-2xl font-bold text-slate-900 mb-4">
+        <div className="mb-8 pb-4 border-b border-slate-200">
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">
             Quote #{quote.quote_number || 'DRAFT'} — Summary
           </h1>
-          <p className="text-base text-slate-700 mb-2">{quote.customer_name}</p>
-          {quote.job_name && <p className="text-sm text-slate-600 mb-2">{quote.job_name}</p>}
+          <p className="text-base text-slate-700">{quote.customer_name}</p>
+          {quote.job_name && <p className="text-sm text-slate-500">{quote.job_name}</p>}
         </div>
 
-      <div className="space-y-6">
+      <div className="space-y-10">
         {roofAreas.map(area => {
           const areaComps = mainComps.filter(c => c.quote_roof_area_id === area.id);
           return (
-            <div key={area.id} className="mb-6">
-              <h3 className="font-semibold text-slate-900 mb-3">{area.label} — {(area.computed_sqm ?? 0).toFixed(1)} m²</h3>
+            <div key={area.id}>
+              <h3 className="font-semibold text-slate-900 mb-4">{area.label} — {(area.computed_sqm ?? 0).toFixed(1)} m²</h3>
               {areaComps.length > 0 ? (
-                <table className="w-full text-sm border-collapse">
-                  <thead><tr className="text-left text-xs text-slate-500 border-b-2 border-slate-300">
-                    <th className="py-2 font-semibold">Component</th><th className="py-2 text-right font-semibold">Entries</th><th className="py-2 text-right font-semibold">Total Qty</th>
-                    <th className="py-2 text-right font-semibold">Material</th><th className="py-2 text-right font-semibold">Labour</th><th className="py-2 text-right font-semibold">Total</th>
+                <table className="w-full text-sm">
+                  <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-300">
+                    <th className="pb-2 font-medium">Component</th><th className="pb-2 text-right font-medium">Entries</th><th className="pb-2 text-right font-medium">Total Qty</th>
+                    <th className="pb-2 text-right font-medium">Material</th><th className="pb-2 text-right font-medium">Labour</th><th className="pb-2 text-right font-medium">Total</th>
                   </tr></thead>
                   <tbody>{areaComps.map(c => (
-                    <tr key={c.id} className="border-b border-slate-200">
-                      <td className="py-2">{c.name}</td>
-                      <td className="py-2 text-right">{(entries[c.id] ?? []).length}</td>
-                      <td className="py-2 text-right">{(c.final_quantity ?? 0).toFixed(1)} {unitForMeasurement(c.measurement_type)}</td>
-                      <td className="py-2 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
-                      <td className="py-2 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
-                      <td className="py-2 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
+                    <tr key={c.id} className="border-b border-slate-100">
+                      <td className="py-3">{c.name}</td>
+                      <td className="py-3 text-right">{(entries[c.id] ?? []).length}</td>
+                      <td className="py-3 text-right">{(c.final_quantity ?? 0).toFixed(1)} {unitForMeasurement(c.measurement_type)}</td>
+                      <td className="py-3 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
+                      <td className="py-3 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
+                      <td className="py-3 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
                     </tr>
                   ))}</tbody>
                 </table>
@@ -181,34 +181,34 @@ export default async function QuoteSummaryPage({
         })}
 
         {extraComps.length > 0 && (
-          <div className="mb-6">
-            <h3 className="font-semibold text-slate-900 mb-3">Extras</h3>
-            <table className="w-full text-sm border-collapse">
-              <thead><tr className="text-left text-xs text-slate-500 border-b-2 border-slate-300">
-                <th className="py-2 font-semibold">Extra</th><th className="py-2 text-right font-semibold">Entries</th><th className="py-2 text-right font-semibold">Total Qty</th>
-                <th className="py-2 text-right font-semibold">Material</th><th className="py-2 text-right font-semibold">Labour</th><th className="py-2 text-right font-semibold">Total</th>
+          <div>
+            <h3 className="font-semibold text-slate-900 mb-4">Extras</h3>
+            <table className="w-full text-sm">
+              <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-300">
+                <th className="pb-2 font-medium">Extra</th><th className="pb-2 text-right font-medium">Entries</th><th className="pb-2 text-right font-medium">Total Qty</th>
+                <th className="pb-2 text-right font-medium">Material</th><th className="pb-2 text-right font-medium">Labour</th><th className="pb-2 text-right font-medium">Total</th>
               </tr></thead>
               <tbody>{extraComps.map(c => (
-                <tr key={c.id} className="border-b border-slate-200">
-                  <td className="py-2">{c.name}</td>
-                  <td className="py-2 text-right">{(entries[c.id] ?? []).length}</td>
-                  <td className="py-2 text-right">{(c.final_quantity ?? 0).toFixed(1)}</td>
-                  <td className="py-2 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
-                  <td className="py-2 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
-                  <td className="py-2 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
+                <tr key={c.id} className="border-b border-slate-100">
+                  <td className="py-3">{c.name}</td>
+                  <td className="py-3 text-right">{(entries[c.id] ?? []).length}</td>
+                  <td className="py-3 text-right">{(c.final_quantity ?? 0).toFixed(1)}</td>
+                  <td className="py-3 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
+                  <td className="py-3 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
+                  <td className="py-3 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
                 </tr>
               ))}</tbody>
             </table>
           </div>
         )}
 
-        <div className="mt-8 pt-4 border-t-2 border-slate-300 space-y-3">
-          <div className="flex justify-between text-base"><span className="text-slate-900">Total Materials</span><span className="text-slate-900">{formatCurrency(totals.totalMaterials, effectiveCurrency)}</span></div>
-          <div className="flex justify-between text-base"><span className="text-slate-900">Total Labour</span><span className="text-slate-900">{formatCurrency(totals.totalLabour, effectiveCurrency)}</span></div>
-          {(totals.materialMargin > 0 || totals.labourMargin > 0) && <div className="flex justify-between text-base text-slate-600"><span>Margins</span><span>+{formatCurrency(totals.materialMargin + totals.labourMargin, effectiveCurrency)}</span></div>}
-          <div className="flex justify-between text-base border-t-2 border-slate-300 pt-3"><span className="text-slate-900">Subtotal</span><span className="text-slate-900">{formatCurrency(totals.subtotalWithMargins, effectiveCurrency)}</span></div>
-          {totals.tax > 0 && <div className="flex justify-between text-base"><span className="text-slate-900">Tax ({quote.tax_rate}%)</span><span className="text-slate-900">{formatCurrency(totals.tax, effectiveCurrency)}</span></div>}
-          <div className="flex justify-between text-xl font-bold border-t-2 border-slate-300 pt-3"><span className="text-slate-900">Grand Total</span><span className="text-slate-900">{formatCurrency(totals.grandTotal, effectiveCurrency)}</span></div>
+        <div className="pt-6 border-t border-slate-300 space-y-4">
+          <div className="flex justify-between text-base"><span className="text-slate-900">Total Materials</span><span className="text-slate-900 text-right">{formatCurrency(totals.totalMaterials, effectiveCurrency)}</span></div>
+          <div className="flex justify-between text-base"><span className="text-slate-900">Total Labour</span><span className="text-slate-900 text-right">{formatCurrency(totals.totalLabour, effectiveCurrency)}</span></div>
+          {(totals.materialMargin > 0 || totals.labourMargin > 0) && <div className="flex justify-between text-base text-slate-500"><span>Margins</span><span className="text-right">+{formatCurrency(totals.materialMargin + totals.labourMargin, effectiveCurrency)}</span></div>}
+          <div className="flex justify-between text-base border-t border-slate-300 pt-4"><span className="text-slate-900">Subtotal</span><span className="text-slate-900 text-right">{formatCurrency(totals.subtotalWithMargins, effectiveCurrency)}</span></div>
+          {totals.tax > 0 && <div className="flex justify-between text-base"><span className="text-slate-900">Tax ({quote.tax_rate}%)</span><span className="text-slate-900 text-right">{formatCurrency(totals.tax, effectiveCurrency)}</span></div>}
+          <div className="flex justify-between text-xl font-bold border-t border-slate-300 pt-4"><span className="text-slate-900">Grand Total</span><span className="text-slate-900 text-right">{formatCurrency(totals.grandTotal, effectiveCurrency)}</span></div>
         </div>
 
         {/* Files & Documents */}
