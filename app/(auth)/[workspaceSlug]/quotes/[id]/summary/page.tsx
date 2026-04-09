@@ -103,7 +103,8 @@ export default async function QuoteSummaryPage({
         </div>
       </div>
 
-      <div data-pdf-content className="flex gap-3 p-4 bg-slate-50 rounded-full flex-wrap">
+      <div data-pdf-content>
+      <div className="flex gap-3 p-4 bg-slate-50 rounded-full flex-wrap">
         {quote.status === 'draft' && (
           <>
             <ConvertSystemButton quoteId={id} currentSystem={quote.measurement_system} workspaceSlug={workspaceSlug} />
@@ -253,6 +254,7 @@ export default async function QuoteSummaryPage({
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
