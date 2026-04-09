@@ -10,14 +10,18 @@ interface Props {
   quote: QuoteRow;
   roofAreas: QuoteRoofAreaRow[];
   components: QuoteComponentRow[];
+  savedLines: any[];
   workspaceSlug: string;
 }
 
-export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug }: Props) {
+export function LaborSheetPreview({ quote, roofAreas, components, savedLines, workspaceSlug }: Props) {
   const currency = quote.currency || 'NZD';
   const [isGenerating, setIsGenerating] = useState(false);
   
-  // Group components by roof area
+  // Use saved lines if available, otherwise fall back to components
+  const visibleLines = savedLines.filter(l => l.is_visible);
+  
+  // Group components by roof area (for fallback display)
   const componentsByArea = components.reduce((acc, comp) => {
     const areaId = comp.quote_roof_area_id || 'extras';
     if (!acc[areaId]) acc[areaId] = [];
@@ -25,8 +29,10 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
     return acc;
   }, {} as Record<string, QuoteComponentRow[]>);
 
-  // Calculate totals (labor only)
-  const subtotal = components.reduce((sum, c) => sum + (c.labour_cost || 0), 0);
+  // Calculate totals from visible saved lines (if any), otherwise from components
+  const subtotal = visibleLines.length > 0
+    ? visibleLines.filter(l => l.include_in_total).reduce((sum, l) => sum + (l.custom_amount || 0), 0)
+    : components.reduce((sum, c) => sum + (c.labour_cost || 0), 0);
   const tax = subtotal * (quote.tax_rate / 100);
   const total = subtotal + tax;
   
@@ -157,42 +163,30 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
             )}
           </div>
 
-          {/* Roof Areas */}
-          {roofAreas.map(area => {
-            const areaComps = componentsByArea[area.id] || [];
-            if (areaComps.length === 0) return null;
-
-            return (
-              <div key={area.id} className="mb-8">
-                <h2 className="text-lg font-semibold text-black mb-3 border-b border-black pb-2">
-                  {area.label}
-                </h2>
-                <div className="space-y-2">
-                  {areaComps.map(comp => (
-                    <div key={comp.id} className="flex justify-between py-2 border-b border-black">
-                      <div className="flex-1">
-                        <p className="text-sm text-black">
-                          {comp.name} (Labor)
-                        </p>
-                      </div>
-                      <p className="text-sm font-medium text-black">
-                        {formatCurrency(comp.labour_cost || 0, currency)}
+          {/* Line Items */}
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold text-black mb-3 border-b border-black pb-2">
+              Labor Items
+            </h2>
+            <div className="space-y-2">
+              {visibleLines.length > 0 ? (
+                visibleLines.map(line => (
+                  <div key={line.id} className="flex justify-between py-2 border-b border-black">
+                    <div className="flex-1">
+                      <p className="text-sm text-black">
+                        {line.show_units ? line.custom_text : line.custom_text.split('—')[0].trim()}
                       </p>
                     </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Extras */}
-          {componentsByArea['extras'] && componentsByArea['extras'].length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-black mb-3 border-b border-black pb-2">
-                Additional Items
-              </h2>
-              <div className="space-y-2">
-                {componentsByArea['extras'].map(comp => (
+                    {line.show_price && (
+                      <p className="text-sm font-medium text-black">
+                        {formatCurrency(line.custom_amount || 0, currency)}
+                      </p>
+                    )}
+                  </div>
+                ))
+              ) : (
+                // Fallback to components if no saved lines
+                components.map(comp => (
                   <div key={comp.id} className="flex justify-between py-2 border-b border-black">
                     <div className="flex-1">
                       <p className="text-sm text-black">
@@ -203,10 +197,10 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
                       {formatCurrency(comp.labour_cost || 0, currency)}
                     </p>
                   </div>
-                ))}
-              </div>
+                ))
+              )}
             </div>
-          )}
+          </div>
 
           {/* Totals */}
           <div className="border-t border-black pt-6 mt-8">

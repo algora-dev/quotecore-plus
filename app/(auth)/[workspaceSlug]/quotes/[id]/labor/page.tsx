@@ -1,5 +1,5 @@
 import { requireCompanyContext } from '@/app/lib/supabase/server';
-import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents } from '../../actions';
+import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadCustomerQuoteLines } from '../../actions';
 import { LaborSheetPreview } from './LaborSheetPreview';
 
 export default async function LaborSheetPage({
@@ -10,11 +10,12 @@ export default async function LaborSheetPage({
   const { workspaceSlug, id } = await params;
   await requireCompanyContext();
 
-  const [quote, roofAreas, components] = await Promise.all([
+  const [quote, roofAreas, components, savedLines] = await Promise.all([
     loadQuote(id),
     loadQuoteRoofAreas(id),
     loadQuoteComponents(id),
+    loadCustomerQuoteLines(id),
   ]);
 
-  return <LaborSheetPreview quote={quote} roofAreas={roofAreas} components={components} workspaceSlug={workspaceSlug} />;
+  return <LaborSheetPreview quote={quote} roofAreas={roofAreas} components={components} savedLines={savedLines} workspaceSlug={workspaceSlug} />;
 }
