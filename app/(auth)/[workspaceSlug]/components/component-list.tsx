@@ -169,7 +169,12 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1">Type</label>
-                <select name="component_type" required className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
+                <select 
+                  name="component_type" 
+                  required 
+                  defaultValue={filter === 'extra' ? 'extra' : 'main'}
+                  className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                >
                   <option value="main">Main Component</option>
                   <option value="extra">Extra</option>
                 </select>
