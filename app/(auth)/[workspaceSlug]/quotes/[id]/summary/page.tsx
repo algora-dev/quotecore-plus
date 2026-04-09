@@ -6,6 +6,7 @@ import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { unitForMeasurement } from '@/app/lib/types';
 import { ConvertSystemButton } from './ConvertSystemButton';
 import { CurrencySelector } from './CurrencySelector';
+import { DownloadSummaryPDFButton } from './DownloadSummaryPDFButton';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
@@ -91,12 +92,18 @@ export default async function QuoteSummaryPage({
           <h1 className="text-2xl font-semibold text-slate-900 mt-1">{quote.customer_name}</h1>
           {quote.job_name && <p className="text-sm text-slate-500 mt-1">{quote.job_name}</p>}
         </div>
-        <span className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700">
-          {quote.status}
-        </span>
+        <div className="flex items-center gap-3">
+          <DownloadSummaryPDFButton 
+            quoteNumber={quote.quote_number}
+            customerName={quote.customer_name}
+          />
+          <span className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700">
+            {quote.status}
+          </span>
+        </div>
       </div>
 
-      <div className="flex gap-3 p-4 bg-slate-50 rounded-full flex-wrap">
+      <div data-pdf-content className="flex gap-3 p-4 bg-slate-50 rounded-full flex-wrap">
         {quote.status === 'draft' && (
           <>
             <ConvertSystemButton quoteId={id} currentSystem={quote.measurement_system} workspaceSlug={workspaceSlug} />
