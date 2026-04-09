@@ -82,7 +82,7 @@ export default async function QuoteSummaryPage({
     materialCost: c.material_cost, labourCost: c.labour_cost, isRateOverridden: c.is_rate_overridden, isQuantityOverridden: c.is_quantity_overridden,
     isWasteOverridden: c.is_waste_overridden, isPitchOverridden: c.is_pitch_overridden, isCustomerVisible: c.is_customer_visible, pricingUnit: c.pricing_unit ?? undefined,
   }));
-  const totals = computeQuoteTotals(engineComps, { materialMarginPct: quote.material_margin_pct, labourMarginPct: quote.labour_margin_pct, taxRate: quote.tax_rate });
+  const totals = computeQuoteTotals(engineComps, { materialMarginPct: quote.material_margin_percent ?? 0, labourMarginPct: quote.labor_margin_percent ?? 0, taxRate: quote.tax_rate });
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 space-y-6">
