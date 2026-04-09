@@ -43,38 +43,18 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
 
       console.log('[PDF] Found element, preparing for conversion...');
 
-      // Clone element to avoid modifying the original
-      const clone = element.cloneNode(true) as HTMLElement;
+      // Use the element directly - no cloning or color forcing
+      // html2canvas will handle it naturally
       
-      // Recursively force RGB colors on all elements
-      function forceRGBColors(el: HTMLElement) {
-        el.style.color = 'rgb(0, 0, 0)';
-        el.style.backgroundColor = 'rgb(255, 255, 255)';
-        el.style.borderColor = 'rgb(0, 0, 0)';
-        
-        Array.from(el.children).forEach(child => {
-          if (child instanceof HTMLElement) {
-            forceRGBColors(child);
-          }
-        });
-      }
-      
-      forceRGBColors(clone);
-      
-      clone.style.position = 'absolute';
-      clone.style.left = '-9999px';
-      document.body.appendChild(clone);
-
       try {
-        const canvas = await html2canvas(clone, {
-          scale: 1, // Reduced from 2 to 1 for smaller file size
+        const canvas = await html2canvas(element, {
+          scale: 2, // High quality for clear text
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
-          allowTaint: false,
+          allowTaint: true, // Allow rendering of all content
+          foreignObjectRendering: false,
         });
-
-        document.body.removeChild(clone);
 
         console.log('[PDF] Canvas generated, creating PDF...');
 
@@ -115,16 +95,15 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
         const filename = `Labor-Sheet-${quote.quote_number || 'DRAFT'}-${quote.customer_name.replace(/[^a-z0-9]/gi, '_')}.pdf`;
         console.log('[PDF] Downloading:', filename);
         pdf.save(filename);
-      } catch (conversionError) {
-        if (document.body.contains(clone)) {
-          document.body.removeChild(clone);
-        }
-        throw conversionError;
+      } catch (error) {
+        console.error('[PDF] Generation failed:', error);
+        alert(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } finally {
+        setIsGenerating(false);
       }
     } catch (error) {
-      console.error('[PDF] Generation failed:', error);
-      alert(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
+      console.error('[PDF] Setup failed:', error);
+      alert('Failed to prepare PDF. Please try again.');
       setIsGenerating(false);
     }
   };

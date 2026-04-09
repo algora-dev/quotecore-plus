@@ -24,44 +24,18 @@ export function DownloadPDFButton({ quoteNumber, customerName }: Props) {
         return;
       }
 
-      console.log('[PDF] Found element, preparing for conversion...');
-
-      // Clone element to avoid modifying the original
-      const clone = element.cloneNode(true) as HTMLElement;
-      
-      // Recursively force RGB colors on all elements to avoid lab() errors
-      function forceRGBColors(el: HTMLElement) {
-        el.style.color = 'rgb(0, 0, 0)';
-        el.style.backgroundColor = 'rgb(255, 255, 255)';
-        el.style.borderColor = 'rgb(0, 0, 0)';
-        
-        // Process all children
-        Array.from(el.children).forEach(child => {
-          if (child instanceof HTMLElement) {
-            forceRGBColors(child);
-          }
-        });
-      }
-      
-      forceRGBColors(clone);
-      
-      // Temporarily append clone off-screen
-      clone.style.position = 'absolute';
-      clone.style.left = '-9999px';
-      document.body.appendChild(clone);
+      console.log('[PDF] Found element, generating PDF...');
 
       try {
-        // Convert HTML to canvas (reduced quality for smaller file size)
-        const canvas = await html2canvas(clone, {
-          scale: 1, // Reduced from 2 to 1 for smaller file size
+        // Convert HTML to canvas directly (high quality)
+        const canvas = await html2canvas(element, {
+          scale: 2, // High quality for clear text
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
-          allowTaint: false,
+          allowTaint: true,
+          foreignObjectRendering: false,
         });
-
-        // Remove clone
-        document.body.removeChild(clone);
 
         console.log('[PDF] Canvas generated, creating PDF...');
 
@@ -105,17 +79,15 @@ export function DownloadPDFButton({ quoteNumber, customerName }: Props) {
         // Download
         console.log('[PDF] Downloading:', filename);
         pdf.save(filename);
-      } catch (conversionError) {
-        // Remove clone if conversion failed
-        if (document.body.contains(clone)) {
-          document.body.removeChild(clone);
-        }
-        throw conversionError;
+      } catch (error) {
+        console.error('[PDF] Generation failed:', error);
+        alert(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } finally {
+        setIsGenerating(false);
       }
     } catch (error) {
-      console.error('[PDF] Generation failed:', error);
-      alert(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
+      console.error('[PDF] Setup failed:', error);
+      alert('Failed to prepare PDF. Please try again.');
       setIsGenerating(false);
     }
   };

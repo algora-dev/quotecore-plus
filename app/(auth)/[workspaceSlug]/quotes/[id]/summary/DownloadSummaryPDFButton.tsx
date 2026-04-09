@@ -24,45 +24,22 @@ export function DownloadSummaryPDFButton({ quoteNumber, customerName }: Props) {
         return;
       }
 
-      console.log('[PDF] Found element, preparing for conversion...');
-
-      // Clone element to avoid modifying the original
-      const clone = element.cloneNode(true) as HTMLElement;
-      
-      // Remove elements marked for exclusion
-      const excludeElements = clone.querySelectorAll('.data-exclude-pdf');
-      excludeElements.forEach(el => el.remove());
-      
-      // Recursively force RGB colors on all elements
-      function forceRGBColors(el: HTMLElement) {
-        el.style.color = 'rgb(0, 0, 0)';
-        el.style.backgroundColor = 'rgb(248, 250, 252)'; // slate-50
-        el.style.borderColor = 'rgb(0, 0, 0)';
-        
-        Array.from(el.children).forEach(child => {
-          if (child instanceof HTMLElement) {
-            forceRGBColors(child);
-          }
-        });
-      }
-      
-      forceRGBColors(clone);
-      
-      clone.style.position = 'absolute';
-      clone.style.left = '-9999px';
-      document.body.appendChild(clone);
+      console.log('[PDF] Found element, preparing conversion...');
 
       try {
-        // Convert HTML to canvas (reduced quality for smaller file size)
-        const canvas = await html2canvas(clone, {
-          scale: 1, // Reduced from 2 to 1 for smaller file size
+        // Convert HTML to canvas directly (high quality)
+        const canvas = await html2canvas(element, {
+          scale: 2, // High quality for clear text
           useCORS: true,
           logging: false,
           backgroundColor: '#f8fafc',
-          allowTaint: false,
+          allowTaint: true,
+          foreignObjectRendering: false,
+          ignoreElements: (el) => {
+            // Exclude elements marked with data-exclude-pdf class
+            return el.classList?.contains('data-exclude-pdf');
+          },
         });
-
-        document.body.removeChild(clone);
 
         console.log('[PDF] Canvas generated, creating PDF...');
 
@@ -106,16 +83,15 @@ export function DownloadSummaryPDFButton({ quoteNumber, customerName }: Props) {
         // Download
         console.log('[PDF] Downloading:', filename);
         pdf.save(filename);
-      } catch (conversionError) {
-        if (document.body.contains(clone)) {
-          document.body.removeChild(clone);
-        }
-        throw conversionError;
+      } catch (error) {
+        console.error('[PDF] Generation failed:', error);
+        alert(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } finally {
+        setIsGenerating(false);
       }
     } catch (error) {
-      console.error('[PDF] Generation failed:', error);
-      alert(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
+      console.error('[PDF] Setup failed:', error);
+      alert('Failed to prepare PDF. Please try again.');
       setIsGenerating(false);
     }
   };
