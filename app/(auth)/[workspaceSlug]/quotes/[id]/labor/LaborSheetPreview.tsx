@@ -52,11 +52,17 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
           allowTaint: true,
           foreignObjectRendering: false,
           onclone: (clonedDoc) => {
+            // Only force colors on elements, don't force backgrounds everywhere
             const allElements = clonedDoc.querySelectorAll('*');
             allElements.forEach((el: any) => {
+              // Force text color to black
               el.style.color = 'rgb(0, 0, 0)';
-              el.style.backgroundColor = 'rgb(255, 255, 255)';
+              // Force border colors
               el.style.borderColor = 'rgb(203, 213, 225)';
+              // Only force white background on the root container
+              if (el.hasAttribute('data-pdf-content')) {
+                el.style.backgroundColor = 'rgb(255, 255, 255)';
+              }
             });
           },
         });
