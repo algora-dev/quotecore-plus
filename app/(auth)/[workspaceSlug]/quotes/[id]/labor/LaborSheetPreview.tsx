@@ -51,20 +51,6 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
           backgroundColor: '#ffffff',
           allowTaint: true,
           foreignObjectRendering: false,
-          onclone: (clonedDoc) => {
-            // Only force colors on elements, don't force backgrounds everywhere
-            const allElements = clonedDoc.querySelectorAll('*');
-            allElements.forEach((el: any) => {
-              // Force text color to black
-              el.style.color = 'rgb(0, 0, 0)';
-              // Force border colors
-              el.style.borderColor = 'rgb(203, 213, 225)';
-              // Only force white background on the root container
-              if (el.hasAttribute('data-pdf-content')) {
-                el.style.backgroundColor = 'rgb(255, 255, 255)';
-              }
-            });
-          },
         });
 
         console.log('[PDF] Canvas generated, creating PDF...');
@@ -140,18 +126,18 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
         </div>
 
         {/* Document */}
-        <div data-pdf-content className="bg-white rounded-xl border border-slate-200 p-12 shadow-sm">
+        <div data-pdf-content className="bg-white rounded-xl border border-black p-12 shadow-sm">
           {/* Title */}
-          <div className="border-b-2 pb-6 mb-8">
-            <h1 className="text-3xl font-bold text-slate-900 mb-4">LABOR SHEET</h1>
-            <p className="text-lg text-slate-700 mb-2">
+          <div className="border-b-2 border-black pb-6 mb-8">
+            <h1 className="text-3xl font-bold text-black mb-4">LABOR SHEET</h1>
+            <p className="text-lg text-black mb-2">
               Quote #{quote.quote_number || 'DRAFT'}
             </p>
-            <p className="text-base text-slate-900 mb-2">
+            <p className="text-base text-black mb-2">
               <span className="font-semibold">Client:</span> {quote.customer_name}
             </p>
             {quote.job_name && (
-              <p className="text-base text-slate-900">
+              <p className="text-base text-black">
                 <span className="font-semibold">Job:</span> {quote.job_name}
               </p>
             )}
@@ -164,18 +150,18 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
 
             return (
               <div key={area.id} className="mb-8">
-                <h2 className="text-lg font-semibold text-slate-900 mb-3 border-b pb-2">
+                <h2 className="text-lg font-semibold text-black mb-3 border-b border-black pb-2">
                   {area.label}
                 </h2>
                 <div className="space-y-2">
                   {areaComps.map(comp => (
-                    <div key={comp.id} className="flex justify-between py-2 border-b border-slate-100">
+                    <div key={comp.id} className="flex justify-between py-2 border-b border-black">
                       <div className="flex-1">
-                        <p className="text-sm text-slate-900">
+                        <p className="text-sm text-black">
                           {comp.name} (Labor)
                         </p>
                       </div>
-                      <p className="text-sm font-medium text-slate-900">
+                      <p className="text-sm font-medium text-black">
                         {formatCurrency(comp.labour_cost || 0, currency)}
                       </p>
                     </div>
@@ -188,18 +174,18 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
           {/* Extras */}
           {componentsByArea['extras'] && componentsByArea['extras'].length > 0 && (
             <div className="mb-8">
-              <h2 className="text-lg font-semibold text-slate-900 mb-3 border-b pb-2">
+              <h2 className="text-lg font-semibold text-black mb-3 border-b border-black pb-2">
                 Additional Items
               </h2>
               <div className="space-y-2">
                 {componentsByArea['extras'].map(comp => (
-                  <div key={comp.id} className="flex justify-between py-2 border-b border-slate-100">
+                  <div key={comp.id} className="flex justify-between py-2 border-b border-black">
                     <div className="flex-1">
-                      <p className="text-sm text-slate-900">
+                      <p className="text-sm text-black">
                         {comp.name} (Labor)
                       </p>
                     </div>
-                    <p className="text-sm font-medium text-slate-900">
+                    <p className="text-sm font-medium text-black">
                       {formatCurrency(comp.labour_cost || 0, currency)}
                     </p>
                   </div>
@@ -209,19 +195,19 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
           )}
 
           {/* Totals */}
-          <div className="border-t pt-6 mt-8">
+          <div className="border-t border-black pt-6 mt-8">
             <div className="space-y-2">
               <div className="flex justify-between text-base">
-                <span className="text-slate-600">Subtotal (Labor)</span>
-                <span className="font-medium text-slate-900">{formatCurrency(subtotal, currency)}</span>
+                <span className="text-black">Subtotal (Labor)</span>
+                <span className="font-medium text-black">{formatCurrency(subtotal, currency)}</span>
               </div>
               <div className="flex justify-between text-base">
-                <span className="text-slate-600">Tax ({quote.tax_rate}%)</span>
-                <span className="font-medium text-slate-900">{formatCurrency(tax, currency)}</span>
+                <span className="text-black">Tax ({quote.tax_rate}%)</span>
+                <span className="font-medium text-black">{formatCurrency(tax, currency)}</span>
               </div>
-              <div className="flex justify-between text-xl font-bold border-t pt-3 mt-3">
-                <span className="text-slate-900">Total</span>
-                <span className="text-slate-900">{formatCurrency(total, currency)}</span>
+              <div className="flex justify-between text-xl font-bold border-t border-black pt-3 mt-3">
+                <span className="text-black">Total</span>
+                <span className="text-black">{formatCurrency(total, currency)}</span>
               </div>
             </div>
           </div>
