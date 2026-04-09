@@ -1,7 +1,10 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow } from '@/app/lib/types';
 import { formatCurrency } from '@/app/lib/currency/currencies';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface Props {
   quote: QuoteRow;
@@ -12,6 +15,7 @@ interface Props {
 
 export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug }: Props) {
   const currency = quote.currency || 'NZD';
+  const [isGenerating, setIsGenerating] = useState(false);
   
   // Group components by roof area
   const componentsByArea = components.reduce((acc, comp) => {
@@ -25,22 +29,67 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
   const subtotal = components.reduce((sum, c) => sum + (c.labour_cost || 0), 0);
   const tax = subtotal * (quote.tax_rate / 100);
   const total = subtotal + tax;
+  
+  const handleDownloadPDF = async () => {
+    setIsGenerating(true);
+    try {
+      const element = document.querySelector('[data-pdf-content]') as HTMLElement;
+      if (!element) {
+        alert('Could not find labor sheet content to export');
+        return;
+      }
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      });
+
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      const pdf = new jsPDF({
+        orientation: imgHeight > imgWidth ? 'portrait' : 'landscape',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+
+      const filename = `Labor-Sheet-${quote.quote_number || 'DRAFT'}-${quote.customer_name.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+      pdf.save(filename);
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-4xl mx-auto p-8">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <Link
             href={`/${workspaceSlug}/quotes/${quote.id}/summary`}
             className="text-sm text-slate-600 hover:text-slate-900"
           >
             ← Back to Summary
           </Link>
+          <button
+            onClick={handleDownloadPDF}
+            disabled={isGenerating}
+            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isGenerating ? 'Generating PDF...' : 'Download PDF'}
+          </button>
         </div>
 
         {/* Document */}
-        <div className="bg-white rounded-xl border border-slate-200 p-12 shadow-sm">
+        <div data-pdf-content className="bg-white rounded-xl border border-slate-200 p-12 shadow-sm">
           {/* Title */}
           <div className="border-b pb-6 mb-6">
             <h1 className="text-3xl font-bold text-slate-900">LABOR SHEET</h1>
