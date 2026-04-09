@@ -120,27 +120,27 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto p-8">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <Link
             href={`/${workspaceSlug}/quotes/${quote.id}/summary`}
-            className="text-sm text-slate-600 hover:text-slate-900"
+            className="text-sm text-black hover:text-black"
           >
             ← Back to Summary
           </Link>
           <button
             onClick={handleDownloadPDF}
             disabled={isGenerating}
-            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-black transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isGenerating ? 'Generating PDF...' : 'Download PDF'}
           </button>
         </div>
 
         {/* Document */}
-        <div data-pdf-content className="bg-white rounded-xl border border-black p-12 shadow-sm">
+        <div data-pdf-content className="bg-white rounded-xl border border-black p-12">
           {/* Title */}
           <div className="border-b-2 border-black pb-6 mb-8">
             <h1 className="text-3xl font-bold text-black mb-4">LABOR SHEET</h1>
