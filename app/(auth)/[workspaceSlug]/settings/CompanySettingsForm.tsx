@@ -5,6 +5,9 @@ import { CURRENCY_GROUPS } from '@/app/lib/currency/currencies';
 
 interface Props {
   companyId: string;
+  userId: string;
+  currentCompanyName: string;
+  currentUserName: string;
   currentCurrency: string;
   currentLanguage: string;
   currentMeasurement: 'metric' | 'imperial';
@@ -14,12 +17,17 @@ interface Props {
 
 export function CompanySettingsForm({
   companyId,
+  userId,
+  currentCompanyName,
+  currentUserName,
   currentCurrency,
   currentLanguage,
   currentMeasurement,
   currentMaterialMargin,
   currentLaborMargin,
 }: Props) {
+  const [companyName, setCompanyName] = useState(currentCompanyName);
+  const [userName, setUserName] = useState(currentUserName);
   const [currency, setCurrency] = useState(currentCurrency);
   const [language, setLanguage] = useState(currentLanguage);
   const [measurement, setMeasurement] = useState(currentMeasurement);
@@ -31,6 +39,17 @@ export function CompanySettingsForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaveMessage(null);
+
+    // Validate names
+    if (!companyName.trim()) {
+      setSaveMessage({ type: 'error', text: 'Company name is required' });
+      return;
+    }
+
+    if (!userName.trim()) {
+      setSaveMessage({ type: 'error', text: 'User name is required' });
+      return;
+    }
 
     // Validate margins
     const matMargin = parseFloat(materialMargin);
@@ -48,7 +67,9 @@ export function CompanySettingsForm({
 
     startTransition(async () => {
       try {
-        await updateCompanySettings(companyId, {
+        await updateCompanySettings(companyId, userId, {
+          companyName: companyName.trim(),
+          userName: userName.trim(),
           currency,
           language,
           measurement,
@@ -67,6 +88,51 @@ export function CompanySettingsForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Account Information */}
+      <div className="border-b border-gray-200 pb-8">
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">👤 Account Information</h2>
+        
+        <div className="space-y-6">
+          {/* Company Name */}
+          <div className="space-y-2">
+            <label className="block">
+              <span className="text-sm font-semibold text-gray-900">Company Name</span>
+              <p className="text-xs text-gray-600 mt-1 mb-2">
+                Your company name appears on quotes and templates
+              </p>
+              <input
+                type="text"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                placeholder="Your Company Ltd"
+                disabled={isPending}
+                required
+              />
+            </label>
+          </div>
+
+          {/* User Name */}
+          <div className="space-y-2">
+            <label className="block">
+              <span className="text-sm font-semibold text-gray-900">Your Name</span>
+              <p className="text-xs text-gray-600 mt-1 mb-2">
+                Your full name for your account profile
+              </p>
+              <input
+                type="text"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                placeholder="John Smith"
+                disabled={isPending}
+                required
+              />
+            </label>
+          </div>
+        </div>
+      </div>
+
       {/* Currency Selection */}
       <div className="space-y-3">
         <label className="block">

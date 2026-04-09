@@ -22,6 +22,13 @@ export default async function CompanySettingsPage({
     notFound();
   }
 
+  // Load user profile
+  const { data: user } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', profile.id)
+    .single();
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto">
@@ -37,6 +44,9 @@ export default async function CompanySettingsPage({
           {/* Settings Form */}
           <CompanySettingsForm
             companyId={company.id}
+            userId={profile.id}
+            currentCompanyName={company.name}
+            currentUserName={user?.full_name || ''}
             currentCurrency={company.default_currency}
             currentLanguage={company.default_language}
             currentMeasurement={company.default_measurement_system}
