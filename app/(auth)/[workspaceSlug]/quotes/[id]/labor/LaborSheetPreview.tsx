@@ -32,10 +32,10 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
         {/* Header */}
         <div className="mb-6">
           <Link
-            href={`/${workspaceSlug}/quotes/${quote.id}`}
+            href={`/${workspaceSlug}/quotes/${quote.id}/summary`}
             className="text-sm text-slate-600 hover:text-slate-900"
           >
-            ← Back to Quote
+            ← Back to Summary
           </Link>
         </div>
 

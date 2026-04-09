@@ -52,6 +52,19 @@ export default async function QuoteSummaryPage({
       url: urlData.publicUrl,
     };
   }) || [];
+  
+  // Add canvas image if it exists
+  if (quote.takeoff_canvas_url) {
+    allFiles.push({
+      id: 'canvas-image',
+      file_type: 'canvas' as any,
+      file_name: 'Digital Takeoff Canvas',
+      file_size: 0, // Unknown size
+      storage_path: '',
+      uploaded_at: quote.updated_at,
+      url: quote.takeoff_canvas_url,
+    });
+  }
 
 
 
@@ -207,7 +220,8 @@ export default async function QuoteSummaryPage({
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-700 truncate">{file.file_name}</p>
                     <p className="text-xs text-slate-500">
-                      {file.file_type === 'plan' ? 'Roof Plan' : 'Supporting File'} • {(file.file_size / 1024 / 1024).toFixed(2)} MB
+                      {file.file_type === 'plan' ? 'Roof Plan' : file.file_type === 'canvas' ? 'Digital Takeoff' : 'Supporting File'}
+                      {file.file_size > 0 && ` • ${(file.file_size / 1024 / 1024).toFixed(2)} MB`}
                     </p>
                   </div>
                   <a
