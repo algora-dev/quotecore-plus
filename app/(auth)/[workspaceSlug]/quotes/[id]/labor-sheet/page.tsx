@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
-import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadCustomerQuoteLines, loadCustomerQuoteTemplates } from '../../actions';
+import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadCustomerQuoteTemplates } from '../../actions';
+import { loadLaborSheetLines } from './actions';
 
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { LaborSheetEditorWrapper } from './LaborSheetEditorWrapper';
@@ -14,8 +15,8 @@ export default async function LaborSheetPage({
   const quote = await loadQuote(id);
   const roofAreas = await loadQuoteRoofAreas(id);
   const components = await loadQuoteComponents(id);
-  // Load saved lines for labor sheet (so edits persist)
-  const savedLines = await loadCustomerQuoteLines(id);
+  // Load saved lines for labor sheet (separate from customer quote lines)
+  const savedLines = await loadLaborSheetLines(id);
   const templates = await loadCustomerQuoteTemplates();
   
   const supabase = await createSupabaseServerClient();

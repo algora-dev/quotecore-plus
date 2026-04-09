@@ -24,6 +24,7 @@ interface Props {
   editorTitle?: string; // Custom title (default: "Customer Quote Editor")
   previewTitle?: string; // Custom preview title (default: "Customer Quote Preview")
   includeMargins?: boolean; // Whether to include margins in line amounts (default: true)
+  customSaveAction?: (quoteId: string, lines: any[]) => Promise<void>; // Custom save function (for labor sheet)
 }
 
 interface QuoteLine {
@@ -40,7 +41,7 @@ interface QuoteLine {
   sortOrder: number;
 }
 
-export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true }: Props) {
+export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true, customSaveAction }: Props) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [isDirty, setIsDirty] = useState(false);
@@ -245,22 +246,24 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
+      const lineData = lines.map(line => ({
+        id: line.id,
+        lineType: line.type,
+        componentId: line.componentId,
+        text: line.text,
+        amount: line.amount,
+        showPrice: line.showPrice,
+        showUnits: line.showUnits,
+        sortOrder: line.sortOrder,
+        isVisible: line.isVisible,
+        includeInTotal: line.includeInTotal,
+      }));
+
+      // Use custom save action if provided (for labor sheet), otherwise use default
+      const saveLineAction = customSaveAction || saveCustomerQuoteLines;
+
       await Promise.all([
-        saveCustomerQuoteLines(
-          quote.id,
-          lines.map(line => ({
-            id: line.id,
-            lineType: line.type,
-            componentId: line.componentId,
-            text: line.text,
-            amount: line.amount,
-            showPrice: line.showPrice,
-            showUnits: line.showUnits,
-            sortOrder: line.sortOrder,
-            isVisible: line.isVisible,
-            includeInTotal: line.includeInTotal,
-          }))
-        ),
+        saveLineAction(quote.id, lineData),
         saveCustomerQuoteBranding(quote.id, {
           companyName,
           companyAddress,
@@ -278,7 +281,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     } finally {
       setSaving(false);
     }
-  }, [quote.id, lines, companyName, companyAddress, companyPhone, companyEmail, companyLogoUrl, footerText]);
+  }, [quote.id, lines, companyName, companyAddress, companyPhone, companyEmail, companyLogoUrl, footerText, customSaveAction]);
 
   // Auto-save effect (10 seconds after last change, only if dirty and enabled)
   // Increased delay to prevent race conditions with rapid checkbox changes

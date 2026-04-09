@@ -1,5 +1,6 @@
 import { requireCompanyContext } from '@/app/lib/supabase/server';
-import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadCustomerQuoteLines } from '../../actions';
+import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents } from '../../actions';
+import { loadLaborSheetLines } from '../labor-sheet/actions';
 import { LaborSheetPreview } from './LaborSheetPreview';
 
 export default async function LaborSheetPage({
@@ -14,7 +15,7 @@ export default async function LaborSheetPage({
     loadQuote(id),
     loadQuoteRoofAreas(id),
     loadQuoteComponents(id),
-    loadCustomerQuoteLines(id),
+    loadLaborSheetLines(id),
   ]);
 
   return <LaborSheetPreview quote={quote} roofAreas={roofAreas} components={components} savedLines={savedLines} workspaceSlug={workspaceSlug} />;

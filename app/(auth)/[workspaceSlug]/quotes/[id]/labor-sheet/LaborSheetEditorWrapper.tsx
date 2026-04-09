@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
 import { CustomerQuoteEditor } from '../customer-edit/CustomerQuoteEditor';
+import { saveLaborSheetLines } from './actions';
 
 interface Props {
   quote: QuoteRow;
@@ -48,6 +49,7 @@ export function LaborSheetEditorWrapper({
           editorTitle="Labor Sheet Editor"
           previewTitle="Labor Sheet Preview"
           includeMargins={false}
+          customSaveAction={saveLaborSheetLines}
         />
   );
 }
