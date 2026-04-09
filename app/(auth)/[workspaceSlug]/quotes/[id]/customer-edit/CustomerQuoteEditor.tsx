@@ -23,6 +23,7 @@ interface Props {
   disableAutoSave?: boolean; // For labor sheet - no persistence
   editorTitle?: string; // Custom title (default: "Customer Quote Editor")
   previewTitle?: string; // Custom preview title (default: "Customer Quote Preview")
+  includeMargins?: boolean; // Whether to include margins in line amounts (default: true)
 }
 
 interface QuoteLine {
@@ -39,7 +40,7 @@ interface QuoteLine {
   sortOrder: number;
 }
 
-export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview" }: Props) {
+export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true }: Props) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [isDirty, setIsDirty] = useState(false);
@@ -70,13 +71,13 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           const component = components.find(c => c.id === saved.quote_component_id);
           if (!component) return null; // Component was deleted
           
-          // Calculate amount WITH margins applied
+          // Calculate amount WITH margins applied (if enabled)
           const baseMaterialCost = component.material_cost || 0;
           const baseLabourCost = component.labour_cost || 0;
-          const materialMargin = quote.material_margin_enabled && quote.material_margin_percent 
+          const materialMargin = includeMargins && quote.material_margin_enabled && quote.material_margin_percent 
             ? baseMaterialCost * (quote.material_margin_percent / 100) 
             : 0;
-          const labourMargin = quote.labor_margin_enabled && quote.labor_margin_percent 
+          const labourMargin = includeMargins && quote.labor_margin_enabled && quote.labor_margin_percent 
             ? baseLabourCost * (quote.labor_margin_percent / 100) 
             : 0;
           const amountWithMargins = baseMaterialCost + baseLabourCost + materialMargin + labourMargin;
@@ -113,16 +114,16 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       }).filter(Boolean) as QuoteLine[];
       setLines(loadedLines);
     } else {
-      // Initialize from components (first time) - include margins
+      // Initialize from components (first time) - include margins if enabled
       const initialLines: QuoteLine[] = components
         .filter(c => c.is_customer_visible)
         .map((c, idx) => {
           const baseMaterialCost = c.material_cost || 0;
           const baseLabourCost = c.labour_cost || 0;
-          const materialMargin = quote.material_margin_enabled && quote.material_margin_percent 
+          const materialMargin = includeMargins && quote.material_margin_enabled && quote.material_margin_percent 
             ? baseMaterialCost * (quote.material_margin_percent / 100) 
             : 0;
-          const labourMargin = quote.labor_margin_enabled && quote.labor_margin_percent 
+          const labourMargin = includeMargins && quote.labor_margin_enabled && quote.labor_margin_percent 
             ? baseLabourCost * (quote.labor_margin_percent / 100) 
             : 0;
           const amountWithMargins = baseMaterialCost + baseLabourCost + materialMargin + labourMargin;

@@ -47,6 +47,7 @@ export function LaborSheetEditorWrapper({
           disableAutoSave={true}
           editorTitle="Labor Sheet Editor"
           previewTitle="Labor Sheet Preview"
+          includeMargins={false}
         />
   );
 }
