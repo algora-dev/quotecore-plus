@@ -2,6 +2,7 @@ import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/sup
 import { loadQuote, loadCustomerQuoteLines } from '../../actions';
 import Link from 'next/link';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
+import { DownloadPDFButton } from './DownloadPDFButton';
 
 export default async function CustomerQuotePage({
   params,
@@ -43,16 +44,22 @@ export default async function CustomerQuotePage({
           >
             ← Back to Summary
           </Link>
-          <Link
-            href={`/${workspaceSlug}/quotes/${id}/customer-edit`}
-            className="px-3 py-1.5 text-sm font-medium text-purple-600 border border-purple-200 rounded-full hover:bg-purple-50"
-          >
-            Edit Customer Quote
-          </Link>
+          <div className="flex items-center gap-3">
+            <DownloadPDFButton 
+              quoteNumber={quote.quote_number}
+              customerName={quote.customer_name}
+            />
+            <Link
+              href={`/${workspaceSlug}/quotes/${id}/customer-edit`}
+              className="px-3 py-1.5 text-sm font-medium text-purple-600 border border-purple-200 rounded-full hover:bg-purple-50"
+            >
+              Edit Customer Quote
+            </Link>
+          </div>
         </div>
 
         {/* Quote Document */}
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-8 space-y-6">
+        <div data-pdf-content className="bg-white rounded-xl shadow-lg border border-slate-200 p-8 space-y-6">
           {/* Quote Header */}
           <div className="border-b pb-6">
             {/* Logo (Top Right) - Always show placeholder or image */}
