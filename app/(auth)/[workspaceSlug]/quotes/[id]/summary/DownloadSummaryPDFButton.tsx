@@ -66,11 +66,7 @@ export function DownloadSummaryPDFButton({ quoteNumber, customerName }: Props) {
 
         console.log('[PDF] Canvas generated, creating PDF...');
 
-        // Calculate PDF dimensions
-        const imgWidth = 210; // A4 width in mm
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        
-        // Create PDF
+        // Create PDF with proper margins
         const pdf = new jsPDF({
           orientation: 'portrait',
           unit: 'mm',
@@ -79,19 +75,29 @@ export function DownloadSummaryPDFButton({ quoteNumber, customerName }: Props) {
 
         const imgData = canvas.toDataURL('image/png');
         
+        // Add margins (15mm on all sides)
+        const margin = 15;
+        const pageWidth = 210; // A4 width
+        const pageHeight = 297; // A4 height
+        const printableWidth = pageWidth - (margin * 2);
+        const printableHeight = pageHeight - (margin * 2);
+        
+        // Calculate scaled dimensions to fit within printable area
+        const imgWidth = printableWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
         // If content is taller than one page, add multiple pages
         let heightLeft = imgHeight;
         let position = 0;
-        const pageHeight = 297; // A4 height in mm
 
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        pdf.addImage(imgData, 'PNG', margin, margin + position, imgWidth, imgHeight);
+        heightLeft -= printableHeight;
 
         while (heightLeft > 0) {
           position = heightLeft - imgHeight;
           pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
+          pdf.addImage(imgData, 'PNG', margin, margin + position, imgWidth, imgHeight);
+          heightLeft -= printableHeight;
         }
 
         // Generate filename
