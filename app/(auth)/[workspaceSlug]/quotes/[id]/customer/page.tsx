@@ -174,15 +174,6 @@ export default async function CustomerQuotePage({
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 justify-end">
-          <button className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50">
-            Download PDF
-          </button>
-          <button className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-80 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">
-            Email Quote
-          </button>
-        </div>
       </div>
     </div>
   );

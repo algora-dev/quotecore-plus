@@ -35,16 +35,23 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
     try {
       const element = document.querySelector('[data-pdf-content]') as HTMLElement;
       if (!element) {
-        alert('Could not find labor sheet content to export');
+        console.error('[PDF] Could not find element with data-pdf-content attribute');
+        alert('Could not find labor sheet content to export. Please refresh and try again.');
+        setIsGenerating(false);
         return;
       }
+
+      console.log('[PDF] Found element, generating canvas...');
 
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        logging: false,
+        logging: true,
         backgroundColor: '#ffffff',
+        allowTaint: false,
       });
+
+      console.log('[PDF] Canvas generated, creating PDF...');
 
       const imgWidth = 210;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -59,10 +66,11 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
 
       const filename = `Labor-Sheet-${quote.quote_number || 'DRAFT'}-${quote.customer_name.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+      console.log('[PDF] Downloading:', filename);
       pdf.save(filename);
     } catch (error) {
-      console.error('PDF generation failed:', error);
-      alert('Failed to generate PDF. Please try again.');
+      console.error('[PDF] Generation failed:', error);
+      alert(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsGenerating(false);
     }
@@ -176,18 +184,6 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="mt-6 flex gap-3">
-          <Link
-            href={`/${workspaceSlug}/quotes/${quote.id}/labor-sheet`}
-            className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 bg-white pill-shimmer"
-          >
-            Edit Labor Sheet
-          </Link>
-          <button className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">
-            📄 Download PDF
-          </button>
-        </div>
       </div>
     </div>
   );

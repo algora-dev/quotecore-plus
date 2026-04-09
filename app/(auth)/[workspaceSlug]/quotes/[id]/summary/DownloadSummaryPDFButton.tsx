@@ -18,17 +18,24 @@ export function DownloadSummaryPDFButton({ quoteNumber, customerName }: Props) {
       // Find the summary content container
       const element = document.querySelector('[data-pdf-content]') as HTMLElement;
       if (!element) {
-        alert('Could not find summary content to export');
+        console.error('[PDF] Could not find element with data-pdf-content attribute');
+        alert('Could not find summary content to export. Please refresh and try again.');
+        setIsGenerating(false);
         return;
       }
+
+      console.log('[PDF] Found element, generating canvas...');
 
       // Convert HTML to canvas
       const canvas = await html2canvas(element, {
         scale: 2, // Higher quality
         useCORS: true,
-        logging: false,
+        logging: true,
         backgroundColor: '#f8fafc', // slate-50
+        allowTaint: false,
       });
+
+      console.log('[PDF] Canvas generated, creating PDF...');
 
       // Calculate PDF dimensions
       const imgWidth = 210; // A4 width in mm
@@ -62,10 +69,11 @@ export function DownloadSummaryPDFButton({ quoteNumber, customerName }: Props) {
       const filename = `Master-Quote-${quoteNumber || 'DRAFT'}-${customerName.replace(/[^a-z0-9]/gi, '_')}.pdf`;
       
       // Download
+      console.log('[PDF] Downloading:', filename);
       pdf.save(filename);
     } catch (error) {
-      console.error('PDF generation failed:', error);
-      alert('Failed to generate PDF. Please try again.');
+      console.error('[PDF] Generation failed:', error);
+      alert(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsGenerating(false);
     }
