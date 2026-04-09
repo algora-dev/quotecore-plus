@@ -28,8 +28,22 @@ export function DownloadPDFButton({ quoteNumber, customerName }: Props) {
 
       // Clone element to avoid modifying the original
       const clone = element.cloneNode(true) as HTMLElement;
-      clone.style.color = 'rgb(0, 0, 0)'; // Force black text
-      clone.style.backgroundColor = 'rgb(255, 255, 255)'; // Force white background
+      
+      // Recursively force RGB colors on all elements to avoid lab() errors
+      function forceRGBColors(el: HTMLElement) {
+        el.style.color = 'rgb(0, 0, 0)';
+        el.style.backgroundColor = 'rgb(255, 255, 255)';
+        el.style.borderColor = 'rgb(0, 0, 0)';
+        
+        // Process all children
+        Array.from(el.children).forEach(child => {
+          if (child instanceof HTMLElement) {
+            forceRGBColors(child);
+          }
+        });
+      }
+      
+      forceRGBColors(clone);
       
       // Temporarily append clone off-screen
       clone.style.position = 'absolute';

@@ -28,8 +28,22 @@ export function DownloadSummaryPDFButton({ quoteNumber, customerName }: Props) {
 
       // Clone element to avoid modifying the original
       const clone = element.cloneNode(true) as HTMLElement;
-      clone.style.color = 'rgb(0, 0, 0)';
-      clone.style.backgroundColor = 'rgb(248, 250, 252)'; // slate-50
+      
+      // Recursively force RGB colors on all elements
+      function forceRGBColors(el: HTMLElement) {
+        el.style.color = 'rgb(0, 0, 0)';
+        el.style.backgroundColor = 'rgb(248, 250, 252)'; // slate-50
+        el.style.borderColor = 'rgb(0, 0, 0)';
+        
+        Array.from(el.children).forEach(child => {
+          if (child instanceof HTMLElement) {
+            forceRGBColors(child);
+          }
+        });
+      }
+      
+      forceRGBColors(clone);
+      
       clone.style.position = 'absolute';
       clone.style.left = '-9999px';
       document.body.appendChild(clone);
