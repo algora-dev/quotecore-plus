@@ -103,8 +103,7 @@ export default async function QuoteSummaryPage({
         </div>
       </div>
 
-      <div data-pdf-content>
-      <div className="flex gap-3 p-4 bg-slate-50 rounded-full flex-wrap">
+      <div className="flex gap-3 p-4 bg-slate-50 rounded-full flex-wrap data-exclude-pdf">
         {quote.status === 'draft' && (
           <>
             <ConvertSystemButton quoteId={id} currentSystem={quote.measurement_system} workspaceSlug={workspaceSlug} />
@@ -142,6 +141,16 @@ export default async function QuoteSummaryPage({
           Labor Sheet
         </Link>
       </div>
+
+      <div data-pdf-content>
+        {/* PDF Header */}
+        <div className="mb-6 pb-4 border-b-2 border-slate-300">
+          <h1 className="text-2xl font-bold text-slate-900">
+            Quote #{quote.quote_number || 'DRAFT'} — Summary
+          </h1>
+          <p className="text-base text-slate-700 mt-1">{quote.customer_name}</p>
+          {quote.job_name && <p className="text-sm text-slate-600">{quote.job_name}</p>}
+        </div>
 
       <div className="space-y-6">
         {roofAreas.map(area => {
@@ -204,7 +213,7 @@ export default async function QuoteSummaryPage({
 
         {/* Files & Documents */}
         {allFiles.length > 0 && (
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 data-exclude-pdf">
             <h3 className="font-semibold text-slate-900 mb-3">Files & Documents</h3>
             <div className="space-y-2">
               {allFiles.map(file => (

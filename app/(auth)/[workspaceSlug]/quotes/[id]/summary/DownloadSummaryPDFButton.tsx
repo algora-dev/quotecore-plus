@@ -29,6 +29,10 @@ export function DownloadSummaryPDFButton({ quoteNumber, customerName }: Props) {
       // Clone element to avoid modifying the original
       const clone = element.cloneNode(true) as HTMLElement;
       
+      // Remove elements marked for exclusion
+      const excludeElements = clone.querySelectorAll('.data-exclude-pdf');
+      excludeElements.forEach(el => el.remove());
+      
       // Recursively force RGB colors on all elements
       function forceRGBColors(el: HTMLElement) {
         el.style.color = 'rgb(0, 0, 0)';
@@ -49,9 +53,9 @@ export function DownloadSummaryPDFButton({ quoteNumber, customerName }: Props) {
       document.body.appendChild(clone);
 
       try {
-        // Convert HTML to canvas
+        // Convert HTML to canvas (reduced quality for smaller file size)
         const canvas = await html2canvas(clone, {
-          scale: 2,
+          scale: 1, // Reduced from 2 to 1 for smaller file size
           useCORS: true,
           logging: false,
           backgroundColor: '#f8fafc',

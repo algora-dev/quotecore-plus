@@ -51,9 +51,9 @@ export function DownloadPDFButton({ quoteNumber, customerName }: Props) {
       document.body.appendChild(clone);
 
       try {
-        // Convert HTML to canvas
+        // Convert HTML to canvas (reduced quality for smaller file size)
         const canvas = await html2canvas(clone, {
-          scale: 2,
+          scale: 1, // Reduced from 2 to 1 for smaller file size
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',

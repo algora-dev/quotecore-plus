@@ -67,7 +67,7 @@ export function LaborSheetPreview({ quote, roofAreas, components, workspaceSlug 
 
       try {
         const canvas = await html2canvas(clone, {
-          scale: 2,
+          scale: 1, // Reduced from 2 to 1 for smaller file size
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
