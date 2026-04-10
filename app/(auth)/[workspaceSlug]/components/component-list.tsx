@@ -234,6 +234,21 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
                 </select>
               </div>
             )}
+            <div className="border-t border-slate-200 pt-3 mt-3">
+              <h4 className="text-xs font-semibold text-slate-700 mb-2">Material Orders</h4>
+              <div className="flex items-center gap-2 mb-2">
+                <input type="checkbox" id="eligible-orders" name="eligible_for_orders" defaultChecked className="rounded" />
+                <label htmlFor="eligible-orders" className="text-xs text-slate-700">Include in material orders</label>
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Default Flashing (Optional)</label>
+                <select name="default_flashing_id" className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
+                  <option value="">None</option>
+                  {/* Flashings will be loaded here in Slice 4 */}
+                </select>
+                <p className="text-xs text-slate-400 mt-1">Assign a flashing drawing to use in material order forms</p>
+              </div>
+            </div>
             <div className="flex gap-2 pt-2">
               <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50">
                 {saving ? 'Saving...' : 'Create'}
@@ -305,6 +320,21 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
                       </select>
                     </div>
                   )}
+                  <div className="border-t border-slate-200 pt-3 mt-3">
+                    <h4 className="text-xs font-semibold text-slate-700 mb-2">Material Orders</h4>
+                    <div className="flex items-center gap-2 mb-2">
+                      <input type="checkbox" id={`eligible-orders-${comp.id}`} name="eligible_for_orders" defaultChecked={comp.eligible_for_orders ?? true} className="rounded" />
+                      <label htmlFor={`eligible-orders-${comp.id}`} className="text-xs text-slate-700">Include in material orders</label>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">Default Flashing (Optional)</label>
+                      <select name="default_flashing_id" defaultValue={comp.default_flashing_id ?? ''} className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
+                        <option value="">None</option>
+                        {/* Flashings will be loaded here in Slice 4 */}
+                      </select>
+                      <p className="text-xs text-slate-400 mt-1">Assign a flashing drawing to use in material order forms</p>
+                    </div>
+                  </div>
                   <div className="flex gap-2 pt-2">
                     <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50">
                       {saving ? 'Saving...' : 'Save'}
