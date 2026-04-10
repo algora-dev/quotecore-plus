@@ -307,6 +307,13 @@ export async function confirmQuoteAndRedirect(id: string, workspaceSlug: string)
   redirect(`/${workspaceSlug}/quotes/${id}/summary`);
 }
 
+export async function saveConfirmedQuoteAndRedirect(id: string, workspaceSlug: string) {
+  'use server';
+  // Quote is already confirmed, just redirect to summary
+  const { redirect } = await import('next/navigation');
+  redirect(`/${workspaceSlug}/quotes/${id}/summary`);
+}
+
 export async function convertQuoteMeasurementSystem(id: string, newSystem: 'metric' | 'imperial') {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();

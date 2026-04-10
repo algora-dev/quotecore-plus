@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation';
-import { confirmQuoteAndRedirect } from '../actions';
+import { confirmQuoteAndRedirect, saveConfirmedQuoteAndRedirect } from '../actions';
 import type { QuoteStatus } from '@/app/lib/types';
 
 interface Props {
@@ -9,16 +8,10 @@ interface Props {
 }
 
 export function ConfirmQuoteButton({ quoteId, workspaceSlug, quoteStatus }: Props) {
-  // If quote is already confirmed, just redirect to summary (don't try to confirm again)
-  async function handleSaveConfirmed() {
-    'use server';
-    redirect(`/${workspaceSlug}/quotes/${quoteId}/summary`);
-  }
-
-  // If draft, confirm then redirect
+  // If draft, confirm then redirect; if already confirmed, just redirect
   const action = quoteStatus === 'draft' 
     ? confirmQuoteAndRedirect.bind(null, quoteId, workspaceSlug)
-    : handleSaveConfirmed;
+    : saveConfirmedQuoteAndRedirect.bind(null, quoteId, workspaceSlug);
 
   const buttonText = quoteStatus === 'draft' ? 'Confirm Quote →' : 'Save Changes →';
 
