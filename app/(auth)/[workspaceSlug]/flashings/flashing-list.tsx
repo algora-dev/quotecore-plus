@@ -41,7 +41,7 @@ export function FlashingList({ initialFlashings }: { initialFlashings: FlashingL
       // Form will be unmounted when upload form closes, no need to reset
     } catch (err: any) {
       console.error('Failed to create flashing:', err);
-      alert(`Error: ${err.message}`);
+      alert(`Error creating flashing: ${err.message || 'Unknown error'}\n\nCheck browser console for details.`);
     } finally {
       setSaving(false);
     }

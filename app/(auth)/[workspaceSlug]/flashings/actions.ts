@@ -8,9 +8,11 @@ export async function loadFlashingLibrary() {
   try {
     profile = await requireCompanyContext();
   } catch (err) {
-    console.error('Failed to get company context:', err);
+    console.error('[loadFlashingLibrary] Failed to get company context:', err);
     throw new Error('Account setup incomplete. Please ensure you are logged in and have a company workspace.');
   }
+  
+  console.log('[loadFlashingLibrary] Loading flashings for company:', profile.company_id);
   
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -20,11 +22,13 @@ export async function loadFlashingLibrary() {
     .order('name');
   
   if (error) {
-    console.error('Database error loading flashings:', error);
+    console.error('[loadFlashingLibrary] Database error:', error);
+    console.error('[loadFlashingLibrary] Error details:', JSON.stringify(error, null, 2));
     throw new Error(`Failed to load flashings: ${error.message}`);
   }
   
-  return data;
+  console.log('[loadFlashingLibrary] Successfully loaded', data?.length || 0, 'flashings');
+  return data || [];
 }
 
 export async function createFlashing(input: FlashingLibraryInsert) {
