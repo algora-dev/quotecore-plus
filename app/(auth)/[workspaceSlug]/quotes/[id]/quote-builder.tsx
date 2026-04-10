@@ -774,7 +774,7 @@ export function QuoteBuilder({
             >
               ← Back to Extras
             </button>
-            <ConfirmQuoteButton quoteId={quote.id} workspaceSlug={workspaceSlug} />
+            <ConfirmQuoteButton quoteId={quote.id} workspaceSlug={workspaceSlug} quoteStatus={quote.status} />
           </div>
         </div>
       )}
