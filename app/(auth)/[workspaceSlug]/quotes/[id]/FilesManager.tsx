@@ -163,7 +163,7 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
       </button>
 
       {expanded && (
-        <div className="mt-3 mr-3 space-y-6 bg-white p-4 rounded-full border border-slate-200">
+        <div className="mt-3 mr-3 space-y-6 bg-white p-4 rounded-lg border border-slate-200">
           {/* Roof Plan Section */}
           <div>
             <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">Roof Plan</h3>
@@ -173,7 +173,7 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
 
             {planUrl && planName ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-full border border-slate-200">
+                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
                   <div className="flex-shrink-0">
                     {planName.toLowerCase().endsWith('.pdf') ? (
                       <svg className="w-12 h-12 text-red-500" fill="currentColor" viewBox="0 0 20 20">
@@ -277,7 +277,7 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
                     {supportingFiles.map(file => (
                       <div
                         key={file.id}
-                        className="flex items-center gap-3 p-3 bg-slate-50 rounded-full border border-slate-200"
+                        className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200"
                       >
                         <div className="flex-shrink-0">
                           {file.fileName.toLowerCase().endsWith('.pdf') ? (
