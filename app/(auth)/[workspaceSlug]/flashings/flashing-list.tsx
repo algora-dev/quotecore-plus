@@ -38,7 +38,7 @@ export function FlashingList({ initialFlashings }: { initialFlashings: FlashingL
 
       setFlashings([...flashings, newFlashing]);
       setShowUploadForm(false);
-      e.currentTarget.reset();
+      // Form will be unmounted when upload form closes, no need to reset
     } catch (err: any) {
       console.error('Failed to create flashing:', err);
       alert(`Error: ${err.message}`);
