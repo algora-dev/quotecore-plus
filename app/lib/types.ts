@@ -8,6 +8,27 @@ export type PitchType = 'none' | 'rafter' | 'valley_hip';
 export type QuoteStatus = 'draft' | 'confirmed' | 'sent' | 'accepted' | 'declined' | 'expired' | 'archived';
 export type LineType = 'component' | 'custom' | 'roof_area_header';
 
+// Flashing Library Types
+export interface FlashingLibraryRow {
+  id: string;
+  company_id: string;
+  name: string;
+  description: string | null;
+  image_url: string;
+  canvas_data: any | null;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FlashingLibraryInsert {
+  name: string;
+  description?: string | null;
+  image_url: string;
+  canvas_data?: any | null;
+  is_default?: boolean;
+}
+
 export function unitForMeasurement(mt: MeasurementType): string {
   switch (mt) {
     case 'area': return 'm²';

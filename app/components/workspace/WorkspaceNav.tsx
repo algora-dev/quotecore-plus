@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-type NavKey = 'overview' | 'components' | 'templates' | 'quotes';
+type NavKey = 'overview' | 'components' | 'flashings' | 'templates' | 'quotes';
 
 const makeNavItems = (slug: string) => {
   const base = `/${slug}`;
   return [
     { key: 'overview' as NavKey, href: base, label: 'Overview' },
     { key: 'components' as NavKey, href: `${base}/components`, label: 'Components' },
+    { key: 'flashings' as NavKey, href: `${base}/flashings`, label: 'Flashings' },
     { key: 'templates' as NavKey, href: `${base}/templates`, label: 'Templates' },
     { key: 'quotes' as NavKey, href: `${base}/quotes`, label: 'Quotes' },
   ];
