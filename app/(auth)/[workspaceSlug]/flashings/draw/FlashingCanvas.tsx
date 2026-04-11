@@ -291,7 +291,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
       {/* Canvas */}
       <div className="border border-slate-300 rounded-xl overflow-hidden inline-block">
-        <canvas ref={canvasRef} />
+        <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} />
       </div>
 
       {/* Instructions */}
