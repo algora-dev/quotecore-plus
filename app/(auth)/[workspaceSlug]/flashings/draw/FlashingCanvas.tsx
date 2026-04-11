@@ -2,24 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Canvas, Line, Circle, IText, Rect, Path } from 'fabric';
+import { Canvas, Line, Circle, IText, Rect, Group } from 'fabric';
 import { createFlashingFromCanvas } from '../actions';
 
 type DrawMode = 'none' | 'line' | 'text' | 'edit';
-type AngleType = 'right' | 'custom';
 
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
-const SCALE = 1; // 1 pixel = 1mm
-
-interface AnnotatedPoint {
-  x: number;
-  y: number;
-  angleType: AngleType;
-  angleValue: number;
-  marker?: any;
-  annotation?: any;
-}
+const SCALE = 0.5; // 2 pixels = 1mm (doubled visual size)
 
 export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const router = useRouter();
@@ -28,9 +18,9 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   
   const [drawMode, setDrawMode] = useState<DrawMode>('none');
   const [linePoints, setLinePoints] = useState<{ x: number; y: number }[]>([]);
-  const [annotatedPoints, setAnnotatedPoints] = useState<AnnotatedPoint[]>([]);
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
   const [interiorAngle, setInteriorAngle] = useState(true);
+  const [exteriorLength, setExteriorLength] = useState(true);
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
   
   const [name, setName] = useState('');
@@ -76,6 +66,30 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     return Math.abs(angle);
   };
 
+  // Calculate angle bisector direction for text placement
+  const getAngleBisector = (
+    p1: { x: number; y: number },
+    p2: { x: number; y: number },
+    p3: { x: number; y: number }
+  ): { x: number; y: number } => {
+    // Normalize vectors
+    const v1 = { x: p1.x - p2.x, y: p1.y - p2.y };
+    const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
+    const len1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
+    const len2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
+    
+    const norm1 = { x: v1.x / len1, y: v1.y / len1 };
+    const norm2 = { x: v2.x / len2, y: v2.y / len2 };
+    
+    // Bisector is the average of normalized vectors
+    const bisector = {
+      x: (norm1.x + norm2.x) / 2,
+      y: (norm1.y + norm2.y) / 2
+    };
+    
+    return bisector;
+  };
+
   // Initialize canvas
   useEffect(() => {
     if (!canvasRef.current || fabricRef.current) return;
@@ -84,6 +98,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       width: CANVAS_WIDTH,
       height: CANVAS_HEIGHT,
       backgroundColor: '#ffffff',
+      selection: false, // Disable group selection to prevent accidental moves
     });
 
     fabricRef.current = canvas;
@@ -97,8 +112,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     // Mouse down - handle clicks
     canvas.on('mouse:down', (opt) => {
       const pointer = canvas.getPointer(opt.e);
-
-      console.log('[Canvas] Click at:', pointer, 'Mode:', drawModeRef.current);
 
       // Text mode - add text immediately
       if (drawModeRef.current === 'text') {
@@ -118,14 +131,12 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
       // Edit mode - select point to edit annotation
       if (drawModeRef.current === 'edit') {
-        // Find if user clicked near a point
         const currentPoints = linePointsRef.current;
         for (let i = 0; i < currentPoints.length; i++) {
           const pt = currentPoints[i];
           const dist = Math.sqrt(Math.pow(pointer.x - pt.x, 2) + Math.pow(pointer.y - pt.y, 2));
-          if (dist < 10) {
+          if (dist < 15) {
             setSelectedPoint(i);
-            console.log('[Edit] Selected point:', i);
             return;
           }
         }
@@ -136,8 +147,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       if (drawModeRef.current === 'line') {
         const currentPoints = linePointsRef.current;
         const newPoint = { x: pointer.x, y: pointer.y };
-
-        console.log('[Canvas] Line point added:', newPoint, 'Total points:', currentPoints.length + 1);
 
         // Add marker
         const marker = new Circle({
@@ -155,8 +164,9 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         canvas.add(marker);
 
         if (currentPoints.length > 0) {
-          // Draw line from previous point
           const prevPoint = currentPoints[currentPoints.length - 1];
+          
+          // Draw line
           const line = new Line([prevPoint.x, prevPoint.y, newPoint.x, newPoint.y], {
             stroke: '#000000',
             strokeWidth: 2,
@@ -164,6 +174,35 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             evented: false,
           });
           canvas.add(line);
+
+          // Add length label on the line
+          const length = Math.round(calculateDistance(prevPoint, newPoint));
+          const midX = (prevPoint.x + newPoint.x) / 2;
+          const midY = (prevPoint.y + newPoint.y) / 2;
+          
+          // Calculate perpendicular offset for label (exterior/interior)
+          const dx = newPoint.x - prevPoint.x;
+          const dy = newPoint.y - prevPoint.y;
+          const lineLength = Math.sqrt(dx * dx + dy * dy);
+          const perpX = -dy / lineLength;
+          const perpY = dx / lineLength;
+          
+          const offset = exteriorLength ? 15 : -15;
+          const labelX = midX + perpX * offset;
+          const labelY = midY + perpY * offset;
+          
+          const lengthLabel = new IText(`${length}mm`, {
+            left: labelX,
+            top: labelY,
+            fontSize: 14,
+            fill: '#0066cc',
+            fontFamily: 'Arial',
+            originX: 'center',
+            originY: 'center',
+            selectable: true,
+            evented: true,
+          });
+          canvas.add(lengthLabel);
         }
 
         setLinePoints([...currentPoints, newPoint]);
@@ -174,7 +213,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     return () => {
       canvas.dispose();
     };
-  }, []);
+  }, [exteriorLength]);
 
   // Update cursor based on draw mode
   useEffect(() => {
@@ -210,7 +249,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       fabricRef.current.renderAll();
     }
     setLinePoints([]);
-    setAnnotatedPoints([]);
     setSelectedPoint(null);
   };
 
@@ -221,12 +259,14 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
   const handleAddRightAngle = () => {
     if (selectedPoint === null || selectedPoint >= linePoints.length) return;
+    if (selectedPoint === 0 && linePoints.length < 2) return;
+    if (selectedPoint === linePoints.length - 1 && linePoints.length < 2) return;
     
     const pt = linePoints[selectedPoint];
     
     // Draw right angle symbol (small square)
     if (fabricRef.current) {
-      const size = 10;
+      const size = 12;
       const square = new Rect({
         left: pt.x - size / 2,
         top: pt.y - size / 2,
@@ -234,7 +274,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         height: size,
         fill: 'transparent',
         stroke: '#000',
-        strokeWidth: 1,
+        strokeWidth: 1.5,
         selectable: false,
         evented: false,
       });
@@ -250,35 +290,45 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     
     const pt = linePoints[selectedPoint];
     const prevPt = linePoints[selectedPoint - 1];
-    const nextPt = linePoints[selectedPoint + 1] || cursorPos;
+    const nextPt = linePoints[selectedPoint + 1];
     
     if (!nextPt) return;
     
     const angle = Math.round(calculateAngle(prevPt, pt, nextPt, interiorAngle));
     
-    // Draw arc symbol + angle text
+    // Calculate bisector for text placement
+    const bisector = getAngleBisector(prevPt, pt, nextPt);
+    
+    // Draw arc symbol + angle text on bisector
     if (fabricRef.current) {
-      // Simple arc representation (you can enhance this)
-      const arcRadius = 20;
+      const arcRadius = 25;
+      
+      // Simplified arc (quarter circle)
       const arc = new Circle({
         left: pt.x,
         top: pt.y,
         radius: arcRadius,
         fill: 'transparent',
         stroke: '#FF6B35',
-        strokeWidth: 1,
+        strokeWidth: 1.5,
         originX: 'center',
         originY: 'center',
         selectable: false,
         evented: false,
+        startAngle: 0,
+        endAngle: Math.PI / 2,
       });
       
+      // Position text on bisector, interior side
+      const textOffset = arcRadius + 15;
       const text = new IText(`${angle}°`, {
-        left: pt.x + arcRadius + 5,
-        top: pt.y - 10,
-        fontSize: 14,
+        left: pt.x + bisector.x * textOffset,
+        top: pt.y + bisector.y * textOffset,
+        fontSize: 16,
         fill: '#000',
         fontFamily: 'Arial',
+        originX: 'center',
+        originY: 'center',
         editable: true,
       });
       
@@ -301,7 +351,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     try {
       const canvas = fabricRef.current;
 
-      // Export canvas as PNG
       const dataUrl = canvas.toDataURL({
         format: 'png',
         quality: 1,
@@ -335,7 +384,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Draw Flashing</h1>
         <p className="text-sm text-slate-500 mt-1">
-          Draw to scale: 1 pixel = 1mm (max 800mm x 600mm)
+          Draw to scale: 2 pixels = 1mm (max 400mm x 300mm)
         </p>
       </div>
 
@@ -402,7 +451,14 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           onClick={() => setInteriorAngle(!interiorAngle)}
           className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50"
         >
-          {interiorAngle ? '📐 Interior' : '📐 Exterior'}
+          Angle: {interiorAngle ? '📐 Interior' : '📐 Exterior'}
+        </button>
+
+        <button
+          onClick={() => setExteriorLength(!exteriorLength)}
+          className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50"
+        >
+          Length: {exteriorLength ? '↗️ Exterior' : '↙️ Interior'}
         </button>
         
         {selectedPoint !== null && (
@@ -454,23 +510,23 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         </div>
       </div>
 
-      {/* Live Measurements */}
-      {measurements && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg inline-block">
-          <div className="flex gap-6 text-sm font-mono">
-            <div>
-              <span className="text-blue-600 font-semibold">Length:</span>{' '}
-              <span className="text-blue-900 font-bold">{measurements.length}mm</span>
-            </div>
-            {measurements.angle !== null && (
-              <div>
-                <span className="text-blue-600 font-semibold">Angle:</span>{' '}
-                <span className="text-blue-900 font-bold">{measurements.angle}°</span>
-              </div>
-            )}
+      {/* Live Measurements - Always visible, fixed position */}
+      <div className="mb-4 p-4 bg-blue-50 border-2 border-blue-300 rounded-lg inline-block min-w-[400px]">
+        <div className="flex gap-8 text-lg font-mono">
+          <div>
+            <span className="text-blue-700 font-semibold">Length:</span>{' '}
+            <span className="text-blue-900 font-bold text-2xl">
+              {measurements?.length || '—'}mm
+            </span>
+          </div>
+          <div>
+            <span className="text-blue-700 font-semibold">Angle:</span>{' '}
+            <span className="text-blue-900 font-bold text-2xl">
+              {measurements?.angle !== null && measurements?.angle !== undefined ? `${measurements.angle}°` : '—'}
+            </span>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Canvas */}
       <div className="border-2 border-slate-300 rounded-xl overflow-hidden inline-block shadow-lg">
@@ -482,19 +538,22 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         <h3 className="text-sm font-semibold text-blue-900 mb-2">✨ How to Use:</h3>
         <ul className="text-sm text-blue-800 space-y-1">
           <li>
-            <strong>📏 Line Tool:</strong> Click points to draw. Watch live length/angle measurements above canvas.
+            <strong>📏 Line Tool:</strong> Click points to draw. Watch live length/angle above canvas (2x bigger now!).
           </li>
           <li>
-            <strong>✏️ Edit Tool:</strong> Click a point (orange dot), then choose Right Angle or Custom Angle.
+            <strong>✏️ Edit Tool:</strong> Click an orange point, then choose Right Angle or Custom Angle.
           </li>
           <li>
-            <strong>📐 Interior/Exterior:</strong> Toggle to change which side of angle is measured.
+            <strong>Angle placement:</strong> Custom angles now appear on the angle bisector (middle of the angle).
           </li>
           <li>
-            <strong>📝 Text Tool:</strong> Add labels, measurements, or notes anywhere.
+            <strong>Length labels:</strong> Automatically added to each line segment.
           </li>
           <li>
-            <strong>Scale:</strong> 1 pixel = 1mm (draw actual dimensions!)
+            <strong>Toggle sides:</strong> Switch interior/exterior for angles and lengths independently.
+          </li>
+          <li>
+            <strong>Scale:</strong> 2 pixels = 1mm (drawings appear 2x larger now!)
           </li>
         </ul>
       </div>
