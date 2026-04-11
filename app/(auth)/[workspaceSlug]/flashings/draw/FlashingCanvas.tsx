@@ -52,15 +52,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
   const [selectedMeasurement, setSelectedMeasurement] = useState<string | null>(null);
   
-  const [history, setHistory] = useState<CanvasState[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-  const historyIndexRef = useRef(-1);
-  const historyRef = useRef<CanvasState[]>([]);
-  
-  useEffect(() => {
-    historyIndexRef.current = historyIndex;
-    historyRef.current = history;
-  }, [historyIndex, history]);
+  // History removed - was causing issues with canvas state sync
   
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -82,65 +74,11 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     measurementsRef.current = measurements;
   }, [measurements]);
 
-  // Save state to history - STABLE, no dependencies
-  const saveToHistory = useCallback(() => {
-    if (!fabricRef.current) return;
-    
-    const state: CanvasState = {
-      canvasJSON: JSON.stringify(fabricRef.current.toJSON()),
-      measurements: measurementsRef.current.map(m => ({ ...m })),
-    };
-    
-    const currentIndex = historyIndexRef.current;
-    const currentHistory = historyRef.current;
-    const newHistory = currentHistory.slice(0, currentIndex + 1);
-    newHistory.push(state);
-    const trimmed = newHistory.length > 10 ? newHistory.slice(-10) : newHistory;
-    
-    setHistory(trimmed);
-    setHistoryIndex(trimmed.length - 1);
-  }, []); // NO dependencies - uses only refs
-
-  // Undo
-  const handleUndo = () => {
-    if (historyIndex <= 0) return;
-    
-    const prevState = history[historyIndex - 1];
-    restoreState(prevState);
-    setHistoryIndex(historyIndex - 1);
-  };
-
-  // Redo
-  const handleRedo = () => {
-    if (historyIndex >= history.length - 1) return;
-    
-    const nextState = history[historyIndex + 1];
-    restoreState(nextState);
-    setHistoryIndex(historyIndex + 1);
-  };
-
-  // Restore state
-  const restoreState = (state: CanvasState) => {
-    if (!fabricRef.current) return;
-    
-    fabricRef.current.loadFromJSON(JSON.parse(state.canvasJSON), () => {
-      fabricRef.current?.renderAll();
-    });
-    
-    setMeasurements(state.measurements.map(m => ({ ...m })));
-  };
-
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
-        if (e.key === 'z' && !e.shiftKey) {
-          e.preventDefault();
-          handleUndo();
-        } else if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) {
-          e.preventDefault();
-          handleRedo();
-        } else if (e.key === 'a') {
+        if (e.key === 'a') {
           e.preventDefault();
           handleSelectAll();
         }
@@ -149,7 +87,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [historyIndex, history]);
+  }, []);
 
   // Select All - proper implementation
   const handleSelectAll = () => {
@@ -254,7 +192,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         canvas.setActiveObject(text);
         canvas.renderAll();
         setDrawMode('none');
-        setTimeout(saveToHistory, 100);
         return;
       }
 
@@ -412,7 +349,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           setMeasurements(prev => [...prev, ...newMeasurements]);
         }
         canvas.requestRenderAll();
-        setTimeout(saveToHistory, 100);
       }
     });
 
@@ -476,8 +412,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     setLinePoints([]);
     setMeasurements([]);
     setSelectedPoint(null);
-    setHistory([]);
-    setHistoryIndex(-1);
   };
 
   const handleFinishLine = () => {
@@ -504,7 +438,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     ));
     
     canvas.renderAll();
-    setTimeout(saveToHistory, 100);
   };
 
   const handleEditMeasurementValue = (id: string) => {
@@ -531,7 +464,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     ));
 
     canvas.renderAll();
-    setTimeout(saveToHistory, 100);
   };
 
   const handleResetMeasurement = (id: string) => {
@@ -552,7 +484,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     ));
 
     canvas.renderAll();
-    setTimeout(saveToHistory, 100);
   };
 
   const handleToggleAngleType = (id: string) => {
@@ -576,7 +507,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     ));
 
     canvas.renderAll();
-    setTimeout(saveToHistory, 100);
   };
 
   const handleSelectMeasurement = (id: string) => {
@@ -634,7 +564,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     ));
 
     canvas.renderAll();
-    setTimeout(saveToHistory, 100);
   };
 
   const handleAddRightAngle = () => {
@@ -660,7 +589,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       });
       fabricRef.current.add(square);
       fabricRef.current.renderAll();
-      setTimeout(saveToHistory, 100);
     }
     
     setSelectedPoint(null);
@@ -728,7 +656,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       }]);
       
       fabricRef.current.renderAll();
-      setTimeout(saveToHistory, 100);
     }
     
     setSelectedPoint(null);
@@ -851,22 +778,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         
         <div className="h-8 w-px bg-slate-300" />
         
-        <button
-          onClick={handleUndo}
-          disabled={historyIndex <= 0}
-          title="Undo (Ctrl+Z)"
-          className="px-3 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-30"
-        >
-          Undo
-        </button>
-        <button
-          onClick={handleRedo}
-          disabled={historyIndex >= history.length - 1}
-          title="Redo (Ctrl+Y)"
-          className="px-3 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-30"
-        >
-          Redo
-        </button>
         <button
           onClick={handleSelectAll}
           title="Select All (Ctrl+A)"
@@ -1016,11 +927,12 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         <ul className="text-sm text-blue-800 space-y-1 grid grid-cols-2 gap-x-6">
           <li><strong>Line Tool:</strong> Click points to draw. Angles appear automatically after 3rd point.</li>
           <li><strong>Text Tool:</strong> Click to add text labels anywhere on the canvas.</li>
-          <li><strong>Undo/Redo:</strong> Ctrl+Z / Ctrl+Y (10 steps history)</li>
           <li><strong>Select All:</strong> Ctrl+A to select and move entire drawing.</li>
-          <li><strong>Sidebar:</strong> Measurements appear as: Length → Angle → Length → Angle...</li>
+          <li><strong>Sidebar:</strong> Click any measurement to highlight it on canvas.</li>
+          <li><strong>Measurements:</strong> Appear as Length → Angle → Length → Angle...</li>
           <li><strong>Toggle Angle:</strong> Switch between interior/exterior angles in sidebar.</li>
           <li><strong>Hide/Show:</strong> Toggle visibility of individual measurements.</li>
+          <li><strong>Edit Values:</strong> Change any measurement value manually.</li>
         </ul>
       </div>
     </div>
