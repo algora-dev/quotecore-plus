@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Canvas, Line, Circle, IText, Rect, Object as FabricObject } from 'fabric';
+import { Canvas, Line, Circle, IText, Rect } from 'fabric';
 import { createFlashingFromCanvas } from '../actions';
 
 type DrawMode = 'none' | 'line' | 'text' | 'edit';
@@ -22,6 +22,29 @@ interface DrawingPoint {
   marker: any;
 }
 
+interface MeasurementItem {
+  id: string;
+  type: 'length' | 'angle';
+  value: number;
+  originalValue: number;
+  visible: boolean;
+  canvasObjects: any[];
+  // For angles
+  interiorValue?: number;
+  exteriorValue?: number;
+  showInterior?: boolean;
+  // For linking to points
+  fromIndex?: number;
+  toIndex?: number;
+  pointIndex?: number;
+}
+
+interface CanvasState {
+  objects: any[];
+  measurements: MeasurementItem[];
+  linePoints: DrawingPoint[];
+}
+
 export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -30,38 +53,129 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const [canvasSize, setCanvasSize] = useState<CanvasSize>('medium');
   const [drawMode, setDrawMode] = useState<DrawMode>('none');
   const [linePoints, setLinePoints] = useState<DrawingPoint[]>([]);
+  const [measurements, setMeasurements] = useState<MeasurementItem[]>([]);
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
   const [interiorAngle, setInteriorAngle] = useState(true);
   const [exteriorLength, setExteriorLength] = useState(true);
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
-  const [selectedLabel, setSelectedLabel] = useState<any>(null);
+  const [selectedMeasurement, setSelectedMeasurement] = useState<string | null>(null);
+  
+  const [history, setHistory] = useState<CanvasState[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Refs to avoid stale closure issues
+  // Refs
   const drawModeRef = useRef<DrawMode>('none');
   const linePointsRef = useRef<DrawingPoint[]>([]);
-  const interiorAngleRef = useRef(true);
-  const canvasSizeRef = useRef<CanvasSize>('medium');
+  const measurementsRef = useRef<MeasurementItem[]>([]);
 
-  // Update refs when state changes
   useEffect(() => {
     drawModeRef.current = drawMode;
     linePointsRef.current = linePoints;
-    interiorAngleRef.current = interiorAngle;
-    canvasSizeRef.current = canvasSize;
-  }, [drawMode, linePoints, interiorAngle, canvasSize]);
+    measurementsRef.current = measurements;
+  }, [drawMode, linePoints, measurements]);
 
-  // Calculate distance in mm
+  // Save state to history
+  const saveToHistory = () => {
+    if (!fabricRef.current) return;
+    
+    const state: CanvasState = {
+      objects: fabricRef.current.toJSON(),
+      measurements: JSON.parse(JSON.stringify(measurements)),
+      linePoints: JSON.parse(JSON.stringify(linePoints)),
+    };
+    
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push(state);
+    
+    // Keep only last 10 states
+    if (newHistory.length > 10) {
+      newHistory.shift();
+    } else {
+      setHistoryIndex(historyIndex + 1);
+    }
+    
+    setHistory(newHistory);
+  };
+
+  // Undo
+  const handleUndo = () => {
+    if (historyIndex <= 0) return;
+    
+    const prevState = history[historyIndex - 1];
+    restoreState(prevState);
+    setHistoryIndex(historyIndex - 1);
+  };
+
+  // Redo
+  const handleRedo = () => {
+    if (historyIndex >= history.length - 1) return;
+    
+    const nextState = history[historyIndex + 1];
+    restoreState(nextState);
+    setHistoryIndex(historyIndex + 1);
+  };
+
+  // Restore state
+  const restoreState = (state: CanvasState) => {
+    if (!fabricRef.current) return;
+    
+    fabricRef.current.clear();
+    fabricRef.current.loadFromJSON(state.objects, () => {
+      fabricRef.current?.renderAll();
+    });
+    
+    setMeasurements(state.measurements);
+    setLinePoints(state.linePoints);
+  };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'z' && !e.shiftKey) {
+          e.preventDefault();
+          handleUndo();
+        } else if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) {
+          e.preventDefault();
+          handleRedo();
+        } else if (e.key === 'a') {
+          e.preventDefault();
+          handleSelectAll();
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [historyIndex, history]);
+
+  // Select All
+  const handleSelectAll = () => {
+    if (!fabricRef.current) return;
+    
+    // Enable selection temporarily
+    fabricRef.current.selection = true;
+    
+    // Select all objects
+    const allObjects = fabricRef.current.getObjects();
+    allObjects.forEach((obj: any) => {
+      obj.set('selectable', true);
+    });
+    
+    fabricRef.current.renderAll();
+    alert('All objects are now selectable. Click and drag to move them together.');
+  };
+
   const calculateDistance = (p1: { x: number; y: number }, p2: { x: number; y: number }): number => {
     const dx = p2.x - p1.x;
     const dy = p2.y - p1.y;
     return Math.sqrt(dx * dx + dy * dy) * SCALE;
   };
 
-  // Calculate angle between two segments in degrees
   const calculateAngle = (
     p1: { x: number; y: number },
     p2: { x: number; y: number },
@@ -81,7 +195,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     return Math.abs(angle);
   };
 
-  // Calculate angle bisector direction for text placement
   const getAngleBisector = (
     p1: { x: number; y: number },
     p2: { x: number; y: number },
@@ -95,22 +208,18 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     const norm1 = { x: v1.x / len1, y: v1.y / len1 };
     const norm2 = { x: v2.x / len2, y: v2.y / len2 };
     
-    const bisector = {
+    return {
       x: (norm1.x + norm2.x) / 2,
       y: (norm1.y + norm2.y) / 2
     };
-    
-    return bisector;
   };
 
   // Initialize canvas
   useEffect(() => {
     if (!canvasRef.current) return;
     
-    // Dispose existing canvas if changing size
     if (fabricRef.current) {
       fabricRef.current.dispose();
-      fabricRef.current = null;
     }
 
     const size = CANVAS_SIZES[canvasSize];
@@ -118,39 +227,19 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       width: size.width,
       height: size.height,
       backgroundColor: '#ffffff',
-      selection: false,
+      selection: true, // Enable group selection
     });
 
     fabricRef.current = canvas;
 
-    // Mouse move - track cursor
     canvas.on('mouse:move', (opt) => {
       const pointer = canvas.getPointer(opt.e);
       setCursorPos({ x: pointer.x, y: pointer.y });
     });
 
-    // Selection event - for selecting labels
-    canvas.on('selection:created', (e) => {
-      if (e.selected && e.selected[0]) {
-        setSelectedLabel(e.selected[0]);
-      }
-    });
-
-    canvas.on('selection:updated', (e) => {
-      if (e.selected && e.selected[0]) {
-        setSelectedLabel(e.selected[0]);
-      }
-    });
-
-    canvas.on('selection:cleared', () => {
-      setSelectedLabel(null);
-    });
-
-    // Mouse down - handle clicks
     canvas.on('mouse:down', (opt) => {
       const pointer = canvas.getPointer(opt.e);
 
-      // Text mode
       if (drawModeRef.current === 'text') {
         const text = new IText('Text', {
           left: pointer.x,
@@ -163,32 +252,27 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         canvas.setActiveObject(text);
         canvas.renderAll();
         setDrawMode('none');
+        saveToHistory();
         return;
       }
 
-      // Edit mode - select point or enable dragging
       if (drawModeRef.current === 'edit') {
         const currentPoints = linePointsRef.current;
-        
-        // Check if clicking near a point
         for (let i = 0; i < currentPoints.length; i++) {
           const pt = currentPoints[i];
           const dist = Math.sqrt(Math.pow(pointer.x - pt.x, 2) + Math.pow(pointer.y - pt.y, 2));
           if (dist < 15) {
             setSelectedPoint(i);
-            console.log('[Edit] Selected point:', i);
             return;
           }
         }
         return;
       }
 
-      // Line mode - add points
       if (drawModeRef.current === 'line') {
         const currentPoints = linePointsRef.current;
         const newPoint = { x: pointer.x, y: pointer.y };
 
-        // Add marker
         const marker = new Circle({
           left: newPoint.x,
           top: newPoint.y,
@@ -200,7 +284,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           originY: 'center',
           selectable: false,
           evented: false,
-          data: { pointIndex: currentPoints.length },
         });
         canvas.add(marker);
 
@@ -209,17 +292,14 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         if (currentPoints.length > 0) {
           const prevPoint = currentPoints[currentPoints.length - 1];
           
-          // Draw line
           const line = new Line([prevPoint.x, prevPoint.y, newPoint.x, newPoint.y], {
             stroke: '#000000',
             strokeWidth: 2,
             selectable: false,
             evented: false,
-            data: { type: 'line', fromIndex: currentPoints.length - 1, toIndex: currentPoints.length },
           });
           canvas.add(line);
 
-          // Add length label
           const length = Math.round(calculateDistance(prevPoint, newPoint));
           const midX = (prevPoint.x + newPoint.x) / 2;
           const midY = (prevPoint.y + newPoint.y) / 2;
@@ -244,69 +324,29 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             originY: 'center',
             selectable: true,
             evented: true,
-            data: { type: 'lengthLabel', fromIndex: currentPoints.length - 1, toIndex: currentPoints.length },
           });
           canvas.add(lengthLabel);
+
+          // Add to measurements
+          const measurementId = `length-${Date.now()}`;
+          const newMeasurement: MeasurementItem = {
+            id: measurementId,
+            type: 'length',
+            value: length,
+            originalValue: length,
+            visible: true,
+            canvasObjects: [line, lengthLabel],
+            fromIndex: currentPoints.length - 1,
+            toIndex: currentPoints.length,
+          };
+          
+          setMeasurements([...measurementsRef.current, newMeasurement]);
         }
 
         setLinePoints([...currentPoints, newDrawingPoint]);
         canvas.renderAll();
+        saveToHistory();
       }
-    });
-
-    // Object moving - for draggable points in edit mode
-    canvas.on('object:moving', (e) => {
-      if (drawModeRef.current !== 'edit') return;
-      const obj = e.target as any;
-      if (!obj || !obj.data || obj.data.pointIndex === undefined) return;
-
-      const pointIndex = obj.data.pointIndex;
-      const currentPoints = linePointsRef.current;
-      if (pointIndex >= currentPoints.length) return;
-
-      // Update point position
-      const newX = obj.left!;
-      const newY = obj.top!;
-      currentPoints[pointIndex].x = newX;
-      currentPoints[pointIndex].y = newY;
-
-      // Update connected lines and labels
-      canvas.getObjects().forEach((canvasObj: any) => {
-        if (canvasObj.data?.type === 'line') {
-          if (canvasObj.data.fromIndex === pointIndex) {
-            canvasObj.set({ x1: newX, y1: newY });
-          }
-          if (canvasObj.data.toIndex === pointIndex) {
-            canvasObj.set({ x2: newX, y2: newY });
-          }
-        }
-
-        // Update length labels
-        if (canvasObj.data?.type === 'lengthLabel') {
-          if (canvasObj.data.fromIndex === pointIndex || canvasObj.data.toIndex === pointIndex) {
-            const fromPt = currentPoints[canvasObj.data.fromIndex];
-            const toPt = currentPoints[canvasObj.data.toIndex];
-            const length = Math.round(calculateDistance(fromPt, toPt));
-            const midX = (fromPt.x + toPt.x) / 2;
-            const midY = (fromPt.y + toPt.y) / 2;
-            
-            const dx = toPt.x - fromPt.x;
-            const dy = toPt.y - fromPt.y;
-            const lineLength = Math.sqrt(dx * dx + dy * dy);
-            const perpX = -dy / lineLength;
-            const perpY = dx / lineLength;
-            const offset = exteriorLength ? 15 : -15;
-            
-            canvasObj.set({
-              text: `${length}mm`,
-              left: midX + perpX * offset,
-              top: midY + perpY * offset,
-            });
-          }
-        }
-      });
-
-      canvas.renderAll();
     });
 
     return () => {
@@ -314,27 +354,14 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     };
   }, [canvasSize, exteriorLength]);
 
-  // Update cursor and marker selectability based on mode
   useEffect(() => {
     if (fabricRef.current) {
       const cursor = drawMode !== 'none' && drawMode !== 'edit' ? 'crosshair' : 'default';
       fabricRef.current.defaultCursor = cursor;
       fabricRef.current.hoverCursor = cursor;
-
-      // Make markers draggable in edit mode
-      fabricRef.current.getObjects().forEach((obj: any) => {
-        if ((obj as any).data?.pointIndex !== undefined) {
-          obj.set({
-            selectable: drawMode === 'edit',
-            evented: drawMode === 'edit',
-          });
-        }
-      });
-      fabricRef.current.renderAll();
     }
   }, [drawMode]);
 
-  // Calculate live measurements
   const liveMeasurements = () => {
     if (drawMode !== 'line' || linePoints.length === 0 || !cursorPos) return null;
 
@@ -350,7 +377,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     return { length: Math.round(length), angle: angle !== null ? Math.round(angle) : null };
   };
 
-  const measurements = liveMeasurements();
+  const measurements_live = liveMeasurements();
 
   const handleClear = () => {
     if (fabricRef.current) {
@@ -359,8 +386,10 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       fabricRef.current.renderAll();
     }
     setLinePoints([]);
+    setMeasurements([]);
     setSelectedPoint(null);
-    setSelectedLabel(null);
+    setHistory([]);
+    setHistoryIndex(-1);
   };
 
   const handleFinishLine = () => {
@@ -368,26 +397,91 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     setDrawMode('none');
   };
 
-  const handleHideLabel = () => {
-    if (selectedLabel && fabricRef.current) {
-      fabricRef.current.remove(selectedLabel);
-      fabricRef.current.renderAll();
-      setSelectedLabel(null);
+  const handleToggleMeasurementVisibility = (id: string) => {
+    const measurement = measurements.find(m => m.id === id);
+    if (!measurement || !fabricRef.current) return;
+
+    measurement.canvasObjects.forEach(obj => {
+      obj.set('visible', !measurement.visible);
+    });
+    
+    setMeasurements(measurements.map(m => 
+      m.id === id ? { ...m, visible: !m.visible } : m
+    ));
+    
+    fabricRef.current.renderAll();
+    saveToHistory();
+  };
+
+  const handleEditMeasurementValue = (id: string) => {
+    const measurement = measurements.find(m => m.id === id);
+    if (!measurement) return;
+
+    const newValue = prompt(`Enter new ${measurement.type} value:`, measurement.value.toString());
+    if (newValue === null) return;
+
+    const numValue = parseFloat(newValue);
+    if (isNaN(numValue)) return;
+
+    // Update text label
+    const labelObj = measurement.canvasObjects.find((obj: any) => obj.type === 'i-text');
+    if (labelObj) {
+      labelObj.set('text', measurement.type === 'length' ? `${numValue}mm` : `${numValue}°`);
     }
+
+    setMeasurements(measurements.map(m =>
+      m.id === id ? { ...m, value: numValue } : m
+    ));
+
+    fabricRef.current?.renderAll();
+    saveToHistory();
+  };
+
+  const handleResetMeasurement = (id: string) => {
+    const measurement = measurements.find(m => m.id === id);
+    if (!measurement || !fabricRef.current) return;
+
+    const labelObj = measurement.canvasObjects.find((obj: any) => obj.type === 'i-text');
+    if (labelObj) {
+      labelObj.set('text', measurement.type === 'length' ? `${measurement.originalValue}mm` : `${measurement.originalValue}°`);
+    }
+
+    setMeasurements(measurements.map(m =>
+      m.id === id ? { ...m, value: m.originalValue } : m
+    ));
+
+    fabricRef.current.renderAll();
+    saveToHistory();
+  };
+
+  const handleToggleAngleType = (id: string) => {
+    const measurement = measurements.find(m => m.id === id);
+    if (!measurement || measurement.type !== 'angle' || !fabricRef.current) return;
+
+    const newShowInterior = !measurement.showInterior;
+    const newValue = newShowInterior ? measurement.interiorValue! : measurement.exteriorValue!;
+
+    const labelObj = measurement.canvasObjects.find((obj: any) => obj.type === 'i-text');
+    if (labelObj) {
+      labelObj.set('text', `${newValue}°`);
+    }
+
+    setMeasurements(measurements.map(m =>
+      m.id === id ? { ...m, showInterior: newShowInterior, value: newValue } : m
+    ));
+
+    fabricRef.current.renderAll();
+    saveToHistory();
   };
 
   const handleAddRightAngle = () => {
-    if (selectedPoint === null || selectedPoint >= linePoints.length) return;
-    
-    // Right angle needs at least 2 points (before and after)
-    if (selectedPoint === 0 || selectedPoint === linePoints.length - 1) {
-      alert('Right angle can only be added to middle points (not first or last point)');
+    if (selectedPoint === null || selectedPoint === 0 || selectedPoint >= linePoints.length - 1) {
+      alert('Right angle can only be added to middle points');
       return;
     }
     
     const pt = linePoints[selectedPoint];
     
-    // Draw right angle symbol (small square)
     if (fabricRef.current) {
       const size = 12;
       const square = new Rect({
@@ -400,10 +494,10 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         strokeWidth: 1.5,
         selectable: true,
         evented: true,
-        data: { type: 'rightAngle' },
       });
       fabricRef.current.add(square);
       fabricRef.current.renderAll();
+      saveToHistory();
     }
     
     setSelectedPoint(null);
@@ -411,7 +505,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
   const handleAddCustomAngle = () => {
     if (selectedPoint === null || selectedPoint < 1 || selectedPoint >= linePoints.length - 1) {
-      alert('Custom angle requires a middle point with lines on both sides');
+      alert('Custom angle requires a middle point');
       return;
     }
     
@@ -419,7 +513,10 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     const prevPt = linePoints[selectedPoint - 1];
     const nextPt = linePoints[selectedPoint + 1];
     
-    const angle = Math.round(calculateAngle(prevPt, pt, nextPt, interiorAngle));
+    const interiorAngleVal = Math.round(calculateAngle(prevPt, pt, nextPt, true));
+    const exteriorAngleVal = 360 - interiorAngleVal;
+    const displayValue = interiorAngle ? interiorAngleVal : exteriorAngleVal;
+    
     const bisector = getAngleBisector(prevPt, pt, nextPt);
     
     if (fabricRef.current) {
@@ -436,11 +533,10 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         originY: 'center',
         selectable: true,
         evented: true,
-        data: { type: 'angleArc' },
       });
       
       const textOffset = arcRadius + 15;
-      const text = new IText(`${angle}°`, {
+      const text = new IText(`${displayValue}°`, {
         left: pt.x + bisector.x * textOffset,
         top: pt.y + bisector.y * textOffset,
         fontSize: 16,
@@ -450,12 +546,30 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         originY: 'center',
         editable: true,
         selectable: true,
-        data: { type: 'angleLabel' },
       });
       
       fabricRef.current.add(arc);
       fabricRef.current.add(text);
+
+      // Add to measurements
+      const measurementId = `angle-${Date.now()}`;
+      const newMeasurement: MeasurementItem = {
+        id: measurementId,
+        type: 'angle',
+        value: displayValue,
+        originalValue: displayValue,
+        visible: true,
+        canvasObjects: [arc, text],
+        interiorValue: interiorAngleVal,
+        exteriorValue: exteriorAngleVal,
+        showInterior: interiorAngle,
+        pointIndex: selectedPoint,
+      };
+      
+      setMeasurements([...measurementsRef.current, newMeasurement]);
+      
       fabricRef.current.renderAll();
+      saveToHistory();
     }
     
     setSelectedPoint(null);
@@ -503,7 +617,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const currentSize = CANVAS_SIZES[canvasSize];
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-full mx-auto p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Draw Flashing</h1>
         <p className="text-sm text-slate-500 mt-1">
@@ -554,9 +668,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         <button
           onClick={() => setDrawMode('line')}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            drawMode === 'line'
-              ? 'bg-[#FF6B35] text-white shadow-lg'
-              : 'bg-white border border-slate-300 hover:bg-slate-50'
+            drawMode === 'line' ? 'bg-[#FF6B35] text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
           }`}
         >
           📏 Line
@@ -564,9 +676,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         <button
           onClick={() => setDrawMode('text')}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            drawMode === 'text'
-              ? 'bg-[#FF6B35] text-white shadow-lg'
-              : 'bg-white border border-slate-300 hover:bg-slate-50'
+            drawMode === 'text' ? 'bg-[#FF6B35] text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
           }`}
         >
           📝 Text
@@ -574,12 +684,33 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         <button
           onClick={() => setDrawMode('edit')}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            drawMode === 'edit'
-              ? 'bg-[#FF6B35] text-white shadow-lg'
-              : 'bg-white border border-slate-300 hover:bg-slate-50'
+            drawMode === 'edit' ? 'bg-[#FF6B35] text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
           }`}
         >
           ✏️ Edit
+        </button>
+        
+        <div className="h-8 w-px bg-slate-300" />
+        
+        <button
+          onClick={handleUndo}
+          disabled={historyIndex <= 0}
+          className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-30"
+        >
+          ⏪ Undo
+        </button>
+        <button
+          onClick={handleRedo}
+          disabled={historyIndex >= history.length - 1}
+          className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-30"
+        >
+          ⏩ Redo
+        </button>
+        <button
+          onClick={handleSelectAll}
+          className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50"
+        >
+          🎯 Select All
         </button>
         
         <div className="h-8 w-px bg-slate-300" />
@@ -598,17 +729,9 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           Length: {exteriorLength ? '↗️ Exterior' : '↙️ Interior'}
         </button>
         
-        {selectedLabel && (
-          <button
-            onClick={handleHideLabel}
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-red-600 text-white hover:bg-red-700"
-          >
-            👁️ Hide Label
-          </button>
-        )}
-        
         {selectedPoint !== null && (
           <>
+            <div className="h-8 w-px bg-slate-300" />
             <button
               onClick={handleAddRightAngle}
               className="px-4 py-2 text-sm font-medium rounded-lg bg-green-600 text-white hover:bg-green-700"
@@ -662,33 +785,95 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           <div>
             <span className="text-blue-700 font-semibold">Length:</span>{' '}
             <span className="text-blue-900 font-bold text-2xl">
-              {measurements?.length || '—'}mm
+              {measurements_live?.length || '—'}mm
             </span>
           </div>
           <div>
             <span className="text-blue-700 font-semibold">Angle:</span>{' '}
             <span className="text-blue-900 font-bold text-2xl">
-              {measurements?.angle !== null && measurements?.angle !== undefined ? `${measurements.angle}°` : '—'}
+              {measurements_live?.angle !== null && measurements_live?.angle !== undefined ? `${measurements_live.angle}°` : '—'}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Canvas */}
-      <div className="border-2 border-slate-300 rounded-xl overflow-hidden inline-block shadow-lg">
-        <canvas ref={canvasRef} width={currentSize.width} height={currentSize.height} />
+      {/* Main Layout: Sidebar + Canvas */}
+      <div className="flex gap-4">
+        {/* Left Sidebar - Measurements List */}
+        <div className="w-64 border-2 border-slate-300 rounded-xl p-4 bg-white max-h-[700px] overflow-y-auto">
+          <h3 className="text-sm font-semibold text-slate-900 mb-3">Measurements</h3>
+          {measurements.length === 0 ? (
+            <p className="text-xs text-slate-400">No measurements yet</p>
+          ) : (
+            <div className="space-y-3">
+              {measurements.map((m) => (
+                <div key={m.id} className={`p-2 border rounded-lg ${selectedMeasurement === m.id ? 'border-[#FF6B35] bg-orange-50' : 'border-slate-200'}`}>
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="text-xs font-medium text-slate-600">
+                      {m.type === 'length' ? '📏 Length' : '📐 Angle'}
+                    </span>
+                    <button
+                      onClick={() => handleToggleMeasurementVisibility(m.id)}
+                      className="text-xs"
+                    >
+                      {m.visible ? '👁️' : '🚫'}
+                    </button>
+                  </div>
+                  <div className="text-sm font-bold text-slate-900 mb-2">
+                    {m.type === 'length' ? `${m.value}mm` : `${m.value}°`}
+                    {m.type === 'angle' && (
+                      <span className="text-xs font-normal text-slate-500 ml-1">
+                        ({m.showInterior ? 'Int' : 'Ext'})
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex gap-1">
+                    {m.type === 'angle' && (
+                      <button
+                        onClick={() => handleToggleAngleType(m.id)}
+                        className="text-xs px-2 py-1 bg-blue-100 hover:bg-blue-200 rounded"
+                        title="Toggle Interior/Exterior"
+                      >
+                        ↔️
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleEditMeasurementValue(m.id)}
+                      className="text-xs px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded"
+                      title="Edit Value"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => handleResetMeasurement(m.id)}
+                      className="text-xs px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded"
+                      title="Reset to Original"
+                    >
+                      🔄
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Canvas */}
+        <div className="border-2 border-slate-300 rounded-xl overflow-hidden shadow-lg">
+          <canvas ref={canvasRef} width={currentSize.width} height={currentSize.height} />
+        </div>
       </div>
 
       {/* Instructions */}
-      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg max-w-3xl">
+      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <h3 className="text-sm font-semibold text-blue-900 mb-2">✨ How to Use:</h3>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li><strong>Canvas Size:</strong> Change Small/Medium/Large to fit your flashing design.</li>
-          <li><strong>📏 Line Tool:</strong> Click points to draw. Watch live measurements above canvas.</li>
-          <li><strong>✏️ Edit Tool:</strong> Click orange point → add angle annotation, OR drag points to reposition.</li>
-          <li><strong>👁️ Hide Label:</strong> Select any label (click it) → click "Hide Label" to remove clutter.</li>
-          <li><strong>🎯 Drag Points:</strong> In Edit mode, click and drag orange markers to adjust the drawing.</li>
-          <li><strong>Scale:</strong> 2 pixels = 1mm (draw actual dimensions!)</li>
+        <ul className="text-sm text-blue-800 space-y-1 grid grid-cols-2 gap-x-6">
+          <li><strong>📏 Line Tool:</strong> Click points to draw. Watch live measurements above.</li>
+          <li><strong>✏️ Edit Tool:</strong> Click orange point → add angle annotation.</li>
+          <li><strong>⏪ Undo / ⏩ Redo:</strong> Ctrl+Z / Ctrl+Y (10 steps)</li>
+          <li><strong>🎯 Select All:</strong> Ctrl+A to select and move entire drawing.</li>
+          <li><strong>📋 Sidebar:</strong> Manage all measurements - hide, edit, toggle angle type.</li>
+          <li><strong>↔️ Toggle:</strong> Switch between interior/exterior angles in sidebar.</li>
         </ul>
       </div>
     </div>
