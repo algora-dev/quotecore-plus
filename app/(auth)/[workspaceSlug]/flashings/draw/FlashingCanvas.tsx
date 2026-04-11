@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Canvas, Line, Circle, IText, Rect } from 'fabric';
+import { Canvas, Line, Circle, IText, Rect, ActiveSelection } from 'fabric';
 import { createFlashingFromCanvas } from '../actions';
 
 type DrawMode = 'none' | 'line' | 'text' | 'edit';
@@ -16,33 +16,24 @@ const CANVAS_SIZES = {
 
 const SCALE = 0.5; // 2 pixels = 1mm
 
-interface DrawingPoint {
-  x: number;
-  y: number;
-  marker: any;
-}
-
 interface MeasurementItem {
   id: string;
   type: 'length' | 'angle';
   value: number;
   originalValue: number;
   visible: boolean;
-  canvasObjects: any[];
+  labelObjectId?: string;
   // For angles
   interiorValue?: number;
   exteriorValue?: number;
   showInterior?: boolean;
-  // For linking to points
-  fromIndex?: number;
-  toIndex?: number;
-  pointIndex?: number;
+  // For placement
+  placementSide?: 'interior' | 'exterior';
 }
 
 interface CanvasState {
-  objects: any[];
+  canvasJSON: string;
   measurements: MeasurementItem[];
-  linePoints: DrawingPoint[];
 }
 
 export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
@@ -52,13 +43,10 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   
   const [canvasSize, setCanvasSize] = useState<CanvasSize>('medium');
   const [drawMode, setDrawMode] = useState<DrawMode>('none');
-  const [linePoints, setLinePoints] = useState<DrawingPoint[]>([]);
   const [measurements, setMeasurements] = useState<MeasurementItem[]>([]);
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
-  const [interiorAngle, setInteriorAngle] = useState(true);
-  const [exteriorLength, setExteriorLength] = useState(true);
+  const [linePoints, setLinePoints] = useState<{ x: number; y: number }[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
-  const [selectedMeasurement, setSelectedMeasurement] = useState<string | null>(null);
   
   const [history, setHistory] = useState<CanvasState[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -69,37 +57,40 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
   // Refs
   const drawModeRef = useRef<DrawMode>('none');
-  const linePointsRef = useRef<DrawingPoint[]>([]);
-  const measurementsRef = useRef<MeasurementItem[]>([]);
+  const linePointsRef = useRef<{ x: number; y: number }[]>([]);
 
   useEffect(() => {
     drawModeRef.current = drawMode;
     linePointsRef.current = linePoints;
-    measurementsRef.current = measurements;
-  }, [drawMode, linePoints, measurements]);
+  }, [drawMode, linePoints]);
 
   // Save state to history
-  const saveToHistory = () => {
+  const saveToHistory = useCallback(() => {
     if (!fabricRef.current) return;
     
-    const state: CanvasState = {
-      objects: fabricRef.current.toJSON(),
-      measurements: JSON.parse(JSON.stringify(measurements)),
-      linePoints: JSON.parse(JSON.stringify(linePoints)),
-    };
-    
-    const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push(state);
-    
-    // Keep only last 10 states
-    if (newHistory.length > 10) {
-      newHistory.shift();
-    } else {
-      setHistoryIndex(historyIndex + 1);
-    }
-    
-    setHistory(newHistory);
-  };
+    setHistory(prevHistory => {
+      setHistoryIndex(prevIndex => {
+        const newHistory = prevHistory.slice(0, prevIndex + 1);
+        const state: CanvasState = {
+          canvasJSON: JSON.stringify(fabricRef.current!.toJSON()),
+          measurements: measurements.map(m => ({ ...m })),
+        };
+        newHistory.push(state);
+        
+        // Keep only last 10 states
+        const trimmed = newHistory.length > 10 ? newHistory.slice(-10) : newHistory;
+        return trimmed.length - 1;
+      });
+      
+      const newHistory = prevHistory.slice(0, historyIndex + 1);
+      const state: CanvasState = {
+        canvasJSON: JSON.stringify(fabricRef.current!.toJSON()),
+        measurements: measurements.map(m => ({ ...m })),
+      };
+      newHistory.push(state);
+      return newHistory.length > 10 ? newHistory.slice(-10) : newHistory;
+    });
+  }, [measurements, historyIndex]);
 
   // Undo
   const handleUndo = () => {
@@ -123,13 +114,11 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const restoreState = (state: CanvasState) => {
     if (!fabricRef.current) return;
     
-    fabricRef.current.clear();
-    fabricRef.current.loadFromJSON(state.objects, () => {
+    fabricRef.current.loadFromJSON(JSON.parse(state.canvasJSON), () => {
       fabricRef.current?.renderAll();
     });
     
-    setMeasurements(state.measurements);
-    setLinePoints(state.linePoints);
+    setMeasurements(state.measurements.map(m => ({ ...m })));
   };
 
   // Keyboard shortcuts
@@ -153,21 +142,25 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [historyIndex, history]);
 
-  // Select All
+  // Select All - proper implementation
   const handleSelectAll = () => {
     if (!fabricRef.current) return;
     
-    // Enable selection temporarily
-    fabricRef.current.selection = true;
+    const canvas = fabricRef.current;
+    const allObjects = canvas.getObjects();
     
-    // Select all objects
-    const allObjects = fabricRef.current.getObjects();
+    // Make all objects selectable
     allObjects.forEach((obj: any) => {
-      obj.set('selectable', true);
+      obj.set({ selectable: true, evented: true });
     });
     
-    fabricRef.current.renderAll();
-    alert('All objects are now selectable. Click and drag to move them together.');
+    // Create active selection
+    if (allObjects.length > 0) {
+      canvas.discardActiveObject();
+      const selection = new ActiveSelection(allObjects as any, { canvas });
+      canvas.setActiveObject(selection as any);
+      canvas.requestRenderAll();
+    }
   };
 
   const calculateDistance = (p1: { x: number; y: number }, p2: { x: number; y: number }): number => {
@@ -227,7 +220,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       width: size.width,
       height: size.height,
       backgroundColor: '#ffffff',
-      selection: true, // Enable group selection
+      selection: true,
     });
 
     fabricRef.current = canvas;
@@ -252,7 +245,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         canvas.setActiveObject(text);
         canvas.renderAll();
         setDrawMode('none');
-        saveToHistory();
+        setTimeout(saveToHistory, 100);
         return;
       }
 
@@ -287,8 +280,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         });
         canvas.add(marker);
 
-        const newDrawingPoint: DrawingPoint = { x: newPoint.x, y: newPoint.y, marker };
-
         if (currentPoints.length > 0) {
           const prevPoint = currentPoints[currentPoints.length - 1];
           
@@ -310,7 +301,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           const perpX = -dy / lineLength;
           const perpY = dx / lineLength;
           
-          const offset = exteriorLength ? 15 : -15;
+          const offset = 15;
           const labelX = midX + perpX * offset;
           const labelY = midY + perpY * offset;
           
@@ -328,31 +319,27 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           canvas.add(lengthLabel);
 
           // Add to measurements
-          const measurementId = `length-${Date.now()}`;
-          const newMeasurement: MeasurementItem = {
-            id: measurementId,
+          setMeasurements(prev => [...prev, {
+            id: `length-${Date.now()}`,
             type: 'length',
             value: length,
             originalValue: length,
             visible: true,
-            canvasObjects: [line, lengthLabel],
-            fromIndex: currentPoints.length - 1,
-            toIndex: currentPoints.length,
-          };
-          
-          setMeasurements([...measurementsRef.current, newMeasurement]);
+            labelObjectId: (lengthLabel as any)._id,
+            placementSide: 'exterior',
+          }]);
         }
 
-        setLinePoints([...currentPoints, newDrawingPoint]);
+        setLinePoints([...currentPoints, newPoint]);
         canvas.renderAll();
-        saveToHistory();
+        setTimeout(saveToHistory, 100);
       }
     });
 
     return () => {
       canvas.dispose();
     };
-  }, [canvasSize, exteriorLength]);
+  }, [canvasSize, saveToHistory]);
 
   useEffect(() => {
     if (fabricRef.current) {
@@ -371,7 +358,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     let angle: number | null = null;
     if (linePoints.length >= 2) {
       const prevPoint = linePoints[linePoints.length - 2];
-      angle = calculateAngle(prevPoint, lastPoint, cursorPos, interiorAngle);
+      angle = calculateAngle(prevPoint, lastPoint, cursorPos, true);
     }
 
     return { length: Math.round(length), angle: angle !== null ? Math.round(angle) : null };
@@ -401,21 +388,23 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     const measurement = measurements.find(m => m.id === id);
     if (!measurement || !fabricRef.current) return;
 
-    measurement.canvasObjects.forEach(obj => {
+    const canvas = fabricRef.current;
+    const obj = canvas.getObjects().find((o: any) => o._id === measurement.labelObjectId);
+    if (obj) {
       obj.set('visible', !measurement.visible);
-    });
+    }
     
     setMeasurements(measurements.map(m => 
       m.id === id ? { ...m, visible: !m.visible } : m
     ));
     
-    fabricRef.current.renderAll();
-    saveToHistory();
+    canvas.renderAll();
+    setTimeout(saveToHistory, 100);
   };
 
   const handleEditMeasurementValue = (id: string) => {
     const measurement = measurements.find(m => m.id === id);
-    if (!measurement) return;
+    if (!measurement || !fabricRef.current) return;
 
     const newValue = prompt(`Enter new ${measurement.type} value:`, measurement.value.toString());
     if (newValue === null) return;
@@ -423,35 +412,36 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     const numValue = parseFloat(newValue);
     if (isNaN(numValue)) return;
 
-    // Update text label
-    const labelObj = measurement.canvasObjects.find((obj: any) => obj.type === 'i-text');
-    if (labelObj) {
-      labelObj.set('text', measurement.type === 'length' ? `${numValue}mm` : `${numValue}°`);
+    const canvas = fabricRef.current;
+    const obj = canvas.getObjects().find((o: any) => o._id === measurement.labelObjectId);
+    if (obj && (obj as any).type === 'i-text') {
+      (obj as any).set('text', measurement.type === 'length' ? `${numValue}mm` : `${numValue}°`);
     }
 
     setMeasurements(measurements.map(m =>
       m.id === id ? { ...m, value: numValue } : m
     ));
 
-    fabricRef.current?.renderAll();
-    saveToHistory();
+    canvas.renderAll();
+    setTimeout(saveToHistory, 100);
   };
 
   const handleResetMeasurement = (id: string) => {
     const measurement = measurements.find(m => m.id === id);
     if (!measurement || !fabricRef.current) return;
 
-    const labelObj = measurement.canvasObjects.find((obj: any) => obj.type === 'i-text');
-    if (labelObj) {
-      labelObj.set('text', measurement.type === 'length' ? `${measurement.originalValue}mm` : `${measurement.originalValue}°`);
+    const canvas = fabricRef.current;
+    const obj = canvas.getObjects().find((o: any) => o._id === measurement.labelObjectId);
+    if (obj && (obj as any).type === 'i-text') {
+      (obj as any).set('text', measurement.type === 'length' ? `${measurement.originalValue}mm` : `${measurement.originalValue}°`);
     }
 
     setMeasurements(measurements.map(m =>
       m.id === id ? { ...m, value: m.originalValue } : m
     ));
 
-    fabricRef.current.renderAll();
-    saveToHistory();
+    canvas.renderAll();
+    setTimeout(saveToHistory, 100);
   };
 
   const handleToggleAngleType = (id: string) => {
@@ -461,17 +451,32 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     const newShowInterior = !measurement.showInterior;
     const newValue = newShowInterior ? measurement.interiorValue! : measurement.exteriorValue!;
 
-    const labelObj = measurement.canvasObjects.find((obj: any) => obj.type === 'i-text');
-    if (labelObj) {
-      labelObj.set('text', `${newValue}°`);
+    const canvas = fabricRef.current;
+    const obj = canvas.getObjects().find((o: any) => o._id === measurement.labelObjectId);
+    if (obj && (obj as any).type === 'i-text') {
+      (obj as any).set('text', `${newValue}°`);
     }
 
     setMeasurements(measurements.map(m =>
       m.id === id ? { ...m, showInterior: newShowInterior, value: newValue } : m
     ));
 
-    fabricRef.current.renderAll();
-    saveToHistory();
+    canvas.renderAll();
+    setTimeout(saveToHistory, 100);
+  };
+
+  const handleTogglePlacementSide = (id: string) => {
+    const measurement = measurements.find(m => m.id === id);
+    if (!measurement || !fabricRef.current) return;
+
+    const newSide = measurement.placementSide === 'exterior' ? 'interior' : 'exterior';
+
+    setMeasurements(measurements.map(m =>
+      m.id === id ? { ...m, placementSide: newSide } : m
+    ));
+
+    // Note: Actual repositioning would require recalculating label position
+    // For now just toggle the state - full implementation would move the label
   };
 
   const handleAddRightAngle = () => {
@@ -497,7 +502,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       });
       fabricRef.current.add(square);
       fabricRef.current.renderAll();
-      saveToHistory();
+      setTimeout(saveToHistory, 100);
     }
     
     setSelectedPoint(null);
@@ -515,7 +520,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     
     const interiorAngleVal = Math.round(calculateAngle(prevPt, pt, nextPt, true));
     const exteriorAngleVal = 360 - interiorAngleVal;
-    const displayValue = interiorAngle ? interiorAngleVal : exteriorAngleVal;
+    const displayValue = interiorAngleVal;
     
     const bisector = getAngleBisector(prevPt, pt, nextPt);
     
@@ -552,24 +557,20 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       fabricRef.current.add(text);
 
       // Add to measurements
-      const measurementId = `angle-${Date.now()}`;
-      const newMeasurement: MeasurementItem = {
-        id: measurementId,
+      setMeasurements(prev => [...prev, {
+        id: `angle-${Date.now()}`,
         type: 'angle',
         value: displayValue,
         originalValue: displayValue,
         visible: true,
-        canvasObjects: [arc, text],
         interiorValue: interiorAngleVal,
         exteriorValue: exteriorAngleVal,
-        showInterior: interiorAngle,
-        pointIndex: selectedPoint,
-      };
-      
-      setMeasurements([...measurementsRef.current, newMeasurement]);
+        showInterior: true,
+        labelObjectId: (text as any)._id,
+      }]);
       
       fabricRef.current.renderAll();
-      saveToHistory();
+      setTimeout(saveToHistory, 100);
     }
     
     setSelectedPoint(null);
@@ -695,38 +696,25 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         <button
           onClick={handleUndo}
           disabled={historyIndex <= 0}
-          className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-30"
+          title="Undo (Ctrl+Z)"
+          className="px-3 py-2 text-lg rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-30"
         >
-          ⏪ Undo
+          ⏪
         </button>
         <button
           onClick={handleRedo}
           disabled={historyIndex >= history.length - 1}
-          className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-30"
+          title="Redo (Ctrl+Y)"
+          className="px-3 py-2 text-lg rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-30"
         >
-          ⏩ Redo
+          ⏩
         </button>
         <button
           onClick={handleSelectAll}
+          title="Select All (Ctrl+A)"
           className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50"
         >
           🎯 Select All
-        </button>
-        
-        <div className="h-8 w-px bg-slate-300" />
-        
-        <button
-          onClick={() => setInteriorAngle(!interiorAngle)}
-          className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50"
-        >
-          Angle: {interiorAngle ? '📐 Interior' : '📐 Exterior'}
-        </button>
-
-        <button
-          onClick={() => setExteriorLength(!exteriorLength)}
-          className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50"
-        >
-          Length: {exteriorLength ? '↗️ Exterior' : '↙️ Interior'}
         </button>
         
         {selectedPoint !== null && (
@@ -800,56 +788,66 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       {/* Main Layout: Sidebar + Canvas */}
       <div className="flex gap-4">
         {/* Left Sidebar - Measurements List */}
-        <div className="w-64 border-2 border-slate-300 rounded-xl p-4 bg-white max-h-[700px] overflow-y-auto">
+        <div className="w-72 border-2 border-slate-300 rounded-xl p-4 bg-white max-h-[700px] overflow-y-auto">
           <h3 className="text-sm font-semibold text-slate-900 mb-3">Measurements</h3>
           {measurements.length === 0 ? (
             <p className="text-xs text-slate-400">No measurements yet</p>
           ) : (
             <div className="space-y-3">
               {measurements.map((m) => (
-                <div key={m.id} className={`p-2 border rounded-lg ${selectedMeasurement === m.id ? 'border-[#FF6B35] bg-orange-50' : 'border-slate-200'}`}>
-                  <div className="flex justify-between items-start mb-1">
+                <div key={m.id} className="p-3 border rounded-lg border-slate-200 bg-slate-50">
+                  <div className="flex justify-between items-start mb-2">
                     <span className="text-xs font-medium text-slate-600">
                       {m.type === 'length' ? '📏 Length' : '📐 Angle'}
                     </span>
                     <button
                       onClick={() => handleToggleMeasurementVisibility(m.id)}
-                      className="text-xs"
+                      className="text-sm"
+                      title={m.visible ? 'Hide' : 'Show'}
                     >
                       {m.visible ? '👁️' : '🚫'}
                     </button>
                   </div>
-                  <div className="text-sm font-bold text-slate-900 mb-2">
+                  <div className="text-base font-bold text-slate-900 mb-3">
                     {m.type === 'length' ? `${m.value}mm` : `${m.value}°`}
                     {m.type === 'angle' && (
                       <span className="text-xs font-normal text-slate-500 ml-1">
-                        ({m.showInterior ? 'Int' : 'Ext'})
+                        ({m.showInterior ? 'Interior' : 'Exterior'})
                       </span>
                     )}
                   </div>
-                  <div className="flex gap-1">
+                  <div className="space-y-1">
                     {m.type === 'angle' && (
                       <button
                         onClick={() => handleToggleAngleType(m.id)}
-                        className="text-xs px-2 py-1 bg-blue-100 hover:bg-blue-200 rounded"
+                        className="w-full text-xs px-2 py-1.5 bg-blue-100 hover:bg-blue-200 rounded text-left"
                         title="Toggle Interior/Exterior"
                       >
-                        ↔️
+                        ↔️ Toggle Angle Type
+                      </button>
+                    )}
+                    {m.type === 'length' && (
+                      <button
+                        onClick={() => handleTogglePlacementSide(m.id)}
+                        className="w-full text-xs px-2 py-1.5 bg-purple-100 hover:bg-purple-200 rounded text-left"
+                        title="Toggle placement side"
+                      >
+                        {m.placementSide === 'exterior' ? '↗️' : '↙️'} {m.placementSide === 'exterior' ? 'Exterior' : 'Interior'} Side
                       </button>
                     )}
                     <button
                       onClick={() => handleEditMeasurementValue(m.id)}
-                      className="text-xs px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded"
+                      className="w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left"
                       title="Edit Value"
                     >
-                      ✏️
+                      ✏️ Edit Value
                     </button>
                     <button
                       onClick={() => handleResetMeasurement(m.id)}
-                      className="text-xs px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded"
+                      className="w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left"
                       title="Reset to Original"
                     >
-                      🔄
+                      🔄 Reset
                     </button>
                   </div>
                 </div>
@@ -870,10 +868,11 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         <ul className="text-sm text-blue-800 space-y-1 grid grid-cols-2 gap-x-6">
           <li><strong>📏 Line Tool:</strong> Click points to draw. Watch live measurements above.</li>
           <li><strong>✏️ Edit Tool:</strong> Click orange point → add angle annotation.</li>
-          <li><strong>⏪ Undo / ⏩ Redo:</strong> Ctrl+Z / Ctrl+Y (10 steps)</li>
+          <li><strong>⏪ ⏩ Undo/Redo:</strong> Ctrl+Z / Ctrl+Y (10 steps history)</li>
           <li><strong>🎯 Select All:</strong> Ctrl+A to select and move entire drawing.</li>
-          <li><strong>📋 Sidebar:</strong> Manage all measurements - hide, edit, toggle angle type.</li>
-          <li><strong>↔️ Toggle:</strong> Switch between interior/exterior angles in sidebar.</li>
+          <li><strong>📋 Sidebar:</strong> Manage all measurements - hide, edit, toggle types.</li>
+          <li><strong>↔️ Angle Toggle:</strong> Switch between interior/exterior angles.</li>
+          <li><strong>↗️ Length Placement:</strong> Toggle which side of line the label appears.</li>
         </ul>
       </div>
     </div>
