@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Canvas, Line, Circle, IText, Rect, ActiveSelection } from 'fabric';
 import { createFlashingFromCanvas } from '../actions';
+import { AngleCalculatorModal } from './AngleCalculatorModal';
 
 type DrawMode = 'none' | 'line' | 'text' | 'edit';
 type CanvasSize = 'small' | 'medium' | 'large';
@@ -51,6 +52,8 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const [linePoints, setLinePoints] = useState<{ x: number; y: number }[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
   const [selectedMeasurement, setSelectedMeasurement] = useState<string | null>(null);
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const [calculatingAngleId, setCalculatingAngleId] = useState<string | null>(null);
   
   // History removed - was causing issues with canvas state sync
   
@@ -509,6 +512,34 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     canvas.renderAll();
   };
 
+  const handleOpenCalculator = (id: string) => {
+    const measurement = measurements.find(m => m.id === id);
+    if (!measurement || measurement.type !== 'angle') return;
+    
+    setCalculatingAngleId(id);
+    setCalculatorOpen(true);
+  };
+
+  const handleApplyCalculatedAngle = (newAngle: number) => {
+    if (!calculatingAngleId || !fabricRef.current) return;
+
+    const canvas = fabricRef.current;
+    const textObj = canvas.getObjects().find((o: any) => 
+      o.measurementId === calculatingAngleId && o.type === 'i-text'
+    );
+    
+    if (textObj) {
+      (textObj as any).set('text', `${newAngle}°`);
+    }
+
+    setMeasurements(measurements.map(m =>
+      m.id === calculatingAngleId ? { ...m, value: newAngle } : m
+    ));
+
+    canvas.renderAll();
+    setCalculatingAngleId(null);
+  };
+
   const handleSelectMeasurement = (id: string) => {
     if (!fabricRef.current) return;
     
@@ -877,17 +908,35 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                   </div>
                   <div className="space-y-1">
                     {m.type === 'angle' && (
-                      <button
-                        onClick={() => handleToggleAngleType(m.id)}
-                        className="w-full text-xs px-2 py-1.5 bg-blue-100 hover:bg-blue-200 rounded text-left"
-                        title="Toggle Interior/Exterior"
-                      >
-                        Toggle Angle Type
-                      </button>
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenCalculator(m.id);
+                          }}
+                          className="w-full text-xs px-2 py-1.5 bg-[#FF6B35] text-white hover:bg-[#ff5722] rounded text-left font-medium"
+                          title="Auto-Calculate from Roof Pitches"
+                        >
+                          Auto-Calculate
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleAngleType(m.id);
+                          }}
+                          className="w-full text-xs px-2 py-1.5 bg-blue-100 hover:bg-blue-200 rounded text-left"
+                          title="Toggle Interior/Exterior"
+                        >
+                          Toggle Angle Type
+                        </button>
+                      </>
                     )}
                     {m.type === 'length' && (
                       <button
-                        onClick={() => handleTogglePlacementSide(m.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTogglePlacementSide(m.id);
+                        }}
                         className="w-full text-xs px-2 py-1.5 bg-purple-100 hover:bg-purple-200 rounded text-left"
                         title="Toggle placement side"
                       >
@@ -895,14 +944,20 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                       </button>
                     )}
                     <button
-                      onClick={() => handleEditMeasurementValue(m.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditMeasurementValue(m.id);
+                      }}
                       className="w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left"
                       title="Edit Value"
                     >
                       Edit Value
                     </button>
                     <button
-                      onClick={() => handleResetMeasurement(m.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleResetMeasurement(m.id);
+                      }}
                       className="w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left"
                       title="Reset to Original"
                     >
@@ -933,8 +988,21 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           <li><strong>Toggle Angle:</strong> Switch between interior/exterior angles in sidebar.</li>
           <li><strong>Hide/Show:</strong> Toggle visibility of individual measurements.</li>
           <li><strong>Edit Values:</strong> Change any measurement value manually.</li>
+          <li><strong>Auto-Calculate:</strong> Use roof pitch calculator for accurate angles.</li>
         </ul>
       </div>
+
+      {/* Angle Calculator Modal */}
+      <AngleCalculatorModal
+        isOpen={calculatorOpen}
+        onClose={() => setCalculatorOpen(false)}
+        onApply={handleApplyCalculatedAngle}
+        currentAngle={
+          calculatingAngleId 
+            ? measurements.find(m => m.id === calculatingAngleId)?.value || 0
+            : 0
+        }
+      />
     </div>
   );
 }
