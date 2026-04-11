@@ -280,9 +280,66 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         });
         canvas.add(marker);
 
+        const newMeasurements: MeasurementItem[] = [];
+
         if (currentPoints.length > 0) {
           const prevPoint = currentPoints[currentPoints.length - 1];
           
+          // Add angle if we now have 3+ points (angle at previous point)
+          if (currentPoints.length >= 2) {
+            const prevPrevPoint = currentPoints[currentPoints.length - 2];
+            
+            const interiorAngleVal = Math.round(calculateAngle(prevPrevPoint, prevPoint, newPoint, true));
+            const exteriorAngleVal = 360 - interiorAngleVal;
+            const displayValue = interiorAngleVal;
+            
+            const bisector = getAngleBisector(prevPrevPoint, prevPoint, newPoint);
+            
+            const arcRadius = 25;
+            
+            const arc = new Circle({
+              left: prevPoint.x,
+              top: prevPoint.y,
+              radius: arcRadius,
+              fill: 'transparent',
+              stroke: '#FF6B35',
+              strokeWidth: 1.5,
+              originX: 'center',
+              originY: 'center',
+              selectable: true,
+              evented: true,
+            });
+            
+            const textOffset = arcRadius + 15;
+            const angleText = new IText(`${displayValue}°`, {
+              left: prevPoint.x + bisector.x * textOffset,
+              top: prevPoint.y + bisector.y * textOffset,
+              fontSize: 16,
+              fill: '#000',
+              fontFamily: 'Arial',
+              originX: 'center',
+              originY: 'center',
+              editable: true,
+              selectable: true,
+            });
+            
+            canvas.add(arc);
+            canvas.add(angleText);
+
+            newMeasurements.push({
+              id: `angle-${Date.now()}`,
+              type: 'angle',
+              value: displayValue,
+              originalValue: displayValue,
+              visible: true,
+              interiorValue: interiorAngleVal,
+              exteriorValue: exteriorAngleVal,
+              showInterior: true,
+              labelObjectId: (angleText as any)._id,
+            });
+          }
+          
+          // Add line
           const line = new Line([prevPoint.x, prevPoint.y, newPoint.x, newPoint.y], {
             stroke: '#000000',
             strokeWidth: 2,
@@ -291,6 +348,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           });
           canvas.add(line);
 
+          // Add length label
           const length = Math.round(calculateDistance(prevPoint, newPoint));
           const midX = (prevPoint.x + newPoint.x) / 2;
           const midY = (prevPoint.y + newPoint.y) / 2;
@@ -318,19 +376,21 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           });
           canvas.add(lengthLabel);
 
-          // Add to measurements
-          setMeasurements(prev => [...prev, {
-            id: `length-${Date.now()}`,
+          newMeasurements.push({
+            id: `length-${Date.now() + 1}`, // +1 to ensure unique ID
             type: 'length',
             value: length,
             originalValue: length,
             visible: true,
             labelObjectId: (lengthLabel as any)._id,
             placementSide: 'exterior',
-          }]);
+          });
         }
 
         setLinePoints([...currentPoints, newPoint]);
+        if (newMeasurements.length > 0) {
+          setMeasurements(prev => [...prev, ...newMeasurements]);
+        }
         canvas.requestRenderAll();
         setTimeout(saveToHistory, 100);
       }
@@ -724,13 +784,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
               onClick={handleAddRightAngle}
               className="px-4 py-2 text-sm font-medium rounded-lg bg-green-600 text-white hover:bg-green-700"
             >
-              ⊏ Right Angle
-            </button>
-            <button
-              onClick={handleAddCustomAngle}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-            >
-              ⌒ Custom Angle
+              ⊏ Right Angle Symbol
             </button>
           </>
         )}
@@ -866,12 +920,12 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <h3 className="text-sm font-semibold text-blue-900 mb-2">✨ How to Use:</h3>
         <ul className="text-sm text-blue-800 space-y-1 grid grid-cols-2 gap-x-6">
-          <li><strong>📏 Line Tool:</strong> Click points to draw. Watch live measurements above.</li>
-          <li><strong>✏️ Edit Tool:</strong> Click orange point → add angle annotation.</li>
+          <li><strong>📏 Line Tool:</strong> Click points to draw. Angles appear automatically after 3rd point.</li>
+          <li><strong>✏️ Edit Tool:</strong> Click orange point → add right angle symbol.</li>
           <li><strong>⏪ ⏩ Undo/Redo:</strong> Ctrl+Z / Ctrl+Y (10 steps history)</li>
           <li><strong>🎯 Select All:</strong> Ctrl+A to select and move entire drawing.</li>
-          <li><strong>📋 Sidebar:</strong> Manage all measurements - hide, edit, toggle types.</li>
-          <li><strong>↔️ Angle Toggle:</strong> Switch between interior/exterior angles.</li>
+          <li><strong>📋 Sidebar:</strong> Measurements appear as: Length → Angle → Length → Angle...</li>
+          <li><strong>↔️ Angle Toggle:</strong> Switch between interior/exterior angles in sidebar.</li>
           <li><strong>↗️ Length Placement:</strong> Toggle which side of line the label appears.</li>
         </ul>
       </div>
