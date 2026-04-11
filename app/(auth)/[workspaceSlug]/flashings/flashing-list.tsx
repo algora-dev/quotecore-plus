@@ -15,8 +15,6 @@ export function FlashingList({ initialFlashings }: { initialFlashings: FlashingL
     setSaving(true);
     try {
       const fd = new FormData(e.currentTarget);
-      const name = fd.get('name') as string;
-      const description = fd.get('description') as string;
       const imageFile = fd.get('image') as File;
 
       if (!imageFile || imageFile.size === 0) {
@@ -25,16 +23,8 @@ export function FlashingList({ initialFlashings }: { initialFlashings: FlashingL
         return;
       }
 
-      // TODO: Upload to Supabase storage in Slice 4
-      // For now, we'll create a placeholder URL
-      const tempImageUrl = `https://placeholder.com/${imageFile.name}`;
-
-      const newFlashing = await createFlashing({
-        name,
-        description: description || null,
-        image_url: tempImageUrl,
-        is_default: false,
-      });
+      // Pass entire FormData to server action (includes name, description, image)
+      const newFlashing = await createFlashing(fd);
 
       setFlashings([...flashings, newFlashing]);
       setShowUploadForm(false);
@@ -146,17 +136,13 @@ export function FlashingList({ initialFlashings }: { initialFlashings: FlashingL
               className="border border-slate-200 rounded-xl bg-white p-3 hover:border-slate-300 transition-colors"
             >
               <div className="aspect-square bg-slate-100 rounded-lg mb-2 flex items-center justify-center overflow-hidden">
-                {flashing.image_url.includes('placeholder') ? (
-                  <span className="text-xs text-slate-400">Preview</span>
-                ) : (
-                  <Image
-                    src={flashing.image_url}
-                    alt={flashing.name}
-                    width={200}
-                    height={200}
-                    className="object-contain"
-                  />
-                )}
+                <Image
+                  src={flashing.image_url}
+                  alt={flashing.name}
+                  width={200}
+                  height={200}
+                  className="object-contain"
+                />
               </div>
               <div className="mb-2">
                 <h3 className="font-medium text-sm text-slate-900">{flashing.name}</h3>

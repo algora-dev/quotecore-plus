@@ -31,7 +31,7 @@ export async function loadFlashingLibrary() {
   return data || [];
 }
 
-export async function createFlashing(input: FlashingLibraryInsert) {
+export async function createFlashing(formData: FormData) {
   let profile;
   try {
     profile = await requireCompanyContext();
@@ -40,18 +40,64 @@ export async function createFlashing(input: FlashingLibraryInsert) {
     throw new Error('Account setup incomplete. Please log out and log back in.');
   }
 
+  const name = formData.get('name') as string;
+  const description = formData.get('description') as string | null;
+  const imageFile = formData.get('image') as File;
+
+  if (!name || !imageFile) {
+    throw new Error('Name and image file are required');
+  }
+
   console.log('[createFlashing] Creating flashing for company:', profile.company_id);
-  console.log('[createFlashing] Input data:', input);
+  console.log('[createFlashing] File:', imageFile.name, imageFile.type, imageFile.size);
 
   const supabase = await createSupabaseServerClient();
+
+  // 1. Upload image to storage
+  const fileExt = imageFile.name.split('.').pop();
+  const fileName = `${crypto.randomUUID()}.${fileExt}`;
+  const storagePath = `${profile.company_id}/flashings/${fileName}`;
+
+  // Convert File to Buffer for server-side upload
+  const arrayBuffer = await imageFile.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  const { error: uploadError } = await supabase.storage
+    .from('company-logos')
+    .upload(storagePath, buffer, {
+      contentType: imageFile.type,
+      upsert: false,
+    });
+
+  if (uploadError) {
+    console.error('[createFlashing] Upload error:', uploadError);
+    throw new Error(`Failed to upload image: ${uploadError.message}`);
+  }
+
+  // 2. Get public URL
+  const { data: { publicUrl } } = supabase.storage
+    .from('company-logos')
+    .getPublicUrl(storagePath);
+
+  console.log('[createFlashing] Image uploaded to:', publicUrl);
+
+  // 3. Create database record
   const { data, error } = await supabase
     .from('flashing_library')
-    .insert({ ...input, company_id: profile.company_id })
+    .insert({
+      name,
+      description: description || null,
+      image_url: publicUrl,
+      company_id: profile.company_id,
+      is_default: false,
+    })
     .select()
     .single();
   
   if (error) {
     console.error('[createFlashing] Database error:', error);
+    // Try to clean up uploaded file if database insert fails
+    await supabase.storage.from('company-logos').remove([storagePath]);
     throw new Error(`Failed to create flashing: ${error.message}`);
   }
   
@@ -100,6 +146,46 @@ export async function deleteFlashing(id: string) {
   console.log('[deleteFlashing] Deleting flashing:', id);
 
   const supabase = await createSupabaseServerClient();
+
+  // 1. Get flashing record to find image URL
+  const { data: flashing, error: fetchError } = await supabase
+    .from('flashing_library')
+    .select('image_url')
+    .eq('id', id)
+    .eq('company_id', profile.company_id)
+    .single();
+
+  if (fetchError) {
+    console.error('[deleteFlashing] Fetch error:', fetchError);
+    throw new Error(`Failed to fetch flashing: ${fetchError.message}`);
+  }
+
+  // 2. Delete from storage if image exists
+  if (flashing?.image_url && !flashing.image_url.includes('placeholder')) {
+    try {
+      // Extract storage path from URL
+      // URL format: https://{project}.supabase.co/storage/v1/object/public/company-logos/{path}
+      const urlParts = flashing.image_url.split('/company-logos/');
+      if (urlParts.length === 2) {
+        const storagePath = urlParts[1];
+        console.log('[deleteFlashing] Removing storage file:', storagePath);
+        
+        const { error: storageError } = await supabase.storage
+          .from('company-logos')
+          .remove([storagePath]);
+
+        if (storageError) {
+          console.error('[deleteFlashing] Storage deletion error:', storageError);
+          // Don't throw - continue with database deletion even if storage fails
+        }
+      }
+    } catch (err) {
+      console.error('[deleteFlashing] Error parsing storage path:', err);
+      // Don't throw - continue with database deletion
+    }
+  }
+
+  // 3. Delete database record
   const { error } = await supabase
     .from('flashing_library')
     .delete()
