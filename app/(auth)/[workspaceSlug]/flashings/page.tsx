@@ -3,7 +3,12 @@ import { FlashingList } from './flashing-list';
 
 export const dynamic = 'force-dynamic';
 
-export default async function FlashingsPage() {
+interface Props {
+  params: Promise<{ workspaceSlug: string }>;
+}
+
+export default async function FlashingsPage(props: Props) {
+  const { workspaceSlug } = await props.params;
   const flashings = await loadFlashingLibrary();
 
   return (
@@ -14,7 +19,7 @@ export default async function FlashingsPage() {
           Manage standard flashing designs for material order forms
         </p>
       </div>
-      <FlashingList initialFlashings={flashings} />
+      <FlashingList initialFlashings={flashings} workspaceSlug={workspaceSlug} />
     </div>
   );
 }

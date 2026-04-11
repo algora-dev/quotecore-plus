@@ -1,11 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createFlashing, updateFlashing, deleteFlashing } from './actions';
 import type { FlashingLibraryRow } from '@/app/lib/types';
 import Image from 'next/image';
 
-export function FlashingList({ initialFlashings }: { initialFlashings: FlashingLibraryRow[] }) {
+interface Props {
+  initialFlashings: FlashingLibraryRow[];
+  workspaceSlug: string;
+}
+
+export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
+  const router = useRouter();
   const [flashings, setFlashings] = useState(initialFlashings);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -55,12 +62,20 @@ export function FlashingList({ initialFlashings }: { initialFlashings: FlashingL
         <p className="text-sm text-slate-500">
           {flashings.length} {flashings.length === 1 ? 'flashing' : 'flashings'} in library
         </p>
-        <button
-          onClick={() => setShowUploadForm(true)}
-          className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-        >
-          + New Flashing
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => router.push(`/${workspaceSlug}/flashings/draw`)}
+            className="px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff8159] transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.6)]"
+          >
+            ✏️ Draw Flashing
+          </button>
+          <button
+            onClick={() => setShowUploadForm(true)}
+            className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          >
+            📁 Upload Image
+          </button>
+        </div>
       </div>
 
       {showUploadForm && (

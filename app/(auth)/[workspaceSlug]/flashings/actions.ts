@@ -2,6 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import type { FlashingLibraryInsert } from '@/app/lib/types';
+import { redirect } from 'next/navigation';
 
 export async function loadFlashingLibrary() {
   let profile;
@@ -198,4 +199,77 @@ export async function deleteFlashing(id: string) {
   }
   
   revalidatePath('/[workspaceSlug]/flashings');
+}
+
+export async function createFlashingFromCanvas(formData: FormData) {
+  let profile;
+  try {
+    profile = await requireCompanyContext();
+  } catch (err) {
+    console.error('[createFlashingFromCanvas] Failed to get company context:', err);
+    throw new Error('Account setup incomplete. Please log out and log back in.');
+  }
+
+  const name = formData.get('name') as string;
+  const description = formData.get('description') as string | null;
+  const imageFile = formData.get('image') as File;
+  const canvasData = formData.get('canvas_data') as string | null;
+
+  if (!name || !imageFile) {
+    throw new Error('Name and image are required');
+  }
+
+  console.log('[createFlashingFromCanvas] Creating flashing from canvas:', name);
+
+  const supabase = await createSupabaseServerClient();
+
+  // 1. Upload canvas image to storage
+  const fileName = `${crypto.randomUUID()}.png`;
+  const storagePath = `${profile.company_id}/flashings/${fileName}`;
+
+  const arrayBuffer = await imageFile.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  const { error: uploadError } = await supabase.storage
+    .from('company-logos')
+    .upload(storagePath, buffer, {
+      contentType: 'image/png',
+      upsert: false,
+    });
+
+  if (uploadError) {
+    console.error('[createFlashingFromCanvas] Upload error:', uploadError);
+    throw new Error(`Failed to upload canvas image: ${uploadError.message}`);
+  }
+
+  // 2. Get public URL
+  const { data: { publicUrl } } = supabase.storage
+    .from('company-logos')
+    .getPublicUrl(storagePath);
+
+  console.log('[createFlashingFromCanvas] Canvas image uploaded:', publicUrl);
+
+  // 3. Create database record with canvas JSON
+  const { data, error } = await supabase
+    .from('flashing_library')
+    .insert({
+      name,
+      description: description || null,
+      image_url: publicUrl,
+      canvas_data: canvasData ? JSON.parse(canvasData) : null,
+      company_id: profile.company_id,
+      is_default: false,
+    })
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('[createFlashingFromCanvas] Database error:', error);
+    // Try to clean up uploaded file
+    await supabase.storage.from('company-logos').remove([storagePath]);
+    throw new Error(`Failed to create flashing: ${error.message}`);
+  }
+  
+  revalidatePath('/[workspaceSlug]/flashings');
+  return data;
 }
