@@ -2,26 +2,39 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Canvas, Line, Circle, IText, Rect, Group } from 'fabric';
+import { Canvas, Line, Circle, IText, Rect, Object as FabricObject } from 'fabric';
 import { createFlashingFromCanvas } from '../actions';
 
 type DrawMode = 'none' | 'line' | 'text' | 'edit';
+type CanvasSize = 'small' | 'medium' | 'large';
 
-const CANVAS_WIDTH = 800;
-const CANVAS_HEIGHT = 600;
-const SCALE = 0.5; // 2 pixels = 1mm (doubled visual size)
+const CANVAS_SIZES = {
+  small: { width: 600, height: 450, maxMm: '300mm x 225mm' },
+  medium: { width: 800, height: 600, maxMm: '400mm x 300mm' },
+  large: { width: 1200, height: 900, maxMm: '600mm x 450mm' },
+};
+
+const SCALE = 0.5; // 2 pixels = 1mm
+
+interface DrawingPoint {
+  x: number;
+  y: number;
+  marker: any;
+}
 
 export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fabricRef = useRef<Canvas | null>(null);
   
+  const [canvasSize, setCanvasSize] = useState<CanvasSize>('medium');
   const [drawMode, setDrawMode] = useState<DrawMode>('none');
-  const [linePoints, setLinePoints] = useState<{ x: number; y: number }[]>([]);
+  const [linePoints, setLinePoints] = useState<DrawingPoint[]>([]);
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
   const [interiorAngle, setInteriorAngle] = useState(true);
   const [exteriorLength, setExteriorLength] = useState(true);
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
+  const [selectedLabel, setSelectedLabel] = useState<any>(null);
   
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -29,15 +42,17 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
   // Refs to avoid stale closure issues
   const drawModeRef = useRef<DrawMode>('none');
-  const linePointsRef = useRef<{ x: number; y: number }[]>([]);
+  const linePointsRef = useRef<DrawingPoint[]>([]);
   const interiorAngleRef = useRef(true);
+  const canvasSizeRef = useRef<CanvasSize>('medium');
 
   // Update refs when state changes
   useEffect(() => {
     drawModeRef.current = drawMode;
     linePointsRef.current = linePoints;
     interiorAngleRef.current = interiorAngle;
-  }, [drawMode, linePoints, interiorAngle]);
+    canvasSizeRef.current = canvasSize;
+  }, [drawMode, linePoints, interiorAngle, canvasSize]);
 
   // Calculate distance in mm
   const calculateDistance = (p1: { x: number; y: number }, p2: { x: number; y: number }): number => {
@@ -72,7 +87,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     p2: { x: number; y: number },
     p3: { x: number; y: number }
   ): { x: number; y: number } => {
-    // Normalize vectors
     const v1 = { x: p1.x - p2.x, y: p1.y - p2.y };
     const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
     const len1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
@@ -81,7 +95,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     const norm1 = { x: v1.x / len1, y: v1.y / len1 };
     const norm2 = { x: v2.x / len2, y: v2.y / len2 };
     
-    // Bisector is the average of normalized vectors
     const bisector = {
       x: (norm1.x + norm2.x) / 2,
       y: (norm1.y + norm2.y) / 2
@@ -92,28 +105,52 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
   // Initialize canvas
   useEffect(() => {
-    if (!canvasRef.current || fabricRef.current) return;
+    if (!canvasRef.current) return;
+    
+    // Dispose existing canvas if changing size
+    if (fabricRef.current) {
+      fabricRef.current.dispose();
+      fabricRef.current = null;
+    }
 
+    const size = CANVAS_SIZES[canvasSize];
     const canvas = new Canvas(canvasRef.current, {
-      width: CANVAS_WIDTH,
-      height: CANVAS_HEIGHT,
+      width: size.width,
+      height: size.height,
       backgroundColor: '#ffffff',
-      selection: false, // Disable group selection to prevent accidental moves
+      selection: false,
     });
 
     fabricRef.current = canvas;
 
-    // Mouse move - track cursor for live measurements
+    // Mouse move - track cursor
     canvas.on('mouse:move', (opt) => {
       const pointer = canvas.getPointer(opt.e);
       setCursorPos({ x: pointer.x, y: pointer.y });
+    });
+
+    // Selection event - for selecting labels
+    canvas.on('selection:created', (e) => {
+      if (e.selected && e.selected[0]) {
+        setSelectedLabel(e.selected[0]);
+      }
+    });
+
+    canvas.on('selection:updated', (e) => {
+      if (e.selected && e.selected[0]) {
+        setSelectedLabel(e.selected[0]);
+      }
+    });
+
+    canvas.on('selection:cleared', () => {
+      setSelectedLabel(null);
     });
 
     // Mouse down - handle clicks
     canvas.on('mouse:down', (opt) => {
       const pointer = canvas.getPointer(opt.e);
 
-      // Text mode - add text immediately
+      // Text mode
       if (drawModeRef.current === 'text') {
         const text = new IText('Text', {
           left: pointer.x,
@@ -129,14 +166,17 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         return;
       }
 
-      // Edit mode - select point to edit annotation
+      // Edit mode - select point or enable dragging
       if (drawModeRef.current === 'edit') {
         const currentPoints = linePointsRef.current;
+        
+        // Check if clicking near a point
         for (let i = 0; i < currentPoints.length; i++) {
           const pt = currentPoints[i];
           const dist = Math.sqrt(Math.pow(pointer.x - pt.x, 2) + Math.pow(pointer.y - pt.y, 2));
           if (dist < 15) {
             setSelectedPoint(i);
+            console.log('[Edit] Selected point:', i);
             return;
           }
         }
@@ -160,8 +200,11 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           originY: 'center',
           selectable: false,
           evented: false,
+          data: { pointIndex: currentPoints.length },
         });
         canvas.add(marker);
+
+        const newDrawingPoint: DrawingPoint = { x: newPoint.x, y: newPoint.y, marker };
 
         if (currentPoints.length > 0) {
           const prevPoint = currentPoints[currentPoints.length - 1];
@@ -172,15 +215,15 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             strokeWidth: 2,
             selectable: false,
             evented: false,
+            data: { type: 'line', fromIndex: currentPoints.length - 1, toIndex: currentPoints.length },
           });
           canvas.add(line);
 
-          // Add length label on the line
+          // Add length label
           const length = Math.round(calculateDistance(prevPoint, newPoint));
           const midX = (prevPoint.x + newPoint.x) / 2;
           const midY = (prevPoint.y + newPoint.y) / 2;
           
-          // Calculate perpendicular offset for label (exterior/interior)
           const dx = newPoint.x - prevPoint.x;
           const dy = newPoint.y - prevPoint.y;
           const lineLength = Math.sqrt(dx * dx + dy * dy);
@@ -201,26 +244,93 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             originY: 'center',
             selectable: true,
             evented: true,
+            data: { type: 'lengthLabel', fromIndex: currentPoints.length - 1, toIndex: currentPoints.length },
           });
           canvas.add(lengthLabel);
         }
 
-        setLinePoints([...currentPoints, newPoint]);
+        setLinePoints([...currentPoints, newDrawingPoint]);
         canvas.renderAll();
       }
+    });
+
+    // Object moving - for draggable points in edit mode
+    canvas.on('object:moving', (e) => {
+      if (drawModeRef.current !== 'edit') return;
+      const obj = e.target as any;
+      if (!obj || !obj.data || obj.data.pointIndex === undefined) return;
+
+      const pointIndex = obj.data.pointIndex;
+      const currentPoints = linePointsRef.current;
+      if (pointIndex >= currentPoints.length) return;
+
+      // Update point position
+      const newX = obj.left!;
+      const newY = obj.top!;
+      currentPoints[pointIndex].x = newX;
+      currentPoints[pointIndex].y = newY;
+
+      // Update connected lines and labels
+      canvas.getObjects().forEach((canvasObj: any) => {
+        if (canvasObj.data?.type === 'line') {
+          if (canvasObj.data.fromIndex === pointIndex) {
+            canvasObj.set({ x1: newX, y1: newY });
+          }
+          if (canvasObj.data.toIndex === pointIndex) {
+            canvasObj.set({ x2: newX, y2: newY });
+          }
+        }
+
+        // Update length labels
+        if (canvasObj.data?.type === 'lengthLabel') {
+          if (canvasObj.data.fromIndex === pointIndex || canvasObj.data.toIndex === pointIndex) {
+            const fromPt = currentPoints[canvasObj.data.fromIndex];
+            const toPt = currentPoints[canvasObj.data.toIndex];
+            const length = Math.round(calculateDistance(fromPt, toPt));
+            const midX = (fromPt.x + toPt.x) / 2;
+            const midY = (fromPt.y + toPt.y) / 2;
+            
+            const dx = toPt.x - fromPt.x;
+            const dy = toPt.y - fromPt.y;
+            const lineLength = Math.sqrt(dx * dx + dy * dy);
+            const perpX = -dy / lineLength;
+            const perpY = dx / lineLength;
+            const offset = exteriorLength ? 15 : -15;
+            
+            canvasObj.set({
+              text: `${length}mm`,
+              left: midX + perpX * offset,
+              top: midY + perpY * offset,
+            });
+          }
+        }
+      });
+
+      canvas.renderAll();
     });
 
     return () => {
       canvas.dispose();
     };
-  }, [exteriorLength]);
+  }, [canvasSize, exteriorLength]);
 
-  // Update cursor based on draw mode
+  // Update cursor and marker selectability based on mode
   useEffect(() => {
     if (fabricRef.current) {
       const cursor = drawMode !== 'none' && drawMode !== 'edit' ? 'crosshair' : 'default';
       fabricRef.current.defaultCursor = cursor;
       fabricRef.current.hoverCursor = cursor;
+
+      // Make markers draggable in edit mode
+      fabricRef.current.getObjects().forEach((obj: any) => {
+        if ((obj as any).data?.pointIndex !== undefined) {
+          obj.set({
+            selectable: drawMode === 'edit',
+            evented: drawMode === 'edit',
+          });
+        }
+      });
+      fabricRef.current.renderAll();
     }
   }, [drawMode]);
 
@@ -250,6 +360,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     }
     setLinePoints([]);
     setSelectedPoint(null);
+    setSelectedLabel(null);
   };
 
   const handleFinishLine = () => {
@@ -257,10 +368,22 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     setDrawMode('none');
   };
 
+  const handleHideLabel = () => {
+    if (selectedLabel && fabricRef.current) {
+      fabricRef.current.remove(selectedLabel);
+      fabricRef.current.renderAll();
+      setSelectedLabel(null);
+    }
+  };
+
   const handleAddRightAngle = () => {
     if (selectedPoint === null || selectedPoint >= linePoints.length) return;
-    if (selectedPoint === 0 && linePoints.length < 2) return;
-    if (selectedPoint === linePoints.length - 1 && linePoints.length < 2) return;
+    
+    // Right angle needs at least 2 points (before and after)
+    if (selectedPoint === 0 || selectedPoint === linePoints.length - 1) {
+      alert('Right angle can only be added to middle points (not first or last point)');
+      return;
+    }
     
     const pt = linePoints[selectedPoint];
     
@@ -275,8 +398,9 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         fill: 'transparent',
         stroke: '#000',
         strokeWidth: 1.5,
-        selectable: false,
-        evented: false,
+        selectable: true,
+        evented: true,
+        data: { type: 'rightAngle' },
       });
       fabricRef.current.add(square);
       fabricRef.current.renderAll();
@@ -286,24 +410,21 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   };
 
   const handleAddCustomAngle = () => {
-    if (selectedPoint === null || selectedPoint < 1 || selectedPoint >= linePoints.length) return;
+    if (selectedPoint === null || selectedPoint < 1 || selectedPoint >= linePoints.length - 1) {
+      alert('Custom angle requires a middle point with lines on both sides');
+      return;
+    }
     
     const pt = linePoints[selectedPoint];
     const prevPt = linePoints[selectedPoint - 1];
     const nextPt = linePoints[selectedPoint + 1];
     
-    if (!nextPt) return;
-    
     const angle = Math.round(calculateAngle(prevPt, pt, nextPt, interiorAngle));
-    
-    // Calculate bisector for text placement
     const bisector = getAngleBisector(prevPt, pt, nextPt);
     
-    // Draw arc symbol + angle text on bisector
     if (fabricRef.current) {
       const arcRadius = 25;
       
-      // Simplified arc (quarter circle)
       const arc = new Circle({
         left: pt.x,
         top: pt.y,
@@ -313,13 +434,11 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         strokeWidth: 1.5,
         originX: 'center',
         originY: 'center',
-        selectable: false,
-        evented: false,
-        startAngle: 0,
-        endAngle: Math.PI / 2,
+        selectable: true,
+        evented: true,
+        data: { type: 'angleArc' },
       });
       
-      // Position text on bisector, interior side
       const textOffset = arcRadius + 15;
       const text = new IText(`${angle}°`, {
         left: pt.x + bisector.x * textOffset,
@@ -330,6 +449,8 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         originX: 'center',
         originY: 'center',
         editable: true,
+        selectable: true,
+        data: { type: 'angleLabel' },
       });
       
       fabricRef.current.add(arc);
@@ -379,26 +500,42 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     }
   };
 
+  const currentSize = CANVAS_SIZES[canvasSize];
+
   return (
     <div className="max-w-7xl mx-auto p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Draw Flashing</h1>
         <p className="text-sm text-slate-500 mt-1">
-          Draw to scale: 2 pixels = 1mm (max 400mm x 300mm)
+          Draw to scale: 2 pixels = 1mm (max {currentSize.maxMm})
         </p>
       </div>
 
       {/* Input fields */}
       <div className="mb-4 space-y-3">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g., Custom Ridge Cap"
-            className="w-full max-w-md px-3 py-2 border border-slate-300 rounded-lg"
-          />
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., Custom Ridge Cap"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Canvas Size</label>
+            <select
+              value={canvasSize}
+              onChange={(e) => setCanvasSize(e.target.value as CanvasSize)}
+              className="px-3 py-2 border border-slate-300 rounded-lg bg-white"
+            >
+              <option value="small">Small (600x450)</option>
+              <option value="medium">Medium (800x600)</option>
+              <option value="large">Large (1200x900)</option>
+            </select>
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
@@ -407,7 +544,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Optional description"
-            className="w-full max-w-md px-3 py-2 border border-slate-300 rounded-lg"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg"
           />
         </div>
       </div>
@@ -461,6 +598,15 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           Length: {exteriorLength ? '↗️ Exterior' : '↙️ Interior'}
         </button>
         
+        {selectedLabel && (
+          <button
+            onClick={handleHideLabel}
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-red-600 text-white hover:bg-red-700"
+          >
+            👁️ Hide Label
+          </button>
+        )}
+        
         {selectedPoint !== null && (
           <>
             <button
@@ -510,7 +656,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         </div>
       </div>
 
-      {/* Live Measurements - Always visible, fixed position */}
+      {/* Live Measurements */}
       <div className="mb-4 p-4 bg-blue-50 border-2 border-blue-300 rounded-lg inline-block min-w-[400px]">
         <div className="flex gap-8 text-lg font-mono">
           <div>
@@ -530,31 +676,19 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
       {/* Canvas */}
       <div className="border-2 border-slate-300 rounded-xl overflow-hidden inline-block shadow-lg">
-        <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} />
+        <canvas ref={canvasRef} width={currentSize.width} height={currentSize.height} />
       </div>
 
       {/* Instructions */}
       <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg max-w-3xl">
         <h3 className="text-sm font-semibold text-blue-900 mb-2">✨ How to Use:</h3>
         <ul className="text-sm text-blue-800 space-y-1">
-          <li>
-            <strong>📏 Line Tool:</strong> Click points to draw. Watch live length/angle above canvas (2x bigger now!).
-          </li>
-          <li>
-            <strong>✏️ Edit Tool:</strong> Click an orange point, then choose Right Angle or Custom Angle.
-          </li>
-          <li>
-            <strong>Angle placement:</strong> Custom angles now appear on the angle bisector (middle of the angle).
-          </li>
-          <li>
-            <strong>Length labels:</strong> Automatically added to each line segment.
-          </li>
-          <li>
-            <strong>Toggle sides:</strong> Switch interior/exterior for angles and lengths independently.
-          </li>
-          <li>
-            <strong>Scale:</strong> 2 pixels = 1mm (drawings appear 2x larger now!)
-          </li>
+          <li><strong>Canvas Size:</strong> Change Small/Medium/Large to fit your flashing design.</li>
+          <li><strong>📏 Line Tool:</strong> Click points to draw. Watch live measurements above canvas.</li>
+          <li><strong>✏️ Edit Tool:</strong> Click orange point → add angle annotation, OR drag points to reposition.</li>
+          <li><strong>👁️ Hide Label:</strong> Select any label (click it) → click "Hide Label" to remove clutter.</li>
+          <li><strong>🎯 Drag Points:</strong> In Edit mode, click and drag orange markers to adjust the drawing.</li>
+          <li><strong>Scale:</strong> 2 pixels = 1mm (draw actual dimensions!)</li>
         </ul>
       </div>
     </div>
