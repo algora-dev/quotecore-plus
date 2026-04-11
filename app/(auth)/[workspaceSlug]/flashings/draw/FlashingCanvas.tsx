@@ -285,9 +285,10 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           
           const line = new Line([prevPoint.x, prevPoint.y, newPoint.x, newPoint.y], {
             stroke: '#000000',
-            strokeWidth: 2,
-            selectable: false,
-            evented: false,
+            strokeWidth: 3,
+            selectable: true,
+            evented: true,
+            strokeUniform: true,
           });
           canvas.add(line);
 
@@ -331,7 +332,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         }
 
         setLinePoints([...currentPoints, newPoint]);
-        canvas.renderAll();
+        canvas.requestRenderAll();
         setTimeout(saveToHistory, 100);
       }
     });
