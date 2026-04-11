@@ -2,10 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Canvas, Line, Circle, Rect, IText } from 'fabric';
+import { Canvas, Line, Circle, IText } from 'fabric';
 import { createFlashingFromCanvas } from '../actions';
 
-type DrawMode = 'none' | 'line' | 'rect' | 'circle' | 'text';
+type DrawMode = 'none' | 'line' | 'text';
 
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
@@ -14,13 +14,23 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fabricRef = useRef<Canvas | null>(null);
+  
   const [drawMode, setDrawMode] = useState<DrawMode>('none');
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
-  const [tempObject, setTempObject] = useState<any>(null);
+  const [linePoints, setLinePoints] = useState<{ x: number; y: number }[]>([]);
+  const [tempLine, setTempLine] = useState<any>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Refs to avoid stale closure issues
+  const drawModeRef = useRef<DrawMode>('none');
+  const linePointsRef = useRef<{ x: number; y: number }[]>([]);
+
+  // Update refs when state changes
+  useEffect(() => {
+    drawModeRef.current = drawMode;
+    linePointsRef.current = linePoints;
+  }, [drawMode, linePoints]);
 
   // Initialize canvas
   useEffect(() => {
@@ -34,94 +44,65 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
     fabricRef.current = canvas;
 
-    // Mouse down - start drawing
+    // Mouse down - handle clicks
     canvas.on('mouse:down', (opt) => {
-      if (drawMode === 'none') return;
-      
       const pointer = canvas.getPointer(opt.e);
-      setIsDrawing(true);
-      setStartPoint({ x: pointer.x, y: pointer.y });
 
-      // For text, add immediately
-      if (drawMode === 'text') {
+      console.log('[Canvas] Click at:', pointer, 'Mode:', drawModeRef.current);
+
+      // Text mode - add text immediately
+      if (drawModeRef.current === 'text') {
         const text = new IText('Text', {
           left: pointer.x,
           top: pointer.y,
           fontSize: 20,
-          fill: '#000',
+          fill: '#000000',
+          fontFamily: 'Arial',
         });
         canvas.add(text);
         canvas.setActiveObject(text);
         canvas.renderAll();
         setDrawMode('none');
-        setIsDrawing(false);
-        setStartPoint(null);
-      }
-    });
-
-    // Mouse move - update temp shape
-    canvas.on('mouse:move', (opt) => {
-      if (!isDrawing || !startPoint || drawMode === 'text') return;
-
-      const pointer = canvas.getPointer(opt.e);
-
-      // Remove previous temp object
-      if (tempObject) {
-        canvas.remove(tempObject);
+        return;
       }
 
-      let newObject: any = null;
+      // Line mode - add points
+      if (drawModeRef.current === 'line') {
+        const currentPoints = linePointsRef.current;
+        const newPoint = { x: pointer.x, y: pointer.y };
 
-      switch (drawMode) {
-        case 'line':
-          newObject = new Line([startPoint.x, startPoint.y, pointer.x, pointer.y], {
-            stroke: '#000',
-            strokeWidth: 2,
-          });
-          break;
-        case 'rect':
-          newObject = new Rect({
-            left: Math.min(startPoint.x, pointer.x),
-            top: Math.min(startPoint.y, pointer.y),
-            width: Math.abs(pointer.x - startPoint.x),
-            height: Math.abs(pointer.y - startPoint.y),
-            fill: 'transparent',
-            stroke: '#000',
-            strokeWidth: 2,
-          });
-          break;
-        case 'circle':
-          const radius = Math.sqrt(
-            Math.pow(pointer.x - startPoint.x, 2) + Math.pow(pointer.y - startPoint.y, 2)
-          );
-          newObject = new Circle({
-            left: startPoint.x,
-            top: startPoint.y,
-            radius: radius,
-            fill: 'transparent',
-            stroke: '#000',
-            strokeWidth: 2,
-            originX: 'center',
-            originY: 'center',
-          });
-          break;
-      }
+        console.log('[Canvas] Line point added:', newPoint, 'Total points:', currentPoints.length + 1);
 
-      if (newObject) {
-        canvas.add(newObject);
-        setTempObject(newObject);
+        // Add marker
+        const marker = new Circle({
+          left: newPoint.x,
+          top: newPoint.y,
+          radius: 4,
+          fill: '#FF6B35',
+          stroke: '#000',
+          strokeWidth: 1,
+          originX: 'center',
+          originY: 'center',
+          selectable: false,
+          evented: false,
+        });
+        canvas.add(marker);
+
+        if (currentPoints.length > 0) {
+          // Draw line from previous point
+          const prevPoint = currentPoints[currentPoints.length - 1];
+          const line = new Line([prevPoint.x, prevPoint.y, newPoint.x, newPoint.y], {
+            stroke: '#000000',
+            strokeWidth: 2,
+            selectable: false,
+            evented: false,
+          });
+          canvas.add(line);
+        }
+
+        setLinePoints([...currentPoints, newPoint]);
         canvas.renderAll();
       }
-    });
-
-    // Mouse up - finalize shape
-    canvas.on('mouse:up', () => {
-      if (isDrawing && tempObject) {
-        setTempObject(null);
-      }
-      setIsDrawing(false);
-      setStartPoint(null);
-      setDrawMode('none');
     });
 
     return () => {
@@ -144,6 +125,14 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       fabricRef.current.backgroundColor = '#ffffff';
       fabricRef.current.renderAll();
     }
+    setLinePoints([]);
+    setTempLine(null);
+  };
+
+  const handleFinishLine = () => {
+    setLinePoints([]);
+    setTempLine(null);
+    setDrawMode('none');
   };
 
   const handleSave = async () => {
@@ -225,53 +214,41 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       </div>
 
       {/* Toolbar */}
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex gap-2 items-center">
         <button
           onClick={() => setDrawMode('line')}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             drawMode === 'line'
-              ? 'bg-[#FF6B35] text-white'
+              ? 'bg-[#FF6B35] text-white shadow-lg'
               : 'bg-white border border-slate-300 hover:bg-slate-50'
           }`}
         >
-          Line
-        </button>
-        <button
-          onClick={() => setDrawMode('rect')}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            drawMode === 'rect'
-              ? 'bg-[#FF6B35] text-white'
-              : 'bg-white border border-slate-300 hover:bg-slate-50'
-          }`}
-        >
-          Rectangle
-        </button>
-        <button
-          onClick={() => setDrawMode('circle')}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            drawMode === 'circle'
-              ? 'bg-[#FF6B35] text-white'
-              : 'bg-white border border-slate-300 hover:bg-slate-50'
-          }`}
-        >
-          Circle
+          📏 Line
         </button>
         <button
           onClick={() => setDrawMode('text')}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             drawMode === 'text'
-              ? 'bg-[#FF6B35] text-white'
+              ? 'bg-[#FF6B35] text-white shadow-lg'
               : 'bg-white border border-slate-300 hover:bg-slate-50'
           }`}
         >
-          Text
+          📝 Text
         </button>
+        {drawMode === 'line' && linePoints.length > 0 && (
+          <button
+            onClick={handleFinishLine}
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-green-600 text-white hover:bg-green-700"
+          >
+            ✓ Finish Line ({linePoints.length} points)
+          </button>
+        )}
         <div className="ml-auto flex gap-2">
           <button
             onClick={handleClear}
             className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50"
           >
-            Clear
+            🗑️ Clear
           </button>
           <button
             onClick={() => router.push(`/${workspaceSlug}/flashings`)}
@@ -290,20 +267,26 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       </div>
 
       {/* Canvas */}
-      <div className="border border-slate-300 rounded-xl overflow-hidden inline-block">
+      <div className="border-2 border-slate-300 rounded-xl overflow-hidden inline-block shadow-lg">
         <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} />
       </div>
 
       {/* Instructions */}
-      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <h3 className="text-sm font-semibold text-blue-900 mb-2">Drawing Tips:</h3>
+      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg max-w-3xl">
+        <h3 className="text-sm font-semibold text-blue-900 mb-2">✨ Drawing Tips:</h3>
         <ul className="text-sm text-blue-800 space-y-1">
-          <li>• Select a tool from the toolbar above</li>
-          <li>• Click and drag on the canvas to draw</li>
-          <li>• Use Line for straight edges, Rectangle for boxes, Circle for rounded shapes</li>
-          <li>• Add Text for labels or measurements</li>
-          <li>• Click objects to select and move them</li>
-          <li>• Use Clear to start over</li>
+          <li>
+            <strong>📏 Line Tool:</strong> Click multiple points to draw connected lines. Click "Finish Line" when done.
+          </li>
+          <li>
+            <strong>📝 Text Tool:</strong> Click anywhere to add text, then type and position as needed.
+          </li>
+          <li>
+            <strong>✏️ Edit:</strong> Click on any object to select, move, resize, or delete it.
+          </li>
+          <li>
+            <strong>🗑️ Clear:</strong> Remove everything and start fresh.
+          </li>
         </ul>
       </div>
     </div>
