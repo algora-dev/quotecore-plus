@@ -64,33 +64,33 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     linePointsRef.current = linePoints;
   }, [drawMode, linePoints]);
 
-  // Save state to history
+  // Refs for stable history saving
+  const measurementsRef = useRef<MeasurementItem[]>([]);
+  
+  useEffect(() => {
+    measurementsRef.current = measurements;
+  }, [measurements]);
+
+  // Save state to history - STABLE, no dependencies that change often
   const saveToHistory = useCallback(() => {
     if (!fabricRef.current) return;
     
-    setHistory(prevHistory => {
-      setHistoryIndex(prevIndex => {
-        const newHistory = prevHistory.slice(0, prevIndex + 1);
-        const state: CanvasState = {
-          canvasJSON: JSON.stringify(fabricRef.current!.toJSON()),
-          measurements: measurements.map(m => ({ ...m })),
-        };
-        newHistory.push(state);
-        
-        // Keep only last 10 states
-        const trimmed = newHistory.length > 10 ? newHistory.slice(-10) : newHistory;
-        return trimmed.length - 1;
-      });
-      
-      const newHistory = prevHistory.slice(0, historyIndex + 1);
-      const state: CanvasState = {
-        canvasJSON: JSON.stringify(fabricRef.current!.toJSON()),
-        measurements: measurements.map(m => ({ ...m })),
-      };
+    const state: CanvasState = {
+      canvasJSON: JSON.stringify(fabricRef.current.toJSON()),
+      measurements: measurementsRef.current.map(m => ({ ...m })),
+    };
+    
+    setHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
       newHistory.push(state);
       return newHistory.length > 10 ? newHistory.slice(-10) : newHistory;
     });
-  }, [measurements, historyIndex]);
+    
+    setHistoryIndex(prev => {
+      const newIndex = prev + 1;
+      return newIndex >= 10 ? 9 : newIndex;
+    });
+  }, [historyIndex]);
 
   // Undo
   const handleUndo = () => {
@@ -285,10 +285,9 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           
           const line = new Line([prevPoint.x, prevPoint.y, newPoint.x, newPoint.y], {
             stroke: '#000000',
-            strokeWidth: 3,
-            selectable: true,
-            evented: true,
-            strokeUniform: true,
+            strokeWidth: 2,
+            selectable: false,
+            evented: false,
           });
           canvas.add(line);
 
@@ -340,7 +339,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     return () => {
       canvas.dispose();
     };
-  }, [canvasSize, saveToHistory]);
+  }, [canvasSize]); // Only re-init when canvas size changes
 
   useEffect(() => {
     if (fabricRef.current) {
