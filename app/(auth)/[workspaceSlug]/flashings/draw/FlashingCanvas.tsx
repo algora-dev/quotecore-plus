@@ -50,6 +50,11 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   
   const [history, setHistory] = useState<CanvasState[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const historyIndexRef = useRef(-1);
+  
+  useEffect(() => {
+    historyIndexRef.current = historyIndex;
+  }, [historyIndex]);
   
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -80,17 +85,14 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       measurements: measurementsRef.current.map(m => ({ ...m })),
     };
     
-    setHistory(prev => {
-      const newHistory = prev.slice(0, historyIndex + 1);
-      newHistory.push(state);
-      return newHistory.length > 10 ? newHistory.slice(-10) : newHistory;
-    });
+    const currentIndex = historyIndexRef.current;
+    const newHistory = history.slice(0, currentIndex + 1);
+    newHistory.push(state);
+    const trimmed = newHistory.length > 10 ? newHistory.slice(-10) : newHistory;
     
-    setHistoryIndex(prev => {
-      const newIndex = prev + 1;
-      return newIndex >= 10 ? 9 : newIndex;
-    });
-  }, [historyIndex]);
+    setHistory(trimmed);
+    setHistoryIndex(trimmed.length - 1);
+  }, [history]);
 
   // Undo
   const handleUndo = () => {
@@ -311,6 +313,8 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             });
             
             const textOffset = arcRadius + 15;
+            const measurementId = `angle-${Date.now()}`;
+            
             const angleText = new IText(`${displayValue}°`, {
               left: prevPoint.x + bisector.x * textOffset,
               top: prevPoint.y + bisector.y * textOffset,
@@ -322,12 +326,15 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
               editable: true,
               selectable: true,
             });
+            (angleText as any).measurementId = measurementId;
+            
+            (arc as any).measurementId = measurementId;
             
             canvas.add(arc);
             canvas.add(angleText);
 
             newMeasurements.push({
-              id: `angle-${Date.now()}`,
+              id: measurementId,
               type: 'angle',
               value: displayValue,
               originalValue: displayValue,
@@ -335,7 +342,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
               interiorValue: interiorAngleVal,
               exteriorValue: exteriorAngleVal,
               showInterior: true,
-              labelObjectId: (angleText as any)._id,
+              labelObjectId: measurementId,
             });
           }
           
@@ -363,6 +370,8 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           const labelX = midX + perpX * offset;
           const labelY = midY + perpY * offset;
           
+          const measurementId = `length-${Date.now() + 1}`;
+          
           const lengthLabel = new IText(`${length}mm`, {
             left: labelX,
             top: labelY,
@@ -374,15 +383,17 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             selectable: true,
             evented: true,
           });
+          (lengthLabel as any).measurementId = measurementId;
+          
           canvas.add(lengthLabel);
 
           newMeasurements.push({
-            id: `length-${Date.now() + 1}`, // +1 to ensure unique ID
+            id: measurementId,
             type: 'length',
             value: length,
             originalValue: length,
             visible: true,
-            labelObjectId: (lengthLabel as any)._id,
+            labelObjectId: measurementId,
             placementSide: 'exterior',
           });
         }
@@ -449,13 +460,17 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     if (!measurement || !fabricRef.current) return;
 
     const canvas = fabricRef.current;
-    const obj = canvas.getObjects().find((o: any) => o._id === measurement.labelObjectId);
-    if (obj) {
-      obj.set('visible', !measurement.visible);
-    }
+    const newVisible = !measurement.visible;
+    
+    // Find ALL objects with this measurementId (arc + text for angles, just text for lengths)
+    canvas.getObjects().forEach((obj: any) => {
+      if (obj.measurementId === id) {
+        obj.set('visible', newVisible);
+      }
+    });
     
     setMeasurements(measurements.map(m => 
-      m.id === id ? { ...m, visible: !m.visible } : m
+      m.id === id ? { ...m, visible: newVisible } : m
     ));
     
     canvas.renderAll();
@@ -473,9 +488,12 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     if (isNaN(numValue)) return;
 
     const canvas = fabricRef.current;
-    const obj = canvas.getObjects().find((o: any) => o._id === measurement.labelObjectId);
-    if (obj && (obj as any).type === 'i-text') {
-      (obj as any).set('text', measurement.type === 'length' ? `${numValue}mm` : `${numValue}°`);
+    const textObj = canvas.getObjects().find((o: any) => 
+      o.measurementId === id && o.type === 'i-text'
+    );
+    
+    if (textObj) {
+      (textObj as any).set('text', measurement.type === 'length' ? `${numValue}mm` : `${numValue}°`);
     }
 
     setMeasurements(measurements.map(m =>
@@ -491,9 +509,12 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     if (!measurement || !fabricRef.current) return;
 
     const canvas = fabricRef.current;
-    const obj = canvas.getObjects().find((o: any) => o._id === measurement.labelObjectId);
-    if (obj && (obj as any).type === 'i-text') {
-      (obj as any).set('text', measurement.type === 'length' ? `${measurement.originalValue}mm` : `${measurement.originalValue}°`);
+    const textObj = canvas.getObjects().find((o: any) => 
+      o.measurementId === id && o.type === 'i-text'
+    );
+    
+    if (textObj) {
+      (textObj as any).set('text', measurement.type === 'length' ? `${measurement.originalValue}mm` : `${measurement.originalValue}°`);
     }
 
     setMeasurements(measurements.map(m =>
@@ -512,9 +533,12 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     const newValue = newShowInterior ? measurement.interiorValue! : measurement.exteriorValue!;
 
     const canvas = fabricRef.current;
-    const obj = canvas.getObjects().find((o: any) => o._id === measurement.labelObjectId);
-    if (obj && (obj as any).type === 'i-text') {
-      (obj as any).set('text', `${newValue}°`);
+    const textObj = canvas.getObjects().find((o: any) => 
+      o.measurementId === id && o.type === 'i-text'
+    );
+    
+    if (textObj) {
+      (textObj as any).set('text', `${newValue}°`);
     }
 
     setMeasurements(measurements.map(m =>
@@ -732,7 +756,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             drawMode === 'line' ? 'bg-[#FF6B35] text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
           }`}
         >
-          📏 Line
+          Line
         </button>
         <button
           onClick={() => setDrawMode('text')}
@@ -740,7 +764,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             drawMode === 'text' ? 'bg-[#FF6B35] text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
           }`}
         >
-          📝 Text
+          Text
         </button>
         <button
           onClick={() => setDrawMode('edit')}
@@ -748,7 +772,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             drawMode === 'edit' ? 'bg-[#FF6B35] text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
           }`}
         >
-          ✏️ Edit
+          Edit
         </button>
         
         <div className="h-8 w-px bg-slate-300" />
@@ -757,44 +781,32 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           onClick={handleUndo}
           disabled={historyIndex <= 0}
           title="Undo (Ctrl+Z)"
-          className="px-3 py-2 text-lg rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-30"
+          className="px-3 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-30"
         >
-          ⏪
+          Undo
         </button>
         <button
           onClick={handleRedo}
           disabled={historyIndex >= history.length - 1}
           title="Redo (Ctrl+Y)"
-          className="px-3 py-2 text-lg rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-30"
+          className="px-3 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-30"
         >
-          ⏩
+          Redo
         </button>
         <button
           onClick={handleSelectAll}
           title="Select All (Ctrl+A)"
           className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50"
         >
-          🎯 Select All
+          Select All
         </button>
-        
-        {selectedPoint !== null && (
-          <>
-            <div className="h-8 w-px bg-slate-300" />
-            <button
-              onClick={handleAddRightAngle}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-green-600 text-white hover:bg-green-700"
-            >
-              ⊏ Right Angle Symbol
-            </button>
-          </>
-        )}
         
         {drawMode === 'line' && linePoints.length > 0 && (
           <button
             onClick={handleFinishLine}
             className="px-4 py-2 text-sm font-medium rounded-lg bg-green-600 text-white hover:bg-green-700"
           >
-            ✓ Finish Line ({linePoints.length} points)
+            Finish Line ({linePoints.length} points)
           </button>
         )}
         
@@ -803,7 +815,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             onClick={handleClear}
             className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50"
           >
-            🗑️ Clear
+            Clear
           </button>
           <button
             onClick={() => router.push(`/${workspaceSlug}/flashings`)}
@@ -852,14 +864,14 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                 <div key={m.id} className="p-3 border rounded-lg border-slate-200 bg-slate-50">
                   <div className="flex justify-between items-start mb-2">
                     <span className="text-xs font-medium text-slate-600">
-                      {m.type === 'length' ? '📏 Length' : '📐 Angle'}
+                      {m.type === 'length' ? 'Length' : 'Angle'}
                     </span>
                     <button
                       onClick={() => handleToggleMeasurementVisibility(m.id)}
-                      className="text-sm"
+                      className="text-xs px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded"
                       title={m.visible ? 'Hide' : 'Show'}
                     >
-                      {m.visible ? '👁️' : '🚫'}
+                      {m.visible ? 'Hide' : 'Show'}
                     </button>
                   </div>
                   <div className="text-base font-bold text-slate-900 mb-3">
@@ -877,7 +889,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                         className="w-full text-xs px-2 py-1.5 bg-blue-100 hover:bg-blue-200 rounded text-left"
                         title="Toggle Interior/Exterior"
                       >
-                        ↔️ Toggle Angle Type
+                        Toggle Angle Type
                       </button>
                     )}
                     {m.type === 'length' && (
@@ -886,7 +898,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                         className="w-full text-xs px-2 py-1.5 bg-purple-100 hover:bg-purple-200 rounded text-left"
                         title="Toggle placement side"
                       >
-                        {m.placementSide === 'exterior' ? '↗️' : '↙️'} {m.placementSide === 'exterior' ? 'Exterior' : 'Interior'} Side
+                        {m.placementSide === 'exterior' ? 'Exterior' : 'Interior'} Side
                       </button>
                     )}
                     <button
@@ -894,14 +906,14 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                       className="w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left"
                       title="Edit Value"
                     >
-                      ✏️ Edit Value
+                      Edit Value
                     </button>
                     <button
                       onClick={() => handleResetMeasurement(m.id)}
                       className="w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left"
                       title="Reset to Original"
                     >
-                      🔄 Reset
+                      Reset
                     </button>
                   </div>
                 </div>
@@ -918,15 +930,15 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
       {/* Instructions */}
       <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <h3 className="text-sm font-semibold text-blue-900 mb-2">✨ How to Use:</h3>
+        <h3 className="text-sm font-semibold text-blue-900 mb-2">How to Use:</h3>
         <ul className="text-sm text-blue-800 space-y-1 grid grid-cols-2 gap-x-6">
-          <li><strong>📏 Line Tool:</strong> Click points to draw. Angles appear automatically after 3rd point.</li>
-          <li><strong>✏️ Edit Tool:</strong> Click orange point → add right angle symbol.</li>
-          <li><strong>⏪ ⏩ Undo/Redo:</strong> Ctrl+Z / Ctrl+Y (10 steps history)</li>
-          <li><strong>🎯 Select All:</strong> Ctrl+A to select and move entire drawing.</li>
-          <li><strong>📋 Sidebar:</strong> Measurements appear as: Length → Angle → Length → Angle...</li>
-          <li><strong>↔️ Angle Toggle:</strong> Switch between interior/exterior angles in sidebar.</li>
-          <li><strong>↗️ Length Placement:</strong> Toggle which side of line the label appears.</li>
+          <li><strong>Line Tool:</strong> Click points to draw. Angles appear automatically after 3rd point.</li>
+          <li><strong>Text Tool:</strong> Click to add text labels anywhere on the canvas.</li>
+          <li><strong>Undo/Redo:</strong> Ctrl+Z / Ctrl+Y (10 steps history)</li>
+          <li><strong>Select All:</strong> Ctrl+A to select and move entire drawing.</li>
+          <li><strong>Sidebar:</strong> Measurements appear as: Length → Angle → Length → Angle...</li>
+          <li><strong>Toggle Angle:</strong> Switch between interior/exterior angles in sidebar.</li>
+          <li><strong>Hide/Show:</strong> Toggle visibility of individual measurements.</li>
         </ul>
       </div>
     </div>
