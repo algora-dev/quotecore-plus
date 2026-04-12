@@ -99,25 +99,40 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Select All - proper implementation
+  // Select All - with uniform scaling only
   const handleSelectAll = () => {
     if (!fabricRef.current) return;
     
     const canvas = fabricRef.current;
-    const allObjects = canvas.getObjects();
+    // Exclude point markers from selection
+    const selectableObjects = canvas.getObjects().filter((obj: any) => !obj.isPointMarker);
     
-    // Make all objects selectable
-    allObjects.forEach((obj: any) => {
+    if (selectableObjects.length === 0) return;
+    
+    // Make objects selectable
+    selectableObjects.forEach((obj: any) => {
       obj.set({ selectable: true, evented: true });
     });
     
     // Create active selection
-    if (allObjects.length > 0) {
-      canvas.discardActiveObject();
-      const selection = new ActiveSelection(allObjects as any, { canvas });
-      canvas.setActiveObject(selection as any);
-      canvas.requestRenderAll();
-    }
+    canvas.discardActiveObject();
+    const selection = new ActiveSelection(selectableObjects as any, { canvas });
+    
+    // Disable middle handles on the selection
+    selection.setControlsVisibility({
+      mt: false,  // no middle-top
+      mb: false,  // no middle-bottom
+      ml: false,  // no middle-left
+      mr: false,  // no middle-right
+      tl: true,   // keep corners
+      tr: true,
+      bl: true,
+      br: true,
+      mtr: true,  // keep rotation
+    });
+    
+    canvas.setActiveObject(selection as any);
+    canvas.requestRenderAll();
   };
 
   const calculateDistance = (p1: { x: number; y: number }, p2: { x: number; y: number }): number => {
@@ -178,15 +193,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       height: size.height,
       backgroundColor: '#ffffff',
       selection: true,
-    });
-
-    // Set default object controls: disable middle handles globally
-    FabricObject.prototype.setControlsVisibility({
-      mt: false, // no middle-top
-      mb: false, // no middle-bottom
-      ml: false, // no middle-left  
-      mr: false, // no middle-right
-      mtr: true, // keep rotation
     });
 
     fabricRef.current = canvas;
