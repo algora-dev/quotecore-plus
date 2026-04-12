@@ -103,20 +103,23 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const handleSelectAll = () => {
     if (!fabricRef.current) return;
     
-    const canvas = fabricRef.current;
-    // Exclude point markers from selection
-    const selectableObjects = canvas.getObjects().filter((obj: any) => !obj.isPointMarker);
+    // Exit Line mode to prevent adding points while moving selection
+    setDrawMode('none');
     
-    if (selectableObjects.length === 0) return;
+    const canvas = fabricRef.current;
+    // Select ALL objects (including point markers so they move with the drawing)
+    const allObjects = canvas.getObjects();
+    
+    if (allObjects.length === 0) return;
     
     // Make objects selectable
-    selectableObjects.forEach((obj: any) => {
+    allObjects.forEach((obj: any) => {
       obj.set({ selectable: true, evented: true });
     });
     
     // Create active selection
     canvas.discardActiveObject();
-    const selection = new ActiveSelection(selectableObjects as any, { canvas });
+    const selection = new ActiveSelection(allObjects as any, { canvas });
     
     // Set as active FIRST
     canvas.setActiveObject(selection as any);
