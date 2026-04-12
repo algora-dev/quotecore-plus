@@ -575,8 +575,10 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       
       const canvas = fabricRef.current;
       
-      // Deselect everything when switching modes (to exit Select All state)
-      canvas.discardActiveObject();
+      // Deselect everything when switching modes (UNLESS editing is locked from Select All)
+      if (!editingLocked) {
+        canvas.discardActiveObject();
+      }
       
       // Show/hide angle circles based on mode
       canvas.getObjects().forEach((obj: any) => {
@@ -603,7 +605,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       
       canvas.renderAll();
     }
-  }, [drawMode]);
+  }, [drawMode, editingLocked]);
 
   // Handle clicks outside canvas in adjustPoints mode
   useEffect(() => {
@@ -1425,8 +1427,9 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                       {m.type === 'length' ? 'Length' : 'Angle'}
                     </span>
                     <button
-                      onClick={() => handleToggleMeasurementVisibility(m.id)}
-                      className="text-xs px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded"
+                      onClick={() => !editingLocked && handleToggleMeasurementVisibility(m.id)}
+                      disabled={editingLocked}
+                      className={`text-xs px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                       title={m.visible ? 'Hide' : 'Show'}
                     >
                       {m.visible ? 'Hide' : 'Show'}
@@ -1446,9 +1449,10 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleOpenCalculator(m.id);
+                            !editingLocked && handleOpenCalculator(m.id);
                           }}
-                          className="w-full text-xs px-2 py-1.5 bg-[#FF6B35] text-white hover:bg-[#ff5722] rounded text-left font-medium"
+                          disabled={editingLocked}
+                          className={`w-full text-xs px-2 py-1.5 bg-[#FF6B35] text-white hover:bg-[#ff5722] rounded text-left font-medium ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                           title="Auto-Calculate from Roof Pitches"
                         >
                           Auto-Calculate
@@ -1456,9 +1460,10 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleToggleAngleType(m.id);
+                            !editingLocked && handleToggleAngleType(m.id);
                           }}
-                          className="w-full text-xs px-2 py-1.5 bg-blue-100 hover:bg-blue-200 rounded text-left"
+                          disabled={editingLocked}
+                          className={`w-full text-xs px-2 py-1.5 bg-blue-100 hover:bg-blue-200 rounded text-left ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                           title="Toggle Interior/Exterior"
                         >
                           Toggle Angle Type
@@ -1469,9 +1474,10 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleTogglePlacementSide(m.id);
+                          !editingLocked && handleTogglePlacementSide(m.id);
                         }}
-                        className="w-full text-xs px-2 py-1.5 bg-purple-100 hover:bg-purple-200 rounded text-left"
+                        disabled={editingLocked}
+                        className={`w-full text-xs px-2 py-1.5 bg-purple-100 hover:bg-purple-200 rounded text-left ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                         title="Toggle placement side"
                       >
                         {m.placementSide === 'exterior' ? 'Exterior' : 'Interior'} Side
@@ -1480,9 +1486,10 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleEditMeasurementValue(m.id);
+                        !editingLocked && handleEditMeasurementValue(m.id);
                       }}
-                      className="w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left"
+                      disabled={editingLocked}
+                      className={`w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                       title="Edit Value"
                     >
                       Edit Value
