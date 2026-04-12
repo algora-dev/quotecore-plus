@@ -61,6 +61,8 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const [calculatingAngleId, setCalculatingAngleId] = useState<string | null>(null);
   const [needsRecalibration, setNeedsRecalibration] = useState(false);
   const [showAdjustConfirmation, setShowAdjustConfirmation] = useState(false);
+  const [showSelectAllWarning, setShowSelectAllWarning] = useState(false);
+  const [editingLocked, setEditingLocked] = useState(false);
   
   // History removed - was causing issues with canvas state sync
   
@@ -99,9 +101,21 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Select All - with uniform scaling only
+  // Select All - with warning (final step, locks editing)
   const handleSelectAll = () => {
     if (!fabricRef.current) return;
+    
+    // Show warning modal first
+    setShowSelectAllWarning(true);
+  };
+
+  const handleConfirmSelectAll = (proceed: boolean) => {
+    setShowSelectAllWarning(false);
+    
+    if (!proceed || !fabricRef.current) return;
+    
+    // Lock editing - Select All is final
+    setEditingLocked(true);
     
     // Exit Line mode to prevent adding points while moving selection
     setDrawMode('none');
@@ -1288,34 +1302,38 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       {/* Toolbar */}
       <div className="mb-4 flex gap-2 items-center flex-wrap">
         <button
-          onClick={() => setDrawMode('line')}
+          onClick={() => !editingLocked && setDrawMode('line')}
+          disabled={editingLocked}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             drawMode === 'line' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
-          }`}
+          } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Line
         </button>
         <button
-          onClick={() => setDrawMode('text')}
+          onClick={() => !editingLocked && setDrawMode('text')}
+          disabled={editingLocked}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             drawMode === 'text' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
-          }`}
+          } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Text
         </button>
         <button
-          onClick={() => setDrawMode('edit')}
+          onClick={() => !editingLocked && setDrawMode('edit')}
+          disabled={editingLocked}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             drawMode === 'edit' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
-          }`}
+          } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Edit
         </button>
         <button
-          onClick={handleAdjustPointsMode}
+          onClick={() => !editingLocked && handleAdjustPointsMode()}
+          disabled={editingLocked}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             drawMode === 'adjustPoints' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
-          }`}
+          } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Adjust Points
         </button>
@@ -1324,11 +1342,12 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         
         <button
           onClick={handleRecalibrateAll}
+          disabled={editingLocked}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             needsRecalibration 
               ? 'bg-[#FF6B35] text-white shadow-lg animate-pulse hover:bg-[#ff5722]' 
               : 'bg-white border border-slate-300 hover:bg-slate-50'
-          }`}
+          } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Recalibrate
         </button>
@@ -1532,6 +1551,39 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                 className="flex-1 px-4 py-2 bg-[#FF6B35] text-white font-medium rounded-lg hover:bg-[#ff5722] transition-colors"
               >
                 Yes, Finish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Select All Warning Modal */}
+      {showSelectAllWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-red-600 mb-4">⚠️ Warning: Final Step</h2>
+            <p className="text-slate-700 mb-4">
+              <strong>Make sure you are finished editing your drawing.</strong>
+            </p>
+            <p className="text-slate-700 mb-6">
+              Once you use the Select All feature, you <strong>cannot edit the drawing any further</strong>. 
+              You will only be able to move and resize the entire image.
+            </p>
+            <p className="text-sm text-slate-500 mb-6">
+              Are you ready to finalize your drawing?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleConfirmSelectAll(false)}
+                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                No, Continue Editing
+              </button>
+              <button
+                onClick={() => handleConfirmSelectAll(true)}
+                className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Yes, Finalize
               </button>
             </div>
           </div>
