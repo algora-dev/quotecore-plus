@@ -806,23 +806,71 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     canvas.requestRenderAll();
   };
 
-  const handleResetMeasurement = (id: string) => {
-    const measurement = measurements.find(m => m.id === id);
-    if (!measurement || !fabricRef.current) return;
-
-    const canvas = fabricRef.current;
-    const textObj = canvas.getObjects().find((o: any) => 
-      o.measurementId === id && o.type === 'i-text'
-    );
+  const handleRecalibrateAll = () => {
+    if (!fabricRef.current) return;
     
-    if (textObj) {
-      (textObj as any).set('text', measurement.type === 'length' ? `${measurement.originalValue}mm` : `${measurement.originalValue}°`);
-    }
-
-    setMeasurements(measurements.map(m =>
-      m.id === id ? { ...m, value: m.originalValue } : m
-    ));
-
+    const canvas = fabricRef.current;
+    const currentPoints = linePointsRef.current;
+    
+    // Recalculate ALL measurements from actual canvas positions
+    const updatedMeasurements = measurements.map(m => {
+      if (m.type === 'length' && m.lineStartIndex !== undefined && m.lineEndIndex !== undefined) {
+        const p1 = currentPoints[m.lineStartIndex];
+        const p2 = currentPoints[m.lineEndIndex];
+        
+        if (p1 && p2) {
+          const actualLength = Math.round(calculateDistance(p1, p2));
+          
+          // Update label text
+          const textObj = canvas.getObjects().find((o: any) => 
+            o.measurementId === m.id && o.type === 'i-text'
+          );
+          if (textObj) {
+            (textObj as any).set('text', `${actualLength}mm`);
+          }
+          
+          return {
+            ...m,
+            value: actualLength,
+            originalValue: actualLength,
+            lineStart: p1,
+            lineEnd: p2,
+          };
+        }
+      } else if (m.type === 'angle' && m.pointIndex !== undefined) {
+        const pointIdx = m.pointIndex;
+        if (pointIdx > 0 && pointIdx < currentPoints.length - 1) {
+          const p1 = currentPoints[pointIdx - 1];
+          const p2 = currentPoints[pointIdx];
+          const p3 = currentPoints[pointIdx + 1];
+          
+          if (p1 && p2 && p3) {
+            const actualInterior = Math.round(calculateAngle(p1, p2, p3, true));
+            const actualExterior = 360 - actualInterior;
+            const actualValue = m.showInterior ? actualInterior : actualExterior;
+            
+            // Update label text
+            const textObj = canvas.getObjects().find((o: any) => 
+              o.measurementId === m.id && o.type === 'i-text'
+            );
+            if (textObj) {
+              (textObj as any).set('text', `${actualValue}°`);
+            }
+            
+            return {
+              ...m,
+              value: actualValue,
+              originalValue: actualValue,
+              interiorValue: actualInterior,
+              exteriorValue: actualExterior,
+            };
+          }
+        }
+      }
+      return m;
+    });
+    
+    setMeasurements(updatedMeasurements);
     canvas.renderAll();
   };
 
@@ -1208,7 +1256,18 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       <div className="flex gap-4">
         {/* Left Sidebar - Measurements List */}
         <div className="w-72 border-2 border-slate-300 rounded-xl p-4 bg-white max-h-[700px] overflow-y-auto">
-          <h3 className="text-sm font-semibold text-slate-900 mb-3">Measurements</h3>
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-sm font-semibold text-slate-900">Measurements</h3>
+            {measurements.length > 0 && (
+              <button
+                onClick={handleRecalibrateAll}
+                className="text-xs px-3 py-1.5 bg-green-600 text-white hover:bg-green-700 rounded font-medium"
+                title="Recalculate all measurements from current geometry"
+              >
+                Recalibrate
+              </button>
+            )}
+          </div>
           {measurements.length === 0 ? (
             <p className="text-xs text-slate-400">No measurements yet</p>
           ) : (
@@ -1289,16 +1348,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                       title="Edit Value"
                     >
                       Edit Value
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleResetMeasurement(m.id);
-                      }}
-                      className="w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left"
-                      title="Reset to Original"
-                    >
-                      Reset
                     </button>
                   </div>
                 </div>
