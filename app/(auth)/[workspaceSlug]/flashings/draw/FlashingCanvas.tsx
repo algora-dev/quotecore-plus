@@ -587,6 +587,133 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     canvas.renderAll();
   };
 
+  // Helper function to update all connected geometry when a point moves
+  const updateConnectedGeometry = (changedPointIdx: number, offsetX: number, offsetY: number) => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    
+    const currentPoints = linePointsRef.current;
+    
+    // Move all points AFTER the changed point by the same offset
+    for (let i = changedPointIdx + 1; i < currentPoints.length; i++) {
+      currentPoints[i] = {
+        x: currentPoints[i].x + offsetX,
+        y: currentPoints[i].y + offsetY,
+      };
+      
+      // Update point marker
+      const marker = canvas.getObjects().find((o: any) => 
+        o.isPointMarker && o.pointIndex === i
+      );
+      if (marker) {
+        marker.set({
+          left: currentPoints[i].x,
+          top: currentPoints[i].y,
+        });
+      }
+    }
+    
+    // Update ALL lines and measurements
+    canvas.getObjects().forEach((obj: any) => {
+      if (obj.type === 'line') {
+        const startIdx = obj.lineStartIndex;
+        const endIdx = obj.lineEndIndex;
+        
+        if (startIdx !== undefined && endIdx !== undefined) {
+          const p1 = currentPoints[startIdx];
+          const p2 = currentPoints[endIdx];
+          
+          if (p1 && p2) {
+            obj.set({
+              x1: p1.x,
+              y1: p1.y,
+              x2: p2.x,
+              y2: p2.y,
+            });
+            
+            // Update length measurement and label
+            const measurementId = obj.measurementId;
+            if (measurementId) {
+              const newLength = Math.round(calculateDistance(p1, p2));
+              const midX = (p1.x + p2.x) / 2;
+              const midY = (p1.y + p2.y) / 2;
+              
+              const label = canvas.getObjects().find((o: any) => 
+                o.measurementId === measurementId && o.type === 'i-text'
+              );
+              if (label) {
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                const lineLength = Math.sqrt(dx * dx + dy * dy);
+                const perpX = -dy / lineLength;
+                const perpY = dx / lineLength;
+                const offset = 15;
+                
+                (label as any).set({
+                  text: `${newLength}mm`,
+                  left: midX + perpX * offset,
+                  top: midY + perpY * offset,
+                });
+              }
+              
+              setMeasurements(prev => prev.map(m =>
+                m.id === measurementId
+                  ? { ...m, value: newLength, lineStart: p1, lineEnd: p2 }
+                  : m
+              ));
+            }
+          }
+        }
+      }
+    });
+    
+    // Update all angles
+    measurements.forEach(m => {
+      if (m.type === 'angle' && m.pointIndex !== undefined) {
+        const pointIdx = m.pointIndex;
+        if (pointIdx > 0 && pointIdx < currentPoints.length - 1) {
+          const p1 = currentPoints[pointIdx - 1];
+          const p2 = currentPoints[pointIdx];
+          const p3 = currentPoints[pointIdx + 1];
+          
+          if (p1 && p2 && p3) {
+            const newInterior = Math.round(calculateAngle(p1, p2, p3, true));
+            const newExterior = 360 - newInterior;
+            const newValue = m.showInterior ? newInterior : newExterior;
+            
+            // Update arc position
+            const arc = canvas.getObjects().find((o: any) =>
+              o.measurementId === m.id && o.type === 'circle'
+            );
+            if (arc) {
+              arc.set({ left: p2.x, top: p2.y });
+            }
+            
+            // Update text position and value
+            const bisector = getAngleBisector(p1, p2, p3);
+            const textOffset = 40;
+            const angleText = canvas.getObjects().find((o: any) =>
+              o.measurementId === m.id && o.type === 'i-text'
+            );
+            if (angleText) {
+              (angleText as any).set({
+                text: `${newValue}°`,
+                left: p2.x + bisector.x * textOffset,
+                top: p2.y + bisector.y * textOffset,
+              });
+            }
+            
+            setMeasurements(prev => prev.map(measure =>
+              measure.id === m.id
+                ? { ...measure, value: newValue, interiorValue: newInterior, exteriorValue: newExterior }
+                : measure
+            ));
+          }
+        }
+      }
+    });
+  };
+
   const handleEditMeasurementValue = (id: string) => {
     const measurement = measurements.find(m => m.id === id);
     if (!measurement || !fabricRef.current) return;
@@ -598,10 +725,9 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     if (isNaN(numValue)) return;
 
     const canvas = fabricRef.current;
+    const currentPoints = linePointsRef.current;
     
     if (measurement.type === 'length') {
-      // Scale the line to match new length
-      const currentPoints = linePointsRef.current;
       const startIdx = measurement.lineStartIndex;
       const endIdx = measurement.lineEndIndex;
       
@@ -610,10 +736,10 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         const p2 = currentPoints[endIdx];
         
         const currentLengthPx = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-        const newLengthPx = numValue / SCALE; // Convert mm to pixels
+        const newLengthPx = numValue / SCALE;
         const scale = newLengthPx / currentLengthPx;
         
-        // Scale from p1 (keep start fixed, move end)
+        // Calculate new end point
         const dx = p2.x - p1.x;
         const dy = p2.y - p1.y;
         const newP2 = {
@@ -621,119 +747,63 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           y: p1.y + dy * scale,
         };
         
-        // Update point
+        // Calculate offset
+        const offsetX = newP2.x - p2.x;
+        const offsetY = newP2.y - p2.y;
+        
+        // Update this point
         currentPoints[endIdx] = newP2;
+        
+        // Propagate to all connected points
+        updateConnectedGeometry(endIdx, offsetX, offsetY);
+        
         setLinePoints([...currentPoints]);
-        
-        // Update line object
-        const lineObj = canvas.getObjects().find((o: any) => 
-          o.measurementId === id && o.type === 'line'
-        );
-        if (lineObj) {
-          (lineObj as any).set({ x2: newP2.x, y2: newP2.y });
-        }
-        
-        // Update point marker
-        const marker = canvas.getObjects().find((o: any) => 
-          o.isPointMarker && o.pointIndex === endIdx
-        );
-        if (marker) {
-          marker.set({ left: newP2.x, top: newP2.y });
-        }
-        
-        // Update label text and position
-        const textObj = canvas.getObjects().find((o: any) => 
-          o.measurementId === id && o.type === 'i-text'
-        );
-        if (textObj) {
-          const midX = (p1.x + newP2.x) / 2;
-          const midY = (p1.y + newP2.y) / 2;
-          const dx2 = newP2.x - p1.x;
-          const dy2 = newP2.y - p1.y;
-          const lineLength = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-          const perpX = -dy2 / lineLength;
-          const perpY = dx2 / lineLength;
-          const offset = 15;
-          
-          (textObj as any).set({
-            text: `${numValue}mm`,
-            left: midX + perpX * offset,
-            top: midY + perpY * offset,
-          });
-        }
-        
-        setMeasurements(measurements.map(m =>
-          m.id === id ? { ...m, value: numValue, lineStart: p1, lineEnd: newP2 } : m
-        ));
       }
     } else if (measurement.type === 'angle') {
-      // Rotate the connected lines to match new angle
       const pointIdx = measurement.pointIndex;
-      if (pointIdx === undefined) return;
-      
-      const currentPoints = linePointsRef.current;
-      if (pointIdx < 1 || pointIdx >= currentPoints.length - 1) return;
+      if (pointIdx === undefined || pointIdx < 1 || pointIdx >= currentPoints.length - 1) return;
       
       const p1 = currentPoints[pointIdx - 1];
       const p2 = currentPoints[pointIdx];
       const p3 = currentPoints[pointIdx + 1];
       
-      const currentInterior = Math.round(calculateAngle(p1, p2, p3, true));
+      // Calculate current angle using ACTUAL current points
+      const currentInterior = calculateAngle(p1, p2, p3, true);
       const targetInterior = measurement.showInterior ? numValue : 360 - numValue;
       const angleDiff = targetInterior - currentInterior;
       
-      // Rotate p3 around p2 by angleDiff
+      // Rotate p3 and all subsequent points around p2
       const angleRad = angleDiff * Math.PI / 180;
-      const dx = p3.x - p2.x;
-      const dy = p3.y - p2.y;
-      const newP3 = {
-        x: p2.x + dx * Math.cos(angleRad) - dy * Math.sin(angleRad),
-        y: p2.y + dx * Math.sin(angleRad) + dy * Math.cos(angleRad),
-      };
       
-      // Update point
-      currentPoints[pointIdx + 1] = newP3;
+      for (let i = pointIdx + 1; i < currentPoints.length; i++) {
+        const pt = currentPoints[i];
+        const dx = pt.x - p2.x;
+        const dy = pt.y - p2.y;
+        
+        currentPoints[i] = {
+          x: p2.x + dx * Math.cos(angleRad) - dy * Math.sin(angleRad),
+          y: p2.y + dx * Math.sin(angleRad) + dy * Math.cos(angleRad),
+        };
+        
+        // Update point marker
+        const marker = canvas.getObjects().find((o: any) => 
+          o.isPointMarker && o.pointIndex === i
+        );
+        if (marker) {
+          marker.set({
+            left: currentPoints[i].x,
+            top: currentPoints[i].y,
+          });
+        }
+      }
+      
+      // Update all connected geometry
+      updateConnectedGeometry(pointIdx, 0, 0);
+      
       setLinePoints([...currentPoints]);
-      
-      // Update line
-      const lineObj = canvas.getObjects().find((o: any) => 
-        o.type === 'line' && o.lineStartIndex === pointIdx && o.lineEndIndex === pointIdx + 1
-      );
-      if (lineObj) {
-        (lineObj as any).set({ x2: newP3.x, y2: newP3.y });
-      }
-      
-      // Update point marker
-      const marker = canvas.getObjects().find((o: any) => 
-        o.isPointMarker && o.pointIndex === pointIdx + 1
-      );
-      if (marker) {
-        marker.set({ left: newP3.x, top: newP3.y });
-      }
-      
-      // Update angle label
-      const textObj = canvas.getObjects().find((o: any) => 
-        o.measurementId === id && o.type === 'i-text'
-      );
-      if (textObj) {
-        const bisector = getAngleBisector(p1, p2, newP3);
-        const textOffset = 40;
-        (textObj as any).set({
-          text: `${numValue}°`,
-          left: p2.x + bisector.x * textOffset,
-          top: p2.y + bisector.y * textOffset,
-        });
-      }
-      
-      const newInterior = Math.round(calculateAngle(p1, p2, newP3, true));
-      const newExterior = 360 - newInterior;
-      
-      setMeasurements(measurements.map(m =>
-        m.id === id ? { ...m, value: numValue, interiorValue: newInterior, exteriorValue: newExterior } : m
-      ));
     }
 
-    canvas.renderAll();
+    canvas.requestRenderAll();
   };
 
   const handleResetMeasurement = (id: string) => {
