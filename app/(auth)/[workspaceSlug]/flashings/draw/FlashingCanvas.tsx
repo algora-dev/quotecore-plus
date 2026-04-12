@@ -99,25 +99,50 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Select All - proper implementation
+  // Select All - with uniform scaling only (no distortion)
   const handleSelectAll = () => {
     if (!fabricRef.current) return;
     
     const canvas = fabricRef.current;
-    const allObjects = canvas.getObjects();
+    // Select all objects except point markers
+    const allObjects = canvas.getObjects().filter((obj: any) => !obj.isPointMarker);
     
-    // Make all objects selectable
+    if (allObjects.length === 0) return;
+    
+    // Make objects selectable
     allObjects.forEach((obj: any) => {
       obj.set({ selectable: true, evented: true });
     });
     
-    // Create active selection
-    if (allObjects.length > 0) {
-      canvas.discardActiveObject();
-      const selection = new ActiveSelection(allObjects as any, { canvas });
-      canvas.setActiveObject(selection as any);
-      canvas.requestRenderAll();
-    }
+    // Create active selection with custom controls
+    canvas.discardActiveObject();
+    const selection = new ActiveSelection(allObjects as any, { canvas });
+    
+    // Configure selection: only corner handles (uniform scaling) + rotation
+    selection.set({
+      lockScalingFlip: true,
+      cornerStyle: 'rect',
+      cornerSize: 10,
+      borderColor: '#FF6B35',
+      cornerColor: '#FF6B35',
+      hasRotatingPoint: true,
+    });
+    
+    // Disable middle handles to prevent width/height distortion
+    selection.setControlsVisibility({
+      mt: false,  // no top-middle
+      mb: false,  // no bottom-middle
+      ml: false,  // no left-middle
+      mr: false,  // no right-middle
+      tl: true,   // keep top-left corner
+      tr: true,   // keep top-right corner
+      bl: true,   // keep bottom-left corner
+      br: true,   // keep bottom-right corner
+      mtr: true,  // keep rotation control
+    });
+    
+    canvas.setActiveObject(selection as any);
+    canvas.requestRenderAll();
   };
 
   const calculateDistance = (p1: { x: number; y: number }, p2: { x: number; y: number }): number => {
