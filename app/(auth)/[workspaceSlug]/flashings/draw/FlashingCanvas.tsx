@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Canvas, Line, Circle, IText, Rect, ActiveSelection } from 'fabric';
+import { Canvas, Line, Circle, IText, Rect, ActiveSelection, Object as FabricObject } from 'fabric';
 import { createFlashingFromCanvas } from '../actions';
 import { AngleCalculatorModal } from './AngleCalculatorModal';
 
@@ -178,6 +178,15 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       height: size.height,
       backgroundColor: '#ffffff',
       selection: true,
+    });
+
+    // Set default object controls: disable middle handles globally
+    FabricObject.prototype.setControlsVisibility({
+      mt: false, // no middle-top
+      mb: false, // no middle-bottom
+      ml: false, // no middle-left  
+      mr: false, // no middle-right
+      mtr: true, // keep rotation
     });
 
     fabricRef.current = canvas;
