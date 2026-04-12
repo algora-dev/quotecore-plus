@@ -190,15 +190,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     canvas.on('mouse:down', (opt) => {
       const pointer = canvas.getPointer(opt.e);
 
-      // In adjustPoints mode, clicking empty space shows confirmation
-      if (drawModeRef.current === 'adjustPoints') {
-        const target = canvas.findTarget(opt.e);
-        if (!target || !(target as any).isPointMarker) {
-          setShowAdjustConfirmation(true);
-        }
-        return;
-      }
-
       if (drawModeRef.current === 'text') {
         const text = new IText('Text', {
           left: pointer.x,
@@ -549,12 +540,16 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       const canvas = fabricRef.current;
       canvas.getObjects().forEach((obj: any) => {
         if (obj.type === 'circle' && obj.measurementId) {
-          // This is an angle arc/circle
-          obj.set('visible', drawMode !== 'adjustPoints');
+          // This is an angle arc/circle - check measurement visibility too
+          const measurement = measurements.find(m => m.id === obj.measurementId);
+          const shouldShow = drawMode !== 'adjustPoints' && (!measurement || measurement.visible);
+          obj.set('visible', shouldShow);
         }
-        if (obj.type === 'rect') {
-          // This might be a right angle square
-          obj.set('visible', drawMode !== 'adjustPoints');
+        if (obj.type === 'rect' && obj.measurementId) {
+          // This is a right angle square - check measurement visibility too
+          const measurement = measurements.find(m => m.id === obj.measurementId);
+          const shouldShow = drawMode !== 'adjustPoints' && (!measurement || measurement.visible);
+          obj.set('visible', shouldShow);
         }
       });
       
@@ -567,6 +562,33 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       
       canvas.renderAll();
     }
+  }, [drawMode]);
+
+  // Handle clicks outside canvas in adjustPoints mode
+  useEffect(() => {
+    if (drawMode !== 'adjustPoints') return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const canvasEl = canvasRef.current;
+      if (!canvasEl) return;
+      
+      const rect = canvasEl.getBoundingClientRect();
+      const clickX = e.clientX;
+      const clickY = e.clientY;
+      
+      // Check if click is outside canvas bounds
+      if (
+        clickX < rect.left ||
+        clickX > rect.right ||
+        clickY < rect.top ||
+        clickY > rect.bottom
+      ) {
+        setShowAdjustConfirmation(true);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, [drawMode]);
 
   const liveMeasurements = () => {
@@ -789,6 +811,17 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         
         // Update this point
         currentPoints[endIdx] = newP2;
+        
+        // Update the marker for THIS point first
+        const changedMarker = canvas.getObjects().find((o: any) => 
+          o.isPointMarker && o.pointIndex === endIdx
+        );
+        if (changedMarker) {
+          changedMarker.set({
+            left: newP2.x,
+            top: newP2.y,
+          });
+        }
         
         // Propagate to all connected points
         updateConnectedGeometry(endIdx, offsetX, offsetY);
@@ -1230,7 +1263,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         <button
           onClick={() => setDrawMode('line')}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            drawMode === 'line' ? 'bg-[#FF6B35] text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
+            drawMode === 'line' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
           }`}
         >
           Line
@@ -1238,7 +1271,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         <button
           onClick={() => setDrawMode('text')}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            drawMode === 'text' ? 'bg-[#FF6B35] text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
+            drawMode === 'text' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
           }`}
         >
           Text
@@ -1246,7 +1279,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         <button
           onClick={() => setDrawMode('edit')}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            drawMode === 'edit' ? 'bg-[#FF6B35] text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
+            drawMode === 'edit' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
           }`}
         >
           Edit
@@ -1254,7 +1287,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         <button
           onClick={handleAdjustPointsMode}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            drawMode === 'adjustPoints' ? 'bg-[#FF6B35] text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
+            drawMode === 'adjustPoints' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
           }`}
         >
           Adjust Points
@@ -1266,8 +1299,8 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           onClick={handleRecalibrateAll}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             needsRecalibration 
-              ? 'bg-green-600 text-white shadow-lg animate-pulse hover:bg-green-700' 
-              : 'bg-green-600 text-white hover:bg-green-700'
+              ? 'bg-[#FF6B35] text-white shadow-lg animate-pulse hover:bg-[#ff5722]' 
+              : 'bg-white border border-slate-300 hover:bg-slate-50'
           }`}
         >
           Recalibrate
@@ -1280,15 +1313,6 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         >
           Select All
         </button>
-        
-        {drawMode === 'line' && linePoints.length > 0 && (
-          <button
-            onClick={handleFinishLine}
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-green-600 text-white hover:bg-green-700"
-          >
-            Finish Line ({linePoints.length} points)
-          </button>
-        )}
         
         <div className="ml-auto flex gap-2">
           <button
