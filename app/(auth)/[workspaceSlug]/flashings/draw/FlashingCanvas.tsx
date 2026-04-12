@@ -6,7 +6,7 @@ import { Canvas, Line, Circle, IText, Rect, ActiveSelection } from 'fabric';
 import { createFlashingFromCanvas } from '../actions';
 import { AngleCalculatorModal } from './AngleCalculatorModal';
 
-type DrawMode = 'none' | 'line' | 'text' | 'edit';
+type DrawMode = 'none' | 'line' | 'text' | 'edit' | 'adjustPoints';
 type CanvasSize = 'small' | 'medium' | 'large';
 
 const CANVAS_SIZES = {
@@ -59,6 +59,8 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const [selectedMeasurement, setSelectedMeasurement] = useState<string | null>(null);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [calculatingAngleId, setCalculatingAngleId] = useState<string | null>(null);
+  const [needsRecalibration, setNeedsRecalibration] = useState(false);
+  const [showAdjustConfirmation, setShowAdjustConfirmation] = useState(false);
   
   // History removed - was causing issues with canvas state sync
   
@@ -187,6 +189,15 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
     canvas.on('mouse:down', (opt) => {
       const pointer = canvas.getPointer(opt.e);
+
+      // In adjustPoints mode, clicking empty space shows confirmation
+      if (drawModeRef.current === 'adjustPoints') {
+        const target = canvas.findTarget(opt.e);
+        if (!target || !(target as any).isPointMarker) {
+          setShowAdjustConfirmation(true);
+        }
+        return;
+      }
 
       if (drawModeRef.current === 'text') {
         const text = new IText('Text', {
@@ -402,6 +413,9 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       const newX = obj.left!;
       const newY = obj.top!;
       
+      // Mark that recalibration is needed
+      setNeedsRecalibration(true);
+      
       // Update linePoints ref
       const currentPoints = linePointsRef.current;
       if (pointIdx >= currentPoints.length) return;
@@ -527,9 +541,31 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
   useEffect(() => {
     if (fabricRef.current) {
-      const cursor = drawMode !== 'none' && drawMode !== 'edit' ? 'crosshair' : 'default';
+      const cursor = (drawMode === 'line' || drawMode === 'text') ? 'crosshair' : 'default';
       fabricRef.current.defaultCursor = cursor;
       fabricRef.current.hoverCursor = cursor;
+      
+      // Show/hide angle circles based on mode
+      const canvas = fabricRef.current;
+      canvas.getObjects().forEach((obj: any) => {
+        if (obj.type === 'circle' && obj.measurementId) {
+          // This is an angle arc/circle
+          obj.set('visible', drawMode !== 'adjustPoints');
+        }
+        if (obj.type === 'rect') {
+          // This might be a right angle square
+          obj.set('visible', drawMode !== 'adjustPoints');
+        }
+      });
+      
+      // Make point markers selectable only in adjustPoints mode
+      canvas.getObjects().forEach((obj: any) => {
+        if (obj.isPointMarker) {
+          obj.set('selectable', drawMode === 'adjustPoints');
+        }
+      });
+      
+      canvas.renderAll();
     }
   }, [drawMode]);
 
@@ -806,11 +842,35 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     canvas.requestRenderAll();
   };
 
+  const handleAdjustPointsMode = () => {
+    if (drawMode === 'adjustPoints') {
+      // Already in adjust mode, show confirmation
+      setShowAdjustConfirmation(true);
+    } else {
+      // Enter adjust mode
+      setDrawMode('adjustPoints');
+    }
+  };
+
+  const handleConfirmFinishAdjusting = (confirm: boolean) => {
+    if (confirm) {
+      // Exit adjust mode, return to edit mode
+      setDrawMode('edit');
+      setShowAdjustConfirmation(false);
+    } else {
+      // Continue adjusting
+      setShowAdjustConfirmation(false);
+    }
+  };
+
   const handleRecalibrateAll = () => {
     if (!fabricRef.current) return;
     
     const canvas = fabricRef.current;
     const currentPoints = linePointsRef.current;
+    
+    // Reset recalibration flag
+    setNeedsRecalibration(false);
     
     // Recalculate ALL measurements from actual canvas positions
     const updatedMeasurements = measurements.map(m => {
@@ -1191,8 +1251,27 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         >
           Edit
         </button>
+        <button
+          onClick={handleAdjustPointsMode}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+            drawMode === 'adjustPoints' ? 'bg-[#FF6B35] text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
+          }`}
+        >
+          Adjust Points
+        </button>
         
         <div className="h-8 w-px bg-slate-300" />
+        
+        <button
+          onClick={handleRecalibrateAll}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+            needsRecalibration 
+              ? 'bg-green-600 text-white shadow-lg animate-pulse hover:bg-green-700' 
+              : 'bg-green-600 text-white hover:bg-green-700'
+          }`}
+        >
+          Recalibrate
+        </button>
         
         <button
           onClick={handleSelectAll}
@@ -1256,18 +1335,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       <div className="flex gap-4">
         {/* Left Sidebar - Measurements List */}
         <div className="w-72 border-2 border-slate-300 rounded-xl p-4 bg-white max-h-[700px] overflow-y-auto">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-sm font-semibold text-slate-900">Measurements</h3>
-            {measurements.length > 0 && (
-              <button
-                onClick={handleRecalibrateAll}
-                className="text-xs px-3 py-1.5 bg-green-600 text-white hover:bg-green-700 rounded font-medium"
-                title="Recalculate all measurements from current geometry"
-              >
-                Recalibrate
-              </button>
-            )}
-          </div>
+          <h3 className="text-sm font-semibold text-slate-900 mb-3">Measurements</h3>
           {measurements.length === 0 ? (
             <p className="text-xs text-slate-400">No measurements yet</p>
           ) : (
@@ -1389,6 +1457,35 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             : 0
         }
       />
+
+      {/* Adjust Points Confirmation Modal */}
+      {showAdjustConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-slate-900 mb-4">Finished Adjusting?</h2>
+            <p className="text-slate-700 mb-6">
+              Are you sure you're finished adjusting the drawing points?
+            </p>
+            <p className="text-sm text-slate-500 mb-6">
+              Click <strong>Recalibrate</strong> after adjusting to update all measurements.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleConfirmFinishAdjusting(false)}
+                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                No, Continue
+              </button>
+              <button
+                onClick={() => handleConfirmFinishAdjusting(true)}
+                className="flex-1 px-4 py-2 bg-[#FF6B35] text-white font-medium rounded-lg hover:bg-[#ff5722] transition-colors"
+              >
+                Yes, Finish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
