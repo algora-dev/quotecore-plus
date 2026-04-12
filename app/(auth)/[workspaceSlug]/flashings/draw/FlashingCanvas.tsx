@@ -118,20 +118,25 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     canvas.discardActiveObject();
     const selection = new ActiveSelection(selectableObjects as any, { canvas });
     
-    // Disable middle handles on the selection
-    selection.setControlsVisibility({
-      mt: false,  // no middle-top
-      mb: false,  // no middle-bottom
-      ml: false,  // no middle-left
-      mr: false,  // no middle-right
-      tl: true,   // keep corners
-      tr: true,
-      bl: true,
-      br: true,
-      mtr: true,  // keep rotation
-    });
-    
+    // Set as active FIRST
     canvas.setActiveObject(selection as any);
+    
+    // Then disable middle handles (must be after setActiveObject)
+    const activeObj = canvas.getActiveObject();
+    if (activeObj) {
+      activeObj.setControlsVisibility({
+        mt: false,  // no middle-top
+        mb: false,  // no middle-bottom
+        ml: false,  // no middle-left
+        mr: false,  // no middle-right
+        tl: true,   // keep corners
+        tr: true,
+        bl: true,
+        br: true,
+        mtr: true,  // keep rotation
+      });
+    }
+    
     canvas.requestRenderAll();
   };
 
