@@ -559,8 +559,12 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       fabricRef.current.defaultCursor = cursor;
       fabricRef.current.hoverCursor = cursor;
       
-      // Show/hide angle circles based on mode
       const canvas = fabricRef.current;
+      
+      // Deselect everything when switching modes (to exit Select All state)
+      canvas.discardActiveObject();
+      
+      // Show/hide angle circles based on mode
       canvas.getObjects().forEach((obj: any) => {
         if (obj.type === 'circle' && obj.measurementId) {
           // This is an angle arc/circle - check measurement visibility too
