@@ -82,7 +82,7 @@ export interface ComponentLibraryRow {
   default_material_rate: number; default_labour_rate: number; default_waste_type: WasteType;
   default_waste_percent: number; default_waste_fixed: number; default_pitch_type: PitchType;
   show_price_default: boolean; show_dimensions_default: boolean;
-  eligible_for_orders: boolean | null; default_flashing_id: string | null;
+  eligible_for_orders: boolean | null; flashing_ids: string[] | null;
   is_active: boolean; sort_order: number; created_at: string; updated_at: string;
 }
 
@@ -90,7 +90,7 @@ export interface ComponentLibraryInsert {
   name: string; component_type: ComponentType; measurement_type: MeasurementType;
   default_material_rate?: number; default_labour_rate?: number; default_waste_type?: WasteType;
   default_waste_percent?: number; default_waste_fixed?: number; default_pitch_type?: PitchType; 
-  eligible_for_orders?: boolean; default_flashing_id?: string | null;
+  eligible_for_orders?: boolean; flashing_ids?: string[] | null;
   sort_order?: number;
 }
 

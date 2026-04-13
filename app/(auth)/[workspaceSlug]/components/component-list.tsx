@@ -45,6 +45,8 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
   const [formWasteType, setFormWasteType] = useState<WasteType>('none');
   const [formMeasurementType, setFormMeasurementType] = useState<MeasurementType>('area');
   const [formPitchEnabled, setFormPitchEnabled] = useState(false);
+  const [selectedFlashingId, setSelectedFlashingId] = useState<string>('');
+  const [assignedFlashings, setAssignedFlashings] = useState<string[]>([]);
 
   // Load flashings on mount
   useEffect(() => {
@@ -66,6 +68,8 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
     setFormMeasurementType(comp.measurement_type);
     setFormWasteType(comp.default_waste_type);
     setFormPitchEnabled(comp.default_pitch_type !== 'none');
+    setAssignedFlashings(comp.flashing_ids || []);
+    setSelectedFlashingId('');
   }
 
   function cancelEdit() {
@@ -73,6 +77,22 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
     setFormWasteType('none');
     setFormMeasurementType('area');
     setFormPitchEnabled(false);
+    setAssignedFlashings([]);
+    setSelectedFlashingId('');
+  }
+
+  function addFlashing() {
+    if (!selectedFlashingId) return;
+    if (assignedFlashings.includes(selectedFlashingId)) {
+      alert('This flashing is already assigned');
+      return;
+    }
+    setAssignedFlashings(prev => [...prev, selectedFlashingId]);
+    setSelectedFlashingId('');
+  }
+
+  function removeFlashing(flashingId: string) {
+    setAssignedFlashings(prev => prev.filter(id => id !== flashingId));
   }
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
@@ -82,8 +102,6 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
 
     const wasteType = fd.get('default_waste_type') as WasteType;
     const wasteAmount = Number(fd.get('waste_amount')) || 0;
-
-    const flashingId = fd.get('default_flashing_id') as string;
 
     const input: ComponentLibraryInsert = {
       name: fd.get('name') as string,
@@ -96,7 +114,7 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
       default_waste_fixed: wasteType === 'fixed' ? wasteAmount : 0,
       default_pitch_type: formPitchEnabled ? (fd.get('default_pitch_type') as PitchType) : 'none',
       eligible_for_orders: fd.get('eligible_for_orders') === 'on',
-      default_flashing_id: flashingId || null,
+      flashing_ids: assignedFlashings.length > 0 ? assignedFlashings : null,
     };
 
     try {
@@ -106,6 +124,8 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
       setFormWasteType('none');
       setFormMeasurementType('area');
       setFormPitchEnabled(false);
+      setAssignedFlashings([]);
+      setSelectedFlashingId('');
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to create component');
     } finally {
@@ -120,7 +140,6 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
 
     const wasteType = fd.get('default_waste_type') as WasteType;
     const wasteAmount = Number(fd.get('waste_amount')) || 0;
-    const flashingId = fd.get('default_flashing_id') as string;
 
     const input: Partial<ComponentLibraryInsert> = {
       name: fd.get('name') as string,
@@ -131,7 +150,7 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
       default_waste_fixed: wasteType === 'fixed' ? wasteAmount : 0,
       default_pitch_type: formPitchEnabled ? (fd.get('default_pitch_type') as PitchType) : 'none',
       eligible_for_orders: fd.get('eligible_for_orders') === 'on',
-      default_flashing_id: flashingId || null,
+      flashing_ids: assignedFlashings.length > 0 ? assignedFlashings : null,
     };
 
     try {
@@ -264,16 +283,51 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
                 <label htmlFor="eligible-orders" className="text-xs text-slate-700">Include in material orders</label>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Default Flashing (Optional)</label>
-                <select name="default_flashing_id" className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
-                  <option value="">None</option>
-                  {flashings.map(flashing => (
-                    <option key={flashing.id} value={flashing.id}>
-                      {flashing.name} {flashing.description && `- ${flashing.description}`}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-slate-400 mt-1">Assign a flashing drawing to use in material order forms</p>
+                <label className="block text-xs text-slate-500 mb-1">Assign Flashings (Optional)</label>
+                <div className="flex gap-2">
+                  <select 
+                    value={selectedFlashingId} 
+                    onChange={(e) => setSelectedFlashingId(e.target.value)}
+                    className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded"
+                  >
+                    <option value="">Select a flashing...</option>
+                    {flashings.map(flashing => (
+                      <option key={flashing.id} value={flashing.id}>
+                        {flashing.name} {flashing.description && `- ${flashing.description}`}
+                      </option>
+                    ))}
+                  </select>
+                  <button 
+                    type="button" 
+                    onClick={addFlashing}
+                    disabled={!selectedFlashingId}
+                    className="px-3 py-1 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  >
+                    Add
+                  </button>
+                </div>
+                {assignedFlashings.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {assignedFlashings.map(flashingId => {
+                      const flashing = flashings.find(f => f.id === flashingId);
+                      return (
+                        <div key={flashingId} className="flex items-center justify-between px-2 py-1 bg-slate-50 rounded border border-slate-200">
+                          <span className="text-xs text-slate-700">
+                            {flashing?.name || 'Unknown'} {flashing?.description && `- ${flashing.description}`}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeFlashing(flashingId)}
+                            className="text-red-600 hover:text-red-700 text-xs font-medium"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className="text-xs text-slate-400 mt-1">Add flashing drawings to use in material order forms</p>
               </div>
             </div>
             <div className="flex gap-2 pt-2">
@@ -354,16 +408,51 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
                       <label htmlFor={`eligible-orders-${comp.id}`} className="text-xs text-slate-700">Include in material orders</label>
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-500 mb-1">Default Flashing (Optional)</label>
-                      <select name="default_flashing_id" defaultValue={comp.default_flashing_id ?? ''} className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
-                        <option value="">None</option>
-                        {flashings.map(flashing => (
-                          <option key={flashing.id} value={flashing.id}>
-                            {flashing.name} {flashing.description && `- ${flashing.description}`}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="text-xs text-slate-400 mt-1">Assign a flashing drawing to use in material order forms</p>
+                      <label className="block text-xs text-slate-500 mb-1">Assign Flashings (Optional)</label>
+                      <div className="flex gap-2">
+                        <select 
+                          value={selectedFlashingId} 
+                          onChange={(e) => setSelectedFlashingId(e.target.value)}
+                          className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded"
+                        >
+                          <option value="">Select a flashing...</option>
+                          {flashings.map(flashing => (
+                            <option key={flashing.id} value={flashing.id}>
+                              {flashing.name} {flashing.description && `- ${flashing.description}`}
+                            </option>
+                          ))}
+                        </select>
+                        <button 
+                          type="button" 
+                          onClick={addFlashing}
+                          disabled={!selectedFlashingId}
+                          className="px-3 py-1 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                        >
+                          Add
+                        </button>
+                      </div>
+                      {assignedFlashings.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {assignedFlashings.map(flashingId => {
+                            const flashing = flashings.find(f => f.id === flashingId);
+                            return (
+                              <div key={flashingId} className="flex items-center justify-between px-2 py-1 bg-slate-50 rounded border border-slate-200">
+                                <span className="text-xs text-slate-700">
+                                  {flashing?.name || 'Unknown'} {flashing?.description && `- ${flashing.description}`}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeFlashing(flashingId)}
+                                  className="text-red-600 hover:text-red-700 text-xs font-medium"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <p className="text-xs text-slate-400 mt-1">Add flashing drawings to use in material order forms</p>
                     </div>
                   </div>
                   <div className="flex gap-2 pt-2">
