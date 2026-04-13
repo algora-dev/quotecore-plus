@@ -69,6 +69,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const [showSelectAllWarning, setShowSelectAllWarning] = useState(false);
   const [editingLocked, setEditingLocked] = useState(false);
   const [loading, setLoading] = useState(editMode); // Loading state for edit mode
+  const [canvasReady, setCanvasReady] = useState(false); // Track when canvas is initialized
   
   // History removed - was causing issues with canvas state sync
   
@@ -224,6 +225,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     });
 
     fabricRef.current = canvas;
+    setCanvasReady(true); // Mark canvas as ready
 
     canvas.on('mouse:move', (opt) => {
       const pointer = canvas.getPointer(opt.e);
@@ -570,20 +572,21 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
     return () => {
       canvas.dispose();
+      setCanvasReady(false);
     };
   }, [canvasSize]); // Only re-init when canvas size changes
 
-  // Load existing flashing in edit mode
+  // Load existing flashing in edit mode (AFTER canvas is ready)
   useEffect(() => {
-    console.log('[FlashingCanvas] Edit mode check:', { editMode, flashingId, hasCanvas: !!fabricRef.current });
+    console.log('[FlashingCanvas] Load check:', { editMode, flashingId, canvasReady, hasCanvas: !!fabricRef.current });
     
     if (!editMode || !flashingId) {
       setLoading(false); // Not in edit mode, stop loading
       return;
     }
     
-    if (!fabricRef.current) {
-      console.log('[FlashingCanvas] Canvas not ready yet, waiting...');
+    if (!canvasReady || !fabricRef.current) {
+      console.log('[FlashingCanvas] Waiting for canvas to initialize...');
       return;
     }
     
@@ -628,7 +631,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     }
     
     loadFlashing();
-  }, [editMode, flashingId, fabricRef.current]);
+  }, [editMode, flashingId, canvasReady]); // Trigger when canvas becomes ready
 
   useEffect(() => {
     if (fabricRef.current) {
