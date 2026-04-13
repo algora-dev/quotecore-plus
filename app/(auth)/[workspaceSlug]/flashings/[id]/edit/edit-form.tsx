@@ -25,18 +25,30 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
   
   // Parse canvas_data to extract measurements
   const [measurements, setMeasurements] = useState<MeasurementData[]>(() => {
-    if (!flashing.canvas_data) return [];
+    if (!flashing.canvas_data) {
+      console.log('[EditForm] No canvas_data found');
+      return [];
+    }
     
     try {
       const canvasData = typeof flashing.canvas_data === 'string' 
         ? JSON.parse(flashing.canvas_data)
         : flashing.canvas_data;
       
+      console.log('[EditForm] Canvas data:', canvasData);
+      console.log('[EditForm] Objects count:', canvasData.objects?.length || 0);
+      
       // Extract measurements from canvas objects
       const extracted: MeasurementData[] = [];
       
       if (canvasData.objects) {
-        canvasData.objects.forEach((obj: any) => {
+        canvasData.objects.forEach((obj: any, index: number) => {
+          console.log(`[EditForm] Object ${index}:`, {
+            type: obj.type,
+            measurementId: obj.measurementId,
+            text: obj.text,
+          });
+          
           if (obj.measurementId && obj.type === 'i-text' && obj.text) {
             // Parse text like "125mm" or "90°"
             const text = obj.text.toString();
@@ -45,6 +57,7 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
               // Length measurement
               const value = parseFloat(text.replace('mm', ''));
               if (!isNaN(value)) {
+                console.log('[EditForm] Found length:', value);
                 extracted.push({
                   id: obj.measurementId,
                   type: 'length',
@@ -55,6 +68,7 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
               // Angle measurement
               const value = parseFloat(text.replace('°', ''));
               if (!isNaN(value)) {
+                console.log('[EditForm] Found angle:', value);
                 extracted.push({
                   id: obj.measurementId,
                   type: 'angle',
@@ -66,9 +80,10 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
         });
       }
       
+      console.log('[EditForm] Total extracted measurements:', extracted.length);
       return extracted;
     } catch (err) {
-      console.error('Failed to parse canvas_data:', err);
+      console.error('[EditForm] Failed to parse canvas_data:', err);
       return [];
     }
   });
@@ -201,14 +216,14 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
       <div className="bg-white border border-slate-200 rounded-lg p-4 flex gap-3 justify-end">
         <button
           onClick={() => router.push(`/${workspaceSlug}/flashings`)}
-          className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-lg hover:bg-slate-50"
+          className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50 transition-all shadow-sm"
         >
           Cancel
         </button>
         <button
           onClick={handleSave}
           disabled={saving || !name.trim()}
-          className="px-4 py-2 text-sm font-medium bg-black text-white rounded-lg hover:bg-slate-800 disabled:opacity-50"
+          className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all shadow-sm disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Changes'}
         </button>

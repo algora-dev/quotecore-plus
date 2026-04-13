@@ -1609,8 +1609,8 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
       {/* Adjust Points Confirmation Modal */}
       {showAdjustConfirmation && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-white/10 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md border border-slate-200">
+        <div className="fixed inset-0 backdrop-blur-md bg-slate-900/20 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md border border-slate-200">
             <h2 className="text-xl font-bold text-slate-900 mb-4">Finished Adjusting?</h2>
             <p className="text-slate-700 mb-6">
               Are you sure you're finished adjusting the drawing points?
@@ -1621,13 +1621,13 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             <div className="flex gap-3">
               <button
                 onClick={() => handleConfirmFinishAdjusting(false)}
-                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 font-medium rounded-full hover:bg-slate-50 transition-all shadow-sm"
               >
                 No, Continue
               </button>
               <button
                 onClick={() => handleConfirmFinishAdjusting(true)}
-                className="flex-1 px-4 py-2 bg-[#FF6B35] text-white font-medium rounded-lg hover:bg-[#ff5722] transition-colors"
+                className="flex-1 px-4 py-2 bg-[#FF6B35] text-white font-medium rounded-full hover:bg-[#ff5722] transition-all shadow-sm"
               >
                 Yes, Finish
               </button>
@@ -1638,8 +1638,8 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
       {/* Select All Warning Modal */}
       {showSelectAllWarning && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-white/10 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md border border-slate-200">
+        <div className="fixed inset-0 backdrop-blur-md bg-slate-900/20 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md border border-slate-200">
             <h2 className="text-xl font-bold text-red-600 mb-4">⚠️ Warning: Final Step</h2>
             <p className="text-slate-700 mb-4">
               <strong>Make sure you are finished editing your drawing.</strong>
@@ -1654,13 +1654,13 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             <div className="flex gap-3">
               <button
                 onClick={() => handleConfirmSelectAll(false)}
-                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 font-medium rounded-full hover:bg-slate-50 transition-all shadow-sm"
               >
                 No, Continue Editing
               </button>
               <button
                 onClick={() => handleConfirmSelectAll(true)}
-                className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
+                className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-full hover:bg-red-700 transition-all shadow-sm"
               >
                 Yes, Finalize
               </button>
