@@ -9,6 +9,18 @@ export type QuoteStatus = 'draft' | 'confirmed' | 'sent' | 'accepted' | 'decline
 export type LineType = 'component' | 'custom' | 'roof_area_header';
 
 // Flashing Library Types
+export interface FlashingMeasurement {
+  id: string;                                    // e.g., "length-uuid" or "angle-uuid"
+  type: 'length' | 'angle';                      // Type of measurement
+  sequence: number;                              // Display order (1, 2, 3, ...)
+  value: number;                                 // Numeric value (125, 90, 5.5)
+  unit: 'mm' | 'ft' | 'in' | 'degrees';         // Unit type
+  pointIndices?: number[];                       // Point relationships: [0,1] for length, [0,1,2] for angle
+  label?: string;                                // Optional: "Bottom Edge", "Left Angle"
+  visible?: boolean;                             // Show/hide in UI
+  placement?: 'interior' | 'exterior';           // For angles only
+}
+
 export interface FlashingLibraryRow {
   id: string;
   company_id: string;
@@ -16,6 +28,7 @@ export interface FlashingLibraryRow {
   description: string | null;
   image_url: string;
   canvas_data: any | null;
+  measurements: FlashingMeasurement[] | null;   // NEW: Clean measurement data
   is_default: boolean;
   created_at: string;
   updated_at: string;
@@ -26,6 +39,7 @@ export interface FlashingLibraryInsert {
   description?: string | null;
   image_url: string;
   canvas_data?: any | null;
+  measurements?: FlashingMeasurement[] | null;  // NEW: Clean measurement data
   is_default?: boolean;
 }
 
