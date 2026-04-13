@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createComponent, updateComponent, deleteComponent } from './actions';
 import type {
   ComponentLibraryRow,
@@ -9,8 +9,10 @@ import type {
   MeasurementType,
   WasteType,
   PitchType,
+  FlashingLibraryRow,
 } from '@/app/lib/types';
 import { unitForMeasurement, wasteAmountSuffix } from '@/app/lib/types';
+import { loadFlashingLibrary } from '../flashings/actions';
 
 const MEASUREMENT_LABELS: Record<MeasurementType, string> = {
   area: 'Area (m²)',
@@ -33,6 +35,7 @@ const PITCH_LABELS: Record<PitchType, string> = {
 
 export function ComponentList({ initialComponents }: { initialComponents: ComponentLibraryRow[] }) {
   const [components, setComponents] = useState(initialComponents);
+  const [flashings, setFlashings] = useState<FlashingLibraryRow[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | ComponentType>('all');
@@ -42,6 +45,19 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
   const [formWasteType, setFormWasteType] = useState<WasteType>('none');
   const [formMeasurementType, setFormMeasurementType] = useState<MeasurementType>('area');
   const [formPitchEnabled, setFormPitchEnabled] = useState(false);
+
+  // Load flashings on mount
+  useEffect(() => {
+    async function fetchFlashings() {
+      try {
+        const data = await loadFlashingLibrary();
+        setFlashings(data);
+      } catch (err) {
+        console.error('Failed to load flashings:', err);
+      }
+    }
+    fetchFlashings();
+  }, []);
 
   const filtered = filter === 'all' ? components : components.filter((c) => c.component_type === filter);
 
@@ -67,6 +83,8 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
     const wasteType = fd.get('default_waste_type') as WasteType;
     const wasteAmount = Number(fd.get('waste_amount')) || 0;
 
+    const flashingId = fd.get('default_flashing_id') as string;
+
     const input: ComponentLibraryInsert = {
       name: fd.get('name') as string,
       component_type: fd.get('component_type') as ComponentType,
@@ -77,6 +95,8 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
       default_waste_percent: wasteType === 'percent' ? wasteAmount : 0,
       default_waste_fixed: wasteType === 'fixed' ? wasteAmount : 0,
       default_pitch_type: formPitchEnabled ? (fd.get('default_pitch_type') as PitchType) : 'none',
+      eligible_for_orders: fd.get('eligible_for_orders') === 'on',
+      default_flashing_id: flashingId || null,
     };
 
     try {
@@ -100,6 +120,7 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
 
     const wasteType = fd.get('default_waste_type') as WasteType;
     const wasteAmount = Number(fd.get('waste_amount')) || 0;
+    const flashingId = fd.get('default_flashing_id') as string;
 
     const input: Partial<ComponentLibraryInsert> = {
       name: fd.get('name') as string,
@@ -109,6 +130,8 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
       default_waste_percent: wasteType === 'percent' ? wasteAmount : 0,
       default_waste_fixed: wasteType === 'fixed' ? wasteAmount : 0,
       default_pitch_type: formPitchEnabled ? (fd.get('default_pitch_type') as PitchType) : 'none',
+      eligible_for_orders: fd.get('eligible_for_orders') === 'on',
+      default_flashing_id: flashingId || null,
     };
 
     try {
@@ -244,7 +267,11 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
                 <label className="block text-xs text-slate-500 mb-1">Default Flashing (Optional)</label>
                 <select name="default_flashing_id" className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
                   <option value="">None</option>
-                  {/* Flashings will be loaded here in Slice 4 */}
+                  {flashings.map(flashing => (
+                    <option key={flashing.id} value={flashing.id}>
+                      {flashing.name} {flashing.description && `- ${flashing.description}`}
+                    </option>
+                  ))}
                 </select>
                 <p className="text-xs text-slate-400 mt-1">Assign a flashing drawing to use in material order forms</p>
               </div>
@@ -330,7 +357,11 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
                       <label className="block text-xs text-slate-500 mb-1">Default Flashing (Optional)</label>
                       <select name="default_flashing_id" defaultValue={comp.default_flashing_id ?? ''} className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
                         <option value="">None</option>
-                        {/* Flashings will be loaded here in Slice 4 */}
+                        {flashings.map(flashing => (
+                          <option key={flashing.id} value={flashing.id}>
+                            {flashing.name} {flashing.description && `- ${flashing.description}`}
+                          </option>
+                        ))}
                       </select>
                       <p className="text-xs text-slate-400 mt-1">Assign a flashing drawing to use in material order forms</p>
                     </div>
