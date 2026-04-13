@@ -1294,16 +1294,16 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const currentSize = CANVAS_SIZES[canvasSize];
 
   return (
-    <div className="max-w-full mx-auto p-6">
+    <div className="max-w-full mx-auto p-6 bg-slate-50 min-h-screen">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Draw Flashing</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-sm text-slate-600 mt-1">
           Draw to scale: 2 pixels = 1mm (max {currentSize.maxMm})
         </p>
       </div>
 
-      {/* Input fields */}
-      <div className="mb-4 space-y-3">
+      {/* Input fields - Clean Card */}
+      <div className="bg-white rounded-lg border border-slate-200 p-4 mb-4 space-y-3">
         <div className="flex gap-4">
           <div className="flex-1">
             <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
@@ -1340,8 +1340,8 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="mb-4 flex gap-2 items-center flex-wrap">
+      {/* Toolbar - Professional Design */}
+      <div className="bg-white rounded-lg border border-slate-200 p-3 mb-4 flex gap-2 items-center flex-wrap">
         <button
           onClick={() => {
             if (!editingLocked && !checkAdjustPointsExit()) {
@@ -1440,18 +1440,18 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         </div>
       </div>
 
-      {/* Live Measurements */}
-      <div className="mb-4 p-4 bg-blue-50 border-2 border-blue-300 rounded-lg inline-block min-w-[400px]">
-        <div className="flex gap-8 text-lg font-mono">
+      {/* Live Measurements - Subtle Professional Design */}
+      <div className="mb-4 p-3 bg-slate-100 border border-slate-200 rounded-lg inline-block">
+        <div className="flex gap-6 text-sm">
           <div>
-            <span className="text-blue-700 font-semibold">Length:</span>{' '}
-            <span className="text-blue-900 font-bold text-2xl">
+            <span className="text-slate-600 font-medium">Length:</span>{' '}
+            <span className="text-slate-900 font-bold">
               {measurements_live?.length || '—'}mm
             </span>
           </div>
           <div>
-            <span className="text-blue-700 font-semibold">Angle:</span>{' '}
-            <span className="text-blue-900 font-bold text-2xl">
+            <span className="text-slate-600 font-medium">Angle:</span>{' '}
+            <span className="text-slate-900 font-bold">
               {measurements_live?.angle !== null && measurements_live?.angle !== undefined ? `${measurements_live.angle}°` : '—'}
             </span>
           </div>
@@ -1460,8 +1460,8 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
       {/* Main Layout: Sidebar + Canvas */}
       <div className="flex gap-4">
-        {/* Left Sidebar - Measurements List */}
-        <div className="w-72 border-2 border-slate-300 rounded-xl p-4 bg-white max-h-[700px] overflow-y-auto">
+        {/* Left Sidebar - Measurements List - Professional Design */}
+        <div className="w-72 bg-white border border-slate-200 rounded-lg p-4 max-h-[700px] overflow-y-auto shadow-sm">
           <h3 className="text-sm font-semibold text-slate-900 mb-3">Measurements</h3>
           {measurements.length === 0 ? (
             <p className="text-xs text-slate-400">No measurements yet</p>
@@ -1477,8 +1477,8 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                   }}
                   className={`p-3 border rounded-lg cursor-pointer transition-all ${
                     selectedMeasurement === m.id 
-                      ? 'border-[#FF6B35] bg-orange-50 shadow-md' 
-                      : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                      ? 'border-[#FF6B35] bg-orange-50 shadow-sm ring-1 ring-orange-200' 
+                      : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
                   }`}
                 >
                   <div className="flex justify-between items-start mb-2">
@@ -1573,16 +1573,16 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           )}
         </div>
 
-        {/* Canvas */}
-        <div className="border-2 border-slate-300 rounded-xl overflow-hidden shadow-lg">
+        {/* Canvas - Professional Container */}
+        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
           <canvas ref={canvasRef} width={currentSize.width} height={currentSize.height} />
         </div>
       </div>
 
-      {/* Instructions */}
-      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <h3 className="text-sm font-semibold text-blue-900 mb-2">How to Use:</h3>
-        <ul className="text-sm text-blue-800 space-y-1 grid grid-cols-2 gap-x-6">
+      {/* Instructions - Subtle Design */}
+      <div className="mt-4 p-4 bg-slate-100 border border-slate-200 rounded-lg">
+        <h3 className="text-sm font-semibold text-slate-900 mb-2">How to Use:</h3>
+        <ul className="text-sm text-slate-700 space-y-1 grid grid-cols-2 gap-x-6">
           <li><strong>Line Tool:</strong> Click points to draw. Angles appear automatically after 3rd point.</li>
           <li><strong>Text Tool:</strong> Click to add text labels anywhere on the canvas.</li>
           <li><strong>Select All:</strong> Ctrl+A to select and move entire drawing.</li>
