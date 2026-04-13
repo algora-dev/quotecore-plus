@@ -619,20 +619,19 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           firstObject: flashing.canvas_data.objects?.[0],
         });
         
-        // Load canvas from saved JSON
+        // Load canvas from JSON
         fabricRef.current.loadFromJSON(flashing.canvas_data, () => {
           if (!fabricRef.current) return;
           
-          console.log('[FlashingCanvas] Canvas JSON loaded, rendering...');
-          console.log('[FlashingCanvas] Canvas objects after load:', fabricRef.current.getObjects().length);
+          console.log('[FlashingCanvas] loadFromJSON callback fired');
+          console.log('[FlashingCanvas] Objects after load:', fabricRef.current.getObjects().length);
           
-          // Debug: Show what objects were created
           if (fabricRef.current.getObjects().length === 0) {
-            console.error('[FlashingCanvas] PROBLEM: No objects loaded!');
-            console.error('[FlashingCanvas] Canvas dimensions:', {
-              width: fabricRef.current.getWidth(),
-              height: fabricRef.current.getHeight(),
-            });
+            console.error('[FlashingCanvas] CRITICAL: No objects loaded!');
+            console.error('[FlashingCanvas] This indicates a fabric.js deserialization failure');
+            alert('⚠️ Cannot load this drawing for editing.\n\nThis may be due to incompatible canvas format.\n\nPlease create a new flashing from scratch.');
+          } else {
+            console.log('[FlashingCanvas] Successfully loaded', fabricRef.current.getObjects().length, 'objects');
           }
           
           fabricRef.current.renderAll();
