@@ -612,13 +612,30 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           return;
         }
         
+        // Debug: Log the actual canvas data structure
+        console.log('[FlashingCanvas] Canvas data structure:', {
+          hasObjects: !!flashing.canvas_data.objects,
+          objectsCount: flashing.canvas_data.objects?.length || 0,
+          firstObject: flashing.canvas_data.objects?.[0],
+        });
+        
         // Load canvas from saved JSON
         fabricRef.current.loadFromJSON(flashing.canvas_data, () => {
           if (!fabricRef.current) return;
           
           console.log('[FlashingCanvas] Canvas JSON loaded, rendering...');
+          console.log('[FlashingCanvas] Canvas objects after load:', fabricRef.current.getObjects().length);
+          
+          // Debug: Show what objects were created
+          if (fabricRef.current.getObjects().length === 0) {
+            console.error('[FlashingCanvas] PROBLEM: No objects loaded!');
+            console.error('[FlashingCanvas] Canvas dimensions:', {
+              width: fabricRef.current.getWidth(),
+              height: fabricRef.current.getHeight(),
+            });
+          }
+          
           fabricRef.current.renderAll();
-          console.log('[FlashingCanvas] Canvas objects count:', fabricRef.current.getObjects().length);
         });
         
         // Restore state (outside callback to avoid loops)
