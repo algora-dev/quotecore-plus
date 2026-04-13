@@ -214,12 +214,14 @@ export async function createFlashingFromCanvas(formData: FormData) {
   const description = formData.get('description') as string | null;
   const imageFile = formData.get('image') as File;
   const canvasData = formData.get('canvas_data') as string | null;
+  const measurementsData = formData.get('measurements') as string | null;
 
   if (!name || !imageFile) {
     throw new Error('Name and image are required');
   }
 
   console.log('[createFlashingFromCanvas] Creating flashing from canvas:', name);
+  console.log('[createFlashingFromCanvas] Measurements:', measurementsData ? JSON.parse(measurementsData).length : 0);
 
   const supabase = await createSupabaseServerClient();
 
@@ -249,7 +251,7 @@ export async function createFlashingFromCanvas(formData: FormData) {
 
   console.log('[createFlashingFromCanvas] Canvas image uploaded:', publicUrl);
 
-  // 3. Create database record with canvas JSON
+  // 3. Create database record with canvas JSON and measurements
   const { data, error } = await supabase
     .from('flashing_library')
     .insert({
@@ -257,6 +259,7 @@ export async function createFlashingFromCanvas(formData: FormData) {
       description: description || null,
       image_url: publicUrl,
       canvas_data: canvasData ? JSON.parse(canvasData) : null,
+      measurements: measurementsData ? JSON.parse(measurementsData) : [],
       company_id: profile.company_id,
       is_default: false,
     })

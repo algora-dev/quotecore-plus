@@ -1274,11 +1274,26 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
       const canvasJSON = JSON.stringify(canvas.toJSON());
 
+      // Build clean measurements array for database
+      const cleanMeasurements = measurements.map((m, index) => ({
+        id: m.id,
+        type: m.type,
+        sequence: index + 1,
+        value: m.value,
+        unit: m.type === 'length' ? 'mm' : 'degrees',
+        pointIndices: m.type === 'length' 
+          ? [m.lineStartIndex, m.lineEndIndex]
+          : [m.pointIndex! - 1, m.pointIndex!, (m.pointIndex! + 1) % linePoints.length],
+        visible: m.visible,
+        placement: m.type === 'angle' ? (m.showInterior ? 'interior' : 'exterior') : undefined,
+      }));
+
       const formData = new FormData();
       formData.append('name', name);
       formData.append('description', description || '');
       formData.append('image', blob, 'flashing.png');
       formData.append('canvas_data', canvasJSON);
+      formData.append('measurements', JSON.stringify(cleanMeasurements));
 
       await createFlashingFromCanvas(formData);
 
