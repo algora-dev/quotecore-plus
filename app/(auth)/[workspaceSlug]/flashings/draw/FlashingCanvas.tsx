@@ -70,6 +70,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const [editingLocked, setEditingLocked] = useState(false);
   const [loading, setLoading] = useState(editMode); // Loading state for edit mode
   const [canvasReady, setCanvasReady] = useState(false); // Track when canvas is initialized
+  const [flashingLoaded, setFlashingLoaded] = useState(false); // Track if flashing data loaded
   
   // History removed - was causing issues with canvas state sync
   
@@ -576,13 +577,18 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     };
   }, [canvasSize]); // Only re-init when canvas size changes
 
-  // Load existing flashing in edit mode (AFTER canvas is ready)
+  // Load existing flashing in edit mode (AFTER canvas is ready, ONCE only)
   useEffect(() => {
-    console.log('[FlashingCanvas] Load check:', { editMode, flashingId, canvasReady, hasCanvas: !!fabricRef.current });
+    console.log('[FlashingCanvas] Load check:', { editMode, flashingId, canvasReady, flashingLoaded, hasCanvas: !!fabricRef.current });
     
     if (!editMode || !flashingId) {
       setLoading(false); // Not in edit mode, stop loading
       return;
+    }
+    
+    if (flashingLoaded) {
+      console.log('[FlashingCanvas] Already loaded, skipping');
+      return; // Already loaded, don't load again
     }
     
     if (!canvasReady || !fabricRef.current) {
@@ -608,21 +614,47 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         
         // Load canvas from saved JSON
         fabricRef.current.loadFromJSON(flashing.canvas_data, () => {
-          fabricRef.current?.renderAll();
+          if (!fabricRef.current) return;
           
-          // Restore measurements state
-          if (flashing.measurements) {
-            setMeasurements(flashing.measurements);
-          }
-          
-          setName(flashing.name);
-          setDescription(flashing.description || '');
-          setLoading(false);
-          
-          console.log('[FlashingCanvas] Flashing loaded successfully');
-          console.log('[FlashingCanvas] Canvas data size:', JSON.stringify(flashing.canvas_data).length, 'bytes');
-          console.log('[FlashingCanvas] Measurements count:', flashing.measurements?.length || 0);
+          console.log('[FlashingCanvas] Canvas JSON loaded, rendering...');
+          fabricRef.current.renderAll();
+          console.log('[FlashingCanvas] Canvas objects count:', fabricRef.current.getObjects().length);
         });
+        
+        // Restore state (outside callback to avoid loops)
+        if (flashing.measurements) {
+          setMeasurements(flashing.measurements);
+        }
+        
+        // Restore line points from measurements pointIndices
+        const points: { x: number; y: number }[] = [];
+        if (flashing.measurements) {
+          flashing.measurements.forEach((m: any) => {
+            if (m.type === 'length' && m.pointIndices) {
+              // Reconstruct points from line objects
+              const lineObj = fabricRef.current?.getObjects().find((obj: any) => obj.measurementId === m.id);
+              if (lineObj && (lineObj as any).x1 !== undefined) {
+                const line = lineObj as any;
+                if (!points[m.pointIndices[0]]) {
+                  points[m.pointIndices[0]] = { x: line.x1, y: line.y1 };
+                }
+                if (!points[m.pointIndices[1]]) {
+                  points[m.pointIndices[1]] = { x: line.x2, y: line.y2 };
+                }
+              }
+            }
+          });
+        }
+        setLinePoints(points.filter(p => p)); // Remove undefined entries
+        
+        setName(flashing.name);
+        setDescription(flashing.description || '');
+        setFlashingLoaded(true); // Mark as loaded
+        setLoading(false);
+        
+        console.log('[FlashingCanvas] Flashing loaded successfully');
+        console.log('[FlashingCanvas] Canvas data size:', JSON.stringify(flashing.canvas_data).length, 'bytes');
+        console.log('[FlashingCanvas] Measurements count:', flashing.measurements?.length || 0);
       } catch (err) {
         console.error('[FlashingCanvas] Failed to load flashing:', err);
         alert(`Failed to load flashing: ${err}`);
@@ -631,7 +663,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     }
     
     loadFlashing();
-  }, [editMode, flashingId, canvasReady]); // Trigger when canvas becomes ready
+  }, [editMode, flashingId, canvasReady, flashingLoaded]); // Trigger when canvas becomes ready
 
   useEffect(() => {
     if (fabricRef.current) {
