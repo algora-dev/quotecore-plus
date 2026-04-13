@@ -43,6 +43,11 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
       
       if (canvasData.objects) {
         canvasData.objects.forEach((obj: any, index: number) => {
+          // Log full object to see structure
+          if (index < 5) {
+            console.log(`[EditForm] Full Object ${index}:`, JSON.stringify(obj, null, 2));
+          }
+          
           console.log(`[EditForm] Object ${index}:`, {
             type: obj.type,
             measurementId: obj.measurementId,
