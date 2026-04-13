@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-type NavKey = 'overview' | 'components' | 'flashings' | 'templates' | 'quotes';
+type NavKey = 'overview' | 'components' | 'flashings' | 'templates' | 'quotes' | 'material-orders';
 
 const makeNavItems = (slug: string) => {
   const base = `/${slug}`;
@@ -13,6 +13,7 @@ const makeNavItems = (slug: string) => {
     { key: 'flashings' as NavKey, href: `${base}/flashings`, label: 'Flashings' },
     { key: 'templates' as NavKey, href: `${base}/templates`, label: 'Templates' },
     { key: 'quotes' as NavKey, href: `${base}/quotes`, label: 'Quotes' },
+    { key: 'material-orders' as NavKey, href: `${base}/material-orders`, label: 'Material Orders' },
   ];
 };
 
