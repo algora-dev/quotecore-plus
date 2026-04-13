@@ -1370,7 +1370,14 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       const response = await fetch(dataUrl);
       const blob = await response.blob();
 
-      const canvasJSON = JSON.stringify(canvas.toJSON());
+      // Export canvas JSON with custom properties
+      const canvasJSON = JSON.stringify((canvas as any).toJSON([
+        'measurementId',
+        'lineStartIndex',
+        'lineEndIndex',
+        'pointIndex',
+        'isPointMarker',
+      ]));
 
       // Build clean measurements array for database
       const cleanMeasurements = measurements.map((m, index) => ({
