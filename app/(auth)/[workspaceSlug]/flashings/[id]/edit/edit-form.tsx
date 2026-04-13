@@ -23,74 +23,20 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
   const [description, setDescription] = useState(flashing.description || '');
   const [saving, setSaving] = useState(false);
   
-  // Parse canvas_data to extract measurements
+  // Load measurements from clean measurements column
   const [measurements, setMeasurements] = useState<MeasurementData[]>(() => {
-    if (!flashing.canvas_data) {
-      console.log('[EditForm] No canvas_data found');
-      return [];
+    // Use new measurements column (clean data)
+    if (flashing.measurements && Array.isArray(flashing.measurements)) {
+      console.log('[EditForm] Loading from measurements column:', flashing.measurements.length);
+      return flashing.measurements.map(m => ({
+        id: m.id,
+        type: m.type,
+        value: m.value,
+      }));
     }
     
-    try {
-      const canvasData = typeof flashing.canvas_data === 'string' 
-        ? JSON.parse(flashing.canvas_data)
-        : flashing.canvas_data;
-      
-      console.log('[EditForm] Canvas data:', canvasData);
-      console.log('[EditForm] Objects count:', canvasData.objects?.length || 0);
-      
-      // Extract measurements from canvas objects
-      const extracted: MeasurementData[] = [];
-      
-      if (canvasData.objects) {
-        canvasData.objects.forEach((obj: any, index: number) => {
-          // Log full object to see structure
-          if (index < 5) {
-            console.log(`[EditForm] Full Object ${index}:`, JSON.stringify(obj, null, 2));
-          }
-          
-          console.log(`[EditForm] Object ${index}:`, {
-            type: obj.type,
-            measurementId: obj.measurementId,
-            text: obj.text,
-          });
-          
-          if (obj.measurementId && obj.type === 'i-text' && obj.text) {
-            // Parse text like "125mm" or "90°"
-            const text = obj.text.toString();
-            
-            if (text.endsWith('mm')) {
-              // Length measurement
-              const value = parseFloat(text.replace('mm', ''));
-              if (!isNaN(value)) {
-                console.log('[EditForm] Found length:', value);
-                extracted.push({
-                  id: obj.measurementId,
-                  type: 'length',
-                  value,
-                });
-              }
-            } else if (text.endsWith('°')) {
-              // Angle measurement
-              const value = parseFloat(text.replace('°', ''));
-              if (!isNaN(value)) {
-                console.log('[EditForm] Found angle:', value);
-                extracted.push({
-                  id: obj.measurementId,
-                  type: 'angle',
-                  value,
-                });
-              }
-            }
-          }
-        });
-      }
-      
-      console.log('[EditForm] Total extracted measurements:', extracted.length);
-      return extracted;
-    } catch (err) {
-      console.error('[EditForm] Failed to parse canvas_data:', err);
-      return [];
-    }
+    console.log('[EditForm] No measurements found');
+    return [];
   });
 
   const handleUpdateMeasurement = (id: string, newValue: number) => {
@@ -102,7 +48,13 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Update canvas_data with new measurement values
+      // Rebuild full measurements array from edited values
+      const updatedMeasurements = flashing.measurements?.map(m => {
+        const edited = measurements.find(em => em.id === m.id);
+        return edited ? { ...m, value: edited.value } : m;
+      }) || [];
+
+      // Also update canvas_data text objects to match
       let updatedCanvasData = flashing.canvas_data;
       
       if (updatedCanvasData && measurements.length > 0) {
@@ -126,10 +78,11 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
         updatedCanvasData = JSON.stringify(canvasData);
       }
 
-      // Update flashing
+      // Update both measurements column AND canvas_data (keep in sync)
       await updateFlashing(flashing.id, {
         name,
         description: description || null,
+        measurements: updatedMeasurements,
         canvas_data: updatedCanvasData,
       });
 
