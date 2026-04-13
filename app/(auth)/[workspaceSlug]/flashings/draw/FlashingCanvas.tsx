@@ -1044,20 +1044,77 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const handleApplyCalculatedAngle = (newAngle: number) => {
     if (!calculatingAngleId || !fabricRef.current) return;
 
+    const measurement = measurements.find(m => m.id === calculatingAngleId);
+    if (!measurement || measurement.type !== 'angle') {
+      setCalculatingAngleId(null);
+      return;
+    }
+
     const canvas = fabricRef.current;
+    const currentPoints = linePointsRef.current;
+    const pointIdx = measurement.pointIndex;
+
+    // Update geometry (same logic as handleEditMeasurementValue for angles)
+    if (pointIdx !== undefined && pointIdx >= 1 && pointIdx < currentPoints.length - 1) {
+      const p1 = currentPoints[pointIdx - 1];
+      const p2 = currentPoints[pointIdx];
+      const p3 = currentPoints[pointIdx + 1];
+      
+      // Calculate current angle using ACTUAL current points
+      const currentInterior = calculateAngle(p1, p2, p3, true);
+      const targetInterior = measurement.showInterior ? newAngle : 360 - newAngle;
+      const angleDiff = targetInterior - currentInterior;
+      
+      // Rotate p3 and all subsequent points around p2
+      const angleRad = angleDiff * Math.PI / 180;
+      
+      for (let i = pointIdx + 1; i < currentPoints.length; i++) {
+        const pt = currentPoints[i];
+        const dx = pt.x - p2.x;
+        const dy = pt.y - p2.y;
+        
+        currentPoints[i] = {
+          x: p2.x + dx * Math.cos(angleRad) - dy * Math.sin(angleRad),
+          y: p2.y + dx * Math.sin(angleRad) + dy * Math.cos(angleRad),
+        };
+        
+        // Update point marker
+        const marker = canvas.getObjects().find((o: any) => 
+          o.isPointMarker && o.pointIndex === i
+        );
+        if (marker) {
+          marker.set({
+            left: currentPoints[i].x,
+            top: currentPoints[i].y,
+          });
+        }
+      }
+      
+      // Update all connected geometry
+      updateConnectedGeometry(pointIdx, 0, 0);
+      
+      setLinePoints([...currentPoints]);
+    }
+
+    // Update text label
     const textObj = canvas.getObjects().find((o: any) => 
       o.measurementId === calculatingAngleId && o.type === 'i-text'
     );
-    
     if (textObj) {
       (textObj as any).set('text', `${newAngle}°`);
     }
 
+    // Update measurement state
+    const newInterior = measurement.showInterior ? newAngle : 360 - newAngle;
+    const newExterior = 360 - newInterior;
+    
     setMeasurements(measurements.map(m =>
-      m.id === calculatingAngleId ? { ...m, value: newAngle } : m
+      m.id === calculatingAngleId 
+        ? { ...m, value: newAngle, interiorValue: newInterior, exteriorValue: newExterior }
+        : m
     ));
 
-    canvas.renderAll();
+    canvas.requestRenderAll();
     setCalculatingAngleId(null);
   };
 
