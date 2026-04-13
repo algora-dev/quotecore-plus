@@ -135,6 +135,94 @@ export async function updateFlashing(id: string, input: Partial<FlashingLibraryI
   return data;
 }
 
+export async function updateFlashingWithImage(id: string, formData: FormData) {
+  let profile;
+  try {
+    profile = await requireCompanyContext();
+  } catch (err) {
+    console.error('[updateFlashingWithImage] Failed to get company context:', err);
+    throw new Error('Account setup incomplete. Please log out and log back in.');
+  }
+
+  const name = formData.get('name') as string;
+  const description = formData.get('description') as string | null;
+  const imageFile = formData.get('image') as File | null;
+  const canvasData = formData.get('canvas_data') as string | null;
+  const measurementsData = formData.get('measurements') as string | null;
+
+  console.log('[updateFlashingWithImage] Updating flashing:', id);
+
+  const supabase = await createSupabaseServerClient();
+
+  // Get current flashing to get old image URL
+  const { data: currentFlashing } = await supabase
+    .from('flashing_library')
+    .select('image_url')
+    .eq('id', id)
+    .single();
+
+  let imageUrl = currentFlashing?.image_url;
+
+  // Upload new image if provided
+  if (imageFile && imageFile.size > 0) {
+    const fileName = `${crypto.randomUUID()}.png`;
+    const storagePath = `${profile.company_id}/flashings/${fileName}`;
+
+    const arrayBuffer = await imageFile.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const { error: uploadError } = await supabase.storage
+      .from('company-logos')
+      .upload(storagePath, buffer, {
+        contentType: 'image/png',
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error('[updateFlashingWithImage] Upload error:', uploadError);
+      throw new Error(`Failed to upload image: ${uploadError.message}`);
+    }
+
+    // Get new public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('company-logos')
+      .getPublicUrl(storagePath);
+
+    imageUrl = publicUrl;
+
+    // Delete old image (best effort)
+    if (currentFlashing?.image_url) {
+      const oldPath = currentFlashing.image_url.split('/storage/v1/object/public/company-logos/')[1];
+      if (oldPath) {
+        await supabase.storage.from('company-logos').remove([oldPath]);
+      }
+    }
+  }
+
+  // Update database
+  const { data, error } = await supabase
+    .from('flashing_library')
+    .update({
+      name,
+      description: description || null,
+      image_url: imageUrl,
+      canvas_data: canvasData ? JSON.parse(canvasData) : undefined,
+      measurements: measurementsData ? JSON.parse(measurementsData) : undefined,
+    })
+    .eq('id', id)
+    .eq('company_id', profile.company_id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('[updateFlashingWithImage] Database error:', error);
+    throw new Error(`Failed to update flashing: ${error.message}`);
+  }
+
+  revalidatePath('/[workspaceSlug]/flashings');
+  return data;
+}
+
 export async function deleteFlashing(id: string) {
   let profile;
   try {

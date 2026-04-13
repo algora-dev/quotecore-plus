@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { updateFlashing } from '../../actions';
+import { Canvas } from 'fabric';
+import { updateFlashingWithImage } from '../../actions';
 import type { FlashingLibraryRow } from '@/app/lib/types';
 import Image from 'next/image';
 
@@ -22,6 +23,11 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
   const [name, setName] = useState(flashing.name);
   const [description, setDescription] = useState(flashing.description || '');
   const [saving, setSaving] = useState(false);
+  const [imageUrl, setImageUrl] = useState(flashing.image_url);
+  
+  // Hidden canvas for regeneration
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fabricRef = useRef<Canvas | null>(null);
   
   // Load measurements from clean measurements column
   const [measurements, setMeasurements] = useState<MeasurementData[]>(() => {
@@ -39,52 +45,107 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
     return [];
   });
 
+  // Initialize hidden canvas from canvas_data
+  useEffect(() => {
+    if (!canvasRef.current || !flashing.canvas_data) return;
+    
+    const canvas = new Canvas(canvasRef.current, {
+      backgroundColor: '#ffffff', // White background (not gray)
+    });
+    
+    // Load canvas from JSON
+    canvas.loadFromJSON(flashing.canvas_data, () => {
+      canvas.renderAll();
+      console.log('[EditForm] Canvas loaded from JSON');
+    });
+    
+    fabricRef.current = canvas;
+    
+    return () => {
+      canvas.dispose();
+    };
+  }, [flashing.canvas_data]);
+
   const handleUpdateMeasurement = (id: string, newValue: number) => {
     setMeasurements(measurements.map(m => 
       m.id === id ? { ...m, value: newValue } : m
     ));
+    
+    // Update canvas text object
+    if (fabricRef.current) {
+      const canvas = fabricRef.current;
+      const textObj = canvas.getObjects().find((o: any) => 
+        o.type === 'i-text' && o.measurementId === id
+      );
+      
+      if (textObj) {
+        const measurement = measurements.find(m => m.id === id);
+        if (measurement) {
+          const newText = measurement.type === 'length' 
+            ? `${newValue}mm` 
+            : `${newValue}°`;
+          (textObj as any).set('text', newText);
+          canvas.renderAll();
+          
+          // Generate new preview
+          regeneratePreview();
+        }
+      }
+    }
+  };
+  
+  const regeneratePreview = () => {
+    if (!fabricRef.current) return;
+    
+    const canvas = fabricRef.current;
+    
+    // Export canvas as data URL
+    const dataUrl = canvas.toDataURL({
+      format: 'png',
+      quality: 1,
+      multiplier: 1,
+    });
+    
+    // Update preview image
+    setImageUrl(dataUrl);
   };
 
   const handleSave = async () => {
+    if (!fabricRef.current) return;
+    
     setSaving(true);
     try {
+      const canvas = fabricRef.current;
+      
       // Rebuild full measurements array from edited values
       const updatedMeasurements = flashing.measurements?.map(m => {
         const edited = measurements.find(em => em.id === m.id);
         return edited ? { ...m, value: edited.value } : m;
       }) || [];
 
-      // Also update canvas_data text objects to match
-      let updatedCanvasData = flashing.canvas_data;
-      
-      if (updatedCanvasData && measurements.length > 0) {
-        const canvasData = typeof updatedCanvasData === 'string'
-          ? JSON.parse(updatedCanvasData)
-          : updatedCanvasData;
-        
-        if (canvasData.objects) {
-          canvasData.objects.forEach((obj: any) => {
-            if (obj.measurementId && obj.type === 'i-text') {
-              const measurement = measurements.find(m => m.id === obj.measurementId);
-              if (measurement) {
-                obj.text = measurement.type === 'length' 
-                  ? `${measurement.value}mm`
-                  : `${measurement.value}°`;
-              }
-            }
-          });
-        }
-        
-        updatedCanvasData = JSON.stringify(canvasData);
-      }
-
-      // Update both measurements column AND canvas_data (keep in sync)
-      await updateFlashing(flashing.id, {
-        name,
-        description: description || null,
-        measurements: updatedMeasurements,
-        canvas_data: updatedCanvasData,
+      // Export updated canvas as PNG
+      const dataUrl = canvas.toDataURL({
+        format: 'png',
+        quality: 1,
+        multiplier: 1,
       });
+
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+
+      // Get updated canvas JSON
+      const canvasJSON = JSON.stringify(canvas.toJSON());
+
+      // Build FormData
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('description', description || '');
+      formData.append('image', blob, 'flashing.png');
+      formData.append('canvas_data', canvasJSON);
+      formData.append('measurements', JSON.stringify(updatedMeasurements));
+
+      // Update with new image
+      await updateFlashingWithImage(flashing.id, formData);
 
       router.push(`/${workspaceSlug}/flashings`);
     } catch (err: any) {
@@ -97,18 +158,25 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Hidden canvas for regeneration */}
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+      
       {/* Preview */}
       <div className="bg-white border border-slate-200 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-slate-900 mb-3">Preview</h3>
-        <div className="max-w-sm mx-auto aspect-square bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
+        <h3 className="text-sm font-semibold text-slate-900 mb-3">Preview (Live Updates)</h3>
+        <div className="max-w-sm mx-auto aspect-square bg-white rounded-lg flex items-center justify-center overflow-hidden border border-slate-200">
           <Image
-            src={flashing.image_url}
+            src={imageUrl}
             alt={name}
             width={400}
             height={400}
             className="object-contain"
+            key={imageUrl}
           />
         </div>
+        <p className="text-xs text-slate-500 mt-2 text-center">
+          Image updates automatically as you edit measurements
+        </p>
       </div>
 
       {/* Basic Details */}
