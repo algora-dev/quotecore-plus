@@ -32,6 +32,34 @@ export async function loadFlashingLibrary() {
   return data || [];
 }
 
+export async function loadFlashingById(id: string) {
+  let profile;
+  try {
+    profile = await requireCompanyContext();
+  } catch (err) {
+    console.error('[loadFlashingById] Failed to get company context:', err);
+    throw new Error('Account setup incomplete. Please ensure you are logged in and have a company workspace.');
+  }
+  
+  console.log('[loadFlashingById] Loading flashing:', id);
+  
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('flashing_library')
+    .select('*')
+    .eq('id', id)
+    .eq('company_id', profile.company_id)
+    .single();
+  
+  if (error) {
+    console.error('[loadFlashingById] Database error:', error);
+    throw new Error(`Failed to load flashing: ${error.message}`);
+  }
+  
+  console.log('[loadFlashingById] Successfully loaded flashing');
+  return data;
+}
+
 export async function createFlashing(formData: FormData) {
   let profile;
   try {

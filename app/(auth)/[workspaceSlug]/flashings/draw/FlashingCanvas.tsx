@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Canvas, Line, Circle, IText, Rect, ActiveSelection, Object as FabricObject } from 'fabric';
-import { createFlashingFromCanvas } from '../actions';
+import { createFlashingFromCanvas, updateFlashingWithImage, loadFlashingById } from '../actions';
 import { AngleCalculatorModal } from './AngleCalculatorModal';
 
 type DrawMode = 'none' | 'line' | 'text' | 'edit' | 'adjustPoints';
@@ -47,8 +47,13 @@ interface CanvasState {
 
 export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fabricRef = useRef<Canvas | null>(null);
+  
+  // Detect edit mode
+  const editMode = searchParams.get('edit') === 'true';
+  const flashingId = searchParams.get('id');
   
   const [canvasSize, setCanvasSize] = useState<CanvasSize>('medium');
   const [drawMode, setDrawMode] = useState<DrawMode>('none');
@@ -63,6 +68,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const [showAdjustConfirmation, setShowAdjustConfirmation] = useState(false);
   const [showSelectAllWarning, setShowSelectAllWarning] = useState(false);
   const [editingLocked, setEditingLocked] = useState(false);
+  const [loading, setLoading] = useState(editMode); // Loading state for edit mode
   
   // History removed - was causing issues with canvas state sync
   
@@ -566,6 +572,44 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       canvas.dispose();
     };
   }, [canvasSize]); // Only re-init when canvas size changes
+
+  // Load existing flashing in edit mode
+  useEffect(() => {
+    if (!editMode || !flashingId || !fabricRef.current) return;
+    
+    async function loadFlashing() {
+      try {
+        console.log('[FlashingCanvas] Loading flashing for edit:', flashingId);
+        const flashing = await loadFlashingById(flashingId!);
+        
+        if (!flashing || !fabricRef.current) return;
+        
+        // Load canvas from saved JSON
+        fabricRef.current.loadFromJSON(flashing.canvas_data, () => {
+          fabricRef.current?.renderAll();
+          
+          // Restore measurements state
+          if (flashing.measurements) {
+            setMeasurements(flashing.measurements);
+          }
+          
+          setName(flashing.name);
+          setDescription(flashing.description || '');
+          setLoading(false);
+          
+          console.log('[FlashingCanvas] Flashing loaded successfully');
+          console.log('[FlashingCanvas] Canvas data size:', JSON.stringify(flashing.canvas_data).length, 'bytes');
+          console.log('[FlashingCanvas] Measurements count:', flashing.measurements?.length || 0);
+        });
+      } catch (err) {
+        console.error('[FlashingCanvas] Failed to load flashing:', err);
+        alert('Failed to load flashing for editing');
+        setLoading(false);
+      }
+    }
+    
+    loadFlashing();
+  }, [editMode, flashingId]);
 
   useEffect(() => {
     if (fabricRef.current) {
@@ -1295,7 +1339,20 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       formData.append('canvas_data', canvasJSON);
       formData.append('measurements', JSON.stringify(cleanMeasurements));
 
-      await createFlashingFromCanvas(formData);
+      // Log file sizes
+      console.log('[FlashingSave] PNG size:', Math.round(blob.size / 1024), 'KB');
+      console.log('[FlashingSave] Canvas JSON size:', Math.round(canvasJSON.length / 1024), 'KB');
+      console.log('[FlashingSave] Measurements:', cleanMeasurements.length, 'items');
+
+      if (editMode && flashingId) {
+        // UPDATE existing flashing
+        console.log('[FlashingSave] Updating existing flashing:', flashingId);
+        await updateFlashingWithImage(flashingId, formData);
+      } else {
+        // CREATE new flashing
+        console.log('[FlashingSave] Creating new flashing');
+        await createFlashingFromCanvas(formData);
+      }
 
       router.push(`/${workspaceSlug}/flashings`);
     } catch (err: any) {
@@ -1308,10 +1365,23 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
   const currentSize = CANVAS_SIZES[canvasSize];
 
+  if (loading) {
+    return (
+      <div className="max-w-full mx-auto p-6 bg-slate-50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg font-semibold text-slate-900">Loading flashing...</div>
+          <div className="text-sm text-slate-600 mt-2">Please wait</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-full mx-auto p-6 bg-slate-50 min-h-screen">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Draw Flashing</h1>
+        <h1 className="text-2xl font-bold text-slate-900">
+          {editMode ? 'Edit Flashing' : 'Draw Flashing'}
+        </h1>
         <p className="text-sm text-slate-600 mt-1">
           Draw to scale: 2 pixels = 1mm (max {currentSize.maxMm})
         </p>

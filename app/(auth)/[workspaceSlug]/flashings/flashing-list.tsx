@@ -167,7 +167,7 @@ export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => router.push(`/${workspaceSlug}/flashings/${flashing.id}/edit`)}
+                  onClick={() => router.push(`/${workspaceSlug}/flashings/draw?edit=true&id=${flashing.id}`)}
                   className="flex-1 px-2 py-1 text-xs text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-all"
                 >
                   Edit
