@@ -607,32 +607,14 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     }
   }, [drawMode, editingLocked]);
 
-  // Handle clicks outside canvas in adjustPoints mode
-  useEffect(() => {
-    if (drawMode !== 'adjustPoints') return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      const canvasEl = canvasRef.current;
-      if (!canvasEl) return;
-      
-      const rect = canvasEl.getBoundingClientRect();
-      const clickX = e.clientX;
-      const clickY = e.clientY;
-      
-      // Check if click is outside canvas bounds
-      if (
-        clickX < rect.left ||
-        clickX > rect.right ||
-        clickY < rect.top ||
-        clickY > rect.bottom
-      ) {
-        setShowAdjustConfirmation(true);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [drawMode]);
+  // Helper to check if we should show Adjust Points confirmation
+  const checkAdjustPointsExit = () => {
+    if (drawMode === 'adjustPoints') {
+      setShowAdjustConfirmation(true);
+      return true; // Prevent action until confirmed
+    }
+    return false; // Allow action
+  };
 
   const liveMeasurements = () => {
     if (drawMode !== 'line' || linePoints.length === 0 || !cursorPos) return null;
@@ -1361,7 +1343,11 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       {/* Toolbar */}
       <div className="mb-4 flex gap-2 items-center flex-wrap">
         <button
-          onClick={() => !editingLocked && setDrawMode('line')}
+          onClick={() => {
+            if (!editingLocked && !checkAdjustPointsExit()) {
+              setDrawMode('line');
+            }
+          }}
           disabled={editingLocked}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             drawMode === 'line' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
@@ -1370,7 +1356,11 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           Line
         </button>
         <button
-          onClick={() => !editingLocked && setDrawMode('text')}
+          onClick={() => {
+            if (!editingLocked && !checkAdjustPointsExit()) {
+              setDrawMode('text');
+            }
+          }}
           disabled={editingLocked}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             drawMode === 'text' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
@@ -1379,7 +1369,11 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           Text
         </button>
         <button
-          onClick={() => !editingLocked && setDrawMode('edit')}
+          onClick={() => {
+            if (!editingLocked && !checkAdjustPointsExit()) {
+              setDrawMode('edit');
+            }
+          }}
           disabled={editingLocked}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             drawMode === 'edit' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
@@ -1388,7 +1382,11 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           Edit
         </button>
         <button
-          onClick={() => !editingLocked && handleAdjustPointsMode()}
+          onClick={() => {
+            if (!editingLocked) {
+              handleAdjustPointsMode();
+            }
+          }}
           disabled={editingLocked}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             drawMode === 'adjustPoints' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
@@ -1472,7 +1470,11 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
               {measurements.map((m) => (
                 <div 
                   key={m.id} 
-                  onClick={() => handleSelectMeasurement(m.id)}
+                  onClick={() => {
+                    if (!checkAdjustPointsExit()) {
+                      handleSelectMeasurement(m.id);
+                    }
+                  }}
                   className={`p-3 border rounded-lg cursor-pointer transition-all ${
                     selectedMeasurement === m.id 
                       ? 'border-[#FF6B35] bg-orange-50 shadow-md' 
@@ -1484,7 +1486,12 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                       {m.type === 'length' ? 'Length' : 'Angle'}
                     </span>
                     <button
-                      onClick={() => !editingLocked && handleToggleMeasurementVisibility(m.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!editingLocked && !checkAdjustPointsExit()) {
+                          handleToggleMeasurementVisibility(m.id);
+                        }
+                      }}
                       disabled={editingLocked}
                       className={`text-xs px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                       title={m.visible ? 'Hide' : 'Show'}
@@ -1506,7 +1513,9 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            !editingLocked && handleOpenCalculator(m.id);
+                            if (!editingLocked && !checkAdjustPointsExit()) {
+                              handleOpenCalculator(m.id);
+                            }
                           }}
                           disabled={editingLocked}
                           className={`w-full text-xs px-2 py-1.5 bg-[#FF6B35] text-white hover:bg-[#ff5722] rounded text-left font-medium ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -1517,7 +1526,9 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            !editingLocked && handleToggleAngleType(m.id);
+                            if (!editingLocked && !checkAdjustPointsExit()) {
+                              handleToggleAngleType(m.id);
+                            }
                           }}
                           disabled={editingLocked}
                           className={`w-full text-xs px-2 py-1.5 bg-blue-100 hover:bg-blue-200 rounded text-left ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -1531,7 +1542,9 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          !editingLocked && handleTogglePlacementSide(m.id);
+                          if (!editingLocked && !checkAdjustPointsExit()) {
+                            handleTogglePlacementSide(m.id);
+                          }
                         }}
                         disabled={editingLocked}
                         className={`w-full text-xs px-2 py-1.5 bg-purple-100 hover:bg-purple-200 rounded text-left ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -1543,7 +1556,9 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        !editingLocked && handleEditMeasurementValue(m.id);
+                        if (!editingLocked && !checkAdjustPointsExit()) {
+                          handleEditMeasurementValue(m.id);
+                        }
                       }}
                       disabled={editingLocked}
                       className={`w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -1594,8 +1609,8 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
       {/* Adjust Points Confirmation Modal */}
       {showAdjustConfirmation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+        <div className="fixed inset-0 backdrop-blur-sm bg-white/10 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md border border-slate-200">
             <h2 className="text-xl font-bold text-slate-900 mb-4">Finished Adjusting?</h2>
             <p className="text-slate-700 mb-6">
               Are you sure you're finished adjusting the drawing points?
@@ -1623,8 +1638,8 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
       {/* Select All Warning Modal */}
       {showSelectAllWarning && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+        <div className="fixed inset-0 backdrop-blur-sm bg-white/10 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md border border-slate-200">
             <h2 className="text-xl font-bold text-red-600 mb-4">⚠️ Warning: Final Step</h2>
             <p className="text-slate-700 mb-4">
               <strong>Make sure you are finished editing your drawing.</strong>
