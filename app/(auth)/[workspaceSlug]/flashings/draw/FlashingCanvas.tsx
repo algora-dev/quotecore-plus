@@ -1387,19 +1387,17 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
   const currentSize = CANVAS_SIZES[canvasSize];
 
-  if (loading) {
-    return (
-      <div className="max-w-full mx-auto p-6 bg-slate-50 min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-lg font-semibold text-slate-900">Loading flashing...</div>
-          <div className="text-sm text-slate-600 mt-2">Please wait</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-full mx-auto p-6 bg-slate-50 min-h-screen">
+      {/* Loading overlay - show over canvas */}
+      {loading && (
+        <div className="fixed inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="text-center">
+            <div className="text-lg font-semibold text-slate-900">Loading flashing...</div>
+            <div className="text-sm text-slate-600 mt-2">Please wait</div>
+          </div>
+        </div>
+      )}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">
           {editMode ? 'Edit Flashing' : 'Draw Flashing'}
