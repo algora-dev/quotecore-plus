@@ -44,19 +44,51 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
     console.log('[EditForm] No measurements found');
     return [];
   });
+  
+  // Regenerate preview function
+  const regeneratePreview = () => {
+    if (!fabricRef.current) return;
+    
+    const canvas = fabricRef.current;
+    
+    // Export canvas as data URL
+    const dataUrl = canvas.toDataURL({
+      format: 'png',
+      quality: 1,
+      multiplier: 1,
+    });
+    
+    // Update preview image
+    setImageUrl(dataUrl);
+  };
 
   // Initialize hidden canvas from canvas_data
   useEffect(() => {
     if (!canvasRef.current || !flashing.canvas_data) return;
     
+    // Get dimensions from saved canvas data
+    const canvasData = typeof flashing.canvas_data === 'string'
+      ? JSON.parse(flashing.canvas_data)
+      : flashing.canvas_data;
+    
+    const width = canvasData.width || 800;
+    const height = canvasData.height || 600;
+    
+    console.log('[EditForm] Creating canvas:', width, 'x', height);
+    
     const canvas = new Canvas(canvasRef.current, {
+      width,
+      height,
       backgroundColor: '#ffffff', // White background (not gray)
     });
     
     // Load canvas from JSON
-    canvas.loadFromJSON(flashing.canvas_data, () => {
+    canvas.loadFromJSON(canvasData, () => {
       canvas.renderAll();
       console.log('[EditForm] Canvas loaded from JSON');
+      
+      // Generate initial preview after a short delay to ensure render complete
+      setTimeout(regeneratePreview, 100);
     });
     
     fabricRef.current = canvas;
@@ -92,22 +124,6 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
         }
       }
     }
-  };
-  
-  const regeneratePreview = () => {
-    if (!fabricRef.current) return;
-    
-    const canvas = fabricRef.current;
-    
-    // Export canvas as data URL
-    const dataUrl = canvas.toDataURL({
-      format: 'png',
-      quality: 1,
-      multiplier: 1,
-    });
-    
-    // Update preview image
-    setImageUrl(dataUrl);
   };
 
   const handleSave = async () => {
