@@ -612,15 +612,31 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           return;
         }
         
+        // Parse canvas data if it's a string
+        let canvasDataObj = flashing.canvas_data;
+        if (typeof canvasDataObj === 'string') {
+          console.log('[FlashingCanvas] Canvas data is string, parsing...');
+          try {
+            canvasDataObj = JSON.parse(canvasDataObj);
+          } catch (e) {
+            console.error('[FlashingCanvas] Failed to parse canvas_data:', e);
+            alert('Error: Canvas data is corrupted');
+            setLoading(false);
+            setFlashingLoaded(true);
+            return;
+          }
+        }
+        
         // Debug: Log the actual canvas data structure
         console.log('[FlashingCanvas] Canvas data structure:', {
-          hasObjects: !!flashing.canvas_data.objects,
-          objectsCount: flashing.canvas_data.objects?.length || 0,
-          firstObject: flashing.canvas_data.objects?.[0],
+          hasObjects: !!canvasDataObj.objects,
+          objectsCount: canvasDataObj.objects?.length || 0,
+          firstObject: canvasDataObj.objects?.[0],
+          dataType: typeof canvasDataObj,
         });
         
         // Load canvas from JSON
-        fabricRef.current.loadFromJSON(flashing.canvas_data, () => {
+        fabricRef.current.loadFromJSON(canvasDataObj, () => {
           if (!fabricRef.current) return;
           
           console.log('[FlashingCanvas] loadFromJSON callback fired');
