@@ -43,6 +43,37 @@ export interface FlashingLibraryInsert {
   is_default?: boolean;
 }
 
+// Material Order Template Types
+export interface MaterialOrderTemplateRow {
+  id: string;
+  company_id: string;
+  name: string;
+  description: string | null;
+  default_supplier_name: string | null;
+  default_supplier_contact: string | null;
+  default_supplier_phone: string | null;
+  default_supplier_email: string | null;
+  default_delivery_address: string | null;
+  default_header_notes: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MaterialOrderTemplateInsert {
+  name: string;
+  description?: string | null;
+  default_supplier_name?: string | null;
+  default_supplier_contact?: string | null;
+  default_supplier_phone?: string | null;
+  default_supplier_email?: string | null;
+  default_delivery_address?: string | null;
+  default_header_notes?: string | null;
+  is_active?: boolean;
+  sort_order?: number;
+}
+
 export function unitForMeasurement(mt: MeasurementType): string {
   switch (mt) {
     case 'area': return 'm²';
