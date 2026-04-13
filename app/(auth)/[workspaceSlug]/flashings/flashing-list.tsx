@@ -65,15 +65,15 @@ export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
         <div className="flex gap-2">
           <button
             onClick={() => router.push(`/${workspaceSlug}/flashings/draw`)}
-            className="px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff8159] transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.6)]"
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all"
           >
-            ✏️ Draw Flashing
+            Draw Flashing
           </button>
           <button
             onClick={() => setShowUploadForm(true)}
-            className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-black text-white hover:bg-slate-800 transition-all"
           >
-            📁 Upload Image
+            Upload Image
           </button>
         </div>
       </div>
@@ -166,6 +166,12 @@ export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
                 )}
               </div>
               <div className="flex gap-2">
+                <button
+                  onClick={() => router.push(`/${workspaceSlug}/flashings/${flashing.id}/edit`)}
+                  className="flex-1 px-2 py-1 text-xs text-slate-700 border border-slate-300 rounded hover:bg-slate-50"
+                >
+                  Edit
+                </button>
                 <button
                   onClick={() => handleDelete(flashing.id)}
                   className="flex-1 px-2 py-1 text-xs text-red-600 border border-red-200 rounded hover:bg-red-50"
