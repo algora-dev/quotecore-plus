@@ -628,12 +628,28 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         }
         
         // Debug: Log the actual canvas data structure
-        console.log('[FlashingCanvas] Canvas data structure:', {
-          hasObjects: !!canvasDataObj.objects,
-          objectsCount: canvasDataObj.objects?.length || 0,
-          firstObject: canvasDataObj.objects?.[0],
-          dataType: typeof canvasDataObj,
+        console.log('[FlashingCanvas] Canvas data TYPE:', typeof canvasDataObj);
+        console.log('[FlashingCanvas] Has objects array?', !!canvasDataObj.objects);
+        console.log('[FlashingCanvas] Objects count:', canvasDataObj.objects?.length || 0);
+        console.log('[FlashingCanvas] Canvas dimensions in JSON:', {
+          width: canvasDataObj.width,
+          height: canvasDataObj.height,
         });
+        console.log('[FlashingCanvas] Current canvas dimensions:', {
+          width: fabricRef.current.getWidth(),
+          height: fabricRef.current.getHeight(),
+        });
+        
+        // CRITICAL FIX: Set canvas dimensions BEFORE loading objects
+        if (canvasDataObj.width && canvasDataObj.height) {
+          console.log('[FlashingCanvas] Resizing canvas to match saved dimensions...');
+          fabricRef.current.setDimensions({
+            width: canvasDataObj.width,
+            height: canvasDataObj.height,
+          });
+        }
+        
+        console.log('[FlashingCanvas] First object sample:', JSON.stringify(canvasDataObj.objects?.[0]).substring(0, 200));
         
         // Load canvas from JSON
         fabricRef.current.loadFromJSON(canvasDataObj, () => {
