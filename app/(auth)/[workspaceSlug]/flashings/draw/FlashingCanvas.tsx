@@ -575,14 +575,33 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
 
   // Load existing flashing in edit mode
   useEffect(() => {
-    if (!editMode || !flashingId || !fabricRef.current) return;
+    console.log('[FlashingCanvas] Edit mode check:', { editMode, flashingId, hasCanvas: !!fabricRef.current });
+    
+    if (!editMode || !flashingId) {
+      setLoading(false); // Not in edit mode, stop loading
+      return;
+    }
+    
+    if (!fabricRef.current) {
+      console.log('[FlashingCanvas] Canvas not ready yet, waiting...');
+      return;
+    }
     
     async function loadFlashing() {
       try {
         console.log('[FlashingCanvas] Loading flashing for edit:', flashingId);
         const flashing = await loadFlashingById(flashingId!);
         
-        if (!flashing || !fabricRef.current) return;
+        console.log('[FlashingCanvas] Flashing data received:', {
+          hasCanvasData: !!flashing.canvas_data,
+          measurementsCount: flashing.measurements?.length || 0,
+        });
+        
+        if (!flashing || !fabricRef.current) {
+          console.error('[FlashingCanvas] Missing flashing data or canvas ref');
+          setLoading(false);
+          return;
+        }
         
         // Load canvas from saved JSON
         fabricRef.current.loadFromJSON(flashing.canvas_data, () => {
@@ -603,13 +622,13 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         });
       } catch (err) {
         console.error('[FlashingCanvas] Failed to load flashing:', err);
-        alert('Failed to load flashing for editing');
+        alert(`Failed to load flashing: ${err}`);
         setLoading(false);
       }
     }
     
     loadFlashing();
-  }, [editMode, flashingId]);
+  }, [editMode, flashingId, fabricRef.current]);
 
   useEffect(() => {
     if (fabricRef.current) {
