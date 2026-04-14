@@ -55,6 +55,7 @@ export interface MaterialOrderTemplateRow {
   default_supplier_email: string | null;
   default_delivery_address: string | null;
   default_header_notes: string | null;
+  default_logo_url: string | null;
   is_active: boolean;
   sort_order: number;
   created_at: string;
@@ -70,6 +71,7 @@ export interface MaterialOrderTemplateInsert {
   default_supplier_email?: string | null;
   default_delivery_address?: string | null;
   default_header_notes?: string | null;
+  default_logo_url?: string | null;
   is_active?: boolean;
   sort_order?: number;
 }

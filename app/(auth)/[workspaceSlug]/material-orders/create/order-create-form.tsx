@@ -58,6 +58,7 @@ export function OrderCreateForm({ workspaceSlug, templates, components, flashing
       setEmail(template.default_supplier_email || '');
       setDeliveryAddress(template.default_delivery_address || '');
       setNotes(template.default_header_notes || '');
+      setLogoUrl(template.default_logo_url || '');
     }
   }
   

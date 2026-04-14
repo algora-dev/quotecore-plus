@@ -29,6 +29,7 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
       default_supplier_email: fd.get('default_supplier_email') as string || null,
       default_delivery_address: fd.get('default_delivery_address') as string || null,
       default_header_notes: fd.get('default_header_notes') as string || null,
+      default_logo_url: fd.get('default_logo_url') as string || null,
     };
 
     try {
@@ -56,6 +57,7 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
       default_supplier_email: fd.get('default_supplier_email') as string || null,
       default_delivery_address: fd.get('default_delivery_address') as string || null,
       default_header_notes: fd.get('default_header_notes') as string || null,
+      default_logo_url: fd.get('default_logo_url') as string || null,
     };
 
     try {
@@ -142,6 +144,10 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
                     <input name="default_supplier_email" type="email" placeholder="Email address" className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                   </div>
                   <div className="col-span-2">
+                    <label className="block text-xs text-slate-500 mb-1">Logo URL (Optional)</label>
+                    <input name="default_logo_url" type="url" placeholder="https://example.com/logo.png" className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                  </div>
+                  <div className="col-span-2">
                     <label className="block text-xs text-slate-500 mb-1">Delivery Address</label>
                     <textarea name="default_delivery_address" rows={2} placeholder="Default delivery address" className="w-full px-2 py-1 text-sm border border-slate-300 rounded"></textarea>
                   </div>
@@ -195,6 +201,10 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
                         <div>
                           <label className="block text-xs text-slate-500 mb-1">Email</label>
                           <input name="default_supplier_email" type="email" defaultValue={template.default_supplier_email || ''} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-xs text-slate-500 mb-1">Logo URL (Optional)</label>
+                          <input name="default_logo_url" type="url" defaultValue={template.default_logo_url || ''} placeholder="https://example.com/logo.png" className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                         </div>
                         <div className="col-span-2">
                           <label className="block text-xs text-slate-500 mb-1">Delivery Address</label>
