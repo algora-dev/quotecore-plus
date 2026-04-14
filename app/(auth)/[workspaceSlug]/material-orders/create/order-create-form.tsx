@@ -684,9 +684,41 @@ export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreate
                           className="w-full px-2 py-1 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
                         >
                           <option value="">None</option>
-                          {flashings.map(f => (
-                            <option key={f.id} value={f.id}>{f.name}</option>
-                          ))}
+                          
+                          {/* Show component's linked flashings first (if from quote) */}
+                          {(() => {
+                            // Get component data if this is from a quote
+                            const quoteComponentId = line.id.startsWith('quote-') ? line.id.replace('quote-', '') : null;
+                            const quoteComponent = quoteComponentId ? quoteData?.components.find(c => c.id === quoteComponentId) : null;
+                            const linkedFlashingIds = quoteComponent?.component_library?.flashing_ids || [];
+                            
+                            if (linkedFlashingIds.length > 0) {
+                              const linkedFlashings = flashings.filter(f => linkedFlashingIds.includes(f.id));
+                              const otherFlashings = flashings.filter(f => !linkedFlashingIds.includes(f.id));
+                              
+                              return (
+                                <>
+                                  <optgroup label="━━ Component Flashings ━━">
+                                    {linkedFlashings.map(f => (
+                                      <option key={f.id} value={f.id}>{f.name}</option>
+                                    ))}
+                                  </optgroup>
+                                  {otherFlashings.length > 0 && (
+                                    <optgroup label="━━ All Other Flashings ━━">
+                                      {otherFlashings.map(f => (
+                                        <option key={f.id} value={f.id}>{f.name}</option>
+                                      ))}
+                                    </optgroup>
+                                  )}
+                                </>
+                              );
+                            } else {
+                              // No linked flashings, show all
+                              return flashings.map(f => (
+                                <option key={f.id} value={f.id}>{f.name}</option>
+                              ));
+                            }
+                          })()}
                         </select>
                       </div>
                       
