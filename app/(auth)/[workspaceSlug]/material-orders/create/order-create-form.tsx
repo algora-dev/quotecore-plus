@@ -96,24 +96,18 @@ export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreate
     
     // Map quote components to order line items
     const mappedLines: OrderLineItem[] = quoteData.components.map((comp) => {
-      // Parse quantity from custom_text (e.g., "Delivery fee (Standard) — 1.0 units")
-      const quantityMatch = comp.custom_text.match(/—\s*([\d.]+)\s*(\w+)/);
-      const quantity = quantityMatch ? parseFloat(quantityMatch[1]) : 0;
-      const unit = quantityMatch ? quantityMatch[2] : 'pcs';
-      const name = comp.custom_text.split('—')[0].trim();
-      
-      // Get flashing data if component exists
-      const flashingId = comp.component?.flashing_id || undefined;
-      const flashing = flashingId ? flashings.find(f => f.id === flashingId) : undefined;
+      // Get flashing image if flashing_id exists
+      const flashing = comp.flashing_id ? flashings.find(f => f.id === comp.flashing_id) : undefined;
       
       return {
         id: `quote-${comp.id}`,
-        componentName: name,
-        flashingId,
+        componentName: comp.name,
+        flashingId: comp.flashing_id || undefined,
         flashingImageUrl: flashing?.image_url,
         entryMode: 'single',
-        quantity,
-        unit,
+        quantity: comp.quantity || 0,
+        unit: comp.unit || 'pcs',
+        notes: comp.notes || undefined,
         showComponentName: false, // Hidden by default
         showFlashingImage: false,
         showMeasurements: false,
