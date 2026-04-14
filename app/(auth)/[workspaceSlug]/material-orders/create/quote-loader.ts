@@ -1,5 +1,7 @@
 'use server';
 
+// Quote data loader - uses customer_quote_lines table (2026-04-14)
+
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 
 export interface QuoteComponentData {
