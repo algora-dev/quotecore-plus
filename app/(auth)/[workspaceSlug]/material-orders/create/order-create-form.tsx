@@ -368,23 +368,20 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
                 />
                 
                 <div>
-                  <div className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={colourInput}
-                      onChange={(e) => setColourInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addColour())}
-                      placeholder="Colours"
-                      className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={addColour}
-                      className="px-3 py-2 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600"
-                    >
-                      Add
-                    </button>
-                  </div>
+                  <input
+                    type="text"
+                    value={colourInput}
+                    onChange={(e) => setColourInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addColour();
+                      }
+                    }}
+                    onBlur={addColour}
+                    placeholder="Colours (type and press Enter)"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm mb-2"
+                  />
                   {colours.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {colours.map(colour => (
@@ -728,7 +725,7 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
                       )}
                       
                       {deliveryAddress && (
-                        <div className="mt-3 pt-3">
+                        <div className="mt-2">
                           <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Delivery Address:</p>
                           <p className="text-xs text-slate-700 whitespace-pre-wrap">{deliveryAddress}</p>
                         </div>
