@@ -80,7 +80,19 @@ export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreate
   
   // Auto-populate from quote data
   useEffect(() => {
-    if (!quoteData || quoteData.components.length === 0) return;
+    console.log('[OrderCreateForm] useEffect triggered - quoteData:', quoteData);
+    
+    if (!quoteData) {
+      console.log('[OrderCreateForm] No quoteData - skipping auto-populate');
+      return;
+    }
+    
+    if (quoteData.components.length === 0) {
+      console.log('[OrderCreateForm] Quote has no components - skipping');
+      return;
+    }
+    
+    console.log('[OrderCreateForm] Mapping', quoteData.components.length, 'components');
     
     // Map quote components to order line items
     const mappedLines: OrderLineItem[] = quoteData.components.map((comp) => {
@@ -101,10 +113,12 @@ export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreate
       };
     });
     
+    console.log('[OrderCreateForm] Setting', mappedLines.length, 'order lines');
     setOrderLines(mappedLines);
     
     // Pre-fill reference if available
     if (quoteData.quote_number) {
+      console.log('[OrderCreateForm] Pre-filling reference:', quoteData.quote_number);
       setReference(`Order for ${quoteData.quote_number}`);
     }
   }, [quoteData, flashings]);
