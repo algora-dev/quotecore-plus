@@ -15,6 +15,8 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [formLogoUrl, setFormLogoUrl] = useState('');
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -30,13 +32,14 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
       default_supplier_email: fd.get('default_supplier_email') as string || null,
       default_delivery_address: fd.get('default_delivery_address') as string || null,
       default_header_notes: fd.get('default_header_notes') as string || null,
-      default_logo_url: fd.get('default_logo_url') as string || null,
+      default_logo_url: formLogoUrl || null,
     };
 
     try {
       const created = await createOrderTemplate(input);
       setTemplates(prev => [...prev, created]);
       setShowForm(false);
+      setFormLogoUrl('');
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to create template');
     } finally {
@@ -58,18 +61,29 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
       default_supplier_email: fd.get('default_supplier_email') as string || null,
       default_delivery_address: fd.get('default_delivery_address') as string || null,
       default_header_notes: fd.get('default_header_notes') as string || null,
-      default_logo_url: fd.get('default_logo_url') as string || null,
+      default_logo_url: formLogoUrl || null,
     };
 
     try {
       const updated = await updateOrderTemplate(id, input);
       setTemplates(prev => prev.map(t => t.id === id ? updated : t));
       setEditingId(null);
+      setFormLogoUrl('');
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to update template');
     } finally {
       setSaving(false);
     }
+  }
+  
+  function startEdit(template: MaterialOrderTemplateRow) {
+    setEditingId(template.id);
+    setFormLogoUrl(template.default_logo_url || '');
+  }
+  
+  function cancelEdit() {
+    setEditingId(null);
+    setFormLogoUrl('');
   }
 
   async function handleDelete(id: string, name: string) {
@@ -80,6 +94,43 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
       setTemplates(prev => prev.filter(t => t.id !== id));
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete template');
+    }
+  }
+  
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file');
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be less than 5MB');
+      return;
+    }
+    
+    setUploadingLogo(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/upload-logo', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) throw new Error('Upload failed');
+      
+      const { url } = await response.json();
+      setFormLogoUrl(url);
+    } catch (error) {
+      console.error('Logo upload error:', error);
+      alert('Failed to upload logo. Please try again.');
+    } finally {
+      setUploadingLogo(false);
     }
   }
 
@@ -145,8 +196,35 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
                     <input name="default_supplier_email" type="email" placeholder="Email address" className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-xs text-slate-500 mb-1">Logo URL (Optional)</label>
-                    <input name="default_logo_url" type="url" placeholder="https://example.com/logo.png" className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                    <label className="block text-xs text-slate-500 mb-1">Logo (Optional)</label>
+                    <div className="flex items-center gap-3">
+                      {formLogoUrl && (
+                        <div className="relative w-20 h-20 border border-slate-200 rounded bg-white">
+                          <img src={formLogoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
+                          <button
+                            type="button"
+                            onClick={() => setFormLogoUrl('')}
+                            className="absolute -top-1 -right-1 p-0.5 bg-red-600 text-white rounded-full hover:bg-red-700 shadow"
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoUpload}
+                          disabled={uploadingLogo}
+                          className="hidden"
+                        />
+                        <span className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded border border-slate-300 hover:bg-slate-50">
+                          {uploadingLogo ? 'Uploading...' : formLogoUrl ? 'Change' : 'Upload Logo'}
+                        </span>
+                      </label>
+                    </div>
                   </div>
                   <div className="col-span-2">
                     <label className="block text-xs text-slate-500 mb-1">Delivery Address</label>
@@ -161,7 +239,7 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
                   <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50">
                     {saving ? 'Creating...' : 'Create Template'}
                   </button>
-                  <button type="button" onClick={() => setShowForm(false)} className="px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50">
+                  <button type="button" onClick={() => { setShowForm(false); setFormLogoUrl(''); }} className="px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50">
                     Cancel
                   </button>
                 </div>
@@ -204,8 +282,35 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
                           <input name="default_supplier_email" type="email" defaultValue={template.default_supplier_email || ''} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                         </div>
                         <div className="col-span-2">
-                          <label className="block text-xs text-slate-500 mb-1">Logo URL (Optional)</label>
-                          <input name="default_logo_url" type="url" defaultValue={template.default_logo_url || ''} placeholder="https://example.com/logo.png" className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                          <label className="block text-xs text-slate-500 mb-1">Logo (Optional)</label>
+                          <div className="flex items-center gap-3">
+                            {formLogoUrl && (
+                              <div className="relative w-20 h-20 border border-slate-200 rounded bg-white">
+                                <img src={formLogoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
+                                <button
+                                  type="button"
+                                  onClick={() => setFormLogoUrl('')}
+                                  className="absolute -top-1 -right-1 p-0.5 bg-red-600 text-white rounded-full hover:bg-red-700 shadow"
+                                >
+                                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </div>
+                            )}
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleLogoUpload}
+                                disabled={uploadingLogo}
+                                className="hidden"
+                              />
+                              <span className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded border border-slate-300 hover:bg-slate-50">
+                                {uploadingLogo ? 'Uploading...' : formLogoUrl ? 'Change' : 'Upload Logo'}
+                              </span>
+                            </label>
+                          </div>
                         </div>
                         <div className="col-span-2">
                           <label className="block text-xs text-slate-500 mb-1">Delivery Address</label>
@@ -220,7 +325,7 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
                         <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50">
                           {saving ? 'Saving...' : 'Save Changes'}
                         </button>
-                        <button type="button" onClick={() => setEditingId(null)} className="px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50">
+                        <button type="button" onClick={cancelEdit} className="px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50">
                           Cancel
                         </button>
                       </div>
@@ -257,7 +362,7 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
                           Preview
                         </button>
                         <button
-                          onClick={() => setEditingId(template.id)}
+                          onClick={() => startEdit(template)}
                           className="px-3 py-1 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50"
                         >
                           Edit
