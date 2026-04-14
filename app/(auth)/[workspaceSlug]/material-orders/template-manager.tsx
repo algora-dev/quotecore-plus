@@ -13,6 +13,7 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
   const [templates, setTemplates] = useState(initialTemplates);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
@@ -250,6 +251,12 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
                       </div>
                       <div className="flex gap-2 ml-4">
                         <button
+                          onClick={() => setPreviewId(template.id)}
+                          className="px-3 py-1 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                        >
+                          Preview
+                        </button>
+                        <button
                           onClick={() => setEditingId(template.id)}
                           className="px-3 py-1 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50"
                         >
@@ -285,6 +292,125 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
           )}
         </div>
       </div>
+      
+      {/* Preview Modal */}
+      {previewId && (() => {
+        const template = templates.find(t => t.id === previewId);
+        if (!template) return null;
+        
+        return (
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+              {/* Preview Header */}
+              <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <div>
+                  <h3 className="font-semibold text-slate-900">Template Preview: {template.name}</h3>
+                  <p className="text-xs text-slate-600 mt-0.5">How this will appear on material orders</p>
+                </div>
+                <button
+                  onClick={() => setPreviewId(null)}
+                  className="p-2 rounded-full hover:bg-slate-200 transition-colors"
+                >
+                  <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              {/* Preview Content */}
+              <div className="flex-1 overflow-y-auto p-8 bg-slate-50">
+                <div className="bg-white border-2 border-slate-300 rounded-lg shadow-lg max-w-3xl mx-auto">
+                  {/* Order Header Simulation */}
+                  <div className="bg-slate-100 px-6 py-3 border-b-2 border-slate-300">
+                    <h4 className="font-bold text-slate-900">MATERIAL ORDER</h4>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-8 p-6">
+                    {/* Left - To Section */}
+                    <div>
+                      <h5 className="text-xs font-semibold text-slate-500 uppercase mb-3">To:</h5>
+                      <div className="space-y-2 text-sm">
+                        <div className="text-slate-400 italic">Customer Name</div>
+                        <div className="text-slate-400 italic">Job Reference</div>
+                        <div className="text-slate-400 italic">Colours: Various</div>
+                      </div>
+                      
+                      {template.default_delivery_address && (
+                        <div className="mt-4">
+                          <h6 className="text-xs font-semibold text-slate-500 uppercase mb-2">Delivery Address:</h6>
+                          <div className="text-sm text-slate-700 whitespace-pre-wrap">
+                            {template.default_delivery_address}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {template.default_header_notes && (
+                        <div className="mt-4">
+                          <h6 className="text-xs font-semibold text-slate-500 uppercase mb-2">Notes:</h6>
+                          <div className="text-sm text-slate-600 whitespace-pre-wrap">
+                            {template.default_header_notes}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Right - From Section */}
+                    <div>
+                      {template.default_logo_url && (
+                        <div className="mb-4 flex justify-end">
+                          <img 
+                            src={template.default_logo_url} 
+                            alt="Company logo" 
+                            className="max-w-[150px] max-h-[80px] object-contain"
+                          />
+                        </div>
+                      )}
+                      
+                      <h5 className="text-xs font-semibold text-slate-500 uppercase mb-3">From:</h5>
+                      <div className="space-y-2 text-sm">
+                        {template.default_supplier_name && (
+                          <div className="font-semibold text-slate-900">{template.default_supplier_name}</div>
+                        )}
+                        {template.default_supplier_contact && (
+                          <div className="text-slate-700">{template.default_supplier_contact}</div>
+                        )}
+                        {template.default_supplier_phone && (
+                          <div className="text-slate-600">
+                            <span className="text-slate-500">Phone:</span> {template.default_supplier_phone}
+                          </div>
+                        )}
+                        {template.default_supplier_email && (
+                          <div className="text-slate-600">
+                            <span className="text-slate-500">Email:</span> {template.default_supplier_email}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Sample Line Items */}
+                  <div className="border-t-2 border-slate-200 p-6 bg-slate-50">
+                    <h5 className="text-xs font-semibold text-slate-500 uppercase mb-3">Order Items:</h5>
+                    <div className="text-sm text-slate-400 italic text-center py-4">
+                      Line items will appear here...
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Preview Footer */}
+              <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end">
+                <button
+                  onClick={() => setPreviewId(null)}
+                  className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-white transition-colors"
+                >
+                  Close Preview
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
