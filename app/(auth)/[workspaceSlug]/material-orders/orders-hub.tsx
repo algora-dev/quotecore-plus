@@ -37,7 +37,7 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates }: Props) {
 
         {/* Order from Quote */}
         <Link
-          href={`/${workspaceSlug}/material-orders/from-quote`}
+          href={`/${workspaceSlug}/material-orders/order-from-quote`}
           className="block p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
         >
           <div className="flex items-start gap-4">
