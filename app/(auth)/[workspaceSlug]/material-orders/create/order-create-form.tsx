@@ -454,36 +454,104 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
 
       {/* Main Content Area - Sidebar + Order Form */}
       <div className="flex-1 flex overflow-hidden">
-        {/* LEFT SIDEBAR - Quote Navigator */}
+        {/* LEFT SIDEBAR - Order Components Control Panel */}
         <div className="w-80 bg-white border-r border-slate-200 flex flex-col overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
-            <h3 className="font-semibold text-slate-900 text-sm">Quote Items</h3>
+            <h3 className="font-semibold text-slate-900 text-sm">Order Components</h3>
             <p className="text-xs text-slate-600 mt-0.5">
-              {quoteId ? 'Select items to add to order' : 'No quote selected'}
+              Control what appears in the order form
             </p>
           </div>
           
           <div className="flex-1 overflow-y-auto p-4">
-            {quoteComponents.length === 0 ? (
+            {orderLines.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
                 <svg className="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <p className="text-xs mb-3">No quote items</p>
+                <p className="text-xs mb-3">No components added</p>
                 <button
                   type="button"
                   onClick={openAddItemModal}
                   className="px-3 py-1.5 text-xs font-medium rounded bg-[#FF6B35] text-white hover:bg-orange-600"
                 >
-                  Add Custom Item
+                  Add Component
                 </button>
               </div>
             ) : (
-              <div className="space-y-2">
-                {/* TODO: Map quote components here */}
-                <p className="text-xs text-slate-500">Quote components will appear here</p>
+              <div className="space-y-3">
+                {orderLines.map((line) => (
+                  <div key={line.id} className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
+                    {/* Component Header */}
+                    <div className="px-3 py-2 bg-white border-b border-slate-200">
+                      <h4 className="font-medium text-sm text-slate-900 mb-2">{line.componentName}</h4>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(line.id)}
+                          className="flex-1 px-2 py-1 text-xs font-medium rounded border border-slate-300 hover:bg-slate-50"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeLine(line.id)}
+                          className="flex-1 px-2 py-1 text-xs font-medium rounded border border-red-200 text-red-600 hover:bg-red-50"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Visibility Controls */}
+                    <div className="px-3 py-2 space-y-2">
+                      <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:bg-white rounded px-2 py-1.5 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={line.showComponentName}
+                          onChange={() => toggleLineVisibility(line.id, 'showComponentName')}
+                          className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                        />
+                        <span>Show Name</span>
+                      </label>
+                      
+                      {line.flashingImageUrl && (
+                        <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:bg-white rounded px-2 py-1.5 transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={line.showFlashingImage}
+                            onChange={() => toggleLineVisibility(line.id, 'showFlashingImage')}
+                            className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                          />
+                          <span>Show Flashing Drawing</span>
+                        </label>
+                      )}
+                      
+                      <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:bg-white rounded px-2 py-1.5 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={line.showMeasurements}
+                          onChange={() => toggleLineVisibility(line.id, 'showMeasurements')}
+                          className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                        />
+                        <span>Show Measurements</span>
+                      </label>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
+          </div>
+
+          {/* Add Component Button */}
+          <div className="px-4 py-3 border-t border-slate-200 bg-slate-50">
+            <button
+              type="button"
+              onClick={openAddItemModal}
+              className="w-full px-4 py-2 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors"
+            >
+              + Add Component
+            </button>
           </div>
         </div>
 
@@ -520,8 +588,10 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
             </div>
           </div>
 
-          {/* Order Form Content */}
-          <div className="flex-1 overflow-y-auto p-6">
+          {/* Order Form Content - A4 Preview */}
+          <div className="flex-1 overflow-y-auto p-6 bg-slate-100">
+            <div className="max-w-[210mm] mx-auto bg-white shadow-lg" style={{ minHeight: '297mm' }}>
+              <div className="p-8">
             {orderLines.length === 0 ? (
               <div className="text-center py-20 text-slate-500">
                 <svg className="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -545,145 +615,63 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
             ) : (
               <div className={layoutMode === 'double' ? 'grid grid-cols-2 gap-6' : 'space-y-6'}>
                 {orderLines.map(line => (
-                  <div key={line.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-                    {/* Item Header */}
-                    <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => toggleLineVisibility(line.id, 'showComponentName')}
-                          className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                            line.showComponentName
-                              ? 'bg-[#FF6B35] border-orange-600 text-white'
-                              : 'border-slate-300 hover:bg-slate-100'
-                          }`}
-                          title="Toggle component name visibility"
-                        >
-                          {line.showComponentName && (
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </button>
-                        <span className="text-xs font-medium text-slate-600">Name</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(line.id)}
-                          className="px-2 py-1 text-xs font-medium rounded border border-slate-300 hover:bg-white transition-colors"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeLine(line.id)}
-                          className="px-2 py-1 text-xs font-medium rounded border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
+                  <div key={line.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+                    {/* Component Name */}
+                    {line.showComponentName && (
+                      <h4 className="font-semibold text-slate-900 text-base">{line.componentName}</h4>
+                    )}
 
-                    {/* Item Content */}
-                    <div className="p-4 space-y-3">
-                      {/* Component Name */}
-                      {line.showComponentName && (
-                        <h4 className="font-semibold text-slate-900">{line.componentName}</h4>
-                      )}
-
-                      {/* Flashing Image Toggle */}
-                      {line.flashingImageUrl && (
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <button
-                              type="button"
-                              onClick={() => toggleLineVisibility(line.id, 'showFlashingImage')}
-                              className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                                line.showFlashingImage
-                                  ? 'bg-[#FF6B35] border-orange-600 text-white'
-                                  : 'border-slate-300 hover:bg-slate-100'
-                              }`}
-                              title="Toggle flashing image visibility"
-                            >
-                              {line.showFlashingImage && (
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                </svg>
-                              )}
-                            </button>
-                            <span className="text-xs font-medium text-slate-600">Flashing Drawing</span>
-                          </div>
-                          {line.showFlashingImage && (
-                            <img 
-                              src={line.flashingImageUrl} 
-                              alt="Flashing" 
-                              className={`border border-slate-200 rounded ${layoutMode === 'double' ? 'w-full' : 'w-full max-w-md'}`}
-                            />
-                          )}
-                        </div>
-                      )}
-
-                      {/* Measurements Toggle */}
+                    {/* Flashing Image */}
+                    {line.showFlashingImage && line.flashingImageUrl && (
                       <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <button
-                            type="button"
-                            onClick={() => toggleLineVisibility(line.id, 'showMeasurements')}
-                            className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                              line.showMeasurements
-                                ? 'bg-[#FF6B35] border-orange-600 text-white'
-                                : 'border-slate-300 hover:bg-slate-100'
-                            }`}
-                            title="Toggle measurements visibility"
-                          >
-                            {line.showMeasurements && (
-                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </button>
-                          <span className="text-xs font-medium text-slate-600">Measurements</span>
-                        </div>
-                        {line.showMeasurements && (
-                          <div className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3 border border-slate-200">
-                            {line.entryMode === 'single' ? (
-                              <p className="font-medium">Quantity: {line.quantity} {line.unit}</p>
-                            ) : (
-                              <div>
-                                <p className="font-medium text-xs text-slate-500 uppercase mb-2">Lengths ({line.lengthUnit}):</p>
-                                <div className="space-y-2">
-                                  {line.lengths?.map((entry, idx) => (
-                                    <div key={idx}>
-                                      <div className="flex items-center gap-2 text-sm">
-                                        <span className="font-medium">{entry.length}{line.lengthUnit}</span>
-                                        <span className="text-slate-400">×</span>
-                                        <span className="text-slate-600">{entry.multiplier}</span>
-                                      </div>
-                                      {entry.variables && entry.variables.length > 0 && (
-                                        <div className="text-xs text-slate-500 pl-4 mt-0.5">
-                                          {entry.variables.map((v, vIdx) => (
-                                            <span key={vIdx} className="mr-2">
-                                              {v.name}={v.value}{v.unit}
-                                              {vIdx < entry.variables!.length - 1 && ', '}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      )}
+                        <img 
+                          src={line.flashingImageUrl} 
+                          alt="Flashing" 
+                          className={`border border-slate-200 rounded ${layoutMode === 'double' ? 'w-full' : 'w-full max-w-md'}`}
+                        />
+                      </div>
+                    )}
+
+                    {/* Measurements */}
+                    {line.showMeasurements && (
+                      <div className="text-sm text-slate-700">
+                        {line.entryMode === 'single' ? (
+                          <p className="font-medium">Quantity: {line.quantity} {line.unit}</p>
+                        ) : (
+                          <div>
+                            <p className="font-medium text-xs text-slate-500 uppercase mb-2">Lengths ({line.lengthUnit}):</p>
+                            <div className="space-y-2">
+                              {line.lengths?.map((entry, idx) => (
+                                <div key={idx}>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">{entry.length}{line.lengthUnit}</span>
+                                    <span className="text-slate-400">×</span>
+                                    <span className="text-slate-600">{entry.multiplier}</span>
+                                  </div>
+                                  {entry.variables && entry.variables.length > 0 && (
+                                    <div className="text-xs text-slate-500 pl-4 mt-0.5">
+                                      {entry.variables.map((v, vIdx) => (
+                                        <span key={vIdx} className="mr-2">
+                                          {v.name}={v.value}{v.unit}
+                                          {vIdx < entry.variables!.length - 1 && ', '}
+                                        </span>
+                                      ))}
                                     </div>
-                                  ))}
+                                  )}
                                 </div>
-                              </div>
-                            )}
-                            {line.notes && <p className="text-slate-600 mt-2">{line.notes}</p>}
+                              ))}
+                            </div>
                           </div>
                         )}
+                        {line.notes && <p className="text-slate-600 mt-2 text-xs italic">{line.notes}</p>}
                       </div>
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
+              </div>
+            </div>
           </div>
 
           {/* Footer Actions */}
