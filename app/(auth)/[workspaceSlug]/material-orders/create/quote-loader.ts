@@ -42,7 +42,7 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
       return null;
     }
     
-    // Load quote components with measurements join for individual cut lengths
+    // Load quote components with component_library join AND separate takeoff measurements query
     console.log('[QuoteLoader] Loading quote_components for quote:', quoteId);
     const { data: components, error: componentsError } = await supabase
       .from('quote_components')
@@ -53,12 +53,20 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
         final_quantity,
         measurement_type,
         sort_order,
-        component_library:component_library_id(flashing_ids),
-        measurements:quote_takeoff_measurements(id, measurement_value, multiplier)
+        component_library:component_library_id(flashing_ids)
       `)
       .eq('quote_id', quoteId)
       .order('sort_order', { ascending: true })
       .limit(2);
+    
+    // Load takeoff measurements separately (they link to component_library, not quote_components)
+    const { data: takeoffMeasurements, error: measurementsError } = await supabase
+      .from('quote_takeoff_measurements')
+      .select('id, component_library_id, measurement_value, measurement_unit')
+      .eq('quote_id', quoteId)
+      .eq('is_visible', true);
+    
+    console.log('[QuoteLoader] Takeoff measurements:', JSON.stringify({ takeoffMeasurements, error: measurementsError }, null, 2));
     
     console.log('[QuoteLoader] Components query result:', JSON.stringify({ components, error: componentsError }, null, 2));
     
