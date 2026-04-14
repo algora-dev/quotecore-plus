@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { MaterialOrderTemplateRow, FlashingLibraryRow } from '@/app/lib/types';
 import { saveDraftOrder } from './order-actions';
+import type { QuoteData } from './quote-loader';
 
 interface OrderCreateFormProps {
   templates: MaterialOrderTemplateRow[];
   flashings: FlashingLibraryRow[];
-  quoteId?: string; // Optional - if creating from quote
+  quoteData?: QuoteData | null;
 }
 
 interface Variable {
@@ -42,7 +43,7 @@ interface OrderLineItem {
   showMeasurements: boolean;
 }
 
-export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFormProps) {
+export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreateFormProps) {
   const router = useRouter();
   
   // Layout state
@@ -77,8 +78,36 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
   // Order line items
   const [orderLines, setOrderLines] = useState<OrderLineItem[]>([]);
   
-  // Sidebar - Quote component navigator (placeholder for now)
-  const quoteComponents: any[] = []; // TODO: Load from quote if quoteId provided
+  // Auto-populate from quote data
+  useEffect(() => {
+    if (!quoteData || quoteData.components.length === 0) return;
+    
+    // Map quote components to order line items
+    const mappedLines: OrderLineItem[] = quoteData.components.map((comp) => {
+      const flashing = comp.flashing_id ? flashings.find(f => f.id === comp.flashing_id) : undefined;
+      
+      return {
+        id: `quote-${comp.id}`,
+        componentName: comp.name,
+        flashingId: comp.flashing_id || undefined,
+        flashingImageUrl: flashing?.image_url,
+        entryMode: 'single',
+        quantity: comp.quantity || 0,
+        unit: comp.unit || 'pcs',
+        notes: comp.notes || undefined,
+        showComponentName: false, // Hidden by default
+        showFlashingImage: false,
+        showMeasurements: false,
+      };
+    });
+    
+    setOrderLines(mappedLines);
+    
+    // Pre-fill reference if available
+    if (quoteData.quote_number) {
+      setReference(`Order for ${quoteData.quote_number}`);
+    }
+  }, [quoteData, flashings]);
   
   // Template auto-fill
   function handleTemplateChange(templateId: string) {
@@ -732,7 +761,7 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
                 </svg>
                 <p className="text-sm mb-4">No items added yet</p>
                 <p className="text-xs text-slate-400 mb-4">
-                  {quoteId 
+                  {quoteData 
                     ? 'Select items from the sidebar to add them here'
                     : 'Add custom items to get started'
                   }
