@@ -11,12 +11,7 @@ export default async function CreateOrderPage(props: Props) {
   const templates = await loadOrderTemplates();
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">New Material Order</h1>
-        <p className="text-sm text-slate-600 mt-1">Create a custom material order from scratch</p>
-      </div>
-
+    <div className="h-screen overflow-hidden">
       <OrderCreateForm
         templates={templates}
       />
