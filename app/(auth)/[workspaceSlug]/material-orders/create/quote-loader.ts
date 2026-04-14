@@ -44,9 +44,9 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
     console.log('[QuoteLoader] Loading quote_components for quote:', quoteId);
     const { data: components, error: componentsError } = await supabase
       .from('quote_components')
-      .select('id, name, flashing_id, quantity, unit, measurements, notes')
+      .select('*')
       .eq('quote_id', quoteId)
-      .order('display_order', { ascending: true });
+      .limit(1);
     
     console.log('[QuoteLoader] Components query result:', { components, error: componentsError });
     
