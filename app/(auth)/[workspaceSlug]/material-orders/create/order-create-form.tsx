@@ -1,29 +1,38 @@
 'use client';
 
 import { useState } from 'react';
-import type { MaterialOrderTemplateRow } from '@/app/lib/types';
+import type { MaterialOrderTemplateRow, FlashingLibraryRow } from '@/app/lib/types';
 
 interface OrderCreateFormProps {
   templates: MaterialOrderTemplateRow[];
+  flashings: FlashingLibraryRow[];
   quoteId?: string; // Optional - if creating from quote
 }
 
 interface OrderLineItem {
   id: string;
   componentName: string;
+  flashingId?: string;
   flashingImageUrl?: string;
   quantity: number;
   unit: string;
   notes?: string;
+  showComponentName: boolean;
+  showFlashingImage: boolean;
+  showMeasurements: boolean;
 }
 
-export function OrderCreateForm({ templates, quoteId }: OrderCreateFormProps) {
+export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFormProps) {
   // Layout state
   const [layoutMode, setLayoutMode] = useState<'single' | 'double'>('single');
   const [headerExpanded, setHeaderExpanded] = useState(true);
   
   // Template selection
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  
+  // Add item modal
+  const [showAddItemModal, setShowAddItemModal] = useState(false);
+  const [editingLineId, setEditingLineId] = useState<string | null>(null);
   
   // Header form state - LEFT
   const [toSupplier, setToSupplier] = useState('');
@@ -131,18 +140,71 @@ export function OrderCreateForm({ templates, quoteId }: OrderCreateFormProps) {
     }
   }
   
-  function addCustomLine() {
-    const newLine: OrderLineItem = {
-      id: `line-${Date.now()}`,
-      componentName: '',
-      quantity: 0,
-      unit: 'm',
-    };
-    setOrderLines([...orderLines, newLine]);
+  function openAddItemModal() {
+    setEditingLineId(null);
+    setShowAddItemModal(true);
+  }
+  
+  function openEditModal(lineId: string) {
+    setEditingLineId(lineId);
+    setShowAddItemModal(true);
+  }
+  
+  function saveLineItem(data: {
+    componentName: string;
+    flashingId?: string;
+    quantity: number;
+    unit: string;
+    notes?: string;
+  }) {
+    const flashing = data.flashingId ? flashings.find(f => f.id === data.flashingId) : undefined;
+    
+    if (editingLineId) {
+      // Update existing
+      setOrderLines(orderLines.map(line => 
+        line.id === editingLineId
+          ? {
+              ...line,
+              componentName: data.componentName,
+              flashingId: data.flashingId,
+              flashingImageUrl: flashing?.image_url,
+              quantity: data.quantity,
+              unit: data.unit,
+              notes: data.notes,
+            }
+          : line
+      ));
+    } else {
+      // Add new
+      const newLine: OrderLineItem = {
+        id: `line-${Date.now()}`,
+        componentName: data.componentName,
+        flashingId: data.flashingId,
+        flashingImageUrl: flashing?.image_url,
+        quantity: data.quantity,
+        unit: data.unit,
+        notes: data.notes,
+        showComponentName: true,
+        showFlashingImage: true,
+        showMeasurements: true,
+      };
+      setOrderLines([...orderLines, newLine]);
+    }
+    
+    setShowAddItemModal(false);
+    setEditingLineId(null);
   }
   
   function removeLine(id: string) {
-    setOrderLines(orderLines.filter(l => l.id !== id));
+    if (confirm('Remove this item from the order?')) {
+      setOrderLines(orderLines.filter(l => l.id !== id));
+    }
+  }
+  
+  function toggleLineVisibility(lineId: string, field: 'showComponentName' | 'showFlashingImage' | 'showMeasurements') {
+    setOrderLines(orderLines.map(line =>
+      line.id === lineId ? { ...line, [field]: !line[field] } : line
+    ));
   }
   
   return (
@@ -383,7 +445,7 @@ export function OrderCreateForm({ templates, quoteId }: OrderCreateFormProps) {
                 <p className="text-xs mb-3">No quote items</p>
                 <button
                   type="button"
-                  onClick={addCustomLine}
+                  onClick={openAddItemModal}
                   className="px-3 py-1.5 text-xs font-medium rounded bg-[#FF6B35] text-white hover:bg-orange-600"
                 >
                   Add Custom Item
@@ -447,7 +509,7 @@ export function OrderCreateForm({ templates, quoteId }: OrderCreateFormProps) {
                 </p>
                 <button
                   type="button"
-                  onClick={addCustomLine}
+                  onClick={openAddItemModal}
                   className="px-4 py-2 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600"
                 >
                   Add Custom Item
@@ -456,29 +518,113 @@ export function OrderCreateForm({ templates, quoteId }: OrderCreateFormProps) {
             ) : (
               <div className={layoutMode === 'double' ? 'grid grid-cols-2 gap-6' : 'space-y-6'}>
                 {orderLines.map(line => (
-                  <div key={line.id} className="bg-white border border-slate-200 rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <h4 className="font-medium text-slate-900">{line.componentName || 'Unnamed Component'}</h4>
-                      <button
-                        type="button"
-                        onClick={() => removeLine(line.id)}
-                        className="text-red-600 hover:text-red-700 text-sm"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                    {line.flashingImageUrl && (
-                      <div className="mb-3">
-                        <img 
-                          src={line.flashingImageUrl} 
-                          alt="Flashing" 
-                          className={`border border-slate-200 rounded ${layoutMode === 'double' ? 'w-full' : 'w-64'}`}
-                        />
+                  <div key={line.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+                    {/* Item Header */}
+                    <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => toggleLineVisibility(line.id, 'showComponentName')}
+                          className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                            line.showComponentName
+                              ? 'bg-[#FF6B35] border-orange-600 text-white'
+                              : 'border-slate-300 hover:bg-slate-100'
+                          }`}
+                          title="Toggle component name visibility"
+                        >
+                          {line.showComponentName && (
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </button>
+                        <span className="text-xs font-medium text-slate-600">Name</span>
                       </div>
-                    )}
-                    <div className="text-sm text-slate-600">
-                      <p>Quantity: {line.quantity} {line.unit}</p>
-                      {line.notes && <p className="text-slate-500 mt-1">{line.notes}</p>}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(line.id)}
+                          className="px-2 py-1 text-xs font-medium rounded border border-slate-300 hover:bg-white transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeLine(line.id)}
+                          className="px-2 py-1 text-xs font-medium rounded border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Item Content */}
+                    <div className="p-4 space-y-3">
+                      {/* Component Name */}
+                      {line.showComponentName && (
+                        <h4 className="font-semibold text-slate-900">{line.componentName}</h4>
+                      )}
+
+                      {/* Flashing Image Toggle */}
+                      {line.flashingImageUrl && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <button
+                              type="button"
+                              onClick={() => toggleLineVisibility(line.id, 'showFlashingImage')}
+                              className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                                line.showFlashingImage
+                                  ? 'bg-[#FF6B35] border-orange-600 text-white'
+                                  : 'border-slate-300 hover:bg-slate-100'
+                              }`}
+                              title="Toggle flashing image visibility"
+                            >
+                              {line.showFlashingImage && (
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </button>
+                            <span className="text-xs font-medium text-slate-600">Flashing Drawing</span>
+                          </div>
+                          {line.showFlashingImage && (
+                            <img 
+                              src={line.flashingImageUrl} 
+                              alt="Flashing" 
+                              className={`border border-slate-200 rounded ${layoutMode === 'double' ? 'w-full' : 'w-full max-w-md'}`}
+                            />
+                          )}
+                        </div>
+                      )}
+
+                      {/* Measurements Toggle */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleLineVisibility(line.id, 'showMeasurements')}
+                            className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                              line.showMeasurements
+                                ? 'bg-[#FF6B35] border-orange-600 text-white'
+                                : 'border-slate-300 hover:bg-slate-100'
+                            }`}
+                            title="Toggle measurements visibility"
+                          >
+                            {line.showMeasurements && (
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </button>
+                          <span className="text-xs font-medium text-slate-600">Measurements</span>
+                        </div>
+                        {line.showMeasurements && (
+                          <div className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3 border border-slate-200">
+                            <p className="font-medium">Quantity: {line.quantity} {line.unit}</p>
+                            {line.notes && <p className="text-slate-600 mt-2">{line.notes}</p>}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -501,6 +647,180 @@ export function OrderCreateForm({ templates, quoteId }: OrderCreateFormProps) {
               Save Draft
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Add/Edit Item Modal */}
+      {showAddItemModal && (
+        <AddItemModal
+          flashings={flashings}
+          existingLine={editingLineId ? orderLines.find(l => l.id === editingLineId) : undefined}
+          onSave={saveLineItem}
+          onCancel={() => {
+            setShowAddItemModal(false);
+            setEditingLineId(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// Add Item Modal Component
+interface AddItemModalProps {
+  flashings: FlashingLibraryRow[];
+  existingLine?: OrderLineItem;
+  onSave: (data: { componentName: string; flashingId?: string; quantity: number; unit: string; notes?: string }) => void;
+  onCancel: () => void;
+}
+
+function AddItemModal({ flashings, existingLine, onSave, onCancel }: AddItemModalProps) {
+  const [componentName, setComponentName] = useState(existingLine?.componentName || '');
+  const [flashingId, setFlashingId] = useState(existingLine?.flashingId || '');
+  const [quantity, setQuantity] = useState(existingLine?.quantity || 0);
+  const [unit, setUnit] = useState(existingLine?.unit || 'm');
+  const [notes, setNotes] = useState(existingLine?.notes || '');
+  
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    
+    if (!componentName.trim()) {
+      alert('Component name is required');
+      return;
+    }
+    
+    if (quantity <= 0) {
+      alert('Quantity must be greater than 0');
+      return;
+    }
+    
+    onSave({
+      componentName: componentName.trim(),
+      flashingId: flashingId || undefined,
+      quantity,
+      unit,
+      notes: notes.trim() || undefined,
+    });
+  }
+  
+  const selectedFlashing = flashingId ? flashings.find(f => f.id === flashingId) : undefined;
+  
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="px-6 py-4 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900">
+            {existingLine ? 'Edit Order Item' : 'Add Order Item'}
+          </h2>
+          <p className="text-sm text-slate-600 mt-0.5">Enter component details and measurements</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Component Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={componentName}
+              onChange={(e) => setComponentName(e.target.value)}
+              required
+              placeholder="e.g., Ridge Flashing, Valley Gutter"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Flashing Drawing <span className="text-slate-400 font-normal">(Optional)</span>
+            </label>
+            <select
+              value={flashingId}
+              onChange={(e) => setFlashingId(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            >
+              <option value="">No flashing image</option>
+              {flashings.map(flashing => (
+                <option key={flashing.id} value={flashing.id}>
+                  {flashing.name}
+                </option>
+              ))}
+            </select>
+            {selectedFlashing && (
+              <div className="mt-3 border border-slate-200 rounded-lg p-2 bg-slate-50">
+                <img 
+                  src={selectedFlashing.image_url} 
+                  alt={selectedFlashing.name}
+                  className="w-full max-w-sm mx-auto"
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Quantity <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
+                required
+                step="0.1"
+                min="0"
+                placeholder="0.0"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Unit <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              >
+                <option value="m">Meters (m)</option>
+                <option value="ft">Feet (ft)</option>
+                <option value="in">Inches (in)</option>
+                <option value="pcs">Pieces (pcs)</option>
+                <option value="sheets">Sheets</option>
+                <option value="rolls">Rolls</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Notes <span className="text-slate-400 font-normal">(Optional)</span>
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Any additional notes or specifications..."
+              rows={3}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            />
+          </div>
+        </form>
+
+        <div className="px-6 py-4 border-t border-slate-200 flex gap-3 justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-6 py-2.5 text-sm font-medium rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            className="px-6 py-2.5 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm"
+          >
+            {existingLine ? 'Save Changes' : 'Add Item'}
+          </button>
         </div>
       </div>
     </div>
