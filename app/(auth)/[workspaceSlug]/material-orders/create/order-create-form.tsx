@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type { MaterialOrderTemplateRow, FlashingLibraryRow } from '@/app/lib/types';
+import { saveDraftOrder } from './order-actions';
 
 interface OrderCreateFormProps {
   templates: MaterialOrderTemplateRow[];
@@ -41,9 +43,12 @@ interface OrderLineItem {
 }
 
 export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFormProps) {
+  const router = useRouter();
+  
   // Layout state
   const [layoutMode, setLayoutMode] = useState<'single' | 'double'>('single');
   const [headerExpanded, setHeaderExpanded] = useState(true);
+  const [saving, setSaving] = useState(false);
   
   // Template selection
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
@@ -250,6 +255,61 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
     const newLines = [...orderLines];
     [newLines[index], newLines[index + 1]] = [newLines[index + 1], newLines[index]];
     setOrderLines(newLines);
+  }
+  
+  async function handleSaveDraft() {
+    if (!reference.trim()) {
+      alert('Please enter a Reference/Job name before saving');
+      return;
+    }
+    
+    if (orderLines.length === 0) {
+      alert('Please add at least one component before saving');
+      return;
+    }
+    
+    setSaving(true);
+    
+    try {
+      const result = await saveDraftOrder({
+        templateId: selectedTemplateId || undefined,
+        reference: reference.trim(),
+        toSupplier,
+        fromCompany,
+        contactPerson,
+        contactDetails,
+        orderType,
+        colours,
+        deliveryDate,
+        deliveryAddress,
+        orderNotes,
+        logoUrl,
+        orderDate,
+        lineItems: orderLines.map((line, index) => ({
+          componentName: line.componentName,
+          flashingId: line.flashingId,
+          flashingImageUrl: line.flashingImageUrl,
+          entryMode: line.entryMode,
+          quantity: line.quantity,
+          unit: line.unit,
+          lengths: line.lengths,
+          lengthUnit: line.lengthUnit,
+          notes: line.notes,
+          showComponentName: line.showComponentName,
+          showFlashingImage: line.showFlashingImage,
+          showMeasurements: line.showMeasurements,
+          sortOrder: index,
+        })),
+      });
+      
+      alert(`Draft saved! Order #${result.orderNumber}`);
+      router.push('../material-orders');
+    } catch (error) {
+      console.error('Save error:', error);
+      alert('Failed to save draft. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   }
   
   return (
@@ -790,15 +850,19 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
           <div className="px-6 py-4 bg-white border-t border-slate-200 flex gap-3 justify-end">
             <button
               type="button"
-              className="px-6 py-2.5 text-sm font-medium rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors"
+              onClick={() => router.push('../material-orders')}
+              disabled={saving}
+              className="px-6 py-2.5 text-sm font-medium rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="button"
-              className="px-6 py-2.5 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm"
+              onClick={handleSaveDraft}
+              disabled={saving}
+              className="px-6 py-2.5 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-50"
             >
-              Save Draft
+              {saving ? 'Saving...' : 'Save Draft'}
             </button>
           </div>
         </div>
