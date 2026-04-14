@@ -9,13 +9,24 @@ interface OrderCreateFormProps {
   quoteId?: string; // Optional - if creating from quote
 }
 
+interface LengthEntry {
+  length: number;
+  multiplier: number;
+}
+
 interface OrderLineItem {
   id: string;
   componentName: string;
   flashingId?: string;
   flashingImageUrl?: string;
+  entryMode: 'single' | 'multiple';
+  // Single mode
   quantity: number;
   unit: string;
+  // Multiple mode
+  lengths?: LengthEntry[];
+  lengthUnit?: string;
+  // Common
   notes?: string;
   showComponentName: boolean;
   showFlashingImage: boolean;
@@ -153,8 +164,11 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
   function saveLineItem(data: {
     componentName: string;
     flashingId?: string;
-    quantity: number;
-    unit: string;
+    entryMode: 'single' | 'multiple';
+    quantity?: number;
+    unit?: string;
+    lengths?: LengthEntry[];
+    lengthUnit?: string;
     notes?: string;
   }) {
     const flashing = data.flashingId ? flashings.find(f => f.id === data.flashingId) : undefined;
@@ -168,8 +182,11 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
               componentName: data.componentName,
               flashingId: data.flashingId,
               flashingImageUrl: flashing?.image_url,
-              quantity: data.quantity,
-              unit: data.unit,
+              entryMode: data.entryMode,
+              quantity: data.quantity || 0,
+              unit: data.unit || '',
+              lengths: data.lengths,
+              lengthUnit: data.lengthUnit,
               notes: data.notes,
             }
           : line
@@ -181,8 +198,11 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
         componentName: data.componentName,
         flashingId: data.flashingId,
         flashingImageUrl: flashing?.image_url,
-        quantity: data.quantity,
-        unit: data.unit,
+        entryMode: data.entryMode,
+        quantity: data.quantity || 0,
+        unit: data.unit || '',
+        lengths: data.lengths,
+        lengthUnit: data.lengthUnit,
         notes: data.notes,
         showComponentName: true,
         showFlashingImage: true,
@@ -620,7 +640,22 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
                         </div>
                         {line.showMeasurements && (
                           <div className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3 border border-slate-200">
-                            <p className="font-medium">Quantity: {line.quantity} {line.unit}</p>
+                            {line.entryMode === 'single' ? (
+                              <p className="font-medium">Quantity: {line.quantity} {line.unit}</p>
+                            ) : (
+                              <div>
+                                <p className="font-medium text-xs text-slate-500 uppercase mb-2">Lengths ({line.lengthUnit}):</p>
+                                <div className="space-y-1">
+                                  {line.lengths?.map((entry, idx) => (
+                                    <div key={idx} className="flex items-center gap-2 text-sm">
+                                      <span className="font-medium">{entry.length}{line.lengthUnit}</span>
+                                      <span className="text-slate-400">×</span>
+                                      <span className="text-slate-600">{entry.multiplier}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                             {line.notes && <p className="text-slate-600 mt-2">{line.notes}</p>}
                           </div>
                         )}
@@ -670,16 +705,54 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
 interface AddItemModalProps {
   flashings: FlashingLibraryRow[];
   existingLine?: OrderLineItem;
-  onSave: (data: { componentName: string; flashingId?: string; quantity: number; unit: string; notes?: string }) => void;
+  onSave: (data: {
+    componentName: string;
+    flashingId?: string;
+    entryMode: 'single' | 'multiple';
+    quantity?: number;
+    unit?: string;
+    lengths?: LengthEntry[];
+    lengthUnit?: string;
+    notes?: string;
+  }) => void;
   onCancel: () => void;
 }
 
 function AddItemModal({ flashings, existingLine, onSave, onCancel }: AddItemModalProps) {
   const [componentName, setComponentName] = useState(existingLine?.componentName || '');
   const [flashingId, setFlashingId] = useState(existingLine?.flashingId || '');
+  const [entryMode, setEntryMode] = useState<'single' | 'multiple'>(existingLine?.entryMode || 'single');
+  
+  // Single mode
   const [quantity, setQuantity] = useState(existingLine?.quantity || 0);
-  const [unit, setUnit] = useState(existingLine?.unit || 'm');
+  const [unit, setUnit] = useState(existingLine?.unit || 'pcs');
+  
+  // Multiple mode
+  const [lengths, setLengths] = useState<LengthEntry[]>(existingLine?.lengths || []);
+  const [lengthUnit, setLengthUnit] = useState(existingLine?.lengthUnit || 'm');
+  const [newLength, setNewLength] = useState(0);
+  const [newMultiplier, setNewMultiplier] = useState(1);
+  
   const [notes, setNotes] = useState(existingLine?.notes || '');
+  
+  function addLength() {
+    if (newLength <= 0) {
+      alert('Length must be greater than 0');
+      return;
+    }
+    if (newMultiplier <= 0) {
+      alert('Multiplier must be greater than 0');
+      return;
+    }
+    
+    setLengths([...lengths, { length: newLength, multiplier: newMultiplier }]);
+    setNewLength(0);
+    setNewMultiplier(1);
+  }
+  
+  function removeLength(index: number) {
+    setLengths(lengths.filter((_, i) => i !== index));
+  }
   
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -689,18 +762,35 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel }: AddItemModa
       return;
     }
     
-    if (quantity <= 0) {
-      alert('Quantity must be greater than 0');
-      return;
+    if (entryMode === 'single') {
+      if (quantity <= 0) {
+        alert('Quantity must be greater than 0');
+        return;
+      }
+      
+      onSave({
+        componentName: componentName.trim(),
+        flashingId: flashingId || undefined,
+        entryMode: 'single',
+        quantity,
+        unit,
+        notes: notes.trim() || undefined,
+      });
+    } else {
+      if (lengths.length === 0) {
+        alert('Add at least one length entry');
+        return;
+      }
+      
+      onSave({
+        componentName: componentName.trim(),
+        flashingId: flashingId || undefined,
+        entryMode: 'multiple',
+        lengths,
+        lengthUnit,
+        notes: notes.trim() || undefined,
+      });
     }
-    
-    onSave({
-      componentName: componentName.trim(),
-      flashingId: flashingId || undefined,
-      quantity,
-      unit,
-      notes: notes.trim() || undefined,
-    });
   }
   
   const selectedFlashing = flashingId ? flashings.find(f => f.id === flashingId) : undefined;
@@ -757,40 +847,154 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel }: AddItemModa
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Quantity <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                value={quantity}
-                onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
-                required
-                step="0.1"
-                min="0"
-                placeholder="0.0"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Unit <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          {/* Entry Mode Toggle */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Entry Mode</label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setEntryMode('single')}
+                className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                  entryMode === 'single'
+                    ? 'bg-[#FF6B35] text-white border-orange-600'
+                    : 'border-slate-300 hover:bg-slate-50'
+                }`}
               >
-                <option value="m">Meters (m)</option>
-                <option value="ft">Feet (ft)</option>
-                <option value="in">Inches (in)</option>
-                <option value="pcs">Pieces (pcs)</option>
-                <option value="sheets">Sheets</option>
-                <option value="rolls">Rolls</option>
-              </select>
+                Single Item
+              </button>
+              <button
+                type="button"
+                onClick={() => setEntryMode('multiple')}
+                className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                  entryMode === 'multiple'
+                    ? 'bg-[#FF6B35] text-white border-orange-600'
+                    : 'border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                Multiple Lengths
+              </button>
             </div>
+            <p className="text-xs text-slate-500 mt-1">
+              {entryMode === 'single' 
+                ? 'For bulk items (rolls, sheets, pieces)' 
+                : 'For flashings with multiple cut lengths'
+              }
+            </p>
           </div>
+
+          {/* Single Mode Inputs */}
+          {entryMode === 'single' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Quantity <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
+                  required
+                  step="0.1"
+                  min="0"
+                  placeholder="0.0"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Unit <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value="pcs">Pieces (pcs)</option>
+                  <option value="sheets">Sheets</option>
+                  <option value="rolls">Rolls</option>
+                  <option value="boxes">Boxes</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Multiple Lengths Mode */}
+          {entryMode === 'multiple' && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Length Unit</label>
+                <select
+                  value={lengthUnit}
+                  onChange={(e) => setLengthUnit(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value="m">Lineal Meters (m)</option>
+                  <option value="ft">Lineal Feet (ft)</option>
+                  <option value="in">Inches (in)</option>
+                </select>
+              </div>
+
+              <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
+                <label className="block text-sm font-medium text-slate-700 mb-2">Add Lengths</label>
+                <div className="flex gap-2 mb-3">
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      value={newLength || ''}
+                      onChange={(e) => setNewLength(parseFloat(e.target.value) || 0)}
+                      step="0.01"
+                      min="0"
+                      placeholder="Length (e.g., 5.55)"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                    />
+                  </div>
+                  <span className="flex items-center text-slate-400 font-medium">×</span>
+                  <div className="w-20">
+                    <input
+                      type="number"
+                      value={newMultiplier || ''}
+                      onChange={(e) => setNewMultiplier(parseInt(e.target.value) || 1)}
+                      min="1"
+                      placeholder="Qty"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addLength}
+                    className="px-4 py-2 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600"
+                  >
+                    Add
+                  </button>
+                </div>
+
+                {/* Length List */}
+                {lengths.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-slate-600 uppercase">Added Lengths:</p>
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {lengths.map((entry, idx) => (
+                        <div key={idx} className="flex items-center justify-between bg-white border border-slate-200 rounded px-3 py-2">
+                          <span className="text-sm">
+                            <span className="font-medium">{entry.length}{lengthUnit}</span>
+                            <span className="text-slate-400 mx-2">×</span>
+                            <span className="text-slate-600">{entry.multiplier}</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeLength(idx)}
+                            className="text-red-600 hover:text-red-700 text-xs font-medium"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
