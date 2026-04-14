@@ -39,19 +39,25 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
     }
     
     // Load quote components
+    console.log('[QuoteLoader] Loading components for quote:', quoteId);
     const { data: components, error: componentsError } = await supabase
       .from('quote_components')
       .select('id, name, flashing_id, quantity, unit, measurements, notes')
       .eq('quote_id', quoteId)
       .order('display_order', { ascending: true });
     
+    console.log('[QuoteLoader] Components query result:', { components, error: componentsError });
+    
     if (componentsError) {
       console.error('[QuoteLoader] Components load error:', componentsError);
+      console.error('[QuoteLoader] Error details:', JSON.stringify(componentsError));
       return {
         ...quote,
         components: [],
       };
     }
+    
+    console.log('[QuoteLoader] Loaded', components?.length || 0, 'components');
     
     return {
       ...quote,
