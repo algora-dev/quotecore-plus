@@ -662,17 +662,33 @@ export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreate
                         <span>Show Name</span>
                       </label>
                       
-                      {line.flashingImageUrl && (
-                        <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:bg-white rounded px-2 py-1.5 transition-colors">
-                          <input
-                            type="checkbox"
-                            checked={line.showFlashingImage}
-                            onChange={() => toggleLineVisibility(line.id, 'showFlashingImage')}
-                            className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-                          />
-                          <span>Show Flashing Drawing</span>
-                        </label>
-                      )}
+                      {/* Flashing Drawing Selector */}
+                      <div className="px-2 py-1.5">
+                        <label className="block text-xs text-slate-600 mb-1">Flashing Drawing:</label>
+                        <select
+                          value={line.flashingId || ''}
+                          onChange={(e) => {
+                            const newFlashingId = e.target.value || undefined;
+                            const updatedFlashing = newFlashingId ? flashings.find(f => f.id === newFlashingId) : undefined;
+                            setOrderLines(orderLines.map(l => 
+                              l.id === line.id 
+                                ? { 
+                                    ...l, 
+                                    flashingId: newFlashingId, 
+                                    flashingImageUrl: updatedFlashing?.image_url,
+                                    showFlashingImage: !!newFlashingId
+                                  }
+                                : l
+                            ));
+                          }}
+                          className="w-full px-2 py-1 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+                        >
+                          <option value="">None</option>
+                          {flashings.map(f => (
+                            <option key={f.id} value={f.id}>{f.name}</option>
+                          ))}
+                        </select>
+                      </div>
                       
                       <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:bg-white rounded px-2 py-1.5 transition-colors">
                         <input
