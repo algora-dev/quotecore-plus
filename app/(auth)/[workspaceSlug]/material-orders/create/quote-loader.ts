@@ -60,7 +60,7 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
       .order('sort_order', { ascending: true })
       .limit(2);
     
-    console.log('[QuoteLoader] Components query result:', { components, error: componentsError });
+    console.log('[QuoteLoader] Components query result:', JSON.stringify({ components, error: componentsError }, null, 2));
     
     if (componentsError) {
       console.error('[QuoteLoader] Components load error:', componentsError);
