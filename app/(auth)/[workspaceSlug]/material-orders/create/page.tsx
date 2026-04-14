@@ -2,6 +2,7 @@ import { loadOrderTemplates } from '../template-actions';
 import { loadFlashingLibrary } from '../../flashings/actions';
 import { OrderCreateForm } from './order-create-form';
 import { loadQuoteData } from './quote-loader';
+import { testQuoteQuery } from './test-query';
 
 interface Props {
   params: Promise<{ workspaceSlug: string }>;
@@ -13,6 +14,12 @@ export default async function CreateOrderPage(props: Props) {
   const { quoteId } = await props.searchParams;
   
   console.log('[CreateOrderPage] quoteId:', quoteId);
+  
+  // Run diagnostic test if quoteId present
+  if (quoteId) {
+    const testResults = await testQuoteQuery(quoteId);
+    console.log('[CreateOrderPage] Test results:', testResults);
+  }
   
   const [templates, flashings, quoteData] = await Promise.all([
     loadOrderTemplates(),
