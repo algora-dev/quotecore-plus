@@ -107,9 +107,9 @@ export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreate
       const hasMeasurements = comp.measurements && comp.measurements.length > 0;
       
       if (hasMeasurements) {
-        // Multiple lengths mode - use individual cut lengths
+        // Multiple lengths mode - use individual cut lengths (rounded to 2 decimals)
         const lengths: LengthEntry[] = comp.measurements!.map(m => ({
-          length: m.measurement_value,
+          length: Math.round(m.measurement_value * 100) / 100,
           multiplier: 1,
         }));
         
