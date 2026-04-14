@@ -102,9 +102,15 @@ export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreate
       const unit = quantityMatch ? quantityMatch[2] : 'pcs';
       const name = comp.custom_text.split('—')[0].trim();
       
+      // Get flashing data if component exists
+      const flashingId = comp.component?.flashing_id || undefined;
+      const flashing = flashingId ? flashings.find(f => f.id === flashingId) : undefined;
+      
       return {
         id: `quote-${comp.id}`,
         componentName: name,
+        flashingId,
+        flashingImageUrl: flashing?.image_url,
         entryMode: 'single',
         quantity,
         unit,

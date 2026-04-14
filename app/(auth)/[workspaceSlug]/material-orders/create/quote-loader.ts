@@ -9,6 +9,10 @@ export interface QuoteComponentData {
   custom_text: string;
   custom_amount: number;
   line_type: string;
+  quote_component_id: string | null;
+  component?: {
+    flashing_id: string | null;
+  } | null;
 }
 
 export interface QuoteData {
@@ -37,11 +41,18 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
       return null;
     }
     
-    // Load quote components (customer_quote_lines table)
+    // Load quote components with flashing data via quote_components join
     console.log('[QuoteLoader] Loading components for quote:', quoteId);
     const { data: components, error: componentsError } = await supabase
       .from('customer_quote_lines')
-      .select('id, custom_text, custom_amount, line_type')
+      .select(`
+        id,
+        custom_text,
+        custom_amount,
+        line_type,
+        quote_component_id,
+        component:quote_components!quote_component_id(flashing_id)
+      `)
       .eq('quote_id', quoteId)
       .order('sort_order', { ascending: true });
     
@@ -58,9 +69,21 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
     
     console.log('[QuoteLoader] Loaded', components?.length || 0, 'components');
     
+    // Normalize component data (join returns array, we want single object)
+    const normalizedComponents = components?.map((comp: any) => ({
+      id: comp.id,
+      custom_text: comp.custom_text,
+      custom_amount: comp.custom_amount,
+      line_type: comp.line_type,
+      quote_component_id: comp.quote_component_id,
+      component: Array.isArray(comp.component) && comp.component.length > 0 
+        ? comp.component[0] 
+        : comp.component,
+    })) || [];
+    
     return {
       ...quote,
-      components: components || [],
+      components: normalizedComponents,
     };
   } catch (error) {
     console.error('[QuoteLoader] Unexpected error:', error);
