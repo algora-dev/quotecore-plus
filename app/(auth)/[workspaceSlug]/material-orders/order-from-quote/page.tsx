@@ -13,7 +13,7 @@ export default async function OrderFromQuotePage(props: Props) {
   // Load confirmed quotes
   const { data: quotes, error } = await supabase
     .from('quotes')
-    .select('id, quote_number, job_name, customer_name, confirmed_at, created_at')
+    .select('id, quote_number, job_name, customer_name, created_at')
     .eq('company_id', profile.company_id)
     .eq('is_confirmed', true)
     .order('created_at', { ascending: false });
@@ -82,7 +82,7 @@ export default async function OrderFromQuotePage(props: Props) {
                     Customer: {quote.customer_name || 'Not specified'}
                   </p>
                   <p className="text-xs text-slate-500 mt-2">
-                    Confirmed: {new Date(quote.confirmed_at).toLocaleDateString()}
+                    Created: {new Date(quote.created_at).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="ml-4">
