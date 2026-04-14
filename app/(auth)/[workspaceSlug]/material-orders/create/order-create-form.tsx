@@ -639,60 +639,64 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
               <div className="p-8">
                 {/* Order Header */}
                 <div className="mb-6 pb-6 border-b-2 border-slate-300">
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-2 gap-8">
                     {/* Left - To */}
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold text-slate-500 uppercase">To:</p>
-                      <p className="text-sm font-medium text-slate-900">{toSupplier || 'Not set'}</p>
-                      {reference && (
-                        <p className="text-xs text-slate-600">
-                          <span className="font-medium">Ref:</span> {reference}
-                        </p>
-                      )}
-                      {deliveryDate && (
-                        <p className="text-xs text-slate-600">
-                          <span className="font-medium">Delivery:</span> {new Date(deliveryDate).toLocaleDateString()}
-                        </p>
-                      )}
-                      {colours.length > 0 && (
-                        <p className="text-xs text-slate-600">
-                          <span className="font-medium">Colours:</span> {colours.join(', ')}
-                        </p>
+                    <div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-slate-500 uppercase">To:</p>
+                        <p className="text-sm font-medium text-slate-900">{toSupplier || 'Not set'}</p>
+                        {reference && (
+                          <p className="text-xs text-slate-600">
+                            <span className="font-medium">Ref:</span> {reference}
+                          </p>
+                        )}
+                        {deliveryDate && (
+                          <p className="text-xs text-slate-600">
+                            <span className="font-medium">Delivery:</span> {new Date(deliveryDate).toLocaleDateString()}
+                          </p>
+                        )}
+                        {colours.length > 0 && (
+                          <p className="text-xs text-slate-600">
+                            <span className="font-medium">Colours:</span> {colours.join(', ')}
+                          </p>
+                        )}
+                      </div>
+                      
+                      {deliveryAddress && (
+                        <div className="mt-3">
+                          <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Delivery Address:</p>
+                          <p className="text-xs text-slate-700 whitespace-pre-wrap">{deliveryAddress}</p>
+                        </div>
                       )}
                     </div>
                     
                     {/* Right - From */}
-                    <div className="space-y-1">
+                    <div className="flex flex-col">
                       {logoUrl && (
-                        <div className="mb-2">
+                        <div className="mb-3">
                           <img src={logoUrl} alt="Logo" className="h-12 object-contain ml-auto" />
                         </div>
                       )}
-                      <p className="text-xs font-semibold text-slate-500 uppercase">From:</p>
-                      <p className="text-sm font-medium text-slate-900">{fromCompany || 'Not set'}</p>
-                      {contactPerson && (
-                        <p className="text-xs text-slate-600">{contactPerson}</p>
-                      )}
-                      {contactDetails && (
-                        <p className="text-xs text-slate-600">{contactDetails}</p>
-                      )}
-                      {orderDate && (
-                        <p className="text-xs text-slate-600">
-                          <span className="font-medium">Order Date:</span> {new Date(orderDate).toLocaleDateString()}
-                        </p>
-                      )}
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-slate-500 uppercase">From:</p>
+                        <p className="text-sm font-medium text-slate-900">{fromCompany || 'Not set'}</p>
+                        {contactPerson && (
+                          <p className="text-xs text-slate-600">{contactPerson}</p>
+                        )}
+                        {contactDetails && (
+                          <p className="text-xs text-slate-600">{contactDetails}</p>
+                        )}
+                        {orderDate && (
+                          <p className="text-xs text-slate-600">
+                            <span className="font-medium">Order Date:</span> {new Date(orderDate).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
-                  {deliveryAddress && (
-                    <div className="mt-3 pt-3 border-t border-slate-200">
-                      <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Delivery Address:</p>
-                      <p className="text-xs text-slate-700 whitespace-pre-wrap">{deliveryAddress}</p>
-                    </div>
-                  )}
-                  
                   {orderNotes && (
-                    <div className="mt-3 pt-3 border-t border-slate-200">
+                    <div className="mt-4 pt-4 border-t border-slate-200">
                       <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Notes:</p>
                       <p className="text-xs text-slate-700 whitespace-pre-wrap">{orderNotes}</p>
                     </div>
