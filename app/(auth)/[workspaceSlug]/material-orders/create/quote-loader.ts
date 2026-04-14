@@ -13,7 +13,7 @@ export interface QuoteComponentData {
   measurements: any; // JSONB - contains entries/individual measurements
   notes: string | null;
   component_library?: {
-    flashing_id: string | null;
+    flashing_ids: string[] | null;
   } | null;
 }
 
@@ -56,7 +56,7 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
         measurements,
         notes,
         display_order,
-        component_library:component_library_id(flashing_id)
+        component_library:component_library_id(flashing_ids)
       `)
       .eq('quote_id', quoteId)
       .order('display_order', { ascending: true });

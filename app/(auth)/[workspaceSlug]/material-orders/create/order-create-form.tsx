@@ -96,8 +96,8 @@ export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreate
     
     // Map quote components to order line items
     const mappedLines: OrderLineItem[] = quoteData.components.map((comp) => {
-      // Get flashing_id from component_library join
-      const flashingId = comp.component_library?.flashing_id || undefined;
+      // Get first flashing_id from component_library join (flashing_ids is array)
+      const flashingId = comp.component_library?.flashing_ids?.[0] || undefined;
       const flashing = flashingId ? flashings.find(f => f.id === flashingId) : undefined;
       
       return {
