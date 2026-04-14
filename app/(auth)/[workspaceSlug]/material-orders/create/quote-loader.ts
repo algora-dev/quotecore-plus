@@ -43,23 +43,13 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
       return null;
     }
     
-    // Load quote components with component_library join for flashing_id
+    // Load quote components - discover actual column names
     console.log('[QuoteLoader] Loading quote_components for quote:', quoteId);
     const { data: components, error: componentsError } = await supabase
       .from('quote_components')
-      .select(`
-        id,
-        name,
-        component_library_id,
-        quantity,
-        unit,
-        measurements,
-        notes,
-        display_order,
-        component_library:component_library_id(flashing_ids)
-      `)
+      .select('*')
       .eq('quote_id', quoteId)
-      .order('display_order', { ascending: true });
+      .limit(3);
     
     console.log('[QuoteLoader] Components query result:', { components, error: componentsError });
     
