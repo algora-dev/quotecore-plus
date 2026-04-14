@@ -103,18 +103,45 @@ export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreate
       // Derive unit from measurement_type
       const unit = comp.measurement_type === 'linear' ? 'm' : comp.measurement_type === 'area' ? 'm²' : 'pcs';
       
-      return {
-        id: `quote-${comp.id}`,
-        componentName: comp.name,
-        flashingId,
-        flashingImageUrl: flashing?.image_url,
-        entryMode: 'single',
-        quantity: comp.final_quantity || 0,
-        unit,
-        showComponentName: false, // Hidden by default
-        showFlashingImage: false,
-        showMeasurements: false,
-      };
+      // Check if we have individual measurements for this component
+      const hasMeasurements = comp.measurements && comp.measurements.length > 0;
+      
+      if (hasMeasurements) {
+        // Multiple lengths mode - use individual cut lengths
+        const lengths: LengthEntry[] = comp.measurements!.map(m => ({
+          length: m.measurement_value,
+          multiplier: 1,
+        }));
+        
+        return {
+          id: `quote-${comp.id}`,
+          componentName: comp.name,
+          flashingId,
+          flashingImageUrl: flashing?.image_url,
+          entryMode: 'multiple',
+          quantity: 0,
+          unit: 'pcs',
+          lengths,
+          lengthUnit: 'm',
+          showComponentName: false,
+          showFlashingImage: false,
+          showMeasurements: false,
+        };
+      } else {
+        // Single mode - use total quantity
+        return {
+          id: `quote-${comp.id}`,
+          componentName: comp.name,
+          flashingId,
+          flashingImageUrl: flashing?.image_url,
+          entryMode: 'single',
+          quantity: comp.final_quantity || 0,
+          unit,
+          showComponentName: false,
+          showFlashingImage: false,
+          showMeasurements: false,
+        };
+      }
     });
     
     console.log('[OrderCreateForm] Setting', mappedLines.length, 'order lines');

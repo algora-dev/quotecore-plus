@@ -14,6 +14,7 @@ export interface QuoteComponentData {
   component_library?: {
     flashing_ids: string[] | null;
   } | null;
+  measurements?: { measurement_value: number; measurement_unit: string }[];
 }
 
 export interface QuoteData {
@@ -56,8 +57,7 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
         component_library:component_library_id(flashing_ids)
       `)
       .eq('quote_id', quoteId)
-      .order('sort_order', { ascending: true })
-      .limit(2);
+      .order('sort_order', { ascending: true });
     
     // CRITICAL: Load takeoff measurements separately (they link to component_library_id, NOT quote_component_id)
     console.log('[QuoteLoader] About to load takeoff measurements for quote:', quoteId);
@@ -82,7 +82,16 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
     
     console.log('[QuoteLoader] Loaded', components?.length || 0, 'components');
     
-    // Normalize component_library join (returns array, we want single object)
+    // Group measurements by component_library_id
+    const measurementsByLibraryId = new Map<string, typeof takeoffMeasurements>();
+    takeoffMeasurements?.forEach(m => {
+      if (m.component_library_id) {
+        const existing = measurementsByLibraryId.get(m.component_library_id) || [];
+        measurementsByLibraryId.set(m.component_library_id, [...existing, m]);
+      }
+    });
+    
+    // Normalize components and attach measurements
     const normalizedComponents = components?.map((comp: any) => ({
       id: comp.id,
       name: comp.name,
@@ -93,6 +102,9 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
       component_library: Array.isArray(comp.component_library) && comp.component_library.length > 0
         ? comp.component_library[0]
         : comp.component_library,
+      measurements: comp.component_library_id 
+        ? measurementsByLibraryId.get(comp.component_library_id) || []
+        : [],
     })) || [];
     
     return {
