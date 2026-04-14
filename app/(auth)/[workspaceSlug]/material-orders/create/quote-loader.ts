@@ -59,14 +59,15 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
       .order('sort_order', { ascending: true })
       .limit(2);
     
-    // Load takeoff measurements separately (they link to component_library, not quote_components)
+    // CRITICAL: Load takeoff measurements separately (they link to component_library_id, NOT quote_component_id)
+    console.log('[QuoteLoader] About to load takeoff measurements for quote:', quoteId);
     const { data: takeoffMeasurements, error: measurementsError } = await supabase
       .from('quote_takeoff_measurements')
       .select('id, component_library_id, measurement_value, measurement_unit')
       .eq('quote_id', quoteId)
       .eq('is_visible', true);
     
-    console.log('[QuoteLoader] Takeoff measurements:', JSON.stringify({ takeoffMeasurements, error: measurementsError }, null, 2));
+    console.log('[QuoteLoader] Takeoff measurements RAW:', JSON.stringify({ takeoffMeasurements, error: measurementsError }, null, 2));
     
     console.log('[QuoteLoader] Components query result:', JSON.stringify({ components, error: componentsError }, null, 2));
     
