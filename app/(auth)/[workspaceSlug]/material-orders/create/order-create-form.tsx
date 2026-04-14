@@ -1,77 +1,76 @@
 'use client';
 
 import { useState } from 'react';
-import type { 
-  MaterialOrderTemplateRow, 
-  ComponentLibraryRow,
-  FlashingLibraryRow 
-} from '@/app/lib/types';
+import type { MaterialOrderTemplateRow } from '@/app/lib/types';
 
-interface Props {
-  workspaceSlug: string;
+interface OrderCreateFormProps {
   templates: MaterialOrderTemplateRow[];
-  components: ComponentLibraryRow[];
-  flashings: FlashingLibraryRow[];
 }
 
-export function OrderCreateForm({ workspaceSlug, templates, components, flashings }: Props) {
+export function OrderCreateForm({ templates }: OrderCreateFormProps) {
   // Template selection
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
   
-  // Header form state - Left column (Job/Delivery)
-  const [toCompany, setToCompany] = useState('');
-  const [jobReference, setJobReference] = useState('');
+  // LEFT SIDE - To Section
+  const [toSupplier, setToSupplier] = useState('');
+  const [reference, setReference] = useState('');
+  const [orderType, setOrderType] = useState('');
   const [colours, setColours] = useState<string[]>([]);
   const [colourInput, setColourInput] = useState('');
-  const [includedMaterials, setIncludedMaterials] = useState('');
-  const [deliveryAddress, setDeliveryAddress] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
-  const [notes, setNotes] = useState('');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [orderNotes, setOrderNotes] = useState('');
   
-  // Header form state - Right column (Supplier)
-  const [fromSupplier, setFromSupplier] = useState('');
-  const [contactPerson, setContactPerson] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+  // RIGHT SIDE - From Section
   const [logoUrl, setLogoUrl] = useState('');
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [fromCompany, setFromCompany] = useState('');
+  const [contactPerson, setContactPerson] = useState('');
+  const [contactDetails, setContactDetails] = useState('');
+  const [orderDate, setOrderDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
   
   // Handle template selection
   function handleTemplateChange(templateId: string) {
     setSelectedTemplateId(templateId);
     
     if (!templateId) {
-      // Clear supplier fields if "None" selected
-      setFromSupplier('');
+      // Clear all fields if "None" selected
+      setToSupplier('');
+      setFromCompany('');
       setContactPerson('');
-      setPhone('');
-      setEmail('');
+      setContactDetails('');
       setDeliveryAddress('');
-      setNotes('');
+      setOrderNotes('');
+      setLogoUrl('');
       return;
     }
     
     const template = templates.find(t => t.id === templateId);
-    if (template) {
-      setFromSupplier(template.default_supplier_name || '');
-      setContactPerson(template.default_supplier_contact || '');
-      setPhone(template.default_supplier_phone || '');
-      setEmail(template.default_supplier_email || '');
-      setDeliveryAddress(template.default_delivery_address || '');
-      setNotes(template.default_header_notes || '');
-      setLogoUrl(template.default_logo_url || '');
+    if (!template) return;
+    
+    // Auto-fill from template
+    if (template.default_supplier_name) setToSupplier(template.default_supplier_name);
+    if (template.default_supplier_contact) setContactPerson(template.default_supplier_contact);
+    if (template.default_supplier_phone || template.default_supplier_email) {
+      const details = [template.default_supplier_phone, template.default_supplier_email]
+        .filter(Boolean)
+        .join(' / ');
+      setContactDetails(details);
     }
+    if (template.default_delivery_address) setDeliveryAddress(template.default_delivery_address);
+    if (template.default_header_notes) setOrderNotes(template.default_header_notes);
+    if (template.default_logo_url) setLogoUrl(template.default_logo_url);
   }
   
-  // Add colour to list
+  // Handle colour tags
   function addColour() {
-    if (colourInput.trim() && !colours.includes(colourInput.trim())) {
-      setColours([...colours, colourInput.trim()]);
+    const trimmed = colourInput.trim();
+    if (trimmed && !colours.includes(trimmed)) {
+      setColours([...colours, trimmed]);
       setColourInput('');
     }
   }
   
-  // Remove colour from list
   function removeColour(colour: string) {
     setColours(colours.filter(c => c !== colour));
   }
@@ -81,13 +80,11 @@ export function OrderCreateForm({ workspaceSlug, templates, components, flashing
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Check file type
     if (!file.type.startsWith('image/')) {
       alert('Please upload an image file');
       return;
     }
     
-    // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert('Image must be less than 5MB');
       return;
@@ -96,19 +93,15 @@ export function OrderCreateForm({ workspaceSlug, templates, components, flashing
     setUploadingLogo(true);
     
     try {
-      // Create form data
       const formData = new FormData();
       formData.append('file', file);
       
-      // Upload to Supabase storage
       const response = await fetch('/api/upload-logo', {
         method: 'POST',
         body: formData,
       });
       
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
+      if (!response.ok) throw new Error('Upload failed');
       
       const { url } = await response.json();
       setLogoUrl(url);
@@ -119,13 +112,13 @@ export function OrderCreateForm({ workspaceSlug, templates, components, flashing
       setUploadingLogo(false);
     }
   }
-
+  
   return (
     <div className="space-y-6">
       {/* Template Selector */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4">
+      <div>
         <label className="block text-sm font-medium text-slate-700 mb-2">
-          Use Supplier Template (Optional)
+          Use Template (Optional)
         </label>
         <select
           value={selectedTemplateId}
@@ -141,36 +134,64 @@ export function OrderCreateForm({ workspaceSlug, templates, components, flashing
         </select>
         {selectedTemplateId && (
           <p className="text-xs text-slate-500 mt-2">
-            ✓ Supplier details auto-filled from template
+            ✓ Details auto-filled from template (you can still edit them)
           </p>
         )}
       </div>
 
-      {/* Header Form - Two Column Layout */}
+      {/* Order Header Form */}
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
         <div className="bg-slate-50 px-6 py-3 border-b border-slate-200">
           <h2 className="font-semibold text-slate-900">Order Header</h2>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
-          {/* LEFT COLUMN - Job/Delivery Info */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6">
+          {/* LEFT SIDE - To Section */}
           <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">To (Supplier)</h3>
+            
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                To (Company/Customer)
+                To
               </label>
               <input
                 type="text"
-                value={toCompany}
-                onChange={(e) => setToCompany(e.target.value)}
-                placeholder="Enter company or customer name"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                value={toSupplier}
+                onChange={(e) => setToSupplier(e.target.value)}
+                placeholder="Supplier company name"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Colour(s)
+                Reference
+              </label>
+              <input
+                type="text"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                placeholder="Job name or quote number"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Order Type <span className="text-slate-400 font-normal">(Optional)</span>
+              </label>
+              <input
+                type="text"
+                value={orderType}
+                onChange={(e) => setOrderType(e.target.value)}
+                placeholder="e.g., roof, flashings, underlay"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Colours
               </label>
               <div className="flex gap-2 mb-2">
                 <input
@@ -179,7 +200,7 @@ export function OrderCreateForm({ workspaceSlug, templates, components, flashing
                   onChange={(e) => setColourInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addColour())}
                   placeholder="Enter colour name"
-                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
                 <button
                   type="button"
@@ -212,14 +233,13 @@ export function OrderCreateForm({ workspaceSlug, templates, components, flashing
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Included Materials
+                Delivery Date
               </label>
-              <textarea
-                value={includedMaterials}
-                onChange={(e) => setIncludedMaterials(e.target.value)}
-                placeholder="List any materials included in this order..."
-                rows={3}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+              <input
+                type="date"
+                value={deliveryDate}
+                onChange={(e) => setDeliveryDate(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
@@ -232,41 +252,31 @@ export function OrderCreateForm({ workspaceSlug, templates, components, flashing
                 onChange={(e) => setDeliveryAddress(e.target.value)}
                 placeholder="Enter delivery address..."
                 rows={3}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Delivery Date
-              </label>
-              <input
-                type="date"
-                value={deliveryDate}
-                onChange={(e) => setDeliveryDate(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Notes
+                Order Notes
               </label>
               <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Any additional notes or instructions..."
+                value={orderNotes}
+                onChange={(e) => setOrderNotes(e.target.value)}
+                placeholder="Add any extra information for this order..."
                 rows={3}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
           </div>
 
-          {/* RIGHT COLUMN - From/Supplier Info */}
+          {/* RIGHT SIDE - From Section */}
           <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">From (Your Company)</h3>
+            
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Logo (Optional)
+                Logo <span className="text-slate-400 font-normal">(Optional)</span>
               </label>
               <div className="flex items-start gap-4">
                 {logoUrl ? (
@@ -295,7 +305,6 @@ export function OrderCreateForm({ workspaceSlug, templates, components, flashing
                       onChange={handleLogoUpload}
                       disabled={uploadingLogo}
                       className="hidden"
-                      id="logo-upload"
                     />
                     <span className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 hover:bg-slate-50 cursor-pointer transition-colors">
                       {uploadingLogo ? (
@@ -329,23 +338,10 @@ export function OrderCreateForm({ workspaceSlug, templates, components, flashing
               </label>
               <input
                 type="text"
-                value={fromSupplier}
-                onChange={(e) => setFromSupplier(e.target.value)}
+                value={fromCompany}
+                onChange={(e) => setFromCompany(e.target.value)}
                 placeholder="Your company name"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Job Reference
-              </label>
-              <input
-                type="text"
-                value={jobReference}
-                onChange={(e) => setJobReference(e.target.value)}
-                placeholder="Job number or reference"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
@@ -358,7 +354,7 @@ export function OrderCreateForm({ workspaceSlug, templates, components, flashing
                 value={contactPerson}
                 onChange={(e) => setContactPerson(e.target.value)}
                 placeholder="Contact name"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
@@ -366,50 +362,51 @@ export function OrderCreateForm({ workspaceSlug, templates, components, flashing
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Contact Details
               </label>
-              <div className="space-y-2">
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Phone number"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email address"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-              </div>
+              <input
+                type="text"
+                value={contactDetails}
+                onChange={(e) => setContactDetails(e.target.value)}
+                placeholder="Phone number or email"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Order Date
+              </label>
+              <input
+                type="date"
+                value={orderDate}
+                onChange={(e) => setOrderDate(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
             </div>
           </div>
         </div>
       </div>
 
       {/* Line Items Section - Placeholder */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
-        <h2 className="font-semibold text-slate-900 mb-4">Order Line Items</h2>
-        <div className="text-center py-12 text-slate-500">
-          <svg className="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-          <p className="text-sm">Line items section - Coming next!</p>
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <div className="bg-slate-50 px-6 py-3 border-b border-slate-200">
+          <h2 className="font-semibold text-slate-900">Order Items</h2>
+        </div>
+        <div className="p-6 text-center text-slate-500">
+          Line items section coming next...
         </div>
       </div>
 
-      {/* Save Button */}
-      <div className="flex justify-end gap-3">
+      {/* Action Buttons */}
+      <div className="flex gap-3 justify-end">
         <button
           type="button"
-          onClick={() => window.location.href = `/${workspaceSlug}/material-orders`}
-          className="px-6 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors"
+          className="px-6 py-2.5 text-sm font-medium rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors"
         >
           Cancel
         </button>
         <button
           type="button"
-          className="px-6 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          className="px-6 py-2.5 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm"
         >
           Save Draft
         </button>
