@@ -10,12 +10,11 @@ export default async function OrderFromQuotePage(props: Props) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
   
-  // Load confirmed quotes
+  // Load all quotes (TODO: filter by confirmed status when column exists)
   const { data: quotes, error } = await supabase
     .from('quotes')
-    .select('id, quote_number, job_name, customer_name, created_at')
+    .select('id, quote_number, job_name, customer_name, created_at, status')
     .eq('company_id', profile.company_id)
-    .eq('is_confirmed', true)
     .order('created_at', { ascending: false });
   
   if (error) {
