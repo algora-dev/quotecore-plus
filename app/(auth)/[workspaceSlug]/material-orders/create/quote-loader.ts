@@ -6,10 +6,9 @@ import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/sup
 
 export interface QuoteComponentData {
   id: string;
-  line_name: string;
-  quantity: number;
-  unit: string;
-  notes: string | null;
+  custom_text: string;
+  custom_amount: number;
+  line_type: string;
 }
 
 export interface QuoteData {
@@ -42,9 +41,9 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
     console.log('[QuoteLoader] Loading components for quote:', quoteId);
     const { data: components, error: componentsError } = await supabase
       .from('customer_quote_lines')
-      .select('id, line_name, quantity, unit, notes')
+      .select('id, custom_text, custom_amount, line_type')
       .eq('quote_id', quoteId)
-      .order('line_order', { ascending: true });
+      .order('sort_order', { ascending: true });
     
     console.log('[QuoteLoader] Components query result:', { components, error: componentsError });
     

@@ -96,13 +96,18 @@ export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreate
     
     // Map quote components to order line items
     const mappedLines: OrderLineItem[] = quoteData.components.map((comp) => {
+      // Parse quantity from custom_text (e.g., "Delivery fee (Standard) — 1.0 units")
+      const quantityMatch = comp.custom_text.match(/—\s*([\d.]+)\s*(\w+)/);
+      const quantity = quantityMatch ? parseFloat(quantityMatch[1]) : 0;
+      const unit = quantityMatch ? quantityMatch[2] : 'pcs';
+      const name = comp.custom_text.split('—')[0].trim();
+      
       return {
         id: `quote-${comp.id}`,
-        componentName: comp.line_name,
+        componentName: name,
         entryMode: 'single',
-        quantity: comp.quantity || 0,
-        unit: comp.unit || 'pcs',
-        notes: comp.notes || undefined,
+        quantity,
+        unit,
         showComponentName: false, // Hidden by default
         showFlashingImage: false,
         showMeasurements: false,
