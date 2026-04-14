@@ -8,10 +8,9 @@ export interface QuoteComponentData {
   id: string;
   name: string;
   component_library_id: string | null;
-  quantity: number;
-  unit: string;
-  measurements: any; // JSONB - contains entries/individual measurements
-  notes: string | null;
+  final_quantity: number;
+  measurement_type: string;
+  sort_order: number;
   component_library?: {
     flashing_ids: string[] | null;
   } | null;
@@ -43,13 +42,21 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
       return null;
     }
     
-    // Load quote components - discover actual column names
+    // Load quote components with component_library join for flashing_ids
     console.log('[QuoteLoader] Loading quote_components for quote:', quoteId);
     const { data: components, error: componentsError } = await supabase
       .from('quote_components')
-      .select('*')
+      .select(`
+        id,
+        name,
+        component_library_id,
+        final_quantity,
+        measurement_type,
+        sort_order,
+        component_library:component_library_id(flashing_ids)
+      `)
       .eq('quote_id', quoteId)
-      .limit(3);
+      .order('sort_order', { ascending: true });
     
     console.log('[QuoteLoader] Components query result:', { components, error: componentsError });
     
@@ -69,10 +76,9 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
       id: comp.id,
       name: comp.name,
       component_library_id: comp.component_library_id,
-      quantity: comp.quantity,
-      unit: comp.unit,
-      measurements: comp.measurements,
-      notes: comp.notes,
+      final_quantity: comp.final_quantity,
+      measurement_type: comp.measurement_type,
+      sort_order: comp.sort_order,
       component_library: Array.isArray(comp.component_library) && comp.component_library.length > 0
         ? comp.component_library[0]
         : comp.component_library,

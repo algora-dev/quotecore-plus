@@ -100,15 +100,17 @@ export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreate
       const flashingId = comp.component_library?.flashing_ids?.[0] || undefined;
       const flashing = flashingId ? flashings.find(f => f.id === flashingId) : undefined;
       
+      // Derive unit from measurement_type
+      const unit = comp.measurement_type === 'linear' ? 'm' : comp.measurement_type === 'area' ? 'm²' : 'pcs';
+      
       return {
         id: `quote-${comp.id}`,
         componentName: comp.name,
         flashingId,
         flashingImageUrl: flashing?.image_url,
         entryMode: 'single',
-        quantity: comp.quantity || 0,
-        unit: comp.unit || 'pcs',
-        notes: comp.notes || undefined,
+        quantity: comp.final_quantity || 0,
+        unit,
         showComponentName: false, // Hidden by default
         showFlashingImage: false,
         showMeasurements: false,
