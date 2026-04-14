@@ -61,8 +61,7 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
   const [toSupplier, setToSupplier] = useState('');
   const [reference, setReference] = useState('');
   const [orderType, setOrderType] = useState('');
-  const [colours, setColours] = useState<string[]>([]);
-  const [colourInput, setColourInput] = useState('');
+  const [colours, setColours] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [orderNotes, setOrderNotes] = useState('');
@@ -95,7 +94,7 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
       setLogoUrl('');
       setReference('');
       setOrderType('');
-      setColours([]);
+      setColours('');
       return;
     }
     
@@ -111,20 +110,9 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
     if (template.default_logo_url) setLogoUrl(template.default_logo_url);
     if (template.default_reference) setReference(template.default_reference);
     if (template.default_order_type) setOrderType(template.default_order_type);
-    if (template.default_colours) setColours(template.default_colours);
+    if (template.default_colours) setColours(template.default_colours.join(', '));
   }
   
-  function addColour() {
-    const trimmed = colourInput.trim();
-    if (trimmed && !colours.includes(trimmed)) {
-      setColours([...colours, trimmed]);
-      setColourInput('');
-    }
-  }
-  
-  function removeColour(colour: string) {
-    setColours(colours.filter(c => c !== colour));
-  }
   
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -279,7 +267,7 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
         contactPerson,
         contactDetails,
         orderType,
-        colours,
+        colours: colours.split(',').map(c => c.trim()).filter(Boolean),
         deliveryDate,
         deliveryAddress,
         orderNotes,
@@ -367,41 +355,13 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
                 />
                 
-                <div>
-                  <input
-                    type="text"
-                    value={colourInput}
-                    onChange={(e) => setColourInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addColour();
-                      }
-                    }}
-                    onBlur={addColour}
-                    placeholder="Colours (type and press Enter)"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm mb-2"
-                  />
-                  {colours.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {colours.map(colour => (
-                        <span
-                          key={colour}
-                          className="inline-flex items-center gap-2 px-2 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs"
-                        >
-                          {colour}
-                          <button
-                            type="button"
-                            onClick={() => removeColour(colour)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <input
+                  type="text"
+                  value={colours}
+                  onChange={(e) => setColours(e.target.value)}
+                  placeholder="Colours"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                />
                 
                 <input
                   type="date"
@@ -718,9 +678,9 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
                           <span className="font-medium">Order Type:</span> {orderType}
                         </p>
                       )}
-                      {colours && colours.length > 0 && (
+                      {colours && (
                         <p className="text-xs text-slate-600">
-                          <span className="font-medium">Colours:</span> {colours.join(', ')}
+                          <span className="font-medium">Colours:</span> {colours}
                         </p>
                       )}
                       
