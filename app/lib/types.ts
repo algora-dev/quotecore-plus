@@ -49,13 +49,23 @@ export interface MaterialOrderTemplateRow {
   company_id: string;
   name: string;
   description: string | null;
+  // Left side (To section)
   default_supplier_name: string | null;
+  default_reference: string | null;
+  default_order_type: string | null;
+  default_colours: string[] | null;
+  default_delivery_address: string | null;
+  default_header_notes: string | null;
+  // Right side (From section)
+  default_logo_url: string | null;
+  default_from_company: string | null;
+  default_contact_person: string | null;
+  default_contact_details: string | null;
+  // Legacy fields (keeping for backwards compatibility)
   default_supplier_contact: string | null;
   default_supplier_phone: string | null;
   default_supplier_email: string | null;
-  default_delivery_address: string | null;
-  default_header_notes: string | null;
-  default_logo_url: string | null;
+  // Metadata
   is_active: boolean;
   sort_order: number;
   created_at: string;
@@ -65,13 +75,23 @@ export interface MaterialOrderTemplateRow {
 export interface MaterialOrderTemplateInsert {
   name: string;
   description?: string | null;
+  // Left side (To section)
   default_supplier_name?: string | null;
+  default_reference?: string | null;
+  default_order_type?: string | null;
+  default_colours?: string[] | null;
+  default_delivery_address?: string | null;
+  default_header_notes?: string | null;
+  // Right side (From section)
+  default_logo_url?: string | null;
+  default_from_company?: string | null;
+  default_contact_person?: string | null;
+  default_contact_details?: string | null;
+  // Legacy fields (keeping for backwards compatibility)
   default_supplier_contact?: string | null;
   default_supplier_phone?: string | null;
   default_supplier_email?: string | null;
-  default_delivery_address?: string | null;
-  default_header_notes?: string | null;
-  default_logo_url?: string | null;
+  // Metadata
   is_active?: boolean;
   sort_order?: number;
 }

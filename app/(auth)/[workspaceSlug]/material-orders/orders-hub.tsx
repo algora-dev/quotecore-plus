@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { MaterialOrderTemplateRow } from '@/app/lib/types';
-import { TemplateManager } from './template-manager';
+import { TemplateManager } from './template-manager-new';
 
 interface Props {
   workspaceSlug: string;
