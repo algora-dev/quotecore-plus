@@ -125,19 +125,6 @@ export function OrderCreateForm({ workspaceSlug, templates, components, flashing
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Job Reference
-              </label>
-              <input
-                type="text"
-                value={jobReference}
-                onChange={(e) => setJobReference(e.target.value)}
-                placeholder="Job number or reference"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
                 Colour(s)
               </label>
               <div className="flex gap-2 mb-2">
@@ -230,7 +217,7 @@ export function OrderCreateForm({ workspaceSlug, templates, components, flashing
             </div>
           </div>
 
-          {/* RIGHT COLUMN - Supplier Info */}
+          {/* RIGHT COLUMN - From/Supplier Info */}
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -272,13 +259,26 @@ export function OrderCreateForm({ workspaceSlug, templates, components, flashing
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                From (Supplier Name)
+                From
               </label>
               <input
                 type="text"
                 value={fromSupplier}
                 onChange={(e) => setFromSupplier(e.target.value)}
-                placeholder="Supplier company name"
+                placeholder="Your company name"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Job Reference
+              </label>
+              <input
+                type="text"
+                value={jobReference}
+                onChange={(e) => setJobReference(e.target.value)}
+                placeholder="Job number or reference"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
               />
             </div>
@@ -298,28 +298,24 @@ export function OrderCreateForm({ workspaceSlug, templates, components, flashing
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Phone
+                Contact Details
               </label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Phone number"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email address"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-              />
+              <div className="space-y-2">
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="Phone number"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email address"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                />
+              </div>
             </div>
           </div>
         </div>
