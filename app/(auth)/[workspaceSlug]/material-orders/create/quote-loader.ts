@@ -7,11 +7,14 @@ import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/sup
 export interface QuoteComponentData {
   id: string;
   name: string;
-  flashing_id: string | null;
+  component_library_id: string | null;
   quantity: number;
   unit: string;
   measurements: any; // JSONB - contains entries/individual measurements
   notes: string | null;
+  component_library?: {
+    flashing_id: string | null;
+  } | null;
 }
 
 export interface QuoteData {
@@ -40,13 +43,23 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
       return null;
     }
     
-    // Load quote components directly (builder data, not customer summary)
+    // Load quote components with component_library join for flashing_id
     console.log('[QuoteLoader] Loading quote_components for quote:', quoteId);
     const { data: components, error: componentsError } = await supabase
       .from('quote_components')
-      .select('*')
+      .select(`
+        id,
+        name,
+        component_library_id,
+        quantity,
+        unit,
+        measurements,
+        notes,
+        display_order,
+        component_library:component_library_id(flashing_id)
+      `)
       .eq('quote_id', quoteId)
-      .limit(1);
+      .order('display_order', { ascending: true });
     
     console.log('[QuoteLoader] Components query result:', { components, error: componentsError });
     
@@ -61,9 +74,23 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
     
     console.log('[QuoteLoader] Loaded', components?.length || 0, 'components');
     
+    // Normalize component_library join (returns array, we want single object)
+    const normalizedComponents = components?.map((comp: any) => ({
+      id: comp.id,
+      name: comp.name,
+      component_library_id: comp.component_library_id,
+      quantity: comp.quantity,
+      unit: comp.unit,
+      measurements: comp.measurements,
+      notes: comp.notes,
+      component_library: Array.isArray(comp.component_library) && comp.component_library.length > 0
+        ? comp.component_library[0]
+        : comp.component_library,
+    })) || [];
+    
     return {
       ...quote,
-      components: components || [],
+      components: normalizedComponents,
     };
   } catch (error) {
     console.error('[QuoteLoader] Unexpected error:', error);
