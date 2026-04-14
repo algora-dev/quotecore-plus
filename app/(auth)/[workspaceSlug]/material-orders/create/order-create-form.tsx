@@ -699,6 +699,13 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
               <div className="p-8">
                 {/* Order Header */}
                 <div className="mb-6 pb-6 border-b-2 border-slate-300">
+                  {/* Logo Row - Above everything */}
+                  {logoUrl && (
+                    <div className="flex justify-end mb-3">
+                      <img src={logoUrl} alt="Logo" className="h-16 object-contain" />
+                    </div>
+                  )}
+                  
                   <div className="grid grid-cols-2 gap-8">
                     {/* Left - To */}
                     <div className="space-y-1">
@@ -714,14 +721,9 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
                           <span className="font-medium">Order Type:</span> {orderType}
                         </p>
                       )}
-                      {colours.length > 0 && (
+                      {colours && colours.length > 0 && (
                         <p className="text-xs text-slate-600">
                           <span className="font-medium">Colours:</span> {colours.join(', ')}
-                        </p>
-                      )}
-                      {deliveryDate && (
-                        <p className="text-xs text-slate-600">
-                          <span className="font-medium">Delivery:</span> {new Date(deliveryDate).toLocaleDateString()}
                         </p>
                       )}
                       
@@ -732,30 +734,28 @@ export function OrderCreateForm({ templates, flashings, quoteId }: OrderCreateFo
                         </div>
                       )}
                       
-                      {orderDate && (
+                      {deliveryDate && (
                         <p className="text-xs text-slate-600 mt-2">
-                          <span className="font-medium">Order Date:</span> {new Date(orderDate).toLocaleDateString()}
+                          <span className="font-medium">Delivery Date:</span> {new Date(deliveryDate).toLocaleDateString()}
                         </p>
                       )}
                     </div>
                     
                     {/* Right - From */}
-                    <div className="flex flex-col items-end">
-                      {logoUrl && (
-                        <div className="mb-3 self-end">
-                          <img src={logoUrl} alt="Logo" className="h-16 object-contain" />
-                        </div>
+                    <div className="space-y-1 text-right">
+                      <p className="text-xs font-semibold text-slate-500 uppercase">From:</p>
+                      <p className="text-sm font-medium text-slate-900">{fromCompany || 'Not set'}</p>
+                      {contactPerson && (
+                        <p className="text-xs text-slate-600">{contactPerson}</p>
                       )}
-                      <div className="space-y-1 text-right w-full">
-                        <p className="text-xs font-semibold text-slate-500 uppercase">From:</p>
-                        <p className="text-sm font-medium text-slate-900">{fromCompany || 'Not set'}</p>
-                        {contactPerson && (
-                          <p className="text-xs text-slate-600">{contactPerson}</p>
-                        )}
-                        {contactDetails && (
-                          <p className="text-xs text-slate-600">{contactDetails}</p>
-                        )}
-                      </div>
+                      {contactDetails && (
+                        <p className="text-xs text-slate-600">{contactDetails}</p>
+                      )}
+                      {orderDate && (
+                        <p className="text-xs text-slate-600 mt-2">
+                          <span className="font-medium">Order Date:</span> {new Date(orderDate).toLocaleDateString()}
+                        </p>
+                      )}
                     </div>
                   </div>
                   
