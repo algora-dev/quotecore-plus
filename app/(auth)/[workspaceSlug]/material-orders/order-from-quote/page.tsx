@@ -16,14 +16,17 @@ export default async function OrderFromQuotePage(props: Props) {
     .select('id, quote_number, job_name, customer_name, confirmed_at, created_at')
     .eq('company_id', profile.company_id)
     .eq('is_confirmed', true)
-    .order('confirmed_at', { ascending: false });
+    .order('created_at', { ascending: false });
   
   if (error) {
     console.error('[OrderFromQuote] Load error:', error);
+    console.error('[OrderFromQuote] Error details:', JSON.stringify(error));
     return (
       <div className="p-6 max-w-4xl mx-auto">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-          Failed to load quotes. Please try again.
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-700 font-medium">Failed to load quotes</p>
+          <p className="text-sm text-red-600 mt-2">{error.message || 'Unknown error'}</p>
+          <pre className="text-xs mt-2 text-red-500 overflow-auto">{JSON.stringify(error, null, 2)}</pre>
         </div>
       </div>
     );
