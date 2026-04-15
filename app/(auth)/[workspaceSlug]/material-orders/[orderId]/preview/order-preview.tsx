@@ -79,12 +79,15 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
       </div>
 
       {/* A4 Preview Container */}
-      <div className="max-w-[210mm] mx-auto p-8">
-        <div className="bg-white shadow-lg" style={{ minHeight: '297mm' }}>
-          {/* A4 Page Content */}
-          <div className="p-[15mm]">
+      <div className="max-w-[210mm] mx-auto p-8 space-y-8">
+        {/* Page 1 - Header + Start of Items */}
+        <div className="bg-white shadow-lg relative" style={{ width: '210mm', height: '297mm' }}>
+          {/* Page number indicator */}
+          <div className="absolute top-2 right-4 text-xs text-slate-400">Page 1</div>
+          
+          <div className="p-[15mm] h-full flex flex-col">
             {/* Header */}
-            <div className="grid grid-cols-2 gap-8 mb-8">
+            <div className="grid grid-cols-2 gap-8 mb-6">
               {/* Left: To Section */}
               <div>
                 <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">To:</h2>
@@ -150,22 +153,20 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
               )}
             </div>
 
-            {/* Line Items */}
-            <div className="space-y-6">
-              {lines.map((line, index) => {
+            {/* Line Items (first few that fit) */}
+            <div className="flex-1 overflow-hidden space-y-4">
+              {lines.slice(0, 3).map((line, index) => {
                 const flashing = line.flashing_id ? flashings.find(f => f.id === line.flashing_id) : null;
                 
                 return (
-                  <div key={line.id} className="border border-slate-200 rounded-lg p-4">
+                  <div key={line.id} className="border border-slate-200 rounded-lg p-4 break-inside-avoid">
                     <div className={order.layout_mode === 'double' ? 'grid grid-cols-2 gap-4' : ''}>
-                      {/* Component Name */}
                       {line.show_component_name && (
                         <div className="font-semibold text-slate-900 mb-2">
                           {index + 1}. {line.item_name}
                         </div>
                       )}
                       
-                      {/* Flashing Image */}
                       {line.show_flashing_image && flashing && (
                         <div className={`mb-3 ${order.layout_mode === 'single' ? 'max-w-md' : 'max-w-xs'}`}>
                           <img 
@@ -176,7 +177,6 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
                         </div>
                       )}
                       
-                      {/* Measurements */}
                       {line.show_measurements && (
                         <div className="text-sm text-slate-700">
                           {line.entry_mode === 'single' ? (
@@ -198,7 +198,6 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
                         </div>
                       )}
                       
-                      {/* Notes */}
                       {line.item_notes && (
                         <div className="text-sm text-slate-600 italic mt-2">
                           Note: {line.item_notes}
@@ -209,16 +208,97 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
                 );
               })}
             </div>
+          </div>
+        </div>
 
-            {/* Footer Notes */}
-            {order.header_notes && (
-              <div className="mt-8 pt-6 border-t border-slate-200">
+        {/* Continuation Pages (if more than 3 items) */}
+        {lines.length > 3 && (
+          <>
+            {Array.from({ length: Math.ceil((lines.length - 3) / 5) }).map((_, pageIdx) => {
+              const startIdx = 3 + (pageIdx * 5);
+              const pageLines = lines.slice(startIdx, startIdx + 5);
+              const pageNumber = pageIdx + 2;
+              
+              return (
+                <div key={pageIdx} className="bg-white shadow-lg relative" style={{ width: '210mm', height: '297mm' }}>
+                  <div className="absolute top-2 right-4 text-xs text-slate-400">Page {pageNumber}</div>
+                  
+                  <div className="p-[15mm] space-y-4">
+                    {pageLines.map((line, index) => {
+                      const flashing = line.flashing_id ? flashings.find(f => f.id === line.flashing_id) : null;
+                      const globalIndex = startIdx + index;
+                      
+                      return (
+                        <div key={line.id} className="border border-slate-200 rounded-lg p-4 break-inside-avoid">
+                          <div className={order.layout_mode === 'double' ? 'grid grid-cols-2 gap-4' : ''}>
+                            {line.show_component_name && (
+                              <div className="font-semibold text-slate-900 mb-2">
+                                {globalIndex + 1}. {line.item_name}
+                              </div>
+                            )}
+                            
+                            {line.show_flashing_image && flashing && (
+                              <div className={`mb-3 ${order.layout_mode === 'single' ? 'max-w-md' : 'max-w-xs'}`}>
+                                <img 
+                                  src={flashing.image_url} 
+                                  alt={flashing.name}
+                                  className="w-full h-auto border border-slate-200 rounded"
+                                />
+                              </div>
+                            )}
+                            
+                            {line.show_measurements && (
+                              <div className="text-sm text-slate-700">
+                                {line.entry_mode === 'single' ? (
+                                  <p><strong>Quantity:</strong> {line.quantity} {line.unit}</p>
+                                ) : (
+                                  line.lengths && (
+                                    <div>
+                                      <p className="font-semibold mb-1">Individual Lengths:</p>
+                                      <ul className="space-y-1">
+                                        {(line.lengths as any[]).map((entry, idx) => (
+                                          <li key={idx}>
+                                            {entry.length} {line.length_unit} × {entry.multiplier}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            )}
+                            
+                            {line.item_notes && (
+                              <div className="text-sm text-slate-600 italic mt-2">
+                                Note: {line.item_notes}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        )}
+
+        {/* Final Page with Footer (if notes exist) */}
+        {order.header_notes && (
+          <div className="bg-white shadow-lg relative" style={{ width: '210mm', minHeight: '297mm' }}>
+            <div className="absolute top-2 right-4 text-xs text-slate-400">
+              Page {Math.ceil(lines.length / 5) + 1}
+            </div>
+            
+            <div className="p-[15mm]">
+              <div className="pt-6 border-t border-slate-200">
                 <h3 className="text-sm font-semibold text-slate-900 mb-2">Order Notes:</h3>
                 <p className="text-sm text-slate-700 whitespace-pre-line">{order.header_notes}</p>
               </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
