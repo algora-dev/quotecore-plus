@@ -162,60 +162,54 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
             </div>
 
             {/* Line Items (first few that fit) */}
-            <div className="flex-1 overflow-hidden space-y-4">
+            <div className={`flex-1 overflow-hidden ${order.layout_mode === 'double' ? 'grid grid-cols-2 gap-4' : 'space-y-4'}`}>
               {lines.slice(0, 3).map((line, index) => {
                 const flashing = line.flashing_id ? flashings.find(f => f.id === line.flashing_id) : null;
                 
                 return (
                   <div key={line.id} className="border border-slate-200 rounded-lg p-4 break-inside-avoid">
-                    <div className={order.layout_mode === 'double' ? 'grid grid-cols-2 gap-4' : ''}>
-                      {/* Left column (or full width in single mode): Name + Measurements + Notes */}
-                      <div>
-                        {line.show_component_name && (
-                          <div className="font-semibold text-slate-900 mb-2">
-                            {index + 1}. {line.item_name}
-                          </div>
-                        )}
-                        
-                        {line.show_measurements && (
-                          <div className="text-sm text-slate-700">
-                            {line.entry_mode === 'single' ? (
-                              <p><strong>Quantity:</strong> {line.quantity} {line.unit}</p>
-                            ) : (
-                              line.lengths && (
-                                <div>
-                                  <p className="font-semibold mb-1">Individual Lengths:</p>
-                                  <ul className="space-y-1">
-                                    {(line.lengths as any[]).map((entry, idx) => (
-                                      <li key={idx}>
-                                        {entry.length} {line.length_unit} × {entry.multiplier}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )
-                            )}
-                          </div>
-                        )}
-                        
-                        {line.item_notes && (
-                          <div className="text-sm text-slate-600 italic mt-2">
-                            Note: {line.item_notes}
-                          </div>
+                    {line.show_component_name && (
+                      <div className="font-semibold text-slate-900 mb-3">
+                        {index + 1}. {line.item_name}
+                      </div>
+                    )}
+                    
+                    {line.show_flashing_image && flashing && (
+                      <div className="mb-3">
+                        <img 
+                          src={flashing.image_url} 
+                          alt={flashing.name}
+                          className="w-full h-auto border border-slate-200 rounded"
+                        />
+                      </div>
+                    )}
+                    
+                    {line.show_measurements && (
+                      <div className="text-sm text-slate-700">
+                        {line.entry_mode === 'single' ? (
+                          <p><strong>Quantity:</strong> {line.quantity} {line.unit}</p>
+                        ) : (
+                          line.lengths && (
+                            <div>
+                              <p className="font-semibold mb-1">LENGTHS (M):</p>
+                              <ul className="space-y-1">
+                                {(line.lengths as any[]).map((entry, idx) => (
+                                  <li key={idx}>
+                                    {entry.length}{line.length_unit} × {entry.multiplier}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )
                         )}
                       </div>
-                      
-                      {/* Right column (or below in single mode): Image */}
-                      {line.show_flashing_image && flashing && (
-                        <div className={order.layout_mode === 'single' ? 'mt-3' : ''}>
-                          <img 
-                            src={flashing.image_url} 
-                            alt={flashing.name}
-                            className="w-full h-auto border border-slate-200 rounded"
-                          />
-                        </div>
-                      )}
-                    </div>
+                    )}
+                    
+                    {line.item_notes && (
+                      <div className="text-sm text-slate-600 italic mt-2">
+                        Note: {line.item_notes}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -235,61 +229,55 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
                 <div key={pageIdx} className="bg-white shadow-lg relative" style={{ width: '210mm', height: '297mm' }}>
                   <div className="absolute top-2 right-4 text-xs text-slate-400">Page {pageNumber}</div>
                   
-                  <div className="p-[15mm] space-y-4">
+                  <div className={`p-[15mm] ${order.layout_mode === 'double' ? 'grid grid-cols-2 gap-4' : 'space-y-4'}`}>
                     {pageLines.map((line, index) => {
                       const flashing = line.flashing_id ? flashings.find(f => f.id === line.flashing_id) : null;
                       const globalIndex = startIdx + index;
                       
                       return (
                         <div key={line.id} className="border border-slate-200 rounded-lg p-4 break-inside-avoid">
-                          <div className={order.layout_mode === 'double' ? 'grid grid-cols-2 gap-4' : ''}>
-                            {/* Left column: Name + Measurements + Notes */}
-                            <div>
-                              {line.show_component_name && (
-                                <div className="font-semibold text-slate-900 mb-2">
-                                  {globalIndex + 1}. {line.item_name}
-                                </div>
-                              )}
-                              
-                              {line.show_measurements && (
-                                <div className="text-sm text-slate-700">
-                                  {line.entry_mode === 'single' ? (
-                                    <p><strong>Quantity:</strong> {line.quantity} {line.unit}</p>
-                                  ) : (
-                                    line.lengths && (
-                                      <div>
-                                        <p className="font-semibold mb-1">Individual Lengths:</p>
-                                        <ul className="space-y-1">
-                                          {(line.lengths as any[]).map((entry, idx) => (
-                                            <li key={idx}>
-                                              {entry.length} {line.length_unit} × {entry.multiplier}
-                                            </li>
-                                          ))}
-                                        </ul>
-                                      </div>
-                                    )
-                                  )}
-                                </div>
-                              )}
-                              
-                              {line.item_notes && (
-                                <div className="text-sm text-slate-600 italic mt-2">
-                                  Note: {line.item_notes}
-                                </div>
+                          {line.show_component_name && (
+                            <div className="font-semibold text-slate-900 mb-3">
+                              {globalIndex + 1}. {line.item_name}
+                            </div>
+                          )}
+                          
+                          {line.show_flashing_image && flashing && (
+                            <div className="mb-3">
+                              <img 
+                                src={flashing.image_url} 
+                                alt={flashing.name}
+                                className="w-full h-auto border border-slate-200 rounded"
+                              />
+                            </div>
+                          )}
+                          
+                          {line.show_measurements && (
+                            <div className="text-sm text-slate-700">
+                              {line.entry_mode === 'single' ? (
+                                <p><strong>Quantity:</strong> {line.quantity} {line.unit}</p>
+                              ) : (
+                                line.lengths && (
+                                  <div>
+                                    <p className="font-semibold mb-1">LENGTHS (M):</p>
+                                    <ul className="space-y-1">
+                                      {(line.lengths as any[]).map((entry, idx) => (
+                                        <li key={idx}>
+                                          {entry.length}{line.length_unit} × {entry.multiplier}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )
                               )}
                             </div>
-                            
-                            {/* Right column: Image */}
-                            {line.show_flashing_image && flashing && (
-                              <div className={order.layout_mode === 'single' ? 'mt-3' : ''}>
-                                <img 
-                                  src={flashing.image_url} 
-                                  alt={flashing.name}
-                                  className="w-full h-auto border border-slate-200 rounded"
-                                />
-                              </div>
-                            )}
-                          </div>
+                          )}
+                          
+                          {line.item_notes && (
+                            <div className="text-sm text-slate-600 italic mt-2">
+                              Note: {line.item_notes}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
