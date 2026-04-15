@@ -1,4 +1,5 @@
 import { loadOrderTemplates } from './template-actions';
+import { loadRecentOrders } from './order-list-actions';
 import { MaterialOrdersHub } from './orders-hub';
 
 interface Props {
@@ -8,7 +9,10 @@ interface Props {
 export default async function MaterialOrdersPage(props: Props) {
   const { workspaceSlug } = await props.params;
   
-  const templates = await loadOrderTemplates();
+  const [templates, recentOrders] = await Promise.all([
+    loadOrderTemplates(),
+    loadRecentOrders(),
+  ]);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -20,6 +24,7 @@ export default async function MaterialOrdersPage(props: Props) {
       <MaterialOrdersHub 
         workspaceSlug={workspaceSlug}
         initialTemplates={templates}
+        recentOrders={recentOrders}
       />
     </div>
   );
