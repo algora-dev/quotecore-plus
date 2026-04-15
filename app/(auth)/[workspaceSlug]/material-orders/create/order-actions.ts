@@ -128,7 +128,7 @@ export async function saveDraftOrder(input: SaveOrderInput) {
           logo_url: input.logoUrl || null,
           order_date: input.orderDate ? new Date(input.orderDate) : null,
           layout_mode: input.layoutMode,
-          status: 'draft',
+          status: 'ready',
         })
         .select()
         .single();

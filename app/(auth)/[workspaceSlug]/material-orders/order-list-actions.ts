@@ -22,6 +22,22 @@ export async function loadRecentOrders(): Promise<MaterialOrderRow[]> {
   return data || [];
 }
 
+export async function markOrderAsOrdered(orderId: string) {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+  
+  const { error } = await supabase
+    .from('material_orders')
+    .update({ status: 'ordered' })
+    .eq('id', orderId)
+    .eq('company_id', profile.company_id);
+  
+  if (error) {
+    console.error('[markOrderAsOrdered] Error:', error);
+    throw new Error('Failed to update order status');
+  }
+}
+
 export async function deleteOrder(orderId: string) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();

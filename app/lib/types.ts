@@ -97,7 +97,7 @@ export interface MaterialOrderTemplateInsert {
 }
 
 // Material Order Types
-export type OrderStatus = 'draft' | 'ordered';
+export type OrderStatus = 'ready' | 'ordered';
 
 export interface MaterialOrderRow {
   id: string;

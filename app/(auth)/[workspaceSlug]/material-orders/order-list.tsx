@@ -72,16 +72,22 @@ export function OrderList({ orders, workspaceSlug }: Props) {
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                   order.status === 'ordered' 
                     ? 'bg-green-100 text-green-800' 
-                    : 'bg-slate-100 text-slate-700'
+                    : 'bg-blue-100 text-blue-800'
                 }`}>
-                  {order.status === 'ordered' ? 'Ordered' : 'Draft'}
+                  {order.status === 'ordered' ? 'Ordered' : 'Ready'}
                 </span>
               </td>
               <td className="py-3 px-4 text-slate-600">
                 {new Date(order.created_at).toLocaleDateString()}
               </td>
               <td className="py-3 px-4 text-right">
-                <div className="flex items-center justify-end gap-2">
+                <div className="flex items-center justify-end gap-3">
+                  <Link
+                    href={`/${workspaceSlug}/material-orders/${order.id}/preview`}
+                    className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                  >
+                    Preview
+                  </Link>
                   <Link
                     href={`/${workspaceSlug}/material-orders/create?orderId=${order.id}`}
                     className="text-sm font-medium text-[#FF6B35] hover:text-orange-600"
