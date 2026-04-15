@@ -86,79 +86,59 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
           <div className="absolute top-2 right-4 text-xs text-slate-400">Page 1</div>
           
           <div className="p-[15mm] h-full flex flex-col">
-            {/* Header */}
-            <div className="grid grid-cols-[1fr_auto] gap-8 mb-6">
-              {/* Left: To Section */}
-              {(order.to_supplier || order.contact_person || order.contact_details || order.delivery_address) && (
-                <div className="pr-8">
-                  <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">To:</h2>
-                  <div className="space-y-1 text-sm">
-                    {order.to_supplier && <p className="font-semibold">{order.to_supplier}</p>}
-                    {order.contact_person && <p className="text-slate-700">{order.contact_person}</p>}
-                    {order.contact_details && <p className="text-slate-600">{order.contact_details}</p>}
+            {/* Header - Two Column Layout */}
+            <div className="grid grid-cols-2 gap-12 mb-6 pb-6 border-b-2 border-slate-200">
+              {/* Left Column: TO Section */}
+              <div className="space-y-3 text-sm">
+                <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">TO:</h2>
+                {order.to_supplier && <p className="font-semibold text-slate-900">{order.to_supplier}</p>}
+                {order.reference && (
+                  <p className="text-slate-700">
+                    <span className="font-medium">Ref:</span> {order.reference}
+                  </p>
+                )}
+                {order.order_type && (
+                  <p className="text-slate-700">
+                    <span className="font-medium">Order Type:</span> {order.order_type}
+                  </p>
+                )}
+                {order.colours && (
+                  <p className="text-slate-700">
+                    <span className="font-medium">Colours:</span> {order.colours}
+                  </p>
+                )}
+                
+                {order.delivery_address && (
+                  <div className="mt-4">
+                    <p className="font-semibold text-slate-900 uppercase text-xs mb-1">DELIVERY ADDRESS:</p>
+                    <p className="text-slate-700 whitespace-pre-line">{order.delivery_address}</p>
                   </div>
-                  
-                  {order.delivery_address && (
-                    <div className="mt-4">
-                      <p className="text-xs font-semibold text-slate-700 mb-1">Delivery Address:</p>
-                      <p className="text-sm text-slate-600 whitespace-pre-line">{order.delivery_address}</p>
-                    </div>
-                  )}
-                </div>
-              )}
+                )}
+                
+                {order.delivery_date && (
+                  <p className="text-slate-700">
+                    <span className="font-medium">Delivery Date:</span> {new Date(order.delivery_date).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
 
-              {/* Right: From Section + Logo */}
-              {(order.logo_url || order.from_company) && (
-                <div className="text-right">
-                  {order.logo_url && (
-                    <div className="mb-4 flex justify-end">
-                      <img src={order.logo_url} alt="Company Logo" className="h-16 object-contain" />
-                    </div>
-                  )}
-                  {order.from_company && (
-                    <>
-                      <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">From:</h2>
-                      <div className="space-y-1 text-sm">
-                        <p className="font-semibold">{order.from_company}</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Order Details Grid */}
-            <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-6 pb-6 border-b-2 border-slate-200 text-sm">
-              {order.reference && (
-                <>
-                  <div className="font-semibold text-slate-700">Reference:</div>
-                  <div className="text-slate-900">{order.reference}</div>
-                </>
-              )}
-              {order.order_date && (
-                <>
-                  <div className="font-semibold text-slate-700">Order Date:</div>
-                  <div className="text-slate-900">{new Date(order.order_date).toLocaleDateString()}</div>
-                </>
-              )}
-              {order.delivery_date && (
-                <>
-                  <div className="font-semibold text-slate-700">Delivery Date:</div>
-                  <div className="text-slate-900">{new Date(order.delivery_date).toLocaleDateString()}</div>
-                </>
-              )}
-              {order.order_type && (
-                <>
-                  <div className="font-semibold text-slate-700">Order Type:</div>
-                  <div className="text-slate-900">{order.order_type}</div>
-                </>
-              )}
-              {order.colours && (
-                <>
-                  <div className="font-semibold text-slate-700">Colours:</div>
-                  <div className="text-slate-900">{order.colours}</div>
-                </>
-              )}
+              {/* Right Column: FROM Section */}
+              <div className="text-right space-y-2 text-sm">
+                {order.logo_url && (
+                  <div className="mb-4 flex justify-end">
+                    <img src={order.logo_url} alt="Company Logo" className="h-16 object-contain" />
+                  </div>
+                )}
+                <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">FROM:</h2>
+                {order.from_company && <p className="font-semibold text-slate-900">{order.from_company}</p>}
+                {order.contact_person && <p className="text-slate-700">{order.contact_person}</p>}
+                {order.contact_details && <p className="text-slate-700">{order.contact_details}</p>}
+                {order.order_date && (
+                  <p className="text-slate-700">
+                    <span className="font-medium">Order Date:</span> {new Date(order.order_date).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Line Items (first few that fit) */}
