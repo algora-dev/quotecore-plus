@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import type { MaterialOrderTemplateRow, FlashingLibraryRow } from '@/app/lib/types';
 import { saveDraftOrder } from './order-actions';
 import type { QuoteData } from './quote-loader';
+import type { ExistingOrderData } from './order-loader';
 
 interface OrderCreateFormProps {
   templates: MaterialOrderTemplateRow[];
   flashings: FlashingLibraryRow[];
   quoteData?: QuoteData | null;
+  existingOrder?: ExistingOrderData | null;
 }
 
 interface Variable {
@@ -43,7 +45,7 @@ interface OrderLineItem {
   showMeasurements: boolean;
 }
 
-export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreateFormProps) {
+export function OrderCreateForm({ templates, flashings, quoteData, existingOrder }: OrderCreateFormProps) {
   const router = useRouter();
   
   // Layout state
@@ -153,6 +155,51 @@ export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreate
       setReference(`Order for ${quoteData.quote_number}`);
     }
   }, [quoteData, flashings]);
+  
+  // Load existing order for edit
+  useEffect(() => {
+    if (!existingOrder) return;
+    
+    console.log('[OrderCreateForm] Loading existing order:', existingOrder.order.order_number);
+    
+    const { order, lines } = existingOrder;
+    
+    // Load header fields
+    setSelectedTemplateId(order.template_id || '');
+    setReference(order.reference || order.job_name || '');
+    setToSupplier(order.to_supplier || order.supplier_name || '');
+    setFromCompany(order.from_company || '');
+    setContactPerson(order.contact_person || order.supplier_contact || '');
+    setContactDetails(order.contact_details || '');
+    setOrderType(order.order_type || '');
+    setColours(order.colours || (order.job_colours || []).join(', '));
+    setDeliveryDate(order.delivery_date || '');
+    setDeliveryAddress(order.delivery_address || '');
+    setOrderNotes(order.header_notes || '');
+    setLogoUrl(order.logo_url || '');
+    setOrderDate(order.order_date || new Date().toISOString().split('T')[0]);
+    setLayoutMode(order.layout_mode || 'single');
+    
+    // Map line items
+    const mappedLines: OrderLineItem[] = lines.map(line => ({
+      id: line.id,
+      componentName: line.item_name,
+      flashingId: line.flashing_id || undefined,
+      flashingImageUrl: line.flashing_image_url || undefined,
+      entryMode: line.entry_mode,
+      quantity: line.quantity || 0,
+      unit: line.unit || 'pcs',
+      lengths: line.lengths || undefined,
+      lengthUnit: line.length_unit || undefined,
+      notes: line.item_notes || undefined,
+      showComponentName: line.show_component_name,
+      showFlashingImage: line.show_flashing_image,
+      showMeasurements: line.show_measurements,
+    }));
+    
+    console.log('[OrderCreateForm] Loaded', mappedLines.length, 'line items');
+    setOrderLines(mappedLines);
+  }, [existingOrder]);
   
   // Template auto-fill
   function handleTemplateChange(templateId: string) {
@@ -334,6 +381,7 @@ export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreate
     
     try {
       const result = await saveDraftOrder({
+        orderId: existingOrder?.order.id,
         templateId: selectedTemplateId || undefined,
         reference: reference.trim(),
         toSupplier,
