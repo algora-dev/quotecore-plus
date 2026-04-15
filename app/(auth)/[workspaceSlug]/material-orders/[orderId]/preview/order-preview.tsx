@@ -87,10 +87,10 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
           
           <div className="p-[15mm] h-full flex flex-col">
             {/* Header */}
-            <div className="grid grid-cols-2 gap-8 mb-6">
+            <div className="grid grid-cols-[1fr_auto] gap-8 mb-6">
               {/* Left: To Section */}
               {(order.to_supplier || order.contact_person || order.contact_details || order.delivery_address) && (
-                <div>
+                <div className="pr-8">
                   <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">To:</h2>
                   <div className="space-y-1 text-sm">
                     {order.to_supplier && <p className="font-semibold">{order.to_supplier}</p>}
