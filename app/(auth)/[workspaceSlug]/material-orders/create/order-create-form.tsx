@@ -365,11 +365,11 @@ export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreate
         })),
       });
       
-      alert(`Draft saved! Order #${result.orderNumber}`);
+      alert(`Order saved! Order #${result.orderNumber}`);
       router.push('../material-orders');
     } catch (error) {
       console.error('Save error:', error);
-      alert('Failed to save draft. Please try again.');
+      alert('Failed to save order. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -946,7 +946,7 @@ export function OrderCreateForm({ templates, flashings, quoteData }: OrderCreate
               disabled={saving}
               className="px-6 py-2.5 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-50"
             >
-              {saving ? 'Saving...' : 'Save Draft'}
+              {saving ? 'Saving...' : 'Save Order'}
             </button>
           </div>
         </div>
