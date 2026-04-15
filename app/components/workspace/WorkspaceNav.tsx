@@ -3,12 +3,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-type NavKey = 'overview' | 'components' | 'flashings' | 'templates' | 'quotes' | 'material-orders';
+type NavKey = 'components' | 'flashings' | 'templates' | 'quotes' | 'material-orders';
 
 const makeNavItems = (slug: string) => {
   const base = `/${slug}`;
   return [
-    { key: 'overview' as NavKey, href: base, label: 'Overview' },
     { key: 'components' as NavKey, href: `${base}/components`, label: 'Components' },
     { key: 'flashings' as NavKey, href: `${base}/flashings`, label: 'Flashings' },
     { key: 'templates' as NavKey, href: `${base}/templates`, label: 'Templates' },
@@ -24,9 +23,7 @@ export function WorkspaceNav({ workspaceSlug }: { workspaceSlug: string }) {
   return (
     <nav className="flex flex-wrap items-center gap-2 text-sm">
       {items.map((item) => {
-        const isActive =
-          item.href === pathname ||
-          (item.key !== 'overview' && pathname?.startsWith(`${item.href}`));
+        const isActive = pathname?.startsWith(`${item.href}`);
         return (
           <Link
             key={item.key}
