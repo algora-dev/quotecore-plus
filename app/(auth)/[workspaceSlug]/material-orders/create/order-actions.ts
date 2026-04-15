@@ -4,6 +4,9 @@ import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/sup
 import { revalidatePath } from 'next/cache';
 
 interface SaveOrderInput {
+  // Optional: edit existing order
+  orderId?: string;
+  
   // Header data
   templateId?: string;
   reference: string;
@@ -12,12 +15,13 @@ interface SaveOrderInput {
   contactPerson?: string;
   contactDetails?: string;
   orderType?: string;
-  colours: string[];
+  colours?: string;
   deliveryDate?: string;
   deliveryAddress?: string;
   orderNotes?: string;
   logoUrl?: string;
   orderDate: string;
+  layoutMode: 'single' | 'double';
   
   // Line items
   lineItems: {
@@ -50,53 +54,110 @@ export async function saveDraftOrder(input: SaveOrderInput) {
   const supabase = await createSupabaseServerClient();
   
   try {
-    // Generate order number (simple incrementing - could be improved)
-    const orderNumber = `ORD-${Date.now()}`;
+    let order;
     
-    // Create order record
-    const { data: order, error: orderError } = await supabase
-      .from('material_orders')
-      .insert({
-        company_id: profile.company_id,
-        template_id: input.templateId || null,
-        order_number: orderNumber,
-        job_name: input.reference || 'Untitled Order',
-        supplier_name: input.toSupplier,
-        supplier_contact: input.contactPerson || null,
-        delivery_date: input.deliveryDate ? new Date(input.deliveryDate) : null,
-        delivery_address: input.deliveryAddress || null,
-        job_colours: input.colours.length > 0 ? input.colours : null,
-        header_notes: input.orderNotes || null,
-        is_sent: false, // Draft
-      })
-      .select()
-      .single();
-    
-    if (orderError) {
-      console.error('[saveDraftOrder] Order insert error:', orderError);
-      throw new Error('Failed to save order');
+    if (input.orderId) {
+      // UPDATE existing order
+      const { data: existingOrder, error: fetchError } = await supabase
+        .from('material_orders')
+        .select('id, order_number')
+        .eq('id', input.orderId)
+        .eq('company_id', profile.company_id)
+        .single();
+      
+      if (fetchError || !existingOrder) {
+        throw new Error('Order not found or unauthorized');
+      }
+      
+      const { data: updatedOrder, error: updateError } = await supabase
+        .from('material_orders')
+        .update({
+          template_id: input.templateId || null,
+          reference: input.reference || 'Untitled Order',
+          to_supplier: input.toSupplier,
+          from_company: input.fromCompany,
+          contact_person: input.contactPerson || null,
+          contact_details: input.contactDetails || null,
+          order_type: input.orderType || null,
+          colours: input.colours || null,
+          delivery_date: input.deliveryDate ? new Date(input.deliveryDate) : null,
+          delivery_address: input.deliveryAddress || null,
+          header_notes: input.orderNotes || null,
+          logo_url: input.logoUrl || null,
+          order_date: input.orderDate ? new Date(input.orderDate) : null,
+          layout_mode: input.layoutMode,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', input.orderId)
+        .select()
+        .single();
+      
+      if (updateError) {
+        console.error('[saveDraftOrder] Order update error:', updateError);
+        throw new Error('Failed to update order');
+      }
+      
+      order = updatedOrder;
+      
+      // Delete old line items
+      await supabase
+        .from('material_order_lines')
+        .delete()
+        .eq('order_id', input.orderId);
+      
+    } else {
+      // CREATE new order
+      const orderNumber = `ORD-${Date.now()}`;
+      
+      const { data: newOrder, error: orderError } = await supabase
+        .from('material_orders')
+        .insert({
+          company_id: profile.company_id,
+          template_id: input.templateId || null,
+          order_number: orderNumber,
+          reference: input.reference || 'Untitled Order',
+          to_supplier: input.toSupplier,
+          from_company: input.fromCompany,
+          contact_person: input.contactPerson || null,
+          contact_details: input.contactDetails || null,
+          order_type: input.orderType || null,
+          colours: input.colours || null,
+          delivery_date: input.deliveryDate ? new Date(input.deliveryDate) : null,
+          delivery_address: input.deliveryAddress || null,
+          header_notes: input.orderNotes || null,
+          logo_url: input.logoUrl || null,
+          order_date: input.orderDate ? new Date(input.orderDate) : null,
+          layout_mode: input.layoutMode,
+          status: 'draft',
+        })
+        .select()
+        .single();
+      
+      if (orderError) {
+        console.error('[saveDraftOrder] Order insert error:', orderError);
+        throw new Error('Failed to save order');
+      }
+      
+      order = newOrder;
     }
     
-    // Create line items
+    // Create line items with new schema
     if (input.lineItems.length > 0) {
-      const lineItemsData = input.lineItems.map((item, index) => ({
+      const lineItemsData = input.lineItems.map((item) => ({
         order_id: order.id,
-        component_id: null, // Custom order - no component reference
-        component_name: item.componentName,
+        component_id: null,
+        item_name: item.componentName,
+        entry_mode: item.entryMode,
+        quantity: item.entryMode === 'single' ? (item.quantity || 0) : 0,
+        unit: item.entryMode === 'single' ? (item.unit || '') : null,
+        lengths: item.entryMode === 'multiple' ? item.lengths : null,
+        length_unit: item.entryMode === 'multiple' ? item.lengthUnit : null,
         flashing_id: item.flashingId || null,
         flashing_image_url: item.flashingImageUrl || null,
-        quantity: item.entryMode === 'single' ? item.quantity : null,
-        unit: item.entryMode === 'single' ? item.unit : null,
-        // Store complex data as JSONB
-        item_notes: JSON.stringify({
-          entryMode: item.entryMode,
-          lengths: item.lengths,
-          lengthUnit: item.lengthUnit,
-          notes: item.notes,
-          showComponentName: item.showComponentName,
-          showFlashingImage: item.showFlashingImage,
-          showMeasurements: item.showMeasurements,
-        }),
+        item_notes: item.notes || null,
+        show_component_name: item.showComponentName,
+        show_flashing_image: item.showFlashingImage,
+        show_measurements: item.showMeasurements,
         sort_order: item.sortOrder,
       }));
       

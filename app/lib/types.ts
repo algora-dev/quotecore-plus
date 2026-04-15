@@ -96,6 +96,62 @@ export interface MaterialOrderTemplateInsert {
   sort_order?: number;
 }
 
+// Material Order Types
+export type OrderStatus = 'draft' | 'ordered';
+
+export interface MaterialOrderRow {
+  id: string;
+  company_id: string;
+  quote_id: string | null;
+  order_number: string;
+  status: OrderStatus;
+  // Header fields
+  template_id: string | null;
+  reference: string | null;
+  to_supplier: string | null;
+  from_company: string | null;
+  contact_person: string | null;
+  contact_details: string | null;
+  order_type: string | null;
+  colours: string | null;
+  delivery_date: string | null;
+  delivery_address: string | null;
+  header_notes: string | null;
+  logo_url: string | null;
+  order_date: string | null;
+  layout_mode: 'single' | 'double';
+  // Legacy fields
+  job_name: string | null;
+  supplier_name: string | null;
+  supplier_contact: string | null;
+  job_colours: string[] | null;
+  is_sent: boolean;
+  pdf_url: string | null;
+  // Metadata
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MaterialOrderLineRow {
+  id: string;
+  order_id: string;
+  component_id: string | null;
+  item_name: string;
+  entry_mode: 'single' | 'multiple';
+  quantity: number;
+  unit: string | null;
+  lengths: any | null; // JSONB
+  length_unit: string | null;
+  flashing_id: string | null;
+  flashing_image_url: string | null;
+  item_notes: string | null;
+  show_component_name: boolean;
+  show_flashing_image: boolean;
+  show_measurements: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
 export function unitForMeasurement(mt: MeasurementType): string {
   switch (mt) {
     case 'area': return 'm²';
