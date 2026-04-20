@@ -25,15 +25,25 @@ export default async function QuoteSummaryPage({
   
   const supabase = await createSupabaseServerClient();
   
-  // Load custom lines from customer_quote_lines
-  const { data: customLines } = await supabase
+  // Load ALL customer quote lines (for overrides + custom lines)
+  const { data: allCustomerLines } = await supabase
     .from('customer_quote_lines')
     .select('*')
     .eq('quote_id', id)
-    .eq('line_type', 'custom')
-    .eq('is_visible', true)
-    .eq('include_in_total', true)
     .order('sort_order', { ascending: true });
+  
+  // Separate custom lines
+  const customLines = (allCustomerLines || []).filter(
+    line => line.line_type === 'custom' && line.is_visible && line.include_in_total
+  );
+  
+  // Build component override map (componentId -> custom_amount)
+  const componentOverrides = new Map<string, number>();
+  (allCustomerLines || []).forEach(line => {
+    if (line.line_type === 'component' && line.quote_component_id && line.custom_amount != null) {
+      componentOverrides.set(line.quote_component_id, line.custom_amount);
+    }
+  });
   
   // Load company default currency
   const { data: company } = await supabase
@@ -79,10 +89,28 @@ export default async function QuoteSummaryPage({
 
 
 
-  const mainComps = components.filter(c => c.quote_roof_area_id);
-  const extraComps = components.filter(c => !c.quote_roof_area_id);
   const totalRoofSqm = roofAreas.reduce((sum, a) => sum + (a.computed_sqm ?? 0), 0);
-  const engineComps = components.map(c => ({
+  
+  // Apply customer quote line overrides to component costs
+  const componentsWithOverrides = components.map(c => {
+    const override = componentOverrides.get(c.id);
+    if (override !== undefined) {
+      // Override exists - recalculate material/labour split while preserving total
+      const totalCost = c.material_cost + c.labour_cost;
+      const ratio = totalCost > 0 ? c.material_cost / totalCost : 0.5;
+      return {
+        ...c,
+        material_cost: override * ratio,
+        labour_cost: override * (1 - ratio),
+      };
+    }
+    return c;
+  });
+  
+  const mainComps = componentsWithOverrides.filter(c => c.quote_roof_area_id);
+  const extraComps = componentsWithOverrides.filter(c => !c.quote_roof_area_id);
+  
+  const engineComps = componentsWithOverrides.map(c => ({
     id: c.id, name: c.name, componentType: c.component_type as 'main' | 'extra',
     measurementType: c.measurement_type as 'area' | 'linear' | 'quantity' | 'fixed', inputMode: c.input_mode as 'final' | 'calculated',
     finalValue: c.final_value ?? undefined, calcRawValue: c.calc_raw_value ?? undefined,
