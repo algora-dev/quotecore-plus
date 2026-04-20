@@ -179,18 +179,35 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
 
   return (
     <div>
-      {/* Header with title and action buttons */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-            Component Library
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Master list of reusable components and extras for your templates and quotes.
-          </p>
+      {/* Header with title */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+          Component Library
+        </h1>
+        <p className="text-sm text-zinc-500 mt-1">
+          Master list of reusable components and extras for your templates and quotes.
+        </p>
+      </div>
+      
+      {/* Filter tabs + Action Buttons (same row, like Quotes page) */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex gap-2">
+          {(['all', 'main', 'extra'] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 text-sm rounded-full font-medium transition ${
+                filter === f
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {f === 'all' ? 'All' : f === 'main' ? 'Main Components' : 'Extras'}
+            </button>
+          ))}
         </div>
         
-        {/* Action Buttons */}
+        {/* Action Buttons on the right */}
         <div className="flex gap-2">
           <button
             onClick={() => setShowForm(true)}
@@ -205,23 +222,6 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
             + Create Flashing
           </Link>
         </div>
-      </div>
-      
-      {/* Filter tabs */}
-      <div className="flex gap-2 mb-4">
-        {(['all', 'main', 'extra'] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 text-sm rounded-full font-medium transition ${
-              filter === f
-                ? 'bg-slate-900 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            {f === 'all' ? 'All' : f === 'main' ? 'Main Components' : 'Extras'}
-          </button>
-        ))}
       </div>
 
       {showForm && (
