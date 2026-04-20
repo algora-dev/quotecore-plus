@@ -1223,7 +1223,7 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel }: AddItemModa
               <button
                 type="button"
                 onClick={() => setEntryMode('single')}
-                className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                className={`flex-1 px-4 py-2 text-sm font-medium rounded-full border transition-colors ${
                   entryMode === 'single'
                     ? 'bg-[#FF6B35] text-white border-orange-600'
                     : 'border-slate-300 hover:bg-slate-50'
@@ -1234,7 +1234,7 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel }: AddItemModa
               <button
                 type="button"
                 onClick={() => setEntryMode('multiple')}
-                className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                className={`flex-1 px-4 py-2 text-sm font-medium rounded-full border transition-colors ${
                   entryMode === 'multiple'
                     ? 'bg-[#FF6B35] text-white border-orange-600'
                     : 'border-slate-300 hover:bg-slate-50'
@@ -1375,13 +1375,14 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel }: AddItemModa
                           className="w-20 px-2 py-1.5 border border-slate-300 rounded text-sm"
                         >
                           <option value="mm">mm</option>
-                          <option value="in">in</option>
                           <option value="cm">cm</option>
+                          <option value="in">in</option>
+                          <option value="°">degrees (°)</option>
                         </select>
                         <button
                           type="button"
                           onClick={addVariable}
-                          className="px-3 py-1.5 text-xs font-medium rounded bg-slate-700 text-white hover:bg-slate-800"
+                          className="px-3 py-1.5 text-xs font-medium rounded-full bg-slate-700 text-white hover:bg-slate-800"
                         >
                           Add
                         </button>
@@ -1415,7 +1416,7 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel }: AddItemModa
                 <button
                   type="button"
                   onClick={addLength}
-                  className="w-full px-4 py-2 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600"
+                  className="w-full px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600"
                 >
                   Add Length Entry
                 </button>
@@ -1478,14 +1479,14 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel }: AddItemModa
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2.5 text-sm font-medium rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors"
+            className="px-6 py-2.5 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             onClick={handleSubmit}
-            className="px-6 py-2.5 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm"
+            className="px-6 py-2.5 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm"
           >
             {existingLine ? 'Save Changes' : 'Add Item'}
           </button>
