@@ -602,7 +602,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
             <button
               type="button"
               onClick={() => setHeaderExpanded(true)}
-              className="px-3 py-1.5 text-xs font-medium rounded border border-slate-300 hover:bg-slate-50 transition-colors"
+              className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors"
             >
               Edit Header
             </button>
@@ -626,7 +626,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
             <button
               type="button"
               onClick={openAddItemModal}
-              className="w-full px-4 py-2 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors"
+              className="w-full px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors"
             >
               + Add Component
             </button>
@@ -798,7 +798,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
                 <button
                   type="button"
                   onClick={() => setLayoutMode('single')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded border transition-colors ${
+                  className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                     layoutMode === 'single'
                       ? 'bg-[#FF6B35] text-white border-orange-600'
                       : 'border-slate-300 hover:bg-slate-50'
@@ -809,7 +809,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
                 <button
                   type="button"
                   onClick={() => setLayoutMode('double')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded border transition-colors ${
+                  className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                     layoutMode === 'double'
                       ? 'bg-[#FF6B35] text-white border-orange-600'
                       : 'border-slate-300 hover:bg-slate-50'
@@ -984,15 +984,25 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
               type="button"
               onClick={() => router.push('../material-orders')}
               disabled={saving}
-              className="px-6 py-2.5 text-sm font-medium rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors disabled:opacity-50"
+              className="px-6 py-2.5 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
+            {existingOrder && (
+              <button
+                type="button"
+                onClick={() => window.open(`../material-orders/${existingOrder.order.id}/preview`, '_blank')}
+                disabled={saving}
+                className="px-6 py-2.5 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors disabled:opacity-50"
+              >
+                Preview
+              </button>
+            )}
             <button
               type="button"
               onClick={handleSaveDraft}
               disabled={saving}
-              className="px-6 py-2.5 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-50"
+              className="px-6 py-2.5 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Order'}
             </button>
