@@ -38,13 +38,15 @@ export default async function ComponentsPage(props: {params: Promise<{workspaceS
           </p>
         </div>
         
-        {/* Tab/Link to Flashings */}
-        <Link
-          href={`/${workspaceSlug}/flashings`}
-          className="px-4 py-2 text-sm font-medium rounded-full transition text-slate-600 border-2 border-transparent pill-shimmer"
-        >
-          Flashings →
-        </Link>
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <Link
+            href={`/${workspaceSlug}/flashings`}
+            className="inline-flex items-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          >
+            + Create Flashing
+          </Link>
+        </div>
       </div>
       <ComponentList initialComponents={components} />
     </div>
