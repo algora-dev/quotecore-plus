@@ -5,7 +5,6 @@ import Link from 'next/link';
 import type { MaterialOrderTemplateRow, MaterialOrderRow } from '@/app/lib/types';
 import { TemplateManager } from './template-manager-new';
 import { OrderList } from './order-list';
-import { BackButton } from '@/app/components/BackButton';
 
 interface Props {
   workspaceSlug: string;
@@ -18,9 +17,6 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
 
   return (
     <div className="space-y-6">
-      {/* Back Button */}
-      <BackButton />
-      
       {/* Action Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Create Custom Order */}

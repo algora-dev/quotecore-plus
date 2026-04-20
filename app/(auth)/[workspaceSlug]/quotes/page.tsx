@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { QuotesList } from './QuotesList';
+import { BackButton } from '@/app/components/BackButton';
 
 export default async function QuotesPage({
   params,
@@ -19,6 +20,8 @@ export default async function QuotesPage({
 
   return (
     <section className="space-y-6">
+      <BackButton />
+      
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-semibold text-slate-900">Quotes</h1>
         <p className="text-base text-slate-600">Create and manage roofing quotes.</p>
