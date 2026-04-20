@@ -96,13 +96,13 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
             <div className="flex gap-3">
               <button
                 onClick={() => setSelectedQuote(null)}
-                className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors"
+                className="flex-1 px-4 py-2.5 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirm}
-                className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm"
+                className="flex-1 px-4 py-2.5 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm"
               >
                 Yes, Create Order
               </button>
