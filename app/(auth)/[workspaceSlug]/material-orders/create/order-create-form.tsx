@@ -6,6 +6,7 @@ import type { MaterialOrderTemplateRow, FlashingLibraryRow } from '@/app/lib/typ
 import { saveDraftOrder } from './order-actions';
 import type { QuoteData } from './quote-loader';
 import type { ExistingOrderData } from './order-loader';
+import { BackButton } from '@/app/components/BackButton';
 
 interface OrderCreateFormProps {
   templates: MaterialOrderTemplateRow[];
@@ -425,6 +426,11 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
   
   return (
     <div className="flex flex-col h-screen bg-slate-50">
+      {/* Back Button */}
+      <div className="px-6 pt-4">
+        <BackButton />
+      </div>
+      
       {/* Header Section */}
       <div className="flex-shrink-0">
         {headerExpanded ? (

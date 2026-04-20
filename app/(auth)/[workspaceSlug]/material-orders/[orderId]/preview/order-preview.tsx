@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { MaterialOrderRow, MaterialOrderLineRow, FlashingLibraryRow } from '@/app/lib/types';
 import { markOrderAsOrdered } from '../../order-list-actions';
+import { BackButton } from '@/app/components/BackButton';
 
 interface Props {
   order: MaterialOrderRow;
@@ -37,6 +38,11 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
 
   return (
     <div className="min-h-screen bg-slate-100">
+      {/* Back Button */}
+      <div className="bg-white px-6 pt-4">
+        <BackButton />
+      </div>
+      
       {/* Top Bar */}
       <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
         <div className="flex items-center gap-4">
