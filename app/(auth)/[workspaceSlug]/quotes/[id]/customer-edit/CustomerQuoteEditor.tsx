@@ -45,7 +45,6 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [isDirty, setIsDirty] = useState(false);
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState(!disableAutoSave);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -72,7 +71,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           const component = components.find(c => c.id === saved.quote_component_id);
           if (!component) return null; // Component was deleted
           
-          // Calculate amount WITH margins applied (if enabled)
+          // Calculate default amount WITH margins applied (if enabled)
           const baseMaterialCost = component.material_cost || 0;
           const baseLabourCost = component.labour_cost || 0;
           const materialMargin = includeMargins && quote.material_margin_enabled && quote.material_margin_percent 
@@ -81,7 +80,12 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           const labourMargin = includeMargins && quote.labor_margin_enabled && quote.labor_margin_percent 
             ? baseLabourCost * (quote.labor_margin_percent / 100) 
             : 0;
-          const amountWithMargins = baseMaterialCost + baseLabourCost + materialMargin + labourMargin;
+          const calculatedAmount = baseMaterialCost + baseLabourCost + materialMargin + labourMargin;
+          
+          // Use saved custom_amount if it exists AND differs from calculated (user override)
+          // Otherwise use calculated amount
+          const hasCustomAmount = saved.custom_amount != null && saved.custom_amount !== calculatedAmount;
+          const finalAmount = hasCustomAmount ? saved.custom_amount : calculatedAmount;
 
           return {
             id: component.id,
@@ -89,7 +93,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             componentId: component.id,
             roofAreaId: component.quote_roof_area_id || undefined,
             text: generateDefaultText(component),
-            amount: amountWithMargins,
+            amount: finalAmount,
             showPrice: saved.show_price ?? true,
             showUnits: saved.show_units ?? true,
             isVisible: saved.is_visible ?? true,
@@ -283,17 +287,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     }
   }, [quote.id, lines, companyName, companyAddress, companyPhone, companyEmail, companyLogoUrl, footerText, customSaveAction]);
 
-  // Auto-save effect (10 seconds after last change, only if dirty and enabled)
-  // Increased delay to prevent race conditions with rapid checkbox changes
-  useEffect(() => {
-    if (!autoSaveEnabled || !isDirty || lines.length === 0 || saving) return;
-    
-    const timer = setTimeout(() => {
-      handleSave();
-    }, 10000); // Increased from 3s to 10s
-
-    return () => clearTimeout(timer);
-  }, [autoSaveEnabled, isDirty, handleSave, saving]);
+  // Auto-save removed per user request
 
   // Group lines by roof area
   const linesByArea = lines.reduce((acc, line) => {
@@ -343,26 +337,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 ))}
               </select>
             )}
-            {!disableAutoSave && (
-              <>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="autoSave"
-                    checked={autoSaveEnabled}
-                    onChange={(e) => setAutoSaveEnabled(e.target.checked)}
-                    className="w-4 h-4 text-orange-600 rounded"
-                  />
-                  <label htmlFor="autoSave" className="text-sm text-slate-700 cursor-pointer">
-                    Auto-save
-                  </label>
-                </div>
-                <div className="text-sm text-slate-500">
-                  {saving ? 'Saving...' : lastSaved ? `Last saved ${lastSaved.toLocaleTimeString()}` : 'Not saved yet'}
-                  {isDirty && !saving && ' (unsaved changes)'}
-                </div>
-              </>
-            )}
+            <div className="text-sm text-slate-500">
+              {saving ? 'Saving...' : lastSaved ? `Last saved ${lastSaved.toLocaleTimeString()}` : 'Not saved yet'}
+              {isDirty && !saving && ' (unsaved changes)'}
+            </div>
           </div>
         </div>
 
