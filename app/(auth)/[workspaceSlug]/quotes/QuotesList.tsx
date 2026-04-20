@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { deleteQuote } from './actions';
 import { useRouter } from 'next/navigation';
+import { BackButton } from '@/app/components/BackButton';
 
 type Quote = {
   id: string;
@@ -61,6 +62,9 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
 
   return (
     <>
+      {/* Back Button */}
+      <BackButton />
+      
       {/* Search */}
       <div className="relative max-w-md">
         <input

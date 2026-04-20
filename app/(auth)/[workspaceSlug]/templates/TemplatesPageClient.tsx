@@ -6,6 +6,7 @@ import type { CustomerQuoteTemplateRow, TemplateRow } from '@/app/lib/types';
 import { deleteTemplate, deleteCustomerQuoteTemplate } from './actions';
 import { ViewCustomerTemplateModal } from './ViewCustomerTemplateModal';
 import { EditCustomerTemplateModal } from './EditCustomerTemplateModal';
+import { BackButton } from '@/app/components/BackButton';
 
 interface Props {
   workspaceSlug: string;
@@ -66,6 +67,9 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-6xl mx-auto p-6 space-y-6">
+        {/* Back Button */}
+        <BackButton />
+        
         {/* Header */}
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Templates</h1>
