@@ -993,7 +993,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
                 type="button"
                 onClick={() => window.open(`../material-orders/${existingOrder.order.id}/preview`, '_blank')}
                 disabled={saving}
-                className="px-6 py-2.5 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                className="px-6 py-2.5 text-sm font-medium rounded-full bg-slate-900 text-white hover:shadow-[0_0_15px_rgba(255,107,53,0.5)] hover:bg-slate-800 transition-all disabled:opacity-50"
               >
                 Preview
               </button>

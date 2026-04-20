@@ -58,20 +58,20 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
             <button
               onClick={handleMarkAsOrdered}
               disabled={markingOrdered}
-              className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-full hover:bg-green-700 disabled:opacity-50"
             >
               {markingOrdered ? 'Updating...' : 'Mark as Ordered'}
             </button>
           )}
           <Link
             href={`/${workspaceSlug}/material-orders/create?orderId=${order.id}`}
-            className="px-4 py-2 text-sm font-medium bg-[#FF6B35] text-white rounded-lg hover:bg-orange-600"
+            className="px-4 py-2 text-sm font-medium bg-[#FF6B35] text-white rounded-full hover:bg-orange-600"
           >
             Edit Order
           </Link>
           <button
             onClick={() => window.print()}
-            className="px-4 py-2 text-sm font-medium bg-slate-700 text-white rounded-lg hover:bg-slate-800"
+            className="px-4 py-2 text-sm font-medium bg-slate-700 text-white rounded-full hover:bg-slate-800"
           >
             Print / Save PDF
           </button>
