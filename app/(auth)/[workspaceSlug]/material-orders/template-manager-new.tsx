@@ -177,7 +177,7 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
               <p className="text-slate-500 mb-4">No templates yet</p>
               <button
                 onClick={() => setShowForm(true)}
-                className="px-4 py-2 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors"
+                className="px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors"
               >
                 Create First Template
               </button>
@@ -207,13 +207,13 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
                     <div className="flex gap-2 ml-4">
                       <button
                         onClick={() => setEditingTemplate(template)}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors"
+                        className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(template.id, template.name)}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                        className="px-3 py-1.5 text-xs font-medium rounded-full border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
                       >
                         Delete
                       </button>
@@ -231,7 +231,7 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
             <p className="text-sm text-slate-600">{templates.length} template{templates.length !== 1 ? 's' : ''}</p>
             <button
               onClick={() => setShowForm(true)}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors"
+              className="px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors"
             >
               Create Template
             </button>
