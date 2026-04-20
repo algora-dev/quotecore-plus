@@ -827,15 +827,9 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
               <div className="p-8">
                 {/* Order Header */}
                 <div className="mb-6 pb-6 border-b-2 border-slate-300">
-                  {/* Logo Row - Above everything */}
-                  {logoUrl && (
-                    <div className="flex justify-end mb-3">
-                      <img src={logoUrl} alt="Logo" className="h-16 object-contain" />
-                    </div>
-                  )}
-                  
-                  <div className="grid grid-cols-2 gap-8">
-                    {/* Left - To */}
+                  {/* 3-Column Header Layout */}
+                  <div className="grid grid-cols-3 gap-8">
+                    {/* Column 1: TO section (left-aligned) */}
                     <div className="space-y-1">
                       <p className="text-xs font-semibold text-slate-500 uppercase">To:</p>
                       <p className="text-sm font-medium text-slate-900">{toSupplier || 'Not set'}</p>
@@ -869,21 +863,34 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
                       )}
                     </div>
                     
-                    {/* Right - From */}
-                    <div className="space-y-1 text-right">
-                      <p className="text-xs font-semibold text-slate-500 uppercase">From:</p>
-                      <p className="text-sm font-medium text-slate-900">{fromCompany || 'Not set'}</p>
-                      {contactPerson && (
-                        <p className="text-xs text-slate-600">{contactPerson}</p>
+                    {/* Column 2: Spacer (breathing room) */}
+                    <div></div>
+                    
+                    {/* Column 3: Logo + FROM section (left-aligned) */}
+                    <div className="space-y-3">
+                      {/* Logo pinned to top, max height */}
+                      {logoUrl && (
+                        <div className="flex items-start">
+                          <img src={logoUrl} alt="Logo" className="max-h-16 max-w-full object-contain" />
+                        </div>
                       )}
-                      {contactDetails && (
-                        <p className="text-xs text-slate-600">{contactDetails}</p>
-                      )}
-                      {orderDate && (
-                        <p className="text-xs text-slate-600 mt-2">
-                          <span className="font-medium">Order Date:</span> {new Date(orderDate).toLocaleDateString()}
-                        </p>
-                      )}
+                      
+                      {/* FROM section - left-aligned */}
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-slate-500 uppercase">From:</p>
+                        <p className="text-sm font-medium text-slate-900">{fromCompany || 'Not set'}</p>
+                        {contactPerson && (
+                          <p className="text-xs text-slate-600">{contactPerson}</p>
+                        )}
+                        {contactDetails && (
+                          <p className="text-xs text-slate-600">{contactDetails}</p>
+                        )}
+                        {orderDate && (
+                          <p className="text-xs text-slate-600 mt-2">
+                            <span className="font-medium">Order Date:</span> {new Date(orderDate).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                   

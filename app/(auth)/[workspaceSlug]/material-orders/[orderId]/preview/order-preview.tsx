@@ -86,9 +86,9 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
           <div className="absolute top-2 right-4 text-xs text-slate-400">Page 1</div>
           
           <div className="p-[15mm] h-full flex flex-col">
-            {/* Header - Two Column Layout */}
-            <div className="grid grid-cols-2 gap-12 mb-6 pb-6 border-b-2 border-slate-200">
-              {/* Left Column: TO Section */}
+            {/* Header - Three Column Layout */}
+            <div className="grid grid-cols-3 gap-8 mb-6 pb-6 border-b-2 border-slate-200">
+              {/* Column 1: TO Section (left-aligned) */}
               <div className="space-y-3 text-sm">
                 <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">TO:</h2>
                 {order.to_supplier && <p className="font-semibold text-slate-900">{order.to_supplier}</p>}
@@ -122,22 +122,30 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
                 )}
               </div>
 
-              {/* Right Column: FROM Section */}
-              <div className="text-right space-y-2 text-sm">
+              {/* Column 2: Spacer (breathing room) */}
+              <div></div>
+
+              {/* Column 3: Logo + FROM Section (left-aligned) */}
+              <div className="space-y-3 text-sm">
+                {/* Logo pinned to top, max height */}
                 {order.logo_url && (
-                  <div className="mb-4 flex justify-end">
-                    <img src={order.logo_url} alt="Company Logo" className="h-16 object-contain" />
+                  <div className="flex items-start mb-4">
+                    <img src={order.logo_url} alt="Company Logo" className="max-h-16 max-w-full object-contain" />
                   </div>
                 )}
-                <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">FROM:</h2>
-                {order.from_company && <p className="font-semibold text-slate-900">{order.from_company}</p>}
-                {order.contact_person && <p className="text-slate-700">{order.contact_person}</p>}
-                {order.contact_details && <p className="text-slate-700">{order.contact_details}</p>}
-                {order.order_date && (
-                  <p className="text-slate-700">
-                    <span className="font-medium">Order Date:</span> {new Date(order.order_date).toLocaleDateString()}
-                  </p>
-                )}
+                
+                {/* FROM section - left-aligned */}
+                <div className="space-y-2">
+                  <h2 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">FROM:</h2>
+                  {order.from_company && <p className="font-semibold text-slate-900">{order.from_company}</p>}
+                  {order.contact_person && <p className="text-slate-700">{order.contact_person}</p>}
+                  {order.contact_details && <p className="text-slate-700">{order.contact_details}</p>}
+                  {order.order_date && (
+                    <p className="text-slate-700">
+                      <span className="font-medium">Order Date:</span> {new Date(order.order_date).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
