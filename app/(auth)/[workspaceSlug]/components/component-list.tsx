@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { createComponent, updateComponent, deleteComponent } from './actions';
 import type {
   ComponentLibraryRow,
@@ -33,7 +34,7 @@ const PITCH_LABELS: Record<PitchType, string> = {
   valley_hip: 'Valley/Hip Pitch',
 };
 
-export function ComponentList({ initialComponents }: { initialComponents: ComponentLibraryRow[] }) {
+export function ComponentList({ initialComponents, workspaceSlug }: { initialComponents: ComponentLibraryRow[], workspaceSlug: string }) {
   const [components, setComponents] = useState(initialComponents);
   const [flashings, setFlashings] = useState<FlashingLibraryRow[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -178,6 +179,35 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
 
   return (
     <div>
+      {/* Header with title and action buttons */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex-1">
+          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+            Component Library
+          </h1>
+          <p className="text-sm text-zinc-500 mt-1">
+            Master list of reusable components and extras for your templates and quotes.
+          </p>
+        </div>
+        
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          >
+            + Add Component
+          </button>
+          <Link
+            href={`/${workspaceSlug}/flashings`}
+            className="inline-flex items-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          >
+            + Create Flashing
+          </Link>
+        </div>
+      </div>
+      
+      {/* Filter tabs */}
       <div className="flex gap-2 mb-4">
         {(['all', 'main', 'extra'] as const).map((f) => (
           <button
@@ -192,12 +222,6 @@ export function ComponentList({ initialComponents }: { initialComponents: Compon
             {f === 'all' ? 'All' : f === 'main' ? 'Main Components' : 'Extras'}
           </button>
         ))}
-        <button
-          onClick={() => setShowForm(true)}
-          className="ml-auto px-4 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-        >
-          + Add Component
-        </button>
       </div>
 
       {showForm && (

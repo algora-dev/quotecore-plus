@@ -28,27 +28,7 @@ export default async function ComponentsPage(props: {params: Promise<{workspaceS
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-            Component Library
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Master list of reusable components and extras for your templates and quotes.
-          </p>
-        </div>
-        
-        {/* Action Buttons */}
-        <div className="flex gap-2">
-          <Link
-            href={`/${workspaceSlug}/flashings`}
-            className="inline-flex items-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-          >
-            + Create Flashing
-          </Link>
-        </div>
-      </div>
-      <ComponentList initialComponents={components} />
+      <ComponentList initialComponents={components} workspaceSlug={workspaceSlug} />
     </div>
   );
 }
