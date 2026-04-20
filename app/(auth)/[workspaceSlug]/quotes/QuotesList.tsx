@@ -111,6 +111,12 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
           >
             Confirmed ({confirmed.length})
           </button>
+          <Link
+            href={`/${workspaceSlug}/templates`}
+            className="px-4 py-2 text-sm font-medium rounded-full transition text-slate-500 hover:text-slate-700"
+          >
+            Templates
+          </Link>
         </div>
         
         <Link
