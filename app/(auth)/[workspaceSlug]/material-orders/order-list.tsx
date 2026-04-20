@@ -81,16 +81,16 @@ export function OrderList({ orders, workspaceSlug }: Props) {
                 {new Date(order.created_at).toLocaleDateString()}
               </td>
               <td className="py-3 px-4 text-right">
-                <div className="flex items-center justify-end gap-3">
+                <div className="flex items-center justify-end gap-2">
                   <Link
                     href={`/${workspaceSlug}/material-orders/${order.id}/preview`}
-                    className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                    className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white pill-shimmer"
                   >
                     Preview
                   </Link>
                   <Link
                     href={`/${workspaceSlug}/material-orders/create?orderId=${order.id}`}
-                    className="text-sm font-medium text-[#FF6B35] hover:text-orange-600"
+                    className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white pill-shimmer"
                   >
                     Edit
                   </Link>
@@ -98,7 +98,7 @@ export function OrderList({ orders, workspaceSlug }: Props) {
                     type="button"
                     onClick={() => handleDelete(order.id, order.order_number)}
                     disabled={deleting === order.id}
-                    className="text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-50"
+                    className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-red-300 bg-white text-red-600 hover:bg-red-50 disabled:opacity-50"
                   >
                     {deleting === order.id ? 'Deleting...' : 'Delete'}
                   </button>

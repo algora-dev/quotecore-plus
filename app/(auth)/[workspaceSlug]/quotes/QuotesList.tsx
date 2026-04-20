@@ -156,13 +156,13 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
                   <>
                     <Link
                       href={`/${workspaceSlug}/quotes/${q.id}`}
-                      className="px-3 py-1 text-sm rounded-full border border-slate-300 bg-white hover:bg-slate-50"
+                      className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white pill-shimmer"
                     >
                       Edit
                     </Link>
                     <button
                       onClick={() => setDeleteId(q.id)}
-                      className="px-3 py-1 text-sm rounded-full border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+                      className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-red-300 bg-white text-red-600 hover:bg-red-50"
                     >
                       Delete
                     </button>
@@ -174,13 +174,13 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
                   <>
                     <Link
                       href={`/${workspaceSlug}/quotes/${q.id}/summary`}
-                      className="px-3 py-1 text-sm rounded-full border border-slate-300 bg-white hover:bg-slate-50"
+                      className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white pill-shimmer"
                     >
                       View
                     </Link>
                     <button
                       onClick={() => setDeleteId(q.id)}
-                      className="px-3 py-1 text-sm rounded-full border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+                      className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-red-300 bg-white text-red-600 hover:bg-red-50"
                     >
                       Delete
                     </button>
