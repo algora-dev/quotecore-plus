@@ -14,6 +14,7 @@ import type {
 } from '@/app/lib/types';
 import { unitForMeasurement, wasteAmountSuffix } from '@/app/lib/types';
 import { loadFlashingLibrary } from '../flashings/actions';
+import { BackButton } from '@/app/components/BackButton';
 
 const MEASUREMENT_LABELS: Record<MeasurementType, string> = {
   area: 'Area (m²)',
@@ -179,6 +180,9 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
 
   return (
     <div>
+      {/* Back Button */}
+      <BackButton />
+      
       {/* Header with title */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
