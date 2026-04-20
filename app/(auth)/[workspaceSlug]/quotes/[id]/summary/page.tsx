@@ -25,6 +25,16 @@ export default async function QuoteSummaryPage({
   
   const supabase = await createSupabaseServerClient();
   
+  // Load custom lines from customer_quote_lines
+  const { data: customLines } = await supabase
+    .from('customer_quote_lines')
+    .select('*')
+    .eq('quote_id', id)
+    .eq('line_type', 'custom')
+    .eq('is_visible', true)
+    .eq('include_in_total', true)
+    .order('sort_order', { ascending: true });
+  
   // Load company default currency
   const { data: company } = await supabase
     .from('companies')
@@ -83,6 +93,14 @@ export default async function QuoteSummaryPage({
     isWasteOverridden: c.is_waste_overridden, isPitchOverridden: c.is_pitch_overridden, isCustomerVisible: c.is_customer_visible, pricingUnit: c.pricing_unit ?? undefined,
   }));
   const totals = computeQuoteTotals(engineComps, { materialMarginPct: quote.material_margin_percent ?? 0, labourMarginPct: quote.labor_margin_percent ?? 0, taxRate: quote.tax_rate });
+  
+  // Calculate custom lines total
+  const customLinesTotal = (customLines || []).reduce((sum, line) => sum + (line.custom_amount || 0), 0);
+  
+  // Adjust totals to include custom lines
+  const adjustedSubtotal = totals.subtotalWithMargins + customLinesTotal;
+  const adjustedTax = adjustedSubtotal * (quote.tax_rate / 100);
+  const adjustedGrandTotal = adjustedSubtotal + adjustedTax;
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 space-y-6">
@@ -202,13 +220,33 @@ export default async function QuoteSummaryPage({
           </div>
         )}
 
+        {/* Custom Extra Items */}
+        {customLines && customLines.length > 0 && (
+          <div>
+            <h3 className="font-semibold text-slate-900 mb-4">Custom Extra Items</h3>
+            <table className="w-full text-sm">
+              <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-300">
+                <th className="pb-2 font-medium">Description</th>
+                <th className="pb-2 text-right font-medium">Amount</th>
+              </tr></thead>
+              <tbody>{customLines.map(line => (
+                <tr key={line.id} className="border-b border-slate-100">
+                  <td className="py-3">{line.custom_text}</td>
+                  <td className="py-3 text-right font-medium">{formatCurrency(line.custom_amount || 0, effectiveCurrency)}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        )}
+
         <div className="pt-6 border-t border-slate-300 space-y-4">
           <div className="flex justify-between text-base"><span className="text-slate-900">Total Materials</span><span className="text-slate-900 text-right">{formatCurrency(totals.totalMaterials, effectiveCurrency)}</span></div>
           <div className="flex justify-between text-base"><span className="text-slate-900">Total Labour</span><span className="text-slate-900 text-right">{formatCurrency(totals.totalLabour, effectiveCurrency)}</span></div>
           {(totals.materialMargin > 0 || totals.labourMargin > 0) && <div className="flex justify-between text-base text-slate-500"><span>Margins</span><span className="text-right">+{formatCurrency(totals.materialMargin + totals.labourMargin, effectiveCurrency)}</span></div>}
-          <div className="flex justify-between text-base border-t border-slate-300 pt-4"><span className="text-slate-900">Subtotal</span><span className="text-slate-900 text-right">{formatCurrency(totals.subtotalWithMargins, effectiveCurrency)}</span></div>
-          {totals.tax > 0 && <div className="flex justify-between text-base"><span className="text-slate-900">Tax ({quote.tax_rate}%)</span><span className="text-slate-900 text-right">{formatCurrency(totals.tax, effectiveCurrency)}</span></div>}
-          <div className="flex justify-between text-xl font-bold border-t border-slate-300 pt-4"><span className="text-slate-900">Grand Total</span><span className="text-slate-900 text-right">{formatCurrency(totals.grandTotal, effectiveCurrency)}</span></div>
+          {customLinesTotal > 0 && <div className="flex justify-between text-base"><span className="text-slate-900">Custom Items</span><span className="text-slate-900 text-right">{formatCurrency(customLinesTotal, effectiveCurrency)}</span></div>}
+          <div className="flex justify-between text-base border-t border-slate-300 pt-4"><span className="text-slate-900">Subtotal</span><span className="text-slate-900 text-right">{formatCurrency(adjustedSubtotal, effectiveCurrency)}</span></div>
+          {adjustedTax > 0 && <div className="flex justify-between text-base"><span className="text-slate-900">Tax ({quote.tax_rate}%)</span><span className="text-slate-900 text-right">{formatCurrency(adjustedTax, effectiveCurrency)}</span></div>}
+          <div className="flex justify-between text-xl font-bold border-t border-slate-300 pt-4"><span className="text-slate-900">Grand Total</span><span className="text-slate-900 text-right">{formatCurrency(adjustedGrandTotal, effectiveCurrency)}</span></div>
         </div>
 
         {/* Files & Documents */}
