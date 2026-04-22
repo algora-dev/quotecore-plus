@@ -66,41 +66,6 @@ export default async function CompanySettingsPage({
           </div>
         </div>
 
-        {/* Quick Links */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Quick Links</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Link
-              href={`/${workspaceSlug}/templates?tab=email`}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl border border-slate-200 hover:border-orange-300 hover:bg-orange-50/50 transition text-center"
-            >
-              <span className="text-2xl">📧</span>
-              <span className="text-sm font-medium text-slate-700">Email Templates</span>
-            </Link>
-            <Link
-              href={`/${workspaceSlug}/templates`}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl border border-slate-200 hover:border-orange-300 hover:bg-orange-50/50 transition text-center"
-            >
-              <span className="text-2xl">📋</span>
-              <span className="text-sm font-medium text-slate-700">Quote Templates</span>
-            </Link>
-            <Link
-              href={`/${workspaceSlug}/flashings`}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl border border-slate-200 hover:border-orange-300 hover:bg-orange-50/50 transition text-center"
-            >
-              <span className="text-2xl">🔧</span>
-              <span className="text-sm font-medium text-slate-700">Flashings</span>
-            </Link>
-            <Link
-              href={`/${workspaceSlug}/components`}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl border border-slate-200 hover:border-orange-300 hover:bg-orange-50/50 transition text-center"
-            >
-              <span className="text-2xl">🧱</span>
-              <span className="text-sm font-medium text-slate-700">Components</span>
-            </Link>
-          </div>
-        </div>
-
         {/* Company & Preferences */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
           <CompanySettingsForm
@@ -153,6 +118,37 @@ export default async function CompanySettingsPage({
             <p className="text-xs text-slate-400">
               Subscription plans and billing will be available soon
             </p>
+          </div>
+        </div>
+
+        {/* Quick Links */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">Quick Links</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Link
+              href={`/${workspaceSlug}/templates?tab=email`}
+              className="px-4 py-2.5 text-sm font-medium text-center rounded-full border border-slate-300 hover:border-orange-300 hover:bg-orange-50 transition"
+            >
+              Email Templates
+            </Link>
+            <Link
+              href={`/${workspaceSlug}/templates`}
+              className="px-4 py-2.5 text-sm font-medium text-center rounded-full border border-slate-300 hover:border-orange-300 hover:bg-orange-50 transition"
+            >
+              Quote Templates
+            </Link>
+            <Link
+              href={`/${workspaceSlug}/flashings`}
+              className="px-4 py-2.5 text-sm font-medium text-center rounded-full border border-slate-300 hover:border-orange-300 hover:bg-orange-50 transition"
+            >
+              Flashings
+            </Link>
+            <Link
+              href={`/${workspaceSlug}/components`}
+              className="px-4 py-2.5 text-sm font-medium text-center rounded-full border border-slate-300 hover:border-orange-300 hover:bg-orange-50 transition"
+            >
+              Components
+            </Link>
           </div>
         </div>
       </div>
