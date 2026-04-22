@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { LogoutButton } from '@/app/components/auth/LogoutButton';
-import { LanguageSwitcher } from '@/app/components/auth/LanguageSwitcher';
+
 import { WorkspaceNav } from '@/app/components/workspace/WorkspaceNav';
 import { AlertBell } from '@/app/components/alerts/AlertBell';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
@@ -25,7 +25,6 @@ export default async function WorkspaceLayout({
   }
 
   const workspaceLabel = company.name ? company.name.slice(0, 10) : 'Workspace';
-  const languageLabel = (company.default_language ?? 'en').toUpperCase();
 
   // Load alerts for bell
   const supabase = await createSupabaseServerClient();
@@ -47,7 +46,6 @@ export default async function WorkspaceLayout({
               <img src="/logo.png" alt="QuoteCore" className="h-11" />
             </Link>
             <div className="flex items-center gap-3">
-              <LanguageSwitcher currentLanguage={languageLabel} />
               <AlertBell
                 initialAlerts={alerts || []}
                 initialUnreadCount={unreadCount}
