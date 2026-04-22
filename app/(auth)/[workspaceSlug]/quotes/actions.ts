@@ -52,6 +52,32 @@ export async function createQuoteFromTemplate(templateId: string, customerName: 
   redirect(`/${company.slug}/quotes/${quote.id}`);
 }
 
+const VALID_JOB_STATUSES = [
+  'unsent', 'sent', 'accepted', 'declined', 'deposit_paid',
+  'materials_ordered', 'install', 'invoice_sent', 'invoice_paid', 'finished',
+] as const;
+
+export type JobStatus = typeof VALID_JOB_STATUSES[number];
+
+export async function updateQuoteJobStatus(quoteId: string, jobStatus: JobStatus) {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  if (!VALID_JOB_STATUSES.includes(jobStatus)) {
+    throw new Error('Invalid job status');
+  }
+
+  const { error } = await supabase
+    .from('quotes')
+    .update({ job_status: jobStatus })
+    .eq('id', quoteId)
+    .eq('company_id', profile.company_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath('/');
+}
+
 export async function createBlankQuote(customerName: string, jobReference?: string | null) {
   const { profile, company } = await loadCompanyContext();
   console.log('createBlankQuote - company.default_measurement_system:', company.default_measurement_system);

@@ -1,7 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { deleteQuote } from './actions';
+import { deleteQuote, updateQuoteJobStatus } from './actions';
+import type { JobStatus } from './actions';
 import { useRouter } from 'next/navigation';
 
 type Quote = {
@@ -11,11 +12,107 @@ type Quote = {
   status: string;
   quote_number: number | null;
   created_at: string;
+  job_status: string | null;
 };
 
 interface Props {
   quotes: Quote[];
   workspaceSlug: string;
+}
+
+const JOB_STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; ring: string }> = {
+  unsent:            { label: 'Unsent',            bg: 'bg-slate-100',   text: 'text-slate-600',   ring: 'ring-slate-300' },
+  sent:              { label: 'Sent',              bg: 'bg-orange-100',  text: 'text-orange-700',  ring: 'ring-orange-300' },
+  accepted:          { label: 'Accepted',          bg: 'bg-emerald-100', text: 'text-emerald-700', ring: 'ring-emerald-300' },
+  declined:          { label: 'Declined',          bg: 'bg-red-100',     text: 'text-red-700',     ring: 'ring-red-300' },
+  deposit_paid:      { label: 'Deposit Paid',      bg: 'bg-emerald-100', text: 'text-emerald-700', ring: 'ring-emerald-300' },
+  materials_ordered: { label: 'Materials Ordered', bg: 'bg-blue-100',    text: 'text-blue-700',    ring: 'ring-blue-300' },
+  install:           { label: 'Install',           bg: 'bg-blue-100',    text: 'text-blue-700',    ring: 'ring-blue-300' },
+  invoice_sent:      { label: 'Invoice Sent',      bg: 'bg-orange-100',  text: 'text-orange-700',  ring: 'ring-orange-300' },
+  invoice_paid:      { label: 'Invoice Paid',      bg: 'bg-emerald-100', text: 'text-emerald-700', ring: 'ring-emerald-300' },
+  finished:          { label: 'Finished',          bg: 'bg-emerald-100', text: 'text-emerald-700', ring: 'ring-emerald-300' },
+};
+
+const JOB_STATUS_ORDER: string[] = [
+  'unsent', 'sent', 'accepted', 'declined', 'deposit_paid',
+  'materials_ordered', 'install', 'invoice_sent', 'invoice_paid', 'finished',
+];
+
+function JobStatusDropdown({ quoteId, currentStatus }: { quoteId: string; currentStatus: string }) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState(currentStatus);
+  const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  const config = JOB_STATUS_CONFIG[status] || JOB_STATUS_CONFIG.unsent;
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  async function handleSelect(newStatus: string) {
+    if (newStatus === status) {
+      setOpen(false);
+      return;
+    }
+    setSaving(true);
+    setOpen(false);
+    try {
+      await updateQuoteJobStatus(quoteId, newStatus as JobStatus);
+      setStatus(newStatus);
+      router.refresh();
+    } catch (err) {
+      console.error('Failed to update job status:', err);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        disabled={saving}
+        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.ring} ${saving ? 'opacity-50' : ''}`}
+      >
+        {saving ? '...' : config.label}
+        <svg className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+          {JOB_STATUS_ORDER.map((s) => {
+            const c = JOB_STATUS_CONFIG[s];
+            const isActive = s === status;
+            return (
+              <button
+                key={s}
+                onClick={() => handleSelect(s)}
+                className={`flex w-full items-center gap-2 px-3 py-1.5 text-xs transition hover:bg-slate-50 ${isActive ? 'font-semibold' : ''}`}
+              >
+                <span className={`inline-block w-2 h-2 rounded-full ${c.bg} ring-1 ring-inset ${c.ring}`} />
+                <span className={isActive ? c.text : 'text-slate-700'}>{c.label}</span>
+                {isActive && (
+                  <svg className="w-3 h-3 ml-auto text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function QuotesList({ quotes, workspaceSlug }: Props) {
@@ -28,9 +125,8 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
   const drafts = quotes.filter(q => q.status === 'draft');
   const confirmed = quotes
     .filter(q => q.status === 'confirmed' || q.status === 'sent' || q.status === 'accepted')
-    .sort((a, b) => (b.quote_number || 0) - (a.quote_number || 0)); // Sort by quote number desc
+    .sort((a, b) => (b.quote_number || 0) - (a.quote_number || 0));
   
-  // Filter by search query
   const filteredDrafts = drafts.filter(q => 
     q.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (q.job_name && q.job_name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -155,15 +251,20 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
               </div>
               
               <div className="flex items-center gap-2">
-                <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                  q.status === 'draft' ? 'bg-slate-100 text-slate-600' :
-                  q.status === 'sent' ? 'bg-orange-100 text-orange-700' :
-                  q.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' :
-                  q.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700' :
-                  'bg-slate-100 text-slate-600'
-                }`}>
-                  {q.status}
-                </span>
+                {/* Draft status pill (static) */}
+                {q.status === 'draft' && (
+                  <span className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-slate-100 text-slate-600">
+                    draft
+                  </span>
+                )}
+
+                {/* Confirmed: job status dropdown */}
+                {q.status !== 'draft' && (
+                  <JobStatusDropdown
+                    quoteId={q.id}
+                    currentStatus={q.job_status || 'unsent'}
+                  />
+                )}
 
                 {/* Draft actions */}
                 {q.status === 'draft' && (
@@ -228,7 +329,7 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setDeleteId(null)}
-                className="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50"
+                className="px-4 py-2 text-sm rounded-full border border-slate-300 hover:bg-slate-50"
                 disabled={deleting}
               >
                 Cancel
