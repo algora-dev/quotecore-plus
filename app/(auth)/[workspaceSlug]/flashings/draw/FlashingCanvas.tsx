@@ -2,11 +2,11 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Canvas, Line, Circle, IText, Rect, ActiveSelection, Object as FabricObject } from 'fabric';
+import { Canvas, Line, Circle, IText, Rect, ActiveSelection, Object as FabricObject, PencilBrush } from 'fabric';
 import { createFlashingFromCanvas, updateFlashingWithImage, loadFlashingById } from '../actions';
 import { AngleCalculatorModal } from './AngleCalculatorModal';
 
-type DrawMode = 'none' | 'line' | 'text' | 'edit' | 'adjustPoints';
+type DrawMode = 'none' | 'line' | 'text' | 'edit' | 'adjustPoints' | 'draw';
 type CanvasSize = 'small' | 'medium' | 'large';
 
 const CANVAS_SIZES = {
@@ -77,6 +77,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
+  const [pencilWidth, setPencilWidth] = useState<1 | 2 | 4>(2);
 
   // Refs
   const drawModeRef = useRef<DrawMode>('none');
@@ -571,6 +572,20 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       }
     });
 
+    // Make freehand paths selectable/movable/resizable after drawing
+    canvas.on('path:created', (e: any) => {
+      const path = e.path;
+      if (path) {
+        path.set({
+          selectable: true,
+          evented: true,
+          hasControls: true,
+          hasBorders: true,
+        });
+        canvas.renderAll();
+      }
+    });
+
     return () => {
       canvas.dispose();
       setCanvasReady(false);
@@ -713,13 +728,34 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     loadFlashing();
   }, [editMode, flashingId, canvasReady, flashingLoaded]); // Trigger when canvas becomes ready
 
+  // Sync pencil width when it changes
+  useEffect(() => {
+    if (fabricRef.current && drawMode === 'draw') {
+      const brush = fabricRef.current.freeDrawingBrush;
+      if (brush) {
+        brush.width = pencilWidth;
+      }
+    }
+  }, [pencilWidth, drawMode]);
+
   useEffect(() => {
     if (fabricRef.current) {
-      const cursor = (drawMode === 'line' || drawMode === 'text') ? 'crosshair' : 'default';
+      const cursor = (drawMode === 'line' || drawMode === 'text' || drawMode === 'draw') ? 'crosshair' : 'default';
       fabricRef.current.defaultCursor = cursor;
       fabricRef.current.hoverCursor = cursor;
       
       const canvas = fabricRef.current;
+      
+      // Handle freehand drawing mode
+      if (drawMode === 'draw') {
+        canvas.isDrawingMode = true;
+        const brush = new PencilBrush(canvas);
+        brush.width = pencilWidth;
+        brush.color = '#000000';
+        canvas.freeDrawingBrush = brush;
+      } else {
+        canvas.isDrawingMode = false;
+      }
       
       // Deselect everything when switching modes (UNLESS editing is locked from Select All)
       if (!editingLocked) {
@@ -1560,6 +1596,52 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         >
           Text
         </button>
+        <div className="relative">
+          <button
+            onClick={() => {
+              if (!editingLocked && !checkAdjustPointsExit()) {
+                setDrawMode('draw');
+              }
+            }}
+            disabled={editingLocked}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+              drawMode === 'draw' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
+            } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            Pencil
+          </button>
+          {drawMode === 'draw' && (
+            <div className="absolute top-full left-0 mt-1 flex gap-1 bg-white border border-slate-200 rounded-lg p-1.5 shadow-lg z-10">
+              <button
+                onClick={() => setPencilWidth(1)}
+                className={`w-8 h-8 flex items-center justify-center rounded transition ${
+                  pencilWidth === 1 ? 'bg-black text-white' : 'hover:bg-slate-100'
+                }`}
+                title="Thin"
+              >
+                <div className="w-3 border-t border-current" style={{ borderWidth: '1px' }} />
+              </button>
+              <button
+                onClick={() => setPencilWidth(2)}
+                className={`w-8 h-8 flex items-center justify-center rounded transition ${
+                  pencilWidth === 2 ? 'bg-black text-white' : 'hover:bg-slate-100'
+                }`}
+                title="Medium"
+              >
+                <div className="w-3 border-t-2 border-current" />
+              </button>
+              <button
+                onClick={() => setPencilWidth(4)}
+                className={`w-8 h-8 flex items-center justify-center rounded transition ${
+                  pencilWidth === 4 ? 'bg-black text-white' : 'hover:bg-slate-100'
+                }`}
+                title="Thick"
+              >
+                <div className="w-3 border-t-4 border-current" />
+              </button>
+            </div>
+          )}
+        </div>
         <button
           onClick={() => {
             if (!editingLocked && !checkAdjustPointsExit()) {
@@ -1777,6 +1859,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         <ul className="text-sm text-slate-700 space-y-1 grid grid-cols-2 gap-x-6">
           <li><strong>Line Tool:</strong> Click points to draw. Angles appear automatically after 3rd point.</li>
           <li><strong>Text Tool:</strong> Click to add text labels anywhere on the canvas.</li>
+          <li><strong>Pencil Tool:</strong> Freehand draw with 3 thickness options. Drawings are movable and resizable.</li>
           <li><strong>Select All:</strong> Ctrl+A to select and move entire drawing.</li>
           <li><strong>Sidebar:</strong> Click any measurement to highlight it on canvas.</li>
           <li><strong>Measurements:</strong> Appear as Length → Angle → Length → Angle...</li>
