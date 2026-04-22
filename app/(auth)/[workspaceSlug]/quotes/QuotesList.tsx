@@ -20,17 +20,17 @@ interface Props {
   workspaceSlug: string;
 }
 
-const JOB_STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; ring: string }> = {
-  unsent:            { label: 'Unsent',            bg: 'bg-slate-100',   text: 'text-slate-600',   ring: 'ring-slate-300' },
-  sent:              { label: 'Sent',              bg: 'bg-orange-100',  text: 'text-orange-700',  ring: 'ring-orange-300' },
-  accepted:          { label: 'Accepted',          bg: 'bg-emerald-100', text: 'text-emerald-700', ring: 'ring-emerald-300' },
-  declined:          { label: 'Declined',          bg: 'bg-red-100',     text: 'text-red-700',     ring: 'ring-red-300' },
-  deposit_paid:      { label: 'Deposit Paid',      bg: 'bg-emerald-100', text: 'text-emerald-700', ring: 'ring-emerald-300' },
-  materials_ordered: { label: 'Materials Ordered', bg: 'bg-blue-100',    text: 'text-blue-700',    ring: 'ring-blue-300' },
-  install:           { label: 'Install',           bg: 'bg-blue-100',    text: 'text-blue-700',    ring: 'ring-blue-300' },
-  invoice_sent:      { label: 'Invoice Sent',      bg: 'bg-orange-100',  text: 'text-orange-700',  ring: 'ring-orange-300' },
-  invoice_paid:      { label: 'Invoice Paid',      bg: 'bg-emerald-100', text: 'text-emerald-700', ring: 'ring-emerald-300' },
-  finished:          { label: 'Finished',          bg: 'bg-emerald-100', text: 'text-emerald-700', ring: 'ring-emerald-300' },
+const JOB_STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string }> = {
+  unsent:            { label: 'Unsent',            bg: 'bg-slate-50',    text: 'text-slate-600',   border: 'border-slate-300' },
+  sent:              { label: 'Sent',              bg: 'bg-orange-50',   text: 'text-orange-700',  border: 'border-orange-300' },
+  accepted:          { label: 'Accepted',          bg: 'bg-emerald-50',  text: 'text-emerald-700', border: 'border-emerald-300' },
+  declined:          { label: 'Declined',          bg: 'bg-red-50',      text: 'text-red-700',     border: 'border-red-300' },
+  deposit_paid:      { label: 'Deposit Paid',      bg: 'bg-emerald-50',  text: 'text-emerald-700', border: 'border-emerald-300' },
+  materials_ordered: { label: 'Materials Ordered', bg: 'bg-blue-50',     text: 'text-blue-700',    border: 'border-blue-300' },
+  install:           { label: 'Install',           bg: 'bg-blue-50',     text: 'text-blue-700',    border: 'border-blue-300' },
+  invoice_sent:      { label: 'Invoice Sent',      bg: 'bg-orange-50',   text: 'text-orange-700',  border: 'border-orange-300' },
+  invoice_paid:      { label: 'Invoice Paid',      bg: 'bg-emerald-50',  text: 'text-emerald-700', border: 'border-emerald-300' },
+  finished:          { label: 'Finished',          bg: 'bg-emerald-50',  text: 'text-emerald-700', border: 'border-emerald-300' },
 };
 
 const JOB_STATUS_ORDER: string[] = [
@@ -80,7 +80,7 @@ function JobStatusDropdown({ quoteId, currentStatus }: { quoteId: string; curren
       <button
         onClick={() => setOpen(!open)}
         disabled={saving}
-        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.ring} ${saving ? 'opacity-50' : ''}`}
+        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium border transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.border} ${saving ? 'opacity-50' : ''}`}
       >
         {saving ? '...' : config.label}
         <svg className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,7 +99,7 @@ function JobStatusDropdown({ quoteId, currentStatus }: { quoteId: string; curren
                 onClick={() => handleSelect(s)}
                 className={`flex w-full items-center gap-2 px-3 py-1.5 text-xs transition hover:bg-slate-50 ${isActive ? 'font-semibold' : ''}`}
               >
-                <span className={`inline-block w-2 h-2 rounded-full ${c.bg} ring-1 ring-inset ${c.ring}`} />
+                <span className={`inline-block w-2 h-2 rounded-full ${c.bg} border ${c.border}`} />
                 <span className={isActive ? c.text : 'text-slate-700'}>{c.label}</span>
                 {isActive && (
                   <svg className="w-3 h-3 ml-auto text-slate-400" fill="currentColor" viewBox="0 0 20 20">
