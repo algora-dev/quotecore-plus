@@ -3,6 +3,7 @@ import { CompanySettingsForm } from './CompanySettingsForm';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { BackButton } from '@/app/components/BackButton';
+import { PasswordSection } from './PasswordSection';
 
 export default async function CompanySettingsPage({
   params,
@@ -124,6 +125,7 @@ export default async function CompanySettingsPage({
             </div>
           </div>
           <div className="space-y-4">
+            <PasswordSection authProvider={authProvider} userEmail={user?.email || authUser?.email || ''} />
             <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
               <div>
                 <p className="text-sm font-medium text-slate-900">Two-Factor Authentication (2FA)</p>
@@ -133,17 +135,6 @@ export default async function CompanySettingsPage({
                 Coming Soon
               </span>
             </div>
-            {authProvider === 'email' && (
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                <div>
-                  <p className="text-sm font-medium text-slate-900">Password</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Change your account password</p>
-                </div>
-                <span className="px-3 py-1 text-xs font-medium rounded-full bg-slate-200 text-slate-600">
-                  Coming Soon
-                </span>
-              </div>
-            )}
           </div>
         </div>
 

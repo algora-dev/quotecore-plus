@@ -52,6 +52,9 @@ export async function completeOnboarding(companyId: string, data: OnboardingData
 export async function completeGoogleOnboarding(formData: FormData) {
   const companyName = String(formData.get('companyName') || '').trim();
   const fullName = String(formData.get('fullName') || '').trim();
+  const currency = String(formData.get('currency') || 'NZD').trim();
+  const language = String(formData.get('language') || 'en').trim();
+  const measurement = String(formData.get('measurement') || 'metric').trim();
 
   if (!companyName || !fullName) {
     throw new Error('Company name and your name are required.');
@@ -75,7 +78,9 @@ export async function completeGoogleOnboarding(formData: FormData) {
     .insert({
       name: companyName,
       slug: companySlug,
-      default_currency: 'NZD',
+      default_currency: currency,
+      default_language: language,
+      default_measurement_system: measurement,
       default_tax_rate: 15.0,
       onboarding_completed_at: new Date().toISOString(),
     })

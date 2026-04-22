@@ -29,6 +29,7 @@ export default async function OnboardingPage() {
             </div>
             <GoogleOnboardingForm 
               defaultName={authUser.user_metadata?.full_name || authUser.user_metadata?.name || ''}
+              defaultEmail={authUser.email || ''}
             />
           </div>
         </div>
@@ -46,7 +47,7 @@ export default async function OnboardingPage() {
               <h1 className="text-2xl font-bold text-slate-900">Set Up Your Company</h1>
               <p className="text-slate-600 text-sm">We need a company name to get you started.</p>
             </div>
-            <GoogleOnboardingForm defaultName="" />
+            <GoogleOnboardingForm defaultName="" defaultEmail={authUser.email || ''} />
           </div>
         </div>
       </div>
