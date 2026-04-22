@@ -5,7 +5,9 @@ import { redirect } from 'next/navigation';
 import { LogoutButton } from '@/app/components/auth/LogoutButton';
 import { LanguageSwitcher } from '@/app/components/auth/LanguageSwitcher';
 import { WorkspaceNav } from '@/app/components/workspace/WorkspaceNav';
+import { AlertBell } from '@/app/components/alerts/AlertBell';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
+import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 
 export default async function WorkspaceLayout({
   children,
@@ -25,6 +27,17 @@ export default async function WorkspaceLayout({
   const workspaceLabel = company.name ? company.name.slice(0, 10) : 'Workspace';
   const languageLabel = (company.default_language ?? 'en').toUpperCase();
 
+  // Load alerts for bell
+  const supabase = await createSupabaseServerClient();
+  const { data: alerts } = await supabase
+    .from('alerts')
+    .select('id, alert_type, title, message, is_read, created_at, quote_id')
+    .eq('company_id', company.id)
+    .order('created_at', { ascending: false })
+    .limit(20);
+  
+  const unreadCount = (alerts || []).filter(a => !a.is_read).length;
+
   return (
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white shadow-sm">
@@ -35,6 +48,11 @@ export default async function WorkspaceLayout({
             </Link>
             <div className="flex items-center gap-3">
               <LanguageSwitcher currentLanguage={languageLabel} />
+              <AlertBell
+                initialAlerts={alerts || []}
+                initialUnreadCount={unreadCount}
+                workspaceSlug={slug}
+              />
               <Link
                 href={`/${slug}/settings`}
                 prefetch={false}

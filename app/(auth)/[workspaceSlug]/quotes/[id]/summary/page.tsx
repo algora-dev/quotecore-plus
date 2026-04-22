@@ -9,6 +9,7 @@ import { CurrencySelector } from './CurrencySelector';
 import { DownloadSummaryPDFButton } from './DownloadSummaryPDFButton';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
+import { SendQuoteButton } from './SendQuoteButton';
 
 export default async function QuoteSummaryPage({
   params,
@@ -36,6 +37,9 @@ export default async function QuoteSummaryPage({
   const customLines = (allCustomerLines || []).filter(
     line => line.line_type === 'custom' && line.is_visible && line.include_in_total
   );
+  
+  // Detect if customer quote has been saved (has any customer_quote_lines)
+  const hasCustomerQuote = (allCustomerLines || []).length > 0;
   
   // Build component override map (componentId -> custom_amount)
   const componentOverrides = new Map<string, number>();
@@ -186,6 +190,11 @@ export default async function QuoteSummaryPage({
         <Link href={`/${workspaceSlug}/quotes/${id}/labor`} className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">
           Labor Sheet
         </Link>
+        <SendQuoteButton
+          quoteId={id}
+          existingToken={quote.acceptance_token || null}
+          hasCustomerQuote={hasCustomerQuote}
+        />
       </div>
 
       <div data-pdf-content className="p-12 bg-white">

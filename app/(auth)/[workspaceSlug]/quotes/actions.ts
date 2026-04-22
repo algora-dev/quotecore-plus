@@ -52,6 +52,37 @@ export async function createQuoteFromTemplate(templateId: string, customerName: 
   redirect(`/${company.slug}/quotes/${quote.id}`);
 }
 
+export async function generateAcceptanceToken(quoteId: string): Promise<string> {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  // Check quote exists and belongs to company
+  const { data: quote } = await supabase
+    .from('quotes')
+    .select('id, acceptance_token, status')
+    .eq('id', quoteId)
+    .eq('company_id', profile.company_id)
+    .single();
+
+  if (!quote) throw new Error('Quote not found');
+  if (quote.status === 'draft') throw new Error('Cannot send draft quotes');
+
+  // Return existing token if already generated
+  if (quote.acceptance_token) return quote.acceptance_token;
+
+  // Generate new token
+  const token = crypto.randomUUID();
+  const { error } = await supabase
+    .from('quotes')
+    .update({ acceptance_token: token, job_status: 'sent' })
+    .eq('id', quoteId);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath('/');
+  return token;
+}
+
 const VALID_JOB_STATUSES = [
   'unsent', 'sent', 'accepted', 'declined', 'deposit_paid',
   'materials_ordered', 'install', 'invoice_sent', 'invoice_paid', 'finished',
