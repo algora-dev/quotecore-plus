@@ -116,7 +116,7 @@ function JobStatusDropdown({ quoteId, currentStatus }: { quoteId: string; curren
 }
 
 export function QuotesList({ quotes, workspaceSlug }: Props) {
-  const [activeTab, setActiveTab] = useState<'draft' | 'confirmed'>('draft');
+  const [activeTab, setActiveTab] = useState<'draft' | 'confirmed'>('confirmed');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
