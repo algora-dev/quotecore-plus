@@ -451,33 +451,71 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           console.error('[SaveTakeoff] Failed to upload full canvas image:', uploadError);
         }
         
-        // 2. Export LINES-ONLY (hide background image, white background)
+        // 2. Export LINES-ONLY (hide bg image + area fills, convert all to black)
         console.log('[SaveTakeoff] Exporting lines-only image...');
         try {
           const objects = canvas.getObjects();
-          // The background plan image is the first object (sent to back on load)
-          // Find it: it's a FabricImage that is not selectable
           const bgImage = objects.find((obj: any) => 
             obj.type === 'image' && !obj.selectable
           );
           
-          // Store original state
+          // Store original state for all objects
           const originalBg = canvas.backgroundColor;
+          const originalStates: { obj: any; fill: any; stroke: any; visible: boolean }[] = [];
           
-          // Hide background image and set white background
+          objects.forEach((obj: any) => {
+            originalStates.push({
+              obj,
+              fill: obj.fill,
+              stroke: obj.stroke,
+              visible: obj.visible !== false,
+            });
+          });
+          
+          // Hide background image
           if (bgImage) bgImage.set('visible', false);
           canvas.backgroundColor = '#ffffff';
+          
+          // Convert all drawable objects to black, remove area fills
+          objects.forEach((obj: any) => {
+            if (obj === bgImage) return;
+            
+            // Polygons: remove fill overlay, black stroke
+            if (obj.type === 'polygon') {
+              obj.set({ fill: 'transparent', stroke: '#000000' });
+            }
+            // Lines: black stroke
+            else if (obj.type === 'line') {
+              obj.set({ stroke: '#000000' });
+            }
+            // Circles (markers): black fill and stroke
+            else if (obj.type === 'circle') {
+              obj.set({ fill: '#000000', stroke: '#000000' });
+            }
+            // Triangles (arrow markers): black
+            else if (obj.type === 'triangle') {
+              obj.set({ fill: '#000000', stroke: '#000000' });
+            }
+            // Any other drawn object: try black
+            else if (obj !== bgImage) {
+              if (obj.stroke) obj.set({ stroke: '#000000' });
+              if (obj.fill && obj.fill !== 'transparent') obj.set({ fill: '#000000' });
+            }
+          });
+          
           canvas.renderAll();
           
-          // Export lines-only
+          // Export
           const linesDataUrl = canvas.toDataURL({
             format: 'png',
             quality: 0.9,
             multiplier: 1,
           });
           
-          // Restore original state
-          if (bgImage) bgImage.set('visible', true);
+          // Restore ALL original states
+          originalStates.forEach(({ obj, fill, stroke, visible }) => {
+            obj.set({ fill, stroke, visible });
+          });
           canvas.backgroundColor = originalBg as string;
           canvas.renderAll();
           
