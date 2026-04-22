@@ -13,7 +13,7 @@ export default async function AcceptQuotePage({
   // Load quote by acceptance token (public - no auth required)
   const { data: quote, error } = await supabase
     .from('quotes')
-    .select('id, customer_name, job_name, quote_number, company_id, currency, tax_rate, accepted_at, declined_at, acceptance_token')
+    .select('*')
     .eq('acceptance_token', token)
     .single();
 
@@ -59,7 +59,7 @@ export default async function AcceptQuotePage({
     );
   }
 
-  // Load company info for branding
+  // Load company info for currency
   const { data: company } = await supabase
     .from('companies')
     .select('name, default_currency')
@@ -70,114 +70,136 @@ export default async function AcceptQuotePage({
   const effectiveCurrency = getEffectiveCurrency(quote.currency, companyDefaultCurrency);
 
   // Load saved customer quote lines
-  const { data: customerLines } = await supabase
+  const { data: savedLines } = await supabase
     .from('customer_quote_lines')
     .select('*')
     .eq('quote_id', quote.id)
-    .eq('is_visible', true)
     .order('sort_order');
 
-  const visibleLines = customerLines || [];
-  const totalLines = visibleLines.filter(l => l.include_in_total);
-  const subtotal = totalLines.reduce((sum, l) => sum + (l.custom_amount || l.amount || 0), 0);
+  const allLines = savedLines || [];
+  const visibleLines = allLines.filter((l: any) => l.is_visible);
+  const subtotal = allLines.filter((l: any) => l.include_in_total).reduce((sum: number, l: any) => sum + (l.custom_amount || 0), 0);
   const tax = subtotal * ((quote.tax_rate || 0) / 100);
-  const grandTotal = subtotal + tax;
-
-  // Load company branding from quote
-  const { data: brandingQuote } = await supabase
-    .from('quotes')
-    .select('cq_company_name, cq_company_address, cq_company_phone, cq_company_email, cq_company_logo_url, cq_footer_text')
-    .eq('id', quote.id)
-    .single();
-
-  const branding = brandingQuote || {} as any;
+  const total = subtotal + tax;
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4">
-      <div className="max-w-2xl mx-auto space-y-6">
-        {/* Company Header */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-          <div className="flex items-start justify-between">
-            <div>
-              {branding.cq_company_logo_url && (
-                <img
-                  src={branding.cq_company_logo_url}
-                  alt="Company Logo"
-                  className="h-12 mb-3"
-                />
-              )}
-              <h2 className="text-lg font-semibold text-slate-900">
-                {branding.cq_company_name || company?.name || 'Company'}
-              </h2>
-              {branding.cq_company_address && (
-                <p className="text-sm text-slate-500">{branding.cq_company_address}</p>
-              )}
-              {branding.cq_company_phone && (
-                <p className="text-sm text-slate-500">{branding.cq_company_phone}</p>
-              )}
-              {branding.cq_company_email && (
-                <p className="text-sm text-slate-500">{branding.cq_company_email}</p>
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-4xl mx-auto p-8 space-y-6">
+        {/* Quote Document — exact same format as internal Customer Quote preview */}
+        <div className="bg-white rounded-xl border border-black p-12 space-y-8">
+          {/* Quote Header */}
+          <div className="border-b-2 border-black pb-6 mb-6">
+            {/* Logo (Top Right) */}
+            <div className="flex justify-end mb-6">
+              {quote.cq_company_logo_url ? (
+                <img src={quote.cq_company_logo_url} alt="Company Logo" className="h-16 object-contain" />
+              ) : (
+                <div className="w-32 h-16 border-2 border-dashed border-black rounded flex items-center justify-center bg-white">
+                  <span className="text-xs text-black">Logo</span>
+                </div>
               )}
             </div>
-            <div className="text-right">
-              <p className="text-sm font-medium text-slate-900">Quote #{quote.quote_number}</p>
-              <p className="text-sm text-slate-500">{quote.customer_name}</p>
-              {quote.job_name && <p className="text-xs text-slate-400">{quote.job_name}</p>}
-            </div>
-          </div>
-        </div>
 
-        {/* Quote Lines */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-          <h3 className="text-base font-semibold text-slate-900 mb-4">Quote Details</h3>
-          
-          {visibleLines.length > 0 ? (
-            <div className="space-y-2">
-              {visibleLines.map((line) => (
-                <div
-                  key={line.id}
-                  className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0"
-                >
-                  <span className="text-sm text-slate-700">
-                    {line.custom_text || line.label || 'Item'}
-                  </span>
-                  {line.include_in_total && (
-                    <span className="text-sm font-medium text-slate-900">
-                      {formatCurrency(line.custom_amount || line.amount || 0, effectiveCurrency)}
-                    </span>
+            {/* Quote Info + Company Details (Side by Side) */}
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-xl font-bold text-black mb-4">
+                  QUOTE #{quote.quote_number || 'DRAFT'}
+                </h1>
+                <div className="space-y-2">
+                  <p className="text-base text-black">
+                    <span className="font-semibold">Client:</span> {quote.customer_name}
+                  </p>
+                  {quote.job_name && (
+                    <p className="text-base text-black">
+                      <span className="font-semibold">Job:</span> {quote.job_name}
+                    </p>
+                  )}
+                  {quote.site_address && (
+                    <p className="text-base text-black">
+                      <span className="font-semibold">Site:</span> {quote.site_address}
+                    </p>
+                  )}
+                  <p className="text-base text-black">
+                    <span className="font-semibold">Date:</span> {new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' })}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Company Details */}
+              {(quote.cq_company_name || quote.cq_company_address || quote.cq_company_phone || quote.cq_company_email) && (
+                <div className="text-right space-y-1">
+                  {quote.cq_company_name && (
+                    <p className="font-semibold text-base text-black">{quote.cq_company_name}</p>
+                  )}
+                  {quote.cq_company_address && (
+                    <p className="text-sm text-black">{quote.cq_company_address}</p>
+                  )}
+                  {quote.cq_company_phone && (
+                    <p className="text-sm text-black">{quote.cq_company_phone}</p>
+                  )}
+                  {quote.cq_company_email && (
+                    <p className="text-sm text-black">{quote.cq_company_email}</p>
                   )}
                 </div>
-              ))}
+              )}
             </div>
-          ) : (
-            <p className="text-sm text-slate-400">No items listed.</p>
-          )}
+          </div>
+
+          {/* Line Items */}
+          <div className="space-y-3">
+            {visibleLines.length === 0 ? (
+              <p className="text-black italic text-center py-8">
+                No items in this quote.
+              </p>
+            ) : (
+              visibleLines.map((line: any) => (
+                <div
+                  key={line.id}
+                  className="flex items-start justify-between py-3 border-b border-black"
+                >
+                  <div className="flex-1">
+                    <p className="text-black">{line.custom_text}</p>
+                  </div>
+                  {line.show_price && (
+                    <div className="ml-4">
+                      <p className="text-black font-medium whitespace-nowrap">
+                        {formatCurrency(line.custom_amount || 0, effectiveCurrency)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
 
           {/* Totals */}
-          <div className="mt-6 pt-4 border-t border-slate-200 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Subtotal</span>
-              <span className="text-slate-900">{formatCurrency(subtotal, effectiveCurrency)}</span>
-            </div>
-            {tax > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Tax ({quote.tax_rate}%)</span>
-                <span className="text-slate-900">{formatCurrency(tax, effectiveCurrency)}</span>
+          {visibleLines.length > 0 && (
+            <div className="space-y-3 pt-4 border-t-2 border-black">
+              <div className="flex justify-between text-base">
+                <span className="text-black">Subtotal</span>
+                <span className="font-medium text-black">{formatCurrency(subtotal, effectiveCurrency)}</span>
               </div>
-            )}
-            <div className="flex justify-between text-lg font-bold pt-2 border-t border-slate-200">
-              <span className="text-slate-900">Total</span>
-              <span className="text-slate-900">{formatCurrency(grandTotal, effectiveCurrency)}</span>
+              {(quote.tax_rate || 0) > 0 && (
+                <div className="flex justify-between text-base">
+                  <span className="text-black">Tax ({quote.tax_rate}%)</span>
+                  <span className="font-medium text-black">{formatCurrency(tax, effectiveCurrency)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-xl font-bold border-t-2 border-black pt-3">
+                <span className="text-black">Total</span>
+                <span className="text-black">{formatCurrency(total, effectiveCurrency)}</span>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* Footer text */}
-        {branding.cq_footer_text && (
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-            <p className="text-xs text-slate-500 whitespace-pre-wrap">{branding.cq_footer_text}</p>
-          </div>
-        )}
+          {/* Footer */}
+          {quote.cq_footer_text && (
+            <div className="pt-6 border-t border-black">
+              <p className="text-sm text-black italic whitespace-pre-wrap">{quote.cq_footer_text}</p>
+            </div>
+          )}
+        </div>
 
         {/* Accept/Decline */}
         <AcceptDeclineButtons token={token} />
