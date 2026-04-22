@@ -40,6 +40,13 @@ export default async function QuoteSummaryPage({
   
   // Detect if customer quote has been saved (has any customer_quote_lines)
   const hasCustomerQuote = (allCustomerLines || []).length > 0;
+
+  // Load email templates for Send Quote modal
+  const { data: emailTemplates } = await supabase
+    .from('email_templates')
+    .select('id, name, subject, body, is_default')
+    .eq('company_id', quote.company_id)
+    .order('created_at', { ascending: false });
   
   // Build component override map (componentId -> custom_amount)
   const componentOverrides = new Map<string, number>();
@@ -52,7 +59,7 @@ export default async function QuoteSummaryPage({
   // Load company default currency
   const { data: company } = await supabase
     .from('companies')
-    .select('default_currency')
+    .select('default_currency, name')
     .eq('id', quote.company_id)
     .single();
   const companyDefaultCurrency = company?.default_currency || 'NZD';
@@ -194,6 +201,14 @@ export default async function QuoteSummaryPage({
           quoteId={id}
           existingToken={quote.acceptance_token || null}
           hasCustomerQuote={hasCustomerQuote}
+          emailTemplates={emailTemplates || []}
+          quoteMeta={{
+            customerName: quote.customer_name,
+            quoteNumber: quote.quote_number,
+            jobName: quote.job_name,
+            companyName: quote.cq_company_name || company?.name || null,
+            quoteDate: new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' }),
+          }}
         />
       </div>
 

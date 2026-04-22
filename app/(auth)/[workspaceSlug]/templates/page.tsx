@@ -1,5 +1,6 @@
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadCustomerQuoteTemplates } from '../quotes/actions';
+import { loadEmailTemplates } from './email-actions';
 import { TemplatesPageClient } from './TemplatesPageClient';
 
 export default async function TemplatesPage({
@@ -22,9 +23,10 @@ export default async function TemplatesPage({
     .eq('company_id', profile.company_id)
     .order('name');
 
-  const customerQuoteTemplates = await loadCustomerQuoteTemplates();
-
-  console.log('Customer templates loaded:', customerQuoteTemplates.length);
+  const [customerQuoteTemplates, emailTemplates] = await Promise.all([
+    loadCustomerQuoteTemplates(),
+    loadEmailTemplates(),
+  ]);
 
   return (
     <TemplatesPageClient
@@ -32,6 +34,7 @@ export default async function TemplatesPage({
       companyId={profile.company_id}
       quoteTemplates={quoteTemplates || []}
       customerQuoteTemplates={customerQuoteTemplates}
+      emailTemplates={emailTemplates}
       initialTab={tab || 'quote'}
     />
   );
