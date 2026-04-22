@@ -430,23 +430,62 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       
       console.log('[SaveTakeoff] Saving', allMeasurements.length, 'measurements to quote:', quote.id);
       
-      // Export canvas as PNG
+      // Export canvas as PNG (2 images: full canvas + lines-only)
       let canvasImageUrl: string | undefined;
+      let linesImageUrl: string | undefined;
       if (fabricRef.current) {
-        console.log('[SaveTakeoff] Exporting canvas image...');
-        const dataUrl = fabricRef.current.toDataURL({
+        const canvas = fabricRef.current;
+        
+        // 1. Export FULL canvas (plan image + drawings)
+        console.log('[SaveTakeoff] Exporting full canvas image...');
+        const fullDataUrl = canvas.toDataURL({
           format: 'png',
           quality: 0.9,
-          multiplier: 1, // Use 1x resolution (original canvas size)
+          multiplier: 1,
         });
         
-        // Upload canvas image
         try {
-          canvasImageUrl = await uploadCanvasImage(quote.id, dataUrl);
-          console.log('[SaveTakeoff] Canvas image uploaded:', canvasImageUrl);
+          canvasImageUrl = await uploadCanvasImage(quote.id, fullDataUrl);
+          console.log('[SaveTakeoff] Full canvas image uploaded:', canvasImageUrl);
         } catch (uploadError) {
-          console.error('[SaveTakeoff] Failed to upload canvas image:', uploadError);
-          // Continue anyway - don't block the save
+          console.error('[SaveTakeoff] Failed to upload full canvas image:', uploadError);
+        }
+        
+        // 2. Export LINES-ONLY (hide background image, white background)
+        console.log('[SaveTakeoff] Exporting lines-only image...');
+        try {
+          const objects = canvas.getObjects();
+          // The background plan image is the first object (sent to back on load)
+          // Find it: it's a FabricImage that is not selectable
+          const bgImage = objects.find((obj: any) => 
+            obj.type === 'image' && !obj.selectable
+          );
+          
+          // Store original state
+          const originalBg = canvas.backgroundColor;
+          
+          // Hide background image and set white background
+          if (bgImage) bgImage.set('visible', false);
+          canvas.backgroundColor = '#ffffff';
+          canvas.renderAll();
+          
+          // Export lines-only
+          const linesDataUrl = canvas.toDataURL({
+            format: 'png',
+            quality: 0.9,
+            multiplier: 1,
+          });
+          
+          // Restore original state
+          if (bgImage) bgImage.set('visible', true);
+          canvas.backgroundColor = originalBg as string;
+          canvas.renderAll();
+          
+          // Upload lines-only image
+          linesImageUrl = await uploadCanvasImage(quote.id, linesDataUrl, 'lines');
+          console.log('[SaveTakeoff] Lines-only image uploaded:', linesImageUrl);
+        } catch (linesError) {
+          console.error('[SaveTakeoff] Failed to export lines-only image:', linesError);
         }
       }
       
@@ -454,7 +493,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         quote.id,
         allMeasurements,
         calibrations[0]?.unit || 'feet',
-        canvasImageUrl
+        canvasImageUrl,
+        linesImageUrl
       );
       
       console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);

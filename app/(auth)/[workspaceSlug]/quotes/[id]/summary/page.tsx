@@ -91,10 +91,23 @@ export default async function QuoteSummaryPage({
       id: 'canvas-image',
       file_type: 'canvas' as any,
       file_name: 'Digital Takeoff Canvas',
-      file_size: 0, // Unknown size
+      file_size: 0,
       storage_path: '',
       uploaded_at: quote.updated_at,
       url: quote.takeoff_canvas_url,
+    });
+  }
+
+  // Add lines-only canvas image if it exists
+  if (quote.takeoff_lines_url) {
+    allFiles.push({
+      id: 'canvas-lines',
+      file_type: 'canvas' as any,
+      file_name: 'Takeoff Lines Only (Print Ready)',
+      file_size: 0,
+      storage_path: '',
+      uploaded_at: quote.updated_at,
+      url: quote.takeoff_lines_url,
     });
   }
 

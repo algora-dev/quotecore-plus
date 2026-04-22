@@ -8,7 +8,7 @@ import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/sup
  * @param dataUrl - Canvas exported as data URL (base64 PNG)
  * @returns Public URL of uploaded canvas image
  */
-export async function uploadCanvasImage(quoteId: string, dataUrl: string): Promise<string> {
+export async function uploadCanvasImage(quoteId: string, dataUrl: string, suffix: string = ''): Promise<string> {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
@@ -25,7 +25,7 @@ export async function uploadCanvasImage(quoteId: string, dataUrl: string): Promi
 
   // Generate unique filename
   const timestamp = Date.now();
-  const filename = `canvas-${quoteId}-${timestamp}.png`;
+  const filename = `canvas-${quoteId}${suffix ? '-' + suffix : ''}-${timestamp}.png`;
   const filePath = `${profile.company_id}/${quoteId}/${filename}`;
 
   console.log('[uploadCanvasImage] Uploading to:', filePath);

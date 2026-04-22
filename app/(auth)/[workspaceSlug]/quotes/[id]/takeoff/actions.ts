@@ -18,7 +18,8 @@ export async function saveTakeoffMeasurements(
   quoteId: string,
   measurements: TakeoffMeasurement[],
   unit: string,
-  canvasImageUrl?: string
+  canvasImageUrl?: string,
+  linesImageUrl?: string
 ) {
   const supabase = await createSupabaseServerClient();
   
@@ -33,17 +34,20 @@ export async function saveTakeoffMeasurements(
     throw new Error('Quote not found');
   }
   
-  // Update quote with canvas image URL if provided
-  if (canvasImageUrl) {
-    console.log('[SaveTakeoff] Saving canvas image URL:', canvasImageUrl);
+  // Update quote with canvas image URLs if provided
+  if (canvasImageUrl || linesImageUrl) {
+    const updateData: Record<string, string> = {};
+    if (canvasImageUrl) updateData.takeoff_canvas_url = canvasImageUrl;
+    if (linesImageUrl) updateData.takeoff_lines_url = linesImageUrl;
+    
+    console.log('[SaveTakeoff] Saving canvas URLs:', updateData);
     const { error: updateError } = await supabase
       .from('quotes')
-      .update({ takeoff_canvas_url: canvasImageUrl })
+      .update(updateData)
       .eq('id', quoteId);
     
     if (updateError) {
-      console.error('[SaveTakeoff] Failed to save canvas URL:', updateError);
-      // Don't throw - continue with measurement save
+      console.error('[SaveTakeoff] Failed to save canvas URLs:', updateError);
     }
   }
   
