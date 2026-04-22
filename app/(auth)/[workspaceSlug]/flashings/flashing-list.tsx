@@ -16,6 +16,7 @@ export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
   const [flashings, setFlashings] = useState(initialFlashings);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [viewingFlashing, setViewingFlashing] = useState<FlashingLibraryRow | null>(null);
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -167,10 +168,10 @@ export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => router.push(`/${workspaceSlug}/flashings/draw?edit=true&id=${flashing.id}`)}
+                  onClick={() => setViewingFlashing(flashing)}
                   className="flex-1 px-2 py-1 text-xs text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-all"
                 >
-                  Edit
+                  View
                 </button>
                 <button
                   onClick={() => handleDelete(flashing.id)}
@@ -181,6 +182,32 @@ export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* View Flashing Modal */}
+      {viewingFlashing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setViewingFlashing(null)}>
+          <div className="bg-white rounded-xl p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">{viewingFlashing.name}</h3>
+                {viewingFlashing.description && (
+                  <p className="text-sm text-slate-500 mt-0.5">{viewingFlashing.description}</p>
+                )}
+              </div>
+              <button onClick={() => setViewingFlashing(null)} className="text-slate-400 hover:text-slate-600 text-xl">✕</button>
+            </div>
+            <div className="bg-slate-50 rounded-lg p-4 flex items-center justify-center">
+              <Image
+                src={viewingFlashing.image_url}
+                alt={viewingFlashing.name}
+                width={800}
+                height={800}
+                className="object-contain max-h-[70vh]"
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>

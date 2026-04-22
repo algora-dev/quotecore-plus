@@ -218,7 +218,7 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
           </Link>
           <Link
             href={`/${workspaceSlug}/templates`}
-            className="inline-flex items-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Templates
           </Link>
