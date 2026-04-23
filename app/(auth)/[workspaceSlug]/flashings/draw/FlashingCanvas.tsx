@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -1522,10 +1522,17 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         </div>
       )}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">
+        <button
+          onClick={() => router.push(`/${workspaceSlug}/flashings`)}
+          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-3"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          Back
+        </button>
+        <h1 className="text-2xl font-semibold text-slate-900">
           {editMode ? 'Edit Flashing' : 'Draw Flashing'}
         </h1>
-        <p className="text-sm text-slate-600 mt-1">
+        <p className="text-sm text-slate-500 mt-1">
           Draw to scale: 2 pixels = 1mm (max {currentSize.maxMm})
         </p>
       </div>
@@ -1792,7 +1799,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                             }
                           }}
                           disabled={editingLocked}
-                          className={`w-full text-xs px-2 py-1.5 bg-[#FF6B35] text-white hover:bg-[#ff5722] rounded text-left font-medium ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className={`w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left font-medium text-slate-700 ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                           title="Auto-Calculate from Roof Pitches"
                         >
                           Auto-Calculate
@@ -1805,7 +1812,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                             }
                           }}
                           disabled={editingLocked}
-                          className={`w-full text-xs px-2 py-1.5 bg-blue-100 hover:bg-blue-200 rounded text-left ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className={`w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                           title="Toggle Interior/Exterior"
                         >
                           Toggle Angle Type
@@ -1821,7 +1828,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                           }
                         }}
                         disabled={editingLocked}
-                        className={`w-full text-xs px-2 py-1.5 bg-purple-100 hover:bg-purple-200 rounded text-left ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                         title="Toggle placement side"
                       >
                         {m.placementSide === 'exterior' ? 'Exterior' : 'Interior'} Side
