@@ -1451,16 +1451,16 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           </div>
 
           {/* Canvas */}
-          <div className="flex-1 flex items-start justify-center p-6 pt-4 overflow-auto">
+          <div className="flex-1 flex flex-col items-center justify-start p-6 pt-4 overflow-auto">
             <div className="border-2 border-gray-200 rounded-lg">
               <canvas ref={canvasRef} />
             </div>
+            <p className="mt-2 text-center text-xs text-slate-400">
+              {calibrationMode
+                ? `Click ${calibrationPoints.length === 0 ? 'first' : 'second'} point to calibrate`
+                : 'Hold Alt + Drag to pan'}
+            </p>
           </div>
-          <p className="flex-shrink-0 pb-4 text-center text-sm text-gray-500">
-            {calibrationMode
-              ? `Click ${calibrationPoints.length === 0 ? 'first' : 'second'} point to calibrate`
-              : 'Hold Alt + Drag to pan'}
-          </p>
         </div>
       </div>
 
