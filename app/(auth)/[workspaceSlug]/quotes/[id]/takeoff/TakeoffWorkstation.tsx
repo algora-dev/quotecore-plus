@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -1219,8 +1219,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                               }`}
                             >
                               <div
-                                className="w-6 h-6 rounded border-2 border-gray-300 flex-shrink-0"
-                                style={{ backgroundColor: assignment?.color }}
+                                className="w-3 h-3 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: assignment?.color || '#94a3b8' }}
                               />
                               <div className="flex-1 text-sm font-medium">{comp.name}</div>
                               
@@ -1316,27 +1316,20 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   <div className="space-y-1">
                     {displayComponents
                       .filter(comp => !activeComponentIds.includes(comp.id))
-                      .map((comp) => {
-                        const assignment = componentColors.find(c => c.componentId === comp.id);
-                        return (
+                      .map((comp) => (
                           <div
                             key={comp.id}
-                            className="flex items-center gap-2 p-2 rounded bg-gray-100/50 hover:bg-gray-100"
+                            className="flex items-center gap-2 p-1.5 rounded hover:bg-gray-100 transition"
                           >
-                            <div
-                              className="w-6 h-6 rounded border-2 border-gray-300 flex-shrink-0"
-                              style={{ backgroundColor: assignment?.color }}
-                            />
-                            <div className="flex-1 text-sm font-medium">{comp.name}</div>
+                            <div className="flex-1 text-sm text-slate-600">{comp.name}</div>
                             <button
                               onClick={() => handleAddComponent(comp.id)}
-                              className="w-6 h-6 flex items-center justify-center text-orange-500 hover:bg-orange-100 rounded-md font-bold transition-colors"
+                              className="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-orange-500 hover:bg-orange-50 rounded-full text-xs font-bold transition-colors"
                             >
                               +
                             </button>
                           </div>
-                        );
-                      })}
+                      ))}
                   </div>
                 </div>
               </div>
@@ -1361,7 +1354,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                     : 'bg-gray-100 hover:bg-gray-200'
                 }`}
               >
-                📐 {calibrationConfirmed ? 'Recalibrate' : 'Calibrate'}
+                {calibrationConfirmed ? 'Recalibrate' : 'Calibrate'}
               </button>
               <button
                 onClick={() => {
@@ -1385,7 +1378,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)) ? 'Create roof area with pitch first' : selectedComponentId ? 'Measure line' : 'Select component first'}
               >
-                📏 Line
+                Line
               </button>
               <button
                 onClick={() => {
@@ -1400,7 +1393,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : selectedComponentId ? 'Measure area for component' : 'Measure roof area (required first!)'}
               >
-                📐 Area
+                Area
               </button>
               <button
                 onClick={() => {
@@ -1423,7 +1416,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)) ? 'Create roof area with pitch first' : selectedComponentId ? 'Add point marker' : 'Select component first'}
               >
-                📍 Point
+                Point
               </button>
             </div>
 
