@@ -13,7 +13,7 @@ export default async function OrderFromQuotePage(props: Props) {
   
   const { data: quotes, error } = await supabase
     .from('quotes')
-    .select('id, quote_number, job_name, customer_name, created_at, status')
+    .select('id, quote_number, job_name, customer_name, created_at, status, job_status, updated_at')
     .eq('company_id', profile.company_id)
     .neq('status', 'draft')
     .order('created_at', { ascending: false });
