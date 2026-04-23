@@ -109,6 +109,7 @@ function JobStatusDropdown({ quoteId, currentStatus }: { quoteId: string; curren
       <button
         onClick={() => setOpen(!open)}
         disabled={saving}
+        title="Click to change status"
         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.border} ${saving ? 'opacity-50' : ''}`}
       >
         <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
@@ -254,12 +255,6 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
 
         <div className="flex gap-2">
           <Link
-            href={`/${workspaceSlug}/templates`}
-            className="inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-          >
-            Templates
-          </Link>
-          <Link
             href={`/${workspaceSlug}/quotes/new`}
             title="Click to create a new quote"
             className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
@@ -268,6 +263,12 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             New Quote
+          </Link>
+          <Link
+            href={`/${workspaceSlug}/templates`}
+            className="inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          >
+            Templates
           </Link>
         </div>
       </div>
@@ -343,7 +344,7 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
               key={q.id}
               onClick={() => handleRowClick(q)}
               title="Click to open this quote"
-              className="grid sm:grid-cols-[1fr_1fr_140px_120px_40px] gap-4 items-center rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer hover:bg-slate-50 hover:border-slate-300 transition group"
+              className="grid sm:grid-cols-[1fr_1fr_140px_120px_40px] gap-4 items-center rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
             >
               {/* Quote info */}
               <div className="min-w-0">
