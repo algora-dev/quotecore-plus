@@ -12,7 +12,7 @@ export default async function QuotesPage({
 
   const { data: quotes } = await supabase
     .from('quotes')
-    .select('id, customer_name, job_name, status, quote_number, created_at, job_status')
+    .select('id, customer_name, job_name, status, quote_number, created_at, updated_at, job_status')
     .eq('company_id', profile.company_id)
     .order('created_at', { ascending: false });
 
