@@ -203,7 +203,7 @@ export default async function QuoteSummaryPage({
         effectiveCurrency={effectiveCurrency}
         hasLaborSheet={hasLaborSheet}
         laborLines={(laborSheetLines || []).map(l => ({ id: l.id, custom_text: l.custom_text, custom_amount: l.custom_amount, show_price: l.show_price, is_visible: l.is_visible, include_in_total: l.include_in_total }))}
-        actionButtons={
+        summaryActions={
           <>
             {quote.status === 'draft' && (
               <>

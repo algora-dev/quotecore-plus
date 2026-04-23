@@ -16,7 +16,6 @@ interface CustomerLine {
 interface Props {
   workspaceSlug: string;
   quoteId: string;
-  // Customer quote data
   customerLines: CustomerLine[];
   hasCustomerQuote: boolean;
   quote: {
@@ -34,13 +33,10 @@ interface Props {
     cq_footer_text: string | null;
   };
   effectiveCurrency: string;
-  // Labor sheet data  
   hasLaborSheet: boolean;
   laborLines: CustomerLine[];
-  // Children = the summary content
   children: ReactNode;
-  // Action buttons
-  actionButtons: ReactNode;
+  summaryActions: ReactNode;
 }
 
 export function SummaryTabs({
@@ -53,13 +49,13 @@ export function SummaryTabs({
   hasLaborSheet,
   laborLines,
   children,
-  actionButtons,
+  summaryActions,
 }: Props) {
   const [activeTab, setActiveTab] = useState<'summary' | 'customer' | 'labor'>('summary');
 
   return (
     <>
-      {/* Tabs + Actions */}
+      {/* Tabs + Context Actions */}
       <div className="flex items-center justify-between data-exclude-pdf">
         <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
           <button
@@ -88,8 +84,25 @@ export function SummaryTabs({
           </button>
         </div>
 
+        {/* Contextual actions per tab */}
         <div className="flex items-center gap-2">
-          {actionButtons}
+          {activeTab === 'summary' && summaryActions}
+          {activeTab === 'customer' && hasCustomerQuote && (
+            <Link
+              href={`/${workspaceSlug}/quotes/${quoteId}/customer-edit`}
+              className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition pill-shimmer"
+            >
+              Edit Customer Quote
+            </Link>
+          )}
+          {activeTab === 'labor' && hasLaborSheet && (
+            <Link
+              href={`/${workspaceSlug}/quotes/${quoteId}/labor-sheet`}
+              className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition pill-shimmer"
+            >
+              Edit Labor Sheet
+            </Link>
+          )}
         </div>
       </div>
 
@@ -156,15 +169,7 @@ function CustomerQuotePreview({
   const total = subtotal + tax;
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <Link
-          href={`/${workspaceSlug}/quotes/${quoteId}/customer-edit`}
-          className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition pill-shimmer"
-        >
-          Edit Customer Quote
-        </Link>
-      </div>
+    <div>
       <div className="bg-white rounded-xl border border-black p-12 space-y-8">
         {/* Header */}
         <div className="border-b-2 border-black pb-6 mb-6">
@@ -277,15 +282,7 @@ function LaborSheetPreview({
   const total = subtotal + tax;
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <Link
-          href={`/${workspaceSlug}/quotes/${quoteId}/labor-sheet`}
-          className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition pill-shimmer"
-        >
-          Edit Labor Sheet
-        </Link>
-      </div>
+    <div>
       <div className="bg-white rounded-xl border border-black p-12 space-y-8">
         <div className="border-b-2 border-black pb-6">
           <h1 className="text-xl font-bold text-black mb-4">LABOR SHEET — Quote #{quote.quote_number || 'DRAFT'}</h1>
