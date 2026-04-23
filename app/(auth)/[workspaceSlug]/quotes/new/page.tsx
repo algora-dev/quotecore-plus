@@ -19,12 +19,12 @@ export default async function NewQuotePage({
     .order('name');
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-2xl mx-auto p-6">
+    <div>
+      <div className="max-w-2xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-slate-900">Create New Quote</h1>
-          <p className="text-slate-600 mt-2">
-            Enter job details to get started
+          <h1 className="text-2xl font-semibold text-slate-900">Create New Quote</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Enter job details to get started.
           </p>
         </div>
 

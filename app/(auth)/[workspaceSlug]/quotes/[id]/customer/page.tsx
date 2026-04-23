@@ -42,9 +42,10 @@ export default async function CustomerQuotePage({
         <div className="flex items-start justify-between">
           <Link
             href={`/${workspaceSlug}/quotes/${id}/summary`}
-            className="text-sm text-slate-500 hover:text-slate-700"
+            className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors"
           >
-            ← Back to Summary
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            Back
           </Link>
           <div className="flex items-center gap-3">
             <DownloadPDFButton 
@@ -53,7 +54,7 @@ export default async function CustomerQuotePage({
             />
             <Link
               href={`/${workspaceSlug}/quotes/${id}/customer-edit`}
-              className="px-3 py-1.5 text-sm font-medium text-purple-600 border border-purple-200 rounded-full hover:bg-purple-50"
+              className="px-3 py-1.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 pill-shimmer"
             >
               Edit Customer Quote
             </Link>

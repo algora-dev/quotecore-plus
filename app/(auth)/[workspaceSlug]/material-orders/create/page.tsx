@@ -1,9 +1,8 @@
-import { loadOrderTemplates } from '../template-actions';
+﻿import { loadOrderTemplates } from '../template-actions';
 import { loadFlashingLibrary } from '../../flashings/actions';
 import { OrderCreateForm } from './order-create-form';
 import { loadQuoteData } from './quote-loader';
 import { loadOrderForEdit } from './order-loader';
-import { testQuoteQuery } from './test-query';
 
 interface Props {
   params: Promise<{ workspaceSlug: string }>;
@@ -14,12 +13,9 @@ export default async function CreateOrderPage(props: Props) {
   const { workspaceSlug } = await props.params;
   const { quoteId, orderId } = await props.searchParams;
   
-  console.log('[CreateOrderPage] quoteId:', quoteId, 'orderId:', orderId);
   
   // Run diagnostic test if quoteId present
   if (quoteId) {
-    const testResults = await testQuoteQuery(quoteId);
-    console.log('[CreateOrderPage] Test results:', testResults);
   }
   
   const [templates, flashings, quoteData, existingOrder] = await Promise.all([
@@ -29,8 +25,6 @@ export default async function CreateOrderPage(props: Props) {
     orderId ? loadOrderForEdit(orderId) : Promise.resolve(null),
   ]);
   
-  console.log('[CreateOrderPage] quoteData loaded:', quoteData ? `${quoteData.quote_number} with ${quoteData.components.length} components` : 'null');
-  console.log('[CreateOrderPage] existingOrder loaded:', existingOrder ? `${existingOrder.order.order_number} with ${existingOrder.lines.length} lines` : 'null');
 
   return (
     <div className="h-screen overflow-hidden">

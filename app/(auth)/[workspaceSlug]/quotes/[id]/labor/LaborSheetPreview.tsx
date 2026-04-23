@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState } from 'react';
 import Link from 'next/link';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow } from '@/app/lib/types';
@@ -132,9 +132,9 @@ export function LaborSheetPreview({ quote, roofAreas, components, savedLines, wo
         <div className="mb-6 flex items-center justify-between">
           <Link
             href={`/${workspaceSlug}/quotes/${quote.id}/summary`}
-            className="text-sm text-black hover:text-black"
+            className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors"
           >
-            ← Back to Summary
+            <svg className="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>Back
           </Link>
           <button
             onClick={handleDownloadPDF}
