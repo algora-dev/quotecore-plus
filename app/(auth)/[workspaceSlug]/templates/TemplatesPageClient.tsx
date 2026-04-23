@@ -9,7 +9,7 @@ import { EditCustomerTemplateModal } from './EditCustomerTemplateModal';
 import { EmailTemplateEditor } from './EmailTemplateEditor';
 import { deleteEmailTemplate } from './email-actions';
 import type { EmailTemplate } from './email-actions';
-import { BackButton } from '@/app/components/BackButton';
+
 
 interface Props {
   workspaceSlug: string;
@@ -80,53 +80,45 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-6xl mx-auto p-6 space-y-6">
-        {/* Back Button */}
-        <BackButton />
-        
+    <div className="space-y-5">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Templates</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Manage quote templates and customer quote branding
-          </p>
+          <p className="text-sm text-slate-500 mt-1">Manage quote, customer, and email templates.</p>
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-slate-200">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab('quote')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'quote'
-                  ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-              }`}
-            >
-              Quote Templates
-            </button>
-            <button
-              onClick={() => setActiveTab('customer')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'customer'
-                  ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-              }`}
-            >
-              Customer Quote Templates
-            </button>
-            <button
-              onClick={() => setActiveTab('email')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'email'
-                  ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-              }`}
-            >
-              Email Templates
-            </button>
-          </nav>
+        <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
+          <button
+            onClick={() => setActiveTab('quote')}
+            className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
+              activeTab === 'quote'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Quote
+          </button>
+          <button
+            onClick={() => setActiveTab('customer')}
+            className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
+              activeTab === 'customer'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Customer
+          </button>
+          <button
+            onClick={() => setActiveTab('email')}
+            className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
+              activeTab === 'email'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Email
+          </button>
         </div>
 
         {/* Tab Content */}
@@ -298,11 +290,6 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
 
             {/* Customer Quote Templates List */}
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-              {(() => {
-                console.log('Render check - customerQuoteTemplates.length:', customerQuoteTemplates.length);
-                console.log('Render check - showing empty state?', customerQuoteTemplates.length === 0);
-                return null;
-              })()}
               {customerQuoteTemplates.length === 0 ? (
                 <div className="p-8 text-center">
                   <p className="text-slate-400 mb-4">No customer quote templates created yet</p>
@@ -384,7 +371,6 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
             </div>
           </div>
         )}
-      </div>
 
       {/* Modals */}
       {viewingCustomerTemplate && (

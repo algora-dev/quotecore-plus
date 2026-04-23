@@ -2,6 +2,7 @@ import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/sup
 import { loadCustomerQuoteTemplates } from '../quotes/actions';
 import { loadEmailTemplates } from './email-actions';
 import { TemplatesPageClient } from './TemplatesPageClient';
+import { BackButton } from '@/app/components/BackButton';
 
 export default async function TemplatesPage({
   params,
@@ -29,6 +30,8 @@ export default async function TemplatesPage({
   ]);
 
   return (
+    <section className="space-y-5">
+    <BackButton />
     <TemplatesPageClient
       workspaceSlug={workspaceSlug}
       companyId={profile.company_id}
@@ -37,5 +40,6 @@ export default async function TemplatesPage({
       emailTemplates={emailTemplates}
       initialTab={tab || 'quote'}
     />
+    </section>
   );
 }

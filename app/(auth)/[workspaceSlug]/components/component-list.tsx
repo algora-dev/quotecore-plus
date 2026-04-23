@@ -14,7 +14,7 @@ import type {
 } from '@/app/lib/types';
 import { unitForMeasurement, wasteAmountSuffix } from '@/app/lib/types';
 import { loadFlashingLibrary } from '../flashings/actions';
-import { BackButton } from '@/app/components/BackButton';
+
 
 const MEASUREMENT_LABELS: Record<MeasurementType, string> = {
   area: 'Area (m²)',
@@ -179,39 +179,31 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
   const wasteAmountLabel = wasteAmountSuffix(formWasteType, formMeasurementType);
 
   return (
-    <div>
-      {/* Back Button */}
-      <BackButton />
-      
-      {/* Header with title */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-          Component Library
-        </h1>
-        <p className="text-sm text-zinc-500 mt-1">
-          Master list of reusable components and extras for your templates and quotes.
-        </p>
+    <div className="space-y-5">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-semibold text-slate-900">Components</h1>
+        <p className="text-sm text-slate-500 mt-1">Manage reusable components and extras for quotes.</p>
       </div>
       
-      {/* Filter tabs + Action Buttons (same row, like Quotes page) */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex gap-2">
+      {/* Filter tabs + Action Buttons */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
           {(['all', 'main', 'extra'] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 text-sm rounded-full font-medium transition ${
+              className={`px-4 py-1.5 text-sm rounded-full font-medium transition ${
                 filter === f
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              {f === 'all' ? 'All' : f === 'main' ? 'Main Components' : 'Extras'}
+              {f === 'all' ? 'All' : f === 'main' ? 'Main' : 'Extras'}
             </button>
           ))}
         </div>
         
-        {/* Action Buttons on the right */}
         <div className="flex gap-2">
           <button
             onClick={() => setShowForm(true)}
@@ -494,7 +486,7 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
                 </form>
               </div>
             ) : (
-              <div className="flex items-center gap-3 px-4 py-3 border border-slate-200 rounded-xl bg-white hover:border-slate-300">
+              <div className="flex items-center gap-3 px-4 py-3 border border-slate-200 rounded-xl bg-white hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium text-slate-900">{comp.name}</h3>
@@ -514,8 +506,14 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
                 <button onClick={() => startEdit(comp)} className="px-3 py-1 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50">
                   Edit
                 </button>
-                <button onClick={() => handleDelete(comp.id)} className="text-xs text-red-500 hover:text-red-700">
-                  Remove
+                <button 
+                  onClick={() => handleDelete(comp.id)} 
+                  title="Click to delete"
+                  className="p-1.5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
                 </button>
               </div>
             )}
