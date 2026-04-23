@@ -43,7 +43,7 @@ export default async function WorkspaceLayout({
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-4">
           <div className="flex items-center justify-between">
             <Link href={`/${slug}`} prefetch={false} className="flex items-center">
-              <img src="/logo.png" alt="QuoteCore" className="h-8" />
+              <img src="/logo.png" alt="QuoteCore" className="h-9" />
             </Link>
             <div className="flex items-center gap-3">
               <AlertBell
