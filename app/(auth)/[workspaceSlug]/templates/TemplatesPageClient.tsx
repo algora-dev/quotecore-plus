@@ -125,9 +125,7 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
         {activeTab === 'email' ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-slate-600">
-                Email templates for sending quotes to customers with acceptance links
-              </p>
+              <p className="text-sm text-slate-500">Email templates for sending quotes with acceptance links.</p>
               <button
                 onClick={() => setEditingEmailTemplate(null)}
                 className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
@@ -135,240 +133,135 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
                 + Create Template
               </button>
             </div>
-
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-              {emailTemplates.length === 0 ? (
-                <div className="p-8 text-center">
-                  <p className="text-slate-400 mb-4">No email templates created yet</p>
-                  <button
-                    onClick={() => setEditingEmailTemplate(null)}
-                    className="inline-block px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            {emailTemplates.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+                <p className="text-sm text-slate-500">No email templates yet.</p>
+              </div>
+            ) : (
+              <div className="grid gap-1">
+                {emailTemplates.map((template) => (
+                  <div
+                    key={template.id}
+                    onClick={() => setEditingEmailTemplate(template)}
+                    title="Click to edit"
+                    className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 bg-white cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
                   >
-                    Create Your First Email Template
-                  </button>
-                </div>
-              ) : (
-                <table className="w-full">
-                  <thead className="bg-slate-50 border-b border-slate-200">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Subject</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Default</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {emailTemplates.map((template) => (
-                      <tr key={template.id} className="hover:bg-slate-50">
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-slate-900">{template.name}</div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-slate-600">
-                          {template.subject || '—'}
-                        </td>
-                        <td className="px-6 py-4">
-                          {template.is_default && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
-                              Default
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-right space-x-2">
-                          <button
-                            onClick={() => setEditingEmailTemplate(template)}
-                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white pill-shimmer"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteEmailTemplate(template.id, template.name)}
-                            disabled={deleting === template.id}
-                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-red-300 bg-white text-red-600 hover:bg-red-50 disabled:opacity-50"
-                          >
-                            {deleting === template.id ? 'Deleting...' : 'Delete'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-900">{template.name}</p>
+                      {template.is_default && (
+                        <span className="text-xs text-orange-600 font-medium">Default</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteEmailTemplate(template.id, template.name); }}
+                      disabled={deleting === template.id}
+                      title="Click to delete"
+                      className="p-1.5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : activeTab === 'quote' ? (
           <div className="space-y-4">
-            {/* Header for Quote Templates Tab */}
             <div className="flex items-center justify-between">
-              <p className="text-sm text-slate-600">
-                Reusable roof quote structures with predefined components
-              </p>
+              <p className="text-sm text-slate-500">Reusable quote structures with predefined components.</p>
               <Link
                 href={`/${workspaceSlug}/templates/create`}
-                className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-80 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               >
                 + Create Template
               </Link>
             </div>
-
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-              {quoteTemplates.length === 0 ? (
-                <div className="p-8 text-center">
-                  <p className="text-slate-400 mb-4">No quote templates created yet</p>
+            {quoteTemplates.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+                <p className="text-sm text-slate-500">No quote templates yet.</p>
+              </div>
+            ) : (
+              <div className="grid gap-1">
+                {quoteTemplates.map((template) => (
                   <Link
-                    href={`/${workspaceSlug}/templates/create`}
-                    className="inline-block px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-80 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                    key={template.id}
+                    href={`/${workspaceSlug}/templates/${template.id}/edit`}
+                    title="Click to edit"
+                    className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 bg-white cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
                   >
-                    Create Your First Template
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-900">{template.name}</p>
+                      {template.description && <p className="text-xs text-slate-400 mt-0.5">{template.description}</p>}
+                    </div>
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteQuoteTemplate(template.id, template.name); }}
+                      disabled={deleting === template.id}
+                      title="Click to delete"
+                      className="p-1.5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
                   </Link>
-                </div>
-              ) : (
-                <table className="w-full">
-                  <thead className="bg-slate-50 border-b border-slate-200">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                        Template Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                        Description
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {quoteTemplates.map((template) => (
-                      <tr key={template.id} className="hover:bg-slate-50">
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-slate-900">{template.name}</div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-slate-600">
-                          {template.description || '—'}
-                        </td>
-                        <td className="px-6 py-4 text-right space-x-2">
-                          <Link
-                            href={`/${workspaceSlug}/templates/${template.id}/edit`}
-                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white pill-shimmer"
-                          >
-                            Edit
-                          </Link>
-                          <Link
-                            href={`/${workspaceSlug}/quotes/new?template=${template.id}`}
-                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-                          >
-                            Use
-                          </Link>
-                          <button
-                            onClick={() => handleDeleteQuoteTemplate(template.id, template.name)}
-                            disabled={deleting === template.id}
-                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-red-300 bg-white text-red-600 hover:bg-red-50 disabled:opacity-50"
-                          >
-                            {deleting === template.id ? 'Deleting...' : 'Delete'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Header for Customer Tab */}
             <div className="flex items-center justify-between">
-              <p className="text-sm text-slate-600">
-                Reusable branding layouts for customer-facing quotes
-              </p>
+              <p className="text-sm text-slate-500">Branding layouts for customer-facing quotes.</p>
               <Link
                 href={`/${workspaceSlug}/customer-quote-templates/create`}
-                className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-80 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               >
                 + Create Template
               </Link>
             </div>
-
-            {/* Customer Quote Templates List */}
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-              {customerQuoteTemplates.length === 0 ? (
-                <div className="p-8 text-center">
-                  <p className="text-slate-400 mb-4">No customer quote templates created yet</p>
-                  <Link
-                    href={`/${workspaceSlug}/customer-quote-templates/create`}
-                    className="inline-block px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-80 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            {customerQuoteTemplates.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+                <p className="text-sm text-slate-500">No customer quote templates yet.</p>
+              </div>
+            ) : (
+              <div className="grid gap-1">
+                {customerQuoteTemplates.map((template) => (
+                  <div
+                    key={template.id}
+                    onClick={() => !template.is_starter_template ? setEditingCustomerTemplate(template) : setViewingCustomerTemplate(template)}
+                    title={template.is_starter_template ? 'Click to view' : 'Click to edit'}
+                    className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 bg-white cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
                   >
-                    Create Your First Template
-                  </Link>
-                </div>
-              ) : (
-                <table className="w-full">
-                  <thead className="bg-slate-50 border-b border-slate-200">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                        Template Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                        Type
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                        Company Name
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {customerQuoteTemplates.map((template) => (
-                      <tr key={template.id} className="hover:bg-slate-50">
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-slate-900">{template.name}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          {template.is_starter_template ? (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                              Starter
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              Custom
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-slate-600">
-                          {template.company_name || '—'}
-                        </td>
-                        <td className="px-6 py-4 text-right space-x-2">
-                          <button
-                            onClick={() => setViewingCustomerTemplate(template)}
-                            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white pill-shimmer"
-                          >
-                            View
-                          </button>
-                          {!template.is_starter_template && (
-                            <>
-                              <button
-                                onClick={() => setEditingCustomerTemplate(template)}
-                                className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white pill-shimmer"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteCustomerTemplate(template.id, template.name)}
-                                disabled={deleting === template.id}
-                                className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-red-300 bg-white text-red-600 hover:bg-red-50 disabled:opacity-50"
-                              >
-                                {deleting === template.id ? 'Deleting...' : 'Delete'}
-                              </button>
-                            </>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">{template.name}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{template.company_name || 'No company name'}</p>
+                      </div>
+                      {template.is_starter_template && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Starter</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setViewingCustomerTemplate(template); }}
+                        title="Preview"
+                        className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                      </button>
+                      {!template.is_starter_template && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteCustomerTemplate(template.id, template.name); }}
+                          disabled={deleting === template.id}
+                          title="Click to delete"
+                          className="p-1.5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

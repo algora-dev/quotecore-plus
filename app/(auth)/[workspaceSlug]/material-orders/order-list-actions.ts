@@ -33,9 +33,24 @@ export async function markOrderAsOrdered(orderId: string) {
     .eq('company_id', profile.company_id);
   
   if (error) {
-    console.error('[markOrderAsOrdered] Error:', error);
     throw new Error('Failed to update order status');
   }
+}
+
+export async function updateOrderStatus(orderId: string, status: string) {
+  const validStatuses = ['ready', 'ordered', 'delivered', 'paid', 'pickup', 'waiting'];
+  if (!validStatuses.includes(status)) throw new Error('Invalid status');
+
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  const { error } = await supabase
+    .from('material_orders')
+    .update({ status })
+    .eq('id', orderId)
+    .eq('company_id', profile.company_id);
+
+  if (error) throw new Error('Failed to update order status');
 }
 
 export async function deleteOrder(orderId: string) {

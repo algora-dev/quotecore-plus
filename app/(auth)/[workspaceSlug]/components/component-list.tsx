@@ -486,7 +486,11 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
                 </form>
               </div>
             ) : (
-              <div className="flex items-center gap-3 px-4 py-3 border border-slate-200 rounded-xl bg-white hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group">
+              <div 
+                onClick={() => startEdit(comp)}
+                title="Click to view component"
+                className="flex items-center gap-3 px-4 py-3 border border-slate-200 rounded-xl bg-white cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
+              >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium text-slate-900">{comp.name}</h3>
@@ -503,11 +507,8 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
                     {comp.default_pitch_type !== 'none' && <> · {PITCH_LABELS[comp.default_pitch_type]}</>}
                   </p>
                 </div>
-                <button onClick={() => startEdit(comp)} className="px-3 py-1 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50">
-                  Edit
-                </button>
                 <button 
-                  onClick={() => handleDelete(comp.id)} 
+                  onClick={(e) => { e.stopPropagation(); handleDelete(comp.id); }} 
                   title="Click to delete"
                   className="p-1.5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
                 >
