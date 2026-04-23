@@ -157,55 +157,28 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
 
   return (
     <>
-      {/* Search */}
-      <div className="relative max-w-md">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={activeTab === 'confirmed' ? 'Search by quote #, client, or job reference...' : 'Search by client or job reference...'}
-          className="w-full pl-10 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
-        />
-        <svg 
-          className="absolute left-3 top-2.5 w-4 h-4 text-slate-400"
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        {searchQuery && (
-          <button
-            onClick={() => setSearchQuery('')}
-            className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
-          >
-            ✕
-          </button>
-        )}
-      </div>
-
-      {/* Tabs + New Quote Button */}
+      {/* Tabs + Actions row */}
       <div className="flex items-center justify-between">
-        <div className="flex gap-1 p-1 bg-slate-100 rounded-lg w-fit">
-          <button
-            onClick={() => setActiveTab('draft')}
-            className={`px-4 py-2 text-sm font-medium rounded-full transition ${
-              activeTab === 'draft'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            Drafts ({searchQuery ? `${filteredDrafts.length}/${drafts.length}` : drafts.length})
-          </button>
+        <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
           <button
             onClick={() => setActiveTab('confirmed')}
-            className={`px-4 py-2 text-sm font-medium rounded-full transition ${
+            className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
               activeTab === 'confirmed'
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             Confirmed ({confirmed.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('draft')}
+            className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
+              activeTab === 'draft'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Drafts ({drafts.length})
           </button>
         </div>
         
@@ -225,34 +198,61 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
         </div>
       </div>
 
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={activeTab === 'confirmed' ? 'Search by quote #, client, or job...' : 'Search by client or job...'}
+          className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+        />
+        <svg 
+          className="absolute left-3 top-2.5 w-4 h-4 text-slate-400"
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
       {/* Quote List */}
       {displayQuotes.length > 0 ? (
-        <div className="grid gap-3">
+        <div className="grid gap-2">
           {displayQuotes.map((q) => (
             <div
               key={q.id}
-              className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 hover:shadow-md transition"
+              className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 hover:shadow-sm transition"
             >
-              <div className="flex-1">
-                {q.quote_number && (
-                  <span className="font-semibold text-orange-600 mr-3">Quote #{q.quote_number}</span>
-                )}
-                <span className="font-medium text-slate-900">{q.customer_name}</span>
-                {q.job_name && <span className="text-slate-500 ml-2">— {q.job_name}</span>}
-                <span className="text-xs text-slate-400 ml-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {q.quote_number && (
+                    <span className="font-semibold text-orange-600 text-sm">#{q.quote_number}</span>
+                  )}
+                  <span className="font-medium text-slate-900 text-sm truncate">{q.customer_name}</span>
+                  {q.job_name && <span className="text-slate-400 text-sm truncate">— {q.job_name}</span>}
+                </div>
+                <span className="text-xs text-slate-400 mt-0.5 block">
                   {new Date(q.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short', year: 'numeric' })}
                 </span>
               </div>
               
-              <div className="flex items-center gap-2">
-                {/* Draft status pill (static) */}
+              <div className="flex items-center gap-2 flex-shrink-0 ml-4">
                 {q.status === 'draft' && (
-                  <span className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-slate-100 text-slate-600">
-                    draft
+                  <span className="rounded-full px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-500">
+                    Draft
                   </span>
                 )}
 
-                {/* Confirmed: job status dropdown */}
                 {q.status !== 'draft' && (
                   <JobStatusDropdown
                     quoteId={q.id}
@@ -260,70 +260,54 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
                   />
                 )}
 
-                {/* Draft actions */}
-                {q.status === 'draft' && (
-                  <>
-                    <Link
-                      href={`/${workspaceSlug}/quotes/${q.id}`}
-                      className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white pill-shimmer"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() => setDeleteId(q.id)}
-                      className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-red-300 bg-white text-red-600 hover:bg-red-50"
-                    >
-                      Delete
-                    </button>
-                  </>
+                {q.status === 'draft' ? (
+                  <Link
+                    href={`/${workspaceSlug}/quotes/${q.id}`}
+                    className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white pill-shimmer"
+                  >
+                    Edit
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/${workspaceSlug}/quotes/${q.id}/summary`}
+                    className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white pill-shimmer"
+                  >
+                    View
+                  </Link>
                 )}
 
-                {/* Confirmed actions */}
-                {q.status !== 'draft' && (
-                  <>
-                    <Link
-                      href={`/${workspaceSlug}/quotes/${q.id}/summary`}
-                      className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white pill-shimmer"
-                    >
-                      View
-                    </Link>
-                    <button
-                      onClick={() => setDeleteId(q.id)}
-                      className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-red-300 bg-white text-red-600 hover:bg-red-50"
-                    >
-                      Delete
-                    </button>
-                  </>
-                )}
+                <button
+                  onClick={() => setDeleteId(q.id)}
+                  className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border border-red-200 bg-white text-red-500 hover:bg-red-50"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
-          <h2 className="text-xl font-semibold text-slate-900">
-            No {activeTab} quotes yet
-          </h2>
-          <p className="mt-2 text-slate-600">
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+          <p className="text-sm text-slate-500">
             {activeTab === 'draft' 
-              ? 'Create a new quote to get started.' 
-              : 'Confirmed quotes will appear here after you complete them.'}
+              ? 'No draft quotes yet.' 
+              : 'No confirmed quotes yet.'}
           </p>
         </div>
       )}
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation Modal */}
       {deleteId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md mx-4 space-y-4">
-            <h3 className="text-lg font-semibold text-red-600">Delete Quote?</h3>
-            <p className="text-sm text-slate-600">
-              Are you sure you want to delete this quote? This action cannot be undone and the quote will be gone forever.
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">Delete Quote</h3>
+            <p className="text-sm text-slate-500 mt-2">
+              This action cannot be undone. The quote will be permanently deleted.
             </p>
-            <div className="flex gap-3 justify-end">
+            <div className="flex gap-3 justify-end mt-6">
               <button
                 onClick={() => setDeleteId(null)}
-                className="px-4 py-2 text-sm rounded-full border border-slate-300 hover:bg-slate-50"
+                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
                 disabled={deleting}
               >
                 Cancel
@@ -333,7 +317,7 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
                 className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
                 disabled={deleting}
               >
-                {deleting ? 'Deleting...' : 'Delete Forever'}
+                {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
