@@ -90,13 +90,14 @@ function OrderStatusDropdown({ orderId, currentStatus }: { orderId: string; curr
 export function OrderList({ orders, workspaceSlug }: Props) {
   const router = useRouter();
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  async function handleDelete(e: React.MouseEvent, orderId: string, orderNumber: string) {
-    e.stopPropagation();
-    if (!confirm(`Delete order ${orderNumber}? This cannot be undone.`)) return;
-    setDeleting(orderId);
+  async function confirmDelete() {
+    if (!deleteId) return;
+    setDeleting(deleteId);
     try {
-      await deleteOrder(orderId);
+      await deleteOrder(deleteId);
+      setDeleteId(null);
       router.refresh();
     } catch {
       alert('Failed to delete order.');
@@ -116,7 +117,7 @@ export function OrderList({ orders, workspaceSlug }: Props) {
   return (
     <div>
       {/* Header */}
-      <div className="hidden sm:grid grid-cols-[120px_1fr_1fr_130px_80px_70px] gap-4 px-4 pb-2 text-xs font-medium text-slate-400 uppercase tracking-wide">
+      <div className="hidden sm:grid grid-cols-[160px_1fr_1fr_130px_80px_70px] gap-4 px-4 pb-2 text-xs font-medium text-slate-400 uppercase tracking-wide">
         <span>Order</span>
         <span>Reference</span>
         <span>Supplier</span>
@@ -131,7 +132,7 @@ export function OrderList({ orders, workspaceSlug }: Props) {
             key={order.id}
             onClick={() => router.push(`/${workspaceSlug}/material-orders/create?orderId=${order.id}`)}
             title="Click to edit"
-            className="grid sm:grid-cols-[120px_1fr_1fr_130px_80px_70px] gap-4 items-center rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
+            className="grid sm:grid-cols-[160px_1fr_1fr_130px_80px_70px] gap-4 items-center rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
           >
             <div className="font-semibold text-sm text-orange-600">{order.order_number}</div>
             <div className="text-sm text-slate-700 truncate">{order.reference || order.job_name || '—'}</div>
@@ -152,7 +153,7 @@ export function OrderList({ orders, workspaceSlug }: Props) {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
               </Link>
               <button
-                onClick={(e) => handleDelete(e, order.id, order.order_number)}
+                onClick={(e) => { e.stopPropagation(); setDeleteId(order.id); }}
                 disabled={deleting === order.id}
                 title="Click to delete"
                 className="p-1.5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
@@ -163,6 +164,20 @@ export function OrderList({ orders, workspaceSlug }: Props) {
           </div>
         ))}
       </div>
+
+      {/* Delete Modal */}
+      {deleteId && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">Delete Order</h3>
+            <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The order will be permanently deleted.</p>
+            <div className="flex gap-3 justify-end mt-6">
+              <button onClick={() => setDeleteId(null)} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={!!deleting}>Cancel</button>
+              <button onClick={confirmDelete} className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={!!deleting}>{deleting ? 'Deleting...' : 'Delete'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

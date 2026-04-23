@@ -166,13 +166,20 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Remove this component from the library?')) return;
+  const [deleteCompId, setDeleteCompId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  async function confirmDeleteComp() {
+    if (!deleteCompId) return;
+    setDeleteLoading(true);
     try {
-      await deleteComponent(id);
-      setComponents((prev) => prev.filter((c) => c.id !== id));
+      await deleteComponent(deleteCompId);
+      setComponents((prev) => prev.filter((c) => c.id !== deleteCompId));
+      setDeleteCompId(null);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete');
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
@@ -508,7 +515,7 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
                   </p>
                 </div>
                 <button 
-                  onClick={(e) => { e.stopPropagation(); handleDelete(comp.id); }} 
+                  onClick={(e) => { e.stopPropagation(); setDeleteCompId(comp.id); }} 
                   title="Click to delete"
                   className="p-1.5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
                 >
@@ -521,6 +528,20 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
           </div>
         ))}
       </div>
+
+      {/* Delete Modal */}
+      {deleteCompId && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">Delete Component</h3>
+            <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The component will be removed from your library.</p>
+            <div className="flex gap-3 justify-end mt-6">
+              <button onClick={() => setDeleteCompId(null)} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={deleteLoading}>Cancel</button>
+              <button onClick={confirmDeleteComp} className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Delete'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

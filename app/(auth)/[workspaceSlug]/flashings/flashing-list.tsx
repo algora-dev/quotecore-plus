@@ -17,6 +17,8 @@ export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [viewingFlashing, setViewingFlashing] = useState<FlashingLibraryRow | null>(null);
+  const [deleteFlashingId, setDeleteFlashingId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -45,15 +47,17 @@ export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Delete this flashing? This cannot be undone.')) return;
-    
+  async function confirmDeleteFlashing() {
+    if (!deleteFlashingId) return;
+    setDeleteLoading(true);
     try {
-      await deleteFlashing(id);
-      setFlashings(flashings.filter((f) => f.id !== id));
+      await deleteFlashing(deleteFlashingId);
+      setFlashings(flashings.filter((f) => f.id !== deleteFlashingId));
+      setDeleteFlashingId(null);
     } catch (err: any) {
-      console.error('Failed to delete flashing:', err);
       alert(`Error: ${err.message}`);
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
@@ -169,7 +173,7 @@ export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
                 )}
               </div>
               <button
-                onClick={(e) => { e.stopPropagation(); handleDelete(flashing.id); }}
+                onClick={(e) => { e.stopPropagation(); setDeleteFlashingId(flashing.id); }}
                 title="Click to delete"
                 className="absolute top-2 right-2 p-1.5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
               >
@@ -179,6 +183,20 @@ export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {deleteFlashingId && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">Delete Flashing</h3>
+            <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The flashing will be permanently deleted.</p>
+            <div className="flex gap-3 justify-end mt-6">
+              <button onClick={() => setDeleteFlashingId(null)} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={deleteLoading}>Cancel</button>
+              <button onClick={confirmDeleteFlashing} className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Delete'}</button>
+            </div>
+          </div>
         </div>
       )}
 
