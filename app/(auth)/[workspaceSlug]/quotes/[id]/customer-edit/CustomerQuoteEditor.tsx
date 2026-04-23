@@ -382,7 +382,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                   type="checkbox"
                                   checked={line.isVisible}
                                   onChange={() => toggleVisibility(line.id)}
-                                  className="w-3.5 h-3.5 accent-slate-800 rounded"
+                                  className="toggle-dot"
                                 />
                                 Show
                               </label>
@@ -392,7 +392,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                   checked={line.showPrice}
                                   onChange={() => toggleShowPrice(line.id)}
                                   disabled={!line.isVisible}
-                                  className="w-3.5 h-3.5 accent-slate-800 rounded disabled:opacity-30"
+                                  className="toggle-dot"
                                 />
                                 Price
                               </label>
@@ -402,7 +402,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                   checked={line.showUnits}
                                   onChange={() => toggleShowUnits(line.id)}
                                   disabled={!line.isVisible}
-                                  className="w-3.5 h-3.5 accent-slate-800 rounded disabled:opacity-30"
+                                  className="toggle-dot"
                                 />
                                 Units
                               </label>
@@ -411,7 +411,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                   type="checkbox"
                                   checked={line.includeInTotal}
                                   onChange={() => toggleIncludeInTotal(line.id)}
-                                  className="w-3.5 h-3.5 accent-slate-800 rounded"
+                                  className="toggle-dot"
                                 />
                                 Add $
                               </label>
@@ -468,7 +468,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                 type="checkbox"
                                 checked={line.isVisible}
                                 onChange={() => toggleVisibility(line.id)}
-                                className="w-3.5 h-3.5 accent-slate-800 rounded"
+                                className="toggle-dot"
                               />
                               Show
                             </label>
@@ -478,7 +478,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                 checked={line.showPrice}
                                 onChange={() => toggleShowPrice(line.id)}
                                 disabled={!line.isVisible}
-                                className="w-3.5 h-3.5 accent-slate-800 rounded disabled:opacity-30"
+                                className="toggle-dot"
                               />
                               Price
                             </label>
@@ -488,7 +488,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                 checked={line.showUnits}
                                 onChange={() => toggleShowUnits(line.id)}
                                 disabled={!line.isVisible}
-                                className="w-3.5 h-3.5 accent-slate-800 rounded disabled:opacity-30"
+                                className="toggle-dot"
                               />
                               Units
                             </label>
@@ -497,7 +497,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                 type="checkbox"
                                 checked={line.includeInTotal}
                                 onChange={() => toggleIncludeInTotal(line.id)}
-                                className="w-3.5 h-3.5 accent-slate-800 rounded"
+                                className="toggle-dot"
                               />
                               Add $
                             </label>

@@ -73,3 +73,25 @@ a,
   opacity: 1;
   animation: shimmer 1.5s linear infinite;
 }
+
+/* Radio-style toggle for checkboxes */
+.toggle-dot {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  background: white;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.toggle-dot:checked {
+  border-color: #334155;
+  background: #334155;
+}
+.toggle-dot:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
