@@ -1,4 +1,4 @@
-import type { QuoteRow } from '@/app/lib/types';
+﻿import type { QuoteRow } from '@/app/lib/types';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import { LineEditForm } from './LineEditForm';
 
@@ -106,10 +106,10 @@ export function QuotePreview({
         {showEditButtons && onEditHeader && (
           <button
             onClick={onEditHeader}
-            className="absolute -top-2 -right-2 px-2 py-1 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700 shadow-sm"
+            className="absolute -top-2 -right-2 p-1.5 rounded-full bg-white border border-slate-300 hover:bg-slate-50 shadow-sm"
             title="Edit header details"
           >
-            ✏️ Edit Header
+            <svg className="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
           </button>
         )}
       </div>
@@ -186,10 +186,10 @@ export function QuotePreview({
           {showEditButtons && onEditFooter && (
             <button
               onClick={onEditFooter}
-              className="absolute -top-2 -right-2 px-2 py-1 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700 shadow-sm"
+              className="absolute -top-2 -right-2 p-1.5 rounded-full bg-white border border-slate-300 hover:bg-slate-50 shadow-sm"
               title="Edit footer"
             >
-              ✏️ Edit Footer
+              <svg className="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
             </button>
           )}
         </div>

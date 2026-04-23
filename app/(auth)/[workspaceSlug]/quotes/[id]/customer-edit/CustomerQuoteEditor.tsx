@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -312,7 +312,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               href={`/${workspaceSlug}/quotes/${quote.id}/summary`}
               className="text-sm text-slate-500 hover:text-slate-700"
             >
-              ← Back to Summary
+              <svg className="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>Back
             </Link>
             <h1 className="text-2xl font-semibold text-slate-900 mt-1">
               {editorTitle} — Quote #{quote.quote_number || 'Draft'}
@@ -382,7 +382,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                   type="checkbox"
                                   checked={line.isVisible}
                                   onChange={() => toggleVisibility(line.id)}
-                                  className="w-3.5 h-3.5 text-orange-600 rounded"
+                                  className="w-3.5 h-3.5 accent-slate-800 rounded"
                                 />
                                 Show
                               </label>
@@ -392,7 +392,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                   checked={line.showPrice}
                                   onChange={() => toggleShowPrice(line.id)}
                                   disabled={!line.isVisible}
-                                  className="w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-30"
+                                  className="w-3.5 h-3.5 accent-slate-800 rounded disabled:opacity-30"
                                 />
                                 Price
                               </label>
@@ -402,7 +402,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                   checked={line.showUnits}
                                   onChange={() => toggleShowUnits(line.id)}
                                   disabled={!line.isVisible}
-                                  className="w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-30"
+                                  className="w-3.5 h-3.5 accent-slate-800 rounded disabled:opacity-30"
                                 />
                                 Units
                               </label>
@@ -411,7 +411,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                   type="checkbox"
                                   checked={line.includeInTotal}
                                   onChange={() => toggleIncludeInTotal(line.id)}
-                                  className="w-3.5 h-3.5 text-orange-600 rounded"
+                                  className="w-3.5 h-3.5 accent-slate-800 rounded"
                                 />
                                 Add $
                               </label>
@@ -468,7 +468,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                 type="checkbox"
                                 checked={line.isVisible}
                                 onChange={() => toggleVisibility(line.id)}
-                                className="w-3.5 h-3.5 text-orange-600 rounded"
+                                className="w-3.5 h-3.5 accent-slate-800 rounded"
                               />
                               Show
                             </label>
@@ -478,7 +478,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                 checked={line.showPrice}
                                 onChange={() => toggleShowPrice(line.id)}
                                 disabled={!line.isVisible}
-                                className="w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-30"
+                                className="w-3.5 h-3.5 accent-slate-800 rounded disabled:opacity-30"
                               />
                               Price
                             </label>
@@ -488,7 +488,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                 checked={line.showUnits}
                                 onChange={() => toggleShowUnits(line.id)}
                                 disabled={!line.isVisible}
-                                className="w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-30"
+                                className="w-3.5 h-3.5 accent-slate-800 rounded disabled:opacity-30"
                               />
                               Units
                             </label>
@@ -497,7 +497,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                 type="checkbox"
                                 checked={line.includeInTotal}
                                 onChange={() => toggleIncludeInTotal(line.id)}
-                                className="w-3.5 h-3.5 text-orange-600 rounded"
+                                className="w-3.5 h-3.5 accent-slate-800 rounded"
                               />
                               Add $
                             </label>
@@ -567,9 +567,9 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                     alert('Failed to save template: ' + (error as Error).message);
                   }
                 }}
-                className="w-full py-2 text-sm font-medium border border-purple-300 text-purple-700 rounded-full hover:bg-purple-50"
+                className="w-full py-2 text-sm font-medium border border-slate-300 text-slate-700 rounded-full hover:bg-slate-50"
               >
-                💾 Save Branding as Template
+                Save Branding as Template
               </button>
             </div>
           </div>
@@ -580,9 +580,9 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               <h2 className="text-lg font-semibold text-slate-900">{previewTitle}</h2>
               <button
                 onClick={() => setShowPreviewModal(true)}
-                className="px-3 py-1.5 text-sm font-medium text-orange-600 border border-blue-200 rounded-full hover:bg-blue-50"
+                className="px-3 py-1.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50"
               >
-                🔍 Preview Full Size
+                Preview Full Size
               </button>
             </div>
             
