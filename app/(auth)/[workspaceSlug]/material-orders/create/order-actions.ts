@@ -106,8 +106,31 @@ export async function saveDraftOrder(input: SaveOrderInput) {
         .eq('order_id', input.orderId);
       
     } else {
-      // CREATE new order
-      const orderNumber = `ORD-${Date.now()}`;
+      // CREATE new order - generate proper order number
+      let orderNumber: string;
+      
+      // Check if reference contains a quote number (from "Order from Quote" flow)
+      const quoteMatch = input.reference?.match(/Order for (\d+)/);
+      if (quoteMatch) {
+        orderNumber = `ON-${quoteMatch[1]}`;
+      } else {
+        // Sequential number for custom orders
+        const { data: lastOrder } = await supabase
+          .from('material_orders')
+          .select('order_number')
+          .eq('company_id', profile.company_id)
+          .like('order_number', 'ON-%')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        
+        let nextNum = 1;
+        if (lastOrder?.order_number) {
+          const match = lastOrder.order_number.match(/ON-(\d+)/);
+          if (match) nextNum = parseInt(match[1], 10) + 1;
+        }
+        orderNumber = `ON-${String(nextNum).padStart(6, '0')}`;
+      }
       
       const { data: newOrder, error: orderError } = await supabase
         .from('material_orders')

@@ -116,7 +116,7 @@ export function OrderList({ orders, workspaceSlug }: Props) {
   return (
     <div>
       {/* Header */}
-      <div className="hidden sm:grid grid-cols-[80px_1fr_1fr_130px_100px_70px] gap-4 px-4 pb-2 text-xs font-medium text-slate-400 uppercase tracking-wide">
+      <div className="hidden sm:grid grid-cols-[120px_1fr_1fr_130px_80px_70px] gap-4 px-4 pb-2 text-xs font-medium text-slate-400 uppercase tracking-wide">
         <span>Order</span>
         <span>Reference</span>
         <span>Supplier</span>
@@ -131,7 +131,7 @@ export function OrderList({ orders, workspaceSlug }: Props) {
             key={order.id}
             onClick={() => router.push(`/${workspaceSlug}/material-orders/create?orderId=${order.id}`)}
             title="Click to edit"
-            className="grid sm:grid-cols-[80px_1fr_1fr_130px_100px_70px] gap-4 items-center rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
+            className="grid sm:grid-cols-[120px_1fr_1fr_130px_80px_70px] gap-4 items-center rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
           >
             <div className="font-semibold text-sm text-orange-600">{order.order_number}</div>
             <div className="text-sm text-slate-700 truncate">{order.reference || order.job_name || '—'}</div>

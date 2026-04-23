@@ -31,51 +31,28 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
   const [editingCustomerTemplate, setEditingCustomerTemplate] = useState<CustomerQuoteTemplateRow | null>(null);
   const [editingEmailTemplate, setEditingEmailTemplate] = useState<EmailTemplate | null | undefined>(undefined);
 
-  async function handleDeleteQuoteTemplate(id: string, name: string) {
-    if (!confirm(`Delete template "${name}"? This cannot be undone.`)) {
-      return;
-    }
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [pendingDeleteType, setPendingDeleteType] = useState<'quote' | 'customer' | 'email' | null>(null);
 
-    setDeleting(id);
-    try {
-      await deleteTemplate(id);
-      router.refresh();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete template');
-    } finally {
-      setDeleting(null);
-    }
+  function requestDelete(id: string, type: 'quote' | 'customer' | 'email') {
+    setPendingDeleteId(id);
+    setPendingDeleteType(type);
   }
 
-  async function handleDeleteCustomerTemplate(id: string, name: string) {
-    if (!confirm(`Delete template "${name}"? This cannot be undone.`)) {
-      return;
-    }
-
-    setDeleting(id);
+  async function confirmDelete() {
+    if (!pendingDeleteId || !pendingDeleteType) return;
+    setDeleting(pendingDeleteId);
     try {
-      await deleteCustomerQuoteTemplate(id);
+      if (pendingDeleteType === 'quote') await deleteTemplate(pendingDeleteId);
+      else if (pendingDeleteType === 'customer') await deleteCustomerQuoteTemplate(pendingDeleteId);
+      else await deleteEmailTemplate(pendingDeleteId);
       router.refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete template');
+      alert(err instanceof Error ? err.message : 'Failed to delete');
     } finally {
       setDeleting(null);
-    }
-  }
-
-  async function handleDeleteEmailTemplate(id: string, name: string) {
-    if (!confirm(`Delete email template "${name}"? This cannot be undone.`)) {
-      return;
-    }
-
-    setDeleting(id);
-    try {
-      await deleteEmailTemplate(id);
-      router.refresh();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete template');
-    } finally {
-      setDeleting(null);
+      setPendingDeleteId(null);
+      setPendingDeleteType(null);
     }
   }
 
@@ -153,7 +130,7 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
                       )}
                     </div>
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleDeleteEmailTemplate(template.id, template.name); }}
+                      onClick={(e) => { e.stopPropagation(); requestDelete(template.id, 'email'); }}
                       disabled={deleting === template.id}
                       title="Click to delete"
                       className="p-1.5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
@@ -194,7 +171,7 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
                       {template.description && <p className="text-xs text-slate-400 mt-0.5">{template.description}</p>}
                     </div>
                     <button
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteQuoteTemplate(template.id, template.name); }}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); requestDelete(template.id, 'quote'); }}
                       disabled={deleting === template.id}
                       title="Click to delete"
                       className="p-1.5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
@@ -249,7 +226,7 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
                       </button>
                       {!template.is_starter_template && (
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleDeleteCustomerTemplate(template.id, template.name); }}
+                          onClick={(e) => { e.stopPropagation(); requestDelete(template.id, 'customer'); }}
                           disabled={deleting === template.id}
                           title="Click to delete"
                           className="p-1.5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
@@ -283,6 +260,20 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
             router.refresh();
           }}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {pendingDeleteId && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">Delete Template</h3>
+            <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The template will be permanently deleted.</p>
+            <div className="flex gap-3 justify-end mt-6">
+              <button onClick={() => { setPendingDeleteId(null); setPendingDeleteType(null); }} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={!!deleting}>Cancel</button>
+              <button onClick={confirmDelete} className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={!!deleting}>{deleting ? 'Deleting...' : 'Delete'}</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {editingEmailTemplate !== undefined && (
