@@ -15,6 +15,8 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<MaterialOrderTemplateRow | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleteTemplateId, setDeleteTemplateId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   async function handleCreateSubmit(data: any) {
     setSaving(true);
@@ -76,14 +78,17 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
     }
   }
 
-  async function handleDelete(id: string, name: string) {
-    if (!confirm(`Delete template "${name}"?\n\nThis cannot be undone.`)) return;
-    
+  async function confirmDeleteTemplate() {
+    if (!deleteTemplateId) return;
+    setDeleteLoading(true);
     try {
-      await deleteOrderTemplate(id);
-      setTemplates(prev => prev.filter(t => t.id !== id));
+      await deleteOrderTemplate(deleteTemplateId);
+      setTemplates(prev => prev.filter(t => t.id !== deleteTemplateId));
+      setDeleteTemplateId(null);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete template');
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
@@ -183,47 +188,47 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
               </button>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="grid gap-1">
               {templates.map(template => (
                 <div
                   key={template.id}
-                  className="bg-white border border-slate-200 rounded-lg p-4 hover:border-slate-300 transition-colors"
+                  onClick={() => setEditingTemplate(template)}
+                  title="Click to edit"
+                  className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 bg-white cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-medium text-slate-900">{template.name}</h3>
-                      {template.description && (
-                        <p className="text-sm text-slate-600 mt-0.5">{template.description}</p>
-                      )}
-                      <div className="flex gap-4 mt-2 text-xs text-slate-500">
-                        {template.default_supplier_name && (
-                          <span>To: {template.default_supplier_name}</span>
-                        )}
-                        {template.default_from_company && (
-                          <span>From: {template.default_from_company}</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-2 ml-4">
-                      <button
-                        onClick={() => setEditingTemplate(template)}
-                        className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(template.id, template.name)}
-                        className="px-3 py-1.5 text-xs font-medium rounded-full border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        Delete
-                      </button>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-sm text-slate-900">{template.name}</h3>
+                    <div className="flex gap-4 mt-0.5 text-xs text-slate-400">
+                      {template.default_supplier_name && <span>To: {template.default_supplier_name}</span>}
+                      {template.default_from_company && <span>From: {template.default_from_company}</span>}
                     </div>
                   </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeleteTemplateId(template.id); }}
+                    title="Click to delete"
+                    className="p-1.5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
                 </div>
               ))}
             </div>
           )}
         </div>
+
+        {/* Delete Modal */}
+        {deleteTemplateId && (
+          <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-[60]">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+              <h3 className="text-lg font-semibold text-slate-900">Delete Template</h3>
+              <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The template will be permanently deleted.</p>
+              <div className="flex gap-3 justify-end mt-6">
+                <button onClick={() => setDeleteTemplateId(null)} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={deleteLoading}>Cancel</button>
+                <button onClick={confirmDeleteTemplate} className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Delete'}</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         {templates.length > 0 && (
