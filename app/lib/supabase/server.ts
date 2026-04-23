@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { cache } from 'react';
 
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
@@ -32,7 +33,8 @@ export async function createSupabaseServerClient() {
   );
 }
 
-export async function requireUser() {
+// Deduplicated per-request: only calls Supabase auth API once per render
+export const requireUser = cache(async () => {
   const supabase = await createSupabaseServerClient();
 
   const {
@@ -45,9 +47,10 @@ export async function requireUser() {
   }
 
   return user;
-}
+});
 
-export async function getCurrentProfile(existingClient?: SupabaseClient) {
+// Deduplicated per-request: only queries profile once per render
+export const getCurrentProfile = cache(async (existingClient?: SupabaseClient) => {
   const supabase = existingClient ?? (await createSupabaseServerClient());
   const user = await requireUser();
 
@@ -67,16 +70,16 @@ export async function getCurrentProfile(existingClient?: SupabaseClient) {
   }
 
   return data;
-}
+});
 
-export async function requireCompanyContext(options?: { skipOnboardingCheck?: boolean }) {
+// Deduplicated per-request: only runs company check once per render
+export const requireCompanyContext = cache(async (options?: { skipOnboardingCheck?: boolean }) => {
   const profile = await getCurrentProfile();
 
   if (!profile.company_id) {
     throw new Error('No company context found for user');
   }
 
-  // Skip onboarding check if explicitly requested (e.g., from onboarding page itself)
   if (!options?.skipOnboardingCheck) {
     const { redirect } = await import('next/navigation');
     const supabase = await createSupabaseServerClient();
@@ -87,11 +90,10 @@ export async function requireCompanyContext(options?: { skipOnboardingCheck?: bo
       .eq('id', profile.company_id)
       .single();
     
-    // If onboarding not complete, redirect to onboarding page
     if (!company?.onboarding_completed_at) {
       redirect('/onboarding');
     }
   }
 
   return profile;
-}
+});
