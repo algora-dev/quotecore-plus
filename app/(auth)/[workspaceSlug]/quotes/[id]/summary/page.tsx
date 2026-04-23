@@ -10,6 +10,7 @@ import { DownloadSummaryPDFButton } from './DownloadSummaryPDFButton';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 import { SendQuoteButton } from './SendQuoteButton';
+import { SummaryTabs } from './SummaryTabs';
 
 export default async function QuoteSummaryPage({
   params,
@@ -38,8 +39,17 @@ export default async function QuoteSummaryPage({
     line => line.line_type === 'custom' && line.is_visible && line.include_in_total
   );
   
-  // Detect if customer quote has been saved (has any customer_quote_lines)
+  // Detect if customer quote has been saved
   const hasCustomerQuote = (allCustomerLines || []).length > 0;
+
+  // Load labor sheet lines
+  const { data: laborSheetLines } = await supabase
+    .from('labor_sheet_lines')
+    .select('id, custom_text, custom_amount, show_price, is_visible, include_in_total')
+    .eq('quote_id', id)
+    .order('sort_order');
+  
+  const hasLaborSheet = (laborSheetLines || []).length > 0;
 
   // Load email templates for Send Quote modal
   const { data: emailTemplates } = await supabase
@@ -171,67 +181,66 @@ export default async function QuoteSummaryPage({
         </div>
       </div>
 
-      {/* Tabs + Actions */}
-      <div className="flex items-center justify-between data-exclude-pdf">
-        <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
-          <span className="px-4 py-1.5 text-sm font-medium rounded-full bg-white text-slate-900 shadow-sm">
-            Summary
-          </span>
-          <Link
-            href={hasCustomerQuote ? `/${workspaceSlug}/quotes/${id}/customer` : `/${workspaceSlug}/quotes/${id}/customer-edit`}
-            className="px-4 py-1.5 text-sm font-medium rounded-full text-slate-500 hover:text-slate-700 transition"
-          >
-            Customer Quote
-          </Link>
-          <Link
-            href={`/${workspaceSlug}/quotes/${id}/labor`}
-            className="px-4 py-1.5 text-sm font-medium rounded-full text-slate-500 hover:text-slate-700 transition"
-          >
-            Labor Sheet
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {quote.status === 'draft' && (
-            <>
-              <ConvertSystemButton quoteId={id} currentSystem={quote.measurement_system} workspaceSlug={workspaceSlug} />
-              <CurrencySelector 
-                quoteId={id} 
-                currentCurrency={quote.currency} 
-                companyDefaultCurrency={companyDefaultCurrency}
-                workspaceSlug={workspaceSlug} 
-              />
-            </>
-          )}
-          <Link href={`/${workspaceSlug}/quotes/${id}`} title="Edit Quote" className="p-2 rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition">
-            <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-          </Link>
-          <form action={async () => {
-            'use server';
-            const { cloneQuote } = await import('../../actions');
-            const newId = await cloneQuote(id, quote.customer_name + ' (Copy)');
-            redirect(`/${workspaceSlug}/quotes/${newId}`);
-          }}>
-            <button type="submit" title="Clone Quote" className="p-2 rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition">
-              <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-            </button>
-          </form>
-          <DownloadSummaryPDFButton quoteNumber={quote.quote_number} customerName={quote.customer_name} />
-          <SendQuoteButton
-            quoteId={id}
-            existingToken={quote.acceptance_token || null}
-            hasCustomerQuote={hasCustomerQuote}
-            emailTemplates={emailTemplates || []}
-            quoteMeta={{
-              customerName: quote.customer_name,
-              quoteNumber: quote.quote_number,
-              jobName: quote.job_name,
-              companyName: quote.cq_company_name || company?.name || null,
-              quoteDate: new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' }),
-            }}
-          />
-        </div>
-      </div>
+      <SummaryTabs
+        workspaceSlug={workspaceSlug}
+        quoteId={id}
+        customerLines={(allCustomerLines || []).map(l => ({ id: l.id, custom_text: l.custom_text, custom_amount: l.custom_amount, show_price: l.show_price, is_visible: l.is_visible, include_in_total: l.include_in_total }))}
+        hasCustomerQuote={hasCustomerQuote}
+        quote={{
+          quote_number: quote.quote_number,
+          customer_name: quote.customer_name,
+          job_name: quote.job_name,
+          site_address: quote.site_address,
+          created_at: quote.created_at,
+          tax_rate: quote.tax_rate,
+          cq_company_name: quote.cq_company_name,
+          cq_company_address: quote.cq_company_address,
+          cq_company_phone: quote.cq_company_phone,
+          cq_company_email: quote.cq_company_email,
+          cq_company_logo_url: quote.cq_company_logo_url,
+          cq_footer_text: quote.cq_footer_text,
+        }}
+        effectiveCurrency={effectiveCurrency}
+        hasLaborSheet={hasLaborSheet}
+        laborLines={(laborSheetLines || []).map(l => ({ id: l.id, custom_text: l.custom_text, custom_amount: l.custom_amount, show_price: l.show_price, is_visible: l.is_visible, include_in_total: l.include_in_total }))}
+        actionButtons={
+          <>
+            {quote.status === 'draft' && (
+              <>
+                <ConvertSystemButton quoteId={id} currentSystem={quote.measurement_system} workspaceSlug={workspaceSlug} />
+                <CurrencySelector quoteId={id} currentCurrency={quote.currency} companyDefaultCurrency={companyDefaultCurrency} workspaceSlug={workspaceSlug} />
+              </>
+            )}
+            <Link href={`/${workspaceSlug}/quotes/${id}`} title="Edit Quote" className="p-2 rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition">
+              <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+            </Link>
+            <form action={async () => {
+              'use server';
+              const { cloneQuote } = await import('../../actions');
+              const newId = await cloneQuote(id, quote.customer_name + ' (Copy)');
+              redirect(`/${workspaceSlug}/quotes/${newId}`);
+            }}>
+              <button type="submit" title="Clone Quote" className="p-2 rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition">
+                <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+              </button>
+            </form>
+            <DownloadSummaryPDFButton quoteNumber={quote.quote_number} customerName={quote.customer_name} />
+            <SendQuoteButton
+              quoteId={id}
+              existingToken={quote.acceptance_token || null}
+              hasCustomerQuote={hasCustomerQuote}
+              emailTemplates={emailTemplates || []}
+              quoteMeta={{
+                customerName: quote.customer_name,
+                quoteNumber: quote.quote_number,
+                jobName: quote.job_name,
+                companyName: quote.cq_company_name || company?.name || null,
+                quoteDate: new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' }),
+              }}
+            />
+          </>
+        }
+      >
 
       <div data-pdf-content className="p-12 bg-white">
         {/* PDF Header */}
@@ -376,6 +385,7 @@ export default async function QuoteSummaryPage({
         )}
       </div>
       </div>
+      </SummaryTabs>
     </div>
   );
 }
