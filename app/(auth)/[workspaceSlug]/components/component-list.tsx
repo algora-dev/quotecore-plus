@@ -41,6 +41,8 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | ComponentType>('all');
+  const [measurementFilter, setMeasurementFilter] = useState<'all' | MeasurementType | 'rafter' | 'valley_hip'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [saving, setSaving] = useState(false);
 
   // Form state for dynamic fields
@@ -63,7 +65,22 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
     fetchFlashings();
   }, []);
 
-  const filtered = filter === 'all' ? components : components.filter((c) => c.component_type === filter);
+  let filtered = filter === 'all' ? components : components.filter((c) => c.component_type === filter);
+  
+  // Measurement/pitch filter
+  if (measurementFilter === 'rafter') {
+    filtered = filtered.filter(c => c.default_pitch_type === 'rafter');
+  } else if (measurementFilter === 'valley_hip') {
+    filtered = filtered.filter(c => c.default_pitch_type === 'valley_hip');
+  } else if (measurementFilter !== 'all') {
+    filtered = filtered.filter(c => c.measurement_type === measurementFilter);
+  }
+
+  // Search
+  if (searchQuery) {
+    const s = searchQuery.toLowerCase();
+    filtered = filtered.filter(c => c.name.toLowerCase().includes(s));
+  }
 
   function startEdit(comp: ComponentLibraryRow) {
     setEditingId(comp.id);
@@ -225,6 +242,46 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
             Flashings
           </Link>
         </div>
+      </div>
+
+      {/* Measurement type filters */}
+      <div className="flex gap-1 flex-wrap">
+        {[
+          { key: 'all', label: 'All Types' },
+          { key: 'area', label: 'Area' },
+          { key: 'lineal', label: 'Linear' },
+          { key: 'rafter', label: 'Rafter Pitch' },
+          { key: 'valley_hip', label: 'Hip/Valley Pitch' },
+        ].map(f => (
+          <button
+            key={f.key}
+            onClick={() => setMeasurementFilter(f.key as any)}
+            className={`px-3 py-1 text-xs font-medium rounded-full border transition ${
+              measurementFilter === f.key
+                ? 'bg-slate-900 text-white border-slate-900'
+                : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search components..."
+          className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+        />
+        <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        {searchQuery && (
+          <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">✕</button>
+        )}
       </div>
 
       {showForm && (
