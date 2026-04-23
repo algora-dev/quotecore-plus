@@ -171,91 +171,66 @@ export default async function QuoteSummaryPage({
         </div>
       </div>
 
-      {/* Document cards */}
-      <div className="grid gap-2 data-exclude-pdf">
-        {/* Summary row */}
-        <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 bg-white">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-slate-900">Summary</span>
-            <span className="text-xs text-slate-400">Master quote with costs & components</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Link href={`/${workspaceSlug}/quotes/${id}`} title="Edit Quote" className="p-2 rounded-full hover:bg-slate-100 transition">
-              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-            </Link>
-            <DownloadSummaryPDFButton quoteNumber={quote.quote_number} customerName={quote.customer_name} />
-            <form action={async () => {
-              'use server';
-              const { cloneQuote } = await import('../../actions');
-              const newId = await cloneQuote(id, quote.customer_name + ' (Copy)');
-              redirect(`/${workspaceSlug}/quotes/${newId}`);
-            }}>
-              <button type="submit" title="Clone Quote" className="p-2 rounded-full hover:bg-slate-100 transition">
-                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-              </button>
-            </form>
-          </div>
+      {/* Tabs + Actions */}
+      <div className="flex items-center justify-between data-exclude-pdf">
+        <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
+          <span className="px-4 py-1.5 text-sm font-medium rounded-full bg-white text-slate-900 shadow-sm">
+            Summary
+          </span>
+          <Link
+            href={hasCustomerQuote ? `/${workspaceSlug}/quotes/${id}/customer` : `/${workspaceSlug}/quotes/${id}/customer-edit`}
+            className="px-4 py-1.5 text-sm font-medium rounded-full text-slate-500 hover:text-slate-700 transition"
+          >
+            Customer Quote
+          </Link>
+          <Link
+            href={`/${workspaceSlug}/quotes/${id}/labor`}
+            className="px-4 py-1.5 text-sm font-medium rounded-full text-slate-500 hover:text-slate-700 transition"
+          >
+            Labor Sheet
+          </Link>
         </div>
 
-        {/* Customer Quote row */}
-        <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 bg-white">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-slate-900">Customer Quote</span>
-            <span className="text-xs text-slate-400">Customer-facing quote document</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Link href={`/${workspaceSlug}/quotes/${id}/customer-edit`} title="Edit Customer Quote" className="p-2 rounded-full hover:bg-slate-100 transition">
-              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-            </Link>
-            <Link href={`/${workspaceSlug}/quotes/${id}/customer`} title="Preview Customer Quote" className="p-2 rounded-full hover:bg-slate-100 transition">
-              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-            </Link>
-          </div>
+        <div className="flex items-center gap-2">
+          {quote.status === 'draft' && (
+            <>
+              <ConvertSystemButton quoteId={id} currentSystem={quote.measurement_system} workspaceSlug={workspaceSlug} />
+              <CurrencySelector 
+                quoteId={id} 
+                currentCurrency={quote.currency} 
+                companyDefaultCurrency={companyDefaultCurrency}
+                workspaceSlug={workspaceSlug} 
+              />
+            </>
+          )}
+          <Link href={`/${workspaceSlug}/quotes/${id}`} title="Edit Quote" className="p-2 rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition">
+            <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+          </Link>
+          <form action={async () => {
+            'use server';
+            const { cloneQuote } = await import('../../actions');
+            const newId = await cloneQuote(id, quote.customer_name + ' (Copy)');
+            redirect(`/${workspaceSlug}/quotes/${newId}`);
+          }}>
+            <button type="submit" title="Clone Quote" className="p-2 rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition">
+              <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+            </button>
+          </form>
+          <DownloadSummaryPDFButton quoteNumber={quote.quote_number} customerName={quote.customer_name} />
+          <SendQuoteButton
+            quoteId={id}
+            existingToken={quote.acceptance_token || null}
+            hasCustomerQuote={hasCustomerQuote}
+            emailTemplates={emailTemplates || []}
+            quoteMeta={{
+              customerName: quote.customer_name,
+              quoteNumber: quote.quote_number,
+              jobName: quote.job_name,
+              companyName: quote.cq_company_name || company?.name || null,
+              quoteDate: new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' }),
+            }}
+          />
         </div>
-
-        {/* Labor Sheet row */}
-        <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 bg-white">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-slate-900">Labor Sheet</span>
-            <span className="text-xs text-slate-400">Labor-only costs for contractors</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Link href={`/${workspaceSlug}/quotes/${id}/labor-sheet`} title="Edit Labor Sheet" className="p-2 rounded-full hover:bg-slate-100 transition">
-              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-            </Link>
-            <Link href={`/${workspaceSlug}/quotes/${id}/labor`} title="Preview Labor Sheet" className="p-2 rounded-full hover:bg-slate-100 transition">
-              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Send Quote + Draft tools */}
-      <div className="flex items-center gap-2 data-exclude-pdf">
-        <SendQuoteButton
-          quoteId={id}
-          existingToken={quote.acceptance_token || null}
-          hasCustomerQuote={hasCustomerQuote}
-          emailTemplates={emailTemplates || []}
-          quoteMeta={{
-            customerName: quote.customer_name,
-            quoteNumber: quote.quote_number,
-            jobName: quote.job_name,
-            companyName: quote.cq_company_name || company?.name || null,
-            quoteDate: new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' }),
-          }}
-        />
-        {quote.status === 'draft' && (
-          <>
-            <ConvertSystemButton quoteId={id} currentSystem={quote.measurement_system} workspaceSlug={workspaceSlug} />
-            <CurrencySelector 
-              quoteId={id} 
-              currentCurrency={quote.currency} 
-              companyDefaultCurrency={companyDefaultCurrency}
-              workspaceSlug={workspaceSlug} 
-            />
-          </>
-        )}
       </div>
 
       <div data-pdf-content className="p-12 bg-white">
