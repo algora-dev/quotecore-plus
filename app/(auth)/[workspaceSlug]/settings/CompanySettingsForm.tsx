@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useTransition } from 'react';
 import { updateCompanySettings } from './actions';
 import { CURRENCY_GROUPS } from '@/app/lib/currency/currencies';
@@ -136,14 +136,14 @@ export function CompanySettingsForm({
       {/* Currency Selection */}
       <div className="space-y-3">
         <label className="block">
-          <span className="text-sm font-semibold text-gray-900">💰 Default Currency</span>
+          <span className="text-sm font-semibold text-gray-900">Default Currency</span>
           <p className="text-xs text-gray-600 mt-1 mb-2">
             All component library prices will be entered in this currency
           </p>
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
             disabled={isPending}
           >
             {CURRENCY_GROUPS.map(group => (
@@ -157,9 +157,9 @@ export function CompanySettingsForm({
             ))}
           </select>
         </label>
-        <div className="bg-amber-50 border-2 border-orange-400 rounded-full p-3">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
           <p className="text-xs text-gray-900">
-            ⚠️ <strong>Important:</strong> Changing currency won't convert existing component prices
+            <strong>Important:</strong> Changing currency won't convert existing component prices
           </p>
         </div>
       </div>
@@ -167,14 +167,14 @@ export function CompanySettingsForm({
       {/* Language Selection */}
       <div className="space-y-3">
         <label className="block">
-          <span className="text-sm font-semibold text-gray-900">🌐 Language</span>
+          <span className="text-sm font-semibold text-gray-900">Language</span>
           <p className="text-xs text-gray-600 mt-1 mb-2">
             UI language (currently only English is supported)
           </p>
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
             disabled={isPending}
           >
             <option value="en">English</option>
@@ -185,12 +185,12 @@ export function CompanySettingsForm({
       {/* Measurement System */}
       <div className="space-y-3">
         <label className="block">
-          <span className="text-sm font-semibold text-gray-900">📏 Measurement System</span>
+          <span className="text-sm font-semibold text-gray-900">Measurement System</span>
           <p className="text-xs text-gray-600 mt-1 mb-2">
             Default units for quotes and measurements
           </p>
           <div className="flex gap-4">
-            <label className="flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-full cursor-pointer hover:bg-gray-50">
+            <label className="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50">
               <input
                 type="radio"
                 value="metric"
@@ -201,7 +201,7 @@ export function CompanySettingsForm({
               />
               <span className="text-sm">Metric (meters, square meters)</span>
             </label>
-            <label className="flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-full cursor-pointer hover:bg-gray-50">
+            <label className="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50">
               <input
                 type="radio"
                 value="imperial"
@@ -218,7 +218,7 @@ export function CompanySettingsForm({
 
       {/* Profit Margins */}
       <div className="border-t border-gray-200 pt-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">💸 Default Profit Margins</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Default Profit Margins</h2>
         <p className="text-sm text-gray-600 mb-6">
           These margins will be automatically applied to new quotes. You can adjust them per quote in the Review tab.
         </p>
@@ -239,7 +239,7 @@ export function CompanySettingsForm({
                   step="0.1"
                   value={materialMargin}
                   onChange={(e) => setMaterialMargin(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   placeholder="15"
                   disabled={isPending}
                 />
@@ -268,7 +268,7 @@ export function CompanySettingsForm({
                   step="0.1"
                   value={laborMargin}
                   onChange={(e) => setLaborMargin(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   placeholder="20"
                   disabled={isPending}
                 />
@@ -283,9 +283,9 @@ export function CompanySettingsForm({
           </div>
         </div>
 
-        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-full p-4">
-          <p className="text-sm text-blue-900">
-            <strong>💡 Note:</strong> Margins are hidden from customers. They only see the final total price including your profit.
+        <div className="mt-4 bg-slate-50 border border-slate-200 rounded-lg p-3">
+          <p className="text-xs text-slate-600">
+            <strong>Note:</strong> Margins are hidden from customers. They only see the final total price including your profit.
           </p>
         </div>
       </div>
@@ -308,7 +308,7 @@ export function CompanySettingsForm({
         <button
           type="submit"
           disabled={isPending}
-          className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-5 py-2.5 bg-black hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] text-white font-medium rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isPending ? 'Saving...' : 'Save Settings'}
         </button>

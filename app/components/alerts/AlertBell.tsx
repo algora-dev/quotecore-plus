@@ -69,6 +69,16 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
     } catch {}
   }
 
+  async function clearAll() {
+    try {
+      const res = await fetch('/api/alerts/clear-all', { method: 'POST' });
+      if (res.ok) {
+        setAlerts([]);
+        setUnreadCount(0);
+      }
+    } catch {}
+  }
+
   return (
     <div className="relative" ref={ref}>
       <button
@@ -106,14 +116,14 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
         <div className="absolute right-0 top-full mt-2 z-50 w-80 rounded-xl border border-slate-200 bg-white shadow-lg">
           <div className="flex items-center justify-between p-3 border-b border-slate-100">
             <h4 className="text-sm font-semibold text-slate-900">Notifications</h4>
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllRead}
-                className="text-xs text-orange-600 hover:text-orange-800"
-              >
-                Mark all read
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {unreadCount > 0 && (
+                <button onClick={markAllRead} className="text-xs text-orange-600 hover:text-orange-800">Mark read</button>
+              )}
+              {alerts.length > 0 && (
+                <button onClick={clearAll} className="text-xs text-slate-400 hover:text-red-500">Clear all</button>
+              )}
+            </div>
           </div>
 
           <div className="max-h-64 overflow-y-auto">

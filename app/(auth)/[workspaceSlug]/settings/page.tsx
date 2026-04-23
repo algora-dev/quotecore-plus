@@ -1,4 +1,4 @@
-import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
+﻿import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { CompanySettingsForm } from './CompanySettingsForm';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -59,7 +59,7 @@ export default async function CompanySettingsPage({
                   Google
                 </>
               ) : (
-                <>📧 Email</>
+                <>Email</>
               )}
             </span>
             <span className="text-slate-400">{user?.email}</span>
@@ -85,7 +85,7 @@ export default async function CompanySettingsPage({
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">🔒 Security</h2>
+              <h2 className="text-lg font-semibold text-slate-900">Security</h2>
               <p className="text-sm text-slate-500 mt-1">Protect your account with additional security</p>
             </div>
           </div>
@@ -107,7 +107,7 @@ export default async function CompanySettingsPage({
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">💳 Billing & Subscription</h2>
+              <h2 className="text-lg font-semibold text-slate-900">Billing & Subscription</h2>
               <p className="text-sm text-slate-500 mt-1">Manage your plan and payment details</p>
             </div>
           </div>
