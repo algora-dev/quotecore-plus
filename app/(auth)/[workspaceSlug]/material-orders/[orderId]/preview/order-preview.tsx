@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { MaterialOrderRow, MaterialOrderLineRow, FlashingLibraryRow } from '@/app/lib/types';
 import { markOrderAsOrdered } from '../../order-list-actions';
-import { BackButton } from '@/app/components/BackButton';
+
 
 interface Props {
   order: MaterialOrderRow;
@@ -20,16 +20,15 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
 
   const isOrdered = order.status === 'ordered';
 
+  const [showMarkModal, setShowMarkModal] = useState(false);
+
   async function handleMarkAsOrdered() {
-    if (!confirm('Mark this order as sent to supplier?')) return;
-    
     setMarkingOrdered(true);
     try {
       await markOrderAsOrdered(order.id);
+      setShowMarkModal(false);
       router.refresh();
-      alert('Order marked as sent!');
-    } catch (error) {
-      console.error('Error:', error);
+    } catch {
       alert('Failed to update status');
     } finally {
       setMarkingOrdered(false);
@@ -38,46 +37,42 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
 
   return (
     <div className="min-h-screen bg-slate-100">
-      {/* Back Button */}
-      <div className="bg-white px-6 pt-4">
-        <BackButton />
-      </div>
-      
       {/* Top Bar */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+      <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm data-exclude-pdf">
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.back()}
-            className="text-slate-600 hover:text-slate-900"
+            className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 transition-colors"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
+            Back
           </button>
           <div>
             <h1 className="text-lg font-semibold text-slate-900">Order Preview</h1>
-            <p className="text-sm text-slate-600">{order.order_number}</p>
+            <p className="text-sm text-slate-500">{order.order_number}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {!isOrdered && (
             <button
-              onClick={handleMarkAsOrdered}
+              onClick={() => setShowMarkModal(true)}
               disabled={markingOrdered}
-              className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-full hover:bg-green-700 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium border border-slate-300 bg-white text-slate-700 rounded-full hover:bg-slate-50 transition pill-shimmer disabled:opacity-50"
             >
-              {markingOrdered ? 'Updating...' : 'Mark as Ordered'}
+              Mark as Ordered
             </button>
           )}
           <Link
             href={`/${workspaceSlug}/material-orders/create?orderId=${order.id}`}
-            className="px-4 py-2 text-sm font-medium bg-[#FF6B35] text-white rounded-full hover:bg-orange-600"
+            className="px-4 py-2 text-sm font-medium border border-slate-300 bg-white text-slate-700 rounded-full hover:bg-slate-50 transition pill-shimmer"
           >
             Edit Order
           </Link>
           <button
             onClick={() => window.print()}
-            className="px-4 py-2 text-sm font-medium bg-slate-700 text-white rounded-full hover:bg-slate-800"
+            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Print / Save PDF
           </button>
@@ -298,6 +293,20 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
           </div>
         )}
       </div>
+
+      {/* Mark as Ordered Modal */}
+      {showMarkModal && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">Mark as Ordered</h3>
+            <p className="text-sm text-slate-500 mt-2">Confirm this order has been sent to the supplier.</p>
+            <div className="flex gap-3 justify-end mt-6">
+              <button onClick={() => setShowMarkModal(false)} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={markingOrdered}>Cancel</button>
+              <button onClick={handleMarkAsOrdered} className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]" disabled={markingOrdered}>{markingOrdered ? 'Updating...' : 'Confirm'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
