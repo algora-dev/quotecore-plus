@@ -5,6 +5,8 @@ export interface CopilotStep {
   description: string;
   position?: 'top' | 'bottom' | 'left' | 'right';
   page?: string; // URL path this step should appear on (optional)
+  validation?: 'input' | 'select' | 'click' | 'none'; // What to check before allowing Next
+  validationTarget?: string; // CSS selector for the element to validate (defaults to target)
 }
 
 export interface CopilotGuide {

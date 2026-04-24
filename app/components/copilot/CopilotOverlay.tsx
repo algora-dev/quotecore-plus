@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useCopilot } from './CopilotProvider';
 
 export function CopilotOverlay() {
-  const { isActive, currentStepData, state, totalSteps, nextStep, prevStep, skipGuide, currentGuide, toggle } = useCopilot();
+  const { isActive, currentStepData, state, totalSteps, nextStep, prevStep, skipGuide, currentGuide, toggle, nudgeMessage } = useCopilot();
   const currentStep = state.currentStep;
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [showDismissMsg, setShowDismissMsg] = useState(false);
@@ -244,6 +244,9 @@ export function CopilotOverlay() {
 
           <div className="px-5 pb-3">
             <p className="text-xs text-slate-600 leading-relaxed">{currentStepData.description}</p>
+            {nudgeMessage && (
+              <p className="text-xs text-orange-600 font-medium mt-2 animate-pulse">{nudgeMessage}</p>
+            )}
           </div>
 
           <div className="px-5 pb-3">

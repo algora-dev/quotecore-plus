@@ -12,6 +12,7 @@ interface CopilotContextType {
   currentGuide: typeof COPILOT_GUIDES[number] | null;
   currentStepData: typeof COPILOT_GUIDES[number]['steps'][number] | null;
   totalSteps: number;
+  nudgeMessage: string | null;
   toggle: () => void;
   nextStep: () => void;
   prevStep: () => void;
@@ -34,6 +35,8 @@ interface Props {
 
 export function CopilotProvider({ children, userId, initialState }: Props) {
   const pathname = usePathname();
+  const [nudgeMessage, setNudgeMessage] = useState<string | null>(null);
+
   const [state, setState] = useState<CopilotState>(
     initialState || {
       enabled: true,
@@ -118,8 +121,39 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
 
   const nextStep = useCallback(() => {
     if (!currentGuide) return;
+
+    // Validate current step before advancing
+    const current = currentGuide.steps[state.currentStep];
+    if (current?.validation && current.validation !== 'none') {
+      const targetSelector = current.validationTarget || current.target;
+      const el = document.querySelector(targetSelector);
+
+      if (current.validation === 'input') {
+        // Check if any input/select inside the target has a non-empty, non-zero value
+        const inputs = el?.querySelectorAll('input, select, textarea');
+        const hasValue = inputs && Array.from(inputs).some((inp: any) => {
+          const val = inp.value?.trim();
+          return val && val !== '' && val !== '0';
+        });
+        if (!hasValue) {
+          setNudgeMessage('Please fill in this field before continuing.');
+          setTimeout(() => setNudgeMessage(null), 2500);
+          return;
+        }
+      } else if (current.validation === 'click') {
+        // Check if the validation target element exists (means the click action was performed)
+        const checkEl = document.querySelector(current.validationTarget || '');
+        if (!checkEl) {
+          setNudgeMessage('Please complete this step first.');
+          setTimeout(() => setNudgeMessage(null), 2500);
+          return;
+        }
+      }
+    }
+
+    setNudgeMessage(null);
     
-    // Find next step that has a visible target (skip conditional steps where element doesn't exist)
+    // Find next step that has a visible target
     let nextIdx = state.currentStep + 1;
     while (nextIdx < currentGuide.steps.length) {
       const step = currentGuide.steps[nextIdx];
@@ -170,7 +204,7 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
 
   return (
     <CopilotContext.Provider value={{
-      state, isActive, currentGuide, currentStepData, totalSteps,
+      state, isActive, currentGuide, currentStepData, totalSteps, nudgeMessage,
       toggle, nextStep, prevStep, skipGuide,
     }}>
       {children}

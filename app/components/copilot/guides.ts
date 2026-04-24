@@ -12,6 +12,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         title: 'Components Page',
         description: 'This is where you manage all your reusable components — materials, labour items, and extras that appear in your quotes. Click "Components" to get started.',
         position: 'bottom',
+        validation: 'none',
       },
       {
         id: 'components-add',
@@ -20,6 +21,8 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         description: 'Click "+ Add Component" to create your first component. Components are the building blocks of every quote — things like roofing iron, underlay, ridge cap, etc.',
         position: 'bottom',
         page: '/components',
+        validation: 'click',
+        validationTarget: '[data-copilot="component-name"]',
       },
       {
         id: 'components-name',
@@ -28,6 +31,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         description: 'Give your component a clear name that describes what it is. For example: "Roofing Iron", "Building Paper", "Ridge Cap". This name will appear in your quotes.',
         position: 'right',
         page: '/components',
+        validation: 'input',
       },
       {
         id: 'components-type',
@@ -36,6 +40,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         description: 'Choose "Main Component" for primary materials (roofing iron, underlay) or "Extra" for additional items (screws, sealant, delivery). Main components are tied to roof areas, extras are standalone.',
         position: 'right',
         page: '/components',
+        validation: 'none',
       },
       {
         id: 'components-measurement',
@@ -44,6 +49,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         description: 'How is this component measured? Area (m²) for sheets/underlay, Linear (m) for flashings/gutters, Quantity for items like vents, or Fixed for flat-rate items.',
         position: 'right',
         page: '/components',
+        validation: 'none',
       },
       {
         id: 'components-material-rate',
@@ -52,6 +58,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         description: 'Set the price per unit for materials. For example, roofing iron might be $25/m². This rate auto-calculates material totals in your quotes based on measurements.',
         position: 'right',
         page: '/components',
+        validation: 'input',
       },
       {
         id: 'components-labour-rate',
@@ -60,6 +67,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         description: 'Set the labour rate per unit. For example, $15/m² for installation. This is calculated separately from materials so you can track costs and margins independently.',
         position: 'right',
         page: '/components',
+        validation: 'input',
       },
       {
         id: 'components-waste',
@@ -68,6 +76,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         description: 'Add a waste factor to account for cuts and off-cuts. Percentage (e.g., 10%) is most common. This automatically adds extra material to your quotes — so you never under-order.',
         position: 'right',
         page: '/components',
+        validation: 'none',
       },
       {
         id: 'components-waste-amount',
@@ -76,6 +85,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         description: 'Enter the waste value. For percentage, enter a number like 10 (for 10%). For fixed, enter the extra quantity to add. This ensures you always order enough material to cover cuts, trims, and off-cuts.',
         position: 'right',
         page: '/components',
+        validation: 'input',
       },
       {
         id: 'components-pitch-toggle',
@@ -84,6 +94,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         description: 'Enable this if the component quantity is affected by roof pitch. When enabled, measurements are automatically adjusted using the pitch angle — steeper roofs need more material. Most roofing materials need this enabled.',
         position: 'right',
         page: '/components',
+        validation: 'none',
       },
       {
         id: 'components-pitch-type',
@@ -92,6 +103,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         description: 'Rafter Pitch: For materials that follow the roof slope (iron, underlay, battens). Hip/Valley Pitch: For materials along hip or valley lines (hip caps, valley irons). Choose based on where this component is installed.',
         position: 'right',
         page: '/components',
+        validation: 'none',
       },
       {
         id: 'components-flashings',
@@ -100,6 +112,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         description: 'Link flashing drawings to this component. When you create a material order, the flashing design will appear next to this item — so your supplier knows exactly what profile to manufacture. Optional but very useful for custom flashings.',
         position: 'right',
         page: '/components',
+        validation: 'none',
       },
       {
         id: 'components-save',
@@ -108,6 +121,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         description: 'Click "Create" to save this component to your library. Once saved, you can use it when creating quotes — it will appear as an option to add to any roof area. You can always come back here to edit rates or settings.',
         position: 'top',
         page: '/components',
+        validation: 'none',
       },
     ],
   },
