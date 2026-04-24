@@ -324,7 +324,7 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
                 <label className="block text-xs text-slate-500 mb-1">Material Price ({unitForMeasurement(formMeasurementType)})</label>
                 <input name="default_material_rate" type="number" step="0.01" defaultValue="0" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
               </div>
-              <div>
+              <div data-copilot="component-labour">
                 <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(formMeasurementType)})</label>
                 <input name="default_labour_rate" type="number" step="0.01" defaultValue="0" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
               </div>
