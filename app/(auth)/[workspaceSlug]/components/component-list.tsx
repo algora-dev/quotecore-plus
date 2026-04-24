@@ -342,26 +342,26 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
                 </select>
               </div>
               {formWasteType !== 'none' && (
-                <div>
+                <div data-copilot="component-waste-amount">
                   <label className="block text-xs text-slate-500 mb-1">Waste Amount {wasteAmountLabel}</label>
-                  <input name="waste_amount" type="number" step="0.01" defaultValue="0" className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                  <input name="waste_amount" type="number" step="0.01" defaultValue="0" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2" data-copilot="component-pitch">
               <input type="checkbox" id="pitch-enabled" checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="rounded" />
               <label htmlFor="pitch-enabled" className="text-xs text-slate-700">Apply pitch calculation</label>
             </div>
             {formPitchEnabled && (
-              <div>
+              <div data-copilot="component-pitch-type">
                 <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
-                <select name="default_pitch_type" className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
+                <select name="default_pitch_type" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg">
                   <option value="rafter">Rafter Pitch</option>
                   <option value="valley_hip">Valley/Hip Pitch</option>
                 </select>
               </div>
             )}
-            <div className="border-t border-slate-200 pt-3 mt-3">
+            <div className="border-t border-slate-200 pt-3 mt-3" data-copilot="component-flashings">
               <h4 className="text-xs font-semibold text-slate-700 mb-2">Material Orders</h4>
               <div className="flex items-center gap-2 mb-2">
                 <input type="checkbox" id="eligible-orders" name="eligible_for_orders" defaultChecked className="rounded" />
