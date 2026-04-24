@@ -120,7 +120,17 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
     const fd = new FormData(e.currentTarget);
 
     const wasteType = fd.get('default_waste_type') as WasteType;
-    const wasteAmount = Number(fd.get('waste_amount')) || 0;
+    const wasteAmountRaw = fd.get('waste_amount') as string || '0';
+    const wasteAmount = Number(wasteAmountRaw) || 0;
+
+    if (wasteType === 'fixed' && wasteAmountRaw.includes('.')) {
+      const decimals = wasteAmountRaw.split('.')[1];
+      if (decimals && decimals.length > 2) {
+        alert('Reduce your decimal places to two or less (e.g. 0.25)');
+        setSaving(false);
+        return;
+      }
+    }
 
     const input: ComponentLibraryInsert = {
       name: fd.get('name') as string,
@@ -158,7 +168,17 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
     const fd = new FormData(e.currentTarget);
 
     const wasteType = fd.get('default_waste_type') as WasteType;
-    const wasteAmount = Number(fd.get('waste_amount')) || 0;
+    const wasteAmountRaw = fd.get('waste_amount') as string || '0';
+    const wasteAmount = Number(wasteAmountRaw) || 0;
+
+    if (wasteType === 'fixed' && wasteAmountRaw.includes('.')) {
+      const decimals = wasteAmountRaw.split('.')[1];
+      if (decimals && decimals.length > 2) {
+        alert('Reduce your decimal places to two or less (e.g. 0.25)');
+        setSaving(false);
+        return;
+      }
+    }
 
     const input: Partial<ComponentLibraryInsert> = {
       name: fd.get('name') as string,
