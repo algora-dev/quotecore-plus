@@ -26,10 +26,9 @@ export function CopilotOverlay() {
     }
 
     updateRect();
-    // Re-measure on scroll/resize
     window.addEventListener('scroll', updateRect, true);
     window.addEventListener('resize', updateRect);
-    const interval = setInterval(updateRect, 500); // Poll for dynamic elements
+    const interval = setInterval(updateRect, 500);
 
     return () => {
       window.removeEventListener('scroll', updateRect, true);
@@ -63,17 +62,16 @@ export function CopilotOverlay() {
       };
     } else if (pos === 'right') {
       tooltipStyle = {
-        top: targetRect.top + targetRect.height / 2 - 60,
-        left: targetRect.right + padding + 12,
+        top: Math.max(16, targetRect.top + targetRect.height / 2 - 60),
+        left: Math.min(targetRect.right + padding + 12, window.innerWidth - tooltipWidth - 16),
       };
     } else if (pos === 'left') {
       tooltipStyle = {
-        top: targetRect.top + targetRect.height / 2 - 60,
-        right: window.innerWidth - targetRect.left + padding + 12,
+        top: Math.max(16, targetRect.top + targetRect.height / 2 - 60),
+        right: Math.max(16, window.innerWidth - targetRect.left + padding + 12),
       };
     }
   } else {
-    // No target found — center the tooltip
     tooltipStyle = {
       top: '50%',
       left: '50%',
@@ -81,39 +79,41 @@ export function CopilotOverlay() {
     };
   }
 
+  // Build clip-path to create 4 rectangles around the spotlight hole
+  // This lets clicks pass through the hole to the actual page elements
+  const dimRects = hasTarget ? [
+    // Top bar
+    { top: 0, left: 0, width: '100%', height: Math.max(0, targetRect.top - padding) },
+    // Bottom bar  
+    { top: targetRect.bottom + padding, left: 0, width: '100%', height: Math.max(0, window.innerHeight - targetRect.bottom - padding) },
+    // Left bar (between top and bottom)
+    { top: targetRect.top - padding, left: 0, width: Math.max(0, targetRect.left - padding), height: targetRect.height + padding * 2 },
+    // Right bar (between top and bottom)
+    { top: targetRect.top - padding, left: targetRect.right + padding, width: Math.max(0, window.innerWidth - targetRect.right - padding), height: targetRect.height + padding * 2 },
+  ] : [
+    { top: 0, left: 0, width: '100%', height: '100%' },
+  ];
+
   return (
     <div ref={overlayRef} className="fixed inset-0 z-[100] pointer-events-none">
-      {/* Dark overlay with spotlight hole */}
-      <svg className="absolute inset-0 w-full h-full">
-        <defs>
-          <mask id="copilot-mask">
-            <rect width="100%" height="100%" fill="white" />
-            {hasTarget && (
-              <rect
-                x={targetRect.left - padding}
-                y={targetRect.top - padding}
-                width={targetRect.width + padding * 2}
-                height={targetRect.height + padding * 2}
-                rx={8}
-                fill="black"
-              />
-            )}
-          </mask>
-        </defs>
-        <rect
-          width="100%"
-          height="100%"
-          fill="rgba(0,0,0,0.5)"
-          mask="url(#copilot-mask)"
-          className="pointer-events-auto"
-          onClick={(e) => e.stopPropagation()}
+      {/* Dim overlay — 4 rectangles around the spotlight hole */}
+      {dimRects.map((rect, i) => (
+        <div
+          key={i}
+          className="absolute bg-black/50 pointer-events-auto"
+          style={{
+            top: typeof rect.top === 'number' ? `${rect.top}px` : rect.top,
+            left: typeof rect.left === 'number' ? `${rect.left}px` : rect.left,
+            width: typeof rect.width === 'number' ? `${rect.width}px` : rect.width,
+            height: typeof rect.height === 'number' ? `${rect.height}px` : rect.height,
+          }}
         />
-      </svg>
+      ))}
 
-      {/* Spotlight ring */}
+      {/* Spotlight ring around the target */}
       {hasTarget && (
         <div
-          className="absolute border-2 border-orange-400 rounded-lg pointer-events-none"
+          className="absolute border-2 border-orange-400 rounded-lg pointer-events-none animate-pulse"
           style={{
             top: targetRect.top - padding,
             left: targetRect.left - padding,
@@ -124,26 +124,12 @@ export function CopilotOverlay() {
         />
       )}
 
-      {/* Make the target element clickable through the overlay */}
-      {hasTarget && (
-        <div
-          className="absolute pointer-events-auto"
-          style={{
-            top: targetRect.top - padding,
-            left: targetRect.left - padding,
-            width: targetRect.width + padding * 2,
-            height: targetRect.height + padding * 2,
-          }}
-        />
-      )}
-
-      {/* Tooltip */}
+      {/* Tooltip card */}
       <div
         className="absolute w-80 pointer-events-auto"
         style={tooltipStyle}
       >
         <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
-          {/* Header */}
           <div className="px-5 pt-4 pb-2">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-medium text-orange-600">{currentGuide?.name}</span>
@@ -152,7 +138,6 @@ export function CopilotOverlay() {
             <h3 className="text-sm font-semibold text-slate-900">{currentStepData.title}</h3>
           </div>
 
-          {/* Body */}
           <div className="px-5 pb-3">
             <p className="text-xs text-slate-600 leading-relaxed">{currentStepData.description}</p>
           </div>

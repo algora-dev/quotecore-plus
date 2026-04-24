@@ -13,9 +13,14 @@ export function CopilotToggle() {
       {/* Toggle switch */}
       <button
         onClick={() => {
-          if (state.enabled) {
+          if (state.enabled && state.activeGuide) {
+            // Currently running a guide — toggle off
             toggle();
+          } else if (state.enabled && !state.activeGuide) {
+            // Enabled but no active guide — show menu to pick one
+            setShowMenu(true);
           } else {
+            // Disabled — show menu
             setShowMenu(true);
           }
         }}
