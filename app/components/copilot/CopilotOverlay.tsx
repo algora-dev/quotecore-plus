@@ -39,7 +39,7 @@ export function CopilotOverlay() {
 
   if (!isActive || !currentStepData) return null;
 
-  const padding = 8;
+  const padding = 12; // Generous padding so form inputs are fully accessible
   const hasTarget = targetRect && targetRect.width > 0;
 
   // Calculate tooltip position

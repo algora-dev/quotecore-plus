@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import type { CopilotState } from './types';
 import { COPILOT_GUIDES } from './guides';
@@ -12,11 +13,9 @@ interface CopilotContextType {
   currentStepData: typeof COPILOT_GUIDES[number]['steps'][number] | null;
   totalSteps: number;
   toggle: () => void;
-  startGuide: (guideId: string) => void;
   nextStep: () => void;
   prevStep: () => void;
   skipGuide: () => void;
-  endCopilot: () => void;
 }
 
 const CopilotContext = createContext<CopilotContextType | null>(null);
@@ -34,6 +33,7 @@ interface Props {
 }
 
 export function CopilotProvider({ children, userId, initialState }: Props) {
+  const pathname = usePathname();
   const [state, setState] = useState<CopilotState>(
     initialState || {
       enabled: true,
@@ -53,7 +53,7 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
     try {
       await supabase.from('copilot_progress').upsert({
         user_id: userId,
-        company_id: userId, // Will be overwritten by RLS but needed for insert
+        company_id: userId,
         copilot_enabled: newState.enabled,
         guides_completed: newState.guidesCompleted,
         current_guide: newState.activeGuide,
@@ -61,9 +61,38 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
     } catch {
-      // Silently fail — copilot state is non-critical
+      // Silently fail
     }
   }, [supabase, userId]);
+
+  // Auto-detect which guide to show based on current page
+  useEffect(() => {
+    if (!state.enabled) return;
+
+    let guideId: string | null = null;
+
+    if (pathname?.includes('/components')) {
+      guideId = 'components';
+    } else if (pathname?.includes('/quotes/') && pathname?.includes('/summary')) {
+      guideId = 'customer-labor';
+    } else if (pathname?.includes('/quotes')) {
+      guideId = 'quotes';
+    } else if (pathname?.includes('/flashings') || pathname?.includes('/material-orders')) {
+      guideId = 'flashings-orders';
+    }
+
+    if (guideId && guideId !== state.activeGuide) {
+      // Don't auto-start completed guides
+      if (!state.guidesCompleted.includes(guideId)) {
+        setState(prev => ({ ...prev, activeGuide: guideId, currentStep: 0 }));
+      } else {
+        // Guide already completed, clear active
+        if (state.activeGuide) {
+          setState(prev => ({ ...prev, activeGuide: null, currentStep: 0 }));
+        }
+      }
+    }
+  }, [pathname, state.enabled]);
 
   const currentGuide = state.activeGuide
     ? COPILOT_GUIDES.find(g => g.id === state.activeGuide) || null
@@ -74,22 +103,15 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
     : null;
 
   const totalSteps = currentGuide?.steps.length || 0;
-
   const isActive = state.enabled && !!currentGuide && !!currentStepData;
 
   const toggle = useCallback(() => {
+    const newEnabled = !state.enabled;
     const newState = {
       ...state,
-      enabled: !state.enabled,
-      // If disabling, also clear active guide
-      ...(!state.enabled ? {} : { activeGuide: null, currentStep: 0 }),
+      enabled: newEnabled,
+      ...(newEnabled ? {} : { activeGuide: null, currentStep: 0 }),
     };
-    setState(newState);
-    persist(newState);
-  }, [state, persist]);
-
-  const startGuide = useCallback((guideId: string) => {
-    const newState = { ...state, activeGuide: guideId, currentStep: 0, enabled: true };
     setState(newState);
     persist(newState);
   }, [state, persist]);
@@ -98,13 +120,8 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
     if (!currentGuide) return;
     if (state.currentStep >= currentGuide.steps.length - 1) {
       // Guide complete
-      const newCompleted = [...state.guidesCompleted, currentGuide.id].filter((v, i, a) => a.indexOf(v) === i);
-      const newState = {
-        ...state,
-        guidesCompleted: newCompleted,
-        activeGuide: null,
-        currentStep: 0,
-      };
+      const newCompleted = [...new Set([...state.guidesCompleted, currentGuide.id])];
+      const newState = { ...state, guidesCompleted: newCompleted, activeGuide: null, currentStep: 0 };
       setState(newState);
       persist(newState);
     } else {
@@ -123,21 +140,18 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
   }, [state, persist]);
 
   const skipGuide = useCallback(() => {
-    const newState = { ...state, activeGuide: null, currentStep: 0 };
-    setState(newState);
-    persist(newState);
-  }, [state, persist]);
-
-  const endCopilot = useCallback(() => {
-    const newState = { ...state, enabled: false, activeGuide: null, currentStep: 0 };
-    setState(newState);
-    persist(newState);
-  }, [state, persist]);
+    if (currentGuide) {
+      const newCompleted = [...new Set([...state.guidesCompleted, currentGuide.id])];
+      const newState = { ...state, guidesCompleted: newCompleted, activeGuide: null, currentStep: 0 };
+      setState(newState);
+      persist(newState);
+    }
+  }, [state, currentGuide, persist]);
 
   return (
     <CopilotContext.Provider value={{
       state, isActive, currentGuide, currentStepData, totalSteps,
-      toggle, startGuide, nextStep, prevStep, skipGuide, endCopilot,
+      toggle, nextStep, prevStep, skipGuide,
     }}>
       {children}
     </CopilotContext.Provider>

@@ -290,23 +290,23 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
           <h3 className="font-semibold text-slate-900 mb-3">New Component</h3>
           <form onSubmit={handleCreate} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <div>
+              <div data-copilot="component-name">
                 <label className="block text-xs text-slate-500 mb-1">Name</label>
-                <input name="name" required className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                <input name="name" required className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
               </div>
-              <div>
+              <div data-copilot="component-type">
                 <label className="block text-xs text-slate-500 mb-1">Type</label>
                 <select 
                   name="component_type" 
                   required 
                   defaultValue={filter === 'extra' ? 'extra' : 'main'}
-                  className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                  className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg"
                 >
                   <option value="main">Main Component</option>
                   <option value="extra">Extra</option>
                 </select>
               </div>
-              <div>
+              <div data-copilot="component-measurement">
                 <label className="block text-xs text-slate-500 mb-1">Measurement</label>
                 <select
                   name="measurement_type"
@@ -320,15 +320,15 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
                   ))}
                 </select>
               </div>
-              <div>
+              <div data-copilot="component-rates">
                 <label className="block text-xs text-slate-500 mb-1">Material Price ({unitForMeasurement(formMeasurementType)})</label>
-                <input name="default_material_rate" type="number" step="0.01" defaultValue="0" className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                <input name="default_material_rate" type="number" step="0.01" defaultValue="0" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(formMeasurementType)})</label>
-                <input name="default_labour_rate" type="number" step="0.01" defaultValue="0" className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                <input name="default_labour_rate" type="number" step="0.01" defaultValue="0" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
               </div>
-              <div>
+              <div data-copilot="component-waste">
                 <label className="block text-xs text-slate-500 mb-1">Waste Type</label>
                 <select
                   name="default_waste_type"
@@ -415,7 +415,7 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
                 <p className="text-xs text-slate-400 mt-1">Add flashing drawings to use in material order forms</p>
               </div>
             </div>
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2 pt-2" data-copilot="component-save">
               <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50">
                 {saving ? 'Saving...' : 'Create'}
               </button>
