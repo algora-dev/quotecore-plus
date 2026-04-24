@@ -23,6 +23,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         page: '/components',
         validation: 'click',
         validationTarget: '[data-copilot="component-name"]',
+        nudgeText: 'Please click + Add Component to continue.',
       },
       {
         id: 'components-name',

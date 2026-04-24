@@ -129,22 +129,21 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
       const el = document.querySelector(targetSelector);
 
       if (current.validation === 'input') {
-        // Check if any input/select inside the target has a non-empty, non-zero value
+        // Check if any input inside the target has been filled (blank = not done, zero = OK)
         const inputs = el?.querySelectorAll('input, select, textarea');
         const hasValue = inputs && Array.from(inputs).some((inp: any) => {
-          const val = inp.value?.trim();
-          return val && val !== '' && val !== '0';
+          const val = inp.value;
+          return val !== undefined && val !== null && val.trim() !== '';
         });
         if (!hasValue) {
-          setNudgeMessage('Please fill in this field before continuing.');
+          setNudgeMessage(current.nudgeText || 'Please fill in this field before continuing.');
           setTimeout(() => setNudgeMessage(null), 2500);
           return;
         }
       } else if (current.validation === 'click') {
-        // Check if the validation target element exists (means the click action was performed)
         const checkEl = document.querySelector(current.validationTarget || '');
         if (!checkEl) {
-          setNudgeMessage('Please complete this step first.');
+          setNudgeMessage(current.nudgeText || 'Please complete this step first.');
           setTimeout(() => setNudgeMessage(null), 2500);
           return;
         }

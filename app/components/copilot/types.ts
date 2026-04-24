@@ -7,6 +7,7 @@ export interface CopilotStep {
   page?: string; // URL path this step should appear on (optional)
   validation?: 'input' | 'select' | 'click' | 'none'; // What to check before allowing Next
   validationTarget?: string; // CSS selector for the element to validate (defaults to target)
+  nudgeText?: string; // Custom message when validation fails
 }
 
 export interface CopilotGuide {
