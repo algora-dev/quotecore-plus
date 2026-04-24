@@ -3,11 +3,13 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { LogoutButton } from '@/app/components/auth/LogoutButton';
-
 import { WorkspaceNav } from '@/app/components/workspace/WorkspaceNav';
 import { AlertBell } from '@/app/components/alerts/AlertBell';
+import { CopilotProvider } from '@/app/components/copilot/CopilotProvider';
+import { CopilotToggle } from '@/app/components/copilot/CopilotToggle';
+import { CopilotOverlay } from '@/app/components/copilot/CopilotOverlay';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
-import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 
 export default async function WorkspaceLayout({
   children,
@@ -25,9 +27,25 @@ export default async function WorkspaceLayout({
   }
 
   const workspaceLabel = company.name ? company.name.slice(0, 10) : 'Workspace';
+  const profile = await getCurrentProfile();
+
+  const supabase = await createSupabaseServerClient();
+
+  // Load copilot progress
+  const { data: copilotData } = await supabase
+    .from('copilot_progress')
+    .select('copilot_enabled, guides_completed, current_guide, current_step')
+    .eq('user_id', profile.id)
+    .single();
+
+  const copilotState = copilotData ? {
+    enabled: copilotData.copilot_enabled ?? true,
+    activeGuide: copilotData.current_guide,
+    currentStep: copilotData.current_step ?? 0,
+    guidesCompleted: copilotData.guides_completed ?? [],
+  } : null;
 
   // Load alerts for bell
-  const supabase = await createSupabaseServerClient();
   const { data: alerts } = await supabase
     .from('alerts')
     .select('id, alert_type, title, message, is_read, created_at, quote_id')
@@ -38,6 +56,7 @@ export default async function WorkspaceLayout({
   const unreadCount = (alerts || []).filter(a => !a.is_read).length;
 
   return (
+    <CopilotProvider userId={profile.id} initialState={copilotState}>
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white shadow-sm">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-4">
@@ -46,6 +65,7 @@ export default async function WorkspaceLayout({
               <img src="/logo.png" alt="QuoteCore" className="h-9" />
             </Link>
             <div className="flex items-center gap-3">
+              <CopilotToggle />
               <AlertBell
                 initialAlerts={alerts || []}
                 initialUnreadCount={unreadCount}
@@ -67,6 +87,8 @@ export default async function WorkspaceLayout({
       </header>
 
       <main className="mx-auto w-full max-w-6xl px-6 py-10">{children}</main>
+      <CopilotOverlay />
     </div>
+    </CopilotProvider>
   );
 }

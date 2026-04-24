@@ -231,6 +231,7 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
         <div className="flex gap-2">
           <button
             onClick={() => setShowForm(true)}
+            data-copilot="add-component"
             className="inline-flex items-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             + Add Component

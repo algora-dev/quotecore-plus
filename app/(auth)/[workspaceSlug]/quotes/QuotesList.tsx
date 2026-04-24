@@ -257,6 +257,7 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
           <Link
             href={`/${workspaceSlug}/quotes/new`}
             title="Click to create a new quote"
+            data-copilot="new-quote"
             className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

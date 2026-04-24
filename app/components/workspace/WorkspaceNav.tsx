@@ -8,9 +8,9 @@ type NavKey = 'components' | 'quotes' | 'material-orders';
 const makeNavItems = (slug: string) => {
   const base = `/${slug}`;
   return [
-    { key: 'components' as NavKey, href: `${base}/components`, label: 'Components' },
-    { key: 'quotes' as NavKey, href: `${base}/quotes`, label: 'Quotes' },
-    { key: 'material-orders' as NavKey, href: `${base}/material-orders`, label: 'Material Orders' },
+    { key: 'components' as NavKey, href: `${base}/components`, label: 'Components', copilot: 'nav-components' },
+    { key: 'quotes' as NavKey, href: `${base}/quotes`, label: 'Quotes', copilot: 'nav-quotes' },
+    { key: 'material-orders' as NavKey, href: `${base}/material-orders`, label: 'Material Orders', copilot: 'nav-orders' },
   ];
 };
 
@@ -27,6 +27,7 @@ export function WorkspaceNav({ workspaceSlug }: { workspaceSlug: string }) {
             key={item.key}
             href={item.href}
             prefetch={false}
+            data-copilot={item.copilot}
             className={`rounded-full px-3 py-1 transition-all duration-200 ease-in-out ${
               isActive
                 ? 'bg-black text-white border-2 border-black'

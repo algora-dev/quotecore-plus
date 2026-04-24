@@ -56,7 +56,7 @@ export function SummaryTabs({
   return (
     <>
       {/* Tabs + Context Actions */}
-      <div className="flex items-center justify-between data-exclude-pdf">
+      <div className="flex items-center justify-between data-exclude-pdf" data-copilot="summary-tabs">
         <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
           <button
             onClick={() => setActiveTab('summary')}
