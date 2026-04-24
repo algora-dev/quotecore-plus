@@ -118,26 +118,46 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
 
   const nextStep = useCallback(() => {
     if (!currentGuide) return;
-    if (state.currentStep >= currentGuide.steps.length - 1) {
+    
+    // Find next step that has a visible target (skip conditional steps where element doesn't exist)
+    let nextIdx = state.currentStep + 1;
+    while (nextIdx < currentGuide.steps.length) {
+      const step = currentGuide.steps[nextIdx];
+      const el = document.querySelector(step.target);
+      if (el) break; // Target exists, use this step
+      nextIdx++; // Skip — target not in DOM
+    }
+    
+    if (nextIdx >= currentGuide.steps.length) {
       // Guide complete
       const newCompleted = [...new Set([...state.guidesCompleted, currentGuide.id])];
       const newState = { ...state, guidesCompleted: newCompleted, activeGuide: null, currentStep: 0 };
       setState(newState);
       persist(newState);
     } else {
-      const newState = { ...state, currentStep: state.currentStep + 1 };
+      const newState = { ...state, currentStep: nextIdx };
       setState(newState);
       persist(newState);
     }
   }, [state, currentGuide, persist]);
 
   const prevStep = useCallback(() => {
-    if (state.currentStep > 0) {
-      const newState = { ...state, currentStep: state.currentStep - 1 };
+    if (!currentGuide || state.currentStep <= 0) return;
+    
+    let prevIdx = state.currentStep - 1;
+    while (prevIdx >= 0) {
+      const step = currentGuide.steps[prevIdx];
+      const el = document.querySelector(step.target);
+      if (el) break;
+      prevIdx--;
+    }
+    
+    if (prevIdx >= 0) {
+      const newState = { ...state, currentStep: prevIdx };
       setState(newState);
       persist(newState);
     }
-  }, [state, persist]);
+  }, [state, currentGuide, persist]);
 
   const skipGuide = useCallback(() => {
     if (currentGuide) {
