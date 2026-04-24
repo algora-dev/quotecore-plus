@@ -344,7 +344,7 @@ export function ComponentList({ initialComponents, workspaceSlug }: { initialCom
               {formWasteType !== 'none' && (
                 <div data-copilot="component-waste-amount">
                   <label className="block text-xs text-slate-500 mb-1">Waste Amount {wasteAmountLabel}</label>
-                  <input name="waste_amount" type="number" step="0.01" defaultValue="0" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
+                  <input name="waste_amount" type="number" step="0.01" placeholder={formWasteType === 'percent' ? '% e.g. 10' : 'e.g. 0.25(m)'} className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
                 </div>
               )}
             </div>
