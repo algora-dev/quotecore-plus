@@ -243,7 +243,7 @@ export function CopilotOverlay() {
           </div>
 
           <div className="px-5 pb-3">
-            <p className="text-xs text-slate-600 leading-relaxed">{currentStepData.description}</p>
+            <p className="text-xs text-slate-600 leading-relaxed" dangerouslySetInnerHTML={{ __html: currentStepData.description.replace(/_(.*?)_/g, '<em class="italic text-slate-700">$1</em>') }} />
             {nudgeMessage && (
               <p className="text-xs text-orange-600 font-medium mt-2 animate-pulse">{nudgeMessage}</p>
             )}
