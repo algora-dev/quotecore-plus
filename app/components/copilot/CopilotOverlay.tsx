@@ -8,11 +8,20 @@ export function CopilotOverlay() {
   const currentStep = state.currentStep;
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [showDismissMsg, setShowDismissMsg] = useState(false);
+  const [windowSize, setWindowSize] = useState({ w: 0, h: 0 });
 
   // Draggable tooltip state
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ mouseX: number; mouseY: number; offsetX: number; offsetY: number } | null>(null);
+
+  // Track window size for SVG
+  useEffect(() => {
+    function update() { setWindowSize({ w: window.innerWidth, h: window.innerHeight }); }
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   // Reset drag offset when step changes
   useEffect(() => {
@@ -47,13 +56,12 @@ export function CopilotOverlay() {
     };
   }, [isActive, currentStepData]);
 
-  // Enter key → Next (and prevent form submission during copilot)
+  // Enter key → Next (prevent form submission during copilot)
   useEffect(() => {
     if (!isActive) return;
 
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Enter') {
-        // Prevent form submission
         const target = e.target as HTMLElement;
         if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA') {
           e.preventDefault();
@@ -102,14 +110,13 @@ export function CopilotOverlay() {
     };
   }, [isDragging]);
 
-  // Close copilot → show dismiss message
   function handleClose() {
     toggle();
     setShowDismissMsg(true);
     setTimeout(() => setShowDismissMsg(false), 3000);
   }
 
-  // Dismiss message (shown after closing)
+  // Dismiss message
   if (showDismissMsg) {
     return (
       <div className="fixed bottom-6 right-6 z-[100] pointer-events-auto">
@@ -123,9 +130,10 @@ export function CopilotOverlay() {
   if (!isActive || !currentStepData) return null;
 
   const padding = 12;
+  const radius = 12;
   const hasTarget = targetRect && targetRect.width > 0;
 
-  // Calculate base tooltip position
+  // Tooltip position
   let baseTop = 0;
   let baseLeft = 0;
   const pos = currentStepData.position || 'bottom';
@@ -133,23 +141,22 @@ export function CopilotOverlay() {
 
   if (hasTarget) {
     const centerX = targetRect.left + targetRect.width / 2;
-
     if (pos === 'bottom') {
       baseTop = targetRect.bottom + padding + 12;
-      baseLeft = Math.max(16, Math.min(centerX - tooltipWidth / 2, window.innerWidth - tooltipWidth - 16));
+      baseLeft = Math.max(16, Math.min(centerX - tooltipWidth / 2, windowSize.w - tooltipWidth - 16));
     } else if (pos === 'top') {
       baseTop = targetRect.top - padding - 200;
-      baseLeft = Math.max(16, Math.min(centerX - tooltipWidth / 2, window.innerWidth - tooltipWidth - 16));
+      baseLeft = Math.max(16, Math.min(centerX - tooltipWidth / 2, windowSize.w - tooltipWidth - 16));
     } else if (pos === 'right') {
       baseTop = Math.max(16, targetRect.top + targetRect.height / 2 - 60);
-      baseLeft = Math.min(targetRect.right + padding + 12, window.innerWidth - tooltipWidth - 16);
+      baseLeft = Math.min(targetRect.right + padding + 12, windowSize.w - tooltipWidth - 16);
     } else if (pos === 'left') {
       baseTop = Math.max(16, targetRect.top + targetRect.height / 2 - 60);
       baseLeft = Math.max(16, targetRect.left - padding - tooltipWidth - 12);
     }
   } else {
-    baseTop = window.innerHeight / 2 - 100;
-    baseLeft = window.innerWidth / 2 - tooltipWidth / 2;
+    baseTop = windowSize.h / 2 - 100;
+    baseLeft = windowSize.w / 2 - tooltipWidth / 2;
   }
 
   const tooltipStyle: React.CSSProperties = {
@@ -158,41 +165,50 @@ export function CopilotOverlay() {
     cursor: isDragging ? 'grabbing' : 'grab',
   };
 
-  // Build 4 dim rectangles around the spotlight hole
-  const dimRects = hasTarget ? [
-    { top: 0, left: 0, width: '100%', height: Math.max(0, targetRect.top - padding) },
-    { top: targetRect.bottom + padding, left: 0, width: '100%', height: Math.max(0, window.innerHeight - targetRect.bottom - padding) },
-    { top: targetRect.top - padding, left: 0, width: Math.max(0, targetRect.left - padding), height: targetRect.height + padding * 2 },
-    { top: targetRect.top - padding, left: targetRect.right + padding, width: Math.max(0, window.innerWidth - targetRect.right - padding), height: targetRect.height + padding * 2 },
-  ] : [
-    { top: 0, left: 0, width: '100%', height: '100%' },
-  ];
-
   return (
     <div className="fixed inset-0 z-[100] pointer-events-none">
-      {/* Dim overlay */}
-      {dimRects.map((rect, i) => (
-        <div
-          key={i}
-          className="absolute bg-black/40 pointer-events-auto"
-          style={{
-            top: typeof rect.top === 'number' ? `${rect.top}px` : rect.top,
-            left: typeof rect.left === 'number' ? `${rect.left}px` : rect.left,
-            width: typeof rect.width === 'number' ? `${rect.width}px` : rect.width,
-            height: typeof rect.height === 'number' ? `${rect.height}px` : rect.height,
-          }}
-        />
-      ))}
+      {/* SVG dim overlay with rounded cutout — pointer-events: none so page is fully interactive */}
+      {windowSize.w > 0 && (
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{ pointerEvents: 'none' }}
+        >
+          <defs>
+            <mask id="copilot-spotlight-mask">
+              <rect width="100%" height="100%" fill="white" />
+              {hasTarget && (
+                <rect
+                  x={targetRect.left - padding}
+                  y={targetRect.top - padding}
+                  width={targetRect.width + padding * 2}
+                  height={targetRect.height + padding * 2}
+                  rx={radius}
+                  ry={radius}
+                  fill="black"
+                />
+              )}
+            </mask>
+          </defs>
+          <rect
+            width="100%"
+            height="100%"
+            fill="rgba(0,0,0,0.45)"
+            mask="url(#copilot-spotlight-mask)"
+          />
+        </svg>
+      )}
 
-      {/* Spotlight ring */}
+      {/* Rounded spotlight ring */}
       {hasTarget && (
         <div
-          className="absolute border-2 border-orange-400 rounded-lg pointer-events-none"
+          className="absolute pointer-events-none"
           style={{
             top: targetRect.top - padding,
             left: targetRect.left - padding,
             width: targetRect.width + padding * 2,
             height: targetRect.height + padding * 2,
+            borderRadius: `${radius}px`,
+            border: '2px solid #FB923C',
             boxShadow: '0 0 0 4px rgba(255, 107, 53, 0.15)',
             animation: 'pulse 2s ease-in-out infinite',
           }}
@@ -206,7 +222,6 @@ export function CopilotOverlay() {
         onMouseDown={handleMouseDown}
       >
         <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
-          {/* Header with close button */}
           <div className="px-5 pt-3 pb-2 flex items-center justify-between">
             <div>
               <span className="text-xs font-medium text-orange-600">{currentGuide?.name}</span>
@@ -223,17 +238,14 @@ export function CopilotOverlay() {
             </button>
           </div>
 
-          {/* Title */}
           <div className="px-5 pb-1">
             <h3 className="text-sm font-semibold text-slate-900">{currentStepData.title}</h3>
           </div>
 
-          {/* Description */}
           <div className="px-5 pb-3">
             <p className="text-xs text-slate-600 leading-relaxed">{currentStepData.description}</p>
           </div>
 
-          {/* Progress bar */}
           <div className="px-5 pb-3">
             <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
               <div
@@ -243,7 +255,6 @@ export function CopilotOverlay() {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="px-5 pb-4 flex items-center justify-between">
             <button onClick={skipGuide} className="text-xs text-slate-400 hover:text-slate-600 transition">
               Skip guide
@@ -260,9 +271,8 @@ export function CopilotOverlay() {
             </div>
           </div>
 
-          {/* Drag hint */}
           <div className="px-5 pb-2 text-center">
-            <p className="text-[10px] text-slate-300">Drag to move</p>
+            <p className="text-[10px] text-slate-300">Drag to move · Press Enter for next</p>
           </div>
         </div>
       </div>
