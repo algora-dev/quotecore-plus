@@ -435,7 +435,7 @@ export function QuoteBuilder({
               onRemove={handleRemoveArea}
             />
           ))}
-          <div className="flex gap-2">
+          <div className="flex gap-2" data-copilot="quote-add-area-row">
             <input
               value={newAreaLabel}
               onChange={e => setNewAreaLabel(e.target.value)}

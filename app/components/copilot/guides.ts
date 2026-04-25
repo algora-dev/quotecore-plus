@@ -201,18 +201,10 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
     description: 'Learn to add roof areas, set measurements, and assign components.',
     steps: [
       {
-        id: 'qb-area-name',
-        target: '[data-copilot="quote-area-name"]',
-        title: 'Name Your Roof Area',
-        description: 'Each quote is built from roof areas. Enter a name for your first area - _for example: Main Roof, Garage, Extension._ You can add multiple areas for complex jobs.',
-        position: 'right',
-        validation: 'input',
-      },
-      {
         id: 'qb-add-area',
-        target: '[data-copilot="quote-add-area"]',
-        title: 'Add the Roof Area',
-        description: 'Click "Add Roof Area" to create it. The area will appear with fields for pitch and measurements.',
+        target: '[data-copilot="quote-add-area-row"]',
+        title: 'Create a Roof Area',
+        description: 'Enter a name for your roof area - _for example: Main Roof, Garage, Extension_ - then click "Add Roof Area". You can add multiple areas for complex jobs.',
         position: 'right',
         validation: 'none',
       },
