@@ -134,7 +134,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 p-8 space-y-6">
       {/* Customer Name */}
-      <div>
+      <div data-copilot="quote-customer">
         <label className="block text-sm font-medium text-slate-700 mb-2">
           Customer Name <span className="text-red-500">*</span>
         </label>
@@ -150,7 +150,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
       </div>
 
       {/* Job Name */}
-      <div>
+      <div data-copilot="quote-job">
         <label className="block text-sm font-medium text-slate-700 mb-2">
           Job Name <span className="text-slate-400">(optional)</span>
         </label>
@@ -164,7 +164,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
       </div>
 
       {/* Template Selection */}
-      <div>
+      <div data-copilot="quote-template">
         <label className="block text-sm font-medium text-slate-700 mb-2">
           Quote Template <span className="text-slate-400">(optional)</span>
         </label>
@@ -192,7 +192,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
       </div>
 
       {/* Entry Mode Selection */}
-      <div>
+      <div data-copilot="quote-entry">
         <label className="block text-sm font-medium text-slate-700 mb-3">
           Entry Mode <span className="text-red-500">*</span>
         </label>
@@ -286,6 +286,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
         </Link>
         <button
           type="submit"
+          data-copilot="quote-create"
           disabled={creating || !customerName.trim() || !entryMode || (entryMode === 'digital' && !planUploaded)}
           className="px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
         >

@@ -440,12 +440,14 @@ export function QuoteBuilder({
               value={newAreaLabel}
               onChange={e => setNewAreaLabel(e.target.value)}
               placeholder="e.g. Main Roof, Garage"
+              data-copilot="quote-area-name"
               className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg"
               onKeyDown={e => e.key === 'Enter' && handleAddArea()}
             />
             <button
               onClick={handleAddArea}
               disabled={!newAreaLabel.trim()}
+              data-copilot="quote-add-area"
               className="px-4 py-2 text-sm font-medium rounded-full bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50"
             >
               Add Roof Area
@@ -455,6 +457,7 @@ export function QuoteBuilder({
             <button
               onClick={() => setPhase('components')}
               disabled={!allAreasLocked}
+              data-copilot="quote-next-components"
               className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
               {allAreasLocked ? 'Next: Components →' : 'Confirm all areas to continue'}
