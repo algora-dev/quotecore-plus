@@ -188,7 +188,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         target: '[data-copilot="quote-create"]',
         title: 'Create the Quote',
         description: 'Click "Create Quote" to start building. You will be taken to the Quote Builder where you can add roof areas and assign components.',
-        position: 'bottom',
+        position: 'right',
         page: '/quotes/new',
         validation: 'none',
       },
@@ -204,7 +204,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         target: '[data-copilot="quote-add-area-row"]',
         title: 'Add a Roof Area',
         description: 'Type a name for your first roof area - _for example: Main Roof, Garage, Extension_ - then click the Add Roof Area button. You can add more areas later for complex jobs.',
-        position: 'right',
+        position: 'bottom',
         validation: 'click',
         validationTarget: '[data-copilot="quote-pitch"]',
         nudgeText: 'Type a roof area name and click "Add Roof Area" first.',
@@ -214,7 +214,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         target: '[data-copilot="quote-pitch"]',
         title: 'Roof Pitch',
         description: 'Enter the roof pitch in degrees. This is the angle of the roof slope - _for example: 15 for a low pitch, 25 for a standard pitch, 35+ for a steep pitch._ The pitch adjusts material quantities for components that have pitch calculation enabled.',
-        position: 'right',
+        position: 'bottom',
         validation: 'none',
       },
       {
@@ -246,7 +246,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         target: '[data-copilot="quote-next-components"]',
         title: 'Move to Components',
         description: 'Click "Next: Components" to start assigning materials. _Tip: outside of Copilot, you can go back and add more roof areas anytime._',
-        position: 'top',
+        position: 'bottom',
         validation: 'none',
       },
       {
@@ -254,7 +254,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         target: '[data-copilot="quote-add-from-library"]',
         title: 'Select a Component',
         description: 'Use the dropdown to choose a component from your library - _for example: Tiles, Underlay, Fixings._ Each component will calculate quantities based on your roof area measurements.',
-        position: 'right',
+        position: 'bottom',
         validation: 'none',
       },
       {
@@ -271,7 +271,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         target: '[data-copilot="quote-first-component"]',
         title: 'Expand the Component',
         description: 'Click the arrow on a component to expand it. Inside, you can add individual lengths, areas, or quantities depending on the component type. You can also link it to a roof area to auto-calculate from your measurements.',
-        position: 'right',
+        position: 'bottom',
         validation: 'none',
       },
       {
@@ -279,7 +279,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         target: '[data-copilot="quote-next-extras"]',
         title: 'Move to Extras',
         description: 'Once you have added components to your areas, click "Next: Extras" to add any additional items that are not tied to a specific roof area - _for example: scaffolding, skip hire, travel costs._',
-        position: 'top',
+        position: 'bottom',
         validation: 'none',
       },
       {
