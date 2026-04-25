@@ -861,7 +861,7 @@ function RoofAreaCard({
             </div>
           </div>
           <div>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-2" data-copilot="quote-pitch">
                 <label className="text-xs text-slate-500">Pitch (°)</label>
                 <input
                   type="number"

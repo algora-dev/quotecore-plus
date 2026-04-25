@@ -75,6 +75,33 @@ export function CopilotOverlay() {
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isActive, nextStep]);
 
+  // Auto-advance when user clicks a button/link target
+  useEffect(() => {
+    if (!isActive || !currentStepData) return;
+
+    // Only auto-advance for steps that don't require text input
+    if (currentStepData.validation === 'input') return;
+
+    function handleClick(e: MouseEvent) {
+      const clickedEl = e.target as HTMLElement;
+      const targetEl = document.querySelector(currentStepData!.target);
+      if (!targetEl) return;
+
+      // Check if the click was inside or on the copilot target element
+      if (targetEl.contains(clickedEl) || targetEl === clickedEl) {
+        // Check if a button, link, or interactive element was clicked
+        const isButton = clickedEl.closest('button, a, [role="button"]');
+        if (isButton) {
+          // Small delay to let the click action complete first
+          setTimeout(() => nextStep(), 300);
+        }
+      }
+    }
+
+    document.addEventListener('click', handleClick, true);
+    return () => document.removeEventListener('click', handleClick, true);
+  }, [isActive, currentStepData, nextStep]);
+
   // Drag handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     setIsDragging(true);
