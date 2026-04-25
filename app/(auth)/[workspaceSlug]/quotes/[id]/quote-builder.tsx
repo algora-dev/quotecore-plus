@@ -1273,6 +1273,7 @@ function AddFromLibrary({
           }
         }}
         disabled={!sel}
+        data-copilot={copilotId ? `${copilotId}-add-btn` : undefined}
         className="px-2 py-1 text-xs rounded bg-blue-600 text-white disabled:opacity-50"
       >
         +

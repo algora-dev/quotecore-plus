@@ -102,6 +102,26 @@ export function CopilotOverlay() {
     return () => document.removeEventListener('click', handleClick, true);
   }, [isActive, currentStepData, nextStep]);
 
+  // Auto-advance when validationTarget appears in DOM (for steps that wait for an element)
+  useEffect(() => {
+    if (!isActive || !currentStepData) return;
+    if (!currentStepData.validationTarget) return;
+
+    const selector = currentStepData.validationTarget;
+    // If already exists, don't auto-advance (user needs to click Next)
+    if (document.querySelector(selector)) return;
+
+    // Watch for it to appear
+    const interval = setInterval(() => {
+      if (document.querySelector(selector)) {
+        clearInterval(interval);
+        nextStep();
+      }
+    }, 300);
+
+    return () => clearInterval(interval);
+  }, [isActive, currentStepData, nextStep]);
+
   // Drag handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     setIsDragging(true);
