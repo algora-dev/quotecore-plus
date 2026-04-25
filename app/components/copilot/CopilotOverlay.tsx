@@ -98,8 +98,23 @@ export function CopilotOverlay() {
       }
     }
 
+    // 2. Auto-advance on select change within the target
+    function handleChange(e: Event) {
+      const changedEl = e.target as HTMLElement;
+      if (changedEl.tagName !== 'SELECT') return;
+      const targetEl = document.querySelector(currentStepData!.target);
+      if (!targetEl) return;
+      if (targetEl.contains(changedEl) && (changedEl as HTMLSelectElement).value) {
+        setTimeout(() => nextStep(), 300);
+      }
+    }
+
     document.addEventListener('click', handleClick, true);
-    return () => document.removeEventListener('click', handleClick, true);
+    document.addEventListener('change', handleChange, true);
+    return () => {
+      document.removeEventListener('click', handleClick, true);
+      document.removeEventListener('change', handleChange, true);
+    };
   }, [isActive, currentStepData, nextStep]);
 
   // Auto-advance when validationTarget appears in DOM (for steps that wait for an element)
