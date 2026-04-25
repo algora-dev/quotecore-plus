@@ -90,7 +90,16 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
     }
 
     if (guideId && !state.guidesCompleted.includes(guideId)) {
-      setState(prev => ({ ...prev, activeGuide: guideId, currentStep: 0 }));
+      // Find the first step whose target exists in the DOM (skip already-completed steps)
+      const guide = COPILOT_GUIDES.find(g => g.id === guideId);
+      let startStep = 0;
+      if (guide) {
+        for (let i = 0; i < guide.steps.length; i++) {
+          const el = document.querySelector(guide.steps[i].target);
+          if (el) { startStep = i; break; }
+        }
+      }
+      setState(prev => ({ ...prev, activeGuide: guideId, currentStep: startStep }));
     }
   }, [pathname, state.enabled, state.activeGuide]);
 
