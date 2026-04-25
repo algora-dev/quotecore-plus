@@ -71,6 +71,8 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
   // Auto-detect which guide to show based on current page
   useEffect(() => {
     if (!state.enabled) return;
+    // Don't interfere if a guide is already running
+    if (state.activeGuide) return;
 
     let guideId: string | null = null;
 
@@ -84,18 +86,10 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
       guideId = 'flashings-orders';
     }
 
-    if (guideId && guideId !== state.activeGuide) {
-      // Don't auto-start completed guides
-      if (!state.guidesCompleted.includes(guideId)) {
-        setState(prev => ({ ...prev, activeGuide: guideId, currentStep: 0 }));
-      } else {
-        // Guide already completed, clear active
-        if (state.activeGuide) {
-          setState(prev => ({ ...prev, activeGuide: null, currentStep: 0 }));
-        }
-      }
+    if (guideId && !state.guidesCompleted.includes(guideId)) {
+      setState(prev => ({ ...prev, activeGuide: guideId, currentStep: 0 }));
     }
-  }, [pathname, state.enabled]);
+  }, [pathname, state.enabled, state.activeGuide]);
 
   const currentGuide = state.activeGuide
     ? COPILOT_GUIDES.find(g => g.id === state.activeGuide) || null

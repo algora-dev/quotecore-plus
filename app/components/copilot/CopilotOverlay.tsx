@@ -75,7 +75,7 @@ export function CopilotOverlay() {
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isActive, nextStep]);
 
-  // Auto-advance when user clicks a button/link target
+  // Auto-advance when user clicks a button target (not nav links)
   useEffect(() => {
     if (!isActive || !currentStepData) return;
 
@@ -87,12 +87,12 @@ export function CopilotOverlay() {
       const targetEl = document.querySelector(currentStepData!.target);
       if (!targetEl) return;
 
-      // Check if the click was inside or on the copilot target element
+      // Check if the click was inside the copilot target
       if (targetEl.contains(clickedEl) || targetEl === clickedEl) {
-        // Check if a button, link, or interactive element was clicked
-        const isButton = clickedEl.closest('button, a, [role="button"]');
-        if (isButton) {
-          // Small delay to let the click action complete first
+        const clickedButton = clickedEl.closest('button, [role="button"]');
+        // Only auto-advance for buttons (not links/nav - those cause page navigation)
+        // Links trigger page changes which the auto-detect handles
+        if (clickedButton && !clickedButton.closest('a, nav')) {
           setTimeout(() => nextStep(), 300);
         }
       }
