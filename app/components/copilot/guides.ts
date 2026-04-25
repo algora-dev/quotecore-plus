@@ -146,9 +146,9 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         description: 'Click "+ New Quote" to start creating a quote. You will enter the customer name, job details, and choose how you want to build the quote.',
         position: 'bottom',
         page: '/quotes',
-        validation: 'click',
-        validationTarget: '[data-copilot="quote-customer"]',
-        nudgeText: 'Please click + New Quote to continue.',
+        validation: 'none',
+        
+        
       },
       {
         id: 'quotes-customer',
