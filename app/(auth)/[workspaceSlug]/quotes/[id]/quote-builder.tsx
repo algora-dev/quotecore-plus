@@ -475,7 +475,7 @@ export function QuoteBuilder({
 
       {phase === 'components' && (
         <div className="space-y-4" data-copilot="quote-components-phase">
-          {roofAreas.map(area => {
+          {roofAreas.map((area, areaIdx) => {
             const areaComps = mainComps.filter(c => c.quote_roof_area_id === area.id);
             return (
               <div key={area.id} className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
@@ -486,7 +486,7 @@ export function QuoteBuilder({
                     {area.calc_pitch_degrees ? ` @ ${area.calc_pitch_degrees}°` : ''})
                   </span>
                 </h3>
-                {areaComps.map(comp => (
+                {areaComps.map((comp, compIdx) => (
                   <ExpandableComponent
                     key={comp.id}
                     comp={comp}
@@ -500,11 +500,13 @@ export function QuoteBuilder({
                     onRemoveEntry={handleRemoveEntry}
                     onRemove={handleRemoveComponent}
                     onUpdateSettings={handleUpdateCompSettings}
+                    copilotId={areaIdx === 0 && compIdx === 0 ? 'quote-first-component' : undefined}
                   />
                 ))}
                 <AddFromLibrary
                   library={libraryComponents.filter(c => c.component_type === 'main')}
                   onAdd={libId => handleAddFromLibrary(libId, area.id, 'main')}
+                  copilotId={areaIdx === 0 ? 'quote-add-from-library' : undefined}
                 />
               </div>
             );
@@ -903,7 +905,7 @@ function RoofAreaCard({
                 </div>
               ))}
               {adding ? (
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2 mt-2" data-copilot="quote-measurement-inputs">
                   <input
                     ref={widthRef}
                     type="number"
@@ -958,6 +960,7 @@ function RoofAreaCard({
               ) : (
                 <button
                   onClick={startAdding}
+                  data-copilot="quote-add-measurement"
                   className="text-xs text-orange-600 hover:text-blue-800 font-medium mt-1"
                 >
                   + Add area measurement
@@ -990,7 +993,8 @@ function ExpandableComponent({
   onUseRoofArea,
   onRemoveEntry,
   onRemove,
-  onUpdateSettings
+  onUpdateSettings,
+  copilotId
 }: {
   comp: QuoteComponentRow;
   entries: QuoteComponentEntryRow[];
@@ -1011,6 +1015,7 @@ function ExpandableComponent({
       custom_pitch_degrees?: number | null;
     }
   ) => Promise<void>;
+  copilotId?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -1052,7 +1057,7 @@ function ExpandableComponent({
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 overflow-hidden">
+    <div className="rounded-lg border border-slate-200 bg-slate-50 overflow-hidden" {...(copilotId ? { 'data-copilot': copilotId } : {})}>
       <div
         className="flex items-center gap-3 px-3 py-2 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
