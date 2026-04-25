@@ -149,14 +149,8 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
 
     setNudgeMessage(null);
     
-    // Find next step that has a visible target
-    let nextIdx = state.currentStep + 1;
-    while (nextIdx < currentGuide.steps.length) {
-      const step = currentGuide.steps[nextIdx];
-      const el = document.querySelector(step.target);
-      if (el) break; // Target exists, use this step
-      nextIdx++; // Skip — target not in DOM
-    }
+    // Move to next step — don't skip missing targets, wait for them
+    const nextIdx = state.currentStep + 1;
     
     if (nextIdx >= currentGuide.steps.length) {
       // Guide complete
