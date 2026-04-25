@@ -958,6 +958,7 @@ function RoofAreaCard({
           <div className="flex justify-end pt-2">
             <button
               onClick={() => onToggleLock(area.id, true)}
+              data-copilot="quote-confirm-area"
               className="px-3 py-1 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
             >
               Confirm
