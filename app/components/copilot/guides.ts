@@ -203,8 +203,8 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
       {
         id: 'qb-add-area',
         target: '[data-copilot="quote-add-area-row"]',
-        title: 'Create a Roof Area',
-        description: 'Enter a name for your roof area - _for example: Main Roof, Garage, Extension_ - then click "Add Roof Area". You can add multiple areas for complex jobs.',
+        title: 'Add a Roof Area',
+        description: 'Type a name for your first roof area - _for example: Main Roof, Garage, Extension_ - then click the Add Roof Area button. You can add more areas later for complex jobs.',
         position: 'right',
         validation: 'none',
       },
