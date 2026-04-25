@@ -1,5 +1,4 @@
 ﻿import type { CopilotGuide } from './types';
-
 export const COPILOT_GUIDES: CopilotGuide[] = [
   {
     id: 'components',
@@ -206,9 +205,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         title: 'Add a Roof Area',
         description: 'Type a name for your first roof area - _for example: Main Roof, Garage, Extension_ - then click the Add Roof Area button. You can add more areas later for complex jobs.',
         position: 'right',
-        validation: 'click',
-        validationTarget: '[data-copilot="quote-pitch"]',
-        nudgeText: 'Type a roof area name and click Add Roof Area first.',
+        validation: 'none',
       },
       {
         id: 'qb-pitch',
