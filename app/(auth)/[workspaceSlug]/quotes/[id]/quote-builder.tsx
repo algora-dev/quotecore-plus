@@ -474,7 +474,7 @@ export function QuoteBuilder({
       )}
 
       {phase === 'components' && (
-        <div className="space-y-4">
+        <div className="space-y-4" data-copilot="quote-components-phase">
           {roofAreas.map(area => {
             const areaComps = mainComps.filter(c => c.quote_roof_area_id === area.id);
             return (
@@ -518,6 +518,7 @@ export function QuoteBuilder({
             </button>
             <button
               onClick={() => setPhase('extras')}
+              data-copilot="quote-next-extras"
               className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
               Next: Extras →
@@ -527,7 +528,7 @@ export function QuoteBuilder({
       )}
 
       {phase === 'extras' && (
-        <div className="space-y-4">
+        <div className="space-y-4" data-copilot="quote-extras-phase">
           <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
             <h3 className="font-semibold text-slate-900">Extras</h3>
             {extraComps.map(comp => (
@@ -558,6 +559,7 @@ export function QuoteBuilder({
             </button>
             <button
               onClick={() => setPhase('review')}
+              data-copilot="quote-next-review"
               className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
               Next: Review →
@@ -567,7 +569,7 @@ export function QuoteBuilder({
       )}
 
       {phase === 'review' && (
-        <div className="space-y-6">
+        <div className="space-y-6" data-copilot="quote-review-phase">
           {roofAreas.map(area => {
             const areaComps = components.filter(c => c.quote_roof_area_id === area.id);
             return (
@@ -1236,14 +1238,16 @@ function ExpandableComponent({
 
 function AddFromLibrary({
   library,
-  onAdd
+  onAdd,
+  copilotId
 }: {
   library: ComponentLibraryRow[];
   onAdd: (id: string) => Promise<void>;
+  copilotId?: string;
 }) {
   const [sel, setSel] = useState('');
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2" {...(copilotId ? { 'data-copilot': copilotId } : {})}>
       <select
         value={sel}
         onChange={e => setSel(e.target.value)}

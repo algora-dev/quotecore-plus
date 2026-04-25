@@ -19,6 +19,7 @@ export function ConfirmQuoteButton({ quoteId, workspaceSlug, quoteStatus }: Prop
     <form action={action}>
       <button
         type="submit"
+        data-copilot="quote-confirm"
         className="px-6 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
       >
         {buttonText}
