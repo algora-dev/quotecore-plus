@@ -80,8 +80,11 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
       guideId = 'components';
     } else if (pathname?.includes('/quotes/') && pathname?.includes('/summary')) {
       guideId = 'customer-labor';
+    } else if (pathname?.match(/\/quotes\/[^/]+$/) && !pathname?.includes('/new')) {
+      // Quote builder page: /quotes/[id] (not /quotes/new or /quotes/[id]/summary)
+      guideId = 'quote-builder';
     } else if (pathname?.includes('/quotes')) {
-      guideId = 'quotes';
+      guideId = 'create-quote';
     } else if (pathname?.includes('/flashings') || pathname?.includes('/material-orders')) {
       guideId = 'flashings-orders';
     }

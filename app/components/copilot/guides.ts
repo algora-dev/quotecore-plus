@@ -127,12 +127,12 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
     ],
   },
   {
-    id: 'quotes',
+    id: 'create-quote',
     name: 'Create a Quote',
-    description: 'Learn to create and manage roofing quotes from start to finish.',
+    description: 'Learn to set up a new quote with customer details and entry mode.',
     steps: [
       {
-        id: 'quotes-nav',
+        id: 'cq-nav',
         target: '[data-copilot="nav-quotes"]',
         title: 'Quotes Page',
         description: 'This is your quotes hub - where you create, track, and manage all your quotes. Click "Quotes" to get started.',
@@ -140,18 +140,16 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         validation: 'none',
       },
       {
-        id: 'quotes-new',
+        id: 'cq-new',
         target: '[data-copilot="new-quote"]',
         title: 'Create a New Quote',
         description: 'Click "+ New Quote" to start creating a quote. You will enter the customer name, job details, and choose how you want to build the quote.',
         position: 'bottom',
         page: '/quotes',
         validation: 'none',
-        
-        
       },
       {
-        id: 'quotes-customer',
+        id: 'cq-customer',
         target: '[data-copilot="quote-customer"]',
         title: 'Customer Name',
         description: 'Enter the customer or company name for this quote. _For example: John Smith, ABC Builders._ This will appear on all documents for this job.',
@@ -160,7 +158,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         validation: 'input',
       },
       {
-        id: 'quotes-job',
+        id: 'cq-job',
         target: '[data-copilot="quote-job"]',
         title: 'Job Reference',
         description: 'Add a job name or reference to help identify this quote later. _For example: Residential Re-roof, 123 Main St._ This is optional but very helpful when you have multiple quotes.',
@@ -169,7 +167,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         validation: 'none',
       },
       {
-        id: 'quotes-template',
+        id: 'cq-template',
         target: '[data-copilot="quote-template"]',
         title: 'Choose a Template',
         description: 'Select a template to pre-load components, or leave as _"Start from scratch"_ to build manually. Templates save time on repeat job types - you can create them in the Templates section later.',
@@ -178,7 +176,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         validation: 'none',
       },
       {
-        id: 'quotes-entry-mode',
+        id: 'cq-entry-mode',
         target: '[data-copilot="quote-entry"]',
         title: 'Entry Mode',
         description: 'Choose how to build this quote. _Manual Mode_ - enter measurements by hand from your own site measure. _Digital Mode_ - upload a roof plan and measure directly on screen. For this guide, select _Manual Mode._',
@@ -187,16 +185,23 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         validation: 'none',
       },
       {
-        id: 'quotes-create-btn',
+        id: 'cq-create-btn',
         target: '[data-copilot="quote-create"]',
         title: 'Create the Quote',
-        description: 'Once you have entered your details and selected Manual Mode, click "Create Quote" to start building. You will be taken to the Quote Builder.',
+        description: 'Click "Create Quote" to start building. You will be taken to the Quote Builder where you can add roof areas and assign components.',
         position: 'top',
         page: '/quotes/new',
         validation: 'none',
       },
+    ],
+  },
+  {
+    id: 'quote-builder',
+    name: 'Quote Builder',
+    description: 'Learn to add roof areas, set measurements, and assign components.',
+    steps: [
       {
-        id: 'quotes-area-name',
+        id: 'qb-area-name',
         target: '[data-copilot="quote-area-name"]',
         title: 'Name Your Roof Area',
         description: 'Each quote is built from roof areas. Enter a name for your first area - _for example: Main Roof, Garage, Extension._ You can add multiple areas for complex jobs.',
@@ -204,7 +209,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         validation: 'input',
       },
       {
-        id: 'quotes-add-area-btn',
+        id: 'qb-add-area',
         target: '[data-copilot="quote-add-area"]',
         title: 'Add the Roof Area',
         description: 'Click "Add Roof Area" to create it. The area will appear with fields for pitch and measurements.',
@@ -212,7 +217,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         validation: 'none',
       },
       {
-        id: 'quotes-pitch',
+        id: 'qb-pitch',
         target: '[data-copilot="quote-pitch"]',
         title: 'Roof Pitch',
         description: 'Enter the roof pitch in degrees. This is the angle of the roof slope - _for example: 15 for a low pitch, 25 for a standard pitch, 35+ for a steep pitch._ The pitch adjusts material quantities for components that have pitch calculation enabled.',
@@ -220,7 +225,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         validation: 'none',
       },
       {
-        id: 'quotes-confirm-area',
+        id: 'qb-confirm-area',
         target: '[data-copilot="quote-confirm-area"]',
         title: 'Confirm the Roof Area',
         description: 'Click "Confirm" to lock this roof area. Once confirmed, the measurements are set and you can move on to adding components. You can still edit it later by clicking "Edit".',
@@ -228,7 +233,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         validation: 'none',
       },
       {
-        id: 'quotes-next-components',
+        id: 'qb-next-components',
         target: '[data-copilot="quote-next-components"]',
         title: 'Move to Components',
         description: 'Once all your roof areas are confirmed, click "Next: Components" to assign materials to each area. Each component from your library will be available to add here.',
