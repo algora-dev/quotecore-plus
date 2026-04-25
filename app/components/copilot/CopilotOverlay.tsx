@@ -78,7 +78,7 @@ export function CopilotOverlay() {
   // Auto-advance: on button clicks, or when target disappears (user navigated)
   useEffect(() => {
     if (!isActive || !currentStepData) return;
-    if (currentStepData.validation === 'input') return;
+    if (currentStepData.validation === 'input' || currentStepData.validation === 'click') return;
 
     // 1. Auto-advance on button clicks within the target
     function handleClick(e: MouseEvent) {
