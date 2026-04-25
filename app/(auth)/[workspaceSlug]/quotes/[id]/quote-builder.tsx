@@ -653,7 +653,7 @@ export function QuoteBuilder({
           )}
 
           {/* Profit Margin Controls */}
-          <div className="rounded-xl border border-blue-200 bg-blue-50 p-6 space-y-4">
+          <div className="rounded-xl border border-blue-200 bg-blue-50 p-6 space-y-4" data-copilot="quote-margins">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold text-gray-900 text-lg">💸 Profit Margins</h3>

@@ -299,6 +299,14 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         validation: 'none',
       },
       {
+        id: 'qb-margins',
+        target: '[data-copilot="quote-margins"]',
+        title: 'Profit Margins',
+        description: 'Here you can add a percentage for material and labour margin. This is for your own records and is not visible to the customer unless you specifically change it in the customer quote editor. _This step is optional - you can skip it and come back later._',
+        position: 'top',
+        validation: 'none',
+      },
+      {
         id: 'qb-confirm',
         target: '[data-copilot="quote-confirm"]',
         title: 'Confirm Your Quote',
