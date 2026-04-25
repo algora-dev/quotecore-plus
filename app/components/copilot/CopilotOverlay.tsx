@@ -89,9 +89,11 @@ export function CopilotOverlay() {
       if (targetEl.contains(clickedEl) || targetEl === clickedEl) {
         const clickedInteractive = clickedEl.closest('button, a, [role="button"]');
         if (clickedInteractive) {
-          // For links that navigate, wait longer for page to load
+          // Longer delay for links/submits that cause navigation
           const isLink = clickedInteractive.tagName === 'A';
-          setTimeout(() => nextStep(), isLink ? 800 : 300);
+          const isSubmit = (clickedInteractive as HTMLButtonElement).type === 'submit';
+          const delay = (isLink || isSubmit) ? 1500 : 300;
+          setTimeout(() => nextStep(), delay);
         }
       }
     }
