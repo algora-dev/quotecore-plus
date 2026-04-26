@@ -63,6 +63,7 @@ export function SummaryTabs({
           <button
             onClick={() => setActiveTab('summary')}
             data-copilot="tab-summary"
+            data-tab-active={activeTab === 'summary' ? 'true' : undefined}
             className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
               activeTab === 'summary' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
@@ -72,6 +73,7 @@ export function SummaryTabs({
           <button
             onClick={() => setActiveTab('customer')}
             data-copilot="tab-customer"
+            data-tab-active={activeTab === 'customer' ? 'true' : undefined}
             className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
               activeTab === 'customer' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
@@ -81,6 +83,7 @@ export function SummaryTabs({
           <button
             onClick={() => setActiveTab('labor')}
             data-copilot="tab-labor"
+            data-tab-active={activeTab === 'labor' ? 'true' : undefined}
             className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
               activeTab === 'labor' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}

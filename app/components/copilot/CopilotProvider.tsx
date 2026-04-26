@@ -94,7 +94,13 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
     } else if (pathname?.includes('/quotes/') && pathname?.includes('/labor-sheet')) {
       guideId = 'labor-sheet';
     } else if (pathname?.includes('/quotes/') && (pathname?.includes('/summary') || pathname?.includes('/customer-edit'))) {
-      guideId = 'customer-labor';
+      // Check if labor tab is active — if so, start labor-sheet guide instead
+      const laborTabActive = document.querySelector('[data-copilot="tab-labor"][data-tab-active="true"]');
+      if (laborTabActive && !state.guidesCompleted.includes('labor-sheet')) {
+        guideId = 'labor-sheet';
+      } else {
+        guideId = 'customer-labor';
+      }
     } else if (pathname?.match(/\/quotes\/[^/]+$/) && !pathname?.includes('/new')) {
       // Quote builder page: /quotes/[id] (not /quotes/new or /quotes/[id]/summary)
       guideId = 'quote-builder';
