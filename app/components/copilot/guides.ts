@@ -546,18 +546,18 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
     steps: [
       {
         id: 'dt-more-areas',
-        target: '[data-copilot="takeoff-sidebar"]',
+        target: '[data-copilot="takeoff-toolbar"]',
         title: 'Roof Areas',
-        description: 'You can continue adding more roof areas if you have them (garage, lower roof, different pitch roof etc). You must add all roof areas now before adding components. If you are done adding areas, click Next.',
-        position: 'right',
+        description: 'You can also add multiple roof areas, like garage, lower roof, flat roof (different pitch roofs). Add them now before adding components if you need them, use the area tool, or manually add them in the quote builder phase.',
+        position: 'bottom',
         validation: 'none',
       },
       {
         id: 'dt-area-hint',
-        target: '[data-copilot="takeoff-components-heading"]',
+        target: '[data-copilot="takeoff-toolbar"]',
         title: 'Area Components',
         description: 'Items determined by area (tiles, roofing iron, shingles, underlay, plywood etc.) do not need to be added here. You can auto-calculate them easily in the Quote Builder using the roof area you just created. You can still add them here, but it is faster in the next stage.',
-        position: 'right',
+        position: 'bottom',
         validation: 'none',
       },
       {
@@ -589,6 +589,14 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         target: '[data-copilot="takeoff-tool-line"]',
         title: 'Line Tool',
         description: 'Use the Line tool to measure linear components like flashings, gutters, and ridges. Select a component first, then click two points to measure the length. The measurement is automatically assigned to the selected component.',
+        position: 'bottom',
+        validation: 'none',
+      },
+      {
+        id: 'dt-line-hint',
+        target: '[data-copilot="takeoff-tool-line"]',
+        title: 'Line Measurements',
+        description: 'You can add multiple measurements for each component if you want. Always measure the individual lengths to allow for waste calculation and full editing ability in later stages.',
         position: 'bottom',
         validation: 'none',
       },
