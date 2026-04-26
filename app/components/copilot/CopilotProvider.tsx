@@ -233,6 +233,8 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
 
   const startGuide = useCallback((guideId: string) => {
     setTransitionPrompt(null);
+    // Close any open modals (e.g. Send Quote modal)
+    window.dispatchEvent(new CustomEvent('copilot-close-modals'));
     const guide = COPILOT_GUIDES.find(g => g.id === guideId);
     let startStep = -1;
     if (guide) {

@@ -47,6 +47,13 @@ export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emai
   const [emailBody, setEmailBody] = useState('');
   const [emailCopied, setEmailCopied] = useState(false);
 
+  // Close modal when copilot transition starts
+  useEffect(() => {
+    function handleClose() { setOpen(false); }
+    window.addEventListener('copilot-close-modals', handleClose);
+    return () => window.removeEventListener('copilot-close-modals', handleClose);
+  }, []);
+
   if (!hasCustomerQuote) return null;
 
   const acceptanceUrl = token
