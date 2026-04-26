@@ -213,6 +213,10 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       setRoofAreas([...roofAreas, newArea]);
       setShowAreaNamePrompt(false);
       setPendingAreaPoints([]);
+      // Signal copilot that a roof area was created
+      if (roofAreas.length === 0) {
+        setTimeout(() => window.dispatchEvent(new CustomEvent('copilot-redetect')), 500);
+      }
       setAreaPoints([]);
       setAreaMode(false);
     } else {
@@ -1341,6 +1345,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
 
         {/* Center - Canvas */}
         <div className="flex-1 flex flex-col relative bg-gray-50">
+          {/* Hidden marker: copilot only starts after first roof area created */}
+          {roofAreas.length > 0 && <div data-copilot="takeoff-ready" className="hidden" />}
+
           {/* Top Toolbar */}
           <div className="flex-shrink-0 m-6 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-3 shadow-sm" data-copilot="takeoff-toolbar">
             {/* Tools - Left Side */}

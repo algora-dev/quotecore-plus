@@ -81,6 +81,14 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
     }
   }, [supabase, userId]);
 
+  // Re-detection trigger (e.g. after first roof area created in takeoff)
+  const [redetectTick, setRedetectTick] = useState(0);
+  useEffect(() => {
+    function handleRedetect() { setRedetectTick(t => t + 1); }
+    window.addEventListener('copilot-redetect', handleRedetect);
+    return () => window.removeEventListener('copilot-redetect', handleRedetect);
+  }, []);
+
   // Auto-detect which guide to show based on current page
   useEffect(() => {
     if (!state.enabled) return;
@@ -92,7 +100,10 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
     if (pathname?.includes('/components')) {
       guideId = 'components';
     } else if (pathname?.includes('/quotes/') && pathname?.includes('/takeoff')) {
-      guideId = 'digital-takeoff';
+      // Only start after first roof area is created (takeoff-ready marker exists)
+      if (document.querySelector('[data-copilot="takeoff-ready"]')) {
+        guideId = 'digital-takeoff';
+      }
     } else if (pathname?.includes('/quotes/') && pathname?.includes('/labor-sheet')) {
       guideId = 'labor-sheet';
     } else if (pathname?.includes('/quotes/') && (pathname?.includes('/summary') || pathname?.includes('/customer-edit'))) {
@@ -127,7 +138,8 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
         setState(prev => ({ ...prev, activeGuide: guideId, currentStep: startStep }));
       }
     }
-  }, [pathname, state.enabled, state.activeGuide]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, state.enabled, state.activeGuide, redetectTick]);
 
   const currentGuide = state.activeGuide
     ? COPILOT_GUIDES.find(g => g.id === state.activeGuide) || null
