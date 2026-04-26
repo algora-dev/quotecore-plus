@@ -444,10 +444,10 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
       },
       {
         id: 'cl-final',
-        target: '[data-copilot="cl-copy-url-option"]',
+        target: '[data-copilot="cl-send-modal"]',
         title: 'Test It Out',
         description: 'You can test the generated URL link - copy and paste it into your browser. You will see exactly what your customer sees, and you can even accept or decline the quote to see what happens. You will get an alert notification, and the status of your quote will automatically update on the main quotes page. Now you know how customer quotes work!',
-        position: 'top',
+        position: 'bottom',
         validation: 'none',
       },
     ],
