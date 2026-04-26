@@ -331,7 +331,7 @@ export function CopilotOverlay() {
                 </button>
               )}
               <button onClick={nextStep} className="px-3 py-1.5 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">
-                Next
+                {currentStep >= totalSteps - 1 ? 'Finish' : 'Next'}
               </button>
             </div>
           </div>
