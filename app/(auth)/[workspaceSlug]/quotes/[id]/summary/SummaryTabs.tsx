@@ -104,6 +104,7 @@ export function SummaryTabs({
             <Link
               href={`/${workspaceSlug}/quotes/${quoteId}/labor-sheet`}
               title="Click to edit"
+              data-copilot="edit-labor-icon"
               className="p-2 rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition"
             >
               <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -275,6 +276,7 @@ function LaborSheetPreview({
         <p className="text-sm text-slate-500 mb-3">No labor sheet created yet.</p>
         <Link
           href={`/${workspaceSlug}/quotes/${quoteId}/labor-sheet`}
+          data-copilot="create-labor-sheet"
           className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
         >
           Create Labor Sheet

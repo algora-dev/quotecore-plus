@@ -6,6 +6,15 @@ import { createBrowserClient } from '@supabase/ssr';
 import type { CopilotState } from './types';
 import { COPILOT_GUIDES } from './guides';
 
+interface TransitionPrompt {
+  title: string;
+  message: string;
+  yesLabel: string;
+  noLabel: string;
+  noMessage: string;
+  targetGuide: string;
+}
+
 interface CopilotContextType {
   state: CopilotState;
   isActive: boolean;
@@ -13,10 +22,13 @@ interface CopilotContextType {
   currentStepData: typeof COPILOT_GUIDES[number]['steps'][number] | null;
   totalSteps: number;
   nudgeMessage: string | null;
+  transitionPrompt: TransitionPrompt | null;
   toggle: () => void;
   nextStep: () => void;
   prevStep: () => void;
   skipGuide: () => void;
+  startGuide: (guideId: string) => void;
+  dismissTransition: () => void;
 }
 
 const CopilotContext = createContext<CopilotContextType | null>(null);
@@ -36,6 +48,7 @@ interface Props {
 export function CopilotProvider({ children, userId, initialState }: Props) {
   const pathname = usePathname();
   const [nudgeMessage, setNudgeMessage] = useState<string | null>(null);
+  const [transitionPrompt, setTransitionPrompt] = useState<TransitionPrompt | null>(null);
 
   const [state, setState] = useState<CopilotState>(
     initialState || {
@@ -78,6 +91,8 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
 
     if (pathname?.includes('/components')) {
       guideId = 'components';
+    } else if (pathname?.includes('/quotes/') && pathname?.includes('/labor-sheet')) {
+      guideId = 'labor-sheet';
     } else if (pathname?.includes('/quotes/') && (pathname?.includes('/summary') || pathname?.includes('/customer-edit'))) {
       guideId = 'customer-labor';
     } else if (pathname?.match(/\/quotes\/[^/]+$/) && !pathname?.includes('/new')) {
@@ -170,6 +185,18 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
       const newState = { ...state, guidesCompleted: newCompleted, activeGuide: null, currentStep: 0 };
       setState(newState);
       persist(newState);
+
+      // Show transition prompt if applicable
+      if (currentGuide.id === 'customer-labor' && !newCompleted.includes('labor-sheet')) {
+        setTransitionPrompt({
+          title: 'Labor Sheet Guide',
+          message: 'Now let\'s show you how to use the Labor Sheet system. It\'s almost identical to the Customer Quote flow.',
+          yesLabel: 'Yes, show me',
+          noLabel: 'No thanks',
+          noMessage: 'No problem! You can access Copilot anytime you like if you need help. Just click the Labor Sheet tab then turn Copilot on.',
+          targetGuide: 'labor-sheet',
+        });
+      }
     } else {
       const newState = { ...state, currentStep: nextIdx };
       setState(newState);
@@ -204,10 +231,31 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
     }
   }, [state, currentGuide, persist]);
 
+  const startGuide = useCallback((guideId: string) => {
+    setTransitionPrompt(null);
+    const guide = COPILOT_GUIDES.find(g => g.id === guideId);
+    let startStep = -1;
+    if (guide) {
+      for (let i = 0; i < guide.steps.length; i++) {
+        const el = document.querySelector(guide.steps[i].target);
+        if (el) { startStep = i; break; }
+      }
+    }
+    if (startStep >= 0) {
+      const newState = { ...state, activeGuide: guideId, currentStep: startStep };
+      setState(newState);
+      persist(newState);
+    }
+  }, [state, persist]);
+
+  const dismissTransition = useCallback(() => {
+    setTransitionPrompt(null);
+  }, []);
+
   return (
     <CopilotContext.Provider value={{
       state, isActive, currentGuide, currentStepData, totalSteps, nudgeMessage,
-      toggle, nextStep, prevStep, skipGuide,
+      transitionPrompt, toggle, nextStep, prevStep, skipGuide, startGuide, dismissTransition,
     }}>
       {children}
     </CopilotContext.Provider>

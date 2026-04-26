@@ -4,10 +4,11 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useCopilot } from './CopilotProvider';
 
 export function CopilotOverlay() {
-  const { isActive, currentStepData, state, totalSteps, nextStep, prevStep, skipGuide, currentGuide, toggle, nudgeMessage } = useCopilot();
+  const { isActive, currentStepData, state, totalSteps, nextStep, prevStep, skipGuide, currentGuide, toggle, nudgeMessage, transitionPrompt, startGuide, dismissTransition } = useCopilot();
   const currentStep = state.currentStep;
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [showDismissMsg, setShowDismissMsg] = useState(false);
+  const [dismissMessage, setDismissMessage] = useState<string | null>(null);
   const [windowSize, setWindowSize] = useState({ w: 0, h: 0 });
 
   // Draggable tooltip state
@@ -184,6 +185,51 @@ export function CopilotOverlay() {
       <div className="fixed bottom-6 right-6 z-[100] pointer-events-auto">
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 px-5 py-3 max-w-xs">
           <p className="text-sm text-slate-700">You can switch Copilot back on anytime you want.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Transition prompt (e.g. "Want to try the Labor Sheet guide?")
+  if (transitionPrompt) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-auto">
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 max-w-sm mx-4 space-y-4">
+          <div>
+            <p className="text-xs font-medium text-orange-500 mb-1">Copilot</p>
+            <h3 className="text-base font-semibold text-slate-900">{transitionPrompt.title}</h3>
+            <p className="text-sm text-slate-600 mt-2">{transitionPrompt.message}</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                const msg = transitionPrompt.noMessage;
+                dismissTransition();
+                setDismissMessage(msg);
+                setTimeout(() => setDismissMessage(null), 5000);
+              }}
+              className="flex-1 px-3 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition"
+            >
+              {transitionPrompt.noLabel}
+            </button>
+            <button
+              onClick={() => startGuide(transitionPrompt.targetGuide)}
+              className="flex-1 px-3 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            >
+              {transitionPrompt.yesLabel}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show dismiss message when user clicks "No thanks" on transition
+  if (dismissMessage) {
+    return (
+      <div className="fixed bottom-6 right-6 z-[100] pointer-events-auto">
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 px-5 py-3 max-w-sm">
+          <p className="text-sm text-slate-700">{dismissMessage}</p>
         </div>
       </div>
     );
