@@ -1069,6 +1069,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         <button
           onClick={handleSaveTakeoff}
           disabled={calibrations.length === 0 || isSaving}
+          data-copilot="takeoff-save"
           className="px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           title={calibrations.length === 0 ? 'Calibrate the plan first' : ''}
         >
@@ -1078,7 +1079,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar - Calibration, Roof Areas & Components */}
-        <div className="w-80 bg-white border-r border-gray-200 p-4 overflow-y-auto space-y-6">
+        <div className="w-80 bg-white border-r border-gray-200 p-4 overflow-y-auto space-y-6" data-copilot="takeoff-sidebar">
           {/* Calibration Section - Show if: not confirmed, calibration mode, or showing flash */}
           {(!calibrationConfirmed || calibrationMode || showConfirmedFlash) && (
             <div>
@@ -1187,7 +1188,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
 
           {calibrationConfirmed && (
             <div className="border-t border-gray-200 pt-4">
-              <h2 className="text-sm font-semibold mb-3 text-gray-600">Components</h2>
+              <h2 className="text-sm font-semibold mb-3 text-gray-600" data-copilot="takeoff-components-heading">Components</h2>
               {displayComponents.length === 0 ? (
               <div className="text-sm text-gray-500">
                 No components in library
@@ -1341,11 +1342,12 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         {/* Center - Canvas */}
         <div className="flex-1 flex flex-col relative bg-gray-50">
           {/* Top Toolbar */}
-          <div className="flex-shrink-0 m-6 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
+          <div className="flex-shrink-0 m-6 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-3 shadow-sm" data-copilot="takeoff-toolbar">
             {/* Tools - Left Side */}
             <div className="flex gap-2">
               <button
                 onClick={handleStartCalibration}
+                data-copilot="takeoff-tool-calibrate"
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 ${
                   calibrationMode
                     ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-500'
@@ -1373,6 +1375,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   setLinePoints([]);
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
+                data-copilot="takeoff-tool-line"
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   lineMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
@@ -1388,6 +1391,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   setAreaPoints([]);
                 }}
                 disabled={calibrationMode || calibrations.length === 0}
+                data-copilot="takeoff-tool-area"
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   areaMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
@@ -1411,6 +1415,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   setAreaMode(false);
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
+                data-copilot="takeoff-tool-point"
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   pointMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}

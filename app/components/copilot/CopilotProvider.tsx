@@ -91,6 +91,8 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
 
     if (pathname?.includes('/components')) {
       guideId = 'components';
+    } else if (pathname?.includes('/quotes/') && pathname?.includes('/takeoff')) {
+      guideId = 'digital-takeoff';
     } else if (pathname?.includes('/quotes/') && pathname?.includes('/labor-sheet')) {
       guideId = 'labor-sheet';
     } else if (pathname?.includes('/quotes/') && (pathname?.includes('/summary') || pathname?.includes('/customer-edit'))) {
