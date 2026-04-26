@@ -256,7 +256,8 @@ export function CopilotOverlay() {
       baseTop = targetRect.top - padding - 200;
       baseLeft = Math.max(16, Math.min(centerX - tooltipWidth / 2, windowSize.w - tooltipWidth - 16));
     } else if (pos === 'right') {
-      baseTop = Math.max(16, targetRect.top + targetRect.height / 2 - 60);
+      // Cap tooltip near top of target, not center (avoids mid-screen on tall elements)
+      baseTop = Math.max(16, Math.min(targetRect.top + 40, targetRect.top + targetRect.height / 2 - 60));
       baseLeft = Math.min(targetRect.right + padding + 12, windowSize.w - tooltipWidth - 16);
     } else if (pos === 'left') {
       baseTop = Math.max(16, targetRect.top + targetRect.height / 2 - 60);

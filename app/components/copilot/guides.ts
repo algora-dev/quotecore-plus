@@ -565,7 +565,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         target: '[data-copilot="takeoff-sidebar"]',
         title: 'Components Panel',
         description: 'This is your component panel. Click the "+" icon next to a component to add it to the active list. Components need to be active and assigned a colour before you can measure for them.',
-        position: 'top',
+        position: 'right',
         validation: 'none',
       },
       {
