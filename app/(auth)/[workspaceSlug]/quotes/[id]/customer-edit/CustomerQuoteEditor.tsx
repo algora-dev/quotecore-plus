@@ -327,7 +327,8 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                     e.target.value = '';
                   }
                 }}
-                className="px-3 py-1.5 text-sm border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500"
+                data-copilot="cl-template-dropdown"
+                className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               >
                 <option value="">Load Template...</option>
                 {templates.map((template) => (
@@ -347,7 +348,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         {/* Two-panel layout */}
         <div className="grid grid-cols-2 gap-6">
           {/* Left Panel: Component Selection */}
-          <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4" data-copilot="cl-left-panel">
             <h2 className="text-lg font-semibold text-slate-900">Components & Items</h2>
             
             <div className="space-y-4">
@@ -543,6 +544,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                   router.push(`/${workspaceSlug}/quotes/${quote.id}/summary`);
                 }}
                 disabled={saving}
+                data-copilot="cl-save-return"
                 className="w-full py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-5 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               >
                 {saving ? 'Saving...' : 'Save & Return to Summary'}
@@ -575,7 +577,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           </div>
 
           {/* Right Panel: Live Preview */}
-          <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4" data-copilot="cl-right-panel">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">{previewTitle}</h2>
               <button

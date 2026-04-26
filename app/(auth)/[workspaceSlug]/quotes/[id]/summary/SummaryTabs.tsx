@@ -60,6 +60,7 @@ export function SummaryTabs({
         <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
           <button
             onClick={() => setActiveTab('summary')}
+            data-copilot="tab-summary"
             className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
               activeTab === 'summary' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
@@ -68,6 +69,7 @@ export function SummaryTabs({
           </button>
           <button
             onClick={() => setActiveTab('customer')}
+            data-copilot="tab-customer"
             className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
               activeTab === 'customer' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
@@ -76,6 +78,7 @@ export function SummaryTabs({
           </button>
           <button
             onClick={() => setActiveTab('labor')}
+            data-copilot="tab-labor"
             className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
               activeTab === 'labor' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
@@ -91,6 +94,7 @@ export function SummaryTabs({
             <Link
               href={`/${workspaceSlug}/quotes/${quoteId}/customer-edit`}
               title="Click to edit"
+              data-copilot="edit-customer-icon"
               className="p-2 rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition"
             >
               <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -157,6 +161,7 @@ function CustomerQuotePreview({
         <p className="text-sm text-slate-500 mb-3">No customer quote created yet.</p>
         <Link
           href={`/${workspaceSlug}/quotes/${quoteId}/customer-edit`}
+          data-copilot="create-customer-quote"
           className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
         >
           Create Customer Quote
