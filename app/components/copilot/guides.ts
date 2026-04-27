@@ -545,18 +545,10 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
     description: 'Review and edit your digital takeoff in the quote builder.',
     steps: [
       {
-        id: 'dqb-overview',
-        target: '[data-copilot="dqb-tabs"]',
-        title: 'Quote Builder',
-        description: 'Your roof areas and component measurements from the digital takeoff have been pre-populated here. Just like manual mode, you can add more roof areas, edit components, or further adjust details from your digital takeoff.',
-        position: 'bottom',
-        validation: 'none',
-      },
-      {
         id: 'dqb-areas',
         target: '[data-copilot="quote-next-components"]',
         title: 'Roof Areas',
-        description: 'Your roof areas from the takeoff are already here. You can add more areas manually, edit existing ones, or go straight to Components if everything looks right.',
+        description: 'Your roof areas and components from the digital takeoff are pre-populated here. You can add more areas manually, edit existing ones, or go straight to Components if everything looks right.',
         position: 'bottom',
         validation: 'none',
       },
