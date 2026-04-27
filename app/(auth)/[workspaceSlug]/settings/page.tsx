@@ -67,7 +67,7 @@ export default async function CompanySettingsPage({
         </div>
 
         {/* Company & Preferences */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8" data-copilot="settings-company">
           <CompanySettingsForm
             companyId={company.id}
             userId={profile.id}
@@ -82,7 +82,7 @@ export default async function CompanySettingsPage({
         </div>
 
         {/* Security */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6" data-copilot="settings-security">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Security</h2>
@@ -104,7 +104,7 @@ export default async function CompanySettingsPage({
         </div>
 
         {/* Billing */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6" data-copilot="settings-billing">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Billing & Subscription</h2>
@@ -122,7 +122,7 @@ export default async function CompanySettingsPage({
         </div>
 
         {/* Quick Links */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6" data-copilot="settings-links">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Quick Links</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Link

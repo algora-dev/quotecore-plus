@@ -134,6 +134,8 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
       guideId = 'material-order-create';
     } else if (pathname?.includes('/material-orders')) {
       guideId = 'material-orders-hub';
+    } else if (pathname?.includes('/settings')) {
+      guideId = 'account-settings';
     } else if (pathname?.includes('/flashings')) {
       guideId = 'flashings-orders';
     }
