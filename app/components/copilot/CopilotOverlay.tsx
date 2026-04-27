@@ -268,6 +268,9 @@ export function CopilotOverlay() {
     baseLeft = windowSize.w / 2 - tooltipWidth / 2;
   }
 
+  // Ensure tooltip never goes below viewport (leave 220px for tooltip height)
+  baseTop = Math.min(baseTop, windowSize.h - 220);
+
   const tooltipStyle: React.CSSProperties = {
     top: baseTop + dragOffset.y,
     left: baseLeft + dragOffset.x,
