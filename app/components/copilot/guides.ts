@@ -863,7 +863,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         target: '[data-copilot="mo-minimize-header"]',
         title: 'Minimize Header',
         description: 'Click "Minimize Header" to collapse the supplier details and see more of your order. You can expand it again anytime by clicking "Edit Header".',
-        position: 'top',
+        position: 'left',
         validation: 'none',
       },
       {
