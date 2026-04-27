@@ -121,6 +121,8 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
       guideId = 'quote-builder';
     } else if (pathname?.includes('/quotes')) {
       guideId = 'create-quote';
+    } else if (pathname?.includes('/flashings/draw') || pathname?.includes('/flashings/') && pathname?.includes('/edit')) {
+      guideId = 'flashing-draw';
     } else if (pathname?.includes('/flashings') || pathname?.includes('/material-orders')) {
       guideId = 'flashings-orders';
     }

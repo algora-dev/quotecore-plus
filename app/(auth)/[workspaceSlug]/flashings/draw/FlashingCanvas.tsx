@@ -1538,7 +1538,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       </div>
 
       {/* Input fields - Clean Card */}
-      <div className="bg-white rounded-lg border border-slate-200 p-4 mb-4 space-y-3">
+      <div className="bg-white rounded-lg border border-slate-200 p-4 mb-4 space-y-3" data-copilot="flashing-inputs">
         <div className="flex gap-4">
           <div className="flex-1">
             <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
@@ -1576,7 +1576,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       </div>
 
       {/* Toolbar - Professional Design */}
-      <div className="bg-white rounded-lg border border-slate-200 p-3 mb-4 flex gap-2 items-center flex-wrap">
+      <div className="bg-white rounded-lg border border-slate-200 p-3 mb-4 flex gap-2 items-center flex-wrap" data-copilot="flashing-toolbar">
         <button
           onClick={() => {
             if (!editingLocked && !checkAdjustPointsExit()) {
@@ -1584,6 +1584,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             }
           }}
           disabled={editingLocked}
+          data-copilot="flashing-tool-line"
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             drawMode === 'line' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
           } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -1597,6 +1598,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             }
           }}
           disabled={editingLocked}
+          data-copilot="flashing-tool-text"
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             drawMode === 'text' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
           } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -1611,6 +1613,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
               }
             }}
             disabled={editingLocked}
+            data-copilot="flashing-tool-pencil"
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
               drawMode === 'draw' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
             } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -1656,6 +1659,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             }
           }}
           disabled={editingLocked}
+          data-copilot="flashing-tool-edit"
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             drawMode === 'edit' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
           } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -1669,6 +1673,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             }
           }}
           disabled={editingLocked}
+          data-copilot="flashing-tool-adjust"
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             drawMode === 'adjustPoints' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
           } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -1714,6 +1719,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           <button
             onClick={handleSave}
             disabled={saving || !name.trim()}
+            data-copilot="flashing-save"
             className="px-4 py-2 text-sm font-medium rounded-lg bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Save Flashing'}
@@ -1722,7 +1728,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       </div>
 
       {/* Live Measurements - Subtle Professional Design */}
-      <div className="mb-4 p-3 bg-slate-100 border border-slate-200 rounded-lg inline-block">
+      <div className="mb-4 p-3 bg-slate-100 border border-slate-200 rounded-lg inline-block" data-copilot="flashing-live-readout">
         <div className="flex gap-6 text-sm">
           <div>
             <span className="text-slate-600 font-medium">Length:</span>{' '}
@@ -1742,7 +1748,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       {/* Main Layout: Sidebar + Canvas */}
       <div className="flex gap-4">
         {/* Left Sidebar - Measurements List - Professional Design */}
-        <div className="w-72 bg-white border border-slate-200 rounded-lg p-4 max-h-[700px] overflow-y-auto shadow-sm">
+        <div className="w-72 bg-white border border-slate-200 rounded-lg p-4 max-h-[700px] overflow-y-auto shadow-sm" data-copilot="flashing-measurements">
           <h3 className="text-sm font-semibold text-slate-900 mb-3">Measurements</h3>
           {measurements.length === 0 ? (
             <p className="text-xs text-slate-400">No measurements yet</p>
