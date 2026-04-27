@@ -92,6 +92,13 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
   // Auto-detect which guide to show based on current page
   useEffect(() => {
     if (!state.enabled) return;
+    // Switch guide if user navigated to a page that needs a different guide
+    if (state.activeGuide === 'flashings-orders' && (pathname?.includes('/flashings/draw') || (pathname?.includes('/flashings/') && pathname?.includes('/edit')))) {
+      const newCompleted = [...new Set([...state.guidesCompleted, 'flashings-orders'])];
+      setState(prev => ({ ...prev, guidesCompleted: newCompleted, activeGuide: null, currentStep: 0 }));
+      // Will re-run and pick up flashing-draw
+      return;
+    }
     // Don't interfere if a guide is already running
     if (state.activeGuide) return;
 
@@ -121,9 +128,11 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
       guideId = 'quote-builder';
     } else if (pathname?.includes('/quotes')) {
       guideId = 'create-quote';
-    } else if (pathname?.includes('/flashings/draw') || pathname?.includes('/flashings/') && pathname?.includes('/edit')) {
+    } else if (pathname?.includes('/flashings/draw') || (pathname?.includes('/flashings/') && pathname?.includes('/edit'))) {
       guideId = 'flashing-draw';
-    } else if (pathname?.includes('/flashings') || pathname?.includes('/material-orders')) {
+    } else if (pathname?.includes('/material-orders')) {
+      guideId = 'flashings-orders';
+    } else if (pathname?.includes('/flashings')) {
       guideId = 'flashings-orders';
     }
 
