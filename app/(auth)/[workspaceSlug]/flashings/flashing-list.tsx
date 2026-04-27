@@ -70,6 +70,7 @@ export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
         <div className="flex gap-2">
           <button
             onClick={() => router.push(`/${workspaceSlug}/flashings/draw`)}
+            data-copilot="draw-flashing"
             className="px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all shadow-sm hover:shadow-md"
           >
             Draw Flashing
