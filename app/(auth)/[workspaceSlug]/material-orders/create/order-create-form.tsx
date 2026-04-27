@@ -436,7 +436,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
         {headerExpanded ? (
           <div className="bg-white border-b border-slate-200 shadow-sm">
             {/* Template Selector */}
-            <div className="px-6 py-3 border-b border-slate-100 bg-slate-50">
+            <div className="px-6 py-3 border-b border-slate-100 bg-slate-50" data-copilot="mo-template">
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Use Template (Optional)
               </label>
@@ -455,7 +455,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
             </div>
 
             {/* Header Form - Two Column */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6" data-copilot="mo-header-form">
               {/* LEFT COLUMN */}
               <div className="space-y-3">
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">To (Supplier)</h3>
@@ -619,7 +619,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
       {/* Main Content Area - Sidebar + Order Form */}
       <div className="flex-1 flex overflow-hidden">
         {/* LEFT SIDEBAR - Order Components Control Panel */}
-        <div className="w-80 bg-white border-r border-slate-200 flex flex-col overflow-hidden">
+        <div className="w-80 bg-white border-r border-slate-200 flex flex-col overflow-hidden" data-copilot="mo-sidebar">
           <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
             <h3 className="font-semibold text-slate-900 text-sm">Order Components</h3>
             <p className="text-xs text-slate-600 mt-0.5">
@@ -800,7 +800,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
           <div className="px-6 py-3 bg-white border-b border-slate-200 flex items-center justify-between">
             <h3 className="font-semibold text-slate-900">Order Form</h3>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm text-slate-600">
+              <div className="flex items-center gap-2 text-sm text-slate-600" data-copilot="mo-layout-toggle">
                 <button
                   type="button"
                   onClick={() => setLayoutMode('single')}
@@ -1015,6 +1015,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
               type="button"
               onClick={handleSaveDraft}
               disabled={saving}
+              data-copilot="mo-save"
               className="px-6 py-2.5 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Order'}

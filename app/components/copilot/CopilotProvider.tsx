@@ -130,8 +130,10 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
       guideId = 'create-quote';
     } else if (pathname?.includes('/flashings/draw') || (pathname?.includes('/flashings/') && pathname?.includes('/edit'))) {
       guideId = 'flashing-draw';
+    } else if (pathname?.includes('/material-orders/create') || pathname?.includes('/material-orders/') && pathname?.includes('/preview')) {
+      guideId = 'material-order-create';
     } else if (pathname?.includes('/material-orders')) {
-      guideId = 'flashings-orders';
+      guideId = 'material-orders-hub';
     } else if (pathname?.includes('/flashings')) {
       guideId = 'flashings-orders';
     }
