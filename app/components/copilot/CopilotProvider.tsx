@@ -114,6 +114,8 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
       } else {
         guideId = 'customer-labor';
       }
+    } else if (pathname?.includes('/quotes/') && pathname?.includes('/build')) {
+      guideId = 'digital-quote-builder';
     } else if (pathname?.match(/\/quotes\/[^/]+$/) && !pathname?.includes('/new')) {
       // Quote builder page: /quotes/[id] (not /quotes/new or /quotes/[id]/summary)
       guideId = 'quote-builder';

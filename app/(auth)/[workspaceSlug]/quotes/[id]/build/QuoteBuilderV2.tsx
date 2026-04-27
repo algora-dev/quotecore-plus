@@ -69,7 +69,7 @@ export function QuoteBuilderV2({
         </div>
 
         {/* Tab Navigation */}
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 mb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 mb-6" data-copilot="dqb-tabs">
           <div className="flex border-b border-slate-200">
             {steps.map((step) => {
               const isActive = currentStep === step.key;
