@@ -5,6 +5,8 @@ import { useCopilot } from './CopilotProvider';
 export function CopilotToggle() {
   const { state, toggle } = useCopilot();
 
+  if (!state.visible) return null;
+
   return (
     <button
       onClick={toggle}

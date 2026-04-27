@@ -19,6 +19,7 @@ export interface CopilotGuide {
 
 export interface CopilotState {
   enabled: boolean;
+  visible: boolean; // Master toggle — hides copilot from nav when false
   activeGuide: string | null;
   currentStep: number;
   guidesCompleted: string[];

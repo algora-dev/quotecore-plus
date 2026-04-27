@@ -34,12 +34,13 @@ export default async function WorkspaceLayout({
   // Load copilot progress
   const { data: copilotData } = await supabase
     .from('copilot_progress')
-    .select('copilot_enabled, guides_completed, current_guide, current_step')
+    .select('copilot_enabled, copilot_visible, guides_completed, current_guide, current_step')
     .eq('user_id', profile.id)
     .single();
 
   const copilotState = copilotData ? {
     enabled: copilotData.copilot_enabled ?? true,
+    visible: (copilotData as any).copilot_visible ?? true,
     activeGuide: copilotData.current_guide,
     currentStep: copilotData.current_step ?? 0,
     guidesCompleted: copilotData.guides_completed ?? [],

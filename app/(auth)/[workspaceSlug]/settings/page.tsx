@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { BackButton } from '@/app/components/BackButton';
 import { PasswordSection } from './PasswordSection';
+import { CopilotSettings } from './CopilotSettings';
 
 export default async function CompanySettingsPage({
   params,
@@ -119,6 +120,17 @@ export default async function CompanySettingsPage({
               Subscription plans and billing will be available soon
             </p>
           </div>
+        </div>
+
+        {/* Copilot */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6" data-copilot="settings-copilot">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Copilot</h2>
+              <p className="text-sm text-slate-500 mt-1">Interactive tutorials that guide you through each feature</p>
+            </div>
+          </div>
+          <CopilotSettings />
         </div>
 
         {/* Quick Links */}

@@ -29,6 +29,8 @@ interface CopilotContextType {
   skipGuide: () => void;
   startGuide: (guideId: string) => void;
   dismissTransition: () => void;
+  setVisible: (visible: boolean) => void;
+  resetGuides: () => void;
 }
 
 const CopilotContext = createContext<CopilotContextType | null>(null);
@@ -53,6 +55,7 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
   const [state, setState] = useState<CopilotState>(
     initialState || {
       enabled: true,
+      visible: true,
       activeGuide: null,
       currentStep: 0,
       guidesCompleted: [],
@@ -71,6 +74,7 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
         user_id: userId,
         company_id: userId,
         copilot_enabled: newState.enabled,
+        copilot_visible: newState.visible,
         guides_completed: newState.guidesCompleted,
         current_guide: newState.activeGuide,
         current_step: newState.currentStep,
@@ -91,7 +95,7 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
 
   // Auto-detect which guide to show based on current page
   useEffect(() => {
-    if (!state.enabled) return;
+    if (!state.enabled || !state.visible) return;
     // Switch guide if user navigated to a page that needs a different guide
     if (state.activeGuide === 'flashings-orders' && (pathname?.includes('/flashings/draw') || (pathname?.includes('/flashings/') && pathname?.includes('/edit')))) {
       const newCompleted = [...new Set([...state.guidesCompleted, 'flashings-orders'])];
@@ -291,10 +295,22 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
     setTransitionPrompt(null);
   }, []);
 
+  const setVisible = useCallback((visible: boolean) => {
+    const newState = { ...state, visible, enabled: visible ? state.enabled : false, activeGuide: visible ? state.activeGuide : null };
+    setState(newState);
+    persist(newState);
+  }, [state, persist]);
+
+  const resetGuides = useCallback(() => {
+    const newState = { ...state, guidesCompleted: [], activeGuide: null, currentStep: 0 };
+    setState(newState);
+    persist(newState);
+  }, [state, persist]);
+
   return (
     <CopilotContext.Provider value={{
       state, isActive, currentGuide, currentStepData, totalSteps, nudgeMessage,
-      transitionPrompt, toggle, nextStep, prevStep, skipGuide, startGuide, dismissTransition,
+      transitionPrompt, toggle, nextStep, prevStep, skipGuide, startGuide, dismissTransition, setVisible, resetGuides,
     }}>
       {children}
     </CopilotContext.Provider>
