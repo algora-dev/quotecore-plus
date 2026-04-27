@@ -820,6 +820,14 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         validation: 'none',
       },
       {
+        id: 'moc-minimize',
+        target: '[data-copilot="mo-minimize-header"]',
+        title: 'Minimize Header',
+        description: 'Click "Minimize Header" to collapse the supplier details and see more of your order. You can expand it again anytime by clicking "Edit Header".',
+        position: 'top',
+        validation: 'none',
+      },
+      {
         id: 'moc-layout',
         target: '[data-copilot="mo-layout-toggle"]',
         title: 'Layout Mode',
@@ -848,7 +856,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         target: '[data-copilot="mo-save"]',
         title: 'Save Order',
         description: 'When you are finished, click Save Order. You can preview and print the order, or come back and edit it later from the Material Orders page.',
-        position: 'top',
+        position: 'left',
         validation: 'none',
       },
     ],

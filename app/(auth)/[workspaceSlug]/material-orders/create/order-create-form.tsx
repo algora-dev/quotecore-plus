@@ -592,6 +592,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
               <button
                 type="button"
                 onClick={() => setHeaderExpanded(false)}
+                data-copilot="mo-minimize-header"
                 className="px-3 py-1.5 text-xs font-medium rounded border border-slate-300 hover:bg-white transition-colors"
               >
                 Minimize Header
