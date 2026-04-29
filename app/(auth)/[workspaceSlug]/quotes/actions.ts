@@ -71,11 +71,18 @@ export async function generateAcceptanceToken(quoteId: string): Promise<string> 
   // Return existing token if already generated
   if (quote.acceptance_token) return quote.acceptance_token;
 
-  // Generate new token
+  // Generate new token with 30-day expiry
   const token = crypto.randomUUID();
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 30);
+
   const { error } = await supabase
     .from('quotes')
-    .update({ acceptance_token: token, job_status: 'sent' })
+    .update({
+      acceptance_token: token,
+      acceptance_token_expires_at: expiresAt.toISOString(),
+      job_status: 'sent',
+    })
     .eq('id', quoteId);
 
   if (error) throw new Error(error.message);

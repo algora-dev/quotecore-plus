@@ -45,6 +45,18 @@ export default async function AcceptQuotePage({
     );
   }
 
+  // Check token expiry
+  if (quote.acceptance_token_expires_at && new Date(quote.acceptance_token_expires_at) < new Date()) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="bg-white rounded-xl p-8 max-w-md text-center shadow-lg">
+          <h1 className="text-xl font-semibold text-slate-900 mb-2">Link Expired</h1>
+          <p className="text-sm text-slate-500">This quote link has expired. Please contact the sender for a new link.</p>
+        </div>
+      </div>
+    );
+  }
+
   // Check if already responded
   if (quote.accepted_at || quote.declined_at) {
     const wasAccepted = !!quote.accepted_at;

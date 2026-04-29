@@ -20,12 +20,17 @@ export async function respondToQuote(token: string, action: 'accept' | 'decline'
   // Load quote by token — select ONLY needed fields
   const { data: quote, error: fetchErr } = await supabase
     .from('quotes')
-    .select('id, company_id, customer_name, quote_number, accepted_at, declined_at')
+    .select('id, company_id, customer_name, quote_number, accepted_at, declined_at, acceptance_token_expires_at')
     .eq('acceptance_token', token)
     .single();
 
   if (fetchErr || !quote) throw new Error('Quote not found');
   if (quote.accepted_at || quote.declined_at) throw new Error('This quote has already been responded to');
+
+  // Check token expiry
+  if ((quote as any).acceptance_token_expires_at && new Date((quote as any).acceptance_token_expires_at) < new Date()) {
+    throw new Error('This link has expired. Please contact the sender for a new link.');
+  }
 
   const now = new Date().toISOString();
   const isAccept = action === 'accept';
