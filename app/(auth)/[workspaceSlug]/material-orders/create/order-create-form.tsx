@@ -680,7 +680,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
                             </svg>
                           </button>
                         </div>
-                        <h4 className="flex-1 font-medium text-sm text-slate-900">{line.componentName}</h4>
+                        <h4 className="flex-1 font-bold text-sm text-slate-900">{line.componentName}</h4>
                       </div>
                       <div className="flex gap-2">
                         <button

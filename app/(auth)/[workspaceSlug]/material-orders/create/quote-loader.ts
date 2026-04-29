@@ -59,17 +59,21 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
       .eq('quote_id', quoteId)
       .order('sort_order', { ascending: true });
     
-    // CRITICAL: Load takeoff measurements separately (they link to component_library_id, NOT quote_component_id)
-    console.log('[QuoteLoader] About to load takeoff measurements for quote:', quoteId);
-    const { data: takeoffMeasurements, error: measurementsError } = await supabase
+    // Load takeoff measurements (digital mode - linked to component_library_id)
+    const { data: takeoffMeasurements } = await supabase
       .from('quote_takeoff_measurements')
       .select('id, component_library_id, measurement_value, measurement_unit')
       .eq('quote_id', quoteId)
       .eq('is_visible', true);
     
-    console.log('[QuoteLoader] Takeoff measurements RAW:', JSON.stringify({ takeoffMeasurements, error: measurementsError }, null, 2));
-    
-    console.log('[QuoteLoader] Components query result:', JSON.stringify({ components, error: componentsError }, null, 2));
+    // Load component entries (manual mode - linked to quote_component_id)
+    const compIds = (components || []).map((c: any) => c.id);
+    const { data: componentEntries } = compIds.length > 0
+      ? await supabase
+          .from('quote_component_entries')
+          .select('id, quote_component_id, raw_value, value_after_waste')
+          .in('quote_component_id', compIds)
+      : { data: [] };
     
     if (componentsError) {
       console.error('[QuoteLoader] Components load error:', componentsError);
@@ -82,7 +86,7 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
     
     console.log('[QuoteLoader] Loaded', components?.length || 0, 'components');
     
-    // Group measurements by component_library_id
+    // Group takeoff measurements by component_library_id (digital mode)
     const measurementsByLibraryId = new Map<string, typeof takeoffMeasurements>();
     takeoffMeasurements?.forEach(m => {
       if (m.component_library_id) {
@@ -91,21 +95,48 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
       }
     });
     
-    // Normalize components and attach measurements
-    const normalizedComponents = components?.map((comp: any) => ({
-      id: comp.id,
-      name: comp.name,
-      component_library_id: comp.component_library_id,
-      final_quantity: comp.final_quantity,
-      measurement_type: comp.measurement_type,
-      sort_order: comp.sort_order,
-      component_library: Array.isArray(comp.component_library) && comp.component_library.length > 0
-        ? comp.component_library[0]
-        : comp.component_library,
-      measurements: comp.component_library_id 
+    // Group component entries by quote_component_id (manual mode)
+    const entriesByCompId = new Map<string, typeof componentEntries>();
+    componentEntries?.forEach(e => {
+      if (e.quote_component_id) {
+        const existing = entriesByCompId.get(e.quote_component_id) || [];
+        entriesByCompId.set(e.quote_component_id, [...existing, e]);
+      }
+    });
+    
+    // Normalize components and attach measurements from BOTH sources
+    const normalizedComponents = components?.map((comp: any) => {
+      // Try takeoff measurements first (digital mode)
+      let measurements = comp.component_library_id 
         ? measurementsByLibraryId.get(comp.component_library_id) || []
-        : [],
-    })) || [];
+        : [];
+      
+      // If no takeoff measurements, use component entries (manual mode)
+      if (measurements.length === 0) {
+        const entries = entriesByCompId.get(comp.id) || [];
+        if (entries.length > 0) {
+          measurements = entries.map((e: any) => ({
+            id: e.id,
+            component_library_id: comp.component_library_id,
+            measurement_value: e.raw_value,
+            measurement_unit: comp.measurement_type === 'lineal' ? 'm' : comp.measurement_type === 'area' ? 'm²' : 'pcs',
+          }));
+        }
+      }
+      
+      return {
+        id: comp.id,
+        name: comp.name,
+        component_library_id: comp.component_library_id,
+        final_quantity: comp.final_quantity,
+        measurement_type: comp.measurement_type,
+        sort_order: comp.sort_order,
+        component_library: Array.isArray(comp.component_library) && comp.component_library.length > 0
+          ? comp.component_library[0]
+          : comp.component_library,
+        measurements,
+      };
+    }) || [];
     
     return {
       ...quote,
