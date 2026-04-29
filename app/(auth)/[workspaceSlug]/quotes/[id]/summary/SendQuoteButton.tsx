@@ -24,14 +24,22 @@ interface Props {
   };
 }
 
+function sanitize(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function replacePlaceholders(text: string, data: Record<string, string>): string {
   return text
-    .replace(/\{\{customer_name\}\}/g, data.customer_name || '')
-    .replace(/\{\{quote_number\}\}/g, data.quote_number || '')
-    .replace(/\{\{job_name\}\}/g, data.job_name || '')
-    .replace(/\{\{quote_url\}\}/g, data.quote_url || '')
-    .replace(/\{\{company_name\}\}/g, data.company_name || '')
-    .replace(/\{\{quote_date\}\}/g, data.quote_date || '');
+    .replace(/\{\{customer_name\}\}/g, sanitize(data.customer_name || ''))
+    .replace(/\{\{quote_number\}\}/g, sanitize(data.quote_number || ''))
+    .replace(/\{\{job_name\}\}/g, sanitize(data.job_name || ''))
+    .replace(/\{\{quote_url\}\}/g, data.quote_url || '') // URL not sanitized (needs to be clickable)
+    .replace(/\{\{company_name\}\}/g, sanitize(data.company_name || ''))
+    .replace(/\{\{quote_date\}\}/g, sanitize(data.quote_date || ''));
 }
 
 export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emailTemplates, quoteMeta }: Props) {
