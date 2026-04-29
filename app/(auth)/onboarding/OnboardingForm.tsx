@@ -90,7 +90,7 @@ export function OnboardingForm({
             disabled={isPending}
             className="w-full py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
           >
-            {isPending ? 'Setting up...' : 'Start with Components Tutorial'}
+            {isPending ? 'Setting up...' : 'Quick Start Components Tutorial'}
           </button>
           <button
             type="button"
@@ -98,7 +98,7 @@ export function OnboardingForm({
             disabled={isPending}
             className="w-full py-3 font-medium rounded-full border-2 border-slate-200 hover:border-orange-300 hover:bg-orange-50/50 transition text-slate-700 disabled:opacity-50"
           >
-            Turn Copilot On, I will explore on my own
+            Keep Copilot On, I will explore on my own
           </button>
           <button
             type="button"
@@ -106,7 +106,7 @@ export function OnboardingForm({
             disabled={isPending}
             className="w-full py-2 text-sm text-slate-500 hover:text-slate-700 transition disabled:opacity-50"
           >
-            Skip for now
+            Turn Copilot Off
           </button>
         </div>
       </div>
