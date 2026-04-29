@@ -45,8 +45,8 @@ export async function completeOnboarding(companyId: string, data: OnboardingData
 
   console.log('[completeOnboarding] Success! Onboarding completed.');
 
-  revalidatePath('/onboarding');
-  revalidatePath('/');
+  // Don't revalidate here — client handles the copilot intro step transition
+  // revalidatePath will cause server to re-render and redirect before copilot step shows
 }
 
 export async function completeGoogleOnboarding(formData: FormData) {
