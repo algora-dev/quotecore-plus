@@ -7,6 +7,7 @@ import { CURRENCY_GROUPS } from '@/app/lib/currency/currencies';
 interface Props {
   companyId: string;
   companyName: string;
+  companySlug: string;
   currentCurrency: string;
   currentLanguage: string;
   currentMeasurement: 'metric' | 'imperial';
@@ -14,7 +15,8 @@ interface Props {
 
 export function OnboardingForm({ 
   companyId, 
-  companyName, 
+  companyName,
+  companySlug,
   currentCurrency, 
   currentLanguage, 
   currentMeasurement 
@@ -27,7 +29,7 @@ export function OnboardingForm({
   const router = useRouter();
 
   function handleCopilotChoice(choice: 'tutorial' | 'on' | 'off') {
-    const slug = companyName.toLowerCase().replace(/\s+/g, '-');
+    const slug = companySlug;
     
     startTransition(async () => {
       try {

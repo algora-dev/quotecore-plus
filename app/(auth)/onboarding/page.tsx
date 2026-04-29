@@ -79,6 +79,7 @@ export default async function OnboardingPage() {
           <OnboardingForm 
             companyId={company!.id}
             companyName={company!.name}
+            companySlug={company!.slug}
             currentCurrency={company!.default_currency}
             currentLanguage={company!.default_language}
             currentMeasurement={company!.default_measurement_system}
