@@ -53,7 +53,7 @@ export async function createQuoteFromTemplate(templateId: string, customerName: 
   redirect(`/${company.slug}/quotes/${quote.id}`);
 }
 
-export async function generateAcceptanceToken(quoteId: string): Promise<string> {
+export async function generateAcceptanceToken(quoteId: string, expiryDays: number = 30): Promise<string> {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
@@ -71,10 +71,11 @@ export async function generateAcceptanceToken(quoteId: string): Promise<string> 
   // Return existing token if already generated
   if (quote.acceptance_token) return quote.acceptance_token;
 
-  // Generate new token with 30-day expiry
+  // Generate new token with configurable expiry
+  const days = Math.max(1, Math.min(365, expiryDays)); // Clamp 1-365 days
   const token = crypto.randomUUID();
   const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 30);
+  expiresAt.setDate(expiresAt.getDate() + days);
 
   const { error } = await supabase
     .from('quotes')

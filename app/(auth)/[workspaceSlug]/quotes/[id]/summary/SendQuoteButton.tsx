@@ -54,6 +54,7 @@ export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emai
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
   const [emailCopied, setEmailCopied] = useState(false);
+  const [expiryDays, setExpiryDays] = useState<number>(30);
 
   // Close modal when copilot transition starts
   useEffect(() => {
@@ -72,7 +73,7 @@ export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emai
     if (token) return token;
     setLoading(true);
     try {
-      const newToken = await generateAcceptanceToken(quoteId);
+      const newToken = await generateAcceptanceToken(quoteId, expiryDays);
       setToken(newToken);
       return newToken;
     } catch (err) {
@@ -208,6 +209,26 @@ export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emai
             {mode === 'choose' && !loading && (
               <div className="space-y-3">
                 <p className="text-sm text-slate-600">How would you like to send this quote?</p>
+
+                {/* Quote Expiry */}
+                {!token && (
+                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <label className="text-sm font-medium text-slate-700 whitespace-nowrap">Link expires in:</label>
+                    <select
+                      value={expiryDays}
+                      onChange={(e) => setExpiryDays(Number(e.target.value))}
+                      className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
+                    >
+                      <option value={7}>7 days</option>
+                      <option value={14}>14 days</option>
+                      <option value={30}>30 days</option>
+                      <option value={60}>60 days</option>
+                      <option value={90}>90 days</option>
+                      <option value={180}>180 days</option>
+                      <option value={365}>1 year</option>
+                    </select>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={handleUrlMode}
