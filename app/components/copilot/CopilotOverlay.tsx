@@ -3,6 +3,16 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useCopilot } from './CopilotProvider';
 
+/** Safely render _text_ as <em> without dangerouslySetInnerHTML */
+function renderCopilotDescription(text: string) {
+  const parts = text.split(/(_[^_]+_)/g);
+  return parts.map((part, i) =>
+    part.startsWith('_') && part.endsWith('_')
+      ? <em key={i} className="italic text-slate-700">{part.slice(1, -1)}</em>
+      : <span key={i}>{part}</span>
+  );
+}
+
 export function CopilotOverlay() {
   const { isActive, currentStepData, state, totalSteps, nextStep, prevStep, skipGuide, currentGuide, toggle, nudgeMessage, transitionPrompt, startGuide, dismissTransition } = useCopilot();
   const currentStep = state.currentStep;
@@ -355,7 +365,9 @@ export function CopilotOverlay() {
           </div>
 
           <div className="px-5 pb-3">
-            <p className="text-xs text-slate-600 leading-relaxed" dangerouslySetInnerHTML={{ __html: currentStepData.description.replace(/_(.*?)_/g, '<em class="italic text-slate-700">$1</em>') }} />
+            <p className="text-xs text-slate-600 leading-relaxed">
+              {renderCopilotDescription(currentStepData.description)}
+            </p>
             {nudgeMessage && (
               <p className="text-xs text-orange-600 font-medium mt-2 animate-pulse">{nudgeMessage}</p>
             )}
