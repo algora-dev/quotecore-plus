@@ -15,13 +15,13 @@ interface CompanySettings {
 
 export async function updateCompanySettings(
   companyId: string,
-  userId: string,
+  _userId: string, // Ignored — we use the authenticated user's ID instead
   settings: CompanySettings
 ) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
-  // Verify user owns this company
+  // Verify user owns this company (use server-side profile, not client params)
   if (profile.company_id !== companyId) {
     throw new Error('Unauthorized');
   }
@@ -44,27 +44,20 @@ export async function updateCompanySettings(
     throw new Error('Failed to update company settings');
   }
 
-  // Update user name
+  // Update user name (use authenticated user ID, not client-provided)
   const { error: userError } = await supabase
-    .from('profiles')
+    .from('users')
     .update({
       full_name: settings.userName,
     })
-    .eq('id', userId);
+    .eq('id', profile.id);
 
   if (userError) {
     console.error('[Settings] User update failed:', userError);
     throw new Error('Failed to update user settings');
   }
 
-  console.log('[Settings] Settings updated:', {
-    companyId,
-    userId,
-    companyName: settings.companyName,
-    userName: settings.userName,
-    materialMargin: settings.materialMargin,
-    laborMargin: settings.laborMargin,
-  });
+
 
   // Revalidate any pages that depend on company settings
   revalidatePath('/');
