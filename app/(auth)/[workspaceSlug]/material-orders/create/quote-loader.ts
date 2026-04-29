@@ -118,7 +118,7 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
           measurements = entries.map((e: any) => ({
             id: e.id,
             component_library_id: comp.component_library_id,
-            measurement_value: e.raw_value,
+            measurement_value: e.value_after_waste,
             measurement_unit: comp.measurement_type === 'lineal' ? 'm' : comp.measurement_type === 'area' ? 'm²' : 'pcs',
           }));
         }
