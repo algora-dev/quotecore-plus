@@ -81,19 +81,13 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
   // Order line items
   const [orderLines, setOrderLines] = useState<OrderLineItem[]>([]);
   
-  // Auto-populate from quote data
+  // Auto-populate from quote data (runs ONCE on mount)
+  const [quoteLoaded, setQuoteLoaded] = useState(false);
   useEffect(() => {
-    console.log('[OrderCreateForm] useEffect triggered - quoteData:', quoteData);
-    
-    if (!quoteData) {
-      console.log('[OrderCreateForm] No quoteData - skipping auto-populate');
-      return;
-    }
-    
-    if (quoteData.components.length === 0) {
-      console.log('[OrderCreateForm] Quote has no components - skipping');
-      return;
-    }
+    if (quoteLoaded) return; // Only run once
+    if (!quoteData) return;
+    if (quoteData.components.length === 0) return;
+    setQuoteLoaded(true);
     
     console.log('[OrderCreateForm] Mapping', quoteData.components.length, 'components');
     
@@ -126,9 +120,9 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
           unit: 'pcs',
           lengths,
           lengthUnit: 'm',
-          showComponentName: false,
-          showFlashingImage: false,
-          showMeasurements: false,
+          showComponentName: true,
+          showFlashingImage: !!flashing?.image_url,
+          showMeasurements: true,
         };
       } else {
         // Single mode - use total quantity
@@ -140,9 +134,9 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
           entryMode: 'single',
           quantity: comp.final_quantity || 0,
           unit,
-          showComponentName: false,
-          showFlashingImage: false,
-          showMeasurements: false,
+          showComponentName: true,
+          showFlashingImage: !!flashing?.image_url,
+          showMeasurements: true,
         };
       }
     });
