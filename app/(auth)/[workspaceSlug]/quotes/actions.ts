@@ -742,13 +742,7 @@ export async function updateQuoteMargins(
 
   if (error) throw new Error(error.message);
 
-  console.log('[Margins] Quote margins updated:', {
-    quoteId,
-    materialMarginPercent: settings.materialMarginPercent,
-    laborMarginPercent: settings.laborMarginPercent,
-    materialEnabled: settings.materialMarginEnabled,
-    laborEnabled: settings.laborMarginEnabled,
-  });
+
 
   revalidatePath(`/`);
 }
