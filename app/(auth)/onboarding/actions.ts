@@ -115,5 +115,10 @@ export async function completeGoogleOnboarding(formData: FormData) {
       });
   }
 
-  redirect(`/${company.slug}`);
+  // Skip redirect if requested (copilot intro step handles navigation)
+  const skipRedirect = formData.get('skipRedirect') === 'true';
+  if (!skipRedirect) {
+    redirect(`/${company.slug}`);
+  }
+  return { slug: company.slug };
 }

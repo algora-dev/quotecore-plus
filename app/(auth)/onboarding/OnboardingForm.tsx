@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { completeOnboarding } from './actions';
 import { CURRENCY_GROUPS } from '@/app/lib/currency/currencies';
 
+
 interface Props {
   companyId: string;
   companyName: string;
@@ -22,12 +23,12 @@ export function OnboardingForm({
   const [currency, setCurrency] = useState(currentCurrency);
   const [language, setLanguage] = useState(currentLanguage);
   const [measurement, setMeasurement] = useState(currentMeasurement);
+  const [step, setStep] = useState<'preferences' | 'copilot'>('preferences');
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    
+
+  async function handleSavePreferences() {
     startTransition(async () => {
       try {
         await completeOnboarding(companyId, {
@@ -35,10 +36,7 @@ export function OnboardingForm({
           language,
           measurement,
         });
-        
-        // Redirect to overview page
-        const slug = companyName.toLowerCase().replace(/\s+/g, '-');
-        router.push(`/${slug}`);
+        setStep('copilot');
       } catch (err) {
         console.error('Onboarding failed:', err);
         alert('Failed to complete setup. Please try again.');
@@ -46,8 +44,72 @@ export function OnboardingForm({
     });
   }
 
+  function handleCopilotChoice(choice: 'tutorial' | 'on' | 'off') {
+    const slug = companyName.toLowerCase().replace(/\s+/g, '-');
+    if (choice === 'tutorial') {
+      router.push(`/${slug}/components?copilot=on`);
+    } else if (choice === 'on') {
+      router.push(`/${slug}?copilot=on`);
+    } else {
+      router.push(`/${slug}?copilot=off`);
+    }
+  }
+
+  if (step === 'copilot') {
+    return (
+      <div className="space-y-6">
+        <div className="text-center space-y-3">
+          <div className="w-16 h-16 mx-auto bg-orange-100 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-slate-900">Meet Copilot</h2>
+          <p className="text-sm text-slate-600 max-w-md mx-auto">
+            We have an interactive tutorial system called Copilot that walks you through each step of the app. It highlights the buttons and fields you need to use, so you can learn as you go.
+          </p>
+          <p className="text-sm text-slate-600 max-w-md mx-auto">
+            You can switch Copilot on or off anytime from the navigation bar or in Account Settings.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-slate-700 text-center">We recommend starting with these tutorials:</p>
+          <div className="flex gap-2 justify-center">
+            <span className="px-3 py-1 text-xs font-medium bg-orange-100 text-orange-700 rounded-full">Adding Components</span>
+            <span className="px-3 py-1 text-xs font-medium bg-orange-100 text-orange-700 rounded-full">Creating a Quote</span>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={() => handleCopilotChoice('tutorial')}
+            className="w-full py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          >
+            Start with Components Tutorial
+          </button>
+          <button
+            type="button"
+            onClick={() => handleCopilotChoice('on')}
+            className="w-full py-3 font-medium rounded-full border-2 border-slate-200 hover:border-orange-300 hover:bg-orange-50/50 transition text-slate-700"
+          >
+            Turn Copilot On, I will explore on my own
+          </button>
+          <button
+            type="button"
+            onClick={() => handleCopilotChoice('off')}
+            className="w-full py-2 text-sm text-slate-500 hover:text-slate-700 transition"
+          >
+            Skip for now
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={(e) => { e.preventDefault(); handleSavePreferences(); }} className="space-y-6">
       {/* Currency Selection */}
       <div className="space-y-3">
         <label className="block">

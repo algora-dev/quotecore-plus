@@ -85,6 +85,30 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
     }
   }, [supabase, userId]);
 
+  // Handle onboarding copilot preference from URL query
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const copilotParam = params.get('copilot');
+    if (copilotParam === 'on') {
+      const newState = { ...state, enabled: true, visible: true };
+      setState(newState);
+      persist(newState);
+      // Clean URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('copilot');
+      window.history.replaceState({}, '', url.toString());
+    } else if (copilotParam === 'off') {
+      const newState = { ...state, enabled: false, visible: false };
+      setState(newState);
+      persist(newState);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('copilot');
+      window.history.replaceState({}, '', url.toString());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only on mount
+
   // Re-detection trigger (e.g. after first roof area created in takeoff)
   const [redetectTick, setRedetectTick] = useState(0);
   useEffect(() => {
