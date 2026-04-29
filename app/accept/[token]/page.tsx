@@ -1,6 +1,8 @@
+import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 import { AcceptDeclineButtons } from './AcceptDeclineButtons';
+import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 
 export default async function AcceptQuotePage({
   params,
@@ -8,6 +10,21 @@ export default async function AcceptQuotePage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
+
+  // Rate limit: 20 attempts per IP per hour
+  const hdrs = await headers();
+  const ip = getClientIP(hdrs);
+  if (!checkRateLimit(`accept:${ip}`, 20, 60 * 60 * 1000)) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 max-w-md text-center">
+          <h1 className="text-xl font-bold text-slate-900 mb-2">Too Many Requests</h1>
+          <p className="text-sm text-slate-600">Please try again later.</p>
+        </div>
+      </div>
+    );
+  }
+
   const supabase = createAdminClient();
 
   // Load quote by acceptance token (public - no auth required)
