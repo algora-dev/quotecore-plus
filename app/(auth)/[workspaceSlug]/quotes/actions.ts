@@ -5,6 +5,7 @@ import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/sup
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 import type { InputMode, WasteType, PitchType } from '@/app/lib/types';
+import { verifyQuoteOwnership, verifyRoofAreaOwnership, verifyComponentOwnership } from '@/app/lib/auth/ownership';
 
 export async function createQuoteFromTemplate(templateId: string, customerName: string, jobReference?: string | null, entryMode?: 'manual' | 'digital') {
   const { profile, company } = await loadCompanyContext();
@@ -135,14 +136,18 @@ export async function loadQuote(id: string) {
 }
 
 export async function loadQuoteRoofAreas(quoteId: string) {
+  const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
+  await verifyQuoteOwnership(supabase, quoteId, profile.company_id);
   const { data, error } = await supabase.from('quote_roof_areas').select('*').eq('quote_id', quoteId).order('sort_order');
   if (error) throw new Error(error.message);
   return data;
 }
 
 export async function loadAllRoofAreaEntriesForQuote(quoteId: string) {
+  const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
+  await verifyQuoteOwnership(supabase, quoteId, profile.company_id);
   const { data: areas } = await supabase.from('quote_roof_areas').select('id').eq('quote_id', quoteId);
   if (!areas?.length) return {};
   const areaIds = areas.map(a => a.id);
@@ -157,14 +162,18 @@ export async function loadAllRoofAreaEntriesForQuote(quoteId: string) {
 }
 
 export async function loadQuoteComponents(quoteId: string) {
+  const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
+  await verifyQuoteOwnership(supabase, quoteId, profile.company_id);
   const { data, error } = await supabase.from('quote_components').select('*').eq('quote_id', quoteId).order('sort_order');
   if (error) throw new Error(error.message);
   return data;
 }
 
 export async function loadAllEntriesForQuote(quoteId: string) {
+  const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
+  await verifyQuoteOwnership(supabase, quoteId, profile.company_id);
   const { data: comps } = await supabase.from('quote_components').select('id').eq('quote_id', quoteId);
   if (!comps?.length) return {};
   const compIds = comps.map(c => c.id);
@@ -179,14 +188,18 @@ export async function loadAllEntriesForQuote(quoteId: string) {
 }
 
 export async function addQuoteRoofArea(quoteId: string, label: string) {
+  const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
+  await verifyQuoteOwnership(supabase, quoteId, profile.company_id);
   const { data, error } = await supabase.from('quote_roof_areas').insert({ quote_id: quoteId, label, input_mode: 'calculated', is_locked: false }).select().single();
   if (error) throw new Error(error.message);
   return data;
 }
 
 export async function addRoofAreaEntry(roofAreaId: string, widthM: number, lengthM: number, pitchDegrees: number) {
+  const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
+  await verifyRoofAreaOwnership(supabase, roofAreaId, profile.company_id);
   const planSqm = widthM * lengthM;
   const pf = 1 / Math.cos((pitchDegrees ?? 0) * Math.PI / 180);
   const sqm = planSqm * pf;
@@ -199,7 +212,9 @@ export async function addRoofAreaEntry(roofAreaId: string, widthM: number, lengt
 }
 
 export async function removeRoofAreaEntry(entryId: string, roofAreaId: string) {
+  const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
+  await verifyRoofAreaOwnership(supabase, roofAreaId, profile.company_id);
   const { error } = await supabase.from('quote_roof_area_entries').delete().eq('id', entryId);
   if (error) throw new Error(error.message);
   await recalcAreaFromEntries(roofAreaId);
@@ -213,7 +228,9 @@ async function recalcAreaFromEntries(roofAreaId: string) {
 }
 
 export async function updateQuoteRoofArea(id: string, input: any) {
+  const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
+  await verifyRoofAreaOwnership(supabase, id, profile.company_id);
   if (input.input_mode === 'calculated') {
     let planSqm = input.calc_plan_sqm ?? 0;
     if (!planSqm && input.calc_width_m && input.calc_length_m) planSqm = input.calc_width_m * input.calc_length_m;
@@ -236,20 +253,26 @@ export async function updateQuoteRoofArea(id: string, input: any) {
 }
 
 export async function toggleAreaLock(id: string, locked: boolean) {
+  const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
+  await verifyRoofAreaOwnership(supabase, id, profile.company_id);
   const { error } = await supabase.from('quote_roof_areas').update({ is_locked: locked }).eq('id', id);
   if (error) throw new Error(error.message);
   revalidatePath('/quotes');
 }
 
 export async function removeQuoteRoofArea(id: string) {
+  const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
+  await verifyRoofAreaOwnership(supabase, id, profile.company_id);
   const { error } = await supabase.from('quote_roof_areas').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
 
 export async function addQuoteComponent(quoteId: string, input: any) {
+  const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
+  await verifyQuoteOwnership(supabase, quoteId, profile.company_id);
   const { data, error } = await supabase.from('quote_components').insert({
     quote_id: quoteId, quote_roof_area_id: input.quote_roof_area_id ?? null,
     component_library_id: input.component_library_id ?? null, name: input.name,
@@ -263,20 +286,26 @@ export async function addQuoteComponent(quoteId: string, input: any) {
 }
 
 export async function removeQuoteComponent(id: string) {
+  const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
+  await verifyComponentOwnership(supabase, id, profile.company_id);
   const { error } = await supabase.from('quote_components').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
 
 export async function updateComponentSettings(id: string, updates: { input_mode?: InputMode; quote_roof_area_id?: string | null; use_custom_pitch?: boolean; custom_pitch_degrees?: number | null }) {
+  const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
+  await verifyComponentOwnership(supabase, id, profile.company_id);
   const { error } = await supabase.from('quote_components').update(updates).eq('id', id);
   if (error) throw new Error(error.message);
   revalidatePath('/quotes');
 }
 
 export async function addComponentEntry(quoteComponentId: string, rawValue: number, areaPitch: number | null) {
+  const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
+  await verifyComponentOwnership(supabase, quoteComponentId, profile.company_id);
   const { data: comp } = await supabase.from('quote_components').select('*').eq('id', quoteComponentId).single();
   if (!comp) throw new Error('Component not found');
   const isPlan = comp.input_mode === 'calculated';
@@ -295,7 +324,9 @@ export async function useRoofAreaTotal(quoteComponentId: string, roofAreaSqm: nu
 }
 
 export async function removeComponentEntry(entryId: string, quoteComponentId: string) {
+  const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
+  await verifyComponentOwnership(supabase, quoteComponentId, profile.company_id);
   const { error } = await supabase.from('quote_component_entries').delete().eq('id', entryId);
   if (error) throw new Error(error.message);
   await recalcComponentFromEntries(quoteComponentId);
