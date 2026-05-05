@@ -10,6 +10,16 @@ import { verifyQuoteOwnership, verifyRoofAreaOwnership, verifyComponentOwnership
 export async function createQuoteFromTemplate(templateId: string, customerName: string, jobReference?: string | null, entryMode?: 'manual' | 'digital') {
   const { profile, company } = await loadCompanyContext();
   const supabase = await createSupabaseServerClient();
+
+  // Verify template belongs to this company before copying any of its structure into a new quote.
+  const { data: template, error: tErr } = await supabase
+    .from('templates')
+    .select('id, company_id')
+    .eq('id', templateId)
+    .single();
+  if (tErr || !template) throw new Error('Template not found');
+  if (template.company_id !== profile.company_id) throw new Error('Unauthorized');
+
   const { data: quote, error: qErr } = await supabase.from('quotes').insert({
     company_id: profile.company_id, 
     template_id: templateId, 
