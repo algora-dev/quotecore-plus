@@ -53,6 +53,7 @@ export default async function QuoteBuilderV2Page({
 
   const supportingFiles = (supportingFilesData || []).map(f => ({
     id: f.id,
+    storagePath: f.storage_path,
     fileName: f.file_name,
     fileSize: f.file_size,
     url: supabase.storage.from('QUOTE-DOCUMENTS').getPublicUrl(f.storage_path).data.publicUrl,

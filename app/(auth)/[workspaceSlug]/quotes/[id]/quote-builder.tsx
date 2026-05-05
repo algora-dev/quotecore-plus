@@ -18,6 +18,7 @@ import { useCopilot } from '@/app/components/copilot/CopilotProvider';
 type Phase = 'areas' | 'components' | 'extras' | 'review';
 
 interface SupportingFile {
+  storagePath: string;
   id: string;
   fileName: string;
   fileSize: number;

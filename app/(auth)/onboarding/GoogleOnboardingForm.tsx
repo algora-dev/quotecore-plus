@@ -51,25 +51,30 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
 
     startTransition(async () => {
       try {
-        const result = await completeGoogleOnboarding(formData) as any;
-        const slug = result?.slug || companyName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        setSavedSlug(slug);
+        const result = await completeGoogleOnboarding(formData) as { slug?: string } | undefined;
+        if (!result?.slug) {
+          // Server should always return { slug } when skipRedirect=true. If not, we've got nothing
+          // safe to redirect to — don't guess (computed slugs collide / 404). Surface the error.
+          setError('Onboarding completed but no workspace slug was returned. Please refresh and try again.');
+          return;
+        }
+        setSavedSlug(result.slug);
         setStep(3);
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : '';
-        if (errMsg.includes('NEXT_REDIRECT')) {
-          const slug = companyName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-          setSavedSlug(slug);
-          setStep(3);
-        } else {
-          setError(errMsg || 'Something went wrong');
-        }
+        // skipRedirect=true is set above, so a NEXT_REDIRECT here means the server bypassed it —
+        // surface as an error rather than guessing a slug from the company name.
+        setError(errMsg || 'Something went wrong');
       }
     });
   }
 
   function handleCopilotChoice(choice: 'tutorial' | 'on' | 'off') {
-    const slug = savedSlug || companyName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    if (!savedSlug) {
+      setError('Workspace slug missing. Please refresh and complete onboarding again.');
+      return;
+    }
+    const slug = savedSlug;
     if (choice === 'tutorial') {
       router.push(`/${slug}/components?copilot=on`);
     } else if (choice === 'on') {

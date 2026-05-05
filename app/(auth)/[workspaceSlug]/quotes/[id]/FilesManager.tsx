@@ -8,6 +8,7 @@ import { checkStorageQuota, saveFileMetadata } from '../../account/actions';
 import { deleteFile } from './actions-files';
 
 interface SupportingFile {
+  storagePath: string;
   id: string;
   fileName: string;
   fileSize: number;
@@ -106,7 +107,8 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
     });
 
     const newFile: SupportingFile = {
-      id: storagePath,
+      id: storagePath, // transient — router.refresh() below replaces this with the real DB id
+      storagePath,
       fileName,
       fileSize: file.size,
       url: urlData.publicUrl,
@@ -306,7 +308,7 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
                             View
                           </a>
                           <button
-                            onClick={() => handleDelete(file.id, file.fileName)}
+                            onClick={() => handleDelete(file.id, file.storagePath)}
                             disabled={deleting === file.id}
                             className="text-xs text-red-600 hover:text-red-800 disabled:opacity-50"
                           >

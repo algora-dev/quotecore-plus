@@ -5,6 +5,7 @@ import { QuoteBuilder } from '../quote-builder';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow } from '@/app/lib/types';
 
 interface SupportingFile {
+  storagePath: string;
   id: string;
   fileName: string;
   fileSize: number;

@@ -73,6 +73,7 @@ export default async function QuoteBuilderPage({
       .getPublicUrl(file.storage_path);
     return {
       id: file.id,
+      storagePath: file.storage_path,
       fileName: file.file_name,
       fileSize: file.file_size,
       url: urlData.publicUrl,

@@ -44,7 +44,7 @@ export default async function CustomerQuoteEditPage({
     
     if (logoFile) {
       const { data: urlData } = supabase.storage
-        .from('COMPANY-LOGOS')
+        .from('company-logos')
         .getPublicUrl(logoFile.storage_path);
       companyLogoUrl = urlData.publicUrl;
     }

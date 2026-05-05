@@ -151,7 +151,7 @@ export function AccountSettings({ company, profile }: Props) {
           <button
             onClick={saveCompanySettings}
             disabled={isPending}
-            className="px-4 py-2 bg-black text-white font-medium rounded-full hover:bg-slate-800 disabled:opacity-5 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="px-4 py-2 bg-black text-white font-medium rounded-full hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             {isPending ? 'Saving...' : 'Save Company Settings'}
           </button>
@@ -194,7 +194,7 @@ export function AccountSettings({ company, profile }: Props) {
           <button
             onClick={saveUserProfile}
             disabled={isPending}
-            className="px-4 py-2 bg-black text-white font-medium rounded-full hover:bg-slate-800 disabled:opacity-5 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="px-4 py-2 bg-black text-white font-medium rounded-full hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             {isPending ? 'Saving...' : 'Save Profile'}
           </button>
