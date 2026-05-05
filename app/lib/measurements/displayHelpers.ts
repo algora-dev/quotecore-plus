@@ -61,13 +61,13 @@ export function formatAreaRate(ratePerSqm: number, system: MeasurementSystem): s
  * @returns Unit label (e.g., "m²", "Rs", "m", "ft")
  */
 export function getUnitLabel(
-  measurementType: 'area' | 'linear' | 'quantity' | 'fixed',
+  measurementType: 'area' | 'lineal' | 'quantity' | 'fixed',
   system: MeasurementSystem
 ): string {
   if (measurementType === 'area') {
     return system === 'imperial' ? 'Rs' : 'm²';
   }
-  if (measurementType === 'linear') {
+  if (measurementType === 'lineal') {
     return system === 'imperial' ? 'ft' : 'm';
   }
   if (measurementType === 'quantity') {

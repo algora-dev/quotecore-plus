@@ -1,11 +1,16 @@
 // QuoteCore+ v2 Pricing Engine
 // Unified calculation: dual input → pitch → waste → costs
 
-export type ComponentType = 'main' | 'extra';
-export type MeasurementType = 'area' | 'linear' | 'quantity' | 'fixed';
-export type InputMode = 'final' | 'calculated';
-export type WasteType = 'percent' | 'fixed' | 'none';
-export type PitchType = 'none' | 'rafter' | 'valley_hip';
+// Shared types live in app/lib/types.ts; we re-export them here so the
+// pricing engine has a single source of truth for measurement/waste/pitch enums.
+import type {
+  ComponentType,
+  MeasurementType,
+  InputMode,
+  WasteType,
+  PitchType,
+} from '@/app/lib/types';
+export type { ComponentType, MeasurementType, InputMode, WasteType, PitchType };
 
 export interface RoofArea {
   id: string; label: string; inputMode: InputMode;

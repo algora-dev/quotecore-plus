@@ -110,7 +110,7 @@ export function QuoteBuilder({
     id: c.id,
     name: c.name,
     componentType: c.component_type as 'main' | 'extra',
-    measurementType: c.measurement_type as 'area' | 'linear' | 'quantity' | 'fixed',
+    measurementType: c.measurement_type as 'area' | 'lineal' | 'quantity' | 'fixed',
     inputMode: c.input_mode as 'final' | 'calculated',
     finalValue: c.final_value ?? undefined,
     calcRawValue: c.calc_raw_value ?? undefined,
@@ -297,7 +297,7 @@ export function QuoteBuilder({
     if (measurementType === 'area') {
       return formatArea(qty, quote.measurement_system);
     }
-    if (measurementType === 'linear') {
+    if (measurementType === 'lineal') {
       return formatLinear(qty, quote.measurement_system);
     }
     return `${qty.toFixed(1)} ${getUnitLabel(measurementType as any, quote.measurement_system)}`;

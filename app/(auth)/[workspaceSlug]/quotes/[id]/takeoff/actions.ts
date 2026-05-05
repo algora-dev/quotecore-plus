@@ -148,7 +148,7 @@ export async function saveTakeoffMeasurements(
         component_library_id: componentId,
         name: libComp.name,
         component_type: 'main',
-        measurement_type: 'linear',
+        measurement_type: 'lineal',
         input_mode: 'calculated',
         material_rate: libComp.default_material_rate || 0,
         labour_rate: libComp.default_labour_rate || 0,

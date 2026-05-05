@@ -98,7 +98,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
       const flashing = flashingId ? flashings.find(f => f.id === flashingId) : undefined;
       
       // Derive unit from measurement_type
-      const unit = comp.measurement_type === 'linear' ? 'm' : comp.measurement_type === 'area' ? 'm²' : 'pcs';
+      const unit = comp.measurement_type === 'lineal' ? 'm' : comp.measurement_type === 'area' ? 'm²' : 'pcs';
       
       // Check if we have individual measurements for this component
       const hasMeasurements = comp.measurements && comp.measurements.length > 0;

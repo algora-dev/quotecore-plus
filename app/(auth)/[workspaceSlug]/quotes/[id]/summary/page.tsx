@@ -146,7 +146,7 @@ export default async function QuoteSummaryPage({
   
   const engineComps = componentsWithOverrides.map(c => ({
     id: c.id, name: c.name, componentType: c.component_type as 'main' | 'extra',
-    measurementType: c.measurement_type as 'area' | 'linear' | 'quantity' | 'fixed', inputMode: c.input_mode as 'final' | 'calculated',
+    measurementType: c.measurement_type as 'area' | 'lineal' | 'quantity' | 'fixed', inputMode: c.input_mode as 'final' | 'calculated',
     finalValue: c.final_value ?? undefined, calcRawValue: c.calc_raw_value ?? undefined,
     calcPitchDegrees: c.calc_pitch_degrees ?? undefined, calcPitchFactor: c.calc_pitch_factor ?? undefined,
     wasteType: c.waste_type as 'percent' | 'fixed' | 'none', wastePercent: c.waste_percent, wasteFixed: c.waste_fixed,

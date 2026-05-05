@@ -296,7 +296,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       setPointMode(false);
       
       // Activate appropriate tool
-      if (measurementType === 'linear') {
+      if (measurementType === 'lineal') {
         setLineMode(true);
       } else if (measurementType === 'area') {
         setAreaMode(true);
