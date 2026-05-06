@@ -91,18 +91,30 @@ export async function middleware(request: NextRequest) {
   //   - nextLevel:    where the session needs to be once factors are considered
   // If they don't match, the user has a verified factor that hasn't been used
   // for this session yet — block routing until they pass the /2fa challenge.
+  //
+  // We also honour the user-controlled mfa_required flag on public.users so
+  // someone who has a saved authenticator factor but has temporarily switched
+  // 2FA off in settings doesn't get challenged. The DB read is one indexed PK
+  // lookup; cheap and runs after we've already paid for getUser().
   if (!isAal1Allowed(pathname)) {
     const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (
-      aal.data &&
-      aal.data.nextLevel === 'aal2' &&
-      aal.data.currentLevel !== 'aal2'
-    ) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/2fa';
-      // Preserve where they were trying to go so we can bounce them back.
-      url.searchParams.set('redirect', pathname + (request.nextUrl.search || ''));
-      return NextResponse.redirect(url);
+    const factorPending =
+      aal.data?.nextLevel === 'aal2' && aal.data.currentLevel !== 'aal2';
+
+    if (factorPending) {
+      const { data: profile } = await supabase
+        .from('users')
+        .select('mfa_required')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile?.mfa_required) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/2fa';
+        // Preserve where they were trying to go so we can bounce them back.
+        url.searchParams.set('redirect', pathname + (request.nextUrl.search || ''));
+        return NextResponse.redirect(url);
+      }
     }
   }
 

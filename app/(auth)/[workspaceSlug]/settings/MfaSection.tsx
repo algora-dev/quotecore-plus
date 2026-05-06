@@ -3,7 +3,12 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/app/lib/supabase/client';
-import { unenrollMfaFactor, type MfaFactorSummary } from './mfa-actions';
+import {
+  unenrollMfaFactor,
+  markMfaRequiredAfterEnroll,
+  setMfaRequired,
+  type MfaFactorSummary,
+} from './mfa-actions';
 import { generateRecoveryCodes, type RecoveryCodeStatus } from './recovery-actions';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 
@@ -12,6 +17,8 @@ interface Props {
   initialFactors: MfaFactorSummary[];
   /** Whether the current session is fully verified (AAL2). Surfaces a nudge if MFA is enrolled but not active. */
   currentAal: 'aal1' | 'aal2' | null;
+  /** Stored mfa_required flag from public.users. Drives the on/off slider. */
+  initialMfaRequired: boolean;
 }
 
 interface EnrollState {
@@ -22,7 +29,7 @@ interface EnrollState {
   challengeId?: string;
 }
 
-export function MfaSection({ initialFactors, currentAal }: Props) {
+export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: Props) {
   const router = useRouter();
   const supabase = createClient();
 
@@ -40,6 +47,11 @@ export function MfaSection({ initialFactors, currentAal }: Props) {
   // Unenroll modal state
   const [pendingUnenroll, setPendingUnenroll] = useState<MfaFactorSummary | null>(null);
   const [unenrollDeleting, setUnenrollDeleting] = useState(false);
+
+  // Enabled-flag slider state (independent of factor existence so the toggle
+  // reflects intent immediately).
+  const [mfaRequired, setMfaRequiredState] = useState(initialMfaRequired);
+  const [togglingMfa, setTogglingMfa] = useState(false);
 
   const hasVerified = verifiedFactors.length > 0;
 
@@ -95,11 +107,42 @@ export function MfaSection({ initialFactors, currentAal }: Props) {
       return;
     }
 
-    // Done — clear local enrollment state and refresh the server-loaded list.
+    // Verification succeeded. Flip the persistent mfa_required flag on so the
+    // middleware will challenge subsequent logins, then clear local state.
+    try {
+      await markMfaRequiredAfterEnroll();
+      setMfaRequiredState(true);
+    } catch (err) {
+      // Non-fatal: user still has a verified factor, the slider is just a
+      // preference. Surface to the console so we notice if Supabase RLS bites us.
+      console.error('[MFA] Failed to mark mfa_required after enroll', err);
+    }
+
     setEnroll(null);
     setCode('');
     setFriendlyName('');
     router.refresh();
+  }
+
+  async function handleToggleMfa(next: boolean) {
+    if (next && !hasVerified) {
+      // Can't enable without a factor; nudge the user to enrol instead.
+      alert('Add an authenticator factor first before turning 2FA back on.');
+      return;
+    }
+    setTogglingMfa(true);
+    const previous = mfaRequired;
+    // Optimistic update so the toggle feels responsive; rolled back on error.
+    setMfaRequiredState(next);
+    try {
+      await setMfaRequired(next);
+      router.refresh();
+    } catch (err) {
+      setMfaRequiredState(previous);
+      alert(err instanceof Error ? err.message : 'Could not update 2FA preference');
+    } finally {
+      setTogglingMfa(false);
+    }
   }
 
   /** Cancel an in-flight enrollment (also unenrolls the unverified factor server-side). */
@@ -134,16 +177,48 @@ export function MfaSection({ initialFactors, currentAal }: Props) {
   }
 
   return (
-    <div className="flex items-start justify-between p-4 bg-slate-50 rounded-xl">
+    <div className="flex items-start justify-between p-4 bg-slate-50 rounded-xl gap-4">
       <div className="flex-1">
-        <p className="text-sm font-medium text-slate-900">Two-Factor Authentication (2FA)</p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm font-medium text-slate-900">Two-Factor Authentication (2FA)</p>
+          {hasVerified && (
+            <button
+              type="button"
+              role="switch"
+              aria-checked={mfaRequired}
+              disabled={togglingMfa}
+              onClick={() => handleToggleMfa(!mfaRequired)}
+              title={
+                mfaRequired
+                  ? '2FA is required at login. Click to disable.'
+                  : '2FA is currently disabled. Click to require it at login.'
+              }
+              className={`relative w-10 h-5 rounded-full transition-colors disabled:opacity-50 ${
+                mfaRequired ? 'bg-orange-500' : 'bg-slate-300'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                  mfaRequired ? 'translate-x-5' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+          )}
+        </div>
         <p className="text-xs text-slate-500 mt-0.5">
           Use an authenticator app (Google Authenticator, 1Password, Authy, etc.) to add a
           second factor to your login. Optional &mdash; recommended for any account holding
           customer data.
         </p>
 
-        {hasVerified && currentAal === 'aal1' && (
+        {hasVerified && !mfaRequired && (
+          <p className="mt-2 text-xs px-2 py-1.5 rounded bg-amber-50 border border-amber-200 text-amber-800">
+            2FA is currently <strong>disabled</strong>. Your authenticator factor is still
+            saved — flip the switch back on whenever you want to require it at login again.
+          </p>
+        )}
+
+        {hasVerified && mfaRequired && currentAal === 'aal1' && (
           <p className="mt-2 text-xs px-2 py-1.5 rounded bg-amber-50 border border-amber-200 text-amber-800">
             2FA is enrolled but this session is not yet verified at the second-factor level.
             Log out and log back in to activate full protection.

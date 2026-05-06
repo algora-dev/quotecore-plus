@@ -96,10 +96,12 @@ export async function generateRecoveryCodes(): Promise<string[]> {
  * Validate a recovery code against the stored hashes for the *current* user
  * (must be at least AAL1, i.e. signed in but not yet 2FA-verified).
  *
- * On success: marks the code used and returns true. The caller is responsible
- * for nuking the user's existing TOTP factor and routing them to a fresh
- * enrollment flow -- a recovery code is single-use and forces the user to
- * re-bind a new authenticator before they regain AAL2.
+ * On success the entire batch of recovery codes is wiped, not just the one
+ * that was used. This prevents the previously-reported bug where a user could
+ * recover with code A, set up a fresh authenticator, then later recover again
+ * with code B from the *same* batch — effectively making one batch good for
+ * multiple takeovers. A user who wants more recovery codes after using one
+ * generates a fresh batch from settings; that's an explicit step.
  */
 export async function consumeRecoveryCode(rawCode: string): Promise<boolean> {
   const user = await requireUser();
@@ -117,11 +119,13 @@ export async function consumeRecoveryCode(rawCode: string): Promise<boolean> {
   if (!data) return false;
   if (data.used_at !== null) return false; // already burned
 
-  const { error: updErr } = await admin
+  // Wipe every recovery code for this user. Anything that was unused in the
+  // current batch is now invalidated.
+  const { error: delErr } = await admin
     .from('user_recovery_codes')
-    .update({ used_at: new Date().toISOString() })
-    .eq('id', data.id);
-  if (updErr) throw new Error(updErr.message);
+    .delete()
+    .eq('user_id', user.id);
+  if (delErr) throw new Error(delErr.message);
 
   return true;
 }
