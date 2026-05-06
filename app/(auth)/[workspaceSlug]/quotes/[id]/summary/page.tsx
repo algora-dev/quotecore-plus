@@ -11,7 +11,7 @@ import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 import { SendQuoteButton } from './SendQuoteButton';
 import { SummaryTabs } from './SummaryTabs';
-import { SummaryFileRow } from './SummaryFileRow';
+import { SummaryFilesPanel } from './SummaryFilesPanel';
 import { loadQuoteTaxes } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
 
@@ -346,26 +346,19 @@ export default async function QuoteSummaryPage({
           <div className="flex justify-between text-xl font-bold border-t border-slate-300 pt-4"><span className="text-slate-900">Grand Total</span><span className="text-slate-900 text-right">{formatCurrency(adjustedGrandTotal, effectiveCurrency)}</span></div>
         </div>
 
-        {/* Files & Documents */}
-        {allFiles.length > 0 && (
-          <div className="rounded-xl border border-slate-200 bg-white p-4 data-exclude-pdf">
-            <h3 className="font-semibold text-slate-900 mb-3">Files & Documents</h3>
-            <div className="space-y-2">
-              {allFiles.map(file => (
-                <SummaryFileRow
-                  key={file.id}
-                  quoteId={id}
-                  id={file.id}
-                  fileName={file.file_name}
-                  fileType={file.file_type as string}
-                  fileSize={file.file_size}
-                  storagePath={file.storage_path}
-                  url={file.url}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Files & Documents (always visible so users can add more supporting files from here) */}
+        <SummaryFilesPanel
+          quoteId={id}
+          companyId={quote.company_id}
+          files={allFiles.map((f) => ({
+            id: f.id,
+            file_name: f.file_name,
+            file_type: f.file_type as string,
+            file_size: f.file_size,
+            storage_path: f.storage_path,
+            url: f.url,
+          }))}
+        />
       </div>
       </div>
       </SummaryTabs>

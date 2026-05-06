@@ -816,10 +816,10 @@ export function QuoteBuilder({
       title="Remove roof area"
       description={
         areaPendingDelete
-          ? `Remove "${areaPendingDelete.label}" and any of its components? This cannot be undone.`
+          ? `Remove "${areaPendingDelete.label}"? Every component attached to this area (and their entries, customer-quote lines, and labor-sheet lines) will also be deleted. This cannot be undone.`
           : ''
       }
-      confirmLabel="Remove"
+      confirmLabel="Remove area + components"
       pendingLabel="Removing..."
       pending={areaDeleting}
       onCancel={() => { if (!areaDeleting) setAreaPendingDelete(null); }}
