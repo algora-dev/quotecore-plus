@@ -1,6 +1,6 @@
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadCustomerQuoteLines, loadCustomerQuoteTemplates } from '../../actions';
-import { loadQuoteTaxes } from '@/app/lib/taxes/actions';
+import { loadQuoteTaxes, loadCompanyTaxes } from '@/app/lib/taxes/actions';
 import { CustomerQuoteEditor } from './CustomerQuoteEditor';
 import { getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
@@ -12,13 +12,14 @@ export default async function CustomerQuoteEditPage({
   const { workspaceSlug, id } = await params;
   await requireCompanyContext();
 
-  const [quote, roofAreas, components, savedLines, templates, quoteTaxes] = await Promise.all([
+  const [quote, roofAreas, components, savedLines, templates, quoteTaxes, companyTaxes] = await Promise.all([
     loadQuote(id),
     loadQuoteRoofAreas(id),
     loadQuoteComponents(id),
     loadCustomerQuoteLines(id),
     loadCustomerQuoteTemplates(),
     loadQuoteTaxes(id),
+    loadCompanyTaxes(),
   ]);
   
   const supabase = await createSupabaseServerClient();
@@ -63,6 +64,11 @@ export default async function CustomerQuoteEditPage({
       currency={effectiveCurrency}
       defaultLogoUrl={companyLogoUrl}
       initialTaxes={quoteTaxes}
+      companyTaxes={companyTaxes.map((t) => ({
+        id: t.id,
+        name: t.name,
+        rate_percent: Number(t.rate_percent),
+      }))}
       taxAudience="quote"
     />
   );

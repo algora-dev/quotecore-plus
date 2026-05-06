@@ -11,7 +11,11 @@ export function CopilotToggle() {
     <button
       onClick={toggle}
       className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition"
-      title="Copilot helps you learn each step"
+      title={
+        state.enabled
+          ? 'Copilot is on. Click to pause, or switch it off completely in account settings.'
+          : 'Copilot is paused. Click to resume, or switch it off completely in account settings.'
+      }
     >
       <div className={`relative w-8 h-4 rounded-full transition-colors ${state.enabled ? 'bg-orange-500' : 'bg-slate-300'}`}>
         <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform ${state.enabled ? 'translate-x-4' : 'translate-x-0.5'}`} />

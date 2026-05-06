@@ -30,6 +30,8 @@ interface Props {
   includeMargins?: boolean; // Whether to include margins in line amounts (default: true)
   customSaveAction?: (quoteId: string, lines: any[]) => Promise<void>; // Custom save function (for labor sheet)
   initialTaxes: QuoteTaxRow[];
+  /** Active company-level tax library, shown as a quick “add from defaults” picker. */
+  companyTaxes: { id: string; name: string; rate_percent: number }[];
   /** Which include flag drives totals here. Customer-edit uses 'quote'; labor sheet passes 'labor'. */
   taxAudience?: 'quote' | 'labor';
 }
@@ -48,7 +50,7 @@ interface QuoteLine {
   sortOrder: number;
 }
 
-export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true, customSaveAction, initialTaxes, taxAudience = 'quote' }: Props) {
+export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true, customSaveAction, initialTaxes, companyTaxes, taxAudience = 'quote' }: Props) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [taxes, setTaxes] = useState<EditableTax[]>(
@@ -610,6 +612,72 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 showAudienceToggles
                 disabled={saving}
               />
+
+              {companyTaxes.length > 0 && (
+                <div className="pt-3 border-t border-slate-200">
+                  <p className="text-xs font-semibold text-slate-700 mb-2">
+                    Apply default taxes
+                  </p>
+                  <p className="text-xs text-slate-500 mb-2">
+                    Tick to apply, untick to remove. Edits below stay scoped to this quote
+                    and never change your company defaults.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {companyTaxes.map((ct) => {
+                      const applied = taxes.some(
+                        (t) => t.source_tax_id === ct.id || (!t.source_tax_id && t.dbId === ct.id)
+                      );
+                      return (
+                        <button
+                          type="button"
+                          key={ct.id}
+                          onClick={() => {
+                            setIsDirty(true);
+                            if (applied) {
+                              setTaxes(taxes.filter(
+                                (t) => t.source_tax_id !== ct.id && t.dbId !== ct.id
+                              ));
+                            } else {
+                              setTaxes([
+                                ...taxes,
+                                {
+                                  id: `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                                  source_tax_id: ct.id,
+                                  name: ct.name,
+                                  rate_percent: ct.rate_percent,
+                                  include_in_quote: true,
+                                  include_in_labor: true,
+                                },
+                              ]);
+                            }
+                          }}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-full border transition ${
+                            applied
+                              ? 'bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100'
+                              : 'bg-white border-slate-300 text-slate-700 hover:border-orange-300 hover:text-orange-600 hover:bg-orange-50'
+                          }`}
+                          title={applied ? 'Click to remove from this quote' : 'Click to apply to this quote'}
+                        >
+                          <span className="inline-flex items-center gap-1.5">
+                            <span
+                              className={`inline-block w-3 h-3 rounded-sm border ${
+                                applied ? 'bg-orange-500 border-orange-500' : 'border-slate-400 bg-white'
+                              }`}
+                            >
+                              {applied && (
+                                <svg viewBox="0 0 16 16" className="w-full h-full text-white" fill="none" stroke="currentColor" strokeWidth={3}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8.5l3 3 7-7" />
+                                </svg>
+                              )}
+                            </span>
+                            {ct.name} ({ct.rate_percent}%)
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="pt-4 border-t space-y-2">

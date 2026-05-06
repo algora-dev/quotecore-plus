@@ -71,21 +71,30 @@ export function SummaryFileRow({ quoteId, id, fileName, fileType, fileSize, stor
           {sizeText}
         </p>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <a
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-orange-600 hover:text-orange-800 font-medium"
+          title="View file"
+          className="icon-btn border-slate-300 bg-white"
         >
-          View →
+          {/* Eye / view icon */}
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
         </a>
         <a
           href={url}
           download={fileName}
-          className="px-3 py-1.5 text-xs font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          title="Download file"
+          className="icon-btn border-slate-300 bg-white"
         >
-          Download
+          {/* Download arrow icon */}
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
+          </svg>
         </a>
         {deletable && (
           <button

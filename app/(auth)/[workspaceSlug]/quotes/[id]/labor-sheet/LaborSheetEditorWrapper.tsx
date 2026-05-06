@@ -16,6 +16,7 @@ interface Props {
   currency: string;
   defaultLogoUrl: string | null;
   initialTaxes: QuoteTaxRow[];
+  companyTaxes: { id: string; name: string; rate_percent: number }[];
 }
 
 export function LaborSheetEditorWrapper({ 
@@ -28,6 +29,7 @@ export function LaborSheetEditorWrapper({
   currency, 
   defaultLogoUrl,
   initialTaxes,
+  companyTaxes,
 }: Props) {
   // Transform components to show only labor costs (set material to 0)
   const laborOnlyComponents = useMemo(() => {
@@ -54,6 +56,7 @@ export function LaborSheetEditorWrapper({
           includeMargins={false}
           customSaveAction={saveLaborSheetLines}
           initialTaxes={initialTaxes}
+          companyTaxes={companyTaxes}
           taxAudience="labor"
         />
   );

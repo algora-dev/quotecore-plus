@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadCustomerQuoteTemplates } from '../../actions';
 import { loadLaborSheetLines } from './actions';
-import { loadQuoteTaxes } from '@/app/lib/taxes/actions';
+import { loadQuoteTaxes, loadCompanyTaxes } from '@/app/lib/taxes/actions';
 
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { LaborSheetEditorWrapper } from './LaborSheetEditorWrapper';
@@ -20,6 +20,7 @@ export default async function LaborSheetPage({
   const savedLines = await loadLaborSheetLines(id);
   const templates = await loadCustomerQuoteTemplates();
   const initialTaxes = await loadQuoteTaxes(id);
+  const companyTaxes = await loadCompanyTaxes();
   
   const supabase = await createSupabaseServerClient();
   
@@ -51,6 +52,11 @@ export default async function LaborSheetPage({
       currency={currency}
       defaultLogoUrl={defaultLogoUrl}
       initialTaxes={initialTaxes}
+      companyTaxes={companyTaxes.map((t) => ({
+        id: t.id,
+        name: t.name,
+        rate_percent: Number(t.rate_percent),
+      }))}
     />
   );
 }
