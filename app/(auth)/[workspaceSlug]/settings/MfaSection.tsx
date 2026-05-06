@@ -4,7 +4,9 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/app/lib/supabase/client';
 import { unenrollMfaFactor, type MfaFactorSummary } from './mfa-actions';
+import { generateRecoveryCodes, type RecoveryCodeStatus } from './recovery-actions';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
+
 
 interface Props {
   initialFactors: MfaFactorSummary[];
@@ -323,6 +325,208 @@ export function MfaSection({ initialFactors, currentAal }: Props) {
           if (!unenrollDeleting) setPendingUnenroll(null);
         }}
         onConfirm={confirmUnenroll}
+      />
+
+    </div>
+  );
+}
+
+/**
+ * Recovery codes panel.
+ *
+ * Rendered as a separate card section so we can mount it under the same Security
+ * heading as the rest of MFA without bloating the main MFA component.
+ *
+ * Codes are optional and not auto-generated, matching Shaun's preference ("make
+ * it optional for them to download the codes rather than force them"). The UI
+ * surfaces a soft suggestion when MFA is enrolled but no codes exist yet.
+ */
+export function RecoveryCodesPanel({
+  initialStatus,
+  hasVerifiedMfa,
+}: {
+  initialStatus: RecoveryCodeStatus;
+  hasVerifiedMfa: boolean;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [status, setStatus] = useState<RecoveryCodeStatus>(initialStatus);
+  const [codes, setCodes] = useState<string[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [confirmRegen, setConfirmRegen] = useState(false);
+
+  const hasCodes = status.total > 0;
+  const lowRemaining = status.remaining <= 2 && status.remaining > 0;
+  const allUsed = status.total > 0 && status.remaining === 0;
+
+  async function generate() {
+    setError(null);
+    try {
+      const newCodes = await generateRecoveryCodes();
+      setCodes(newCodes);
+      setStatus({ total: newCodes.length, used: 0, remaining: newCodes.length });
+      setConfirmRegen(false);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not generate recovery codes');
+    }
+  }
+
+  function download() {
+    if (!codes) return;
+    const lines = [
+      'QuoteCore+ Recovery Codes',
+      '------------------------------',
+      'Each code can be used ONCE if you lose access to your authenticator.',
+      'Using a code will reset your 2FA — you will be asked to re-enroll a fresh authenticator.',
+      '',
+      ...codes,
+      '',
+      `Generated: ${new Date().toLocaleString()}`,
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `quotecore-recovery-codes-${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  }
+
+  async function copyAll() {
+    if (!codes) return;
+    try {
+      await navigator.clipboard.writeText(codes.join('\n'));
+    } catch {
+      // ignore
+    }
+  }
+
+  return (
+    <div className="flex items-start justify-between p-4 bg-slate-50 rounded-xl">
+      <div className="flex-1">
+        <p className="text-sm font-medium text-slate-900">Recovery codes</p>
+        <p className="text-xs text-slate-500 mt-0.5">
+          One-time codes you can use to sign in if you lose access to your authenticator.
+          Each code works once. Using one resets your 2FA so you&apos;ll re-enroll a fresh
+          authenticator app.
+        </p>
+
+        {hasVerifiedMfa && !hasCodes && (
+          <p className="mt-2 text-xs px-2 py-1.5 rounded bg-amber-50 border border-amber-200 text-amber-800">
+            You have 2FA enabled but no recovery codes. We strongly recommend generating a
+            batch and storing them somewhere safe (password manager, printed copy in a drawer,
+            etc.). They&apos;re your only backup if your authenticator is lost.
+          </p>
+        )}
+
+        {hasCodes && !codes && (
+          <p className="mt-2 text-xs text-slate-600">
+            <span className="font-medium">Status:</span> {status.remaining} of {status.total} codes
+            remaining {status.used > 0 && <span className="text-slate-500">({status.used} used)</span>}
+          </p>
+        )}
+
+        {hasCodes && lowRemaining && !codes && (
+          <p className="mt-2 text-xs px-2 py-1.5 rounded bg-amber-50 border border-amber-200 text-amber-800">
+            Only {status.remaining} recovery code{status.remaining === 1 ? '' : 's'} left.
+            Generate a fresh batch soon to keep a healthy buffer.
+          </p>
+        )}
+
+        {allUsed && !codes && (
+          <p className="mt-2 text-xs px-2 py-1.5 rounded bg-red-50 border border-red-200 text-red-800">
+            All recovery codes have been used. Generate a new batch.
+          </p>
+        )}
+
+        {/* Display the freshly-generated codes once. */}
+        {codes && (
+          <div className="mt-3 p-3 border border-slate-200 rounded-lg bg-white">
+            <p className="text-xs font-medium text-slate-900 mb-1">
+              Save these codes somewhere safe.
+            </p>
+            <p className="text-[11px] text-amber-700 mb-2">
+              We won&apos;t show them again. If you close this dialog without copying or
+              downloading them, you&apos;ll have to regenerate the batch.
+            </p>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              {codes.map((c) => (
+                <code
+                  key={c}
+                  className="text-xs font-mono text-center bg-slate-50 border border-slate-200 rounded py-1.5"
+                >
+                  {c}
+                </code>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={download}
+                className="px-3 py-1.5 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.4)]"
+              >
+                Download as .txt
+              </button>
+              <button
+                type="button"
+                onClick={copyAll}
+                className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+              >
+                Copy all
+              </button>
+              <button
+                type="button"
+                onClick={() => setCodes(null)}
+                className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50 ml-auto"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        )}
+
+        {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {!hasCodes && (
+            <button
+              type="button"
+              onClick={() =>
+                startTransition(async () => {
+                  await generate();
+                })
+              }
+              disabled={pending}
+              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
+            >
+              {pending ? 'Generating...' : 'Generate recovery codes'}
+            </button>
+          )}
+          {hasCodes && (
+            <button
+              type="button"
+              onClick={() => setConfirmRegen(true)}
+              disabled={pending}
+              className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Regenerate
+            </button>
+          )}
+        </div>
+      </div>
+
+      <ConfirmModal
+        open={confirmRegen}
+        title="Regenerate recovery codes"
+        description="Your existing recovery codes will be invalidated immediately. Anyone holding the old codes will no longer be able to use them. You'll get a fresh batch to download."
+        confirmLabel="Regenerate"
+        pendingLabel="Generating..."
+        pending={pending}
+        destructive={false}
+        onCancel={() => setConfirmRegen(false)}
+        onConfirm={() => startTransition(async () => { await generate(); })}
       />
     </div>
   );

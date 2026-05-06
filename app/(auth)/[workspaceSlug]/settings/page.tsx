@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { BackButton } from '@/app/components/BackButton';
 import { PasswordSection } from './PasswordSection';
 import { CopilotSettings } from './CopilotSettings';
-import { MfaSection } from './MfaSection';
+import { MfaSection, RecoveryCodesPanel } from './MfaSection';
 import { listMfaFactors } from './mfa-actions';
+import { getRecoveryCodeStatus } from './recovery-actions';
 import { loadCompanyTaxes } from '@/app/lib/taxes/actions';
 
 export default async function CompanySettingsPage({
@@ -60,6 +61,7 @@ export default async function CompanySettingsPage({
 
   const taxes = await loadCompanyTaxes();
   const mfa = await listMfaFactors();
+  const recoveryStatus = await getRecoveryCodeStatus();
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
@@ -124,6 +126,10 @@ export default async function CompanySettingsPage({
           <div className="space-y-4">
             <PasswordSection authProvider={authProvider} userEmail={user?.email || authUser?.email || ''} />
             <MfaSection initialFactors={mfa.factors} currentAal={mfa.currentAal} />
+            <RecoveryCodesPanel
+              initialStatus={recoveryStatus}
+              hasVerifiedMfa={mfa.factors.some((f) => f.status === 'verified')}
+            />
           </div>
         </div>
 

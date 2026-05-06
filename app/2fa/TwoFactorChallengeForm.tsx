@@ -82,13 +82,21 @@ export function TwoFactorChallengeForm({ factorId, redirectTo }: Props) {
         {pending ? 'Verifying...' : 'Verify'}
       </button>
 
-      <button
-        type="button"
-        onClick={handleSignOut}
-        className="w-full text-sm text-slate-500 hover:text-slate-700 underline"
-      >
-        Sign in as a different user
-      </button>
+      <div className="flex items-center justify-between text-xs pt-2">
+        <a
+          href={`/2fa/recover${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`}
+          className="text-orange-600 hover:text-orange-700 underline"
+        >
+          Use a recovery code instead
+        </a>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="text-slate-500 hover:text-slate-700 underline"
+        >
+          Sign in as a different user
+        </button>
+      </div>
     </form>
   );
 }
