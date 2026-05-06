@@ -11,6 +11,17 @@ const PUBLIC_PATHS = [
   '/onboarding',   // New user onboarding
 ];
 
+// Paths reachable when the user has an AAL1 session but still needs to clear 2FA.
+// /2fa is the challenge page itself; logout/signout shouldn't be blocked behind 2FA.
+const AAL1_ALLOWED_PATHS = [
+  '/2fa',
+  '/auth/signout',
+];
+
+function isAal1Allowed(pathname: string): boolean {
+  return AAL1_ALLOWED_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(p => pathname.startsWith(p));
 }
@@ -74,7 +85,29 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // User exists — allow through (page-level checks handle company context)
+  // 2FA gate. getAuthenticatorAssuranceLevel() is a local JWT decode, not a
+  // network round-trip, so it's safe to run on every request.
+  //   - currentLevel: where the session is now (aal1 or aal2)
+  //   - nextLevel:    where the session needs to be once factors are considered
+  // If they don't match, the user has a verified factor that hasn't been used
+  // for this session yet — block routing until they pass the /2fa challenge.
+  if (!isAal1Allowed(pathname)) {
+    const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (
+      aal.data &&
+      aal.data.nextLevel === 'aal2' &&
+      aal.data.currentLevel !== 'aal2'
+    ) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/2fa';
+      // Preserve where they were trying to go so we can bounce them back.
+      url.searchParams.set('redirect', pathname + (request.nextUrl.search || ''));
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // User exists (and 2FA, if applicable, has been satisfied). Page-level checks
+  // continue to handle company context.
   return response;
 }
 

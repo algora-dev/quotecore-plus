@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { BackButton } from '@/app/components/BackButton';
 import { PasswordSection } from './PasswordSection';
 import { CopilotSettings } from './CopilotSettings';
+import { MfaSection } from './MfaSection';
+import { listMfaFactors } from './mfa-actions';
 import { loadCompanyTaxes } from '@/app/lib/taxes/actions';
 
 export default async function CompanySettingsPage({
@@ -57,6 +59,7 @@ export default async function CompanySettingsPage({
   }
 
   const taxes = await loadCompanyTaxes();
+  const mfa = await listMfaFactors();
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
@@ -120,15 +123,7 @@ export default async function CompanySettingsPage({
           </div>
           <div className="space-y-4">
             <PasswordSection authProvider={authProvider} userEmail={user?.email || authUser?.email || ''} />
-            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-              <div>
-                <p className="text-sm font-medium text-slate-900">Two-Factor Authentication (2FA)</p>
-                <p className="text-xs text-slate-500 mt-0.5">Add an extra layer of security with authenticator app</p>
-              </div>
-              <span className="px-3 py-1 text-xs font-medium rounded-full bg-slate-200 text-slate-600">
-                Coming Soon
-              </span>
-            </div>
+            <MfaSection initialFactors={mfa.factors} currentAal={mfa.currentAal} />
           </div>
         </div>
 
