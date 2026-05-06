@@ -2,6 +2,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { deleteFile } from '../actions-files';
+import { ConfirmModal } from '@/app/components/ConfirmModal';
 
 interface Props {
   id: string;
@@ -18,12 +19,17 @@ export function SummaryFileRow({ id, fileName, fileType, fileSize, storagePath, 
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [removed, setRemoved] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  function handleDelete() {
-    if (!confirm(`Delete "${fileName}"? This cannot be undone.`)) return;
+  function requestDelete() {
+    setConfirmOpen(true);
+  }
+
+  function handleConfirmedDelete() {
     startTransition(async () => {
       try {
         await deleteFile(id, storagePath);
+        setConfirmOpen(false);
         setRemoved(true);
         router.refresh();
       } catch (err) {
@@ -76,7 +82,7 @@ export function SummaryFileRow({ id, fileName, fileType, fileSize, storagePath, 
         {deletable && (
           <button
             type="button"
-            onClick={handleDelete}
+            onClick={requestDelete}
             disabled={pending}
             title="Delete file"
             className="p-1.5 rounded-full border border-slate-300 bg-white hover:bg-red-50 hover:border-red-300 text-slate-600 hover:text-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
@@ -94,6 +100,16 @@ export function SummaryFileRow({ id, fileName, fileType, fileSize, storagePath, 
           </button>
         )}
       </div>
+      <ConfirmModal
+        open={confirmOpen}
+        title="Delete file"
+        description={`Delete “${fileName}”? This cannot be undone.`}
+        confirmLabel="Delete"
+        pendingLabel="Deleting..."
+        pending={pending}
+        onCancel={() => { if (!pending) setConfirmOpen(false); }}
+        onConfirm={handleConfirmedDelete}
+      />
     </div>
   );
 }

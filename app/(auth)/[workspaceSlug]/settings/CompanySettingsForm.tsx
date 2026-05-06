@@ -2,6 +2,7 @@
 import { useState, useTransition } from 'react';
 import { updateCompanySettings } from './actions';
 import { CURRENCY_GROUPS } from '@/app/lib/currency/currencies';
+import { LogoUploader } from '../account/LogoUploader';
 
 interface Props {
   companyId: string;
@@ -13,6 +14,7 @@ interface Props {
   currentMeasurement: 'metric' | 'imperial';
   currentMaterialMargin: number;
   currentLaborMargin: number;
+  currentLogoUrl: string | null;
 }
 
 export function CompanySettingsForm({
@@ -25,6 +27,7 @@ export function CompanySettingsForm({
   currentMeasurement,
   currentMaterialMargin,
   currentLaborMargin,
+  currentLogoUrl,
 }: Props) {
   const [companyName, setCompanyName] = useState(currentCompanyName);
   const [userName, setUserName] = useState(currentUserName);
@@ -130,6 +133,9 @@ export function CompanySettingsForm({
               />
             </label>
           </div>
+
+          {/* Company Logo */}
+          <LogoUploader companyId={companyId} currentLogoUrl={currentLogoUrl} />
         </div>
       </div>
 

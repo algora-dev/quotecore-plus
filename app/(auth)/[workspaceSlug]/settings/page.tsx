@@ -37,6 +37,24 @@ export default async function CompanySettingsPage({
   const { data: { user: authUser } } = await supabase.auth.getUser();
   const authProvider = authUser?.app_metadata?.provider || 'email';
 
+  // Load most recent company logo (if any) for the inline LogoUploader
+  const { data: logoFile } = await supabase
+    .from('quote_files')
+    .select('storage_path')
+    .eq('company_id', company.id)
+    .eq('file_type', 'logo')
+    .order('uploaded_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let logoUrl: string | null = null;
+  if (logoFile) {
+    const { data: urlData } = supabase.storage
+      .from('company-logos')
+      .getPublicUrl(logoFile.storage_path);
+    logoUrl = urlData.publicUrl;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -79,6 +97,7 @@ export default async function CompanySettingsPage({
             currentMeasurement={company.default_measurement_system}
             currentMaterialMargin={company.default_material_margin_percent || 0}
             currentLaborMargin={company.default_labor_margin_percent || 0}
+            currentLogoUrl={logoUrl}
           />
         </div>
 

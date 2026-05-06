@@ -6,6 +6,7 @@ import { createClient } from '@/app/lib/supabase/client';
 import { FileUploader } from '@/app/components/FileUploader';
 import { checkStorageQuota, saveFileMetadata } from '../../account/actions';
 import { deleteFile } from './actions-files';
+import { ConfirmModal } from '@/app/components/ConfirmModal';
 
 interface SupportingFile {
   storagePath: string;
@@ -33,6 +34,7 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
   const [planName, setPlanName] = useState(initialPlanName);
   const [supportingFiles, setSupportingFiles] = useState<SupportingFile[]>(initialFiles);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<SupportingFile | null>(null);
   const router = useRouter();
 
   async function handlePlanUpload(file: File) {
@@ -119,15 +121,18 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
     router.refresh();
   }
 
-  async function handleDelete(fileId: string, storagePath: string) {
-    if (!confirm('Delete this file? This cannot be undone.')) {
-      return;
-    }
+  function requestDelete(file: SupportingFile) {
+    setPendingDelete(file);
+  }
 
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    const { id: fileId, storagePath } = pendingDelete;
     setDeleting(fileId);
     try {
       await deleteFile(fileId, storagePath);
       setSupportingFiles(prev => prev.filter(f => f.id !== fileId));
+      setPendingDelete(null);
       router.refresh();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete file');
@@ -145,6 +150,7 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
   const totalFiles = (planUrl ? 1 : 0) + supportingFiles.length;
 
   return (
+    <>
     <div className="border-l-4 border-slate-300 bg-slate-50 pl-3 py-2 rounded">
       <button
         onClick={() => setExpanded(!expanded)}
@@ -308,7 +314,7 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
                             View
                           </a>
                           <button
-                            onClick={() => handleDelete(file.id, file.storagePath)}
+                            onClick={() => requestDelete(file)}
                             disabled={deleting === file.id}
                             className="text-xs text-red-600 hover:text-red-800 disabled:opacity-50"
                           >
@@ -327,5 +333,20 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
         </div>
       )}
     </div>
+    <ConfirmModal
+      open={pendingDelete !== null}
+      title="Delete file"
+      description={
+        pendingDelete
+          ? `Delete “${pendingDelete.fileName}”? This cannot be undone.`
+          : ''
+      }
+      confirmLabel="Delete"
+      pendingLabel="Deleting..."
+      pending={deleting !== null}
+      onCancel={() => { if (deleting === null) setPendingDelete(null); }}
+      onConfirm={confirmDelete}
+    />
+    </>
   );
 }

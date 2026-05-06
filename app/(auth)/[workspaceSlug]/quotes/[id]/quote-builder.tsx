@@ -14,6 +14,7 @@ import { CurrencySelector } from './CurrencySelector';
 import { FilesManager } from './FilesManager';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 import { useCopilot } from '@/app/components/copilot/CopilotProvider';
+import { ConfirmModal } from '@/app/components/ConfirmModal';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
 
@@ -97,6 +98,8 @@ export function QuoteBuilder({
   const [components, setComponents] = useState(initialComponents);
   const [entries, setEntries] = useState(initialEntries);
   const [newAreaLabel, setNewAreaLabel] = useState('');
+  const [areaPendingDelete, setAreaPendingDelete] = useState<{ id: string; label: string } | null>(null);
+  const [areaDeleting, setAreaDeleting] = useState(false);
 
   const mainComps = components.filter(c => c.component_type === 'main');
   const extraComps = components.filter(c => c.component_type === 'extra');
@@ -186,11 +189,24 @@ export function QuoteBuilder({
     setRoofAreas(prev => prev.map(a => a.id === areaId ? { ...a, computed_sqm: totalSqm } : a));
   }
 
-  async function handleRemoveArea(id: string) {
-    if (!confirm('Remove this roof area and its components?')) return;
-    await removeQuoteRoofArea(id);
-    setRoofAreas(prev => prev.filter(a => a.id !== id));
-    setComponents(prev => prev.filter(c => c.quote_roof_area_id !== id));
+  function handleRemoveArea(id: string) {
+    const area = roofAreas.find(a => a.id === id);
+    setAreaPendingDelete({ id, label: area?.label || 'this roof area' });
+  }
+
+  async function confirmRemoveArea() {
+    if (!areaPendingDelete) return;
+    setAreaDeleting(true);
+    try {
+      await removeQuoteRoofArea(areaPendingDelete.id);
+      setRoofAreas(prev => prev.filter(a => a.id !== areaPendingDelete.id));
+      setComponents(prev => prev.filter(c => c.quote_roof_area_id !== areaPendingDelete.id));
+      setAreaPendingDelete(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete roof area');
+    } finally {
+      setAreaDeleting(false);
+    }
   }
 
   async function handleAddFromLibrary(libId: string, areaId: string | null, type: 'main' | 'extra') {
@@ -354,6 +370,7 @@ export function QuoteBuilder({
   };
 
   return (
+    <>
     <section className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
@@ -794,6 +811,21 @@ export function QuoteBuilder({
         </div>
       )}
     </section>
+    <ConfirmModal
+      open={areaPendingDelete !== null}
+      title="Remove roof area"
+      description={
+        areaPendingDelete
+          ? `Remove "${areaPendingDelete.label}" and any of its components? This cannot be undone.`
+          : ''
+      }
+      confirmLabel="Remove"
+      pendingLabel="Removing..."
+      pending={areaDeleting}
+      onCancel={() => { if (!areaDeleting) setAreaPendingDelete(null); }}
+      onConfirm={confirmRemoveArea}
+    />
+    </>
   );
 }
 
@@ -814,7 +846,7 @@ function RoofAreaCard({
   onToggleLock: (id: string, locked: boolean) => Promise<void>;
   onAddEntry: (areaId: string, widthM: number, lengthM: number) => Promise<void>;
   onRemoveEntry: (entryId: string, areaId: string) => Promise<void>;
-  onRemove: (id: string) => Promise<void>;
+  onRemove: (id: string) => void;
 }) {
   const [adding, setAdding] = useState(false);
   const [widthInput, setWidthInput] = useState('');
