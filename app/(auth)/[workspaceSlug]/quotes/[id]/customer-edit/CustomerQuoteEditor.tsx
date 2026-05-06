@@ -10,6 +10,10 @@ import { EditFooterModal } from './EditFooterModal';
 import { saveCustomerQuoteLines, saveCustomerQuoteBranding } from '../../actions';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import { createCustomerQuoteTemplate } from '../../../customer-quote-templates/create/build/actions';
+import { saveQuoteTaxes, seedQuoteTaxesFromCompanyDefaults } from '@/app/lib/taxes/actions';
+import { computeTaxLines } from '@/app/lib/taxes/types';
+import type { QuoteTaxRow } from '@/app/lib/taxes/types';
+import { TaxEditor, type EditableTax } from '@/app/components/TaxEditor';
 
 interface Props {
   quote: QuoteRow;
@@ -25,6 +29,9 @@ interface Props {
   previewTitle?: string; // Custom preview title (default: "Customer Quote Preview")
   includeMargins?: boolean; // Whether to include margins in line amounts (default: true)
   customSaveAction?: (quoteId: string, lines: any[]) => Promise<void>; // Custom save function (for labor sheet)
+  initialTaxes: QuoteTaxRow[];
+  /** Which include flag drives totals here. Customer-edit uses 'quote'; labor sheet passes 'labor'. */
+  taxAudience?: 'quote' | 'labor';
 }
 
 interface QuoteLine {
@@ -41,9 +48,20 @@ interface QuoteLine {
   sortOrder: number;
 }
 
-export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true, customSaveAction }: Props) {
+export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true, customSaveAction, initialTaxes, taxAudience = 'quote' }: Props) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
+  const [taxes, setTaxes] = useState<EditableTax[]>(
+    initialTaxes.map((t) => ({
+      id: t.id,
+      dbId: t.id,
+      source_tax_id: t.source_tax_id,
+      name: t.name,
+      rate_percent: Number(t.rate_percent),
+      include_in_quote: t.include_in_quote,
+      include_in_labor: t.include_in_labor,
+    }))
+  );
   const [isDirty, setIsDirty] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
@@ -266,6 +284,14 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       // Use custom save action if provided (for labor sheet), otherwise use default
       const saveLineAction = customSaveAction || saveCustomerQuoteLines;
 
+      // Validate taxes before save so we don't half-write.
+      for (const t of taxes) {
+        if (!t.name.trim()) throw new Error('Each tax must have a name');
+        if (!Number.isFinite(t.rate_percent) || t.rate_percent < 0 || t.rate_percent > 100) {
+          throw new Error(`Invalid rate for "${t.name}": must be between 0 and 100`);
+        }
+      }
+
       await Promise.all([
         saveLineAction(quote.id, lineData),
         saveCustomerQuoteBranding(quote.id, {
@@ -276,6 +302,18 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           companyLogoUrl,
           footerText,
         }),
+        saveQuoteTaxes(
+          quote.id,
+          taxes.map((t, idx) => ({
+            id: t.dbId,
+            source_tax_id: t.source_tax_id ?? null,
+            name: t.name,
+            rate_percent: Number(t.rate_percent),
+            sort_order: idx,
+            include_in_quote: t.include_in_quote ?? true,
+            include_in_labor: t.include_in_labor ?? true,
+          }))
+        ),
       ]);
       setLastSaved(new Date());
       setIsDirty(false);
@@ -285,7 +323,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     } finally {
       setSaving(false);
     }
-  }, [quote.id, lines, companyName, companyAddress, companyPhone, companyEmail, companyLogoUrl, footerText, customSaveAction]);
+  }, [quote.id, lines, taxes, companyName, companyAddress, companyPhone, companyEmail, companyLogoUrl, footerText, customSaveAction]);
 
   // Auto-save removed per user request
 
@@ -299,8 +337,18 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
 
   const visibleLines = lines.filter(l => l.isVisible);
   const subtotal = lines.filter(l => l.includeInTotal).reduce((sum, l) => sum + l.amount, 0); // Only include items with "Add $" checked
-  const tax = subtotal * (quote.tax_rate / 100);
-  const total = subtotal + tax;
+  const { lines: taxLines, total: taxTotal } = computeTaxLines(
+    taxes.map((t) => ({
+      id: t.id,
+      name: t.name,
+      rate_percent: t.rate_percent,
+      include_in_quote: t.include_in_quote ?? true,
+      include_in_labor: t.include_in_labor ?? true,
+    })),
+    subtotal,
+    taxAudience
+  );
+  const total = subtotal + taxTotal;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -534,6 +582,36 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               + Add Custom Line
             </button>
 
+            {/* Taxes */}
+            <div className="pt-4 border-t space-y-3">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900">Taxes</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Toggle which taxes apply on this quote and edit their rates without
+                    changing your company defaults. Multiple taxes stack on the customer total.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!confirm('Reset taxes on this quote to the current company defaults? Any per-quote edits will be lost.')) return;
+                    await seedQuoteTaxesFromCompanyDefaults(quote.id);
+                    router.refresh();
+                  }}
+                  className="text-xs text-slate-500 hover:text-orange-600 underline whitespace-nowrap"
+                >
+                  Reset to defaults
+                </button>
+              </div>
+              <TaxEditor
+                taxes={taxes}
+                onChange={(next) => { setTaxes(next); setIsDirty(true); }}
+                showAudienceToggles
+                disabled={saving}
+              />
+            </div>
+
             <div className="pt-4 border-t space-y-2">
               <p className="text-xs text-slate-500">
                 {saving ? 'Saving...' : lastSaved ? `Auto-saved ${Math.floor((Date.now() - lastSaved.getTime()) / 1000)}s ago` : 'Not saved yet'}
@@ -593,7 +671,8 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 quote={quote}
                 lines={visibleLines}
                 subtotal={subtotal}
-                tax={tax}
+                taxLines={taxLines}
+                taxTotal={taxTotal}
                 total={total}
                 companyName={companyName}
                 companyAddress={companyAddress}
@@ -640,7 +719,8 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 quote={quote}
                 lines={visibleLines}
                 subtotal={subtotal}
-                tax={tax}
+                taxLines={taxLines}
+                taxTotal={taxTotal}
                 total={total}
                 companyName={companyName}
                 companyAddress={companyAddress}

@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow } from '@/app/lib/types';
+import type { QuoteTaxRow } from '@/app/lib/taxes/types';
+import { computeTaxLines } from '@/app/lib/taxes/types';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -12,9 +14,10 @@ interface Props {
   components: QuoteComponentRow[];
   savedLines: any[];
   workspaceSlug: string;
+  quoteTaxes: QuoteTaxRow[];
 }
 
-export function LaborSheetPreview({ quote, roofAreas, components, savedLines, workspaceSlug }: Props) {
+export function LaborSheetPreview({ quote, roofAreas, components, savedLines, workspaceSlug, quoteTaxes }: Props) {
   const currency = quote.currency || 'NZD';
   const [isGenerating, setIsGenerating] = useState(false);
   
@@ -33,8 +36,8 @@ export function LaborSheetPreview({ quote, roofAreas, components, savedLines, wo
   const subtotal = savedLines.length > 0
     ? savedLines.filter(l => l.include_in_total).reduce((sum, l) => sum + (l.custom_amount || 0), 0)
     : components.reduce((sum, c) => sum + (c.labour_cost || 0), 0);
-  const tax = subtotal * (quote.tax_rate / 100);
-  const total = subtotal + tax;
+  const { lines: taxLines, total: taxTotal } = computeTaxLines(quoteTaxes, subtotal, 'labor');
+  const total = subtotal + taxTotal;
   
   const handleDownloadPDF = async () => {
     setIsGenerating(true);
@@ -209,10 +212,18 @@ export function LaborSheetPreview({ quote, roofAreas, components, savedLines, wo
                 <span className="text-black">Subtotal (Labor)</span>
                 <span className="font-medium text-black">{formatCurrency(subtotal, currency)}</span>
               </div>
-              <div className="flex justify-between text-base">
-                <span className="text-black">Tax ({quote.tax_rate}%)</span>
-                <span className="font-medium text-black">{formatCurrency(tax, currency)}</span>
-              </div>
+              {taxLines.map((tl) => (
+                <div key={tl.id} className="flex justify-between text-base">
+                  <span className="text-black">{tl.name} ({tl.rate_percent}%)</span>
+                  <span className="font-medium text-black">{formatCurrency(tl.amount, currency)}</span>
+                </div>
+              ))}
+              {taxLines.length > 1 && (
+                <div className="flex justify-between text-base border-t border-black pt-2">
+                  <span className="text-black">Tax total</span>
+                  <span className="font-medium text-black">{formatCurrency(taxTotal, currency)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-xl font-bold border-t border-black pt-3 mt-3">
                 <span className="text-black">Total</span>
                 <span className="text-black">{formatCurrency(total, currency)}</span>

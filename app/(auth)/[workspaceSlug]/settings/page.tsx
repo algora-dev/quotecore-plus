@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { BackButton } from '@/app/components/BackButton';
 import { PasswordSection } from './PasswordSection';
 import { CopilotSettings } from './CopilotSettings';
+import { loadCompanyTaxes } from '@/app/lib/taxes/actions';
 
 export default async function CompanySettingsPage({
   params,
@@ -55,6 +56,8 @@ export default async function CompanySettingsPage({
     logoUrl = urlData.publicUrl;
   }
 
+  const taxes = await loadCompanyTaxes();
+
   return (
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -98,6 +101,12 @@ export default async function CompanySettingsPage({
             currentMaterialMargin={company.default_material_margin_percent || 0}
             currentLaborMargin={company.default_labor_margin_percent || 0}
             currentLogoUrl={logoUrl}
+            currentTaxes={taxes.map((t) => ({
+              id: t.id,
+              dbId: t.id,
+              name: t.name,
+              rate_percent: Number(t.rate_percent),
+            }))}
           />
         </div>
 

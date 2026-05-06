@@ -1,4 +1,5 @@
 ﻿import type { QuoteRow } from '@/app/lib/types';
+import type { TaxLine } from '@/app/lib/taxes/types';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import { LineEditForm } from './LineEditForm';
 
@@ -14,7 +15,10 @@ interface Props {
   quote: QuoteRow;
   lines: QuoteLine[];
   subtotal: number;
-  tax: number;
+  /** Per-tax breakdown to render between subtotal and grand total. */
+  taxLines: TaxLine[];
+  /** Sum of taxLines amounts. Passed in so callers can use the same number elsewhere. */
+  taxTotal: number;
   total: number;
   companyName: string;
   companyAddress: string;
@@ -32,11 +36,12 @@ interface Props {
   currency: string;
 }
 
-export function QuotePreview({ 
-  quote, 
-  lines, 
-  subtotal, 
-  tax, 
+export function QuotePreview({
+  quote,
+  lines,
+  subtotal,
+  taxLines,
+  taxTotal,
   total,
   companyName,
   companyAddress,
@@ -51,11 +56,11 @@ export function QuotePreview({
   onEditHeader,
   onEditFooter,
   showEditButtons = true,
-  currency, 
+  currency,
 }: Props) {
-  // Helper to remove units from text (everything after "—")
+  // Helper to remove units from text (everything after "-")
   function removeUnits(text: string): string {
-    const dashIndex = text.indexOf('—');
+    const dashIndex = text.indexOf('-');
     if (dashIndex === -1) return text;
     return text.substring(0, dashIndex).trim();
   }
@@ -119,7 +124,7 @@ export function QuotePreview({
         {lines.length === 0 ? (
           <p className="text-sm text-slate-400 italic">No items selected</p>
         ) : (
-          lines.map(line => 
+          lines.map(line =>
             editingLineId === line.id && onSaveLine && onCancelEdit ? (
               <div key={line.id} className="py-2">
                 <LineEditForm
@@ -142,7 +147,7 @@ export function QuotePreview({
                     </p>
                   )}
                   {showEditButtons && onEditLine && (
-                    <button 
+                    <button
                       onClick={() => onEditLine(line.id)}
                       className="p-1 text-slate-400 hover:text-slate-600"
                     >
@@ -164,10 +169,24 @@ export function QuotePreview({
           <span className="text-slate-600">Subtotal</span>
           <span className="font-medium text-slate-900">{formatCurrency(subtotal, currency)}</span>
         </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-slate-600">Tax ({quote.tax_rate}%)</span>
-          <span className="font-medium text-slate-900">{formatCurrency(tax, currency)}</span>
-        </div>
+        {taxLines.length > 0 && (
+          <>
+            {taxLines.map((tl) => (
+              <div key={tl.id} className="flex justify-between text-sm">
+                <span className="text-slate-600">
+                  {tl.name} ({tl.rate_percent}%)
+                </span>
+                <span className="font-medium text-slate-900">{formatCurrency(tl.amount, currency)}</span>
+              </div>
+            ))}
+            {taxLines.length > 1 && (
+              <div className="flex justify-between text-sm border-t pt-2">
+                <span className="text-slate-600">Tax total</span>
+                <span className="font-medium text-slate-900">{formatCurrency(taxTotal, currency)}</span>
+              </div>
+            )}
+          </>
+        )}
         <div className="flex justify-between text-lg font-bold border-t pt-2">
           <span className="text-slate-900">Total</span>
           <span className="text-slate-900">{formatCurrency(total, currency)}</span>

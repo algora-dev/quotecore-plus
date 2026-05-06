@@ -7,6 +7,38 @@ import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 import type { InputMode, WasteType, PitchType } from '@/app/lib/types';
 import { verifyQuoteOwnership, verifyRoofAreaOwnership, verifyComponentOwnership } from '@/app/lib/auth/ownership';
 
+/**
+ * Snapshot the company's current tax library onto a freshly-created quote.
+ * Best-effort: any failure here is logged and swallowed so the quote-creation
+ * flow itself never breaks because of taxes.
+ */
+async function seedQuoteTaxesOnCreate(quoteId: string, companyId: string): Promise<void> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data: defaults } = await supabase
+      .from('company_taxes')
+      .select('id, name, rate_percent, sort_order')
+      .eq('company_id', companyId)
+      .is('archived_at', null)
+      .order('sort_order', { ascending: true });
+
+    if (!defaults || defaults.length === 0) return;
+
+    const rows = defaults.map((d) => ({
+      quote_id: quoteId,
+      source_tax_id: d.id,
+      name: d.name,
+      rate_percent: d.rate_percent,
+      sort_order: d.sort_order,
+      include_in_quote: true,
+      include_in_labor: true,
+    }));
+    await supabase.from('quote_taxes').insert(rows);
+  } catch (err) {
+    console.error('[seedQuoteTaxesOnCreate] failed:', err);
+  }
+}
+
 export async function createQuoteFromTemplate(templateId: string, customerName: string, jobReference?: string | null, entryMode?: 'manual' | 'digital') {
   const { profile, company } = await loadCompanyContext();
   const supabase = await createSupabaseServerClient();
@@ -60,6 +92,7 @@ export async function createQuoteFromTemplate(templateId: string, customerName: 
     });
     await supabase.from('quote_components').insert(quoteComponents);
   }
+  await seedQuoteTaxesOnCreate(quote.id, profile.company_id);
   redirect(`/${company.slug}/quotes/${quote.id}`);
 }
 
@@ -142,6 +175,7 @@ export async function createBlankQuote(customerName: string, jobReference?: stri
   }).select().single();
   console.log('createBlankQuote - created quote measurement_system:', quote?.measurement_system);
   if (error || !quote) throw new Error(error?.message || 'Failed to create quote');
+  await seedQuoteTaxesOnCreate(quote.id, profile.company_id);
   redirect(`/${company.slug}/quotes/${quote.id}`);
 }
 
@@ -544,6 +578,29 @@ export async function cloneQuote(id: string, newCustomerName: string) {
       }).select('id').single();
       if (newArea) areaMapping[area.id] = newArea.id;
     }
+  }
+
+  // Copy taxes from the source quote so customizations carry over. Falls back to
+  // the company defaults if the source had none, mirroring create-quote behaviour.
+  const { data: srcTaxes } = await supabase
+    .from('quote_taxes')
+    .select('source_tax_id, name, rate_percent, sort_order, include_in_quote, include_in_labor')
+    .eq('quote_id', id)
+    .order('sort_order', { ascending: true });
+  if (srcTaxes && srcTaxes.length > 0) {
+    await supabase.from('quote_taxes').insert(
+      srcTaxes.map((t) => ({
+        quote_id: newQuote.id,
+        source_tax_id: t.source_tax_id,
+        name: t.name,
+        rate_percent: t.rate_percent,
+        sort_order: t.sort_order,
+        include_in_quote: t.include_in_quote,
+        include_in_labor: t.include_in_labor,
+      }))
+    );
+  } else {
+    await seedQuoteTaxesOnCreate(newQuote.id, profile.company_id);
   }
 
   const { data: comps } = await supabase.from('quote_components').select('*').eq('quote_id', id).order('sort_order');

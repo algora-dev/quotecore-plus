@@ -12,6 +12,8 @@ import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currenc
 import { SendQuoteButton } from './SendQuoteButton';
 import { SummaryTabs } from './SummaryTabs';
 import { SummaryFileRow } from './SummaryFileRow';
+import { loadQuoteTaxes } from '@/app/lib/taxes/actions';
+import { computeTaxLines } from '@/app/lib/taxes/types';
 
 export default async function QuoteSummaryPage({
   params,
@@ -19,11 +21,12 @@ export default async function QuoteSummaryPage({
   params: Promise<{ workspaceSlug: string; id: string }>;
 }) {
   const { workspaceSlug, id } = await params;
-  const [quote, roofAreas, components, entries] = await Promise.all([
+  const [quote, roofAreas, components, entries, quoteTaxes] = await Promise.all([
     loadQuote(id),
     loadQuoteRoofAreas(id),
     loadQuoteComponents(id),
     loadAllEntriesForQuote(id),
+    loadQuoteTaxes(id),
   ]);
   
   const supabase = await createSupabaseServerClient();
@@ -162,7 +165,7 @@ export default async function QuoteSummaryPage({
   
   // Adjust totals to include custom lines
   const adjustedSubtotal = totals.subtotalWithMargins + customLinesTotal;
-  const adjustedTax = adjustedSubtotal * (quote.tax_rate / 100);
+  const { lines: summaryTaxLines, total: adjustedTax } = computeTaxLines(quoteTaxes, adjustedSubtotal, 'quote');
   const adjustedGrandTotal = adjustedSubtotal + adjustedTax;
 
   return (
@@ -328,7 +331,18 @@ export default async function QuoteSummaryPage({
           {(totals.materialMargin > 0 || totals.labourMargin > 0) && <div className="flex justify-between text-base text-slate-500"><span>Margins</span><span className="text-right">+{formatCurrency(totals.materialMargin + totals.labourMargin, effectiveCurrency)}</span></div>}
           {customLinesTotal > 0 && <div className="flex justify-between text-base"><span className="text-slate-900">Custom Items</span><span className="text-slate-900 text-right">{formatCurrency(customLinesTotal, effectiveCurrency)}</span></div>}
           <div className="flex justify-between text-base border-t border-slate-300 pt-4"><span className="text-slate-900">Subtotal</span><span className="text-slate-900 text-right">{formatCurrency(adjustedSubtotal, effectiveCurrency)}</span></div>
-          {adjustedTax > 0 && <div className="flex justify-between text-base"><span className="text-slate-900">Tax ({quote.tax_rate}%)</span><span className="text-slate-900 text-right">{formatCurrency(adjustedTax, effectiveCurrency)}</span></div>}
+          {summaryTaxLines.map((tl) => (
+            <div key={tl.id} className="flex justify-between text-base">
+              <span className="text-slate-900">{tl.name} ({tl.rate_percent}%)</span>
+              <span className="text-slate-900 text-right">{formatCurrency(tl.amount, effectiveCurrency)}</span>
+            </div>
+          ))}
+          {summaryTaxLines.length > 1 && (
+            <div className="flex justify-between text-base border-t border-slate-300 pt-2">
+              <span className="text-slate-900">Tax total</span>
+              <span className="text-slate-900 text-right">{formatCurrency(adjustedTax, effectiveCurrency)}</span>
+            </div>
+          )}
           <div className="flex justify-between text-xl font-bold border-t border-slate-300 pt-4"><span className="text-slate-900">Grand Total</span><span className="text-slate-900 text-right">{formatCurrency(adjustedGrandTotal, effectiveCurrency)}</span></div>
         </div>
 

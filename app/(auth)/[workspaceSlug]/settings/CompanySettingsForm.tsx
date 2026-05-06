@@ -1,8 +1,10 @@
 ﻿'use client';
 import { useState, useTransition } from 'react';
 import { updateCompanySettings } from './actions';
+import { saveCompanyTaxes } from '@/app/lib/taxes/actions';
 import { CURRENCY_GROUPS } from '@/app/lib/currency/currencies';
 import { LogoUploader } from '../account/LogoUploader';
+import { TaxEditor, type EditableTax } from '@/app/components/TaxEditor';
 
 interface Props {
   companyId: string;
@@ -15,6 +17,7 @@ interface Props {
   currentMaterialMargin: number;
   currentLaborMargin: number;
   currentLogoUrl: string | null;
+  currentTaxes: EditableTax[];
 }
 
 export function CompanySettingsForm({
@@ -28,6 +31,7 @@ export function CompanySettingsForm({
   currentMaterialMargin,
   currentLaborMargin,
   currentLogoUrl,
+  currentTaxes,
 }: Props) {
   const [companyName, setCompanyName] = useState(currentCompanyName);
   const [userName, setUserName] = useState(currentUserName);
@@ -36,6 +40,7 @@ export function CompanySettingsForm({
   const [measurement, setMeasurement] = useState(currentMeasurement);
   const [materialMargin, setMaterialMargin] = useState(currentMaterialMargin.toString());
   const [laborMargin, setLaborMargin] = useState(currentLaborMargin.toString());
+  const [taxes, setTaxes] = useState<EditableTax[]>(currentTaxes);
   const [isPending, startTransition] = useTransition();
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -68,6 +73,18 @@ export function CompanySettingsForm({
       return;
     }
 
+    // Validate taxes before kicking off the transition so we never half-save.
+    for (const t of taxes) {
+      if (!t.name.trim()) {
+        setSaveMessage({ type: 'error', text: 'Each tax must have a name' });
+        return;
+      }
+      if (!Number.isFinite(t.rate_percent) || t.rate_percent < 0 || t.rate_percent > 100) {
+        setSaveMessage({ type: 'error', text: `Invalid rate for "${t.name}": must be between 0 and 100` });
+        return;
+      }
+    }
+
     startTransition(async () => {
       try {
         await updateCompanySettings(companyId, userId, {
@@ -79,6 +96,15 @@ export function CompanySettingsForm({
           materialMargin: matMargin,
           laborMargin: labMargin,
         });
+
+        await saveCompanyTaxes(
+          taxes.map((t, idx) => ({
+            id: t.dbId,
+            name: t.name,
+            rate_percent: Number(t.rate_percent),
+            sort_order: idx,
+          }))
+        );
 
         setSaveMessage({ type: 'success', text: '✓ Settings saved successfully!' });
         setTimeout(() => setSaveMessage(null), 3000);
@@ -294,6 +320,17 @@ export function CompanySettingsForm({
             <strong>Note:</strong> Margins are hidden from customers. They only see the final total price including your profit.
           </p>
         </div>
+      </div>
+
+      {/* Default Taxes */}
+      <div className="border-t border-gray-200 pt-8">
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">Default Taxes</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Add as many taxes as you need (e.g. GST, regional levy). Each new quote starts
+          with this list copied across; you can hide or edit individual taxes per quote.
+          When multiple taxes apply they stack on the customer quote and labor sheet.
+        </p>
+        <TaxEditor taxes={taxes} onChange={setTaxes} disabled={isPending} />
       </div>
 
       {/* Save Message */}

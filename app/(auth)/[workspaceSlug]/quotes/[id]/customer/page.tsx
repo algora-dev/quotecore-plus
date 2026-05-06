@@ -1,5 +1,7 @@
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadQuote, loadCustomerQuoteLines } from '../../actions';
+import { loadQuoteTaxes } from '@/app/lib/taxes/actions';
+import { computeTaxLines } from '@/app/lib/taxes/types';
 import Link from 'next/link';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 import { DownloadPDFButton } from './DownloadPDFButton';
@@ -12,9 +14,10 @@ export default async function CustomerQuotePage({
   const { workspaceSlug, id } = await params;
   await requireCompanyContext();
 
-  const [quote, savedLines] = await Promise.all([
+  const [quote, savedLines, quoteTaxes] = await Promise.all([
     loadQuote(id),
     loadCustomerQuoteLines(id),
+    loadQuoteTaxes(id),
   ]);
 
   // Load company default currency
@@ -32,8 +35,8 @@ export default async function CustomerQuotePage({
   
   // Total: ALL lines where "Add $" is checked (regardless of visibility)
   const subtotal = savedLines.filter(l => l.include_in_total).reduce((sum, l) => sum + (l.custom_amount || 0), 0);
-  const tax = subtotal * (quote.tax_rate / 100);
-  const total = subtotal + tax;
+  const { lines: taxLines, total: taxTotal } = computeTaxLines(quoteTaxes, subtotal, 'quote');
+  const total = subtotal + taxTotal;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -156,11 +159,21 @@ export default async function CustomerQuotePage({
                 <span className="text-black">Subtotal</span>
                 <span className="font-medium text-black">{formatCurrency(subtotal, effectiveCurrency)}</span>
               </div>
-              {quote.tax_rate > 0 && (
-                <div className="flex justify-between text-base">
-                  <span className="text-black">Tax ({quote.tax_rate}%)</span>
-                  <span className="font-medium text-black">{formatCurrency(tax, effectiveCurrency)}</span>
-                </div>
+              {taxLines.length > 0 && (
+                <>
+                  {taxLines.map((tl) => (
+                    <div key={tl.id} className="flex justify-between text-base">
+                      <span className="text-black">{tl.name} ({tl.rate_percent}%)</span>
+                      <span className="font-medium text-black">{formatCurrency(tl.amount, effectiveCurrency)}</span>
+                    </div>
+                  ))}
+                  {taxLines.length > 1 && (
+                    <div className="flex justify-between text-base border-t border-black pt-2">
+                      <span className="text-black">Tax total</span>
+                      <span className="font-medium text-black">{formatCurrency(taxTotal, effectiveCurrency)}</span>
+                    </div>
+                  )}
+                </>
               )}
               <div className="flex justify-between text-xl font-bold border-t-2 border-black pt-3">
                 <span className="text-black">Total</span>

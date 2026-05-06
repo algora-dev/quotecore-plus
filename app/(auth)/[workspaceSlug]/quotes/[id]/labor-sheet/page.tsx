@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadCustomerQuoteTemplates } from '../../actions';
 import { loadLaborSheetLines } from './actions';
+import { loadQuoteTaxes } from '@/app/lib/taxes/actions';
 
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { LaborSheetEditorWrapper } from './LaborSheetEditorWrapper';
@@ -18,6 +19,7 @@ export default async function LaborSheetPage({
   // Load saved lines for labor sheet (separate from customer quote lines)
   const savedLines = await loadLaborSheetLines(id);
   const templates = await loadCustomerQuoteTemplates();
+  const initialTaxes = await loadQuoteTaxes(id);
   
   const supabase = await createSupabaseServerClient();
   
@@ -48,6 +50,7 @@ export default async function LaborSheetPage({
       workspaceSlug={workspaceSlug}
       currency={currency}
       defaultLogoUrl={defaultLogoUrl}
+      initialTaxes={initialTaxes}
     />
   );
 }
