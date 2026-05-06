@@ -42,6 +42,10 @@ export default function LoginPage() {
                 try {
                   await loginAction(formData);
                 } catch (err) {
+                  // Next.js signals a server-action redirect by throwing an Error
+                  // whose message is "NEXT_REDIRECT". Re-throw it so the framework
+                  // can complete the navigation instead of rendering it as a UI error.
+                  if (err instanceof Error && err.message === 'NEXT_REDIRECT') throw err;
                   setError(err instanceof Error ? err.message : 'Login failed');
                 }
               });

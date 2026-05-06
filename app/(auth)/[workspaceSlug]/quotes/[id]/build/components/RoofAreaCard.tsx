@@ -166,7 +166,7 @@ export function RoofAreaCard({
                 />
                 <button
                   onClick={handleSubmit}
-                  className="px-2 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.5)]"
                 >
                   Add
                 </button>

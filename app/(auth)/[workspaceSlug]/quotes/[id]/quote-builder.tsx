@@ -991,7 +991,7 @@ function RoofAreaCard({
                   />
                   <button
                     onClick={handleSubmit}
-                    className="px-2 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                    className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.5)]"
                   >
                     Add
                   </button>
@@ -1268,7 +1268,7 @@ function ExpandableComponent({
               <span className="text-xs text-slate-400">{unit}</span>
               <button
                 onClick={handleSubmitEntry}
-                className="px-2 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.5)]"
               >
                 Add
               </button>
@@ -1329,7 +1329,7 @@ function AddFromLibrary({
         }}
         disabled={!sel}
         data-copilot={copilotId ? `${copilotId}-add-btn` : undefined}
-        className="px-2 py-1 text-xs rounded bg-blue-600 text-white disabled:opacity-50"
+        className="px-3 py-1 text-xs rounded-full bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.5)] disabled:hover:bg-orange-500 disabled:hover:shadow-none"
       >
         +
       </button>

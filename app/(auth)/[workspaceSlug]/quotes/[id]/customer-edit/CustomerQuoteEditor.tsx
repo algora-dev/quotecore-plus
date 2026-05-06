@@ -579,7 +579,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
 
             <button 
               onClick={() => setShowAddCustomLine(true)}
-              className="w-full py-2 text-sm text-orange-600 border border-blue-200 rounded-full hover:bg-blue-50"
+              className="w-full py-2 text-sm font-medium text-orange-600 border border-orange-200 rounded-full hover:bg-orange-50 hover:border-orange-300 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]"
             >
               + Add Custom Line
             </button>
