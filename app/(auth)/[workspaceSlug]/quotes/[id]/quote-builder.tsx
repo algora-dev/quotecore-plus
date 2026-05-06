@@ -905,23 +905,39 @@ function RoofAreaCard({
             </div>
           </div>
           <div>
-              <div className="flex items-center gap-2 mb-2" data-copilot="quote-pitch">
-                <label className="text-xs text-slate-500">Pitch (°)</label>
-                <input
-                  type="number"
-                  step="0.5"
-                  defaultValue={area.calc_pitch_degrees ?? ''}
-                  onBlur={e =>
-                    onUpdate(area.id, {
-                      input_mode: 'calculated',
-                      calc_width_m: area.calc_width_m,
-                      calc_length_m: area.calc_length_m,
-                      calc_plan_sqm: area.calc_plan_sqm,
-                      calc_pitch_degrees: Number(e.target.value) || null
-                    })
-                  }
-                  className="w-20 px-2 py-1 text-xs border border-slate-300 rounded"
-                />
+              <div className="mb-2" data-copilot="quote-pitch">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-slate-500">Pitch (°)</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min={0}
+                    max={80}
+                    defaultValue={area.calc_pitch_degrees ?? ''}
+                    onBlur={e => {
+                      const raw = Number(e.target.value);
+                      let clamped: number | null = null;
+                      if (raw > 0) {
+                        clamped = Math.min(raw, 80);
+                        if (clamped !== raw) e.target.value = String(clamped);
+                      }
+                      onUpdate(area.id, {
+                        input_mode: 'calculated',
+                        calc_width_m: area.calc_width_m,
+                        calc_length_m: area.calc_length_m,
+                        calc_plan_sqm: area.calc_plan_sqm,
+                        calc_pitch_degrees: clamped,
+                      });
+                    }}
+                    className="w-20 px-2 py-1 text-xs border border-slate-300 rounded"
+                  />
+                  <span className="text-[11px] text-slate-400">max 80°</span>
+                </div>
+                {(area.calc_pitch_degrees ?? 0) >= 60 && (
+                  <p className="mt-1 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                    Steep pitch ({area.calc_pitch_degrees}°): pitch-calculated quantities (rafter lengths, lineal flashings on slope) get very large near vertical. Double-check the value is right for your roof.
+                  </p>
+                )}
               </div>
               {entries.map((entry, idx) => (
                 <div key={entry.id} className="flex items-center gap-2 text-xs mb-1">
@@ -1182,12 +1198,18 @@ function ExpandableComponent({
                 <input
                   type="number"
                   step="0.5"
+                  min={0}
+                  max={80}
                   defaultValue={comp.custom_pitch_degrees ?? ''}
-                  onBlur={e =>
-                    onUpdateSettings(comp.id, {
-                      custom_pitch_degrees: Number(e.target.value) || null
-                    })
-                  }
+                  onBlur={e => {
+                    const raw = Number(e.target.value);
+                    let clamped: number | null = null;
+                    if (raw > 0) {
+                      clamped = Math.min(raw, 80);
+                      if (clamped !== raw) e.target.value = String(clamped);
+                    }
+                    onUpdateSettings(comp.id, { custom_pitch_degrees: clamped });
+                  }}
                   placeholder="°"
                   className="w-16 px-1 py-0.5 text-xs border border-slate-300 rounded"
                 />

@@ -57,7 +57,7 @@ export default async function WorkspaceLayout({
   const unreadCount = (alerts || []).filter(a => !a.is_read).length;
 
   return (
-    <CopilotProvider userId={profile.id} initialState={copilotState}>
+    <CopilotProvider userId={profile.id} companyId={company.id} initialState={copilotState}>
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white shadow-sm">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-4">

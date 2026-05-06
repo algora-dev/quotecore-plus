@@ -44,10 +44,11 @@ export function useCopilot() {
 interface Props {
   children: ReactNode;
   userId: string;
+  companyId: string;
   initialState: CopilotState | null;
 }
 
-export function CopilotProvider({ children, userId, initialState }: Props) {
+export function CopilotProvider({ children, userId, companyId, initialState }: Props) {
   const pathname = usePathname();
   const [nudgeMessage, setNudgeMessage] = useState<string | null>(null);
   const [transitionPrompt, setTransitionPrompt] = useState<TransitionPrompt | null>(null);
@@ -67,12 +68,14 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // Persist state to database
+  // Persist state to database. We surface errors via console because a silent
+  // failure here means user preferences (e.g. "keep copilot off") get lost
+  // every time they log out, which we explicitly do not want.
   const persist = useCallback(async (newState: CopilotState) => {
     try {
-      await supabase.from('copilot_progress').upsert({
+      const { error } = await supabase.from('copilot_progress').upsert({
         user_id: userId,
-        company_id: userId,
+        company_id: companyId,
         copilot_enabled: newState.enabled,
         copilot_visible: newState.visible,
         guides_completed: newState.guidesCompleted,
@@ -80,10 +83,13 @@ export function CopilotProvider({ children, userId, initialState }: Props) {
         current_step: newState.currentStep,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
-    } catch {
-      // Silently fail
+      if (error) {
+        console.error('[Copilot] Failed to persist state:', error);
+      }
+    } catch (err) {
+      console.error('[Copilot] Persist threw:', err);
     }
-  }, [supabase, userId]);
+  }, [supabase, userId, companyId]);
 
   // Handle onboarding copilot preference from URL query
   useEffect(() => {

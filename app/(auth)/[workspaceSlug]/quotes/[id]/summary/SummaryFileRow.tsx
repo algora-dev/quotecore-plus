@@ -93,7 +93,7 @@ export function SummaryFileRow({ quoteId, id, fileName, fileType, fileSize, stor
             onClick={requestDelete}
             disabled={pending}
             title="Delete file"
-            className="p-1.5 rounded-full border border-slate-300 bg-white hover:bg-red-50 hover:border-red-300 text-slate-600 hover:text-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="icon-btn icon-btn--danger border-slate-300 bg-white"
           >
             {pending ? (
               <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">

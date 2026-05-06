@@ -101,9 +101,9 @@ export function SummaryTabs({
                 href={`/${workspaceSlug}/quotes/${quoteId}/customer-edit`}
                 title="Edit customer quote"
                 data-copilot="edit-customer-icon"
-                className="p-2 rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition"
+                className="icon-btn border-slate-300 bg-white"
               >
-                <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
               </Link>
               <DownloadTabPDF selector="[data-pdf-customer]" filename={`Customer-Quote-${quote.quote_number || 'DRAFT'}-${quote.customer_name.replace(/[^a-z0-9]/gi, '_')}.pdf`} title="Download customer quote PDF" />
             </>
@@ -114,9 +114,9 @@ export function SummaryTabs({
                 href={`/${workspaceSlug}/quotes/${quoteId}/labor-sheet`}
                 title="Edit labor sheet"
                 data-copilot="edit-labor-icon"
-                className="p-2 rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition"
+                className="icon-btn border-slate-300 bg-white"
               >
-                <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
               </Link>
               <DownloadTabPDF selector="[data-pdf-labor]" filename={`Labor-Sheet-${quote.quote_number || 'DRAFT'}-${quote.customer_name.replace(/[^a-z0-9]/gi, '_')}.pdf`} title="Download labor sheet PDF" />
             </>
@@ -399,7 +399,7 @@ function DownloadTabPDF({ selector, filename, title }: { selector: string; filen
   }
 
   return (
-    <button onClick={handleDownload} disabled={generating} title={title} className="p-2 rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition disabled:opacity-50">
+    <button onClick={handleDownload} disabled={generating} title={title} className="icon-btn border-slate-300 bg-white">
       {generating ? (
         <svg className="w-4 h-4 text-slate-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
       ) : (
