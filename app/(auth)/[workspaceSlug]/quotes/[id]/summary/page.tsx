@@ -340,13 +340,13 @@ export default async function QuoteSummaryPage({
               {allFiles.map(file => (
                 <SummaryFileRow
                   key={file.id}
+                  quoteId={id}
                   id={file.id}
                   fileName={file.file_name}
                   fileType={file.file_type as string}
                   fileSize={file.file_size}
                   storagePath={file.storage_path}
                   url={file.url}
-                  deletable={file.file_type !== 'canvas'}
                 />
               ))}
             </div>

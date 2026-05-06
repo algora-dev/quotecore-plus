@@ -1,21 +1,23 @@
 'use client';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { deleteFile } from '../actions-files';
+import { deleteFile, deleteTakeoffCanvas } from '../actions-files';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 
 interface Props {
+  /** Quote id, required when fileType === 'canvas' so we can target the correct column. */
+  quoteId: string;
+  /** Real DB id for quote_files rows; synthetic id like 'canvas-image' / 'canvas-lines' for takeoff snapshots. */
   id: string;
   fileName: string;
   fileType: 'plan' | 'supporting' | 'canvas' | string;
   fileSize: number;
   storagePath: string;
   url: string;
-  /** When true (e.g. canvas snapshots), hide the delete button. */
   deletable?: boolean;
 }
 
-export function SummaryFileRow({ id, fileName, fileType, fileSize, storagePath, url, deletable = true }: Props) {
+export function SummaryFileRow({ quoteId, id, fileName, fileType, fileSize, storagePath, url, deletable = true }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [removed, setRemoved] = useState(false);
@@ -28,7 +30,13 @@ export function SummaryFileRow({ id, fileName, fileType, fileSize, storagePath, 
   function handleConfirmedDelete() {
     startTransition(async () => {
       try {
-        await deleteFile(id, storagePath);
+        if (fileType === 'canvas') {
+          // Synthetic ids: 'canvas-image' → takeoff_canvas_url, 'canvas-lines' → takeoff_lines_url.
+          const kind: 'canvas' | 'lines' = id === 'canvas-lines' ? 'lines' : 'canvas';
+          await deleteTakeoffCanvas(quoteId, kind);
+        } else {
+          await deleteFile(id, storagePath);
+        }
         setConfirmOpen(false);
         setRemoved(true);
         router.refresh();
