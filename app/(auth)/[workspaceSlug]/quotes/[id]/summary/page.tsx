@@ -11,6 +11,7 @@ import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 import { SendQuoteButton } from './SendQuoteButton';
 import { SummaryTabs } from './SummaryTabs';
+import { SummaryFileRow } from './SummaryFileRow';
 
 export default async function QuoteSummaryPage({
   params,
@@ -337,48 +338,16 @@ export default async function QuoteSummaryPage({
             <h3 className="font-semibold text-slate-900 mb-3">Files & Documents</h3>
             <div className="space-y-2">
               {allFiles.map(file => (
-                <div
+                <SummaryFileRow
                   key={file.id}
-                  className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-full"
-                >
-                  <div className="flex-shrink-0">
-                    {file.file_name.toLowerCase().endsWith('.pdf') ? (
-                      <svg className="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
-                      </svg>
-                    ) : (
-                      <img
-                        src={file.url}
-                        alt={file.file_name}
-                        className="w-8 h-8 object-cover rounded border border-slate-300"
-                      />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-700 truncate">{file.file_name}</p>
-                    <p className="text-xs text-slate-500">
-                      {file.file_type === 'plan' ? 'Roof Plan' : file.file_type === 'canvas' ? 'Digital Takeoff' : 'Supporting File'}
-                      {file.file_size > 0 && ` • ${(file.file_size / 1024 / 1024).toFixed(2)} MB`}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={file.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-orange-600 hover:text-orange-800 font-medium"
-                    >
-                      View →
-                    </a>
-                    <a
-                      href={file.url}
-                      download={file.file_name}
-                      className="px-3 py-1.5 text-xs font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-                    >
-                      Download
-                    </a>
-                  </div>
-                </div>
+                  id={file.id}
+                  fileName={file.file_name}
+                  fileType={file.file_type as string}
+                  fileSize={file.file_size}
+                  storagePath={file.storage_path}
+                  url={file.url}
+                  deletable={file.file_type !== 'canvas'}
+                />
               ))}
             </div>
           </div>

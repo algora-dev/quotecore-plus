@@ -2,6 +2,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateCompanySettings, updateUserProfile } from './actions';
+import { LogoUploader } from './LogoUploader';
 
 interface Props {
   company: {
@@ -16,9 +17,10 @@ interface Props {
     full_name: string | null;
     email: string;
   };
+  logoUrl: string | null;
 }
 
-export function AccountSettings({ company, profile }: Props) {
+export function AccountSettings({ company, profile, logoUrl }: Props) {
   // Company fields
   const [companyName, setCompanyName] = useState(company.name || '');
   const [taxRate, setTaxRate] = useState(company.default_tax_rate.toString());
@@ -116,7 +118,11 @@ export function AccountSettings({ company, profile }: Props) {
             </p>
           </div>
 
-          <div>
+          <div className="pt-2 border-t border-slate-100">
+            <LogoUploader companyId={company.id} currentLogoUrl={logoUrl} />
+          </div>
+
+          <div className="pt-2 border-t border-slate-100">
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Default Currency
             </label>

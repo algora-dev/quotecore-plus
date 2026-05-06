@@ -249,12 +249,40 @@ export async function updateQuoteRoofArea(id: string, input: any) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
   await verifyRoofAreaOwnership(supabase, id, profile.company_id);
+
+  // If pitch is being changed, prefer recomputing from existing dimension entries
+  // (each entry has raw width_m/length_m); falls back to calc_plan_sqm when there are no entries.
+  const pitchProvided = input.calc_pitch_degrees !== undefined;
+  const newPitch = Number(input.calc_pitch_degrees ?? 0) || 0;
+  const newPitchFactor = 1 / Math.cos(newPitch * Math.PI / 180);
+
+  let entriesForArea: { id: string; width_m: number; length_m: number }[] = [];
+  if (pitchProvided) {
+    const { data: ents } = await supabase
+      .from('quote_roof_area_entries')
+      .select('id, width_m, length_m')
+      .eq('quote_roof_area_id', id);
+    entriesForArea = (ents ?? []) as any[];
+  }
+
   if (input.input_mode === 'calculated') {
-    let planSqm = input.calc_plan_sqm ?? 0;
-    if (!planSqm && input.calc_width_m && input.calc_length_m) planSqm = input.calc_width_m * input.calc_length_m;
-    const pf = 1 / Math.cos((input.calc_pitch_degrees ?? 0) * Math.PI / 180);
-    input.computed_sqm = planSqm * pf;
+    if (pitchProvided && entriesForArea.length > 0) {
+      // Re-pitch the entries-based total (and persist the new per-entry sqm).
+      let totalSqm = 0;
+      for (const e of entriesForArea) {
+        const sqm = (Number(e.width_m) || 0) * (Number(e.length_m) || 0) * newPitchFactor;
+        totalSqm += sqm;
+        await supabase.from('quote_roof_area_entries').update({ sqm }).eq('id', e.id);
+      }
+      input.computed_sqm = totalSqm;
+    } else {
+      let planSqm = input.calc_plan_sqm ?? 0;
+      if (!planSqm && input.calc_width_m && input.calc_length_m) planSqm = input.calc_width_m * input.calc_length_m;
+      const pf = 1 / Math.cos((input.calc_pitch_degrees ?? 0) * Math.PI / 180);
+      input.computed_sqm = planSqm * pf;
+    }
   } else if (input.input_mode === 'final') input.computed_sqm = input.final_value_sqm ?? 0;
+
   const { data, error } = await supabase.from('quote_roof_areas').update(input).eq('id', id).select().single();
   if (error) throw new Error(error.message);
 
