@@ -4,6 +4,10 @@
 
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import type { MeasurementSystem } from '@/app/lib/types';
+import {
+  convertLinearToMetric,
+  convertAreaFt2ToMetric,
+} from '@/app/lib/measurements/conversions';
 
 export interface QuoteComponentData {
   id: string;
@@ -107,13 +111,42 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
       }
     });
     
-    // Normalize components and attach measurements from BOTH sources
+    // Normalize components and attach measurements from BOTH sources.
+    //
+    // CRITICAL UNIT HANDLING:
+    //   - quote_takeoff_measurements (digital mode) stores raw calibration
+    //     values: feet on imperial takeoffs, metres on metric. The
+    //     measurement_unit column carries the truth ('feet' or 'meters').
+    //   - quote_component_entries (manual mode) stores values that are
+    //     already canonical metric, since the manual builder converts on
+    //     input.
+    //
+    // The order form below assumes `measurement_value` is canonical metric,
+    // so we normalise digital-mode rows here by converting feet -> metres
+    // for linear, and ft² -> m² for area. After this hop every measurement
+    // out of the loader is in metric, regardless of source.
     const normalizedComponents = components?.map((comp: any) => {
       // Try takeoff measurements first (digital mode)
-      let measurements = comp.component_library_id 
+      const rawTakeoffMeasurements = comp.component_library_id
         ? measurementsByLibraryId.get(comp.component_library_id) || []
         : [];
-      
+      let measurements = rawTakeoffMeasurements.map((m: any) => {
+        const isFeet = m.measurement_unit === 'feet';
+        // 'line' / 'area' / 'point' are the only types in this table.
+        // Linear (line) -> divide by 3.28084. Area -> divide by 10.7639.
+        // Points pass through.
+        let metricValue = Number(m.measurement_value);
+        if (isFeet) {
+          if (m.measurement_type === 'line') metricValue = convertLinearToMetric(metricValue);
+          else if (m.measurement_type === 'area') metricValue = convertAreaFt2ToMetric(metricValue);
+        }
+        return {
+          ...m,
+          measurement_value: metricValue,
+          measurement_unit: m.measurement_type === 'line' ? 'm' : m.measurement_type === 'area' ? 'm²' : (m.measurement_unit || 'pcs'),
+        };
+      });
+
       // If no takeoff measurements, use component entries (manual mode)
       if (measurements.length === 0) {
         const entries = entriesByCompId.get(comp.id) || [];
