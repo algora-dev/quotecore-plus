@@ -38,14 +38,15 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
   if (!hasActiveToken && !isAlreadyWithdrawn) return null;
 
   // If already withdrawn, show a dimmed badge instead of an action button so
-  // the user knows the link is dead but doesn't get a no-op action.
+  // the user knows the link is dead but doesn't get a no-op action. Sized to
+  // match the Send Quote pill so it sits cleanly in the action row.
   if (isAlreadyWithdrawn) {
     return (
       <span
         title="The acceptance link has been withdrawn. Use Send Quote to mint a new one."
-        className="inline-flex items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-medium text-purple-700"
+        className="inline-flex items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50 px-5 py-2 text-sm font-semibold text-purple-700"
       >
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
         </svg>
         Withdrawn
@@ -72,9 +73,9 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
         type="button"
         onClick={() => setConfirming(true)}
         title="Withdraw the active acceptance link so it can no longer be used"
-        className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition"
+        className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-900 transition"
       >
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
         </svg>
         Withdraw
