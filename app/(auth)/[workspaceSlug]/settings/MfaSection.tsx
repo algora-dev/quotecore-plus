@@ -182,27 +182,37 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
         <div className="flex items-center gap-3">
           <p className="text-sm font-medium text-slate-900">Two-Factor Authentication (2FA)</p>
           {hasVerified && (
-            <button
-              type="button"
-              role="switch"
-              aria-checked={mfaRequired}
-              disabled={togglingMfa}
-              onClick={() => handleToggleMfa(!mfaRequired)}
-              title={
-                mfaRequired
-                  ? '2FA is required at login. Click to disable.'
-                  : '2FA is currently disabled. Click to require it at login.'
-              }
-              className={`relative w-10 h-5 rounded-full transition-colors disabled:opacity-50 ${
-                mfaRequired ? 'bg-orange-500' : 'bg-slate-300'
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                  mfaRequired ? 'translate-x-5' : 'translate-x-0.5'
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={mfaRequired}
+                disabled={togglingMfa}
+                onClick={() => handleToggleMfa(!mfaRequired)}
+                title={
+                  mfaRequired
+                    ? '2FA is required at login. Click to turn off.'
+                    : '2FA is currently off. Click to turn on.'
+                }
+                // Larger track + thumb, visible border, and a hover ring so the
+                // control reads as an interactive slider at a glance instead of
+                // a static pill.
+                className={`relative w-12 h-6 rounded-full border transition-all disabled:opacity-50 cursor-pointer hover:ring-2 hover:ring-orange-200 hover:ring-offset-1 ${
+                  mfaRequired
+                    ? 'bg-orange-500 border-orange-600'
+                    : 'bg-slate-200 border-slate-300'
                 }`}
-              />
-            </button>
+              >
+                <span
+                  className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md ring-1 ring-black/5 transition-transform ${
+                    mfaRequired ? 'translate-x-[1.625rem]' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+              <span className="text-xs text-slate-400 select-none">
+                {mfaRequired ? 'Turn 2FA off' : 'Turn 2FA on'}
+              </span>
+            </div>
           )}
         </div>
         <p className="text-xs text-slate-500 mt-0.5">
