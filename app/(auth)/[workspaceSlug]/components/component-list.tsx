@@ -12,16 +12,24 @@ import type {
   PitchType,
   FlashingLibraryRow,
 } from '@/app/lib/types';
-import { unitForMeasurement, wasteAmountSuffix } from '@/app/lib/types';
+import { wasteAmountSuffix } from '@/app/lib/types';
+import type { MeasurementSystem } from '@/app/lib/types';
+import { normalizeMeasurementSystem } from '@/app/lib/types';
+import { getUnitLabel } from '@/app/lib/measurements/displayHelpers';
 import { loadFlashingLibrary } from '../flashings/actions';
 
-
-const MEASUREMENT_LABELS: Record<MeasurementType, string> = {
-  area: 'Area (m²)',
-  lineal: 'Linear (m)',
-  quantity: 'Quantity',
-  fixed: 'Fixed',
-};
+/** Build the radio-button labels that decorate measurement type with the company's preferred unit. */
+function buildMeasurementLabels(system: MeasurementSystem): Record<MeasurementType, string> {
+  const norm = normalizeMeasurementSystem(system);
+  const areaUnit = norm === 'metric' ? 'm²' : norm === 'imperial_ft' ? 'ft²' : 'RS';
+  const linealUnit = norm === 'metric' ? 'm' : 'ft';
+  return {
+    area: `Area (${areaUnit})`,
+    lineal: `Linear (${linealUnit})`,
+    quantity: 'Quantity',
+    fixed: 'Fixed',
+  };
+}
 
 const WASTE_LABELS: Record<WasteType, string> = {
   none: 'None',
@@ -35,7 +43,20 @@ const PITCH_LABELS: Record<PitchType, string> = {
   valley_hip: 'Valley/Hip Pitch',
 };
 
-export function ComponentList({ initialComponents, workspaceSlug }: { initialComponents: ComponentLibraryRow[], workspaceSlug: string }) {
+export function ComponentList({
+  initialComponents,
+  workspaceSlug,
+  companyMeasurementSystem = 'metric',
+}: {
+  initialComponents: ComponentLibraryRow[];
+  workspaceSlug: string;
+  /** Company default measurement system; drives unit labels on this page. */
+  companyMeasurementSystem?: MeasurementSystem;
+}) {
+  const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);
+  /** Local helper that picks the right unit suffix for a measurement type given the company's default system. */
+  const unitForMeasurement = (mt: MeasurementType) =>
+    getUnitLabel(mt as 'area' | 'lineal' | 'quantity' | 'fixed', companyMeasurementSystem);
   const [components, setComponents] = useState(initialComponents);
   const [flashings, setFlashings] = useState<FlashingLibraryRow[]>([]);
   const [showForm, setShowForm] = useState(false);

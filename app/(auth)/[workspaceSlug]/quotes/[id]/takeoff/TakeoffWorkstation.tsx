@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
+import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { saveTakeoffMeasurements } from './actions';
 import { uploadCanvasImage } from './uploadCanvasImage';
 
@@ -1151,7 +1152,23 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
             ) : (
               <div className="space-y-2">
                 {roofAreas.map((area) => {
-                  const unit = calibrations[0]?.unit || 'feet';
+                  // The on-canvas value is already in the calibration's units
+                  // (sq ft when calibrated in feet, sq m when calibrated in meters).
+                  // For imperial_rs quotes we still want to surface the value in
+                  // Roofing Squares so the user sees the unit they price in.
+                  const calibUnit = calibrations[0]?.unit || 'feet';
+                  const sys = normalizeMeasurementSystem(quote.measurement_system);
+                  let displayValue = area.area;
+                  let displayUnit: string;
+                  if (calibUnit === 'feet' && sys === 'imperial_rs') {
+                    // sq ft → RS  (1 RS = 100 ft²)
+                    displayValue = area.area / 100;
+                    displayUnit = 'RS';
+                  } else if (calibUnit === 'feet') {
+                    displayUnit = 'ft²';
+                  } else {
+                    displayUnit = 'm²';
+                  }
                   return (
                     <div
                       key={area.id}
@@ -1160,7 +1177,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                       <div className="flex-1">
                         <div className="font-medium text-sm">{area.name}</div>
                         <div className="text-xs text-gray-900">
-                          {area.area.toFixed(2)} sq {unit}
+                          {displayValue.toFixed(2)} {displayUnit}
                         </div>
                       </div>
                       <div className="flex gap-1">

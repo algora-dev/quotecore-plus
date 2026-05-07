@@ -4,6 +4,13 @@ import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadAllEntriesForQu
 import { loadComponentLibrary } from '../../../components/actions';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { unitForMeasurement } from '@/app/lib/types';
+import { formatArea, getUnitLabel } from '@/app/lib/measurements/displayHelpers';
+import {
+  convertLinear,
+  convertArea,
+  convertAreaFt2,
+} from '@/app/lib/measurements/conversions';
+import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { ConvertSystemButton } from './ConvertSystemButton';
 import { CurrencySelector } from './CurrencySelector';
 import { DownloadSummaryPDFButton } from './DownloadSummaryPDFButton';
@@ -295,23 +302,36 @@ export default async function QuoteSummaryPage({
           const areaComps = mainComps.filter(c => c.quote_roof_area_id === area.id);
           return (
             <div key={area.id}>
-              <h3 className="font-semibold text-slate-900 mb-4">{area.label} — {(area.computed_sqm ?? 0).toFixed(1)} m²</h3>
+              <h3 className="font-semibold text-slate-900 mb-4">{area.label} — {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}</h3>
               {areaComps.length > 0 ? (
                 <table className="w-full text-sm">
                   <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-300">
                     <th className="pb-2 font-medium">Component</th><th className="pb-2 text-right font-medium">Entries</th><th className="pb-2 text-right font-medium">Total Qty</th>
                     <th className="pb-2 text-right font-medium">Material</th><th className="pb-2 text-right font-medium">Labour</th><th className="pb-2 text-right font-medium">Total</th>
                   </tr></thead>
-                  <tbody>{areaComps.map(c => (
+                  <tbody>{areaComps.map(c => {
+                    // Convert canonical metric quantity into the quote's display
+                    // system so an Imperial quote shows ft / ft² / RS, not m / m².
+                    const sys = normalizeMeasurementSystem(quote.measurement_system);
+                    const rawQty = c.final_quantity ?? 0;
+                    let displayQty = rawQty;
+                    if (c.measurement_type === 'area') {
+                      if (sys === 'imperial_ft') displayQty = convertAreaFt2(rawQty);
+                      else if (sys === 'imperial_rs') displayQty = Number(convertArea(rawQty));
+                    } else if (c.measurement_type === 'lineal') {
+                      if (sys !== 'metric') displayQty = convertLinear(rawQty);
+                    }
+                    return (
                     <tr key={c.id} className="border-b border-slate-100">
                       <td className="py-3">{c.name}</td>
                       <td className="py-3 text-right">{(entries[c.id] ?? []).length}</td>
-                      <td className="py-3 text-right">{(c.final_quantity ?? 0).toFixed(1)} {unitForMeasurement(c.measurement_type)}</td>
+                      <td className="py-3 text-right">{displayQty.toFixed(1)} {getUnitLabel(c.measurement_type as any, quote.measurement_system)}</td>
                       <td className="py-3 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
                       <td className="py-3 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
                       <td className="py-3 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
                     </tr>
-                  ))}</tbody>
+                  );
+                  })}</tbody>
                 </table>
               ) : <p className="text-xs text-slate-400">No components</p>}
             </div>
@@ -326,16 +346,27 @@ export default async function QuoteSummaryPage({
                 <th className="pb-2 font-medium">Extra</th><th className="pb-2 text-right font-medium">Entries</th><th className="pb-2 text-right font-medium">Total Qty</th>
                 <th className="pb-2 text-right font-medium">Material</th><th className="pb-2 text-right font-medium">Labour</th><th className="pb-2 text-right font-medium">Total</th>
               </tr></thead>
-              <tbody>{extraComps.map(c => (
+              <tbody>{extraComps.map(c => {
+                const sys = normalizeMeasurementSystem(quote.measurement_system);
+                const rawQty = c.final_quantity ?? 0;
+                let displayQty = rawQty;
+                if (c.measurement_type === 'area') {
+                  if (sys === 'imperial_ft') displayQty = convertAreaFt2(rawQty);
+                  else if (sys === 'imperial_rs') displayQty = Number(convertArea(rawQty));
+                } else if (c.measurement_type === 'lineal') {
+                  if (sys !== 'metric') displayQty = convertLinear(rawQty);
+                }
+                return (
                 <tr key={c.id} className="border-b border-slate-100">
                   <td className="py-3">{c.name}</td>
                   <td className="py-3 text-right">{(entries[c.id] ?? []).length}</td>
-                  <td className="py-3 text-right">{(c.final_quantity ?? 0).toFixed(1)}</td>
+                  <td className="py-3 text-right">{displayQty.toFixed(1)} {getUnitLabel(c.measurement_type as any, quote.measurement_system)}</td>
                   <td className="py-3 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
                   <td className="py-3 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
                   <td className="py-3 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
                 </tr>
-              ))}</tbody>
+                );
+              })}</tbody>
             </table>
           </div>
         )}

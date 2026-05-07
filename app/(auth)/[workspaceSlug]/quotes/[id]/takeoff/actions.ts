@@ -3,6 +3,7 @@
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { applyPitchAndWaste, rafterPitchFactor } from '@/app/lib/pricing/engine';
+import { convertLinearToMetric, convertAreaFt2ToMetric } from '@/app/lib/measurements/conversions';
 
 interface TakeoffMeasurement {
   componentId: string | null; // null for informational roof areas
@@ -35,6 +36,24 @@ export async function saveTakeoffMeasurements(
     throw new Error('Quote not found');
   }
 
+  // ---------------------------------------------------------------------
+  // CRITICAL: Imperial calibration -> metric storage conversion.
+  //
+  // Takeoff calibration is captured in the user's chosen unit ('feet' or
+  // 'meters'). Areas come from `pixelArea × scale²` where `scale` is
+  // (real-units / pixel), so feet calibration produces sq-ft areas and
+  // line measurements produce ft. The DB columns are named *_sqm / *_m
+  // and the pricing engine multiplies by `material_rate` (⋅/m or ⋅/m²).
+  // If we store the raw feet value, costs come out ~3× (linear) or
+  // ~10.76× (area) too low.
+  //
+  // Solution: convert here so storage is always canonical metric, just
+  // like the manual quote-builder flow already does.
+  // ---------------------------------------------------------------------
+  const isImperialFeet = unit === 'feet';
+  const toMetricLinear = (v: number) => isImperialFeet ? convertLinearToMetric(v) : v;
+  const toMetricArea = (v: number) => isImperialFeet ? convertAreaFt2ToMetric(v) : v;
+
   // Pre-compute everything in TS (pitch/waste math lives in pricing/engine.ts), then push
   // a single JSONB payload through the save_takeoff_atomic RPC so the delete + all inserts
   // happen inside one transaction. Replaces the previous "delete then insert" pattern that
@@ -45,7 +64,8 @@ export async function saveTakeoffMeasurements(
   const roofAreasPayload = roofAreaMeasurements.map((m, i) => {
     const pitchDegrees = m.pitch || 0;
     const pitchFactor = pitchDegrees > 0 ? rafterPitchFactor(pitchDegrees) : 1;
-    const pitchedArea = m.value * pitchFactor;
+    const valueSqm = toMetricArea(m.value);
+    const pitchedArea = valueSqm * pitchFactor;
     return {
       label: m.name || `Roof Area ${i + 1}`,
       final_value_sqm: pitchedArea,
@@ -79,8 +99,20 @@ export async function saveTakeoffMeasurements(
         const labourRate = libComp.default_labour_rate || 0;
 
         const entries = componentMeasurements.map((m, index) => {
+          // Convert calibration-unit value -> canonical metric BEFORE pitch/waste
+          // math, since material/labour rates are priced per metre or per m².
+          // - 'line' / 'point' (length, count) use linear conversion (or pass-through for points)
+          // - 'area' uses area conversion
+          let metricValue = m.value;
+          if (m.type === 'line') {
+            metricValue = toMetricLinear(m.value);
+          } else if (m.type === 'area') {
+            metricValue = toMetricArea(m.value);
+          }
+          // 'point' is a count (each) and never needs unit conversion.
+
           const result = applyPitchAndWaste(
-            m.value,
+            metricValue,
             true,
             pitchType as any,
             firstRoofAreaPitch,
@@ -89,7 +121,7 @@ export async function saveTakeoffMeasurements(
             wasteFixed
           );
           return {
-            raw_value: m.value,
+            raw_value: metricValue,
             value_after_waste: result.afterWaste,
             sort_order: index,
           };

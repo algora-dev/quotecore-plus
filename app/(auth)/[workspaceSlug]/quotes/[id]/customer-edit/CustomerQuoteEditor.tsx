@@ -9,6 +9,12 @@ import { EditHeaderModal } from './EditHeaderModal';
 import { EditFooterModal } from './EditFooterModal';
 import { saveCustomerQuoteLines, saveCustomerQuoteBranding } from '../../actions';
 import { formatCurrency } from '@/app/lib/currency/currencies';
+import {
+  convertLinear,
+  convertArea,
+  convertAreaFt2,
+} from '@/app/lib/measurements/conversions';
+import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { createCustomerQuoteTemplate } from '../../../customer-quote-templates/create/build/actions';
 import { saveQuoteTaxes, seedQuoteTaxesFromCompanyDefaults } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
@@ -172,10 +178,36 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   }, [savedLines, components]);
 
   function generateDefaultText(component: QuoteComponentRow): string {
-    const qty = component.final_quantity?.toFixed(1) || '0.0';
-    const unit = component.measurement_type === 'area' ? 'm²' : 
-                 component.measurement_type === 'lineal' ? 'm' : 'units';
-    return `${component.name} — ${qty} ${unit}`;
+    // Convert the canonical metric quantity into the quote's display units so
+    // the auto-generated customer line matches what the user sees on screen.
+    const rawQty = Number(component.final_quantity ?? 0);
+    const system = normalizeMeasurementSystem(quote.measurement_system);
+
+    let displayQty = rawQty;
+    let unit: string;
+    if (component.measurement_type === 'area') {
+      if (system === 'imperial_ft') {
+        displayQty = convertAreaFt2(rawQty);
+        unit = 'ft²';
+      } else if (system === 'imperial_rs') {
+        displayQty = Number(convertArea(rawQty));
+        unit = 'RS';
+      } else {
+        unit = 'm²';
+      }
+    } else if (component.measurement_type === 'lineal') {
+      if (system === 'imperial_ft' || system === 'imperial_rs') {
+        displayQty = convertLinear(rawQty);
+        unit = 'ft';
+      } else {
+        unit = 'm';
+      }
+    } else {
+      // quantity / fixed: no conversion, generic label.
+      unit = 'units';
+    }
+
+    return `${component.name} — ${displayQty.toFixed(1)} ${unit}`;
   }
 
   function toggleVisibility(lineId: string) {

@@ -1,10 +1,11 @@
 import { loadComponentLibrary } from './actions';
 import { ComponentList } from './component-list';
+import { loadCompanyContext } from '@/app/lib/data/company-context';
 
 export default async function ComponentsPage(props: {params: Promise<{workspaceSlug: string}>}) {
   const { workspaceSlug } = await props.params;
   let components;
-  
+
   try {
     components = await loadComponentLibrary();
   } catch (error) {
@@ -18,5 +19,17 @@ export default async function ComponentsPage(props: {params: Promise<{workspaceS
     );
   }
 
-  return <ComponentList initialComponents={components} workspaceSlug={workspaceSlug} />;
+  // Component library is per-company — shared across every quote regardless of
+  // measurement system. We render rates in the company default so an Imperial
+  // shop sees ft²/RS labels here, with a note that per-quote display still
+  // follows the quote's own measurement_system.
+  const { company } = await loadCompanyContext();
+
+  return (
+    <ComponentList
+      initialComponents={components}
+      workspaceSlug={workspaceSlug}
+      companyMeasurementSystem={company.default_measurement_system}
+    />
+  );
 }

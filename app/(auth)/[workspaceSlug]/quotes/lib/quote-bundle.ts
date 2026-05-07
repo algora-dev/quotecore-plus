@@ -18,6 +18,42 @@
 import jsPDF from 'jspdf';
 import JSZip from 'jszip';
 import type { QuoteBundleData } from '../actions-bulk';
+import { normalizeMeasurementSystem } from '@/app/lib/types';
+import type { MeasurementSystem } from '@/app/lib/types';
+import {
+  formatArea,
+  getUnitLabel,
+  describeMeasurementSystem,
+} from '@/app/lib/measurements/displayHelpers';
+import {
+  convertLinear,
+  convertArea,
+  convertAreaFt2,
+} from '@/app/lib/measurements/conversions';
+
+/**
+ * Convert the canonical metric quantity stored on a component into the value
+ * that should be printed in the PDF (already rounded to the conversion's
+ * native precision). Quantity types that don't carry a unit (point counts /
+ * fixed) pass through untouched.
+ */
+function displayQuantity(
+  rawQty: number,
+  measurementType: string | null,
+  system: MeasurementSystem | null | undefined
+): number {
+  const sys = normalizeMeasurementSystem(system);
+  if (measurementType === 'area') {
+    if (sys === 'imperial_ft') return convertAreaFt2(rawQty);
+    if (sys === 'imperial_rs') return Number(convertArea(rawQty));
+    return rawQty;
+  }
+  if (measurementType === 'lineal') {
+    return sys === 'metric' ? rawQty : convertLinear(rawQty);
+  }
+  // quantity / fixed: no conversion applies.
+  return rawQty;
+}
 
 // Page geometry (A4 portrait, mm).
 const PAGE_WIDTH = 210;
@@ -137,8 +173,16 @@ function buildSummaryPdf(b: QuoteBundleData): ArrayBuffer {
   if (b.quote.customerEmail) writeKeyValue(cur, 'Customer Email', b.quote.customerEmail);
   if (b.quote.customerPhone) writeKeyValue(cur, 'Customer Phone', b.quote.customerPhone);
   writeKeyValue(cur, 'Currency', b.quote.currency);
-  writeKeyValue(cur, 'Measurement', b.quote.measurementSystem ?? '—');
+  writeKeyValue(
+    cur,
+    'Measurement',
+    b.quote.measurementSystem
+      ? describeMeasurementSystem(b.quote.measurementSystem as MeasurementSystem)
+      : '—'
+  );
   advance(cur);
+
+  const system = (b.quote.measurementSystem ?? 'metric') as MeasurementSystem;
 
   // Roof areas.
   if (b.roofAreas.length > 0) {
@@ -146,15 +190,21 @@ function buildSummaryPdf(b: QuoteBundleData): ArrayBuffer {
     drawDivider(cur);
     for (const area of b.roofAreas) {
       const areaComps = b.components.filter((c) => c.roofAreaLabel === area.label);
-      writeLine(cur, `${area.label} — ${area.computedSqm.toFixed(1)} m²`, { bold: true });
+      writeLine(cur, `${area.label} — ${formatArea(area.computedSqm, system)}`, { bold: true });
       if (areaComps.length === 0) {
         writeLine(cur, '  (no components)', { size: 9 });
       } else {
         for (const c of areaComps) {
           const total = c.materialCost + c.labourCost;
+          // Prefer the measurement-aware unit label; fall back to the
+          // user-typed pricing_unit if the component is non-metric (e.g. "each").
+          const dispQty = displayQuantity(c.finalQuantity, c.measurementType, system);
+          const unit = c.measurementType === 'area' || c.measurementType === 'lineal'
+            ? getUnitLabel(c.measurementType, system)
+            : (c.pricingUnit ?? '');
           writeLine(
             cur,
-            `  ${c.name} — qty ${c.finalQuantity.toFixed(1)} ${c.pricingUnit ?? ''} · mat ${fmtCurrency(c.materialCost, b.quote.currency)} · lab ${fmtCurrency(c.labourCost, b.quote.currency)} · total ${fmtCurrency(total, b.quote.currency)}`,
+            `  ${c.name} — qty ${dispQty.toFixed(1)} ${unit} · mat ${fmtCurrency(c.materialCost, b.quote.currency)} · lab ${fmtCurrency(c.labourCost, b.quote.currency)} · total ${fmtCurrency(total, b.quote.currency)}`,
             { size: 9 }
           );
         }
@@ -170,14 +220,20 @@ function buildSummaryPdf(b: QuoteBundleData): ArrayBuffer {
     drawDivider(cur);
     for (const c of extras) {
       const total = c.materialCost + c.labourCost;
+      const dispQty = displayQuantity(c.finalQuantity, c.measurementType, system);
+      const unit = c.measurementType === 'area' || c.measurementType === 'lineal'
+        ? getUnitLabel(c.measurementType, system)
+        : (c.pricingUnit ?? '');
       writeLine(
         cur,
-        `${c.name} — qty ${c.finalQuantity.toFixed(1)} ${c.pricingUnit ?? ''} · mat ${fmtCurrency(c.materialCost, b.quote.currency)} · lab ${fmtCurrency(c.labourCost, b.quote.currency)} · total ${fmtCurrency(total, b.quote.currency)}`,
+        `${c.name} — qty ${dispQty.toFixed(1)} ${unit} · mat ${fmtCurrency(c.materialCost, b.quote.currency)} · lab ${fmtCurrency(c.labourCost, b.quote.currency)} · total ${fmtCurrency(total, b.quote.currency)}`,
         { size: 9 }
       );
     }
     advance(cur);
   }
+
+
 
   // Totals.
   writeLine(cur, 'Totals', { bold: true, size: 12 });
