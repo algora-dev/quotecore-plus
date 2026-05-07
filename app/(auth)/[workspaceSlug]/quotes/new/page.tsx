@@ -1,5 +1,7 @@
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { QuoteDetailsForm } from './QuoteDetailsForm';
+import { loadCompanyContext } from '@/app/lib/data/company-context';
+import { normalizeMeasurementSystem } from '@/app/lib/types';
 
 export default async function NewQuotePage({
   params,
@@ -18,6 +20,12 @@ export default async function NewQuotePage({
     .eq('is_active', true)
     .order('name');
 
+  // Surface the company's default measurement system so the new-quote form
+  // can pre-select the right radio. Normalised so legacy 'imperial' doesn't
+  // leak into the UI.
+  const { company } = await loadCompanyContext();
+  const defaultMeasurementSystem = normalizeMeasurementSystem(company.default_measurement_system);
+
   return (
     <div>
       <div className="max-w-2xl mx-auto">
@@ -32,6 +40,7 @@ export default async function NewQuotePage({
           workspaceSlug={workspaceSlug}
           templates={templates || []}
           companyId={profile.company_id}
+          defaultMeasurementSystem={defaultMeasurementSystem}
         />
       </div>
     </div>

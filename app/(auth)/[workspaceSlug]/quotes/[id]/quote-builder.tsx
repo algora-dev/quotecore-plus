@@ -7,7 +7,9 @@ import { unitForMeasurement, entryLabel, addMoreLabel } from '@/app/lib/types';
 import { convertArea, convertLinearToMetric, convertAreaToMetric } from '@/app/lib/measurements/conversions';
 import { formatArea, formatLinear, getUnitLabel } from '@/app/lib/measurements/displayHelpers';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow, InputMode } from '@/app/lib/types';
-import { MeasurementSystemToggle } from './MeasurementSystemToggle';
+// MeasurementSystemToggle removed: a quote's measurement system is locked at
+// creation time and cannot be changed afterwards (see
+// QuoteDetailsForm + convertQuoteMeasurementSystem).
 import { QuoteNameEditor } from './QuoteNameEditor';
 import { ConfirmQuoteButton } from './ConfirmQuoteButton';
 import { CurrencySelector } from './CurrencySelector';
@@ -388,11 +390,6 @@ export function QuoteBuilder({
         <div className="flex items-center gap-3">
           {quote.status === 'draft' && (
             <>
-              <MeasurementSystemToggle 
-                quoteId={quote.id} 
-                currentSystem={quote.measurement_system}
-                isDraft={quote.status === 'draft'}
-              />
               <CurrencySelector 
                 quoteId={quote.id}
                 currentCurrency={quote.currency}

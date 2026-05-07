@@ -39,7 +39,14 @@ async function seedQuoteTaxesOnCreate(quoteId: string, companyId: string): Promi
   }
 }
 
-export async function createQuoteFromTemplate(templateId: string, customerName: string, jobReference?: string | null, entryMode?: 'manual' | 'digital') {
+export async function createQuoteFromTemplate(
+  templateId: string,
+  customerName: string,
+  jobReference?: string | null,
+  entryMode?: 'manual' | 'digital',
+  /** Optional override; defaults to the company default. Once persisted this is locked. */
+  measurementSystem?: 'metric' | 'imperial_ft' | 'imperial_rs'
+) {
   const { profile, company } = await loadCompanyContext();
   const supabase = await createSupabaseServerClient();
 
@@ -52,13 +59,20 @@ export async function createQuoteFromTemplate(templateId: string, customerName: 
   if (tErr || !template) throw new Error('Template not found');
   if (template.company_id !== profile.company_id) throw new Error('Unauthorized');
 
+  const safeMeasurementSystem =
+    measurementSystem === 'metric' ||
+    measurementSystem === 'imperial_ft' ||
+    measurementSystem === 'imperial_rs'
+      ? measurementSystem
+      : (company.default_measurement_system === 'imperial' ? 'imperial_rs' : company.default_measurement_system);
+
   const { data: quote, error: qErr } = await supabase.from('quotes').insert({
-    company_id: profile.company_id, 
-    template_id: templateId, 
+    company_id: profile.company_id,
+    template_id: templateId,
     customer_name: customerName,
     job_name: jobReference || null,
-    tax_rate: company.default_tax_rate ?? 0, 
-    measurement_system: company.default_measurement_system,
+    tax_rate: company.default_tax_rate ?? 0,
+    measurement_system: safeMeasurementSystem,
     created_by_user_id: profile.id,
     entry_mode: entryMode || null,
   }).select().single();
@@ -542,32 +556,21 @@ export async function saveConfirmedQuoteAndRedirect(id: string, workspaceSlug: s
   redirect(`/${workspaceSlug}/quotes/${id}/summary`);
 }
 
+/**
+ * Legacy server action that used to let users flip a draft quote's
+ * measurement system back and forth. The product rule is now "the system
+ * picked when the quote is created is permanent" so this action ALWAYS
+ * refuses. Kept around with a clear error so any orphan UI that still
+ * imports it gets a deterministic failure mode rather than silent success.
+ */
 export async function convertQuoteMeasurementSystem(
-  id: string,
-  newSystem: 'metric' | 'imperial_ft' | 'imperial_rs'
+  _id: string,
+  _newSystem: 'metric' | 'imperial_ft' | 'imperial_rs'
 ) {
-  const profile = await requireCompanyContext();
-  const supabase = await createSupabaseServerClient();
-
-  // Reject the legacy 'imperial' enum value defensively — callers should never
-  // be writing it, but we don't want to add it back to fresh rows by accident.
-  if (newSystem !== 'metric' && newSystem !== 'imperial_ft' && newSystem !== 'imperial_rs') {
-    throw new Error('Invalid measurement system');
-  }
-
-  // Verify quote is draft
-  const { data: quote } = await supabase.from('quotes').select('status').eq('id', id).eq('company_id', profile.company_id).single();
-  if (!quote || quote.status !== 'draft') {
-    throw new Error('Only draft quotes can be converted');
-  }
-
-  const { error } = await supabase.from('quotes')
-    .update({ measurement_system: newSystem })
-    .eq('id', id)
-    .eq('company_id', profile.company_id);
-
-  if (error) throw new Error(error.message);
-  revalidatePath(`/quotes/${id}`);
+  await requireCompanyContext();
+  throw new Error(
+    "A quote's measurement system is locked when the quote is created. To use a different system, create a new quote."
+  );
 }
 
 export async function updateQuoteCurrency(id: string, currency: string | null) {

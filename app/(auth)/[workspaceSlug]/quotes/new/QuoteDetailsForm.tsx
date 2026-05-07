@@ -13,13 +13,23 @@ interface Template {
   description: string | null;
 }
 
+type MeasurementChoice = 'metric' | 'imperial_ft' | 'imperial_rs';
+
 interface Props {
   workspaceSlug: string;
   templates: Template[];
   companyId: string;
+  /** Company default measurement system; pre-selects the radio when the form mounts. */
+  defaultMeasurementSystem: MeasurementChoice;
 }
 
-export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props) {
+const MEASUREMENT_OPTIONS: Array<{ value: MeasurementChoice; title: string; subtitle: string }> = [
+  { value: 'metric', title: 'Metric', subtitle: 'meters & m²' },
+  { value: 'imperial_ft', title: 'Imperial — ft²', subtitle: 'feet & square feet' },
+  { value: 'imperial_rs', title: 'Imperial — Roofing Squares', subtitle: 'feet & RS (1 RS = 100 ft²)' },
+];
+
+export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultMeasurementSystem }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [customerName, setCustomerName] = useState('');
@@ -29,6 +39,9 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
   const [planUploaded, setPlanUploaded] = useState(false);
   const [uploadedPlanPath, setUploadedPlanPath] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  // Measurement system for the quote-to-be. Locked once the quote is created.
+  const [measurementSystem, setMeasurementSystem] = useState<MeasurementChoice>(defaultMeasurementSystem);
+  const [pendingSystemSwitch, setPendingSystemSwitch] = useState<MeasurementChoice | null>(null);
 
   // Pre-select template from URL param
   useEffect(() => {
@@ -91,6 +104,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
         jobName: jobName.trim() || null,
         templateId: templateId || null,
         entryMode,
+        measurementSystem,
       });
 
       // If template mode, redirect happens inside createQuoteWithDetails (quoteId will be void)
@@ -162,6 +176,96 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId }: Props)
           className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
         />
       </div>
+
+      {/* Measurement System (locked once the quote is created) */}
+      <div data-copilot="quote-measurement">
+        <label className="block text-sm font-medium text-slate-700 mb-2">
+          Measurement System <span className="text-red-500">*</span>
+        </label>
+        <p className="text-xs text-slate-500 mb-3">
+          Pick now — this <strong>cannot be changed later</strong> for this quote. Default comes from your company settings.
+        </p>
+        <div className="grid grid-cols-1 gap-2">
+          {MEASUREMENT_OPTIONS.map((opt) => {
+            const isActive = measurementSystem === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  if (opt.value === measurementSystem) return;
+                  // If the user switches AWAY from their company default,
+                  // confirm so they don't do it by accident on a tiny radio.
+                  if (opt.value !== defaultMeasurementSystem) {
+                    setPendingSystemSwitch(opt.value);
+                  } else {
+                    setMeasurementSystem(opt.value);
+                  }
+                }}
+                className={`relative p-3 rounded-lg border-2 transition text-left ${
+                  isActive
+                    ? 'border-orange-500 bg-orange-50'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    aria-hidden
+                    className={`inline-block w-3 h-3 rounded-full border-2 ${
+                      isActive ? 'border-orange-500 bg-orange-500' : 'border-slate-300'
+                    }`}
+                  />
+                  <div>
+                    <div className="font-medium text-sm text-slate-900">{opt.title}</div>
+                    <div className="text-xs text-slate-500">{opt.subtitle}</div>
+                  </div>
+                  {opt.value === defaultMeasurementSystem && (
+                    <span className="ml-auto text-[11px] uppercase tracking-wide text-slate-400">
+                      Company default
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Confirm modal: switching away from the company default */}
+      {pendingSystemSwitch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4">
+            <h3 className="text-lg font-semibold text-slate-900">Switch measurement system?</h3>
+            <p className="text-sm text-slate-600">
+              You're about to use <strong>
+                {MEASUREMENT_OPTIONS.find((o) => o.value === pendingSystemSwitch)?.title}
+              </strong> for this quote instead of your company default.
+            </p>
+            <p className="text-sm text-slate-600">
+              This <strong>cannot be changed</strong> after the quote is created. Are you sure?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setPendingSystemSwitch(null)}
+                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMeasurementSystem(pendingSystemSwitch);
+                  setPendingSystemSwitch(null);
+                }}
+                className="px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800"
+              >
+                Yes, use this
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Template Selection */}
       <div data-copilot="quote-template">

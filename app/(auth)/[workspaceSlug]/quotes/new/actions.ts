@@ -7,16 +7,36 @@ interface CreateQuoteParams {
   jobName: string | null;
   templateId: string | null;
   entryMode: 'manual' | 'digital';
+  /**
+   * The measurement system locked into this quote at creation. Required —
+   * the new-quote form forces the user to confirm the choice if it differs
+   * from their company default. After this insert it can never be changed.
+   */
+  measurementSystem: 'metric' | 'imperial_ft' | 'imperial_rs';
 }
 
 export async function createQuoteWithDetails(params: CreateQuoteParams): Promise<string | void> {
   const { profile, company } = await loadCompanyContext();
   const supabase = await createSupabaseServerClient();
 
+  // Whitelist defensively — client could send anything.
+  const safeMeasurementSystem =
+    params.measurementSystem === 'metric' ||
+    params.measurementSystem === 'imperial_ft' ||
+    params.measurementSystem === 'imperial_rs'
+      ? params.measurementSystem
+      : 'metric';
+
   // If template specified, use existing createQuoteFromTemplate
   if (params.templateId) {
     const { createQuoteFromTemplate } = await import('../actions');
-    await createQuoteFromTemplate(params.templateId, params.customerName, params.jobName, params.entryMode);
+    await createQuoteFromTemplate(
+      params.templateId,
+      params.customerName,
+      params.jobName,
+      params.entryMode,
+      safeMeasurementSystem
+    );
     return; // redirect() is called inside createQuoteFromTemplate
   }
 
@@ -28,7 +48,7 @@ export async function createQuoteWithDetails(params: CreateQuoteParams): Promise
       customer_name: params.customerName,
       job_name: params.jobName,
       tax_rate: company.default_tax_rate ?? 0,
-      measurement_system: company.default_measurement_system,
+      measurement_system: safeMeasurementSystem,
       created_by_user_id: profile.id,
       entry_mode: params.entryMode,
     })

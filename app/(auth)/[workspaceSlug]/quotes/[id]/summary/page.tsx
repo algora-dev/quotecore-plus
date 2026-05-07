@@ -11,7 +11,9 @@ import {
   convertAreaFt2,
 } from '@/app/lib/measurements/conversions';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { ConvertSystemButton } from './ConvertSystemButton';
+// ConvertSystemButton removed: a quote's measurement system is locked at
+// creation time and cannot be changed afterwards. The user picks it on the
+// new-quote form via QuoteDetailsForm.
 import { CurrencySelector } from './CurrencySelector';
 import { DownloadSummaryPDFButton } from './DownloadSummaryPDFButton';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
@@ -244,10 +246,7 @@ export default async function QuoteSummaryPage({
         summaryActions={
           <>
             {quote.status === 'draft' && (
-              <>
-                <ConvertSystemButton quoteId={id} currentSystem={quote.measurement_system} workspaceSlug={workspaceSlug} />
-                <CurrencySelector quoteId={id} currentCurrency={quote.currency} companyDefaultCurrency={companyDefaultCurrency} workspaceSlug={workspaceSlug} />
-              </>
+              <CurrencySelector quoteId={id} currentCurrency={quote.currency} companyDefaultCurrency={companyDefaultCurrency} workspaceSlug={workspaceSlug} />
             )}
             <Link href={`/${workspaceSlug}/quotes/${id}`} title="Edit Quote" className="icon-btn border-slate-300 bg-white">
               <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
