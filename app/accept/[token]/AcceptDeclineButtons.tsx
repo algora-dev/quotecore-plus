@@ -4,11 +4,11 @@ import { respondToQuote } from './actions';
 
 interface AcceptDeclineProps {
   token: string;
-  /** Optional secondary action shown below the Accept/Decline pair, e.g. the Request-Changes button. */
-  secondaryAction?: React.ReactNode;
+  /** Optional middle action rendered inline between Accept and Decline. */
+  middleAction?: React.ReactNode;
 }
 
-export function AcceptDeclineButtons({ token, secondaryAction }: AcceptDeclineProps) {
+export function AcceptDeclineButtons({ token, middleAction }: AcceptDeclineProps) {
   const [status, setStatus] = useState<'pending' | 'accepted' | 'declined'>('pending');
   const [loading, setLoading] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'accept' | 'decline' | null>(null);
@@ -69,6 +69,7 @@ export function AcceptDeclineButtons({ token, secondaryAction }: AcceptDeclinePr
           >
             Accept Quote
           </button>
+          {middleAction}
           <button
             onClick={() => setConfirmAction('decline')}
             disabled={loading}
@@ -77,15 +78,6 @@ export function AcceptDeclineButtons({ token, secondaryAction }: AcceptDeclinePr
             Decline Quote
           </button>
         </div>
-        {secondaryAction && (
-          <div className="pt-4 border-t border-slate-100 -mx-6 px-6">
-            <div className="flex justify-center">
-              <div className="max-w-xs w-full">
-                {secondaryAction}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Confirmation Modal */}

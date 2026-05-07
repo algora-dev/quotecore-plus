@@ -30,7 +30,7 @@ interface Props {
 
 const VARIANT_COPY: Record<Variant, { trigger: string; heading: string; intro: string }> = {
   active: {
-    trigger: 'Request changes to this quote',
+    trigger: 'Request Changes',
     heading: 'Request a revised quote',
     intro: 'Tell the team what you would like changed and they will get back to you with an updated quote.',
   },
@@ -65,13 +65,13 @@ export function RequestRequoteButton({ token, variant, defaultCustomerName, defa
   const copy = VARIANT_COPY[variant];
 
   // Trigger style differs by context:
-  //  - active:    subtle text-style link inside the Accept/Decline card so it
-  //               doesn't compete visually with the primary CTAs above it.
+  //  - active:    orange pill, sits inline between Accept and Decline,
+  //               same size/weight so the three options read as siblings.
   //  - responded/expired: bold black pill because it's the only action
   //               available on those dead-end screens.
   const triggerClass =
     variant === 'active'
-      ? 'inline-flex items-center justify-center text-sm text-slate-500 hover:text-slate-900 underline decoration-dotted underline-offset-4 transition'
+      ? 'px-6 py-2.5 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
       : 'inline-flex items-center justify-center w-full rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] transition';
 
   async function handleSubmit() {

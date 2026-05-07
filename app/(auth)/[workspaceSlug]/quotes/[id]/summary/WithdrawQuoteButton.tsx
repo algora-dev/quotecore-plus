@@ -32,18 +32,45 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Hide entirely when there's nothing to withdraw or the quote has reached a
-  // final state. The button only makes sense for a "live" link.
-  if (acceptedAt || declinedAt) return null;
+  // Final states get a non-clickable status badge in place of the action,
+  // styled to match the rest of the action row.
+  if (acceptedAt) {
+    return (
+      <span
+        title="The customer has accepted this quote."
+        className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white cursor-not-allowed select-none"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+        Accepted
+      </span>
+    );
+  }
+  if (declinedAt) {
+    return (
+      <span
+        title="The customer has declined this quote."
+        className="inline-flex items-center gap-1.5 rounded-full bg-slate-200 px-5 py-2 text-sm font-semibold text-slate-700 cursor-not-allowed select-none"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        Declined
+      </span>
+    );
+  }
+
+  // Nothing live and no withdrawal history — the quote was never sent, so
+  // there's nothing for this button to control. Hide entirely.
   if (!hasActiveToken && !isAlreadyWithdrawn) return null;
 
-  // If already withdrawn, show a dimmed badge instead of an action button so
-  // the user knows the link is dead but doesn't get a no-op action. Sized to
-  // match the Send Quote pill so it sits cleanly in the action row.
+  // Withdrawn but not yet re-sent: show a dimmed badge instead of an action
+  // button so the user knows the link is dead but doesn't get a no-op action.
   if (isAlreadyWithdrawn) {
     return (
       <span
-        title="The acceptance link has been withdrawn. Use Send Quote to mint a new one."
+        title="The acceptance link has been withdrawn. Use Send Quote to create a new one."
         className="inline-flex items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50 px-5 py-2 text-sm font-semibold text-purple-700"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,12 +100,12 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
         type="button"
         onClick={() => setConfirming(true)}
         title="Withdraw the active acceptance link so it can no longer be used"
-        className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-900 transition"
+        className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-all hover:shadow-[0_0_12px_rgba(220,38,38,0.4)]"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
         </svg>
-        Withdraw
+        Withdraw Quote
       </button>
 
       {confirming && (
@@ -90,7 +117,7 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
               &quot;Quote No Longer Valid&quot; message with the option to request a fresh quote.
             </p>
             <p className="text-sm text-slate-600">
-              You can mint a new link any time via <span className="font-medium">Send Quote</span>.
+              You can create a new link any time via <span className="font-medium">Send Quote</span>.
             </p>
             {error && (
               <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">

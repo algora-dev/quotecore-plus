@@ -276,11 +276,11 @@ export default async function AcceptQuotePage({
           )}
         </div>
 
-        {/* Accept/Decline + soft third option (request changes) grouped in
-            the same card so it reads as a single decision panel. */}
+        {/* Accept / Request Changes / Decline rendered as a single button row
+            so the three options read as siblings of the same decision. */}
         <AcceptDeclineButtons
           token={token}
-          secondaryAction={
+          middleAction={
             <RequestRequoteButton
               token={token}
               variant="active"
