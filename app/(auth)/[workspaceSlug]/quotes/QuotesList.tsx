@@ -3,7 +3,10 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { deleteQuote, updateQuoteJobStatus } from './actions';
+import { loadQuoteBundleData, bulkDeleteQuotes } from './actions-bulk';
 import type { JobStatus } from './actions';
+import JSZip from 'jszip';
+import { addQuoteToZip, downloadBlob, sanitizeFilename } from './lib/quote-bundle';
 
 type Quote = {
   id: string;
@@ -153,7 +156,22 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  // Multi-select state for bulk download / delete.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState<null | 'download' | 'delete'>(null);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number; message: string } | null>(null);
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
   const router = useRouter();
+
+  // Reset selection if the underlying quotes list changes (e.g. after a delete refresh).
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const stillExists = new Set(quotes.map((q) => q.id));
+      const next = new Set<string>();
+      for (const id of prev) if (stillExists.has(id)) next.add(id);
+      return next;
+    });
+  }, [quotes]);
 
   const drafts = quotes.filter(q => q.status === 'draft');
   const confirmed = quotes
@@ -215,6 +233,125 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
       alert('Failed to delete quote. Please try again.');
     } finally {
       setDeleting(false);
+    }
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAllVisible(visibleQuotes: Quote[]) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      const visibleIds = visibleQuotes.map((q) => q.id);
+      const allSelected = visibleIds.every((id) => next.has(id));
+      if (allSelected) {
+        for (const id of visibleIds) next.delete(id);
+      } else {
+        for (const id of visibleIds) next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
+
+  /**
+   * Bulk download: load each quote's data on the server, build a single ZIP
+   * client-side, then trigger a download. Quotes are processed serially so the
+   * UI stays responsive and the server isn't hit with N parallel queries.
+   */
+  async function handleBulkDownload() {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    setBulkBusy('download');
+    setBulkProgress({ done: 0, total: ids.length, message: 'Preparing export...' });
+
+    try {
+      const zip = new JSZip();
+      let succeeded = 0;
+      const failures: string[] = [];
+
+      for (let i = 0; i < ids.length; i++) {
+        const id = ids[i];
+        const quoteRow = quotes.find((q) => q.id === id);
+        const label = quoteRow ? (quoteRow.quote_number ? `#${quoteRow.quote_number} ${quoteRow.customer_name}` : quoteRow.customer_name) : id;
+        setBulkProgress({ done: i, total: ids.length, message: `Bundling ${label} (${i + 1} of ${ids.length})...` });
+
+        try {
+          const data = await loadQuoteBundleData(id);
+          if (!data) {
+            failures.push(`${label} (not found)`);
+          } else {
+            await addQuoteToZip(zip, data);
+            succeeded++;
+          }
+        } catch (err) {
+          console.error('[bulkDownload] failed for', id, err);
+          failures.push(`${label} (${err instanceof Error ? err.message : 'error'})`);
+        }
+
+        // Yield to the event loop so the progress UI repaints between quotes.
+        await new Promise((r) => setTimeout(r, 0));
+      }
+
+      if (succeeded === 0) {
+        alert(`No quotes could be exported.${failures.length ? '\n\nFailed:\n' + failures.join('\n') : ''}`);
+        return;
+      }
+
+      setBulkProgress({ done: ids.length, total: ids.length, message: 'Compressing ZIP...' });
+      const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+
+      // Filename: single quote -> Quote-####-Name.zip, multiple -> dated bundle.
+      let zipName: string;
+      if (succeeded === 1 && ids.length === 1) {
+        const q = quotes.find((x) => x.id === ids[0]);
+        const numberPart = q?.quote_number ? String(q.quote_number).padStart(4, '0') : 'DRAFT';
+        const customerPart = q ? sanitizeFilename(q.customer_name) : 'Quote';
+        zipName = `Quote-${numberPart}-${customerPart}.zip`;
+      } else {
+        const stamp = new Date().toISOString().slice(0, 10);
+        zipName = `QuoteCore-Export-${stamp}-${succeeded}-quotes.zip`;
+      }
+
+      downloadBlob(blob, zipName);
+
+      if (failures.length > 0) {
+        alert(`Exported ${succeeded} of ${ids.length} quotes.\n\nFailed:\n${failures.join('\n')}`);
+      }
+    } finally {
+      setBulkBusy(null);
+      setBulkProgress(null);
+    }
+  }
+
+  /** Bulk delete after explicit confirmation. */
+  async function handleBulkDelete() {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setBulkBusy('delete');
+    try {
+      const result = await bulkDeleteQuotes(ids);
+      setSelectedIds(new Set());
+      setBulkDeleteConfirmOpen(false);
+      router.refresh();
+      if (result.skipped > 0) {
+        alert(`Deleted ${result.deleted} quotes. ${result.skipped} were skipped (not owned or already gone).`);
+      }
+    } catch (err) {
+      console.error('[bulkDelete] failed:', err);
+      alert(`Failed to delete quotes: ${err instanceof Error ? err.message : 'unknown error'}`);
+    } finally {
+      setBulkBusy(null);
     }
   }
 
@@ -328,7 +465,21 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
 
       {/* Table header */}
       {displayQuotes.length > 0 && (
-        <div className="hidden sm:grid grid-cols-[1fr_1fr_140px_120px_40px] gap-4 px-4 text-xs font-medium text-slate-400 uppercase tracking-wide">
+        <div className="hidden sm:grid grid-cols-[28px_1fr_1fr_140px_120px_40px] gap-4 px-4 text-xs font-medium text-slate-400 uppercase tracking-wide items-center">
+          <input
+            type="checkbox"
+            checked={displayQuotes.length > 0 && displayQuotes.every((q) => selectedIds.has(q.id))}
+            ref={(el) => {
+              if (!el) return;
+              const someSelected = displayQuotes.some((q) => selectedIds.has(q.id));
+              const allSelected = displayQuotes.every((q) => selectedIds.has(q.id));
+              el.indeterminate = someSelected && !allSelected;
+            }}
+            onChange={() => toggleSelectAllVisible(displayQuotes)}
+            onClick={(e) => e.stopPropagation()}
+            title="Select all visible quotes"
+            className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+          />
           <span>Quote</span>
           <span>Client / Job</span>
           <span>Status</span>
@@ -345,8 +496,18 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
               key={q.id}
               onClick={() => handleRowClick(q)}
               title="Click to open this quote"
-              className="grid sm:grid-cols-[1fr_1fr_140px_120px_40px] gap-4 items-center rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
+              className={`grid sm:grid-cols-[28px_1fr_1fr_140px_120px_40px] gap-4 items-center rounded-xl border bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${selectedIds.has(q.id) ? 'border-orange-300 bg-orange-50/30' : 'border-slate-200'}`}
             >
+              {/* Selection checkbox */}
+              <input
+                type="checkbox"
+                checked={selectedIds.has(q.id)}
+                onChange={() => toggleSelect(q.id)}
+                onClick={(e) => e.stopPropagation()}
+                title="Select for bulk download or delete"
+                className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+              />
+
               {/* Quote info */}
               <div className="min-w-0">
                 {q.quote_number && (
@@ -406,6 +567,90 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
                   ? `No ${STATUS_FILTERS.find(f => f.key === statusFilter)?.label.toLowerCase()} quotes.`
                   : 'No confirmed quotes yet.'}
           </p>
+        </div>
+      )}
+
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-lg">
+          <span className="text-sm text-slate-700">
+            {selectedIds.size} selected
+          </span>
+          <button
+            onClick={clearSelection}
+            className="text-xs text-slate-500 hover:text-slate-700 underline"
+          >
+            clear
+          </button>
+          <span className="w-px h-6 bg-slate-200" />
+          <button
+            onClick={handleBulkDownload}
+            disabled={bulkBusy !== null}
+            className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+            </svg>
+            {bulkBusy === 'download' ? 'Bundling...' : `Download ${selectedIds.size} as ZIP`}
+          </button>
+          <button
+            onClick={() => setBulkDeleteConfirmOpen(true)}
+            disabled={bulkBusy !== null}
+            className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete Selected
+          </button>
+        </div>
+      )}
+
+      {/* Bulk download progress modal */}
+      {bulkProgress && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">Building Export</h3>
+            <p className="text-sm text-slate-600 mt-2">{bulkProgress.message}</p>
+            <div className="mt-4 h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+              <div
+                className="h-full bg-orange-500 transition-all"
+                style={{ width: `${Math.round((bulkProgress.done / Math.max(1, bulkProgress.total)) * 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-slate-500 mt-2 text-right">
+              {bulkProgress.done} / {bulkProgress.total}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk delete confirmation */}
+      {bulkDeleteConfirmOpen && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">Delete {selectedIds.size} Quotes</h3>
+            <p className="text-sm text-slate-500 mt-2">
+              This action cannot be undone. All selected quotes and their attached files will be permanently deleted.
+              Make sure you've downloaded a copy first if you want to keep records.
+            </p>
+            <div className="flex gap-3 justify-end mt-6">
+              <button
+                onClick={() => setBulkDeleteConfirmOpen(false)}
+                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                disabled={bulkBusy === 'delete'}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                disabled={bulkBusy === 'delete'}
+              >
+                {bulkBusy === 'delete' ? 'Deleting...' : `Delete ${selectedIds.size}`}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
