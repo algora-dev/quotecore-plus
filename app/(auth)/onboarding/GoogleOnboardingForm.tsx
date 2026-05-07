@@ -26,7 +26,7 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
   // Step 2 fields
   const [currency, setCurrency] = useState('NZD');
   const [language, setLanguage] = useState('en');
-  const [measurement, setMeasurement] = useState<'metric' | 'imperial'>('metric');
+  const [measurement, setMeasurement] = useState<'metric' | 'imperial_ft' | 'imperial_rs'>('metric');
 
   function handleNext() {
     if (!companyName.trim() || !fullName.trim()) {
@@ -172,31 +172,26 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
           {/* Measurement */}
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-1">📏 Measurement System</label>
-            <div className="grid grid-cols-2 gap-3 mt-2">
-              <button
-                type="button"
-                onClick={() => setMeasurement('metric')}
-                className={`p-3 rounded-lg border-2 transition text-left ${
-                  measurement === 'metric'
-                    ? 'border-orange-500 bg-orange-50'
-                    : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <div className="font-medium text-sm">Metric</div>
-                <div className="text-xs text-slate-500 mt-0.5">Meters, m²</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setMeasurement('imperial')}
-                className={`p-3 rounded-lg border-2 transition text-left ${
-                  measurement === 'imperial'
-                    ? 'border-orange-500 bg-orange-50'
-                    : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <div className="font-medium text-sm">Imperial</div>
-                <div className="text-xs text-slate-500 mt-0.5">Feet, sq ft</div>
-              </button>
+            <div className="grid grid-cols-1 gap-2 mt-2">
+              {[
+                { value: 'metric' as const, title: 'Metric', subtitle: 'Meters (m), Square meters (m²)' },
+                { value: 'imperial_ft' as const, title: 'Imperial — ft²', subtitle: 'Feet (ft), Square feet (ft²)' },
+                { value: 'imperial_rs' as const, title: 'Imperial — Roofing Squares', subtitle: 'Feet (ft), RS (1 RS = 100 ft²)' },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setMeasurement(opt.value)}
+                  className={`p-3 rounded-lg border-2 transition text-left ${
+                    measurement === opt.value
+                      ? 'border-orange-500 bg-orange-50'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="font-medium text-sm">{opt.title}</div>
+                  <div className="text-xs text-slate-500 mt-0.5">{opt.subtitle}</div>
+                </button>
+              ))}
             </div>
           </div>
 

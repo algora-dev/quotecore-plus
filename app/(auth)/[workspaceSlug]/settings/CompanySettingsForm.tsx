@@ -13,7 +13,7 @@ interface Props {
   currentUserName: string;
   currentCurrency: string;
   currentLanguage: string;
-  currentMeasurement: 'metric' | 'imperial';
+  currentMeasurement: 'metric' | 'imperial_ft' | 'imperial_rs' | 'imperial';
   currentMaterialMargin: number;
   currentLaborMargin: number;
   currentLogoUrl: string | null;
@@ -37,7 +37,11 @@ export function CompanySettingsForm({
   const [userName, setUserName] = useState(currentUserName);
   const [currency, setCurrency] = useState(currentCurrency);
   const [language, setLanguage] = useState(currentLanguage);
-  const [measurement, setMeasurement] = useState(currentMeasurement);
+  // Normalise legacy 'imperial' to 'imperial_rs' for the local state so the
+  // form starts on a value the new selector recognises.
+  const [measurement, setMeasurement] = useState<'metric' | 'imperial_ft' | 'imperial_rs'>(
+    currentMeasurement === 'imperial' ? 'imperial_rs' : (currentMeasurement as 'metric' | 'imperial_ft' | 'imperial_rs')
+  );
   const [materialMargin, setMaterialMargin] = useState(currentMaterialMargin.toString());
   const [laborMargin, setLaborMargin] = useState(currentLaborMargin.toString());
   const [taxes, setTaxes] = useState<EditableTax[]>(currentTaxes);
@@ -219,31 +223,29 @@ export function CompanySettingsForm({
         <label className="block">
           <span className="text-sm font-semibold text-gray-900">Measurement System</span>
           <p className="text-xs text-gray-600 mt-1 mb-2">
-            Default units for quotes and measurements
+            Default units for quotes and measurements. Roofing Squares (RS) is common for NZ/AU/UK roofers; ft² is common for US.
           </p>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50">
-              <input
-                type="radio"
-                value="metric"
-                checked={measurement === 'metric'}
-                onChange={(e) => setMeasurement(e.target.value as 'metric' | 'imperial')}
-                disabled={isPending}
-                className="w-4 h-4"
-              />
-              <span className="text-sm">Metric (meters, square meters)</span>
-            </label>
-            <label className="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50">
-              <input
-                type="radio"
-                value="imperial"
-                checked={measurement === 'imperial'}
-                onChange={(e) => setMeasurement(e.target.value as 'metric' | 'imperial')}
-                disabled={isPending}
-                className="w-4 h-4"
-              />
-              <span className="text-sm">Imperial (feet, square feet)</span>
-            </label>
+          <div className="flex flex-col gap-2">
+            {[
+              { value: 'metric', label: 'Metric — meters & m²' },
+              { value: 'imperial_ft', label: 'Imperial — feet & ft²' },
+              { value: 'imperial_rs', label: 'Imperial — feet & Roofing Squares (1 RS = 100 ft²)' },
+            ].map((opt) => (
+              <label
+                key={opt.value}
+                className="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50"
+              >
+                <input
+                  type="radio"
+                  value={opt.value}
+                  checked={measurement === opt.value}
+                  onChange={(e) => setMeasurement(e.target.value as 'metric' | 'imperial_ft' | 'imperial_rs')}
+                  disabled={isPending}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">{opt.label}</span>
+              </label>
+            ))}
           </div>
         </label>
       </div>

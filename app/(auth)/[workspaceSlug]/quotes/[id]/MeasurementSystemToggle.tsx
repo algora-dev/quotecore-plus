@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { convertQuoteMeasurementSystem } from '../actions';
 import { useRouter } from 'next/navigation';
 
+type System = 'metric' | 'imperial_ft' | 'imperial_rs' | 'imperial';
+
 interface Props {
   quoteId: string;
-  currentSystem: 'metric' | 'imperial';
+  currentSystem: System;
   isDraft: boolean;
 }
 
@@ -13,8 +15,13 @@ export function MeasurementSystemToggle({ quoteId, currentSystem, isDraft }: Pro
   const [switching, setSwitching] = useState(false);
   const router = useRouter();
 
-  async function handleSwitch(newSystem: 'metric' | 'imperial') {
-    if (newSystem === currentSystem || !isDraft || switching) return;
+  // Treat the deprecated 'imperial' value as 'imperial_rs' for selected-state.
+  const normalized: 'metric' | 'imperial_ft' | 'imperial_rs' =
+    currentSystem === 'metric' ? 'metric' :
+    currentSystem === 'imperial_ft' ? 'imperial_ft' : 'imperial_rs';
+
+  async function handleSwitch(newSystem: 'metric' | 'imperial_ft' | 'imperial_rs') {
+    if (newSystem === normalized || !isDraft || switching) return;
     
     setSwitching(true);
     try {
@@ -40,20 +47,33 @@ export function MeasurementSystemToggle({ quoteId, currentSystem, isDraft }: Pro
         disabled={!isDraft || switching}
         className={`${baseButtonClass} ${
           !isDraft ? disabledClass :
-          currentSystem === 'metric' ? activeClass : inactiveClass
+          normalized === 'metric' ? activeClass : inactiveClass
         }`}
+        title="Metric (m, m²)"
       >
         Metric
       </button>
       <button
-        onClick={() => handleSwitch('imperial')}
+        onClick={() => handleSwitch('imperial_ft')}
         disabled={!isDraft || switching}
         className={`${baseButtonClass} border-l border-slate-300 ${
           !isDraft ? disabledClass :
-          currentSystem === 'imperial' ? activeClass : inactiveClass
+          normalized === 'imperial_ft' ? activeClass : inactiveClass
         }`}
+        title="Imperial (ft, ft²)"
       >
-        Imperial
+        Imperial ft²
+      </button>
+      <button
+        onClick={() => handleSwitch('imperial_rs')}
+        disabled={!isDraft || switching}
+        className={`${baseButtonClass} border-l border-slate-300 ${
+          !isDraft ? disabledClass :
+          normalized === 'imperial_rs' ? activeClass : inactiveClass
+        }`}
+        title="Imperial (ft, Roofing Squares)"
+      >
+        Imperial RS
       </button>
     </div>
   );

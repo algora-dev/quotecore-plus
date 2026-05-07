@@ -11,7 +11,7 @@ export type CompanyContext = {
     slug: string;
     default_language: string | null;
     default_tax_rate: number;
-    default_measurement_system: 'metric' | 'imperial';
+    default_measurement_system: 'metric' | 'imperial_ft' | 'imperial_rs' | 'imperial';
     default_currency: string | null;
     onboarding_completed_at: string | null;
     created_at: string;

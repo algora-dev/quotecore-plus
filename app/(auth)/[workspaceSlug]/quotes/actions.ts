@@ -542,21 +542,30 @@ export async function saveConfirmedQuoteAndRedirect(id: string, workspaceSlug: s
   redirect(`/${workspaceSlug}/quotes/${id}/summary`);
 }
 
-export async function convertQuoteMeasurementSystem(id: string, newSystem: 'metric' | 'imperial') {
+export async function convertQuoteMeasurementSystem(
+  id: string,
+  newSystem: 'metric' | 'imperial_ft' | 'imperial_rs'
+) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
-  
+
+  // Reject the legacy 'imperial' enum value defensively — callers should never
+  // be writing it, but we don't want to add it back to fresh rows by accident.
+  if (newSystem !== 'metric' && newSystem !== 'imperial_ft' && newSystem !== 'imperial_rs') {
+    throw new Error('Invalid measurement system');
+  }
+
   // Verify quote is draft
   const { data: quote } = await supabase.from('quotes').select('status').eq('id', id).eq('company_id', profile.company_id).single();
   if (!quote || quote.status !== 'draft') {
     throw new Error('Only draft quotes can be converted');
   }
-  
+
   const { error } = await supabase.from('quotes')
     .update({ measurement_system: newSystem })
     .eq('id', id)
     .eq('company_id', profile.company_id);
-    
+
   if (error) throw new Error(error.message);
   revalidatePath(`/quotes/${id}`);
 }

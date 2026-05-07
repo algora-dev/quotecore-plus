@@ -8,7 +8,7 @@ interface CompanySettings {
   userName: string;
   currency: string;
   language: string;
-  measurement: 'metric' | 'imperial';
+  measurement: 'metric' | 'imperial_ft' | 'imperial_rs';
   materialMargin: number;
   laborMargin: number;
 }

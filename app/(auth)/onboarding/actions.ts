@@ -7,7 +7,7 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
 interface OnboardingData {
   currency: string;
   language: string;
-  measurement: 'metric' | 'imperial';
+  measurement: 'metric' | 'imperial_ft' | 'imperial_rs';
 }
 
 export async function completeOnboarding(companyId: string, data: OnboardingData) {
@@ -54,7 +54,14 @@ export async function completeGoogleOnboarding(formData: FormData) {
   const fullName = String(formData.get('fullName') || '').trim();
   const currency = String(formData.get('currency') || 'NZD').trim();
   const language = String(formData.get('language') || 'en').trim();
-  const measurement = String(formData.get('measurement') || 'metric').trim();
+  // Validate measurement against the new tri-state. Anything we don't recognise
+  // (e.g. an old form posting 'imperial') gets normalised to 'imperial_rs'
+  // since that's what the legacy UI produced.
+  const rawMeasurement = String(formData.get('measurement') || 'metric').trim();
+  const measurement: 'metric' | 'imperial_ft' | 'imperial_rs' =
+    rawMeasurement === 'metric' || rawMeasurement === 'imperial_ft' || rawMeasurement === 'imperial_rs'
+      ? rawMeasurement
+      : 'imperial_rs';
 
   if (!companyName || !fullName) {
     throw new Error('Company name and your name are required.');

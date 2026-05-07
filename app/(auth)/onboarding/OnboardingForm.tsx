@@ -10,7 +10,7 @@ interface Props {
   companySlug: string;
   currentCurrency: string;
   currentLanguage: string;
-  currentMeasurement: 'metric' | 'imperial';
+  currentMeasurement: 'metric' | 'imperial_ft' | 'imperial_rs' | 'imperial';
 }
 
 export function OnboardingForm({ 
@@ -23,7 +23,10 @@ export function OnboardingForm({
 }: Props) {
   const [currency, setCurrency] = useState(currentCurrency);
   const [language, setLanguage] = useState(currentLanguage);
-  const [measurement, setMeasurement] = useState(currentMeasurement);
+  // Normalise legacy 'imperial' to 'imperial_rs' so the picker doesn't render unselected.
+  const [measurement, setMeasurement] = useState<'metric' | 'imperial_ft' | 'imperial_rs'>(
+    currentMeasurement === 'imperial' ? 'imperial_rs' : (currentMeasurement as 'metric' | 'imperial_ft' | 'imperial_rs')
+  );
   const [step, setStep] = useState<'preferences' | 'copilot'>('preferences');
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -160,31 +163,26 @@ export function OnboardingForm({
             Default for new quotes (you can change per-quote later)
           </p>
         </label>
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            type="button"
-            onClick={() => setMeasurement('metric')}
-            className={`p-4 rounded-lg border-2 transition ${
-              measurement === 'metric'
-                ? 'border-orange-500 bg-orange-50'
-                : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-            }`}
-          >
-            <div className="font-semibold">Metric</div>
-            <div className="text-xs text-slate-500 mt-1">Meters (m), Square meters (m2)</div>
-          </button>
-          <button
-            type="button"
-            onClick={() => setMeasurement('imperial')}
-            className={`p-4 rounded-lg border-2 transition ${
-              measurement === 'imperial'
-                ? 'border-orange-500 bg-orange-50'
-                : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-            }`}
-          >
-            <div className="font-semibold">Imperial</div>
-            <div className="text-xs text-slate-500 mt-1">Feet (ft), Roof squares (Rs)</div>
-          </button>
+        <div className="grid grid-cols-1 gap-3">
+          {[
+            { value: 'metric' as const, title: 'Metric', subtitle: 'Meters (m), Square meters (m²)' },
+            { value: 'imperial_ft' as const, title: 'Imperial — ft²', subtitle: 'Feet (ft), Square feet (ft²). Common for US.' },
+            { value: 'imperial_rs' as const, title: 'Imperial — Roofing Squares', subtitle: 'Feet (ft), Roofing Squares (RS = 100 ft²). Common for NZ/AU/UK.' },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setMeasurement(opt.value)}
+              className={`p-4 rounded-lg border-2 transition text-left ${
+                measurement === opt.value
+                  ? 'border-orange-500 bg-orange-50'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <div className="font-semibold">{opt.title}</div>
+              <div className="text-xs text-slate-500 mt-1">{opt.subtitle}</div>
+            </button>
+          ))}
         </div>
       </div>
 

@@ -62,7 +62,7 @@ export async function updateUserProfile(userId: string, data: UserProfile) {
   revalidatePath('/account');
 }
 
-export async function updateDefaultMeasurementSystem(system: 'metric' | 'imperial') {
+export async function updateDefaultMeasurementSystem(system: 'metric' | 'imperial_ft' | 'imperial_rs') {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
   

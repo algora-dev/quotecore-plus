@@ -1,77 +1,79 @@
-// Display formatting helpers for measurements
-import { convertLinear, convertArea, convertLinearRate, convertAreaRate } from './conversions';
+// Display formatting helpers for measurements.
+// All inputs are in METRIC (canonical storage). Output is formatted for the
+// caller's chosen MeasurementSystem.
+
+import {
+  convertLinear,
+  convertArea,        // -> RS (string, 3dp)
+  convertAreaFt2,     // -> ft² (number, 2dp)
+  convertLinearRate,
+  convertAreaRate,    // -> $/RS (2dp)
+  convertAreaFt2Rate, // -> $/ft² (4dp)
+} from './conversions';
+import { normalizeMeasurementSystem } from '../types';
 import type { MeasurementSystem } from '../types';
 
-/**
- * Format linear measurement with appropriate unit
- * @param meters Value in meters (canonical storage)
- * @param system Target display system
- * @returns Formatted string with unit (e.g., "10.0 m" or "32.81 ft")
- */
+/** Format a linear measurement (stored in meters) with the right unit suffix. */
 export function formatLinear(meters: number, system: MeasurementSystem): string {
-  if (system === 'imperial') {
-    return `${convertLinear(meters)} ft`;
-  }
-  return `${meters.toFixed(2)} m`;
+  const norm = normalizeMeasurementSystem(system);
+  if (norm === 'metric') return `${meters.toFixed(2)} m`;
+  // Both imperial flavours use feet for linear.
+  return `${convertLinear(meters)} ft`;
 }
 
-/**
- * Format area measurement with appropriate unit
- * @param sqm Value in square meters (canonical storage)
- * @param system Target display system
- * @returns Formatted string with unit (e.g., "100.0 m²" or "1.076 Rs")
- */
+/** Format an area (stored in m²) with the right unit suffix. */
 export function formatArea(sqm: number, system: MeasurementSystem): string {
-  if (system === 'imperial') {
-    return `${convertArea(sqm)} Rs`;
-  }
-  return `${sqm.toFixed(2)} m²`;
+  const norm = normalizeMeasurementSystem(system);
+  if (norm === 'metric') return `${sqm.toFixed(2)} m²`;
+  if (norm === 'imperial_ft') return `${convertAreaFt2(sqm)} ft²`;
+  return `${convertArea(sqm)} RS`;
 }
 
-/**
- * Format linear rate with appropriate unit
- * @param ratePerMeter Rate in $/m (canonical storage)
- * @param system Target display system
- * @returns Formatted string (e.g., "$5.00/m" or "$1.52/ft")
- */
+/** Format a linear rate ($/m canonical) with the right per-unit suffix. */
 export function formatLinearRate(ratePerMeter: number, system: MeasurementSystem): string {
-  if (system === 'imperial') {
-    return `$${convertLinearRate(ratePerMeter)}/ft`;
-  }
-  return `$${ratePerMeter.toFixed(2)}/m`;
+  const norm = normalizeMeasurementSystem(system);
+  if (norm === 'metric') return `$${ratePerMeter.toFixed(2)}/m`;
+  return `$${convertLinearRate(ratePerMeter)}/ft`;
 }
 
-/**
- * Format area rate with appropriate unit
- * @param ratePerSqm Rate in $/m² (canonical storage)
- * @param system Target display system
- * @returns Formatted string (e.g., "$15.00/m²" or "$1.61/Rs")
- */
+/** Format an area rate ($/m² canonical) with the right per-unit suffix. */
 export function formatAreaRate(ratePerSqm: number, system: MeasurementSystem): string {
-  if (system === 'imperial') {
-    return `$${convertAreaRate(ratePerSqm)}/Rs`;
-  }
-  return `$${ratePerSqm.toFixed(2)}/m²`;
+  const norm = normalizeMeasurementSystem(system);
+  if (norm === 'metric') return `$${ratePerSqm.toFixed(2)}/m²`;
+  if (norm === 'imperial_ft') return `$${convertAreaFt2Rate(ratePerSqm)}/ft²`;
+  return `$${convertAreaRate(ratePerSqm)}/RS`;
 }
 
-/**
- * Get unit label for measurement type
- * @param measurementType Type of measurement
- * @param system Target display system
- * @returns Unit label (e.g., "m²", "Rs", "m", "ft")
- */
+/** Get just the unit label (no value) for a given measurement type + system. */
 export function getUnitLabel(
   measurementType: 'area' | 'lineal' | 'quantity' | 'fixed',
   system: MeasurementSystem
 ): string {
+  const norm = normalizeMeasurementSystem(system);
   if (measurementType === 'area') {
-    return system === 'imperial' ? 'Rs' : 'm²';
+    if (norm === 'metric') return 'm²';
+    if (norm === 'imperial_ft') return 'ft²';
+    return 'RS';
   }
   if (measurementType === 'lineal') {
-    return system === 'imperial' ? 'ft' : 'm';
+    return norm === 'metric' ? 'm' : 'ft';
   }
-  if (measurementType === 'quantity') {
-    return 'each';
-  }
+  if (measurementType === 'quantity') return 'each';
   return '';
+}
+
+/** Human-friendly label for the system itself (used in selectors / settings). */
+export function describeMeasurementSystem(system: MeasurementSystem): string {
+  const norm = normalizeMeasurementSystem(system);
+  if (norm === 'metric') return 'Metric (m, m²)';
+  if (norm === 'imperial_ft') return 'Imperial — feet & ft²';
+  return 'Imperial — feet & Roofing Squares';
+}
+
+/** Short label, e.g. for the convert button. */
+export function shortMeasurementSystemLabel(system: MeasurementSystem): string {
+  const norm = normalizeMeasurementSystem(system);
+  if (norm === 'metric') return 'Metric';
+  if (norm === 'imperial_ft') return 'Imperial (ft²)';
+  return 'Imperial (RS)';
 }

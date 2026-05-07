@@ -1,7 +1,27 @@
 // QuoteCore+ v2 shared types
 export type ComponentType = 'main' | 'extra';
 export type MeasurementType = 'area' | 'lineal' | 'quantity' | 'fixed';
-export type MeasurementSystem = 'metric' | 'imperial';
+/**
+ * Measurement system used for display in a quote (and as the company default).
+ *
+ * - `metric`       : meters and square meters (m / m²) — canonical storage units
+ * - `imperial_ft`  : feet and square feet (ft / ft²) — typical for US roofers
+ * - `imperial_rs`  : feet and Roofing Squares (ft / RS, 1 RS = 100 ft²) — typical for NZ/AU/UK roofers
+ * - `imperial`     : DEPRECATED legacy value, treated as `imperial_rs` everywhere.
+ *                    Kept in the union (and Postgres enum) so old data still type-checks;
+ *                    new code paths must never write this value.
+ */
+export type MeasurementSystem = 'metric' | 'imperial_ft' | 'imperial_rs' | 'imperial';
+
+/** Narrow a possibly-legacy MeasurementSystem to the canonical 4-value set callers should branch on. */
+export function normalizeMeasurementSystem(
+  system: MeasurementSystem | null | undefined
+): 'metric' | 'imperial_ft' | 'imperial_rs' {
+  if (system === 'imperial_ft') return 'imperial_ft';
+  // Legacy 'imperial' rows were always Roofing Squares in practice.
+  if (system === 'imperial' || system === 'imperial_rs') return 'imperial_rs';
+  return 'metric';
+}
 export type InputMode = 'final' | 'calculated';
 export type WasteType = 'percent' | 'fixed' | 'none';
 export type PitchType = 'none' | 'rafter' | 'valley_hip';
@@ -152,6 +172,15 @@ export interface MaterialOrderLineRow {
   created_at: string;
 }
 
+/**
+ * Metric-only unit label for a measurement type. Used by system-agnostic
+ * contexts like the component library (which spans every quote regardless of
+ * unit system).
+ *
+ * NOTE: For per-quote rendering use `getUnitLabel(measurementType, system)` from
+ * `@/app/lib/measurements/displayHelpers` instead, which knows how to render
+ * ft, ft², and Roofing Squares for Imperial quotes.
+ */
 export function unitForMeasurement(mt: MeasurementType): string {
   switch (mt) {
     case 'area': return 'm²';
