@@ -64,12 +64,14 @@ export function RequestRequoteButton({ token, variant, defaultCustomerName, defa
 
   const copy = VARIANT_COPY[variant];
 
-  // Trigger style: black on the active state (it's a competing CTA so we
-  // intentionally keep it secondary), bordered on the dead-end states (where
-  // it's the primary action available).
+  // Trigger style differs by context:
+  //  - active:    subtle text-style link inside the Accept/Decline card so it
+  //               doesn't compete visually with the primary CTAs above it.
+  //  - responded/expired: bold black pill because it's the only action
+  //               available on those dead-end screens.
   const triggerClass =
     variant === 'active'
-      ? 'inline-flex items-center justify-center w-full rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition'
+      ? 'inline-flex items-center justify-center text-sm text-slate-500 hover:text-slate-900 underline decoration-dotted underline-offset-4 transition'
       : 'inline-flex items-center justify-center w-full rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] transition';
 
   async function handleSubmit() {

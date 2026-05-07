@@ -276,19 +276,19 @@ export default async function AcceptQuotePage({
           )}
         </div>
 
-        {/* Accept/Decline */}
-        <AcceptDeclineButtons token={token} />
-
-        {/* Soft third option: request changes / a re-quote. Visually subordinate
-            to Accept/Decline so it doesn't compete, but always available. */}
-        <div className="pt-2">
-          <RequestRequoteButton
-            token={token}
-            variant="active"
-            defaultCustomerName={quote.customer_name ?? null}
-            defaultCustomerEmail={quote.customer_email ?? null}
-          />
-        </div>
+        {/* Accept/Decline + soft third option (request changes) grouped in
+            the same card so it reads as a single decision panel. */}
+        <AcceptDeclineButtons
+          token={token}
+          secondaryAction={
+            <RequestRequoteButton
+              token={token}
+              variant="active"
+              defaultCustomerName={quote.customer_name ?? null}
+              defaultCustomerEmail={quote.customer_email ?? null}
+            />
+          }
+        />
       </div>
     </div>
   );

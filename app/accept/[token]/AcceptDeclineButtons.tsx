@@ -2,7 +2,13 @@
 import { useState } from 'react';
 import { respondToQuote } from './actions';
 
-export function AcceptDeclineButtons({ token }: { token: string }) {
+interface AcceptDeclineProps {
+  token: string;
+  /** Optional secondary action shown below the Accept/Decline pair, e.g. the Request-Changes button. */
+  secondaryAction?: React.ReactNode;
+}
+
+export function AcceptDeclineButtons({ token, secondaryAction }: AcceptDeclineProps) {
   const [status, setStatus] = useState<'pending' | 'accepted' | 'declined'>('pending');
   const [loading, setLoading] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'accept' | 'decline' | null>(null);
@@ -55,7 +61,7 @@ export function AcceptDeclineButtons({ token }: { token: string }) {
         <p className="text-sm text-slate-600">
           Please accept or decline this quote using the buttons below.
         </p>
-        <div className="flex gap-3 justify-center">
+        <div className="flex gap-3 justify-center flex-wrap">
           <button
             onClick={() => setConfirmAction('accept')}
             disabled={loading}
@@ -71,6 +77,15 @@ export function AcceptDeclineButtons({ token }: { token: string }) {
             Decline Quote
           </button>
         </div>
+        {secondaryAction && (
+          <div className="pt-4 border-t border-slate-100 -mx-6 px-6">
+            <div className="flex justify-center">
+              <div className="max-w-xs w-full">
+                {secondaryAction}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Confirmation Modal */}
