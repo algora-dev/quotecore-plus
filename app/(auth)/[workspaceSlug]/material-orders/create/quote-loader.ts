@@ -66,10 +66,13 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
       .eq('quote_id', quoteId)
       .order('sort_order', { ascending: true });
     
-    // Load takeoff measurements (digital mode - linked to component_library_id)
+    // Load takeoff measurements (digital mode - linked to component_library_id).
+    // measurement_type is REQUIRED here — the order-form normalisation downstream
+    // branches on it ('line' / 'area' / 'point') to pick linear vs area conversion.
+    // Forgetting it makes every imperial digital order silently double-convert.
     const { data: takeoffMeasurements } = await supabase
       .from('quote_takeoff_measurements')
-      .select('id, component_library_id, measurement_value, measurement_unit')
+      .select('id, component_library_id, measurement_type, measurement_value, measurement_unit')
       .eq('quote_id', quoteId)
       .eq('is_visible', true);
     
@@ -135,22 +138,11 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
         // 'line' / 'area' / 'point' are the only types in this table.
         // Linear (line) -> divide by 3.28084. Area -> divide by 10.7639.
         // Points pass through.
-        const original = Number(m.measurement_value);
-        let metricValue = original;
+        let metricValue = Number(m.measurement_value);
         if (isFeet) {
           if (m.measurement_type === 'line') metricValue = convertLinearToMetric(metricValue);
           else if (m.measurement_type === 'area') metricValue = convertAreaFt2ToMetric(metricValue);
         }
-        // Diagnostic: if this log appears in Vercel function logs we know the
-        // new branch is running. Remove once #material-orders Imperial fix is
-        // verified end-to-end.
-        console.log('[QuoteLoader.normalise]', {
-          comp: comp.name,
-          type: m.measurement_type,
-          unit: m.measurement_unit,
-          original,
-          metricValue,
-        });
         return {
           ...m,
           measurement_value: metricValue,
