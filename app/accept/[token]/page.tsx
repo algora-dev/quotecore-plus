@@ -48,6 +48,31 @@ export default async function AcceptQuotePage({
     );
   }
 
+  // Withdrawn by the sender — same UI as expired, since from the customer's
+  // perspective both states mean "this quote is no longer valid". We don't
+  // distinguish them in the customer-facing copy because the user might have
+  // withdrawn for any number of reasons.
+  if ((quote as any).withdrawn_at) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-lg">
+          <div className="text-center mb-6">
+            <h1 className="text-xl font-semibold text-slate-900 mb-2">Quote No Longer Valid</h1>
+            <p className="text-sm text-slate-500">
+              This quote is no longer valid. You can request a fresh quote below or contact the sender directly.
+            </p>
+          </div>
+          <RequestRequoteButton
+            token={token}
+            variant="expired"
+            defaultCustomerName={quote.customer_name ?? null}
+            defaultCustomerEmail={quote.customer_email ?? null}
+          />
+        </div>
+      </div>
+    );
+  }
+
   // Check token expiry — we still surface the re-quote CTA so an aged-out
   // link becomes an inbound lead instead of a dead end.
   if (quote.acceptance_token_expires_at && new Date(quote.acceptance_token_expires_at) < new Date()) {

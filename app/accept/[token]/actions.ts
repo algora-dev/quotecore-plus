@@ -107,10 +107,11 @@ export async function submitRevisionRequest(
   const supabase = createAdminClient();
 
   // Look up the quote by token. We DON'T require the token to be unexpired
-  // here — the whole point is that expired links can still trigger a re-quote.
+  // here — the whole point is that expired/withdrawn links can still trigger
+  // a re-quote.
   const { data: quote, error: fetchErr } = await supabase
     .from('quotes')
-    .select('id, company_id, quote_number, customer_name, accepted_at, declined_at, acceptance_token_expires_at')
+    .select('id, company_id, quote_number, customer_name, accepted_at, declined_at, acceptance_token_expires_at, withdrawn_at')
     .eq('acceptance_token', token)
     .single();
 
@@ -118,9 +119,13 @@ export async function submitRevisionRequest(
     return { success: false, error: 'Quote not found.' };
   }
 
-  // Classify state for the user's awareness.
-  let sourceState: 'active' | 'expired' | 'responded' = 'active';
-  if (quote.accepted_at || quote.declined_at) {
+  // Classify state for the user's awareness. Order matters — a withdrawal
+  // supersedes responded/expired because it's the user's deliberate signal
+  // that this quote shouldn't be acted on.
+  let sourceState: 'active' | 'expired' | 'responded' | 'withdrawn' = 'active';
+  if ((quote as any).withdrawn_at) {
+    sourceState = 'withdrawn';
+  } else if (quote.accepted_at || quote.declined_at) {
     sourceState = 'responded';
   } else if (
     quote.acceptance_token_expires_at &&
@@ -200,12 +205,15 @@ export async function respondToQuote(token: string, action: 'accept' | 'decline'
   // Load quote by token — select ONLY needed fields
   const { data: quote, error: fetchErr } = await supabase
     .from('quotes')
-    .select('id, company_id, customer_name, quote_number, accepted_at, declined_at, acceptance_token_expires_at')
+    .select('id, company_id, customer_name, quote_number, accepted_at, declined_at, acceptance_token_expires_at, withdrawn_at')
     .eq('acceptance_token', token)
     .single();
 
   if (fetchErr || !quote) throw new Error('Quote not found');
   if (quote.accepted_at || quote.declined_at) throw new Error('This quote has already been responded to');
+  if ((quote as any).withdrawn_at) {
+    throw new Error('This quote has been withdrawn by the sender. Please request a fresh quote below.');
+  }
 
   // Check token expiry
   if ((quote as any).acceptance_token_expires_at && new Date((quote as any).acceptance_token_expires_at) < new Date()) {

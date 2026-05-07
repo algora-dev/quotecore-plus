@@ -10,6 +10,7 @@ import { DownloadSummaryPDFButton } from './DownloadSummaryPDFButton';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 import { SendQuoteButton } from './SendQuoteButton';
+import { WithdrawQuoteButton } from './WithdrawQuoteButton';
 import { SummaryTabs } from './SummaryTabs';
 import { SummaryFilesPanel } from './SummaryFilesPanel';
 import { RevisionRequestsPanel } from './RevisionRequestsPanel';
@@ -92,7 +93,7 @@ export default async function QuoteSummaryPage({
     notes: string;
     customer_name: string | null;
     customer_email: string | null;
-    source_state: 'active' | 'expired' | 'responded';
+    source_state: 'active' | 'expired' | 'responded' | 'withdrawn';
     created_at: string;
     resolved_at: string | null;
   }>;
@@ -255,9 +256,16 @@ export default async function QuoteSummaryPage({
               </button>
             </form>
             <DownloadSummaryPDFButton quoteNumber={quote.quote_number} customerName={quote.customer_name} />
+            <WithdrawQuoteButton
+              quoteId={id}
+              hasActiveToken={!!quote.acceptance_token && !quote.withdrawn_at}
+              isAlreadyWithdrawn={!!quote.withdrawn_at}
+              acceptedAt={quote.accepted_at ?? null}
+              declinedAt={quote.declined_at ?? null}
+            />
             <SendQuoteButton
               quoteId={id}
-              existingToken={quote.acceptance_token || null}
+              existingToken={quote.acceptance_token && !quote.withdrawn_at ? quote.acceptance_token : null}
               hasCustomerQuote={hasCustomerQuote}
               emailTemplates={emailTemplates || []}
               quoteMeta={{

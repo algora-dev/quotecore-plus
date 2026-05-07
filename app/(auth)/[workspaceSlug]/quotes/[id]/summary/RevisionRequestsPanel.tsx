@@ -16,7 +16,7 @@ export interface RevisionRequest {
   notes: string;
   customer_name: string | null;
   customer_email: string | null;
-  source_state: 'active' | 'expired' | 'responded';
+  source_state: 'active' | 'expired' | 'responded' | 'withdrawn';
   created_at: string;
   resolved_at: string | null;
 }
@@ -33,6 +33,7 @@ const STATE_BADGE: Record<RevisionRequest['source_state'], { label: string; cls:
   active: { label: 'Active quote', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
   responded: { label: 'After response', cls: 'bg-slate-50 text-slate-700 border-slate-200' },
   expired: { label: 'Expired link', cls: 'bg-orange-50 text-orange-700 border-orange-200' },
+  withdrawn: { label: 'After withdrawal', cls: 'bg-purple-50 text-purple-700 border-purple-200' },
 };
 
 function formatTimestamp(iso: string): string {

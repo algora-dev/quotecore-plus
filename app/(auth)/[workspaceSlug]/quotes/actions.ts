@@ -103,16 +103,21 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
   // Check quote exists and belongs to company
   const { data: quote } = await supabase
     .from('quotes')
-    .select('id, acceptance_token, status')
+    .select('id, acceptance_token, status, accepted_at, declined_at, withdrawn_at')
     .eq('id', quoteId)
     .eq('company_id', profile.company_id)
     .single();
 
   if (!quote) throw new Error('Quote not found');
   if (quote.status === 'draft') throw new Error('Cannot send draft quotes');
+  if ((quote as any).accepted_at) throw new Error('Quote has already been accepted');
+  if ((quote as any).declined_at) throw new Error('Quote has already been declined');
 
-  // Return existing token if already generated
-  if (quote.acceptance_token) return quote.acceptance_token;
+  // Reuse the existing token only when there's a live one (not withdrawn).
+  // After a withdrawal, mint a fresh token so the dead URL stays dead.
+  if (quote.acceptance_token && !(quote as any).withdrawn_at) {
+    return quote.acceptance_token;
+  }
 
   // Generate new token with configurable expiry
   const days = Math.max(1, Math.min(365, expiryDays)); // Clamp 1-365 days
@@ -126,13 +131,68 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
       acceptance_token: token,
       acceptance_token_expires_at: expiresAt.toISOString(),
       job_status: 'sent',
+      // Clear any prior withdrawal so the new link is treated as live.
+      withdrawn_at: null,
+      withdrawn_by_user_id: null,
     })
-    .eq('id', quoteId);
+    .eq('id', quoteId)
+    .eq('company_id', profile.company_id);
 
   if (error) throw new Error(error.message);
 
   revalidatePath('/');
   return token;
+}
+
+/**
+ * Withdraw the active acceptance URL for a quote.
+ *
+ * Stamps `withdrawn_at` and clears the token so the public /accept/[token]
+ * URL stops working immediately. The quote remains intact (just no longer
+ * "sent") and the user can mint a fresh URL whenever they're ready.
+ *
+ * Refuses to withdraw if the quote has already been accepted or declined —
+ * those final states stand.
+ */
+export async function withdrawQuote(quoteId: string): Promise<void> {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  const { data: quote, error: loadErr } = await supabase
+    .from('quotes')
+    .select('id, company_id, acceptance_token, accepted_at, declined_at, withdrawn_at')
+    .eq('id', quoteId)
+    .eq('company_id', profile.company_id)
+    .single();
+
+  if (loadErr || !quote) throw new Error('Quote not found');
+  if ((quote as any).accepted_at) throw new Error('Cannot withdraw — the customer has already accepted this quote.');
+  if ((quote as any).declined_at) throw new Error('Cannot withdraw — the customer has already declined this quote.');
+  if (!quote.acceptance_token && !(quote as any).withdrawn_at) {
+    // Nothing to withdraw — no active link in the first place.
+    throw new Error('No active acceptance link to withdraw.');
+  }
+
+  // We KEEP the token but stamp withdrawn_at. This way the public URL still
+  // resolves so the customer can submit a fresh-quote request through the
+  // same flow used for expired/responded links — but accept/decline are
+  // refused server-side because the quote is withdrawn. When the user mints
+  // a new URL via generateAcceptanceToken, that path replaces the token
+  // (the old one becomes invalid).
+  const { error: updateErr } = await supabase
+    .from('quotes')
+    .update({
+      withdrawn_at: new Date().toISOString(),
+      withdrawn_by_user_id: profile.id,
+      // Roll job_status back to unsent so the quotes list reflects reality.
+      job_status: 'unsent',
+    })
+    .eq('id', quoteId)
+    .eq('company_id', profile.company_id);
+
+  if (updateErr) throw new Error(`Failed to withdraw quote: ${updateErr.message}`);
+
+  revalidatePath('/');
 }
 
 const VALID_JOB_STATUSES = [
