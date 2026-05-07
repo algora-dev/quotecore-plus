@@ -3,6 +3,7 @@
 // Quote data loader - uses customer_quote_lines table (2026-04-14)
 
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import type { MeasurementSystem } from '@/app/lib/types';
 
 export interface QuoteComponentData {
   id: string;
@@ -22,6 +23,8 @@ export interface QuoteData {
   quote_number: string;
   job_name: string | null;
   customer_name: string | null;
+  /** Quote's locked measurement system. Drives the unit labels we paint into the order form. */
+  measurement_system: MeasurementSystem;
   components: QuoteComponentData[];
 }
 
@@ -33,7 +36,7 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
     // Load quote header
     const { data: quote, error: quoteError } = await supabase
       .from('quotes')
-      .select('id, quote_number, job_name, customer_name')
+      .select('id, quote_number, job_name, customer_name, measurement_system')
       .eq('id', quoteId)
       .eq('company_id', profile.company_id)
       .single();

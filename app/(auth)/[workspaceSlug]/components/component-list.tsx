@@ -12,7 +12,6 @@ import type {
   PitchType,
   FlashingLibraryRow,
 } from '@/app/lib/types';
-import { wasteAmountSuffix } from '@/app/lib/types';
 import type { MeasurementSystem } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { getUnitLabel } from '@/app/lib/measurements/displayHelpers';
@@ -57,6 +56,18 @@ export function ComponentList({
   /** Local helper that picks the right unit suffix for a measurement type given the company's default system. */
   const unitForMeasurement = (mt: MeasurementType) =>
     getUnitLabel(mt as 'area' | 'lineal' | 'quantity' | 'fixed', companyMeasurementSystem);
+  /** System-aware version of `wasteAmountSuffix(wt, mt)` from types.ts. Drives the
+   *  right-hand label next to the Waste Amount input on the component editor. */
+  const wasteAmountSuffix = (wt: WasteType, mt: MeasurementType): string => {
+    if (wt === 'percent') return '%';
+    if (wt === 'fixed') return unitForMeasurement(mt);
+    return '';
+  };
+  /** Placeholder text inside the Waste Amount input. Mirrors the suffix unit. */
+  const wasteAmountPlaceholder = (wt: WasteType, mt: MeasurementType): string => {
+    if (wt === 'percent') return '% e.g. 10';
+    return `e.g. 0.25 (${unitForMeasurement(mt)})`;
+  };
   const [components, setComponents] = useState(initialComponents);
   const [flashings, setFlashings] = useState<FlashingLibraryRow[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -242,6 +253,7 @@ export function ComponentList({
   }
 
   const wasteAmountLabel = wasteAmountSuffix(formWasteType, formMeasurementType);
+  const wasteAmountPlaceholderText = wasteAmountPlaceholder(formWasteType, formMeasurementType);
 
   return (
     <div className="space-y-5">
@@ -385,7 +397,7 @@ export function ComponentList({
               {formWasteType !== 'none' && (
                 <div data-copilot="component-waste-amount">
                   <label className="block text-xs text-slate-500 mb-1">Waste Amount {wasteAmountLabel}</label>
-                  <input name="waste_amount" type="number" step="0.01" placeholder={formWasteType === 'percent' ? '% e.g. 10' : 'e.g. 0.25(m)'} className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
+                  <input name="waste_amount" type="number" step="0.01" placeholder={wasteAmountPlaceholderText} className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
                 </div>
               )}
             </div>

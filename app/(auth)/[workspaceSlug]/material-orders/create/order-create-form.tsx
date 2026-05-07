@@ -5,8 +5,16 @@ import { useRouter } from 'next/navigation';
 import type { MaterialOrderTemplateRow, FlashingLibraryRow } from '@/app/lib/types';
 import { saveDraftOrder } from './order-actions';
 import type { QuoteData } from './quote-loader';
+import { normalizeMeasurementSystem } from '@/app/lib/types';
+import { getUnitLabel } from '@/app/lib/measurements/displayHelpers';
+import {
+  convertLinear,
+  convertArea,
+  convertAreaFt2,
+} from '@/app/lib/measurements/conversions';
 import type { ExistingOrderData } from './order-loader';
 import { BackButton } from '@/app/components/BackButton';
+import { AlertModal } from '@/app/components/AlertModal';
 
 interface OrderCreateFormProps {
   templates: MaterialOrderTemplateRow[];
@@ -51,6 +59,27 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
   
   // Layout state
   const [layoutMode, setLayoutMode] = useState<'single' | 'double'>('single');
+  // App-style alert state. Replaces native alert() calls so the order flow
+  // matches the rest of the app's modal styling.
+  const [alertState, setAlertState] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    variant?: 'info' | 'success' | 'error';
+    /** When set, the modal's close handler runs this callback (e.g. navigate after save). */
+    onClose?: () => void;
+  }>({ open: false, title: '' });
+  const showAlert = (
+    title: string,
+    description?: string,
+    variant: 'info' | 'success' | 'error' = 'info',
+    onClose?: () => void
+  ) => setAlertState({ open: true, title, description, variant, onClose });
+  const closeAlert = () => {
+    const cb = alertState.onClose;
+    setAlertState({ open: false, title: '' });
+    if (cb) cb();
+  };
   const [headerExpanded, setHeaderExpanded] = useState(true);
   const [saving, setSaving] = useState(false);
   
@@ -91,25 +120,56 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
     
     console.log('[OrderCreateForm] Mapping', quoteData.components.length, 'components');
     
+    // The quote's measurement system is locked at creation; the order
+    // inherits it. We:
+    //   - paint the right unit suffix (m / m² / ft / ft² / RS) into
+    //     `unit` and `lengthUnit`
+    //   - convert the canonical metric quantities into the display system
+    //     so the value the supplier sees matches the quote.
+    const sys = normalizeMeasurementSystem(quoteData.measurement_system);
+    const lengthUnit = getUnitLabel('lineal', quoteData.measurement_system); // 'm' | 'ft'
+    const areaUnit = getUnitLabel('area', quoteData.measurement_system);     // 'm²' | 'ft²' | 'RS'
+    const toDisplayLinear = (m: number) => sys === 'metric' ? m : convertLinear(m);
+    const toDisplayArea = (sqm: number) => {
+      if (sys === 'metric') return sqm;
+      if (sys === 'imperial_ft') return convertAreaFt2(sqm);
+      return Number(convertArea(sqm)); // imperial_rs -> RS
+    };
+
     // Map quote components to order line items
     const mappedLines: OrderLineItem[] = quoteData.components.map((comp) => {
       // Get first flashing_id from component_library join (flashing_ids is array)
       const flashingId = comp.component_library?.flashing_ids?.[0] || undefined;
       const flashing = flashingId ? flashings.find(f => f.id === flashingId) : undefined;
-      
-      // Derive unit from measurement_type
-      const unit = comp.measurement_type === 'lineal' ? 'm' : comp.measurement_type === 'area' ? 'm²' : 'pcs';
-      
+
+      // Pick the unit + display value for the SINGLE-quantity path.
+      const singleUnit =
+        comp.measurement_type === 'lineal'
+          ? lengthUnit
+          : comp.measurement_type === 'area'
+          ? areaUnit
+          : 'pcs';
+      const rawQty = comp.final_quantity || 0;
+      const displayQty =
+        comp.measurement_type === 'lineal'
+          ? toDisplayLinear(rawQty)
+          : comp.measurement_type === 'area'
+          ? toDisplayArea(rawQty)
+          : rawQty;
+
       // Check if we have individual measurements for this component
       const hasMeasurements = comp.measurements && comp.measurements.length > 0;
-      
+
       if (hasMeasurements) {
-        // Multiple lengths mode - use individual cut lengths (rounded to 2 decimals)
-        const lengths: LengthEntry[] = comp.measurements!.map(m => ({
-          length: Math.round(m.measurement_value * 100) / 100,
-          multiplier: 1,
-        }));
-        
+        // Multiple lengths mode — the stored measurement_values are in
+        // canonical metric (m for linear, m² for area), so convert each into
+        // the display system before rendering.
+        const isLineal = comp.measurement_type === 'lineal';
+        const lengths: LengthEntry[] = comp.measurements!.map(m => {
+          const converted = isLineal ? toDisplayLinear(m.measurement_value) : toDisplayArea(m.measurement_value);
+          return { length: Math.round(converted * 100) / 100, multiplier: 1 };
+        });
+
         return {
           id: `quote-${comp.id}`,
           componentName: comp.name,
@@ -119,21 +179,23 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
           quantity: 0,
           unit: 'pcs',
           lengths,
-          lengthUnit: 'm',
+          // For 'multiple' lines we always show the lineal unit since each
+          // entry is a cut length — even for area-typed components the order
+          // is fundamentally a list of lengths.
+          lengthUnit,
           showComponentName: true,
           showFlashingImage: !!flashing?.image_url,
           showMeasurements: true,
         };
       } else {
-        // Single mode - use total quantity
         return {
           id: `quote-${comp.id}`,
           componentName: comp.name,
           flashingId,
           flashingImageUrl: flashing?.image_url,
           entryMode: 'single',
-          quantity: comp.final_quantity || 0,
-          unit,
+          quantity: displayQty,
+          unit: singleUnit,
           showComponentName: true,
           showFlashingImage: !!flashing?.image_url,
           showMeasurements: true,
@@ -235,12 +297,12 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
     if (!file) return;
     
     if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file');
+      showAlert('Image required', 'Please upload an image file.', 'info');
       return;
     }
-    
+
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image must be less than 5MB');
+      showAlert('Image too large', 'The image must be less than 5 MB.', 'info');
       return;
     }
     
@@ -261,7 +323,8 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
       setLogoUrl(url);
     } catch (error) {
       console.error('Logo upload error:', error);
-      alert('Failed to upload logo. Please try again.');
+      const message = error instanceof Error ? error.message : 'Please try again.';
+      showAlert('Failed to upload logo', message, 'error');
     } finally {
       setUploadingLogo(false);
     }
@@ -363,12 +426,12 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
   
   async function handleSaveDraft() {
     if (!reference.trim()) {
-      alert('Please enter a Reference/Job name before saving');
+      showAlert('Reference required', 'Please enter a Reference / Job name before saving.', 'info');
       return;
     }
-    
+
     if (orderLines.length === 0) {
-      alert('Please add at least one component before saving');
+      showAlert('No components', 'Please add at least one component before saving.', 'info');
       return;
     }
     
@@ -408,11 +471,19 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
         })),
       });
       
-      alert(`Order saved! Order #${result.orderNumber}`);
-      router.push('../material-orders');
+      // Show success modal, then navigate when the user closes it. The
+      // navigation runs in the modal's onClose so the user actually sees the
+      // confirmation instead of being whisked away mid-toast.
+      showAlert(
+        'Order saved',
+        `Order #${result.orderNumber} has been saved successfully.`,
+        'success',
+        () => router.push('../material-orders')
+      );
     } catch (error) {
       console.error('Save error:', error);
-      alert('Failed to save order. Please try again.');
+      const message = error instanceof Error ? error.message : 'Please try again.';
+      showAlert('Failed to save order', message, 'error');
     } finally {
       setSaving(false);
     }
@@ -1029,8 +1100,18 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
             setShowAddItemModal(false);
             setEditingLineId(null);
           }}
+          showAlert={showAlert}
         />
       )}
+
+      {/* App-style alert replaces native alert() across the order create flow. */}
+      <AlertModal
+        open={alertState.open}
+        title={alertState.title}
+        description={alertState.description}
+        variant={alertState.variant}
+        onClose={closeAlert}
+      />
     </div>
   );
 }
@@ -1050,9 +1131,11 @@ interface AddItemModalProps {
     notes?: string;
   }) => void;
   onCancel: () => void;
+  /** Inherited from the parent so this modal can pop the same app-style alerts instead of native ones. */
+  showAlert: (title: string, description?: string, variant?: 'info' | 'success' | 'error') => void;
 }
 
-function AddItemModal({ flashings, existingLine, onSave, onCancel }: AddItemModalProps) {
+function AddItemModal({ flashings, existingLine, onSave, onCancel, showAlert }: AddItemModalProps) {
   const [componentName, setComponentName] = useState(existingLine?.componentName || '');
   const [flashingId, setFlashingId] = useState(existingLine?.flashingId || '');
   const [entryMode, setEntryMode] = useState<'single' | 'multiple'>(existingLine?.entryMode || 'single');
@@ -1078,11 +1161,11 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel }: AddItemModa
   
   function addVariable() {
     if (!newVarName.trim()) {
-      alert('Variable name is required');
+      showAlert('Variable name required', 'Please enter a name for the variable.', 'info');
       return;
     }
     if (newVarValue <= 0) {
-      alert('Variable value must be greater than 0');
+      showAlert('Invalid variable value', 'The variable value must be greater than 0.', 'info');
       return;
     }
     
@@ -1102,11 +1185,11 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel }: AddItemModa
   
   function addLength() {
     if (newLength <= 0) {
-      alert('Length must be greater than 0');
+      showAlert('Invalid length', 'The length must be greater than 0.', 'info');
       return;
     }
     if (newMultiplier <= 0) {
-      alert('Multiplier must be greater than 0');
+      showAlert('Invalid multiplier', 'The multiplier must be greater than 0.', 'info');
       return;
     }
     
@@ -1129,13 +1212,13 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel }: AddItemModa
     e.preventDefault();
     
     if (!componentName.trim()) {
-      alert('Component name is required');
+      showAlert('Component name required', 'Please enter a name for this component.', 'info');
       return;
     }
-    
+
     if (entryMode === 'single') {
       if (quantity <= 0) {
-        alert('Quantity must be greater than 0');
+        showAlert('Invalid quantity', 'The quantity must be greater than 0.', 'info');
         return;
       }
       
@@ -1149,7 +1232,7 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel }: AddItemModa
       });
     } else {
       if (lengths.length === 0) {
-        alert('Add at least one length entry');
+        showAlert('No lengths', 'Add at least one length entry before saving.', 'info');
         return;
       }
       

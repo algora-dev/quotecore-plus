@@ -26,7 +26,7 @@ interface Props {
 const MEASUREMENT_OPTIONS: Array<{ value: MeasurementChoice; title: string; subtitle: string }> = [
   { value: 'metric', title: 'Metric', subtitle: 'meters & m²' },
   { value: 'imperial_ft', title: 'Imperial — ft²', subtitle: 'feet & square feet' },
-  { value: 'imperial_rs', title: 'Imperial — Roofing Squares', subtitle: 'feet & RS (1 RS = 100 ft²)' },
+  { value: 'imperial_rs', title: 'Imperial — Roofing Squares', subtitle: 'feet & Roofing Squares (RS)' },
 ];
 
 export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultMeasurementSystem }: Props) {

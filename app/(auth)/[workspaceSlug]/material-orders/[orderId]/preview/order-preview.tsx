@@ -180,7 +180,7 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
                         ) : (
                           line.lengths && (
                             <div>
-                              <p className="font-semibold mb-1">LENGTHS (M):</p>
+                              <p className="font-semibold mb-1">LENGTHS ({(line.length_unit || 'm').toUpperCase()}):</p>
                               <ul className="space-y-1">
                                 {(line.lengths as any[]).map((entry, idx) => (
                                   <li key={idx}>
@@ -248,7 +248,7 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
                               ) : (
                                 line.lengths && (
                                   <div>
-                                    <p className="font-semibold mb-1">LENGTHS (M):</p>
+                                    <p className="font-semibold mb-1">LENGTHS ({(line.length_unit || 'm').toUpperCase()}):</p>
                                     <ul className="space-y-1">
                                       {(line.lengths as any[]).map((entry, idx) => (
                                         <li key={idx}>

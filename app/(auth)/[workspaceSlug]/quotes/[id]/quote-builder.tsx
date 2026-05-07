@@ -4,7 +4,16 @@ import Link from 'next/link';
 import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins } from '../actions';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { unitForMeasurement, entryLabel, addMoreLabel } from '@/app/lib/types';
-import { convertArea, convertLinearToMetric, convertAreaToMetric } from '@/app/lib/measurements/conversions';
+// Use the polymorphic helpers for any user-input -> metric conversion. They
+// dispatch correctly across all three systems (metric / imperial_ft /
+// imperial_rs) so we don't have to branch on the system manually anywhere
+// the user types a number into an Imperial quote.
+import {
+  convertArea,
+  linearInputToMetric,
+  areaInputToMetric,
+} from '@/app/lib/measurements/conversions';
+import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { formatArea, formatLinear, getUnitLabel } from '@/app/lib/measurements/displayHelpers';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow, InputMode } from '@/app/lib/types';
 // MeasurementSystemToggle removed: a quote's measurement system is locked at
@@ -173,9 +182,11 @@ export function QuoteBuilder({
   async function handleAddRoofAreaEntry(areaId: string, widthInput: number, lengthInput: number) {
     const area = roofAreas.find(a => a.id === areaId);
     if (!area) return;
-    // Convert imperial inputs to metric for storage
-    const widthM = quote.measurement_system === 'imperial' ? convertLinearToMetric(widthInput) : widthInput;
-    const lengthM = quote.measurement_system === 'imperial' ? convertLinearToMetric(lengthInput) : lengthInput;
+    // Convert imperial inputs to metric for storage. linearInputToMetric()
+    // is a no-op for metric quotes and converts feet -> meters for both
+    // imperial_ft and imperial_rs.
+    const widthM = linearInputToMetric(widthInput, quote.measurement_system);
+    const lengthM = linearInputToMetric(lengthInput, quote.measurement_system);
     const entry = await addRoofAreaEntry(areaId, widthM, lengthM, area.calc_pitch_degrees ?? 0);
     setRoofAreaEntries(prev => ({ ...prev, [areaId]: [...(prev[areaId] ?? []), entry] }));
     const areaEnts = [...(roofAreaEntries[areaId] ?? []), entry];
@@ -243,15 +254,17 @@ export function QuoteBuilder({
 
   async function handleAddEntry(compId: string, rawInputValue: number) {
     const comp = components.find(c => c.id === compId);
-    // Convert imperial inputs to metric for storage
+    // Convert imperial inputs to metric for storage. The helpers handle the
+    // 3 systems correctly:
+    //   - imperial_ft: ft -> m (linear), ft² -> m² (area)
+    //   - imperial_rs: ft -> m (linear), RS  -> m² (area)
+    //   - metric:     pass through
+    //   - quantity / fixed: pass through (no unit attached)
     let rawValue = rawInputValue;
-    if (quote.measurement_system === 'imperial') {
-      if (comp?.measurement_type === 'area') {
-        rawValue = convertAreaToMetric(rawInputValue);
-      } else if (comp?.measurement_type === 'lineal') {
-        rawValue = convertLinearToMetric(rawInputValue);
-      }
-      // quantity/fixed pass through unchanged
+    if (comp?.measurement_type === 'area') {
+      rawValue = areaInputToMetric(rawInputValue, quote.measurement_system);
+    } else if (comp?.measurement_type === 'lineal') {
+      rawValue = linearInputToMetric(rawInputValue, quote.measurement_system);
     }
     const areaPitch = comp?.quote_roof_area_id
       ? roofAreas.find(a => a.id === comp.quote_roof_area_id)?.calc_pitch_degrees ?? null
@@ -958,7 +971,7 @@ function RoofAreaCard({
                     step="0.01"
                     value={widthInput}
                     onChange={e => setWidthInput(e.target.value)}
-                    placeholder={quote.measurement_system === "imperial" ? "Width (ft)" : "Width (m)"}
+                    placeholder={normalizeMeasurementSystem(quote.measurement_system) === 'metric' ? "Width (m)" : "Width (ft)"}
                     onKeyDown={e => {
                       if (e.key === 'Enter') handleSubmit();
                       if (e.key === 'Escape') {
@@ -975,7 +988,7 @@ function RoofAreaCard({
                     step="0.01"
                     value={lengthInput}
                     onChange={e => setLengthInput(e.target.value)}
-                    placeholder={quote.measurement_system === "imperial" ? "Length (ft)" : "Length (m)"}
+                    placeholder={normalizeMeasurementSystem(quote.measurement_system) === 'metric' ? "Length (m)" : "Length (ft)"}
                     onKeyDown={e => {
                       if (e.key === 'Enter') handleSubmit();
                       if (e.key === 'Escape') {

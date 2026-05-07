@@ -5,11 +5,17 @@
  * submitted by the customer via the public acceptance URL. Each request shows
  * the customer's notes, when it arrived, contact info (if provided), and a
  * "Mark Resolved" button. Resolved requests collapse into a count.
+ *
+ * Replying: instead of forcing a `mailto:` button (which opens whichever
+ * email client the OS thinks is default), we show the customer's email
+ * address inline alongside a Copy-to-clipboard button. Most users prefer to
+ * paste the address into their own browser-based mail client.
  */
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { resolveRevisionRequest } from '@/app/accept/[token]/actions';
+import { AlertModal } from '@/app/components/AlertModal';
 
 export interface RevisionRequest {
   id: string;
@@ -25,7 +31,7 @@ interface Props {
   requests: RevisionRequest[];
   /** Customer name from the quote, used as a fallback when the request didn't include one. */
   fallbackCustomerName: string;
-  /** Quote number for the mailto subject line. */
+  /** Quote number kept on the props for future use (e.g. richer reply UX). Currently unused. */
   quoteNumber: number | null;
 }
 
@@ -47,7 +53,7 @@ function formatTimestamp(iso: string): string {
   });
 }
 
-export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNumber }: Props) {
+export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNumber: _quoteNumber }: Props) {
   const pending = requests.filter((r) => !r.resolved_at);
   const resolved = requests.filter((r) => r.resolved_at);
 
@@ -56,11 +62,40 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
   const [expanded, setExpanded] = useState(pending.length > 0);
   const [showResolved, setShowResolved] = useState(false);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
+  /** Per-request "Copied!" feedback timeout. */
+  const [copiedRequestId, setCopiedRequestId] = useState<string | null>(null);
+  /** App-style alert state replaces native alert() in this panel. */
+  const [alertState, setAlertState] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    variant?: 'info' | 'success' | 'error';
+  }>({ open: false, title: '' });
+  const closeAlert = () => setAlertState((s) => ({ ...s, open: false }));
   const [, startTransition] = useTransition();
   const router = useRouter();
 
-  // Don't render anything if there's no history at all \u2014 keeps the summary clean.
+  // Don't render anything if there's no history at all — keeps the summary clean.
   if (requests.length === 0) return null;
+
+  async function copyEmail(req: RevisionRequest) {
+    if (!req.customer_email) return;
+    try {
+      await navigator.clipboard.writeText(req.customer_email);
+      setCopiedRequestId(req.id);
+      // Reset the "Copied!" feedback after 1.5s so the button returns to normal.
+      window.setTimeout(() => setCopiedRequestId((cur) => (cur === req.id ? null : cur)), 1500);
+    } catch {
+      // Clipboard can fail in non-secure contexts — fall back to a modal so
+      // the user can still grab the address.
+      setAlertState({
+        open: true,
+        title: 'Could not copy',
+        description: `Couldn't reach the clipboard. The email is:\n\n${req.customer_email}`,
+        variant: 'info',
+      });
+    }
+  }
 
   function handleResolve(id: string) {
     setResolvingId(id);
@@ -70,21 +105,16 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
         router.refresh();
       } catch (err) {
         console.error('[resolveRevisionRequest] failed:', err);
-        alert(`Failed to resolve request: ${err instanceof Error ? err.message : 'unknown error'}`);
+        setAlertState({
+          open: true,
+          title: 'Failed to resolve request',
+          description: err instanceof Error ? err.message : 'Unknown error',
+          variant: 'error',
+        });
       } finally {
         setResolvingId(null);
       }
     });
-  }
-
-  function buildReplyMailto(req: RevisionRequest): string | null {
-    if (!req.customer_email) return null;
-    const subject = encodeURIComponent(`Re: Quote${quoteNumber !== null ? ` #${quoteNumber}` : ''} \u2014 revision request`);
-    const greetingName = req.customer_name || fallbackCustomerName || 'there';
-    const body = encodeURIComponent(
-      `Hi ${greetingName},\n\nThanks for getting in touch about Quote${quoteNumber !== null ? ` #${quoteNumber}` : ''}. Regarding your notes:\n\n> ${req.notes.split('\n').join('\n> ')}\n\n`
-    );
-    return `mailto:${req.customer_email}?subject=${subject}&body=${body}`;
   }
 
   return (
@@ -120,7 +150,6 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
         <div className="mt-4 space-y-3">
           {pending.map((req) => {
             const badge = STATE_BADGE[req.source_state];
-            const mailto = buildReplyMailto(req);
             return (
               <div key={req.id} className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -140,19 +169,26 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
                 </p>
 
                 <div className="flex items-center gap-2 flex-wrap">
-                  {mailto && (
-                    <a
-                      href={mailto}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {/* Email + Copy: show the actual customer email inline so the user
+                      can grab it into whichever mail client they use, instead of being
+                      forced through a `mailto:` handler. */}
+                  {req.customer_email ? (
+                    <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 pl-3 pr-1 py-1 text-xs text-slate-700">
+                      <svg className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
-                      Reply by email
-                    </a>
-                  )}
-                  {req.customer_email && !mailto && (
-                    <span className="text-xs text-slate-500">{req.customer_email}</span>
+                      <span className="select-all font-medium break-all">{req.customer_email}</span>
+                      <button
+                        type="button"
+                        onClick={() => copyEmail(req)}
+                        className="ml-1 rounded-full bg-white border border-slate-300 px-2 py-0.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 flex-shrink-0"
+                        title="Copy email address to clipboard"
+                      >
+                        {copiedRequestId === req.id ? 'Copied!' : 'Copy'}
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">No email provided</span>
                   )}
                   <button
                     type="button"
@@ -186,7 +222,7 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
                             {req.customer_name || fallbackCustomerName || 'Customer'}
                           </p>
                           <p className="text-[11px] text-slate-400">
-                            Submitted {formatTimestamp(req.created_at)} \u00b7 Resolved {req.resolved_at ? formatTimestamp(req.resolved_at) : ''}
+                            Submitted {formatTimestamp(req.created_at)} · Resolved {req.resolved_at ? formatTimestamp(req.resolved_at) : ''}
                           </p>
                         </div>
                       </div>
@@ -199,6 +235,14 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
           )}
         </div>
       )}
+
+      <AlertModal
+        open={alertState.open}
+        title={alertState.title}
+        description={alertState.description}
+        variant={alertState.variant}
+        onClose={closeAlert}
+      />
     </div>
   );
 }

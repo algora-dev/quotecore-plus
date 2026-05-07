@@ -7,6 +7,7 @@ import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { saveTakeoffMeasurements } from './actions';
 import { uploadCanvasImage } from './uploadCanvasImage';
+import { AlertModal } from '@/app/components/AlertModal';
 
 // Extend Fabric.js Canvas type with custom properties
 declare module 'fabric' {
@@ -136,6 +137,17 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [showPointMeasurementPrompt, setShowPointMeasurementPrompt] = useState(false);
   const [pendingPointLocation, setPendingPointLocation] = useState<{ x: number; y: number } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  // Replaces native alert() across this workstation. `error` flips the modal
+  // to red styling so problems read clearly.
+  const [alertState, setAlertState] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    variant?: 'info' | 'success' | 'error';
+  }>({ open: false, title: '' });
+  const showAlert = (title: string, description?: string, variant: 'info' | 'success' | 'error' = 'info') =>
+    setAlertState({ open: true, title, description, variant });
+  const closeAlert = () => setAlertState((s) => ({ ...s, open: false }));
   
   // Component display state (may include test components)
   const [displayComponents, setDisplayComponents] = useState<Component[]>([]);
@@ -397,7 +409,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     console.log('[SaveTakeoff] Roof areas:', roofAreas.length);
     
     if (componentMeasurements.length === 0 && roofAreas.length === 0) {
-      alert('No measurements to save. Please add some measurements first.');
+      showAlert('No measurements to save', 'Please add some measurements first.', 'info');
       return;
     }
     
@@ -546,7 +558,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
     } catch (error) {
       console.error('[SaveTakeoff] Error:', error);
-      alert('Failed to save measurements. Please try again.');
+      // Surface the real error message so we can diagnose Imperial save bugs
+      // and any future RPC issues. The native alert() that used to live here
+      // hid the underlying cause behind a generic message.
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      showAlert('Failed to save measurements', message, 'error');
     } finally {
       setIsSaving(false);
     }
@@ -1386,11 +1402,15 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 onClick={() => {
                   const hasRoofAreaWithPitch = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0);
                   if (!hasRoofAreaWithPitch) {
-                    alert('Create a roof area with pitch first! This is required for component calculations.');
+                    showAlert(
+                      'Roof area required',
+                      'Create a roof area with pitch first — components are calculated against the roof pitch.',
+                      'info'
+                    );
                     return;
                   }
                   if (!selectedComponentId) {
-                    alert('Select a component first');
+                    showAlert('Select a component first', 'Pick a component from the list before measuring.', 'info');
                     return;
                   }
                   setLineMode(!lineMode);
@@ -1427,11 +1447,15 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 onClick={() => {
                   const hasRoofAreaWithPitch = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0);
                   if (!hasRoofAreaWithPitch) {
-                    alert('Create a roof area with pitch first! This is required for component calculations.');
+                    showAlert(
+                      'Roof area required',
+                      'Create a roof area with pitch first — components are calculated against the roof pitch.',
+                      'info'
+                    );
                     return;
                   }
                   if (!selectedComponentId) {
-                    alert('Select a component first');
+                    showAlert('Select a component first', 'Pick a component from the list before measuring.', 'info');
                     return;
                   }
                   setPointMode(!pointMode);
@@ -1705,6 +1729,15 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           }}
         />
       )}
+
+      {/* App-style alert replaces native alert() across this workstation. */}
+      <AlertModal
+        open={alertState.open}
+        title={alertState.title}
+        description={alertState.description}
+        variant={alertState.variant}
+        onClose={closeAlert}
+      />
       </div>
     </div>
   );

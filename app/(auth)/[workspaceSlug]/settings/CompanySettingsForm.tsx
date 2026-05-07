@@ -223,13 +223,13 @@ export function CompanySettingsForm({
         <label className="block">
           <span className="text-sm font-semibold text-gray-900">Measurement System</span>
           <p className="text-xs text-gray-600 mt-1 mb-2">
-            Default units for quotes and measurements. Roofing Squares (RS) is common for NZ/AU/UK roofers; ft² is common for US.
+            Default units for new quotes. Each quote keeps its own measurement system once created.
           </p>
           <div className="flex flex-col gap-2">
             {[
               { value: 'metric', label: 'Metric — meters & m²' },
               { value: 'imperial_ft', label: 'Imperial — feet & ft²' },
-              { value: 'imperial_rs', label: 'Imperial — feet & Roofing Squares (1 RS = 100 ft²)' },
+              { value: 'imperial_rs', label: 'Imperial — feet & Roofing Squares (RS)' },
             ].map((opt) => (
               <label
                 key={opt.value}
