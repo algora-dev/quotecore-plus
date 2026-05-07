@@ -12,6 +12,7 @@ import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currenc
 import { SendQuoteButton } from './SendQuoteButton';
 import { SummaryTabs } from './SummaryTabs';
 import { SummaryFilesPanel } from './SummaryFilesPanel';
+import { RevisionRequestsPanel } from './RevisionRequestsPanel';
 import { loadQuoteTaxes } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
 
@@ -79,6 +80,23 @@ export default async function QuoteSummaryPage({
   const companyDefaultCurrency = company?.default_currency || 'NZD';
   const effectiveCurrency = getEffectiveCurrency(quote.currency, companyDefaultCurrency);
   
+  // Load customer-submitted revision requests (from the public acceptance URL)
+  // so we can surface them on the summary as a pending action.
+  const { data: revisionRequestsData } = await supabase
+    .from('quote_revision_requests')
+    .select('id, notes, customer_name, customer_email, source_state, created_at, resolved_at')
+    .eq('quote_id', id)
+    .order('created_at', { ascending: false });
+  const revisionRequests = (revisionRequestsData ?? []) as Array<{
+    id: string;
+    notes: string;
+    customer_name: string | null;
+    customer_email: string | null;
+    source_state: 'active' | 'expired' | 'responded';
+    created_at: string;
+    resolved_at: string | null;
+  }>;
+
   // Load all files (plan + supporting)
   const { data: filesData } = await supabase
     .from('quote_files')
@@ -184,6 +202,14 @@ export default async function QuoteSummaryPage({
           <span className="text-sm font-medium text-orange-600">Quote #{quote.quote_number}</span>
         </div>
       </div>
+
+      {revisionRequests.length > 0 && (
+        <RevisionRequestsPanel
+          requests={revisionRequests}
+          fallbackCustomerName={quote.customer_name}
+          quoteNumber={quote.quote_number}
+        />
+      )}
 
       <SummaryTabs
         workspaceSlug={workspaceSlug}

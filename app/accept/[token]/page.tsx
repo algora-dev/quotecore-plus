@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 import { AcceptDeclineButtons } from './AcceptDeclineButtons';
+import { RequestRequoteButton } from './RequestRequoteButton';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 
 export default async function AcceptQuotePage({
@@ -35,6 +36,8 @@ export default async function AcceptQuotePage({
     .single();
 
   if (error || !quote) {
+    // No quote at all — we can't show a re-quote button because we have no
+    // company to route the request to. Show the original generic message.
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="bg-white rounded-xl p-8 max-w-md text-center shadow-lg">
@@ -45,24 +48,36 @@ export default async function AcceptQuotePage({
     );
   }
 
-  // Check token expiry
+  // Check token expiry — we still surface the re-quote CTA so an aged-out
+  // link becomes an inbound lead instead of a dead end.
   if (quote.acceptance_token_expires_at && new Date(quote.acceptance_token_expires_at) < new Date()) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="bg-white rounded-xl p-8 max-w-md text-center shadow-lg">
-          <h1 className="text-xl font-semibold text-slate-900 mb-2">Link Expired</h1>
-          <p className="text-sm text-slate-500">This quote link has expired. Please contact the sender for a new link.</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-lg">
+          <div className="text-center mb-6">
+            <h1 className="text-xl font-semibold text-slate-900 mb-2">Link Expired</h1>
+            <p className="text-sm text-slate-500">
+              This quote link has expired. You can request a fresh quote below or contact the sender directly.
+            </p>
+          </div>
+          <RequestRequoteButton
+            token={token}
+            variant="expired"
+            defaultCustomerName={quote.customer_name ?? null}
+            defaultCustomerEmail={quote.customer_email ?? null}
+          />
         </div>
       </div>
     );
   }
 
-  // Check if already responded
+  // Check if already responded — same idea, surface the re-quote CTA so
+  // the customer can re-engage if circumstances change.
   if (quote.accepted_at || quote.declined_at) {
     const wasAccepted = !!quote.accepted_at;
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="bg-white rounded-xl p-8 max-w-md text-center shadow-lg">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-lg">
           <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${wasAccepted ? 'bg-emerald-100' : 'bg-red-100'}`}>
             {wasAccepted ? (
               <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,15 +89,21 @@ export default async function AcceptQuotePage({
               </svg>
             )}
           </div>
-          <h1 className="text-xl font-semibold text-slate-900 mb-2">
+          <h1 className="text-xl font-semibold text-slate-900 mb-2 text-center">
             Quote Already {wasAccepted ? 'Accepted' : 'Declined'}
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 text-center mb-6">
             This quote was {wasAccepted ? 'accepted' : 'declined'} on{' '}
             {new Date(wasAccepted ? quote.accepted_at! : quote.declined_at!).toLocaleDateString('en-NZ', {
               day: '2-digit', month: 'short', year: 'numeric',
             })}.
           </p>
+          <RequestRequoteButton
+            token={token}
+            variant="responded"
+            defaultCustomerName={quote.customer_name ?? null}
+            defaultCustomerEmail={quote.customer_email ?? null}
+          />
         </div>
       </div>
     );
@@ -232,6 +253,17 @@ export default async function AcceptQuotePage({
 
         {/* Accept/Decline */}
         <AcceptDeclineButtons token={token} />
+
+        {/* Soft third option: request changes / a re-quote. Visually subordinate
+            to Accept/Decline so it doesn't compete, but always available. */}
+        <div className="pt-2">
+          <RequestRequoteButton
+            token={token}
+            variant="active"
+            defaultCustomerName={quote.customer_name ?? null}
+            defaultCustomerEmail={quote.customer_email ?? null}
+          />
+        </div>
       </div>
     </div>
   );
