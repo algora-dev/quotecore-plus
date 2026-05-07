@@ -161,7 +161,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
       const hasMeasurements = comp.measurements && comp.measurements.length > 0;
 
       if (hasMeasurements) {
-        // Multiple lengths mode — the stored measurement_values are in
+        // Multiple-entries mode — the stored measurement_values are in
         // canonical metric (m for linear, m² for area), so convert each into
         // the display system before rendering.
         const isLineal = comp.measurement_type === 'lineal';
@@ -169,6 +169,12 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
           const converted = isLineal ? toDisplayLinear(m.measurement_value) : toDisplayArea(m.measurement_value);
           return { length: Math.round(converted * 100) / 100, multiplier: 1 };
         });
+
+        // Pick the right unit for the entries: linear unit (m / ft) for
+        // lineal components, area unit (m² / ft² / RS) for area components.
+        // Anything else (quantity / fixed) falls back to the linear unit
+        // since those rarely use the multi-entries mode.
+        const entryUnit = comp.measurement_type === 'area' ? areaUnit : lengthUnit;
 
         return {
           id: `quote-${comp.id}`,
@@ -179,10 +185,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
           quantity: 0,
           unit: 'pcs',
           lengths,
-          // For 'multiple' lines we always show the lineal unit since each
-          // entry is a cut length — even for area-typed components the order
-          // is fundamentally a list of lengths.
-          lengthUnit,
+          lengthUnit: entryUnit,
           showComponentName: true,
           showFlashingImage: !!flashing?.image_url,
           showMeasurements: true,
