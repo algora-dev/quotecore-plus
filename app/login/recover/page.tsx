@@ -1,4 +1,5 @@
 import { RecoverFlow } from './RecoverFlow';
+import { PublicFooter } from '@/app/components/PublicFooter';
 
 /**
  * Account recovery flow — "I've lost access to my email."
@@ -17,8 +18,8 @@ export const dynamic = 'force-dynamic';
 
 export default function RecoverPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-10">
-      <div className="w-full max-w-md">
+    <main className="min-h-screen flex flex-col bg-slate-50 px-4">
+      <div className="w-full max-w-md mx-auto my-auto py-10">
         <div className="text-center mb-8">
           <img src="/logo-email.png" alt="QuoteCore+" className="h-10 inline-block" />
         </div>
@@ -31,6 +32,7 @@ export default function RecoverPage() {
           </a>
         </p>
       </div>
+      <PublicFooter />
     </main>
   );
 }

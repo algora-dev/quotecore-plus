@@ -9,6 +9,9 @@ const PUBLIC_PATHS = [
   '/auth/callback', // OAuth callback
   '/auth/reset-password', // Password reset
   '/onboarding',   // New user onboarding
+  '/privacy',      // Privacy Policy (legally required to be public)
+  '/cookies',      // Cookie Policy (legally required to be public)
+  '/terms',        // Terms of Service (legally required to be public)
 ];
 
 // Paths reachable when the user has an AAL1 session but still needs to clear 2FA.

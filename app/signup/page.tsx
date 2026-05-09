@@ -4,14 +4,15 @@
 import { useState, useTransition } from 'react';
 import { signupWithCompany } from './actions';
 import { GoogleSignInButton } from '@/app/components/auth/GoogleSignInButton';
+import { PublicFooter } from '@/app/components/PublicFooter';
 
 export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-10">
-      <div className="w-full max-w-md">
+    <main className="min-h-screen flex flex-col bg-slate-50 px-4">
+      <div className="w-full max-w-md mx-auto my-auto py-10">
         <div className="text-center mb-8">
           <img src="/logo.png" alt="QuoteCore" className="h-12 inline-block" />
         </div>
@@ -125,6 +126,7 @@ export default function SignupPage() {
           </a>
         </p>
       </div>
+      <PublicFooter />
     </main>
   );
 }
