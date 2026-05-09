@@ -56,7 +56,8 @@ ${innerHtml}
 </td></tr>
 <tr><td style="padding:24px 32px;background-color:#F9FAFB;border-top:1px solid #F3F4F6;">
 <p style="margin:0 0 6px 0;font-size:12px;line-height:18px;color:#6B7280;">QuoteCore<span style="color:#F97316;">+</span> &mdash; Quoting &amp; job management for trades</p>
-<p style="margin:0;font-size:12px;line-height:18px;color:#9CA3AF;">Sent via QuoteCore+ &bull; <a href="mailto:info@quote-core.com" style="color:#9CA3AF;text-decoration:underline;">info@quote-core.com</a></p>
+<p style="margin:0 0 6px 0;font-size:12px;line-height:18px;color:#9CA3AF;">Sent via QuoteCore+ &bull; <a href="mailto:info@quote-core.com" style="color:#9CA3AF;text-decoration:underline;">info@quote-core.com</a></p>
+<p style="margin:0;font-size:11px;line-height:16px;color:#9CA3AF;font-style:italic;">This is an automated message &mdash; please don't reply to this email.</p>
 </td></tr></table></td></tr></table></body></html>`;
 }
 
