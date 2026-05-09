@@ -168,7 +168,9 @@ export function CopilotProvider({ children, userId, companyId, initialState }: P
       guideId = 'material-order-create';
     } else if (pathname?.includes('/material-orders')) {
       guideId = 'material-orders-hub';
-    } else if (pathname?.includes('/settings')) {
+    } else if (pathname?.includes('/account') || pathname?.includes('/settings')) {
+      // /settings is the legacy URL (now 308-redirected). We still match it
+      // here so deep-links from older copilot tooltips don't fall through.
       guideId = 'account-settings';
     } else if (pathname?.includes('/flashings')) {
       guideId = 'flashings-orders';

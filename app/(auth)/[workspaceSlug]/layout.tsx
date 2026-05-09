@@ -73,7 +73,7 @@ export default async function WorkspaceLayout({
                 workspaceSlug={slug}
               />
               <Link
-                href={`/${slug}/settings`}
+                href={`/${slug}/account`}
                 prefetch={false}
                 className="inline-flex items-center rounded-full border-2 border-transparent bg-white px-3 py-1 text-sm font-semibold text-slate-600 pill-shimmer"
               >

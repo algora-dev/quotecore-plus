@@ -1,54 +1,51 @@
-import { loadCompanyContext } from '@/app/lib/data/company-context';
-import { createSupabaseServerClient } from '@/app/lib/supabase/server';
-import { MeasurementSystemSelector } from './MeasurementSystemSelector';
-import { AccountSettings } from './AccountSettings';
-import { LogoUploader } from './LogoUploader';
+import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { EmailChangeSection } from '@/app/(auth)/[workspaceSlug]/settings/EmailChangeSection';
+import { UserProfileForm } from './UserProfileForm';
 
-export default async function AccountPage() {
-  const { company, profile } = await loadCompanyContext();
-  
-  // Load company logo if exists
+/**
+ * /account — index page (user profile + email).
+ *
+ * Default landing for the section. Per Shaun's preference: when the user
+ * clicks "Account" in the top nav, they land here (most personal — name,
+ * email). Company-level config is one click away under "Company".
+ */
+export default async function AccountIndexPage() {
+  const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
-  const { data: logoFile } = await supabase
-    .from('quote_files')
-    .select('storage_path')
-    .eq('company_id', company.id)
-    .eq('file_type', 'logo')
-    .order('uploaded_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  
-  let logoUrl = null;
-  if (logoFile) {
-    const { data: urlData } = supabase.storage
-      .from('company-logos')
-      .getPublicUrl(logoFile.storage_path);
-    logoUrl = urlData.publicUrl;
-  }
+
+  const { data: user } = await supabase
+    .from('users')
+    .select('full_name, email')
+    .eq('id', profile.id)
+    .single();
+
+  // authProvider drives the EmailChangeSection's UI — Google-only users see
+  // a "manage in Google" message instead of the change form.
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+  const authProvider = authUser?.app_metadata?.provider || 'email';
+  const userEmail = user?.email || authUser?.email || '';
 
   return (
     <section className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold">Account & permissions</h1>
-        <p className="text-slate-600">
-          Manage company settings, primary contact details, and (soon) invite additional teammates.
-        </p>
+      <div>
+        <h2 className="text-xl font-semibold text-slate-900">Profile</h2>
+        <p className="text-sm text-slate-500 mt-1">Your personal account details.</p>
       </div>
 
-      <AccountSettings company={company} profile={profile} />
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+        <UserProfileForm
+          userId={profile.id}
+          currentFullName={user?.full_name ?? ''}
+          currentEmail={userEmail}
+        />
+      </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-6">
-        <LogoUploader companyId={company.id} currentLogoUrl={logoUrl} />
-        
-        <div className="border-t pt-6">
-          <MeasurementSystemSelector currentSystem={company.default_measurement_system} />
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+        <div>
+          <h3 className="text-base font-semibold text-slate-900">Sign-in email</h3>
+          <p className="text-xs text-slate-500 mt-1">Change the email used to sign in. Both your old and new email must confirm the change.</p>
         </div>
-      </div>
-
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-        <p className="text-sm text-amber-800">
-          <strong>Coming soon:</strong> Invite teammates, manage permissions, and customize company branding.
-        </p>
+        <EmailChangeSection currentEmail={userEmail} authProvider={authProvider} />
       </div>
     </section>
   );
