@@ -57,12 +57,24 @@ export function LegalPageShell({
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-10 items-start">
-          {/* Article body */}
-          <article className="prose prose-slate max-w-none prose-headings:scroll-mt-24 prose-h2:text-xl prose-h2:font-semibold prose-h2:mt-10 prose-h3:text-base prose-h3:font-semibold prose-h3:mt-6 prose-p:text-slate-700 prose-p:leading-relaxed prose-li:text-slate-700 prose-a:text-orange-600 prose-a:no-underline hover:prose-a:underline">
+          {/*
+            Article body. We don't use Tailwind's `prose` classes because the
+            project doesn't include @tailwindcss/typography; without that plugin
+            those classes are silently ignored, which is why the early version
+            of these pages rendered as one undifferentiated wall of text. The
+            `legal-doc` className below is paired with explicit selectors in
+            globals.css to give h2/h3/p/ul/li/table real visual hierarchy.
+          */}
+          <article className="legal-doc text-slate-700 leading-relaxed">
             {children}
           </article>
 
-          {/* TOC — sticky on desktop, hidden on mobile (use in-page scroll) */}
+          {/*
+            Table of Contents. Sticky on desktop (md+), hidden on mobile where
+            users can rely on the document's natural scroll. Each anchor jumps
+            to a heading via `#id`; we apply scroll-margin in globals.css so
+            the heading isn't hidden under any sticky header on landing.
+          */}
           <aside className="hidden lg:block sticky top-6 self-start">
             <p className="text-xs uppercase tracking-wide text-slate-400 font-semibold mb-3">
               On this page
@@ -88,7 +100,6 @@ export function LegalPageShell({
         <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-xs text-slate-500">
           <div>
             &copy; {new Date().getFullYear()} QuoteCore<span className="text-orange-500">+</span>
-            <span className="ml-2 text-slate-400">[Costa Rica Entity Name TBC]</span>
           </div>
           <nav className="flex items-center gap-4">
             <Link href="/privacy" className="hover:text-orange-600 transition">Privacy</Link>

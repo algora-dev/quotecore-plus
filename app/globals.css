@@ -140,3 +140,91 @@ a,
   opacity: 0.3;
   cursor: not-allowed;
 }
+
+/* ---------------------------------------------------------------------------
+   Legal documents (/privacy, /cookies, /terms) typography.
+   Project doesn't ship @tailwindcss/typography (Tailwind 4) so we hand-style
+   the document body. Apply via <article className="legal-doc"> in
+   LegalPageShell.tsx.
+   --------------------------------------------------------------------------- */
+
+.legal-doc h2 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
+  color: #0f172a; /* slate-900 */
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e2e8f0; /* slate-200 */
+  scroll-margin-top: 6rem; /* offset for any future sticky header on anchor jump */
+}
+.legal-doc h2:first-child { border-top: 0; padding-top: 0; margin-top: 0.5rem; }
+
+.legal-doc h3 {
+  font-size: 1.05rem;
+  line-height: 1.6rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.legal-doc p {
+  margin-top: 0.85rem;
+  margin-bottom: 0.85rem;
+  color: #334155; /* slate-700 */
+}
+
+.legal-doc ul, .legal-doc ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.85rem;
+  padding-left: 1.5rem;
+}
+.legal-doc ul { list-style: disc; }
+.legal-doc ol { list-style: decimal; }
+.legal-doc li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+  color: #334155;
+}
+.legal-doc li > p { margin-top: 0; margin-bottom: 0; }
+
+.legal-doc a {
+  color: #ea580c; /* orange-600 */
+  text-decoration: none;
+}
+.legal-doc a:hover { text-decoration: underline; }
+
+.legal-doc strong { color: #0f172a; font-weight: 600; }
+
+.legal-doc code {
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.85em;
+  background: #f1f5f9; /* slate-100 */
+  border: 1px solid #e2e8f0;
+  border-radius: 0.25rem;
+  padding: 0.05rem 0.35rem;
+  color: #334155;
+}
+
+.legal-doc table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+.legal-doc th, .legal-doc td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+.legal-doc th {
+  background: #f8fafc; /* slate-50 */
+  font-weight: 600;
+  color: #0f172a;
+  border-bottom: 2px solid #e2e8f0;
+}
+.legal-doc td code { white-space: nowrap; }

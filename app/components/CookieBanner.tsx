@@ -63,7 +63,22 @@ export function CookieBanner() {
     >
       <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-4 space-y-3">
         <div className="flex items-start gap-3">
-          <span aria-hidden="true" className="text-2xl leading-none">🍪</span>
+          {/*
+            Inline shield/lock SVG instead of an emoji. Stroke 1.6 keeps it
+            visually balanced with the body text. We ship the icon inline so
+            there's no extra HTTP request and no icon-library dependency.
+          */}
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.6}
+            className="w-5 h-5 mt-0.5 flex-shrink-0 text-slate-500"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l8 4v5c0 5-3.4 8.5-8 9-4.6-.5-8-4-8-9V7l8-4z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.5 12.5l1.8 1.8 3.7-3.7" />
+          </svg>
           <div className="text-sm text-slate-700 leading-relaxed">
             QuoteCore<span className="text-orange-500">+</span> uses{' '}
             <strong>strictly-necessary cookies</strong> for sign-in and

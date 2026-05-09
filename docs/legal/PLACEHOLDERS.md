@@ -11,7 +11,7 @@ public-facing copy starts with an entry in the change log at the bottom.
 
 | Placeholder | Files | Notes |
 | --- | --- | --- |
-| `[Costa Rica Entity Name TBC]` | `app/privacy/page.tsx`, `app/terms/page.tsx`, `app/components/LegalPageShell.tsx` | The Costa Rica company that owns and operates QuoteCore+. Once registered name is confirmed, replace literally everywhere. |
+| `[Costa Rica Entity Name TBC]` | `app/privacy/page.tsx`, `app/terms/page.tsx` | The Costa Rica company that owns and operates QuoteCore+. Replace once the registered name is confirmed. The footer in `LegalPageShell.tsx` no longer renders this placeholder — only the in-policy occurrences remain (those are legally required to identify the controller, so they stay as `[TBC]` until you fill them in). |
 | `[Costa Rica Registered Address TBC]` | `app/privacy/page.tsx`, `app/terms/page.tsx` | Full registered address as it appears on the company registration certificate. |
 
 The NZ entity is intentionally NOT mentioned anywhere — see below in
@@ -79,3 +79,4 @@ Append a row whenever a legal page is materially updated. Bump the
 | Date | File(s) | Author | Change |
 | --- | --- | --- | --- |
 | 2026-05-09 | privacy / cookies / terms — all three | Gavin | Initial drafts. Costa Rica entity placeholders. Beta v1.0. GDPR-shaped privacy. Notice-style cookie banner. |
+| 2026-05-09 | LegalPageShell, CookieBanner, globals.css | Gavin | Removed `[Costa Rica Entity Name TBC]` from the page footer (kept only in the policy bodies where it's legally required). Replaced cookie-emoji icon with an inline SVG shield (no emojis policy). Added explicit `legal-doc` typography in globals.css because @tailwindcss/typography isn't installed — the previous `prose` classes were silently being ignored. |
