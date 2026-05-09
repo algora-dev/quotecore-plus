@@ -753,40 +753,23 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
     ],
   },
   {
+    // Renamed from the previous flat 'account-settings' guide. The old guide
+    // walked through 4 cards on a single /settings page; the page is now
+    // split across /account/* sub-routes, so the guide simply welcomes the
+    // user and points them at the sidebar. Each sub-page can grow its own
+    // dedicated guide later if a step-by-step walkthrough becomes useful.
     id: 'account-settings',
-    name: 'Account Settings',
-    description: 'Manage your company, preferences, and security.',
+    name: 'Account',
+    description: 'Your account, company, security, notifications and billing - all from one menu.',
     steps: [
       {
-        id: 'as-company',
-        target: '[data-copilot="settings-company"]',
-        title: 'Company & Preferences',
-        description: 'Set your company name, display name, default currency, measurement system, and language. You can also set default profit margins that apply to all new quotes.',
-        position: 'bottom',
-        validation: 'none',
-      },
-      {
-        id: 'as-security',
-        target: '[data-copilot="settings-security"]',
-        title: 'Security',
-        description: 'Manage your password here. If you signed in with Google, you can add a password for email login. Two-factor authentication is coming soon.',
-        position: 'bottom',
-        validation: 'none',
-      },
-      {
-        id: 'as-billing',
-        target: '[data-copilot="settings-billing"]',
-        title: 'Billing & Subscription',
-        description: 'You are currently on the Free Beta plan. Subscription plans and billing options will be available soon.',
-        position: 'bottom',
-        validation: 'none',
-      },
-      {
-        id: 'as-links',
-        target: '[data-copilot="settings-links"]',
-        title: 'Quick Links',
-        description: 'Quick access to Email Templates, Quote Templates, Flashings, and Components. These shortcuts take you directly to each section.',
-        position: 'top',
+        id: 'as-welcome',
+        // The sidebar nav is rendered by app/(auth)/[slug]/account/AccountSidebar.tsx.
+        // We target it via the <nav> aria-label which is stable.
+        target: 'nav[aria-label="Account sections"]',
+        title: 'Find what you need',
+        description: 'Use the sidebar to switch between Account (your name and sign-in email), Company (workspace settings), Security (password and 2FA), Notifications (email alerts and Copilot), and Billing.',
+        position: 'right',
         validation: 'none',
       },
     ],
