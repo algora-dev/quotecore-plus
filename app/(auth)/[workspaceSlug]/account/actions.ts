@@ -1,6 +1,10 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import {
+  checkStorageQuota as _checkStorageQuota,
+  saveFileMetadata as _saveFileMetadata,
+} from '@/app/lib/files/storage-actions';
 
 interface CompanySettings {
   name: string;
@@ -14,14 +18,14 @@ interface UserProfile {
 
 export async function updateCompanySettings(companyId: string, settings: CompanySettings) {
   const profile = await requireCompanyContext();
-  
+
   // Security: ensure user owns this company
   if (profile.company_id !== companyId) {
     throw new Error('Unauthorized');
   }
 
   const supabase = await createSupabaseServerClient();
-  
+
   const { error } = await supabase
     .from('companies')
     .update({
@@ -40,14 +44,14 @@ export async function updateCompanySettings(companyId: string, settings: Company
 
 export async function updateUserProfile(userId: string, data: UserProfile) {
   const profile = await requireCompanyContext();
-  
+
   // Security: ensure user can only update their own profile
   if (profile.id !== userId) {
     throw new Error('Unauthorized');
   }
 
   const supabase = await createSupabaseServerClient();
-  
+
   const { error } = await supabase
     .from('users')
     .update({
@@ -65,7 +69,7 @@ export async function updateUserProfile(userId: string, data: UserProfile) {
 export async function updateDefaultMeasurementSystem(system: 'metric' | 'imperial_ft' | 'imperial_rs') {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
-  
+
   const { error } = await supabase
     .from('companies')
     .update({ default_measurement_system: system })
@@ -78,26 +82,20 @@ export async function updateDefaultMeasurementSystem(system: 'metric' | 'imperia
   revalidatePath('/account');
 }
 
-export async function checkStorageQuota(companyId: string, fileSize: number): Promise<boolean> {
-  const profile = await requireCompanyContext();
-  
-  if (profile.company_id !== companyId) {
-    throw new Error('Unauthorized');
-  }
+/* -------------------------------------------------------------------------
+ * Compatibility shim — file-storage actions used to live here.
+ *
+ * They moved to `app/lib/files/storage-actions.ts` because they are not
+ * settings-specific. Direct re-export of an external `'use server'` symbol
+ * is not allowed by Next 16's server-actions module rules, so we wrap each
+ * one in a thin pass-through. The wrappers add no behaviour; they exist only
+ * so legacy callers keep working until every import site is updated.
+ *
+ * NEW CODE: import from `@/app/lib/files/storage-actions` directly.
+ * ------------------------------------------------------------------------- */
 
-  const supabase = await createSupabaseServerClient();
-  
-  const { data: company } = await supabase
-    .from('companies')
-    .select('storage_used_bytes, storage_limit_bytes')
-    .eq('id', companyId)
-    .single();
-  
-  if (!company) {
-    throw new Error('Company not found');
-  }
-  
-  return (company.storage_used_bytes + fileSize) <= company.storage_limit_bytes;
+export async function checkStorageQuota(companyId: string, fileSize: number): Promise<boolean> {
+  return _checkStorageQuota(companyId, fileSize);
 }
 
 export async function saveFileMetadata(data: {
@@ -109,38 +107,5 @@ export async function saveFileMetadata(data: {
   storagePath: string;
   quoteId?: string;
 }): Promise<void> {
-  console.log('[saveFileMetadata] Starting with data:', data);
-  
-  const profile = await requireCompanyContext();
-  console.log('[saveFileMetadata] Profile loaded:', profile.id, profile.company_id);
-  
-  if (profile.company_id !== data.companyId) {
-    throw new Error('Unauthorized');
-  }
-
-  // Use admin client to bypass RLS
-  const { createAdminClient } = await import('@/app/lib/supabase/admin');
-  const supabaseAdmin = createAdminClient();
-  
-  console.log('[saveFileMetadata] Attempting upsert...');
-  const { error } = await supabaseAdmin
-    .from('quote_files')
-    .upsert({
-      company_id: data.companyId,
-      quote_id: data.quoteId || null,
-      file_type: data.fileType,
-      file_name: data.fileName,
-      file_size: data.fileSize,
-      mime_type: data.mimeType,
-      storage_path: data.storagePath,
-      uploaded_by: profile.id,
-    }, { onConflict: 'storage_path' });
-
-  if (error) {
-    console.error('[saveFileMetadata] Database error:', error);
-    throw new Error(error.message);
-  }
-
-  console.log('[saveFileMetadata] Success! Revalidating...');
-  revalidatePath('/account');
+  return _saveFileMetadata(data);
 }

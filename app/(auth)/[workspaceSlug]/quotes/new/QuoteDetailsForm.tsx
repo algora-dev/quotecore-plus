@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { createQuoteWithDetails } from './actions';
 import { FileUploader } from '@/app/components/FileUploader';
 import { createClient } from '@/app/lib/supabase/client';
-import { checkStorageQuota, saveFileMetadata } from '../../account/actions';
+import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-actions';
 
 interface Template {
   id: string;

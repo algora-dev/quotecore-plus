@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/app/lib/supabase/client';
 import { FileUploader } from '@/app/components/FileUploader';
 import { SummaryFileRow } from './SummaryFileRow';
-import { checkStorageQuota, saveFileMetadata } from '../../../account/actions';
+import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-actions';
 
 interface FileEntry {
   id: string;

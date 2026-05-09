@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/app/lib/supabase/client';
 import { FileUploader } from '@/app/components/FileUploader';
-import { checkStorageQuota, saveFileMetadata } from '../../account/actions';
+import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-actions';
 import { deleteFile } from './actions-files';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 
