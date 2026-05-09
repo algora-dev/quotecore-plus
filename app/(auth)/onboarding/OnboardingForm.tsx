@@ -3,6 +3,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { completeOnboarding } from './actions';
 import { CURRENCY_GROUPS } from '@/app/lib/currency/currencies';
+import { SecurityQuestionsStep } from './SecurityQuestionsStep';
 
 interface Props {
   companyId: string;
@@ -27,7 +28,7 @@ export function OnboardingForm({
   const [measurement, setMeasurement] = useState<'metric' | 'imperial_ft' | 'imperial_rs'>(
     currentMeasurement === 'imperial' ? 'imperial_rs' : (currentMeasurement as 'metric' | 'imperial_ft' | 'imperial_rs')
   );
-  const [step, setStep] = useState<'preferences' | 'copilot'>('preferences');
+  const [step, setStep] = useState<'preferences' | 'recovery' | 'copilot'>('preferences');
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -53,14 +54,32 @@ export function OnboardingForm({
     });
   }
 
-  if (step === 'copilot') {
+  if (step === 'recovery') {
     return (
       <div className="space-y-6">
-        {/* Step indicator */}
+        {/* Step indicator: 1 done, 2 active, 3 pending */}
         <div className="flex items-center gap-2 mb-2">
           <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-emerald-500 text-white">&#10003;</div>
           <div className="flex-1 h-0.5 bg-emerald-500" />
           <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-black text-white">2</div>
+          <div className="flex-1 h-0.5 bg-slate-200" />
+          <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-slate-200 text-slate-500">3</div>
+        </div>
+        <SecurityQuestionsStep onDone={() => setStep('copilot')} />
+      </div>
+    );
+  }
+
+  if (step === 'copilot') {
+    return (
+      <div className="space-y-6">
+        {/* Step indicator: 1 + 2 done, 3 active */}
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-emerald-500 text-white">&#10003;</div>
+          <div className="flex-1 h-0.5 bg-emerald-500" />
+          <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-emerald-500 text-white">&#10003;</div>
+          <div className="flex-1 h-0.5 bg-emerald-500" />
+          <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-black text-white">3</div>
         </div>
 
         <div className="text-center space-y-3">
@@ -118,11 +137,13 @@ export function OnboardingForm({
 
   return (
     <div className="space-y-6">
-      {/* Step indicator */}
+      {/* Step indicator: 1 active, 2 + 3 pending */}
       <div className="flex items-center gap-2 mb-2">
         <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-black text-white">1</div>
         <div className="flex-1 h-0.5 bg-slate-200" />
         <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-slate-200 text-slate-500">2</div>
+        <div className="flex-1 h-0.5 bg-slate-200" />
+        <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-slate-200 text-slate-500">3</div>
       </div>
 
       {/* Currency Selection */}
@@ -189,7 +210,7 @@ export function OnboardingForm({
       {/* Next Button */}
       <button
         type="button"
-        onClick={() => setStep('copilot')}
+        onClick={() => setStep('recovery')}
         className="w-full py-4 bg-black text-white font-semibold rounded-full hover:bg-slate-800 transition"
       >
         Next →

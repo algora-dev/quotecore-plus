@@ -7,6 +7,9 @@ import { PasswordSection } from './PasswordSection';
 import { CopilotSettings } from './CopilotSettings';
 import { MfaSection, RecoveryCodesPanel } from './MfaSection';
 import { NotificationsSection } from './NotificationsSection';
+import { EmailChangeSection } from './EmailChangeSection';
+import { SecurityQuestionsSection } from './SecurityQuestionsSection';
+import { listSecurityQuestions } from './security-questions-actions';
 import { listMfaFactors, getMfaRequired } from './mfa-actions';
 import { getRecoveryCodeStatus } from './recovery-actions';
 import { loadCompanyTaxes } from '@/app/lib/taxes/actions';
@@ -64,6 +67,7 @@ export default async function CompanySettingsPage({
   const mfa = await listMfaFactors();
   const mfaRequired = await getMfaRequired();
   const recoveryStatus = await getRecoveryCodeStatus();
+  const securityQuestions = await listSecurityQuestions();
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
@@ -126,6 +130,10 @@ export default async function CompanySettingsPage({
             </div>
           </div>
           <div className="space-y-4">
+            <EmailChangeSection
+              currentEmail={user?.email || authUser?.email || ''}
+              authProvider={authProvider}
+            />
             <PasswordSection authProvider={authProvider} userEmail={user?.email || authUser?.email || ''} />
             <MfaSection
               initialFactors={mfa.factors}
@@ -137,6 +145,19 @@ export default async function CompanySettingsPage({
               hasVerifiedMfa={mfa.factors.some((f) => f.status === 'verified')}
             />
           </div>
+        </div>
+
+        {/* Recovery Questions */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6" data-copilot="settings-recovery-questions">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Account Recovery</h2>
+              <p className="text-sm text-slate-500 mt-1">
+                Set questions only you can answer. Used by support to verify you if you ever lose access to your email.
+              </p>
+            </div>
+          </div>
+          <SecurityQuestionsSection initialQuestions={securityQuestions} />
         </div>
 
         {/* Notifications */}

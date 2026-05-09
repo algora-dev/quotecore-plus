@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { syncEmailChangeFromAuth } from '@/app/(auth)/[workspaceSlug]/settings/email-change-actions';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -12,6 +13,15 @@ export async function GET(request: Request) {
     if (!error) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // Best-effort: if the auth user's email has changed (e.g. just
+        // confirmed a secure email change), mirror it into public.users and
+        // stamp the cooldown timestamp. Failure here MUST NOT block sign-in.
+        try {
+          await syncEmailChangeFromAuth();
+        } catch (err) {
+          console.error('[auth/callback] syncEmailChangeFromAuth failed (non-fatal):', err);
+        }
+
         const { data: profile } = await supabase
           .from('users')
           .select('company_id')
