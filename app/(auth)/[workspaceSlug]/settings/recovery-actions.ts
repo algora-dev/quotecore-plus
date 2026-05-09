@@ -131,11 +131,15 @@ export async function consumeRecoveryCode(rawCode: string): Promise<boolean> {
   if (delErr) throw new Error(delErr.message);
 
   // Best-effort security email — always sent regardless of user preference.
+  // We await here (not fire-and-forget) because Vercel serverless functions
+  // terminate the moment the handler returns, killing any in-flight Promise.
+  // notifyRecoveryCodeUsed swallows its own errors so this can't break the
+  // recovery-code login flow.
   try {
     const hdrs = await headers();
     const ip = getClientIP(hdrs);
     const ua = hdrs.get('user-agent');
-    void notifyRecoveryCodeUsed({ userId: user.id, ip, userAgent: ua });
+    await notifyRecoveryCodeUsed({ userId: user.id, ip, userAgent: ua });
   } catch (err) {
     console.error('[recovery] notifyRecoveryCodeUsed failed (non-fatal):', err);
   }

@@ -214,10 +214,20 @@ export async function requestEmailChange(
 
 /**
  * Called by /auth/callback after Supabase finalises a secure email change.
- * Mirrors the auth.users.email -> public.users.email and stamps the cooldown.
+ *
+ * On a detected email change we:
+ *   1. Mirror auth.users.email -> public.users.email
+ *   2. Stamp the cooldown (last_email_change_at)
+ *   3. Boot ALL existing sessions for this user
+ *   4. Send a password-reset link to the new address
+ *
+ * Steps 3 + 4 implement the "force a fresh password after every email
+ * change" policy. Rationale: if the user has lost a device or had their
+ * password silently leaked, an email change is the right moment to require
+ * a fresh credential. Same posture as Flow 2 (lost-email recovery).
  *
  * Idempotent: safe to call on every callback hit; if nothing has changed, the
- * UPDATE is a no-op.
+ * UPDATE is a no-op and steps 3 + 4 are skipped.
  */
 export async function syncEmailChangeFromAuth(): Promise<void> {
   const user = await requireUser();
@@ -231,13 +241,48 @@ export async function syncEmailChangeFromAuth(): Promise<void> {
     .single();
   if (!profile) return;
 
-  if ((profile.email ?? '').toLowerCase() !== user.email.toLowerCase()) {
-    await admin
-      .from('users')
-      .update({
-        email: user.email,
-        last_email_change_at: new Date().toISOString(),
-      })
-      .eq('id', user.id);
+  const newEmail = user.email;
+  const currentMirrorEmail = (profile.email ?? '').toLowerCase();
+  if (currentMirrorEmail === newEmail.toLowerCase()) {
+    // No change to react to. Bail out before the destructive steps.
+    return;
+  }
+
+  // 1 + 2: mirror + cooldown stamp.
+  await admin
+    .from('users')
+    .update({
+      email: newEmail,
+      last_email_change_at: new Date().toISOString(),
+    })
+    .eq('id', user.id);
+
+  // 3: kill ALL sessions for this user. We do this BEFORE sending the reset
+  // email so any device / browser that still holds a live token loses it
+  // immediately. The user keeps their current session in this request because
+  // the cookie was already exchanged for a new access token by
+  // exchangeCodeForSession; the next request will re-validate against
+  // auth.users, see the email matches, and continue.
+  try {
+    await admin.auth.admin.signOut(user.id);
+  } catch (err) {
+    console.error('[email-change] signOut all sessions failed (non-fatal):', err);
+  }
+
+  // 4: send a password-reset link to the new address. The user clicks the
+  // link, lands on /auth/reset-password, sets a new password and continues.
+  try {
+    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/recover`;
+    await fetch(url, {
+      method: 'POST',
+      headers: {
+        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
+        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email: newEmail }),
+    });
+  } catch (err) {
+    console.error('[email-change] forced password reset email failed (non-fatal):', err);
   }
 }

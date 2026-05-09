@@ -170,8 +170,11 @@ export async function submitRevisionRequest(
   });
 
   // Best-effort email notification (gated by user preference). Failures are
-  // swallowed — the in-app alert above is the source of truth.
-  void notifyRevisionRequested({
+  // swallowed inside notifyRevisionRequested — the in-app alert above is the
+  // source of truth. We MUST await here, not fire-and-forget: Vercel
+  // serverless functions terminate the moment the handler returns, killing
+  // any in-flight Promise.
+  await notifyRevisionRequested({
     companyId: quote.company_id,
     quoteId: quote.id,
     quoteNumber: quote.quote_number ?? null,
@@ -260,10 +263,12 @@ export async function respondToQuote(token: string, action: 'accept' | 'decline'
     message: `${quote.customer_name} has ${isAccept ? 'accepted' : 'declined'} Quote #${quote.quote_number}.`,
   });
 
-  // Best-effort email notification. Re-fetch the small slice of fields we need
-  // for routing (creator + slug) — kept off the original select to minimise
-  // the public-side query surface.
-  void notifyQuoteResponse({
+  // Best-effort email notification. notifyQuoteResponse swallows its own
+  // errors. We MUST await here, not fire-and-forget: Vercel serverless
+  // functions terminate the moment the handler returns, killing any
+  // in-flight Promise. (That bug caused decline emails to silently drop
+  // because the client state-change resolved faster than Resend.)
+  await notifyQuoteResponse({
     companyId: quote.company_id,
     quoteId: quote.id,
     quoteNumber: quote.quote_number ?? null,
