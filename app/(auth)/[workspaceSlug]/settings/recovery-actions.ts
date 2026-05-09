@@ -1,9 +1,12 @@
 'use server';
 
 import crypto from 'node:crypto';
+import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireUser } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { notifyRecoveryCodeUsed } from '@/app/lib/email/notify';
+import { getClientIP } from '@/app/lib/security/rateLimit';
 
 const RECOVERY_CODE_COUNT = 10;
 const RECOVERY_CODE_GROUPS = 3;
@@ -126,6 +129,16 @@ export async function consumeRecoveryCode(rawCode: string): Promise<boolean> {
     .delete()
     .eq('user_id', user.id);
   if (delErr) throw new Error(delErr.message);
+
+  // Best-effort security email — always sent regardless of user preference.
+  try {
+    const hdrs = await headers();
+    const ip = getClientIP(hdrs);
+    const ua = hdrs.get('user-agent');
+    void notifyRecoveryCodeUsed({ userId: user.id, ip, userAgent: ua });
+  } catch (err) {
+    console.error('[recovery] notifyRecoveryCodeUsed failed (non-fatal):', err);
+  }
 
   return true;
 }

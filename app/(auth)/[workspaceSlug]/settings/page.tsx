@@ -6,6 +6,7 @@ import { BackButton } from '@/app/components/BackButton';
 import { PasswordSection } from './PasswordSection';
 import { CopilotSettings } from './CopilotSettings';
 import { MfaSection, RecoveryCodesPanel } from './MfaSection';
+import { NotificationsSection } from './NotificationsSection';
 import { listMfaFactors, getMfaRequired } from './mfa-actions';
 import { getRecoveryCodeStatus } from './recovery-actions';
 import { loadCompanyTaxes } from '@/app/lib/taxes/actions';
@@ -33,7 +34,7 @@ export default async function CompanySettingsPage({
   // Load user profile
   const { data: user } = await supabase
     .from('users')
-    .select('full_name, email')
+    .select('full_name, email, email_notifications_enabled')
     .eq('id', profile.id)
     .single();
 
@@ -136,6 +137,20 @@ export default async function CompanySettingsPage({
               hasVerifiedMfa={mfa.factors.some((f) => f.status === 'verified')}
             />
           </div>
+        </div>
+
+        {/* Notifications */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6" data-copilot="settings-notifications">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Notifications</h2>
+              <p className="text-sm text-slate-500 mt-1">Choose which app alerts you also receive by email</p>
+            </div>
+          </div>
+          <NotificationsSection
+            initialEnabled={user?.email_notifications_enabled ?? true}
+            userEmail={user?.email || authUser?.email || ''}
+          />
         </div>
 
         {/* Billing */}

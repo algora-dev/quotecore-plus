@@ -2,6 +2,10 @@
 import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
+import {
+  notifyQuoteResponse,
+  notifyRevisionRequested,
+} from '@/app/lib/email/notify';
 
 // Validate token format (must be a UUID)
 function isValidUUID(str: string): boolean {
@@ -165,6 +169,18 @@ export async function submitRevisionRequest(
     message: `${cleanName || quote.customer_name || 'Customer'} has requested a revision (${sourceState}). Notes: ${trimmedNotes.slice(0, 200)}${trimmedNotes.length > 200 ? '…' : ''}`,
   });
 
+  // Best-effort email notification (gated by user preference). Failures are
+  // swallowed — the in-app alert above is the source of truth.
+  void notifyRevisionRequested({
+    companyId: quote.company_id,
+    quoteId: quote.id,
+    quoteNumber: quote.quote_number ?? null,
+    creatorUserId: (quote as { created_by_user_id?: string | null }).created_by_user_id ?? null,
+    customerNameForEmail: cleanName || quote.customer_name || null,
+    notes: trimmedNotes,
+    sourceState,
+  });
+
   return { success: true };
 }
 
@@ -242,5 +258,16 @@ export async function respondToQuote(token: string, action: 'accept' | 'decline'
     alert_type: isAccept ? 'quote_accepted' : 'quote_declined',
     title: `Quote #${quote.quote_number} ${isAccept ? 'Accepted' : 'Declined'}`,
     message: `${quote.customer_name} has ${isAccept ? 'accepted' : 'declined'} Quote #${quote.quote_number}.`,
+  });
+
+  // Best-effort email notification. Re-fetch the small slice of fields we need
+  // for routing (creator + slug) — kept off the original select to minimise
+  // the public-side query surface.
+  void notifyQuoteResponse({
+    companyId: quote.company_id,
+    quoteId: quote.id,
+    quoteNumber: quote.quote_number ?? null,
+    customerName: quote.customer_name ?? null,
+    isAccept,
   });
 }

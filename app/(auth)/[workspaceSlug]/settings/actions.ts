@@ -62,3 +62,22 @@ export async function updateCompanySettings(
   // Revalidate any pages that depend on company settings
   revalidatePath('/');
 }
+
+/**
+ * Update the per-user toggle for receiving in-app alerts via email.
+ * Security emails are not affected by this flag and always send.
+ */
+export async function updateEmailNotificationsEnabled(enabled: boolean): Promise<void> {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  const { error } = await supabase
+    .from('users')
+    .update({ email_notifications_enabled: enabled })
+    .eq('id', profile.id);
+
+  if (error) {
+    console.error('[Settings] updateEmailNotificationsEnabled failed:', error);
+    throw new Error('Failed to update notification preference');
+  }
+}
