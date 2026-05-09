@@ -4,6 +4,7 @@
 import { useState, useTransition } from 'react';
 import { loginAction } from './actions';
 import { GoogleSignInButton } from '@/app/components/auth/GoogleSignInButton';
+import { TroubleSigningInPanel } from './TroubleSigningInPanel';
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +74,10 @@ export default function LoginPage() {
                   placeholder="••••••••"
                 />
               </label>
+
+              <div className="-mt-2">
+                <TroubleSigningInPanel />
+              </div>
 
               <button 
                 type="submit" 
