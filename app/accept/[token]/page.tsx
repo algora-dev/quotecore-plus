@@ -7,12 +7,32 @@ import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { loadQuoteTaxesByQuoteId } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
 
+/**
+ * Validate token format up front so a malformed URL fails fast without
+ * hitting the DB. Mirrors the regex used in `app/accept/[token]/actions.ts`.
+ */
+function isValidUUID(str: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
+
 export default async function AcceptQuotePage({
   params,
 }: {
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
+
+  // Reject obviously-bad tokens before any DB or rate-limiter work.
+  if (!token || !isValidUUID(token)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="bg-white rounded-xl p-8 max-w-md text-center shadow-lg">
+          <h1 className="text-xl font-semibold text-slate-900 mb-2">Quote Not Found</h1>
+          <p className="text-sm text-slate-500">This link may be invalid or expired.</p>
+        </div>
+      </div>
+    );
+  }
 
   // Rate limit: 20 attempts per IP per hour
   const hdrs = await headers();
