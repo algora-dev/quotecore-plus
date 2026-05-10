@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/app/lib/supabase/client';
 import { FileUploader } from '@/app/components/FileUploader';
-import { checkStorageQuota, saveFileMetadata } from './actions';
+import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-actions';
 
 interface Props {
   companyId: string;
