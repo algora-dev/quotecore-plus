@@ -4,6 +4,8 @@ import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currenc
 import { AcceptDeclineButtons } from './AcceptDeclineButtons';
 import { RequestRequoteButton } from './RequestRequoteButton';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
+import { loadQuoteTaxesByQuoteId } from '@/app/lib/taxes/actions';
+import { computeTaxLines } from '@/app/lib/taxes/types';
 
 export default async function AcceptQuotePage({
   params,
@@ -154,8 +156,26 @@ export default async function AcceptQuotePage({
   const allLines = savedLines || [];
   const visibleLines = allLines.filter((l: any) => l.is_visible);
   const subtotal = allLines.filter((l: any) => l.include_in_total).reduce((sum: number, l: any) => sum + (l.custom_amount || 0), 0);
-  const tax = subtotal * ((quote.tax_rate || 0) / 100);
-  const total = subtotal + tax;
+
+  // Use the multi-tax engine so the customer sees the same totals as the
+  // internal summary/customer pages. Token validation above has already
+  // proved access to this quote, so the public-safe loader is appropriate.
+  const quoteTaxes = await loadQuoteTaxesByQuoteId(quote.id);
+  let taxLines: { id: string; name: string; rate_percent: number; amount: number }[] = [];
+  let taxTotal = 0;
+  if (quoteTaxes.length > 0) {
+    const computed = computeTaxLines(quoteTaxes, subtotal, 'quote');
+    taxLines = computed.lines;
+    taxTotal = computed.total;
+  } else if ((quote.tax_rate || 0) > 0) {
+    // LEGACY FALLBACK: pre-multi-tax quotes never had `quote_taxes` rows seeded.
+    // We honour the legacy single-rate column so historical quotes still total
+    // correctly. New quotes will always have rows and skip this branch.
+    const legacyAmount = subtotal * ((quote.tax_rate || 0) / 100);
+    taxLines = [{ id: 'legacy', name: 'Tax', rate_percent: quote.tax_rate, amount: legacyAmount }];
+    taxTotal = legacyAmount;
+  }
+  const total = subtotal + taxTotal;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -255,11 +275,21 @@ export default async function AcceptQuotePage({
                 <span className="text-black">Subtotal</span>
                 <span className="font-medium text-black">{formatCurrency(subtotal, effectiveCurrency)}</span>
               </div>
-              {(quote.tax_rate || 0) > 0 && (
-                <div className="flex justify-between text-base">
-                  <span className="text-black">Tax ({quote.tax_rate}%)</span>
-                  <span className="font-medium text-black">{formatCurrency(tax, effectiveCurrency)}</span>
-                </div>
+              {taxLines.length > 0 && (
+                <>
+                  {taxLines.map((tl) => (
+                    <div key={tl.id} className="flex justify-between text-base">
+                      <span className="text-black">{tl.name} ({tl.rate_percent}%)</span>
+                      <span className="font-medium text-black">{formatCurrency(tl.amount, effectiveCurrency)}</span>
+                    </div>
+                  ))}
+                  {taxLines.length > 1 && (
+                    <div className="flex justify-between text-base border-t border-black pt-2">
+                      <span className="text-black">Tax total</span>
+                      <span className="font-medium text-black">{formatCurrency(taxTotal, effectiveCurrency)}</span>
+                    </div>
+                  )}
+                </>
               )}
               <div className="flex justify-between text-xl font-bold border-t-2 border-black pt-3">
                 <span className="text-black">Total</span>
