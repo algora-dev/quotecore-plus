@@ -7,6 +7,28 @@ import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 import type { InputMode, WasteType, PitchType } from '@/app/lib/types';
 import { verifyQuoteOwnership, verifyRoofAreaOwnership, verifyComponentOwnership } from '@/app/lib/auth/ownership';
 import { seedQuoteTaxesOnCreate } from '@/app/lib/taxes/seed';
+import { createAdminClient } from '@/app/lib/supabase/admin';
+import { BUCKETS } from '@/app/lib/storage/buckets';
+
+/**
+ * Extract the storage object path from a Supabase storage URL (public or signed).
+ * Returns null if the URL is empty or matches neither pattern.
+ */
+function storagePathFromUrl(url: string | null, bucket: string): string | null {
+  if (!url) return null;
+  const markers = [
+    `/storage/v1/object/public/${bucket}/`,
+    `/storage/v1/object/sign/${bucket}/`,
+  ];
+  for (const marker of markers) {
+    const idx = url.indexOf(marker);
+    if (idx === -1) continue;
+    const tail = url.substring(idx + marker.length);
+    const clean = tail.split('?')[0].split('#')[0];
+    if (clean) return decodeURIComponent(clean);
+  }
+  return null;
+}
 
 export async function createQuoteFromTemplate(
   templateId: string,
@@ -578,16 +600,62 @@ export async function updateQuoteNames(id: string, customerName: string, jobName
   revalidatePath(`/quotes/${id}`);
 }
 
+/**
+ * Delete a single quote. Mirrors `bulkDeleteQuotes` storage cleanup so we
+ * never leak orphaned objects:
+ *   1. Verify ownership.
+ *   2. Collect every storage path attached to the quote (quote_files +
+ *      takeoff canvas snapshot URLs stored on the quote row).
+ *   3. Remove storage objects FIRST. If that fails, do NOT delete the DB row
+ *      — the user can retry. Without this rule, a transient storage error
+ *      would leave the database clean but the bucket polluted forever.
+ *   4. Delete the quote row (FK cascades clean up children).
+ */
 export async function deleteQuote(id: string) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
-  
+  const supabaseAdmin = createAdminClient();
+
+  // Verify ownership and grab takeoff URLs in one shot.
+  const { data: quote, error: quoteErr } = await supabase
+    .from('quotes')
+    .select('id, company_id, takeoff_canvas_url, takeoff_lines_url')
+    .eq('id', id)
+    .eq('company_id', profile.company_id)
+    .maybeSingle();
+  if (quoteErr) throw new Error(quoteErr.message);
+  if (!quote) throw new Error('Quote not found');
+
+  // Gather all storage paths.
+  const { data: quoteFiles } = await supabaseAdmin
+    .from('quote_files')
+    .select('storage_path')
+    .eq('quote_id', id);
+  const storagePaths = new Set<string>(
+    (quoteFiles ?? []).map((f: any) => f.storage_path).filter((p: string | null): p is string => !!p),
+  );
+  const canvasPath = storagePathFromUrl(quote.takeoff_canvas_url, BUCKETS.QUOTE_DOCUMENTS);
+  const linesPath = storagePathFromUrl(quote.takeoff_lines_url, BUCKETS.QUOTE_DOCUMENTS);
+  if (canvasPath) storagePaths.add(canvasPath);
+  if (linesPath) storagePaths.add(linesPath);
+
+  // Remove storage objects. If this fails (and there were paths to remove),
+  // bail before the DB row is touched so the user can retry.
+  if (storagePaths.size > 0) {
+    const { error: storageErr } = await supabaseAdmin.storage
+      .from(BUCKETS.QUOTE_DOCUMENTS)
+      .remove(Array.from(storagePaths));
+    if (storageErr) {
+      throw new Error(`Failed to remove quote files from storage: ${storageErr.message}`);
+    }
+  }
+
   const { error } = await supabase
     .from('quotes')
     .delete()
     .eq('id', id)
     .eq('company_id', profile.company_id);
-    
+
   if (error) throw new Error(error.message);
   revalidatePath('/quotes');
 }
