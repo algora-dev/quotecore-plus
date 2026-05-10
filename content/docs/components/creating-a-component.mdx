@@ -1,4 +1,4 @@
-﻿---
+---
 title: Creating a component
 description: Step-by-step from blank form to saved component.
 order: 2
@@ -8,4 +8,80 @@ updated: 2026-05-10
 
 # Creating a component
 
-Placeholder. Content written in step 4.
+Walk through it once and you'll have the pattern for every component you'll ever add. Most components take 30 seconds to set up.
+
+## When to use it
+
+- First time setting up the app - add the materials and labor you use on most jobs.
+- Adding a new product or new supplier.
+- Splitting an existing component into variants (different colors, gauges, profiles).
+
+## Steps
+
+1. Go to **Components** from the workspace nav.
+2. Click **+ Add Component**.
+3. Fill in the form (see field details below).
+4. Save.
+
+That's it. The component is now available in every quote you build from this point on.
+
+## Walked example: roofing tiles
+
+1. **Name:** Roofing tiles - clay terracotta.
+2. **Type:** Main.
+3. **Measurement:** Area (m2 or Rs depending on your default).
+4. **Material price:** the cost per m2 your supplier charges you.
+5. **Labor price:** what you pay your fixers, or what you charge for labor, per m2.
+6. **Waste:** Percentage, 5%.
+7. **Pitch:** On, Rafter pitch.
+8. **Material orders:** Yes.
+9. Save.
+
+That tile component is now ready to drop into any quote. Set the area pitch in the quote builder and the maths is done.
+
+## Walked example: ridge cap
+
+1. **Name:** Ridge cap - 240 standard.
+2. **Type:** Main.
+3. **Measurement:** Lineal.
+4. **Material price:** per linear meter.
+5. **Labor price:** per linear meter.
+6. **Waste:** Fixed, 100mm per length.
+7. **Pitch:** Off (ridges sit horizontally, no pitch factor needed).
+8. **Material orders:** Yes. Attach a flashing drawing if you have one for this profile.
+9. Save.
+
+## Walked example: skip hire (Extra)
+
+1. **Name:** Skip hire.
+2. **Type:** Extra.
+3. **Measurement:** Quantity.
+4. **Material price:** flat amount per skip.
+5. **Labor price:** 0.
+6. **Waste:** Off.
+7. **Pitch:** Off.
+8. **Material orders:** No.
+9. Save.
+
+## Tips
+
+- Use specific names. "Roofing iron - corrugate 0.55 colorsteel" is better than "Iron".
+- If you sell something in two finishes (galvanised vs colorsteel), make two components.
+- Set waste defaults that are realistic for *your* installs. Don't copy someone else's number - they cut differently.
+
+<Callout type="warning">
+Pitch type can't be added later in the quote builder - it has to be set on the component itself. If you forget to enable rafter pitch on a roofing material, you'll under-order. Double-check before saving.
+</Callout>
+
+## What happens after you save
+
+- The component is in the dropdown when you add components in [Manual takeoff](/docs/building-a-quote/manual-takeoff) or [Digital takeoff](/docs/building-a-quote/digital-takeoff).
+- It's available to load via [Quote templates](/docs/templates/quote-templates).
+- You can edit or delete it any time. Editing doesn't change quotes you've already built.
+
+## Related
+
+- [Component fields reference](/docs/components/component-fields-reference)
+- [Building your component library](/docs/components/building-your-library)
+- [Components vs Extras](/docs/core-concepts/components-vs-extras)
+- [Waste, pitch, and calculations](/docs/core-concepts/waste-pitch-and-calculations)

@@ -1,4 +1,4 @@
-﻿---
+---
 title: Email templates
 description: Stop typing the same email every time you send a quote.
 order: 3
@@ -8,4 +8,82 @@ updated: 2026-05-10
 
 # Email templates
 
-Placeholder. Content written in step 4.
+Email templates are pre-written messages that go out with a quote. You write the subject and body once, drop in placeholders for the customer name and quote number, and reuse it on every send.
+
+## When to use them
+
+- You send more than one or two quotes a week.
+- You want to make sure every quote goes out with the same professional message.
+- You want to a/b your emails (formal vs casual) without typing each from scratch.
+
+## Steps to create one
+
+1. Go to **Templates** in the workspace nav. Find the email templates section.
+2. Click **New Email Template**.
+3. Set a name (something like "Standard residential quote send").
+4. Write the subject line. Include placeholders if useful.
+5. Write the body. Use placeholders for anything that should fill in per quote.
+6. Mark as default if you want this used on every send.
+7. Save.
+
+## Available placeholders
+
+You can drop these into either the subject or the body. They get replaced with the actual values when the email goes out.
+
+- `{customer_name}` - the customer's name from the quote.
+- `{quote_number}` - the auto-generated quote number.
+- `{job_reference}` - the job reference you set on the quote.
+- `{quote_url}` - the unique URL the customer clicks to see the quote.
+- `{company_name}` - your company name.
+- `{quote_date}` - the date the quote was created.
+
+## Example body
+
+```
+Hi {customer_name},
+
+Thanks for the chance to quote your job. Here's the quote for {job_reference}.
+
+You can view, accept, or request changes here:
+{quote_url}
+
+The quote is valid for 30 days. Get in touch if you've got any questions.
+
+Cheers,
+{company_name}
+```
+
+When this goes out to a customer named Jane on quote #1042 for a re-roof, it becomes:
+
+```
+Hi Jane,
+
+Thanks for the chance to quote your job. Here's the quote for Re-roof.
+
+You can view, accept, or request changes here:
+https://quote-core.com/accept/[unique-token]
+
+The quote is valid for 30 days. Get in touch if you've got any questions.
+
+Cheers,
+Acme Roofing
+```
+
+## Steps to use one
+
+When you send a quote ([Sending a quote](/docs/customer-facing/sending-a-quote)) you'll see two options:
+
+1. **Generate a URL only** - skip the email, just get the link.
+2. **Send via email** - pick a template here. Default template is selected for you. Customer email is filled in if you've got it on the quote. Send.
+
+## Tips
+
+- Keep the body short. The link is what matters.
+- Use the same friendly tone you'd use in person.
+- Mark your most-used template as default. You'll save a click on every send.
+
+## Related
+
+- [Sending a quote](/docs/customer-facing/sending-a-quote)
+- [Templates explained](/docs/core-concepts/templates-explained)
+- [Follow-up emails](/docs/customer-facing/follow-up-emails)

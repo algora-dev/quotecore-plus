@@ -1,4 +1,4 @@
-﻿---
+---
 title: Component fields reference
 description: Every field on the component form, what it does, when to use it.
 order: 3
@@ -8,4 +8,86 @@ updated: 2026-05-10
 
 # Component fields reference
 
-Placeholder. Content written in step 4.
+Every field, plain English, with the gotchas called out.
+
+## Field reference
+
+<Field name="Component name" required>
+What you'll search for when adding to a quote. Also what shows on the customer quote and labor sheet by default. Be specific - "Longrun corrugate 0.55 colorsteel" beats "Iron".
+</Field>
+
+<Field name="Component type" required>
+**Main** for normal materials and labor. **Extra** for one-offs and add-ons that you want priced and tracked but maybe not visible to the customer or sent on supplier orders. See [Components vs Extras](/docs/core-concepts/components-vs-extras).
+</Field>
+
+<Field name="Measurement type" required>
+How this component is measured. Pick one:
+- **Area** - per square meter, square foot, or roofing square.
+- **Lineal** - per linear meter or linear foot. Used for ridges, valleys, gutters, fascia.
+- **Quantity** - per item. Used for skylights, downpipes, vents.
+- **Fixed** - one-off flat amount.
+</Field>
+
+<Field name="Material price" required>
+Cost per unit (per m2, per lineal meter, per item). This is what *you* pay. Margins applied at the quote level turn this into the customer-facing price.
+</Field>
+
+<Field name="Labor price">
+Labor cost per unit. Either what you pay your installer or what you charge for labor. Same unit as the material price. Set to 0 if labor doesn't apply (e.g. a delivery fee).
+</Field>
+
+<Field name="Waste type">
+**None**, **Percentage**, or **Fixed**. Percentage adds a % on top of the calculated quantity. Fixed adds a set amount per item. See [Waste, pitch, and calculations](/docs/core-concepts/waste-pitch-and-calculations).
+</Field>
+
+<Field name="Waste amount">
+The percentage or fixed amount, depending on waste type. 5% is typical for most roofing materials. 100mm fixed per length is typical for ridges.
+</Field>
+
+<Field name="Pitch calculation">
+Toggle on if this component sits on a roof slope.
+
+When on, you pick a pitch type:
+- **Rafter pitch** for the main roof slope (tiles, longrun, underlay).
+- **Hip pitch** for hip rafters.
+- **Valley pitch** for valley rafters.
+
+The actual pitch angle gets set on the area when you build the quote, not here.
+</Field>
+
+<Field name="Allow on material orders">
+Toggle on if this component is something you order from a supplier. Off for things like labor-only items, site cleanup, or extras.
+</Field>
+
+<Field name="Flashing drawing or image">
+Optional. Attach a drawing or photo that represents the component. Useful for flashings - the supplier sees the drawing on the order. Either upload an image or use a saved [flashing drawing](/docs/flashings/drawing-flashings).
+</Field>
+
+## Common combinations
+
+| Component | Type | Measurement | Pitch | Waste |
+|---|---|---|---|---|
+| Roofing tiles | Main | Area | Rafter | 5% |
+| Longrun iron | Main | Area | Rafter | 5% |
+| Underlay | Main | Area | Rafter or off | 5-10% |
+| Ridge | Main | Lineal | Off | Fixed (100mm/length) |
+| Valley | Main | Lineal | Valley | Fixed (200mm/length) |
+| Hip | Main | Lineal | Hip | Fixed (150mm/length) |
+| Barge | Main | Lineal | Off | 5% |
+| Gutter | Main | Lineal | Off | 5% |
+| Downpipe | Main | Quantity | Off | Off |
+| Skylight | Main | Quantity | Off | Off |
+| Site cleanup | Extra | Fixed | Off | Off |
+| Skip hire | Extra | Quantity | Off | Off |
+
+These are starting points. Tweak waste percentages to match your install practice.
+
+<Callout type="tip">
+If you're not sure about a field, leave the default and save. You can edit any component at any time.
+</Callout>
+
+## Related
+
+- [Creating a component](/docs/components/creating-a-component)
+- [Building your component library](/docs/components/building-your-library)
+- [Waste, pitch, and calculations](/docs/core-concepts/waste-pitch-and-calculations)

@@ -1,4 +1,4 @@
-﻿---
+---
 title: Components overview
 description: What components are and how they fit into a quote.
 order: 1
@@ -8,4 +8,54 @@ updated: 2026-05-10
 
 # Components overview
 
-Placeholder. Content written in step 4.
+Components are your re-usable price book. Anything you put on a quote - tiles, longrun, ridges, valleys, fixings, underlay, scaffold - lives here once. After that, building a quote is picking from your library and entering measurements.
+
+## Why components matter
+
+The first time you set them up, it takes an hour. Every quote after that is faster, more consistent, and harder to get wrong. You change a price once and every new quote uses the new price.
+
+You can have four components or four hundred. The library scales with the work.
+
+## What's in a component
+
+Each component holds:
+
+- A name (what shows on the quote).
+- Whether it's a [Main component or an Extra](/docs/core-concepts/components-vs-extras).
+- A measurement type - area, lineal, quantity, or fixed.
+- A material price per unit.
+- A labor price per unit.
+- A waste setting.
+- An optional pitch type ([rafter, hip, or valley](/docs/core-concepts/waste-pitch-and-calculations)).
+- Whether it can be added to material orders.
+- An attached flashing drawing or image (optional).
+
+For the full breakdown of every field, see [Component fields reference](/docs/components/component-fields-reference).
+
+## Examples
+
+- **Roofing iron.** Area-based, material rate per m2, labor rate per m2, 5% waste, rafter pitch.
+- **Ridge.** Lineal, material rate per linear meter, labor rate per linear meter, 100mm fixed waste per length, no pitch.
+- **Valley.** Lineal, valley pitch enabled.
+- **Skylight.** Quantity, fixed price per unit, no waste, no pitch.
+- **Site cleanup.** Extra, fixed cost.
+
+## How components show up on a quote
+
+When you build a quote (manual takeoff or digital takeoff), you pick components from your library. The app pre-fills the rates, waste, and pitch you saved. You enter the measurement (or it gets pre-filled from digital takeoff). The quote builder takes care of the maths.
+
+You can override anything on a per-quote basis without changing the saved component. So you can have a default 5% waste in your library and dial it up to 7% for one specific quote.
+
+## When you'd add a new component
+
+- You bought new product and want to quote it.
+- You're quoting a job with a specific material you don't usually use.
+- You want a custom labor item separate from your normal rate.
+- A supplier changed pricing and you need a new variant.
+
+## Related
+
+- [Creating a component](/docs/components/creating-a-component)
+- [Component fields reference](/docs/components/component-fields-reference)
+- [Building your component library](/docs/components/building-your-library)
+- [Components vs Extras](/docs/core-concepts/components-vs-extras)
