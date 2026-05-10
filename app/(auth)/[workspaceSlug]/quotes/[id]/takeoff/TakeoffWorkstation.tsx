@@ -447,9 +447,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       
       console.log('[SaveTakeoff] Saving', allMeasurements.length, 'measurements to quote:', quote.id);
       
-      // Export canvas as PNG (2 images: full canvas + lines-only)
-      let canvasImageUrl: string | undefined;
-      let linesImageUrl: string | undefined;
+      // Export canvas as PNG (2 images: full canvas + lines-only).
+      // We persist STORAGE PATHS, not URLs, so render sites can sign on render
+      // with a short TTL (Gerald audit pass 2 fix).
+      let canvasImagePath: string | undefined;
+      let linesImagePath: string | undefined;
       if (fabricRef.current) {
         const canvas = fabricRef.current;
         
@@ -462,8 +464,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         });
         
         try {
-          canvasImageUrl = await uploadCanvasImage(quote.id, fullDataUrl);
-          console.log('[SaveTakeoff] Full canvas image uploaded:', canvasImageUrl);
+          canvasImagePath = await uploadCanvasImage(quote.id, fullDataUrl);
+          console.log('[SaveTakeoff] Full canvas image uploaded (path):', canvasImagePath);
         } catch (uploadError) {
           console.error('[SaveTakeoff] Failed to upload full canvas image:', uploadError);
         }
@@ -537,8 +539,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           canvas.renderAll();
           
           // Upload lines-only image
-          linesImageUrl = await uploadCanvasImage(quote.id, linesDataUrl, 'lines');
-          console.log('[SaveTakeoff] Lines-only image uploaded:', linesImageUrl);
+          linesImagePath = await uploadCanvasImage(quote.id, linesDataUrl, 'lines');
+          console.log('[SaveTakeoff] Lines-only image uploaded (path):', linesImagePath);
         } catch (linesError) {
           console.error('[SaveTakeoff] Failed to export lines-only image:', linesError);
         }
@@ -548,8 +550,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         quote.id,
         allMeasurements,
         calibrations[0]?.unit || 'feet',
-        canvasImageUrl,
-        linesImageUrl
+        canvasImagePath,
+        linesImagePath,
       );
       
       console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);

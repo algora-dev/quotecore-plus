@@ -260,6 +260,9 @@ export interface QuoteRow {
   cq_company_name: string | null; cq_company_address: string | null; cq_company_phone: string | null;
   cq_company_email: string | null; cq_company_logo_url: string | null; cq_footer_text: string | null;
   takeoff_canvas_url: string | null;
+  takeoff_lines_url: string | null;
+  takeoff_canvas_path: string | null;
+  takeoff_lines_path: string | null;
   created_at: string; updated_at: string;
 }
 

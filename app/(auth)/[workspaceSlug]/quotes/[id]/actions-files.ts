@@ -69,9 +69,13 @@ export async function deleteFile(fileId: string, storagePath: string): Promise<v
 }
 
 /**
- * Delete a takeoff canvas snapshot stored on the quote row
- * (takeoff_canvas_url or takeoff_lines_url). Clears the column and removes
- * the underlying file from QUOTE-DOCUMENTS storage when its path can be derived.
+ * Delete a takeoff canvas snapshot stored on the quote row.
+ * Clears both the path column and the legacy URL column, and removes the
+ * underlying file from QUOTE-DOCUMENTS storage when its path is known.
+ *
+ * After Gerald audit pass 2: snapshots are tracked by their stable storage
+ * path (takeoff_canvas_path / takeoff_lines_path). The legacy URL columns
+ * are still cleared for back-compat with quotes saved before the migration.
  */
 export async function deleteTakeoffCanvas(
   quoteId: string,
@@ -80,38 +84,40 @@ export async function deleteTakeoffCanvas(
   const profile = await requireCompanyContext();
   const supabaseAdmin = createAdminClient();
 
-  // Verify ownership and load the current URL.
+  // Verify ownership and load both the new path column and the legacy URL column.
   const { data: quote, error: loadError } = await supabaseAdmin
     .from('quotes')
-    .select('id, company_id, takeoff_canvas_url, takeoff_lines_url')
+    .select('id, company_id, takeoff_canvas_url, takeoff_lines_url, takeoff_canvas_path, takeoff_lines_path')
     .eq('id', quoteId)
     .single();
 
   if (loadError || !quote) throw new Error('Quote not found');
   if (quote.company_id !== profile.company_id) throw new Error('Unauthorized');
 
-  const column = kind === 'lines' ? 'takeoff_lines_url' : 'takeoff_canvas_url';
-  const currentUrl: string | null = (quote as any)[column];
+  const pathColumn = kind === 'lines' ? 'takeoff_lines_path' : 'takeoff_canvas_path';
+  const urlColumn = kind === 'lines' ? 'takeoff_lines_url' : 'takeoff_canvas_url';
+  const currentPath: string | null = (quote as any)[pathColumn];
+  const currentUrl: string | null = (quote as any)[urlColumn];
 
-  // Best-effort storage cleanup. We don't fail the whole op if storage is already gone.
-  if (currentUrl) {
-    const path = storagePathFromPublicUrl(currentUrl, BUCKETS.QUOTE_DOCUMENTS);
-    if (path) {
-      const { error: storageError } = await supabaseAdmin.storage
-        .from(BUCKETS.QUOTE_DOCUMENTS)
-        .remove([path]);
-      if (storageError) {
-        // Log but proceed — column still gets cleared so the user no longer sees the file.
-        console.warn('[deleteTakeoffCanvas] Storage remove warning:', storageError.message);
-      }
-    } else {
-      console.warn('[deleteTakeoffCanvas] Could not derive storage path from URL:', currentUrl);
+  // Best-effort storage cleanup. Path column wins; URL extraction is the fallback.
+  const storagePath: string | null =
+    currentPath ?? (currentUrl ? storagePathFromPublicUrl(currentUrl, BUCKETS.QUOTE_DOCUMENTS) : null);
+
+  if (storagePath) {
+    const { error: storageError } = await supabaseAdmin.storage
+      .from(BUCKETS.QUOTE_DOCUMENTS)
+      .remove([storagePath]);
+    if (storageError) {
+      // Log but proceed — columns still get cleared so the user no longer sees the file.
+      console.warn('[deleteTakeoffCanvas] Storage remove warning:', storageError.message);
     }
+  } else if (currentUrl) {
+    console.warn('[deleteTakeoffCanvas] Could not derive storage path from URL:', currentUrl);
   }
 
   const { error: updateError } = await supabaseAdmin
     .from('quotes')
-    .update({ [column]: null })
+    .update({ [pathColumn]: null, [urlColumn]: null })
     .eq('id', quoteId);
 
   if (updateError) {

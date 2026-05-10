@@ -616,10 +616,13 @@ export async function deleteQuote(id: string) {
   const supabase = await createSupabaseServerClient();
   const supabaseAdmin = createAdminClient();
 
-  // Verify ownership and grab takeoff URLs in one shot.
+  // Verify ownership and grab takeoff snapshot references in one shot. We
+  // prefer the stable storage path columns and only fall back to extracting
+  // a path from the legacy *_url columns for ancient quotes whose path
+  // column is still null after the backfill (Gerald audit pass 2 fix).
   const { data: quote, error: quoteErr } = await supabase
     .from('quotes')
-    .select('id, company_id, takeoff_canvas_url, takeoff_lines_url')
+    .select('id, company_id, takeoff_canvas_url, takeoff_lines_url, takeoff_canvas_path, takeoff_lines_path')
     .eq('id', id)
     .eq('company_id', profile.company_id)
     .maybeSingle();
@@ -634,8 +637,12 @@ export async function deleteQuote(id: string) {
   const storagePaths = new Set<string>(
     (quoteFiles ?? []).map((f: any) => f.storage_path).filter((p: string | null): p is string => !!p),
   );
-  const canvasPath = storagePathFromUrl(quote.takeoff_canvas_url, BUCKETS.QUOTE_DOCUMENTS);
-  const linesPath = storagePathFromUrl(quote.takeoff_lines_url, BUCKETS.QUOTE_DOCUMENTS);
+  const canvasPath =
+    (quote as any).takeoff_canvas_path ??
+    storagePathFromUrl(quote.takeoff_canvas_url, BUCKETS.QUOTE_DOCUMENTS);
+  const linesPath =
+    (quote as any).takeoff_lines_path ??
+    storagePathFromUrl(quote.takeoff_lines_url, BUCKETS.QUOTE_DOCUMENTS);
   if (canvasPath) storagePaths.add(canvasPath);
   if (linesPath) storagePaths.add(linesPath);
 

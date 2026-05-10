@@ -19,8 +19,8 @@ export async function saveTakeoffMeasurements(
   quoteId: string,
   measurements: TakeoffMeasurement[],
   unit: string,
-  canvasImageUrl?: string,
-  linesImageUrl?: string
+  canvasImagePath?: string,
+  linesImagePath?: string,
 ) {
   const supabase = await createSupabaseServerClient();
 
@@ -160,9 +160,12 @@ export async function saveTakeoffMeasurements(
     is_visible: m.visible,
   }));
 
+  // Pass STORAGE PATHS to the RPC (Gerald audit pass 2). The RPC keeps
+  // accepting the legacy *_url keys for one release so an in-flight deploy
+  // doesn't drop snapshots, but we should never send them from new code.
   const payload = {
-    canvas_image_url: canvasImageUrl ?? null,
-    lines_image_url: linesImageUrl ?? null,
+    canvas_image_path: canvasImagePath ?? null,
+    lines_image_path: linesImagePath ?? null,
     measurements: measurementsPayload,
     roof_areas: roofAreasPayload,
     components: componentsPayload,

@@ -121,39 +121,56 @@ export default async function QuoteSummaryPage({
   
   // QUOTE-DOCUMENTS is private; batch-sign every file's storage path so we
   // hit the storage API once instead of N times.
-  const filePaths = (filesData || []).map((f) => f.storage_path);
-  const signed = filePaths.length > 0
-    ? await getSignedUrls(BUCKETS.QUOTE_DOCUMENTS, filePaths)
+  // Takeoff canvas snapshots: prefer the stable storage path columns and sign
+  // on render. The legacy *_url columns are kept as a transition fallback for
+  // ancient quotes whose path column is still null after the backfill
+  // (Gerald audit pass 2 fix).
+  const canvasPath = quote.takeoff_canvas_path ?? null;
+  const linesPath = quote.takeoff_lines_path ?? null;
+
+  const allPathsToSign = [
+    ...(filesData || []).map((f) => f.storage_path),
+    ...(canvasPath ? [canvasPath] : []),
+    ...(linesPath ? [linesPath] : []),
+  ];
+  const signed = allPathsToSign.length > 0
+    ? await getSignedUrls(BUCKETS.QUOTE_DOCUMENTS, allPathsToSign)
     : [];
   const signedByPath = new Map(signed.map((s) => [s.path, s.signedUrl]));
   const allFiles = (filesData || []).map((file) => ({
     ...file,
     url: signedByPath.get(file.storage_path) ?? '',
   }));
-  
+
   // Add canvas image if it exists
-  if (quote.takeoff_canvas_url) {
+  const canvasUrl = canvasPath
+    ? signedByPath.get(canvasPath) ?? ''
+    : (quote.takeoff_canvas_url ?? '');
+  if (canvasUrl) {
     allFiles.push({
       id: 'canvas-image',
       file_type: 'canvas' as any,
       file_name: 'Digital Takeoff Canvas',
       file_size: 0,
-      storage_path: '',
+      storage_path: canvasPath ?? '',
       uploaded_at: quote.updated_at,
-      url: quote.takeoff_canvas_url,
+      url: canvasUrl,
     });
   }
 
   // Add lines-only canvas image if it exists
-  if (quote.takeoff_lines_url) {
+  const linesUrl = linesPath
+    ? signedByPath.get(linesPath) ?? ''
+    : (quote.takeoff_lines_url ?? '');
+  if (linesUrl) {
     allFiles.push({
       id: 'canvas-lines',
       file_type: 'canvas' as any,
       file_name: 'Takeoff Lines Only (Print Ready)',
       file_size: 0,
-      storage_path: '',
+      storage_path: linesPath ?? '',
       uploaded_at: quote.updated_at,
-      url: quote.takeoff_lines_url,
+      url: linesUrl,
     });
   }
 

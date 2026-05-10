@@ -221,23 +221,47 @@ export async function loadQuoteBundleData(quoteId: string): Promise<QuoteBundleD
     });
   }
 
-  // Add takeoff canvas snapshots (already public on the quote row).
-  if (quote.takeoff_canvas_url) {
+  // Takeoff canvas snapshots: prefer the stable storage path columns and
+  // sign on render. Fall back to the legacy *_url columns for ancient quotes
+  // whose path column is still null after the backfill (Gerald audit pass 2 fix).
+  const signSnapshot = async (path: string | null | undefined): Promise<string | null> => {
+    if (!path) return null;
+    const { data: s, error: e } = await supabaseAdmin
+      .storage
+      .from(QUOTE_DOCUMENTS_BUCKET)
+      .createSignedUrl(path, SIGNED_URL_TTL_SECONDS);
+    if (e || !s?.signedUrl) {
+      console.warn('[loadQuoteBundleData] signed URL failed for snapshot', path, e?.message);
+      return null;
+    }
+    return s.signedUrl;
+  };
+
+  const canvasSignedUrl =
+    (await signSnapshot((quote as any).takeoff_canvas_path)) ??
+    quote.takeoff_canvas_url ??
+    null;
+  const linesSignedUrl =
+    (await signSnapshot((quote as any).takeoff_lines_path)) ??
+    quote.takeoff_lines_url ??
+    null;
+
+  if (canvasSignedUrl) {
     filesWithUrls.push({
       id: 'canvas-image',
       fileType: 'canvas',
       fileName: 'Digital-Takeoff-Canvas.png',
-      storagePath: null,
-      url: quote.takeoff_canvas_url,
+      storagePath: (quote as any).takeoff_canvas_path ?? null,
+      url: canvasSignedUrl,
     });
   }
-  if (quote.takeoff_lines_url) {
+  if (linesSignedUrl) {
     filesWithUrls.push({
       id: 'canvas-lines',
       fileType: 'canvas',
       fileName: 'Takeoff-Lines-Only.png',
-      storagePath: null,
-      url: quote.takeoff_lines_url,
+      storagePath: (quote as any).takeoff_lines_path ?? null,
+      url: linesSignedUrl,
     });
   }
 
