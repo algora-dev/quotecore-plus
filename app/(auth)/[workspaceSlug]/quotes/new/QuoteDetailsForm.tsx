@@ -57,11 +57,13 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
       throw new Error('Storage quota exceeded. Please upgrade your plan.');
     }
 
-    // Upload to storage only (don't save metadata yet - quote doesn't exist)
+    // Upload to storage only (don't save metadata yet - quote doesn't exist).
+    // Path MUST start with the company id so the storage RLS policy
+    // (`first segment === caller's company_id`) accepts the write.
     const supabase = createClient();
     const fileExt = file.name.split('.').pop();
     const fileName = `plan-${Date.now()}.${fileExt}`;
-    const tempPath = `temp/${companyId}/${fileName}`;
+    const tempPath = `${companyId}/_pending/${fileName}`;
     
     const { error: uploadError } = await supabase.storage
       .from('QUOTE-DOCUMENTS')
