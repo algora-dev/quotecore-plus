@@ -190,8 +190,14 @@ export async function updateFlashingWithImage(id: string, formData: FormData) {
     .single();
 
   let imageUrl = currentFlashing?.image_url;
+  // Track whether we just uploaded a new image so we know to clean up the
+  // OLD image only AFTER the DB update succeeds. If we deleted the old image
+  // before the update and the update then failed, the surviving DB row
+  // would point at a now-missing object and the user would see a broken
+  // image with no path back.
+  let oldImageUrlToCleanUp: string | null = null;
 
-  // Upload new image if provided
+  // Upload new image if provided.
   if (imageFile && imageFile.size > 0) {
     const fileName = `${crypto.randomUUID()}.png`;
     const storagePath = `${profile.company_id}/flashings/${fileName}`;
@@ -217,14 +223,8 @@ export async function updateFlashingWithImage(id: string, formData: FormData) {
       .getPublicUrl(storagePath);
 
     imageUrl = publicUrl;
-
-    // Delete old image (best effort)
-    if (currentFlashing?.image_url) {
-      const oldPath = currentFlashing.image_url.split('/storage/v1/object/public/company-logos/')[1];
-      if (oldPath) {
-        await supabase.storage.from('company-logos').remove([oldPath]);
-      }
-    }
+    // Defer the old-image cleanup until AFTER the DB update succeeds.
+    oldImageUrlToCleanUp = currentFlashing?.image_url ?? null;
   }
 
   // Update database
@@ -244,7 +244,21 @@ export async function updateFlashingWithImage(id: string, formData: FormData) {
 
   if (error) {
     console.error('[updateFlashingWithImage] Database error:', error);
+    // Note: we don't clean up the freshly-uploaded NEW image on DB failure
+    // because retrying the operation will pick a new uuid name. A periodic
+    // orphan-sweep is the right tool for that, not inline rollback.
     throw new Error(`Failed to update flashing: ${error.message}`);
+  }
+
+  // DB update succeeded — NOW it is safe to remove the old image.
+  if (oldImageUrlToCleanUp) {
+    const oldPath = oldImageUrlToCleanUp.split('/storage/v1/object/public/company-logos/')[1];
+    if (oldPath) {
+      const { error: removeErr } = await supabase.storage.from('company-logos').remove([oldPath]);
+      if (removeErr) {
+        console.warn('[updateFlashingWithImage] Old image cleanup failed:', removeErr.message);
+      }
+    }
   }
 
   revalidatePath('/[workspaceSlug]/flashings');
