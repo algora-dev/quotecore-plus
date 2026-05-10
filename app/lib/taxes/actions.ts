@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 import { verifyQuoteOwnership } from '@/app/lib/auth/ownership';
 import type { CompanyTaxRow, QuoteTaxRow } from './types';
 
@@ -106,6 +107,31 @@ export async function loadQuoteTaxes(quoteId: string): Promise<QuoteTaxRow[]> {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
   await verifyQuoteOwnership(supabase, quoteId, profile.company_id);
+  const { data, error } = await supabase
+    .from('quote_taxes')
+    .select('*')
+    .eq('quote_id', quoteId)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as QuoteTaxRow[];
+}
+
+/**
+ * PUBLIC-SAFE quote-tax loader for use on the public accept page.
+ *
+ * IMPORTANT: This bypasses the normal `requireCompanyContext()` /
+ * `verifyQuoteOwnership()` checks. The caller MUST have already validated
+ * access through some other mechanism (e.g. an acceptance token lookup
+ * that proved the quote exists and the link is still active).
+ *
+ * Uses the service-role admin client because the public accept page is
+ * unauthenticated and would otherwise be blocked by RLS on `quote_taxes`.
+ *
+ * Returns the same shape as `loadQuoteTaxes` so callers can swap freely.
+ */
+export async function loadQuoteTaxesByQuoteId(quoteId: string): Promise<QuoteTaxRow[]> {
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('quote_taxes')
     .select('*')
