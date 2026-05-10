@@ -1,4 +1,4 @@
-﻿---
+---
 title: FAQ
 description: Quick answers to the questions most people ask.
 order: 3
@@ -8,4 +8,101 @@ updated: 2026-05-10
 
 # FAQ
 
-Placeholder. Content written in step 4.
+Common questions, short answers, links if you want more.
+
+## What's the difference between a Component and an Extra?
+
+Components are the materials and labor you'd order from a supplier - tiles, longrun, ridges, fixings. Extras are everything else - skip hire, accommodation, scaffold, custom one-offs. Both behave the same for pricing; the split is mostly about how the quote reads. See [Components vs Extras](/docs/core-concepts/components-vs-extras).
+
+## Can I edit a sent quote?
+
+Yes. Either:
+
+- Edit the customer quote directly (small text changes) in the [customer quote editor](/docs/customer-facing/customer-quote-editor) and save.
+- Edit the underlying quote (numbers and components) by going back into the [quote builder](/docs/building-a-quote/quote-builder) from the summary.
+
+After either, generate a fresh URL from the summary so the customer sees the new version. The old URL becomes invalid.
+
+## How do I handle a re-roof where I have actual measurements?
+
+Use [manual takeoff](/docs/building-a-quote/manual-takeoff). Add your components, type in the measurements, and set each component to **Actual** so the pitch maths get skipped. Waste still applies. See [Plan vs Actual](/docs/core-concepts/plan-vs-actual).
+
+## Can the customer see my labor cost?
+
+No - not unless you specifically choose to show it. The [labor sheet](/docs/labor-and-installers/labor-sheet-editor) is separate from the customer quote. Labor amounts on the customer quote are bundled into the line price by default.
+
+## What if I get the pitch wrong?
+
+Two ways to fix it:
+
+- If you set the wrong pitch on an area, edit the area in the [quote builder](/docs/building-a-quote/quote-builder) and the maths re-run.
+- If a component should have had pitch enabled and didn't (or vice versa), edit the component, then re-add it to the quote builder. The quote re-calculates.
+
+If you've already sent the quote, generate a new URL after fixing.
+
+## How do I clone a quote?
+
+From the [quote summary](/docs/building-a-quote/quote-summary), click **Clone Quote**. Enter a new customer name. Edit anything that needs changing.
+
+Cloning is faster than starting fresh when:
+
+- You're quoting a similar job.
+- You messed up a quote and want a clean restart.
+- You're quoting the same job for a different customer.
+
+## What happens if my customer doesn't respond?
+
+Three options:
+
+- Wait. The quote URL is valid for whatever expiry you set (default 30 days).
+- Follow up manually with a phone call or email.
+- Once [follow-up emails](/docs/customer-facing/follow-up-emails) ship, you'll be able to set automatic chase emails.
+
+If the link expires before they respond, the customer can request a fresh quote from the expired-link page.
+
+## Does the system work on iPad / on site?
+
+Yes. The app works on tablets and phones for most flows - reading quotes, status updates, generating URLs. The digital takeoff drawing tool is best on a tablet or laptop with a stylus or trackpad. Drawing complex roofs on a phone is technically possible but slow.
+
+## What measurement systems are supported?
+
+Three:
+
+- **Metric** - meters, m2, mm.
+- **Imperial feet** - feet, ft2, inches.
+- **Imperial roofing squares** - linear feet, roofing squares (Rs), with conversions handled automatically.
+
+Pick a default in [Company settings](/docs/account-and-billing/company-settings). Each new quote locks to its system at creation. Existing quotes don't change if you change the default later.
+
+## How do I add a one-off cost like skip hire?
+
+Add it as an **Extra**. Quickest way: add it as a line item directly in the quote builder Extras phase. If it's something you'll use on multiple quotes, save it as a component with type "Extra" so it's in your library.
+
+## Can two people in my company work on the same quote?
+
+Not yet - team accounts are [coming soon](/docs/account-and-billing/team-members). Right now there's one login per company. You can share a login if you really need to, but each person should ideally have their own when team accounts ship.
+
+## How do I delete a quote?
+
+From the [quotes page](/docs/building-a-quote/quote-summary), check the box next to the quote(s), then click **Delete**. Once deleted, the quote and all attached files are gone permanently.
+
+If you might want it later, [withdraw](/docs/customer-facing/withdrawing-a-quote) instead.
+
+## Why is my customer quote total different from my summary?
+
+Two possibilities:
+
+- The customer quote was edited after the master was last saved (common - you tweaked descriptions or hid lines).
+- The summary shows everything; the customer quote may have hidden lines that still count toward the total.
+
+Open the customer quote editor and the summary side-by-side. Compare line by line.
+
+## How do I back up everything?
+
+From the [quotes page](/docs/building-a-quote/quote-summary), check the box next to one or many quotes, click **Download**. You get a zip containing the quotes, customer quotes, labor sheets, and all attached files. Drop it on your computer, a USB stick, or your cloud drive.
+
+## Related
+
+- [Glossary](/docs/core-concepts/glossary)
+- [Contact support](/docs/help-and-support/contact-support)
+- [Changelog](/docs/help-and-support/changelog)
