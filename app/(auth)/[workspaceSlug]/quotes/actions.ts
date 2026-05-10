@@ -6,38 +6,7 @@ import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 import type { InputMode, WasteType, PitchType } from '@/app/lib/types';
 import { verifyQuoteOwnership, verifyRoofAreaOwnership, verifyComponentOwnership } from '@/app/lib/auth/ownership';
-
-/**
- * Snapshot the company's current tax library onto a freshly-created quote.
- * Best-effort: any failure here is logged and swallowed so the quote-creation
- * flow itself never breaks because of taxes.
- */
-async function seedQuoteTaxesOnCreate(quoteId: string, companyId: string): Promise<void> {
-  try {
-    const supabase = await createSupabaseServerClient();
-    const { data: defaults } = await supabase
-      .from('company_taxes')
-      .select('id, name, rate_percent, sort_order')
-      .eq('company_id', companyId)
-      .is('archived_at', null)
-      .order('sort_order', { ascending: true });
-
-    if (!defaults || defaults.length === 0) return;
-
-    const rows = defaults.map((d) => ({
-      quote_id: quoteId,
-      source_tax_id: d.id,
-      name: d.name,
-      rate_percent: d.rate_percent,
-      sort_order: d.sort_order,
-      include_in_quote: true,
-      include_in_labor: true,
-    }));
-    await supabase.from('quote_taxes').insert(rows);
-  } catch (err) {
-    console.error('[seedQuoteTaxesOnCreate] failed:', err);
-  }
-}
+import { seedQuoteTaxesOnCreate } from '@/app/lib/taxes/seed';
 
 export async function createQuoteFromTemplate(
   templateId: string,

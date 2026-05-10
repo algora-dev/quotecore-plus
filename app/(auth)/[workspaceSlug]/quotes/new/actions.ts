@@ -1,6 +1,7 @@
 'use server';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
+import { seedQuoteTaxesOnCreate } from '@/app/lib/taxes/seed';
 
 interface CreateQuoteParams {
   customerName: string;
@@ -58,6 +59,11 @@ export async function createQuoteWithDetails(params: CreateQuoteParams): Promise
   if (error || !quote) {
     throw new Error(error?.message || 'Failed to create quote');
   }
+
+  // Snapshot the company's tax library onto the new quote so totals work
+  // immediately on summary/customer/accept pages. Best-effort: a failure
+  // here is logged inside the helper and won't block quote creation.
+  await seedQuoteTaxesOnCreate(quote.id, profile.company_id);
 
   return quote.id;
 }
