@@ -8,6 +8,7 @@ import { AlertBell } from '@/app/components/alerts/AlertBell';
 import { CopilotProvider } from '@/app/components/copilot/CopilotProvider';
 import { CopilotToggle } from '@/app/components/copilot/CopilotToggle';
 import { CopilotOverlay } from '@/app/components/copilot/CopilotOverlay';
+import { HelpDrawer } from '@/app/components/docs/HelpDrawer';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 
@@ -66,6 +67,7 @@ export default async function WorkspaceLayout({
               <img src="/logo.png" alt="QuoteCore" className="h-9" />
             </Link>
             <div className="flex items-center gap-3">
+              <HelpDrawer />
               <CopilotToggle />
               <AlertBell
                 initialAlerts={alerts || []}
