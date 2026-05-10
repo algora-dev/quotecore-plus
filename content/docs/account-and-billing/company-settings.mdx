@@ -1,4 +1,4 @@
-﻿---
+---
 title: Company settings
 description: Logo, currency, default units, default margins, taxes.
 order: 2
@@ -8,4 +8,56 @@ updated: 2026-05-10
 
 # Company settings
 
-Placeholder. Content written in step 4.
+The company page is where you set the things customers see on quotes - your name, logo, contact details - and the defaults the app uses when you build a new quote.
+
+## When to use it
+
+- First-time setup. See [Set up your company](/docs/getting-started/set-up-your-company) for the walkthrough.
+- Updating logo, address, or contact details.
+- Changing your default currency or measurement system.
+- Adding or editing tax rates.
+- Adjusting default profit margins.
+
+## What's on the page
+
+### Company info
+
+- **Company name** - what appears on customer quotes.
+- **Logo** - top-right of the customer quote. Transparent PNG works best.
+- **Address** - shown on the customer quote header.
+- **Phone** - shown on the customer quote header.
+- **Company email** - shown on the customer quote (overrides your account email).
+
+### Defaults for new quotes
+
+- **Default currency** - three-letter code. Existing quotes keep their original currency.
+- **Default measurement system** - metric, imperial feet, or imperial roofing squares. Existing quotes lock to the system they were created in.
+- **Default material margin** - percentage applied to materials on a new quote.
+- **Default labor margin** - percentage applied to labor on a new quote.
+
+### Taxes
+
+A list of tax rows. Each row has:
+
+- **Name** - shown on the customer quote (e.g. "GST", "VAT").
+- **Rate %** - the percentage.
+- **Show on customer quote** - toggle.
+- **Show on labor sheet** - toggle.
+
+New quotes copy the tax list when they're created, so editing the list later doesn't change quotes you've already made.
+
+## Editing taxes mid-quote
+
+If you need to update a tax on an existing quote, edit it inside the quote's tax panel - not the company tax list. Company tax changes only apply to new quotes.
+
+## Tips
+
+- Set realistic default margins. They're meant to be the typical case, not the maximum or minimum.
+- For multi-tax regions (federal + provincial), add each tax as its own row. The customer quote shows them as separate lines.
+- If you change the company name, existing quotes keep the old name on them. Re-generate the customer quote to pick up the new name.
+
+## Related
+
+- [Set up your company](/docs/getting-started/set-up-your-company)
+- [Account details](/docs/account-and-billing/account-details)
+- [Notifications](/docs/account-and-billing/notifications)
