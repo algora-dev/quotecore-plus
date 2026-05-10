@@ -14,12 +14,18 @@
     "@types/jszip": "^3.4.0",
     "bcryptjs": "^3.0.3",
     "fabric": "^6.5.2",
+    "gray-matter": "^4.0.3",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "jszip": "^3.10.1",
     "next": "16.2.6",
+    "next-mdx-remote": "^6.0.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "reading-time": "^1.5.0",
+    "rehype-autolink-headings": "^7.1.0",
+    "rehype-slug": "^6.0.0",
+    "remark-gfm": "^4.0.1",
     "resend": "^4.8.0"
   },
   "overrides": {
