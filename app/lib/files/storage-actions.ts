@@ -16,16 +16,22 @@
  *   - Storage operations are independent of any individual page; couple them
  *     to the route that happens to use them today and we'll be repeating this
  *     migration in six months.
- *   - Keeps the upcoming `/account` settings refactor surgical: only settings-
- *     specific actions move, file IO is already out of the blast radius.
  *
- * Public surface kept identical to the old call sites: `checkStorageQuota`
- * and `saveFileMetadata` have the SAME signatures and behaviour. The only
- * thing that changes for callers is the import path.
+ * Trust model (hardened 2026-05-10 in response to Gerald audit pass 2):
+ *   - The browser supplies file metadata, but the server treats every supplied
+ *     value as untrusted input. Storage path prefix, optional quote id, and
+ *     actual object size + mime are all re-verified server-side before the
+ *     `quote_files` row is written.
+ *   - The admin client is used ONLY for `logo` uploads, which legitimately
+ *     need to bypass the company-scoped RLS check at the moment a brand-new
+ *     company is being onboarded. Plan + supporting uploads go through the
+ *     RLS-bound user client, so a missing or wrong company_id on the row
+ *     would be rejected by the database, not just the application layer.
  */
 
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import { verifyQuoteOwnership } from '@/app/lib/auth/ownership';
 import { getSignedUrl } from '@/app/lib/storage/helpers';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 
@@ -42,6 +48,9 @@ export async function checkStorageQuota(companyId: string, fileSize: number): Pr
 
   if (profile.company_id !== companyId) {
     throw new Error('Unauthorized');
+  }
+  if (!Number.isFinite(fileSize) || fileSize < 0) {
+    throw new Error('Invalid file size');
   }
 
   const supabase = await createSupabaseServerClient();
@@ -60,15 +69,21 @@ export async function checkStorageQuota(companyId: string, fileSize: number): Pr
 }
 
 /**
- * Records a freshly-uploaded object in `quote_files`. The object itself must
- * already be in storage (Supabase Storage upload is done client-side via
- * signed URLs). This call writes the metadata row that the rest of the app
- * reads when listing or rendering files.
+ * Records a freshly-uploaded object in `quote_files`. The object must already
+ * exist in storage; this call writes the metadata row that the rest of the
+ * app reads when listing or rendering files.
  *
- * Uses the admin client to bypass RLS so the upsert succeeds even when the
- * user's row-level role can't write to `quote_files` directly. Authorization
- * is enforced at the application layer instead: the caller's `companyId`
- * must match their authenticated `profile.company_id`.
+ * The browser tells us the path, name, and (claimed) size and mime; we ignore
+ * the claimed size and mime, look the object up in Supabase Storage, and use
+ * the values the storage system reports. That defeats clients trying to:
+ *   - inflate or deflate `companies.storage_used_bytes` (the storage trigger
+ *     adds whatever value lands in `quote_files.file_size`),
+ *   - register a metadata row pointing at a path they don't own,
+ *   - attach a file to a quote owned by a different company.
+ *
+ * For `plan` and `supporting` uploads we use the RLS-bound user client so
+ * the database itself rejects mismatched company ids. Logos still need the
+ * admin client during onboarding, but their path prefix is also validated.
  *
  * Idempotent on `storage_path` (PK conflict) so retrying after a transient
  * failure produces no duplicates.
@@ -77,41 +92,108 @@ export async function saveFileMetadata(data: {
   companyId: string;
   fileType: 'logo' | 'plan' | 'supporting';
   fileName: string;
-  fileSize: number;
-  mimeType: string;
+  /** Ignored. Kept in signature for back-compat; real size is read from Storage. */
+  fileSize?: number;
+  /** Ignored. Kept in signature for back-compat; real mime is read from Storage. */
+  mimeType?: string;
   storagePath: string;
   quoteId?: string;
 }): Promise<void> {
   const profile = await requireCompanyContext();
 
+  // 1. Caller's claimed company id must match their authenticated company.
   if (profile.company_id !== data.companyId) {
     throw new Error('Unauthorized');
   }
 
-  // Use admin client to bypass RLS — application-level authorization above
-  // is the source of truth for this surface.
-  const { createAdminClient } = await import('@/app/lib/supabase/admin');
-  const supabaseAdmin = createAdminClient();
+  // 2. Storage path must be prefixed with the caller's company id. Every path
+  //    we generate looks like `${companyId}/...`; anything else is bogus.
+  if (!data.storagePath || !data.storagePath.startsWith(`${profile.company_id}/`)) {
+    throw new Error('Invalid storage path');
+  }
 
-  const { error } = await supabaseAdmin
-    .from('quote_files')
-    .upsert(
-      {
-        company_id: data.companyId,
-        quote_id: data.quoteId || null,
-        file_type: data.fileType,
-        file_name: data.fileName,
-        file_size: data.fileSize,
-        mime_type: data.mimeType,
-        storage_path: data.storagePath,
-        uploaded_by: profile.id,
-      },
-      { onConflict: 'storage_path' }
-    );
+  // 3. Storage path must NOT contain any traversal segments. Belt-and-braces
+  //    after the prefix check.
+  if (data.storagePath.includes('..') || data.storagePath.includes('//')) {
+    throw new Error('Invalid storage path');
+  }
 
-  if (error) {
-    console.error('[saveFileMetadata] Database error:', error);
-    throw new Error(error.message);
+  const supabase = await createSupabaseServerClient();
+
+  // 4. If this metadata row is being attached to a quote, that quote must
+  //    belong to the caller's company.
+  if (data.quoteId) {
+    await verifyQuoteOwnership(supabase, data.quoteId, profile.company_id);
+  }
+
+  // 5. Pick the bucket from the file type. Logos go in the public logos
+  //    bucket; everything else goes in the private quote-documents bucket.
+  const bucket =
+    data.fileType === 'logo' ? BUCKETS.COMPANY_LOGOS : BUCKETS.QUOTE_DOCUMENTS;
+
+  // 6. Read actual object metadata from Storage. This is the source of truth
+  //    for size and mime — the browser doesn't get to lie about either.
+  //    `list()` with the parent prefix and a `search` filter is the documented
+  //    way to look up a single object's metadata.
+  const lastSlash = data.storagePath.lastIndexOf('/');
+  const prefix = lastSlash >= 0 ? data.storagePath.slice(0, lastSlash) : '';
+  const objectName = lastSlash >= 0 ? data.storagePath.slice(lastSlash + 1) : data.storagePath;
+
+  // The user's RLS-bound client can `list()` paths under their own company id
+  // because the storage policies allow it. Falling back to the admin client
+  // here would defeat the whole point.
+  const { data: listResult, error: listErr } = await supabase.storage
+    .from(bucket)
+    .list(prefix, { search: objectName, limit: 1 });
+
+  if (listErr) {
+    console.error('[saveFileMetadata] storage list failed:', listErr);
+    throw new Error('Failed to verify uploaded file');
+  }
+
+  const obj = listResult?.find((o) => o.name === objectName);
+  if (!obj) {
+    throw new Error('Uploaded file not found in storage');
+  }
+
+  const realSize = (obj.metadata as { size?: number } | null)?.size;
+  const realMime = (obj.metadata as { mimetype?: string } | null)?.mimetype;
+  if (typeof realSize !== 'number' || !Number.isFinite(realSize) || realSize < 0) {
+    throw new Error('Storage object has no readable size');
+  }
+
+  const row = {
+    company_id: data.companyId,
+    quote_id: data.quoteId || null,
+    file_type: data.fileType,
+    file_name: data.fileName,
+    file_size: realSize,
+    mime_type: realMime || 'application/octet-stream',
+    storage_path: data.storagePath,
+    uploaded_by: profile.id,
+  };
+
+  // 7. Logos use the admin client because the very first logo upload during
+  //    onboarding can race the company_id propagation. Plan/supporting uploads
+  //    go through the user client so RLS double-checks the company match.
+  if (data.fileType === 'logo') {
+    const { createAdminClient } = await import('@/app/lib/supabase/admin');
+    const supabaseAdmin = createAdminClient();
+    const { error } = await supabaseAdmin
+      .from('quote_files')
+      .upsert(row, { onConflict: 'storage_path' });
+    if (error) {
+      console.error('[saveFileMetadata] logo upsert failed:', error);
+      throw new Error(error.message);
+    }
+  } else {
+    const { error } = await supabase
+      .from('quote_files')
+      .upsert(row, { onConflict: 'storage_path' });
+    if (error) {
+      console.error('[saveFileMetadata] upsert failed:', error);
+      throw new Error(error.message);
+    }
   }
 
   // Bust the previously-named "/account" cache key for now. Once the new
