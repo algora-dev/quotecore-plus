@@ -1,4 +1,4 @@
-﻿---
+---
 title: Plan vs Actual measurements
 description: When to flip between plan and actual, and why.
 order: 3
@@ -8,4 +8,52 @@ updated: 2026-05-10
 
 # Plan vs Actual measurements
 
-Placeholder. Content written in step 4.
+Every measurement on a quote is either **Plan** or **Actual**. They look the same on the screen. They behave differently in the maths.
+
+## What "Plan" means
+
+Plan measurements are the flat numbers off a roof plan. The roof on paper is a 2D shape. A 100 m2 plan area becomes more than 100 m2 of actual roofing material once you factor in the pitch.
+
+When a component has pitch enabled, QuoteCore+ takes your plan number, multiplies by the pitch factor for the angle you set on the area, and adds waste. That's how you go from "the plan says 100" to "I need to order 122 m2 of iron".
+
+Use Plan when:
+
+- You're measuring off a drawing or aerial image.
+- You don't have site measurements yet.
+- You're quoting from architects' plans before the build starts.
+
+## What "Actual" means
+
+Actual measurements are real-world numbers. You measured the roof on site. You measured each lineal length yourself. Pitch doesn't apply because the number you typed is already the real thing.
+
+When a component is set to Actual, QuoteCore+ skips the pitch calculation. Waste still applies if you set it.
+
+Use Actual when:
+
+- You did a site measure-up.
+- You're quoting a re-roof and you've measured the old roof already.
+- You want to override the pitch maths for a specific component.
+
+## How to flip between them
+
+In the [Quote builder](/docs/building-a-quote/quote-builder) Components phase, each component has a **Plan / Actual** toggle. Default is Plan. Switch to Actual on the components you measured directly.
+
+You can mix on the same quote. For example: ridges and barges measured on site (Actual), main roof area measured off the plan (Plan).
+
+<Callout type="warning">
+If you set a component to Actual and forget, you'll under-order. Pitch isn't applied, waste might still be, but the actual roof maths are gone. Double-check the Plan/Actual toggle on every quote where you mixed measurement methods.
+</Callout>
+
+## A worked example
+
+A roof plan shows 100 m2. Pitch is 30 degrees. Waste is 5%.
+
+- **Plan + pitch enabled + 5% waste:** 100 m2 x 1.155 (pitch factor) x 1.05 (waste) = ~121 m2 ordered.
+- **Actual + pitch enabled + 5% waste:** 100 m2 x 1.05 = 105 m2 ordered. (Pitch is skipped because the number is already real.)
+- **Plan + pitch disabled + 5% waste:** 100 m2 x 1.05 = 105 m2 ordered. (Useful for components like underlay where you don't always need pitch.)
+
+## Related
+
+- [Waste, pitch, and calculations](/docs/core-concepts/waste-pitch-and-calculations)
+- [Quote builder](/docs/building-a-quote/quote-builder)
+- [Manual takeoff](/docs/building-a-quote/manual-takeoff)
