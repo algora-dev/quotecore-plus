@@ -2,7 +2,7 @@ import fs from 'fs';
 import matter from 'gray-matter';
 import * as runtime from 'react/jsx-runtime';
 import * as devRuntime from 'react/jsx-dev-runtime';
-import { evaluate } from '@mdx-js/mdx';
+import { evaluate, type EvaluateOptions } from '@mdx-js/mdx';
 import remarkGfm from 'remark-gfm';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
@@ -36,19 +36,22 @@ export async function loadDoc(slug: string): Promise<LoadedDoc | null> {
   const fileSource = fs.readFileSync(page.filePath, 'utf8');
   const { content: body, data } = matter(fileSource);
 
-  const { default: MDXContent } = await evaluate(body, {
-    ...(runtime as any),
-    ...(devRuntime as any),
+  const evalOptions = {
+    ...runtime,
+    ...devRuntime,
     development: false,
     remarkPlugins: [remarkGfm],
     rehypePlugins: [
       rehypeSlug,
-      [rehypeAutolinkHeadings, { behavior: 'wrap' }] as any,
+      [rehypeAutolinkHeadings, { behavior: 'wrap' }],
     ],
-  });
+  } as unknown as EvaluateOptions;
+
+  const { default: MDXContent } = await evaluate(body, evalOptions);
 
   // MDXContent is a React component; render it bound to our component overrides.
-  const content = (MDXContent as any)({ components: mdxComponents });
+  const Comp = MDXContent as React.ComponentType<{ components: typeof mdxComponents }>;
+  const content = <Comp components={mdxComponents} />;
 
   return {
     page,

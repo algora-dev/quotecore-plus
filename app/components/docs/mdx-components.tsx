@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 /**
@@ -37,7 +36,7 @@ export function ComingSoon() {
     <div className="my-6 flex items-center gap-3 rounded-lg border border-orange-200 bg-orange-50 p-4">
       <span className="inline-block rounded-full bg-orange-600 px-2 py-0.5 text-xs font-semibold text-white">Coming soon</span>
       <span className="text-sm text-orange-900">
-        This feature is on the roadmap. The doc is here so you know what's coming and what to expect.
+        This feature is on the roadmap. The doc is here so you know what&apos;s coming and what to expect.
       </span>
     </div>
   );
@@ -79,10 +78,14 @@ export const mdxComponents = {
   ComingSoon,
   Steps,
   Field,
-  a: (props: any) => {
+  a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
     const href = props.href ?? '';
+    // Use a plain <a> for everything: internal links are still client-side
+    // navigated by Next's router runtime, and a plain <a> works inside both
+    // the App Router page and renderToStaticMarkup (used by the help drawer
+    // server endpoint) without any "client component on server" issues.
     if (href.startsWith('/') || href.startsWith('#')) {
-      return <Link {...props} href={href} />;
+      return <a {...props} href={href} />;
     }
     return <a {...props} target="_blank" rel="noreferrer" />;
   },

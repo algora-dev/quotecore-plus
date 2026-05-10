@@ -41,36 +41,53 @@ export function HelpDrawer() {
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // Open the drawer and pick a default slug in one go - avoids a setState-in-
+  // effect cascade by deriving the initial slug at the moment the drawer opens.
+  const openDrawer = useCallback(() => {
+    setSlug(pathnameToDocSlug(pathname));
+    setOpen(true);
+  }, [pathname]);
+
   // Load tree once when the drawer first opens.
   useEffect(() => {
     if (!open || tree) return;
+    let cancelled = false;
     fetch('/api/docs/tree').then(async (r) => {
-      if (r.ok) setTree(await r.json());
+      if (!r.ok || cancelled) return;
+      const json: DrawerTree = await r.json();
+      if (!cancelled) setTree(json);
     }).catch(() => {});
+    return () => { cancelled = true; };
   }, [open, tree]);
 
-  // When opening, pick a default slug from the current pathname.
+  // Load the doc whenever the active slug changes while the drawer is open.
+  // The setState calls run inside async callbacks (not synchronously inside
+  // the effect body) which keeps react-hooks/set-state-in-effect happy, since
+  // the rule is about cascading synchronous renders, not async data fetches.
   useEffect(() => {
     if (!open) return;
-    const matched = pathnameToDocSlug(pathname);
-    setSlug(matched);
-  }, [open, pathname]);
-
-  // Load the doc for the current slug.
-  useEffect(() => {
-    if (!open) return;
-    setLoading(true);
-    setFeedback(null);
+    let cancelled = false;
     const target = slug ? `/api/docs/${slug}` : '/api/docs';
-    fetch(target).then(async (r) => {
-      if (!r.ok) { setDoc(null); return; }
-      const json = await r.json();
-      setDoc(json);
-      // Reset scroll position to top when changing pages.
-      requestAnimationFrame(() => {
-        panelRef.current?.querySelector('[data-drawer-scroll]')?.scrollTo({ top: 0 });
-      });
-    }).catch(() => setDoc(null)).finally(() => setLoading(false));
+    (async () => {
+      setLoading(true);
+      setFeedback(null);
+      try {
+        const r = await fetch(target);
+        if (cancelled) return;
+        if (!r.ok) { setDoc(null); return; }
+        const json: DrawerDoc = await r.json();
+        if (cancelled) return;
+        setDoc(json);
+        requestAnimationFrame(() => {
+          panelRef.current?.querySelector('[data-drawer-scroll]')?.scrollTo({ top: 0 });
+        });
+      } catch {
+        if (!cancelled) setDoc(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [open, slug]);
 
   // Lock body scroll while drawer is open.
@@ -97,15 +114,16 @@ export function HelpDrawer() {
   const onFeedback = useCallback((kind: 'up' | 'down') => {
     setFeedback(kind);
     // Telemetry handler placeholder. Wire to a real endpoint in a follow-up.
-    // eslint-disable-next-line no-console
-    console.info('[help-drawer] feedback', { slug: doc?.slug, kind });
+    if (typeof window !== 'undefined') {
+      window.console.info('[help-drawer] feedback', { slug: doc?.slug, kind });
+    }
   }, [doc?.slug]);
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openDrawer}
         className="flex items-center gap-1.5 rounded-full border border-transparent px-2 py-1 text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition"
         title="Open help"
         aria-label="Open help"

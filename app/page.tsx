@@ -30,6 +30,12 @@ export default function Home() {
             Sign up
           </Link>
         </div>
+        <Link
+          href="/docs"
+          className="text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-700"
+        >
+          Read the docs
+        </Link>
       </main>
     </div>
   );

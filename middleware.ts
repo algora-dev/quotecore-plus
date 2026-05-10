@@ -12,6 +12,7 @@ const PUBLIC_PATHS = [
   '/privacy',      // Privacy Policy (legally required to be public)
   '/cookies',      // Cookie Policy (legally required to be public)
   '/terms',        // Terms of Service (legally required to be public)
+  '/docs',         // Public help library
 ];
 
 // Paths reachable when the user has an AAL1 session but still needs to clear 2FA.

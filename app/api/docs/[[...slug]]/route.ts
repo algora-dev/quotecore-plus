@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { ReactElement } from 'react';
 import { loadDoc } from '@/app/lib/docs/loader';
 import { getDocTree } from '@/app/lib/docs/tree';
 
@@ -28,9 +29,8 @@ export async function GET(
   // is safe at runtime.
   const { createRequire } = await import('module');
   const req = createRequire(import.meta.url);
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const reactDomServer: typeof import('react-dom/server') = req('react-dom/server');
-  const html = reactDomServer.renderToStaticMarkup(doc.content as any);
+  const reactDomServer = req('react-dom/server') as typeof import('react-dom/server');
+  const html = reactDomServer.renderToStaticMarkup(doc.content as ReactElement);
 
   const tree = getDocTree();
 
