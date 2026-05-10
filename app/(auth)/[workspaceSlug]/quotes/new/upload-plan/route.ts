@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
+import { BUCKETS } from '@/app/lib/storage/buckets';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,6 +15,19 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createSupabaseServerClient();
+
+    // Verify the quote belongs to the caller's company before writing into
+    // its storage prefix. Without this an authenticated user could upload
+    // into any other company's quote folder.
+    const { data: ownedQuote } = await supabase
+      .from('quotes')
+      .select('id')
+      .eq('id', quoteId)
+      .eq('company_id', company.id)
+      .maybeSingle();
+    if (!ownedQuote) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
     
     const fileExt = file.name.split('.').pop();
     const fileName = `plan-${Date.now()}.${fileExt}`;
@@ -24,7 +38,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
 
     const { error: uploadError } = await supabase.storage
-      .from('QUOTE-DOCUMENTS')
+      .from(BUCKETS.QUOTE_DOCUMENTS)
       .upload(storagePath, buffer, {
         contentType: file.type,
         upsert: false,

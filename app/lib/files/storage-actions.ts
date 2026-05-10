@@ -26,6 +26,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import { getSignedUrl } from '@/app/lib/storage/helpers';
+import { BUCKETS } from '@/app/lib/storage/buckets';
 
 /**
  * Returns true if a new upload of `fileSize` bytes will fit under the company's
@@ -116,4 +118,25 @@ export async function saveFileMetadata(data: {
   // /account settings refactor lands, the file pages will revalidate
   // explicitly via their own paths instead of relying on this stale key.
   revalidatePath('/account');
+}
+
+/**
+ * Mint a signed URL for a quote file the caller already owns.
+ *
+ * Used by client components after they upload directly to private storage,
+ * to obtain a viewable URL without exposing the service-role key. We verify
+ * the storage path is prefixed with the caller's company id, which is how
+ * every quote-file path is structured (`{companyId}/{quoteId}/...`).
+ *
+ * Default expiry is 1 hour, matching the read paths on server-rendered pages.
+ */
+export async function getQuoteFileSignedUrl(
+  storagePath: string,
+  expiresIn: number = 3600,
+): Promise<string> {
+  const profile = await requireCompanyContext();
+  if (!storagePath.startsWith(`${profile.company_id}/`)) {
+    throw new Error('Unauthorized');
+  }
+  return getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, storagePath, expiresIn);
 }

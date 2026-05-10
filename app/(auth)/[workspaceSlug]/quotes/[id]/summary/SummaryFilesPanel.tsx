@@ -48,6 +48,8 @@ export function SummaryFilesPanel({ quoteId, companyId, files }: Props) {
     const fileName = `supporting-${Date.now()}.${fileExt}`;
     const storagePath = `${companyId}/${quoteId}/supporting/${fileName}`;
 
+    // Bucket is private; client upload still works via the user's auth session,
+    // and the page re-renders with a freshly-signed URL on router.refresh().
     const { error: uploadError } = await supabase.storage
       .from('QUOTE-DOCUMENTS')
       .upload(storagePath, file, { upsert: true });

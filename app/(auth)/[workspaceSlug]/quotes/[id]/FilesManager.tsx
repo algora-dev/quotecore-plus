@@ -4,9 +4,14 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/app/lib/supabase/client';
 import { FileUploader } from '@/app/components/FileUploader';
-import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-actions';
+import { checkStorageQuota, saveFileMetadata, getQuoteFileSignedUrl } from '@/app/lib/files/storage-actions';
 import { deleteFile } from './actions-files';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
+
+// QUOTE-DOCUMENTS is private. After uploading, we ask the server to mint a
+// short-lived signed URL so the freshly-uploaded image previews correctly
+// without exposing the service-role key in the browser.
+const QUOTE_DOCS_BUCKET = 'QUOTE-DOCUMENTS';
 
 interface SupportingFile {
   storagePath: string;
@@ -49,16 +54,12 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
     const storagePath = `${companyId}/${quoteId}/${fileName}`;
     
     const { error: uploadError } = await supabase.storage
-      .from('QUOTE-DOCUMENTS')
+      .from(QUOTE_DOCS_BUCKET)
       .upload(storagePath, file, { upsert: true });
 
     if (uploadError) {
       throw new Error(uploadError.message);
     }
-
-    const { data: urlData } = supabase.storage
-      .from('QUOTE-DOCUMENTS')
-      .getPublicUrl(storagePath);
 
     await saveFileMetadata({
       companyId,
@@ -70,7 +71,9 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
       storagePath,
     });
 
-    setPlanUrl(urlData.publicUrl);
+    // Mint a signed URL via a server action (private bucket).
+    const signedUrl = await getQuoteFileSignedUrl(storagePath);
+    setPlanUrl(signedUrl);
     setPlanName(fileName);
     router.refresh();
   }
@@ -87,16 +90,12 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
     const storagePath = `${companyId}/${quoteId}/supporting/${fileName}`;
     
     const { error: uploadError } = await supabase.storage
-      .from('QUOTE-DOCUMENTS')
+      .from(QUOTE_DOCS_BUCKET)
       .upload(storagePath, file, { upsert: true });
 
     if (uploadError) {
       throw new Error(uploadError.message);
     }
-
-    const { data: urlData } = supabase.storage
-      .from('QUOTE-DOCUMENTS')
-      .getPublicUrl(storagePath);
 
     await saveFileMetadata({
       companyId,
@@ -108,12 +107,15 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
       storagePath,
     });
 
+    // Mint a signed URL via a server action (private bucket).
+    const signedUrl = await getQuoteFileSignedUrl(storagePath);
+
     const newFile: SupportingFile = {
       id: storagePath, // transient — router.refresh() below replaces this with the real DB id
       storagePath,
       fileName,
       fileSize: file.size,
-      url: urlData.publicUrl,
+      url: signedUrl,
       uploadedAt: new Date().toISOString(),
     };
     setSupportingFiles(prev => [...prev, newFile]);

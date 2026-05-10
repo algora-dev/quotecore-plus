@@ -1,4 +1,6 @@
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { getSignedUrl } from '@/app/lib/storage/helpers';
+import { BUCKETS } from '@/app/lib/storage/buckets';
 import { TakeoffPage } from './TakeoffPage';
 import { notFound } from 'next/navigation';
 
@@ -40,10 +42,8 @@ export default async function Page({
     notFound();
   }
 
-  // Get public URL
-  const { data: urlData } = supabase.storage
-    .from('QUOTE-DOCUMENTS')
-    .getPublicUrl(planFile.storage_path);
+  // QUOTE-DOCUMENTS is private; mint a signed URL for the takeoff canvas.
+  const planUrl = await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, planFile.storage_path);
 
   // Load components from component library
   // Note: default_measurement_type is optional - if missing, auto-tool-selection won't work
@@ -72,7 +72,7 @@ export default async function Page({
       workspaceSlug={workspaceSlug}
       quoteId={quoteId}
       quote={quote}
-      planUrl={urlData.publicUrl}
+      planUrl={planUrl}
       components={components || []}
     />
   );

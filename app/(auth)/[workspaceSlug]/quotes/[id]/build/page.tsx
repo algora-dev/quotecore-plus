@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadAllEntriesForQuote, loadAllRoofAreaEntriesForQuote } from '../../actions';
 import { loadComponentLibrary } from '../../../components/actions';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { getSignedUrl, getSignedUrls } from '@/app/lib/storage/helpers';
+import { BUCKETS } from '@/app/lib/storage/buckets';
 import { QuoteBuilderV2Wrapper } from './QuoteBuilderV2Wrapper';
 
 export default async function QuoteBuilderV2Page({
@@ -40,8 +42,9 @@ export default async function QuoteBuilderV2Page({
     .limit(1)
     .maybeSingle();
 
+  // QUOTE-DOCUMENTS is private; mint short-lived signed URLs at render time.
   const planUrl = planFile
-    ? supabase.storage.from('QUOTE-DOCUMENTS').getPublicUrl(planFile.storage_path).data.publicUrl
+    ? await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, planFile.storage_path)
     : null;
 
   const { data: supportingFilesData } = await supabase
@@ -51,12 +54,16 @@ export default async function QuoteBuilderV2Page({
     .eq('file_type', 'supporting')
     .order('uploaded_at', { ascending: false });
 
-  const supportingFiles = (supportingFilesData || []).map(f => ({
+  // Batch-sign every supporting file in one round trip.
+  const supportingPaths = (supportingFilesData || []).map((f) => f.storage_path);
+  const supportingSigned = await getSignedUrls(BUCKETS.QUOTE_DOCUMENTS, supportingPaths);
+  const signedByPath = new Map(supportingSigned.map((s) => [s.path, s.signedUrl]));
+  const supportingFiles = (supportingFilesData || []).map((f) => ({
     id: f.id,
     storagePath: f.storage_path,
     fileName: f.file_name,
     fileSize: f.file_size,
-    url: supabase.storage.from('QUOTE-DOCUMENTS').getPublicUrl(f.storage_path).data.publicUrl,
+    url: signedByPath.get(f.storage_path) ?? '',
     uploadedAt: f.uploaded_at,
   }));
 

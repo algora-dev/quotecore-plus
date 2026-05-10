@@ -25,6 +25,8 @@ import { SummaryFilesPanel } from './SummaryFilesPanel';
 import { RevisionRequestsPanel } from './RevisionRequestsPanel';
 import { loadQuoteTaxes } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
+import { getSignedUrls } from '@/app/lib/storage/helpers';
+import { BUCKETS } from '@/app/lib/storage/buckets';
 
 export default async function QuoteSummaryPage({
   params,
@@ -117,15 +119,17 @@ export default async function QuoteSummaryPage({
   const planFile = filesData?.find(f => f.file_type === 'plan');
   const supportingFiles = filesData?.filter(f => f.file_type === 'supporting') || [];
   
-  const allFiles = filesData?.map(file => {
-    const { data: urlData } = supabase.storage
-      .from('QUOTE-DOCUMENTS')
-      .getPublicUrl(file.storage_path);
-    return {
-      ...file,
-      url: urlData.publicUrl,
-    };
-  }) || [];
+  // QUOTE-DOCUMENTS is private; batch-sign every file's storage path so we
+  // hit the storage API once instead of N times.
+  const filePaths = (filesData || []).map((f) => f.storage_path);
+  const signed = filePaths.length > 0
+    ? await getSignedUrls(BUCKETS.QUOTE_DOCUMENTS, filePaths)
+    : [];
+  const signedByPath = new Map(signed.map((s) => [s.path, s.signedUrl]));
+  const allFiles = (filesData || []).map((file) => ({
+    ...file,
+    url: signedByPath.get(file.storage_path) ?? '',
+  }));
   
   // Add canvas image if it exists
   if (quote.takeoff_canvas_url) {

@@ -3,6 +3,8 @@ import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadAllEntriesForQu
 import { loadComponentLibrary } from '../../components/actions';
 import { QuoteBuilder } from './quote-builder';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { getSignedUrl, getSignedUrls } from '@/app/lib/storage/helpers';
+import { BUCKETS } from '@/app/lib/storage/buckets';
 import { loadTakeoffMeasurements } from './takeoff/actions';
 
 export default async function QuoteBuilderPage({
@@ -49,13 +51,11 @@ export default async function QuoteBuilderPage({
     .limit(1)
     .maybeSingle();
   
+  // QUOTE-DOCUMENTS is private; mint signed URLs at render time.
   let planUrl: string | null = null;
   let planName: string | null = null;
   if (planFile) {
-    const { data: urlData } = supabase.storage
-      .from('QUOTE-DOCUMENTS')
-      .getPublicUrl(planFile.storage_path);
-    planUrl = urlData.publicUrl;
+    planUrl = await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, planFile.storage_path);
     planName = planFile.file_name;
   }
   
@@ -67,19 +67,19 @@ export default async function QuoteBuilderPage({
     .eq('file_type', 'supporting')
     .order('uploaded_at', { ascending: false });
   
-  const supportingFiles = (supportingFilesData || []).map(file => {
-    const { data: urlData } = supabase.storage
-      .from('QUOTE-DOCUMENTS')
-      .getPublicUrl(file.storage_path);
-    return {
-      id: file.id,
-      storagePath: file.storage_path,
-      fileName: file.file_name,
-      fileSize: file.file_size,
-      url: urlData.publicUrl,
-      uploadedAt: file.uploaded_at,
-    };
-  });
+  const supportingPaths = (supportingFilesData || []).map((f) => f.storage_path);
+  const supportingSigned = supportingPaths.length > 0
+    ? await getSignedUrls(BUCKETS.QUOTE_DOCUMENTS, supportingPaths)
+    : [];
+  const signedByPath = new Map(supportingSigned.map((s) => [s.path, s.signedUrl]));
+  const supportingFiles = (supportingFilesData || []).map((file) => ({
+    id: file.id,
+    storagePath: file.storage_path,
+    fileName: file.file_name,
+    fileSize: file.file_size,
+    url: signedByPath.get(file.storage_path) ?? '',
+    uploadedAt: file.uploaded_at,
+  }));
 
   return (
     <QuoteBuilder

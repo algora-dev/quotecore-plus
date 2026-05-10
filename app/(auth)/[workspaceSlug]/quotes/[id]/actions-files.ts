@@ -1,21 +1,31 @@
 'use server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { requireCompanyContext } from '@/app/lib/supabase/server';
+import { BUCKETS } from '@/app/lib/storage/buckets';
 import { revalidatePath } from 'next/cache';
 
 /**
- * Extract the storage object path from a Supabase public URL.
- * Returns null if the URL doesn't match the expected `/storage/v1/object/public/<bucket>/<path>` shape.
+ * Extract the storage object path from a Supabase storage URL.
+ * Handles both shapes:
+ *   - public:  /storage/v1/object/public/<bucket>/<path>
+ *   - signed:  /storage/v1/object/sign/<bucket>/<path>?token=...
+ * Returns null if the URL is empty or matches neither pattern.
  */
 function storagePathFromPublicUrl(url: string, bucket: string): string | null {
   if (!url) return null;
-  const marker = `/storage/v1/object/public/${bucket}/`;
-  const idx = url.indexOf(marker);
-  if (idx === -1) return null;
-  const tail = url.substring(idx + marker.length);
-  // Strip query/hash if present.
-  const clean = tail.split('?')[0].split('#')[0];
-  return clean ? decodeURIComponent(clean) : null;
+  const markers = [
+    `/storage/v1/object/public/${bucket}/`,
+    `/storage/v1/object/sign/${bucket}/`,
+  ];
+  for (const marker of markers) {
+    const idx = url.indexOf(marker);
+    if (idx === -1) continue;
+    const tail = url.substring(idx + marker.length);
+    // Strip query/hash if present (signed URLs always carry ?token=...).
+    const clean = tail.split('?')[0].split('#')[0];
+    if (clean) return decodeURIComponent(clean);
+  }
+  return null;
 }
 
 export async function deleteFile(fileId: string, storagePath: string): Promise<void> {
@@ -36,7 +46,7 @@ export async function deleteFile(fileId: string, storagePath: string): Promise<v
   
   // Delete from storage
   const { error: storageError } = await supabaseAdmin.storage
-    .from('QUOTE-DOCUMENTS')
+    .from(BUCKETS.QUOTE_DOCUMENTS)
     .remove([storagePath]);
   
   if (storageError) {
@@ -85,10 +95,10 @@ export async function deleteTakeoffCanvas(
 
   // Best-effort storage cleanup. We don't fail the whole op if storage is already gone.
   if (currentUrl) {
-    const path = storagePathFromPublicUrl(currentUrl, 'QUOTE-DOCUMENTS');
+    const path = storagePathFromPublicUrl(currentUrl, BUCKETS.QUOTE_DOCUMENTS);
     if (path) {
       const { error: storageError } = await supabaseAdmin.storage
-        .from('QUOTE-DOCUMENTS')
+        .from(BUCKETS.QUOTE_DOCUMENTS)
         .remove([path]);
       if (storageError) {
         // Log but proceed — column still gets cleared so the user no longer sees the file.

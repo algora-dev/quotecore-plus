@@ -2,6 +2,7 @@
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { seedQuoteTaxesOnCreate } from '@/app/lib/taxes/seed';
+import { BUCKETS } from '@/app/lib/storage/buckets';
 
 interface CreateQuoteParams {
   customerName: string;
@@ -70,16 +71,28 @@ export async function createQuoteWithDetails(params: CreateQuoteParams): Promise
 
 export async function uploadRoofPlanFile(quoteId: string, file: File): Promise<void> {
   const { company } = await loadCompanyContext();
-  const { createClient } = await import('@/app/lib/supabase/client');
-  const supabase = createClient();
+  const supabase = await createSupabaseServerClient();
+
+  // Ownership check: the quote must belong to the caller's company before we
+  // write into its storage prefix.
+  const { data: ownedQuote } = await supabase
+    .from('quotes')
+    .select('id')
+    .eq('id', quoteId)
+    .eq('company_id', company.id)
+    .maybeSingle();
+  if (!ownedQuote) {
+    throw new Error('Unauthorized');
+  }
 
   const fileExt = file.name.split('.').pop();
   const fileName = `plan-${Date.now()}.${fileExt}`;
   const storagePath = `${company.id}/${quoteId}/${fileName}`;
 
-  // Upload to Supabase Storage (client-side, public bucket)
+  // Upload to Supabase Storage from the server. Bucket is private; the
+  // service-role-backed server client handles auth.
   const { error: uploadError } = await supabase.storage
-    .from('QUOTE-DOCUMENTS')
+    .from(BUCKETS.QUOTE_DOCUMENTS)
     .upload(storagePath, file, {
       contentType: file.type,
       upsert: false,
