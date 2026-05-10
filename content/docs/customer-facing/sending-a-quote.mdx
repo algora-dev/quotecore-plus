@@ -1,4 +1,4 @@
-﻿---
+---
 title: Sending a quote
 description: Generate a URL, send the email yourself, or send through QuoteCore+.
 order: 2
@@ -8,4 +8,71 @@ updated: 2026-05-10
 
 # Sending a quote
 
-Placeholder. Content written in step 4.
+Once you've built a customer quote, you can send it to the customer as a unique link. Three ways to do it. All of them give the customer the same Accept / Decline / Request changes buttons.
+
+## Before you start
+
+You need to have built and saved a customer quote on this quote first. See [Customer quote editor](/docs/customer-facing/customer-quote-editor).
+
+## Steps
+
+1. From the [quote summary](/docs/building-a-quote/quote-summary), click **Send Quote**.
+2. Set how long the link is valid (default is 30 days). After that, customers see an "expired" page when they click.
+3. Pick how to send:
+   - **Generate URL only** - copy the link, send it however you want (text, your own email, WhatsApp).
+   - **Send via your email client** - copy the templated email to clipboard, paste into Gmail/Outlook, send from your address.
+   - **Send via QuoteCore+** - we send it from our servers, addressed from your company name with your account email as the reply-to.
+4. Confirm.
+
+The customer gets a link. Clicking it opens the customer quote with three buttons at the bottom:
+
+- **Accept Quote**
+- **Request Changes**
+- **Decline Quote**
+
+You get an in-app alert and (if enabled) an email when they click any of them.
+
+## Send via QuoteCore+
+
+If you pick this option:
+
+- Pick an [email template](/docs/templates/email-templates) (default if you have one).
+- The customer email is filled in if you've got it on the quote.
+- Hit Send.
+
+The customer gets an email from `noreply` addressed as your company name, with your account email as the reply-to so they can reach you directly. The link is in the body.
+
+We track delivery and clicks. You'll see the status update on the [quotes page](/docs/building-a-quote/quote-summary).
+
+## Send via your own email
+
+Pick this if you want the email to come from *your* address (your customer sees you, not us). We hand you the templated email body as a copy-to-clipboard. You paste it into Gmail or Outlook and send.
+
+The link is the same either way. Acceptance still works the same.
+
+## Generate URL only
+
+For when you want to send via something else - SMS, WhatsApp, your own customer portal. Copy the URL, paste it wherever.
+
+## Re-sending and updating
+
+You can generate a new URL any time. The new URL replaces the old one - if anyone clicks the old link they'll get the "no longer valid" page.
+
+Useful when:
+
+- You needed to fix the quote and want the customer to see the new version.
+- The customer lost the email.
+- The original link expired.
+
+## Tips
+
+- Default expiry of 30 days is a good balance. Long enough that customers don't feel rushed, short enough that you don't have stale quotes hanging around.
+- If you withdraw a quote, the URL still works but tells the customer the quote is no longer valid. See [Withdrawing a quote](/docs/customer-facing/withdrawing-a-quote).
+- Always preview the customer quote before sending. The "Open in new tab" link in the editor lets you see exactly what the customer will see.
+
+## Related
+
+- [Customer quote editor](/docs/customer-facing/customer-quote-editor)
+- [Acceptance system](/docs/customer-facing/acceptance-system)
+- [Email templates](/docs/templates/email-templates)
+- [Withdrawing a quote](/docs/customer-facing/withdrawing-a-quote)

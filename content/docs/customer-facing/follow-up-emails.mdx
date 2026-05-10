@@ -1,11 +1,37 @@
-﻿---
+---
 title: Follow-up emails
 description: Auto emails for unanswered or declined quotes.
 order: 6
-status: published
+status: coming-soon
 updated: 2026-05-10
 ---
 
 # Follow-up emails
 
-Placeholder. Content written in step 4.
+<ComingSoon />
+
+## What it'll do
+
+Set rules for automatic follow-up emails on quotes that haven't been responded to, or quotes that were declined. Pick a delay, pick an email template, pick whether the rule applies to all quotes or only specific ones.
+
+## Use cases we're targeting
+
+- "If a quote sits unanswered for 7 days, send a friendly check-in."
+- "If a quote is declined, send a polite ask: what would have made it work?"
+- "If a quote is accepted, send a thanks-and-next-steps email."
+
+## What you'll set up
+
+- A trigger - days since sent, days since declined, days since accepted.
+- An [email template](/docs/templates/email-templates) to use.
+- Optional: scope (all quotes, or only quotes matching certain conditions).
+
+## Status
+
+The plumbing for templated emails is in place ([Email templates](/docs/templates/email-templates), [Sending a quote](/docs/customer-facing/sending-a-quote)). The scheduler that sends them automatically is the missing piece. We'll publish a release note when it's live.
+
+## Related
+
+- [Email templates](/docs/templates/email-templates)
+- [Sending a quote](/docs/customer-facing/sending-a-quote)
+- [Acceptance system](/docs/customer-facing/acceptance-system)

@@ -1,4 +1,4 @@
-﻿---
+---
 title: Manual takeoff
 description: Use components and your own measurements without the digital takeoff tool.
 order: 2
@@ -8,4 +8,55 @@ updated: 2026-05-10
 
 # Manual takeoff
 
-Placeholder. Content written in step 4.
+Manual takeoff is the roofing flow when you've measured on site, off a paper plan, or you just don't want to draw on a digital plan. You add components, type your measurements, the maths still works.
+
+## When to use it
+
+- You did a physical site measure and have actual numbers.
+- You've got a paper plan and you measured by hand.
+- You're quoting a re-roof and you measured the existing roof.
+- You'd rather type than draw.
+
+If you've got a digital plan and want to measure on screen, see [Digital takeoff](/docs/building-a-quote/digital-takeoff).
+
+## Steps
+
+1. Go to **Quotes > New Quote**.
+2. Enter customer and job reference.
+3. Pick **Manual takeoff**.
+4. Optionally pick a [quote template](/docs/templates/quote-templates) so common components are pre-loaded.
+5. Click **Create**.
+6. The quote builder opens at the **Areas** phase.
+7. Add areas (e.g. "Main roof", "Garage", "Lean-to"). Set the pitch on each one if it applies.
+8. Move to the **Components** phase. Add components from your library.
+9. For each component, pick which area(s) it covers and enter the measurement.
+10. Choose **Plan** or **Actual** per component depending on whether the number is a flat plan number or a real-world measurement. See [Plan vs Actual](/docs/core-concepts/plan-vs-actual).
+11. Move to **Extras** if you have any.
+12. Move to **Review**. Apply margins. Save.
+
+## Plan vs Actual on manual takeoff
+
+This is where the Plan/Actual toggle matters most.
+
+- If you measured the roof on the ground and you've got real numbers, set the affected components to **Actual**. The pitch maths get skipped because your number is already real.
+- If you're working off a 2D plan and the components have pitch enabled, leave them on **Plan**. The maths apply.
+
+You can mix: set the main roof area to Plan (you measured off paper), set the gutter and downpipes to Actual (you measured the existing house).
+
+<Callout type="warning">
+The biggest source of "off" quotes is forgetting to flip Plan/Actual. If you measured ridges on site, those are Actual. Leaving them on Plan with rafter pitch enabled (which it shouldn't be on ridges anyway) won't hurt much - but the principle applies on anything where your number is already real.
+</Callout>
+
+## What you get out
+
+- A quote summary with everything totaled.
+- A starting point for the [customer quote editor](/docs/customer-facing/customer-quote-editor).
+- A starting point for the [labor sheet](/docs/labor-and-installers/labor-sheet-editor).
+- Material order data (if you build an order from this quote later).
+
+## Related
+
+- [Digital takeoff](/docs/building-a-quote/digital-takeoff)
+- [Quote builder](/docs/building-a-quote/quote-builder)
+- [Plan vs Actual](/docs/core-concepts/plan-vs-actual)
+- [Quote templates](/docs/templates/quote-templates)
