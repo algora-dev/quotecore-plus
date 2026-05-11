@@ -1,0 +1,670 @@
+'use client';
+
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import type { QuoteRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
+import { formatCurrency } from '@/app/lib/currency/currencies';
+import { saveCustomerQuoteLines, saveCustomerQuoteBranding } from '../../actions';
+import { saveQuoteTaxes, seedQuoteTaxesFromCompanyDefaults } from '@/app/lib/taxes/actions';
+import { computeTaxLines } from '@/app/lib/taxes/types';
+import type { QuoteTaxRow } from '@/app/lib/taxes/types';
+// QuoteTaxRow stays imported because the `initialTaxes` prop shape uses it,
+// even though the in-memory tax editing flow uses EditableTax.
+import { TaxEditor, type EditableTax } from '@/app/components/TaxEditor';
+import { EditHeaderModal } from '../customer-edit/EditHeaderModal';
+import { EditFooterModal } from '../customer-edit/EditFooterModal';
+
+/**
+ * Blank Quote Builder.
+ *
+ * Purpose-built screen for quotes with `entry_mode='blank'`. Reads and
+ * writes the same `customer_quote_lines` rows the customer quote editor
+ * uses, so the Summary, Send Quote, Clone, etc. all work without any
+ * mode-specific branches. The visual + verbal framing is different
+ * though:
+ *
+ *   - Header reads "Build your quote", not "Edit customer quote".
+ *   - Lines are referred to as "quote lines", not "customer lines",
+ *     because in blank mode there's no master-vs-customer distinction.
+ *   - The customer-edit screen's per-line `is_visible` / `include_in_total`
+ *     toggles aren't surfaced here \u2014 they would only confuse the user;
+ *     they're effectively always on for blank-mode lines.
+ *   - The customer-edit screen's "show units" toggle isn't surfaced
+ *     because there are no underlying components/units to show.
+ *
+ * If the user wants to later create a *different* customer-facing view of
+ * a blank quote (e.g. group lines, change descriptions, hide a price),
+ * they can still open the customer quote editor from the Summary. This
+ * builder is the master entry point.
+ */
+
+interface SavedLine {
+  id: string;
+  line_type: 'component' | 'custom';
+  quote_component_id: string | null;
+  custom_text: string | null;
+  custom_amount: number | null;
+  show_price: boolean | null;
+  show_units: boolean | null;
+  is_visible: boolean | null;
+  include_in_total: boolean | null;
+  sort_order: number | null;
+}
+
+interface QuoteLine {
+  /** Stable id used only for React keys + drag/reorder. New lines get a
+   *  temp id; the DB regenerates a real one on save (lines table is full-
+   *  delete-then-insert), but the temp id is fine for the session. */
+  id: string;
+  text: string;
+  amount: number;
+  /** Whether the price column renders in the customer-facing preview /
+   *  PDF / accept URL. Stays editable so the user can offer "complimentary"
+   *  lines that read as a deliverable without a number attached. */
+  showPrice: boolean;
+}
+
+interface Props {
+  quote: QuoteRow;
+  savedLines: SavedLine[];
+  templates: CustomerQuoteTemplateRow[];
+  workspaceSlug: string;
+  currency: string;
+  defaultLogoUrl: string | null;
+  initialTaxes: QuoteTaxRow[];
+  companyTaxes: { id: string; name: string; rate_percent: number }[];
+}
+
+function tempLineId(): string {
+  return `blank-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export function BlankQuoteBuilder({
+  quote,
+  savedLines,
+  templates,
+  workspaceSlug,
+  currency,
+  defaultLogoUrl,
+  initialTaxes,
+  companyTaxes,
+}: Props) {
+  const router = useRouter();
+
+  // Branding state, derived from the quote row (carries between saves).
+  const [companyName, setCompanyName] = useState(quote.cq_company_name || '');
+  const [companyAddress, setCompanyAddress] = useState(quote.cq_company_address || '');
+  const [companyPhone, setCompanyPhone] = useState(quote.cq_company_phone || '');
+  const [companyEmail, setCompanyEmail] = useState(quote.cq_company_email || '');
+  const [companyLogoUrl, setCompanyLogoUrl] = useState(quote.cq_company_logo_url || defaultLogoUrl || '');
+  const [footerText, setFooterText] = useState(quote.cq_footer_text || '');
+
+  // Taxes \u2014 same shape as the customer editor uses; the TaxEditor expects
+  // EditableTax[] so we mirror its dbId + source_tax_id metadata.
+  const [taxes, setTaxes] = useState<EditableTax[]>(
+    initialTaxes.map((t) => ({
+      id: t.id,
+      dbId: t.id,
+      source_tax_id: t.source_tax_id,
+      name: t.name,
+      rate_percent: Number(t.rate_percent),
+      include_in_quote: t.include_in_quote,
+      include_in_labor: t.include_in_labor,
+    })),
+  );
+
+  // Lines: hydrate ONCE from server props using the same one-shot guard the
+  // customer editor uses, so a parent re-render (router.refresh, prop ref
+  // change with identical content) can't wipe in-progress edits.
+  const [lines, setLines] = useState<QuoteLine[]>([]);
+  const hydratedRef = useRef(false);
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+    const initial: QuoteLine[] = savedLines
+      // Blank quotes only ever produce 'custom' lines via this surface.
+      // If a row arrives with line_type='component' it came from the
+      // customer-edit screen layering on top, and we still want to
+      // surface it here so the user sees everything in one place.
+      .map((row) => ({
+        id: row.id,
+        text: row.custom_text ?? '',
+        amount: Number(row.custom_amount) || 0,
+        showPrice: row.show_price ?? true,
+      }));
+    setLines(initial);
+  }, [savedLines]);
+
+  // ---- Mutations -----------------------------------------------------------
+
+  const [isDirty, setIsDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+
+  const addLine = useCallback(() => {
+    setLines((prev) => [
+      ...prev,
+      { id: tempLineId(), text: '', amount: 0, showPrice: true },
+    ]);
+    setIsDirty(true);
+  }, []);
+
+  const updateLine = useCallback((id: string, patch: Partial<QuoteLine>) => {
+    setLines((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+    setIsDirty(true);
+  }, []);
+
+  const removeLine = useCallback((id: string) => {
+    setLines((prev) => prev.filter((l) => l.id !== id));
+    setIsDirty(true);
+  }, []);
+
+  const moveLine = useCallback((id: string, direction: -1 | 1) => {
+    setLines((prev) => {
+      const idx = prev.findIndex((l) => l.id === id);
+      if (idx === -1) return prev;
+      const next = idx + direction;
+      if (next < 0 || next >= prev.length) return prev;
+      const copy = [...prev];
+      [copy[idx], copy[next]] = [copy[next], copy[idx]];
+      return copy;
+    });
+    setIsDirty(true);
+  }, []);
+
+  // ---- Templates -----------------------------------------------------------
+
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+
+  function applyTemplate(templateId: string) {
+    if (!templateId) return;
+    const tpl = templates.find((t) => t.id === templateId);
+    if (!tpl) return;
+    setCompanyName(tpl.company_name || '');
+    setCompanyAddress(tpl.company_address || '');
+    setCompanyPhone(tpl.company_phone || '');
+    setCompanyEmail(tpl.company_email || '');
+    setCompanyLogoUrl(tpl.company_logo_url || defaultLogoUrl || '');
+    setFooterText(tpl.footer_text || '');
+    setIsDirty(true);
+  }
+
+  // ---- Totals --------------------------------------------------------------
+
+  const subtotal = useMemo(
+    () => lines.reduce((sum, l) => sum + (Number(l.amount) || 0), 0),
+    [lines],
+  );
+
+  // computeTaxLines only needs the Pick<> subset; build it directly so the
+  // memo doesn't fight TypeScript over partial QuoteTaxRow shapes.
+  const { taxLines, grandTotal } = useMemo(() => {
+    // EditableTax's include flags are optional; coalesce to boolean for
+    // computeTaxLines, whose Pick<> shape expects strict booleans.
+    const filtered = taxes.map((t) => ({
+      id: t.dbId ?? t.id,
+      name: t.name,
+      rate_percent: t.rate_percent,
+      include_in_quote: t.include_in_quote ?? true,
+      include_in_labor: t.include_in_labor ?? false,
+    }));
+    const { lines: tl, total: tt } = computeTaxLines(filtered, subtotal, 'quote');
+    return { taxLines: tl, grandTotal: subtotal + tt };
+  }, [taxes, subtotal]);
+
+  // ---- Save ----------------------------------------------------------------
+
+  const [showHeader, setShowHeader] = useState(false);
+  const [showFooter, setShowFooter] = useState(false);
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    try {
+      // Validate taxes BEFORE writing anything so we don't half-save.
+      for (const t of taxes) {
+        if (!t.name.trim()) throw new Error('Each tax must have a name');
+        if (!Number.isFinite(t.rate_percent) || t.rate_percent < 0 || t.rate_percent > 100) {
+          throw new Error(`Invalid rate for "${t.name}": must be between 0 and 100`);
+        }
+      }
+      // Sort + persist in display order.
+      const lineData = lines.map((l, idx) => ({
+        id: l.id,
+        lineType: 'custom' as const,
+        componentId: undefined,
+        text: l.text,
+        amount: Number(l.amount) || 0,
+        showPrice: l.showPrice,
+        showUnits: false,
+        sortOrder: idx,
+        isVisible: true,
+        includeInTotal: true,
+      }));
+      await Promise.all([
+        saveCustomerQuoteLines(quote.id, lineData),
+        saveCustomerQuoteBranding(quote.id, {
+          companyName,
+          companyAddress,
+          companyPhone,
+          companyEmail,
+          companyLogoUrl,
+          footerText,
+        }),
+        saveQuoteTaxes(
+          quote.id,
+          // QuoteTaxInput wants strict booleans; coalesce here so an
+          // EditableTax row that hasn't been ticked yet doesn't trip
+          // the TS check.
+          taxes.map((t, idx) => ({
+            id: t.dbId,
+            source_tax_id: t.source_tax_id ?? null,
+            name: t.name,
+            rate_percent: t.rate_percent,
+            sort_order: idx,
+            include_in_quote: t.include_in_quote ?? true,
+            include_in_labor: t.include_in_labor ?? false,
+          })),
+        ),
+      ]);
+      setIsDirty(false);
+      setLastSavedAt(new Date());
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Save failed';
+      alert(message);
+    } finally {
+      setSaving(false);
+    }
+  }, [
+    quote.id,
+    lines,
+    taxes,
+    companyName,
+    companyAddress,
+    companyPhone,
+    companyEmail,
+    companyLogoUrl,
+    footerText,
+  ]);
+
+  const handleSaveAndContinue = useCallback(async () => {
+    await handleSave();
+    router.push(`/${workspaceSlug}/quotes/${quote.id}/summary`);
+  }, [handleSave, router, workspaceSlug, quote.id]);
+
+  // ---- Render --------------------------------------------------------------
+
+  return (
+    <div className="max-w-6xl mx-auto py-6 px-4 space-y-6">
+      {/* Header band */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <Link
+            href={`/${workspaceSlug}/quotes`}
+            className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-2"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            Back
+          </Link>
+          <h1 className="text-2xl font-semibold text-slate-900">Build your quote</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            {quote.customer_name}{quote.job_name ? ` · ${quote.job_name}` : ''}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-xs text-slate-500 hidden sm:inline">
+            {saving
+              ? 'Saving…'
+              : isDirty
+              ? 'Unsaved changes'
+              : lastSavedAt
+              ? `Saved ${Math.max(1, Math.floor((Date.now() - lastSavedAt.getTime()) / 1000))}s ago`
+              : 'Not saved yet'}
+          </span>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || !isDirty}
+            className="px-4 py-1.5 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            onClick={handleSaveAndContinue}
+            disabled={saving}
+            className="px-4 py-1.5 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
+          >
+            {saving ? 'Saving…' : 'Save & continue to summary'}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6">
+        {/* Left: controls */}
+        <div className="space-y-6">
+          {/* Template picker + header/footer edit */}
+          <section className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+            <h2 className="text-base font-semibold text-slate-900">Header &amp; Footer</h2>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Apply a saved template</label>
+              <select
+                value={selectedTemplateId}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  setSelectedTemplateId(id);
+                  if (id) applyTemplate(id);
+                }}
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+              >
+                <option value="">— Choose a customer quote template —</option>
+                {templates.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[11px] text-slate-400">
+                Pre-fills header (logo, company info) and footer text from a saved template. You can still edit either after applying.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowHeader(true)}
+                className="flex-1 px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50"
+              >
+                Edit header
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowFooter(true)}
+                className="flex-1 px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50"
+              >
+                Edit footer
+              </button>
+            </div>
+          </section>
+
+          {/* Quote lines */}
+          <section className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-slate-900">Quote lines</h2>
+              <button
+                type="button"
+                onClick={addLine}
+                className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.4)]"
+              >
+                + Add line
+              </button>
+            </div>
+            {lines.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-200 px-4 py-8 text-center">
+                <p className="text-sm text-slate-500">No lines yet.</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  Click <strong>Add line</strong> to start building your quote. Lines you add here populate both the summary and the customer-facing quote.
+                </p>
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {lines.map((line, idx) => (
+                  <li
+                    key={line.id}
+                    className="rounded-lg border border-slate-200 bg-slate-50/40 p-3 space-y-2"
+                  >
+                    <div className="grid grid-cols-[1fr_120px_auto] gap-2 items-start">
+                      <input
+                        type="text"
+                        value={line.text}
+                        onChange={(e) => updateLine(line.id, { text: e.target.value })}
+                        placeholder="Description (e.g. Supply & install roofing, $/m² included)"
+                        className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                      />
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={line.amount === 0 ? '' : line.amount}
+                        onChange={(e) =>
+                          updateLine(line.id, {
+                            amount: e.target.value === '' ? 0 : Number(e.target.value),
+                          })
+                        }
+                        placeholder="0.00"
+                        className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200 text-right"
+                      />
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => moveLine(line.id, -1)}
+                          disabled={idx === 0}
+                          title="Move up"
+                          className="p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveLine(line.id, 1)}
+                          disabled={idx === lines.length - 1}
+                          title="Move down"
+                          className="p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeLine(line.id)}
+                          title="Delete line"
+                          className="p-1.5 rounded text-slate-400 hover:text-red-600 hover:bg-red-50"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
+                    </div>
+                    <label className="inline-flex items-center gap-2 text-xs text-slate-600">
+                      <input
+                        type="checkbox"
+                        checked={line.showPrice}
+                        onChange={(e) => updateLine(line.id, { showPrice: e.target.checked })}
+                        className="w-4 h-4 text-orange-600 rounded"
+                      />
+                      Show price to customer
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* Taxes */}
+          <section className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-base font-semibold text-slate-900">Taxes</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Stack multiple taxes if needed. Rates are saved per-quote so they don&apos;t change your company defaults.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!confirm('Reset taxes on this quote to your current company defaults? Per-quote edits will be lost.')) return;
+                  await seedQuoteTaxesFromCompanyDefaults(quote.id);
+                  router.refresh();
+                }}
+                className="text-xs text-slate-500 hover:text-orange-600 underline whitespace-nowrap"
+              >
+                Reset to defaults
+              </button>
+            </div>
+            <TaxEditor
+              taxes={taxes}
+              onChange={(next) => { setTaxes(next); setIsDirty(true); }}
+              showAudienceToggles={false}
+              disabled={saving}
+            />
+            {companyTaxes.length > 0 && (
+              <div className="pt-3 border-t border-slate-200">
+                <p className="text-[11px] uppercase tracking-wide text-slate-500 mb-2">Quick add from company defaults</p>
+                <div className="flex flex-wrap gap-2">
+                  {companyTaxes
+                    .filter((ct) => !taxes.some((t) => t.source_tax_id === ct.id))
+                    .map((ct) => (
+                      <button
+                        key={ct.id}
+                        type="button"
+                        onClick={() => {
+                          setTaxes((prev) => [
+                            ...prev,
+                            {
+                              id: `new-${ct.id}`,
+                              dbId: undefined,
+                              source_tax_id: ct.id,
+                              name: ct.name,
+                              rate_percent: ct.rate_percent,
+                              include_in_quote: true,
+                              include_in_labor: false,
+                            },
+                          ]);
+                          setIsDirty(true);
+                        }}
+                        className="text-xs px-2 py-1 rounded-full border border-slate-200 hover:border-orange-300 hover:text-orange-600"
+                      >
+                        + {ct.name} ({ct.rate_percent}%)
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* Right: live preview */}
+        <div className="space-y-3">
+          <h2 className="text-base font-semibold text-slate-900">Preview</h2>
+          <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-6 text-sm">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-200">
+              <div className="min-w-0">
+                {companyName && <p className="text-base font-semibold text-slate-900">{companyName}</p>}
+                {companyAddress && <p className="text-xs text-slate-600 whitespace-pre-line">{companyAddress}</p>}
+                {companyPhone && <p className="text-xs text-slate-600">{companyPhone}</p>}
+                {companyEmail && <p className="text-xs text-slate-600">{companyEmail}</p>}
+                {!companyName && !companyAddress && !companyPhone && !companyEmail && (
+                  <p className="text-xs text-slate-400 italic">Click &quot;Edit header&quot; to add your company details.</p>
+                )}
+              </div>
+              {companyLogoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={companyLogoUrl} alt="Company logo" className="h-12 max-w-[140px] object-contain" />
+              ) : null}
+            </div>
+
+            {/* Customer + meta */}
+            <div className="grid grid-cols-2 gap-4 text-xs">
+              <div>
+                <p className="text-slate-500">Customer</p>
+                <p className="text-slate-900 font-medium">{quote.customer_name}</p>
+                {quote.job_name && <p className="text-slate-600">{quote.job_name}</p>}
+                {quote.site_address && <p className="text-slate-600">{quote.site_address}</p>}
+              </div>
+              <div className="text-right">
+                <p className="text-slate-500">Quote</p>
+                <p className="text-slate-900 font-medium">
+                  #{quote.quote_number ?? <span className="text-slate-400">DRAFT</span>}
+                </p>
+                <p className="text-slate-600">{new Date(quote.created_at).toLocaleDateString()}</p>
+              </div>
+            </div>
+
+            {/* Lines */}
+            <div>
+              <div className="flex items-center justify-between text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200 pb-1.5">
+                <span>Description</span>
+                <span>Amount</span>
+              </div>
+              {lines.length === 0 ? (
+                <p className="text-xs text-slate-400 italic py-4 text-center">No lines yet.</p>
+              ) : (
+                <ul>
+                  {lines.map((line) => (
+                    <li
+                      key={`prev-${line.id}`}
+                      className="flex items-start justify-between gap-4 py-2 border-b border-slate-100 last:border-b-0"
+                    >
+                      <span className="text-slate-800 whitespace-pre-wrap">
+                        {line.text || <span className="text-slate-400 italic">Untitled line</span>}
+                      </span>
+                      <span className="text-slate-900 font-medium whitespace-nowrap">
+                        {line.showPrice ? formatCurrency(line.amount, currency) : '—'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Totals */}
+            <div className="space-y-1 text-sm pt-2 border-t-2 border-slate-200">
+              <div className="flex justify-between">
+                <span className="text-slate-600">Subtotal</span>
+                <span className="font-medium">{formatCurrency(subtotal, currency)}</span>
+              </div>
+              {taxLines.map((tl) => (
+                <div key={`tax-${tl.id}`} className="flex justify-between text-xs text-slate-600">
+                  <span>{tl.name} ({tl.rate_percent}%)</span>
+                  <span>{formatCurrency(tl.amount, currency)}</span>
+                </div>
+              ))}
+              <div className="flex justify-between text-base font-bold pt-1 border-t border-slate-200">
+                <span>Total</span>
+                <span>{formatCurrency(grandTotal, currency)}</span>
+              </div>
+            </div>
+
+            {/* Footer */}
+            {footerText && (
+              <div className="pt-4 border-t border-slate-200">
+                <p className="text-xs text-slate-600 whitespace-pre-line">{footerText}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Header + Footer modals reuse the customer-edit ones \u2014 same data
+          model, same field set. */}
+      {showHeader && (
+        <EditHeaderModal
+          companyName={companyName}
+          companyAddress={companyAddress}
+          companyPhone={companyPhone}
+          companyEmail={companyEmail}
+          companyLogoUrl={companyLogoUrl}
+          onSave={(d) => {
+            setCompanyName(d.companyName);
+            setCompanyAddress(d.companyAddress);
+            setCompanyPhone(d.companyPhone);
+            setCompanyEmail(d.companyEmail);
+            setCompanyLogoUrl(d.companyLogoUrl);
+            setIsDirty(true);
+            setShowHeader(false);
+          }}
+          onCancel={() => setShowHeader(false)}
+        />
+      )}
+      {showFooter && (
+        <EditFooterModal
+          footerText={footerText}
+          onSave={(t) => {
+            setFooterText(t);
+            setIsDirty(true);
+            setShowFooter(false);
+          }}
+          onCancel={() => setShowFooter(false)}
+        />
+      )}
+    </div>
+  );
+}

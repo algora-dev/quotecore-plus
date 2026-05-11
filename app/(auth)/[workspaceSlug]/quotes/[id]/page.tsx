@@ -26,7 +26,7 @@ export default async function QuoteBuilderPage({
     redirect(`/${workspaceSlug}/quotes/${id}/build?step=roof-areas`);
   }
   if (quote.entry_mode === 'blank') {
-    redirect(`/${workspaceSlug}/quotes/${id}/customer-edit`);
+    redirect(`/${workspaceSlug}/quotes/${id}/blank-build`);
   }
   // Load remaining data for v1 (manual mode)
   const [roofAreas, roofAreaEntries, components, libraryComponents, entries, takeoffData] = await Promise.all([

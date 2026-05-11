@@ -141,10 +141,12 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
         
         router.push(`/${workspaceSlug}/quotes/${quoteId}/takeoff`);
       } else if (entryMode === 'blank') {
-        // Blank quote skips the builder entirely. The customer quote editor
-        // is the master/source of line items for this quote; on save, it
-        // lands the user on the standard summary page.
-        router.push(`/${workspaceSlug}/quotes/${quoteId}/customer-edit`);
+        // Blank quote skips the traditional Areas/Components/Extras builder
+        // entirely. We route to the dedicated /blank-build screen which is
+        // the master source of line items for blank quotes. The customer
+        // quote editor remains accessible from the summary if the user
+        // wants to further customise what the customer sees vs the master.
+        router.push(`/${workspaceSlug}/quotes/${quoteId}/blank-build`);
       } else {
         // Manual mode goes to the traditional quote builder.
         router.push(`/${workspaceSlug}/quotes/${quoteId}`);
