@@ -64,6 +64,12 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
   const [selectedMeasurement, setSelectedMeasurement] = useState<string | null>(null);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [calculatingAngleId, setCalculatingAngleId] = useState<string | null>(null);
+  // Replaces the old window.prompt() flow for Edit Value. Both state
+  // pieces null = modal closed; non-null = modal open against that
+  // measurement, with the input pre-filled to its current value.
+  // (Restyle to match the rest of the app, Shaun spec 2026-05-11.)
+  const [editValueMeasurementId, setEditValueMeasurementId] = useState<string | null>(null);
+  const [editValueInput, setEditValueInput] = useState<string>('');
   const [needsRecalibration, setNeedsRecalibration] = useState(false);
   const [showAdjustConfirmation, setShowAdjustConfirmation] = useState(false);
   const [showSelectAllWarning, setShowSelectAllWarning] = useState(false);
@@ -988,19 +994,32 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     });
   };
 
+  /**
+   * Open the in-app Edit Value modal for the given measurement.
+   * Wired to the per-measurement "Edit Value" button in the side panel.
+   * Replaces the previous window.prompt() flow so the prompt is on-brand
+   * and consistent with the rest of the app (Shaun spec 2026-05-11).
+   */
   const handleEditMeasurementValue = (id: string) => {
     const measurement = measurements.find(m => m.id === id);
     if (!measurement || !fabricRef.current) return;
+    setEditValueMeasurementId(id);
+    setEditValueInput(measurement.value.toString());
+  };
 
-    const newValue = prompt(`Enter new ${measurement.type} value:`, measurement.value.toString());
-    if (newValue === null) return;
-
-    const numValue = parseFloat(newValue);
-    if (isNaN(numValue)) return;
+  /**
+   * Apply a numeric edit-value to a measurement. Pulled out of the old
+   * handleEditMeasurementValue so the modal can call it without retreading
+   * the prompt-validation flow.
+   */
+  const applyEditMeasurementValue = (id: string, numValue: number) => {
+    const measurement = measurements.find(m => m.id === id);
+    if (!measurement || !fabricRef.current) return;
+    if (!Number.isFinite(numValue)) return;
 
     const canvas = fabricRef.current;
     const currentPoints = linePointsRef.current;
-    
+
     if (measurement.type === 'length') {
       const startIdx = measurement.lineStartIndex;
       const endIdx = measurement.lineEndIndex;
@@ -1971,6 +1990,77 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           </div>
         </div>
       )}
+
+      {/* Edit Value Modal — replaces the old window.prompt() for editing
+          a measurement's length or angle value. Matches the visual style
+          of the Adjust Points + Select All modals above so the flashing
+          drawing experience reads as one coherent UI. */}
+      {editValueMeasurementId && (() => {
+        const m = measurements.find((x) => x.id === editValueMeasurementId);
+        if (!m) return null;
+        const close = () => {
+          setEditValueMeasurementId(null);
+          setEditValueInput('');
+        };
+        const submit = () => {
+          const num = parseFloat(editValueInput);
+          if (!Number.isFinite(num)) return;
+          applyEditMeasurementValue(editValueMeasurementId, num);
+          close();
+        };
+        const unit = m.type === 'length' ? 'mm' : '°';
+        return (
+          <div
+            className="fixed inset-0 backdrop-blur-md bg-slate-900/20 flex items-center justify-center z-50"
+            onClick={close}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md border border-slate-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-xl font-bold text-slate-900 mb-4">
+                Edit {m.type === 'length' ? 'length' : 'angle'} value
+              </h2>
+              <p className="text-sm text-slate-600 mb-4">
+                {m.type === 'length'
+                  ? 'Enter the real-world length for this segment. The drawing will rescale to match while keeping connected points in sync.'
+                  : 'Enter the angle you want this vertex to read. Subsequent points rotate around this vertex to land at the new angle.'}
+              </p>
+              <div className="flex items-center gap-2 mb-6">
+                <input
+                  type="number"
+                  step="any"
+                  value={editValueInput}
+                  onChange={(e) => setEditValueInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') submit();
+                    if (e.key === 'Escape') close();
+                  }}
+                  autoFocus
+                  className="flex-1 px-3 py-2 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+                <span className="text-sm text-slate-500 font-medium">{unit}</span>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={close}
+                  className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 font-medium rounded-full hover:bg-slate-50 transition-all shadow-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={submit}
+                  className="flex-1 px-4 py-2 bg-[#FF6B35] text-white font-medium rounded-full hover:bg-[#ff5722] transition-all shadow-sm"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
