@@ -35,7 +35,10 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
   const [customerName, setCustomerName] = useState('');
   const [jobName, setJobName] = useState('');
   const [templateId, setTemplateId] = useState('');
-  const [entryMode, setEntryMode] = useState<'manual' | 'digital' | null>(null);
+  // Entry mode: manual (traditional builder), digital (takeoff canvas), or
+  // blank (skip the builder and go straight to the customer quote editor as
+  // the master source). Null until the user clicks one of the three pills.
+  const [entryMode, setEntryMode] = useState<'manual' | 'digital' | 'blank' | null>(null);
   const [planUploaded, setPlanUploaded] = useState(false);
   const [uploadedPlanPath, setUploadedPlanPath] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -90,7 +93,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
     }
 
     if (!entryMode) {
-      alert('Please select an entry mode (Manual or Digital)');
+      alert('Please select an entry mode (Manual, Digital, or Blank Quote)');
       return;
     }
 
@@ -137,8 +140,13 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
         }
         
         router.push(`/${workspaceSlug}/quotes/${quoteId}/takeoff`);
+      } else if (entryMode === 'blank') {
+        // Blank quote skips the builder entirely. The customer quote editor
+        // is the master/source of line items for this quote; on save, it
+        // lands the user on the standard summary page.
+        router.push(`/${workspaceSlug}/quotes/${quoteId}/customer-edit`);
       } else {
-        // Manual mode goes to quote builder
+        // Manual mode goes to the traditional quote builder.
         router.push(`/${workspaceSlug}/quotes/${quoteId}`);
       }
     } catch (err) {
@@ -277,9 +285,11 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
         <select
           value={templateId}
           onChange={(e) => setTemplateId(e.target.value)}
-          disabled={entryMode === 'digital'}
+          // Templates pre-load roof areas/components, neither of which exists
+          // in digital mode (added in-process) or blank mode (skipped entirely).
+          disabled={entryMode === 'digital' || entryMode === 'blank'}
           className={`w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
-            entryMode === 'digital' ? 'opacity-50 cursor-not-allowed bg-slate-100' : ''
+            entryMode === 'digital' || entryMode === 'blank' ? 'opacity-50 cursor-not-allowed bg-slate-100' : ''
           }`}
         >
           <option value="">Start from scratch</option>
@@ -291,8 +301,10 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
           ))}
         </select>
         <p className="text-xs text-slate-500 mt-1">
-          {entryMode === 'digital' 
-            ? 'Templates are not available in digital mode (Components added in process)'
+          {entryMode === 'digital'
+            ? 'Templates are not available in digital mode (components added in process)'
+            : entryMode === 'blank'
+            ? 'Templates do not apply to blank quotes (no areas or components)'
             : 'Templates pre-load roof areas and components'}
         </p>
       </div>
@@ -302,7 +314,10 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
         <label className="block text-sm font-medium text-slate-700 mb-3">
           Entry Mode <span className="text-red-500">*</span>
         </label>
-        <div className="grid grid-cols-2 gap-3">
+        {/* Three-up mode pills. Manual builds via Areas/Components, Digital
+            adds the takeoff canvas step first, Blank skips the builder and
+            uses the customer quote editor as the master source. */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Manual Mode Button */}
           <button
             type="button"
@@ -348,6 +363,32 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
             </div>
             <div className="text-sm font-medium text-slate-900">Digital Mode</div>
             <div className="text-xs text-slate-500 mt-1">Digital takeoff canvas</div>
+          </button>
+
+          {/* Blank Quote Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setEntryMode('blank');
+              setTemplateId('');           // Templates do not apply.
+              setPlanUploaded(false);
+              setUploadedPlanPath(null);
+            }}
+            className={`relative p-4 rounded-full border-2 transition-all ${
+              entryMode === 'blank'
+                ? 'border-orange-500 bg-blue-50'
+                : 'border-slate-300 hover:border-slate-400'
+            }`}
+            title="For fully custom quotes without using components or areas"
+          >
+            <div className="flex items-center justify-center mb-2">
+              {/* Document-with-pencil icon — reads as "freeform write". */}
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-3M16.5 3.5a2.121 2.121 0 113 3L12 14l-4 1 1-4 7.5-7.5z" />
+              </svg>
+            </div>
+            <div className="text-sm font-medium text-slate-900">Blank Quote</div>
+            <div className="text-xs text-slate-500 mt-1">No components or areas</div>
           </button>
         </div>
       </div>
@@ -396,7 +437,13 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
           disabled={creating || !customerName.trim() || !entryMode || (entryMode === 'digital' && !planUploaded)}
           className="px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
         >
-          {creating ? 'Creating...' : entryMode === 'digital' ? 'Start Digital Takeoff' : 'Create Quote'}
+          {creating
+            ? 'Creating...'
+            : entryMode === 'digital'
+            ? 'Start Digital Takeoff'
+            : entryMode === 'blank'
+            ? 'Start Blank Quote'
+            : 'Create Quote'}
         </button>
       </div>
     </form>

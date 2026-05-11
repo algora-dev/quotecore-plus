@@ -8,7 +8,16 @@ interface CreateQuoteParams {
   customerName: string;
   jobName: string | null;
   templateId: string | null;
-  entryMode: 'manual' | 'digital';
+  /**
+   * Entry method for the quote:
+   *   - `manual`: traditional quote builder (Areas → Components → Extras → Review).
+   *   - `digital`: digital takeoff canvas first, then the builder.
+   *   - `blank`: skip the builder entirely; the customer quote editor is the
+   *     master/source of line items for this quote.
+   * The DB CHECK constraint is the authoritative gate; this type is the
+   * client surface.
+   */
+  entryMode: 'manual' | 'digital' | 'blank';
   /**
    * The measurement system locked into this quote at creation. Required —
    * the new-quote form forces the user to confirm the choice if it differs
@@ -29,14 +38,24 @@ export async function createQuoteWithDetails(params: CreateQuoteParams): Promise
       ? params.measurementSystem
       : 'metric';
 
-  // If template specified, use existing createQuoteFromTemplate
-  if (params.templateId) {
+  // Whitelist entry mode the same way — unknown values fall back to manual.
+  const safeEntryMode: 'manual' | 'digital' | 'blank' =
+    params.entryMode === 'manual' || params.entryMode === 'digital' || params.entryMode === 'blank'
+      ? params.entryMode
+      : 'manual';
+
+  // Templates only apply to manual / digital quotes. A blank quote starts
+  // with zero areas / components by definition; piping a template through it
+  // would silently break that promise. The new-quote form already disables
+  // the template selector for digital and blank modes, but we belt-and-brace
+  // it here on the server.
+  if (params.templateId && safeEntryMode !== 'blank') {
     const { createQuoteFromTemplate } = await import('../actions');
     await createQuoteFromTemplate(
       params.templateId,
       params.customerName,
       params.jobName,
-      params.entryMode,
+      safeEntryMode as 'manual' | 'digital',
       safeMeasurementSystem
     );
     return; // redirect() is called inside createQuoteFromTemplate
@@ -52,7 +71,7 @@ export async function createQuoteWithDetails(params: CreateQuoteParams): Promise
       tax_rate: company.default_tax_rate ?? 0,
       measurement_system: safeMeasurementSystem,
       created_by_user_id: profile.id,
-      entry_mode: params.entryMode,
+      entry_mode: safeEntryMode,
     })
     .select('id')
     .single();

@@ -252,7 +252,7 @@ export interface TemplateComponentRow {
 export interface QuoteRow {
   id: string; company_id: string; template_id: string | null; customer_name: string;
   customer_email: string | null; customer_phone: string | null; job_name: string | null; site_address: string | null;
-  status: QuoteStatus; quote_number: number | null; entry_mode: 'manual' | 'digital' | null;
+  status: QuoteStatus; quote_number: number | null; entry_mode: 'manual' | 'digital' | 'blank' | null;
   material_margin_pct: number; labour_margin_pct: number; 
   material_margin_percent: number; labor_margin_percent: number; // Aliases for compatibility
   material_margin_enabled: boolean; labor_margin_enabled: boolean; tax_rate: number;

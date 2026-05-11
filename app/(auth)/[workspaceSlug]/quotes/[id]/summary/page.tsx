@@ -269,7 +269,22 @@ export default async function QuoteSummaryPage({
             {quote.status === 'draft' && (
               <CurrencySelector quoteId={id} currentCurrency={quote.currency} companyDefaultCurrency={companyDefaultCurrency} workspaceSlug={workspaceSlug} />
             )}
-            <Link href={`/${workspaceSlug}/quotes/${id}`} title="Edit Quote" className="icon-btn border-slate-300 bg-white">
+            {/*
+              "Edit Quote" goes back to whichever screen IS the master source
+              for this quote's mode. For manual/digital that's the quote
+              builder route (which itself routes digital onward to /build);
+              for blank quotes the customer quote editor IS the master source
+              of line items, so we route there directly.
+            */}
+            <Link
+              href={
+                quote.entry_mode === 'blank'
+                  ? `/${workspaceSlug}/quotes/${id}/customer-edit`
+                  : `/${workspaceSlug}/quotes/${id}`
+              }
+              title={quote.entry_mode === 'blank' ? 'Edit Quote (Blank)' : 'Edit Quote'}
+              className="icon-btn border-slate-300 bg-white"
+            >
               <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
             </Link>
             <form action={async () => {

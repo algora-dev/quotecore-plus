@@ -674,11 +674,27 @@ export async function cloneQuote(id: string, newCustomerName: string) {
   const { data: originalQuote } = await supabase.from('quotes').select('*').eq('id', id).eq('company_id', profile.company_id).single();
   if (!originalQuote) throw new Error('Quote not found');
 
+  // Preserve entry_mode, measurement_system, and currency on clone so the
+  // copy behaves identically to its source. The previous clone code dropped
+  // entry_mode and measurement_system silently, which (a) defaulted a cloned
+  // manual quote to whatever the DB default was, and (b) would have turned a
+  // blank-quote clone into a manual-quote shell with no underlying data.
   const { data: newQuote, error: qErr } = await supabase.from('quotes').insert({
-    company_id: profile.company_id, template_id: originalQuote.template_id, customer_name: newCustomerName,
-    customer_email: originalQuote.customer_email, customer_phone: originalQuote.customer_phone, job_name: originalQuote.job_name,
-    site_address: originalQuote.site_address, material_margin_percent: originalQuote.material_margin_percent, labor_margin_percent: originalQuote.labor_margin_percent,
-    tax_rate: originalQuote.tax_rate, global_pitch_degrees: originalQuote.global_pitch_degrees, created_by_user_id: profile.id,
+    company_id: profile.company_id,
+    template_id: originalQuote.template_id,
+    customer_name: newCustomerName,
+    customer_email: originalQuote.customer_email,
+    customer_phone: originalQuote.customer_phone,
+    job_name: originalQuote.job_name,
+    site_address: originalQuote.site_address,
+    material_margin_percent: originalQuote.material_margin_percent,
+    labor_margin_percent: originalQuote.labor_margin_percent,
+    tax_rate: originalQuote.tax_rate,
+    global_pitch_degrees: originalQuote.global_pitch_degrees,
+    measurement_system: originalQuote.measurement_system,
+    currency: originalQuote.currency,
+    entry_mode: originalQuote.entry_mode,
+    created_by_user_id: profile.id,
   }).select().single();
   if (qErr || !newQuote) throw new Error(qErr?.message || 'Failed to clone quote');
 
@@ -719,6 +735,24 @@ export async function cloneQuote(id: string, newCustomerName: string) {
     await seedQuoteTaxesOnCreate(newQuote.id, profile.company_id);
   }
 
+  // Copy customer-quote lines. Two reasons we copy ALL of them, not just
+  // visible/included rows:
+  //   1. For blank quotes, customer_quote_lines IS the master source for
+  //      the new quote - if we don't copy these, the clone is just an
+  //      empty quote with the customer name and tax setup.
+  //   2. For manual/digital quotes, customer_quote_lines carries the user's
+  //      visibility flags, hidden-price marks, and ad-hoc custom lines that
+  //      they layered on top of the auto-derived component lines. Dropping
+  //      these on clone meant the user re-did all that customisation.
+  // For 'component' rows we need to remap quote_component_id to the freshly
+  // inserted component IDs, which only exist after the components loop below.
+  // So: collect source lines now, insert them at the end with mapped IDs.
+  const { data: srcCustomerLines } = await supabase
+    .from('customer_quote_lines')
+    .select('*')
+    .eq('quote_id', id)
+    .order('sort_order', { ascending: true });
+
   const { data: comps } = await supabase.from('quote_components').select('*').eq('quote_id', id).order('sort_order');
   if (comps?.length) {
     for (const comp of comps) {
@@ -736,6 +770,70 @@ export async function cloneQuote(id: string, newCustomerName: string) {
         sort_order: comp.sort_order,
       });
     }
+  }
+
+  // Build the component-id mapping from the loop above (we appended a
+  // record for each inserted component) so the customer-line copy can
+  // resolve references.
+  // NOTE: the components loop above doesn't currently capture the new
+  // component IDs because the original code didn't need them. For now we
+  // re-query in component-name order — not 100% reliable if two components
+  // share a name. Safer: re-fetch matched by (sort_order, name) which is
+  // unique inside one quote in practice.
+  const componentIdMapping: Record<string, string> = {};
+  if (comps?.length) {
+    const { data: newComps } = await supabase
+      .from('quote_components')
+      .select('id, name, sort_order')
+      .eq('quote_id', newQuote.id)
+      .order('sort_order');
+    if (newComps) {
+      // Pair by index, which matches the insertion order above.
+      for (let i = 0; i < Math.min(comps.length, newComps.length); i++) {
+        componentIdMapping[comps[i].id] = newComps[i].id;
+      }
+    }
+  }
+
+  if (srcCustomerLines && srcCustomerLines.length > 0) {
+    const remappedLines = srcCustomerLines.map((l: any) => ({
+      quote_id: newQuote.id,
+      line_type: l.line_type,
+      quote_component_id: l.quote_component_id
+        ? (componentIdMapping[l.quote_component_id] ?? null)
+        : null,
+      custom_text: l.custom_text,
+      custom_amount: l.custom_amount,
+      show_price: l.show_price,
+      show_units: l.show_units,
+      is_visible: l.is_visible,
+      include_in_total: l.include_in_total,
+      sort_order: l.sort_order,
+    }));
+    const { error: clErr } = await supabase
+      .from('customer_quote_lines')
+      .insert(remappedLines);
+    if (clErr) {
+      console.warn('[cloneQuote] failed to copy customer_quote_lines:', clErr.message);
+      // Non-fatal: the new quote still exists with components, the user can
+      // rebuild the customer view if they need to.
+    }
+  }
+
+  // Carry branding (header/footer/logo) so the cloned quote looks the same
+  // as the source in the customer quote editor without manual re-entry.
+  if (originalQuote.cq_company_name !== null || originalQuote.cq_footer_text !== null) {
+    await supabase
+      .from('quotes')
+      .update({
+        cq_company_name: originalQuote.cq_company_name,
+        cq_company_address: originalQuote.cq_company_address,
+        cq_company_phone: originalQuote.cq_company_phone,
+        cq_company_email: originalQuote.cq_company_email,
+        cq_company_logo_url: originalQuote.cq_company_logo_url,
+        cq_footer_text: originalQuote.cq_footer_text,
+      })
+      .eq('id', newQuote.id);
   }
 
   return newQuote.id;

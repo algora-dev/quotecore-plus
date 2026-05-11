@@ -14,10 +14,19 @@ export default async function QuoteBuilderPage({
 }) {
   const { workspaceSlug, id } = await params;
   
-  // Check entry mode and redirect to v2 if digital
+  // Check entry mode and redirect away when this page isn't the right one
+  // for the quote's mode:
+  //   - digital: the takeoff/builder flow lives under /build?step=roof-areas.
+  //   - blank:   skips the builder entirely; the customer quote editor is
+  //              the master/source for this quote. Anyone arriving here
+  //              (typically via the Summary 'Edit Quote' button on an old
+  //              link, or a bookmarked URL) gets bounced to the editor.
   const quote = await loadQuote(id);
   if (quote.entry_mode === 'digital') {
     redirect(`/${workspaceSlug}/quotes/${id}/build?step=roof-areas`);
+  }
+  if (quote.entry_mode === 'blank') {
+    redirect(`/${workspaceSlug}/quotes/${id}/customer-edit`);
   }
   // Load remaining data for v1 (manual mode)
   const [roofAreas, roofAreaEntries, components, libraryComponents, entries, takeoffData] = await Promise.all([
