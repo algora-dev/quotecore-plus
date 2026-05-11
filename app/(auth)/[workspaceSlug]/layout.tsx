@@ -8,7 +8,9 @@ import { AlertBell } from '@/app/components/alerts/AlertBell';
 import { CopilotProvider } from '@/app/components/copilot/CopilotProvider';
 import { CopilotToggle } from '@/app/components/copilot/CopilotToggle';
 import { CopilotOverlay } from '@/app/components/copilot/CopilotOverlay';
-import { HelpDrawer } from '@/app/components/docs/HelpDrawer';
+import { HelpDrawerTrigger, HelpDrawerPanel } from '@/app/components/docs/HelpDrawer';
+import { HelpDrawerProvider } from '@/app/components/docs/HelpDrawerContext';
+import { HelpDrawerLayout } from '@/app/components/docs/HelpDrawerLayout';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 
@@ -59,39 +61,52 @@ export default async function WorkspaceLayout({
 
   return (
     <CopilotProvider userId={profile.id} companyId={company.id} initialState={copilotState}>
-    <div className="min-h-screen">
-      <header className="border-b border-slate-200 bg-white shadow-sm">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link href={`/${slug}`} prefetch={false} className="flex items-center">
-              <img src="/logo.png" alt="QuoteCore" className="h-9" />
-            </Link>
-            <div className="flex items-center gap-3">
-              <HelpDrawer />
-              <CopilotToggle />
-              <AlertBell
-                initialAlerts={alerts || []}
-                initialUnreadCount={unreadCount}
-                workspaceSlug={slug}
-              />
-              <Link
-                href={`/${slug}/account`}
-                prefetch={false}
-                className="inline-flex items-center rounded-full border-2 border-transparent bg-white px-3 py-1 text-sm font-semibold text-slate-600 pill-shimmer"
-              >
-                Account
-              </Link>
-              <LogoutButton />
-            </div>
+      <HelpDrawerProvider>
+        {/*
+          The help drawer panel mounts at the viewport's left edge. It's
+          rendered as a sibling of the app shell so it can occupy a column
+          on screen while the rest of the workspace shifts right via
+          <HelpDrawerLayout>'s margin-left offset. The trigger button
+          inside the header simply opens the drawer; both pieces share
+          state through HelpDrawerProvider.
+        */}
+        <HelpDrawerPanel />
+        <HelpDrawerLayout>
+          <div className="min-h-screen">
+            <header className="border-b border-slate-200 bg-white shadow-sm">
+              <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <Link href={`/${slug}`} prefetch={false} className="flex items-center">
+                    <img src="/logo.png" alt="QuoteCore" className="h-9" />
+                  </Link>
+                  <div className="flex items-center gap-3">
+                    <HelpDrawerTrigger />
+                    <CopilotToggle />
+                    <AlertBell
+                      initialAlerts={alerts || []}
+                      initialUnreadCount={unreadCount}
+                      workspaceSlug={slug}
+                    />
+                    <Link
+                      href={`/${slug}/account`}
+                      prefetch={false}
+                      className="inline-flex items-center rounded-full border-2 border-transparent bg-white px-3 py-1 text-sm font-semibold text-slate-600 pill-shimmer"
+                    >
+                      Account
+                    </Link>
+                    <LogoutButton />
+                  </div>
+                </div>
+
+                <WorkspaceNav workspaceSlug={slug} />
+              </div>
+            </header>
+
+            <main className="mx-auto w-full max-w-6xl px-6 py-10">{children}</main>
+            <CopilotOverlay />
           </div>
-
-          <WorkspaceNav workspaceSlug={slug} />
-        </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-6xl px-6 py-10">{children}</main>
-      <CopilotOverlay />
-    </div>
+        </HelpDrawerLayout>
+      </HelpDrawerProvider>
     </CopilotProvider>
   );
 }

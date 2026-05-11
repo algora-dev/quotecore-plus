@@ -106,7 +106,14 @@ a,
     transparent 60%,
     transparent 100%
   );
+  /* `background-size: 200% 100%` makes the gradient twice as wide as the
+     button so one full sweep (−0% → 200%) takes the sheen from fully off the
+     left edge to fully off the right edge. `background-repeat: no-repeat` is
+     critical — without it, the gradient tiles and a SECOND sheen comes into
+     view before the first has fully exited, which reads as "the animation
+     cycled more than once". */
   background-size: 200% 100%;
+  background-repeat: no-repeat;
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -116,11 +123,11 @@ a,
 
 .pill-shimmer:hover::before {
   opacity: 1;
-  /* Pulse fires ONCE per hover (was: infinite). Duration is 25% slower than
-     the original 1.5s tempo (1.5 * 1.25 = 1.875s) to feel less frantic.
-     `forwards` holds the end-state so the sheen doesn't snap back mid-hover;
-     leaving + re-hovering re-mounts the pseudo-element and naturally restarts
-     the animation. */
+  /* One complete sheen sweep per hover, 25% slower than the original 1.5s
+     tempo (1.5 × 1.25 = 1.875s). `forwards` parks the gradient at the
+     end-state (sheen off the right edge, invisible) so it doesn't snap back
+     mid-hover. CSS re-mounts the pseudo-element when hover leaves and
+     re-enters, so the animation naturally restarts on each new hover. */
   animation: shimmer 1.875s linear 1 forwards;
 }
 
