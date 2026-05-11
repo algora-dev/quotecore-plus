@@ -858,10 +858,11 @@ export async function saveCustomerQuoteLines(
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
-  // Verify quote belongs to company
+  // Verify quote belongs to company, and pull the fields we need to decide
+  // whether to auto-assign a quote number on this save (for blank quotes).
   const { data: quote } = await supabase
     .from('quotes')
-    .select('company_id')
+    .select('company_id, entry_mode, status, quote_number')
     .eq('id', quoteId)
     .single();
 
@@ -895,6 +896,42 @@ export async function saveCustomerQuoteLines(
       .insert(insertData);
 
     if (error) throw new Error(error.message);
+  }
+
+  // Blank quotes never go through the manual quote builder's Review step,
+  // which is where a quote normally graduates from 'draft' to 'confirmed'
+  // and gets its quote_number assigned. Without that, the summary shows
+  // 'Quote #DRAFT' and Send Quote refuses to mint an acceptance URL.
+  //
+  // We auto-confirm on the first save that lands at least one customer
+  // line, which is the equivalent point in the blank-quote flow. The check
+  // is narrow on purpose:
+  //   - entry_mode === 'blank' so we never accidentally confirm a
+  //     manual/digital quote that's still mid-build.
+  //   - status === 'draft' AND quote_number IS NULL so we never re-run
+  //     numbering on an already-confirmed quote.
+  //   - lines.length > 0 so an empty save doesn't burn a number.
+  if (
+    quote.entry_mode === 'blank'
+    && quote.status === 'draft'
+    && !quote.quote_number
+    && lines.length > 0
+  ) {
+    const { data: nextNum, error: numErr } = await supabase.rpc('get_next_quote_number', {
+      p_company_id: profile.company_id,
+    });
+    if (numErr) {
+      console.warn('[saveCustomerQuoteLines] failed to mint quote_number for blank quote:', numErr.message);
+    } else if (nextNum) {
+      const { error: updErr } = await supabase
+        .from('quotes')
+        .update({ status: 'confirmed', quote_number: nextNum })
+        .eq('id', quoteId)
+        .eq('company_id', profile.company_id);
+      if (updErr) {
+        console.warn('[saveCustomerQuoteLines] failed to confirm blank quote:', updErr.message);
+      }
+    }
   }
 
   revalidatePath(`/quotes/${quoteId}/customer-edit`);
