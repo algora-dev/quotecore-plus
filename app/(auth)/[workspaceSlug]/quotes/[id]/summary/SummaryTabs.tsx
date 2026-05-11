@@ -60,12 +60,20 @@ export function SummaryTabs({
       {/* Tabs + Context Actions */}
       <div className="flex items-center justify-between data-exclude-pdf" data-copilot="summary-tabs">
         <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
+          {/*
+            Tab buttons. Inactive tabs get a stronger hover: white background,
+            orange-600 text, and the brand glow shadow so the affordance reads
+            as "click me" rather than "decorative pill". Active tab keeps the
+            solid white pill so the selected state stays clearly distinct.
+          */}
           <button
             onClick={() => setActiveTab('summary')}
             data-copilot="tab-summary"
             data-tab-active={activeTab === 'summary' ? 'true' : undefined}
-            className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
-              activeTab === 'summary' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
+              activeTab === 'summary'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
             }`}
           >
             Summary
@@ -74,8 +82,10 @@ export function SummaryTabs({
             onClick={() => setActiveTab('customer')}
             data-copilot="tab-customer"
             data-tab-active={activeTab === 'customer' ? 'true' : undefined}
-            className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
-              activeTab === 'customer' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
+              activeTab === 'customer'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
             }`}
           >
             Customer Quote
@@ -84,8 +94,10 @@ export function SummaryTabs({
             onClick={() => setActiveTab('labor')}
             data-copilot="tab-labor"
             data-tab-active={activeTab === 'labor' ? 'true' : undefined}
-            className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
-              activeTab === 'labor' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
+              activeTab === 'labor'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
             }`}
           >
             Labor Sheet

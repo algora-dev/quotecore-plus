@@ -21,35 +21,42 @@ export default async function CompanyPage() {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
-  const { data: company, error } = await supabase
-    .from('companies')
-    .select('*')
-    .eq('id', profile.company_id)
-    .single();
-  if (error || !company) notFound();
+  // All four reads are independent (logo lookup uses company_id which we
+  // already have from the profile), so fire them in parallel. The previous
+  // sequential await chain added three avoidable round-trips to every load
+  // of /account/company.
+  const [companyRes, userRes, logoFileRes, taxes] = await Promise.all([
+    supabase
+      .from('companies')
+      .select('*')
+      .eq('id', profile.company_id)
+      .single(),
+    supabase
+      .from('users')
+      .select('full_name')
+      .eq('id', profile.id)
+      .single(),
+    supabase
+      .from('quote_files')
+      .select('storage_path')
+      .eq('company_id', profile.company_id)
+      .eq('file_type', 'logo')
+      .order('uploaded_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    loadCompanyTaxes(),
+  ]);
 
-  const { data: user } = await supabase
-    .from('users')
-    .select('full_name')
-    .eq('id', profile.id)
-    .single();
-
-  const { data: logoFile } = await supabase
-    .from('quote_files')
-    .select('storage_path')
-    .eq('company_id', company.id)
-    .eq('file_type', 'logo')
-    .order('uploaded_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const company = companyRes.data;
+  if (companyRes.error || !company) notFound();
+  const user = userRes.data;
+  const logoFile = logoFileRes.data;
 
   let logoUrl: string | null = null;
   if (logoFile) {
     const { data: urlData } = supabase.storage.from('company-logos').getPublicUrl(logoFile.storage_path);
     logoUrl = urlData.publicUrl;
   }
-
-  const taxes = await loadCompanyTaxes();
 
   return (
     <section className="space-y-6">

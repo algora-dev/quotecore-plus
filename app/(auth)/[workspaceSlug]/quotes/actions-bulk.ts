@@ -21,6 +21,26 @@ import { getEffectiveCurrency } from '@/app/lib/currency/currencies';
 const QUOTE_DOCUMENTS_BUCKET = 'QUOTE-DOCUMENTS';
 const SIGNED_URL_TTL_SECONDS = 60 * 30; // 30 minutes — plenty for a download cycle
 
+/**
+ * Hard cap on how many quotes a single bulk operation can touch. Mirrored on
+ * the client (see `MAX_BULK_SELECTION` in QuotesList.tsx). The server check
+ * is authoritative — the client cap is just for UX. Picked at 25 because:
+ *   - building 25 zipped quote bundles fits comfortably in browser memory,
+ *   - 25 sequential server round-trips finish in well under a minute,
+ *   - 25 deletes is a small enough blast radius that an accidental click is
+ *     recoverable from the audit log without a full DB restore.
+ *
+ * NB: this file is annotated `'use server'`, which restricts the public
+ * exports to async functions and types. We therefore expose the cap as an
+ * async getter rather than a plain constant so the module still satisfies
+ * the server-actions surface contract.
+ */
+const MAX_BULK_BATCH = 25;
+
+export async function getMaxBulkBatch(): Promise<number> {
+  return MAX_BULK_BATCH;
+}
+
 export interface QuoteBundleFile {
   id: string;
   fileType: 'plan' | 'supporting' | 'canvas';
@@ -102,6 +122,67 @@ export interface QuoteBundleData {
     taxLines: Array<{ name: string; amount: number; ratePercent: number }>;
   };
   files: QuoteBundleFile[];
+}
+
+/**
+ * Start an audit log entry for a bulk action. Returns the log row id so the
+ * caller can write the outcome back when the work finishes. Best-effort: if
+ * insertion fails we log a warning and return null — audit log failure should
+ * NOT block the user from running the operation.
+ */
+async function beginBulkAudit(
+  operation: 'bulk_delete_quotes' | 'bulk_download_quotes',
+  ids: string[],
+): Promise<string | null> {
+  try {
+    const profile = await requireCompanyContext();
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from('bulk_operations_log')
+      .insert({
+        company_id: profile.company_id,
+        user_id: profile.id,
+        operation,
+        target_ids: ids,
+        requested_count: ids.length,
+        outcome: 'pending',
+      })
+      .select('id')
+      .single();
+    if (error || !data) {
+      console.warn('[beginBulkAudit] insert failed:', error?.message);
+      return null;
+    }
+    return data.id as string;
+  } catch (err) {
+    console.warn('[beginBulkAudit] threw:', err);
+    return null;
+  }
+}
+
+async function finishBulkAudit(
+  logId: string | null,
+  outcome: 'success' | 'partial' | 'error',
+  actualCount: number,
+  skippedCount: number,
+  errorMessage?: string,
+): Promise<void> {
+  if (!logId) return;
+  try {
+    const supabase = await createSupabaseServerClient();
+    await supabase
+      .from('bulk_operations_log')
+      .update({
+        outcome,
+        actual_count: actualCount,
+        skipped_count: skippedCount,
+        error_message: errorMessage ?? null,
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', logId);
+  } catch (err) {
+    console.warn('[finishBulkAudit] threw:', err);
+  }
 }
 
 /**
@@ -360,6 +441,18 @@ export async function bulkDeleteQuotes(ids: string[]): Promise<{ deleted: number
   const profile = await requireCompanyContext();
   if (!Array.isArray(ids) || ids.length === 0) return { deleted: 0, skipped: 0 };
 
+  // Authoritative server-side cap. The client should never let this through,
+  // but if someone replays a request or scripts the action we refuse to
+  // process more than MAX_BULK_BATCH at once.
+  if (ids.length > MAX_BULK_BATCH) {
+    throw new Error(`Too many quotes selected: ${ids.length}. The limit is ${MAX_BULK_BATCH} per batch.`);
+  }
+
+  // De-dupe in case the client somehow sent duplicates.
+  ids = Array.from(new Set(ids));
+
+  const auditId = await beginBulkAudit('bulk_delete_quotes', ids);
+
   const supabase = await createSupabaseServerClient();
   const supabaseAdmin = createAdminClient();
 
@@ -372,7 +465,10 @@ export async function bulkDeleteQuotes(ids: string[]): Promise<{ deleted: number
 
   const ownedIds = (ownedQuotes ?? []).map((q: any) => q.id as string);
   const skipped = ids.length - ownedIds.length;
-  if (ownedIds.length === 0) return { deleted: 0, skipped };
+  if (ownedIds.length === 0) {
+    await finishBulkAudit(auditId, 'success', 0, skipped);
+    return { deleted: 0, skipped };
+  }
 
   // Pull all storage paths for the owned quotes in one query.
   const { data: filesToDelete } = await supabaseAdmin
@@ -406,10 +502,48 @@ export async function bulkDeleteQuotes(ids: string[]): Promise<{ deleted: number
     .eq('company_id', profile.company_id);
 
   if (deleteErr) {
+    await finishBulkAudit(auditId, 'error', 0, skipped, deleteErr.message);
     throw new Error(`Failed to delete quotes: ${deleteErr.message}`);
   }
 
   revalidatePath('/');
 
+  await finishBulkAudit(
+    auditId,
+    skipped > 0 ? 'partial' : 'success',
+    ownedIds.length,
+    skipped,
+  );
+
   return { deleted: ownedIds.length, skipped };
+}
+
+/**
+ * Authoritative server-side cap check for bulk download. The download itself
+ * happens one quote at a time via `loadQuoteBundleData`, so we expose a
+ * lightweight "register the batch and get an audit id" handle that the client
+ * calls once up front. Returns the audit id (or null if logging failed) so
+ * the caller can mark it complete via `finishBulkDownloadAudit`.
+ */
+export async function beginBulkDownload(ids: string[]): Promise<{ auditId: string | null; cap: number }> {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    throw new Error('No quotes selected.');
+  }
+  if (ids.length > MAX_BULK_BATCH) {
+    throw new Error(`Too many quotes selected: ${ids.length}. The limit is ${MAX_BULK_BATCH} per batch.`);
+  }
+  // requireCompanyContext implicitly authorises the caller.
+  await requireCompanyContext();
+  const auditId = await beginBulkAudit('bulk_download_quotes', Array.from(new Set(ids)));
+  return { auditId, cap: MAX_BULK_BATCH };
+}
+
+export async function finishBulkDownloadAudit(
+  auditId: string | null,
+  outcome: 'success' | 'partial' | 'error',
+  actualCount: number,
+  skippedCount: number,
+  errorMessage?: string,
+): Promise<void> {
+  await finishBulkAudit(auditId, outcome, actualCount, skippedCount, errorMessage);
 }

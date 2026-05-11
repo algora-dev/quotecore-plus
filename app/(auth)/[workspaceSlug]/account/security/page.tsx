@@ -18,20 +18,33 @@ export default async function SecurityPage() {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
-  const { data: user } = await supabase
-    .from('users')
-    .select('email')
-    .eq('id', profile.id)
-    .single();
+  // Six previously-sequential reads, now parallel. None of them depend on
+  // each other's results so the prior await chain was needlessly serial
+  // — the biggest single contributor to the slow /account/security load.
+  const [
+    userRes,
+    authUserRes,
+    mfa,
+    mfaRequired,
+    recoveryStatus,
+    securityQuestions,
+  ] = await Promise.all([
+    supabase
+      .from('users')
+      .select('email')
+      .eq('id', profile.id)
+      .single(),
+    supabase.auth.getUser(),
+    listMfaFactors(),
+    getMfaRequired(),
+    getRecoveryCodeStatus(),
+    listSecurityQuestions(),
+  ]);
 
-  const { data: { user: authUser } } = await supabase.auth.getUser();
+  const user = userRes.data;
+  const authUser = authUserRes.data.user;
   const authProvider = authUser?.app_metadata?.provider || 'email';
   const userEmail = user?.email || authUser?.email || '';
-
-  const mfa = await listMfaFactors();
-  const mfaRequired = await getMfaRequired();
-  const recoveryStatus = await getRecoveryCodeStatus();
-  const securityQuestions = await listSecurityQuestions();
 
   return (
     <section className="space-y-6">

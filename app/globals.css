@@ -116,7 +116,12 @@ a,
 
 .pill-shimmer:hover::before {
   opacity: 1;
-  animation: shimmer 1.5s linear infinite;
+  /* Pulse fires ONCE per hover (was: infinite). Duration is 25% slower than
+     the original 1.5s tempo (1.5 * 1.25 = 1.875s) to feel less frantic.
+     `forwards` holds the end-state so the sheen doesn't snap back mid-hover;
+     leaving + re-hovering re-mounts the pseudo-element and naturally restarts
+     the animation. */
+  animation: shimmer 1.875s linear 1 forwards;
 }
 
 /* Radio-style toggle for checkboxes */

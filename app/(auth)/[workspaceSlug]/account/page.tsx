@@ -13,15 +13,19 @@ export default async function AccountIndexPage() {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
-  const { data: user } = await supabase
-    .from('users')
-    .select('full_name, email')
-    .eq('id', profile.id)
-    .single();
+  // Parallelise the two reads. They have no dependency on each other so
+  // sequencing was adding a free round-trip to every Account page load.
+  const [{ data: user }, { data: { user: authUser } }] = await Promise.all([
+    supabase
+      .from('users')
+      .select('full_name, email')
+      .eq('id', profile.id)
+      .single(),
+    supabase.auth.getUser(),
+  ]);
 
   // authProvider drives the EmailChangeSection's UI — Google-only users see
   // a "manage in Google" message instead of the change form.
-  const { data: { user: authUser } } = await supabase.auth.getUser();
   const authProvider = authUser?.app_metadata?.provider || 'email';
   const userEmail = user?.email || authUser?.email || '';
 

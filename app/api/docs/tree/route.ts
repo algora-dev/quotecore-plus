@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getDocTree } from '@/app/lib/docs/tree';
+import { getDocTree, getSearchIndex } from '@/app/lib/docs/tree';
 
 /**
  * Returns the docs tree with only the data the drawer needs: section titles,
  * page slugs, page titles, and coming-soon flags. Keeps the wire payload small.
+ *
+ * Also ships a `searchIndex` so the in-app help drawer can run client-side
+ * fuzzy search without a second round-trip. The index is ~title + description
+ * + section per page — still small, but enough to be useful.
  */
 export async function GET() {
   const tree = getDocTree();
@@ -21,5 +25,6 @@ export async function GET() {
         status: p.frontmatter.status,
       })),
     })),
+    searchIndex: getSearchIndex(),
   });
 }

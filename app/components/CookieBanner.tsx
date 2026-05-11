@@ -30,19 +30,30 @@ import Link from 'next/link';
 const STORAGE_KEY = 'qcp_cookie_notice_dismissed_v1';
 
 export function CookieBanner() {
-  // Start hidden so SSR + first paint don't flash the banner; we'll show it
-  // on the client once we've checked localStorage.
-  const [visible, setVisible] = useState(false);
+  // Two-stage visibility:
+  //   - `mounted` becomes true after the first client render so SSR HTML
+  //     and the first paint never show the banner (avoids a flash).
+  //   - `dismissed` is read from localStorage during that same effect; if
+  //     the user has already acknowledged the notice we keep the banner
+  //     hidden forever, regardless of how many times they log in/out.
+  // This pattern is deliberately defensive: a single `useState(false)` +
+  // `useEffect` toggle was previously firing a visible flash on slow
+  // hydration paths, which read as "the banner keeps coming back".
+  const [mounted, setMounted] = useState(false);
+  const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
+    setMounted(true);
     try {
-      const dismissed = window.localStorage.getItem(STORAGE_KEY);
-      if (!dismissed) setVisible(true);
+      const value = window.localStorage.getItem(STORAGE_KEY);
+      setDismissed(Boolean(value));
     } catch {
-      // localStorage can throw in private mode / SSR; default to showing.
-      setVisible(true);
+      // localStorage can throw in private mode; fall back to showing.
+      setDismissed(false);
     }
   }, []);
+
+  const visible = mounted && !dismissed;
 
   function dismiss() {
     try {
@@ -50,7 +61,7 @@ export function CookieBanner() {
     } catch {
       /* swallow — best-effort */
     }
-    setVisible(false);
+    setDismissed(true);
   }
 
   if (!visible) return null;

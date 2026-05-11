@@ -18,13 +18,16 @@ export default async function NotificationsPage() {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
-  const { data: user } = await supabase
-    .from('users')
-    .select('email, email_notifications_enabled')
-    .eq('id', profile.id)
-    .single();
+  // Parallelise: the two reads are independent.
+  const [{ data: user }, { data: { user: authUser } }] = await Promise.all([
+    supabase
+      .from('users')
+      .select('email, email_notifications_enabled')
+      .eq('id', profile.id)
+      .single(),
+    supabase.auth.getUser(),
+  ]);
 
-  const { data: { user: authUser } } = await supabase.auth.getUser();
   const userEmail = user?.email || authUser?.email || '';
 
   return (

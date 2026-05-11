@@ -3,7 +3,15 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { deleteQuote, updateQuoteJobStatus } from './actions';
-import { loadQuoteBundleData, bulkDeleteQuotes } from './actions-bulk';
+import { loadQuoteBundleData, bulkDeleteQuotes, beginBulkDownload, finishBulkDownloadAudit } from './actions-bulk';
+
+/**
+ * Client-side cap on the multi-select. Must match `MAX_BULK_BATCH` in
+ * actions-bulk.ts. The server enforces the same cap authoritatively; this is
+ * for UX so the user can't even build a selection larger than we're willing
+ * to process.
+ */
+const MAX_BULK_SELECTION = 25;
 import type { JobStatus } from './actions';
 import JSZip from 'jszip';
 import { addQuoteToZip, downloadBlob, sanitizeFilename } from './lib/quote-bundle';
@@ -236,11 +244,26 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
     }
   }
 
+  // Inline notice shown when the user bumps into the selection cap.
+  const [capNotice, setCapNotice] = useState<string | null>(null);
+  useEffect(() => {
+    if (!capNotice) return;
+    const t = setTimeout(() => setCapNotice(null), 4000);
+    return () => clearTimeout(t);
+  }, [capNotice]);
+
   function toggleSelect(id: string) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+        return next;
+      }
+      if (next.size >= MAX_BULK_SELECTION) {
+        setCapNotice(`You can select up to ${MAX_BULK_SELECTION} quotes at a time.`);
+        return prev;
+      }
+      next.add(id);
       return next;
     });
   }
@@ -251,9 +274,23 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
       const visibleIds = visibleQuotes.map((q) => q.id);
       const allSelected = visibleIds.every((id) => next.has(id));
       if (allSelected) {
+        // "Unselect all visible" — unconditionally clears them.
         for (const id of visibleIds) next.delete(id);
-      } else {
-        for (const id of visibleIds) next.add(id);
+        return next;
+      }
+      // "Select all visible", capped at MAX_BULK_SELECTION.
+      let added = 0;
+      for (const id of visibleIds) {
+        if (next.has(id)) continue;
+        if (next.size >= MAX_BULK_SELECTION) break;
+        next.add(id);
+        added++;
+      }
+      const remainingVisible = visibleIds.filter((id) => !next.has(id)).length;
+      if (remainingVisible > 0) {
+        setCapNotice(
+          `Selected the first ${MAX_BULK_SELECTION} quotes. Process this batch first, then select the next ${remainingVisible}.`,
+        );
       }
       return next;
     });
@@ -271,9 +308,28 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
   async function handleBulkDownload() {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
+    if (ids.length > MAX_BULK_SELECTION) {
+      // Should be unreachable thanks to the toggle guards; defensive belt anyway.
+      alert(`Too many quotes selected (${ids.length}). Maximum ${MAX_BULK_SELECTION} per batch.`);
+      return;
+    }
 
     setBulkBusy('download');
     setBulkProgress({ done: 0, total: ids.length, message: 'Preparing export...' });
+
+    // Register the batch up front so even if the browser crashes mid-download
+    // we still have a 'pending' row in the audit log.
+    let auditId: string | null = null;
+    try {
+      const begin = await beginBulkDownload(ids);
+      auditId = begin.auditId;
+    } catch (err) {
+      console.error('[bulkDownload] cap rejected by server:', err);
+      alert(err instanceof Error ? err.message : 'Failed to start bulk download.');
+      setBulkBusy(null);
+      setBulkProgress(null);
+      return;
+    }
 
     try {
       const zip = new JSZip();
@@ -304,6 +360,13 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
       }
 
       if (succeeded === 0) {
+        await finishBulkDownloadAudit(
+          auditId,
+          'error',
+          0,
+          failures.length,
+          failures.length > 0 ? failures.slice(0, 5).join('; ') : 'no quotes exported',
+        );
         alert(`No quotes could be exported.${failures.length ? '\n\nFailed:\n' + failures.join('\n') : ''}`);
         return;
       }
@@ -324,6 +387,14 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
       }
 
       downloadBlob(blob, zipName);
+
+      await finishBulkDownloadAudit(
+        auditId,
+        failures.length > 0 ? 'partial' : 'success',
+        succeeded,
+        failures.length,
+        failures.length > 0 ? failures.slice(0, 5).join('; ') : undefined,
+      );
 
       if (failures.length > 0) {
         alert(`Exported ${succeeded} of ${ids.length} quotes.\n\nFailed:\n${failures.join('\n')}`);
@@ -570,11 +641,19 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
         </div>
       )}
 
+      {/* Cap notice toast (fires when the user tries to exceed MAX_BULK_SELECTION). */}
+      {capNotice && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 max-w-md rounded-lg border border-orange-200 bg-orange-50 px-4 py-2 text-sm text-orange-900 shadow-lg">
+          {capNotice}
+        </div>
+      )}
+
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-lg">
           <span className="text-sm text-slate-700">
             {selectedIds.size} selected
+            <span className="ml-1 text-xs text-slate-400">/ {MAX_BULK_SELECTION} max</span>
           </span>
           <button
             onClick={clearSelection}

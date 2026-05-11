@@ -1,13 +1,18 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { pathnameToDocSlug } from '@/app/lib/docs/route-mapping';
 
 interface DrawerTreePage { slug: string; title: string; status: 'published' | 'coming-soon' }
 interface DrawerTreeSection { id: string; title: string; pages: DrawerTreePage[] }
-interface DrawerTree { root: { slug: string; title: string } | null; sections: DrawerTreeSection[] }
+interface DrawerSearchEntry { slug: string; title: string; description: string; section: string }
+interface DrawerTree {
+  root: { slug: string; title: string } | null;
+  sections: DrawerTreeSection[];
+  searchIndex: DrawerSearchEntry[];
+}
 
 interface DrawerDoc {
   slug: string;
@@ -124,6 +129,28 @@ export function HelpDrawer() {
   const onPickSlug = useCallback((next: string) => {
     setSlug(next);
   }, []);
+
+  // Search state lives in the drawer (not the nav) so picking a result can
+  // also clear the box without the nav owning a ref into the search UI.
+  const [query, setQuery] = useState('');
+  const searchResults = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle || !tree) return [];
+    const tokens = needle.split(/\s+/).filter(Boolean);
+    return tree.searchIndex
+      .map((e) => {
+        const hay = `${e.title} ${e.description} ${e.section}`.toLowerCase();
+        let score = 0;
+        for (const t of tokens) {
+          if (hay.indexOf(t) === -1) return null;
+          score += t.length + (e.title.toLowerCase().includes(t) ? 5 : 0);
+        }
+        return { entry: e, score };
+      })
+      .filter((x): x is { entry: DrawerSearchEntry; score: number } => x !== null)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8);
+  }, [query, tree]);
 
   const onFeedback = useCallback((kind: 'up' | 'down') => {
     setFeedback(kind);
@@ -247,10 +274,49 @@ export function HelpDrawer() {
 
           {/* Body: two independent scroll panes side-by-side. */}
           <div className="flex min-h-0 flex-1">
-            {/* Nav pane — always visible (GitBook-style). */}
+            {/* Nav pane — always visible (GitBook-style). Search lives at the
+                top of this column so users can jump straight to a page without
+                hunting through the sections list. */}
             <aside
               className="h-full w-[30%] min-w-[180px] max-w-[320px] overflow-y-auto border-r border-slate-200 bg-slate-50/60 px-3 py-4"
             >
+              <div className="relative mb-4">
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search help..."
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  aria-label="Search help"
+                />
+                {query.trim() ? (
+                  <div className="mt-2 rounded-lg border border-slate-200 bg-white shadow-sm">
+                    {searchResults.length === 0 ? (
+                      <p className="px-3 py-2 text-xs text-slate-500">No matches.</p>
+                    ) : (
+                      <ul>
+                        {searchResults.map(({ entry }) => (
+                          <li key={entry.slug || 'index'} className="border-b border-slate-100 last:border-b-0">
+                            <button
+                              type="button"
+                              onClick={() => { onPickSlug(entry.slug); setQuery(''); }}
+                              className="block w-full px-3 py-2 text-left hover:bg-slate-50"
+                            >
+                              <p className="text-sm font-semibold text-slate-900">{entry.title}</p>
+                              {entry.section ? (
+                                <p className="text-[10px] uppercase tracking-wide text-slate-500">{entry.section}</p>
+                              ) : null}
+                              {entry.description ? (
+                                <p className="mt-0.5 line-clamp-2 text-xs text-slate-600">{entry.description}</p>
+                              ) : null}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ) : null}
+              </div>
               <DrawerNav tree={tree} active={slug} onPick={onPickSlug} />
             </aside>
 
