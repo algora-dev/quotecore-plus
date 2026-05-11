@@ -86,8 +86,10 @@ a,
  *     hovers off mid-sweep. (CSS alone can't do this; a small
  *     `<PillShimmerScript>` component toggles `.pill-shimmer--playing`
  *     on pointerenter and removes it on `animationend`.)
- *   - Duration is 25% slower than the original snappy 1.5s tempo
- *     (1.5 × 1.25 = 1.875s), per Shaun's feel preference.
+ *   - Duration is the original 1.5s tempo (reverted from the 1.875s slow
+ *     variant, 2026-05-11 — the slowdown was masking a perceived start delay
+ *     that was actually caused by an opacity fade + off-screen start; both
+ *     fixed, so the snappier speed reads better).
  */
 @keyframes shimmer {
   0% {
@@ -137,7 +139,7 @@ a,
    therefore decoupled from `:hover` state — it always finishes once started. */
 .pill-shimmer--playing::before {
   opacity: 1;
-  animation: shimmer 1.875s linear 1 forwards;
+  animation: shimmer 1.5s linear 1 forwards;
 }
 
 /* Radio-style toggle for checkboxes */
