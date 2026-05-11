@@ -614,9 +614,34 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     componentColorsRef.current = componentColors;
   }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, lineMode, linePoints, pointMode, selectedComponentId, componentColors]);
 
-  // Initialize Fabric canvas
+  // Stable ref for the signed plan URL. The signed URL is regenerated on
+  // every server render (it embeds a fresh JWT), so reading it directly
+  // would tie the Fabric init effect to a value that changes on every
+  // parent re-render — which is exactly the bug we're fixing here.
+  // Reading it through a ref means the closure always sees the latest URL
+  // for the initial image load, but the effect's dep array stays stable.
+  const planUrlRef = useRef(planUrl);
   useEffect(() => {
+    planUrlRef.current = planUrl;
+  }, [planUrl]);
+
+  // Initialize Fabric canvas. ONE-SHOT per mount, no deps.
+  //
+  // Previously this effect was keyed on `[planUrl]`, which meant any parent
+  // re-render that regenerated the signed URL on the server (a refresh, a
+  // tab focus, a child state cascade) tore down and rebuilt the canvas —
+  // wiping every line, area, marker, and calibration the user had drawn.
+  // The signed URL changes string-identity on every render even when the
+  // underlying storage path is identical, so the effect kept firing.
+  //
+  // Fix: ref-guard so the canvas is created exactly once per mount, regardless
+  // of how many times the parent re-renders. Following the same one-shot
+  // hydration pattern used on the customer quote / blank-quote editors.
+  const canvasInitedRef = useRef(false);
+  useEffect(() => {
+    if (canvasInitedRef.current) return;
     if (!canvasRef.current) return;
+    canvasInitedRef.current = true;
 
     const canvas = new Canvas(canvasRef.current, {
       width: CANVAS_WIDTH,
@@ -656,7 +681,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       canvas.sendObjectToBack(fabricImg);
       canvas.renderAll();
     };
-    imgElement.src = planUrl;
+    // Read the latest URL from the ref so we always use the most
+    // recent signed URL even though the init effect is dep-less.
+    imgElement.src = planUrlRef.current;
 
     // Pan on drag OR calibration click OR area click OR line click
     canvas.on('mouse:down', (opt) => {
@@ -920,8 +947,13 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
 
     return () => {
       canvas.dispose();
+      // Reset the init guard on unmount so re-mounting the component
+      // (e.g. a Next route remount) gets a fresh canvas. We don't reset on
+      // re-renders — those are exactly what we're guarding against.
+      canvasInitedRef.current = false;
     };
-  }, [planUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally empty: see comment above the effect
 
   // Update cursor when calibration/area/line/point mode changes
   useEffect(() => {
