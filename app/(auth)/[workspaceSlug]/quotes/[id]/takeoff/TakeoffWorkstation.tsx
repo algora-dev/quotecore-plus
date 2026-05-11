@@ -642,6 +642,12 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         scaleY: scale,
         left: (CANVAS_WIDTH - imgElement.width * scale) / 2,
         top: (CANVAS_HEIGHT - imgElement.height * scale) / 2,
+        // Fabric 7 changed default origin to center/center. The left/top
+        // math above is designed to place the image's top-left at the
+        // centring offset, so we lock the origin back to v6 semantics to
+        // preserve the layout.
+        originX: 'left',
+        originY: 'top',
         selectable: false,
         evented: false,
       });
@@ -658,7 +664,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       
       // Line mode: measure distance (2 points)
       if (lineModeRef.current && !evt.altKey) {
-        const pointer = canvas.getPointer(opt.e);
+        // Fabric 7 split getPointer() into getViewportPoint() (HTML
+        // coordinates) and getScenePoint() (canvas coordinates, post
+        // viewport transform). The takeoff workstation always wants the
+        // canvas-space point so we can compare against stored geometry.
+        const pointer = canvas.getScenePoint(opt.e);
         const newPoint = { x: pointer.x, y: pointer.y };
         const currentPoints = linePointsRef.current;
         
@@ -740,7 +750,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       
       // Point mode: add single-click marker
       if (pointModeRef.current && !evt.altKey) {
-        const pointer = canvas.getPointer(opt.e);
+        const pointer = canvas.getScenePoint(opt.e);
         const componentColor = componentColorsRef.current.find(c => c.componentId === selectedComponentIdRef.current)?.color || '#8b5cf6';
         
         // Draw larger triangle marker
@@ -768,7 +778,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       
       // Area mode: add polygon points
       if (areaModeRef.current && !evt.altKey) {
-        const pointer = canvas.getPointer(opt.e);
+        const pointer = canvas.getScenePoint(opt.e);
         const newPoint = { x: pointer.x, y: pointer.y };
         const currentPoints = areaPointsRef.current;
         
@@ -814,7 +824,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       
       // Calibration mode: capture points
       if (calibrationModeRef.current && !evt.altKey) {
-        const pointer = canvas.getPointer(opt.e);
+        const pointer = canvas.getScenePoint(opt.e);
         const newPoint = { x: pointer.x, y: pointer.y };
         
         if (calibrationPointsRef.current.length === 0) {
@@ -928,7 +938,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     
     const canvas = fabricRef.current;
     const handleMouseMove = (opt: any) => {
-      const pointer = canvas.getPointer(opt.e);
+      const pointer = canvas.getScenePoint(opt.e);
       const firstPoint = areaPoints[0];
       const distance = Math.sqrt(
         Math.pow(pointer.x - firstPoint.x, 2) + 

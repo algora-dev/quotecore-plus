@@ -230,17 +230,26 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     setCanvasReady(true); // Mark canvas as ready
 
     canvas.on('mouse:move', (opt) => {
-      const pointer = canvas.getPointer(opt.e);
+      // Fabric 7 renamed canvas.getPointer() to two clearer methods:
+      // getViewportPoint() and getScenePoint(). We want scene coordinates
+      // (the canvas's own coordinate space, post viewport transform), which
+      // is exactly what the old getPointer() returned by default.
+      const pointer = canvas.getScenePoint(opt.e);
       setCursorPos({ x: pointer.x, y: pointer.y });
     });
 
     canvas.on('mouse:down', (opt) => {
-      const pointer = canvas.getPointer(opt.e);
+      const pointer = canvas.getScenePoint(opt.e);
 
       if (drawModeRef.current === 'text') {
         const text = new IText('Text', {
           left: pointer.x,
           top: pointer.y,
+          // Fabric 7 changed the default origin from 'left/top' to
+          // 'center/center'. Pin this back to the original behaviour so the
+          // text appears at the pointer click position, not centred on it.
+          originX: 'left',
+          originY: 'top',
           fontSize: 16,
           fill: '#000000',
           fontFamily: 'Arial',
@@ -1352,6 +1361,12 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
       const square = new Rect({
         left: pt.x - size / 2,
         top: pt.y - size / 2,
+        // The (pt.x - size/2, pt.y - size/2) pre-offset assumes the v6
+        // top-left origin. Fabric 7 made center/center the default, which
+        // would double the offset. Lock back to left/top to preserve
+        // visual layout.
+        originX: 'left',
+        originY: 'top',
         width: size,
         height: size,
         fill: 'transparent',
