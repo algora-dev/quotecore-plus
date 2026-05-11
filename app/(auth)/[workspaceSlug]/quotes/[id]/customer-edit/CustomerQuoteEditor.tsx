@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
@@ -87,8 +87,23 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [companyLogoUrl, setCompanyLogoUrl] = useState(quote.cq_company_logo_url || defaultLogoUrl || '');
   const [footerText, setFooterText] = useState(quote.cq_footer_text || '');
 
-  // Initialize lines: use saved lines if available, otherwise from components
+  // Initialize lines ONCE on first render. The deps array was previously
+  // [savedLines, components], which caused the effect to re-run any time
+  // the parent re-rendered (e.g. on router.refresh(), or even on certain
+  // child state cascades), because each render produced a fresh array
+  // reference for the same content. That re-init wiped in-progress edits
+  // — most visibly on blank quotes, where both arrays are empty so the
+  // re-init resolved to setLines([]) and silently destroyed the user's
+  // custom lines after 3-4 entries (when something upstream triggered a
+  // refresh).
+  //
+  // We use a ref guard rather than removing the effect entirely because the
+  // initial population still needs to run on the client side after hydration
+  // for new-quote-with-components flows.
+  const linesHydratedRef = useRef(false);
   useEffect(() => {
+    if (linesHydratedRef.current) return;
+    linesHydratedRef.current = true;
     if (savedLines.length > 0) {
       // Load from saved lines, but ALWAYS rebuild component data from current components
       const loadedLines: QuoteLine[] = savedLines.map(saved => {
