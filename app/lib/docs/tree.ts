@@ -47,7 +47,7 @@ const DOCS_ROOT = path.join(process.cwd(), 'content', 'docs');
 // alphabetical at the bottom.
 const SECTION_ORDER: string[] = [
   'getting-started',
-  'core-concepts',
+  'concepts',
   'components',
   'templates',
   'building-a-quote',
@@ -55,14 +55,14 @@ const SECTION_ORDER: string[] = [
   'labor-and-installers',
   'flashings',
   'material-orders',
-  'files-and-storage',
-  'account-and-billing',
-  'help-and-support',
+  'files-and-quotes',
+  'account',
+  'help',
 ];
 
 const SECTION_TITLES: Record<string, string> = {
   'getting-started': 'Getting started',
-  'core-concepts': 'Core concepts',
+  'concepts': 'Concepts',
   'components': 'Components',
   'templates': 'Templates',
   'building-a-quote': 'Building a quote',
@@ -70,9 +70,9 @@ const SECTION_TITLES: Record<string, string> = {
   'labor-and-installers': 'Labor & installers',
   'flashings': 'Flashings',
   'material-orders': 'Material orders',
-  'files-and-storage': 'Files & storage',
-  'account-and-billing': 'Account & billing',
-  'help-and-support': 'Help & support',
+  'files-and-quotes': 'Files & quotes',
+  'account': 'Account',
+  'help': 'Help',
 };
 
 let cached: DocTree | null = null;

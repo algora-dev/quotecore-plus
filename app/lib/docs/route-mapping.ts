@@ -18,7 +18,7 @@ export function pathnameToDocSlug(pathname: string | null | undefined): string {
   const inner = parts.join('/');
 
   const rules: { match: RegExp; slug: string }[] = [
-    // Quotes - more specific first
+    // Quotes - more specific first.
     { match: /^quotes\/new(\/|$)/,                         slug: 'building-a-quote/manual-quote' },
     { match: /^quotes\/[^/]+\/takeoff(\/|$)/,              slug: 'building-a-quote/digital-takeoff' },
     { match: /^quotes\/[^/]+\/build(\/|$)/,                slug: 'building-a-quote/quote-builder' },
@@ -35,15 +35,14 @@ export function pathnameToDocSlug(pathname: string | null | undefined): string {
     { match: /^templates(\/|$)/,                           slug: 'templates/quote-templates' },
     { match: /^customer-quote-templates(\/|$)/,            slug: 'templates/customer-quote-templates' },
 
-    { match: /^flashings(\/|$)/,                           slug: 'flashings/drawing-flashings' },
-    { match: /^material-orders(\/|$)/,                     slug: 'material-orders/overview' },
+    { match: /^flashings(\/|$)/,                           slug: 'flashings/flashings' },
+    { match: /^material-orders(\/|$)/,                     slug: 'material-orders/creating-orders' },
 
-    { match: /^account\/company(\/|$)/,                    slug: 'account-and-billing/company-settings' },
-    { match: /^account\/security(\/|$)/,                   slug: 'account-and-billing/security-and-2fa' },
-    { match: /^account\/notifications(\/|$)/,              slug: 'account-and-billing/notifications' },
-    { match: /^account\/billing(\/|$)/,                    slug: 'account-and-billing/billing-and-subscriptions' },
-    { match: /^account(\/|$)/,                             slug: 'account-and-billing/account-details' },
-    { match: /^settings(\/|$)/,                            slug: 'account-and-billing/company-settings' },
+    // Account routes — the live app collapses to one /account page with
+    // ?tab=... query params; we match on the bare path here (the search
+    // string isn't part of pathname).
+    { match: /^account(\/|$)/,                             slug: 'account/account-and-security' },
+    { match: /^settings(\/|$)/,                            slug: 'account/company-settings' },
   ];
 
   for (const r of rules) {

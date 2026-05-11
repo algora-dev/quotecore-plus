@@ -1,76 +1,39 @@
 ---
 title: Quote builder
-description: Areas, components, extras, and review - what each phase does.
+description: The four-phase flow that turns measurements into a finished quote.
 order: 4
 status: published
-updated: 2026-05-10
+updated: 2026-05-11
 ---
 
 # Quote builder
 
-The quote builder is where a quote actually gets put together. It runs in four phases. You can move forward and backward through them at any time before you save.
+The quote builder is where you define exactly what shows up in your quote: materials, labor, components, areas, items, and extras.
 
 ## The four phases
 
 ### 1. Areas
 
-Add the named sections of the roof. Most jobs have at least one ("Main roof"). Bigger jobs might have a Main, a Garage, a Lean-to, a Dormer.
-
-For each area:
-
-- **Name** - whatever makes sense.
-- **Pitch** - the angle of the slope. Used by any component on this area that has rafter pitch enabled. See [Waste, pitch, and calculations](/docs/core-concepts/waste-pitch-and-calculations).
-- **Plan area** - the flat number off the plan, in m2 or whatever your default is.
-
-Areas exist so you can mix pitches on a single quote. A garage at 15 degrees alongside a main roof at 30 degrees - two areas, two pitches.
+Add or edit areas (main, garage, lean-to, dormer, etc.) and their names, the pitch if applicable, and the actual area measurements.
 
 ### 2. Components
 
-Add the components that go on each area. For each one:
-
-- Pick which area(s) it applies to.
-- Enter the measurement (or it's pre-filled from digital takeoff).
-- Choose **Plan** or **Actual**. See [Plan vs Actual](/docs/core-concepts/plan-vs-actual).
-- Override the rate, waste, or pitch if you need to (they default to your component's saved settings).
-
-You can have a component apply to multiple areas - useful for a single supplier order even if the materials cover different sections.
+Add or edit all aspects of the components you want in the quote: which areas they apply to, individual lengths, units, and items. Each component can be flipped between [Plan and Actual](/docs/concepts/plan-vs-actual) here.
 
 ### 3. Extras
 
-Add any extras for the quote. Skip hire, accommodation, callouts, custom one-offs. See [Components vs Extras](/docs/core-concepts/components-vs-extras).
-
-Extras don't usually use pitch or waste maths, but they can if you set them up that way.
+Add or edit any extras: one-off items, multipliers, delivery, accommodation, skip hire, anything outside the main components. See [Components vs Extras](/docs/concepts/components-vs-extras).
 
 ### 4. Review
 
-The last stop before save. Here you'll see:
+The summary view. You can see the totals, set a profit margin percentage for materials and labor, and save.
 
-- Subtotal of materials.
-- Subtotal of labor.
-- Margin fields (overrides your company defaults).
-- Tax line(s).
-- Final total.
+## Editing later
 
-Tweak the margins per quote here. Click Save to lock the quote and open the [quote summary](/docs/building-a-quote/quote-summary).
-
-## Going back to edit
-
-You can re-enter the quote builder from the summary page (**Edit Quote**). Doing so puts you back at the Areas phase. Walk through to whatever you want to change, then save again.
-
-<Callout type="note">
-Re-entering the builder doesn't break anything - your customer quote and labor sheet just get re-flagged for review. If you'd already sent the customer a quote, send a fresh one or [withdraw](/docs/customer-facing/withdrawing-a-quote) the old link.
-</Callout>
-
-## Tips
-
-- Set Plan/Actual deliberately on every component - it's the most common source of wrong totals.
-- Use multiple areas if pitches differ. One area with mixed pitches forces an awkward average.
-- Margins on the Review phase override company defaults. Set company defaults to your typical numbers and only override when something's special.
+You can go back and edit any of the quote builder phases once you have saved. You can also manually add items you missed later in the customer quote builder.
 
 ## Related
 
-- [Manual takeoff](/docs/building-a-quote/manual-takeoff)
-- [Digital takeoff](/docs/building-a-quote/digital-takeoff)
-- [Quote summary](/docs/building-a-quote/quote-summary)
-- [Plan vs Actual](/docs/core-concepts/plan-vs-actual)
-- [Waste, pitch, and calculations](/docs/core-concepts/waste-pitch-and-calculations)
+- [Quote summary](/docs/building-a-quote/quote-summary) - your master view after saving.
+- [Plan vs Actual](/docs/concepts/plan-vs-actual)
+- [Waste and pitch](/docs/concepts/waste-and-pitch)

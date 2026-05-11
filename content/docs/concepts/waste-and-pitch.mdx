@@ -1,0 +1,53 @@
+---
+title: Waste and pitch
+description: How the app converts a plan number into the quantity you actually order.
+order: 3
+status: published
+updated: 2026-05-11
+---
+
+# Waste and pitch
+
+Two settings on every component decide how the app turns a measurement into an order quantity: **waste** and **pitch**. Both live on the [component](/docs/components/creating-a-component) itself, and both can be overridden on a single quote without changing the saved component.
+
+## Waste
+
+Waste is the extra allowance for cuts and breakages. You set it as either a percentage or a fixed amount.
+
+- **Percentage waste.** Adds a percentage to the calculated quantity. Best for area-based materials like tiles or longrun.
+- **Fixed waste.** Adds a fixed amount per item. Useful for lineal-based components where every length needs a small overlap or trim, for example "100mm of waste per ridge length".
+
+You can also set waste to off if it does not apply.
+
+## Pitch
+
+Roof areas are usually measured flat on a plan, but the real material runs along the slope. Pitch is the angle of the slope; the pitch factor scales the flat plan number up to the actual material length or area.
+
+Three pitch types in the app:
+
+- **Rafter pitch.** For the main roof slope. Covers tiles, longrun, underlay, membrane.
+- **Hip pitch.** For hip rafters.
+- **Valley pitch.** For valley rafters.
+
+Pitch is only applied when the component has pitch enabled AND the quote is using a [Plan](/docs/concepts/plan-vs-actual) measurement. If the component is set to Actual, the pitch step is skipped because the number is already the real one.
+
+<Callout type="warning">
+Pitch type can't be added later in the quote builder. It has to be set on the component itself. If you forget to enable rafter pitch on a roofing material, you will under-order. Double-check before saving the component.
+</Callout>
+
+## A worked example
+
+A roof plan shows 100 m2. Pitch is 30 degrees (rafter pitch factor ~1.155). Waste is 5%.
+
+- **Plan, pitch on, 5% waste:** 100 x 1.155 x 1.05 = ~121 m2 ordered.
+- **Plan, pitch off, 5% waste:** 100 x 1.05 = 105 m2 ordered.
+- **Actual, pitch on, 5% waste:** 100 x 1.05 = 105 m2 ordered. (Pitch skipped because the number is already real.)
+
+## Valleys and hips
+
+The hip and valley pitch types currently support the standard 45-degree angle in plan view. Tapered valleys or hips will need either extra length added manually, or you can measure them as Actual and enter the real length.
+
+## Related
+
+- [Plan vs Actual](/docs/concepts/plan-vs-actual)
+- [Creating a component](/docs/components/creating-a-component)

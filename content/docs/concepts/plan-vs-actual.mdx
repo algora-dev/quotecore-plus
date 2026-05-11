@@ -1,0 +1,57 @@
+---
+title: Plan vs Actual measurements
+description: When pitch is applied for you, and when you have already accounted for it.
+order: 2
+status: published
+updated: 2026-05-11
+---
+
+# Plan vs Actual measurements
+
+Every measurement on a quote is either **Plan** or **Actual**. They look the same on screen and behave differently in the maths.
+
+## The rule
+
+- **Plan** measurements are flat numbers from a drawing or aerial image. For roofs with pitch, the app applies the pitch calculation for you to convert the flat plan number into the real roof area or length.
+- **Actual** measurements assume you have already applied the pitch yourself, or you measured the real length or area on site. The app skips the pitch calculation.
+
+Waste still applies to both.
+
+## When to use Plan
+
+- You measured off a roof plan or aerial image.
+- You do not have site measurements yet.
+- You are quoting from architects' plans before the build starts.
+
+This is the default for new components in the quote builder.
+
+## When to use Actual
+
+- You did a site measure-up and the numbers are real.
+- You are quoting a re-roof and you measured the existing roof.
+- You have done a hand calculation that already accounts for pitch.
+- You want to override the pitch maths on a specific component (for example, an experienced quoter who prefers to enter the final number directly).
+
+## How to switch
+
+In the [quote builder](/docs/building-a-quote/quote-builder) Components phase, each component has a **Plan / Actual** toggle. Default is Plan. Switch to Actual on the components where the number you have is already the real one.
+
+You can mix on the same quote. For example, ridges and barges measured on site (Actual) and the main roof area measured off the plan (Plan).
+
+<Callout type="warning">
+If you set a component to Actual and forget, pitch is not applied and you can under-order. Double-check the toggle on every quote where you mixed measurement methods.
+</Callout>
+
+## A worked example
+
+A roof plan shows 100 m2. Pitch is 30 degrees. Waste is 5%.
+
+- **Plan + pitch + 5% waste:** 100 x 1.155 (pitch factor) x 1.05 = ~121 m2 ordered.
+- **Actual + pitch + 5% waste:** 100 x 1.05 = 105 m2 ordered. Pitch is skipped because the number is already real.
+- **Plan + pitch off + 5% waste:** 100 x 1.05 = 105 m2 ordered. Useful for components like underlay where you do not always need pitch applied.
+
+## Related
+
+- [Waste and pitch](/docs/concepts/waste-and-pitch)
+- [Quote builder](/docs/building-a-quote/quote-builder)
+- [Manual takeoff](/docs/building-a-quote/manual-takeoff)

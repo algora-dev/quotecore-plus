@@ -1,61 +1,31 @@
 ---
 title: Components overview
-description: What components are and how they fit into a quote.
+description: The core of the targeted quoting system. Create, edit, and define what ends up in your quotes.
 order: 1
 status: published
-updated: 2026-05-10
+updated: 2026-05-11
 ---
 
 # Components overview
 
-Components are your re-usable price book. Anything you put on a quote - tiles, longrun, ridges, valleys, fixings, underlay, scaffold - lives here once. After that, building a quote is picking from your library and entering measurements.
+Components are the core of the targeted quoting system. This is where you create, edit, and define what items end up in your quote or pricing. Each component has a name, measurement type (lineal or area squared), cost per unit, labor cost per unit, pitch calculations for roofing, component waste settings, ability to add to orders, and more.
+
+## What can be a component?
+
+Roofing tiles, longrun iron, metal flashings (ridge, hips, valleys, barge, custom), roofing underlay, netting, insulation, roofing membrane, fixings, skylights, metal fascia, gutter or spouting, downpipes. Absolutely anything that you use or install on a roof or job can be configured as a component.
+
+You may only have 4 or 5 key components that you use, or you may have hundreds. Either way, you can create and fully customise everything about them.
 
 ## Why components matter
 
-The first time you set them up, it takes an hour. Every quote after that is faster, more consistent, and harder to get wrong. You change a price once and every new quote uses the new price.
+Set them up once and every quote after that is faster, more consistent, and harder to get wrong. You change a price once and every new quote uses the new price.
 
-You can have four components or four hundred. The library scales with the work.
+The library scales with the work. The system is tailored for roofing but can be adapted to include cladding, foundations, windows, flooring, and more.
 
-## What's in a component
+## Extras vs Main components
 
-Each component holds:
+Most components are Main (core job items). **Extras** are a separate bucket for one-off items, items you want recorded but hidden from the customer quote, labor extras, delivery, or custom multipliers. See [Components vs Extras](/docs/concepts/components-vs-extras).
 
-- A name (what shows on the quote).
-- Whether it's a [Main component or an Extra](/docs/core-concepts/components-vs-extras).
-- A measurement type - area, lineal, quantity, or fixed.
-- A material price per unit.
-- A labor price per unit.
-- A waste setting.
-- An optional pitch type ([rafter, hip, or valley](/docs/core-concepts/waste-pitch-and-calculations)).
-- Whether it can be added to material orders.
-- An attached flashing drawing or image (optional).
+## Next
 
-For the full breakdown of every field, see [Component fields reference](/docs/components/component-fields-reference).
-
-## Examples
-
-- **Roofing iron.** Area-based, material rate per m2, labor rate per m2, 5% waste, rafter pitch.
-- **Ridge.** Lineal, material rate per linear meter, labor rate per linear meter, 100mm fixed waste per length, no pitch.
-- **Valley.** Lineal, valley pitch enabled.
-- **Skylight.** Quantity, fixed price per unit, no waste, no pitch.
-- **Site cleanup.** Extra, fixed cost.
-
-## How components show up on a quote
-
-When you build a quote (manual takeoff or digital takeoff), you pick components from your library. The app pre-fills the rates, waste, and pitch you saved. You enter the measurement (or it gets pre-filled from digital takeoff). The quote builder takes care of the maths.
-
-You can override anything on a per-quote basis without changing the saved component. So you can have a default 5% waste in your library and dial it up to 7% for one specific quote.
-
-## When you'd add a new component
-
-- You bought new product and want to quote it.
-- You're quoting a job with a specific material you don't usually use.
-- You want a custom labor item separate from your normal rate.
-- A supplier changed pricing and you need a new variant.
-
-## Related
-
-- [Creating a component](/docs/components/creating-a-component)
-- [Component fields reference](/docs/components/component-fields-reference)
-- [Building your component library](/docs/components/building-your-library)
-- [Components vs Extras](/docs/core-concepts/components-vs-extras)
+- [Creating a component](/docs/components/creating-a-component) - the field-by-field walkthrough.

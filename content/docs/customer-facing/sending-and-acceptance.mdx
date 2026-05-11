@@ -1,0 +1,53 @@
+---
+title: Sending and acceptance
+description: Generate a quote URL, send it to the customer, and track their response.
+order: 2
+status: published
+updated: 2026-05-11
+---
+
+# Sending and acceptance
+
+Once you create a customer quote, you can send it from the [quote summary](/docs/building-a-quote/quote-summary) page.
+
+## How it works
+
+Our quote acceptance system uses a custom URL generated for each specific quote. You determine at generation time how long the URL is valid for (default 30 days; you can choose anything from 7 days up to a year).
+
+During the valid timeframe, you can send the customer that URL manually via email or message, use our custom email system, or any other system you choose. When the customer clicks the link, the customer quote you saved opens, with three live buttons at the bottom: **Accept quote**, **Request changes**, **Decline quote**.
+
+Any of these actions sends you an in-app alert and an email.
+
+## Sending options
+
+When you click **Send quote** you choose between:
+
+### Generate URL only
+
+The app creates the URL. Copy it to clipboard and send it through whatever channel you like (email, SMS, WhatsApp).
+
+### Email the quote
+
+Two sub-options here:
+
+- **Copy to clipboard.** The app prepares a full custom or template email with the quote URL embedded. You paste it into your own email client and send it from there.
+- **Send via QuoteCore+.** Enter the customer's email and they receive your email directly. It comes from QuoteCore+ but is addressed from your company name, with your account email included so the customer can contact you directly. Everything is tracked.
+
+You can use a saved [email template](/docs/templates/email-templates) with placeholders that auto-fill (customer name, quote number, URL, etc.).
+
+## What happens after they respond
+
+- **Accepted.** You get an in-app alert and (if notifications are on) an email. The quote status on the main quotes page auto-updates to **Accepted**.
+- **Declined.** Same alert and email, status becomes **Declined**.
+- **Request changes / requote.** The customer fills in a brief note with their name, quote number, and details of what they want changed, and submits it from the quote URL. You get an alert and an email with their request, and you can action it from the quote in the app.
+
+## Generating a new URL
+
+You can generate a new URL at any time from the summary. The new URL overrides the old one. This is useful if you change the quote and want to make sure the customer sees the latest version.
+
+## Related
+
+- [Customer quote editor](/docs/customer-facing/customer-quote-editor)
+- [Email templates](/docs/templates/email-templates)
+- [Withdrawing a quote](/docs/customer-facing/withdrawing-a-quote)
+- [Notifications](/docs/account/notifications)

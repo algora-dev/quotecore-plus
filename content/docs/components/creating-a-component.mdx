@@ -1,43 +1,57 @@
 ---
 title: Creating a component
-description: Step-by-step from blank form to saved component.
+description: Field-by-field walkthrough with three examples.
 order: 2
 status: published
-updated: 2026-05-10
+updated: 2026-05-11
 ---
 
 # Creating a component
 
-Walk through it once and you'll have the pattern for every component you'll ever add. Most components take 30 seconds to set up.
+Walk through it once and you have the pattern for every component you will ever add. Most components take under a minute to set up.
 
-## When to use it
+## Where to find it
 
-- First time setting up the app - add the materials and labor you use on most jobs.
-- Adding a new product or new supplier.
-- Splitting an existing component into variants (different colors, gauges, profiles).
+**Components > Add component**.
 
-## Steps
+## The fields
 
-1. Go to **Components** from the workspace nav.
-2. Click **+ Add Component**.
-3. Fill in the form (see field details below).
-4. Save.
+**Component name.** This is how you search or find the component, and also what shows on your quote. You can edit it at any time.
 
-That's it. The component is now available in every quote you build from this point on.
+**Component type.** Main or Extra. **Main** is a core job component (most things you quote). **Extra** is a one-off item, multiplier, or anything you want separated for the customer quote or your records. See [Components vs Extras](/docs/concepts/components-vs-extras).
+
+**Measurement method.** How your component is normally measured:
+
+- **Area** (Rs / ft2 / m2) - for main roofing materials like tiles, longrun, membrane.
+- **Lineal** - for flashings, gutter, spouting.
+- **Quantity** or **Fixed** - for downpipes, chimney flashings, skylights, items priced per unit.
+
+**Material price.** What that component costs you per area, per lineal length, or per item.
+
+**Labor price.** The labor rate you (or a contractor) charge per area, per lineal length, or per item.
+
+**Waste type.** Percentage or Fixed. Percentage is best for area-based materials; Fixed (e.g. 100mm per length) is best for lineal materials. See [Waste and pitch](/docs/concepts/waste-and-pitch).
+
+**Pitch calculation.** Tick to apply a pitch type:
+
+- **Rafter pitch** - main roof areas (tiles, longrun, underlay).
+- **Hip pitch** - hip rafters.
+- **Valley pitch** - valley rafters.
+
+Pitch auto-calculates plan measurements into actual lengths, with waste added. You enter the actual pitch angle later during the quote builder. The hip and valley pitch types currently support 45-degree angles in plan view; tapered hips or valleys need extra length added manually.
+
+**Material orders.** Tick if this component can be added to material orders. You can also pre-assign a flashing drawing or image to represent the component. See [Creating material orders](/docs/material-orders/creating-orders).
 
 ## Walked example: roofing tiles
 
-1. **Name:** Roofing tiles - clay terracotta.
+1. **Name:** Roofing tiles - terracotta.
 2. **Type:** Main.
-3. **Measurement:** Area (m2 or Rs depending on your default).
-4. **Material price:** the cost per m2 your supplier charges you.
-5. **Labor price:** what you pay your fixers, or what you charge for labor, per m2.
+3. **Measurement:** Area.
+4. **Material price:** $10 per m2.
+5. **Labor price:** $5 per m2.
 6. **Waste:** Percentage, 5%.
-7. **Pitch:** On, Rafter pitch.
-8. **Material orders:** Yes.
-9. Save.
-
-That tile component is now ready to drop into any quote. Set the area pitch in the quote builder and the maths is done.
+7. **Pitch:** Rafter pitch.
+8. **Material orders:** On.
 
 ## Walked example: ridge cap
 
@@ -47,9 +61,8 @@ That tile component is now ready to drop into any quote. Set the area pitch in t
 4. **Material price:** per linear meter.
 5. **Labor price:** per linear meter.
 6. **Waste:** Fixed, 100mm per length.
-7. **Pitch:** Off (ridges sit horizontally, no pitch factor needed).
-8. **Material orders:** Yes. Attach a flashing drawing if you have one for this profile.
-9. Save.
+7. **Pitch:** Off (ridges sit horizontally).
+8. **Material orders:** On. Attach a flashing drawing if you have one.
 
 ## Walked example: skip hire (Extra)
 
@@ -60,28 +73,14 @@ That tile component is now ready to drop into any quote. Set the area pitch in t
 5. **Labor price:** 0.
 6. **Waste:** Off.
 7. **Pitch:** Off.
-8. **Material orders:** No.
-9. Save.
+8. **Material orders:** Off.
 
-## Tips
+## After you save
 
-- Use specific names. "Roofing iron - corrugate 0.55 colorsteel" is better than "Iron".
-- If you sell something in two finishes (galvanised vs colorsteel), make two components.
-- Set waste defaults that are realistic for *your* installs. Don't copy someone else's number - they cut differently.
-
-<Callout type="warning">
-Pitch type can't be added later in the quote builder - it has to be set on the component itself. If you forget to enable rafter pitch on a roofing material, you'll under-order. Double-check before saving.
-</Callout>
-
-## What happens after you save
-
-- The component is in the dropdown when you add components in [Manual takeoff](/docs/building-a-quote/manual-takeoff) or [Digital takeoff](/docs/building-a-quote/digital-takeoff).
-- It's available to load via [Quote templates](/docs/templates/quote-templates).
-- You can edit or delete it any time. Editing doesn't change quotes you've already built.
+The component is in the dropdown when you add components in [manual takeoff](/docs/building-a-quote/manual-takeoff) or [digital takeoff](/docs/building-a-quote/digital-takeoff). You can edit or delete it any time; editing does not change quotes you have already built.
 
 ## Related
 
-- [Component fields reference](/docs/components/component-fields-reference)
-- [Building your component library](/docs/components/building-your-library)
-- [Components vs Extras](/docs/core-concepts/components-vs-extras)
-- [Waste, pitch, and calculations](/docs/core-concepts/waste-pitch-and-calculations)
+- [Components vs Extras](/docs/concepts/components-vs-extras)
+- [Waste and pitch](/docs/concepts/waste-and-pitch)
+- [Plan vs Actual](/docs/concepts/plan-vs-actual)

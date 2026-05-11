@@ -1,69 +1,28 @@
 ---
 title: Set up your company
-description: Logo, currency, units, taxes, and defaults.
-order: 3
+description: Logo, currency, units, margins, and taxes - the settings that flow into every quote.
+order: 2
 status: published
-updated: 2026-05-10
+updated: 2026-05-11
 ---
 
 # Set up your company
 
-Your company settings drive what shows up on quotes, what currency things are priced in, and which measurement system new quotes start in. Spend five minutes here before you build a quote and you won't have to think about it again.
+This is the name of your business and what your customers see when you send them quotes. Five minutes here saves time on every quote you build.
 
-## When to use it
+## Where to find it
 
-- Right after you sign up.
-- Whenever you change your logo, address, or contact details.
-- If you're starting to quote in a different currency or unit system.
+**Account > Company**.
 
-## Steps
+## What to set
 
-1. Go to **Account > Company**.
-2. Add your company name (this overrides the one you set at sign-up if it's different).
-3. Upload your logo. PNG with a transparent background works best - it lands on every customer quote.
-4. Set your default currency.
-5. Set your default measurement system: metric, imperial feet, or imperial roofing squares.
-6. Set your default profit margin for materials and labor. This applies to new quotes; you can override it on each quote.
-7. Add your tax rates under the Taxes panel. You can have one or several. Each tax has a name, a rate, and toggles for whether it shows on customer quotes and labor sheets.
-8. Save.
+- **Company name.** What appears on the header of customer quotes and emails.
+- **Company logo.** Shown on the customer quote and labor sheet.
+- **Default currency.** What new quotes default to. You can override per quote.
+- **Default measurement units.** Metric, imperial feet, or imperial roofing squares. New quotes lock to this at creation; existing quotes do not change if you flip the default later.
+- **Default profit margins.** Material margin and labor margin percentages, applied to new quotes. You can override per quote.
+- **Tax details.** Add the taxes you want available to include on quotes (e.g. GST, VAT, sales tax).
 
-## Field reference
+## What about your personal account?
 
-<Field name="Company name" required>
-The name your customers see at the top of every customer quote and on the email "from" line. Edit it any time.
-</Field>
-
-<Field name="Logo">
-Upload from your computer. Use a transparent PNG if you can. Customer quotes show it in the top right of the document.
-</Field>
-
-<Field name="Default currency" required>
-Three-letter currency code (NZD, AUD, USD, GBP, and so on). New quotes start in this currency. Existing quotes keep the currency they were created in.
-</Field>
-
-<Field name="Default measurement system" required>
-Metric (meters, m2), imperial feet (ft, ft2), or imperial roofing squares (Rs). Each new quote locks to the system you chose at creation - you can change the default for future quotes any time.
-</Field>
-
-<Field name="Default profit margin">
-A percentage applied to materials and labor when you build a new quote. Set both to zero if you'd rather mark up by hand on each quote.
-</Field>
-
-<Field name="Taxes">
-A list of tax rates - GST, VAT, or anything else you charge. Each row has a name (shown to the customer), a rate, and a toggle for whether it appears on the customer quote and the labor sheet. New quotes copy this list when they're created, so editing it later doesn't change quotes you've already sent.
-</Field>
-
-<Callout type="warning">
-Changing a tax rate later only affects new quotes. If you need to update a quote you've already created, edit the tax inside that quote.
-</Callout>
-
-## Tips
-
-- If you work in a region with multiple taxes (provincial + federal, for example), add each one as its own row. The customer quote shows them as separate lines.
-- Logo files load on every customer quote PDF. Keep the file under 500KB so PDFs render fast.
-
-## Related
-
-- [Account details](/docs/account-and-billing/account-details)
-- [Sign up and first login](/docs/getting-started/sign-up-and-first-login)
-- [Your first quote](/docs/getting-started/your-first-quote)
+Personal details (your name, sign-in email, password, 2FA) live under **Account** and **Security**, not **Company**. See [Account and security](/docs/account/account-and-security).
