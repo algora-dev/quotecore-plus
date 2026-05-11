@@ -540,93 +540,124 @@ export function BlankQuoteBuilder({
           </section>
         </div>
 
-        {/* Right: live preview */}
+        {/* Right: live preview. Mirrors the canonical CustomerQuotePreview
+            layout from SummaryTabs.tsx so what the user sees here is what
+            lands on the summary and the customer-facing quote URL. The
+            HTML is duplicated rather than imported because that component
+            takes its data from saved DB rows; we render from local state
+            for live feedback. Keep the two layouts in sync if either side
+            changes. */}
         <div className="space-y-3">
           <h2 className="text-base font-semibold text-slate-900">Preview</h2>
-          <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-6 text-sm">
+          <div className="bg-white rounded-xl border border-black p-12 space-y-8">
             {/* Header */}
-            <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-200">
-              <div className="min-w-0">
-                {companyName && <p className="text-base font-semibold text-slate-900">{companyName}</p>}
-                {companyAddress && <p className="text-xs text-slate-600 whitespace-pre-line">{companyAddress}</p>}
-                {companyPhone && <p className="text-xs text-slate-600">{companyPhone}</p>}
-                {companyEmail && <p className="text-xs text-slate-600">{companyEmail}</p>}
-                {!companyName && !companyAddress && !companyPhone && !companyEmail && (
-                  <p className="text-xs text-slate-400 italic">Click &quot;Edit header&quot; to add your company details.</p>
+            <div className="border-b-2 border-black pb-6 mb-6">
+              <div className="flex justify-end mb-6">
+                {companyLogoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={companyLogoUrl} alt="Logo" className="h-16 object-contain" />
+                ) : (
+                  <div className="w-32 h-16 border-2 border-dashed border-black rounded flex items-center justify-center">
+                    <span className="text-xs text-black">Logo</span>
+                  </div>
                 )}
               </div>
-              {companyLogoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={companyLogoUrl} alt="Company logo" className="h-12 max-w-[140px] object-contain" />
-              ) : null}
-            </div>
-
-            {/* Customer + meta */}
-            <div className="grid grid-cols-2 gap-4 text-xs">
-              <div>
-                <p className="text-slate-500">Customer</p>
-                <p className="text-slate-900 font-medium">{quote.customer_name}</p>
-                {quote.job_name && <p className="text-slate-600">{quote.job_name}</p>}
-                {quote.site_address && <p className="text-slate-600">{quote.site_address}</p>}
-              </div>
-              <div className="text-right">
-                <p className="text-slate-500">Quote</p>
-                <p className="text-slate-900 font-medium">
-                  #{quote.quote_number ?? <span className="text-slate-400">DRAFT</span>}
-                </p>
-                <p className="text-slate-600">{new Date(quote.created_at).toLocaleDateString()}</p>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h1 className="text-xl font-bold text-black mb-4">
+                    QUOTE #{quote.quote_number ?? 'DRAFT'}
+                  </h1>
+                  <div className="space-y-2">
+                    <p className="text-base text-black">
+                      <span className="font-semibold">Client:</span> {quote.customer_name}
+                    </p>
+                    {quote.job_name && (
+                      <p className="text-base text-black">
+                        <span className="font-semibold">Job:</span> {quote.job_name}
+                      </p>
+                    )}
+                    {quote.site_address && (
+                      <p className="text-base text-black">
+                        <span className="font-semibold">Site:</span> {quote.site_address}
+                      </p>
+                    )}
+                    <p className="text-base text-black">
+                      <span className="font-semibold">Date:</span>{' '}
+                      {new Date(quote.created_at).toLocaleDateString('en-NZ', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  </div>
+                </div>
+                {(companyName || companyAddress || companyPhone || companyEmail) && (
+                  <div className="text-right space-y-1">
+                    {companyName && (
+                      <p className="font-semibold text-base text-black">{companyName}</p>
+                    )}
+                    {companyAddress && <p className="text-sm text-black">{companyAddress}</p>}
+                    {companyPhone && <p className="text-sm text-black">{companyPhone}</p>}
+                    {companyEmail && <p className="text-sm text-black">{companyEmail}</p>}
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Lines */}
-            <div>
-              <div className="flex items-center justify-between text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200 pb-1.5">
-                <span>Description</span>
-                <span>Amount</span>
-              </div>
+            <div className="space-y-3">
               {lines.length === 0 ? (
-                <p className="text-xs text-slate-400 italic py-4 text-center">No lines yet.</p>
+                <p className="text-sm text-slate-500 italic py-4 text-center">
+                  No lines yet. Add some from the &quot;Quote lines&quot; panel.
+                </p>
               ) : (
-                <ul>
-                  {lines.map((line) => (
-                    <li
-                      key={`prev-${line.id}`}
-                      className="flex items-start justify-between gap-4 py-2 border-b border-slate-100 last:border-b-0"
-                    >
-                      <span className="text-slate-800 whitespace-pre-wrap">
-                        {line.text || <span className="text-slate-400 italic">Untitled line</span>}
-                      </span>
-                      <span className="text-slate-900 font-medium whitespace-nowrap">
-                        {line.showPrice ? formatCurrency(line.amount, currency) : '—'}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                lines.map((line) => (
+                  <div
+                    key={`prev-${line.id}`}
+                    className="flex items-start justify-between py-3 border-b border-black"
+                  >
+                    <p className="text-black">
+                      {line.text || <span className="text-slate-400 italic">Untitled line</span>}
+                    </p>
+                    {line.showPrice && (
+                      <p className="text-black font-medium whitespace-nowrap ml-4">
+                        {formatCurrency(line.amount, currency)}
+                      </p>
+                    )}
+                  </div>
+                ))
               )}
             </div>
 
             {/* Totals */}
-            <div className="space-y-1 text-sm pt-2 border-t-2 border-slate-200">
-              <div className="flex justify-between">
-                <span className="text-slate-600">Subtotal</span>
-                <span className="font-medium">{formatCurrency(subtotal, currency)}</span>
-              </div>
-              {taxLines.map((tl) => (
-                <div key={`tax-${tl.id}`} className="flex justify-between text-xs text-slate-600">
-                  <span>{tl.name} ({tl.rate_percent}%)</span>
-                  <span>{formatCurrency(tl.amount, currency)}</span>
+            {lines.length > 0 && (
+              <div className="space-y-3 pt-4 border-t-2 border-black">
+                <div className="flex justify-between text-base">
+                  <span className="text-black">Subtotal</span>
+                  <span className="font-medium text-black">
+                    {formatCurrency(subtotal, currency)}
+                  </span>
                 </div>
-              ))}
-              <div className="flex justify-between text-base font-bold pt-1 border-t border-slate-200">
-                <span>Total</span>
-                <span>{formatCurrency(grandTotal, currency)}</span>
+                {taxLines.map((tl) => (
+                  <div key={`tax-${tl.id}`} className="flex justify-between text-base">
+                    <span className="text-black">
+                      {tl.name} ({tl.rate_percent}%)
+                    </span>
+                    <span className="font-medium text-black">
+                      {formatCurrency(tl.amount, currency)}
+                    </span>
+                  </div>
+                ))}
+                <div className="flex justify-between text-xl font-bold border-t-2 border-black pt-3">
+                  <span className="text-black">Total</span>
+                  <span className="text-black">{formatCurrency(grandTotal, currency)}</span>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Footer */}
             {footerText && (
-              <div className="pt-4 border-t border-slate-200">
-                <p className="text-xs text-slate-600 whitespace-pre-line">{footerText}</p>
+              <div className="pt-6 border-t border-black">
+                <p className="text-sm text-black italic whitespace-pre-wrap">{footerText}</p>
               </div>
             )}
           </div>
