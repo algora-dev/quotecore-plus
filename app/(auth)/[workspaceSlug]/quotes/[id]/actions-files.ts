@@ -28,43 +28,71 @@ function storagePathFromPublicUrl(url: string, bucket: string): string | null {
   return null;
 }
 
-export async function deleteFile(fileId: string, storagePath: string): Promise<void> {
+/**
+ * Delete a quote file. The caller passes ONLY the file id — the storage
+ * path is loaded from the DB row, never trusted from the client. Both the
+ * storage remove and the row delete are then scoped to `id AND company_id`
+ * so a hijacked file id from a different company is rejected at the SQL
+ * boundary, not just at the metadata-row preflight.
+ *
+ * History: an earlier version of this function accepted a client-supplied
+ * `storagePath` parameter and used it directly for the storage remove. The
+ * function then verified company ownership of the metadata row but NOT that
+ * the path matched the row. A malicious caller with a valid file id of
+ * their own could have targeted another company's path with the
+ * admin-client storage remove. Gerald flagged this as High [H-01] on the
+ * 2026-05-11 audit; this rewrite closes the gap.
+ */
+export async function deleteFile(fileId: string): Promise<void> {
   const profile = await requireCompanyContext();
-  
+
   const supabaseAdmin = createAdminClient();
-  
-  // Get file to verify ownership
-  const { data: file } = await supabaseAdmin
+
+  // Load the row scoped to the caller's company. If it doesn't exist OR
+  // belongs to a different company, the lookup returns nothing and we 401.
+  // Using `eq('company_id', ...)` here AND on the delete below means we'd
+  // need two simultaneous bypasses to leak anything across companies.
+  const { data: file, error: loadErr } = await supabaseAdmin
     .from('quote_files')
-    .select('company_id')
+    .select('storage_path, company_id')
     .eq('id', fileId)
-    .single();
-  
-  if (!file || file.company_id !== profile.company_id) {
+    .eq('company_id', profile.company_id)
+    .maybeSingle();
+
+  if (loadErr) {
+    console.error('[deleteFile] Load error:', loadErr);
+    throw new Error('Failed to load file metadata');
+  }
+  if (!file) {
     throw new Error('Unauthorized');
   }
-  
-  // Delete from storage
-  const { error: storageError } = await supabaseAdmin.storage
-    .from(BUCKETS.QUOTE_DOCUMENTS)
-    .remove([storagePath]);
-  
-  if (storageError) {
-    console.error('[deleteFile] Storage error:', storageError);
-    throw new Error(`Failed to delete file from storage: ${storageError.message}`);
+
+  // Remove the storage object at the DB-recorded path. Best-effort — even if
+  // the storage call fails (file already gone, permissions glitch, etc.) we
+  // still proceed to delete the metadata row so the user doesn't see a
+  // ghost entry in the UI.
+  if (file.storage_path) {
+    const { error: storageError } = await supabaseAdmin.storage
+      .from(BUCKETS.QUOTE_DOCUMENTS)
+      .remove([file.storage_path]);
+    if (storageError) {
+      console.warn('[deleteFile] Storage remove warning:', storageError.message);
+    }
   }
-  
-  // Delete from database (triggers storage_used_bytes update)
+
+  // Belt-and-brace: the row delete is also gated by company_id so a race
+  // between the load above and the delete here can't widen the scope.
   const { error: dbError } = await supabaseAdmin
     .from('quote_files')
     .delete()
-    .eq('id', fileId);
-  
+    .eq('id', fileId)
+    .eq('company_id', profile.company_id);
+
   if (dbError) {
     console.error('[deleteFile] Database error:', dbError);
     throw new Error(`Failed to delete file metadata: ${dbError.message}`);
   }
-  
+
   revalidatePath('/quotes');
 }
 

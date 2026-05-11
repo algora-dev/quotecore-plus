@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 
 /**
  * Shared state for the in-app help drawer.
@@ -42,25 +42,34 @@ interface HelpDrawerContextValue {
 
 const HelpDrawerContext = createContext<HelpDrawerContextValue | null>(null);
 
+/**
+ * Lazy initialiser for the drawer width. Runs once on mount instead of via
+ * a setState-in-effect dance, which previously triggered
+ * `react-hooks/set-state-in-effect` (Gerald audit L-04, 2026-05-11).
+ * Stored values from a prior, pre-cap version (e.g. 50vw) are clamped down
+ * to the new max so the layout never arrives in a state we no longer
+ * support.
+ */
+function initialDrawerWidth(): number {
+  if (typeof window === 'undefined') return HELP_DRAWER_DEFAULT_WIDTH_VW;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_WIDTH);
+    if (raw === null) return HELP_DRAWER_DEFAULT_WIDTH_VW;
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed)) return HELP_DRAWER_DEFAULT_WIDTH_VW;
+    return Math.min(HELP_DRAWER_MAX_WIDTH_VW, Math.max(HELP_DRAWER_MIN_WIDTH_VW, parsed));
+  } catch {
+    // localStorage may be unavailable (SSR, private mode); default is fine.
+    return HELP_DRAWER_DEFAULT_WIDTH_VW;
+  }
+}
+
 export function HelpDrawerProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [widthVw, setWidthState] = useState<number>(HELP_DRAWER_DEFAULT_WIDTH_VW);
-
-  // Hydrate stored width on mount. Stored values from a prior, pre-cap
-  // version (e.g. 50vw) are clamped down to the new max so the layout never
-  // arrives in a state we no longer support.
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_WIDTH);
-      if (raw === null) return;
-      const parsed = Number(raw);
-      if (!Number.isFinite(parsed)) return;
-      const clamped = Math.min(HELP_DRAWER_MAX_WIDTH_VW, Math.max(HELP_DRAWER_MIN_WIDTH_VW, parsed));
-      setWidthState(clamped);
-    } catch {
-      // localStorage may be unavailable; default is fine.
-    }
-  }, []);
+  // useState lazy initialiser keeps the localStorage read out of an effect,
+  // avoiding both a hydration flash and the lint rule about set-state in
+  // effects. The first client render already sees the persisted width.
+  const [widthVw, setWidthState] = useState<number>(initialDrawerWidth);
 
   const setWidthVw = useCallback((next: number) => {
     const clamped = Math.min(HELP_DRAWER_MAX_WIDTH_VW, Math.max(HELP_DRAWER_MIN_WIDTH_VW, next));

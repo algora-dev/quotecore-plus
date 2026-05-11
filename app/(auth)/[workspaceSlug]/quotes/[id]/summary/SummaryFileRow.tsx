@@ -35,7 +35,9 @@ export function SummaryFileRow({ quoteId, id, fileName, fileType, fileSize, stor
           const kind: 'canvas' | 'lines' = id === 'canvas-lines' ? 'lines' : 'canvas';
           await deleteTakeoffCanvas(quoteId, kind);
         } else {
-          await deleteFile(id, storagePath);
+          // Server derives the storage path from the DB row — we no longer
+          // pass `storagePath` here (Gerald audit H-01, 2026-05-11).
+          await deleteFile(id);
         }
         setConfirmOpen(false);
         setRemoved(true);

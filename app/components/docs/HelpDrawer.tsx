@@ -145,11 +145,30 @@ export function HelpDrawerPanel() {
     setSlug(next);
   }, []);
 
+  /**
+   * Record a helpful/not-helpful vote against the currently-loaded doc.
+   * Persists to `docs_feedback` via /api/docs/feedback so we have real
+   * telemetry on which pages are landing well (Gerald audit M-04). The
+   * write is best-effort — a failed POST just logs a warning and the UI
+   * still shows the vote as recorded locally, because vote persistence is
+   * never worth interrupting the user with a toast.
+   */
   const onFeedback = useCallback((kind: 'up' | 'down') => {
     setFeedback(kind);
-    if (typeof window !== 'undefined') {
-      window.console.info('[help-drawer] feedback', { slug: doc?.slug, kind });
-    }
+    if (typeof window === 'undefined') return;
+    const slug = doc?.slug ?? '';
+    void fetch('/api/docs/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slug,
+        vote: kind,
+        appPath: window.location.pathname,
+      }),
+      keepalive: true,
+    }).catch((err) => {
+      window.console.warn('[help-drawer] feedback POST failed:', err);
+    });
   }, [doc?.slug]);
 
   // Drag-to-resize: handle on the panel's right edge. Mouse X is the desired

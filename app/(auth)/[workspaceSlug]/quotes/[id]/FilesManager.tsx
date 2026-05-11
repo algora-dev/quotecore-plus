@@ -129,10 +129,12 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
 
   async function confirmDelete() {
     if (!pendingDelete) return;
-    const { id: fileId, storagePath } = pendingDelete;
+    const { id: fileId } = pendingDelete;
     setDeleting(fileId);
     try {
-      await deleteFile(fileId, storagePath);
+      // Server derives the storage path from the DB row — we no longer
+      // pass `storagePath` here (Gerald audit H-01, 2026-05-11).
+      await deleteFile(fileId);
       setSupportingFiles(prev => prev.filter(f => f.id !== fileId));
       setPendingDelete(null);
       router.refresh();

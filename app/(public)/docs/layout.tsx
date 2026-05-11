@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { getDocTree, getSearchIndex } from '@/app/lib/docs/tree';
@@ -14,7 +15,11 @@ export default function DocsLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 lg:px-6">
           <Link href="/" prefetch={false} className="flex items-center gap-2">
-            <img src="/logo.png" alt="QuoteCore+" className="h-8" />
+            {/* next/image instead of raw <img> for the public docs logo so
+                Next handles responsive sizing, format negotiation, and the
+                lint rule about <img> elements. Width/height match the
+                rendered 8 × 8 (32px) target. (Gerald audit L-04.) */}
+            <Image src="/logo.png" alt="QuoteCore+" width={140} height={32} className="h-8 w-auto" priority />
             <span className="hidden text-sm font-semibold text-slate-700 sm:inline">Docs</span>
           </Link>
           <div className="hidden flex-1 max-w-md md:block">
