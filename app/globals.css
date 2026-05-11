@@ -77,13 +77,28 @@ a,
   box-shadow: 0 0 12px rgba(255, 107, 53, 0.45);
 }
 
-/* Premium pill shimmer effect */
+/* Premium pill shimmer effect.
+ *
+ * Behaviour contract (Shaun, 2026-05-11):
+ *   - Animation fires instantly on hover — no opacity fade-in delay.
+ *   - One complete sheen sweep per hover-enter.
+ *   - Once started, the animation plays to completion EVEN IF the user
+ *     hovers off mid-sweep. (CSS alone can't do this; a small
+ *     `<PillShimmerScript>` component toggles `.pill-shimmer--playing`
+ *     on pointerenter and removes it on `animationend`.)
+ *   - Duration is 25% slower than the original snappy 1.5s tempo
+ *     (1.5 × 1.25 = 1.875s), per Shaun's feel preference.
+ */
 @keyframes shimmer {
   0% {
-    background-position: -200% center;
+    /* Sheen starts at the left edge of the button (already partly visible),
+       not off-screen. Avoids the ~470ms "approaching from outside" lag the
+       previous −200% start position introduced. */
+    background-position: -50% center;
   }
   100% {
-    background-position: 200% center;
+    /* And exits cleanly off the right edge. */
+    background-position: 150% center;
   }
 }
 
@@ -106,28 +121,22 @@ a,
     transparent 60%,
     transparent 100%
   );
-  /* `background-size: 200% 100%` makes the gradient twice as wide as the
-     button so one full sweep (−0% → 200%) takes the sheen from fully off the
-     left edge to fully off the right edge. `background-repeat: no-repeat` is
-     critical — without it, the gradient tiles and a SECOND sheen comes into
-     view before the first has fully exited, which reads as "the animation
-     cycled more than once". */
   background-size: 200% 100%;
   background-repeat: no-repeat;
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
+  /* No opacity transition: the previous 300ms fade made the first third of
+     the animation invisible. The sheen now appears the instant the play
+     class is added. */
   opacity: 0;
-  transition: opacity 0.3s ease-in-out;
 }
 
-.pill-shimmer:hover::before {
+/* The .pill-shimmer--playing class is added by `<PillShimmerScript>` on
+   pointerenter and removed automatically on animationend. The animation is
+   therefore decoupled from `:hover` state — it always finishes once started. */
+.pill-shimmer--playing::before {
   opacity: 1;
-  /* One complete sheen sweep per hover, 25% slower than the original 1.5s
-     tempo (1.5 × 1.25 = 1.875s). `forwards` parks the gradient at the
-     end-state (sheen off the right edge, invisible) so it doesn't snap back
-     mid-hover. CSS re-mounts the pseudo-element when hover leaves and
-     re-enters, so the animation naturally restarts on each new hover. */
   animation: shimmer 1.875s linear 1 forwards;
 }
 

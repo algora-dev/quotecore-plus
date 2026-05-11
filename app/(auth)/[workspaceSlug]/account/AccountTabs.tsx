@@ -32,7 +32,17 @@ export type AccountTabKey =
   | 'billing'
   | 'support';
 
-const TABS: { key: AccountTabKey; label: string; icon: ReactNode }[] = [
+/**
+ * Tab descriptor. `disabled` items are rendered but un-clickable; we use
+ * this for the Team tab today (multi-user support not yet built). The
+ * disabled item is NOT a member of `AccountTabKey` because it never becomes
+ * the active tab — typing `?tab=team` resolves to `profile` instead.
+ */
+type Tab =
+  | { key: AccountTabKey; label: string; icon: ReactNode; disabled?: false }
+  | { key: string; label: string; icon: ReactNode; disabled: true; disabledTitle: string };
+
+const TABS: Tab[] = [
   {
     key: 'profile',
     label: 'Account',
@@ -84,6 +94,21 @@ const TABS: { key: AccountTabKey; label: string; icon: ReactNode }[] = [
     icon: (
       <svg className="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+    ),
+  },
+  {
+    // Placeholder for multi-user support. Renders as a disabled row with a
+    // "soon" pill so users know more is coming without us implying it ships
+    // imminently. Restored after a brief disappearance during the tabs
+    // refactor (Shaun, 2026-05-11).
+    key: 'team',
+    label: 'Team',
+    disabled: true,
+    disabledTitle: 'Coming soon',
+    icon: (
+      <svg className="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-5.13a4 4 0 110-8 4 4 0 010 8zm6 4a3 3 0 100-6 3 3 0 000 6zM5 14a3 3 0 100-6 3 3 0 000 6z" />
       </svg>
     ),
   },
@@ -141,12 +166,29 @@ export function AccountTabs({ panels }: AccountTabsProps) {
         <nav aria-label="Account sections" className="md:sticky md:top-6 md:self-start">
           <ul className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible -mx-2 md:mx-0 px-2 md:px-0 pb-2 md:pb-0">
             {TABS.map((tab) => {
+              if (tab.disabled) {
+                return (
+                  <li key={tab.key}>
+                    <div
+                      title={tab.disabledTitle}
+                      aria-disabled="true"
+                      className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-400 cursor-not-allowed select-none whitespace-nowrap md:whitespace-normal"
+                    >
+                      {tab.icon}
+                      <span>{tab.label}</span>
+                      <span className="ml-auto text-[10px] uppercase tracking-wide font-semibold text-slate-400 bg-slate-100 rounded-full px-1.5 py-0.5">
+                        soon
+                      </span>
+                    </div>
+                  </li>
+                );
+              }
               const isActive = active === tab.key;
               return (
                 <li key={tab.key}>
                   <button
                     type="button"
-                    onClick={() => pickTab(tab.key)}
+                    onClick={() => pickTab(tab.key as AccountTabKey)}
                     aria-current={isActive ? 'page' : undefined}
                     className={`flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap md:whitespace-normal text-left ${
                       isActive

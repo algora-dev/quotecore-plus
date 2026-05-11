@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CookieBanner } from "./components/CookieBanner";
+import { PillShimmerScript } from "./components/PillShimmerScript";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,6 +39,9 @@ export default function RootLayout({
         {children}
         {/* Global cookie notice. Self-hides once dismissed (localStorage). */}
         <CookieBanner />
+        {/* Drives the .pill-shimmer hover animation: one full sweep per
+            pointerenter, plays to completion even if hover ends mid-sweep. */}
+        <PillShimmerScript />
       </body>
     </html>
   );
