@@ -21,6 +21,7 @@ export function pathnameToDocSlug(pathname: string | null | undefined): string {
     // Quotes - more specific first.
     { match: /^quotes\/new(\/|$)/,                         slug: 'building-a-quote/manual-quote' },
     { match: /^quotes\/[^/]+\/takeoff(\/|$)/,              slug: 'building-a-quote/digital-takeoff' },
+    { match: /^quotes\/[^/]+\/blank-build(\/|$)/,          slug: 'building-a-quote/blank-quote' },
     { match: /^quotes\/[^/]+\/build(\/|$)/,                slug: 'building-a-quote/quote-builder' },
     { match: /^quotes\/[^/]+\/summary(\/|$)/,              slug: 'building-a-quote/quote-summary' },
     { match: /^quotes\/[^/]+\/customer-edit(\/|$)/,        slug: 'customer-facing/customer-quote-editor' },

@@ -47,7 +47,9 @@ const DOCS_ROOT = path.join(process.cwd(), 'content', 'docs');
 // alphabetical at the bottom.
 const SECTION_ORDER: string[] = [
   'getting-started',
-  'concepts',
+  // Components first, then the rest of the user journey. Concepts moved
+  // to the end so it acts as 'look up when stuck' reference rather than
+  // 'read first' theory; Shaun spec, 2026-05-11.
   'components',
   'templates',
   'building-a-quote',
@@ -58,6 +60,7 @@ const SECTION_ORDER: string[] = [
   'files-and-quotes',
   'account',
   'help',
+  'concepts',
 ];
 
 const SECTION_TITLES: Record<string, string> = {

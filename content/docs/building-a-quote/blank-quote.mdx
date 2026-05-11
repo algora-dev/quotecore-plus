@@ -1,0 +1,76 @@
+---
+title: Blank Quote
+description: A fully custom line-by-line quote without components, areas, or pitch maths.
+order: 2
+status: published
+updated: 2026-05-11
+---
+
+# Blank Quote
+
+A third quote mode alongside Manual and Digital takeoff. Blank Quote skips the components / areas / extras builder entirely. You enter your line items by hand on a dedicated screen, and what you enter becomes both the master quote and the customer-facing quote in one step.
+
+## When to use it
+
+- The job doesn't fit your saved components and you don't want to make one-off ones.
+- You already have a final price for each line and just need it on a professional-looking quote.
+- A trade where measurement-driven quoting doesn't apply (consulting, supply-only, fixed-price packages).
+- A quick re-quote where you only need to swap a couple of numbers.
+
+## What it gives up
+
+- No takeoff. No areas. No pitch calculations. No waste maths.
+- No material orders generated from the quote (you can still build a custom material order separately).
+- No labor-sheet auto-derivation, because there are no underlying components to split material vs labor across.
+
+If you need any of those, use [Manual Quote](/docs/building-a-quote/manual-quote) or [Digital takeoff](/docs/building-a-quote/digital-takeoff) instead.
+
+## The builder
+
+When you choose **Blank Quote** on the new-quote screen, you land on the **Build your quote** screen. Two columns:
+
+- **Left** - controls.
+- **Right** - live preview that mirrors what the customer will see.
+
+### Header and footer
+
+- **Apply a saved template.** Pre-fills the header (company name, logo, address, phone, email) and the footer from one of your [customer quote templates](/docs/templates/customer-quote-templates). You can still edit either after applying.
+- **Edit header** - logo, company name, address, phone, email.
+- **Edit footer** - terms, payment instructions, disclaimers.
+
+### Quote lines
+
+- **Add line** - inline description and amount fields, with up / down arrows to reorder and a delete icon.
+- **Show price to customer** - per-line checkbox. Off keeps the line visible to the customer but hides the dollar value, so you can list "complimentary" or "included" items.
+
+### Taxes
+
+Per-quote taxes that stack on the customer total. Click **Reset to defaults** to re-snapshot from your [company tax defaults](/docs/account/company-settings). Quick-add chips at the bottom let you pull in any company tax you haven't applied yet.
+
+### Save buttons
+
+- **Save** - stay on the builder.
+- **Save & continue to summary** - save and jump to the quote summary.
+
+On the first save with at least one line, the quote is assigned a **quote number** and graduates from draft to confirmed (the same way the manual builder's Review step does). After that you can send the quote, generate the customer URL, clone, withdraw, and download as normal.
+
+## After saving
+
+You land on the standard [Quote Summary](/docs/building-a-quote/quote-summary) page. From there you can:
+
+- [Send the quote](/docs/customer-facing/sending-and-acceptance) - the customer URL works the same as any other quote.
+- Clone the quote - the clone keeps Blank Quote mode and copies your lines, header, footer, and tax setup.
+- Withdraw, download, attach files - all the same as any other quote.
+- Open the [Customer Quote editor](/docs/customer-facing/customer-quote-editor) if you want a different customer-facing view from the master (e.g. hide a line, edit a description for the customer only).
+
+## Coming back to edit
+
+The **Edit Quote** icon on the Summary always brings you back to the Blank Quote builder. Make your changes, save, done.
+
+## Related
+
+- [Customer quote editor](/docs/customer-facing/customer-quote-editor)
+- [Sending and acceptance](/docs/customer-facing/sending-and-acceptance)
+- [Customer quote templates](/docs/templates/customer-quote-templates)
+- [Manual Quote](/docs/building-a-quote/manual-quote)
+- [Digital takeoff](/docs/building-a-quote/digital-takeoff)
