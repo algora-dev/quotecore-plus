@@ -1935,7 +1935,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md border border-slate-200">
             <h2 className="text-xl font-bold text-slate-900 mb-4">Finished Adjusting?</h2>
             <p className="text-slate-700 mb-6">
-              Are you sure you're finished adjusting the drawing points?
+              Are you sure you&apos;re finished adjusting the drawing points?
             </p>
             <p className="text-sm text-slate-500 mb-6">
               Click <strong>Recalibrate</strong> after adjusting to update all measurements.

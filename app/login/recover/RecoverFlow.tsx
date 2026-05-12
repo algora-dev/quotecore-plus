@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import {
   lookupRecovery,
   verifyRecoveryAnswers,
@@ -240,12 +241,12 @@ function DoneStep({ newEmail }: { newEmail: string }) {
         Don&apos;t see it? Check your spam folder. If it doesn&apos;t arrive within a few minutes, contact{' '}
         <a href="mailto:info@quote-core.com" className="text-orange-600 hover:text-orange-700 transition-colors">info@quote-core.com</a>.
       </p>
-      <a
+      <Link
         href="/login"
         className="inline-block px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 transition mt-2"
       >
         Back to sign in
-      </a>
+      </Link>
     </div>
   );
 }
@@ -280,12 +281,12 @@ function ContactSupportCard({ message }: { message: string }) {
       >
         Contact support
       </a>
-      <a
+      <Link
         href="/login"
         className="block text-center text-xs text-slate-500 hover:text-slate-700 transition"
       >
         ← Back to sign in
-      </a>
+      </Link>
     </div>
   );
 }

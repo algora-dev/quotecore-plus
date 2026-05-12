@@ -123,7 +123,7 @@ export async function updateTemplate(templateId: string, data: TemplateData) {
     .eq('template_id', templateId);
 
   // Get or create roof area
-  let { data: roofAreas } = await supabase
+  const { data: roofAreas } = await supabase
     .from('template_roof_areas')
     .select('id')
     .eq('template_id', templateId)

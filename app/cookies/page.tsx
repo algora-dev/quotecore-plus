@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { LegalPageShell } from '@/app/components/LegalPageShell';
 
 export const metadata = {
@@ -21,7 +22,7 @@ export default function CookiePolicyPage() {
         This page lists every cookie QuoteCore<span className="text-orange-500">+</span>{' '}
         sets when you use the Service, what each one does, and how long it
         sticks around. This policy is companion to our{' '}
-        <a href="/privacy">Privacy Policy</a>.
+        <Link href="/privacy">Privacy Policy</Link>.
       </p>
 
       <h2 id="what-cookies-are">What cookies are</h2>

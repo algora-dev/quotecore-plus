@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { createBrowserClient } from '@supabase/ssr';
 
 /**
@@ -102,13 +103,13 @@ export function TroubleSigningInPanel() {
             <p className="text-sm font-medium text-slate-900">🔑 Forgot password</p>
             <p className="text-xs text-slate-500 mt-0.5">I just need a new password — I still have my email.</p>
           </button>
-          <a
+          <Link
             href="/login/recover"
             className="block w-full text-left p-3 rounded-lg border border-slate-200 bg-white hover:border-orange-300 hover:bg-orange-50/40 transition"
           >
             <p className="text-sm font-medium text-slate-900">📧 Lost access to my email</p>
             <p className="text-xs text-slate-500 mt-0.5">I can&apos;t get into the inbox on my account.</p>
-          </a>
+          </Link>
         </div>
       )}
 

@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { loginAction } from './actions';
 import { GoogleSignInButton } from '@/app/components/auth/GoogleSignInButton';
 import { TroubleSigningInPanel } from './TroubleSigningInPanel';
@@ -95,9 +96,9 @@ export default function LoginPage() {
 
         <p className="mt-6 text-center text-sm text-slate-600">
           Don&apos;t have an account?{' '}
-          <a href="/signup" className="text-orange-600 font-medium hover:text-orange-700 transition-colors">
+          <Link href="/signup" className="text-orange-600 font-medium hover:text-orange-700 transition-colors">
             Sign up
-          </a>
+          </Link>
         </p>
       </div>
       <PublicFooter />

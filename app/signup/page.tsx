@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { signupWithCompany } from './actions';
 import { GoogleSignInButton } from '@/app/components/auth/GoogleSignInButton';
 import { PublicFooter } from '@/app/components/PublicFooter';
@@ -121,9 +122,9 @@ export default function SignupPage() {
 
         <p className="mt-6 text-center text-sm text-slate-600">
           Already have an account?{' '}
-          <a href="/login" className="text-orange-600 font-medium hover:text-orange-700 transition-colors">
+          <Link href="/login" className="text-orange-600 font-medium hover:text-orange-700 transition-colors">
             Log in
-          </a>
+          </Link>
         </p>
       </div>
       <PublicFooter />

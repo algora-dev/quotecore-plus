@@ -952,7 +952,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       // re-renders — those are exactly what we're guarding against.
       canvasInitedRef.current = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []); // intentionally empty: see comment above the effect
 
   // Update cursor when calibration/area/line/point mode changes
@@ -1584,7 +1584,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
               <div className="bg-gray-50/50 border border-gray-200 rounded p-3 space-y-2">
                 <p className="font-semibold text-blue-400">How to create a roof area:</p>
                 <ol className="list-decimal list-inside space-y-1.5 text-gray-900 ml-2">
-                  <li>Click the <span className="font-bold text-blue-400">"Area"</span> button in the toolbar above</li>
+                  <li>Click the <span className="font-bold text-blue-400">&quot;Area&quot;</span> button in the toolbar above</li>
                   <li>Click to place <span className="font-bold">at least 4 points</span> around the roof outline</li>
                   <li>Close the shape by clicking <span className="font-bold">near your starting point</span></li>
                   <li>Enter a <span className="font-bold">name</span> and <span className="font-bold text-orange-400">pitch angle</span> (in degrees)</li>
@@ -1604,7 +1604,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
               }}
               className="mt-6 w-full px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
-              Got it, let's create a roof area!
+              Got it, let&apos;s create a roof area!
             </button>
           </div>
         </div>
@@ -1618,11 +1618,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
             <div className="space-y-3 text-sm">
               <p>Before you can measure, you need to set the scale:</p>
               <ol className="list-decimal list-inside space-y-2 text-gray-900">
-                <li>Click the <span className="font-bold text-gray-700">"Calibrate"</span> button</li>
+                <li>Click the <span className="font-bold text-gray-700">&quot;Calibrate&quot;</span> button</li>
                 <li>Click <span className="font-bold">two points</span> on the plan with a known distance</li>
                 <li>Enter the <span className="font-bold">actual distance</span> between those points</li>
                 <li>Add 2-3 calibrations for best accuracy</li>
-                <li>Click <span className="font-bold text-orange-600">"Confirm Calibration"</span> when done</li>
+                <li>Click <span className="font-bold text-orange-600">&quot;Confirm Calibration&quot;</span> when done</li>
               </ol>
               <p className="text-gray-600 text-xs mt-4">
                 Tip: Use dimensions shown on the plan (like wall lengths or roof spans).
@@ -1636,7 +1636,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
               }}
               className="mt-6 w-full px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
-              Got it, let's calibrate!
+              Got it, let&apos;s calibrate!
             </button>
           </div>
         </div>

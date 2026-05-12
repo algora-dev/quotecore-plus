@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { LegalPageShell } from '@/app/components/LegalPageShell';
 
 export const metadata = {
@@ -111,7 +112,7 @@ export default function TermsOfServicePage() {
         <a href="mailto:info@quote-core.com">info@quote-core.com</a>. We will
         delete your account and associated personal data within 90 days,
         subject to any legal retention obligations described in our{' '}
-        <a href="/privacy">Privacy Policy</a>.
+        <Link href="/privacy">Privacy Policy</Link>.
       </p>
       <p>
         We may suspend or terminate your account if you breach these Terms,

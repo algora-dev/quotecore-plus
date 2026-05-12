@@ -249,7 +249,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
           <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4">
             <h3 className="text-lg font-semibold text-slate-900">Switch measurement system?</h3>
             <p className="text-sm text-slate-600">
-              You're about to use <strong>
+              You&apos;re about to use <strong>
                 {MEASUREMENT_OPTIONS.find((o) => o.value === pendingSystemSwitch)?.title}
               </strong> for this quote instead of your company default.
             </p>

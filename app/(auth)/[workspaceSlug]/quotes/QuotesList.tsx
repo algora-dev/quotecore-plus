@@ -711,7 +711,7 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
             <h3 className="text-lg font-semibold text-slate-900">Delete {selectedIds.size} Quotes</h3>
             <p className="text-sm text-slate-500 mt-2">
               This action cannot be undone. All selected quotes and their attached files will be permanently deleted.
-              Make sure you've downloaded a copy first if you want to keep records.
+              Make sure you&apos;ve downloaded a copy first if you want to keep records.
             </p>
             <div className="flex gap-3 justify-end mt-6">
               <button

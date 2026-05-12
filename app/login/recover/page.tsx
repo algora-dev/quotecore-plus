@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { RecoverFlow } from './RecoverFlow';
 import { PublicFooter } from '@/app/components/PublicFooter';
 
@@ -27,9 +28,9 @@ export default function RecoverPage() {
           <RecoverFlow />
         </div>
         <p className="mt-6 text-center text-sm text-slate-600">
-          <a href="/login" className="text-orange-600 font-medium hover:text-orange-700 transition-colors">
+          <Link href="/login" className="text-orange-600 font-medium hover:text-orange-700 transition-colors">
             ← Back to sign in
-          </a>
+          </Link>
         </p>
       </div>
       <PublicFooter />

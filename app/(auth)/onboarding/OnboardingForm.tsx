@@ -151,7 +151,7 @@ export function OnboardingForm({
         <label className="block">
           <span className="text-sm font-semibold text-slate-900">Default Currency</span>
           <p className="text-xs text-slate-500 mt-1 mb-2">
-            All component library prices will be entered in this currency. You can change quote currency later, but prices won't auto-convert.
+            All component library prices will be entered in this currency. You can change quote currency later, but prices won&apos;t auto-convert.
           </p>
           <select
             value={currency}
@@ -171,7 +171,7 @@ export function OnboardingForm({
         </label>
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
           <p className="text-xs text-amber-800">
-            <strong>Important:</strong> Choose carefully! Changing this later won't convert existing component prices.
+            <strong>Important:</strong> Choose carefully! Changing this later won&apos;t convert existing component prices.
           </p>
         </div>
       </div>

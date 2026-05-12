@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { LegalPageShell } from '@/app/components/LegalPageShell';
 
 export const metadata = {
@@ -219,7 +220,7 @@ export default function PrivacyPolicyPage() {
       </ul>
       <p>
         Older versions are available on request. The current version always
-        lives at <a href="/privacy">/privacy</a>.
+        lives at <Link href="/privacy">/privacy</Link>.
       </p>
 
       <h2 id="contact">Contact us</h2>
