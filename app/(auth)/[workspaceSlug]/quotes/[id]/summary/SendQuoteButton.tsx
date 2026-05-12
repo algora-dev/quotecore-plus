@@ -286,8 +286,11 @@ export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emai
                     className="p-4 rounded-xl border-2 border-orange-300 bg-orange-50/50 hover:border-orange-400 hover:bg-orange-50 transition text-left space-y-2"
                   >
                     <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      {/* Paper-plane / send icon. The earlier path was Heroicons' "flag"
+                          variant which read as a warning triangle in context. */}
+                      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                        <path d="M22 2 11 13" />
+                        <path d="M22 2 15 22l-4-9-9-4 20-7Z" />
                       </svg>
                     </div>
                     <h4 className="text-sm font-semibold text-slate-900">Send from QuoteCore+</h4>
