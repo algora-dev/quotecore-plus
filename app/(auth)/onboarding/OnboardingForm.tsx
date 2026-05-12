@@ -105,6 +105,27 @@ export function OnboardingForm({
           </div>
         </div>
 
+        {/* Prefer-reading-over-Copilot alternative. The new /docs surface
+            and the in-app help drawer cover every feature; some users
+            learn faster from a written reference than from interactive
+            highlights. Surface it here so new users know both options
+            exist. */}
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          <p className="font-medium text-slate-900 mb-1">Prefer to read it yourself?</p>
+          <p>
+            Every feature is documented in our{' '}
+            <a
+              href="/docs"
+              target="_blank"
+              rel="noopener"
+              className="text-orange-600 font-medium hover:text-orange-700 underline underline-offset-2"
+            >
+              help library
+            </a>
+            . You can browse it any time from the Help button in the top navigation, or open the in-app help drawer from any page.
+          </p>
+        </div>
+
         <div className="space-y-3">
           <button
             type="button"
