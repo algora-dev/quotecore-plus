@@ -17,11 +17,12 @@
  */
 
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import type { Database } from '@/app/lib/supabase/database.types';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-let cachedClient: ReturnType<typeof createServiceClient> | null = null;
+let cachedClient: ReturnType<typeof createServiceClient<Database>> | null = null;
 
 /**
  * One module-scoped admin client. We deliberately use service_role here
@@ -36,7 +37,7 @@ function getClient() {
       'rateLimit: missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY'
     );
   }
-  cachedClient = createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+  cachedClient = createServiceClient<Database>(SUPABASE_URL, SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   return cachedClient;
@@ -69,17 +70,7 @@ export async function checkRateLimit(
 ): Promise<boolean> {
   try {
     const supabase = getClient();
-    // The Supabase generated DB types don't know about our new
-    // `consume_rate_limit` RPC, so the `.rpc<T>(name, args)` overload
-    // tightens `args` to `undefined`. Cast through `unknown` keeps the
-    // call typed at the boundary without polluting the rest of the file.
-    type RpcArgs = { p_key: string; p_max: number; p_window_ms: number };
-    const { data, error } = await (
-      supabase.rpc as unknown as (
-        fn: 'consume_rate_limit',
-        args: RpcArgs
-      ) => Promise<{ data: unknown; error: { message: string } | null }>
-    )('consume_rate_limit', {
+    const { data, error } = await supabase.rpc('consume_rate_limit', {
       p_key: key,
       p_max: maxAttempts,
       p_window_ms: windowMs,

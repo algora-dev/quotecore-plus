@@ -1,6 +1,29 @@
 // QuoteCore+ v2 shared types
+//
+// As of 2026-05-12, every Row/Insert type below aliases directly to the
+// Supabase-generated `Database` interface. The hand-written shapes that
+// previously lived here had drifted from the schema (missing columns,
+// renamed columns, ghost columns that no longer existed), which is what
+// was driving the bulk of our `as any` casts.
+//
+// To add or change a column: change the migration, run `supabase gen
+// types typescript ...` to refresh `database.types.ts`, and the aliases
+// here propagate automatically. Do NOT re-introduce hand-rolled Row types
+// for DB tables.
+import type {
+  Tables,
+  TablesInsert,
+} from '@/app/lib/supabase/server';
+
 export type ComponentType = 'main' | 'extra';
-export type MeasurementType = 'area' | 'lineal' | 'quantity' | 'fixed';
+/**
+ * `lineal` is canonical (per the 2026-05-05 db01973 backfill that cleaned up
+ * polluted rows). `linear` remains in the Postgres enum for backwards
+ * compatibility but has **zero** rows pointing at it; new code must never
+ * write `'linear'`. The union includes it only because the generated
+ * `Database` types do, and we want them to stay in lockstep.
+ */
+export type MeasurementType = 'area' | 'lineal' | 'linear' | 'quantity' | 'fixed';
 /**
  * Measurement system used for display in a quote (and as the company default).
  *
@@ -41,136 +64,43 @@ export interface FlashingMeasurement {
   placement?: 'interior' | 'exterior';           // For angles only
 }
 
-export interface FlashingLibraryRow {
-  id: string;
-  company_id: string;
-  name: string;
-  description: string | null;
-  image_url: string;
-  canvas_data: any | null;
-  measurements: FlashingMeasurement[] | null;   // NEW: Clean measurement data
-  is_default: boolean;
-  created_at: string;
-  updated_at: string;
-}
+/**
+ * `flashings.measurements` is a Json column at the DB level but our app
+ * always writes `FlashingMeasurement[]` into it. Override the column type
+ * so consumers don't have to cast at every read site.
+ */
+export type FlashingLibraryRow = Omit<Tables<'flashing_library'>, 'measurements'> & {
+  measurements: FlashingMeasurement[] | null;
+};
 
-export interface FlashingLibraryInsert {
-  name: string;
-  description?: string | null;
-  image_url: string;
-  canvas_data?: any | null;
-  measurements?: FlashingMeasurement[] | null;  // NEW: Clean measurement data
-  is_default?: boolean;
-}
+/**
+ * Client-facing Insert shape. `company_id` is stamped server-side; the
+ * client provides everything else. `measurements` is narrowed from Json
+ * to the strongly-typed array form our app writes.
+ */
+export type FlashingLibraryInsert = Omit<
+  TablesInsert<'flashing_library'>,
+  'measurements' | 'company_id'
+> & {
+  company_id?: string;
+  measurements?: FlashingMeasurement[] | null;
+};
 
 // Material Order Template Types
-export interface MaterialOrderTemplateRow {
-  id: string;
-  company_id: string;
-  name: string;
-  description: string | null;
-  // Left side (To section)
-  default_supplier_name: string | null;
-  default_reference: string | null;
-  default_order_type: string | null;
-  default_colours: string[] | null;
-  default_delivery_address: string | null;
-  default_header_notes: string | null;
-  // Right side (From section)
-  default_logo_url: string | null;
-  default_from_company: string | null;
-  default_contact_person: string | null;
-  default_contact_details: string | null;
-  // Legacy fields (keeping for backwards compatibility)
-  default_supplier_contact: string | null;
-  default_supplier_phone: string | null;
-  default_supplier_email: string | null;
-  // Metadata
-  is_active: boolean;
-  sort_order: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface MaterialOrderTemplateInsert {
-  name: string;
-  description?: string | null;
-  // Left side (To section)
-  default_supplier_name?: string | null;
-  default_reference?: string | null;
-  default_order_type?: string | null;
-  default_colours?: string[] | null;
-  default_delivery_address?: string | null;
-  default_header_notes?: string | null;
-  // Right side (From section)
-  default_logo_url?: string | null;
-  default_from_company?: string | null;
-  default_contact_person?: string | null;
-  default_contact_details?: string | null;
-  // Legacy fields (keeping for backwards compatibility)
-  default_supplier_contact?: string | null;
-  default_supplier_phone?: string | null;
-  default_supplier_email?: string | null;
-  // Metadata
-  is_active?: boolean;
-  sort_order?: number;
-}
+export type MaterialOrderTemplateRow = Tables<'material_order_templates'>;
+/**
+ * Client-facing Insert shape. `company_id` is stamped server-side.
+ */
+export type MaterialOrderTemplateInsert = Omit<
+  TablesInsert<'material_order_templates'>,
+  'company_id'
+> & { company_id?: string };
 
 // Material Order Types
 export type OrderStatus = 'ready' | 'ordered';
 
-export interface MaterialOrderRow {
-  id: string;
-  company_id: string;
-  quote_id: string | null;
-  order_number: string;
-  status: OrderStatus;
-  // Header fields
-  template_id: string | null;
-  reference: string | null;
-  to_supplier: string | null;
-  from_company: string | null;
-  contact_person: string | null;
-  contact_details: string | null;
-  order_type: string | null;
-  colours: string | null;
-  delivery_date: string | null;
-  delivery_address: string | null;
-  header_notes: string | null;
-  logo_url: string | null;
-  order_date: string | null;
-  layout_mode: 'single' | 'double';
-  // Legacy fields
-  job_name: string | null;
-  supplier_name: string | null;
-  supplier_contact: string | null;
-  job_colours: string[] | null;
-  is_sent: boolean;
-  pdf_url: string | null;
-  // Metadata
-  created_at: string;
-  updated_at: string;
-}
-
-export interface MaterialOrderLineRow {
-  id: string;
-  order_id: string;
-  component_id: string | null;
-  item_name: string;
-  entry_mode: 'single' | 'multiple';
-  quantity: number;
-  unit: string | null;
-  lengths: any | null; // JSONB
-  length_unit: string | null;
-  flashing_id: string | null;
-  flashing_image_url: string | null;
-  item_notes: string | null;
-  show_component_name: boolean;
-  show_flashing_image: boolean;
-  show_measurements: boolean;
-  sort_order: number;
-  created_at: string;
-}
+export type MaterialOrderRow = Tables<'material_orders'>;
+export type MaterialOrderLineRow = Tables<'material_order_lines'>;
 
 /**
  * Metric-only unit label for a measurement type. Used by system-agnostic
@@ -215,142 +145,37 @@ export function addMoreLabel(mt: MeasurementType): string {
   }
 }
 
-export interface ComponentLibraryRow {
-  id: string; company_id: string; name: string; component_type: ComponentType; measurement_type: MeasurementType;
-  default_material_rate: number; default_labour_rate: number; default_waste_type: WasteType;
-  default_waste_percent: number; default_waste_fixed: number; default_pitch_type: PitchType;
-  show_price_default: boolean; show_dimensions_default: boolean;
-  eligible_for_orders: boolean | null; flashing_ids: string[] | null;
-  is_active: boolean; sort_order: number; created_at: string; updated_at: string;
-}
+export type ComponentLibraryRow = Tables<'component_library'>;
+/**
+ * Client-facing Insert shape. `company_id` is stamped server-side by the
+ * action handlers (from `requireCompanyContext`), so it's optional here.
+ * The full DB-required Insert type is `TablesInsert<'component_library'>`.
+ */
+export type ComponentLibraryInsert = Omit<
+  TablesInsert<'component_library'>,
+  'company_id'
+> & { company_id?: string };
 
-export interface ComponentLibraryInsert {
-  name: string; component_type: ComponentType; measurement_type: MeasurementType;
-  default_material_rate?: number; default_labour_rate?: number; default_waste_type?: WasteType;
-  default_waste_percent?: number; default_waste_fixed?: number; default_pitch_type?: PitchType; 
-  eligible_for_orders?: boolean; flashing_ids?: string[] | null;
-  sort_order?: number;
-}
+export type TemplateRow = Tables<'templates'>;
+export type TemplateRoofAreaRow = Tables<'template_roof_areas'>;
 
-export interface TemplateRow {
-  id: string; company_id: string; name: string; description: string | null;
-  roofing_profile: string | null; is_active: boolean; created_at: string; updated_at: string;
-}
-
-export interface TemplateRoofAreaRow {
-  id: string; template_id: string; label: string; default_input_mode: InputMode; sort_order: number; created_at: string;
-}
-
-export interface TemplateComponentRow {
-  id: string; template_id: string; component_library_id: string; template_roof_area_id: string | null;
-  component_type: ComponentType; override_material_rate: number | null; override_labour_rate: number | null;
-  override_waste_type: WasteType | null; override_waste_percent: number | null; override_waste_fixed: number | null;
-  override_pitch_type: PitchType | null; is_included_by_default: boolean; sort_order: number; created_at: string;
+/**
+ * Template component rows often arrive with the linked component_library
+ * row joined in as `component_library` (PostgREST embed). Express that as
+ * a typed intersection rather than `any`.
+ */
+export type TemplateComponentRow = Tables<'template_components'> & {
   component_library?: ComponentLibraryRow;
-}
+};
 
-export interface QuoteRow {
-  id: string; company_id: string; template_id: string | null; customer_name: string;
-  customer_email: string | null; customer_phone: string | null; job_name: string | null; site_address: string | null;
-  status: QuoteStatus; quote_number: number | null; entry_mode: 'manual' | 'digital' | 'blank' | null;
-  material_margin_pct: number; labour_margin_pct: number; 
-  material_margin_percent: number; labor_margin_percent: number; // Aliases for compatibility
-  material_margin_enabled: boolean; labor_margin_enabled: boolean; tax_rate: number;
-  global_pitch_degrees: number | null; measurement_system: MeasurementSystem; currency: string | null; notes_internal: string | null; created_by_user_id: string | null;
-  cq_company_name: string | null; cq_company_address: string | null; cq_company_phone: string | null;
-  cq_company_email: string | null; cq_company_logo_url: string | null; cq_footer_text: string | null;
-  takeoff_canvas_url: string | null;
-  takeoff_lines_url: string | null;
-  takeoff_canvas_path: string | null;
-  takeoff_lines_path: string | null;
-  created_at: string; updated_at: string;
-}
-
-export interface QuoteRoofAreaRow {
-  id: string; quote_id: string; template_roof_area_id: string | null; label: string; input_mode: InputMode;
-  final_value_sqm: number | null; calc_width_m: number | null; calc_length_m: number | null;
-  calc_plan_sqm: number | null; calc_pitch_degrees: number | null; computed_sqm: number | null;
-  is_locked: boolean; sort_order: number; created_at: string; updated_at: string;
-}
-
-export interface QuoteRoofAreaEntryRow {
-  id: string; quote_roof_area_id: string; width_m: number; length_m: number; sqm: number;
-  sort_order: number; created_at: string; updated_at: string;
-}
-
-export interface QuoteComponentRow {
-  id: string; quote_id: string; quote_roof_area_id: string | null; component_library_id: string | null;
-  template_component_id: string | null; name: string; component_type: ComponentType; measurement_type: MeasurementType;
-  input_mode: InputMode; final_value: number | null; calc_raw_value: number | null;
-  calc_pitch_degrees: number | null; calc_pitch_factor: number | null; pitch_type: PitchType;
-  use_custom_pitch: boolean; custom_pitch_degrees: number | null;
-  waste_type: WasteType; waste_percent: number; waste_fixed: number; final_quantity: number | null; pricing_unit: string | null;
-  material_rate: number; labour_rate: number; material_cost: number; labour_cost: number;
-  is_rate_overridden: boolean; is_quantity_overridden: boolean; is_waste_overridden: boolean; is_pitch_overridden: boolean;
-  is_customer_visible: boolean; sort_order: number; created_at: string; updated_at: string;
-}
-
-export interface QuoteComponentEntryRow {
-  id: string; quote_component_id: string; raw_value: number; value_after_waste: number; sort_order: number; created_at: string;
-}
-
-export interface CustomerQuoteLineRow {
-  id: string;
-  quote_id: string;
-  line_type: LineType;
-  quote_component_id: string | null;
-  custom_text: string | null;
-  custom_amount: number | null;
-  show_price: boolean;
-  show_dimensions: boolean;
-  sort_order: number;
-  is_visible: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CustomerQuoteTemplateRow {
-  id: string;
-  company_id: string;
-  name: string;
-  is_starter_template: boolean;
-  company_name: string | null;
-  company_address: string | null;
-  company_phone: string | null;
-  company_email: string | null;
-  company_logo_url: string | null;
-  footer_text: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CustomerQuoteTemplateLineRow {
-  id: string;
-  template_id: string;
-  line_type: LineType;
-  component_library_id: string | null;
-  custom_text: string | null;
-  custom_amount: number | null;
-  show_price: boolean;
-  sort_order: number;
-  is_visible: boolean;
-  created_at: string;
-  updated_at: string;
-}
+export type QuoteRow = Tables<'quotes'>;
+export type QuoteRoofAreaRow = Tables<'quote_roof_areas'>;
+export type QuoteRoofAreaEntryRow = Tables<'quote_roof_area_entries'>;
+export type QuoteComponentRow = Tables<'quote_components'>;
+export type QuoteComponentEntryRow = Tables<'quote_component_entries'>;
+export type CustomerQuoteLineRow = Tables<'customer_quote_lines'>;
+export type CustomerQuoteTemplateRow = Tables<'customer_quote_templates'>;
 
 // File Storage Types
 export type FileType = 'logo' | 'plan' | 'supporting';
-
-export interface QuoteFileRow {
-  id: string;
-  company_id: string;
-  quote_id: string | null;
-  file_type: FileType;
-  file_name: string;
-  file_size: number;
-  mime_type: string;
-  storage_path: string;
-  description: string | null;
-  uploaded_by: string | null;
-  uploaded_at: string;
-}
+export type QuoteFileRow = Tables<'quote_files'>;

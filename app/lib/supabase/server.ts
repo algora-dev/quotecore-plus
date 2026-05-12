@@ -2,11 +2,31 @@ import { cookies } from 'next/headers';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { cache } from 'react';
+import type { Database } from './database.types';
+
+/**
+ * Re-export of the generated `Database` interface so the rest of the app
+ * can `import type { Database } from '@/app/lib/supabase/server'` without
+ * remembering the deeper path. Regenerate `database.types.ts` whenever the
+ * schema changes (`supabase gen types typescript ...`).
+ */
+export type { Database };
+
+/**
+ * Convenience aliases for table Row/Insert/Update types so call sites can
+ * write `Tables<'quotes'>` instead of the full conditional indexed type.
+ */
+export type Tables<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Row'];
+export type TablesInsert<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Insert'];
+export type TablesUpdate<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Update'];
 
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
 
-  return createServerClient(
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -50,7 +70,7 @@ export const requireUser = cache(async () => {
 });
 
 // Deduplicated per-request: only queries profile once per render
-export const getCurrentProfile = cache(async (existingClient?: SupabaseClient) => {
+export const getCurrentProfile = cache(async (existingClient?: SupabaseClient<Database>) => {
   const supabase = existingClient ?? (await createSupabaseServerClient());
   const user = await requireUser();
 

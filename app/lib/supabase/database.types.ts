@@ -1,0 +1,2243 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.4"
+  }
+  public: {
+    Tables: {
+      account_recovery_log: {
+        Row: {
+          created_at: string
+          id: string
+          ip: string | null
+          new_email: string | null
+          old_email: string | null
+          outcome: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip?: string | null
+          new_email?: string | null
+          old_email?: string | null
+          outcome: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip?: string | null
+          new_email?: string | null
+          old_email?: string | null
+          outcome?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_recovery_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alerts: {
+        Row: {
+          alert_type: string
+          company_id: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string | null
+          quote_id: string | null
+          title: string
+        }
+        Insert: {
+          alert_type: string
+          company_id: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          quote_id?: string | null
+          title: string
+        }
+        Update: {
+          alert_type?: string
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          quote_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bulk_operations_log: {
+        Row: {
+          actual_count: number
+          company_id: string
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          operation: string
+          outcome: string
+          requested_count: number
+          skipped_count: number
+          target_ids: Json
+          user_id: string
+        }
+        Insert: {
+          actual_count?: number
+          company_id: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          operation: string
+          outcome?: string
+          requested_count: number
+          skipped_count?: number
+          target_ids?: Json
+          user_id: string
+        }
+        Update: {
+          actual_count?: number
+          company_id?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          operation?: string
+          outcome?: string
+          requested_count?: number
+          skipped_count?: number
+          target_ids?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bulk_operations_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          created_at: string
+          default_currency: string
+          default_labor_margin_percent: number | null
+          default_language: string
+          default_material_margin_percent: number | null
+          default_measurement_system: Database["public"]["Enums"]["measurement_system"]
+          default_tax_rate: number
+          id: string
+          name: string
+          onboarding_completed_at: string | null
+          slug: string | null
+          storage_limit_bytes: number
+          storage_used_bytes: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_currency?: string
+          default_labor_margin_percent?: number | null
+          default_language?: string
+          default_material_margin_percent?: number | null
+          default_measurement_system?: Database["public"]["Enums"]["measurement_system"]
+          default_tax_rate?: number
+          id?: string
+          name: string
+          onboarding_completed_at?: string | null
+          slug?: string | null
+          storage_limit_bytes?: number
+          storage_used_bytes?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_currency?: string
+          default_labor_margin_percent?: number | null
+          default_language?: string
+          default_material_margin_percent?: number | null
+          default_measurement_system?: Database["public"]["Enums"]["measurement_system"]
+          default_tax_rate?: number
+          id?: string
+          name?: string
+          onboarding_completed_at?: string | null
+          slug?: string | null
+          storage_limit_bytes?: number
+          storage_used_bytes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      company_taxes: {
+        Row: {
+          archived_at: string | null
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+          rate_percent: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          name: string
+          rate_percent?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          rate_percent?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_taxes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      component_library: {
+        Row: {
+          company_id: string
+          component_type: Database["public"]["Enums"]["component_type"]
+          created_at: string
+          default_labour_rate: number
+          default_material_rate: number
+          default_pitch_type: Database["public"]["Enums"]["pitch_type"]
+          default_waste_fixed: number
+          default_waste_percent: number
+          default_waste_type: Database["public"]["Enums"]["waste_type"]
+          eligible_for_orders: boolean | null
+          flashing_ids: string[] | null
+          id: string
+          is_active: boolean
+          measurement_type: Database["public"]["Enums"]["measurement_type"]
+          name: string
+          show_dimensions_default: boolean
+          show_price_default: boolean
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          component_type?: Database["public"]["Enums"]["component_type"]
+          created_at?: string
+          default_labour_rate?: number
+          default_material_rate?: number
+          default_pitch_type?: Database["public"]["Enums"]["pitch_type"]
+          default_waste_fixed?: number
+          default_waste_percent?: number
+          default_waste_type?: Database["public"]["Enums"]["waste_type"]
+          eligible_for_orders?: boolean | null
+          flashing_ids?: string[] | null
+          id?: string
+          is_active?: boolean
+          measurement_type: Database["public"]["Enums"]["measurement_type"]
+          name: string
+          show_dimensions_default?: boolean
+          show_price_default?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          component_type?: Database["public"]["Enums"]["component_type"]
+          created_at?: string
+          default_labour_rate?: number
+          default_material_rate?: number
+          default_pitch_type?: Database["public"]["Enums"]["pitch_type"]
+          default_waste_fixed?: number
+          default_waste_percent?: number
+          default_waste_type?: Database["public"]["Enums"]["waste_type"]
+          eligible_for_orders?: boolean | null
+          flashing_ids?: string[] | null
+          id?: string
+          is_active?: boolean
+          measurement_type?: Database["public"]["Enums"]["measurement_type"]
+          name?: string
+          show_dimensions_default?: boolean
+          show_price_default?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "component_library_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      copilot_progress: {
+        Row: {
+          company_id: string
+          copilot_enabled: boolean | null
+          copilot_visible: boolean | null
+          created_at: string | null
+          current_guide: string | null
+          current_step: number | null
+          guides_completed: string[] | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          copilot_enabled?: boolean | null
+          copilot_visible?: boolean | null
+          created_at?: string | null
+          current_guide?: string | null
+          current_step?: number | null
+          guides_completed?: string[] | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          copilot_enabled?: boolean | null
+          copilot_visible?: boolean | null
+          created_at?: string | null
+          current_guide?: string | null
+          current_step?: number | null
+          guides_completed?: string[] | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "copilot_progress_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_quote_lines: {
+        Row: {
+          created_at: string
+          custom_amount: number | null
+          custom_text: string | null
+          id: string
+          include_in_total: boolean | null
+          is_visible: boolean
+          line_set_type: string | null
+          line_type: Database["public"]["Enums"]["line_type"]
+          quote_component_id: string | null
+          quote_id: string
+          show_dimensions: boolean
+          show_price: boolean
+          show_units: boolean | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_amount?: number | null
+          custom_text?: string | null
+          id?: string
+          include_in_total?: boolean | null
+          is_visible?: boolean
+          line_set_type?: string | null
+          line_type?: Database["public"]["Enums"]["line_type"]
+          quote_component_id?: string | null
+          quote_id: string
+          show_dimensions?: boolean
+          show_price?: boolean
+          show_units?: boolean | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_amount?: number | null
+          custom_text?: string | null
+          id?: string
+          include_in_total?: boolean | null
+          is_visible?: boolean
+          line_set_type?: string | null
+          line_type?: Database["public"]["Enums"]["line_type"]
+          quote_component_id?: string | null
+          quote_id?: string
+          show_dimensions?: boolean
+          show_price?: boolean
+          show_units?: boolean | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_quote_lines_quote_component_id_fkey"
+            columns: ["quote_component_id"]
+            isOneToOne: false
+            referencedRelation: "quote_components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_quote_lines_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_quote_templates: {
+        Row: {
+          company_address: string | null
+          company_email: string | null
+          company_id: string
+          company_logo_url: string | null
+          company_name: string | null
+          company_phone: string | null
+          created_at: string
+          footer_text: string | null
+          id: string
+          is_starter_template: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          company_address?: string | null
+          company_email?: string | null
+          company_id: string
+          company_logo_url?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          created_at?: string
+          footer_text?: string | null
+          id?: string
+          is_starter_template?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          company_address?: string | null
+          company_email?: string | null
+          company_id?: string
+          company_logo_url?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          created_at?: string
+          footer_text?: string | null
+          id?: string
+          is_starter_template?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_quote_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      docs_feedback: {
+        Row: {
+          app_path: string | null
+          company_id: string | null
+          created_at: string
+          id: string
+          reason: string | null
+          slug: string
+          user_agent: string | null
+          user_id: string | null
+          vote: string
+        }
+        Insert: {
+          app_path?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          slug: string
+          user_agent?: string | null
+          user_id?: string | null
+          vote: string
+        }
+        Update: {
+          app_path?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          slug?: string
+          user_agent?: string | null
+          user_id?: string | null
+          vote?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "docs_feedback_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      early_access: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          body: string
+          company_id: string
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          subject: string
+          updated_at: string | null
+        }
+        Insert: {
+          body?: string
+          company_id: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          subject?: string
+          updated_at?: string | null
+        }
+        Update: {
+          body?: string
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          subject?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flashing_library: {
+        Row: {
+          canvas_data: Json | null
+          company_id: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string
+          is_default: boolean | null
+          measurements: Json | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          canvas_data?: Json | null
+          company_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url: string
+          is_default?: boolean | null
+          measurements?: Json | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          canvas_data?: Json | null
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string
+          is_default?: boolean | null
+          measurements?: Json | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashing_library_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labor_sheet_lines: {
+        Row: {
+          created_at: string
+          custom_amount: number
+          custom_text: string
+          id: string
+          include_in_total: boolean
+          is_visible: boolean
+          line_type: string
+          quote_component_id: string | null
+          quote_id: string
+          show_price: boolean
+          show_units: boolean
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_amount?: number
+          custom_text: string
+          id?: string
+          include_in_total?: boolean
+          is_visible?: boolean
+          line_type: string
+          quote_component_id?: string | null
+          quote_id: string
+          show_price?: boolean
+          show_units?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_amount?: number
+          custom_text?: string
+          id?: string
+          include_in_total?: boolean
+          is_visible?: boolean
+          line_type?: string
+          quote_component_id?: string | null
+          quote_id?: string
+          show_price?: boolean
+          show_units?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labor_sheet_lines_quote_component_id_fkey"
+            columns: ["quote_component_id"]
+            isOneToOne: false
+            referencedRelation: "quote_components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "labor_sheet_lines_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_order_lines: {
+        Row: {
+          component_id: string | null
+          created_at: string
+          entry_mode: string | null
+          flashing_id: string | null
+          flashing_image_url: string | null
+          id: string
+          item_name: string
+          item_notes: string | null
+          length_unit: string | null
+          lengths: Json | null
+          order_id: string
+          quantity: number | null
+          show_component_name: boolean | null
+          show_flashing_image: boolean | null
+          show_measurements: boolean | null
+          sort_order: number
+          unit: string | null
+        }
+        Insert: {
+          component_id?: string | null
+          created_at?: string
+          entry_mode?: string | null
+          flashing_id?: string | null
+          flashing_image_url?: string | null
+          id?: string
+          item_name: string
+          item_notes?: string | null
+          length_unit?: string | null
+          lengths?: Json | null
+          order_id: string
+          quantity?: number | null
+          show_component_name?: boolean | null
+          show_flashing_image?: boolean | null
+          show_measurements?: boolean | null
+          sort_order?: number
+          unit?: string | null
+        }
+        Update: {
+          component_id?: string | null
+          created_at?: string
+          entry_mode?: string | null
+          flashing_id?: string | null
+          flashing_image_url?: string | null
+          id?: string
+          item_name?: string
+          item_notes?: string | null
+          length_unit?: string | null
+          lengths?: Json | null
+          order_id?: string
+          quantity?: number | null
+          show_component_name?: boolean | null
+          show_flashing_image?: boolean | null
+          show_measurements?: boolean | null
+          sort_order?: number
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_order_lines_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "component_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_order_lines_flashing_id_fkey"
+            columns: ["flashing_id"]
+            isOneToOne: false
+            referencedRelation: "flashing_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_order_lines_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "material_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_order_templates: {
+        Row: {
+          company_id: string
+          created_at: string
+          default_colours: string[] | null
+          default_contact_details: string | null
+          default_contact_person: string | null
+          default_delivery_address: string | null
+          default_from_company: string | null
+          default_header_notes: string | null
+          default_logo_url: string | null
+          default_order_type: string | null
+          default_reference: string | null
+          default_supplier_contact: string | null
+          default_supplier_email: string | null
+          default_supplier_name: string | null
+          default_supplier_phone: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          default_colours?: string[] | null
+          default_contact_details?: string | null
+          default_contact_person?: string | null
+          default_delivery_address?: string | null
+          default_from_company?: string | null
+          default_header_notes?: string | null
+          default_logo_url?: string | null
+          default_order_type?: string | null
+          default_reference?: string | null
+          default_supplier_contact?: string | null
+          default_supplier_email?: string | null
+          default_supplier_name?: string | null
+          default_supplier_phone?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          default_colours?: string[] | null
+          default_contact_details?: string | null
+          default_contact_person?: string | null
+          default_delivery_address?: string | null
+          default_from_company?: string | null
+          default_header_notes?: string | null
+          default_logo_url?: string | null
+          default_order_type?: string | null
+          default_reference?: string | null
+          default_supplier_contact?: string | null
+          default_supplier_email?: string | null
+          default_supplier_name?: string | null
+          default_supplier_phone?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_order_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_orders: {
+        Row: {
+          colours: string | null
+          company_id: string
+          contact_details: string | null
+          contact_person: string | null
+          created_at: string
+          delivery_address: string | null
+          delivery_date: string | null
+          from_company: string | null
+          header_notes: string | null
+          id: string
+          is_sent: boolean | null
+          job_colours: string[] | null
+          job_name: string | null
+          layout_mode: string | null
+          logo_url: string | null
+          order_date: string | null
+          order_number: string
+          order_type: string | null
+          pdf_url: string | null
+          quote_id: string | null
+          reference: string | null
+          status: string
+          supplier_contact: string | null
+          supplier_name: string | null
+          template_id: string | null
+          to_supplier: string | null
+          updated_at: string
+        }
+        Insert: {
+          colours?: string | null
+          company_id: string
+          contact_details?: string | null
+          contact_person?: string | null
+          created_at?: string
+          delivery_address?: string | null
+          delivery_date?: string | null
+          from_company?: string | null
+          header_notes?: string | null
+          id?: string
+          is_sent?: boolean | null
+          job_colours?: string[] | null
+          job_name?: string | null
+          layout_mode?: string | null
+          logo_url?: string | null
+          order_date?: string | null
+          order_number: string
+          order_type?: string | null
+          pdf_url?: string | null
+          quote_id?: string | null
+          reference?: string | null
+          status?: string
+          supplier_contact?: string | null
+          supplier_name?: string | null
+          template_id?: string | null
+          to_supplier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          colours?: string | null
+          company_id?: string
+          contact_details?: string | null
+          contact_person?: string | null
+          created_at?: string
+          delivery_address?: string | null
+          delivery_date?: string | null
+          from_company?: string | null
+          header_notes?: string | null
+          id?: string
+          is_sent?: boolean | null
+          job_colours?: string[] | null
+          job_name?: string | null
+          layout_mode?: string | null
+          logo_url?: string | null
+          order_date?: string | null
+          order_number?: string
+          order_type?: string | null
+          pdf_url?: string | null
+          quote_id?: string | null
+          reference?: string | null
+          status?: string
+          supplier_contact?: string | null
+          supplier_name?: string | null
+          template_id?: string | null
+          to_supplier?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_orders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_orders_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_orders_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "material_order_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_component_entries: {
+        Row: {
+          created_at: string
+          id: string
+          quote_component_id: string
+          raw_value: number
+          sort_order: number
+          value_after_waste: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          quote_component_id: string
+          raw_value: number
+          sort_order?: number
+          value_after_waste: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          quote_component_id?: string
+          raw_value?: number
+          sort_order?: number
+          value_after_waste?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_component_entries_quote_component_id_fkey"
+            columns: ["quote_component_id"]
+            isOneToOne: false
+            referencedRelation: "quote_components"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_components: {
+        Row: {
+          calc_pitch_degrees: number | null
+          calc_pitch_factor: number | null
+          calc_raw_value: number | null
+          component_library_id: string | null
+          component_type: Database["public"]["Enums"]["component_type"]
+          created_at: string
+          custom_pitch_degrees: number | null
+          final_quantity: number | null
+          final_value: number | null
+          id: string
+          input_mode: Database["public"]["Enums"]["input_mode"]
+          is_customer_visible: boolean
+          is_pitch_overridden: boolean
+          is_quantity_overridden: boolean
+          is_rate_overridden: boolean
+          is_waste_overridden: boolean
+          labour_cost: number
+          labour_rate: number
+          material_cost: number
+          material_rate: number
+          measurement_type: Database["public"]["Enums"]["measurement_type"]
+          name: string
+          pitch_type: Database["public"]["Enums"]["pitch_type"]
+          pricing_unit: string | null
+          quote_id: string
+          quote_roof_area_id: string | null
+          sort_order: number
+          template_component_id: string | null
+          updated_at: string
+          use_custom_pitch: boolean
+          waste_fixed: number
+          waste_percent: number
+          waste_type: Database["public"]["Enums"]["waste_type"]
+        }
+        Insert: {
+          calc_pitch_degrees?: number | null
+          calc_pitch_factor?: number | null
+          calc_raw_value?: number | null
+          component_library_id?: string | null
+          component_type?: Database["public"]["Enums"]["component_type"]
+          created_at?: string
+          custom_pitch_degrees?: number | null
+          final_quantity?: number | null
+          final_value?: number | null
+          id?: string
+          input_mode?: Database["public"]["Enums"]["input_mode"]
+          is_customer_visible?: boolean
+          is_pitch_overridden?: boolean
+          is_quantity_overridden?: boolean
+          is_rate_overridden?: boolean
+          is_waste_overridden?: boolean
+          labour_cost?: number
+          labour_rate?: number
+          material_cost?: number
+          material_rate?: number
+          measurement_type: Database["public"]["Enums"]["measurement_type"]
+          name: string
+          pitch_type?: Database["public"]["Enums"]["pitch_type"]
+          pricing_unit?: string | null
+          quote_id: string
+          quote_roof_area_id?: string | null
+          sort_order?: number
+          template_component_id?: string | null
+          updated_at?: string
+          use_custom_pitch?: boolean
+          waste_fixed?: number
+          waste_percent?: number
+          waste_type?: Database["public"]["Enums"]["waste_type"]
+        }
+        Update: {
+          calc_pitch_degrees?: number | null
+          calc_pitch_factor?: number | null
+          calc_raw_value?: number | null
+          component_library_id?: string | null
+          component_type?: Database["public"]["Enums"]["component_type"]
+          created_at?: string
+          custom_pitch_degrees?: number | null
+          final_quantity?: number | null
+          final_value?: number | null
+          id?: string
+          input_mode?: Database["public"]["Enums"]["input_mode"]
+          is_customer_visible?: boolean
+          is_pitch_overridden?: boolean
+          is_quantity_overridden?: boolean
+          is_rate_overridden?: boolean
+          is_waste_overridden?: boolean
+          labour_cost?: number
+          labour_rate?: number
+          material_cost?: number
+          material_rate?: number
+          measurement_type?: Database["public"]["Enums"]["measurement_type"]
+          name?: string
+          pitch_type?: Database["public"]["Enums"]["pitch_type"]
+          pricing_unit?: string | null
+          quote_id?: string
+          quote_roof_area_id?: string | null
+          sort_order?: number
+          template_component_id?: string | null
+          updated_at?: string
+          use_custom_pitch?: boolean
+          waste_fixed?: number
+          waste_percent?: number
+          waste_type?: Database["public"]["Enums"]["waste_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_components_component_library_id_fkey"
+            columns: ["component_library_id"]
+            isOneToOne: false
+            referencedRelation: "component_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_components_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_components_quote_roof_area_id_fkey"
+            columns: ["quote_roof_area_id"]
+            isOneToOne: false
+            referencedRelation: "quote_roof_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_components_template_component_id_fkey"
+            columns: ["template_component_id"]
+            isOneToOne: false
+            referencedRelation: "template_components"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_files: {
+        Row: {
+          company_id: string
+          description: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          id: string
+          mime_type: string
+          quote_id: string | null
+          storage_path: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          company_id: string
+          description?: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          id?: string
+          mime_type: string
+          quote_id?: string | null
+          storage_path: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          description?: string | null
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          mime_type?: string
+          quote_id?: string | null
+          storage_path?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_files_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_files_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_files_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_number_sequences: {
+        Row: {
+          company_id: string
+          created_at: string
+          next_number: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          next_number?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          next_number?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_number_sequences_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_revision_requests: {
+        Row: {
+          company_id: string
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          id: string
+          notes: string
+          quote_id: string
+          resolved_at: string | null
+          resolved_by_user_id: string | null
+          source_state: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          id?: string
+          notes: string
+          quote_id: string
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          source_state?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          id?: string
+          notes?: string
+          quote_id?: string
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          source_state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_revision_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_revision_requests_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_revision_requests_resolved_by_user_id_fkey"
+            columns: ["resolved_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_roof_area_entries: {
+        Row: {
+          created_at: string | null
+          id: string
+          length_m: number
+          quote_roof_area_id: string
+          sort_order: number | null
+          sqm: number
+          updated_at: string | null
+          width_m: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          length_m: number
+          quote_roof_area_id: string
+          sort_order?: number | null
+          sqm: number
+          updated_at?: string | null
+          width_m: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          length_m?: number
+          quote_roof_area_id?: string
+          sort_order?: number | null
+          sqm?: number
+          updated_at?: string | null
+          width_m?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_roof_area_entries_quote_roof_area_id_fkey"
+            columns: ["quote_roof_area_id"]
+            isOneToOne: false
+            referencedRelation: "quote_roof_areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_roof_areas: {
+        Row: {
+          calc_length_m: number | null
+          calc_pitch_degrees: number | null
+          calc_plan_sqm: number | null
+          calc_width_m: number | null
+          computed_sqm: number | null
+          created_at: string
+          final_value_sqm: number | null
+          id: string
+          input_mode: Database["public"]["Enums"]["input_mode"]
+          is_locked: boolean | null
+          label: string
+          quote_id: string
+          sort_order: number
+          template_roof_area_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          calc_length_m?: number | null
+          calc_pitch_degrees?: number | null
+          calc_plan_sqm?: number | null
+          calc_width_m?: number | null
+          computed_sqm?: number | null
+          created_at?: string
+          final_value_sqm?: number | null
+          id?: string
+          input_mode?: Database["public"]["Enums"]["input_mode"]
+          is_locked?: boolean | null
+          label: string
+          quote_id: string
+          sort_order?: number
+          template_roof_area_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          calc_length_m?: number | null
+          calc_pitch_degrees?: number | null
+          calc_plan_sqm?: number | null
+          calc_width_m?: number | null
+          computed_sqm?: number | null
+          created_at?: string
+          final_value_sqm?: number | null
+          id?: string
+          input_mode?: Database["public"]["Enums"]["input_mode"]
+          is_locked?: boolean | null
+          label?: string
+          quote_id?: string
+          sort_order?: number
+          template_roof_area_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_roof_areas_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_roof_areas_template_roof_area_id_fkey"
+            columns: ["template_roof_area_id"]
+            isOneToOne: false
+            referencedRelation: "template_roof_areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_takeoff_measurements: {
+        Row: {
+          canvas_points: Json | null
+          company_id: string
+          component_library_id: string | null
+          created_at: string | null
+          id: string
+          is_visible: boolean | null
+          measurement_type: string
+          measurement_unit: string
+          measurement_value: number
+          quote_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          canvas_points?: Json | null
+          company_id: string
+          component_library_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_visible?: boolean | null
+          measurement_type: string
+          measurement_unit: string
+          measurement_value: number
+          quote_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          canvas_points?: Json | null
+          company_id?: string
+          component_library_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_visible?: boolean | null
+          measurement_type?: string
+          measurement_unit?: string
+          measurement_value?: number
+          quote_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_takeoff_measurements_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_takeoff_measurements_component_library_id_fkey"
+            columns: ["component_library_id"]
+            isOneToOne: false
+            referencedRelation: "component_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_takeoff_measurements_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_taxes: {
+        Row: {
+          created_at: string
+          id: string
+          include_in_labor: boolean
+          include_in_quote: boolean
+          name: string
+          quote_id: string
+          rate_percent: number
+          sort_order: number
+          source_tax_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          include_in_labor?: boolean
+          include_in_quote?: boolean
+          name: string
+          quote_id: string
+          rate_percent?: number
+          sort_order?: number
+          source_tax_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          include_in_labor?: boolean
+          include_in_quote?: boolean
+          name?: string
+          quote_id?: string
+          rate_percent?: number
+          sort_order?: number
+          source_tax_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_taxes_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_taxes_source_tax_id_fkey"
+            columns: ["source_tax_id"]
+            isOneToOne: false
+            referencedRelation: "company_taxes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          acceptance_token: string | null
+          acceptance_token_expires_at: string | null
+          accepted_at: string | null
+          company_id: string
+          cq_company_address: string | null
+          cq_company_email: string | null
+          cq_company_logo_url: string | null
+          cq_company_name: string | null
+          cq_company_phone: string | null
+          cq_footer_text: string | null
+          created_at: string
+          created_by_user_id: string | null
+          currency: string | null
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          declined_at: string | null
+          entry_mode: string | null
+          global_pitch_degrees: number | null
+          id: string
+          job_name: string | null
+          job_status: string | null
+          labor_margin_enabled: boolean | null
+          labor_margin_percent: number | null
+          material_margin_enabled: boolean | null
+          material_margin_percent: number | null
+          measurement_system: Database["public"]["Enums"]["measurement_system"]
+          notes_internal: string | null
+          quote_number: number | null
+          site_address: string | null
+          status: Database["public"]["Enums"]["quote_status"]
+          takeoff_canvas_path: string | null
+          takeoff_canvas_url: string | null
+          takeoff_lines_path: string | null
+          takeoff_lines_url: string | null
+          tax_rate: number
+          template_id: string | null
+          updated_at: string
+          withdrawn_at: string | null
+          withdrawn_by_user_id: string | null
+        }
+        Insert: {
+          acceptance_token?: string | null
+          acceptance_token_expires_at?: string | null
+          accepted_at?: string | null
+          company_id: string
+          cq_company_address?: string | null
+          cq_company_email?: string | null
+          cq_company_logo_url?: string | null
+          cq_company_name?: string | null
+          cq_company_phone?: string | null
+          cq_footer_text?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          currency?: string | null
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          declined_at?: string | null
+          entry_mode?: string | null
+          global_pitch_degrees?: number | null
+          id?: string
+          job_name?: string | null
+          job_status?: string | null
+          labor_margin_enabled?: boolean | null
+          labor_margin_percent?: number | null
+          material_margin_enabled?: boolean | null
+          material_margin_percent?: number | null
+          measurement_system?: Database["public"]["Enums"]["measurement_system"]
+          notes_internal?: string | null
+          quote_number?: number | null
+          site_address?: string | null
+          status?: Database["public"]["Enums"]["quote_status"]
+          takeoff_canvas_path?: string | null
+          takeoff_canvas_url?: string | null
+          takeoff_lines_path?: string | null
+          takeoff_lines_url?: string | null
+          tax_rate?: number
+          template_id?: string | null
+          updated_at?: string
+          withdrawn_at?: string | null
+          withdrawn_by_user_id?: string | null
+        }
+        Update: {
+          acceptance_token?: string | null
+          acceptance_token_expires_at?: string | null
+          accepted_at?: string | null
+          company_id?: string
+          cq_company_address?: string | null
+          cq_company_email?: string | null
+          cq_company_logo_url?: string | null
+          cq_company_name?: string | null
+          cq_company_phone?: string | null
+          cq_footer_text?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          currency?: string | null
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          declined_at?: string | null
+          entry_mode?: string | null
+          global_pitch_degrees?: number | null
+          id?: string
+          job_name?: string | null
+          job_status?: string | null
+          labor_margin_enabled?: boolean | null
+          labor_margin_percent?: number | null
+          material_margin_enabled?: boolean | null
+          material_margin_percent?: number | null
+          measurement_system?: Database["public"]["Enums"]["measurement_system"]
+          notes_internal?: string | null
+          quote_number?: number | null
+          site_address?: string | null
+          status?: Database["public"]["Enums"]["quote_status"]
+          takeoff_canvas_path?: string | null
+          takeoff_canvas_url?: string | null
+          takeoff_lines_path?: string | null
+          takeoff_lines_url?: string | null
+          tax_rate?: number
+          template_id?: string | null
+          updated_at?: string
+          withdrawn_at?: string | null
+          withdrawn_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_withdrawn_by_user_id_fkey"
+            columns: ["withdrawn_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rate_limits: {
+        Row: {
+          bucket_key: string
+          count: number
+          updated_at: string
+          window_start: string
+        }
+        Insert: {
+          bucket_key: string
+          count?: number
+          updated_at?: string
+          window_start: string
+        }
+        Update: {
+          bucket_key?: string
+          count?: number
+          updated_at?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          app_version: string | null
+          assignee_user_id: string | null
+          body: string
+          category: string
+          company_id: string
+          created_at: string
+          email_forward_error: string | null
+          email_forwarded_at: string | null
+          id: string
+          messages: Json
+          page_context: string | null
+          priority: string
+          resolved_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          assignee_user_id?: string | null
+          body: string
+          category?: string
+          company_id: string
+          created_at?: string
+          email_forward_error?: string | null
+          email_forwarded_at?: string | null
+          id?: string
+          messages?: Json
+          page_context?: string | null
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          app_version?: string | null
+          assignee_user_id?: string | null
+          body?: string
+          category?: string
+          company_id?: string
+          created_at?: string
+          email_forward_error?: string | null
+          email_forwarded_at?: string | null
+          id?: string
+          messages?: Json
+          page_context?: string | null
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_components: {
+        Row: {
+          component_library_id: string
+          component_type: Database["public"]["Enums"]["component_type"]
+          created_at: string
+          id: string
+          is_included_by_default: boolean
+          override_labour_rate: number | null
+          override_material_rate: number | null
+          override_pitch_type: Database["public"]["Enums"]["pitch_type"] | null
+          override_waste_fixed: number | null
+          override_waste_percent: number | null
+          override_waste_type: Database["public"]["Enums"]["waste_type"] | null
+          sort_order: number
+          template_id: string
+          template_roof_area_id: string | null
+        }
+        Insert: {
+          component_library_id: string
+          component_type?: Database["public"]["Enums"]["component_type"]
+          created_at?: string
+          id?: string
+          is_included_by_default?: boolean
+          override_labour_rate?: number | null
+          override_material_rate?: number | null
+          override_pitch_type?: Database["public"]["Enums"]["pitch_type"] | null
+          override_waste_fixed?: number | null
+          override_waste_percent?: number | null
+          override_waste_type?: Database["public"]["Enums"]["waste_type"] | null
+          sort_order?: number
+          template_id: string
+          template_roof_area_id?: string | null
+        }
+        Update: {
+          component_library_id?: string
+          component_type?: Database["public"]["Enums"]["component_type"]
+          created_at?: string
+          id?: string
+          is_included_by_default?: boolean
+          override_labour_rate?: number | null
+          override_material_rate?: number | null
+          override_pitch_type?: Database["public"]["Enums"]["pitch_type"] | null
+          override_waste_fixed?: number | null
+          override_waste_percent?: number | null
+          override_waste_type?: Database["public"]["Enums"]["waste_type"] | null
+          sort_order?: number
+          template_id?: string
+          template_roof_area_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_components_component_library_id_fkey"
+            columns: ["component_library_id"]
+            isOneToOne: false
+            referencedRelation: "component_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "template_components_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "template_components_template_roof_area_id_fkey"
+            columns: ["template_roof_area_id"]
+            isOneToOne: false
+            referencedRelation: "template_roof_areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_roof_areas: {
+        Row: {
+          created_at: string
+          default_input_mode: Database["public"]["Enums"]["input_mode"]
+          id: string
+          label: string
+          sort_order: number
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_input_mode?: Database["public"]["Enums"]["input_mode"]
+          id?: string
+          label: string
+          sort_order?: number
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          default_input_mode?: Database["public"]["Enums"]["input_mode"]
+          id?: string
+          label?: string
+          sort_order?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_roof_areas_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      templates: {
+        Row: {
+          company_id: string
+          created_at: string
+          customer_template_id: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          roofing_profile: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          customer_template_id?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          roofing_profile?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          customer_template_id?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          roofing_profile?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "templates_customer_template_id_fkey"
+            columns: ["customer_template_id"]
+            isOneToOne: false
+            referencedRelation: "customer_quote_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_recovery_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_security_questions: {
+        Row: {
+          answer_hash: string
+          created_at: string
+          id: string
+          question: string
+          slot: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answer_hash: string
+          created_at?: string
+          id?: string
+          question: string
+          slot: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answer_hash?: string
+          created_at?: string
+          id?: string
+          question?: string
+          slot?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_security_questions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          company_id: string
+          created_at: string
+          email: string
+          email_notifications_enabled: boolean
+          full_name: string | null
+          id: string
+          last_email_change_at: string | null
+          mfa_required: boolean
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          email: string
+          email_notifications_enabled?: boolean
+          full_name?: string | null
+          id: string
+          last_email_change_at?: string | null
+          mfa_required?: boolean
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          email?: string
+          email_notifications_enabled?: boolean
+          full_name?: string | null
+          id?: string
+          last_email_change_at?: string | null
+          mfa_required?: boolean
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      check_storage_quota: {
+        Args: { p_company_id: string; p_file_size: number }
+        Returns: boolean
+      }
+      consume_rate_limit: {
+        Args: { p_key: string; p_max: number; p_window_ms: number }
+        Returns: boolean
+      }
+      current_company_id: { Args: never; Returns: string }
+      current_user_id: { Args: never; Returns: string }
+      get_next_quote_number: { Args: { p_company_id: string }; Returns: number }
+      prune_rate_limits: { Args: never; Returns: number }
+      save_takeoff_atomic: {
+        Args: { p_payload: Json; p_quote_id: string }
+        Returns: undefined
+      }
+      user_belongs_to_company: {
+        Args: { target_company_id: string }
+        Returns: boolean
+      }
+    }
+    Enums: {
+      component_type: "main" | "extra"
+      input_mode: "final" | "calculated"
+      line_type: "component" | "custom" | "roof_area_header"
+      measurement_system: "metric" | "imperial" | "imperial_ft" | "imperial_rs"
+      measurement_type: "area" | "linear" | "quantity" | "fixed" | "lineal"
+      pitch_type: "none" | "rafter" | "valley_hip"
+      quote_status:
+        | "draft"
+        | "confirmed"
+        | "sent"
+        | "accepted"
+        | "declined"
+        | "expired"
+        | "archived"
+      waste_type: "percent" | "fixed" | "none"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      component_type: ["main", "extra"],
+      input_mode: ["final", "calculated"],
+      line_type: ["component", "custom", "roof_area_header"],
+      measurement_system: ["metric", "imperial", "imperial_ft", "imperial_rs"],
+      measurement_type: ["area", "linear", "quantity", "fixed", "lineal"],
+      pitch_type: ["none", "rafter", "valley_hip"],
+      quote_status: [
+        "draft",
+        "confirmed",
+        "sent",
+        "accepted",
+        "declined",
+        "expired",
+        "archived",
+      ],
+      waste_type: ["percent", "fixed", "none"],
+    },
+  },
+} as const
