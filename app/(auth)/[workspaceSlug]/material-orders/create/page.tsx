@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default async function CreateOrderPage(props: Props) {
-  const { workspaceSlug } = await props.params;
+  const { workspaceSlug: _workspaceSlug } = await props.params;
   const { quoteId, orderId } = await props.searchParams;
   
   

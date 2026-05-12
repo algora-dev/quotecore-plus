@@ -1,5 +1,5 @@
 'use client';
-import { useState, useTransition } from 'react';
+import { useTransition } from 'react';
 import { updateQuoteCurrency } from '../actions';
 import { useRouter } from 'next/navigation';
 import { CURRENCY_GROUPS } from '@/app/lib/currency/currencies';
@@ -11,7 +11,7 @@ interface Props {
   workspaceSlug: string;
 }
 
-export function CurrencySelector({ quoteId, currentCurrency, companyDefaultCurrency, workspaceSlug }: Props) {
+export function CurrencySelector({ quoteId, currentCurrency, companyDefaultCurrency, workspaceSlug: _workspaceSlug }: Props) {
   const effectiveCurrency = currentCurrency || companyDefaultCurrency;
   const [isPending, startTransition] = useTransition();
   const router = useRouter();

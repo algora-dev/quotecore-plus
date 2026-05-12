@@ -140,9 +140,13 @@ export function AccountTabs({ panels }: AccountTabsProps) {
   const [active, setActive] = useState<AccountTabKey>(initial);
 
   // Keep state in sync with the URL when the user navigates back/forward or
-  // when an external link sets `?tab=...`.
+  // when an external link sets `?tab=...`. React 19's stricter rule warns
+  // about setState inside effects — here the URL is an external source we
+  // intentionally mirror into local state. The set is guarded against
+  // redundant updates so it doesn't loop.
   useEffect(() => {
     const next = readTabFromUrl(searchParams.get('tab'));
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActive((prev) => (prev === next ? prev : next));
   }, [searchParams]);
 

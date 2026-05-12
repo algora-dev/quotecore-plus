@@ -306,7 +306,6 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
               <div
                 className="w-44 h-44 bg-white border border-slate-200 rounded-lg p-2 flex items-center justify-center"
                 // Supabase returns the QR as an inline SVG data URI.
-                // eslint-disable-next-line @next/next/no-img-element
               >
                 <img src={enroll.qrCode} alt="2FA QR code" className="w-full h-full" />
               </div>

@@ -23,7 +23,7 @@ export function AngleCalculatorModal({
   isOpen,
   onClose,
   onApply,
-  currentAngle,
+  currentAngle: _currentAngle,
 }: AngleCalculatorModalProps) {
   const [flashingType, setFlashingType] = useState<FlashingType>('ridge');
   const [pitchConfig, setPitchConfig] = useState<PitchConfig>('single');

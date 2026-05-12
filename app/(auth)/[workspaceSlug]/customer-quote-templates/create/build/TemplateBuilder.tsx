@@ -90,7 +90,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
   const handleSave = async () => {
     setSaving(true);
     try {
-      const templateId = await createCustomerQuoteTemplate({
+      const _templateId = await createCustomerQuoteTemplate({
         name: templateName,
         companyName,
         companyAddress,

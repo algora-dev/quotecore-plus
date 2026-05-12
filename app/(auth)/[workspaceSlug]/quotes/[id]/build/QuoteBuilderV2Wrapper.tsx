@@ -50,10 +50,14 @@ export function QuoteBuilderV2Wrapper(props: Props) {
   const [phase, setPhase] = useState<Phase>(stepToPhase[props.initialStep] || 'areas');
 
   // Sync with URL changes
+  // Sync the active phase from the URL search params. React 19 warns
+  // about setState inside effects — here the URL is an external source we
+  // mirror; the equality guard prevents render loops.
   useEffect(() => {
     const step = searchParams.get('step') || 'roof-areas';
     const newPhase = stepToPhase[step] || 'areas';
     if (newPhase !== phase) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPhase(newPhase);
     }
   }, [searchParams, phase]);

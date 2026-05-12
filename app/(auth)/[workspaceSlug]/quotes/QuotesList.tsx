@@ -279,12 +279,12 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
         return next;
       }
       // "Select all visible", capped at MAX_BULK_SELECTION.
-      let added = 0;
+      let _added = 0;
       for (const id of visibleIds) {
         if (next.has(id)) continue;
         if (next.size >= MAX_BULK_SELECTION) break;
         next.add(id);
-        added++;
+        _added++;
       }
       const remainingVisible = visibleIds.filter((id) => !next.has(id)).length;
       if (remainingVisible > 0) {

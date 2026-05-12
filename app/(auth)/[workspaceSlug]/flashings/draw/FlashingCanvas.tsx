@@ -1,8 +1,8 @@
 ﻿'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Canvas, Line, Circle, IText, Rect, ActiveSelection, Object as FabricObject, PencilBrush } from 'fabric';
+import { Canvas, Line, Circle, IText, Rect, ActiveSelection, Object as _FabricObject, PencilBrush } from 'fabric';
 import { createFlashingFromCanvas, updateFlashingWithImage, loadFlashingById } from '../actions';
 import { AngleCalculatorModal } from './AngleCalculatorModal';
 
@@ -40,7 +40,7 @@ interface MeasurementItem {
   adjacentLineIndices?: number[]; // Indices of connected line measurements
 }
 
-interface CanvasState {
+interface _CanvasState {
   canvasJSON: string;
   measurements: MeasurementItem[];
 }
@@ -841,7 +841,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     setSelectedPoint(null);
   };
 
-  const handleFinishLine = () => {
+  const _handleFinishLine = () => {
     setLinePoints([]);
     setDrawMode('none');
   };
@@ -1367,7 +1367,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     canvas.renderAll();
   };
 
-  const handleAddRightAngle = () => {
+  const _handleAddRightAngle = () => {
     if (selectedPoint === null || selectedPoint === 0 || selectedPoint >= linePoints.length - 1) {
       alert('Right angle can only be added to middle points');
       return;
@@ -1401,7 +1401,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
     setSelectedPoint(null);
   };
 
-  const handleAddCustomAngle = () => {
+  const _handleAddCustomAngle = () => {
     if (selectedPoint === null || selectedPoint < 1 || selectedPoint >= linePoints.length - 1) {
       alert('Custom angle requires a middle point');
       return;

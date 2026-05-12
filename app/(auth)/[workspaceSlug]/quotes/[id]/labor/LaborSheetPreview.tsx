@@ -17,7 +17,7 @@ interface Props {
   quoteTaxes: QuoteTaxRow[];
 }
 
-export function LaborSheetPreview({ quote, roofAreas, components, savedLines, workspaceSlug, quoteTaxes }: Props) {
+export function LaborSheetPreview({ quote, roofAreas: _roofAreas, components, savedLines, workspaceSlug, quoteTaxes }: Props) {
   const currency = quote.currency || 'NZD';
   const [isGenerating, setIsGenerating] = useState(false);
   
@@ -25,7 +25,7 @@ export function LaborSheetPreview({ quote, roofAreas, components, savedLines, wo
   const visibleLines = savedLines.filter(l => l.is_visible);
   
   // Group components by roof area (for fallback display)
-  const componentsByArea = components.reduce((acc, comp) => {
+  const _componentsByArea = components.reduce((acc, comp) => {
     const areaId = comp.quote_roof_area_id || 'extras';
     if (!acc[areaId]) acc[areaId] = [];
     acc[areaId].push(comp);

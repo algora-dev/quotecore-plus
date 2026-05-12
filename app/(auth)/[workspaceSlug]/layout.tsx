@@ -29,7 +29,7 @@ export default async function WorkspaceLayout({
     redirect(`/${slug}`);
   }
 
-  const workspaceLabel = company.name ? company.name.slice(0, 10) : 'Workspace';
+  const _workspaceLabel = company.name ? company.name.slice(0, 10) : 'Workspace';
   const profile = await getCurrentProfile();
 
   const supabase = await createSupabaseServerClient();

@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import type { FlashingLibraryInsert } from '@/app/lib/types';
-import { redirect } from 'next/navigation';
+import {  } from 'next/navigation';
 
 export async function loadFlashingLibrary() {
   let profile;

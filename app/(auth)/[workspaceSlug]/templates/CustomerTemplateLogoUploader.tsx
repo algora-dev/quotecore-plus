@@ -12,7 +12,7 @@ interface Props {
 
 export function CustomerTemplateLogoUploader({ companyId, templateId, currentLogoUrl, onUploadComplete }: Props) {
   const [logoUrl, setLogoUrl] = useState(currentLogoUrl);
-  const [uploading, setUploading] = useState(false);
+  const [_uploading, setUploading] = useState(false);
 
   async function handleUpload(file: File) {
     setUploading(true);

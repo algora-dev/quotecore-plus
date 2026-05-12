@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createFlashing, updateFlashing, deleteFlashing } from './actions';
+import { createFlashing, deleteFlashing } from './actions';
 import type { FlashingLibraryRow } from '@/app/lib/types';
 import Image from 'next/image';
 

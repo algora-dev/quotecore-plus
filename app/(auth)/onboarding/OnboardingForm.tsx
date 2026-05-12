@@ -16,14 +16,14 @@ interface Props {
 
 export function OnboardingForm({ 
   companyId, 
-  companyName,
+  companyName: _companyName,
   companySlug,
   currentCurrency, 
   currentLanguage, 
   currentMeasurement 
 }: Props) {
   const [currency, setCurrency] = useState(currentCurrency);
-  const [language, setLanguage] = useState(currentLanguage);
+  const [language, _setLanguage] = useState(currentLanguage);
   // Normalise legacy 'imperial' to 'imperial_rs' so the picker doesn't render unselected.
   const [measurement, setMeasurement] = useState<'metric' | 'imperial_ft' | 'imperial_rs'>(
     currentMeasurement === 'imperial' ? 'imperial_rs' : (currentMeasurement as 'metric' | 'imperial_ft' | 'imperial_rs')

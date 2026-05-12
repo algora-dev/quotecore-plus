@@ -668,7 +668,7 @@ export async function deleteQuote(id: string) {
 }
 
 export async function cloneQuote(id: string, newCustomerName: string) {
-  const { profile, company } = await loadCompanyContext();
+  const { profile, company: _company } = await loadCompanyContext();
   const supabase = await createSupabaseServerClient();
   
   const { data: originalQuote } = await supabase.from('quotes').select('*').eq('id', id).eq('company_id', profile.company_id).single();
@@ -984,7 +984,7 @@ export async function loadCustomerQuoteTemplates() {
 
 export async function loadCustomerQuoteTemplate(templateId: string) {
   'use server';
-  const profile = await requireCompanyContext();
+  const _profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
   // Load template

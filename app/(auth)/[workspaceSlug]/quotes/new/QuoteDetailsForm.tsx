@@ -46,10 +46,13 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
   const [measurementSystem, setMeasurementSystem] = useState<MeasurementChoice>(defaultMeasurementSystem);
   const [pendingSystemSwitch, setPendingSystemSwitch] = useState<MeasurementChoice | null>(null);
 
-  // Pre-select template from URL param
+  // Pre-select template from URL param. setState inside effect is
+  // intentional: the URL is external state we mirror. React 19's stricter
+  // rule flags it; the guard above prevents loops.
   useEffect(() => {
     const urlTemplateId = searchParams.get('template');
     if (urlTemplateId && templates.find(t => t.id === urlTemplateId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTemplateId(urlTemplateId);
     }
   }, [searchParams, templates]);

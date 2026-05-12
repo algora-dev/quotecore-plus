@@ -42,13 +42,20 @@ export function CookieBanner() {
   const [mounted, setMounted] = useState(false);
   const [dismissed, setDismissed] = useState(true);
 
+  // Classic hydration-marker pattern: set `mounted` once the client has
+  // taken over so the banner never flashes during SSR/hydration mismatch.
+  // React 19's set-state-in-effect rule flags this; the alternative
+  // (`useSyncExternalStore`) is overkill for a single read.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     try {
       const value = window.localStorage.getItem(STORAGE_KEY);
+       
       setDismissed(Boolean(value));
     } catch {
       // localStorage can throw in private mode; fall back to showing.
+       
       setDismissed(false);
     }
   }, []);

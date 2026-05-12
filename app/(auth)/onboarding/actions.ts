@@ -1,6 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
-import { revalidatePath } from 'next/cache';
+import {  } from 'next/cache';
 import { createSupabaseServerClient, requireUser, requireCompanyContext } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 
@@ -67,7 +67,7 @@ export async function completeGoogleOnboarding(formData: FormData) {
     throw new Error('Company name and your name are required.');
   }
 
-  const supabase = await createSupabaseServerClient();
+  const _supabase = await createSupabaseServerClient();
   const authUser = await requireUser();
   const supabaseAdmin = createAdminClient();
 

@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadAllEntriesForQuote, confirmQuote } from '../../actions';
-import { loadComponentLibrary } from '../../../components/actions';
+import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadAllEntriesForQuote } from '../../actions';
+import {  } from '../../../components/actions';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
-import { unitForMeasurement } from '@/app/lib/types';
+import {  } from '@/app/lib/types';
 import { formatArea, getUnitLabel } from '@/app/lib/measurements/displayHelpers';
 import {
   convertLinear,
@@ -116,8 +116,8 @@ export default async function QuoteSummaryPage({
     .eq('quote_id', id)
     .order('uploaded_at', { ascending: false });
   
-  const planFile = filesData?.find(f => f.file_type === 'plan');
-  const supportingFiles = filesData?.filter(f => f.file_type === 'supporting') || [];
+  const _planFile = filesData?.find(f => f.file_type === 'plan');
+  const _supportingFiles = filesData?.filter(f => f.file_type === 'supporting') || [];
   
   // QUOTE-DOCUMENTS is private; batch-sign every file's storage path so we
   // hit the storage API once instead of N times.
@@ -176,7 +176,7 @@ export default async function QuoteSummaryPage({
 
 
 
-  const totalRoofSqm = roofAreas.reduce((sum, a) => sum + (a.computed_sqm ?? 0), 0);
+  const _totalRoofSqm = roofAreas.reduce((sum, a) => sum + (a.computed_sqm ?? 0), 0);
   
   // Apply customer quote line overrides to component costs
   const componentsWithOverrides = components.map(c => {

@@ -554,7 +554,6 @@ export function BlankQuoteBuilder({
             <div className="border-b-2 border-black pb-6 mb-6">
               <div className="flex justify-end mb-6">
                 {companyLogoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={companyLogoUrl} alt="Logo" className="h-16 object-contain" />
                 ) : (
                   <div className="w-32 h-16 border-2 border-dashed border-black rounded flex items-center justify-center">

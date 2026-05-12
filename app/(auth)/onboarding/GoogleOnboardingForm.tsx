@@ -25,7 +25,7 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
 
   // Step 2 fields
   const [currency, setCurrency] = useState('NZD');
-  const [language, setLanguage] = useState('en');
+  const [language, _setLanguage] = useState('en');
   const [measurement, setMeasurement] = useState<'metric' | 'imperial_ft' | 'imperial_rs'>('metric');
 
   function handleNext() {

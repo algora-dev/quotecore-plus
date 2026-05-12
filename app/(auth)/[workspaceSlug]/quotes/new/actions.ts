@@ -1,5 +1,5 @@
 'use server';
-import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { seedQuoteTaxesOnCreate } from '@/app/lib/taxes/seed';
 import { BUCKETS } from '@/app/lib/storage/buckets';

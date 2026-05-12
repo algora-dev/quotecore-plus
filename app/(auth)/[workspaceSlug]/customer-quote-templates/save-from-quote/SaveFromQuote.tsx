@@ -12,7 +12,7 @@ interface Props {
   templateName: string;
 }
 
-export function SaveFromQuote({ workspaceSlug, quote, savedLines, templateName }: Props) {
+export function SaveFromQuote({ workspaceSlug, quote, savedLines: _savedLines, templateName }: Props) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [companyName, setCompanyName] = useState('Your Company Name');

@@ -43,9 +43,15 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
     return () => clearInterval(interval);
   }, [router]);
 
-  // Sync from server
+  // Sync from server. router.refresh() above polls every 30s and the
+  // server re-renders with new `initialAlerts`; mirroring into local
+  // state keeps the dropdown reactive. React 19's rule warns about this
+  // pattern; the proper fix (derive from props directly + lift markAsRead)
+  // is a larger refactor.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAlerts(initialAlerts);
+     
     setUnreadCount(initialUnreadCount);
   }, [initialAlerts, initialUnreadCount]);
 

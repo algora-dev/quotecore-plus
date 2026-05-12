@@ -34,14 +34,20 @@ export function CopilotOverlay() {
     return () => window.removeEventListener('resize', update);
   }, []);
 
-  // Reset drag offset when step changes
+  // Reset drag offset when step changes. setState-in-effect is the right
+  // shape here: "external trigger (step changed) → reset local UI state".
+  // Deriving from props would require lifting the drag state up.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDragOffset({ x: 0, y: 0 });
   }, [currentStep, state.activeGuide]);
 
-  // Find and track the target element
+  // Find and track the target element. The early-out null write is the
+  // "forget last target" signal; setting it inside an effect is the only
+  // way given the rect comes from a DOM measurement.
   useEffect(() => {
     if (!isActive || !currentStepData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTargetRect(null);
       return;
     }

@@ -3,13 +3,13 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins } from '../actions';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
-import { unitForMeasurement, entryLabel, addMoreLabel } from '@/app/lib/types';
+import { entryLabel, addMoreLabel } from '@/app/lib/types';
 // Use the polymorphic helpers for any user-input -> metric conversion. They
 // dispatch correctly across all three systems (metric / imperial_ft /
 // imperial_rs) so we don't have to branch on the system manually anywhere
 // the user types a number into an Imperial quote.
 import {
-  convertArea,
+  
   linearInputToMetric,
   areaInputToMetric,
 } from '@/app/lib/measurements/conversions';
@@ -67,7 +67,7 @@ export function QuoteBuilder({
   planUrl,
   planName,
   supportingFiles,
-  takeoffData = [],
+  takeoffData: _takeoffData = [],
   externalPhase,
   onPhaseChange
 }: Props) {
@@ -282,8 +282,12 @@ export function QuoteBuilder({
   }
 
   async function handleUseRoofArea(compId: string, roofAreaSqm: number) {
-    const comp = components.find(c => c.id === compId);
+    const _comp = components.find(c => c.id === compId);
     // Roof area total is already pitched - don't apply pitch again
+    // `useRoofAreaTotal` is a server action, not a React hook — React's
+    // rules-of-hooks heuristic flags it on the `use*` name. Renaming the
+    // action is a larger change; suppress here is the lower-risk path.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const entry = await useRoofAreaTotal(compId, roofAreaSqm, null);
     setEntries(prev => ({ ...prev, [compId]: [...(prev[compId] ?? []), entry] }));
     const compEntries = [...(entries[compId] ?? []), entry];

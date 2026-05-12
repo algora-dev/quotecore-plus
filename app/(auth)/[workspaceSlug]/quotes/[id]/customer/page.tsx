@@ -132,7 +132,7 @@ export default async function CustomerQuotePage({
                 No items in this quote. Edit the customer quote to add items.
               </p>
             ) : (
-              visibleLines.map((line, idx) => (
+              visibleLines.map((line, _idx) => (
                 <div
                   key={line.id}
                   className="flex items-start justify-between py-3 border-b border-black"

@@ -46,6 +46,12 @@ export function EmailChangeSection({ currentEmail, authProvider }: Props) {
 
   const isOAuthOnly = status?.isOAuthOnly ?? authProvider === 'google';
   const cooldownEndsAt = status?.cooldownEndsAt ?? null;
+  // Reading Date.now() during render is technically impure, but the cost
+  // here is "the cooldown banner might flicker by a few milliseconds on a
+  // double-render at the exact end of the 7-day window" — acceptable.
+  // Surfacing a real-time countdown would require a 1s ticker; not worth
+  // the extra renders for a state that only changes once per week.
+  // eslint-disable-next-line react-hooks/purity
   const inCooldown = !!cooldownEndsAt && new Date(cooldownEndsAt).getTime() > Date.now();
 
   function reset() {

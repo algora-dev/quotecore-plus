@@ -104,7 +104,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [calibrationMode, setCalibrationMode] = useState(false);
   const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
   const [calibrations, setCalibrations] = useState<Calibration[]>([]);
-  const [activeCalibrationId, setActiveCalibrationId] = useState<string | null>(null);
+  const [_activeCalibrationId, setActiveCalibrationId] = useState<string | null>(null);
   const [showCalibrationModal, setShowCalibrationModal] = useState(false);
   const [tempCalibrationLine, setTempCalibrationLine] = useState<any>(null);
   const [calibrationConfirmed, setCalibrationConfirmed] = useState(false);
@@ -121,7 +121,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [roofAreas, setRoofAreas] = useState<RoofArea[]>([]);
   const [areaMode, setAreaMode] = useState(false);
   const [areaPoints, setAreaPoints] = useState<{ x: number; y: number }[]>([]);
-  const [tempAreaPolygon, setTempAreaPolygon] = useState<any>(null);
+  const [_tempAreaPolygon, _setTempAreaPolygon] = useState<any>(null);
   const [showAreaNamePrompt, setShowAreaNamePrompt] = useState(false);
   const [pendingAreaPoints, setPendingAreaPoints] = useState<{ x: number; y: number }[]>([]);
   
@@ -132,8 +132,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [pointMode, setPointMode] = useState(false);
   const [showLineMeasurementPrompt, setShowLineMeasurementPrompt] = useState(false);
   const [pendingLineMeasurement, setPendingLineMeasurement] = useState<{ points: { x: number; y: number }[], length: number } | null>(null);
-  const [showAreaMeasurementPrompt, setShowAreaMeasurementPrompt] = useState(false);
-  const [pendingAreaMeasurement, setPendingAreaMeasurement] = useState<{ points: { x: number; y: number }[], area: number } | null>(null);
+  const [_showAreaMeasurementPrompt, _setShowAreaMeasurementPrompt] = useState(false);
+  const [_pendingAreaMeasurement, _setPendingAreaMeasurement] = useState<{ points: { x: number; y: number }[], area: number } | null>(null);
   const [showPointMeasurementPrompt, setShowPointMeasurementPrompt] = useState(false);
   const [pendingPointLocation, setPendingPointLocation] = useState<{ x: number; y: number } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -905,7 +905,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           // Calculate pixel distance
           const dx = point2.x - point1.x;
           const dy = point2.y - point1.y;
-          const pixelDistance = Math.sqrt(dx * dx + dy * dy);
+          const _pixelDistance = Math.sqrt(dx * dx + dy * dy);
           
           // Store for modal
           setCalibrationPoints([point1, point2]);
@@ -1103,7 +1103,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     setCalibrations(updatedCalibrations);
     
     // Calculate average scale
-    const avgScale = updatedCalibrations.reduce((sum, cal) => sum + cal.scale, 0) / updatedCalibrations.length;
+    const _avgScale = updatedCalibrations.reduce((sum, cal) => sum + cal.scale, 0) / updatedCalibrations.length;
     setActiveCalibrationId(newCalibration.id);
     
     setCalibrationPoints([]);

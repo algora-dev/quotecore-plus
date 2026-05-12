@@ -1,6 +1,6 @@
 'use client';
 import { useMemo } from 'react';
-import Link from 'next/link';
+import _Link from 'next/link';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
 import type { QuoteTaxRow } from '@/app/lib/taxes/types';
 import { CustomerQuoteEditor } from '../customer-edit/CustomerQuoteEditor';

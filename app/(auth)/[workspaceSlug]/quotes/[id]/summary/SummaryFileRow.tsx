@@ -17,7 +17,7 @@ interface Props {
   deletable?: boolean;
 }
 
-export function SummaryFileRow({ quoteId, id, fileName, fileType, fileSize, storagePath, url, deletable = true }: Props) {
+export function SummaryFileRow({ quoteId, id, fileName, fileType, fileSize, storagePath: _storagePath, url, deletable = true }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [removed, setRemoved] = useState(false);
@@ -62,7 +62,6 @@ export function SummaryFileRow({ quoteId, id, fileName, fileType, fileSize, stor
             <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
           </svg>
         ) : (
-          // eslint-disable-next-line @next/next/no-img-element
           <img src={url} alt={fileName} className="w-8 h-8 object-cover rounded border border-slate-300" />
         )}
       </div>

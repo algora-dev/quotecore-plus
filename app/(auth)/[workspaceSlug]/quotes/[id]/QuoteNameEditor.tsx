@@ -14,7 +14,7 @@ export function QuoteNameEditor({ quoteId, customerName, jobName }: Props) {
   const [client, setClient] = useState(customerName);
   const [reference, setReference] = useState(jobName || '');
   const [saving, setSaving] = useState(false);
-  const router = useRouter();
+  const _router = useRouter();
 
   async function handleSave() {
     if (!client.trim()) return;

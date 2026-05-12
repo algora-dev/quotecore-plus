@@ -5,7 +5,7 @@ import { useState, useTransition } from 'react';
 import { updateCompanyLanguage } from '@/app/actions';
 import { SUPPORTED_LANGUAGES } from '@/app/lib/i18n/languages';
 
-export function LanguageSwitcher({ currentLanguage }: { currentLanguage: string }) {
+export function LanguageSwitcher({  }: { currentLanguage: string }) {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
