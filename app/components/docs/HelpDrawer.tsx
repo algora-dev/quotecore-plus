@@ -70,12 +70,23 @@ export function HelpDrawerTrigger() {
   );
 }
 
+/**
+ * Distinguishes "the slug doesn't exist" from "the request itself failed"
+ * so the UI can show the right message + a Retry button only when retrying
+ * would actually help (Gerald audit L-02). `null` means no error.
+ */
+type DocError = { kind: 'not-found' } | { kind: 'network'; detail: string } | null;
+
 export function HelpDrawerPanel() {
   const { open, closeDrawer, widthVw, setWidthVw, commitWidth } = useHelpDrawer();
   const pathname = usePathname();
   const [tree, setTree] = useState<DrawerTree | null>(null);
+  const [treeError, setTreeError] = useState<string | null>(null);
+  const [treeReload, setTreeReload] = useState(0);
   const [slug, setSlug] = useState<string>('');
   const [doc, setDoc] = useState<DrawerDoc | null>(null);
+  const [docError, setDocError] = useState<DocError>(null);
+  const [docReload, setDocReload] = useState(0);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const [query, setQuery] = useState('');
@@ -93,19 +104,37 @@ export function HelpDrawerPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // Load tree once when the panel first opens.
+  // Load tree once when the panel first opens. Retried on demand via the
+  // `treeReload` counter (incremented by the "Try again" button).
   useEffect(() => {
     if (!open || tree) return;
     let cancelled = false;
-    fetch('/api/docs/tree').then(async (r) => {
-      if (!r.ok || cancelled) return;
-      const json: DrawerTree = await r.json();
-      if (!cancelled) setTree(json);
-    }).catch(() => {});
+    setTreeError(null);
+    (async () => {
+      try {
+        const r = await fetch('/api/docs/tree');
+        if (cancelled) return;
+        if (!r.ok) {
+          setTreeError(`Could not load the help index (HTTP ${r.status}).`);
+          return;
+        }
+        const json: DrawerTree = await r.json();
+        if (!cancelled) setTree(json);
+      } catch (err) {
+        if (!cancelled) {
+          setTreeError(
+            err instanceof Error ? err.message : 'Could not reach the help service.'
+          );
+        }
+      }
+    })();
     return () => { cancelled = true; };
-  }, [open, tree]);
+  }, [open, tree, treeReload]);
 
   // Load the doc whenever the active slug changes while the panel is open.
+  // Distinguishes 404 (real not-found, retry won't help) from any other
+  // failure (network/5xx, retry might help) so the UI shows the right CTA
+  // (Gerald audit L-02).
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
@@ -113,24 +142,39 @@ export function HelpDrawerPanel() {
     (async () => {
       setLoading(true);
       setFeedback(null);
+      setDocError(null);
       try {
         const r = await fetch(target);
         if (cancelled) return;
-        if (!r.ok) { setDoc(null); return; }
+        if (!r.ok) {
+          setDoc(null);
+          if (r.status === 404) {
+            setDocError({ kind: 'not-found' });
+          } else {
+            setDocError({ kind: 'network', detail: `HTTP ${r.status}` });
+          }
+          return;
+        }
         const json: DrawerDoc = await r.json();
         if (cancelled) return;
         setDoc(json);
         requestAnimationFrame(() => {
           contentScrollRef.current?.scrollTo({ top: 0 });
         });
-      } catch {
-        if (!cancelled) setDoc(null);
+      } catch (err) {
+        if (!cancelled) {
+          setDoc(null);
+          setDocError({
+            kind: 'network',
+            detail: err instanceof Error ? err.message : 'fetch failed',
+          });
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [open, slug]);
+  }, [open, slug, docReload]);
 
   // Esc to close. NOTE: no body-scroll lock \u2014 the app underneath must stay
   // scrollable and clickable while the drawer is open.
@@ -296,7 +340,13 @@ export function HelpDrawerPanel() {
               </div>
             ) : null}
           </div>
-          <DrawerNav tree={tree} active={slug} onPick={onPickSlug} />
+          <DrawerNav
+            tree={tree}
+            treeError={treeError}
+            onRetry={() => setTreeReload((n) => n + 1)}
+            active={slug}
+            onPick={onPickSlug}
+          />
         </aside>
 
         {/* Content pane. */}
@@ -307,7 +357,30 @@ export function HelpDrawerPanel() {
           {loading ? (
             <p className="text-sm text-slate-500">Loading...</p>
           ) : !doc ? (
-            <p className="text-sm text-slate-500">No help page available.</p>
+            docError?.kind === 'network' ? (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm">
+                <p className="font-semibold text-rose-900">Couldn&apos;t load this help page.</p>
+                <p className="mt-1 text-rose-800">
+                  {docError.detail}. Check your connection and try again.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setDocReload((n) => n + 1)}
+                  className="mt-3 inline-flex items-center gap-1 rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : docError?.kind === 'not-found' ? (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                <p className="font-semibold text-slate-900">This help page isn&apos;t available.</p>
+                <p className="mt-1 text-slate-600">
+                  Try picking another topic from the sidebar.
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">No help page available.</p>
+            )
           ) : (
             <article>
               {doc.sectionTitle ? (
@@ -375,14 +448,35 @@ export function HelpDrawerPanel() {
 
 function DrawerNav({
   tree,
+  treeError,
+  onRetry,
   active,
   onPick,
 }: {
   tree: DrawerTree | null;
+  treeError: string | null;
+  onRetry: () => void;
   active: string;
   onPick: (slug: string) => void;
 }) {
-  if (!tree) return <p className="text-sm text-slate-500">Loading index...</p>;
+  if (!tree) {
+    if (treeError) {
+      return (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs">
+          <p className="font-semibold text-rose-900">Help index unavailable</p>
+          <p className="mt-1 text-rose-800">{treeError}</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="mt-2 inline-flex items-center gap-1 rounded-md bg-rose-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-rose-700"
+          >
+            Try again
+          </button>
+        </div>
+      );
+    }
+    return <p className="text-sm text-slate-500">Loading index...</p>;
+  }
   return (
     <nav className="text-sm">
       <ul className="space-y-5">
