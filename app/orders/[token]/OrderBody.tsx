@@ -28,10 +28,6 @@ interface LengthEntry {
 export function OrderBody({ order, lines, flashings }: Props) {
   const printRootRef = useRef<HTMLDivElement | null>(null);
 
-  function handleDownload() {
-    window.print();
-  }
-
   return (
     <>
       <style jsx global>{`
@@ -148,14 +144,10 @@ export function OrderBody({ order, lines, flashings }: Props) {
         </div>
       </div>
 
-      <div className="mb-6 flex justify-center" data-print-hide>
-        <button
-          onClick={handleDownload}
-          className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition"
-        >
-          Download / Print PDF
-        </button>
-      </div>
+      {/* Download button is now rendered by OrderResponseForm so it
+          shares the action row with Confirm / Request changes / Question.
+          OrderBody itself only renders the document body + the print
+          stylesheet. */}
     </>
   );
 }

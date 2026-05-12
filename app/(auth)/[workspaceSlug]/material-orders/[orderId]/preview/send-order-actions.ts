@@ -7,7 +7,6 @@ import {
 } from '@/app/lib/supabase/server';
 import { sendOutboundMessage } from '@/app/lib/messages/send';
 import { generateOrderSupplierToken } from './supplier-link-actions';
-import { getSiteUrl } from '@/app/lib/email/urls';
 
 export interface SendOrderMessageInput {
   orderId: string;
@@ -44,17 +43,17 @@ export async function sendOrderMessage(
     return { ok: false, error: 'Order not found.' };
   }
 
-  // Make sure a supplier token exists so we can include the order URL
-  // in the outbound message. generateOrderSupplierToken is idempotent
-  // when a live token already exists, so this is safe to call every
-  // time. If it throws (shouldn't, given the ownership check above),
-  // the send still proceeds but without the order_link variable.
-  let orderLink: string | null = null;
-  try {
-    const token = order.acceptance_token ?? (await generateOrderSupplierToken(order.id));
-    orderLink = `${getSiteUrl()}/orders/${token}`;
-  } catch (err) {
-    console.error('[sendOrderMessage] supplier-token issue:', err);
+  // Make sure a supplier token exists so the pipeline can resolve the
+  // "View order" CTA + the {{order_link}} merge variable.
+  // generateOrderSupplierToken is idempotent when a live token already
+  // exists, so this is safe to call every time.
+  let acceptanceToken: string | null = order.acceptance_token ?? null;
+  if (!acceptanceToken) {
+    try {
+      acceptanceToken = await generateOrderSupplierToken(order.id);
+    } catch (err) {
+      console.error('[sendOrderMessage] supplier-token issue:', err);
+    }
   }
 
   // Item count for the {{order_total_items}} merge variable.
@@ -100,15 +99,14 @@ export async function sendOrderMessage(
       order_reference: order.reference ?? undefined,
       order_supplier: order.to_supplier ?? undefined,
       order_total_items: itemCount != null ? String(itemCount) : undefined,
-      order_link: orderLink ?? undefined,
+      // {{order_link}} is substituted by the pipeline using acceptanceToken
+      // so the text reference and the primary CTA URL stay consistent.
     },
     companyName,
     companyLogoUrl: null,
     companyEmail: profile.email ?? null,
     companyPhone: null,
-    primaryCta: orderLink
-      ? { label: 'View order', url: orderLink }
-      : null,
+    acceptanceToken,
   });
 
   if (!result.ok) {

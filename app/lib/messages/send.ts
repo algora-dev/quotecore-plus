@@ -73,16 +73,30 @@ export interface SendOutboundMessageInput {
   companyEmail?: string | null;
   companyPhone?: string | null;
   /**
-   * Override the primary CTA button in the email shell. Default is to
-   * point at `/m/[token]` (the generic reply page) with label
-   * "Respond now". order_send sends pass an override here so the
-   * supplier lands directly on the order page.
+   * Override the primary CTA button in the email shell. If null/omitted
+   * the pipeline picks a default based on `kind`:
+   *   quote_send / followup  → "View quote" → /accept/<acceptanceToken>
+   *   order_send             → "View order" → /orders/<acceptanceToken>
+   *   decline_response       → "Reply"     → /m/<replyToken>
+   *   custom                 → "Respond now" → /m/<replyToken>
+   *
+   * Callers (sendQuoteMessage / sendOrderMessage) usually pass null and
+   * let the pipeline decide. They only override when there's no
+   * acceptance token available (e.g. quote without a customer quote)
+   * and we want to fall back to the generic reply page.
    */
   primaryCta?: {
     label: string;
     /** Either an absolute URL or a path relative to the site URL. */
     url: string;
   } | null;
+  /**
+   * Public acceptance/order token for the related quote or order, if
+   * one already exists. When the pipeline picks the default primary
+   * CTA per `kind`, it uses this to build the URL. If not supplied,
+   * the pipeline falls back to the generic /m/<replyToken> page.
+   */
+  acceptanceToken?: string | null;
 }
 
 export type SendOutboundMessageResult =
@@ -101,6 +115,18 @@ interface MessageTokenPayload {
 
 function lowerEmail(e: string): string {
   return e.trim().toLowerCase();
+}
+
+/**
+ * Resolve a possibly-relative URL to an absolute one against the site
+ * base URL. Centralised so the per-kind default and caller-supplied
+ * overrides both produce the same shape.
+ */
+function resolveUrl(siteUrl: string, candidate: string): string {
+  if (candidate.startsWith('http://') || candidate.startsWith('https://')) {
+    return candidate;
+  }
+  return `${siteUrl}${candidate.startsWith('/') ? '' : '/'}${candidate}`;
 }
 
 /**
@@ -232,38 +258,86 @@ export async function sendOutboundMessage(
   const bodyWithReplyLink = renderMergeVars(bodyRendered, { reply_link: messageReplyUrl });
   const subjectWithReplyLink = renderMergeVars(subjectRendered, { reply_link: messageReplyUrl });
 
-  // Decide the primary CTA. Caller-supplied override wins; otherwise
-  // default to the generic reply page. We resolve relative URLs against
-  // the site URL so callers can pass e.g. `/orders/<token>` without
-  // duplicating the host.
-  const primaryCta = input.primaryCta
-    ? {
+  // Decide the primary CTA.
+  //
+  // Precedence:
+  //   1. Caller-supplied `input.primaryCta` override.
+  //   2. Per-kind default using `input.acceptanceToken` to point at the
+  //      richer customer/supplier page when available.
+  //   3. Fall back to the generic /m/<replyToken> page.
+  //
+  // Why default in the pipeline instead of the call sites: there's one
+  // sensible default per `kind` and centralising it means a future kind
+  // (e.g. invoice_send) only has to add one switch arm here rather than
+  // forcing every caller to re-derive the right URL.
+  const primaryCta = (() => {
+    if (input.primaryCta) {
+      return {
         label: input.primaryCta.label,
-        url: input.primaryCta.url.startsWith('http')
-          ? input.primaryCta.url
-          : `${siteUrl}${input.primaryCta.url.startsWith('/') ? '' : '/'}${input.primaryCta.url}`,
+        url: resolveUrl(siteUrl, input.primaryCta.url),
+      };
+    }
+    const tok = input.acceptanceToken;
+    if (tok) {
+      switch (input.kind) {
+        case 'quote_send':
+        case 'followup':
+          return { label: 'View quote', url: `${siteUrl}/accept/${encodeURIComponent(tok)}` };
+        case 'order_send':
+          return { label: 'View order', url: `${siteUrl}/orders/${encodeURIComponent(tok)}` };
+        // decline_response + custom drop through to the reply-page default.
+        default:
+          break;
       }
-    : { label: 'Respond now', url: messageReplyUrl };
+    }
+    if (input.kind === 'decline_response') {
+      return { label: 'Reply', url: messageReplyUrl };
+    }
+    return { label: 'Respond now', url: messageReplyUrl };
+  })();
+
+  // The body / subject can also reference {{quote_link}} or {{order_link}};
+  // populate those from whichever per-kind URL the CTA resolved to so
+  // text references in templates match the button URL.
+  const linkContext: MergeVarContext = {};
+  if (input.acceptanceToken) {
+    if (input.kind === 'quote_send' || input.kind === 'followup' || input.kind === 'decline_response') {
+      linkContext.quote_link = `${siteUrl}/accept/${encodeURIComponent(input.acceptanceToken)}`;
+    }
+    if (input.kind === 'order_send') {
+      linkContext.order_link = `${siteUrl}/orders/${encodeURIComponent(input.acceptanceToken)}`;
+    }
+  }
+  const bodyWithLinks = renderMergeVars(bodyWithReplyLink, linkContext);
+  const subjectWithLinks = renderMergeVars(subjectWithReplyLink, linkContext);
 
   const html = renderOutboundMessageHtml({
     companyName: input.companyName,
     companyLogoUrl: input.companyLogoUrl ?? null,
     companyEmail: input.companyEmail ?? null,
     companyPhone: input.companyPhone ?? null,
-    bodyText: bodyWithReplyLink,
+    bodyText: bodyWithLinks,
     replyUrl: primaryCta.url,
     replyCtaLabel: primaryCta.label,
     unsubscribeUrl,
   });
   const text = renderOutboundMessageText({
     companyName: input.companyName,
-    bodyText: bodyWithReplyLink,
+    bodyText: bodyWithLinks,
     replyUrl: primaryCta.url,
     replyCtaLabel: primaryCta.label,
     unsubscribeUrl,
     companyEmail: input.companyEmail ?? null,
     companyPhone: input.companyPhone ?? null,
   });
+
+  // Persist the final rendered subject/body so the outbound_messages row
+  // captures exactly what the recipient received (including the link
+  // substitution that happened post-insert).
+  await supabase
+    .from('outbound_messages')
+    .update({ subject: subjectWithLinks, body: bodyWithLinks })
+    .eq('id', messageId);
 
   // 7. Dispatch. From-address display-name carries the user's company so
   //    the recipient sees "Acme Roofing via QuoteCore+" rather than
@@ -276,7 +350,7 @@ export async function sendOutboundMessage(
   const result = await sendEmail({
     from: fromHeader,
     to: input.recipientEmail,
-    subject: subjectWithReplyLink,
+    subject: subjectWithLinks,
     html,
     text,
     replyTo: 'noreply@quote-core.com',

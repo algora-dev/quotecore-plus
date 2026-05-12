@@ -310,6 +310,7 @@ export default async function QuoteSummaryPage({
             />
             <SendQuoteButton
               quoteId={id}
+              workspaceSlug={workspaceSlug}
               existingToken={quote.acceptance_token && !quote.withdrawn_at ? quote.acceptance_token : null}
               hasCustomerQuote={hasCustomerQuote}
               emailTemplates={emailTemplates || []}

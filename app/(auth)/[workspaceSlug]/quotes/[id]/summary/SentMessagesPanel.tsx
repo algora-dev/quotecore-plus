@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { SentMessageRow, type SentMessageReply, type MessageReplyAction } from './SentMessageRow';
+import { DeleteAllMessagesButton } from './DeleteAllMessagesButton';
 
 interface Props {
   quoteId: string;
@@ -74,6 +75,7 @@ export async function SentMessagesPanel({ quoteId, companyId }: Props) {
             </span>
           ) : null}
         </div>
+        <DeleteAllMessagesButton quoteId={quoteId} messageCount={messages.length} />
       </header>
 
       <ul className="divide-y divide-slate-100">

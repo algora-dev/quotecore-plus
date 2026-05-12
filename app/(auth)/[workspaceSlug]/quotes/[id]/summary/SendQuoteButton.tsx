@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { generateAcceptanceToken } from '../../actions';
 import { sendQuoteMessage } from './send-message-actions';
 
@@ -17,6 +18,7 @@ interface EmailTemplate {
 
 interface Props {
   quoteId: string;
+  workspaceSlug: string;
   existingToken: string | null;
   hasCustomerQuote: boolean;
   emailTemplates: EmailTemplate[];
@@ -47,7 +49,22 @@ function replacePlaceholders(text: string, data: Record<string, string>): string
     .replace(/\{\{quote_date\}\}/g, sanitize(data.quote_date || ''));
 }
 
-export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emailTemplates, quoteMeta }: Props) {
+export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCustomerQuote, emailTemplates, quoteMeta }: Props) {
+  const router = useRouter();
+
+  /**
+   * Open the Templates page on the Message tab so the user can build
+   * a reusable quote_send template. The `kind` + `return` query params
+   * are aspirational — the TemplatesPageClient currently honours `tab`
+   * but not the others; they're recorded in the URL so the Phase 2
+   * wiring can pick them up without breaking the navigation now.
+   */
+  function goCreateTemplate() {
+    const returnPath = encodeURIComponent(
+      `/${workspaceSlug}/quotes/${quoteId}/summary`,
+    );
+    router.push(`/${workspaceSlug}/templates?tab=email&kind=quote_send&return=${returnPath}`);
+  }
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'choose' | 'url' | 'email' | 'send'>('choose');
   const [token, setToken] = useState(existingToken);
@@ -279,7 +296,7 @@ export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emai
                     </select>
                   </div>
                 )}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <button
                     onClick={handleSendMode}
                     data-copilot="cl-send-option"
@@ -327,6 +344,20 @@ export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emai
                         ? 'Use a template, copy text to your own email client'
                         : 'Create email text to paste into your own client'}
                     </p>
+                  </button>
+
+                  <button
+                    onClick={goCreateTemplate}
+                    data-copilot="cl-create-template-option"
+                    className="p-4 rounded-xl border-2 border-slate-200 hover:border-orange-300 hover:bg-orange-50/50 transition text-left space-y-2"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                        <path d="M12 5v14M5 12h14" />
+                      </svg>
+                    </div>
+                    <h4 className="text-sm font-semibold text-slate-900">Create new template</h4>
+                    <p className="text-xs text-slate-500">Build a reusable quote email template</p>
                   </button>
                 </div>
               </div>

@@ -3,6 +3,7 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { OrderResponseForm } from './OrderResponseForm';
 import { OrderBody } from './OrderBody';
+import { DownloadOrderButton } from './DownloadOrderButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -97,6 +98,7 @@ export default async function PublicOrderPage({ params }: Props) {
         <OrderResponseForm
           token={token}
           alreadyResponded={!!latestResponse}
+          downloadAction={<DownloadOrderButton />}
         />
 
         <footer className="mt-10 text-center text-xs text-slate-400">

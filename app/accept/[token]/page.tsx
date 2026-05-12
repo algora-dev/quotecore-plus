@@ -331,8 +331,10 @@ export default async function AcceptQuotePage({
           )}
         </div>
 
-        {/* Accept / Request Changes / Decline rendered as a single button row
-            so the three options read as siblings of the same decision. */}
+        {/* Accept / Request Changes / Decline / Download rendered as a single
+            button row so the four options read as siblings of the same
+            decision surface. Download is passed via `secondaryAction` so it
+            also stays visible after the user accepts or declines. */}
         <AcceptDeclineButtons
           token={token}
           middleAction={
@@ -343,13 +345,8 @@ export default async function AcceptQuotePage({
               defaultCustomerEmail={quote.customer_email ?? null}
             />
           }
+          secondaryAction={<DownloadQuoteButton printTargetId="public-quote-document" />}
         />
-
-        {/* Download is a passive secondary action so it sits below the main
-            accept/decline/changes button row rather than competing with it. */}
-        <div className="flex justify-center" data-print-hide>
-          <DownloadQuoteButton printTargetId="public-quote-document" />
-        </div>
       </div>
     </div>
   );

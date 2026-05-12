@@ -54,7 +54,11 @@ export function DownloadQuoteButton({ printTargetId }: { printTargetId: string }
       <button
         onClick={handleClick}
         data-print-hide
-        className="px-4 py-2.5 text-sm font-medium rounded-full border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition"
+        // Blue-outline blue-text styling to match the rest of the app's
+        // tertiary buttons (and the Accept/Decline pattern). Hover
+        // brightens the fill and adds the same brand-glow shadow used
+        // throughout the action bar.
+        className="px-6 py-2.5 text-sm font-semibold rounded-full bg-white text-blue-600 border border-blue-300 hover:bg-blue-50 hover:shadow-[0_0_12px_rgba(59,130,246,0.35)] transition-all"
       >
         Download / Print PDF
       </button>
