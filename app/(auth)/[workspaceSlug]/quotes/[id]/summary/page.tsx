@@ -23,6 +23,7 @@ import { WithdrawQuoteButton } from './WithdrawQuoteButton';
 import { SummaryTabs } from './SummaryTabs';
 import { SummaryFilesPanel } from './SummaryFilesPanel';
 import { RevisionRequestsPanel } from './RevisionRequestsPanel';
+import { SentMessagesPanel } from './SentMessagesPanel';
 import { loadQuoteTaxes } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
 import { getSignedUrls } from '@/app/lib/storage/helpers';
@@ -241,6 +242,8 @@ export default async function QuoteSummaryPage({
           quoteNumber={quote.quote_number}
         />
       )}
+
+      <SentMessagesPanel quoteId={id} companyId={quote.company_id} />
 
       <SummaryTabs
         workspaceSlug={workspaceSlug}

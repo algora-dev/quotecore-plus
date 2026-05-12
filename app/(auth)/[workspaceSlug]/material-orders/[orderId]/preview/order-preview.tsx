@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { MaterialOrderRow, MaterialOrderLineRow, FlashingLibraryRow } from '@/app/lib/types';
 import { markOrderAsOrdered } from '../../order-list-actions';
+import { SendOrderButton } from './SendOrderButton';
 
 
 interface Props {
@@ -76,6 +77,12 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
           >
             Print / Save PDF
           </button>
+          <SendOrderButton
+            orderId={order.id}
+            orderNumber={order.order_number}
+            defaultRecipientName={order.to_supplier}
+            companyName={order.from_company}
+          />
         </div>
       </div>
 

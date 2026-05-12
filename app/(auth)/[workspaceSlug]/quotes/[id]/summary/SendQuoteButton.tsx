@@ -1,6 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { generateAcceptanceToken } from '../../actions';
+import { sendQuoteMessage } from './send-message-actions';
 
 /**
  * Subset of the email_templates row used by SendQuoteButton. Nullability
@@ -48,7 +49,7 @@ function replacePlaceholders(text: string, data: Record<string, string>): string
 
 export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emailTemplates, quoteMeta }: Props) {
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<'choose' | 'url' | 'email'>('choose');
+  const [mode, setMode] = useState<'choose' | 'url' | 'email' | 'send'>('choose');
   const [token, setToken] = useState(existingToken);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -59,6 +60,13 @@ export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emai
   const [emailBody, setEmailBody] = useState('');
   const [emailCopied, setEmailCopied] = useState(false);
   const [expiryDays, setExpiryDays] = useState<number>(30);
+
+  // Send mode state (Messages pipeline). Reuses subject/body from email
+  // mode so the user can flip between Copy and Send without retyping.
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [sendSuccess, setSendSuccess] = useState<'sent' | 'suppressed' | null>(null);
+  const [isSending, startSendTransition] = useTransition();
 
   // Close modal when copilot transition starts
   useEffect(() => {
@@ -98,6 +106,43 @@ export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emai
   async function handleUrlMode() {
     setMode('url');
     await ensureToken();
+  }
+
+  async function handleSendMode() {
+    // Use the same template-prefill as email mode so the user can flip
+    // freely between the two.
+    await handleEmailMode();
+    setMode('send');
+    setSendError(null);
+    setSendSuccess(null);
+  }
+
+  function handleSendSubmit() {
+    setSendError(null);
+    setSendSuccess(null);
+    if (!recipientEmail.trim()) {
+      setSendError('Please enter a recipient email.');
+      return;
+    }
+    if (!emailSubject.trim() || !emailBody.trim()) {
+      setSendError('Subject and body cannot be empty.');
+      return;
+    }
+    startSendTransition(async () => {
+      const result = await sendQuoteMessage({
+        quoteId,
+        templateId: selectedTemplateId || null,
+        subject: emailSubject,
+        body: emailBody,
+        recipientEmail: recipientEmail.trim(),
+        recipientName: quoteMeta.customerName,
+      });
+      if (result.ok) {
+        setSendSuccess(result.status);
+      } else {
+        setSendError(result.error);
+      }
+    });
   }
 
   async function handleEmailMode() {
@@ -200,6 +245,7 @@ export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emai
               <h3 className="text-lg font-semibold text-slate-900">
                 {mode === 'choose' ? 'Send Quote to Customer' :
                  mode === 'url' ? 'Copy Acceptance Link' :
+                 mode === 'send' ? 'Send from QuoteCore+' :
                  'Generate Email'}
               </h3>
               <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600 text-xl">✕</button>
@@ -233,7 +279,21 @@ export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emai
                     </select>
                   </div>
                 )}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <button
+                    onClick={handleSendMode}
+                    data-copilot="cl-send-option"
+                    className="p-4 rounded-xl border-2 border-orange-300 bg-orange-50/50 hover:border-orange-400 hover:bg-orange-50 transition text-left space-y-2"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                    </div>
+                    <h4 className="text-sm font-semibold text-slate-900">Send from QuoteCore+</h4>
+                    <p className="text-xs text-slate-500">Email the customer directly from the app, branded as your company</p>
+                  </button>
+
                   <button
                     onClick={handleUrlMode}
                     data-copilot="cl-copy-url-option"
@@ -261,8 +321,8 @@ export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emai
                     <h4 className="text-sm font-semibold text-slate-900">Generate Email</h4>
                     <p className="text-xs text-slate-500">
                       {emailTemplates.length > 0
-                        ? 'Use a template with quote details filled in'
-                        : 'Create an email with the acceptance link'}
+                        ? 'Use a template, copy text to your own email client'
+                        : 'Create email text to paste into your own client'}
                     </p>
                   </button>
                 </div>
@@ -377,6 +437,99 @@ export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emai
                     }`}
                   >
                     {emailCopied ? '✓ Email Copied!' : 'Copy Email'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Send Mode (Messages pipeline) */}
+            {mode === 'send' && !loading && (
+              <div data-copilot="cl-send-mode" className="space-y-4">
+                <p className="text-sm text-slate-600">
+                  We&apos;ll email the customer directly from QuoteCore+, branded as your
+                  company. Replies come back as in-app alerts.
+                </p>
+
+                {/* Recipient */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Recipient email</label>
+                  <input
+                    type="email"
+                    value={recipientEmail}
+                    onChange={(e) => setRecipientEmail(e.target.value)}
+                    placeholder="customer@example.com"
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Template selector — reused from email mode */}
+                {emailTemplates.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Email Template</label>
+                    <select
+                      value={selectedTemplateId}
+                      onChange={(e) => handleTemplateChange(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                    >
+                      <option value="">— Select template —</option>
+                      {emailTemplates.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                          {t.is_default ? ' (Default)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Subject */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
+                  <input
+                    type="text"
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Body */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Message</label>
+                  <textarea
+                    value={emailBody}
+                    onChange={(e) => setEmailBody(e.target.value)}
+                    rows={10}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    The recipient sees a &ldquo;Respond now&rdquo; button below this text that opens a reply page in their browser.
+                  </p>
+                </div>
+
+                {sendError ? (
+                  <p className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2">{sendError}</p>
+                ) : null}
+                {sendSuccess === 'sent' ? (
+                  <p className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg p-2">Message sent. Replies will show up as in-app alerts.</p>
+                ) : null}
+                {sendSuccess === 'suppressed' ? (
+                  <p className="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-lg p-2">This recipient is on your suppression list, so the message was blocked. The send is logged but no email was dispatched.</p>
+                ) : null}
+
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    onClick={() => setMode('choose')}
+                    className="text-sm text-slate-500 hover:text-slate-700"
+                  >
+                    ← Back to options
+                  </button>
+                  <button
+                    onClick={handleSendSubmit}
+                    disabled={isSending || sendSuccess === 'sent'}
+                    className="px-4 py-2 text-sm font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                  >
+                    {isSending ? 'Sending…' : sendSuccess === 'sent' ? 'Sent' : 'Send message'}
                   </button>
                 </div>
               </div>

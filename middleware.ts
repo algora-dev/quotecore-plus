@@ -15,6 +15,8 @@ const PUBLIC_PATHS = [
   '/docs',         // Public help library
   '/admin/login',  // Admin sign-in (the rest of /admin/* is gated by
                    //  the requireAdmin() helper at the page boundary).
+  '/m',            // Public recipient reply pages (Messages pipeline).
+                   //  HMAC-signed token in the URL is the access gate.
 ];
 
 // Paths reachable when the user has an AAL1 session but still needs to clear 2FA.

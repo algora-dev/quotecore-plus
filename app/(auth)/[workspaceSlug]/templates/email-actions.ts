@@ -22,11 +22,20 @@ export async function loadEmailTemplates(): Promise<EmailTemplate[]> {
   return data || [];
 }
 
+export type MessageTemplateKind =
+  | 'quote_send'
+  | 'order_send'
+  | 'followup'
+  | 'decline_response'
+  | 'custom';
+
 export async function createEmailTemplate(input: {
   name: string;
   subject: string;
   body: string;
   is_default?: boolean;
+  kind?: MessageTemplateKind;
+  category?: string | null;
 }): Promise<EmailTemplate> {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
@@ -48,6 +57,8 @@ export async function createEmailTemplate(input: {
       subject: input.subject,
       body: input.body,
       is_default: input.is_default || false,
+      kind: input.kind ?? 'custom',
+      category: input.category ?? null,
     })
     .select()
     .single();
@@ -60,7 +71,14 @@ export async function createEmailTemplate(input: {
 
 export async function updateEmailTemplate(
   id: string,
-  input: { name?: string; subject?: string; body?: string; is_default?: boolean }
+  input: {
+    name?: string;
+    subject?: string;
+    body?: string;
+    is_default?: boolean;
+    kind?: MessageTemplateKind;
+    category?: string | null;
+  },
 ): Promise<void> {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();

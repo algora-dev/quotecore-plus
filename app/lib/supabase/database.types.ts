@@ -556,30 +556,36 @@ export type Database = {
       email_templates: {
         Row: {
           body: string
+          category: string | null
           company_id: string
           created_at: string | null
           id: string
           is_default: boolean | null
+          kind: string
           name: string
           subject: string
           updated_at: string | null
         }
         Insert: {
           body?: string
+          category?: string | null
           company_id: string
           created_at?: string | null
           id?: string
           is_default?: boolean | null
+          kind?: string
           name: string
           subject?: string
           updated_at?: string | null
         }
         Update: {
           body?: string
+          category?: string | null
           company_id?: string
           created_at?: string | null
           id?: string
           is_default?: boolean | null
+          kind?: string
           name?: string
           subject?: string
           updated_at?: string | null
@@ -974,6 +980,195 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "material_order_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_suppressions: {
+        Row: {
+          company_id: string
+          created_at: string
+          email: string
+          id: string
+          reason: string | null
+          source_message_id: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          email: string
+          id?: string
+          reason?: string | null
+          source_message_id?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          reason?: string | null
+          source_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_suppressions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_suppressions_source_message_id_fkey"
+            columns: ["source_message_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_message_replies: {
+        Row: {
+          action: string
+          body: string | null
+          company_id: string
+          created_at: string
+          id: string
+          ip: string | null
+          message_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          body?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          ip?: string | null
+          message_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          body?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          ip?: string | null
+          message_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_message_replies_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_message_replies_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_messages: {
+        Row: {
+          body: string
+          company_id: string
+          created_at: string
+          id: string
+          kind: string
+          opened_at: string | null
+          recipient_email: string
+          recipient_name: string | null
+          related_order_id: string | null
+          related_quote_id: string | null
+          replied_at: string | null
+          reply_token: string
+          send_error: string | null
+          sender_user_id: string
+          sent_at: string | null
+          status: string
+          subject: string
+          template_id: string | null
+        }
+        Insert: {
+          body: string
+          company_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          opened_at?: string | null
+          recipient_email: string
+          recipient_name?: string | null
+          related_order_id?: string | null
+          related_quote_id?: string | null
+          replied_at?: string | null
+          reply_token: string
+          send_error?: string | null
+          sender_user_id: string
+          sent_at?: string | null
+          status?: string
+          subject: string
+          template_id?: string | null
+        }
+        Update: {
+          body?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          opened_at?: string | null
+          recipient_email?: string
+          recipient_name?: string | null
+          related_order_id?: string | null
+          related_quote_id?: string | null
+          replied_at?: string | null
+          reply_token?: string
+          send_error?: string | null
+          sender_user_id?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_messages_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_related_order_id_fkey"
+            columns: ["related_order_id"]
+            isOneToOne: false
+            referencedRelation: "material_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_related_quote_id_fkey"
+            columns: ["related_quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_sender_user_id_fkey"
+            columns: ["sender_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
             referencedColumns: ["id"]
           },
         ]

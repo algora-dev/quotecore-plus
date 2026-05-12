@@ -61,7 +61,7 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
         {/* Header */}
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Templates</h1>
-          <p className="text-sm text-slate-500 mt-1">Manage quote, customer, and email templates.</p>
+          <p className="text-sm text-slate-500 mt-1">Manage quote, customer, and message templates.</p>
         </div>
 
         {/* Tabs */}
@@ -94,7 +94,7 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
                 : 'text-slate-500 hover:text-slate-700'
             }`}
           >
-            Email
+            Message
           </button>
         </div>
 
@@ -102,7 +102,7 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
         {activeTab === 'email' ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-slate-500">Email templates for sending quotes with acceptance links.</p>
+              <p className="text-sm text-slate-500">Message templates for sending quotes, orders, and follow-ups directly from the app.</p>
               <button
                 onClick={() => setEditingEmailTemplate(null)}
                 className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
@@ -112,7 +112,7 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
             </div>
             {emailTemplates.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
-                <p className="text-sm text-slate-500">No email templates yet.</p>
+                <p className="text-sm text-slate-500">No message templates yet.</p>
               </div>
             ) : (
               <div className="grid gap-1">

@@ -15,6 +15,13 @@ export type SendEmailInput = {
   text?: string;
   /** Override reply-to. Defaults to info@quote-core.com. */
   replyTo?: string;
+  /**
+   * Override the `From:` line. MUST still be on a verified Resend domain.
+   * Use this to carry a friendly display name (e.g.
+   * `"Acme Roofing via QuoteCore+" <noreply@quote-core.com>`). When unset,
+   * `EMAIL_FROM` from client.ts applies.
+   */
+  from?: string;
   /** Optional Resend tags for analytics/filtering in the dashboard. */
   tags?: { name: string; value: string }[];
 };
@@ -35,7 +42,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
 
   try {
     const { data, error } = await client.emails.send({
-      from: EMAIL_FROM,
+      from: input.from ?? EMAIL_FROM,
       to: input.to,
       subject: input.subject,
       html: input.html,
