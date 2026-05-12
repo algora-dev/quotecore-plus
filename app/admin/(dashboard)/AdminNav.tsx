@@ -10,6 +10,7 @@ import { usePathname } from 'next/navigation';
 const ADMIN_NAV: { label: string; href: string; soon?: boolean }[] = [
   { label: 'Dashboard', href: '/admin' },
   { label: 'Support tickets', href: '/admin/support-tickets' },
+  { label: 'Suppressions', href: '/admin/suppressions' },
   { label: 'Users', href: '/admin/users', soon: true },
   { label: 'Companies', href: '/admin/companies', soon: true },
 ];

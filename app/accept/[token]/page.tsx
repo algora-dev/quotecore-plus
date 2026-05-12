@@ -3,6 +3,7 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 import { AcceptDeclineButtons } from './AcceptDeclineButtons';
 import { RequestRequoteButton } from './RequestRequoteButton';
+import { DownloadQuoteButton } from './DownloadQuoteButton';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { loadQuoteTaxesByQuoteId } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
@@ -200,8 +201,12 @@ export default async function AcceptQuotePage({
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-4xl mx-auto p-8 space-y-6">
-        {/* Quote Document — exact same format as internal Customer Quote preview */}
-        <div className="bg-white rounded-xl border border-black p-12 space-y-8">
+        {/*
+          Quote Document — exact same format as internal Customer Quote
+          preview. The id is used by the DownloadQuoteButton's print-mode
+          CSS to single this element out for print-to-PDF.
+        */}
+        <div id="public-quote-document" className="bg-white rounded-xl border border-black p-12 space-y-8">
           {/* Quote Header */}
           <div className="border-b-2 border-black pb-6 mb-6">
             {/* Logo (Top Right) */}
@@ -339,6 +344,12 @@ export default async function AcceptQuotePage({
             />
           }
         />
+
+        {/* Download is a passive secondary action so it sits below the main
+            accept/decline/changes button row rather than competing with it. */}
+        <div className="flex justify-center" data-print-hide>
+          <DownloadQuoteButton printTargetId="public-quote-document" />
+        </div>
       </div>
     </div>
   );

@@ -17,6 +17,8 @@ const PUBLIC_PATHS = [
                    //  the requireAdmin() helper at the page boundary).
   '/m',            // Public recipient reply pages (Messages pipeline).
                    //  HMAC-signed token in the URL is the access gate.
+  '/orders',       // Public supplier order pages. Random UUID token in
+                   //  the URL is the access gate.
 ];
 
 // Paths reachable when the user has an AAL1 session but still needs to clear 2FA.

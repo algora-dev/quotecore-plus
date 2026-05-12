@@ -53,12 +53,12 @@ Kind regards,
 {{company_name}}`,
   order_send: `Hi {{order_supplier}},
 
-Please find our material order {{order_number}} attached.
+Please review our material order {{order_number}}.
 
 Order reference: {{order_reference}}
 Items: {{order_total_items}}
 
-Let us know once confirmed.
+You can confirm, request changes, or ask a question using the button below.
 
 Thanks,
 {{company_name}}`,

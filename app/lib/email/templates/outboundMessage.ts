@@ -19,7 +19,22 @@
  *    blocked. Required by anti-spam law for non-transactional mail.
  */
 
-import { ctaBlock, escapeHtml, paraHtml } from '../baseLayout';
+import { escapeHtml, paraHtml } from '../baseLayout';
+
+/**
+ * Button-only CTA. Unlike the shared `ctaBlock` helper used by
+ * security/alert emails, outbound Messages omit the fallback
+ * "If the button doesn't work, copy and paste this URL" line because
+ * Shaun spec'd a single, prominent action button (2026-05-12) and the
+ * extra text reads like clutter in a customer-facing message.
+ */
+function primaryCtaButton(label: string, url: string): string {
+  const safeUrl = escapeHtml(url);
+  const safeLabel = escapeHtml(label);
+  return `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background-color:#F97316;border-radius:8px;">
+<a href="${safeUrl}" style="display:inline-block;padding:12px 24px;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:8px;">${safeLabel}</a>
+</td></tr></table>`;
+}
 
 const SITE_FOOTER_TEXT = "Sent via QuoteCore+ \u2014 quoting & job management for trades.";
 
@@ -33,7 +48,12 @@ export interface OutboundMessageEmailInput {
   companyPhone?: string | null;
   /** Pre-rendered message body (already merge-var substituted, plain text). */
   bodyText: string;
-  /** Full URL to the public reply page `/m/[token]`. */
+  /**
+   * Full URL the primary CTA button points at. For quote_send / followup /
+   * decline_response / custom this is the message reply page `/m/[token]`.
+   * For order_send it's the supplier order page `/orders/[token]` so the
+   * supplier lands on the full order rather than a generic reply form.
+   */
   replyUrl: string;
   /** Label on the primary CTA button. Defaults to "Respond now". */
   replyCtaLabel?: string;
@@ -76,7 +96,7 @@ export function renderOutboundMessageHtml(input: OutboundMessageEmailInput): str
     )
     .join('\n');
 
-  const cta = ctaBlock(input.replyCtaLabel ?? 'Respond now', input.replyUrl);
+  const cta = primaryCtaButton(input.replyCtaLabel ?? 'Respond now', input.replyUrl);
 
   // Inline the per-message branded layout. We do NOT use the shared
   // renderEmailLayout() here because the company-branded header is

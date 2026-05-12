@@ -465,16 +465,19 @@ export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emai
                   />
                 </div>
 
-                {/* Template selector — reused from email mode */}
-                {emailTemplates.length > 0 && (
+                {/* Template selector — reused from email mode. No template
+                    is required; users can type a one-off message inline.
+                    The hint below the dropdown nudges them to save
+                    repeated messages as templates for next time. */}
+                {emailTemplates.length > 0 ? (
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Email Template</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Message Template</label>
                     <select
                       value={selectedTemplateId}
                       onChange={(e) => handleTemplateChange(e.target.value)}
                       className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                     >
-                      <option value="">— Select template —</option>
+                      <option value="">— None (custom message) —</option>
                       {emailTemplates.map((t) => (
                         <option key={t.id} value={t.id}>
                           {t.name}
@@ -482,6 +485,13 @@ export function SendQuoteButton({ quoteId, existingToken, hasCustomerQuote, emai
                         </option>
                       ))}
                     </select>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <p className="text-xs text-slate-500">
+                      No message templates yet. You can type a one-off message below, or
+                      <span className="text-slate-700 font-medium"> create a template</span> in the Templates section for faster future sends.
+                    </p>
                   </div>
                 )}
 

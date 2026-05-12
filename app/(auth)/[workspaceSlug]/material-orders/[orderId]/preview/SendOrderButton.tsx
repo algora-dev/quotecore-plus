@@ -9,6 +9,12 @@ import {
 interface Props {
   orderId: string;
   orderNumber: string;
+  /**
+   * Pre-existing supplier link token, if any. Currently used only as
+   * a hint to display "order link will be included" copy in the modal;
+   * the server action auto-generates a token at send time when missing.
+   */
+  supplierUrlToken?: string | null;
   defaultRecipientEmail?: string | null;
   defaultRecipientName?: string | null;
   companyName: string | null;
@@ -32,6 +38,7 @@ interface MessageTemplate {
 export function SendOrderButton({
   orderId,
   orderNumber,
+  supplierUrlToken: _supplierUrlToken,
   defaultRecipientEmail,
   defaultRecipientName,
   companyName,
@@ -63,7 +70,10 @@ export function SendOrderButton({
         } else {
           setSubject(`Material order ${orderNumber}${companyName ? ` from ${companyName}` : ''}`);
           setBody(
-            `Hi${defaultRecipientName ? ` ${defaultRecipientName}` : ''},\n\nPlease find our material order ${orderNumber} attached. Let us know once confirmed.\n\nThanks.`,
+            // Default body intentionally short. The branded "Respond now"
+            // button at the bottom of the email already provides the
+            // primary action; this body just sets context.
+            `Hi${defaultRecipientName ? ` ${defaultRecipientName}` : ''},\n\nPlease review our material order ${orderNumber}. You can confirm, request changes, or ask a question using the button below.\n\nThanks.`,
           );
         }
       })

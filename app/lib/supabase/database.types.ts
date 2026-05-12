@@ -792,6 +792,54 @@ export type Database = {
           },
         ]
       }
+      material_order_responses: {
+        Row: {
+          action: string
+          body: string | null
+          company_id: string
+          created_at: string
+          id: string
+          ip: string | null
+          order_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          body?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          ip?: string | null
+          order_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          body?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          ip?: string | null
+          order_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_order_responses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_order_responses_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "material_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       material_order_templates: {
         Row: {
           company_id: string
@@ -874,8 +922,12 @@ export type Database = {
       }
       material_orders: {
         Row: {
+          acceptance_token: string | null
+          acceptance_token_expires_at: string | null
+          changes_requested_at: string | null
           colours: string | null
           company_id: string
+          confirmed_at: string | null
           contact_details: string | null
           contact_person: string | null
           created_at: string
@@ -887,6 +939,7 @@ export type Database = {
           is_sent: boolean | null
           job_colours: string[] | null
           job_name: string | null
+          last_supplier_response_at: string | null
           layout_mode: string | null
           logo_url: string | null
           order_date: string | null
@@ -903,8 +956,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          acceptance_token?: string | null
+          acceptance_token_expires_at?: string | null
+          changes_requested_at?: string | null
           colours?: string | null
           company_id: string
+          confirmed_at?: string | null
           contact_details?: string | null
           contact_person?: string | null
           created_at?: string
@@ -916,6 +973,7 @@ export type Database = {
           is_sent?: boolean | null
           job_colours?: string[] | null
           job_name?: string | null
+          last_supplier_response_at?: string | null
           layout_mode?: string | null
           logo_url?: string | null
           order_date?: string | null
@@ -932,8 +990,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          acceptance_token?: string | null
+          acceptance_token_expires_at?: string | null
+          changes_requested_at?: string | null
           colours?: string | null
           company_id?: string
+          confirmed_at?: string | null
           contact_details?: string | null
           contact_person?: string | null
           created_at?: string
@@ -945,6 +1007,7 @@ export type Database = {
           is_sent?: boolean | null
           job_colours?: string[] | null
           job_name?: string | null
+          last_supplier_response_at?: string | null
           layout_mode?: string | null
           logo_url?: string | null
           order_date?: string | null

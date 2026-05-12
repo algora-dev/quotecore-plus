@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { SentMessageRow, type SentMessageReply, type MessageReplyAction } from './SentMessageRow';
 
 interface Props {
   quoteId: string;
@@ -10,17 +11,17 @@ interface Props {
  * as a server component so it picks up new sends on the next page render
  * without a separate client fetch.
  *
- * Renders nothing when the quote has no messages \u2014 keeps the summary
- * uncluttered for the common case where the user hasn't used Send from
- * QuoteCore+ yet.
+ * 2026-05-12: rows are now expandable to surface the recipient's reply
+ * detail (action + body + timestamp). The expansion UI lives in
+ * `SentMessageRow.tsx` (client component); this server component fetches
+ * the messages + their replies in a single round-trip and hydrates the
+ * client component with the result.
+ *
+ * Renders nothing when the quote has no messages.
  */
 export async function SentMessagesPanel({ quoteId, companyId }: Props) {
   const supabase = await createSupabaseServerClient();
 
-  // Load the most recent 10 messages for this quote. We rely on the
-  // outbound_messages.select RLS policy to keep this scoped to the
-  // caller's company (the page boundary above already enforces this via
-  // requireCompanyContext; this is belt-and-braces).
   const { data: messages } = await supabase
     .from('outbound_messages')
     .select(
@@ -35,7 +36,27 @@ export async function SentMessagesPanel({ quoteId, companyId }: Props) {
     return null;
   }
 
-  // Count messages with replies for the header badge.
+  const messageIds = messages.map((m) => m.id);
+  const { data: replyRows } = await supabase
+    .from('outbound_message_replies')
+    .select('id, message_id, action, body, created_at')
+    .in('message_id', messageIds)
+    .order('created_at', { ascending: true });
+
+  // Group replies by message_id so the row component can render them
+  // in chronological order without doing its own grouping.
+  const repliesByMessage = new Map<string, SentMessageReply[]>();
+  for (const row of replyRows ?? []) {
+    const list = repliesByMessage.get(row.message_id) ?? [];
+    list.push({
+      id: row.id,
+      action: row.action as MessageReplyAction,
+      body: row.body,
+      created_at: row.created_at,
+    });
+    repliesByMessage.set(row.message_id, list);
+  }
+
   const repliedCount = messages.filter((m) => m.replied_at).length;
 
   return (
@@ -57,59 +78,20 @@ export async function SentMessagesPanel({ quoteId, companyId }: Props) {
 
       <ul className="divide-y divide-slate-100">
         {messages.map((m) => (
-          <li key={m.id} className="py-2.5 flex items-center justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-slate-900 truncate">{m.subject}</p>
-              <p className="text-xs text-slate-500 truncate">
-                To {m.recipient_name ? `${m.recipient_name} <${m.recipient_email}>` : m.recipient_email}
-                {' \u00b7 '}
-                {new Date(m.sent_at ?? m.created_at).toLocaleDateString('en-GB', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                })}
-              </p>
-            </div>
-            <StatusPill status={m.status} replied={!!m.replied_at} />
-          </li>
+          <SentMessageRow
+            key={m.id}
+            id={m.id}
+            subject={m.subject}
+            recipientEmail={m.recipient_email}
+            recipientName={m.recipient_name}
+            status={m.status}
+            sentAt={m.sent_at}
+            createdAt={m.created_at}
+            repliedAt={m.replied_at}
+            replies={repliesByMessage.get(m.id) ?? []}
+          />
         ))}
       </ul>
     </div>
-  );
-}
-
-function StatusPill({ status, replied }: { status: string; replied: boolean }) {
-  if (replied) {
-    return (
-      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 whitespace-nowrap">
-        Replied
-      </span>
-    );
-  }
-  if (status === 'sent') {
-    return (
-      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 whitespace-nowrap">
-        Sent
-      </span>
-    );
-  }
-  if (status === 'suppressed') {
-    return (
-      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 whitespace-nowrap">
-        Suppressed
-      </span>
-    );
-  }
-  if (status === 'failed') {
-    return (
-      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 whitespace-nowrap">
-        Failed
-      </span>
-    );
-  }
-  return (
-    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 whitespace-nowrap">
-      {status}
-    </span>
   );
 }

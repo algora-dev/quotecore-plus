@@ -26,7 +26,18 @@ export const BASE_VARS = [
   'today',
 ] as const;
 
-/** Quote-context variables (quote_send / followup / decline_response). */
+/**
+ * Quote-context variables (quote_send / followup / decline_response).
+ *
+ * `reply_link` is intentionally NOT in the picker. The outbound email
+ * always renders a "Respond now" button at the bottom of the message that
+ * points at the public reply page; surfacing the same URL as a merge
+ * variable would let authors create duplicate links in the body, which
+ * was Shaun's spec on 2026-05-12. The renderer in `send.ts` still
+ * substitutes `{{reply_link}}` if an author types it manually (so the
+ * old templates that already use it don't break), but it's hidden from
+ * the picker so new templates won't reach for it.
+ */
 export const QUOTE_VARS = [
   ...BASE_VARS,
   'quote_number',
@@ -37,23 +48,28 @@ export const QUOTE_VARS = [
   'quote_total',
   'quote_currency',
   'quote_link',
-  'reply_link',
 ] as const;
 
-/** Order-context variables. */
+/** Order-context variables. Same `reply_link` reasoning as QUOTE_VARS. */
 export const ORDER_VARS = [
   ...BASE_VARS,
   'order_number',
   'order_reference',
   'order_supplier',
   'order_total_items',
-  'reply_link',
+  'order_link',
 ] as const;
 
+/**
+ * `reply_link` stays in the type so `send.ts` can still substitute it
+ * at render time (for backwards compat with any template that already
+ * uses it). It's just absent from the picker arrays above.
+ */
 export type MergeVarKey =
   | typeof BASE_VARS[number]
   | typeof QUOTE_VARS[number]
-  | typeof ORDER_VARS[number];
+  | typeof ORDER_VARS[number]
+  | 'reply_link';
 
 export type MergeVarContext = Partial<Record<MergeVarKey, string | number | null | undefined>>;
 
@@ -116,4 +132,5 @@ export const VAR_LABELS: Record<MergeVarKey, string> = {
   order_reference: 'Order reference',
   order_supplier: 'Order supplier',
   order_total_items: 'Order item count',
+  order_link: 'Supplier order link',
 };

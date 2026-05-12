@@ -87,6 +87,47 @@ function OrderStatusDropdown({ orderId, currentStatus }: { orderId: string; curr
   );
 }
 
+/**
+ * Small inline pill that shows whether the supplier has responded to a
+ * given order via the public /orders/[token] page. Renders nothing when
+ * no response has happened (so untouched orders stay visually clean).
+ * Confirmed wins over Changes-requested wins over generic Response when
+ * multiple timestamps are set (because the user typically wants to know
+ * the latest meaningful state).
+ */
+function SupplierResponseBadge({
+  confirmedAt,
+  changesRequestedAt,
+  lastResponseAt,
+}: {
+  confirmedAt: string | null;
+  changesRequestedAt: string | null;
+  lastResponseAt: string | null;
+}) {
+  if (changesRequestedAt && (!confirmedAt || new Date(changesRequestedAt) > new Date(confirmedAt))) {
+    return (
+      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 uppercase tracking-wide whitespace-nowrap">
+        Changes
+      </span>
+    );
+  }
+  if (confirmedAt) {
+    return (
+      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 uppercase tracking-wide whitespace-nowrap">
+        Confirmed
+      </span>
+    );
+  }
+  if (lastResponseAt) {
+    return (
+      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 uppercase tracking-wide whitespace-nowrap">
+        Replied
+      </span>
+    );
+  }
+  return null;
+}
+
 export function OrderList({ orders, workspaceSlug }: Props) {
   const router = useRouter();
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -136,7 +177,14 @@ export function OrderList({ orders, workspaceSlug }: Props) {
           >
             <div className="font-semibold text-sm text-orange-600">{order.order_number}</div>
             <div className="text-sm text-slate-700 truncate">{order.reference || order.job_name || '—'}</div>
-            <div className="text-sm text-slate-700 truncate">{order.to_supplier || order.supplier_name || '—'}</div>
+            <div className="text-sm text-slate-700 truncate flex items-center gap-2">
+              <span className="truncate">{order.to_supplier || order.supplier_name || '—'}</span>
+              <SupplierResponseBadge
+                confirmedAt={order.confirmed_at}
+                changesRequestedAt={order.changes_requested_at}
+                lastResponseAt={order.last_supplier_response_at}
+              />
+            </div>
             <div>
               <OrderStatusDropdown orderId={order.id} currentStatus={order.status || 'ready'} />
             </div>

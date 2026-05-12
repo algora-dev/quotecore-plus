@@ -6,6 +6,7 @@ import Link from 'next/link';
 import type { MaterialOrderRow, MaterialOrderLineRow, FlashingLibraryRow } from '@/app/lib/types';
 import { markOrderAsOrdered } from '../../order-list-actions';
 import { SendOrderButton } from './SendOrderButton';
+import { SupplierLinkButton } from './SupplierLinkButton';
 
 
 interface Props {
@@ -77,9 +78,14 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
           >
             Print / Save PDF
           </button>
+          <SupplierLinkButton
+            orderId={order.id}
+            existingToken={order.acceptance_token ?? null}
+          />
           <SendOrderButton
             orderId={order.id}
             orderNumber={order.order_number}
+            supplierUrlToken={order.acceptance_token ?? null}
             defaultRecipientName={order.to_supplier}
             companyName={order.from_company}
           />

@@ -72,6 +72,17 @@ export interface SendOutboundMessageInput {
   companyLogoUrl?: string | null;
   companyEmail?: string | null;
   companyPhone?: string | null;
+  /**
+   * Override the primary CTA button in the email shell. Default is to
+   * point at `/m/[token]` (the generic reply page) with label
+   * "Respond now". order_send sends pass an override here so the
+   * supplier lands directly on the order page.
+   */
+  primaryCta?: {
+    label: string;
+    /** Either an absolute URL or a path relative to the site URL. */
+    url: string;
+  } | null;
 }
 
 export type SendOutboundMessageResult =
@@ -213,13 +224,26 @@ export async function sendOutboundMessage(
 
   // 6. Build the URLs and the rendered email body.
   const siteUrl = getSiteUrl();
-  const replyUrl = `${siteUrl}/m/${encodeURIComponent(token)}`;
+  const messageReplyUrl = `${siteUrl}/m/${encodeURIComponent(token)}`;
   const unsubscribeUrl = `${siteUrl}/m/${encodeURIComponent(token)}/stop`;
 
   // The body / subject may also reference {{reply_link}}; substitute again
   // now that we have the real URL.
-  const bodyWithReplyLink = renderMergeVars(bodyRendered, { reply_link: replyUrl });
-  const subjectWithReplyLink = renderMergeVars(subjectRendered, { reply_link: replyUrl });
+  const bodyWithReplyLink = renderMergeVars(bodyRendered, { reply_link: messageReplyUrl });
+  const subjectWithReplyLink = renderMergeVars(subjectRendered, { reply_link: messageReplyUrl });
+
+  // Decide the primary CTA. Caller-supplied override wins; otherwise
+  // default to the generic reply page. We resolve relative URLs against
+  // the site URL so callers can pass e.g. `/orders/<token>` without
+  // duplicating the host.
+  const primaryCta = input.primaryCta
+    ? {
+        label: input.primaryCta.label,
+        url: input.primaryCta.url.startsWith('http')
+          ? input.primaryCta.url
+          : `${siteUrl}${input.primaryCta.url.startsWith('/') ? '' : '/'}${input.primaryCta.url}`,
+      }
+    : { label: 'Respond now', url: messageReplyUrl };
 
   const html = renderOutboundMessageHtml({
     companyName: input.companyName,
@@ -227,13 +251,15 @@ export async function sendOutboundMessage(
     companyEmail: input.companyEmail ?? null,
     companyPhone: input.companyPhone ?? null,
     bodyText: bodyWithReplyLink,
-    replyUrl,
+    replyUrl: primaryCta.url,
+    replyCtaLabel: primaryCta.label,
     unsubscribeUrl,
   });
   const text = renderOutboundMessageText({
     companyName: input.companyName,
     bodyText: bodyWithReplyLink,
-    replyUrl,
+    replyUrl: primaryCta.url,
+    replyCtaLabel: primaryCta.label,
     unsubscribeUrl,
     companyEmail: input.companyEmail ?? null,
     companyPhone: input.companyPhone ?? null,
