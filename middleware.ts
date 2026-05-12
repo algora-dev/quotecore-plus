@@ -13,6 +13,8 @@ const PUBLIC_PATHS = [
   '/cookies',      // Cookie Policy (legally required to be public)
   '/terms',        // Terms of Service (legally required to be public)
   '/docs',         // Public help library
+  '/admin/login',  // Admin sign-in (the rest of /admin/* is gated by
+                   //  the requireAdmin() helper at the page boundary).
 ];
 
 // Paths reachable when the user has an AAL1 session but still needs to clear 2FA.

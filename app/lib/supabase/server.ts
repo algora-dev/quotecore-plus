@@ -76,7 +76,7 @@ export const getCurrentProfile = cache(async (existingClient?: SupabaseClient<Da
 
   const { data, error } = await supabase
     .from('users')
-    .select('id, email, full_name, role, company_id')
+    .select('id, email, full_name, role, company_id, is_admin')
     .eq('id', user.id)
     .limit(1)
     .maybeSingle();
@@ -115,5 +115,34 @@ export const requireCompanyContext = cache(async (options?: { skipOnboardingChec
     }
   }
 
+  return profile;
+});
+
+/**
+ * Gate the /admin surface: ensures the caller is signed in AND has the
+ * `is_admin` flag on their users row. Anything else redirects to the
+ * admin login page (which carries a `redirect=<pathname>` query so we
+ * land them back where they came from after sign-in).
+ *
+ * Use from the `app/admin/*` server components/actions. The middleware
+ * already enforces the sign-in part, but we redo it here so the helper
+ * is safe to call from anywhere without depending on middleware
+ * ordering. The is_admin lookup runs once per request (React `cache`).
+ */
+export const requireAdmin = cache(async () => {
+  const { redirect } = await import('next/navigation');
+  const profile = await getCurrentProfile().catch(() => null);
+  if (!profile) {
+    redirect('/admin/login');
+    // `redirect` throws a control-flow error and never returns; this
+    // throw is for the type-checker which can't see through the dynamic
+    // `await import('next/navigation')` and otherwise widens `profile`
+    // on the next line back to `null`.
+    throw new Error('unreachable');
+  }
+  if (!profile.is_admin) {
+    redirect('/admin/login?error=not_admin');
+    throw new Error('unreachable');
+  }
   return profile;
 });

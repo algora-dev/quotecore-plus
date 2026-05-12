@@ -2014,6 +2014,7 @@ export type Database = {
           email_notifications_enabled: boolean
           full_name: string | null
           id: string
+          is_admin: boolean
           last_email_change_at: string | null
           mfa_required: boolean
           role: string
@@ -2026,6 +2027,7 @@ export type Database = {
           email_notifications_enabled?: boolean
           full_name?: string | null
           id: string
+          is_admin?: boolean
           last_email_change_at?: string | null
           mfa_required?: boolean
           role?: string
@@ -2038,6 +2040,7 @@ export type Database = {
           email_notifications_enabled?: boolean
           full_name?: string | null
           id?: string
+          is_admin?: boolean
           last_email_change_at?: string | null
           mfa_required?: boolean
           role?: string
