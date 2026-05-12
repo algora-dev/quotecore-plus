@@ -64,7 +64,19 @@ interface _CanvasState {
   measurements: MeasurementItem[];
 }
 
-export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
+export function FlashingCanvas({
+  workspaceSlug,
+  lengthUnit = 'mm',
+}: {
+  workspaceSlug: string;
+  /**
+   * Unit the user's length inputs are in (and what we stamp onto each
+   * saved measurement). Driven by the company's measurement system at
+   * the page boundary; defaults to mm so any caller that hasn't been
+   * updated yet still renders sensibly.
+   */
+  lengthUnit?: 'mm' | 'in';
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -415,7 +427,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           const labelX = midX + perpX * offset;
           const labelY = midY + perpY * offset;
           
-          const lengthLabel = new IText(`${length}mm`, {
+          const lengthLabel = new IText(`${length}${lengthUnit}`, {
             left: labelX,
             top: labelY,
             fontSize: 14,
@@ -530,7 +542,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                   const offset = 15;
                   
                   (label as any).set({
-                    text: `${newLength}mm`,
+                    text: `${newLength}${lengthUnit}`,
                     left: midX + perpX * offset,
                     top: midY + perpY * offset,
                   });
@@ -965,7 +977,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                 const offset = 15;
                 
                 (label as any).set({
-                  text: `${newLength}mm`,
+                  text: `${newLength}${lengthUnit}`,
                   left: midX + perpX * offset,
                   top: midY + perpY * offset,
                 });
@@ -1189,7 +1201,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             o.measurementId === m.id && o.type === 'i-text'
           );
           if (textObj) {
-            (textObj as any).set('text', `${actualLength}mm`);
+            (textObj as any).set('text', `${actualLength}${lengthUnit}`);
           }
           
           return {
@@ -1532,13 +1544,16 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         'isPointMarker',
       ]));
 
-      // Build clean measurements array for database
+      // Build clean measurements array for database. Length measurements
+      // carry the unit that was active at draw time (mm for metric
+      // accounts, inches for either Imperial option); angles are always
+      // degrees regardless of the company's measurement system.
       const cleanMeasurements = measurements.map((m, index) => ({
         id: m.id,
         type: m.type,
         sequence: index + 1,
         value: m.value,
-        unit: m.type === 'length' ? 'mm' : 'degrees',
+        unit: m.type === 'length' ? lengthUnit : 'degrees',
         pointIndices: m.type === 'length' 
           ? [m.lineStartIndex, m.lineEndIndex]
           : [m.pointIndex! - 1, m.pointIndex!, (m.pointIndex! + 1) % linePoints.length],
@@ -1802,7 +1817,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           <div>
             <span className="text-slate-600 font-medium">Length:</span>{' '}
             <span className="text-slate-900 font-bold">
-              {measurements_live?.length || '—'}mm
+              {measurements_live?.length || '—'}{lengthUnit}
             </span>
           </div>
           <div>
@@ -1856,7 +1871,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
                     </button>
                   </div>
                   <div className="text-base font-bold text-slate-900 mb-3">
-                    {m.type === 'length' ? `${m.value}mm` : `${m.value}°`}
+                    {m.type === 'length' ? `${m.value}${lengthUnit}` : `${m.value}°`}
                     {m.type === 'angle' && (
                       <span className="text-xs font-normal text-slate-500 ml-1">
                         ({m.showInterior ? 'Interior' : 'Exterior'})
@@ -2043,7 +2058,7 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           applyEditMeasurementValue(editValueMeasurementId, num);
           close();
         };
-        const unit = m.type === 'length' ? 'mm' : '°';
+        const unit = m.type === 'length' ? lengthUnit : '°';
         return (
           <div
             className="fixed inset-0 backdrop-blur-md bg-slate-900/20 flex items-center justify-center z-50"

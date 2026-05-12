@@ -16,6 +16,10 @@ interface MeasurementData {
   id: string;
   type: 'length' | 'angle';
   value: number;
+  /** Stored unit at the time the flashing was drawn (e.g. 'mm', 'in',
+   *  'degrees'). Optional for legacy rows that pre-date imperial
+   *  support; render fallback handles undefined. */
+  unit?: 'mm' | 'ft' | 'in' | 'degrees';
 }
 
 export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
@@ -245,7 +249,11 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
                     className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-black focus:border-black"
                   />
                   <span className="text-sm text-slate-600">
-                    {m.type === 'length' ? 'mm' : '°'}
+                    {/* Render the stored unit on the measurement (set at
+                        creation based on the company's measurement
+                        system). Falls back to 'mm' / '°' for legacy rows
+                        that pre-date the imperial support. */}
+                    {m.type === 'length' ? (m.unit ?? 'mm') : '°'}
                   </span>
                 </div>
               </div>
