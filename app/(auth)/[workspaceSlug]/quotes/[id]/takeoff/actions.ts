@@ -171,10 +171,16 @@ export async function saveTakeoffMeasurements(
     components: componentsPayload,
   };
 
-  const { error: rpcError } = await supabase.rpc('save_takeoff_atomic', {
+  // The RPC's `p_payload` parameter is typed `Json` by Postgres, which
+  // generates as `{ [key: string]: Json | undefined } | Json[] | ...`. Our
+  // payload contains arrays of typed rows that don't widen to `Json` for
+  // free. Cast the args once at the boundary; the runtime value
+  // serialises to Json correctly.
+  const rpcArgs = {
     p_quote_id: quoteId,
     p_payload: payload,
-  });
+  } as unknown as { p_quote_id: string; p_payload: never };
+  const { error: rpcError } = await supabase.rpc('save_takeoff_atomic', rpcArgs);
 
   if (rpcError) {
     console.error('[SaveTakeoff] RPC error:', rpcError);

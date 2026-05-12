@@ -123,23 +123,36 @@ export async function uploadRoofPlanFile(quoteId: string, file: File): Promise<v
 
   // Save metadata via server action (bypasses RLS)
   await saveRoofPlanMetadata(quoteId, {
+    companyId: company.id,
     fileName: file.name,
     fileSize: file.size,
+    mimeType: file.type || 'application/octet-stream',
     storagePath,
   });
 }
 
 async function saveRoofPlanMetadata(
   quoteId: string,
-  metadata: { fileName: string; fileSize: number; storagePath: string }
+  metadata: {
+    companyId: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    storagePath: string;
+  }
 ): Promise<void> {
   const supabase = await createSupabaseServerClient();
-  
+
+  // company_id and mime_type are NOT NULL on quote_files; previous
+  // versions of this insert were silently failing with a constraint
+  // violation (typed Supabase pass on 2026-05-12 caught it).
   const { error } = await supabase.from('quote_files').insert({
+    company_id: metadata.companyId,
     quote_id: quoteId,
     file_name: metadata.fileName,
     file_type: 'plan',
     file_size: metadata.fileSize,
+    mime_type: metadata.mimeType,
     storage_path: metadata.storagePath,
   });
 

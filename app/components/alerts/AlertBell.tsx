@@ -2,13 +2,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
+/**
+ * Matches the DB `alerts` row shape (subset). `is_read` and `created_at`
+ * are nullable in the schema; treat null the same as the falsy/unknown
+ * value in render code below.
+ */
 interface Alert {
   id: string;
   alert_type: string;
   title: string;
   message: string | null;
-  is_read: boolean;
-  created_at: string;
+  is_read: boolean | null;
+  created_at: string | null;
   quote_id: string | null;
 }
 
@@ -158,9 +163,11 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
                         <p className="text-xs text-slate-500 mt-0.5">{alert.message}</p>
                       )}
                       <p className="text-xs text-slate-400 mt-1">
-                        {new Date(alert.created_at).toLocaleDateString('en-NZ', {
-                          day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
-                        })}
+                        {alert.created_at
+                          ? new Date(alert.created_at).toLocaleDateString('en-NZ', {
+                              day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+                            })
+                          : ''}
                       </p>
                     </div>
                   </div>

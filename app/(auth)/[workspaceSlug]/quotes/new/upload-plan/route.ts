@@ -48,12 +48,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: uploadError.message }, { status: 500 });
     }
 
-    // Save metadata
+    // Save metadata. company_id and mime_type are NOT NULL on quote_files;
+    // previously these inserts were silently failing with a constraint
+    // violation (the typed Supabase pass on 2026-05-12 surfaced this).
     const { error: metadataError } = await supabase.from('quote_files').insert({
+      company_id: company.id,
       quote_id: quoteId,
       file_name: file.name,
       file_type: 'plan',
       file_size: file.size,
+      mime_type: file.type || 'application/octet-stream',
       storage_path: storagePath,
     });
 

@@ -3,11 +3,15 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+/**
+ * Subset of the `quotes` row this picker needs. Shape matches the DB:
+ * `quote_number` is nullable (drafts), `status` is the enum string.
+ */
 interface Quote {
   id: string;
-  quote_number: string;
+  quote_number: number | null;
   job_name: string | null;
-  customer_name: string | null;
+  customer_name: string;
   created_at: string;
   updated_at: string;
   status: string | null;

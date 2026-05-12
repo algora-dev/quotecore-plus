@@ -1,17 +1,12 @@
 'use server';
 import { revalidatePath } from 'next/cache';
-import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import {
+  createSupabaseServerClient,
+  requireCompanyContext,
+  type Tables,
+} from '@/app/lib/supabase/server';
 
-export interface EmailTemplate {
-  id: string;
-  company_id: string;
-  name: string;
-  subject: string;
-  body: string;
-  is_default: boolean;
-  created_at: string;
-  updated_at: string;
-}
+export type EmailTemplate = Tables<'email_templates'>;
 
 export async function loadEmailTemplates(): Promise<EmailTemplate[]> {
   const profile = await requireCompanyContext();

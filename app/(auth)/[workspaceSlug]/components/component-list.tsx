@@ -25,6 +25,10 @@ function buildMeasurementLabels(system: MeasurementSystem): Record<MeasurementTy
   return {
     area: `Area (${areaUnit})`,
     lineal: `Linear (${linealUnit})`,
+    // `linear` is the legacy enum value (zero rows in production). Kept in
+    // the lookup so an unmigrated row would still render a label rather
+    // than crashing; new code uses `lineal`.
+    linear: `Linear (${linealUnit})`,
     quantity: 'Quantity',
     fixed: 'Fixed',
   };

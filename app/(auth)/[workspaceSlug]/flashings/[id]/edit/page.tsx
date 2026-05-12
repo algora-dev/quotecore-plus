@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import type { FlashingLibraryRow } from '@/app/lib/types';
 import { EditFlashingForm } from './edit-form';
 
 export const dynamic = 'force-dynamic';
@@ -36,8 +37,8 @@ export default async function EditFlashingPage(props: Props) {
         </p>
       </div>
       
-      <EditFlashingForm 
-        flashing={flashing} 
+      <EditFlashingForm
+        flashing={flashing as unknown as FlashingLibraryRow}
         workspaceSlug={workspaceSlug}
       />
     </div>

@@ -17,6 +17,25 @@ const CANVAS_SIZES = {
 
 const SCALE = 0.5; // 2 pixels = 1mm
 
+/**
+ * Loose shape of the JSONB blob fabric.js saves into `flashings.canvas_data`
+ * and `flashings.measurements`. The columns are typed `Json` by the
+ * generated DB types (correct — Postgres can hold any JSON there); this
+ * narrowed view is what our app code actually expects to see when loading
+ * a saved drawing. Cast at the boundary, then operate normally.
+ */
+type FabricCanvasData = {
+  objects?: unknown[];
+  width?: number;
+  height?: number;
+  version?: string;
+  [key: string]: unknown;
+} | null;
+
+type StoredMeasurement = MeasurementItem & {
+  pointIndices?: number[];
+};
+
 interface MeasurementItem {
   id: string;
   type: 'length' | 'angle';
@@ -642,12 +661,13 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           return;
         }
         
-        // Parse canvas data if it's a string
-        let canvasDataObj = flashing.canvas_data;
+        // Parse canvas data if it's a string. The DB column is typed Json;
+        // narrow to the fabric-shaped view we actually wrote to it.
+        let canvasDataObj: FabricCanvasData = flashing.canvas_data as FabricCanvasData;
         if (typeof canvasDataObj === 'string') {
           console.log('[FlashingCanvas] Canvas data is string, parsing...');
           try {
-            canvasDataObj = JSON.parse(canvasDataObj);
+            canvasDataObj = JSON.parse(canvasDataObj) as FabricCanvasData;
           } catch (e) {
             console.error('[FlashingCanvas] Failed to parse canvas_data:', e);
             alert('Error: Canvas data is corrupted');
@@ -655,6 +675,12 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
             setFlashingLoaded(true);
             return;
           }
+        }
+        if (!canvasDataObj) {
+          console.error('[FlashingCanvas] canvas_data is null after parse');
+          setLoading(false);
+          setFlashingLoaded(true);
+          return;
         }
         
         // Debug: Log the actual canvas data structure
@@ -681,8 +707,12 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
         
         console.log('[FlashingCanvas] First object sample:', JSON.stringify(canvasDataObj.objects?.[0]).substring(0, 200));
         
-        // Load canvas from JSON
-        fabricRef.current.loadFromJSON(canvasDataObj, () => {
+        // Load canvas from JSON. fabric's typing wants string | Record;
+        // canvasDataObj is the narrowed view so a deliberate cast is
+        // safe here.
+        fabricRef.current.loadFromJSON(
+          canvasDataObj as unknown as Record<string, unknown>,
+          () => {
           if (!fabricRef.current) return;
           
           console.log('[FlashingCanvas] loadFromJSON callback fired');
@@ -699,15 +729,20 @@ export function FlashingCanvas({ workspaceSlug }: { workspaceSlug: string }) {
           fabricRef.current.renderAll();
         });
         
-        // Restore state (outside callback to avoid loops)
-        if (flashing.measurements) {
-          setMeasurements(flashing.measurements);
+        // Restore state (outside callback to avoid loops). The DB column
+        // is Json; we wrote MeasurementItem[] into it, so the narrowing
+        // cast here is safe.
+        const storedMeasurements = (flashing.measurements as unknown) as
+          | StoredMeasurement[]
+          | null;
+        if (storedMeasurements) {
+          setMeasurements(storedMeasurements);
         }
-        
+
         // Restore line points from measurements pointIndices
         const points: { x: number; y: number }[] = [];
-        if (flashing.measurements) {
-          flashing.measurements.forEach((m: any) => {
+        if (storedMeasurements) {
+          storedMeasurements.forEach((m: StoredMeasurement) => {
             if (m.type === 'length' && m.pointIndices) {
               // Reconstruct points from line objects
               const lineObj = fabricRef.current?.getObjects().find((obj: any) => obj.measurementId === m.id);

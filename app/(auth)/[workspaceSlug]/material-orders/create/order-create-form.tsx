@@ -238,23 +238,30 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
     setOrderNotes(order.header_notes || '');
     setLogoUrl(order.logo_url || '');
     setOrderDate(order.order_date || new Date().toISOString().split('T')[0]);
-    setLayoutMode(order.layout_mode || 'single');
-    
+    // `layout_mode` and `entry_mode` are stored as plain text (nullable)
+    // at the DB level; coerce into the narrow client-side union so the
+    // rendered UI doesn't receive unexpected values.
+    setLayoutMode(order.layout_mode === 'double' ? 'double' : 'single');
+
     // Map line items
     const mappedLines: OrderLineItem[] = lines.map(line => ({
       id: line.id,
       componentName: line.item_name,
       flashingId: line.flashing_id || undefined,
       flashingImageUrl: line.flashing_image_url || undefined,
-      entryMode: line.entry_mode,
+      entryMode: line.entry_mode === 'multiple' ? 'multiple' : 'single',
       quantity: line.quantity || 0,
       unit: line.unit || 'pcs',
-      lengths: line.lengths || undefined,
+      // `lengths` is JSONB on the DB; our app writes LengthEntry[] into it.
+      // Cast via unknown for the type bridge.
+      lengths: (line.lengths as unknown as LengthEntry[] | null) || undefined,
       lengthUnit: line.length_unit || undefined,
       notes: line.item_notes || undefined,
-      showComponentName: line.show_component_name,
-      showFlashingImage: line.show_flashing_image,
-      showMeasurements: line.show_measurements,
+      // The DB columns are nullable; the form treats null as false (the
+      // checkbox unchecked state).
+      showComponentName: line.show_component_name ?? false,
+      showFlashingImage: line.show_flashing_image ?? false,
+      showMeasurements: line.show_measurements ?? false,
     }));
     
     console.log('[OrderCreateForm] Loaded', mappedLines.length, 'line items');

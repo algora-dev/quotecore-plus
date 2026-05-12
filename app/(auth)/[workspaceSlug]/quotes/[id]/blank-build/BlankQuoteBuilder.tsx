@@ -39,9 +39,15 @@ import { EditFooterModal } from '../customer-edit/EditFooterModal';
  * builder is the master entry point.
  */
 
+/**
+ * `line_type` matches the DB enum `line_type` which includes
+ * `'roof_area_header'` as well — those rows are filtered out by the
+ * blank-quote loader but the prop type still has to admit them so the
+ * page boundary stays typed.
+ */
 interface SavedLine {
   id: string;
-  line_type: 'component' | 'custom';
+  line_type: 'component' | 'custom' | 'roof_area_header';
   quote_component_id: string | null;
   custom_text: string | null;
   custom_amount: number | null;

@@ -6,13 +6,18 @@ import { formatCurrency } from '@/app/lib/currency/currencies';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
+/**
+ * Subset of the `customer_quote_lines` row shape that SummaryTabs needs.
+ * Nullability matches the DB columns (the original hand-written shape
+ * lied about `custom_text` and `include_in_total`).
+ */
 interface CustomerLine {
   id: string;
-  custom_text: string;
+  custom_text: string | null;
   custom_amount: number | null;
   show_price: boolean;
   is_visible: boolean;
-  include_in_total: boolean;
+  include_in_total: boolean | null;
 }
 
 interface Props {

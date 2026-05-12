@@ -2,12 +2,16 @@
 import { useState, useEffect } from 'react';
 import { generateAcceptanceToken } from '../../actions';
 
+/**
+ * Subset of the email_templates row used by SendQuoteButton. Nullability
+ * matches the DB.
+ */
 interface EmailTemplate {
   id: string;
   name: string;
   subject: string;
   body: string;
-  is_default: boolean;
+  is_default: boolean | null;
 }
 
 interface Props {

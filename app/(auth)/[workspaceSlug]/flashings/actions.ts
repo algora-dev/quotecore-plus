@@ -1,10 +1,9 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
-import type { FlashingLibraryInsert } from '@/app/lib/types';
-import {  } from 'next/navigation';
+import type { FlashingLibraryInsert, FlashingLibraryRow } from '@/app/lib/types';
 
-export async function loadFlashingLibrary() {
+export async function loadFlashingLibrary(): Promise<FlashingLibraryRow[]> {
   let profile;
   try {
     profile = await requireCompanyContext();
@@ -29,10 +28,13 @@ export async function loadFlashingLibrary() {
   }
   
   console.log('[loadFlashingLibrary] Successfully loaded', data?.length || 0, 'flashings');
-  return data || [];
+  // `measurements` is Json at the DB level but our app always writes
+  // FlashingMeasurement[] into it. Narrow at the boundary so the rest of
+  // the codebase doesn't need to.
+  return (data ?? []) as unknown as FlashingLibraryRow[];
 }
 
-export async function loadFlashingById(id: string) {
+export async function loadFlashingById(id: string): Promise<FlashingLibraryRow> {
   let profile;
   try {
     profile = await requireCompanyContext();
@@ -57,10 +59,11 @@ export async function loadFlashingById(id: string) {
   }
   
   console.log('[loadFlashingById] Successfully loaded flashing');
-  return data;
+  // Same narrowing as loadFlashingLibrary (measurements is Json at the DB).
+  return data as unknown as FlashingLibraryRow;
 }
 
-export async function createFlashing(formData: FormData) {
+export async function createFlashing(formData: FormData): Promise<FlashingLibraryRow> {
   let profile;
   try {
     profile = await requireCompanyContext();
@@ -131,10 +134,10 @@ export async function createFlashing(formData: FormData) {
   }
   
   revalidatePath('/[workspaceSlug]/flashings');
-  return data;
+  return data as unknown as FlashingLibraryRow;
 }
 
-export async function updateFlashing(id: string, input: Partial<FlashingLibraryInsert>) {
+export async function updateFlashing(id: string, input: Partial<FlashingLibraryInsert>): Promise<FlashingLibraryRow> {
   let profile;
   try {
     profile = await requireCompanyContext();
@@ -146,24 +149,27 @@ export async function updateFlashing(id: string, input: Partial<FlashingLibraryI
   console.log('[updateFlashing] Updating flashing:', id);
 
   const supabase = await createSupabaseServerClient();
+  // FlashingLibraryInsert narrows `measurements` to FlashingMeasurement[]
+  // | null; the generated DB Update type expects Json | undefined. Both
+  // describe the same runtime value; the cast keeps the call typed.
   const { data, error } = await supabase
     .from('flashing_library')
-    .update(input)
+    .update(input as Record<string, unknown>)
     .eq('id', id)
     .eq('company_id', profile.company_id)
     .select()
     .single();
-  
+
   if (error) {
     console.error('[updateFlashing] Database error:', error);
     throw new Error(`Failed to update flashing: ${error.message}`);
   }
-  
+
   revalidatePath('/[workspaceSlug]/flashings');
-  return data;
+  return data as unknown as FlashingLibraryRow;
 }
 
-export async function updateFlashingWithImage(id: string, formData: FormData) {
+export async function updateFlashingWithImage(id: string, formData: FormData): Promise<FlashingLibraryRow> {
   let profile;
   try {
     profile = await requireCompanyContext();
@@ -262,7 +268,7 @@ export async function updateFlashingWithImage(id: string, formData: FormData) {
   }
 
   revalidatePath('/[workspaceSlug]/flashings');
-  return data;
+  return data as unknown as FlashingLibraryRow;
 }
 
 export async function deleteFlashing(id: string) {
@@ -331,7 +337,7 @@ export async function deleteFlashing(id: string) {
   revalidatePath('/[workspaceSlug]/flashings');
 }
 
-export async function createFlashingFromCanvas(formData: FormData) {
+export async function createFlashingFromCanvas(formData: FormData): Promise<FlashingLibraryRow> {
   let profile;
   try {
     profile = await requireCompanyContext();
@@ -404,5 +410,5 @@ export async function createFlashingFromCanvas(formData: FormData) {
   }
   
   revalidatePath('/[workspaceSlug]/flashings');
-  return data;
+  return data as unknown as FlashingLibraryRow;
 }

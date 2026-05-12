@@ -24,7 +24,12 @@ export interface QuoteComponentData {
 
 export interface QuoteData {
   id: string;
-  quote_number: string;
+  /**
+   * Auto-incrementing per-company quote number. Nullable in the schema
+   * because drafts are issued one when first confirmed; treat null as
+   * "not yet assigned" in render code.
+   */
+  quote_number: number | null;
   job_name: string | null;
   customer_name: string | null;
   /** Quote's locked measurement system. Drives the unit labels we paint into the order form. */

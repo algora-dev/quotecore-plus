@@ -982,32 +982,18 @@ export async function loadCustomerQuoteTemplates() {
   return templates || [];
 }
 
-export async function loadCustomerQuoteTemplate(templateId: string) {
+/**
+ * **Dead path.** Referenced no callers and queries a table
+ * (`customer_quote_template_lines`) that does not exist in the live DB.
+ * Surfaced by the 2026-05-12 typed-supabase pass. Kept as a stub that
+ * fails fast so any future caller hits a clear error rather than
+ * silently 404-ing on the templates feature.
+ */
+export async function loadCustomerQuoteTemplate(_templateId: string): Promise<never> {
   'use server';
-  const _profile = await requireCompanyContext();
-  const supabase = await createSupabaseServerClient();
-
-  // Load template
-  const { data: template, error: templateError } = await supabase
-    .from('customer_quote_templates')
-    .select('*')
-    .eq('id', templateId)
-    .single();
-
-  if (templateError || !template) {
-    throw new Error('Template not found');
-  }
-
-  // Load template lines
-  const { data: lines, error: linesError } = await supabase
-    .from('customer_quote_template_lines')
-    .select('*')
-    .eq('template_id', templateId)
-    .order('sort_order');
-
-  if (linesError) throw new Error(linesError.message);
-
-  return { template, lines: lines || [] };
+  throw new Error(
+    'loadCustomerQuoteTemplate is not implemented — the customer_quote_template_lines table does not exist. Use loadCustomerQuoteTemplates() to fetch the template list.'
+  );
 }
 
 export async function saveCustomerQuoteBranding(

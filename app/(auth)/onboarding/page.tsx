@@ -76,10 +76,14 @@ export default async function OnboardingPage() {
               Let&apos;s set up your company preferences. You can change these later in settings.
             </p>
           </div>
-          <OnboardingForm 
+          <OnboardingForm
             companyId={company!.id}
             companyName={company!.name}
-            companySlug={company!.slug}
+            // company.slug is nullable in the schema; in practice it's
+            // always set at signup. Coerce to '' so the typed prop holds
+            // and the form surfaces an error rather than silently routing
+            // to /undefined/.
+            companySlug={company!.slug ?? ''}
             currentCurrency={company!.default_currency}
             currentLanguage={company!.default_language}
             currentMeasurement={company!.default_measurement_system}

@@ -1,21 +1,30 @@
 import {
   createSupabaseServerClient,
   getCurrentProfile,
+  type Tables,
 } from '@/app/lib/supabase/server';
+
+/**
+ * Subset of the generated `companies` row that the rest of the app uses
+ * for context. Picks the columns explicitly so unrelated schema changes
+ * to companies don't churn this contract.
+ */
+type CompanyContextRow = Pick<
+  Tables<'companies'>,
+  | 'id'
+  | 'name'
+  | 'slug'
+  | 'default_language'
+  | 'default_tax_rate'
+  | 'default_measurement_system'
+  | 'default_currency'
+  | 'onboarding_completed_at'
+  | 'created_at'
+>;
 
 export type CompanyContext = {
   profile: Awaited<ReturnType<typeof getCurrentProfile>>;
-  company: {
-    id: string;
-    name: string | null;
-    slug: string;
-    default_language: string | null;
-    default_tax_rate: number;
-    default_measurement_system: 'metric' | 'imperial_ft' | 'imperial_rs' | 'imperial';
-    default_currency: string | null;
-    onboarding_completed_at: string | null;
-    created_at: string;
-  };
+  company: CompanyContextRow;
 };
 
 export async function loadCompanyContext(): Promise<CompanyContext> {
@@ -50,16 +59,20 @@ export async function loadCompanyContext(): Promise<CompanyContext> {
 
       console.log('[loadCompanyContext] Using fallback - defaulting to metric');
 
+      // Match the DB NOT NULL defaults rather than nulling these out —
+      // companies.default_currency and companies.default_language are NOT
+      // NULL with defaults of 'NZD' and 'en' respectively; the previous
+      // null fallback was a typing lie that the generated types now catch.
       return {
         profile,
-        company: { 
-          ...fallback, 
-          default_language: null, 
+        company: {
+          ...fallback,
+          default_language: 'en',
           default_tax_rate: 0,
-          default_measurement_system: 'metric' as const,
-          default_currency: null,
+          default_measurement_system: 'metric',
+          default_currency: 'NZD',
           onboarding_completed_at: null,
-        },
+        } satisfies CompanyContextRow,
       };
     }
 
