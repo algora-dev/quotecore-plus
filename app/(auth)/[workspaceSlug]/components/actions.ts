@@ -1,6 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import { pickFields } from '@/app/lib/security/pickFields';
 import type { ComponentLibraryInsert } from '@/app/lib/types';
 
 export async function loadComponentLibrary() {
@@ -58,14 +59,43 @@ export async function createComponent(input: ComponentLibraryInsert) {
   return data;
 }
 
+/**
+ * Columns updatable from the client. Gerald audit M-03: keep `id`,
+ * `company_id`, `created_at`, `updated_at` out of the surface. Anything
+ * not in this list is silently dropped by `pickFields`, so an attacker
+ * can't smuggle in arbitrary column writes through a client form.
+ */
+const UPDATABLE_COMPONENT_FIELDS = [
+  'name',
+  'component_type',
+  'measurement_type',
+  'default_material_rate',
+  'default_labour_rate',
+  'default_waste_type',
+  'default_waste_percent',
+  'default_waste_fixed',
+  'default_pitch_type',
+  'show_price_default',
+  'show_dimensions_default',
+  'eligible_for_orders',
+  'flashing_ids',
+  'is_active',
+  'sort_order',
+] as const;
+
 export async function updateComponent(id: string, input: Partial<ComponentLibraryInsert>) {
   const profile = await requireCompanyContext();
-  
+
+  // Whitelist columns before passing to the DB; see pickFields.ts for why.
+  const update = pickFields(input as Record<string, unknown>, UPDATABLE_COMPONENT_FIELDS);
+
   // Note: After migration 022, database accepts 'lineal' directly (no transform needed)
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('component_library')
-    .update(input)
+    // Cast safe: `update` is a strict subset of Partial<ComponentLibraryInsert>
+    // by construction of UPDATABLE_COMPONENT_FIELDS above.
+    .update(update as Partial<ComponentLibraryInsert>)
     .eq('id', id)
     .eq('company_id', profile.company_id)
     .select()

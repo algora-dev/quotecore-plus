@@ -9,6 +9,56 @@ import { verifyQuoteOwnership, verifyRoofAreaOwnership, verifyComponentOwnership
 import { seedQuoteTaxesOnCreate } from '@/app/lib/taxes/seed';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { BUCKETS } from '@/app/lib/storage/buckets';
+import { pickFields } from '@/app/lib/security/pickFields';
+
+/**
+ * Quote-roof-area columns updatable from the client. Server-managed
+ * fields (`id`, `quote_id`, `template_roof_area_id`, `created_at`,
+ * `updated_at`) and the server-computed `computed_sqm` are explicitly
+ * out of scope — the action body sets `computed_sqm` itself before the
+ * update so it's never trusted from the client. Gerald audit M-03.
+ */
+const UPDATABLE_QUOTE_ROOF_AREA_FIELDS = [
+  'label',
+  'input_mode',
+  'final_value_sqm',
+  'calc_width_m',
+  'calc_length_m',
+  'calc_plan_sqm',
+  'calc_pitch_degrees',
+  'computed_sqm',
+  'is_locked',
+  'sort_order',
+] as const;
+
+/**
+ * Quote columns updatable via the generic `updateQuoteSettings` action.
+ * The narrow window allowed here intentionally excludes status, accept
+ * tokens, withdrawn flags, company_id, created_at, etc. — those have
+ * dedicated server actions (`confirmQuote`, `acceptQuote`,
+ * `withdrawQuote`, etc.) that enforce their own state-machine rules.
+ */
+const UPDATABLE_QUOTE_SETTINGS_FIELDS = [
+  'customer_name',
+  'customer_email',
+  'customer_phone',
+  'job_name',
+  'site_address',
+  'notes_internal',
+  'global_pitch_degrees',
+  'currency',
+  'material_margin_percent',
+  'labor_margin_percent',
+  'material_margin_enabled',
+  'labor_margin_enabled',
+  'tax_rate',
+  'cq_company_name',
+  'cq_company_address',
+  'cq_company_phone',
+  'cq_company_email',
+  'cq_company_logo_url',
+  'cq_footer_text',
+] as const;
 
 /**
  * Extract the storage object path from a Supabase storage URL (public or signed).
@@ -382,7 +432,13 @@ export async function updateQuoteRoofArea(id: string, input: any) {
     }
   } else if (input.input_mode === 'final') input.computed_sqm = input.final_value_sqm ?? 0;
 
-  const { data, error } = await supabase.from('quote_roof_areas').update(input).eq('id', id).select().single();
+  // Whitelist columns before passing to the DB (Gerald audit M-03). The
+  // action body has already set `computed_sqm` on the input based on
+  // input_mode + pitch; including it in the allowed set keeps that
+  // server-controlled value through to the update.
+  const update = pickFields(input as Record<string, unknown>, UPDATABLE_QUOTE_ROOF_AREA_FIELDS);
+  // Cast safe: keys come from UPDATABLE_QUOTE_ROOF_AREA_FIELDS.
+  const { data, error } = await supabase.from('quote_roof_areas').update(update as Record<string, unknown>).eq('id', id).select().single();
   if (error) throw new Error(error.message);
 
   if (input.calc_pitch_degrees && input.calc_pitch_degrees > 0) {
@@ -487,10 +543,17 @@ async function recalcComponentFromEntries(quoteComponentId: string) {
   await supabase.from('quote_components').update({ final_quantity: totalQty, material_cost: materialCost, labour_cost: labourCost }).eq('id', quoteComponentId);
 }
 
-export async function updateQuoteSettings(quoteId: string, input: any) {
+export async function updateQuoteSettings(quoteId: string, input: Record<string, unknown>) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from('quotes').update(input).eq('id', quoteId).eq('company_id', profile.company_id);
+  // Whitelist columns before passing to the DB; see pickFields.ts.
+  // Previously this action accepted `any` and forwarded the whole object
+  // to .update(), so a malicious caller could overwrite status,
+  // acceptance_token, withdrawn_at, etc. Now restricted to the columns
+  // the settings UI actually edits.
+  const update = pickFields(input, UPDATABLE_QUOTE_SETTINGS_FIELDS);
+  // Cast safe: keys come from UPDATABLE_QUOTE_SETTINGS_FIELDS.
+  const { error } = await supabase.from('quotes').update(update as Record<string, unknown>).eq('id', quoteId).eq('company_id', profile.company_id);
   if (error) throw new Error(error.message);
 }
 

@@ -1,6 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import { pickFields } from '@/app/lib/security/pickFields';
 import type { FlashingLibraryInsert, FlashingLibraryRow } from '@/app/lib/types';
 
 export async function loadFlashingLibrary(): Promise<FlashingLibraryRow[]> {
@@ -148,13 +149,27 @@ export async function updateFlashing(id: string, input: Partial<FlashingLibraryI
 
   console.log('[updateFlashing] Updating flashing:', id);
 
+  // Whitelist columns before passing to the DB. `company_id`, `id`,
+  // `created_at`, `updated_at` are NOT updatable from the client even if
+  // a request tries to set them; see pickFields.ts (Gerald audit M-03).
+  const UPDATABLE_FLASHING_FIELDS = [
+    'name',
+    'description',
+    'image_url',
+    'canvas_data',
+    'measurements',
+    'is_default',
+  ] as const;
+  const update = pickFields(input as Record<string, unknown>, UPDATABLE_FLASHING_FIELDS);
+
   const supabase = await createSupabaseServerClient();
-  // FlashingLibraryInsert narrows `measurements` to FlashingMeasurement[]
-  // | null; the generated DB Update type expects Json | undefined. Both
-  // describe the same runtime value; the cast keeps the call typed.
   const { data, error } = await supabase
     .from('flashing_library')
-    .update(input as Record<string, unknown>)
+    // Cast safe: `update` keys come from UPDATABLE_FLASHING_FIELDS, and
+    // FlashingLibraryInsert narrows `measurements` from Json to
+    // FlashingMeasurement[] | null at the type boundary; the runtime
+    // value is the same.
+    .update(update as Record<string, unknown>)
     .eq('id', id)
     .eq('company_id', profile.company_id)
     .select()
