@@ -13,6 +13,7 @@ import { normalizeMeasurementSystem } from '../types';
 const M_TO_FT = 3.28084;
 const SQM_TO_FT2 = 10.7639;
 const SQM_TO_RS = 0.107639; // 1 m² = 0.107639 RS  (= 1/9.2903)
+const MM_PER_INCH = 25.4;   // exact by definition (since 1959)
 
 // -- Linear (m -> ft) --------------------------------------------------------
 
@@ -68,6 +69,22 @@ export function convertAreaRate(ratePerSqm: number): number {
 /** Customer typed RS, store as m². */
 export function convertAreaToMetric(roofingSquares: number): number {
   return roofingSquares / SQM_TO_RS;
+}
+
+// -- Small-unit (mm ↔ in) ----------------------------------------------------
+//
+// Used by the flashings drawing tool, where canvas measurements are stored
+// in mm but Imperial users want to see and enter inches. 1 inch = 25.4 mm
+// exactly (international inch since 1959).
+
+/** Display a mm value in inches, 2dp. */
+export function mmToInches(mm: number): number {
+  return Number((mm / MM_PER_INCH).toFixed(2));
+}
+
+/** Customer typed inches, store as mm. Keeps full precision; callers may round. */
+export function inchesToMm(inches: number): number {
+  return inches * MM_PER_INCH;
 }
 
 // -- Polymorphic helpers (recommended for new call sites) --------------------

@@ -16,6 +16,27 @@ const CANVAS_SIZES = {
 };
 
 const SCALE = 0.5; // 2 pixels = 1mm
+const MM_PER_INCH = 25.4;
+
+/**
+ * Format a length stored in mm for display in either mm or inches.
+ * Metric accounts: `120` -> `"120"`. Imperial accounts: `120` -> `"4.72"`.
+ * Lengths are stored canonical in mm; the conversion happens at the
+ * display + input boundaries only.
+ */
+function formatLength(mm: number, unit: 'mm' | 'in'): string {
+  if (unit === 'mm') return String(Math.round(mm));
+  return (mm / MM_PER_INCH).toFixed(2);
+}
+
+/**
+ * Inverse of `formatLength`. Takes whatever the user typed in the active
+ * unit and returns the canonical mm value for storage / pixel math.
+ */
+function lengthInputToMm(value: number, unit: 'mm' | 'in'): number {
+  if (unit === 'mm') return value;
+  return value * MM_PER_INCH;
+}
 
 /**
  * Loose shape of the JSONB blob fabric.js saves into `flashings.canvas_data`
@@ -427,7 +448,7 @@ export function FlashingCanvas({
           const labelX = midX + perpX * offset;
           const labelY = midY + perpY * offset;
           
-          const lengthLabel = new IText(`${length}${lengthUnit}`, {
+          const lengthLabel = new IText(`${formatLength(length, lengthUnit)}${lengthUnit}`, {
             left: labelX,
             top: labelY,
             fontSize: 14,
@@ -542,7 +563,7 @@ export function FlashingCanvas({
                   const offset = 15;
                   
                   (label as any).set({
-                    text: `${newLength}${lengthUnit}`,
+                    text: `${formatLength(newLength, lengthUnit)}${lengthUnit}`,
                     left: midX + perpX * offset,
                     top: midY + perpY * offset,
                   });
@@ -977,7 +998,7 @@ export function FlashingCanvas({
                 const offset = 15;
                 
                 (label as any).set({
-                  text: `${newLength}${lengthUnit}`,
+                  text: `${formatLength(newLength, lengthUnit)}${lengthUnit}`,
                   left: midX + perpX * offset,
                   top: midY + perpY * offset,
                 });
@@ -1051,7 +1072,11 @@ export function FlashingCanvas({
     const measurement = measurements.find(m => m.id === id);
     if (!measurement || !fabricRef.current) return;
     setEditValueMeasurementId(id);
-    setEditValueInput(measurement.value.toString());
+    setEditValueInput(
+      measurement.type === 'length'
+        ? formatLength(measurement.value, lengthUnit)
+        : measurement.value.toString()
+    );
   };
 
   /**
@@ -1068,6 +1093,10 @@ export function FlashingCanvas({
     const currentPoints = linePointsRef.current;
 
     if (measurement.type === 'length') {
+      // The user types in the active unit (mm or inches); convert to
+      // canonical mm before doing pixel math / storage.
+      numValue = lengthInputToMm(numValue, lengthUnit);
+
       const startIdx = measurement.lineStartIndex;
       const endIdx = measurement.lineEndIndex;
       
@@ -1201,7 +1230,7 @@ export function FlashingCanvas({
             o.measurementId === m.id && o.type === 'i-text'
           );
           if (textObj) {
-            (textObj as any).set('text', `${actualLength}${lengthUnit}`);
+            (textObj as any).set('text', `${formatLength(actualLength, lengthUnit)}${lengthUnit}`);
           }
           
           return {
@@ -1553,7 +1582,10 @@ export function FlashingCanvas({
         type: m.type,
         sequence: index + 1,
         value: m.value,
-        unit: m.type === 'length' ? lengthUnit : 'degrees',
+        // Canonical storage: lengths always written as mm. The display
+        // conversion happens on render via formatLength(). Angles stay
+        // in degrees.
+        unit: m.type === 'length' ? 'mm' : 'degrees',
         pointIndices: m.type === 'length' 
           ? [m.lineStartIndex, m.lineEndIndex]
           : [m.pointIndex! - 1, m.pointIndex!, (m.pointIndex! + 1) % linePoints.length],
@@ -1817,7 +1849,7 @@ export function FlashingCanvas({
           <div>
             <span className="text-slate-600 font-medium">Length:</span>{' '}
             <span className="text-slate-900 font-bold">
-              {measurements_live?.length || '—'}{lengthUnit}
+              {measurements_live?.length != null ? formatLength(measurements_live.length, lengthUnit) : '—'}{lengthUnit}
             </span>
           </div>
           <div>
@@ -1871,7 +1903,7 @@ export function FlashingCanvas({
                     </button>
                   </div>
                   <div className="text-base font-bold text-slate-900 mb-3">
-                    {m.type === 'length' ? `${m.value}${lengthUnit}` : `${m.value}°`}
+                    {m.type === 'length' ? `${formatLength(m.value, lengthUnit)}${lengthUnit}` : `${m.value}°`}
                     {m.type === 'angle' && (
                       <span className="text-xs font-normal text-slate-500 ml-1">
                         ({m.showInterior ? 'Interior' : 'Exterior'})
