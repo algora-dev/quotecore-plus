@@ -99,7 +99,7 @@ export async function requestEmailChange(
   // password verifier and basic abuse without blocking legitimate retries.
   const hdrs = await headers();
   const ip = getClientIP(hdrs);
-  if (!checkRateLimit(`email-change:${ip}`, 3, 60 * 60 * 1000)) {
+  if (!(await checkRateLimit(`email-change:${ip}`, 3, 60 * 60 * 1000))) {
     return { ok: false, code: 'rate_limited', message: 'Too many attempts. Please try again in an hour.' };
   }
 

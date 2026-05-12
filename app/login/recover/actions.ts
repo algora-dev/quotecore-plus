@@ -161,11 +161,11 @@ export async function lookupRecovery(oldEmail: string): Promise<LookupResult> {
 
   const hdrs = await headers();
   const ip = getClientIP(hdrs);
-  if (!checkRateLimit(`recovery-lookup-ip:${ip}`, PER_IP_HOUR_LIMIT, 60 * 60 * 1000)) {
+  if (!(await checkRateLimit(`recovery-lookup-ip:${ip}`, PER_IP_HOUR_LIMIT, 60 * 60 * 1000))) {
     await logAttempt({ userId: null, oldEmail: trimmed, outcome: 'rate_limited' });
     return { ok: false, code: 'rate_limited', message: 'Too many recovery attempts. Please try again in an hour.' };
   }
-  if (!checkRateLimit(`recovery-lookup-email:${trimmed}`, PER_EMAIL_HOUR_LIMIT, 60 * 60 * 1000)) {
+  if (!(await checkRateLimit(`recovery-lookup-email:${trimmed}`, PER_EMAIL_HOUR_LIMIT, 60 * 60 * 1000))) {
     await logAttempt({ userId: null, oldEmail: trimmed, outcome: 'rate_limited' });
     return { ok: false, code: 'rate_limited', message: 'Too many recovery attempts for this account. Please try again later.' };
   }
@@ -230,11 +230,11 @@ export async function verifyRecoveryAnswers(answers: { slot: number; answer: str
 
   const hdrs = await headers();
   const ip = getClientIP(hdrs);
-  if (!checkRateLimit(`recovery-verify-ip:${ip}`, PER_IP_HOUR_LIMIT, 60 * 60 * 1000)) {
+  if (!(await checkRateLimit(`recovery-verify-ip:${ip}`, PER_IP_HOUR_LIMIT, 60 * 60 * 1000))) {
     await logAttempt({ userId: payload.sub, oldEmail: null, outcome: 'rate_limited' });
     return { ok: false, code: 'rate_limited', message: 'Too many attempts. Please try again later.' };
   }
-  if (!checkRateLimit(`recovery-verify-user:${payload.sub}`, PER_EMAIL_HOUR_LIMIT, 60 * 60 * 1000)) {
+  if (!(await checkRateLimit(`recovery-verify-user:${payload.sub}`, PER_EMAIL_HOUR_LIMIT, 60 * 60 * 1000))) {
     await logAttempt({ userId: payload.sub, oldEmail: null, outcome: 'rate_limited' });
     return { ok: false, code: 'rate_limited', message: 'Too many attempts for this account. Please try again later.' };
   }

@@ -37,7 +37,7 @@ export default async function AcceptQuotePage({
   // Rate limit: 20 attempts per IP per hour
   const hdrs = await headers();
   const ip = getClientIP(hdrs);
-  if (!checkRateLimit(`accept:${ip}`, 20, 60 * 60 * 1000)) {
+  if (!(await checkRateLimit(`accept:${ip}`, 20, 60 * 60 * 1000))) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 max-w-md text-center">

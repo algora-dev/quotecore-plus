@@ -104,7 +104,7 @@ export async function submitRevisionRequest(
   // actual submissions.
   const hdrs = await headers();
   const ip = getClientIP(hdrs);
-  if (!checkRateLimit(`revision:${ip}`, 5, 60 * 60 * 1000)) {
+  if (!(await checkRateLimit(`revision:${ip}`, 5, 60 * 60 * 1000))) {
     return { success: false, error: 'Too many requests. Please try again later or email directly.' };
   }
 
