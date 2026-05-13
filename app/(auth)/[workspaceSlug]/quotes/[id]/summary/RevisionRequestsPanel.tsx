@@ -6,6 +6,14 @@
  * the customer's notes, when it arrived, contact info (if provided), and a
  * "Mark Resolved" button. Resolved requests collapse into a count.
  *
+ * 2026-05-13: brought into parity with the Sent Messages panel. The
+ * "Select" / multi-select bar, "Select all" / "Clear all", "Resolve
+ * selected" and "Delete selected" affordances now mirror the messages
+ * UX exactly so the user only has to learn one pattern. The two
+ * domains stay separate underneath (different DB tables, different
+ * action semantics) \u2014 a future "Unified inbox" can merge them once
+ * the data shapes converge.
+ *
  * Replying: instead of forcing a `mailto:` button (which opens whichever
  * email client the OS thinks is default), we show the customer's email
  * address inline alongside a Copy-to-clipboard button. Most users prefer to
@@ -14,7 +22,11 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { resolveRevisionRequest } from '@/app/accept/[token]/actions';
+import {
+  resolveRevisionRequest,
+  bulkResolveRevisionRequests,
+  bulkDeleteRevisionRequests,
+} from '@/app/accept/[token]/actions';
 import { AlertModal } from '@/app/components/AlertModal';
 
 export interface RevisionRequest {
@@ -64,6 +76,14 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   /** Per-request "Copied!" feedback timeout. */
   const [copiedRequestId, setCopiedRequestId] = useState<string | null>(null);
+
+  // Multi-select state \u2014 mirrors SentMessagesList behaviour.
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmingBulk, setConfirmingBulk] = useState<null | 'resolve' | 'delete'>(null);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const [bulkPending, startBulkTransition] = useTransition();
+
   /** App-style alert state replaces native alert() in this panel. */
   const [alertState, setAlertState] = useState<{
     open: boolean;
@@ -75,8 +95,60 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
   const [, startTransition] = useTransition();
   const router = useRouter();
 
-  // Don't render anything if there's no history at all — keeps the summary clean.
+  // Don't render anything if there's no history at all \u2014 keeps the summary clean.
   if (requests.length === 0) return null;
+
+  function exitSelectMode() {
+    setSelectMode(false);
+    setSelected(new Set());
+    setConfirmingBulk(null);
+    setBulkError(null);
+  }
+
+  function toggleSelectMode() {
+    if (selectMode) exitSelectMode();
+    else setSelectMode(true);
+  }
+
+  function toggleOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  // Multi-select operates over both pending and resolved \u2014 the user
+  // might want to delete resolved noise. Pending-only select-all is the
+  // common case so the toolbar reflects that.
+  function selectAllPending() {
+    setSelected(new Set(pending.map((r) => r.id)));
+  }
+
+  function clearAll() {
+    setSelected(new Set());
+  }
+
+  function runBulk() {
+    if (selected.size === 0 || confirmingBulk === null) return;
+    setBulkError(null);
+    const ids = Array.from(selected);
+    const action = confirmingBulk;
+    startBulkTransition(async () => {
+      const result =
+        action === 'resolve'
+          ? await bulkResolveRevisionRequests(ids)
+          : await bulkDeleteRevisionRequests(ids);
+      if (result.ok) {
+        exitSelectMode();
+        router.refresh();
+      } else {
+        setBulkError(result.error);
+        setConfirmingBulk(null);
+      }
+    });
+  }
 
   async function copyEmail(req: RevisionRequest) {
     if (!req.customer_email) return;
@@ -86,7 +158,7 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
       // Reset the "Copied!" feedback after 1.5s so the button returns to normal.
       window.setTimeout(() => setCopiedRequestId((cur) => (cur === req.id ? null : cur)), 1500);
     } catch {
-      // Clipboard can fail in non-secure contexts — fall back to a modal so
+      // Clipboard can fail in non-secure contexts \u2014 fall back to a modal so
       // the user can still grab the address.
       setAlertState({
         open: true,
@@ -116,6 +188,9 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
       }
     });
   }
+
+  const allPendingSelected =
+    pending.length > 0 && pending.every((r) => selected.has(r.id));
 
   return (
     <div className={`rounded-2xl border ${pending.length > 0 ? 'border-orange-300 bg-orange-50/40' : 'border-slate-200 bg-white'} p-4`}>
@@ -148,16 +223,74 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
 
       {expanded && (
         <div className="mt-4 space-y-3">
+          {/* Select toolbar \u2014 mirrors SentMessagesList. Only shows when
+              there's more than one row to make multi-select worthwhile. */}
+          {requests.length > 1 ? (
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={toggleSelectMode}
+                className="text-[11px] font-medium text-slate-500 hover:text-slate-800 transition"
+              >
+                {selectMode ? 'Done' : 'Select'}
+              </button>
+              {selectMode && pending.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={allPendingSelected ? clearAll : selectAllPending}
+                  className="text-[11px] font-medium text-slate-500 hover:text-slate-800 transition"
+                >
+                  {allPendingSelected ? 'Clear all' : 'Select all pending'}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+
           {pending.map((req) => {
             const badge = STATE_BADGE[req.source_state];
+            const isSelected = selected.has(req.id);
             return (
-              <div key={req.id} className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+              <div
+                key={req.id}
+                role={selectMode ? 'button' : undefined}
+                tabIndex={selectMode ? 0 : undefined}
+                onClick={selectMode ? () => toggleOne(req.id) : undefined}
+                onKeyDown={
+                  selectMode
+                    ? (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          toggleOne(req.id);
+                        }
+                      }
+                    : undefined
+                }
+                className={`rounded-xl border p-4 space-y-3 ${
+                  selectMode && isSelected
+                    ? 'border-slate-400 bg-slate-50 cursor-pointer'
+                    : selectMode
+                      ? 'border-slate-200 bg-white cursor-pointer hover:bg-slate-50'
+                      : 'border-slate-200 bg-white'
+                }`}
+              >
                 <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">
-                      {req.customer_name || fallbackCustomerName || 'Customer'}
-                    </p>
-                    <p className="text-xs text-slate-500">{formatTimestamp(req.created_at)}</p>
+                  <div className="flex items-start gap-3">
+                    {selectMode ? (
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleOne(req.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label="Select request"
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 cursor-pointer"
+                      />
+                    ) : null}
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">
+                        {req.customer_name || fallbackCustomerName || 'Customer'}
+                      </p>
+                      <p className="text-xs text-slate-500">{formatTimestamp(req.created_at)}</p>
+                    </div>
                   </div>
                   <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${badge.cls}`}>
                     {badge.label}
@@ -168,37 +301,41 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
                   {req.notes}
                 </p>
 
-                <div className="flex items-center gap-2 flex-wrap">
-                  {/* Email + Copy: show the actual customer email inline so the user
-                      can grab it into whichever mail client they use, instead of being
-                      forced through a `mailto:` handler. */}
-                  {req.customer_email ? (
-                    <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 pl-3 pr-1 py-1 text-xs text-slate-700">
-                      <svg className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      <span className="select-all font-medium break-all">{req.customer_email}</span>
-                      <button
-                        type="button"
-                        onClick={() => copyEmail(req)}
-                        className="ml-1 rounded-full bg-white border border-slate-300 px-2 py-0.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 flex-shrink-0"
-                        title="Copy email address to clipboard"
-                      >
-                        {copiedRequestId === req.id ? 'Copied!' : 'Copy'}
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-slate-400 italic">No email provided</span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => handleResolve(req.id)}
-                    disabled={resolvingId === req.id}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                  >
-                    {resolvingId === req.id ? 'Resolving...' : 'Mark resolved'}
-                  </button>
-                </div>
+                {/* Action row hidden in select mode \u2014 the bulk bar at the
+                    bottom owns actions then. */}
+                {!selectMode ? (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Email + Copy: show the actual customer email inline so the user
+                        can grab it into whichever mail client they use, instead of being
+                        forced through a `mailto:` handler. */}
+                    {req.customer_email ? (
+                      <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 pl-3 pr-1 py-1 text-xs text-slate-700">
+                        <svg className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <span className="select-all font-medium break-all">{req.customer_email}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); copyEmail(req); }}
+                          className="ml-1 rounded-full bg-white border border-slate-300 px-2 py-0.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 flex-shrink-0"
+                          title="Copy email address to clipboard"
+                        >
+                          {copiedRequestId === req.id ? 'Copied!' : 'Copy'}
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">No email provided</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleResolve(req.id); }}
+                      disabled={resolvingId === req.id}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {resolvingId === req.id ? 'Resolving...' : 'Mark resolved'}
+                    </button>
+                  </div>
+                ) : null}
               </div>
             );
           })}
@@ -214,25 +351,122 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
               </button>
               {showResolved && (
                 <div className="mt-2 space-y-2">
-                  {resolved.map((req) => (
-                    <div key={req.id} className="rounded-lg border border-slate-200 bg-white p-3 opacity-75">
-                      <div className="flex items-start justify-between gap-3 flex-wrap">
-                        <div>
-                          <p className="text-xs font-medium text-slate-700">
-                            {req.customer_name || fallbackCustomerName || 'Customer'}
-                          </p>
-                          <p className="text-[11px] text-slate-400">
-                            Submitted {formatTimestamp(req.created_at)} · Resolved {req.resolved_at ? formatTimestamp(req.resolved_at) : ''}
-                          </p>
+                  {resolved.map((req) => {
+                    const isSelected = selected.has(req.id);
+                    return (
+                      <div
+                        key={req.id}
+                        role={selectMode ? 'button' : undefined}
+                        tabIndex={selectMode ? 0 : undefined}
+                        onClick={selectMode ? () => toggleOne(req.id) : undefined}
+                        className={`rounded-lg border p-3 ${
+                          selectMode && isSelected
+                            ? 'border-slate-400 bg-slate-50 cursor-pointer'
+                            : selectMode
+                              ? 'border-slate-200 bg-white opacity-75 cursor-pointer hover:bg-slate-50'
+                              : 'border-slate-200 bg-white opacity-75'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <div className="flex items-start gap-3">
+                            {selectMode ? (
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleOne(req.id)}
+                                onClick={(e) => e.stopPropagation()}
+                                aria-label="Select request"
+                                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 cursor-pointer"
+                              />
+                            ) : null}
+                            <div>
+                              <p className="text-xs font-medium text-slate-700">
+                                {req.customer_name || fallbackCustomerName || 'Customer'}
+                              </p>
+                              <p className="text-[11px] text-slate-400">
+                                Submitted {formatTimestamp(req.created_at)} \u00b7 Resolved {req.resolved_at ? formatTimestamp(req.resolved_at) : ''}
+                              </p>
+                            </div>
+                          </div>
                         </div>
+                        <p className="text-xs text-slate-600 mt-1 whitespace-pre-wrap">{req.notes}</p>
                       </div>
-                      <p className="text-xs text-slate-600 mt-1 whitespace-pre-wrap">{req.notes}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
           )}
+
+          {/* Bulk action bar */}
+          {selectMode ? (
+            <div className="flex items-center justify-between gap-3 pt-3 mt-1 border-t border-slate-200">
+              <span className="text-xs text-slate-600">
+                {selected.size === 0
+                  ? 'Select requests to action'
+                  : `${selected.size} selected`}
+              </span>
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                {bulkError ? (
+                  <span className="text-[11px] text-rose-600">{bulkError}</span>
+                ) : null}
+                {confirmingBulk !== null ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={runBulk}
+                      disabled={bulkPending}
+                      className={`px-3 py-1 text-[11px] font-medium rounded-full text-white disabled:opacity-50 ${
+                        confirmingBulk === 'delete'
+                          ? 'bg-rose-600 hover:bg-rose-700'
+                          : 'bg-emerald-600 hover:bg-emerald-700'
+                      }`}
+                    >
+                      {bulkPending
+                        ? 'Working\u2026'
+                        : confirmingBulk === 'delete'
+                          ? `Confirm delete ${selected.size}`
+                          : `Confirm resolve ${selected.size}`}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingBulk(null)}
+                      disabled={bulkPending}
+                      className="text-[11px] text-slate-500 hover:text-slate-700"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={exitSelectMode}
+                      className="text-[11px] text-slate-500 hover:text-slate-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingBulk('resolve')}
+                      disabled={selected.size === 0}
+                      className="px-3 py-1 text-[11px] font-medium rounded-full bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                    >
+                      Mark resolved
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingBulk('delete')}
+                      disabled={selected.size === 0}
+                      className="px-3 py-1 text-[11px] font-medium rounded-full bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                    >
+                      Delete selected
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
 

@@ -172,7 +172,7 @@ export function OrderBody({ order, lines, flashings }: Props) {
                           {((line.lengths as unknown) as LengthEntry[]).map((entry, idx) => (
                             <li key={idx}>
                               {String(entry.length)}
-                              {line.length_unit} \u00d7 {String(entry.multiplier)}
+                              {line.length_unit} × {String(entry.multiplier)}
                             </li>
                           ))}
                         </ul>

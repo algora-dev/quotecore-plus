@@ -265,9 +265,54 @@ export async function updateQuoteJobStatus(quoteId: string, jobStatus: JobStatus
     throw new Error('Invalid job status');
   }
 
+  // Manual status changes are the master source of truth for this
+  // quote and must stay master until another action (manual or
+  // customer-facing) overrides them.
+  //
+  // The two derived timestamps `accepted_at` / `declined_at` are what
+  // the public acceptance link uses to decide whether the link is
+  // still actionable, and they're also the inputs for the WithdrawQuote
+  // / SendQuote button states on the summary page. Before this change,
+  // a user manually flipping job_status away from 'accepted' would
+  // leave `accepted_at` stamped — so the summary chrome and the public
+  // link still believed the quote was accepted. Conversely, manually
+  // setting 'accepted' without stamping accepted_at meant a customer
+  // could later click the public link and override the manual decision.
+  //
+  // Sync rules:
+  //   - jobStatus = 'accepted'  -> stamp accepted_at = now(), clear declined_at.
+  //   - jobStatus = 'declined'  -> stamp declined_at = now(), clear accepted_at.
+  //   - anything else           -> clear BOTH timestamps so the link
+  //                                 sees the quote as not-yet-finalized
+  //                                 and downstream UI re-syncs. This
+  //                                 is the "renegotiate" path the user
+  //                                 implicitly takes by moving status
+  //                                 back to e.g. 'sent' or 'unsent'.
+  //
+  // 2026-05-13 Shaun: "If the user manually changes the status from
+  // accepted/declined, that has to be the new master for that quote
+  // until another action changes it."
+  const now = new Date().toISOString();
+  type StatusPatch = {
+    job_status: JobStatus;
+    accepted_at?: string | null;
+    declined_at?: string | null;
+  };
+  const patch: StatusPatch = { job_status: jobStatus };
+  if (jobStatus === 'accepted') {
+    patch.accepted_at = now;
+    patch.declined_at = null;
+  } else if (jobStatus === 'declined') {
+    patch.declined_at = now;
+    patch.accepted_at = null;
+  } else {
+    patch.accepted_at = null;
+    patch.declined_at = null;
+  }
+
   const { error } = await supabase
     .from('quotes')
-    .update({ job_status: jobStatus })
+    .update(patch)
     .eq('id', quoteId)
     .eq('company_id', profile.company_id);
 

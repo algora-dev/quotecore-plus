@@ -210,6 +210,86 @@ export async function resolveRevisionRequest(requestId: string): Promise<void> {
   if (error) throw new Error(`Failed to resolve request: ${error.message}`);
 }
 
+export type RevisionRequestActionResult =
+  | { ok: true; count: number }
+  | { ok: false; error: string };
+
+/**
+ * Bulk-resolve a set of revision requests in a single round-trip.
+ *
+ * Used by the multi-select bar on the quote summary's revision
+ * requests panel — same UX as the Sent Messages bulk delete. RLS
+ * still filters cross-company rows; we also match company_id
+ * explicitly as belt-and-braces.
+ */
+export async function bulkResolveRevisionRequests(
+  requestIds: string[],
+): Promise<RevisionRequestActionResult> {
+  if (!Array.isArray(requestIds) || requestIds.length === 0) {
+    return { ok: false, error: 'No requests selected.' };
+  }
+  if (requestIds.length > 100) {
+    return { ok: false, error: 'Too many requests selected (max 100).' };
+  }
+  const { requireCompanyContext, createSupabaseServerClient } = await import('@/app/lib/supabase/server');
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from('quote_revision_requests')
+    .update({
+      resolved_at: new Date().toISOString(),
+      resolved_by_user_id: profile.id,
+    })
+    .in('id', requestIds)
+    .eq('company_id', profile.company_id)
+    .is('resolved_at', null) // only act on currently-pending rows
+    .select('id');
+
+  if (error) return { ok: false, error: error.message };
+  console.log(
+    `[requests/resolve-bulk] user=${profile.id} company=${profile.company_id} requested=${requestIds.length} resolved=${data?.length ?? 0}`,
+  );
+  return { ok: true, count: data?.length ?? 0 };
+}
+
+/**
+ * Hard-delete a set of revision requests by id. Mirrors
+ * deleteSentMessagesBulk for the messages panel — same shape, same
+ * limits, same audit log.
+ *
+ * We deliberately allow deleting BOTH pending and resolved rows here:
+ * the user might want to clear noise. If a request is mid-resolve in
+ * another tab, the second delete will still succeed because the row
+ * exists — idempotent enough for this UX.
+ */
+export async function bulkDeleteRevisionRequests(
+  requestIds: string[],
+): Promise<RevisionRequestActionResult> {
+  if (!Array.isArray(requestIds) || requestIds.length === 0) {
+    return { ok: false, error: 'No requests selected.' };
+  }
+  if (requestIds.length > 100) {
+    return { ok: false, error: 'Too many requests selected (max 100).' };
+  }
+  const { requireCompanyContext, createSupabaseServerClient } = await import('@/app/lib/supabase/server');
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from('quote_revision_requests')
+    .delete()
+    .in('id', requestIds)
+    .eq('company_id', profile.company_id)
+    .select('id');
+
+  if (error) return { ok: false, error: error.message };
+  console.log(
+    `[requests/delete-bulk] user=${profile.id} company=${profile.company_id} requested=${requestIds.length} removed=${data?.length ?? 0}`,
+  );
+  return { ok: true, count: data?.length ?? 0 };
+}
+
 export async function respondToQuote(token: string, action: 'accept' | 'decline') {
   // Input validation
   if (!token || !isValidUUID(token)) {
