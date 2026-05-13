@@ -140,7 +140,7 @@ export function ScheduledMessagesList({ rows }: Props) {
                   <p className="text-slate-500">
                     {row.status === 'scheduled' ? 'Sends ' : row.status === 'sent' ? 'Sent ' : 'Was due '}
                     <span className="text-slate-700 font-medium">{formatFireTime(row.fireAt)}</span>
-                    <span className="text-slate-400"> \u00b7 {TRIGGER_LABEL[row.triggerEvent]}</span>
+                    <span className="text-slate-400">{' · '}{TRIGGER_LABEL[row.triggerEvent]}</span>
                   </p>
                   {row.status === 'cancelled' && row.cancelledReason ? (
                     <p className="text-slate-400 italic mt-0.5">{row.cancelledReason}</p>

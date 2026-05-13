@@ -290,7 +290,7 @@ export function ScheduleFollowUpButton({
                     className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                   />
                   <span>
-                    Avoid evenings (8pm\u20138am) and weekends.
+                    Avoid evenings (8pm–8am) and weekends.
                     <span className="block text-slate-400">If the calculated time falls inside the quiet window, we push it to the next allowed slot.</span>
                   </span>
                 </label>
@@ -315,7 +315,7 @@ export function ScheduleFollowUpButton({
 
               {isPushyDelay ? (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                  Heads-up: a short delay can come across as pushy. Most contractors find 5\u20137 days works best for a first follow-up.
+                  Heads-up: a short delay can come across as pushy. Most contractors find 5–7 days works best for a first follow-up.
                 </div>
               ) : null}
 
