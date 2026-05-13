@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { MaterialOrderTemplateRow, FlashingLibraryRow } from '@/app/lib/types';
 import { saveDraftOrder } from './order-actions';
@@ -110,13 +110,21 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
   // Order line items
   const [orderLines, setOrderLines] = useState<OrderLineItem[]>([]);
   
-  // Auto-populate from quote data (runs ONCE on mount)
-  const [quoteLoaded, setQuoteLoaded] = useState(false);
+  // Auto-populate from quote data — hydrate ONCE on mount.
+  //
+  // Same pattern as BlankQuoteBuilder / the customer editor: a single
+  // hydratedRef guard so a parent re-render (router.refresh, identical-
+  // content prop ref change, RSC revalidation bubbling from elsewhere)
+  // can NEVER wipe in-progress edits. The previous `quoteLoaded` state
+  // approach worked at first paint but allowed a stale `existingOrder`
+  // payload to clobber unsaved form state seconds later — the classic
+  // "editor reverted to last saved" bug.
+  const hydratedFromQuoteRef = useRef(false);
   useEffect(() => {
-    if (quoteLoaded) return; // Only run once
+    if (hydratedFromQuoteRef.current) return;
     if (!quoteData) return;
     if (quoteData.components.length === 0) return;
-    setQuoteLoaded(true);
+    hydratedFromQuoteRef.current = true;
     
     console.log('[OrderCreateForm] Mapping', quoteData.components.length, 'components');
     
@@ -216,10 +224,20 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
     }
   }, [quoteData, flashings]);
   
-  // Load existing order for edit
+  // Load existing order for edit — hydrate ONCE on mount.
+  //
+  // Critical: do NOT re-run this effect when `existingOrder` reference
+  // changes after a router.refresh or a sibling-component revalidation.
+  // If we did, the user's unsaved edits would be replaced by the last
+  // server-persisted snapshot every few seconds — the "auto-save
+  // revert" bug Shaun has flagged across editors. Guard with a ref so
+  // the effect short-circuits on every render after the first.
+  const hydratedFromExistingRef = useRef(false);
   useEffect(() => {
+    if (hydratedFromExistingRef.current) return;
     if (!existingOrder) return;
-    
+    hydratedFromExistingRef.current = true;
+
     console.log('[OrderCreateForm] Loading existing order:', existingOrder.order.order_number);
     
     const { order, lines } = existingOrder;

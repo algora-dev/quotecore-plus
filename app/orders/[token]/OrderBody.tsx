@@ -33,10 +33,44 @@ export function OrderBody({ order, lines, flashings }: Props) {
       <style jsx global>{`
         @media print {
           @page { margin: 12mm; }
+          html, body { background: #fff !important; }
           body * { visibility: hidden !important; }
           [data-print-root], [data-print-root] * { visibility: visible !important; }
-          [data-print-root] { position: absolute; left: 0; top: 0; width: 100%; padding: 0 !important; }
-          [data-print-hide] { display: none !important; }
+          [data-print-root] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            background: #fff !important;
+          }
+          [data-print-hide], [data-exclude-pdf] { display: none !important; }
+
+          /* Print-only two-column rule. Tailwind's sm: breakpoint is
+             based on viewport width, which is irrelevant for print, so
+             we force the grid columns explicitly when the user chose
+             'double' layout. */
+          [data-layout-mode='double'] {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 6mm !important;
+          }
+
+          /* Keep each line card together — a tall flashing card (e.g.
+             barge) is pushed to the next page instead of being clipped. */
+          [data-print-card] {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          [data-print-card] img {
+            max-height: 60mm;
+            width: auto;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
         }
       `}</style>
 
@@ -93,12 +127,24 @@ export function OrderBody({ order, lines, flashings }: Props) {
           </div>
         ) : null}
 
-        {/* Line items */}
-        <div className="space-y-4">
+        {/* Line items.
+            The order's saved `layout_mode` controls single- vs two-column
+            grid here. The print stylesheet inherits the same grid (we
+            don't override grid-template-columns in @media print) so the
+            printed/PDF output matches what the user sees and what they
+            chose when saving. */}
+        <div
+          data-layout-mode={order.layout_mode === 'double' ? 'double' : 'single'}
+          className={
+            order.layout_mode === 'double'
+              ? 'grid grid-cols-1 sm:grid-cols-2 gap-4'
+              : 'space-y-4'
+          }
+        >
           {lines.map((line, index) => {
             const flashing = line.flashing_id ? flashings.find((f) => f.id === line.flashing_id) : null;
             return (
-              <div key={line.id} className="rounded-xl border border-slate-200 p-4 break-inside-avoid">
+              <div key={line.id} data-print-card className="rounded-xl border border-slate-200 p-4 break-inside-avoid">
                 {line.show_component_name !== false ? (
                   <p className="font-semibold text-slate-900 mb-2">
                     {index + 1}. {line.item_name}

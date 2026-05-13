@@ -28,6 +28,17 @@ interface Props {
   createdAt: string;
   repliedAt: string | null;
   replies: SentMessageReply[];
+  /**
+   * When the parent panel is in multi-select mode, the row replaces
+   * its inline delete affordance with a checkbox and clicking the row
+   * toggles selection instead of expanding the reply detail. The
+   * default behaviour (selectMode omitted/false) preserves the
+   * original single-row UX so callers that don't need bulk delete
+   * (e.g. future surfaces) don't have to wire selection.
+   */
+  selectMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 /**
@@ -76,6 +87,9 @@ export function SentMessageRow({
   createdAt,
   repliedAt,
   replies,
+  selectMode = false,
+  selected = false,
+  onToggleSelect,
 }: Props) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
@@ -103,15 +117,37 @@ export function SentMessageRow({
       <div
         role="button"
         tabIndex={0}
-        onClick={() => setExpanded((v) => !v)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
+        onClick={() => {
+          if (selectMode) {
+            onToggleSelect?.();
+          } else {
             setExpanded((v) => !v);
           }
         }}
-        className="w-full flex items-center justify-between gap-4 text-left hover:bg-slate-50 -mx-2 px-2 py-1 rounded transition cursor-pointer"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (selectMode) {
+              onToggleSelect?.();
+            } else {
+              setExpanded((v) => !v);
+            }
+          }
+        }}
+        className={`w-full flex items-center justify-between gap-4 text-left -mx-2 px-2 py-1 rounded transition cursor-pointer ${
+          selectMode && selected ? 'bg-slate-100' : 'hover:bg-slate-50'
+        }`}
       >
+        {selectMode ? (
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={() => onToggleSelect?.()}
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Select message"
+            className="shrink-0 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 cursor-pointer"
+          />
+        ) : null}
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-slate-900 truncate">{subject}</p>
           <p className="text-xs text-slate-500 truncate">
@@ -137,9 +173,11 @@ export function SentMessageRow({
           >
             <polyline points="6 9 12 15 18 9" />
           </svg>
-          {/* Hover-revealed delete affordance. Two-click confirm to
-              avoid accidental removal of a long alert thread. */}
-          {confirmDelete ? (
+          {/* Hover-revealed delete affordance. Hidden while the panel
+              is in multi-select mode — the parent bulk action bar owns
+              deletion in that case. Two-click confirm to avoid
+              accidental removal of a long alert thread. */}
+          {selectMode ? null : confirmDelete ? (
             <>
               <button
                 type="button"
@@ -163,6 +201,8 @@ export function SentMessageRow({
               type="button"
               onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
               title="Delete this message"
+              aria-label="Delete this message"
+              data-message-id={id}
               className="p-1 rounded-full text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition opacity-0 group-hover:opacity-100"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,7 +216,7 @@ export function SentMessageRow({
         <p className="mt-1 ml-1 text-[11px] text-rose-600">{deleteError}</p>
       ) : null}
 
-      {expanded ? (
+      {expanded && !selectMode ? (
         <div className="mt-2 ml-1 pl-3 border-l-2 border-slate-200 space-y-3">
           {!hasReplies ? (
             <p className="text-xs text-slate-500 italic">

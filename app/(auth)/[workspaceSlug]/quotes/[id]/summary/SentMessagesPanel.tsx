@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
-import { SentMessageRow, type SentMessageReply, type MessageReplyAction } from './SentMessageRow';
+import { type SentMessageReply, type MessageReplyAction } from './SentMessageRow';
 import { DeleteAllMessagesButton } from './DeleteAllMessagesButton';
+import { SentMessagesList, type SentMessageListItem } from './SentMessagesList';
 
 interface Props {
   quoteId: string;
@@ -60,6 +61,18 @@ export async function SentMessagesPanel({ quoteId, companyId }: Props) {
 
   const repliedCount = messages.filter((m) => m.replied_at).length;
 
+  const listItems: SentMessageListItem[] = messages.map((m) => ({
+    id: m.id,
+    subject: m.subject,
+    recipientEmail: m.recipient_email,
+    recipientName: m.recipient_name,
+    status: m.status,
+    sentAt: m.sent_at,
+    createdAt: m.created_at,
+    repliedAt: m.replied_at,
+    replies: repliesByMessage.get(m.id) ?? [],
+  }));
+
   return (
     <div className="data-exclude-pdf bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
       <header className="flex items-center justify-between">
@@ -78,22 +91,7 @@ export async function SentMessagesPanel({ quoteId, companyId }: Props) {
         <DeleteAllMessagesButton quoteId={quoteId} messageCount={messages.length} />
       </header>
 
-      <ul className="divide-y divide-slate-100">
-        {messages.map((m) => (
-          <SentMessageRow
-            key={m.id}
-            id={m.id}
-            subject={m.subject}
-            recipientEmail={m.recipient_email}
-            recipientName={m.recipient_name}
-            status={m.status}
-            sentAt={m.sent_at}
-            createdAt={m.created_at}
-            repliedAt={m.replied_at}
-            replies={repliesByMessage.get(m.id) ?? []}
-          />
-        ))}
-      </ul>
+      <SentMessagesList messages={listItems} />
     </div>
   );
 }
