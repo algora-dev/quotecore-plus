@@ -161,7 +161,7 @@ export function ScheduledMessagesList({ rows }: Props) {
                           onClick={() => handleForceRun(row.id)}
                           disabled={pendingId === row.id}
                           title="Force-run this scheduled message now (admin only)"
-                          className="px-2 py-0.5 text-[10px] font-medium rounded-full border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                          className="px-3 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
                         >
                           Send now
                         </button>
@@ -170,7 +170,7 @@ export function ScheduledMessagesList({ rows }: Props) {
                         type="button"
                         onClick={() => handleCancel(row.id)}
                         disabled={pendingId === row.id}
-                        className="px-2 py-0.5 text-[10px] font-medium rounded-full border border-slate-300 bg-white text-slate-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 disabled:opacity-50 transition"
+                        className="px-3 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white text-slate-700 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
                       >
                         {pendingId === row.id ? 'Cancelling\u2026' : 'Cancel'}
                       </button>
