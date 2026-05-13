@@ -38,6 +38,63 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
 
   return (
     <div className="min-h-screen bg-slate-100">
+      {/* Print-only stylesheet.
+          Same pattern as the public OrderBody (app/orders/[token]):
+          - hide everything except [data-print-root]
+          - drop the A4 shadow/background framing so print flows naturally
+          - keep each line card together (page-break-inside: avoid) so a
+            tall flashing card (e.g. barge) is pushed to the next page
+            instead of being clipped at the bottom of page 1.
+          - force flashing images to print colour fidelity. */}
+      <style jsx global>{`
+        @media print {
+          @page { margin: 12mm; }
+          html, body { background: #fff !important; }
+          body * { visibility: hidden !important; }
+          [data-print-root], [data-print-root] * { visibility: visible !important; }
+          [data-print-root] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: #fff !important;
+          }
+          [data-print-hide], [data-exclude-pdf] { display: none !important; }
+          [data-print-page] {
+            box-shadow: none !important;
+            width: auto !important;
+            height: auto !important;
+            min-height: 0 !important;
+            page-break-after: always;
+            break-after: page;
+          }
+          [data-print-page]:last-child {
+            page-break-after: auto;
+            break-after: auto;
+          }
+          [data-print-page] > div {
+            padding: 0 !important;
+          }
+          [data-print-page] .data-print-items {
+            display: block !important;
+            overflow: visible !important;
+            height: auto !important;
+          }
+          [data-print-card] {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          [data-print-card] img {
+            max-height: 60mm;
+            width: auto;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+        }
+      `}</style>
+
       {/* Top Bar */}
       <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm data-exclude-pdf">
         <div className="flex items-center gap-4">
@@ -89,9 +146,9 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
       </div>
 
       {/* A4 Preview Container */}
-      <div className="max-w-[210mm] mx-auto p-8 space-y-8">
+      <div data-print-root className="max-w-[210mm] mx-auto p-8 space-y-8">
         {/* Page 1 - Header + Start of Items */}
-        <div className="bg-white shadow-lg relative" style={{ width: '210mm', height: '297mm' }}>
+        <div data-print-page className="bg-white shadow-lg relative" style={{ width: '210mm', height: '297mm' }}>
           {/* Page number indicator */}
           <div className="absolute top-2 right-4 text-xs text-slate-400">Page 1</div>
           
@@ -160,12 +217,12 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
             </div>
 
             {/* Line Items (first few that fit) */}
-            <div className={`flex-1 overflow-hidden ${order.layout_mode === 'double' ? 'grid grid-cols-2 gap-4' : 'space-y-4'}`}>
+            <div className={`data-print-items flex-1 overflow-hidden ${order.layout_mode === 'double' ? 'grid grid-cols-2 gap-4' : 'space-y-4'}`}>
               {lines.slice(0, 3).map((line, index) => {
                 const flashing = line.flashing_id ? flashings.find(f => f.id === line.flashing_id) : null;
                 
                 return (
-                  <div key={line.id} className="border border-slate-200 rounded-lg p-4 break-inside-avoid">
+                  <div key={line.id} data-print-card className="border border-slate-200 rounded-lg p-4 break-inside-avoid">
                     {line.show_component_name && (
                       <div className="font-semibold text-slate-900 mb-3">
                         {index + 1}. {line.item_name}
@@ -224,7 +281,7 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
               const pageNumber = pageIdx + 2;
               
               return (
-                <div key={pageIdx} className="bg-white shadow-lg relative" style={{ width: '210mm', height: '297mm' }}>
+                <div key={pageIdx} data-print-page className="bg-white shadow-lg relative" style={{ width: '210mm', height: '297mm' }}>
                   <div className="absolute top-2 right-4 text-xs text-slate-400">Page {pageNumber}</div>
                   
                   <div className={`p-[15mm] ${order.layout_mode === 'double' ? 'grid grid-cols-2 gap-4' : 'space-y-4'}`}>
@@ -233,7 +290,7 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
                       const globalIndex = startIdx + index;
                       
                       return (
-                        <div key={line.id} className="border border-slate-200 rounded-lg p-4 break-inside-avoid">
+                        <div key={line.id} data-print-card className="border border-slate-200 rounded-lg p-4 break-inside-avoid">
                           {line.show_component_name && (
                             <div className="font-semibold text-slate-900 mb-3">
                               {globalIndex + 1}. {line.item_name}
@@ -288,7 +345,7 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
 
         {/* Final Page with Footer (if notes exist) */}
         {order.header_notes && (
-          <div className="bg-white shadow-lg relative" style={{ width: '210mm', minHeight: '297mm' }}>
+          <div data-print-page className="bg-white shadow-lg relative" style={{ width: '210mm', minHeight: '297mm' }}>
             <div className="absolute top-2 right-4 text-xs text-slate-400">
               Page {Math.ceil(lines.length / 5) + 1}
             </div>

@@ -13,26 +13,26 @@ export default function Home() {
           priority
           className="h-16 w-auto"
         />
-        <p className="text-lg text-slate-600 max-w-md">
-          Roofing measurement and quoting — built for estimators.
+        <p className="text-lg text-slate-600 max-w-xl">
+          The start to finish measure, quote, and job management app built for roofers and all contractors!
         </p>
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Log in
           </Link>
           <Link
             href="/signup"
-            className="rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-900 transition hover:border-slate-400"
+            className="rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-900 transition-all hover:border-slate-400 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Sign up
           </Link>
         </div>
         <Link
           href="/docs"
-          className="text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-700"
+          className="text-xs font-semibold uppercase tracking-wide text-slate-500 transition-all hover:text-[#ff6b35] hover:[text-shadow:0_0_8px_rgba(255,107,53,0.6)]"
         >
           Read the docs
         </Link>
