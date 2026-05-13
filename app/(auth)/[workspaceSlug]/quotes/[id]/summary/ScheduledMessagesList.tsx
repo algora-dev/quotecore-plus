@@ -22,7 +22,6 @@ export interface ScheduledRowDisplay {
   firedAt: string | null;
   cancelledReason: string | null;
   failedError: string | null;
-  isAdmin: boolean;
 }
 
 interface Props {
@@ -155,17 +154,15 @@ export function ScheduledMessagesList({ rows }: Props) {
                 <div className="flex items-center gap-1.5 shrink-0">
                   {row.status === 'scheduled' ? (
                     <>
-                      {row.isAdmin ? (
-                        <button
-                          type="button"
-                          onClick={() => handleForceRun(row.id)}
-                          disabled={pendingId === row.id}
-                          title="Force-run this scheduled message now (admin only)"
-                          className="px-3 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-                        >
-                          Send now
-                        </button>
-                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => handleForceRun(row.id)}
+                        disabled={pendingId === row.id}
+                        title="Send this scheduled message right now instead of waiting for the next cron tick"
+                        className="px-3 py-1 text-xs font-medium rounded-full border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                      >
+                        {pendingId === row.id ? 'Sending\u2026' : 'Send now'}
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleCancel(row.id)}

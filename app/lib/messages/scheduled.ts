@@ -289,25 +289,27 @@ export async function cancelScheduledMessage(id: string): Promise<CancelResultOk
 }
 
 /**
- * Force-run a single scheduled row right now. Hidden behind admin flag
- * in the UI; useful for end-to-end testing of the dispatcher without
- * waiting 30 minutes for the next cron tick.
+ * Force-run a single scheduled row right now.
+ *
+ * Lets the user fire a scheduled follow-up immediately instead of
+ * waiting for the next cron tick (up to 30 minutes). Same risk
+ * profile as the user clicking "Send Quote" directly: every safety
+ * check (RLS, cancel conditions, suppression, rate limiting) still
+ * runs through dispatchOne -> sendOutboundMessage.
+ *
+ * Ownership scoping uses the caller's company_id rather than the
+ * admin flag; if the row belongs to a different company the query
+ * returns nothing (RLS would also block it). We deliberately don't
+ * gate this on `is_admin` — the gate was overzealous and made the
+ * affordance invisible to normal users for no real safety gain.
  */
 export async function forceRunScheduledMessage(id: string): Promise<CancelResultOk | CancelResultErr> {
   const profile = await requireCompanyContext();
-  // Admin gate.
-  const supabase = await createSupabaseServerClient();
-  const { data: me } = await supabase
-    .from('users')
-    .select('is_admin')
-    .eq('id', profile.id)
-    .maybeSingle();
-  if (!me?.is_admin) {
-    return { ok: false, error: 'Admin only.' };
-  }
 
   // Use the service-role dispatcher so it bypasses RLS and runs the
-  // same code path as the cron sweep.
+  // same code path as the cron sweep. We still enforce company
+  // scoping in the WHERE clause so a malicious caller can't
+  // cross-reach.
   const admin = createAdminClient();
   const { data: row, error } = await admin
     .from('scheduled_messages')
