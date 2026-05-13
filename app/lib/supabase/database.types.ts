@@ -1969,6 +1969,108 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_messages: {
+        Row: {
+          cancelled_reason: string | null
+          company_id: string
+          created_at: string
+          created_by_user_id: string
+          failed_error: string | null
+          fire_at: string
+          fired_at: string | null
+          id: string
+          outbound_message_id: string | null
+          quote_id: string | null
+          recipient_email: string
+          recipient_name: string | null
+          require_no_response: boolean
+          respect_quiet_hours: boolean
+          status: string
+          template_id: string | null
+          trigger_anchor_at: string
+          trigger_event: string
+          updated_at: string
+        }
+        Insert: {
+          cancelled_reason?: string | null
+          company_id: string
+          created_at?: string
+          created_by_user_id: string
+          failed_error?: string | null
+          fire_at: string
+          fired_at?: string | null
+          id?: string
+          outbound_message_id?: string | null
+          quote_id?: string | null
+          recipient_email: string
+          recipient_name?: string | null
+          require_no_response?: boolean
+          respect_quiet_hours?: boolean
+          status?: string
+          template_id?: string | null
+          trigger_anchor_at: string
+          trigger_event: string
+          updated_at?: string
+        }
+        Update: {
+          cancelled_reason?: string | null
+          company_id?: string
+          created_at?: string
+          created_by_user_id?: string
+          failed_error?: string | null
+          fire_at?: string
+          fired_at?: string | null
+          id?: string
+          outbound_message_id?: string | null
+          quote_id?: string | null
+          recipient_email?: string
+          recipient_name?: string | null
+          require_no_response?: boolean
+          respect_quiet_hours?: boolean
+          status?: string
+          template_id?: string | null
+          trigger_anchor_at?: string
+          trigger_event?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_messages_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_messages_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_messages_outbound_message_id_fkey"
+            columns: ["outbound_message_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_messages_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_messages_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
           app_version: string | null
