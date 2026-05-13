@@ -119,15 +119,46 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
     });
   }
 
-  // Multi-select operates over both pending and resolved \u2014 the user
-  // might want to delete resolved noise. Pending-only select-all is the
-  // common case so the toolbar reflects that.
-  function selectAllPending() {
-    setSelected(new Set(pending.map((r) => r.id)));
+  // Multi-select operates over both pending and resolved — the user
+  // might want to delete resolved noise. "Select all" covers every row
+  // that's currently visible in the panel (pending always; resolved
+  // only if the user has expanded the resolved drawer).
+  function visibleIds(): string[] {
+    const ids = pending.map((r) => r.id);
+    if (showResolved) ids.push(...resolved.map((r) => r.id));
+    return ids;
+  }
+
+  function selectAllVisible() {
+    setSelected(new Set(visibleIds()));
   }
 
   function clearAll() {
     setSelected(new Set());
+  }
+
+  // Single-row delete — used by the inline hover affordance on resolved
+  // rows so the user doesn't have to enter select mode just to drop one
+  // piece of noise. Mirrors the inline delete on Sent Messages rows.
+  const [singleDeletingId, setSingleDeletingId] = useState<string | null>(null);
+  const [singleConfirmingId, setSingleConfirmingId] = useState<string | null>(null);
+  function handleSingleDelete(id: string) {
+    setSingleDeletingId(id);
+    startTransition(async () => {
+      const result = await bulkDeleteRevisionRequests([id]);
+      if (result.ok) {
+        router.refresh();
+      } else {
+        setAlertState({
+          open: true,
+          title: 'Failed to delete request',
+          description: result.error,
+          variant: 'error',
+        });
+      }
+      setSingleDeletingId(null);
+      setSingleConfirmingId(null);
+    });
   }
 
   function runBulk() {
@@ -189,8 +220,97 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
     });
   }
 
-  const allPendingSelected =
-    pending.length > 0 && pending.every((r) => selected.has(r.id));
+  // "All visible selected" — every row currently in the panel is in
+  // the selected set. We use this to flip the Select-all toggle
+  // between "Select all" and "Clear all".
+  const visibleCount = pending.length + (showResolved ? resolved.length : 0);
+  const allVisibleSelected = visibleCount > 0 && selected.size === visibleCount;
+
+  // Bulk bar is rendered both at the top and bottom of the list so it's
+  // discoverable the instant the user enters select mode, even when
+  // there are zero pending rows and the only thing on screen is the
+  // "Show N resolved" toggle.
+  const renderBulkBar = (placement: 'top' | 'bottom') => {
+    if (!selectMode) return null;
+    return (
+      <div
+        className={`flex items-center justify-between gap-3 flex-wrap ${
+          placement === 'top'
+            ? 'pb-3 mb-1 border-b border-slate-200'
+            : 'pt-3 mt-1 border-t border-slate-200'
+        }`}
+      >
+        <span className="text-xs text-slate-600">
+          {selected.size === 0
+            ? placement === 'top'
+              ? 'Tick the requests you want to action'
+              : 'Select requests to action'
+            : `${selected.size} selected`}
+        </span>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {bulkError ? (
+            <span className="text-[11px] text-rose-600">{bulkError}</span>
+          ) : null}
+          {confirmingBulk !== null ? (
+            <>
+              <button
+                type="button"
+                onClick={runBulk}
+                disabled={bulkPending}
+                className={`px-3 py-1 text-[11px] font-medium rounded-full text-white disabled:opacity-50 ${
+                  confirmingBulk === 'delete'
+                    ? 'bg-rose-600 hover:bg-rose-700'
+                    : 'bg-emerald-600 hover:bg-emerald-700'
+                }`}
+              >
+                {bulkPending
+                  ? 'Working\u2026'
+                  : confirmingBulk === 'delete'
+                    ? `Confirm delete ${selected.size}`
+                    : `Confirm resolve ${selected.size}`}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmingBulk(null)}
+                disabled={bulkPending}
+                className="text-[11px] text-slate-500 hover:text-slate-700"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={exitSelectMode}
+                className="text-[11px] text-slate-500 hover:text-slate-700"
+              >
+                Cancel
+              </button>
+              {pending.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setConfirmingBulk('resolve')}
+                  disabled={selected.size === 0}
+                  className="px-3 py-1 text-[11px] font-medium rounded-full bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                  Mark resolved
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => setConfirmingBulk('delete')}
+                disabled={selected.size === 0}
+                className="px-3 py-1 text-[11px] font-medium rounded-full bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              >
+                Delete selected
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className={`rounded-2xl border ${pending.length > 0 ? 'border-orange-300 bg-orange-50/40' : 'border-slate-200 bg-white'} p-4`}>
@@ -223,28 +343,40 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
 
       {expanded && (
         <div className="mt-4 space-y-3">
-          {/* Select toolbar \u2014 mirrors SentMessagesList. Only shows when
-              there's more than one row to make multi-select worthwhile. */}
-          {requests.length > 1 ? (
+          {/* Select toolbar — promoted to a visible pill button so the
+              user can find it. Available whenever there's at least one
+              row in the panel (resolved-only counts; the user has to
+              be able to delete noise). */}
+          {requests.length >= 1 && !selectMode ? (
+            <div className="flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectMode(true)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 transition"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                Select to delete / resolve
+              </button>
+            </div>
+          ) : null}
+          {selectMode ? (
             <div className="flex items-center justify-between">
               <button
                 type="button"
-                onClick={toggleSelectMode}
+                onClick={allVisibleSelected ? clearAll : selectAllVisible}
                 className="text-[11px] font-medium text-slate-500 hover:text-slate-800 transition"
               >
-                {selectMode ? 'Done' : 'Select'}
+                {allVisibleSelected ? 'Clear all' : 'Select all'}
               </button>
-              {selectMode && pending.length > 0 ? (
-                <button
-                  type="button"
-                  onClick={allPendingSelected ? clearAll : selectAllPending}
-                  className="text-[11px] font-medium text-slate-500 hover:text-slate-800 transition"
-                >
-                  {allPendingSelected ? 'Clear all' : 'Select all pending'}
-                </button>
-              ) : null}
+              <span className="text-[11px] text-slate-400">
+                Tap a request to tick it
+              </span>
             </div>
           ) : null}
+
+          {renderBulkBar('top')}
 
           {pending.map((req) => {
             const badge = STATE_BADGE[req.source_state];
@@ -384,10 +516,50 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
                                 {req.customer_name || fallbackCustomerName || 'Customer'}
                               </p>
                               <p className="text-[11px] text-slate-400">
-                                Submitted {formatTimestamp(req.created_at)} \u00b7 Resolved {req.resolved_at ? formatTimestamp(req.resolved_at) : ''}
+                                Submitted {formatTimestamp(req.created_at)}
+                                {' \u00b7 '}
+                                Resolved {req.resolved_at ? formatTimestamp(req.resolved_at) : ''}
                               </p>
                             </div>
                           </div>
+                          {/* Inline single-row delete affordance for
+                              resolved rows. Hidden in select mode — the
+                              bulk bar owns deletion then. Two-click
+                              confirm so a wrong tap doesn't drop history. */}
+                          {!selectMode ? (
+                            singleConfirmingId === req.id ? (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); handleSingleDelete(req.id); }}
+                                  disabled={singleDeletingId === req.id}
+                                  className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50"
+                                >
+                                  {singleDeletingId === req.id ? 'Removing\u2026' : 'Confirm'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setSingleConfirmingId(null); }}
+                                  disabled={singleDeletingId === req.id}
+                                  className="text-[11px] text-slate-500 hover:text-slate-700"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setSingleConfirmingId(req.id); }}
+                                title="Delete this resolved request"
+                                aria-label="Delete this resolved request"
+                                className="p-1 rounded-full text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            )
+                          ) : null}
                         </div>
                         <p className="text-xs text-slate-600 mt-1 whitespace-pre-wrap">{req.notes}</p>
                       </div>
@@ -398,75 +570,10 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
             </div>
           )}
 
-          {/* Bulk action bar */}
-          {selectMode ? (
-            <div className="flex items-center justify-between gap-3 pt-3 mt-1 border-t border-slate-200">
-              <span className="text-xs text-slate-600">
-                {selected.size === 0
-                  ? 'Select requests to action'
-                  : `${selected.size} selected`}
-              </span>
-              <div className="flex items-center gap-2 flex-wrap justify-end">
-                {bulkError ? (
-                  <span className="text-[11px] text-rose-600">{bulkError}</span>
-                ) : null}
-                {confirmingBulk !== null ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={runBulk}
-                      disabled={bulkPending}
-                      className={`px-3 py-1 text-[11px] font-medium rounded-full text-white disabled:opacity-50 ${
-                        confirmingBulk === 'delete'
-                          ? 'bg-rose-600 hover:bg-rose-700'
-                          : 'bg-emerald-600 hover:bg-emerald-700'
-                      }`}
-                    >
-                      {bulkPending
-                        ? 'Working\u2026'
-                        : confirmingBulk === 'delete'
-                          ? `Confirm delete ${selected.size}`
-                          : `Confirm resolve ${selected.size}`}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmingBulk(null)}
-                      disabled={bulkPending}
-                      className="text-[11px] text-slate-500 hover:text-slate-700"
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={exitSelectMode}
-                      className="text-[11px] text-slate-500 hover:text-slate-700"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmingBulk('resolve')}
-                      disabled={selected.size === 0}
-                      className="px-3 py-1 text-[11px] font-medium rounded-full bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                    >
-                      Mark resolved
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmingBulk('delete')}
-                      disabled={selected.size === 0}
-                      className="px-3 py-1 text-[11px] font-medium rounded-full bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                    >
-                      Delete selected
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          ) : null}
+          {/* Bulk action bar — bottom placement. Top placement is
+              rendered above by `renderBulkBar('top')` so the user can
+              find actions immediately on entering select mode. */}
+          {renderBulkBar('bottom')}
         </div>
       )}
 
