@@ -1,4 +1,7 @@
-import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import {
+  createSupabaseServerClient,
+  requireCompanyContext,
+} from '@/app/lib/supabase/server';
 import { type SentMessageReply, type MessageReplyAction } from './SentMessageRow';
 import { DeleteAllMessagesButton } from './DeleteAllMessagesButton';
 import { SentMessagesList, type SentMessageListItem } from './SentMessagesList';
@@ -36,16 +39,19 @@ export async function SentMessagesPanel({ quoteId, companyId }: Props) {
 
   // Resolve current user once \u2014 used for the admin "Send now" flag on
   // scheduled rows and (implicitly) for RLS scoping on every query below.
-  const { data: { user } } = await supabase.auth.getUser();
-  let isAdmin = false;
-  if (user) {
-    const { data: me } = await supabase
-      .from('users')
-      .select('is_admin')
-      .eq('id', user.id)
-      .maybeSingle();
-    isAdmin = !!me?.is_admin;
-  }
+  // Use requireCompanyContext rather than a raw auth.getUser() hop:
+  // the parent page already called it, so this is a no-op cached lookup
+  // and we don't risk a stale/null user object from a fresh auth call
+  // before cookies have settled. Cookie-less environments are caught
+  // upstream by the layout's auth guard so we can assume `profile`
+  // exists here.
+  const profile = await requireCompanyContext();
+  const { data: me } = await supabase
+    .from('users')
+    .select('is_admin')
+    .eq('id', profile.id)
+    .maybeSingle();
+  const isAdmin = !!me?.is_admin;
 
   const { data: messages } = await supabase
     .from('outbound_messages')
