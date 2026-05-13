@@ -593,11 +593,39 @@ async function markCancelled(
   id: string,
   reason: string,
 ) {
-  await admin
+  // Flip the row first — we use the WHERE status='scheduled' clause as
+  // an idempotency lock so concurrent dispatcher invocations can't
+  // double-cancel.
+  const { data: updated } = await admin
     .from('scheduled_messages')
     .update({ status: 'cancelled', cancelled_reason: reason })
     .eq('id', id)
-    .eq('status', 'scheduled');
+    .eq('status', 'scheduled')
+    .select('company_id, quote_id, recipient_email')
+    .maybeSingle();
+  if (!updated) return;
+
+  // Surface auto-cancels via the bell icon so the user finds out
+  // without having to revisit the quote summary. We deliberately
+  // don't write an alert for user-initiated cancellations (they did
+  // it; they know about it) — that path uses `cancelled_by_user` as
+  // its reason and is bypassed here because it goes through the
+  // server action, not the dispatcher.
+  const { data: quote } = await admin
+    .from('quotes')
+    .select('quote_number, customer_name')
+    .eq('id', updated.quote_id ?? '')
+    .maybeSingle();
+  const quoteRef = quote?.quote_number
+    ? `Quote #${quote.quote_number}`
+    : 'A scheduled follow-up';
+  await admin.from('alerts').insert({
+    company_id: updated.company_id,
+    quote_id: updated.quote_id,
+    alert_type: 'followup_cancelled',
+    title: `${quoteRef}: scheduled follow-up cancelled`,
+    message: `${reason} The follow-up to ${updated.recipient_email} was not sent.`,
+  });
 }
 
 async function markFailed(

@@ -136,15 +136,40 @@ export function ScheduleFollowUpButton({
     });
   }
 
-  // Trigger options visible to the user. We hide options that can't
-  // anchor on the current quote (e.g. quote_accepted when the quote
-  // hasn't been accepted), but always include the trigger that's
-  // currently selected so the form never loses state.
-  const triggerOptions: { value: ScheduledTriggerEvent; label: string; available: boolean }[] = [
-    { value: 'quote_sent', label: 'After the quote was sent', available: hasPriorSend },
-    { value: 'quote_accepted', label: 'After the customer accepted', available: !!quote.accepted_at },
-    { value: 'quote_declined', label: 'After the customer declined', available: !!quote.declined_at },
-    { value: 'manual', label: 'Starting now', available: true },
+  // Trigger options. Each option is only selectable when the quote
+  // is actually in a state that can anchor it (e.g. "after the
+  // customer accepted" needs accepted_at stamped). The disabled-
+  // reason copy tells the user EXACTLY why an option is greyed out
+  // so they don't think the feature is broken.
+  const triggerOptions: {
+    value: ScheduledTriggerEvent;
+    label: string;
+    available: boolean;
+    disabledReason?: string;
+  }[] = [
+    {
+      value: 'quote_sent',
+      label: 'After the quote was sent',
+      available: hasPriorSend,
+      disabledReason: 'Send the quote at least once first',
+    },
+    {
+      value: 'quote_accepted',
+      label: 'After the customer accepted',
+      available: !!quote.accepted_at,
+      disabledReason: 'Only available once this quote is accepted',
+    },
+    {
+      value: 'quote_declined',
+      label: 'After the customer declined',
+      available: !!quote.declined_at,
+      disabledReason: 'Only available once this quote is declined',
+    },
+    {
+      value: 'manual',
+      label: 'Starting now',
+      available: true,
+    },
   ];
 
   return (
@@ -212,7 +237,7 @@ export function ScheduleFollowUpButton({
                   {triggerOptions.map((opt) => (
                     <option key={opt.value} value={opt.value} disabled={!opt.available}>
                       {opt.label}
-                      {!opt.available ? ' \u2014 not yet possible' : ''}
+                      {!opt.available && opt.disabledReason ? ` — ${opt.disabledReason}` : ''}
                     </option>
                   ))}
                 </select>
