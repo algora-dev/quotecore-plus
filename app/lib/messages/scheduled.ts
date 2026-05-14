@@ -130,7 +130,16 @@ export async function scheduleQuoteFollowUp(
   // --- Validate input ------------------------------------------------
   const waitDays = Number.isFinite(input.waitDays) ? Math.max(0, Math.floor(input.waitDays)) : 0;
   const waitHours = Number.isFinite(input.waitHours ?? 0) ? Math.max(0, Math.floor(input.waitHours ?? 0)) : 0;
-  if (waitDays === 0 && waitHours === 0) {
+  // Zero-wait is allowed for event triggers (the row fires the moment
+  // the customer accepts / declines via the activator's inline
+  // dispatch). For chase-style triggers (quote_sent / manual) a zero
+  // delay would be incoherent — you can't chase a non-response that
+  // happened zero seconds ago.
+  const isEventTrigger =
+    input.triggerEvent === 'quote_accepted' ||
+    input.triggerEvent === 'quote_declined' ||
+    input.triggerEvent === 'quote_revision_requested';
+  if (waitDays === 0 && waitHours === 0 && !isEventTrigger) {
     return { ok: false, error: 'Pick a delay greater than zero.' };
   }
   // Anti-footgun cap: 1 year. Beyond this the follow-up is almost
@@ -331,7 +340,7 @@ export async function activateEventScheduledMessages(input: {
   companyId: string;
   event: 'accepted' | 'declined';
   eventAt: string; // ISO
-}): Promise<{ activated: number; cancelled: number }> {
+}): Promise<{ activated: number; cancelled: number; firedImmediately: number }> {
   const admin = createAdminClient();
   const matchingTrigger = input.event === 'accepted' ? 'quote_accepted' : 'quote_declined';
   const oppositeTrigger = input.event === 'accepted' ? 'quote_declined' : 'quote_accepted';
@@ -347,6 +356,12 @@ export async function activateEventScheduledMessages(input: {
     .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
 
   let activated = 0;
+  // Rows whose computed fire_at is now-or-past should dispatch
+  // inline instead of waiting up to 30 minutes for the next cron
+  // tick. Critical for the user's expectation that a 'fires when
+  // customer declines' follow-up actually fires when the customer
+  // declines, not whenever the cron next happens to run.
+  const dueNowRowIds: string[] = [];
   const eventDate = new Date(input.eventAt);
   const now = new Date();
   for (const row of matchingRows ?? []) {
@@ -356,13 +371,14 @@ export async function activateEventScheduledMessages(input: {
       eventDate.getTime() + days * 24 * 60 * 60 * 1000 + hours * 60 * 60 * 1000,
     );
     const adjusted = row.respect_quiet_hours ? applyQuietHours(rawFire) : rawFire;
-    // If somehow the computed fire is in the past (e.g. wait=0 and
-    // quiet hours pushed it backward, which it can't, but defensive)
-    // bump to now + 5 min so we don't fire immediately on the same
-    // cron tick. The dispatcher's >= now() filter handles this anyway
-    // but explicit is better.
-    const minimumFire = new Date(now.getTime() + 5 * 60 * 1000);
-    const finalFire = adjusted < minimumFire ? minimumFire : adjusted;
+    // Two paths:
+    //   - fire_at is now-or-past => dispatch inline. We set fire_at
+    //     to now() so the row is properly marked as due and the
+    //     dispatcher's mutex / status checks all work.
+    //   - fire_at is future => store the real timestamp and let the
+    //     cron pick it up at the right time.
+    const isDueNow = adjusted.getTime() <= now.getTime();
+    const finalFire = isDueNow ? now : adjusted;
     const { error: updateErr } = await admin
       .from('scheduled_messages')
       .update({
@@ -372,7 +388,10 @@ export async function activateEventScheduledMessages(input: {
       .eq('id', row.id)
       .eq('status', 'scheduled')
       .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
-    if (!updateErr) activated += 1;
+    if (!updateErr) {
+      activated += 1;
+      if (isDueNow) dueNowRowIds.push(row.id);
+    }
   }
 
   // Cancel opposite-trigger pending rows — they're now irrelevant.
@@ -391,7 +410,30 @@ export async function activateEventScheduledMessages(input: {
     .eq('trigger_event', oppositeTrigger)
     .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
 
-  return { activated, cancelled: cancelledCount ?? 0 };
+  // Dispatch due-now rows inline so the email lands within seconds
+  // of the customer's accept/decline action. Each dispatchOne call
+  // runs the same code path as the cron sweep — same safety checks,
+  // same audit trail, same final status flip. Best-effort: failures
+  // are logged but don't bubble up because the customer's action
+  // already succeeded.
+  let firedImmediately = 0;
+  for (const rowId of dueNowRowIds) {
+    try {
+      // Reload with the new fire_at so dispatchOne sees a current row.
+      const { data: freshRow } = await admin
+        .from('scheduled_messages')
+        .select('*')
+        .eq('id', rowId)
+        .maybeSingle();
+      if (!freshRow || freshRow.status !== 'scheduled') continue;
+      const outcome = await dispatchOne(freshRow as ScheduledMessageRow, admin);
+      if (outcome === 'sent' || outcome === 'suppressed') firedImmediately += 1;
+    } catch (err) {
+      console.error('[activateEventScheduledMessages] inline dispatch failed:', err);
+    }
+  }
+
+  return { activated, cancelled: cancelledCount ?? 0, firedImmediately };
 }
 
 /**

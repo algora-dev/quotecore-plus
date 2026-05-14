@@ -110,16 +110,23 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   //
   // Each rule has its own template + delay. The prompt is hidden
   // when all rules are scheduled or the user dismisses it.
+  type DelayUnit = 'immediately' | 'hours' | 'days';
   type PostSendRule = {
     enabled: boolean;
     templateId: string;
-    delayDays: number;
+    delayValue: number;
+    delayUnit: DelayUnit;
     scheduled: { ok: true; fireAt: string } | { ok: false; error: string } | null;
   };
   const [postSendRules, setPostSendRules] = useState<Record<'no_response' | 'accepted' | 'declined', PostSendRule>>({
-    no_response: { enabled: true, templateId: '', delayDays: 7, scheduled: null },
-    accepted: { enabled: false, templateId: '', delayDays: 1, scheduled: null },
-    declined: { enabled: false, templateId: '', delayDays: 3, scheduled: null },
+    // Event triggers default to "Immediately" because that's the
+    // headline use case Shaun called out: customer accepts → the
+    // congrats / next-steps email goes out within seconds. The user
+    // can pick hours or days if they want a deliberate gap. The
+    // no_response chase keeps the conventional 7-day default.
+    no_response: { enabled: true, templateId: '', delayValue: 7, delayUnit: 'days', scheduled: null },
+    accepted: { enabled: false, templateId: '', delayValue: 0, delayUnit: 'immediately', scheduled: null },
+    declined: { enabled: false, templateId: '', delayValue: 0, delayUnit: 'immediately', scheduled: null },
   });
   const [postSendScheduling, setPostSendScheduling] = useState(false);
   const [postSendDismissed, setPostSendDismissed] = useState(false);
@@ -235,8 +242,12 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
           quoteId,
           templateId: rule.templateId,
           triggerEvent: triggerByKey[key],
-          waitDays: rule.delayDays,
-          waitHours: 0,
+          // Translate the rule's (value, unit) pair into the
+          // scheduleQuoteFollowUp contract. "Immediately" means
+          // both numbers are zero — the activator will dispatch
+          // inline as soon as the event fires.
+          waitDays: rule.delayUnit === 'days' ? rule.delayValue : 0,
+          waitHours: rule.delayUnit === 'hours' ? rule.delayValue : 0,
           // "no_response" implies require_no_response. The accepted /
           // declined triggers don't gate on response because the
           // event ITSELF is the gate — if the customer accepts, we
@@ -751,22 +762,67 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                                   ))}
                                 </select>
                               </div>
-                              <div className="w-24">
-                                <label className="block text-[10px] font-medium text-slate-500 mb-0.5">Wait (days)</label>
-                                <input
-                                  type="number"
-                                  min={0}
-                                  max={90}
-                                  value={rule.delayDays}
-                                  onChange={(e) =>
+                              <div className="w-32">
+                                <label className="block text-[10px] font-medium text-slate-500 mb-0.5">When</label>
+                                <select
+                                  value={rule.delayUnit}
+                                  onChange={(e) => {
+                                    const nextUnit = e.target.value as DelayUnit;
                                     setPostSendRules((prev) => ({
                                       ...prev,
-                                      [key]: { ...prev[key], delayDays: Math.max(0, Math.min(90, Number(e.target.value) || 0)) },
-                                    }))
-                                  }
+                                      [key]: {
+                                        ...prev[key],
+                                        delayUnit: nextUnit,
+                                        // When switching to immediately, zero out the value.
+                                        // When switching from immediately to hours/days, default to 1.
+                                        delayValue:
+                                          nextUnit === 'immediately'
+                                            ? 0
+                                            : prev[key].delayUnit === 'immediately'
+                                              ? 1
+                                              : prev[key].delayValue,
+                                      },
+                                    }));
+                                  }}
                                   className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
-                                />
+                                >
+                                  {/* Immediately is only meaningful for event triggers —
+                                      a 'no response' chase 0 seconds after sending makes no
+                                      sense and the server would reject it. */}
+                                  {key !== 'no_response' ? (
+                                    <option value="immediately">Immediately</option>
+                                  ) : null}
+                                  <option value="hours">Hours after</option>
+                                  <option value="days">Days after</option>
+                                </select>
                               </div>
+                              {rule.delayUnit !== 'immediately' ? (
+                                <div className="w-20">
+                                  <label className="block text-[10px] font-medium text-slate-500 mb-0.5">{rule.delayUnit === 'hours' ? '# hrs' : '# days'}</label>
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    max={rule.delayUnit === 'hours' ? 168 : 90}
+                                    value={rule.delayValue}
+                                    onChange={(e) =>
+                                      setPostSendRules((prev) => ({
+                                        ...prev,
+                                        [key]: {
+                                          ...prev[key],
+                                          delayValue: Math.max(
+                                            1,
+                                            Math.min(
+                                              prev[key].delayUnit === 'hours' ? 168 : 90,
+                                              Number(e.target.value) || 1,
+                                            ),
+                                          ),
+                                        },
+                                      }))
+                                    }
+                                    className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                                  />
+                                </div>
+                              ) : null}
                             </div>
                           ) : null}
                           {isScheduled ? (
@@ -784,7 +840,12 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                                   unless the customer responds first.
                                 </>
                               ) : (
-                                <>Parked until the customer {key === 'accepted' ? 'accepts' : 'declines'}; fires {rule.delayDays} {rule.delayDays === 1 ? 'day' : 'days'} after.</>
+                                <>
+                                  Parked until the customer {key === 'accepted' ? 'accepts' : 'declines'};{' '}
+                                  {rule.delayUnit === 'immediately'
+                                    ? 'fires immediately when they do.'
+                                    : `fires ${rule.delayValue} ${rule.delayUnit === 'hours' ? (rule.delayValue === 1 ? 'hour' : 'hours') : rule.delayValue === 1 ? 'day' : 'days'} after.`}
+                                </>
                               )}
                             </p>
                           ) : null}
