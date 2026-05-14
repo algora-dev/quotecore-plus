@@ -72,6 +72,18 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Sync local token state to the server prop when it changes.
+  // Without this, `router.refresh()` (used by ReopenQuoteButton, the
+  // post-send prompt, etc.) re-runs the server component and updates
+  // `existingToken` — but the client component's `token` state stays
+  // stuck on whatever was first passed at mount. Result: after a
+  // reopen, ensureToken() reuses the now-deleted token and the user
+  // gets a "Quote Not Found" page. Mirror the prop into local state
+  // whenever it changes so we always reflect DB truth.
+  useEffect(() => {
+    setToken(existingToken);
+  }, [existingToken]);
+
   // Email mode state
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [emailSubject, setEmailSubject] = useState('');
