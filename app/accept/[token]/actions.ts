@@ -343,6 +343,24 @@ export async function respondToQuote(token: string, action: 'accept' | 'decline'
     message: `${quote.customer_name} has ${isAccept ? 'accepted' : 'declined'} Quote #${quote.quote_number}.`,
   });
 
+  // Activate any pre-staged quote_accepted / quote_declined follow-ups
+  // for this quote. The accept/decline modal in the post-send prompt
+  // creates these in advance with sentinel timestamps; this is where
+  // we flip them live. Best-effort — we don't fail the customer
+  // response if activation has trouble. Same await-not-fire-and-forget
+  // discipline as notifyQuoteResponse below.
+  try {
+    const { activateEventScheduledMessages } = await import('@/app/lib/messages/scheduled');
+    await activateEventScheduledMessages({
+      quoteId: quote.id,
+      companyId: quote.company_id,
+      event: isAccept ? 'accepted' : 'declined',
+      eventAt: now,
+    });
+  } catch (err) {
+    console.error('[respondToQuote] activateEventScheduledMessages failed:', err);
+  }
+
   // Best-effort email notification. notifyQuoteResponse swallows its own
   // errors. We MUST await here, not fire-and-forget: Vercel serverless
   // functions terminate the moment the handler returns, killing any

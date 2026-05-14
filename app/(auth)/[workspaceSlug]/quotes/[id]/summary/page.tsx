@@ -20,6 +20,7 @@ import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 import { SendQuoteButton } from './SendQuoteButton';
 import { WithdrawQuoteButton } from './WithdrawQuoteButton';
+import { ReopenQuoteButton } from './ReopenQuoteButton';
 import { SummaryTabs } from './SummaryTabs';
 import { SummaryFilesPanel } from './SummaryFilesPanel';
 import { ActivityCard } from './ActivityCard';
@@ -306,6 +307,13 @@ export default async function QuoteSummaryPage({
               acceptedAt={quote.accepted_at ?? null}
               declinedAt={quote.declined_at ?? null}
             />
+            {quote.accepted_at ? (
+              <ReopenQuoteButton quoteId={id} state="accepted" />
+            ) : quote.declined_at ? (
+              <ReopenQuoteButton quoteId={id} state="declined" />
+            ) : quote.withdrawn_at ? (
+              <ReopenQuoteButton quoteId={id} state="withdrawn" />
+            ) : null}
             <SendQuoteButton
               quoteId={id}
               workspaceSlug={workspaceSlug}

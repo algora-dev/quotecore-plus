@@ -94,6 +94,23 @@ function applyQuietHours(date: Date): Date {
 const MAX_OPEN_PER_QUOTE = 3;
 
 /**
+ * Sentinel timestamp used to park a scheduled_messages row when its
+ * triggering event (accepted / declined) hasn't fired yet. The row
+ * sits in status='scheduled' with this value in `trigger_anchor_at`
+ * AND `fire_at`. The dispatcher's `fire_at <= now()` filter naturally
+ * skips it. When the customer accepts or declines, the accept/decline
+ * handler finds the row by quote_id + trigger_event and replaces both
+ * timestamps with real values so the dispatcher can pick it up next
+ * sweep.
+ *
+ * Year 9999 was picked instead of `null` because `trigger_anchor_at`
+ * and `fire_at` are both NOT NULL in the schema, and changing that
+ * would need a migration. The sentinel is far enough out that no real
+ * scheduled row could ever collide with it.
+ */
+const PENDING_EVENT_SENTINEL_ISO = '9999-01-01T00:00:00.000Z';
+
+/**
  * Persist a new scheduled follow-up for a quote.
  *
  * Anchors the wait to the right lifecycle event:
@@ -188,16 +205,22 @@ export async function scheduleQuoteFollowUp(
       break;
     }
     case 'quote_accepted':
+      // Pre-event scheduling is allowed: when the customer hasn't
+      // accepted yet, park the row with sentinel timestamps. The
+      // accept handler will activate it when the customer actually
+      // accepts.
       if (!quote.accepted_at) {
-        return { ok: false, error: 'Quote has not been accepted yet.' };
+        anchor = new Date(PENDING_EVENT_SENTINEL_ISO);
+      } else {
+        anchor = new Date(quote.accepted_at);
       }
-      anchor = new Date(quote.accepted_at);
       break;
     case 'quote_declined':
       if (!quote.declined_at) {
-        return { ok: false, error: 'Quote has not been declined yet.' };
+        anchor = new Date(PENDING_EVENT_SENTINEL_ISO);
+      } else {
+        anchor = new Date(quote.declined_at);
       }
-      anchor = new Date(quote.declined_at);
       break;
     case 'quote_revision_requested': {
       const { data: lastReq } = await supabase
@@ -220,17 +243,26 @@ export async function scheduleQuoteFollowUp(
       break;
   }
 
-  // Compute fire time.
-  const rawFire = new Date(
-    anchor.getTime() + waitDays * 24 * 60 * 60 * 1000 + waitHours * 60 * 60 * 1000,
-  );
-  const fireAt = input.respectQuietHours ? applyQuietHours(rawFire) : rawFire;
+  // Compute fire time. When the anchor is the pending-event sentinel
+  // we keep fire_at on the sentinel too — the activator (accept /
+  // decline handler) will compute the real fire time using the same
+  // waitDays/waitHours stored on the row.
+  const isPendingEvent = anchor.getTime() === new Date(PENDING_EVENT_SENTINEL_ISO).getTime();
+  let finalFire: Date;
+  if (isPendingEvent) {
+    finalFire = new Date(PENDING_EVENT_SENTINEL_ISO);
+  } else {
+    const rawFire = new Date(
+      anchor.getTime() + waitDays * 24 * 60 * 60 * 1000 + waitHours * 60 * 60 * 1000,
+    );
+    const fireAt = input.respectQuietHours ? applyQuietHours(rawFire) : rawFire;
 
-  // Guard: a fire time in the past usually means the user picked an
-  // event from the past and a short delay. We push it forward to "now
-  // + 5 minutes" so they get the heads-up faster but not instantly.
-  const minimumFire = new Date(now.getTime() + 5 * 60 * 1000);
-  const finalFire = fireAt < minimumFire ? minimumFire : fireAt;
+    // Guard: a fire time in the past usually means the user picked an
+    // event from the past and a short delay. We push it forward to "now
+    // + 5 minutes" so they get the heads-up faster but not instantly.
+    const minimumFire = new Date(now.getTime() + 5 * 60 * 1000);
+    finalFire = fireAt < minimumFire ? minimumFire : fireAt;
+  }
 
   // --- Insert -------------------------------------------------------
   const { data: inserted, error: insertErr } = await supabase
@@ -248,6 +280,11 @@ export async function scheduleQuoteFollowUp(
       recipient_name: input.recipientName ?? quote.customer_name ?? null,
       status: 'scheduled',
       created_by_user_id: profile.id,
+      // Pending-event rows store the intended wait so the
+      // accept/decline activator can compute the real fire_at when
+      // the event happens. Null on live rows.
+      pending_wait_days: isPendingEvent ? waitDays : null,
+      pending_wait_hours: isPendingEvent ? waitHours : null,
     })
     .select('id, fire_at')
     .single();
@@ -258,6 +295,94 @@ export async function scheduleQuoteFollowUp(
 
   revalidatePath('/');
   return { ok: true, id: inserted.id, fireAt: inserted.fire_at };
+}
+
+/**
+ * Activator: called by the accept/decline customer handlers when a
+ * customer responds. Finds parked pending-event rows for the same
+ * quote and trigger, computes their real fire_at (event timestamp +
+ * pending_wait_days/hours, with quiet hours), and flips them from
+ * sentinel timestamps to live ones so the dispatcher picks them up.
+ *
+ * Rows for the OPPOSITE trigger are auto-cancelled at the same time
+ * because they can no longer fire (a customer who accepted will
+ * never decline, and vice versa).
+ *
+ * Uses the admin client so it works from a public (token-validated)
+ * acceptance flow with no logged-in user context. Quote ownership is
+ * established upstream by token validation; we still scope by
+ * quote_id + company_id so a stray call can't reach across companies.
+ *
+ * Best-effort: returns counts but doesn't throw. The customer's
+ * accept/decline must not fail just because a follow-up activation
+ * had a hiccup.
+ */
+export async function activateEventScheduledMessages(input: {
+  quoteId: string;
+  companyId: string;
+  event: 'accepted' | 'declined';
+  eventAt: string; // ISO
+}): Promise<{ activated: number; cancelled: number }> {
+  const admin = createAdminClient();
+  const matchingTrigger = input.event === 'accepted' ? 'quote_accepted' : 'quote_declined';
+  const oppositeTrigger = input.event === 'accepted' ? 'quote_declined' : 'quote_accepted';
+
+  // Activate matching-trigger pending rows.
+  const { data: matchingRows } = await admin
+    .from('scheduled_messages')
+    .select('id, pending_wait_days, pending_wait_hours, respect_quiet_hours')
+    .eq('quote_id', input.quoteId)
+    .eq('company_id', input.companyId)
+    .eq('status', 'scheduled')
+    .eq('trigger_event', matchingTrigger)
+    .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
+
+  let activated = 0;
+  const eventDate = new Date(input.eventAt);
+  const now = new Date();
+  for (const row of matchingRows ?? []) {
+    const days = row.pending_wait_days ?? 0;
+    const hours = row.pending_wait_hours ?? 0;
+    const rawFire = new Date(
+      eventDate.getTime() + days * 24 * 60 * 60 * 1000 + hours * 60 * 60 * 1000,
+    );
+    const adjusted = row.respect_quiet_hours ? applyQuietHours(rawFire) : rawFire;
+    // If somehow the computed fire is in the past (e.g. wait=0 and
+    // quiet hours pushed it backward, which it can't, but defensive)
+    // bump to now + 5 min so we don't fire immediately on the same
+    // cron tick. The dispatcher's >= now() filter handles this anyway
+    // but explicit is better.
+    const minimumFire = new Date(now.getTime() + 5 * 60 * 1000);
+    const finalFire = adjusted < minimumFire ? minimumFire : adjusted;
+    const { error: updateErr } = await admin
+      .from('scheduled_messages')
+      .update({
+        trigger_anchor_at: input.eventAt,
+        fire_at: finalFire.toISOString(),
+      })
+      .eq('id', row.id)
+      .eq('status', 'scheduled')
+      .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
+    if (!updateErr) activated += 1;
+  }
+
+  // Cancel opposite-trigger pending rows — they're now irrelevant.
+  const { count: cancelledCount } = await admin
+    .from('scheduled_messages')
+    .update(
+      {
+        status: 'cancelled',
+        cancelled_reason: `Customer ${input.event} the quote; opposite follow-up no longer needed.`,
+      },
+      { count: 'exact' },
+    )
+    .eq('quote_id', input.quoteId)
+    .eq('company_id', input.companyId)
+    .eq('status', 'scheduled')
+    .eq('trigger_event', oppositeTrigger)
+    .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
+
+  return { activated, cancelled: cancelledCount ?? 0 };
 }
 
 /**
@@ -322,6 +447,16 @@ export async function forceRunScheduledMessage(id: string): Promise<CancelResult
   }
   if (row.status !== 'scheduled') {
     return { ok: false, error: `Cannot force-run a ${row.status} message.` };
+  }
+  // Block force-run on pending-event rows: there's no event yet, so
+  // running them would be a meaningless send (or worse: fire against
+  // a quote that hasn't been responded to). User should cancel +
+  // create a new immediate-fire rule instead.
+  if (row.fire_at === PENDING_EVENT_SENTINEL_ISO) {
+    return {
+      ok: false,
+      error: 'This follow-up is parked waiting for the customer\u2019s response. Cancel it and create a new \u201cStarting now\u201d follow-up if you want to send immediately.',
+    };
   }
 
   await dispatchOne(row as ScheduledMessageRow, admin);

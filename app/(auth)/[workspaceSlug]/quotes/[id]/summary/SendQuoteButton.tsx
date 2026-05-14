@@ -87,14 +87,29 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   const [isSending, startSendTransition] = useTransition();
 
   // Post-send "Schedule follow-up?" prompt state. After a successful
-  // send through the Messages pipeline we offer a one-click 7-day
-  // follow-up. The user can change the delay before confirming, or
-  // dismiss the prompt. Once scheduled (or dismissed) we hide the
-  // prompt for the rest of this modal session.
-  const [postSendDelayDays, setPostSendDelayDays] = useState<number>(7);
-  const [postSendTemplateId, setPostSendTemplateId] = useState<string>('');
+  // send through the Messages pipeline we offer three optional
+  // follow-up rules, each toggleable and configurable independently:
+  //
+  //   1. After no response — fires N days after this send.
+  //   2. After acceptance  — fires N days after the customer accepts
+  //                          (parked with sentinel timestamps until
+  //                          activated by the accept handler).
+  //   3. After decline     — fires N days after the customer declines.
+  //
+  // Each rule has its own template + delay. The prompt is hidden
+  // when all rules are scheduled or the user dismisses it.
+  type PostSendRule = {
+    enabled: boolean;
+    templateId: string;
+    delayDays: number;
+    scheduled: { ok: true; fireAt: string } | { ok: false; error: string } | null;
+  };
+  const [postSendRules, setPostSendRules] = useState<Record<'no_response' | 'accepted' | 'declined', PostSendRule>>({
+    no_response: { enabled: true, templateId: '', delayDays: 7, scheduled: null },
+    accepted: { enabled: false, templateId: '', delayDays: 1, scheduled: null },
+    declined: { enabled: false, templateId: '', delayDays: 3, scheduled: null },
+  });
   const [postSendScheduling, setPostSendScheduling] = useState(false);
-  const [postSendScheduled, setPostSendScheduled] = useState<{ ok: true; fireAt: string } | { ok: false; error: string } | null>(null);
   const [postSendDismissed, setPostSendDismissed] = useState(false);
 
   // Close modal when copilot transition starts
@@ -172,11 +187,15 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
         // a user can do Send -> Schedule -> Send again without the
         // prompt staying dismissed.
         setPostSendDismissed(false);
-        setPostSendScheduled(null);
-        // Pre-select a template for the follow-up: prefer the default,
-        // otherwise the one they just used for sending.
+        // Pre-select a template for every follow-up rule: prefer the
+        // default template, otherwise the one they just used.
         const defaultTpl = emailTemplates.find((t) => t.is_default) || emailTemplates[0];
-        setPostSendTemplateId(defaultTpl?.id ?? selectedTemplateId ?? '');
+        const defaultTplId = defaultTpl?.id ?? selectedTemplateId ?? '';
+        setPostSendRules((prev) => ({
+          no_response: { ...prev.no_response, templateId: defaultTplId, scheduled: null },
+          accepted: { ...prev.accepted, templateId: defaultTplId, scheduled: null },
+          declined: { ...prev.declined, templateId: defaultTplId, scheduled: null },
+        }));
       } else {
         setSendError(result.error);
       }
@@ -184,28 +203,49 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   }
 
   async function handleSchedulePostSend() {
-    if (!postSendTemplateId) return;
+    const enabledRules = (Object.entries(postSendRules) as Array<[
+      'no_response' | 'accepted' | 'declined',
+      PostSendRule,
+    ]>).filter(([, rule]) => rule.enabled && !rule.scheduled?.ok && rule.templateId);
+    if (enabledRules.length === 0) return;
+
     setPostSendScheduling(true);
+    const triggerByKey: Record<typeof enabledRules[number][0], 'quote_sent' | 'quote_accepted' | 'quote_declined'> = {
+      no_response: 'quote_sent',
+      accepted: 'quote_accepted',
+      declined: 'quote_declined',
+    };
     try {
-      const result = await scheduleQuoteFollowUp({
-        quoteId,
-        templateId: postSendTemplateId,
-        triggerEvent: 'quote_sent',
-        waitDays: postSendDelayDays,
-        waitHours: 0,
-        requireNoResponse: true,
-        respectQuietHours: true,
-        recipientEmail: recipientEmail.trim(),
-        recipientName: quoteMeta.customerName || null,
-      });
-      if (result.ok) {
-        setPostSendScheduled({ ok: true, fireAt: result.fireAt });
-        // Refresh the summary so the ActivityCard's Scheduled tab
-        // immediately shows the new row.
-        router.refresh();
-      } else {
-        setPostSendScheduled({ ok: false, error: result.error });
+      // Schedule rules sequentially so errors are independent and the
+      // user can see which one(s) failed.
+      for (const [key, rule] of enabledRules) {
+        const result = await scheduleQuoteFollowUp({
+          quoteId,
+          templateId: rule.templateId,
+          triggerEvent: triggerByKey[key],
+          waitDays: rule.delayDays,
+          waitHours: 0,
+          // "no_response" implies require_no_response. The accepted /
+          // declined triggers don't gate on response because the
+          // event ITSELF is the gate — if the customer accepts, we
+          // want the thank-you to fire regardless of whether they
+          // also replied to the previous message.
+          requireNoResponse: key === 'no_response',
+          respectQuietHours: true,
+          recipientEmail: recipientEmail.trim(),
+          recipientName: quoteMeta.customerName || null,
+        });
+        setPostSendRules((prev) => ({
+          ...prev,
+          [key]: {
+            ...prev[key],
+            scheduled: result.ok
+              ? { ok: true as const, fireAt: result.fireAt }
+              : { ok: false as const, error: result.error },
+          },
+        }));
       }
+      router.refresh();
     } finally {
       setPostSendScheduling(false);
     }
@@ -610,100 +650,153 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                   <p className="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-lg p-2">This recipient is on your suppression list, so the message was blocked. The send is logged but no email was dispatched.</p>
                 ) : null}
 
-                {/* Post-send "Schedule follow-up?" prompt. Shown only
+                {/* Post-send "Schedule follow-ups?" prompt. Shown only
                     after a successful (not suppressed) send through the
-                    Messages pipeline. One-click schedule with adjustable
-                    delay. Hidden once scheduled or dismissed. */}
+                    Messages pipeline. Offers three independent rules:
+                    no-response chase, after-acceptance thank-you, and
+                    after-decline revival. Each is opt-in with its own
+                    template + delay. Hidden once all enabled rules are
+                    scheduled, or the user dismisses it. */}
                 {sendSuccess === 'sent' && !postSendDismissed && emailTemplates.length > 0 ? (
-                  postSendScheduled?.ok ? (
-                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+                  <div className="rounded-lg border border-orange-200 bg-orange-50/60 p-3 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
                       <div className="flex items-start gap-2">
-                        <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <svg className="w-4 h-4 mt-0.5 text-orange-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <div>
-                          <p className="font-medium">Follow-up scheduled</p>
-                          <p className="text-xs text-emerald-700 mt-0.5">
-                            Will send around{' '}
-                            {new Date(postSendScheduled.fireAt).toLocaleString('en-GB', {
-                              weekday: 'short',
-                              day: '2-digit',
-                              month: 'short',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}{' '}
-                            unless the customer replies first.
+                          <p className="text-sm font-medium text-slate-900">Schedule follow-ups?</p>
+                          <p className="text-xs text-slate-600 mt-0.5">
+                            Each rule is independent. Accept/decline rules are parked until the event happens, then fire on the delay you set.
                           </p>
                         </div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => setPostSendDismissed(true)}
+                        className="text-slate-400 hover:text-slate-700 text-sm leading-none p-1"
+                        aria-label="Dismiss follow-up prompt"
+                      >
+                        ✕
+                      </button>
                     </div>
-                  ) : (
-                    <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-start gap-2">
-                          <svg className="w-4 h-4 mt-0.5 text-orange-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <div>
-                            <p className="text-sm font-medium text-slate-900">Schedule a follow-up?</p>
-                            <p className="text-xs text-slate-600 mt-0.5">
-                              We&apos;ll auto-cancel it if the customer accepts, declines, or replies first.
+
+                    {(['no_response', 'accepted', 'declined'] as const).map((key) => {
+                      const rule = postSendRules[key];
+                      const label =
+                        key === 'no_response'
+                          ? 'If no response'
+                          : key === 'accepted'
+                            ? 'After customer accepts'
+                            : 'After customer declines';
+                      const isScheduled = rule.scheduled?.ok === true;
+                      return (
+                        <div
+                          key={key}
+                          className={`rounded-lg border p-2 ${
+                            isScheduled ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-white'
+                          }`}
+                        >
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={rule.enabled || isScheduled}
+                              disabled={isScheduled}
+                              onChange={(e) =>
+                                setPostSendRules((prev) => ({
+                                  ...prev,
+                                  [key]: { ...prev[key], enabled: e.target.checked },
+                                }))
+                              }
+                              className="h-4 w-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500"
+                            />
+                            <span className="text-xs font-medium text-slate-900">{label}</span>
+                            {isScheduled ? (
+                              <span className="ml-auto text-[10px] uppercase tracking-wide text-emerald-700 font-semibold">
+                                Scheduled
+                              </span>
+                            ) : null}
+                          </label>
+                          {rule.enabled && !isScheduled ? (
+                            <div className="flex items-end gap-2 flex-wrap mt-2 pl-6">
+                              <div className="flex-1 min-w-[120px]">
+                                <label className="block text-[10px] font-medium text-slate-500 mb-0.5">Template</label>
+                                <select
+                                  value={rule.templateId}
+                                  onChange={(e) =>
+                                    setPostSendRules((prev) => ({
+                                      ...prev,
+                                      [key]: { ...prev[key], templateId: e.target.value },
+                                    }))
+                                  }
+                                  className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                                >
+                                  {emailTemplates.map((t) => (
+                                    <option key={t.id} value={t.id}>
+                                      {t.name}
+                                      {t.is_default ? ' (Default)' : ''}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div className="w-24">
+                                <label className="block text-[10px] font-medium text-slate-500 mb-0.5">Wait (days)</label>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={90}
+                                  value={rule.delayDays}
+                                  onChange={(e) =>
+                                    setPostSendRules((prev) => ({
+                                      ...prev,
+                                      [key]: { ...prev[key], delayDays: Math.max(0, Math.min(90, Number(e.target.value) || 0)) },
+                                    }))
+                                  }
+                                  className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                                />
+                              </div>
+                            </div>
+                          ) : null}
+                          {isScheduled ? (
+                            <p className="text-[10px] text-emerald-700 pl-6 mt-1">
+                              {key === 'no_response' ? (
+                                <>
+                                  Will send around{' '}
+                                  {new Date((rule.scheduled as { ok: true; fireAt: string }).fireAt).toLocaleString('en-GB', {
+                                    weekday: 'short',
+                                    day: '2-digit',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}{' '}
+                                  unless the customer responds first.
+                                </>
+                              ) : (
+                                <>Parked until the customer {key === 'accepted' ? 'accepts' : 'declines'}; fires {rule.delayDays} {rule.delayDays === 1 ? 'day' : 'days'} after.</>
+                              )}
                             </p>
-                          </div>
+                          ) : null}
+                          {rule.scheduled && !rule.scheduled.ok ? (
+                            <p className="text-[11px] text-rose-700 pl-6 mt-1">{rule.scheduled.error}</p>
+                          ) : null}
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => setPostSendDismissed(true)}
-                          className="text-slate-400 hover:text-slate-700 text-sm leading-none p-1"
-                          aria-label="Dismiss follow-up prompt"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      <div className="flex items-end gap-2 flex-wrap">
-                        <div className="flex-1 min-w-[120px]">
-                          <label className="block text-[11px] font-medium text-slate-600 mb-1">Template</label>
-                          <select
-                            value={postSendTemplateId}
-                            onChange={(e) => setPostSendTemplateId(e.target.value)}
-                            className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white"
-                          >
-                            {emailTemplates.map((t) => (
-                              <option key={t.id} value={t.id}>
-                                {t.name}
-                                {t.is_default ? ' (Default)' : ''}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="w-24">
-                          <label className="block text-[11px] font-medium text-slate-600 mb-1">Wait</label>
-                          <select
-                            value={postSendDelayDays}
-                            onChange={(e) => setPostSendDelayDays(Number(e.target.value))}
-                            className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white"
-                          >
-                            <option value={3}>3 days</option>
-                            <option value={5}>5 days</option>
-                            <option value={7}>7 days</option>
-                            <option value={10}>10 days</option>
-                            <option value={14}>14 days</option>
-                          </select>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleSchedulePostSend}
-                          disabled={postSendScheduling || !postSendTemplateId}
-                          className="px-3 py-1.5 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-                        >
-                          {postSendScheduling ? 'Scheduling…' : 'Schedule'}
-                        </button>
-                      </div>
-                      {postSendScheduled && !postSendScheduled.ok ? (
-                        <p className="text-[11px] text-rose-700">{postSendScheduled.error}</p>
-                      ) : null}
+                      );
+                    })}
+
+                    <div className="flex items-center justify-end">
+                      <button
+                        type="button"
+                        onClick={handleSchedulePostSend}
+                        disabled={
+                          postSendScheduling ||
+                          !(Object.values(postSendRules).some((r) => r.enabled && !r.scheduled?.ok && r.templateId))
+                        }
+                        className="px-3 py-1.5 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                      >
+                        {postSendScheduling ? 'Scheduling…' : 'Schedule selected'}
+                      </button>
                     </div>
-                  )
+                  </div>
                 ) : null}
 
                 <div className="flex items-center justify-between pt-2">

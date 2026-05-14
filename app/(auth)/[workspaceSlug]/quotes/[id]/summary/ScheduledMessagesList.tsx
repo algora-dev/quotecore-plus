@@ -44,6 +44,14 @@ const STATUS_BADGE: Record<ScheduledStatus, { label: string; cls: string }> = {
   failed: { label: 'Failed', cls: 'bg-rose-50 text-rose-700 border-rose-200' },
 };
 
+/** Sentinel year used by pending-event scheduled rows (year 9999).
+ *  Detect via getUTCFullYear() so a real future row in 2026/2027 still
+ *  renders normally. */
+function isPendingEventFireAt(iso: string): boolean {
+  const d = new Date(iso);
+  return d.getUTCFullYear() >= 9000;
+}
+
 function formatFireTime(iso: string): string {
   return new Date(iso).toLocaleString('en-GB', {
     weekday: 'short',
@@ -233,13 +241,24 @@ export function ScheduledMessagesList({ rows }: Props) {
                 : row.recipientEmail}
             </p>
             <p className="text-slate-500">
-              {row.status === 'scheduled'
-                ? 'Sends '
-                : row.status === 'sent'
-                  ? 'Sent '
-                  : 'Was due '}
-              <span className="text-slate-700 font-medium">{formatFireTime(row.fireAt)}</span>
-              <span className="text-slate-400">{' \u00b7 '}{TRIGGER_LABEL[row.triggerEvent]}</span>
+              {row.status === 'scheduled' && isPendingEventFireAt(row.fireAt) ? (
+                <>
+                  <span className="text-slate-700 font-medium">
+                    Waiting for {row.triggerEvent === 'quote_accepted' ? 'acceptance' : row.triggerEvent === 'quote_declined' ? 'decline' : 'event'}
+                  </span>
+                  <span className="text-slate-400">{' \u00b7 '}{TRIGGER_LABEL[row.triggerEvent]}</span>
+                </>
+              ) : (
+                <>
+                  {row.status === 'scheduled'
+                    ? 'Sends '
+                    : row.status === 'sent'
+                      ? 'Sent '
+                      : 'Was due '}
+                  <span className="text-slate-700 font-medium">{formatFireTime(row.fireAt)}</span>
+                  <span className="text-slate-400">{' \u00b7 '}{TRIGGER_LABEL[row.triggerEvent]}</span>
+                </>
+              )}
             </p>
             {/* Inline reason copy stays for history rows so the user can
                 always see WHY a row ended up cancelled / failed without

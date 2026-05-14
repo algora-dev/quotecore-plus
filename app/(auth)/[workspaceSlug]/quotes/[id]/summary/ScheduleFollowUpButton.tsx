@@ -154,16 +154,17 @@ export function ScheduleFollowUpButton({
       disabledReason: 'Send the quote at least once first',
     },
     {
+      // Pre-event scheduling supported: row is parked with sentinel
+      // timestamps until the customer actually accepts, then the
+      // accept handler activates it.
       value: 'quote_accepted',
-      label: 'After the customer accepted',
-      available: !!quote.accepted_at,
-      disabledReason: 'Only available once this quote is accepted',
+      label: quote.accepted_at ? 'After the customer accepted' : 'After the customer accepts (when it happens)',
+      available: true,
     },
     {
       value: 'quote_declined',
-      label: 'After the customer declined',
-      available: !!quote.declined_at,
-      disabledReason: 'Only available once this quote is declined',
+      label: quote.declined_at ? 'After the customer declined' : 'After the customer declines (when it happens)',
+      available: true,
     },
     {
       value: 'manual',
@@ -321,21 +322,36 @@ export function ScheduleFollowUpButton({
                 </label>
               </div>
 
-              {/* Preview + nudge */}
+              {/* Preview + nudge. For pre-event triggers (no
+                  accepted_at / declined_at yet) we can't compute a
+                  real fire time — the wait clock starts when the
+                  event happens. Show wait-window copy instead. */}
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                <p>
-                  Will send around{' '}
-                  <span className="font-semibold text-slate-900">
-                    {projectedFire.toLocaleString('en-GB', {
-                      weekday: 'short',
-                      day: '2-digit',
-                      month: 'short',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </span>{' '}
-                  <span className="text-slate-400">(your timezone)</span>
-                </p>
+                {form.triggerEvent === 'quote_accepted' && !quote.accepted_at ? (
+                  <p>
+                    Parked until the customer accepts. Then fires {form.wait}{' '}
+                    {form.unit === 'days' ? (form.wait === 1 ? 'day' : 'days') : (form.wait === 1 ? 'hour' : 'hours')} later.
+                  </p>
+                ) : form.triggerEvent === 'quote_declined' && !quote.declined_at ? (
+                  <p>
+                    Parked until the customer declines. Then fires {form.wait}{' '}
+                    {form.unit === 'days' ? (form.wait === 1 ? 'day' : 'days') : (form.wait === 1 ? 'hour' : 'hours')} later.
+                  </p>
+                ) : (
+                  <p>
+                    Will send around{' '}
+                    <span className="font-semibold text-slate-900">
+                      {projectedFire.toLocaleString('en-GB', {
+                        weekday: 'short',
+                        day: '2-digit',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>{' '}
+                    <span className="text-slate-400">(your timezone)</span>
+                  </p>
+                )}
               </div>
 
               {isPushyDelay ? (

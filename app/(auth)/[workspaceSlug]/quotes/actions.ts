@@ -250,6 +250,92 @@ export async function withdrawQuote(quoteId: string): Promise<void> {
   revalidatePath('/');
 }
 
+/**
+ * Reopen a quote that's in a final state (accepted / declined / withdrawn).
+ *
+ * Clears the relevant terminal timestamps and the existing acceptance
+ * token so the user can mint a fresh link via Send Quote. Used when a
+ * customer changes their mind, the scope of work changes, or the user
+ * needs to re-engage after a decline. Conceptually this is a "start
+ * over" button on the quote summary.
+ *
+ * Also auto-cancels any still-pending scheduled_messages for this
+ * quote so a stale follow-up doesn't fire against a reopened quote
+ * with stale context. The user can re-schedule from the post-send
+ * prompt or the Schedule modal after re-sending.
+ *
+ * Writes an audit alert so there's a paper trail for the reopen.
+ */
+export async function reopenQuote(quoteId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  const { data: quote, error: loadErr } = await supabase
+    .from('quotes')
+    .select('id, company_id, accepted_at, declined_at, withdrawn_at, quote_number, customer_name')
+    .eq('id', quoteId)
+    .eq('company_id', profile.company_id)
+    .single();
+
+  if (loadErr || !quote) return { ok: false, error: 'Quote not found.' };
+  // Refuse to reopen a quote that's already in a fresh state — nothing
+  // to do, and silently no-oping would mask a UI bug.
+  if (!(quote as any).accepted_at && !(quote as any).declined_at && !(quote as any).withdrawn_at) {
+    return { ok: false, error: 'This quote is already open. There\u2019s nothing to reopen.' };
+  }
+
+  const previousState = (quote as any).accepted_at
+    ? 'accepted'
+    : (quote as any).declined_at
+      ? 'declined'
+      : 'withdrawn';
+
+  // Clear terminal markers + token so the next Send Quote click mints
+  // a fresh URL. job_status rolls back to 'unsent' so the quotes list
+  // and dashboard reflect that the quote is alive again.
+  const { error: updateErr } = await supabase
+    .from('quotes')
+    .update({
+      accepted_at: null,
+      declined_at: null,
+      withdrawn_at: null,
+      withdrawn_by_user_id: null,
+      acceptance_token: null,
+      acceptance_token_expires_at: null,
+      job_status: 'unsent',
+    } as Record<string, unknown>)
+    .eq('id', quoteId)
+    .eq('company_id', profile.company_id);
+
+  if (updateErr) return { ok: false, error: `Failed to reopen quote: ${updateErr.message}` };
+
+  // Auto-cancel any still-pending scheduled follow-ups so they don't
+  // fire against the reopened quote with stale context. The user can
+  // re-schedule from the post-send prompt when they re-send.
+  await supabase
+    .from('scheduled_messages')
+    .update({ status: 'cancelled', cancelled_reason: 'Quote was reopened.' } as Record<string, unknown>)
+    .eq('quote_id', quoteId)
+    .eq('company_id', profile.company_id)
+    .eq('status', 'scheduled');
+
+  // Audit alert. Best-effort; we don't fail the reopen if this fails.
+  try {
+    await supabase.from('alerts').insert({
+      company_id: profile.company_id,
+      quote_id: quoteId,
+      alert_type: 'quote_reopened',
+      title: `Quote #${quote.quote_number ?? '?'} reopened`,
+      message: `Previously ${previousState}. Token cleared; ready for a fresh send.`,
+    });
+  } catch {
+    // ignore audit failure
+  }
+
+  revalidatePath('/');
+  return { ok: true };
+}
+
 const VALID_JOB_STATUSES = [
   'unsent', 'sent', 'accepted', 'declined', 'deposit_paid',
   'materials_ordered', 'install', 'invoice_sent', 'invoice_paid', 'finished',
@@ -317,6 +403,25 @@ export async function updateQuoteJobStatus(quoteId: string, jobStatus: JobStatus
     .eq('company_id', profile.company_id);
 
   if (error) throw new Error(error.message);
+
+  // Activate / cancel any pre-staged event-triggered follow-ups when
+  // the manual status flip pushes the quote into accepted/declined.
+  // Mirrors the same activation done by the customer-facing
+  // accept/decline path so the user gets follow-ups whether the
+  // outcome was recorded by the customer or the user manually.
+  if (jobStatus === 'accepted' || jobStatus === 'declined') {
+    try {
+      const { activateEventScheduledMessages } = await import('@/app/lib/messages/scheduled');
+      await activateEventScheduledMessages({
+        quoteId,
+        companyId: profile.company_id,
+        event: jobStatus,
+        eventAt: now,
+      });
+    } catch (err) {
+      console.error('[updateQuoteJobStatus] activateEventScheduledMessages failed:', err);
+    }
+  }
 
   revalidatePath('/');
 }

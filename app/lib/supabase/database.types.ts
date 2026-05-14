@@ -1980,6 +1980,8 @@ export type Database = {
           fired_at: string | null
           id: string
           outbound_message_id: string | null
+          pending_wait_days: number | null
+          pending_wait_hours: number | null
           quote_id: string | null
           recipient_email: string
           recipient_name: string | null
@@ -2001,6 +2003,8 @@ export type Database = {
           fired_at?: string | null
           id?: string
           outbound_message_id?: string | null
+          pending_wait_days?: number | null
+          pending_wait_hours?: number | null
           quote_id?: string | null
           recipient_email: string
           recipient_name?: string | null
@@ -2022,6 +2026,8 @@ export type Database = {
           fired_at?: string | null
           id?: string
           outbound_message_id?: string | null
+          pending_wait_days?: number | null
+          pending_wait_hours?: number | null
           quote_id?: string | null
           recipient_email?: string
           recipient_name?: string | null
