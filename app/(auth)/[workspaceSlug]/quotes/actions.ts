@@ -266,7 +266,7 @@ export async function withdrawQuote(quoteId: string): Promise<void> {
  *
  * Writes an audit alert so there's a paper trail for the reopen.
  */
-export async function reopenQuote(quoteId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function reopenQuote(quoteId: string): Promise<{ ok: true; cancelledFollowUps: number } | { ok: false; error: string }> {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
@@ -311,10 +311,15 @@ export async function reopenQuote(quoteId: string): Promise<{ ok: true } | { ok:
 
   // Auto-cancel any still-pending scheduled follow-ups so they don't
   // fire against the reopened quote with stale context. The user can
-  // re-schedule from the post-send prompt when they re-send.
-  await supabase
+  // re-schedule from the post-send prompt when they re-send. Return
+  // the count so the confirmation UI can surface exactly what happened
+  // instead of vaguely promising it.
+  const { count: cancelledFollowUps } = await supabase
     .from('scheduled_messages')
-    .update({ status: 'cancelled', cancelled_reason: 'Quote was reopened.' } as Record<string, unknown>)
+    .update(
+      { status: 'cancelled', cancelled_reason: 'Quote was reopened.' } as Record<string, unknown>,
+      { count: 'exact' },
+    )
     .eq('quote_id', quoteId)
     .eq('company_id', profile.company_id)
     .eq('status', 'scheduled');
@@ -333,7 +338,7 @@ export async function reopenQuote(quoteId: string): Promise<{ ok: true } | { ok:
   }
 
   revalidatePath('/');
-  return { ok: true };
+  return { ok: true, cancelledFollowUps: cancelledFollowUps ?? 0 };
 }
 
 const VALID_JOB_STATUSES = [

@@ -48,6 +48,11 @@ export function SentMessagesList({ messages }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [isPending, startTransition] = useTransition();
+  // Optimistic-hide set: rows the user just deleted disappear
+  // immediately while the server roundtrip + refresh complete. On
+  // failure we unhide so the error banner makes sense.
+  const [optimisticHiddenIds, setOptimisticHiddenIds] = useState<Set<string>>(new Set());
+  const visibleMessages = messages.filter((m) => !optimisticHiddenIds.has(m.id));
 
   function exitSelectMode() {
     setSelectMode(false);
@@ -74,7 +79,7 @@ export function SentMessagesList({ messages }: Props) {
   }
 
   function selectAll() {
-    setSelected(new Set(messages.map((m) => m.id)));
+    setSelected(new Set(visibleMessages.map((m) => m.id)));
   }
 
   function clearAll() {
@@ -85,26 +90,38 @@ export function SentMessagesList({ messages }: Props) {
     if (selected.size === 0) return;
     setError(null);
     const ids = Array.from(selected);
+    // Hide selected rows IMMEDIATELY — the perceived speedup is the
+    // whole point. router.refresh() takes the canonical state.
+    setOptimisticHiddenIds((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) next.add(id);
+      return next;
+    });
+    exitSelectMode();
     startTransition(async () => {
       const result = await deleteSentMessagesBulk(ids);
       if (result.ok) {
-        exitSelectMode();
         router.refresh();
       } else {
+        // Unhide so the user can retry; surface the error.
+        setOptimisticHiddenIds((prev) => {
+          const next = new Set(prev);
+          for (const id of ids) next.delete(id);
+          return next;
+        });
         setError(result.error);
-        setConfirming(false);
       }
     });
   }
 
-  const allSelected = selected.size === messages.length && messages.length > 0;
+  const allSelected = selected.size === visibleMessages.length && visibleMessages.length > 0;
 
   return (
     <>
       {/* Toolbar \u2014 selection-mode toggle. Sits above the list and only
           shows when there's more than one message (single message is
           better served by the inline row delete). */}
-      {messages.length > 1 ? (
+      {visibleMessages.length > 1 ? (
         <div className="flex items-center justify-between">
           <button
             type="button"
@@ -126,7 +143,7 @@ export function SentMessagesList({ messages }: Props) {
       ) : null}
 
       <ul className="divide-y divide-slate-100">
-        {messages.map((m) => (
+        {visibleMessages.map((m) => (
           <SentMessageRow
             key={m.id}
             id={m.id}

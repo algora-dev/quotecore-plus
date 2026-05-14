@@ -71,12 +71,14 @@ function formatTimestamp(iso: string): string {
 }
 
 export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNumber: _quoteNumber, chromeless = false }: Props) {
-  const pending = requests.filter((r) => !r.resolved_at);
-  const resolved = requests.filter((r) => r.resolved_at);
+  // Raw partitions — the optimistic-aware versions are computed
+  // below once the optimistic state hooks are declared.
+  const rawPending = requests.filter((r) => !r.resolved_at);
+  const rawResolved = requests.filter((r) => r.resolved_at);
 
   // Default-open when there's something to act on, default-closed when only
   // resolved history remains.
-  const [expanded, setExpanded] = useState(pending.length > 0);
+  const [expanded, setExpanded] = useState(rawPending.length > 0);
   const [showResolved, setShowResolved] = useState(false);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   /** Per-request "Copied!" feedback timeout. */
@@ -88,6 +90,30 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
   const [confirmingBulk, setConfirmingBulk] = useState<null | 'resolve' | 'delete'>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [bulkPending, startBulkTransition] = useTransition();
+
+  // Optimistic UI sets. The server-action + refresh path is ~500ms
+  // which feels slow on a quick click-then-click-again flow. We
+  // mutate locally first and let the refresh deliver canonical state.
+  // Roll back on server error so the user can retry.
+  const [optimisticResolvedIds, setOptimisticResolvedIds] = useState<Set<string>>(new Set());
+  const [optimisticDeletedIds, setOptimisticDeletedIds] = useState<Set<string>>(new Set());
+
+  // Optimistic-aware partitions used by the rest of the component.
+  // A row that's been optimistically deleted disappears entirely; one
+  // that's been optimistically resolved moves from pending to
+  // resolved. The server refresh later replaces these with canonical
+  // state.
+  const pending = rawPending.filter(
+    (r) => !optimisticDeletedIds.has(r.id) && !optimisticResolvedIds.has(r.id),
+  );
+  const resolved = [
+    ...rawResolved.filter((r) => !optimisticDeletedIds.has(r.id)),
+    ...rawPending
+      .filter((r) => optimisticResolvedIds.has(r.id) && !optimisticDeletedIds.has(r.id))
+      // Synthetic resolved_at so downstream renderers (which check
+      // truthiness of resolved_at) treat these as resolved.
+      .map((r) => ({ ...r, resolved_at: new Date().toISOString() })),
+  ];
 
   /** App-style alert state replaces native alert() in this panel. */
   const [alertState, setAlertState] = useState<{
@@ -149,11 +175,24 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
   const [singleConfirmingId, setSingleConfirmingId] = useState<string | null>(null);
   function handleSingleDelete(id: string) {
     setSingleDeletingId(id);
+    // Optimistic remove.
+    setOptimisticDeletedIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+    setSingleConfirmingId(null);
     startTransition(async () => {
       const result = await bulkDeleteRevisionRequests([id]);
       if (result.ok) {
         router.refresh();
       } else {
+        // Roll back.
+        setOptimisticDeletedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
         setAlertState({
           open: true,
           title: 'Failed to delete request',
@@ -162,7 +201,6 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
         });
       }
       setSingleDeletingId(null);
-      setSingleConfirmingId(null);
     });
   }
 
@@ -171,17 +209,44 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
     setBulkError(null);
     const ids = Array.from(selected);
     const action = confirmingBulk;
+    // Optimistic apply.
+    if (action === 'resolve') {
+      setOptimisticResolvedIds((prev) => {
+        const next = new Set(prev);
+        for (const id of ids) next.add(id);
+        return next;
+      });
+    } else {
+      setOptimisticDeletedIds((prev) => {
+        const next = new Set(prev);
+        for (const id of ids) next.add(id);
+        return next;
+      });
+    }
+    exitSelectMode();
     startBulkTransition(async () => {
       const result =
         action === 'resolve'
           ? await bulkResolveRevisionRequests(ids)
           : await bulkDeleteRevisionRequests(ids);
       if (result.ok) {
-        exitSelectMode();
         router.refresh();
       } else {
+        // Roll back the optimistic mutation.
+        if (action === 'resolve') {
+          setOptimisticResolvedIds((prev) => {
+            const next = new Set(prev);
+            for (const id of ids) next.delete(id);
+            return next;
+          });
+        } else {
+          setOptimisticDeletedIds((prev) => {
+            const next = new Set(prev);
+            for (const id of ids) next.delete(id);
+            return next;
+          });
+        }
         setBulkError(result.error);
-        setConfirmingBulk(null);
       }
     });
   }
@@ -207,11 +272,23 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
 
   function handleResolve(id: string) {
     setResolvingId(id);
+    // Optimistic resolve.
+    setOptimisticResolvedIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
     startTransition(async () => {
       try {
         await resolveRevisionRequest(id);
         router.refresh();
       } catch (err) {
+        // Roll back.
+        setOptimisticResolvedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
         console.error('[resolveRevisionRequest] failed:', err);
         setAlertState({
           open: true,

@@ -106,9 +106,17 @@ export function ScheduledMessagesList({ rows }: Props) {
   const [showHistory, setShowHistory] = useState(false);
   const [, startTransition] = useTransition();
 
+  // Optimistic-hide set for rows the user just cancelled. The server
+  // call is fast but router.refresh() can take 300-800ms to re-render
+  // the parent server component, so we hide the row IMMEDIATELY and
+  // let the refresh deliver the canonical state. If the cancel fails
+  // we remove the id from this set so the row reappears with an
+  // error banner. Same idea for the inline Cancel + Send now paths.
+  const [optimisticHiddenIds, setOptimisticHiddenIds] = useState<Set<string>>(new Set());
+
   if (rows.length === 0) return null;
 
-  const activeRows = rows.filter((r) => r.status === 'scheduled');
+  const activeRows = rows.filter((r) => r.status === 'scheduled' && !optimisticHiddenIds.has(r.id));
   const historyRows = rows.filter((r) => r.status !== 'scheduled');
 
   function pickCancelTone(reason: string | null): RowOutcome['kind'] {
@@ -123,15 +131,26 @@ export function ScheduledMessagesList({ rows }: Props) {
       const { [id]: _drop, ...rest } = prev;
       return rest;
     });
+    // Hide the row immediately so the user sees the cancel land
+    // instantly. Refresh delivers the canonical state behind the
+    // scenes; on success the history rows surface the cancellation
+    // and the optimistic hide is irrelevant. On failure we unhide.
+    setOptimisticHiddenIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
     startTransition(async () => {
       const result = await cancelScheduledMessage(id);
       if (result.ok) {
-        setOutcomeByRow((prev) => ({
-          ...prev,
-          [id]: { kind: 'info', text: 'Cancelled. This follow-up will not be sent.' },
-        }));
         router.refresh();
       } else {
+        // Unhide so the user can see the row + the error banner.
+        setOptimisticHiddenIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
         setOutcomeByRow((prev) => ({
           ...prev,
           [id]: { kind: 'error', text: result.error },

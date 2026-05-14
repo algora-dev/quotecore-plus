@@ -55,14 +55,21 @@ export function ReopenQuoteButton({ quoteId, state }: Props) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [success, setSuccess] = useState<{ cancelledFollowUps: number } | null>(null);
 
   function handleConfirm() {
     setError(null);
     startTransition(async () => {
       const result = await reopenQuote(quoteId);
       if (result.ok) {
-        setOpen(false);
-        router.refresh();
+        setSuccess({ cancelledFollowUps: result.cancelledFollowUps });
+        // Short success flash before refresh so the user sees the
+        // cancellation count before the page state changes.
+        setTimeout(() => {
+          setOpen(false);
+          setSuccess(null);
+          router.refresh();
+        }, 1500);
       } else {
         setError(result.error);
       }
@@ -93,6 +100,22 @@ export function ReopenQuoteButton({ quoteId, state }: Props) {
       {open ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+            {success ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <h3 className="text-lg font-semibold text-slate-900">Quote reopened</h3>
+                </div>
+                <p className="text-sm text-slate-600">
+                  {success.cancelledFollowUps > 0
+                    ? `Cancelled ${success.cancelledFollowUps} pending follow-up${success.cancelledFollowUps === 1 ? '' : 's'} so it won\u2019t fire against the reopened quote.`
+                    : 'No pending follow-ups needed cancelling.'}
+                </p>
+              </div>
+            ) : (
+              <>
             <h3 className="text-lg font-semibold text-slate-900">{copy.title}</h3>
             <p className="text-sm text-slate-600">{copy.body}</p>
             <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg p-3">
@@ -122,6 +145,8 @@ export function ReopenQuoteButton({ quoteId, state }: Props) {
                 {pending ? 'Reopening\u2026' : copy.buttonLabel}
               </button>
             </div>
+              </>
+            )}
           </div>
         </div>
       ) : null}

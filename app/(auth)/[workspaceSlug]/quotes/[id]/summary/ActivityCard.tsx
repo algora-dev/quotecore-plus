@@ -1,28 +1,40 @@
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { RevisionRequestsPanel, type RevisionRequest } from './RevisionRequestsPanel';
-import { SentMessagesPanel } from './SentMessagesPanel';
 import { ActivityCardClient } from './ActivityCardClient';
 import { ScheduleFollowUpButton } from './ScheduleFollowUpButton';
 import { DeleteAllMessagesButton } from './DeleteAllMessagesButton';
+import {
+  ScheduledMessagesList,
+  type ScheduledRowDisplay,
+} from './ScheduledMessagesList';
+import {
+  SentMessagesList,
+  type SentMessageListItem,
+} from './SentMessagesList';
+import {
+  type SentMessageReply,
+  type MessageReplyAction,
+} from './SentMessageRow';
 
 /**
  * Activity card on the quote summary.
  *
- * Replaces the two stacked boxes (RevisionRequestsPanel + SentMessagesPanel)
- * with a single tabbed card whose tabs are:
+ * Single self-contained server component that does ALL data loading
+ * for the three tabs in one parallel Promise.all batch. Previously
+ * this component delegated to two SentMessagesPanel instances (one
+ * per tab) which each opened their own Supabase client and re-ran
+ * the same five queries \u2014 ~13 queries per render where 6 would do.
+ * That's the activity-section slowness Shaun reported.
+ *
+ * Tabs:
  *   1. Unresolved \u2014 customer-submitted re-quote requests
  *   2. Scheduled \u2014 pending scheduled follow-ups
  *   3. Sent      \u2014 outbound messages sent for this quote
  *
- * The card collapses to a one-line summary by default when nothing
- * needs attention. Auto-expands when there's at least one open
- * unresolved request or pending scheduled message. Collapse state is
- * persisted in localStorage per quoteId via ActivityCardClient.
- *
- * Server-component shell: does all data loading via Supabase, then
- * hands typed props to the client tab shell. Tab bodies reuse the
- * existing panel components in `chromeless` / `chromelessSection`
- * mode so we don't duplicate row-rendering logic.
+ * Collapsed by default when nothing demands attention; auto-expands
+ * when there's an open unresolved request or pending scheduled
+ * follow-up. Collapse state persists in localStorage per quoteId via
+ * the client shell.
  */
 
 interface Props {
@@ -34,6 +46,14 @@ interface Props {
   revisionRequests: RevisionRequest[];
 }
 
+const TRIGGER_LABELS = {
+  quote_sent: 'After quote was sent',
+  quote_accepted: 'After acceptance',
+  quote_declined: 'After decline',
+  quote_revision_requested: 'After revision request',
+  manual: 'Starting now',
+} as const;
+
 export async function ActivityCard({
   workspaceSlug: _workspaceSlug,
   quoteId,
@@ -44,65 +64,136 @@ export async function ActivityCard({
 }: Props) {
   const supabase = await createSupabaseServerClient();
 
-  // Counts only \u2014 the actual rows are loaded inside SentMessagesPanel
-  // (chromelessSection mode) so we keep one source of truth for what
-  // goes in each tab. Doing two extra count(*) queries here is fine;
-  // they live next to the page render and are cheap on indexed cols.
-  const [scheduledCountResult, sentCountResult, scheduleDefaultsResult] = await Promise.all([
-    supabase
-      .from('scheduled_messages')
-      .select('id', { count: 'exact', head: true })
-      .eq('quote_id', quoteId)
-      .eq('company_id', companyId)
-      .eq('status', 'scheduled'),
+  // One parallel batch: every read the Activity card needs. Far cheaper
+  // than the previous "render two child server components, each of
+  // which re-opens a Supabase client and re-runs five queries" path.
+  const [
+    messagesResult,
+    scheduledResult,
+    emailTemplatesResult,
+    quoteForScheduleResult,
+  ] = await Promise.all([
     supabase
       .from('outbound_messages')
-      .select('id', { count: 'exact', head: true })
+      .select(
+        'id, subject, recipient_email, recipient_name, status, sent_at, replied_at, created_at',
+      )
       .eq('related_quote_id', quoteId)
-      .eq('company_id', companyId),
-    // One small read to power the Schedule modal defaults (recipient
-    // email, accepted/declined gating). Mirrors the same picks made
-    // inside SentMessagesPanel so the modal lands with the same
-    // defaults the user expects when they previously used the panel.
-    Promise.all([
-      supabase
-        .from('email_templates')
-        .select('id, name, subject')
-        .eq('company_id', companyId)
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('outbound_messages')
-        .select('recipient_email, recipient_name, status, created_at')
-        .eq('related_quote_id', quoteId)
-        .eq('company_id', companyId)
-        .order('created_at', { ascending: false })
-        .limit(5),
-      supabase
-        .from('quotes')
-        .select('accepted_at, declined_at')
-        .eq('id', quoteId)
-        .eq('company_id', companyId)
-        .maybeSingle(),
-    ]),
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .limit(10),
+    supabase
+      .from('scheduled_messages')
+      .select(
+        'id, template_id, recipient_email, recipient_name, trigger_event, fire_at, status, fired_at, cancelled_reason, failed_error',
+      )
+      .eq('quote_id', quoteId)
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .limit(10),
+    supabase
+      .from('email_templates')
+      .select('id, name, subject')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('quotes')
+      .select('accepted_at, declined_at')
+      .eq('id', quoteId)
+      .eq('company_id', companyId)
+      .maybeSingle(),
   ]);
 
-  const scheduledCount = scheduledCountResult.count ?? 0;
-  const sentCount = sentCountResult.count ?? 0;
-  const [emailTemplatesResult, recentSendsResult, quoteFlagsResult] = scheduleDefaultsResult;
+  const messages = messagesResult.data ?? [];
+  const scheduledRows = scheduledResult.data ?? [];
   const emailTemplates = emailTemplatesResult.data ?? [];
-  const recentSends = recentSendsResult.data ?? [];
-  const quoteFlags = quoteFlagsResult.data ?? null;
+  const quoteFlags = quoteForScheduleResult.data ?? null;
 
-  const unresolvedCount = revisionRequests.filter((r) => !r.resolved_at).length;
+  // Replies pulled in a second batch so the IN clause has the right ids.
+  // Cheap (single query) and only when there are messages.
+  let replyRows: Array<{
+    id: string;
+    message_id: string;
+    action: MessageReplyAction;
+    body: string | null;
+    created_at: string;
+  }> = [];
+  if (messages.length > 0) {
+    const { data } = await supabase
+      .from('outbound_message_replies')
+      .select('id, message_id, action, body, created_at')
+      .in(
+        'message_id',
+        messages.map((m) => m.id),
+      )
+      .order('created_at', { ascending: true });
+    replyRows = (data ?? []) as typeof replyRows;
+  }
 
+  // ----------------------------------------------------------------
+  // Shape data into the row component contracts.
+  // ----------------------------------------------------------------
+  const repliesByMessage = new Map<string, SentMessageReply[]>();
+  for (const row of replyRows) {
+    const list = repliesByMessage.get(row.message_id) ?? [];
+    list.push({
+      id: row.id,
+      action: row.action,
+      body: row.body,
+      created_at: row.created_at,
+    });
+    repliesByMessage.set(row.message_id, list);
+  }
+
+  const sentItems: SentMessageListItem[] = messages.map((m) => ({
+    id: m.id,
+    subject: m.subject,
+    recipientEmail: m.recipient_email,
+    recipientName: m.recipient_name,
+    status: m.status,
+    sentAt: m.sent_at,
+    createdAt: m.created_at,
+    repliedAt: m.replied_at,
+    replies: repliesByMessage.get(m.id) ?? [],
+  }));
+
+  const templateNameById = new Map<string, string>();
+  for (const t of emailTemplates) {
+    templateNameById.set(t.id, t.name);
+  }
+
+  const scheduledDisplay: ScheduledRowDisplay[] = scheduledRows.map((row) => ({
+    id: row.id,
+    templateName: row.template_id ? (templateNameById.get(row.template_id) ?? null) : null,
+    recipientEmail: row.recipient_email,
+    recipientName: row.recipient_name,
+    triggerEvent: row.trigger_event as ScheduledRowDisplay['triggerEvent'],
+    fireAt: row.fire_at,
+    status: row.status as ScheduledRowDisplay['status'],
+    firedAt: row.fired_at,
+    cancelledReason: row.cancelled_reason,
+    failedError: row.failed_error,
+  }));
+
+  // Schedule modal defaults: prefer the most recent successful send.
   let defaultRecipientEmail: string | null = null;
   let defaultRecipientName: string | null = customerName ?? null;
-  if (recentSends.length > 0) {
-    const lastSuccessful = recentSends.find((m) => m.status === 'sent') ?? recentSends[0];
+  if (messages.length > 0) {
+    const lastSuccessful = messages.find((m) => m.status === 'sent') ?? messages[0];
     defaultRecipientEmail = lastSuccessful.recipient_email;
     defaultRecipientName = lastSuccessful.recipient_name ?? defaultRecipientName;
   }
 
+  // ----------------------------------------------------------------
+  // Counts for the tab badges + header summary.
+  // ----------------------------------------------------------------
+  const unresolvedCount = revisionRequests.filter((r) => !r.resolved_at).length;
+  const scheduledCount = scheduledRows.filter((r) => r.status === 'scheduled').length;
+  const sentCount = messages.length;
+
+  // ----------------------------------------------------------------
+  // Header CTAs.
+  // ----------------------------------------------------------------
   const scheduleCta =
     emailTemplates.length > 0 && quoteFlags ? (
       <ScheduleFollowUpButton
@@ -122,10 +213,11 @@ export async function ActivityCard({
   const deleteAllCta =
     sentCount > 0 ? <DeleteAllMessagesButton quoteId={quoteId} messageCount={sentCount} /> : null;
 
-  // Pre-render each tab's body as JSX so the client component receives
-  // ready-to-mount React nodes. The chromeless variants share their row
-  // rendering with the standalone panels \u2014 keeps row markup in one
-  // place and avoids drift.
+  void TRIGGER_LABELS; // reserved for future inline summaries; intentionally unused
+
+  // ----------------------------------------------------------------
+  // Tab bodies. Inline empty-states so each tab is self-explanatory.
+  // ----------------------------------------------------------------
   const unresolvedTab = (
     <RevisionRequestsPanel
       requests={revisionRequests}
@@ -135,13 +227,25 @@ export async function ActivityCard({
     />
   );
 
-  const scheduledTab = (
-    <SentMessagesPanel quoteId={quoteId} companyId={companyId} chromelessSection="scheduled" />
-  );
+  const scheduledTab =
+    scheduledRows.length > 0 ? (
+      <ScheduledMessagesList rows={scheduledDisplay} />
+    ) : (
+      <div className="px-1 py-6 text-center text-xs text-slate-500">
+        No follow-ups scheduled. Use &ldquo;Schedule follow-up&rdquo; above to plan an automatic
+        message.
+      </div>
+    );
 
-  const sentTab = (
-    <SentMessagesPanel quoteId={quoteId} companyId={companyId} chromelessSection="sent" />
-  );
+  const sentTab =
+    sentItems.length > 0 ? (
+      <SentMessagesList messages={sentItems} />
+    ) : (
+      <div className="px-1 py-6 text-center text-xs text-slate-500">
+        No messages sent yet. Use &ldquo;Send Quote&rdquo; or &ldquo;Schedule follow-up&rdquo; to
+        send one.
+      </div>
+    );
 
   return (
     <ActivityCardClient

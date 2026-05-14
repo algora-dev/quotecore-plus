@@ -294,20 +294,30 @@ export function ScheduleFollowUpButton({
                 </div>
               </div>
 
-              {/* Safety toggles */}
+              {/* Safety toggles. The "cancel if customer responds"
+                  gate only applies to chase-type triggers (quote_sent,
+                  manual). For event-triggered rules the event IS the
+                  response so cancelling on it makes the rule incapable
+                  of ever firing. Hidden in that case. */}
               <div className="space-y-2 pt-1">
-                <label className="flex items-start gap-2 text-xs text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={form.requireNoResponse}
-                    onChange={(e) => setForm((f) => ({ ...f, requireNoResponse: e.target.checked }))}
-                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
-                  />
-                  <span>
-                    Cancel automatically if the customer accepts, declines, or requests a change first.
-                    <span className="block text-slate-400">Recommended. Stops the follow-up firing after the customer has already replied.</span>
-                  </span>
-                </label>
+                {form.triggerEvent === 'quote_sent' || form.triggerEvent === 'manual' ? (
+                  <label className="flex items-start gap-2 text-xs text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={form.requireNoResponse}
+                      onChange={(e) => setForm((f) => ({ ...f, requireNoResponse: e.target.checked }))}
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                    />
+                    <span>
+                      Cancel automatically if the customer accepts, declines, or requests a change first.
+                      <span className="block text-slate-400">Recommended. Stops the follow-up firing after the customer has already replied.</span>
+                    </span>
+                  </label>
+                ) : (
+                  <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+                    Event follow-ups fire when the trigger event happens — the customer&apos;s response IS what activates this rule, so it won&apos;t auto-cancel on their action.
+                  </p>
+                )}
                 <label className="flex items-start gap-2 text-xs text-slate-700">
                   <input
                     type="checkbox"

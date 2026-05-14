@@ -274,7 +274,16 @@ export async function scheduleQuoteFollowUp(
       trigger_event: input.triggerEvent,
       trigger_anchor_at: anchor.toISOString(),
       fire_at: finalFire.toISOString(),
-      require_no_response: input.requireNoResponse,
+      // Event-triggered rules (accepted / declined / revision-requested)
+      // never gate on "customer responded" — the event IS the response.
+      // Forcing false here belt-and-braces the dispatcher fix so even a
+      // legacy caller that passes true can't break event rules.
+      require_no_response:
+        input.triggerEvent === 'quote_accepted' ||
+        input.triggerEvent === 'quote_declined' ||
+        input.triggerEvent === 'quote_revision_requested'
+          ? false
+          : input.requireNoResponse,
       respect_quiet_hours: input.respectQuietHours,
       recipient_email: recipient.toLowerCase(),
       recipient_name: input.recipientName ?? quote.customer_name ?? null,
@@ -578,7 +587,18 @@ async function dispatchOne(
     await markCancelled(admin, row.id, 'Quote was withdrawn.');
     return 'cancelled';
   }
-  if (row.require_no_response) {
+  // Cancel-on-response only applies to follow-ups whose whole purpose
+  // is to chase a missing reply (quote_sent / manual reminders).
+  // For event-triggered follow-ups (quote_accepted / quote_declined /
+  // quote_revision_requested) the event itself IS the trigger —
+  // cancelling because the trigger happened would mean those rows can
+  // never fire, which was the exact bug Shaun hit (decline follow-up
+  // cancelled itself with reason "Customer declined the quote.").
+  const isEventTriggered =
+    row.trigger_event === 'quote_accepted' ||
+    row.trigger_event === 'quote_declined' ||
+    row.trigger_event === 'quote_revision_requested';
+  if (row.require_no_response && !isEventTriggered) {
     if (quote.accepted_at) {
       await markCancelled(admin, row.id, 'Customer accepted the quote.');
       return 'cancelled';
