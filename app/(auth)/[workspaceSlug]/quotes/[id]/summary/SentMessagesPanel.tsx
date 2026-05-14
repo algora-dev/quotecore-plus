@@ -11,6 +11,11 @@ import {
 interface Props {
   quoteId: string;
   companyId: string;
+  /** When set, render only that section's inner rows (no outer card,
+   *  no shared header). Used by ActivityCard's tabs so each tab
+   *  surfaces exactly one slice. When omitted (default) the panel
+   *  renders its full self-contained card. */
+  chromelessSection?: 'scheduled' | 'sent';
 }
 
 /**
@@ -31,7 +36,7 @@ interface Props {
  * templates available, so the button is always reachable on a fresh
  * quote).
  */
-export async function SentMessagesPanel({ quoteId, companyId }: Props) {
+export async function SentMessagesPanel({ quoteId, companyId, chromelessSection }: Props) {
   const supabase = await createSupabaseServerClient();
 
   // Resolve current user once \u2014 used for the admin "Send now" flag on
@@ -94,7 +99,11 @@ export async function SentMessagesPanel({ quoteId, companyId }: Props) {
   //     button so a fresh quote can be auto-followed-up.
   //   - no activity AND no templates \u2192 don't render. The user has no
   //     templates anyway, the Schedule modal would be useless.
-  if (!hasMessages && !hasScheduled && !hasTemplates) {
+  // Standalone mode: hide the whole card when there's nothing to
+  // show. In chromeless tab mode we always render the tab body (with
+  // an empty state when needed) so the parent's tab doesn't appear
+  // broken.
+  if (!chromelessSection && !hasMessages && !hasScheduled && !hasTemplates) {
     return null;
   }
 
@@ -157,6 +166,32 @@ export async function SentMessagesPanel({ quoteId, companyId }: Props) {
     const lastSuccessful = messages!.find((m) => m.status === 'sent') ?? messages![0];
     defaultRecipientEmail = lastSuccessful.recipient_email;
     defaultRecipientName = lastSuccessful.recipient_name ?? defaultRecipientName;
+  }
+
+  // ----------------------------------------------------------------
+  // Chromeless rendering for ActivityCard tabs.
+  // ----------------------------------------------------------------
+  if (chromelessSection === 'scheduled') {
+    if (!hasScheduled) {
+      return (
+        <div className="px-1 py-6 text-center text-xs text-slate-500">
+          No follow-ups scheduled. Use &ldquo;Schedule follow-up&rdquo; above
+          to plan an automatic message.
+        </div>
+      );
+    }
+    return <ScheduledMessagesList rows={scheduledDisplay} />;
+  }
+  if (chromelessSection === 'sent') {
+    if (!hasMessages) {
+      return (
+        <div className="px-1 py-6 text-center text-xs text-slate-500">
+          No messages sent yet. Use &ldquo;Send Quote&rdquo; or
+          &ldquo;Schedule follow-up&rdquo; to send one.
+        </div>
+      );
+    }
+    return <SentMessagesList messages={listItems} />;
   }
 
   return (

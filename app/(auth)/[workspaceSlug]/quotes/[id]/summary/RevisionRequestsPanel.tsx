@@ -45,6 +45,11 @@ interface Props {
   fallbackCustomerName: string;
   /** Quote number kept on the props for future use (e.g. richer reply UX). Currently unused. */
   quoteNumber: number | null;
+  /** When true the panel renders its inner content only (no outer
+   *  card, no expand/collapse header) because the ActivityCard parent
+   *  hosts the chrome via a tab. Default false preserves every
+   *  existing standalone usage. */
+  chromeless?: boolean;
 }
 
 const STATE_BADGE: Record<RevisionRequest['source_state'], { label: string; cls: string }> = {
@@ -65,7 +70,7 @@ function formatTimestamp(iso: string): string {
   });
 }
 
-export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNumber: _quoteNumber }: Props) {
+export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNumber: _quoteNumber, chromeless = false }: Props) {
   const pending = requests.filter((r) => !r.resolved_at);
   const resolved = requests.filter((r) => r.resolved_at);
 
@@ -96,7 +101,7 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
   const router = useRouter();
 
   // Don't render anything if there's no history at all \u2014 keeps the summary clean.
-  if (requests.length === 0) return null;
+  if (requests.length === 0 && !chromeless) return null;
 
   function exitSelectMode() {
     setSelectMode(false);
@@ -312,8 +317,20 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
     );
   };
 
+  // Chromeless empty state so the parent tab shows a friendly
+  // "nothing here yet" message instead of the multi-select bar.
+  if (chromeless && requests.length === 0) {
+    return (
+      <div className="px-1 py-6 text-center text-xs text-slate-500">
+        No customer change requests yet. They&apos;ll show up here if a
+        customer hits &ldquo;Request changes&rdquo; on the acceptance page.
+      </div>
+    );
+  }
+
   return (
-    <div className={`rounded-2xl border ${pending.length > 0 ? 'border-orange-300 bg-orange-50/40' : 'border-slate-200 bg-white'} p-4`}>
+    <div className={chromeless ? "" : `rounded-2xl border ${pending.length > 0 ? 'border-orange-300 bg-orange-50/40' : 'border-slate-200 bg-white'} p-4`}>
+      {!chromeless ? (
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
@@ -340,9 +357,10 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
+      ) : null}
 
-      {expanded && (
-        <div className="mt-4 space-y-3">
+      {(expanded || chromeless) && (
+        <div className={chromeless ? "space-y-3" : "mt-4 space-y-3"}>
           {/* Select toolbar — promoted to a visible pill button so the
               user can find it. Available whenever there's at least one
               row in the panel (resolved-only counts; the user has to

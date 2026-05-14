@@ -22,8 +22,7 @@ import { SendQuoteButton } from './SendQuoteButton';
 import { WithdrawQuoteButton } from './WithdrawQuoteButton';
 import { SummaryTabs } from './SummaryTabs';
 import { SummaryFilesPanel } from './SummaryFilesPanel';
-import { RevisionRequestsPanel } from './RevisionRequestsPanel';
-import { SentMessagesPanel } from './SentMessagesPanel';
+import { ActivityCard } from './ActivityCard';
 import { loadQuoteTaxes } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
 import { getSignedUrls } from '@/app/lib/storage/helpers';
@@ -235,15 +234,14 @@ export default async function QuoteSummaryPage({
         </div>
       </div>
 
-      {revisionRequests.length > 0 && (
-        <RevisionRequestsPanel
-          requests={revisionRequests}
-          fallbackCustomerName={quote.customer_name}
-          quoteNumber={quote.quote_number}
-        />
-      )}
-
-      <SentMessagesPanel quoteId={id} companyId={quote.company_id} />
+      <ActivityCard
+        workspaceSlug={workspaceSlug}
+        quoteId={id}
+        companyId={quote.company_id}
+        customerName={quote.customer_name}
+        quoteNumber={quote.quote_number}
+        revisionRequests={revisionRequests}
+      />
 
       <SummaryTabs
         workspaceSlug={workspaceSlug}
