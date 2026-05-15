@@ -10,6 +10,12 @@ import { sendOutboundMessage } from '@/app/lib/messages/send';
 import { computeTaxLines } from '@/app/lib/taxes/types';
 import { loadQuoteTaxesByQuoteId } from '@/app/lib/taxes/actions';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
+import {
+  assertCanSendMessage,
+  requireFeature,
+  BillingError,
+  FeatureGatedError,
+} from '@/app/lib/billing/entitlements';
 import crypto from 'node:crypto';
 
 /**
@@ -125,6 +131,30 @@ export async function scheduleQuoteFollowUp(
   input: ScheduleQuoteFollowUpInput,
 ): Promise<ScheduleResultOk | ScheduleResultErr> {
   const profile = await requireCompanyContext();
+
+  // Entitlement gate: schedule-time check (Gerald audit H-04 / belt-and-
+  // braces above the RLS gate on scheduled_messages.insert). The dispatch-
+  // time check inside dispatchOne is the authoritative one for the
+  // "company paid then downgraded" case; this one stops a Starter user
+  // from ever creating a scheduled row in the first place.
+  try {
+    await requireFeature(profile.company_id, 'followups');
+  } catch (gateErr) {
+    if (gateErr instanceof FeatureGatedError) {
+      return {
+        ok: false,
+        error: `Automated follow-ups aren't included in your current plan. Upgrade to schedule follow-up messages.`,
+      };
+    }
+    if (gateErr instanceof BillingError) {
+      return {
+        ok: false,
+        error: 'Your subscription is not active. Reactivate to schedule follow-ups.',
+      };
+    }
+    throw gateErr;
+  }
+
   const supabase = await createSupabaseServerClient();
 
   // --- Validate input ------------------------------------------------
@@ -617,6 +647,39 @@ async function dispatchOne(
   // the row stuck. The actual status flip happens at the very end.
   if (!row.quote_id) {
     await markFailed(admin, row.id, 'No quote_id on scheduled row.');
+    return 'failed';
+  }
+
+  // Fire-time entitlement gate (Gerald audit H-04). The schedule-time gate
+  // (RLS on scheduled_messages.insert + the schedule action) only confirms
+  // the company had the feature WHEN they scheduled. By the time cron fires
+  // they may have downgraded. Without this check, a company that paid for
+  // Pro for one month and scheduled 5 follow-ups would still get those
+  // emails sent for free after they downgraded.
+  //
+  // Skipped rows are marked cancelled with a distinct reason string that
+  // the UI keys off to render the amber "Plan downgrade — not sent" pill.
+  // We use the existing markCancelled() so the alert + audit are written
+  // exactly the way users expect.
+  try {
+    await assertCanSendMessage(row.company_id, 'scheduled_dispatch');
+    await requireFeature(row.company_id, 'followups');
+  } catch (gateErr) {
+    if (gateErr instanceof BillingError) {
+      const reason =
+        gateErr instanceof FeatureGatedError
+          ? `Plan no longer includes "${gateErr.feature}". Reactivate to resume follow-ups.`
+          : 'Subscription not active.';
+      await markCancelled(admin, row.id, reason);
+      return 'cancelled';
+    }
+    // Unexpected error in the gate itself — mark failed so we can retry,
+    // and let the caller see the original error via the failed_error column.
+    await markFailed(
+      admin,
+      row.id,
+      `Entitlement check failed unexpectedly: ${(gateErr as Error)?.message ?? 'unknown'}`,
+    );
     return 'failed';
   }
 

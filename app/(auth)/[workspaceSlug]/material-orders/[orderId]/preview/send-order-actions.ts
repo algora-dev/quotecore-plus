@@ -7,6 +7,13 @@ import {
 } from '@/app/lib/supabase/server';
 import { sendOutboundMessage } from '@/app/lib/messages/send';
 import { generateOrderSupplierToken } from './supplier-link-actions';
+import {
+  assertCanSendMessage,
+  requireFeature,
+  FeatureGatedError,
+  SubscriptionInactiveError,
+  FEATURE_LABELS,
+} from '@/app/lib/billing/entitlements';
 
 export interface SendOrderMessageInput {
   orderId: string;
@@ -29,6 +36,32 @@ export async function sendOrderMessage(
   input: SendOrderMessageInput,
 ): Promise<SendOrderMessageResult> {
   const profile = await requireCompanyContext();
+
+  // Two entitlements required to send a supplier order through the
+  // pipeline: the user must have material_orders to operate this surface
+  // at all, AND email_send to dispatch a real email through Resend.
+  // Without email_send they can still generate the supplier link via
+  // the order page and copy it manually — that path doesn't go through
+  // this action.
+  try {
+    await requireFeature(profile.company_id, 'material_orders');
+    await assertCanSendMessage(profile.company_id, 'manual');
+  } catch (gateErr) {
+    if (gateErr instanceof FeatureGatedError) {
+      return {
+        ok: false,
+        error: `${FEATURE_LABELS[gateErr.feature]} isn't included in your current plan. Upgrade to use this feature.`,
+      };
+    }
+    if (gateErr instanceof SubscriptionInactiveError) {
+      return {
+        ok: false,
+        error: 'Your subscription is not active. Reactivate to send orders.',
+      };
+    }
+    throw gateErr;
+  }
+
   const supabase = await createSupabaseServerClient();
 
   const { data: order, error: orderErr } = await supabase

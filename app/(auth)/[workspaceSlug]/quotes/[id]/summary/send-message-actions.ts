@@ -7,6 +7,12 @@ import {
 } from '@/app/lib/supabase/server';
 import crypto from 'node:crypto';
 import { sendOutboundMessage } from '@/app/lib/messages/send';
+import {
+  assertCanSendMessage,
+  FeatureGatedError,
+  SubscriptionInactiveError,
+  FEATURE_LABELS,
+} from '@/app/lib/billing/entitlements';
 import { computeTaxLines } from '@/app/lib/taxes/types';
 import { loadQuoteTaxesByQuoteId } from '@/app/lib/taxes/actions';
 import { formatCurrency } from '@/app/lib/currency/currencies';
@@ -83,6 +89,31 @@ export async function sendQuoteMessage(
   input: SendQuoteMessageInput,
 ): Promise<SendQuoteMessageResult> {
   const profile = await requireCompanyContext();
+
+  // Manual-send entitlement gate. Companies on plans without
+  // feat_email_send (trial, starter) must use the public accept-link
+  // route instead. The DB RLS INSERT policy on outbound_messages would
+  // refuse this anyway, but failing fast here gives the user a clear
+  // upgrade prompt instead of a raw "row-level security policy violation"
+  // error.
+  try {
+    await assertCanSendMessage(profile.company_id, 'manual');
+  } catch (gateErr) {
+    if (gateErr instanceof FeatureGatedError) {
+      return {
+        ok: false,
+        error: `${FEATURE_LABELS[gateErr.feature]} isn't included in your current plan. Upgrade to send emails directly from QuoteCore+, or copy the public quote link from the customer page and email it yourself.`,
+      };
+    }
+    if (gateErr instanceof SubscriptionInactiveError) {
+      return {
+        ok: false,
+        error: 'Your subscription is not active. Reactivate to send messages.',
+      };
+    }
+    throw gateErr;
+  }
+
   const supabase = await createSupabaseServerClient();
 
   // Ownership: load the quote scoped to the caller's company so an
