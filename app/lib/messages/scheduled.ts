@@ -264,7 +264,12 @@ export async function scheduleQuoteFollowUp(
     const rawFire = new Date(
       anchor.getTime() + waitDays * 24 * 60 * 60 * 1000 + waitHours * 60 * 60 * 1000,
     );
-    const fireAt = input.respectQuietHours ? applyQuietHours(rawFire) : rawFire;
+    // "Immediately" (zero wait) bypasses quiet hours regardless of
+    // respect_quiet_hours. The user explicitly signalled this is
+    // time-sensitive; quiet hours are for "fire 3 days after sent"-
+    // style rules, not for event-driven immediate sends.
+    const isImmediate = waitDays === 0 && waitHours === 0;
+    const fireAt = input.respectQuietHours && !isImmediate ? applyQuietHours(rawFire) : rawFire;
 
     // Guard: a fire time in the past usually means the user picked an
     // event from the past and a short delay. We push it forward to "now
@@ -370,7 +375,13 @@ export async function activateEventScheduledMessages(input: {
     const rawFire = new Date(
       eventDate.getTime() + days * 24 * 60 * 60 * 1000 + hours * 60 * 60 * 1000,
     );
-    const adjusted = row.respect_quiet_hours ? applyQuietHours(rawFire) : rawFire;
+    // "Immediately" (zero wait) bypasses quiet hours regardless of
+    // respect_quiet_hours. Quiet hours apply to deliberately
+    // delayed follow-ups, not to event-driven immediate sends —
+    // the customer just accepted/declined seconds ago, they're
+    // clearly awake.
+    const isImmediate = days === 0 && hours === 0;
+    const adjusted = row.respect_quiet_hours && !isImmediate ? applyQuietHours(rawFire) : rawFire;
     // Two paths:
     //   - fire_at is now-or-past => dispatch inline. We set fire_at
     //     to now() so the row is properly marked as due and the
