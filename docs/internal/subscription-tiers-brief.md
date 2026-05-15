@@ -1,10 +1,19 @@
 # Subscription Tiers Implementation Brief
 
-**Status:** v2 (post Gerald audit)
+**Status:** v3 (Shaun's dunning + dispute + refund rules locked in; ready to build)
 **Author:** Gavin (Shaun's full-stack agent)
 **Auditor:** Gerald — audit at `workspace-gerald/audits/quotecore-plus/subscription-tiers-prebuild-2026-05-15.md`
-**Date:** 2026-05-15 (v2 same-day revision)
-**Repo head at v2 draft:** `c84129f` (development) / `b6c97c0` (main)
+**Date:** 2026-05-15 (v3 same-day revision)
+**Repo head at v3 draft:** `58f9328` (development) / `b6c97c0` (main)
+
+## 0a. What changed in v3 (Shaun's rules from the post-audit conversation)
+
+1. **Dunning curve fixed at 7 / 21 / 45 / 75 days.** Old day-numbers (10/28/58/88) discarded. Full state machine specified in §9.5.
+2. **Disputes use the dunning curve until the user opens a ticket.** Stripe `charge.dispute.created` puts them on the dunning curve AND auto-creates a `payment_dispute` support ticket. Once the user opens that ticket, status flips to `disputed` and they STAY ON THEIR CURRENT TIER until resolution. Target resolution: 48 hours. §9.6.
+4. **Refund flow split in two.** Refund-while-continuing-subscription is unchanged. Refund-as-cancellation runs a faster cancellation curve where the user confirms they're leaving and gets a short window to download files. §9.7.
+5. **Trial card-on-file: NOT required at signup.** Confirmed. Abuse mitigation deferred.
+6. **Clones: always count against monthly quote limit.** The `p_count_against_limit` parameter is removed from `create_quote_atomic`. §6.
+7. **Existing-user grandfathering remains, but Shaun expects to wipe everything before going fully live.** Admin override for free-tier-per-company access is still a phase-1 feature for ongoing comp cases post-launch. §12.
 
 ## 0. What changed in v2
 
@@ -183,8 +192,23 @@ ALTER TABLE public.companies
   ADD COLUMN stripe_subscription_id text UNIQUE,
   ADD COLUMN stripe_price_id text,                       -- mirrors active Stripe price
   ADD COLUMN seat_count integer NOT NULL DEFAULT 1,
-  ADD COLUMN storage_topup_bytes bigint NOT NULL DEFAULT 0;
+  ADD COLUMN storage_topup_bytes bigint NOT NULL DEFAULT 0,
+
+  -- Set on first invoice.payment_failed; cleared on invoice.paid. Drives the dunning cron.
+  ADD COLUMN first_payment_failure_at timestamptz,
+  ADD COLUMN dunning_stage_entered_at timestamptz,
+
+  -- Admin-issued comp / free-tier access. If comp_until > now(), the dunning cron treats
+  -- the company as `active` regardless of Stripe state. Useful for time-bounded gifts.
+  ADD COLUMN comp_until timestamptz,
+  ADD COLUMN comp_notes text,
+
+  -- Cancellation refund flow (§9.7 Mode B)
+  ADD COLUMN cancellation_confirmation_required_at timestamptz,
+  ADD COLUMN cancellation_confirmed_at timestamptz;
 ```
+
+The effective-plan helper from §4.4 also checks `comp_until` and treats the company as `active` when set.
 
 ### 4.4 Effective-plan resolution functions (H-05)
 ```sql
@@ -207,13 +231,40 @@ $$;
 CREATE OR REPLACE FUNCTION public.company_effective_plan_active(p_company_id uuid)
 RETURNS boolean LANGUAGE sql STABLE AS $$
   SELECT CASE
-    WHEN c.subscription_status IN ('active','trialing','past_due') THEN true
-    WHEN c.subscription_status = 'grace' AND c.grace_ends_at > now() THEN true
+    -- Admin comp overrides everything until comp_until
+    WHEN c.comp_until IS NOT NULL AND c.comp_until > now() THEN true
+    -- Normal active states
+    WHEN c.subscription_status IN ('active','trialing','past_due','disputed') THEN true
+    -- Grace = read-only but not destroyed; effective entitlement collapses but features stay viewable
+    WHEN c.subscription_status IN ('grace','pending_data_purge','cancellation_pending') THEN true
+    -- Trial-expired with no subscription: read-only
+    WHEN c.subscription_status = 'trialing' AND c.trial_ends_at < now() AND c.stripe_subscription_id IS NULL THEN true
     ELSE false
   END
   FROM public.companies c
   WHERE c.id = p_company_id;
 $$;
+```
+
+For `company_effective_plan_code`, the corresponding update treats `disputed` as the live plan (Shaun's rule: dispute-with-ticket-open stays on tier):
+
+```sql
+CREATE OR REPLACE FUNCTION public.company_effective_plan_code(p_company_id uuid)
+RETURNS text LANGUAGE sql STABLE AS $$
+  SELECT CASE
+    -- Comp override
+    WHEN c.comp_until IS NOT NULL AND c.comp_until > now() THEN c.plan_code
+    -- Trial expired without subscription
+    WHEN c.subscription_status = 'trialing' AND c.trial_ends_at < now() AND c.stripe_subscription_id IS NULL THEN 'starter'
+    -- Active / trialing / past_due / disputed (with ticket open) -> full plan
+    WHEN c.subscription_status IN ('active','trialing','past_due','disputed') THEN c.plan_code
+    -- Grace / pending_data_purge / cancellation_pending -> collapsed to starter (read-only)
+    WHEN c.subscription_status IN ('grace','pending_data_purge','cancellation_pending') THEN 'starter'
+    -- Suspended / canceled -> starter equivalent (locked elsewhere via active=false)
+    ELSE 'starter'
+  END
+  FROM public.companies c
+  WHERE c.id = p_company_id;
 ```
 
 Why this shape: when payment recovers and Stripe flips back to `active`, **we don't have to remember what plan they had** — `plan_code` was never overwritten. Effective entitlements computed in two functions; one source of truth.
@@ -499,7 +550,7 @@ Same gate on `sendOutboundMessage` itself for the manual path: `assertCanSendMes
 
 `scheduled_messages` gains two columns: `skipped_reason text` and `skipped_at timestamptz`. UI shows skipped rows with an amber "Plan downgrade — not sent" pill.
 
-## 9. Stripe state model (H-05, M-05)
+## 9. Stripe state model + dunning + disputes + refunds (H-05, M-05, Shaun rules v3)
 
 ### 9.1 Plan code vs effective entitlement (recap from §4.3)
 - `companies.plan_code` = what the customer is paying for. ONLY ever changed by:
@@ -509,17 +560,26 @@ Same gate on `sendOutboundMessage` itself for the manual path: `assertCanSendMes
 - `companies.subscription_status` = lifecycle (`trialing`/`active`/`past_due`/`grace`/`suspended`/`canceled`).
 - **Payment failure does NOT touch `plan_code`.** It moves status to `past_due` then `grace` then `suspended`. When payment recovers, status flips back; effective plan automatically restores because `plan_code` was preserved.
 
-### 9.2 Status transitions
+### 9.2 Status state machine (full)
 
-| From | Stripe event | To status | Notes |
-|---|---|---|---|
-| trialing | `checkout.session.completed` | active | First successful charge inside trial |
-| trialing | trial_ends_at < now() AND no subscription | (effective) starter | Computed by `company_effective_plan_code`; status row stays `trialing` until cron flips it |
-| active | `invoice.payment_failed` (first) | past_due | Email user; do not change `plan_code`; UI shows banner |
-| past_due | `invoice.payment_failed` (final) | grace | Set `grace_ends_at = now()+3 days`; effective plan collapses to starter for gated features only |
-| grace | `customer.subscription.updated` status=`unpaid` or `canceled` | suspended | All gated features read-only |
-| suspended | `invoice.paid` AND `customer.subscription.updated` status=`active` | active | `plan_code` was preserved — instant restoration |
-| any | admin manual override | (any) | Audit row required |
+The `subscription_status` CHECK constraint widens to:
+```sql
+CHECK (subscription_status IN (
+  'trialing','active','past_due','grace','pending_data_purge',
+  'disputed','suspended','canceled','cancellation_pending'
+))
+```
+
+Transitions are driven by Stripe webhooks + a daily cron `/api/cron/process-billing-lifecycle`. `plan_code` is NEVER mutated by these transitions (except checkout / admin override / explicit Stripe plan switch). See §9.5 for the dunning curve, §9.6 for disputes, §9.7 for cancellation refunds.
+
+Happy path:
+
+| From | Trigger | To status | `plan_code` change | Notes |
+|---|---|---|---|---|
+| trialing | `checkout.session.completed` | active | set to purchased plan | First successful charge inside trial |
+| trialing | `trial_ends_at < now()` AND no subscription | (effective starter) | none | Computed by `company_effective_plan_code`; status stays `trialing` until cron flips it |
+| active | `customer.subscription.updated` (plan switch) | active | updated to new plan | Real plan change, not dunning |
+| any | admin manual override | (any) | (only on explicit plan flip) | Audit row REQUIRED |
 
 ### 9.3 Webhook handler structure (M-05)
 
@@ -539,7 +599,125 @@ Phase 1 uses Stripe-hosted Checkout + Customer Portal. We do not build custom up
 
 The Portal handles prorate, plan switching, card update, cancellation. Saves 2–3 days of work.
 
-### 9.5 Reconciliation cron (phase 2)
+### 9.5 Dunning curve — missed payment (Shaun rules, locked v3)
+
+**Principle:** payment failure is usually a card expiry or temporary cash issue, not an exit signal. Customers want to keep using QuoteCore+. The curve gives them 75 days end-to-end to recover before destructive action, with notification at every gate. `plan_code` is preserved throughout so payment recovery snaps everything back instantly.
+
+**New column on `companies`:**
+```sql
+ALTER TABLE public.companies
+  ADD COLUMN first_payment_failure_at timestamptz,   -- set on first invoice.payment_failed; cleared on invoice.paid
+  ADD COLUMN dunning_stage_entered_at timestamptz;   -- timestamp of last dunning state change
+```
+
+**State machine:**
+
+| Day | Trigger | `subscription_status` | Effective entitlement | Notifications |
+|---|---|---|---|---|
+| 0 | Stripe `invoice.payment_failed` (first attempt) | `past_due` | Unchanged — full plan features | Email: "Payment failed, we'll retry. Update card here." |
+| 1–7 | Stripe auto-retries (Stripe Smart Retries enabled) | `past_due` | Unchanged | Stripe sends its standard card-failure emails |
+| 7 | Our cron sees `past_due` AND `now() - first_payment_failure_at >= 7 days` | `past_due` (no status change; just notification) | Unchanged — full features | Email: "7 days overdue. Service may downgrade in 14 days." |
+| 21 | Our cron sees `past_due` AND `>= 21 days` | `grace` | **Downgrade to effective `starter` (read-only on gated features)** | Email: "Service downgraded to read-only Starter. Resume billing within 24 days to restore your `<plan>` plan." |
+| 45 | Our cron sees `grace` AND `>= 45 days from first_payment_failure_at` | `pending_data_purge` | Effective `starter` read-only | Email: "Final notice — 30 days to download your files. After that storage + quotes + flashings + material orders will be deleted. Your account remains and can be reactivated." |
+| 75 | Our cron sees `pending_data_purge` AND `>= 75 days from first_payment_failure_at` | `suspended` | Locked entirely | Email: "Storage + quote data deleted. Your account remains. Restart subscription to use QuoteCore+ again." Storage purge job runs (§9.8). |
+
+**Recovery at any point before day 75:** `invoice.paid` webhook flips `subscription_status='active'`, clears `first_payment_failure_at` and `dunning_stage_entered_at`. Effective entitlement immediately restores because `plan_code` was never changed.
+
+**Manual interrupts:** `/admin/companies/<id>` can set `subscription_status='active'` or extend the dunning timer (set `first_payment_failure_at` to a later date) for support cases. Every override writes a `subscription_events` row with `event_type='manual_override'` + a `notes` field.
+
+**Notification routing:** dunning emails bypass BOTH `message_suppressions` AND the per-tier `feat_email_send` gate. Billing emails are platform-essential, not user-initiated marketing.
+
+**The cron:** `POST /api/cron/process-billing-lifecycle` runs daily at 09:00 UTC. One pass evaluates all companies in dunning states; one pass evaluates the dispute curve (§9.6); one pass evaluates the cancellation curve (§9.7). Single cron, three workloads, shared idempotency via `dunning_stage_entered_at`.
+
+### 9.6 Dispute curve
+
+Disputes are different from missed payments: the customer (or their bank) has actively complained that the charge was wrong. Stripe immediately withdraws the funds from your balance + charges a ~$15 fee. We have a window to submit evidence.
+
+**Shaun's call:** disputes start on the dunning curve. The moment the user opens a forced `payment_dispute` support ticket, status flips to `disputed` and they stay on their CURRENT TIER until resolution. The ticket open is the good-faith signal that they're engaging with us, not running.
+
+**State machine:**
+
+| Trigger | `subscription_status` | Effective entitlement | Other actions |
+|---|---|---|---|
+| Stripe `charge.dispute.created` | `past_due` (joins the standard dunning curve) | Per dunning curve | Auto-create `support_tickets` row with `ticket_type='payment_dispute'`, `status='unopened'`. Email user with deep-link to open the ticket. Internal alert to Shaun. |
+| User opens the ticket (any in-app action on it) | `disputed` | **Restored to their `plan_code` tier** | Dunning cron stops touching this company while status is `disputed`. Target resolution window starts: 48 hours. |
+| Stripe `charge.dispute.funds_withdrawn` | (unchanged) | (unchanged) | Internal alert: balance impact logged. |
+| Stripe `charge.dispute.closed status='won'` | `active` | Restored | Refund the chargeback fee to the company where Stripe permits. Audit row. |
+| Stripe `charge.dispute.closed status='lost'` | `canceled` | Locked immediately | Audit row. Storage purge follows the same path as the dunning curve hits day 75. |
+| Ticket auto-closes (e.g. user goes silent for X days) | back onto dunning curve from where they left off | Per dunning curve | Configurable; default 14 days of ticket inactivity. |
+
+**Why dispute starts on dunning, not on `disputed` directly:** if the user files a chargeback without engaging with us, they're treating QuoteCore+ as a one-shot purchase to refund. Putting them on dunning protects revenue. The moment they DO engage (open the ticket), we trust them and restore access while we sort it.
+
+**New table:**
+```sql
+CREATE TABLE public.support_tickets (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id uuid NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
+  ticket_type text NOT NULL CHECK (ticket_type IN ('payment_dispute','billing','feature_request','bug','other')),
+  status text NOT NULL DEFAULT 'unopened' CHECK (status IN ('unopened','open','awaiting_user','resolved','auto_closed')),
+  subject text NOT NULL,
+  related_stripe_dispute_id text,
+  related_stripe_charge_id text,
+  opened_at timestamptz,
+  resolved_at timestamptz,
+  auto_close_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  created_by_system boolean NOT NULL DEFAULT false
+);
+```
+
+Support ticket UI is out of phase-1 scope; phase 1 just needs the row written + the email link working. A minimal `/account/support` page already exists in the repo and gets a new `payment_dispute` ticket type wired in.
+
+### 9.7 Cancellation refund curve
+
+Two refund modes:
+
+**Mode A — Refund while keeping the subscription** (user got over-billed, billing error, goodwill credit, etc.)
+- Triggered manually by Shaun via Stripe dashboard / a new admin tool.
+- Stripe `charge.refunded` webhook arrives.
+- `subscription_status` unchanged. `plan_code` unchanged. Effective entitlement unchanged.
+- `subscription_events` row logs the refund + amount + reason.
+- This is just Stripe's normal refund path; we don't need any state machine for it.
+
+**Mode B — Refund as cancellation** (user wants out completely, e.g. tried QuoteCore+, decided it's not for them)
+- Triggered when Shaun manually issues a refund AND flags it as cancellation in the admin tool. The admin action sets `subscription_status='cancellation_pending'` and writes a new column `cancellation_confirmation_required_at`.
+- Faster curve than dunning because the user has explicitly said they're leaving.
+
+**State machine for Mode B:**
+
+| Day | Trigger | `subscription_status` | Effective entitlement | Notifications |
+|---|---|---|---|---|
+| 0 | Admin issues refund-with-cancellation | `cancellation_pending` | Effective `starter` read-only | Email: "We've processed your refund. You have 14 days to download your data. Confirm to speed this up or take the full window." Link includes a confirm button. |
+| 0–14 | If user clicks "confirm I'm leaving" in the email | `pending_data_purge` (jumps ahead) | Effective `starter` read-only | Email: "Confirmed. Data will be deleted in 7 days. Download now if you need a copy." |
+| 7 (post-confirm) OR 14 (no confirm) | Cron triggers data purge | `suspended` | Locked | Email: "Data deleted. Your account remains; restart subscription anytime." |
+
+**Notes on Mode B:**
+- The user can change their mind at any point before purge by opening a support ticket and asking Shaun to revert. Status flips back to `active` if so.
+- The `plan_code` is preserved, same as dunning. If they restart, they pick up where they left off (modulo deleted data).
+- The full Stripe subscription is canceled at refund time via `subscription.cancel(prorate=true)` to stop further billing.
+
+**Why two cancellation paths:** without explicit confirmation, give them 14 days to be sure. With confirmation, give them 7 days to download files. Neither path is instant — we always allow at least 7 days of file download access after the user has committed to leaving.
+
+### 9.8 Storage purge job
+
+When any state machine hits `suspended` via the destructive path (day-75 dunning, day-7-post-confirm cancellation, day-14-no-confirm cancellation, dispute lost), a single helper runs:
+
+```
+purgeCompanyData(companyId):
+  - DELETE all storage.objects WHERE path LIKE companyId/%
+  - DELETE FROM quotes WHERE company_id = companyId  (cascades to quote_files, quote_components, quote_takeoff_measurements, customer_quote_lines, scheduled_messages, outbound_messages)
+  - DELETE FROM flashing_library WHERE company_id = companyId
+  - DELETE FROM material_orders WHERE company_id = companyId  (cascades to lines + responses + templates)
+  - DELETE FROM material_order_templates WHERE company_id = companyId
+  - UPDATE companies SET storage_used_bytes = 0
+  - INSERT subscription_events row: event_type='data_purged'
+```
+
+Kept intact: `companies` (so user can restart), `users` (so login works), `subscription_events` (audit trail), `webhook_deliveries` (compliance), `support_tickets` (history).
+
+The purge runs in a single transaction so partial purges don't leave the company in a broken state. If it fails, retry on next cron tick; an internal alert fires if it fails three times consecutively.
+
+### 9.9 Reconciliation cron (phase 2)
 Nightly job that lists all `companies` with `stripe_subscription_id IS NOT NULL`, fetches the live subscription from Stripe, and corrects any drift on `subscription_status` / `current_period_end` / `stripe_price_id`. Phase 1 ships without it; we rely on webhook idempotency + raw event log. If we see drift in production we accelerate this.
 
 ## 10. Gating: how the source of truth flows out
@@ -568,7 +746,7 @@ Gerald accepted this is OK at our scale. We run EXPLAIN on the policies before r
 - Quotes-this-month counter in topbar for trial/starter.
 - Plan status banners for `past_due`, `grace`, `suspended` states.
 
-## 11. What happens to data when you downgrade (M-04 confirmed)
+## 11. What happens to data when you downgrade (M-04 confirmed; integrates with §9.5–9.7)
 
 | Scenario | Behaviour |
 |---|---|
@@ -605,13 +783,22 @@ Phase-1 test matrix: a script logs in as a synthetic company in each status (act
 4. New signups (going forward) get `plan_code='trial'` via the trigger.
 5. Stripe checkout/portal/webhook ships.
 
-Existing companies are never silently downgraded. Shaun manually decides who gets grandfather discounts vs upgrade prompts.
+Existing companies are never silently downgraded.
+
+**Shaun's note:** he expects to wipe everything before going fully live after the paid-testing phase. The grandfather step is correct for the interim. The admin override for free-tier-per-company access (§6 of §10.4 below) is still useful for the ongoing comp/discount cases post-launch — e.g. handing free `pro` access to one of your roofing buddies for life, or running a 90-day promo for a specific company.
+
+### 12.1 Admin override page (phase 1)
+`/admin/companies/<id>/billing` exposes:
+- Current `plan_code`, `subscription_status`, Stripe ids.
+- Buttons: "Set plan code to X", "Set status to Y", "Extend dunning timer to Z", "Force purge" (destructive, double-confirm).
+- A free-tier toggle: "Mark this company as comped" sets a `comp_until` date; the dunning cron treats `comp_until > now()` as `subscription_status='active'` regardless of Stripe state. Useful for time-bounded gifts.
+- An audit-trail viewer showing the company's `subscription_events` rows.
 
 ## 13. Touchpoints
 
 | Layer | Files touched (approx) |
 |---|---|
-| SQL migrations | 1 (subscription_plans + companies columns + helpers + RLS + trigger + create_quote_atomic RPC + tables) |
+| SQL migrations | 1 (subscription_plans + companies columns + helpers + RLS + trigger + create_quote_atomic RPC + tables: company_quote_usage, subscription_events, webhook_deliveries, support_tickets) |
 | Server library: `app/lib/billing/entitlements.ts` + typed errors + `upload-finaliser.ts` | ~5 new files |
 | Quote action conversion to RPC | 4 files (the four insert paths) |
 | Server actions: add `requireFeature` | ~30 actions across 5 surfaces; one line each |
