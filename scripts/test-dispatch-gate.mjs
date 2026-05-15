@@ -137,7 +137,7 @@ async function main() {
     // --- Step 3: Fire the cron route.
     console.log(`\n--- Firing ${APP_URL}/api/cron/dispatch-scheduled-messages ---`);
     const res = await fetch(`${APP_URL}/api/cron/dispatch-scheduled-messages`, {
-      method: 'POST',
+      method: 'GET',
       headers: { Authorization: `Bearer ${CRON_SECRET}` },
     });
     console.log(`  HTTP ${res.status}`);
@@ -159,19 +159,22 @@ async function main() {
     if (cancelledOk && reasonOk) console.log('  PASS');
     else { console.log('  FAIL'); allOk = false; }
 
-    // --- Step 5: Check for the alert row.
+    // --- Step 5: Check for the alert row — must be NEW (created after we
+    // inserted the scheduled row, and to our test recipient).
     const { data: alerts } = await admin
       .from('alerts')
       .select('id, alert_type, title, message, created_at')
       .eq('company_id', COMPANY_ID)
       .eq('alert_type', 'followup_cancelled')
+      .ilike('message', '%gavin-dispatch-test%')
       .order('created_at', { ascending: false })
       .limit(1);
     if (alerts?.length) {
-      console.log(`  Alert: "${alerts[0].title}" / "${alerts[0].message}"`);
+      console.log(`  Alert: "${alerts[0].title}"`);
+      console.log(`         "${alerts[0].message}"`);
       cleanup.alertId = alerts[0].id;
     } else {
-      console.log('  FAIL: no followup_cancelled alert written');
+      console.log('  FAIL: no followup_cancelled alert mentioning our test recipient');
       allOk = false;
     }
 
