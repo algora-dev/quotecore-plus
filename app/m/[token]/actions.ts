@@ -1,5 +1,6 @@
 'use server';
 
+import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { verifyMessageReplyToken } from '@/app/lib/messages/replyToken';
@@ -160,4 +161,38 @@ export async function suppressMessageRecipient(
   );
 
   return { ok: true };
+}
+
+/**
+ * Form-action variant of suppressMessageRecipient. Used by the
+ * confirmation form on /m/<token>/stop so that the actual write only
+ * happens on POST.
+ *
+ * Why this matters: email clients (Gmail, Outlook), link safety
+ * scanners, image proxies, hover-preview generators, and chat-app
+ * unfurl bots routinely fetch URLs found in emails with plain GET
+ * requests. If a GET to /m/<token>/stop performed the write, a single
+ * pre-fetch by Gmail's link scanner was enough to re-suppress a
+ * recipient who had just been removed from the admin list. This
+ * function is wired to a real <form> submit, so a GET never triggers it.
+ *
+ * On success we redirect to ?confirmed=1 so the page can render the
+ * success state without exposing the action's return value. On failure
+ * we redirect with the error message in the query string.
+ */
+export async function confirmSuppressionFromForm(formData: FormData): Promise<never> {
+  const token = formData.get('token');
+  const tokenStr = typeof token === 'string' ? token : '';
+
+  if (!tokenStr) {
+    redirect(`/m/invalid/stop?error=${encodeURIComponent('Missing token.')}`);
+  }
+
+  const result = await suppressMessageRecipient(tokenStr);
+  if (!result.ok) {
+    redirect(
+      `/m/${encodeURIComponent(tokenStr)}/stop?error=${encodeURIComponent(result.error)}`,
+    );
+  }
+  redirect(`/m/${encodeURIComponent(tokenStr)}/stop?confirmed=1`);
 }
