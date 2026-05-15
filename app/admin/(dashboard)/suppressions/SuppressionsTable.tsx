@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { removeSuppression } from './actions';
 
 interface Entry {
@@ -17,26 +18,53 @@ interface Props {
 }
 
 export function SuppressionsTable({ entries }: Props) {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [errorById, setErrorById] = useState<Record<string, string>>({});
+  // Optimistic-hide pattern (same as ScheduledMessagesList / SentMessagesList):
+  // the row vanishes the instant the user clicks Remove and only reappears
+  // if the server action fails. router.refresh() takes the canonical state
+  // after the roundtrip completes. Without this, the deleted row stayed
+  // visible until the page was hard-reloaded, which made users think the
+  // Remove click had silently failed.
+  const [optimisticHiddenIds, setOptimisticHiddenIds] = useState<Set<string>>(new Set());
 
+  const visibleEntries = useMemo(
+    () => entries.filter((e) => !optimisticHiddenIds.has(e.id)),
+    [entries, optimisticHiddenIds],
+  );
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return entries;
-    return entries.filter(
+    if (!q) return visibleEntries;
+    return visibleEntries.filter(
       (e) => e.email.toLowerCase().includes(q) || e.companyName.toLowerCase().includes(q),
     );
-  }, [entries, search]);
+  }, [visibleEntries, search]);
 
   function handleRemove(id: string) {
     setPendingId(id);
     setErrorById((prev) => ({ ...prev, [id]: '' }));
+    // Hide immediately; restore on failure so the user can retry.
+    setOptimisticHiddenIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
     startTransition(async () => {
       const result = await removeSuppression(id);
       if (!result.ok) {
+        setOptimisticHiddenIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
         setErrorById((prev) => ({ ...prev, [id]: result.error }));
+      } else {
+        // Pull canonical state from the server so the row stays gone
+        // even if the user reloads or navigates away and back.
+        router.refresh();
       }
       setPendingId(null);
     });
@@ -56,7 +84,7 @@ export function SuppressionsTable({ entries }: Props) {
         type="search"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search by company or email\u2026"
+        placeholder="Search by company or email…"
         className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
       />
 
@@ -77,7 +105,7 @@ export function SuppressionsTable({ entries }: Props) {
                 <td className="px-4 py-3 text-slate-900">{e.companyName}</td>
                 <td className="px-4 py-3 text-slate-700 font-mono text-xs">{e.email}</td>
                 <td className="px-4 py-3 text-slate-500 text-xs max-w-xs truncate" title={e.reason ?? ''}>
-                  {e.reason ?? '\u2014'}
+                  {e.reason ?? '—'}
                 </td>
                 <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">
                   {new Date(e.createdAt).toLocaleDateString('en-GB', {
@@ -92,7 +120,7 @@ export function SuppressionsTable({ entries }: Props) {
                     disabled={isPending && pendingId === e.id}
                     className="px-3 py-1 text-xs font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
                   >
-                    {isPending && pendingId === e.id ? 'Removing\u2026' : 'Remove'}
+                    {isPending && pendingId === e.id ? 'Removing…' : 'Remove'}
                   </button>
                   {errorById[e.id] ? (
                     <p className="mt-1 text-[10px] text-rose-600">{errorById[e.id]}</p>
