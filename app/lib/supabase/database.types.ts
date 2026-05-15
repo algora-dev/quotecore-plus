@@ -158,54 +158,139 @@ export type Database = {
       }
       companies: {
         Row: {
+          cancel_at_period_end: boolean
+          cancellation_confirmation_required_at: string | null
+          cancellation_confirmed_at: string | null
+          comp_notes: string | null
+          comp_until: string | null
           created_at: string
+          current_period_end: string | null
           default_currency: string
           default_labor_margin_percent: number | null
           default_language: string
           default_material_margin_percent: number | null
           default_measurement_system: Database["public"]["Enums"]["measurement_system"]
           default_tax_rate: number
+          dunning_stage_entered_at: string | null
+          first_payment_failure_at: string | null
           id: string
           name: string
           onboarding_completed_at: string | null
+          plan_code: string
+          plan_started_at: string
+          seat_count: number
           slug: string | null
           storage_limit_bytes: number
+          storage_topup_bytes: number
           storage_used_bytes: number
+          stripe_customer_id: string | null
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string
+          trial_ends_at: string | null
           updated_at: string
         }
         Insert: {
+          cancel_at_period_end?: boolean
+          cancellation_confirmation_required_at?: string | null
+          cancellation_confirmed_at?: string | null
+          comp_notes?: string | null
+          comp_until?: string | null
           created_at?: string
+          current_period_end?: string | null
           default_currency?: string
           default_labor_margin_percent?: number | null
           default_language?: string
           default_material_margin_percent?: number | null
           default_measurement_system?: Database["public"]["Enums"]["measurement_system"]
           default_tax_rate?: number
+          dunning_stage_entered_at?: string | null
+          first_payment_failure_at?: string | null
           id?: string
           name: string
           onboarding_completed_at?: string | null
+          plan_code?: string
+          plan_started_at?: string
+          seat_count?: number
           slug?: string | null
           storage_limit_bytes?: number
+          storage_topup_bytes?: number
           storage_used_bytes?: number
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string
+          trial_ends_at?: string | null
           updated_at?: string
         }
         Update: {
+          cancel_at_period_end?: boolean
+          cancellation_confirmation_required_at?: string | null
+          cancellation_confirmed_at?: string | null
+          comp_notes?: string | null
+          comp_until?: string | null
           created_at?: string
+          current_period_end?: string | null
           default_currency?: string
           default_labor_margin_percent?: number | null
           default_language?: string
           default_material_margin_percent?: number | null
           default_measurement_system?: Database["public"]["Enums"]["measurement_system"]
           default_tax_rate?: number
+          dunning_stage_entered_at?: string | null
+          first_payment_failure_at?: string | null
           id?: string
           name?: string
           onboarding_completed_at?: string | null
+          plan_code?: string
+          plan_started_at?: string
+          seat_count?: number
           slug?: string | null
           storage_limit_bytes?: number
+          storage_topup_bytes?: number
           storage_used_bytes?: number
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string
+          trial_ends_at?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "companies_plan_code_fkey"
+            columns: ["plan_code"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      company_quote_usage: {
+        Row: {
+          company_id: string
+          period_start: string
+          quotes_created: number
+        }
+        Insert: {
+          company_id: string
+          period_start: string
+          quotes_created?: number
+        }
+        Update: {
+          company_id?: string
+          period_start?: string
+          quotes_created?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_quote_usage_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_taxes: {
         Row: {
@@ -2077,20 +2162,153 @@ export type Database = {
           },
         ]
       }
+      subscription_events: {
+        Row: {
+          actor_user_id: string | null
+          company_id: string | null
+          created_at: string
+          event_type: string
+          from_plan_code: string | null
+          from_status: string | null
+          id: string
+          notes: string | null
+          stripe_event_created: string | null
+          stripe_event_id: string | null
+          stripe_event_type: string | null
+          stripe_payload: Json | null
+          to_plan_code: string | null
+          to_status: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          event_type: string
+          from_plan_code?: string | null
+          from_status?: string | null
+          id?: string
+          notes?: string | null
+          stripe_event_created?: string | null
+          stripe_event_id?: string | null
+          stripe_event_type?: string | null
+          stripe_payload?: Json | null
+          to_plan_code?: string | null
+          to_status?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          event_type?: string
+          from_plan_code?: string | null
+          from_status?: string | null
+          id?: string
+          notes?: string | null
+          stripe_event_created?: string | null
+          stripe_event_id?: string | null
+          stripe_event_type?: string | null
+          stripe_payload?: Json | null
+          to_plan_code?: string | null
+          to_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_events_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_plans: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          display_name: string
+          feat_activity_card: boolean
+          feat_digital_takeoff: boolean
+          feat_email_send: boolean
+          feat_flashings: boolean
+          feat_followups: boolean
+          feat_material_orders: boolean
+          included_seats: number
+          monthly_quote_limit: number
+          price_cents_monthly: number
+          sort_order: number
+          storage_limit_bytes: number
+          stripe_price_id_live: string | null
+          stripe_price_id_test: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          display_name: string
+          feat_activity_card?: boolean
+          feat_digital_takeoff?: boolean
+          feat_email_send?: boolean
+          feat_flashings?: boolean
+          feat_followups?: boolean
+          feat_material_orders?: boolean
+          included_seats?: number
+          monthly_quote_limit: number
+          price_cents_monthly: number
+          sort_order: number
+          storage_limit_bytes: number
+          stripe_price_id_live?: string | null
+          stripe_price_id_test?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          display_name?: string
+          feat_activity_card?: boolean
+          feat_digital_takeoff?: boolean
+          feat_email_send?: boolean
+          feat_flashings?: boolean
+          feat_followups?: boolean
+          feat_material_orders?: boolean
+          included_seats?: number
+          monthly_quote_limit?: number
+          price_cents_monthly?: number
+          sort_order?: number
+          storage_limit_bytes?: number
+          stripe_price_id_live?: string | null
+          stripe_price_id_test?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       support_tickets: {
         Row: {
           app_version: string | null
           assignee_user_id: string | null
+          auto_close_at: string | null
           body: string
           category: string
           company_id: string
           created_at: string
+          created_by_system: boolean
           email_forward_error: string | null
           email_forwarded_at: string | null
           id: string
           messages: Json
           page_context: string | null
           priority: string
+          related_stripe_charge_id: string | null
+          related_stripe_dispute_id: string | null
           resolved_at: string | null
           status: string
           subject: string
@@ -2101,16 +2319,20 @@ export type Database = {
         Insert: {
           app_version?: string | null
           assignee_user_id?: string | null
+          auto_close_at?: string | null
           body: string
           category?: string
           company_id: string
           created_at?: string
+          created_by_system?: boolean
           email_forward_error?: string | null
           email_forwarded_at?: string | null
           id?: string
           messages?: Json
           page_context?: string | null
           priority?: string
+          related_stripe_charge_id?: string | null
+          related_stripe_dispute_id?: string | null
           resolved_at?: string | null
           status?: string
           subject: string
@@ -2121,16 +2343,20 @@ export type Database = {
         Update: {
           app_version?: string | null
           assignee_user_id?: string | null
+          auto_close_at?: string | null
           body?: string
           category?: string
           company_id?: string
           created_at?: string
+          created_by_system?: boolean
           email_forward_error?: string | null
           email_forwarded_at?: string | null
           id?: string
           messages?: Json
           page_context?: string | null
           priority?: string
+          related_stripe_charge_id?: string | null
+          related_stripe_dispute_id?: string | null
           resolved_at?: string | null
           status?: string
           subject?: string
@@ -2422,6 +2648,42 @@ export type Database = {
           },
         ]
       }
+      webhook_deliveries: {
+        Row: {
+          event_id: string
+          event_type: string
+          id: string
+          payload: Json
+          processed_at: string | null
+          processing_result: string | null
+          provider: string
+          received_at: string
+          signature_verified: boolean
+        }
+        Insert: {
+          event_id: string
+          event_type: string
+          id?: string
+          payload: Json
+          processed_at?: string | null
+          processing_result?: string | null
+          provider: string
+          received_at?: string
+          signature_verified: boolean
+        }
+        Update: {
+          event_id?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          processing_result?: string | null
+          provider?: string
+          received_at?: string
+          signature_verified?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -2431,9 +2693,25 @@ export type Database = {
         Args: { p_company_id: string; p_file_size: number }
         Returns: boolean
       }
+      company_effective_plan_active: {
+        Args: { p_company_id: string }
+        Returns: boolean
+      }
+      company_effective_plan_code: {
+        Args: { p_company_id: string }
+        Returns: string
+      }
+      company_has_feature: {
+        Args: { p_company_id: string; p_feature: string }
+        Returns: boolean
+      }
       consume_rate_limit: {
         Args: { p_key: string; p_max: number; p_window_ms: number }
         Returns: boolean
+      }
+      create_quote_atomic: {
+        Args: { p_company_id: string; p_payload: Json; p_user_id: string }
+        Returns: string
       }
       current_company_id: { Args: never; Returns: string }
       current_user_id: { Args: never; Returns: string }
