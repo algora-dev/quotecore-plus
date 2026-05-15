@@ -29,6 +29,15 @@ interface Props {
   repliedAt: string | null;
   replies: SentMessageReply[];
   /**
+   * Suppression context. When `status === 'suppressed'` and a matching
+   * `message_suppressions` row exists, these surface the reason / when
+   * the suppression was added so the row can explain why the send was
+   * blocked. Without this Shaun has no visible signal that a send was
+   * dropped — the row just sits there.
+   */
+  suppressionReason?: string | null;
+  suppressionAt?: string | null;
+  /**
    * When the parent panel is in multi-select mode, the row replaces
    * its inline delete affordance with a checkbox and clicking the row
    * toggles selection instead of expanding the reply detail. The
@@ -87,6 +96,8 @@ export function SentMessageRow({
   createdAt,
   repliedAt,
   replies,
+  suppressionReason = null,
+  suppressionAt = null,
   selectMode = false,
   selected = false,
   onToggleSelect,
@@ -216,6 +227,10 @@ export function SentMessageRow({
         <p className="mt-1 ml-1 text-[11px] text-rose-600">{deleteError}</p>
       ) : null}
 
+      {status === 'suppressed' ? (
+        <SuppressionBanner reason={suppressionReason} suppressedAt={suppressionAt} />
+      ) : null}
+
       {expanded && !selectMode ? (
         <div className="mt-2 ml-1 pl-3 border-l-2 border-slate-200 space-y-3">
           {!hasReplies ? (
@@ -244,6 +259,44 @@ export function SentMessageRow({
         </div>
       ) : null}
     </li>
+  );
+}
+
+function SuppressionBanner({
+  reason,
+  suppressedAt,
+}: {
+  reason: string | null;
+  suppressedAt: string | null;
+}) {
+  return (
+    <div className="mt-2 ml-1 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] leading-relaxed text-amber-900">
+      <svg
+        className="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-600"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+        <line x1="12" y1="9" x2="12" y2="13" />
+        <line x1="12" y1="17" x2="12.01" y2="17" />
+      </svg>
+      <div className="min-w-0">
+        <p className="font-medium">Not sent — recipient is on your suppression list.</p>
+        <p className="mt-0.5 text-amber-800">
+          {reason ? <>Reason: {reason}. </> : <>No reason recorded. </>}
+          {suppressedAt ? (
+            <>Suppressed on {formatDate(suppressedAt)}.</>
+          ) : null}{' '}
+          Remove from <span className="font-medium">Admin › Suppressions</span> to re-enable
+          sends.
+        </p>
+      </div>
+    </div>
   );
 }
 

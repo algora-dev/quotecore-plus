@@ -145,17 +145,54 @@ export async function ActivityCard({
     repliesByMessage.set(row.message_id, list);
   }
 
-  const sentItems: SentMessageListItem[] = messages.map((m) => ({
-    id: m.id,
-    subject: m.subject,
-    recipientEmail: m.recipient_email,
-    recipientName: m.recipient_name,
-    status: m.status,
-    sentAt: m.sent_at,
-    createdAt: m.created_at,
-    repliedAt: m.replied_at,
-    replies: repliesByMessage.get(m.id) ?? [],
-  }));
+  // For any suppressed messages we look up the matching
+  // `message_suppressions` rows so the row can render the reason
+  // banner inline. One additional query keyed on the small set of
+  // distinct recipient emails; matched in JS to keep the SQL simple.
+  const suppressedEmails = Array.from(
+    new Set(
+      messages
+        .filter((m) => m.status === 'suppressed')
+        .map((m) => m.recipient_email.toLowerCase()),
+    ),
+  );
+  const suppressionByEmail = new Map<
+    string,
+    { reason: string | null; createdAt: string }
+  >();
+  if (suppressedEmails.length > 0) {
+    const { data: suppRows } = await supabase
+      .from('message_suppressions')
+      .select('email, reason, created_at')
+      .eq('company_id', companyId)
+      .in('email', suppressedEmails);
+    for (const row of suppRows ?? []) {
+      suppressionByEmail.set(row.email.toLowerCase(), {
+        reason: row.reason,
+        createdAt: row.created_at,
+      });
+    }
+  }
+
+  const sentItems: SentMessageListItem[] = messages.map((m) => {
+    const supp =
+      m.status === 'suppressed'
+        ? suppressionByEmail.get(m.recipient_email.toLowerCase()) ?? null
+        : null;
+    return {
+      id: m.id,
+      subject: m.subject,
+      recipientEmail: m.recipient_email,
+      recipientName: m.recipient_name,
+      status: m.status,
+      sentAt: m.sent_at,
+      createdAt: m.created_at,
+      repliedAt: m.replied_at,
+      replies: repliesByMessage.get(m.id) ?? [],
+      suppressionReason: supp?.reason ?? null,
+      suppressionAt: supp?.createdAt ?? null,
+    };
+  });
 
   const templateNameById = new Map<string, string>();
   for (const t of emailTemplates) {

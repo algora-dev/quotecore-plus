@@ -19,6 +19,15 @@ export interface SentMessageListItem {
   createdAt: string;
   repliedAt: string | null;
   replies: SentMessageReply[];
+  /**
+   * When `status === 'suppressed'`, this carries the matching
+   * `message_suppressions.reason` (nullable) and the
+   * `message_suppressions.created_at`. Used by the row to render an
+   * inline amber banner explaining why the send was blocked.
+   * Null for non-suppressed messages.
+   */
+  suppressionReason?: string | null;
+  suppressionAt?: string | null;
 }
 
 interface Props {
@@ -155,6 +164,8 @@ export function SentMessagesList({ messages }: Props) {
             createdAt={m.createdAt}
             repliedAt={m.repliedAt}
             replies={m.replies}
+            suppressionReason={m.suppressionReason ?? null}
+            suppressionAt={m.suppressionAt ?? null}
             selectMode={selectMode}
             selected={selected.has(m.id)}
             onToggleSelect={() => toggleOne(m.id)}
