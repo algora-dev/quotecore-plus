@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { seedQuoteTaxesOnCreate } from '@/app/lib/taxes/seed';
 import { BUCKETS } from '@/app/lib/storage/buckets';
+import { createQuoteAtomic } from '@/app/lib/billing/quote-creation';
 
 interface CreateQuoteParams {
   customerName: string;
@@ -61,31 +62,25 @@ export async function createQuoteWithDetails(params: CreateQuoteParams): Promise
     return; // redirect() is called inside createQuoteFromTemplate
   }
 
-  // Otherwise, create blank quote
-  const { data: quote, error } = await supabase
-    .from('quotes')
-    .insert({
-      company_id: profile.company_id,
-      customer_name: params.customerName,
-      job_name: params.jobName,
-      tax_rate: company.default_tax_rate ?? 0,
-      measurement_system: safeMeasurementSystem,
-      created_by_user_id: profile.id,
-      entry_mode: safeEntryMode,
-    })
-    .select('id')
-    .single();
-
-  if (error || !quote) {
-    throw new Error(error?.message || 'Failed to create quote');
-  }
+  // Otherwise, create a fresh quote via the atomic RPC. The RPC handles
+  // the monthly-quote-limit check + counter increment + insert in one
+  // transaction under a per-company advisory lock (Gerald audit H-02).
+  // Any monthly-limit / subscription-inactive error bubbles up here and
+  // is caught by the server-action outer handler at the form layer.
+  const quoteId = await createQuoteAtomic(profile.company_id, profile.id, {
+    customerName: params.customerName,
+    jobName: params.jobName,
+    taxRate: company.default_tax_rate ?? 0,
+    measurementSystem: safeMeasurementSystem,
+    entryMode: safeEntryMode,
+  });
 
   // Snapshot the company's tax library onto the new quote so totals work
   // immediately on summary/customer/accept pages. Best-effort: a failure
   // here is logged inside the helper and won't block quote creation.
-  await seedQuoteTaxesOnCreate(quote.id, profile.company_id);
+  await seedQuoteTaxesOnCreate(quoteId, profile.company_id);
 
-  return quote.id;
+  return quoteId;
 }
 
 export async function uploadRoofPlanFile(quoteId: string, file: File): Promise<void> {

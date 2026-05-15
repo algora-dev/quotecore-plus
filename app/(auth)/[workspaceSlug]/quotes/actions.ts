@@ -10,6 +10,7 @@ import { seedQuoteTaxesOnCreate } from '@/app/lib/taxes/seed';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import { pickFields } from '@/app/lib/security/pickFields';
+import { createQuoteAtomic } from '@/app/lib/billing/quote-creation';
 
 /**
  * Quote-roof-area columns updatable from the client. Server-managed
@@ -107,17 +108,28 @@ export async function createQuoteFromTemplate(
       ? measurementSystem
       : (company.default_measurement_system === 'imperial' ? 'imperial_rs' : company.default_measurement_system);
 
-  const { data: quote, error: qErr } = await supabase.from('quotes').insert({
-    company_id: profile.company_id,
-    template_id: templateId,
-    customer_name: customerName,
-    job_name: jobReference || null,
-    tax_rate: company.default_tax_rate ?? 0,
-    measurement_system: safeMeasurementSystem,
-    created_by_user_id: profile.id,
-    entry_mode: entryMode || null,
-  }).select().single();
-  if (qErr || !quote) throw new Error(qErr?.message || 'Failed to create quote');
+  // Atomic create with per-company-per-month advisory lock + quote limit
+  // check (H-02). Same RPC the three other quote-creation paths use.
+  // measurement_system at this point is already in the split enum; pass
+  // through as-is. entry_mode is nullable in the DB but the RPC defaults
+  // to 'manual' when not supplied; this matches the previous behaviour
+  // when entryMode was null.
+  const quoteId = await createQuoteAtomic(profile.company_id, profile.id, {
+    templateId,
+    customerName,
+    jobName: jobReference || null,
+    taxRate: company.default_tax_rate ?? 0,
+    measurementSystem: safeMeasurementSystem as 'metric' | 'imperial_ft' | 'imperial_rs',
+    entryMode: (entryMode ?? 'manual') as 'manual' | 'digital',
+  });
+  // Re-load via the user's RLS-bound client so subsequent queries (template
+  // copy-in below) operate as the caller, not the admin client.
+  const { data: quote, error: qErr } = await supabase
+    .from('quotes')
+    .select('*')
+    .eq('id', quoteId)
+    .single();
+  if (qErr || !quote) throw new Error(qErr?.message || 'Failed to load just-created quote');
   const { data: templateAreas } = await supabase.from('template_roof_areas').select('*').eq('template_id', templateId).order('sort_order');
   const areaMapping: Record<string, string> = {};
   if (templateAreas?.length) {
@@ -433,20 +445,29 @@ export async function updateQuoteJobStatus(quoteId: string, jobStatus: JobStatus
 
 export async function createBlankQuote(customerName: string, jobReference?: string | null) {
   const { profile, company } = await loadCompanyContext();
-  console.log('createBlankQuote - company.default_measurement_system:', company.default_measurement_system);
-  const supabase = await createSupabaseServerClient();
-  const { data: quote, error } = await supabase.from('quotes').insert({
-    company_id: profile.company_id, 
-    customer_name: customerName,
-    job_name: jobReference || null,
-    tax_rate: company.default_tax_rate ?? 0, 
-    measurement_system: company.default_measurement_system,
-    created_by_user_id: profile.id,
-  }).select().single();
-  console.log('createBlankQuote - created quote measurement_system:', quote?.measurement_system);
-  if (error || !quote) throw new Error(error?.message || 'Failed to create quote');
-  await seedQuoteTaxesOnCreate(quote.id, profile.company_id);
-  redirect(`/${company.slug}/quotes/${quote.id}`);
+
+  // Goes through create_quote_atomic so the monthly-quote-limit check +
+  // counter increment happen under the per-company advisory lock with the
+  // quote insert (Gerald audit H-02).
+  //
+  // The company's default_measurement_system enum can legitimately be the
+  // legacy 'imperial' label; normalise it to 'imperial_rs' so the RPC's
+  // payload projection (which expects the split enum) sees a valid value.
+  const normalisedSystem: 'metric' | 'imperial_ft' | 'imperial_rs' =
+    company.default_measurement_system === 'imperial_ft'
+      ? 'imperial_ft'
+      : company.default_measurement_system === 'metric'
+        ? 'metric'
+        : 'imperial_rs';
+
+  const quoteId = await createQuoteAtomic(profile.company_id, profile.id, {
+    customerName,
+    jobName: jobReference || null,
+    taxRate: company.default_tax_rate ?? 0,
+    measurementSystem: normalisedSystem,
+  });
+  await seedQuoteTaxesOnCreate(quoteId, profile.company_id);
+  redirect(`/${company.slug}/quotes/${quoteId}`);
 }
 
 export async function loadQuote(id: string) {
@@ -897,24 +918,31 @@ export async function cloneQuote(id: string, newCustomerName: string) {
   // entry_mode and measurement_system silently, which (a) defaulted a cloned
   // manual quote to whatever the DB default was, and (b) would have turned a
   // blank-quote clone into a manual-quote shell with no underlying data.
-  const { data: newQuote, error: qErr } = await supabase.from('quotes').insert({
-    company_id: profile.company_id,
-    template_id: originalQuote.template_id,
-    customer_name: newCustomerName,
-    customer_email: originalQuote.customer_email,
-    customer_phone: originalQuote.customer_phone,
-    job_name: originalQuote.job_name,
-    site_address: originalQuote.site_address,
-    material_margin_percent: originalQuote.material_margin_percent,
-    labor_margin_percent: originalQuote.labor_margin_percent,
-    tax_rate: originalQuote.tax_rate,
-    global_pitch_degrees: originalQuote.global_pitch_degrees,
-    measurement_system: originalQuote.measurement_system,
-    currency: originalQuote.currency,
-    entry_mode: originalQuote.entry_mode,
-    created_by_user_id: profile.id,
-  }).select().single();
-  if (qErr || !newQuote) throw new Error(qErr?.message || 'Failed to clone quote');
+  //
+  // Routes through create_quote_atomic so each clone counts against the
+  // monthly quote limit (Shaun: clones always count, they're new quotes
+  // operationally and get their own quote_number).
+  const newQuoteId = await createQuoteAtomic(profile.company_id, profile.id, {
+    templateId: originalQuote.template_id,
+    customerName: newCustomerName,
+    customerEmail: originalQuote.customer_email,
+    customerPhone: originalQuote.customer_phone,
+    jobName: originalQuote.job_name,
+    siteAddress: originalQuote.site_address,
+    materialMarginPercent: originalQuote.material_margin_percent,
+    laborMarginPercent: originalQuote.labor_margin_percent,
+    taxRate: originalQuote.tax_rate,
+    globalPitchDegrees: originalQuote.global_pitch_degrees,
+    measurementSystem: (originalQuote.measurement_system as 'metric' | 'imperial_ft' | 'imperial_rs'),
+    currency: originalQuote.currency ?? undefined,
+    entryMode: (originalQuote.entry_mode as 'manual' | 'digital' | 'blank') ?? 'manual',
+  });
+  const { data: newQuote, error: qErr } = await supabase
+    .from('quotes')
+    .select('*')
+    .eq('id', newQuoteId)
+    .single();
+  if (qErr || !newQuote) throw new Error(qErr?.message || 'Failed to load just-cloned quote');
 
   const { data: areas } = await supabase.from('quote_roof_areas').select('*').eq('quote_id', id).order('sort_order');
   const areaMapping: Record<string, string> = {};
