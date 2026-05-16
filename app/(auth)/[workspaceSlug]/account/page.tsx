@@ -18,6 +18,10 @@ import { getRecoveryCodeStatus } from '@/app/(auth)/[workspaceSlug]/settings/rec
 import { listSecurityQuestions } from '@/app/(auth)/[workspaceSlug]/settings/security-questions-actions';
 import { BackButton } from '@/app/components/BackButton';
 import { listMySupportTickets } from './support/actions';
+import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
+import { getStripeMode } from '@/app/lib/billing/stripe';
+import { createAdminClient } from '@/app/lib/supabase/admin';
+import { BillingPanel, type BillingPlanInfo } from './billing/BillingPanel';
 
 /**
  * Unified /account page.
@@ -48,6 +52,8 @@ export default async function AccountPage() {
     recoveryStatus,
     securityQuestions,
     supportTickets,
+    entitlements,
+    plansRes,
   ] = await Promise.all([
     supabase
       .from('users')
@@ -74,6 +80,12 @@ export default async function AccountPage() {
     getRecoveryCodeStatus(),
     listSecurityQuestions(),
     listMySupportTickets(),
+    loadCompanyEntitlements(profile.company_id),
+    createAdminClient()
+      .from('subscription_plans')
+      .select('code, display_name, price_cents_monthly, monthly_quote_limit, storage_limit_bytes, stripe_price_id_live, stripe_price_id_test, sort_order, active')
+      .eq('active', true)
+      .order('sort_order', { ascending: true }),
   ]);
 
   const user = userRes.data;
@@ -201,22 +213,56 @@ export default async function AccountPage() {
       </section>
     ),
 
-    billing: (
-      <section className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold text-slate-900">Billing &amp; Subscription</h2>
-          <p className="text-sm text-slate-500 mt-1">Manage your plan and payment details.</p>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6" data-copilot="account-billing">
-          <div className="p-6 bg-slate-50 rounded-xl text-center space-y-2">
-            <p className="text-sm text-slate-700">
-              You&apos;re currently on the <strong>Free Beta</strong> plan.
-            </p>
-            <p className="text-xs text-slate-400">Subscription plans and billing will be available soon.</p>
+    billing: (() => {
+      const stripeMode = getStripeMode();
+      const priceColumn = stripeMode === 'live' ? 'stripe_price_id_live' : 'stripe_price_id_test';
+      const allPlans = (plansRes.data ?? []) as Array<{
+        code: string;
+        display_name: string;
+        price_cents_monthly: number;
+        monthly_quote_limit: number;
+        storage_limit_bytes: number;
+        stripe_price_id_live: string | null;
+        stripe_price_id_test: string | null;
+        sort_order: number;
+      }>;
+      // Phase 1: only show trial/starter/growth/pro in the upgrade UI. Higher
+      // tiers exist in the DB but aren't user-pickable yet.
+      const PHASE_1_VISIBLE = new Set(['starter', 'growth', 'pro']);
+      const upgradePlans: BillingPlanInfo[] = allPlans
+        .filter((p) => p.code !== entitlements.purchasedPlanCode && PHASE_1_VISIBLE.has(p.code))
+        .map((p) => ({
+          code: p.code,
+          displayName: p.display_name,
+          priceCentsMonthly: p.price_cents_monthly,
+          monthlyQuoteLimit: p.monthly_quote_limit,
+          storageLimitBytes: p.storage_limit_bytes,
+          hasStripePrice: Boolean(p[priceColumn]),
+        }));
+
+      return (
+        <section className="space-y-6">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900">Billing &amp; Subscription</h2>
+            <p className="text-sm text-slate-500 mt-1">Manage your plan and payment details.</p>
           </div>
-        </div>
-      </section>
-    ),
+          <div data-copilot="account-billing">
+            <BillingPanel
+              effectivePlanCode={entitlements.effectivePlanCode}
+              purchasedPlanCode={entitlements.purchasedPlanCode}
+              subscriptionStatus={entitlements.subscriptionStatus}
+              hasStripeCustomer={Boolean(company.stripe_customer_id)}
+              trialEndsAt={entitlements.trialEndsAt}
+              currentPeriodEnd={entitlements.currentPeriodEnd}
+              firstPaymentFailureAt={entitlements.firstPaymentFailureAt}
+              storageUsedBytes={entitlements.storageUsedBytes}
+              storageLimitBytes={entitlements.storageLimitBytes}
+              upgradePlans={upgradePlans}
+            />
+          </div>
+        </section>
+      );
+    })(),
 
     support: <SupportSection initialTickets={supportTickets} />,
   };
