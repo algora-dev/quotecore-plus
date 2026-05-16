@@ -4,6 +4,13 @@ import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/sup
 import { pickFields } from '@/app/lib/security/pickFields';
 import type { FlashingLibraryInsert, FlashingLibraryRow } from '@/app/lib/types';
 
+// TODO(phase-2 storage quota): createFlashing / createFlashingFromCanvas /
+// updateFlashing all upload to the PUBLIC company-logos bucket. Phase 1
+// quota only covers QUOTE-DOCUMENTS, so these paths intentionally bypass
+// finaliseUpload. When we widen the storage quota model to all buckets,
+// wire them through finaliseUpload (or an equivalent helper that supports
+// the company-logos bucket). See app/lib/files/upload-finaliser.ts.
+
 export async function loadFlashingLibrary(): Promise<FlashingLibraryRow[]> {
   let profile;
   try {

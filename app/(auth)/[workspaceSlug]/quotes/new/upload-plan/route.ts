@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { BUCKETS } from '@/app/lib/storage/buckets';
+import { finaliseUpload } from '@/app/lib/files/upload-finaliser';
+import { isBillingError } from '@/app/lib/billing/entitlements';
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +30,7 @@ export async function POST(request: NextRequest) {
     if (!ownedQuote) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
-    
+
     const fileExt = file.name.split('.').pop();
     const fileName = `plan-${Date.now()}.${fileExt}`;
     const storagePath = `${company.id}/${quoteId}/${fileName}`;
@@ -48,6 +50,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: uploadError.message }, { status: 500 });
     }
 
+    // Finalise: re-read real size from storage, assert quota, delete on
+    // overage. Returns server-measured size + mime so the metadata insert
+    // below uses authoritative values (not browser-supplied claims).
+    let finalised;
+    try {
+      finalised = await finaliseUpload({
+        companyId: company.id,
+        bucket: BUCKETS.QUOTE_DOCUMENTS,
+        storagePath,
+      });
+    } catch (err) {
+      if (isBillingError(err)) {
+        return NextResponse.json(
+          {
+            error: err.message,
+            code: err.code,
+          },
+          { status: 402 },
+        );
+      }
+      throw err;
+    }
+
     // Save metadata. company_id and mime_type are NOT NULL on quote_files;
     // previously these inserts were silently failing with a constraint
     // violation (the typed Supabase pass on 2026-05-12 surfaced this).
@@ -56,13 +81,16 @@ export async function POST(request: NextRequest) {
       quote_id: quoteId,
       file_name: file.name,
       file_type: 'plan',
-      file_size: file.size,
-      mime_type: file.type || 'application/octet-stream',
+      file_size: finalised.size,
+      mime_type: finalised.mime,
       storage_path: storagePath,
     });
 
     if (metadataError) {
       console.error('[Upload] Metadata insert error:', metadataError);
+      // The object is in storage but we couldn't write the metadata row.
+      // Best-effort cleanup so we don't leak bytes that aren't tracked.
+      await supabase.storage.from(BUCKETS.QUOTE_DOCUMENTS).remove([storagePath]).catch(() => {});
       return NextResponse.json({ error: `Metadata error: ${metadataError.message}` }, { status: 500 });
     }
 

@@ -34,6 +34,7 @@ import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/sup
 import { verifyQuoteOwnership } from '@/app/lib/auth/ownership';
 import { getSignedUrl } from '@/app/lib/storage/helpers';
 import { BUCKETS } from '@/app/lib/storage/buckets';
+import { assertCanUseStorage } from '@/app/lib/billing/entitlements';
 
 /**
  * Returns true if a new upload of `fileSize` bytes will fit under the company's
@@ -160,6 +161,23 @@ export async function saveFileMetadata(data: {
   const realMime = (obj.metadata as { mimetype?: string } | null)?.mimetype;
   if (typeof realSize !== 'number' || !Number.isFinite(realSize) || realSize < 0) {
     throw new Error('Storage object has no readable size');
+  }
+
+  // Quota gate (Gerald H-03). The browser ran a pre-upload checkStorageQuota
+  // but the size it sent is untrusted. Now we have the SERVER-MEASURED size;
+  // assert against the live limit and delete the orphan on overage. Logo
+  // uploads (PUBLIC company-logos bucket) are exempt for phase 1 — they're
+  // tiny, infrequent, and don't share the QUOTE-DOCUMENTS quota pool.
+  if (data.fileType !== 'logo') {
+    try {
+      await assertCanUseStorage(data.companyId, realSize);
+    } catch (quotaErr) {
+      const { error: rmErr } = await supabase.storage.from(bucket).remove([data.storagePath]);
+      if (rmErr) {
+        console.error('[saveFileMetadata] failed to remove over-quota object:', rmErr.message);
+      }
+      throw quotaErr;
+    }
   }
 
   const row = {

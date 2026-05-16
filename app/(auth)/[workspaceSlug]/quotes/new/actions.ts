@@ -4,6 +4,7 @@ import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { seedQuoteTaxesOnCreate } from '@/app/lib/taxes/seed';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import { createQuoteAtomic } from '@/app/lib/billing/quote-creation';
+import { finaliseUpload } from '@/app/lib/files/upload-finaliser';
 
 interface CreateQuoteParams {
   customerName: string;
@@ -116,12 +117,24 @@ export async function uploadRoofPlanFile(quoteId: string, file: File): Promise<v
     throw new Error(`Failed to upload roof plan: ${uploadError.message}`);
   }
 
-  // Save metadata via server action (bypasses RLS)
+  // Finalise: re-read real size from storage, assert quota, delete on
+  // overage. The finaliser throws StorageQuotaExceededError /
+  // SubscriptionInactiveError on a gated upload — those bubble up to the
+  // form layer and are rendered as upgrade prompts.
+  const finalised = await finaliseUpload({
+    companyId: company.id,
+    bucket: BUCKETS.QUOTE_DOCUMENTS,
+    storagePath,
+  });
+
+  // Save metadata via server action (bypasses RLS). Use the server-measured
+  // size + mime from the finaliser so the trigger that maintains
+  // companies.storage_used_bytes can't be tricked by browser-supplied lies.
   await saveRoofPlanMetadata(quoteId, {
     companyId: company.id,
     fileName: file.name,
-    fileSize: file.size,
-    mimeType: file.type || 'application/octet-stream',
+    fileSize: finalised.size,
+    mimeType: finalised.mime,
     storagePath,
   });
 }
