@@ -42,6 +42,12 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
   const [planUploaded, setPlanUploaded] = useState(false);
   const [uploadedPlanPath, setUploadedPlanPath] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  // Inline error surface for the new-quote flow. Billing errors flag
+  // showUpgrade so we render a CTA to /account?tab=billing rather than a
+  // dead alert(). See catch block below.
+  const [createError, setCreateError] = useState<
+    { message: string; showUpgrade: boolean } | null
+  >(null);
   // Measurement system for the quote-to-be. Locked once the quote is created.
   const [measurementSystem, setMeasurementSystem] = useState<MeasurementChoice>(defaultMeasurementSystem);
   const [pendingSystemSwitch, setPendingSystemSwitch] = useState<MeasurementChoice | null>(null);
@@ -155,13 +161,39 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
         router.push(`/${workspaceSlug}/quotes/${quoteId}`);
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create quote');
+      const raw = err instanceof Error ? err.message : 'Failed to create quote';
+      // Billing errors from create_quote_atomic / requireFeature surface
+      // with stable phrases. Show an inline banner with an Upgrade CTA
+      // instead of a dead alert(). The exhaustive code lookup happens on
+      // the server; here we just sniff the message.
+      const isBilling = /quote_limit_reached|feature_gated|subscription_inactive|storage_quota_exceeded|monthly quote limit|requires "/i.test(raw);
+      setCreateError({ message: raw, showUpgrade: isBilling });
       setCreating(false);
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 p-8 space-y-6">
+      {createError && (
+        <div
+          className={`rounded-lg border p-4 ${
+            createError.showUpgrade
+              ? 'border-amber-300 bg-amber-50 text-amber-900'
+              : 'border-red-300 bg-red-50 text-red-900'
+          }`}
+        >
+          <p className="text-sm font-medium">{createError.message}</p>
+          {createError.showUpgrade && (
+            <Link
+              href={`/${workspaceSlug}/account?tab=billing`}
+              prefetch={false}
+              className="mt-2 inline-block text-sm font-semibold text-amber-900 underline"
+            >
+              View plans →
+            </Link>
+          )}
+        </div>
+      )}
       {/* Customer Name */}
       <div data-copilot="quote-customer">
         <label className="block text-sm font-medium text-slate-700 mb-2">

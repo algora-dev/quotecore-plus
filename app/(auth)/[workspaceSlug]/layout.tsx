@@ -13,6 +13,8 @@ import { HelpDrawerProvider } from '@/app/components/docs/HelpDrawerContext';
 import { HelpDrawerLayout } from '@/app/components/docs/HelpDrawerLayout';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
+import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
+import { EntitlementBanner } from '@/app/components/billing/EntitlementBanner';
 
 export default async function WorkspaceLayout({
   children,
@@ -28,6 +30,12 @@ export default async function WorkspaceLayout({
   if (slug !== workspaceSlug) {
     redirect(`/${slug}`);
   }
+
+  // Single source of truth for feature gating in this workspace shell. The
+  // entitlements snapshot is cached per request via React `cache()`, so
+  // downstream callers can re-call loadCompanyEntitlements without a
+  // second DB round-trip.
+  const entitlements = await loadCompanyEntitlements(company.id);
 
   const _workspaceLabel = company.name ? company.name.slice(0, 10) : 'Workspace';
   const profile = await getCurrentProfile();
@@ -98,9 +106,11 @@ export default async function WorkspaceLayout({
                   </div>
                 </div>
 
-                <WorkspaceNav workspaceSlug={slug} />
+                <WorkspaceNav workspaceSlug={slug} entitlements={entitlements} />
               </div>
             </header>
+
+            <EntitlementBanner entitlements={entitlements} workspaceSlug={slug} />
 
             <main className="mx-auto w-full max-w-6xl px-6 py-10">{children}</main>
             <CopilotOverlay />

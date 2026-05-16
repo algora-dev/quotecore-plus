@@ -24,6 +24,7 @@ import { ReopenQuoteButton } from './ReopenQuoteButton';
 import { SummaryTabs } from './SummaryTabs';
 import { SummaryFilesPanel } from './SummaryFilesPanel';
 import { ActivityCard } from './ActivityCard';
+import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { loadQuoteTaxes } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
 import { getSignedUrls } from '@/app/lib/storage/helpers';
@@ -42,6 +43,13 @@ export default async function QuoteSummaryPage({
     loadAllEntriesForQuote(id),
     loadQuoteTaxes(id),
   ]);
+
+  // Activity card is a paid-tier feature. Trial keeps it (to drive upgrade
+  // pitch); Starter hides it; Growth+ has it. The flag is computed off the
+  // effective plan, so dunning-collapsed accounts (grace -> starter) hide
+  // the card automatically.
+  const entitlements = await loadCompanyEntitlements(quote.company_id);
+  const activityCardEnabled = entitlements.features.activity_card;
   
   const supabase = await createSupabaseServerClient();
   
@@ -235,14 +243,16 @@ export default async function QuoteSummaryPage({
         </div>
       </div>
 
-      <ActivityCard
-        workspaceSlug={workspaceSlug}
-        quoteId={id}
-        companyId={quote.company_id}
-        customerName={quote.customer_name}
-        quoteNumber={quote.quote_number}
-        revisionRequests={revisionRequests}
-      />
+      {activityCardEnabled && (
+        <ActivityCard
+          workspaceSlug={workspaceSlug}
+          quoteId={id}
+          companyId={quote.company_id}
+          customerName={quote.customer_name}
+          quoteNumber={quote.quote_number}
+          revisionRequests={revisionRequests}
+        />
+      )}
 
       <SummaryTabs
         workspaceSlug={workspaceSlug}
