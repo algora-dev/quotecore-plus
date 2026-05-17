@@ -4,7 +4,40 @@ import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { seedQuoteTaxesOnCreate } from '@/app/lib/taxes/seed';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import { createQuoteAtomic } from '@/app/lib/billing/quote-creation';
+import {
+  QuoteLimitReachedError,
+  SubscriptionInactiveError,
+  StorageQuotaExceededError,
+  FeatureGatedError,
+  isBillingError,
+} from '@/app/lib/billing/errors';
 import { finaliseUpload } from '@/app/lib/files/upload-finaliser';
+
+/**
+ * Structured result for {@link createQuoteWithDetails}. The action returns
+ * this instead of throwing for known billing failures, because Next 16
+ * masks thrown errors from server actions in production (the client only
+ * sees a digest, not the original message). Returning the failure as data
+ * lets QuoteDetailsForm render the typed amber banner reliably.
+ *
+ * The `void` branch is the template-mode path: createQuoteFromTemplate
+ * already issues its own redirect() and never returns, so the caller
+ * sees `undefined` on success in that case.
+ */
+export type CreateQuoteResult =
+  | { ok: true; quoteId?: string }
+  | {
+      ok: false;
+      code:
+        | 'quote_limit_reached'
+        | 'subscription_inactive'
+        | 'feature_gated'
+        | 'storage_quota_exceeded'
+        | 'unknown';
+      message: string;
+      /** Extra context for the UI — only populated for some codes. */
+      details?: Record<string, string | number | null>;
+    };
 
 interface CreateQuoteParams {
   customerName: string;
@@ -28,9 +61,69 @@ interface CreateQuoteParams {
   measurementSystem: 'metric' | 'imperial_ft' | 'imperial_rs';
 }
 
-export async function createQuoteWithDetails(params: CreateQuoteParams): Promise<string | void> {
+export async function createQuoteWithDetails(params: CreateQuoteParams): Promise<CreateQuoteResult> {
+  try {
+    return await createQuoteWithDetailsInner(params);
+  } catch (err) {
+    // Convert known billing errors into structured failure payloads so the
+    // client form can render the typed amber banner with the upgrade CTA.
+    // Anything else re-throws — those are genuine bugs and should reach the
+    // error overlay / 500 page.
+    if (isBillingError(err)) {
+      if (err instanceof QuoteLimitReachedError) {
+        return {
+          ok: false,
+          code: 'quote_limit_reached',
+          message: err.message,
+          details: {
+            used: err.used,
+            limit: err.limit,
+            periodStart: err.periodStart,
+            planCode: err.planCode,
+          },
+        };
+      }
+      if (err instanceof SubscriptionInactiveError) {
+        return {
+          ok: false,
+          code: 'subscription_inactive',
+          message: err.message,
+          details: { currentStatus: err.currentStatus },
+        };
+      }
+      if (err instanceof FeatureGatedError) {
+        return {
+          ok: false,
+          code: 'feature_gated',
+          message: err.message,
+          details: {
+            feature: err.feature,
+            currentPlan: err.currentPlan,
+            requiredPlan: err.requiredPlan,
+          },
+        };
+      }
+      if (err instanceof StorageQuotaExceededError) {
+        return {
+          ok: false,
+          code: 'storage_quota_exceeded',
+          message: err.message,
+          details: {
+            usedBytes: err.usedBytes,
+            limitBytes: err.limitBytes,
+            attemptedBytes: err.attemptedBytes,
+          },
+        };
+      }
+      // Unknown billing error subclass — still better than masking it.
+      return { ok: false, code: 'unknown', message: err.message };
+    }
+    throw err;
+  }
+}
+
+async function createQuoteWithDetailsInner(params: CreateQuoteParams): Promise<CreateQuoteResult> {
   const { profile, company } = await loadCompanyContext();
-  const supabase = await createSupabaseServerClient();
 
   // Whitelist defensively — client could send anything.
   const safeMeasurementSystem =
@@ -60,7 +153,10 @@ export async function createQuoteWithDetails(params: CreateQuoteParams): Promise
       safeEntryMode as 'manual' | 'digital',
       safeMeasurementSystem
     );
-    return; // redirect() is called inside createQuoteFromTemplate
+    // createQuoteFromTemplate calls redirect() internally and never
+    // returns. This line is unreachable but TypeScript still needs a
+    // matching return type.
+    return { ok: true };
   }
 
   // Otherwise, create a fresh quote via the atomic RPC. The RPC handles
@@ -81,7 +177,7 @@ export async function createQuoteWithDetails(params: CreateQuoteParams): Promise
   // here is logged inside the helper and won't block quote creation.
   await seedQuoteTaxesOnCreate(quoteId, profile.company_id);
 
-  return quoteId;
+  return { ok: true, quoteId };
 }
 
 export async function uploadRoofPlanFile(quoteId: string, file: File): Promise<void> {

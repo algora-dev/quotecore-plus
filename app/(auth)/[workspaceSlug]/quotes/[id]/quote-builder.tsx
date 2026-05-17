@@ -111,6 +111,10 @@ export function QuoteBuilder({
   const [newAreaLabel, setNewAreaLabel] = useState('');
   const [areaPendingDelete, setAreaPendingDelete] = useState<{ id: string; label: string } | null>(null);
   const [areaDeleting, setAreaDeleting] = useState(false);
+  // Empty-quote guard: when the user clicks Confirm without any roof areas
+  // or main components, we show an explanation modal instead of confirming
+  // a hollow quote. Clicking OK bounces them back to the Roof Areas phase.
+  const [showEmptyQuoteGuard, setShowEmptyQuoteGuard] = useState<null | 'no-areas' | 'no-main-components'>(null);
 
   const mainComps = components.filter(c => c.component_type === 'main');
   const extraComps = components.filter(c => c.component_type === 'extra');
@@ -820,11 +824,56 @@ export function QuoteBuilder({
             >
               ← Back to Extras
             </button>
-            <ConfirmQuoteButton quoteId={quote.id} workspaceSlug={workspaceSlug} quoteStatus={quote.status} />
+            {/*
+              Guard: a confirmed manual quote with no roof areas or no main
+              components is a hollow quote (no line items, $0 totals, broken
+              customer-facing summary). Intercept the click here and show an
+              explanation modal; "OK" bounces the user back to the Roof Areas
+              phase so they can start over from the right place. Only when
+              both checks pass do we delegate to the real ConfirmQuoteButton.
+            */}
+            {roofAreas.length === 0 || mainComps.length === 0 ? (
+              <button
+                type="button"
+                data-copilot="quote-confirm"
+                onClick={() =>
+                  setShowEmptyQuoteGuard(
+                    roofAreas.length === 0 ? 'no-areas' : 'no-main-components',
+                  )
+                }
+                className="px-6 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              >
+                {quote.status === 'draft' ? 'Confirm Quote →' : 'Save Changes →'}
+              </button>
+            ) : (
+              <ConfirmQuoteButton quoteId={quote.id} workspaceSlug={workspaceSlug} quoteStatus={quote.status} />
+            )}
           </div>
         </div>
       )}
     </section>
+    <ConfirmModal
+      open={showEmptyQuoteGuard !== null}
+      title={showEmptyQuoteGuard === 'no-main-components' ? 'Add at least one component' : 'Add at least one roof area'}
+      description={
+        showEmptyQuoteGuard === 'no-main-components'
+          ? 'Your quote has a roof area but no main components yet. Add at least one component (corrugate, tiles, underlay, etc.) against the roof area before saving the quote.'
+          : 'A quote needs at least one roof area and one main component before it can be saved. We’ll take you back to Roof Areas so you can add one.'
+      }
+      confirmLabel="OK, take me there"
+      cancelLabel="Stay here"
+      destructive={false}
+      onCancel={() => setShowEmptyQuoteGuard(null)}
+      onConfirm={() => {
+        // Bounce to the right step: if there's no area at all we go to
+        // Roof Areas; if there's an area but no main components, we go
+        // straight to the Components phase where they pick from the
+        // library.
+        const target = showEmptyQuoteGuard === 'no-main-components' ? 'components' : 'areas';
+        setShowEmptyQuoteGuard(null);
+        setPhase(target);
+      }}
+    />
     <ConfirmModal
       open={areaPendingDelete !== null}
       title="Remove roof area"
@@ -865,16 +914,41 @@ function RoofAreaCard({
   const [adding, setAdding] = useState(false);
   const [widthInput, setWidthInput] = useState('');
   const [lengthInput, setLengthInput] = useState('');
+  // Track in-flight submission so two near-simultaneous onBlur events
+  // (e.g. width blur firing while length is autofilled) don't double-fire.
+  const submittingRef = useRef(false);
   const widthRef = useRef<HTMLInputElement>(null);
 
   async function handleSubmit() {
+    if (submittingRef.current) return;
     const w = Number(widthInput);
     const l = Number(lengthInput);
     if (!w || w <= 0 || !l || l <= 0) return;
-    await onAddEntry(area.id, w, l);
-    setWidthInput('');
-    setLengthInput('');
-    widthRef.current?.focus();
+    submittingRef.current = true;
+    try {
+      await onAddEntry(area.id, w, l);
+      setWidthInput('');
+      setLengthInput('');
+      widthRef.current?.focus();
+    } finally {
+      submittingRef.current = false;
+    }
+  }
+
+  /**
+   * Auto-submit the entry as soon as both fields hold a positive number.
+   * Wired to onBlur on width / length so the user no longer needs to click
+   * the explicit "Add" button — entering W × L × pitch "just works" and the
+   * area's computed_sqm updates immediately. Reported by Shaun 2026-05-17.
+   */
+  function tryAutoSubmit() {
+    const w = Number(widthInput);
+    const l = Number(lengthInput);
+    if (w > 0 && l > 0) {
+      // Defer one tick so React state from the blurring input is committed
+      // (otherwise the trailing edit on the just-blurred field may be lost).
+      setTimeout(() => { void handleSubmit(); }, 0);
+    }
   }
 
   function startAdding() {
@@ -975,6 +1049,7 @@ function RoofAreaCard({
                     step="0.01"
                     value={widthInput}
                     onChange={e => setWidthInput(e.target.value)}
+                    onBlur={tryAutoSubmit}
                     placeholder={normalizeMeasurementSystem(quote.measurement_system) === 'metric' ? "Width (m)" : "Width (ft)"}
                     onKeyDown={e => {
                       if (e.key === 'Enter') handleSubmit();
@@ -992,6 +1067,7 @@ function RoofAreaCard({
                     step="0.01"
                     value={lengthInput}
                     onChange={e => setLengthInput(e.target.value)}
+                    onBlur={tryAutoSubmit}
                     placeholder={normalizeMeasurementSystem(quote.measurement_system) === 'metric' ? "Length (m)" : "Length (ft)"}
                     onKeyDown={e => {
                       if (e.key === 'Enter') handleSubmit();

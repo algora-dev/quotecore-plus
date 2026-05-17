@@ -113,7 +113,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
 
     setCreating(true);
     try {
-      const quoteId = await createQuoteWithDetails({
+      const result = await createQuoteWithDetails({
         customerName: customerName.trim(),
         jobName: jobName.trim() || null,
         templateId: templateId || null,
@@ -121,7 +121,25 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
         measurementSystem,
       });
 
-      // If template mode, redirect happens inside createQuoteWithDetails (quoteId will be void)
+      // Structured failure path: server caught a billing error and returned
+      // it as data so we can render the typed banner instead of crashing
+      // through Next's masked-error pipeline. `code` is stable and matches
+      // the BillingError subclasses on the server.
+      if (!result.ok) {
+        const isBilling =
+          result.code === 'quote_limit_reached' ||
+          result.code === 'subscription_inactive' ||
+          result.code === 'feature_gated' ||
+          result.code === 'storage_quota_exceeded';
+        setCreateError({ message: result.message, showUpgrade: isBilling });
+        setCreating(false);
+        return;
+      }
+
+      const quoteId = result.quoteId;
+
+      // If template mode, redirect happens inside createQuoteWithDetails
+      // and quoteId is undefined (the server function never returns).
       if (!quoteId) return;
 
       // If digital mode with uploaded plan, move file and save metadata
