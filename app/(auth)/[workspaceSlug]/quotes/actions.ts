@@ -733,11 +733,27 @@ export async function updateQuoteSettings(quoteId: string, input: Record<string,
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Idempotent confirm. Behaviour by current status:
+ *   - draft:     promotes to confirmed and assigns the next quote_number.
+ *   - confirmed: no-op (returns successfully).
+ *   - any other ('accepted', 'declined', 'withdrawn', ...): throw, because
+ *     those states represent post-confirm lifecycle events and we don't want
+ *     a stale form re-submit to silently reset metadata.
+ *
+ * Idempotency matters because the /quotes/[id] page's ConfirmQuoteButton
+ * binds its server action at render time. If a user reaches the page while
+ * the quote is draft, confirms once, then navigates back via the browser
+ * and re-submits the same cached form, the second submission still calls
+ * this function. We must not 500 in that case — the original error message
+ * "Only draft quotes can be confirmed" was the production 500 reported
+ * 2026-05-17 (quote a58760fc-...).
+ */
 export async function confirmQuote(id: string) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
   
-  // Check if quote already has a number (prevent reassignment)
+  // Check current status + existing number
   const { data: existing } = await supabase
     .from('quotes')
     .select('quote_number, status')
@@ -746,7 +762,15 @@ export async function confirmQuote(id: string) {
     .single();
     
   if (!existing) throw new Error('Quote not found');
-  if (existing.status !== 'draft') throw new Error('Only draft quotes can be confirmed');
+  if (existing.status === 'confirmed') {
+    // Already confirmed — nothing to do. Revalidate the listing so the
+    // "Drafts vs Confirmed" buckets stay in sync if the cache is stale.
+    revalidatePath('/quotes');
+    return;
+  }
+  if (existing.status !== 'draft') {
+    throw new Error(`Cannot confirm a quote in status '${existing.status}'.`);
+  }
   
   // Get next quote number if not already assigned
   let quoteNumber = existing.quote_number;
@@ -774,6 +798,9 @@ export async function confirmQuote(id: string) {
 
 export async function confirmQuoteAndRedirect(id: string, workspaceSlug: string) {
   'use server';
+  // confirmQuote is idempotent (see its doc comment) — re-submitting a
+  // stale form on an already-confirmed quote is a silent no-op now, not
+  // a 500. Either way we land the user on the summary.
   await confirmQuote(id);
   const { redirect } = await import('next/navigation');
   redirect(`/${workspaceSlug}/quotes/${id}/summary`);
