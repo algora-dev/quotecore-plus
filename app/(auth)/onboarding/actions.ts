@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import {  } from 'next/cache';
 import { createSupabaseServerClient, requireUser, requireCompanyContext } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { seedTemplateComponents } from '@/app/lib/seed/seedTemplateComponents';
 
 interface OnboardingData {
   currency: string;
@@ -121,6 +122,10 @@ export async function completeGoogleOnboarding(formData: FormData) {
         role: 'owner',
       });
   }
+
+  // Seed canonical starter components into the new company. Non-fatal:
+  // onboarding must still succeed if this fails.
+  await seedTemplateComponents(supabaseAdmin, company.id);
 
   // Skip redirect if requested (copilot intro step handles navigation)
   const skipRedirect = formData.get('skipRedirect') === 'true';

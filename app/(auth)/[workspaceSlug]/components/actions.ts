@@ -1,8 +1,92 @@
 'use server';
 import { revalidatePath } from 'next/cache';
-import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import { createSupabaseServerClient, requireCompanyContext, requireUser } from '@/app/lib/supabase/server';
 import { pickFields } from '@/app/lib/security/pickFields';
 import type { ComponentLibraryInsert } from '@/app/lib/types';
+
+/**
+ * Sentinel id we slot into `copilot_progress.guides_completed[]` once the
+ * user has dismissed the first-visit components intro modal. Inline'd here
+ * (rather than imported from a sibling) so this 'use server' file only
+ * exports async functions, which Next requires for server-action modules.
+ */
+const COMPONENTS_INTRO_SEEN_KEY = 'components-intro-seen';
+
+/**
+ * Returns true if the current user has already dismissed the components
+ * intro modal. Used by /components page to decide whether to render it.
+ */
+export async function hasSeenComponentsIntro(): Promise<boolean> {
+  try {
+    const user = await requireUser();
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from('copilot_progress')
+      .select('guides_completed')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (error) {
+      console.error('[hasSeenComponentsIntro] read failed:', error);
+      // Fail-safe: treat as seen so we don't spam the modal on db errors.
+      return true;
+    }
+    const completed = data?.guides_completed ?? [];
+    return completed.includes(COMPONENTS_INTRO_SEEN_KEY);
+  } catch (err) {
+    console.error('[hasSeenComponentsIntro] threw:', err);
+    return true;
+  }
+}
+
+/**
+ * Marks the components intro modal as seen for the current user. Upserts
+ * a copilot_progress row if none exists yet (e.g. a brand-new signup that
+ * hasn't touched copilot state). Idempotent: re-adding the sentinel is a
+ * no-op thanks to the de-duped set we write.
+ */
+export async function markComponentsIntroSeen(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const profile = await requireCompanyContext();
+    const supabase = await createSupabaseServerClient();
+
+    const { data: existing, error: readError } = await supabase
+      .from('copilot_progress')
+      .select('guides_completed')
+      .eq('user_id', profile.id)
+      .maybeSingle();
+    if (readError) {
+      console.error('[markComponentsIntroSeen] read failed:', readError);
+      return { ok: false, error: readError.message };
+    }
+
+    const current = existing?.guides_completed ?? [];
+    if (current.includes(COMPONENTS_INTRO_SEEN_KEY)) {
+      return { ok: true };
+    }
+    const nextCompleted = Array.from(new Set([...current, COMPONENTS_INTRO_SEEN_KEY]));
+
+    const { error: upsertError } = await supabase
+      .from('copilot_progress')
+      .upsert(
+        {
+          user_id: profile.id,
+          company_id: profile.company_id,
+          guides_completed: nextCompleted,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' },
+      );
+    if (upsertError) {
+      console.error('[markComponentsIntroSeen] upsert failed:', upsertError);
+      return { ok: false, error: upsertError.message };
+    }
+    return { ok: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[markComponentsIntroSeen] threw:', message);
+    return { ok: false, error: message };
+  }
+}
 
 export async function loadComponentLibrary() {
   let profile;

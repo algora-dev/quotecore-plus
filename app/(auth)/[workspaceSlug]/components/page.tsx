@@ -1,5 +1,6 @@
-import { loadComponentLibrary } from './actions';
+import { loadComponentLibrary, hasSeenComponentsIntro } from './actions';
 import { ComponentList } from './component-list';
+import { ComponentsIntroModal } from './components-intro-modal';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 
 export default async function ComponentsPage(props: {params: Promise<{workspaceSlug: string}>}) {
@@ -25,11 +26,20 @@ export default async function ComponentsPage(props: {params: Promise<{workspaceS
   // follows the quote's own measurement_system.
   const { company } = await loadCompanyContext();
 
+  // First-visit modal: shown once per user. Suppresses the copilot tour
+  // while open (see ComponentsIntroModal). After dismissal the existing
+  // copilot auto-detect picks up and runs the `components` guide if the
+  // user has copilot enabled.
+  const introSeen = await hasSeenComponentsIntro();
+
   return (
-    <ComponentList
-      initialComponents={components}
-      workspaceSlug={workspaceSlug}
-      companyMeasurementSystem={company.default_measurement_system}
-    />
+    <>
+      {!introSeen && <ComponentsIntroModal />}
+      <ComponentList
+        initialComponents={components}
+        workspaceSlug={workspaceSlug}
+        companyMeasurementSystem={company.default_measurement_system}
+      />
+    </>
   );
 }

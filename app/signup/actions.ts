@@ -3,6 +3,8 @@
 
 import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from '@/app/lib/supabase/database.types';
+import { seedTemplateComponents } from '@/app/lib/seed/seedTemplateComponents';
 
 type SignupInput = {
   companyName: string;
@@ -19,7 +21,7 @@ function getAdminClient() {
     throw new Error('Missing Supabase admin environment variables.');
   }
 
-  return createClient(url, serviceRole, {
+  return createClient<Database>(url, serviceRole, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }
@@ -97,6 +99,11 @@ export async function signupWithCompany(input: SignupInput) {
     await supabaseAdmin.auth.admin.deleteUser(userId);
     return { ok: false, error: profileError.message };
   }
+
+  // Seed the canonical starter components into the new company. Non-fatal:
+  // signup must still succeed if this fails — the user can always create
+  // their own components manually.
+  await seedTemplateComponents(supabaseAdmin, company.id);
 
   redirect('/login?signup=success');
 }

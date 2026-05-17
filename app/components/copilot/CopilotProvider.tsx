@@ -126,6 +126,12 @@ export function CopilotProvider({ children, userId, companyId, initialState }: P
   // Auto-detect which guide to show based on current page
   useEffect(() => {
     if (!state.enabled || !state.visible) return;
+    // Honour a per-page suppression marker. Currently used by the
+    // components page first-visit modal so the copilot tour doesn't
+    // start until the user dismisses the welcome modal. The modal
+    // clears the marker on close and dispatches `copilot-redetect`,
+    // which re-runs this effect.
+    if (typeof document !== 'undefined' && document.body.dataset.copilotSuppress === '1') return;
     // Switch guide if user navigated to a page that needs a different guide
     if (state.activeGuide === 'flashings-orders' && (pathname?.includes('/flashings/draw') || (pathname?.includes('/flashings/') && pathname?.includes('/edit')))) {
       const newCompleted = [...new Set([...state.guidesCompleted, 'flashings-orders'])];
