@@ -243,7 +243,7 @@ export async function activateTrial(): Promise<BillingActionResult> {
   const admin = createAdminClient();
   const { data: company, error: companyErr } = await admin
     .from('companies')
-    .select('id, plan_code, subscription_status, stripe_subscription_id, cancel_at_period_end, trial_ends_at')
+    .select('id, plan_code, subscription_status, stripe_subscription_id, cancel_at_period_end, cancel_at, trial_ends_at')
     .eq('id', profile.company_id)
     .maybeSingle();
   if (companyErr || !company) {
@@ -251,11 +251,16 @@ export async function activateTrial(): Promise<BillingActionResult> {
   }
 
   // Refuse if they're on a paid Stripe sub that is NOT already winding
-  // down. cancel_at_period_end=true means the user has cancelled and is
-  // serving out the rest of the paid period — we treat that as "effectively
-  // gone" so they can pre-stage a trial activation without waiting for the
-  // Stripe webhook to fire customer.subscription.deleted at period end.
-  if (company.stripe_subscription_id && !company.cancel_at_period_end) {
+  // down. A sub is treated as 'winding down' when EITHER:
+  //   - cancel_at_period_end=true (standard portal cancel flow), OR
+  //   - cancel_at is set to a future timestamp (Stripe Dashboard "cancel
+  //     at a specific time" / Subscription Schedules).
+  // Both mean the user has chosen to leave the paid plan and is just
+  // serving out the paid period — we let them pre-stage trial activation.
+  const isWindingDown =
+    company.cancel_at_period_end
+    || (company.cancel_at != null && new Date(company.cancel_at).getTime() > Date.now());
+  if (company.stripe_subscription_id && !isWindingDown) {
     return {
       ok: false,
       code: 'has_active_subscription',

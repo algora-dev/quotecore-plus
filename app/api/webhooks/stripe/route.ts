@@ -289,6 +289,7 @@ async function handleSubscriptionEvent(
     stripe_price_id: string;
     current_period_end: string | null;
     cancel_at_period_end: boolean;
+    cancel_at: string | null;
     trial_ends_at?: string;
   } = {
     plan_code: planCode,
@@ -297,6 +298,18 @@ async function handleSubscriptionEvent(
     stripe_price_id: priceId,
     current_period_end: currentPeriodEnd,
     cancel_at_period_end: sub.cancel_at_period_end ?? false,
+    // Stripe's explicit scheduled cancellation timestamp. Distinct from
+    // cancel_at_period_end; populated by some Dashboard flows and
+    // Subscription Schedules. Mirrored here so the trial-activation gate
+    // can treat a sub as 'winding down' without waiting for the period
+    // to elapse. Cleared on subscription.deleted so a stale value doesn't
+    // outlive the subscription itself.
+    cancel_at:
+      event.type === 'customer.subscription.deleted'
+        ? null
+        : sub.cancel_at
+          ? new Date(sub.cancel_at * 1000).toISOString()
+          : null,
   };
 
   // Trial linkage: Stripe carries the trial end on the subscription.

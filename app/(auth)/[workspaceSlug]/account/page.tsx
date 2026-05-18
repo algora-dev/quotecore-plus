@@ -274,14 +274,20 @@ export default async function AccountPage() {
 
       // Whether the company has an active Stripe sub. Used to gate the
       // trial activation button so paying customers can't accidentally
-      // downgrade themselves. A sub flagged cancel_at_period_end=true is
-      // 'winding down' and is treated as effectively gone so the user
-      // can pre-stage the trial without waiting for the period to elapse.
+      // downgrade themselves. A sub is treated as 'winding down' — and
+      // therefore effectively gone for trial-activation purposes — when
+      // EITHER cancel_at_period_end=true OR cancel_at is a future
+      // timestamp. Both flags can be set by Stripe Dashboard cancel
+      // flows (the portal sets cancel_at_period_end; some dashboard
+      // paths set cancel_at instead).
+      const cancelAt = (company as { cancel_at?: string | null }).cancel_at ?? null;
+      const cancelAtInFuture = cancelAt != null && new Date(cancelAt).getTime() > Date.now();
       const hasActiveSubscription = Boolean(
         company.stripe_subscription_id
         && entitlements.subscriptionStatus !== 'canceled'
         && entitlements.subscriptionStatus !== 'suspended'
-        && !company.cancel_at_period_end,
+        && !company.cancel_at_period_end
+        && !cancelAtInFuture,
       );
 
       return (

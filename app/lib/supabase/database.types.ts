@@ -158,6 +158,7 @@ export type Database = {
       }
       companies: {
         Row: {
+          cancel_at: string | null
           cancel_at_period_end: boolean
           cancellation_confirmation_required_at: string | null
           cancellation_confirmed_at: string | null
@@ -191,6 +192,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cancel_at?: string | null
           cancel_at_period_end?: boolean
           cancellation_confirmation_required_at?: string | null
           cancellation_confirmed_at?: string | null
@@ -224,6 +226,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cancel_at?: string | null
           cancel_at_period_end?: boolean
           cancellation_confirmation_required_at?: string | null
           cancellation_confirmed_at?: string | null
