@@ -28,6 +28,12 @@ export interface BillingPlanInfo {
   code: string;
   displayName: string;
   priceCentsMonthly: number;
+  /**
+   * Original (pre-discount) monthly price in cents. Renders as a
+   * strikethrough next to the live price when set and strictly greater
+   * than priceCentsMonthly. NULL = no strikethrough.
+   */
+  priceCentsMonthlyOriginal: number | null;
   monthlyQuoteLimit: number;
   storageLimitBytes: number;
   componentLimit: number | null;
@@ -96,6 +102,20 @@ function formatBytes(bytes: number): string {
 function formatPrice(cents: number): string {
   if (cents === 0) return 'Free';
   return `$${(cents / 100).toFixed(0)}/mo`;
+}
+
+/**
+ * Optional strikethrough "before" price. Returns null when there's no
+ * meaningful discount to render. Centralised so the card and modal stay
+ * in sync on the threshold logic.
+ */
+function formatOriginalPrice(
+  original: number | null,
+  current: number,
+): string | null {
+  if (original === null) return null;
+  if (original <= current) return null;
+  return `$${(original / 100).toFixed(0)}`;
 }
 
 function formatDate(iso: string | null): string {
@@ -387,8 +407,18 @@ export function BillingPanel(props: BillingPanelProps) {
                       </span>
                     )}
                   </div>
-                  <p className="text-lg font-semibold text-slate-900 mt-1">
-                    {plan.isTrial ? 'Free' : plan.comingSoon ? '—' : formatPrice(plan.priceCentsMonthly)}
+                  <p className="text-lg font-semibold text-slate-900 mt-1 flex items-baseline gap-2">
+                    <span>
+                      {plan.isTrial ? 'Free' : plan.comingSoon ? '—' : formatPrice(plan.priceCentsMonthly)}
+                    </span>
+                    {!plan.isTrial && !plan.comingSoon && (() => {
+                      const original = formatOriginalPrice(plan.priceCentsMonthlyOriginal, plan.priceCentsMonthly);
+                      return original ? (
+                        <span className="text-sm font-medium text-slate-400 line-through">
+                          {original}
+                        </span>
+                      ) : null;
+                    })()}
                   </p>
                   {plan.tagline && (
                     <p className="text-xs text-slate-500 mt-1 italic">{plan.tagline}</p>
@@ -468,12 +498,22 @@ export function BillingPanel(props: BillingPanelProps) {
                 {viewPlan.tagline && (
                   <p className="text-sm text-slate-500 mt-1">{viewPlan.tagline}</p>
                 )}
-                <p className="text-xl font-semibold text-slate-900 mt-3">
-                  {viewPlan.isTrial
-                    ? 'Free (14 days)'
-                    : viewPlan.comingSoon
-                    ? 'Pricing soon'
-                    : formatPrice(viewPlan.priceCentsMonthly)}
+                <p className="text-xl font-semibold text-slate-900 mt-3 flex items-baseline gap-2">
+                  <span>
+                    {viewPlan.isTrial
+                      ? 'Free (14 days)'
+                      : viewPlan.comingSoon
+                      ? 'Pricing soon'
+                      : formatPrice(viewPlan.priceCentsMonthly)}
+                  </span>
+                  {!viewPlan.isTrial && !viewPlan.comingSoon && (() => {
+                    const original = formatOriginalPrice(viewPlan.priceCentsMonthlyOriginal, viewPlan.priceCentsMonthly);
+                    return original ? (
+                      <span className="text-base font-medium text-slate-400 line-through">
+                        {original}
+                      </span>
+                    ) : null;
+                  })()}
                 </p>
               </div>
               {viewPlan.comingSoon && (

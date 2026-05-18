@@ -2248,6 +2248,7 @@ export type Database = {
           monthly_material_order_limit: number | null
           monthly_quote_limit: number
           price_cents_monthly: number
+          price_cents_monthly_original: number | null
           sort_order: number
           storage_limit_bytes: number
           stripe_price_id_live: string | null
@@ -2274,6 +2275,7 @@ export type Database = {
           monthly_material_order_limit?: number | null
           monthly_quote_limit: number
           price_cents_monthly: number
+          price_cents_monthly_original?: number | null
           sort_order: number
           storage_limit_bytes: number
           stripe_price_id_live?: string | null
@@ -2300,6 +2302,7 @@ export type Database = {
           monthly_material_order_limit?: number | null
           monthly_quote_limit?: number
           price_cents_monthly?: number
+          price_cents_monthly_original?: number | null
           sort_order?: number
           storage_limit_bytes?: number
           stripe_price_id_live?: string | null

@@ -83,7 +83,7 @@ export default async function AccountPage() {
     loadCompanyEntitlements(profile.company_id),
     createAdminClient()
       .from('subscription_plans')
-      .select('code, display_name, price_cents_monthly, monthly_quote_limit, storage_limit_bytes, component_limit, flashing_limit, monthly_material_order_limit, included_seats, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card, tagline, feature_blurbs, coming_soon, stripe_price_id_live, stripe_price_id_test, sort_order, active')
+      .select('code, display_name, price_cents_monthly, price_cents_monthly_original, monthly_quote_limit, storage_limit_bytes, component_limit, flashing_limit, monthly_material_order_limit, included_seats, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card, tagline, feature_blurbs, coming_soon, stripe_price_id_live, stripe_price_id_test, sort_order, active')
       .eq('active', true)
       .order('sort_order', { ascending: true }),
   ]);
@@ -220,6 +220,7 @@ export default async function AccountPage() {
         code: string;
         display_name: string;
         price_cents_monthly: number;
+        price_cents_monthly_original: number | null;
         monthly_quote_limit: number;
         storage_limit_bytes: number;
         component_limit: number | null;
@@ -249,6 +250,7 @@ export default async function AccountPage() {
           code: p.code,
           displayName: p.display_name,
           priceCentsMonthly: p.price_cents_monthly,
+          priceCentsMonthlyOriginal: p.price_cents_monthly_original,
           monthlyQuoteLimit: p.monthly_quote_limit,
           storageLimitBytes: p.storage_limit_bytes,
           componentLimit: p.component_limit,
