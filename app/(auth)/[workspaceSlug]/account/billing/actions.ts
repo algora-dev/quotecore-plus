@@ -24,7 +24,7 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import {
   requireStripe,
-  resolveStripePriceForPlan,
+  resolveStripeCheckoutForPlan,
 } from '@/app/lib/billing/stripe';
 
 /**
@@ -86,20 +86,21 @@ export async function createCheckoutSession(
   const { profile, company: ctxCompany } = ctx;
   const slug = ctxCompany.slug;
 
-  let priceId: string | null;
+  let checkout: { priceId: string; couponId: string | null } | null;
   try {
-    priceId = await resolveStripePriceForPlan(planCode);
+    checkout = await resolveStripeCheckoutForPlan(planCode);
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'plan_lookup_failed';
     return { ok: false, code: 'plan_lookup_failed', message: msg };
   }
-  if (!priceId) {
+  if (!checkout) {
     return {
       ok: false,
       code: 'plan_not_configured',
       message: `Plan "${planCode}" is not yet available in this environment.`,
     };
   }
+  const { priceId, couponId } = checkout;
 
   const stripe = requireStripe();
   const admin = createAdminClient();
@@ -137,10 +138,16 @@ export async function createCheckoutSession(
       ...(company.stripe_customer_id
         ? { customer: company.stripe_customer_id }
         : { customer_email: userRow?.email ?? undefined }),
+      // Launch pricing: when a plan has a per-tier MSRP-to-launch coupon,
+      // attach it so Checkout shows the strikethrough subtotal and the
+      // discount line. Mutually exclusive with allow_promotion_codes per
+      // Stripe's API.
+      ...(couponId
+        ? { discounts: [{ coupon: couponId }] }
+        : { allow_promotion_codes: true }),
       // {CHECKOUT_SESSION_ID} is Stripe's template literal; do NOT JS-interpolate.
       success_url: `${base}/${slug}/account?tab=billing&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}/${slug}/account?tab=billing&checkout=canceled`,
-      allow_promotion_codes: true,
     });
 
     if (!session.url) {
@@ -236,15 +243,19 @@ export async function activateTrial(): Promise<BillingActionResult> {
   const admin = createAdminClient();
   const { data: company, error: companyErr } = await admin
     .from('companies')
-    .select('id, plan_code, subscription_status, stripe_subscription_id, trial_ends_at')
+    .select('id, plan_code, subscription_status, stripe_subscription_id, cancel_at_period_end, trial_ends_at')
     .eq('id', profile.company_id)
     .maybeSingle();
   if (companyErr || !company) {
     return { ok: false, code: 'company_not_found', message: 'Company record missing.' };
   }
 
-  // Refuse if they're on a paid Stripe sub.
-  if (company.stripe_subscription_id) {
+  // Refuse if they're on a paid Stripe sub that is NOT already winding
+  // down. cancel_at_period_end=true means the user has cancelled and is
+  // serving out the rest of the paid period — we treat that as "effectively
+  // gone" so they can pre-stage a trial activation without waiting for the
+  // Stripe webhook to fire customer.subscription.deleted at period end.
+  if (company.stripe_subscription_id && !company.cancel_at_period_end) {
     return {
       ok: false,
       code: 'has_active_subscription',

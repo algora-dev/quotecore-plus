@@ -149,18 +149,43 @@ export async function resolvePlanCodeForStripePrice(
 export async function resolveStripePriceForPlan(
   planCode: string,
 ): Promise<string | null> {
-  if (!planCode) throw new Error('resolveStripePriceForPlan: planCode is required');
+  const r = await resolveStripeCheckoutForPlan(planCode);
+  return r?.priceId ?? null;
+}
+
+/**
+ * Companion resolver that returns BOTH the Stripe Price ID and the
+ * optional launch-discount Coupon ID for a plan. Used by
+ * createCheckoutSession so the Stripe Checkout page can show:
+ *
+ *   Subtotal:  $60.00
+ *   Discount: -$31.00  (Growth Launch Discount)
+ *   Total:    $29.00 / mo
+ *
+ * Returns null when the plan isn't active or has no Stripe price wired
+ * up in the current mode (live vs test).
+ *
+ * Note: stripe_launch_coupon_id is environment-agnostic in our DB. Stripe
+ * coupon ids live in both test and live mode under the same string id, so
+ * we don't need a separate live/test column for the coupon.
+ */
+export async function resolveStripeCheckoutForPlan(
+  planCode: string,
+): Promise<{ priceId: string; couponId: string | null } | null> {
+  if (!planCode) throw new Error('resolveStripeCheckoutForPlan: planCode is required');
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('subscription_plans')
-    .select('stripe_price_id_live, stripe_price_id_test, active')
+    .select('stripe_price_id_live, stripe_price_id_test, stripe_launch_coupon_id, active')
     .eq('code', planCode)
     .limit(1)
     .maybeSingle();
-  if (error) throw new Error(`resolveStripePriceForPlan: ${error.message}`);
-  if (!data) throw new Error(`resolveStripePriceForPlan: plan "${planCode}" not found`);
+  if (error) throw new Error(`resolveStripeCheckoutForPlan: ${error.message}`);
+  if (!data) throw new Error(`resolveStripeCheckoutForPlan: plan "${planCode}" not found`);
   if (!data.active) return null;
-  return getStripeMode() === 'live' ? data.stripe_price_id_live : data.stripe_price_id_test;
+  const priceId = getStripeMode() === 'live' ? data.stripe_price_id_live : data.stripe_price_id_test;
+  if (!priceId) return null;
+  return { priceId, couponId: data.stripe_launch_coupon_id ?? null };
 }
 
 /**

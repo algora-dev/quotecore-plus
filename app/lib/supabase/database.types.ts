@@ -2251,6 +2251,7 @@ export type Database = {
           price_cents_monthly_original: number | null
           sort_order: number
           storage_limit_bytes: number
+          stripe_launch_coupon_id: string | null
           stripe_price_id_live: string | null
           stripe_price_id_test: string | null
           tagline: string | null
@@ -2278,6 +2279,7 @@ export type Database = {
           price_cents_monthly_original?: number | null
           sort_order: number
           storage_limit_bytes: number
+          stripe_launch_coupon_id?: string | null
           stripe_price_id_live?: string | null
           stripe_price_id_test?: string | null
           tagline?: string | null
@@ -2305,6 +2307,7 @@ export type Database = {
           price_cents_monthly_original?: number | null
           sort_order?: number
           storage_limit_bytes?: number
+          stripe_launch_coupon_id?: string | null
           stripe_price_id_live?: string | null
           stripe_price_id_test?: string | null
           tagline?: string | null

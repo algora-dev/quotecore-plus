@@ -272,13 +272,16 @@ export default async function AccountPage() {
           isTrial: p.code === 'trial',
         }));
 
-      // Whether the company has an active Stripe sub (used to gate the
+      // Whether the company has an active Stripe sub. Used to gate the
       // trial activation button so paying customers can't accidentally
-      // downgrade themselves).
+      // downgrade themselves. A sub flagged cancel_at_period_end=true is
+      // 'winding down' and is treated as effectively gone so the user
+      // can pre-stage the trial without waiting for the period to elapse.
       const hasActiveSubscription = Boolean(
         company.stripe_subscription_id
         && entitlements.subscriptionStatus !== 'canceled'
-        && entitlements.subscriptionStatus !== 'suspended',
+        && entitlements.subscriptionStatus !== 'suspended'
+        && !company.cancel_at_period_end,
       );
 
       return (
