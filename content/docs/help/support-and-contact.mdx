@@ -3,7 +3,7 @@ title: Support and contact
 description: Submit a support ticket and what to expect back.
 order: 2
 status: published
-updated: 2026-05-11
+updated: 2026-05-18
 ---
 
 # Support and contact
@@ -39,13 +39,40 @@ You do not need to include any of these manually - they come along automatically
 
 ## When you will hear back
 
-We reply by email to the address on your account. Response times depend on the category and severity. Billing and bugs that block your work get priority.
+We reply by email to the address on your account. Response times depend on the category and severity:
+
+| Category | Target first response |
+|---|---|
+| Bug blocking work | Same business day |
+| Billing | Within 1 business day |
+| Question | Within 2 business days |
+| Feature request | Within 5 business days (or queued for the roadmap) |
+| Other | Within 3 business days |
+
+These are targets, not contractual SLAs. Pro Plus customers and above get priority.
 
 ## Tracking your tickets
 
-The Support tab also shows a list of your previous tickets and their current status: Open, Pending, Resolved, or Closed.
+The Support tab also shows a list of your previous tickets and their current status: **Open**, **Pending**, **Resolved**, or **Closed**.
+
+- **Open** — we've received it and haven't replied yet.
+- **Pending** — we're waiting on you (we asked a question, you haven't replied).
+- **Resolved** — we believe it's fixed/answered. You can re-open it by replying.
+- **Closed** — final state, no further action expected.
+
+Replying to a ticket via email also works — your reply attaches to the same ticket.
+
+## Tickets we open for you automatically
+
+Some events open a support ticket on your behalf so nothing slips:
+
+- **Payment dispute (chargeback)** — when your bank disputes a charge, we open a `payment_dispute` ticket. It auto-resolves when the dispute closes.
+- **Repeated failed payments** — after several Stripe retries fail, we open a `billing` ticket so we can reach out before the account suspends.
+
+You'll see these in your ticket list alongside any tickets you opened manually.
 
 ## Related
 
 - [FAQ](/docs/help/faq) - check here first; many common questions are answered.
 - [Account and security](/docs/account/account-and-security)
+- [Billing](/docs/account/billing) - dispute and refund flow.

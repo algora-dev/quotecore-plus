@@ -1,0 +1,126 @@
+---
+title: Tier limits
+description: What each cap on your plan means, how counters work, and what happens when you hit one.
+order: 6
+status: published
+updated: 2026-05-18
+---
+
+# Tier limits
+
+Every plan has caps. This page explains what each one means in practice.
+
+## The five caps
+
+| Cap | What it counts | Reset cycle |
+|---|---|---|
+| **Quotes / month** | Every quote you create (draft or sent) | 1st of each month, UTC |
+| **Components (lifetime)** | Active components in your library | Never — manual delete only |
+| **Flashings (lifetime)** | Flashing designs in your library | Never — manual delete only |
+| **Material orders / month** | Outgoing orders sent to suppliers | 1st of each month, UTC |
+| **Storage** | Total bytes uploaded across the company | Never — manual delete only |
+
+## Per-tier breakdown
+
+| Cap | Trial | Starter | Growth | Pro | Pro Plus |
+|---|---|---|---|---|---|
+| Quotes / month | 10 | 25 | 50 | 100 | 200 |
+| Components | 10 | 10 | 15 | 25 | 50 |
+| Flashings | 5 | 0 (locked) | 0 (locked) | 10 | 20 |
+| Material orders / month | 5 | 0 (locked) | 0 (locked) | 10 | 20 |
+| Storage | 100 MB | 200 MB | 2 GB | 3 GB | 5 GB |
+| Included seats | 1 | 1 | 1 | 1 | 3 |
+
+"Locked" means the feature itself is not available on that tier — not zero, but no access at all (the navigation hides the page).
+
+## Quotes per month
+
+The most important cap. Both **draft quotes** and **finalised quotes** count toward this limit. A new quote consumes one slot when it's created.
+
+<Callout type="warning">
+Sending or finalising a draft does **not** free up its slot. The counter is "quotes created", not "quotes pending". This is intentional — it prevents people from cycling drafts to dodge the cap.
+</Callout>
+
+When you hit the monthly cap:
+
+- The **+ New Quote** button on the quotes list page greys out.
+- Clicking it opens an upgrade modal: *"Monthly quote limit reached (X/Y). To create more quotes this month you need to upgrade your account tier, or wait until your quote limit resets."*
+- The cap resets at midnight UTC on the 1st of next month.
+
+## Components (lifetime)
+
+Components are the building blocks of every quote (ridge cap, valley flashing, fascia, etc.). The lifetime cap counts every **active** component in your library.
+
+- Soft-deleted components (set inactive) **do not count**. Hard-deleting is the only way to make room if you've toggled instead of deleted.
+- New accounts are seeded with 8 starter components, so you start at 8 of your limit.
+- When at the cap, the **+ Add Component** button on the components page opens an upgrade modal.
+
+## Flashings (lifetime)
+
+Same model as components, but for the flashings library. Flashings are images + drawings of cut metal pieces that go onto material orders.
+
+- Every drawing or uploaded image counts as 1.
+- Editing an existing flashing does not consume a new slot.
+- When at the cap, both **Create** and **Upload** buttons on the flashings page open an upgrade modal.
+
+On **Starter** and **Growth**, flashings is a **locked feature** — the whole page shows an upgrade splash and the "Flashings" entry button on the components page opens an upgrade modal instead of navigating.
+
+## Material orders per month
+
+Outgoing purchase orders sent to suppliers. Resets monthly like quotes.
+
+On **Starter** and **Growth**, material orders is a **locked feature** — the nav entry opens an upgrade modal and doesn't route through.
+
+## Storage
+
+Total bytes uploaded to your company storage. Counts:
+
+- Roof plan PDFs and images uploaded for digital takeoff
+- Photos attached to quotes
+- Company logo
+- Flashing reference images
+
+Does **not** count:
+
+- Generated PDFs (created on the fly when you click download)
+- Customer-facing accept page renders
+
+When you're near the limit:
+
+- A storage usage bar on the billing page shows your usage.
+- At 90% it turns amber.
+- At 100% the next upload fails with a "Storage quota exceeded" error.
+
+To free up space, delete old quote attachments or roof plans you no longer need.
+
+## How the upgrade modal works
+
+Every cap opens the same modal pattern:
+
+- Title naming the specific cap you hit
+- Description explaining what's blocked
+- **Not now** button to dismiss
+- **View plans** button that takes you to **Account > Billing** with the recommended plan highlighted
+
+## What about grandfathered data?
+
+If you signed up on a higher tier then downgraded, you may end up with **more existing data than your new tier allows**. That's fine:
+
+- We never delete data when you downgrade.
+- Caps only block *new* additions.
+- Example: a customer with 30 components who downgrades from Pro (25-component cap) to Growth (15-component cap) keeps all 30 components. They just can't add a new one until they delete enough to get back under 15.
+
+## Where to see your current usage
+
+- **Billing page** — storage bar.
+- **Quotes page** — quotes-this-month counter (top right of the list).
+- **Components page** — `X/Y` counter inside the + Add Component button.
+- **Flashings page** — `X/Y used` next to the Create/Upload buttons.
+
+## Related
+
+- [Billing](/docs/account/billing) — full overview of the billing page.
+- [Free trial](/docs/account/trial) — trial caps in detail.
+- [Components overview](/docs/components/overview) — what components are.
+- [Flashings](/docs/flashings/flashings) — flashing library usage.
+- [Material orders: creating](/docs/material-orders/creating-orders) — sending orders to suppliers.

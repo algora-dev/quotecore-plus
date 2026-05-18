@@ -3,7 +3,7 @@ title: Glossary
 description: Plain-English definitions for the terms used in the app.
 order: 4
 status: published
-updated: 2026-05-11
+updated: 2026-05-18
 ---
 
 # Glossary
@@ -41,6 +41,30 @@ Short definitions of the QuoteCore+ and roofing terms you will see in the app.
 **Takeoff.** The act of measuring a job. Either digital (off a plan) or manual (on site).
 
 **Withdrawn quote.** A quote you have pulled back. The customer URL still works but tells them the quote is no longer valid. See [Withdrawing a quote](/docs/customer-facing/withdrawing-a-quote).
+
+## Billing terms
+
+**Cap.** A numeric limit on something your plan allows — quotes per month, components total, storage bytes, etc. Hitting a cap blocks new additions but never deletes existing data. See [Tier limits](/docs/account/tier-limits).
+
+**Dunning.** The process Stripe (and we) follow when a renewal payment fails: automatic card retries, status escalation through `past_due` → `grace` → `suspended`, with chances to recover by updating the card. See [Billing](/docs/account/billing#payment-failures-and-dunning).
+
+**Effective plan.** What your account can actually use today. Usually the same as your purchased plan, but collapses to **Starter** during grace periods or after the trial ends.
+
+**Entitlement.** The bundle of features and caps your plan unlocks. Every gated action (creating a quote, drawing a flashing) checks the entitlement before allowing it.
+
+**Grace period.** A 10-day window after a payment failure where you keep read access but can't create new quotes. Buys you time to update the card before suspension. See [Billing](/docs/account/billing#payment-failures-and-dunning).
+
+**Launch pricing.** The current discounted price we're offering during the early phase. Locked in for the lifetime of the subscription — renewals stay at the launch price.
+
+**MSRP.** The original list price shown as a strikethrough next to the launch price. What we'll charge once launch pricing ends.
+
+**Purchased plan.** The plan you actually paid for. Stays constant during payment failures — only changes when you explicitly switch plans.
+
+**Tier.** Synonym for plan. Trial, Starter, Growth, Professional, Pro Plus, Premium.
+
+**Trial.** A 14-day free taste of every feature, with tiny caps. One per account, ever. See [Free trial](/docs/account/trial).
+
+**Winding down.** A paid subscription that's been cancelled but is still serving out the paid period. Status is technically still `active`, but it will collapse to Starter at the period end.
 
 ## Roofing terms
 
