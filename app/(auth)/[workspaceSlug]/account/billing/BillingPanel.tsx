@@ -310,6 +310,7 @@ export function BillingPanel(props: BillingPanelProps) {
               type="button"
               onClick={onManage}
               disabled={pending}
+              title="Cancel, swap plan, update card, or view invoices"
               className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
             >
               Manage subscription
@@ -361,11 +362,18 @@ export function BillingPanel(props: BillingPanelProps) {
           {props.plans.map((plan) => {
             const isCurrent = plan.code === props.purchasedPlanCode;
             const isActive = pending && activePlan === plan.code;
+            // Plan-switch via Stripe Portal: when the user has an active
+            // paid sub, the 'Choose <plan>' buttons would create a SECOND
+            // subscription, which is wrong. Hide the direct-checkout path
+            // and route them through Manage Subscription (the Stripe
+            // portal handles plan switches with correct proration).
+            const blockedByActiveSub = !plan.isTrial && props.hasActiveSubscription;
+
             const canChoose = !plan.comingSoon
               && !isCurrent
               && (plan.isTrial
-                ? !props.hasActiveSubscription
-                : plan.hasStripePrice);
+                ? !props.hasActiveSubscription && !props.hasStripeCustomer
+                : plan.hasStripePrice && !blockedByActiveSub);
 
             // Trial-specific button copy + reason for disabled state.
             const buttonLabel = isActive
@@ -375,9 +383,11 @@ export function BillingPanel(props: BillingPanelProps) {
               : isCurrent
               ? 'Your current plan'
               : plan.isTrial
-              ? props.hasActiveSubscription
-                ? 'Cancel paid plan first'
+              ? props.hasStripeCustomer
+                ? 'Trial unavailable'
                 : 'Start 14-day trial'
+              : blockedByActiveSub
+              ? 'Manage to switch'
               : plan.hasStripePrice
               ? `Choose ${plan.displayName}`
               : 'Not yet available';
@@ -447,8 +457,10 @@ export function BillingPanel(props: BillingPanelProps) {
                     onClick={() => onChoose(plan)}
                     disabled={!canChoose || pending}
                     title={
-                      plan.isTrial && props.hasActiveSubscription
-                        ? 'Cancel your paid subscription before starting a trial.'
+                      plan.isTrial && props.hasStripeCustomer
+                        ? 'The free trial is only available to new accounts.'
+                        : blockedByActiveSub
+                        ? 'Use "Manage subscription" to switch plans — Stripe will pro-rate the difference.'
                         : plan.comingSoon
                         ? 'This tier is not available yet.'
                         : isCurrent
@@ -599,8 +611,15 @@ export function BillingPanel(props: BillingPanelProps) {
                   || viewPlan.code === props.purchasedPlanCode
                   || pending
                   || (viewPlan.isTrial
-                    ? props.hasActiveSubscription
-                    : !viewPlan.hasStripePrice)
+                    ? props.hasStripeCustomer
+                    : !viewPlan.hasStripePrice || props.hasActiveSubscription)
+                }
+                title={
+                  viewPlan.isTrial && props.hasStripeCustomer
+                    ? 'The free trial is only available to new accounts.'
+                    : !viewPlan.isTrial && props.hasActiveSubscription
+                    ? 'Use "Manage subscription" to switch plans.'
+                    : undefined
                 }
                 className={`px-4 py-2 text-sm font-medium rounded-full disabled:opacity-50 disabled:cursor-not-allowed text-white ${
                   viewPlan.isTrial ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-600 hover:bg-orange-700'
@@ -611,7 +630,9 @@ export function BillingPanel(props: BillingPanelProps) {
                   : viewPlan.code === props.purchasedPlanCode
                   ? 'Current plan'
                   : viewPlan.isTrial
-                  ? 'Start trial'
+                  ? props.hasStripeCustomer ? 'Trial unavailable' : 'Start trial'
+                  : props.hasActiveSubscription
+                  ? 'Manage to switch'
                   : 'Purchase'}
               </button>
             </div>

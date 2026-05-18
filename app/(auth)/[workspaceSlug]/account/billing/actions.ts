@@ -243,20 +243,33 @@ export async function activateTrial(): Promise<BillingActionResult> {
   const admin = createAdminClient();
   const { data: company, error: companyErr } = await admin
     .from('companies')
-    .select('id, plan_code, subscription_status, stripe_subscription_id, cancel_at_period_end, cancel_at, trial_ends_at')
+    .select('id, plan_code, subscription_status, stripe_subscription_id, stripe_customer_id, cancel_at_period_end, cancel_at, trial_ends_at')
     .eq('id', profile.company_id)
     .maybeSingle();
   if (companyErr || !company) {
     return { ok: false, code: 'company_not_found', message: 'Company record missing.' };
   }
 
-  // Refuse if they're on a paid Stripe sub that is NOT already winding
-  // down. A sub is treated as 'winding down' when EITHER:
-  //   - cancel_at_period_end=true (standard portal cancel flow), OR
-  //   - cancel_at is set to a future timestamp (Stripe Dashboard "cancel
-  //     at a specific time" / Subscription Schedules).
-  // Both mean the user has chosen to leave the paid plan and is just
-  // serving out the paid period — we let them pre-stage trial activation.
+  // Trial is once-per-company forever. The presence of a stripe_customer_id
+  // (set on first Checkout) is the canonical 'this company has paid us at
+  // some point' marker. Even if their current sub is cancelled or winding
+  // down, they don't get a fresh trial.
+  if (company.stripe_customer_id) {
+    // One narrow exception: a sub that is winding down but hasn't yet had
+    // its stripe_customer_id set is impossible (customer is created on
+    // the FIRST checkout, before any cancel can happen). So if
+    // stripe_customer_id is set, they paid at least once.
+    return {
+      ok: false,
+      code: 'trial_not_available',
+      message: 'The free trial is for new accounts only. Pick a paid plan to keep using QuoteCore+.',
+    };
+  }
+
+  // Belt-and-braces: even with no stripe_customer_id, refuse if there's
+  // somehow an active Stripe sub on record (this should never happen given
+  // the customer/sub pairing is set together by the webhook, but it's
+  // cheap insurance against a partial state).
   const isWindingDown =
     company.cancel_at_period_end
     || (company.cancel_at != null && new Date(company.cancel_at).getTime() > Date.now());
