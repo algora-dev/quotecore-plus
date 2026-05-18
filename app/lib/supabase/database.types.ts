@@ -2232,6 +2232,7 @@ export type Database = {
         Row: {
           active: boolean
           code: string
+          coming_soon: boolean
           component_limit: number | null
           created_at: string
           display_name: string
@@ -2241,19 +2242,23 @@ export type Database = {
           feat_flashings: boolean
           feat_followups: boolean
           feat_material_orders: boolean
+          feature_blurbs: string[]
           flashing_limit: number | null
           included_seats: number
+          monthly_material_order_limit: number | null
           monthly_quote_limit: number
           price_cents_monthly: number
           sort_order: number
           storage_limit_bytes: number
           stripe_price_id_live: string | null
           stripe_price_id_test: string | null
+          tagline: string | null
           updated_at: string
         }
         Insert: {
           active?: boolean
           code: string
+          coming_soon?: boolean
           component_limit?: number | null
           created_at?: string
           display_name: string
@@ -2263,19 +2268,23 @@ export type Database = {
           feat_flashings?: boolean
           feat_followups?: boolean
           feat_material_orders?: boolean
+          feature_blurbs?: string[]
           flashing_limit?: number | null
           included_seats?: number
+          monthly_material_order_limit?: number | null
           monthly_quote_limit: number
           price_cents_monthly: number
           sort_order: number
           storage_limit_bytes: number
           stripe_price_id_live?: string | null
           stripe_price_id_test?: string | null
+          tagline?: string | null
           updated_at?: string
         }
         Update: {
           active?: boolean
           code?: string
+          coming_soon?: boolean
           component_limit?: number | null
           created_at?: string
           display_name?: string
@@ -2285,14 +2294,17 @@ export type Database = {
           feat_flashings?: boolean
           feat_followups?: boolean
           feat_material_orders?: boolean
+          feature_blurbs?: string[]
           flashing_limit?: number | null
           included_seats?: number
+          monthly_material_order_limit?: number | null
           monthly_quote_limit?: number
           price_cents_monthly?: number
           sort_order?: number
           storage_limit_bytes?: number
           stripe_price_id_live?: string | null
           stripe_price_id_test?: string | null
+          tagline?: string | null
           updated_at?: string
         }
         Relationships: []

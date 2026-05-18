@@ -83,7 +83,7 @@ export default async function AccountPage() {
     loadCompanyEntitlements(profile.company_id),
     createAdminClient()
       .from('subscription_plans')
-      .select('code, display_name, price_cents_monthly, monthly_quote_limit, storage_limit_bytes, stripe_price_id_live, stripe_price_id_test, sort_order, active')
+      .select('code, display_name, price_cents_monthly, monthly_quote_limit, storage_limit_bytes, component_limit, flashing_limit, monthly_material_order_limit, included_seats, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card, tagline, feature_blurbs, coming_soon, stripe_price_id_live, stripe_price_id_test, sort_order, active')
       .eq('active', true)
       .order('sort_order', { ascending: true }),
   ]);
@@ -222,23 +222,62 @@ export default async function AccountPage() {
         price_cents_monthly: number;
         monthly_quote_limit: number;
         storage_limit_bytes: number;
+        component_limit: number | null;
+        flashing_limit: number | null;
+        monthly_material_order_limit: number | null;
+        included_seats: number;
+        feat_digital_takeoff: boolean;
+        feat_flashings: boolean;
+        feat_material_orders: boolean;
+        feat_followups: boolean;
+        feat_email_send: boolean;
+        feat_activity_card: boolean;
+        tagline: string | null;
+        feature_blurbs: string[] | null;
+        coming_soon: boolean;
         stripe_price_id_live: string | null;
         stripe_price_id_test: string | null;
         sort_order: number;
       }>;
-      // Phase 1: only show trial/starter/growth/pro in the upgrade UI. Higher
-      // tiers exist in the DB but aren't user-pickable yet.
-      const PHASE_1_VISIBLE = new Set(['starter', 'growth', 'pro']);
-      const upgradePlans: BillingPlanInfo[] = allPlans
-        .filter((p) => p.code !== entitlements.purchasedPlanCode && PHASE_1_VISIBLE.has(p.code))
+      // Tier-gating v3: render every active plan as a card. Trial is
+      // always selectable (non-Stripe path); coming-soon tiers render
+      // greyed-out and never invoke Stripe.
+      const VISIBLE = new Set(['trial', 'starter', 'growth', 'pro', 'pro_plus', 'premium']);
+      const plans: BillingPlanInfo[] = allPlans
+        .filter((p) => VISIBLE.has(p.code))
         .map((p) => ({
           code: p.code,
           displayName: p.display_name,
           priceCentsMonthly: p.price_cents_monthly,
           monthlyQuoteLimit: p.monthly_quote_limit,
           storageLimitBytes: p.storage_limit_bytes,
+          componentLimit: p.component_limit,
+          flashingLimit: p.flashing_limit,
+          monthlyMaterialOrderLimit: p.monthly_material_order_limit,
+          includedSeats: p.included_seats,
+          features: {
+            digital_takeoff: p.feat_digital_takeoff,
+            flashings: p.feat_flashings,
+            material_orders: p.feat_material_orders,
+            followups: p.feat_followups,
+            email_send: p.feat_email_send,
+            activity_card: p.feat_activity_card,
+          },
+          tagline: p.tagline,
+          featureBlurbs: p.feature_blurbs ?? [],
+          comingSoon: p.coming_soon,
           hasStripePrice: Boolean(p[priceColumn]),
+          isTrial: p.code === 'trial',
         }));
+
+      // Whether the company has an active Stripe sub (used to gate the
+      // trial activation button so paying customers can't accidentally
+      // downgrade themselves).
+      const hasActiveSubscription = Boolean(
+        company.stripe_subscription_id
+        && entitlements.subscriptionStatus !== 'canceled'
+        && entitlements.subscriptionStatus !== 'suspended',
+      );
 
       return (
         <section className="space-y-6">
@@ -252,12 +291,13 @@ export default async function AccountPage() {
               purchasedPlanCode={entitlements.purchasedPlanCode}
               subscriptionStatus={entitlements.subscriptionStatus}
               hasStripeCustomer={Boolean(company.stripe_customer_id)}
+              hasActiveSubscription={hasActiveSubscription}
               trialEndsAt={entitlements.trialEndsAt}
               currentPeriodEnd={entitlements.currentPeriodEnd}
               firstPaymentFailureAt={entitlements.firstPaymentFailureAt}
               storageUsedBytes={entitlements.storageUsedBytes}
               storageLimitBytes={entitlements.storageLimitBytes}
-              upgradePlans={upgradePlans}
+              plans={plans}
             />
           </div>
         </section>

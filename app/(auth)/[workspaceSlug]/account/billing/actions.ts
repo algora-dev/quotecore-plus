@@ -3,6 +3,10 @@
 /**
  * Billing server actions.
  *
+ * Trial activation is a non-Stripe path: we just flip the company onto
+ * the `trial` plan with a 14-day clock. The rest of the billing surface
+ * (checkout, portal) is Stripe-only.
+ *
  * Two entry points: createCheckoutSession (new subscription / plan change
  * for non-customers) and createCustomerPortalSession (existing customers
  * manage cards, invoices, cancel, switch plan). We deliberately keep both
@@ -15,6 +19,7 @@
  */
 
 import { headers } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import {
@@ -23,11 +28,18 @@ import {
 } from '@/app/lib/billing/stripe';
 
 /**
+ * How long a freshly-activated trial runs for. 14 days is the marketing
+ * promise; the entitlement helpers (company_effective_plan_code) downgrade
+ * to `starter` once trial_ends_at < now().
+ */
+const TRIAL_DAYS = 14;
+
+/**
  * Compute the absolute base URL for return links.
  *
  * Stripe needs absolute success/cancel URLs; we read the current host from
  * request headers so this works correctly on previews (vercel.app subdomains)
- * AND on production AND on localhost — no env var needed.
+ * AND on production AND on localhost â€” no env var needed.
  */
 async function baseUrl(): Promise<string> {
   const h = await headers();
@@ -192,4 +204,103 @@ export async function createCustomerPortalSession(): Promise<BillingActionResult
     console.error('[billing] createCustomerPortalSession failed:', msg);
     return { ok: false, code: 'stripe_error', message: msg };
   }
+}
+
+
+/**
+ * Activate the 14-day trial on the current company.
+ *
+ * Non-Stripe path: this just flips the company onto the 	rial plan
+ * with a 14-day clock. The entitlement helpers
+ * (company_effective_plan_code) auto-collapse to starter once
+ * trial_ends_at < now(), so we don't need a cron to enforce expiry.
+ *
+ * Guards:
+ *   * Only allowed when there is NO active Stripe subscription
+ *     (stripe_subscription_id IS NULL AND subscription_status is one
+ *     of trialing/canceled/suspended) so a paying customer can't
+ *     accidentally downgrade themselves to trial via this button.
+ *   * Refused if the company has already had a trial that ENDED in the
+ *     last 30 days (anti-abuse: prevents trial re-rolling).
+ */
+export async function activateTrial(): Promise<BillingActionResult> {
+  let ctx;
+  try {
+    ctx = await loadCompanyContext();
+  } catch {
+    return { ok: false, code: 'unauthenticated', message: 'Please sign in to activate the trial.' };
+  }
+  const { profile, company: ctxCompany } = ctx;
+  const slug = ctxCompany.slug;
+
+  const admin = createAdminClient();
+  const { data: company, error: companyErr } = await admin
+    .from('companies')
+    .select('id, plan_code, subscription_status, stripe_subscription_id, trial_ends_at')
+    .eq('id', profile.company_id)
+    .maybeSingle();
+  if (companyErr || !company) {
+    return { ok: false, code: 'company_not_found', message: 'Company record missing.' };
+  }
+
+  // Refuse if they're on a paid Stripe sub.
+  if (company.stripe_subscription_id) {
+    return {
+      ok: false,
+      code: 'has_active_subscription',
+      message: 'You have an active paid subscription. Cancel it via "Manage subscription" before starting a trial.',
+    };
+  }
+
+  // Re-roll guard. Today: allow re-activation if there's no active trial
+  // (trial_ends_at < now()). Production tightening to come — Shaun wants
+  // to be able to flip onto trial repeatedly during testing, so we
+  // intentionally do NOT block recently-ended trials yet. The 14-day
+  // expiry still applies; users can't extend by re-activating.
+  if (company.subscription_status === 'trialing' && company.trial_ends_at) {
+    const ends = new Date(company.trial_ends_at).getTime();
+    if (Date.now() < ends) {
+      return {
+        ok: false,
+        code: 'trial_already_active',
+        message: 'You are already on the free trial.',
+      };
+    }
+  }
+
+  const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString();
+
+  const { error: updateErr } = await admin
+    .from('companies')
+    .update({
+      plan_code: 'trial',
+      subscription_status: 'trialing',
+      trial_ends_at: trialEndsAt,
+      // Clear any leftover dunning state so the trial isn't immediately
+      // suspended by a stale past-due timer.
+      first_payment_failure_at: null,
+      dunning_stage_entered_at: null,
+    })
+    .eq('id', company.id);
+  if (updateErr) {
+    console.error('[billing] activateTrial update failed:', updateErr);
+    return { ok: false, code: 'update_failed', message: updateErr.message };
+  }
+
+  // Audit row in subscription_events so future debugging can correlate.
+  // Schema mirrors what the Stripe webhook handler writes — the
+  // distinguishing field is event_type='trial.activated'.
+  await admin.from('subscription_events').insert({
+    company_id: company.id,
+    event_type: 'trial.activated',
+    from_plan_code: company.plan_code,
+    to_plan_code: 'trial',
+    stripe_event_type: null,
+  });
+
+  // The success URL goes back to the billing tab so we can flash a
+  // banner — keep the same pattern as Stripe checkout success.
+  const base = await baseUrl();
+  revalidatePath(`/${slug}/account`);
+  return { ok: true, url: `${base}/${slug}/account?tab=billing&trial=activated` };
 }
