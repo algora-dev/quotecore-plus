@@ -1,7 +1,8 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import type { FlashingLibraryRow } from '@/app/lib/types';
 import { EditFlashingForm } from './edit-form';
+import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,9 +12,16 @@ interface Props {
 
 export default async function EditFlashingPage(props: Props) {
   const { workspaceSlug, id } = await props.params;
-  
+
   // Ensure user has company context
-  await requireCompanyContext();
+  const profile = await requireCompanyContext();
+
+  // Feature gate: companies without the flashings feature shouldn't be able
+  // to edit existing flashing rows either. Cap doesn't apply to edits.
+  const ent = await loadCompanyEntitlements(profile.company_id);
+  if (!ent.features.flashings) {
+    redirect(`/${workspaceSlug}/flashings`);
+  }
   
   const supabase = await createSupabaseServerClient();
   

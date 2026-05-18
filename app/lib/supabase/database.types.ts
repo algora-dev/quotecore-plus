@@ -2232,6 +2232,7 @@ export type Database = {
         Row: {
           active: boolean
           code: string
+          component_limit: number | null
           created_at: string
           display_name: string
           feat_activity_card: boolean
@@ -2240,6 +2241,7 @@ export type Database = {
           feat_flashings: boolean
           feat_followups: boolean
           feat_material_orders: boolean
+          flashing_limit: number | null
           included_seats: number
           monthly_quote_limit: number
           price_cents_monthly: number
@@ -2252,6 +2254,7 @@ export type Database = {
         Insert: {
           active?: boolean
           code: string
+          component_limit?: number | null
           created_at?: string
           display_name: string
           feat_activity_card?: boolean
@@ -2260,6 +2263,7 @@ export type Database = {
           feat_flashings?: boolean
           feat_followups?: boolean
           feat_material_orders?: boolean
+          flashing_limit?: number | null
           included_seats?: number
           monthly_quote_limit: number
           price_cents_monthly: number
@@ -2272,6 +2276,7 @@ export type Database = {
         Update: {
           active?: boolean
           code?: string
+          component_limit?: number | null
           created_at?: string
           display_name?: string
           feat_activity_card?: boolean
@@ -2280,6 +2285,7 @@ export type Database = {
           feat_flashings?: boolean
           feat_followups?: boolean
           feat_material_orders?: boolean
+          flashing_limit?: number | null
           included_seats?: number
           monthly_quote_limit?: number
           price_cents_monthly?: number
@@ -2693,6 +2699,10 @@ export type Database = {
         Args: { p_company_id: string; p_file_size: number }
         Returns: boolean
       }
+      company_component_count: {
+        Args: { p_company_id: string }
+        Returns: number
+      }
       company_effective_plan_active: {
         Args: { p_company_id: string }
         Returns: boolean
@@ -2700,6 +2710,10 @@ export type Database = {
       company_effective_plan_code: {
         Args: { p_company_id: string }
         Returns: string
+      }
+      company_flashing_count: {
+        Args: { p_company_id: string }
+        Returns: number
       }
       company_has_feature: {
         Args: { p_company_id: string; p_feature: string }
@@ -2717,6 +2731,14 @@ export type Database = {
       current_user_id: { Args: never; Returns: string }
       get_next_quote_number: { Args: { p_company_id: string }; Returns: number }
       prune_rate_limits: { Args: never; Returns: number }
+      require_component_slot: {
+        Args: { p_company_id: string }
+        Returns: undefined
+      }
+      require_flashing_slot: {
+        Args: { p_company_id: string }
+        Returns: undefined
+      }
       save_takeoff_atomic: {
         Args: { p_payload: Json; p_quote_id: string }
         Returns: undefined

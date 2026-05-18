@@ -1612,7 +1612,20 @@ export function FlashingCanvas({
       } else {
         // CREATE new flashing
         console.log('[FlashingSave] Creating new flashing');
-        await createFlashingFromCanvas(formData);
+        const result = await createFlashingFromCanvas(formData);
+        if (!result.ok) {
+          if (result.code === 'flashing_limit_reached' || result.code === 'feature_gated') {
+            // Server-side route gate should have prevented this, but if a
+            // user squeaks through (e.g. limit hit between page load and
+            // save) bounce them to the flashings page where the cap-aware
+            // UpgradeModal lives.
+            router.push(`/${workspaceSlug}/flashings`);
+            return;
+          }
+          const msg = result.code === 'internal_error' ? result.message : `Save failed (${result.code})`;
+          alert(`Error: ${msg}`);
+          return;
+        }
       }
 
       router.push(`/${workspaceSlug}/flashings`);

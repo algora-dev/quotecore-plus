@@ -26,7 +26,6 @@
 import 'server-only';
 import { cache } from 'react';
 
-import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import {
   FEATURE_MIN_PLAN,
@@ -34,7 +33,9 @@ import {
   type Feature,
 } from './features';
 import {
+  ComponentLimitReachedError,
   FeatureGatedError,
+  FlashingLimitReachedError,
   StorageQuotaExceededError,
   SubscriptionInactiveError,
 } from './errors';
@@ -91,6 +92,22 @@ export interface CompanyEntitlements {
    * + companies.storage_topup_bytes (top-up SKU is phase 2).
    */
   monthlyQuoteLimit: number;
+  /**
+   * Quotes created so far in the current calendar month (UTC). Counts BOTH
+   * drafts and finalised quotes — `create_quote_atomic` doesn't distinguish.
+   * Resets implicitly on the first of the month when the cron rolls the row.
+   */
+  monthlyQuoteUsed: number;
+  /**
+   * Lifetime cap on active component_library rows. NULL = unlimited.
+   */
+  componentLimit: number | null;
+  componentCount: number;
+  /**
+   * Lifetime cap on flashing_library rows. NULL = unlimited.
+   */
+  flashingLimit: number | null;
+  flashingCount: number;
   storageLimitBytes: number;
   storageUsedBytes: number;
   storageTopupBytes: number;
@@ -133,6 +150,8 @@ interface PlanRowRaw {
   monthly_quote_limit: number;
   storage_limit_bytes: number;
   included_seats: number;
+  component_limit: number | null;
+  flashing_limit: number | null;
   feat_digital_takeoff: boolean;
   feat_flashings: boolean;
   feat_material_orders: boolean;
@@ -160,7 +179,20 @@ export const loadCompanyEntitlements = cache(
     // calls cleanly, so we use admin.rpc for each then merge — three small
     // calls is fine since the helpers are STABLE and the company row pulls
     // the rest in a single select.
-    const [companyResult, effCodeResult, effActiveResult] = await Promise.all([
+    const periodStart = new Date(Date.UTC(
+      new Date().getUTCFullYear(),
+      new Date().getUTCMonth(),
+      1,
+    )).toISOString().slice(0, 10); // YYYY-MM-DD
+
+    const [
+      companyResult,
+      effCodeResult,
+      effActiveResult,
+      compCountResult,
+      flashCountResult,
+      usageResult,
+    ] = await Promise.all([
       admin
         .from('companies')
         .select(
@@ -171,6 +203,14 @@ export const loadCompanyEntitlements = cache(
         .maybeSingle(),
       admin.rpc('company_effective_plan_code', { p_company_id: companyId }),
       admin.rpc('company_effective_plan_active', { p_company_id: companyId }),
+      admin.rpc('company_component_count', { p_company_id: companyId }),
+      admin.rpc('company_flashing_count',  { p_company_id: companyId }),
+      admin
+        .from('company_quote_usage')
+        .select('quotes_created')
+        .eq('company_id', companyId)
+        .eq('period_start', periodStart)
+        .maybeSingle(),
     ]);
 
     if (companyResult.error) {
@@ -189,7 +229,7 @@ export const loadCompanyEntitlements = cache(
     const { data: planRowData, error: planErr } = await admin
       .from('subscription_plans')
       .select(
-        'code, monthly_quote_limit, storage_limit_bytes, included_seats, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card',
+        'code, monthly_quote_limit, storage_limit_bytes, included_seats, component_limit, flashing_limit, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card',
       )
       .eq('code', effectivePlanCode)
       .limit(1)
@@ -213,6 +253,11 @@ export const loadCompanyEntitlements = cache(
       subscriptionStatus: company.subscription_status as SubscriptionStatus,
       isActive,
       monthlyQuoteLimit: plan.monthly_quote_limit,
+      monthlyQuoteUsed: (usageResult.data?.quotes_created as number | undefined) ?? 0,
+      componentLimit: plan.component_limit,
+      componentCount: (compCountResult.data as number | null) ?? 0,
+      flashingLimit:  plan.flashing_limit,
+      flashingCount:  (flashCountResult.data as number | null) ?? 0,
       storageLimitBytes: plan.storage_limit_bytes + company.storage_topup_bytes,
       storageUsedBytes: company.storage_used_bytes,
       storageTopupBytes: company.storage_topup_bytes,
@@ -351,6 +396,11 @@ export async function entitlementsForClient(
   isActive: boolean;
   features: Record<Feature, boolean>;
   monthlyQuoteLimit: number;
+  monthlyQuoteUsed: number;
+  componentLimit: number | null;
+  componentCount: number;
+  flashingLimit: number | null;
+  flashingCount: number;
   storageUsedBytes: number;
   storageLimitBytes: number;
   trialEndsAt: string | null;
@@ -365,6 +415,11 @@ export async function entitlementsForClient(
     isActive: ent.isActive,
     features: ent.features,
     monthlyQuoteLimit: ent.monthlyQuoteLimit,
+    monthlyQuoteUsed: ent.monthlyQuoteUsed,
+    componentLimit: ent.componentLimit,
+    componentCount: ent.componentCount,
+    flashingLimit: ent.flashingLimit,
+    flashingCount: ent.flashingCount,
     storageUsedBytes: ent.storageUsedBytes,
     storageLimitBytes: ent.storageLimitBytes,
     trialEndsAt: ent.trialEndsAt,
@@ -372,6 +427,73 @@ export async function entitlementsForClient(
     firstPaymentFailureAt: ent.firstPaymentFailureAt,
     compUntil: ent.compUntil,
   };
+}
+
+/**
+ * Acquire one component-library slot for the given company. Wraps the SQL
+ * function `require_component_slot` so the calling server action gets a
+ * typed error instead of a raw Postgres exception.
+ *
+ * The SQL function does the actual count + cap check. We translate its
+ * SQLSTATE into one of our domain errors so the UI can pattern-match.
+ *
+ * NOTE: this DOES NOT take an advisory lock. Two concurrent creates can
+ * race the check; the small overshoot window is acceptable for now since
+ * component creation is a low-frequency interactive action. Add a lock if
+ * we ever see overshoot in practice.
+ */
+export async function requireComponentSlot(companyId: string): Promise<void> {
+  const admin = createAdminClient();
+  const { error } = await admin.rpc('require_component_slot', { p_company_id: companyId });
+  if (!error) return;
+  // PostgREST surfaces RAISE EXCEPTION SQLSTATE as error.code.
+  const code = (error as { code?: string }).code;
+  if (code === 'P0001') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new SubscriptionInactiveError(ent.subscriptionStatus);
+  }
+  if (code === 'P0010') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new ComponentLimitReachedError({
+      used:     ent.componentCount,
+      limit:    ent.componentLimit ?? 0,
+      planCode: ent.effectivePlanCode,
+    });
+  }
+  throw new Error(`require_component_slot failed: ${error.message}`);
+}
+
+/**
+ * Acquire one flashing-library slot for the given company. Wraps
+ * `require_flashing_slot`. Throws FeatureGatedError if the plan doesn't
+ * include flashings at all, otherwise FlashingLimitReachedError on cap.
+ */
+export async function requireFlashingSlot(companyId: string): Promise<void> {
+  const admin = createAdminClient();
+  const { error } = await admin.rpc('require_flashing_slot', { p_company_id: companyId });
+  if (!error) return;
+  const code = (error as { code?: string }).code;
+  if (code === 'P0001') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new SubscriptionInactiveError(ent.subscriptionStatus);
+  }
+  if (code === 'P0011') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new FlashingLimitReachedError({
+      used:     ent.flashingCount,
+      limit:    ent.flashingLimit ?? 0,
+      planCode: ent.effectivePlanCode,
+    });
+  }
+  if (code === 'P0012') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new FeatureGatedError({
+      feature: 'flashings',
+      currentPlan: ent.effectivePlanCode,
+      requiredPlan: FEATURE_MIN_PLAN.flashings,
+    });
+  }
+  throw new Error(`require_flashing_slot failed: ${error.message}`);
 }
 
 // Re-export the surface the rest of the app should import from one path.
@@ -384,6 +506,8 @@ export {
   FeatureGatedError,
   SubscriptionInactiveError,
   QuoteLimitReachedError,
+  ComponentLimitReachedError,
+  FlashingLimitReachedError,
   StorageQuotaExceededError,
   isBillingError,
 } from './errors';

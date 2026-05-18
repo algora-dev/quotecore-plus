@@ -3,6 +3,12 @@ import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext, requireUser } from '@/app/lib/supabase/server';
 import { pickFields } from '@/app/lib/security/pickFields';
 import type { ComponentLibraryInsert } from '@/app/lib/types';
+import {
+  requireComponentSlot,
+  ComponentLimitReachedError,
+  SubscriptionInactiveError,
+  isBillingError,
+} from '@/app/lib/billing/entitlements';
 
 /**
  * Sentinel id we slot into `copilot_progress.guides_completed[]` once the
@@ -113,17 +119,49 @@ export async function loadComponentLibrary() {
   return data;
 }
 
-export async function createComponent(input: ComponentLibraryInsert) {
+/**
+ * Result envelope so the client can pattern-match on `code` to render a
+ * tier-upgrade modal instead of a generic toast. Keeps the success path
+ * unchanged: callers that just need the row still get `data` on success.
+ */
+export type CreateComponentResult =
+  | { ok: true; data: NonNullable<Awaited<ReturnType<typeof loadComponentLibrary>>>[number] }
+  | { ok: false; code: 'component_limit_reached'; used: number; limit: number; planCode: string }
+  | { ok: false; code: 'subscription_inactive'; status: string }
+  | { ok: false; code: 'internal_error'; message: string };
+
+export async function createComponent(input: ComponentLibraryInsert): Promise<CreateComponentResult> {
   let profile;
   try {
     profile = await requireCompanyContext();
   } catch (err) {
     console.error('[createComponent] Failed to get company context:', err);
-    throw new Error('Account setup incomplete. Please log out and log back in.');
+    return { ok: false, code: 'internal_error', message: 'Account setup incomplete. Please log out and log back in.' };
   }
 
-  console.log('[createComponent] Creating component for company:', profile.company_id);
-  console.log('[createComponent] Input data:', input);
+  // Tier gate: refuse early with a typed error before the INSERT. The SQL
+  // helper double-checks under the hood, but this gives us cheaper UX on the
+  // happy-path block and a typed payload back to the client.
+  try {
+    await requireComponentSlot(profile.company_id);
+  } catch (err) {
+    if (err instanceof ComponentLimitReachedError) {
+      return {
+        ok: false,
+        code: 'component_limit_reached',
+        used: err.used,
+        limit: err.limit,
+        planCode: err.planCode,
+      };
+    }
+    if (err instanceof SubscriptionInactiveError) {
+      return { ok: false, code: 'subscription_inactive', status: err.currentStatus };
+    }
+    if (isBillingError(err)) {
+      return { ok: false, code: 'internal_error', message: err.message };
+    }
+    throw err;
+  }
 
   // Note: After migration 022, database accepts 'lineal' directly (no transform needed)
   const supabase = await createSupabaseServerClient();
@@ -132,15 +170,14 @@ export async function createComponent(input: ComponentLibraryInsert) {
     .insert({ ...input, company_id: profile.company_id })
     .select()
     .single();
-  
+
   if (error) {
     console.error('[createComponent] Database error:', error);
-    throw new Error(`Failed to create component: ${error.message} (Code: ${error.code})`);
+    return { ok: false, code: 'internal_error', message: `${error.message} (Code: ${error.code})` };
   }
-  
-  console.log('[createComponent] Component created successfully:', data.id);
+
   revalidatePath('/components');
-  return data;
+  return { ok: true, data };
 }
 
 /**

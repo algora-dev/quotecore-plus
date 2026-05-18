@@ -2,6 +2,7 @@ import { loadComponentLibrary, hasSeenComponentsIntro } from './actions';
 import { ComponentList } from './component-list';
 import { ComponentsIntroModal } from './components-intro-modal';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
+import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 
 export default async function ComponentsPage(props: {params: Promise<{workspaceSlug: string}>}) {
   const { workspaceSlug } = await props.params;
@@ -25,6 +26,7 @@ export default async function ComponentsPage(props: {params: Promise<{workspaceS
   // shop sees ft²/RS labels here, with a note that per-quote display still
   // follows the quote's own measurement_system.
   const { company } = await loadCompanyContext();
+  const ent = await loadCompanyEntitlements(company.id);
 
   // First-visit modal: shown once per user. Suppresses the copilot tour
   // while open (see ComponentsIntroModal). After dismissal the existing
@@ -39,6 +41,10 @@ export default async function ComponentsPage(props: {params: Promise<{workspaceS
         initialComponents={components}
         workspaceSlug={workspaceSlug}
         companyMeasurementSystem={company.default_measurement_system}
+        componentLimit={ent.componentLimit}
+        componentCount={ent.componentCount}
+        effectivePlanCode={ent.effectivePlanCode}
+        flashingsFeatureEnabled={ent.features.flashings}
       />
     </>
   );

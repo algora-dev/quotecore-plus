@@ -6,6 +6,7 @@ import { createQuoteWithDetails } from './actions';
 import { FileUploader } from '@/app/components/FileUploader';
 import { createClient } from '@/app/lib/supabase/client';
 import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-actions';
+import { UpgradeModal } from '@/app/components/UpgradeModal';
 
 interface Template {
   id: string;
@@ -21,6 +22,13 @@ interface Props {
   companyId: string;
   /** Company default measurement system; pre-selects the radio when the form mounts. */
   defaultMeasurementSystem: MeasurementChoice;
+  /** Whether the digital takeoff feature is available on the company's plan. */
+  digitalTakeoffAvailable: boolean;
+  /** True if the company has hit their monthly quote limit. Blocks submission. */
+  monthlyQuoteAtCap: boolean;
+  monthlyQuoteUsed: number;
+  monthlyQuoteLimit: number;
+  effectivePlanCode: string;
 }
 
 const MEASUREMENT_OPTIONS: Array<{ value: MeasurementChoice; title: string; subtitle: string }> = [
@@ -29,7 +37,17 @@ const MEASUREMENT_OPTIONS: Array<{ value: MeasurementChoice; title: string; subt
   { value: 'imperial_rs', title: 'Imperial — Roofing Squares', subtitle: 'feet & Roofing Squares (RS)' },
 ];
 
-export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultMeasurementSystem }: Props) {
+export function QuoteDetailsForm({
+  workspaceSlug,
+  templates,
+  companyId,
+  defaultMeasurementSystem,
+  digitalTakeoffAvailable,
+  monthlyQuoteAtCap,
+  monthlyQuoteUsed,
+  monthlyQuoteLimit,
+  effectivePlanCode,
+}: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [customerName, setCustomerName] = useState('');
@@ -51,6 +69,14 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
   // Measurement system for the quote-to-be. Locked once the quote is created.
   const [measurementSystem, setMeasurementSystem] = useState<MeasurementChoice>(defaultMeasurementSystem);
   const [pendingSystemSwitch, setPendingSystemSwitch] = useState<MeasurementChoice | null>(null);
+
+  // Upgrade modal state. Two trigger paths:
+  //   1. User clicks the greyed-out Digital Mode button on a plan without
+  //      the digital_takeoff feature.
+  //   2. User submits the form with monthlyQuoteAtCap=true.
+  // Both share the same modal component but with different copy / target plan.
+  const [digitalUpgradeOpen, setDigitalUpgradeOpen] = useState(false);
+  const [quoteCapUpgradeOpen, setQuoteCapUpgradeOpen] = useState(false);
 
   // Pre-select template from URL param. setState inside effect is
   // intentional: the URL is external state we mirror. React 19's stricter
@@ -95,6 +121,14 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Last-line client guard before we hit the server. The server's
+    // create_quote_atomic also enforces this so a bypass attempt still
+    // fails with quote_limit_reached.
+    if (monthlyQuoteAtCap) {
+      setQuoteCapUpgradeOpen(true);
+      return;
+    }
 
     if (!customerName.trim()) {
       alert('Customer name is required');
@@ -397,20 +431,35 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
             <div className="text-xs text-slate-500 mt-1">Traditional quote builder</div>
           </button>
 
-          {/* Digital Mode Button */}
+          {/* Digital Mode Button - locked when plan lacks the feature */}
           <button
             type="button"
             onClick={() => {
+              if (!digitalTakeoffAvailable) {
+                setDigitalUpgradeOpen(true);
+                return;
+              }
               setEntryMode('digital');
               setTemplateId(''); // Auto-switch to "Start from scratch"
             }}
             className={`relative p-4 rounded-full border-2 transition-all ${
-              entryMode === 'digital'
+              !digitalTakeoffAvailable
+                ? 'border-slate-200 bg-slate-100 opacity-60 cursor-pointer'
+                : entryMode === 'digital'
                 ? 'border-orange-500 bg-blue-50'
                 : 'border-slate-300 hover:border-slate-400'
             }`}
-            title="Upload your roof plan, measure and assign roof areas, roof component items (Faster)"
+            title={!digitalTakeoffAvailable
+              ? 'To access digital takeoff mode please upgrade your account'
+              : 'Upload your roof plan, measure and assign roof areas, roof component items (Faster)'}
           >
+            {!digitalTakeoffAvailable && (
+              <span className="absolute top-2 right-2">
+                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </span>
+            )}
             <div className="flex items-center justify-center mb-2">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
@@ -501,6 +550,22 @@ export function QuoteDetailsForm({ workspaceSlug, templates, companyId, defaultM
             : 'Create Quote'}
         </button>
       </div>
+
+      <UpgradeModal
+        open={digitalUpgradeOpen}
+        onClose={() => setDigitalUpgradeOpen(false)}
+        title="Digital takeoff requires a higher plan"
+        description="To access digital takeoff mode please upgrade your account."
+        recommendedPlan="growth"
+      />
+
+      <UpgradeModal
+        open={quoteCapUpgradeOpen}
+        onClose={() => setQuoteCapUpgradeOpen(false)}
+        title={`Monthly quote limit reached (${monthlyQuoteUsed}/${monthlyQuoteLimit})`}
+        description={`To create more quotes this month you need to upgrade your account tier, or wait until your quote limit resets next month. (${effectivePlanCode} plan)`}
+        recommendedPlan={effectivePlanCode === 'trial' ? 'growth' : 'pro'}
+      />
     </form>
   );
 }

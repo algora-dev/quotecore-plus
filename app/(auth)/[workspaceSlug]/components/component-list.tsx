@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createComponent, updateComponent, deleteComponent } from './actions';
+import { UpgradeModal } from '@/app/components/UpgradeModal';
 import type {
   ComponentLibraryRow,
   ComponentLibraryInsert,
@@ -50,11 +51,24 @@ export function ComponentList({
   initialComponents,
   workspaceSlug,
   companyMeasurementSystem = 'metric',
+  componentLimit,
+  componentCount,
+  effectivePlanCode,
+  flashingsFeatureEnabled,
 }: {
   initialComponents: ComponentLibraryRow[];
   workspaceSlug: string;
   /** Company default measurement system; drives unit labels on this page. */
   companyMeasurementSystem?: MeasurementSystem;
+  /** Plan cap on lifetime active components. NULL = unlimited. */
+  componentLimit: number | null;
+  /** Lifetime active component count as of server render. Local state
+   *  tracks deltas during this page session. */
+  componentCount: number;
+  effectivePlanCode: string;
+  /** Whether the plan includes the flashings feature. Controls the
+   *  Flashings entry button on this page. */
+  flashingsFeatureEnabled: boolean;
 }) {
   const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);
   /** Local helper that picks the right unit suffix for a measurement type given the company's default system. */
@@ -75,6 +89,18 @@ export function ComponentList({
   const [components, setComponents] = useState(initialComponents);
   const [flashings, setFlashings] = useState<FlashingLibraryRow[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [flashingsUpgradeOpen, setFlashingsUpgradeOpen] = useState(false);
+
+  // Live cap calculation. We track the active count locally so cap
+  // enforcement reflects deletes/toggles done in this session without a
+  // round-trip. Soft-delete is excluded server-side; we mirror that here
+  // by counting is_active !== false (treat undefined as active).
+  const activeCount = components.filter((c) => c.is_active !== false).length;
+  // Initial server count vs local can differ if rows were added concurrently
+  // in another tab; we take the larger so we don't undershoot the cap.
+  const effectiveCount = Math.max(componentCount, activeCount);
+  const atCap = componentLimit !== null && effectiveCount >= componentLimit;
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | ComponentType>('all');
   const [measurementFilter, setMeasurementFilter] = useState<'all' | MeasurementType | 'rafter' | 'valley_hip'>('all');
@@ -183,8 +209,17 @@ export function ComponentList({
     };
 
     try {
-      const created = await createComponent(input);
-      setComponents((prev) => [...prev, created]);
+      const result = await createComponent(input);
+      if (!result.ok) {
+        if (result.code === 'component_limit_reached') {
+          setShowForm(false);
+          setUpgradeOpen(true);
+        } else {
+          alert(result.code === 'internal_error' ? result.message : 'Could not create component.');
+        }
+        return;
+      }
+      setComponents((prev) => [...prev, result.data]);
       setShowForm(false);
       setFormWasteType('none');
       setFormMeasurementType('area');
@@ -287,18 +322,43 @@ export function ComponentList({
         
         <div className="flex gap-2">
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              if (atCap) {
+                setUpgradeOpen(true);
+                return;
+              }
+              setShowForm(true);
+            }}
             data-copilot="add-component"
             className="inline-flex items-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             + Add Component
+            {componentLimit !== null && (
+              <span className="ml-2 text-xs font-medium text-white/80">
+                {effectiveCount}/{componentLimit}
+              </span>
+            )}
           </button>
-          <Link
-            href={`/${workspaceSlug}/flashings`}
-            className="inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-          >
-            Flashings
-          </Link>
+          {flashingsFeatureEnabled ? (
+            <Link
+              href={`/${workspaceSlug}/flashings`}
+              className="inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            >
+              Flashings
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setFlashingsUpgradeOpen(true)}
+              title="Flashings requires a higher plan"
+              className="inline-flex items-center rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-500 cursor-pointer hover:bg-slate-300"
+            >
+              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Flashings
+            </button>
+          )}
         </div>
       </div>
 
@@ -666,6 +726,22 @@ export function ComponentList({
           </div>
         </div>
       )}
+
+      <UpgradeModal
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        title={`Component library full on ${effectivePlanCode === 'trial' ? 'the free trial' : `the ${effectivePlanCode} plan`}`}
+        description={`You've reached your ${componentLimit ?? 0} component limit. Upgrade your plan to add more reusable components to your library.`}
+        recommendedPlan="growth"
+      />
+
+      <UpgradeModal
+        open={flashingsUpgradeOpen}
+        onClose={() => setFlashingsUpgradeOpen(false)}
+        title="Flashing drawings require a higher plan"
+        description="Upgrade your account to access the flashings drawing tool and reusable flashing library."
+        recommendedPlan="pro"
+      />
     </div>
   );
 }

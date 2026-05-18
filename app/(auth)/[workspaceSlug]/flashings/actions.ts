@@ -3,6 +3,25 @@ import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { pickFields } from '@/app/lib/security/pickFields';
 import type { FlashingLibraryInsert, FlashingLibraryRow } from '@/app/lib/types';
+import {
+  requireFlashingSlot,
+  FlashingLimitReachedError,
+  FeatureGatedError,
+  SubscriptionInactiveError,
+} from '@/app/lib/billing/entitlements';
+
+/**
+ * Envelope returned by the create paths so the client can show an upgrade
+ * modal on cap/feature-gate without parsing message strings. On success
+ * `data` is the new row. On feature-gate failure `code='feature_gated'`,
+ * on cap failure `code='flashing_limit_reached'`.
+ */
+export type CreateFlashingResult =
+  | { ok: true; data: FlashingLibraryRow }
+  | { ok: false; code: 'flashing_limit_reached'; used: number; limit: number; planCode: string }
+  | { ok: false; code: 'feature_gated'; currentPlan: string; requiredPlan: string }
+  | { ok: false; code: 'subscription_inactive'; status: string }
+  | { ok: false; code: 'internal_error'; message: string };
 
 // TODO(phase-2 storage quota): createFlashing / createFlashingFromCanvas /
 // updateFlashing all upload to the PUBLIC company-logos bucket. Phase 1
@@ -71,21 +90,25 @@ export async function loadFlashingById(id: string): Promise<FlashingLibraryRow> 
   return data as unknown as FlashingLibraryRow;
 }
 
-export async function createFlashing(formData: FormData): Promise<FlashingLibraryRow> {
+export async function createFlashing(formData: FormData): Promise<CreateFlashingResult> {
   let profile;
   try {
     profile = await requireCompanyContext();
   } catch (err) {
     console.error('[createFlashing] Failed to get company context:', err);
-    throw new Error('Account setup incomplete. Please log out and log back in.');
+    return { ok: false, code: 'internal_error', message: 'Account setup incomplete. Please log out and log back in.' };
   }
+
+  // Tier gate: refuse before we upload anything to storage.
+  const gateResult = await guardFlashingSlot(profile.company_id);
+  if (gateResult) return gateResult;
 
   const name = formData.get('name') as string;
   const description = formData.get('description') as string | null;
   const imageFile = formData.get('image') as File;
 
   if (!name || !imageFile) {
-    throw new Error('Name and image file are required');
+    return { ok: false, code: 'internal_error', message: 'Name and image file are required' };
   }
 
   console.log('[createFlashing] Creating flashing for company:', profile.company_id);
@@ -111,7 +134,7 @@ export async function createFlashing(formData: FormData): Promise<FlashingLibrar
 
   if (uploadError) {
     console.error('[createFlashing] Upload error:', uploadError);
-    throw new Error(`Failed to upload image: ${uploadError.message}`);
+    return { ok: false, code: 'internal_error', message: `Failed to upload image: ${uploadError.message}` };
   }
 
   // 2. Get public URL
@@ -138,11 +161,44 @@ export async function createFlashing(formData: FormData): Promise<FlashingLibrar
     console.error('[createFlashing] Database error:', error);
     // Try to clean up uploaded file if database insert fails
     await supabase.storage.from('company-logos').remove([storagePath]);
-    throw new Error(`Failed to create flashing: ${error.message}`);
+    return { ok: false, code: 'internal_error', message: `Failed to create flashing: ${error.message}` };
   }
   
   revalidatePath('/[workspaceSlug]/flashings');
-  return data as unknown as FlashingLibraryRow;
+  return { ok: true, data: data as unknown as FlashingLibraryRow };
+}
+
+/**
+ * Shared slot-acquisition gate for both create paths. Returns null on success,
+ * or the envelope-shaped error so the caller can `return` directly.
+ */
+async function guardFlashingSlot(companyId: string): Promise<CreateFlashingResult | null> {
+  try {
+    await requireFlashingSlot(companyId);
+    return null;
+  } catch (err) {
+    if (err instanceof FlashingLimitReachedError) {
+      return {
+        ok: false,
+        code: 'flashing_limit_reached',
+        used: err.used,
+        limit: err.limit,
+        planCode: err.planCode,
+      };
+    }
+    if (err instanceof FeatureGatedError) {
+      return {
+        ok: false,
+        code: 'feature_gated',
+        currentPlan: err.currentPlan,
+        requiredPlan: err.requiredPlan,
+      };
+    }
+    if (err instanceof SubscriptionInactiveError) {
+      return { ok: false, code: 'subscription_inactive', status: err.currentStatus };
+    }
+    throw err;
+  }
 }
 
 export async function updateFlashing(id: string, input: Partial<FlashingLibraryInsert>): Promise<FlashingLibraryRow> {
@@ -359,14 +415,18 @@ export async function deleteFlashing(id: string) {
   revalidatePath('/[workspaceSlug]/flashings');
 }
 
-export async function createFlashingFromCanvas(formData: FormData): Promise<FlashingLibraryRow> {
+export async function createFlashingFromCanvas(formData: FormData): Promise<CreateFlashingResult> {
   let profile;
   try {
     profile = await requireCompanyContext();
   } catch (err) {
     console.error('[createFlashingFromCanvas] Failed to get company context:', err);
-    throw new Error('Account setup incomplete. Please log out and log back in.');
+    return { ok: false, code: 'internal_error', message: 'Account setup incomplete. Please log out and log back in.' };
   }
+
+  // Tier gate: refuse before we upload anything.
+  const gateResult = await guardFlashingSlot(profile.company_id);
+  if (gateResult) return gateResult;
 
   const name = formData.get('name') as string;
   const description = formData.get('description') as string | null;
@@ -375,7 +435,7 @@ export async function createFlashingFromCanvas(formData: FormData): Promise<Flas
   const measurementsData = formData.get('measurements') as string | null;
 
   if (!name || !imageFile) {
-    throw new Error('Name and image are required');
+    return { ok: false, code: 'internal_error', message: 'Name and image are required' };
   }
 
   console.log('[createFlashingFromCanvas] Creating flashing from canvas:', name);
@@ -399,7 +459,7 @@ export async function createFlashingFromCanvas(formData: FormData): Promise<Flas
 
   if (uploadError) {
     console.error('[createFlashingFromCanvas] Upload error:', uploadError);
-    throw new Error(`Failed to upload canvas image: ${uploadError.message}`);
+    return { ok: false, code: 'internal_error', message: `Failed to upload canvas image: ${uploadError.message}` };
   }
 
   // 2. Get public URL
@@ -428,9 +488,9 @@ export async function createFlashingFromCanvas(formData: FormData): Promise<Flas
     console.error('[createFlashingFromCanvas] Database error:', error);
     // Try to clean up uploaded file
     await supabase.storage.from('company-logos').remove([storagePath]);
-    throw new Error(`Failed to create flashing: ${error.message}`);
+    return { ok: false, code: 'internal_error', message: `Failed to create flashing: ${error.message}` };
   }
   
   revalidatePath('/[workspaceSlug]/flashings');
-  return data as unknown as FlashingLibraryRow;
+  return { ok: true, data: data as unknown as FlashingLibraryRow };
 }

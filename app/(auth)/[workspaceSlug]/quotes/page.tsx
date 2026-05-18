@@ -98,7 +98,14 @@ export default async function QuotesPage({
         )}
       </div>
 
-      <QuotesList quotes={quotes} workspaceSlug={workspaceSlug} />
+      <QuotesList
+        quotes={quotes}
+        workspaceSlug={workspaceSlug}
+        monthlyQuoteAtCap={atLimit}
+        monthlyQuoteUsed={used}
+        monthlyQuoteLimit={limit}
+        effectivePlanCode={entitlements.effectivePlanCode}
+      />
     </section>
   );
 }

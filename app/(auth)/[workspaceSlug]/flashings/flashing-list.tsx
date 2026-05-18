@@ -5,10 +5,16 @@ import { useRouter } from 'next/navigation';
 import { createFlashing, deleteFlashing } from './actions';
 import type { FlashingLibraryRow } from '@/app/lib/types';
 import Image from 'next/image';
+import { UpgradeModal } from '@/app/components/UpgradeModal';
 
 interface Props {
   initialFlashings: FlashingLibraryRow[];
   workspaceSlug: string;
+  /** Plan cap on lifetime flashings. NULL = unlimited. */
+  flashingLimit: number | null;
+  /** Lifetime flashing count as of server render. */
+  flashingCount: number;
+  effectivePlanCode: string;
 }
 
 /**
@@ -73,7 +79,7 @@ function printFlashing(flashing: FlashingLibraryRow) {
   w.document.close();
 }
 
-export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
+export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, flashingCount, effectivePlanCode }: Props) {
   const router = useRouter();
   const [flashings, setFlashings] = useState(initialFlashings);
   const [showUploadForm, setShowUploadForm] = useState(false);
@@ -81,6 +87,13 @@ export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
   const [viewingFlashing, setViewingFlashing] = useState<FlashingLibraryRow | null>(null);
   const [deleteFlashingId, setDeleteFlashingId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+
+  // Live cap: prefer the local count once we've started mutating the list,
+  // but never undershoot the server-side count (defends against concurrent
+  // edits in another tab).
+  const effectiveCount = Math.max(flashingCount, flashings.length);
+  const atCap = flashingLimit !== null && effectiveCount >= flashingLimit;
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -96,9 +109,18 @@ export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
       }
 
       // Pass entire FormData to server action (includes name, description, image)
-      const newFlashing = await createFlashing(fd);
+      const result = await createFlashing(fd);
+      if (!result.ok) {
+        if (result.code === 'flashing_limit_reached' || result.code === 'feature_gated') {
+          setShowUploadForm(false);
+          setUpgradeOpen(true);
+        } else {
+          alert(result.code === 'internal_error' ? `Error: ${result.message}` : 'Could not create flashing.');
+        }
+        return;
+      }
 
-      setFlashings([...flashings, newFlashing]);
+      setFlashings([...flashings, result.data]);
       setShowUploadForm(false);
       // Form will be unmounted when upload form closes, no need to reset
     } catch (err: any) {
@@ -129,18 +151,35 @@ export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
         <p className="text-sm text-slate-500">
           {flashings.length} {flashings.length === 1 ? 'flashing' : 'flashings'} in library
         </p>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {flashingLimit !== null && (
+            <span className="text-xs text-slate-500 mr-1">
+              {effectiveCount}/{flashingLimit} used
+            </span>
+          )}
           <button
-            onClick={() => router.push(`/${workspaceSlug}/flashings/draw`)}
+            onClick={() => {
+              if (atCap) {
+                setUpgradeOpen(true);
+                return;
+              }
+              router.push(`/${workspaceSlug}/flashings/draw`);
+            }}
             data-copilot="draw-flashing"
-            title="Create a new flashing/image"
+            title={atCap ? 'Upgrade to create more flashings' : 'Create a new flashing/image'}
             className="px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all shadow-sm hover:shadow-md"
           >
             Create
           </button>
           <button
-            onClick={() => setShowUploadForm(true)}
-            title="Upload an existing flashing/image"
+            onClick={() => {
+              if (atCap) {
+                setUpgradeOpen(true);
+                return;
+              }
+              setShowUploadForm(true);
+            }}
+            title={atCap ? 'Upgrade to upload more flashings' : 'Upload an existing flashing/image'}
             className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all shadow-sm hover:shadow-md"
           >
             Upload
@@ -282,8 +321,17 @@ export function FlashingList({ initialFlashings, workspaceSlug }: Props) {
         </div>
       )}
 
+      <UpgradeModal
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        title={`Flashing library full on ${effectivePlanCode === 'trial' ? 'the free trial' : `the ${effectivePlanCode} plan`}`}
+        description={`You've reached your ${flashingLimit ?? 0} flashing limit. Upgrade your plan to add more flashing designs to your library.`}
+        recommendedPlan="pro"
+      />
+
       {/* View Flashing Modal */}
       {viewingFlashing && (
+
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setViewingFlashing(null)}>
           <div className="bg-white rounded-xl p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4 gap-3">

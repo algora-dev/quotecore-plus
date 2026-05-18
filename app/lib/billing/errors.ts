@@ -106,6 +106,46 @@ export class QuoteLimitReachedError extends BillingError {
 }
 
 /**
+ * Thrown when the company has hit its lifetime component-library cap.
+ * Raised by `require_component_slot` (Postgres P0010).
+ */
+export class ComponentLimitReachedError extends BillingError {
+  readonly used: number;
+  readonly limit: number;
+  readonly planCode: string;
+
+  constructor(args: { used: number; limit: number; planCode: string }) {
+    super(
+      'component_limit_reached',
+      `Component library cap reached for plan "${args.planCode}": ${args.used} of ${args.limit} components used.`,
+    );
+    this.used = args.used;
+    this.limit = args.limit;
+    this.planCode = args.planCode;
+  }
+}
+
+/**
+ * Thrown when the company has hit its lifetime flashing-library cap.
+ * Raised by `require_flashing_slot` (Postgres P0011).
+ */
+export class FlashingLimitReachedError extends BillingError {
+  readonly used: number;
+  readonly limit: number;
+  readonly planCode: string;
+
+  constructor(args: { used: number; limit: number; planCode: string }) {
+    super(
+      'flashing_limit_reached',
+      `Flashing library cap reached for plan "${args.planCode}": ${args.used} of ${args.limit} flashings used.`,
+    );
+    this.used = args.used;
+    this.limit = args.limit;
+    this.planCode = args.planCode;
+  }
+}
+
+/**
  * Thrown when a storage upload would exceed the company's effective storage
  * limit (plan limit + topups - currently used). The upload finaliser catches
  * this and removes the just-uploaded object so we don't leak bytes.

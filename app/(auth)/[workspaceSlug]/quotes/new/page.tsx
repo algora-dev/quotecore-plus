@@ -2,6 +2,7 @@ import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/sup
 import { QuoteDetailsForm } from './QuoteDetailsForm';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
+import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 
 export default async function NewQuotePage({
   params,
@@ -25,6 +26,8 @@ export default async function NewQuotePage({
   // leak into the UI.
   const { company } = await loadCompanyContext();
   const defaultMeasurementSystem = normalizeMeasurementSystem(company.default_measurement_system);
+  const ent = await loadCompanyEntitlements(profile.company_id);
+  const monthlyQuoteAtCap = ent.monthlyQuoteUsed >= ent.monthlyQuoteLimit;
 
   return (
     <div>
@@ -41,6 +44,11 @@ export default async function NewQuotePage({
           templates={templates || []}
           companyId={profile.company_id}
           defaultMeasurementSystem={defaultMeasurementSystem}
+          digitalTakeoffAvailable={ent.features.digital_takeoff}
+          monthlyQuoteAtCap={monthlyQuoteAtCap}
+          monthlyQuoteUsed={ent.monthlyQuoteUsed}
+          monthlyQuoteLimit={ent.monthlyQuoteLimit}
+          effectivePlanCode={ent.effectivePlanCode}
         />
       </div>
     </div>

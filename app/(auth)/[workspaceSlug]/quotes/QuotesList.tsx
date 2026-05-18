@@ -15,6 +15,7 @@ const MAX_BULK_SELECTION = 25;
 import type { JobStatus } from './actions';
 import JSZip from 'jszip';
 import { addQuoteToZip, downloadBlob, sanitizeFilename } from './lib/quote-bundle';
+import { UpgradeModal } from '@/app/components/UpgradeModal';
 
 type Quote = {
   id: string;
@@ -30,6 +31,12 @@ type Quote = {
 interface Props {
   quotes: Quote[];
   workspaceSlug: string;
+  /** True if the company has hit the monthly quote cap. Blocks New Quote
+   *  navigation and opens the upgrade modal instead. */
+  monthlyQuoteAtCap: boolean;
+  monthlyQuoteUsed: number;
+  monthlyQuoteLimit: number;
+  effectivePlanCode: string;
 }
 
 const JOB_STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string; dot: string }> = {
@@ -157,7 +164,15 @@ function JobStatusDropdown({ quoteId, currentStatus }: { quoteId: string; curren
   );
 }
 
-export function QuotesList({ quotes, workspaceSlug }: Props) {
+export function QuotesList({
+  quotes,
+  workspaceSlug,
+  monthlyQuoteAtCap,
+  monthlyQuoteUsed,
+  monthlyQuoteLimit,
+  effectivePlanCode,
+}: Props) {
+  const [capUpgradeOpen, setCapUpgradeOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'confirmed' | 'draft'>('confirmed');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'recently_active'>('newest');
@@ -462,17 +477,32 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
         </div>
 
         <div className="flex gap-2">
-          <Link
-            href={`/${workspaceSlug}/quotes/new`}
-            title="Click to create a new quote"
-            data-copilot="new-quote"
-            className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            New Quote
-          </Link>
+          {monthlyQuoteAtCap ? (
+            <button
+              type="button"
+              onClick={() => setCapUpgradeOpen(true)}
+              title="Monthly quote limit reached — click for upgrade options"
+              data-copilot="new-quote"
+              className="inline-flex items-center gap-1.5 rounded-full bg-slate-300 px-5 py-2 text-sm font-semibold text-slate-600 cursor-pointer hover:bg-slate-400"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              New Quote
+            </button>
+          ) : (
+            <Link
+              href={`/${workspaceSlug}/quotes/new`}
+              title="Click to create a new quote"
+              data-copilot="new-quote"
+              className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              New Quote
+            </Link>
+          )}
           <Link
             href={`/${workspaceSlug}/templates`}
             className="inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
@@ -760,6 +790,14 @@ export function QuotesList({ quotes, workspaceSlug }: Props) {
           </div>
         </div>
       )}
+
+      <UpgradeModal
+        open={capUpgradeOpen}
+        onClose={() => setCapUpgradeOpen(false)}
+        title={`Monthly quote limit reached (${monthlyQuoteUsed}/${monthlyQuoteLimit})`}
+        description={`To create more quotes this month you need to upgrade your account tier, or wait until your quote limit resets next month. Plan: ${effectivePlanCode}.`}
+        recommendedPlan={effectivePlanCode === 'trial' ? 'growth' : 'pro'}
+      />
     </>
   );
 }
