@@ -503,12 +503,14 @@ export function BillingPanel(props: BillingPanelProps) {
               </div>
               <div>
                 <dt className="text-xs text-slate-500">Flashings</dt>
-                <dd className="font-semibold text-slate-900">{formatCap(viewPlan.flashingLimit)}</dd>
+                <dd className={`font-semibold ${viewPlan.features.flashings ? 'text-slate-900' : 'text-slate-400 italic'}`}>
+                  {viewPlan.features.flashings ? formatCap(viewPlan.flashingLimit) : 'Not included'}
+                </dd>
               </div>
               <div>
                 <dt className="text-xs text-slate-500">Material orders / mo</dt>
-                <dd className="font-semibold text-slate-900">
-                  {formatCap(viewPlan.monthlyMaterialOrderLimit)}
+                <dd className={`font-semibold ${viewPlan.features.material_orders ? 'text-slate-900' : 'text-slate-400 italic'}`}>
+                  {viewPlan.features.material_orders ? formatCap(viewPlan.monthlyMaterialOrderLimit) : 'Not included'}
                 </dd>
               </div>
               <div>
