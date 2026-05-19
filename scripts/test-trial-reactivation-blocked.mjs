@@ -226,6 +226,74 @@ async function main() {
       await admin.from('companies').delete().eq('id', signupCleanupId);
     }
 
+    // 8. Smoke #2 fix (2026-05-19 migration 20260519120000): an EXPIRED
+    // trial without a Stripe subscription must report effective_active =
+    // false, AND mutating helpers (create_quote_atomic, the cap-check
+    // RPCs) must refuse with P0001 subscription_inactive. Before the
+    // migration, the same fixture reported effective_active = true and
+    // the user could create up to 25 quotes/month under starter caps.
+    console.log('\n--- Test 8: smoke #2 — expired trial without Stripe sub = inactive ---');
+    const EXP_TAG = `m01r-p2-expired-${Date.now()}`;
+    const { data: expCo, error: expErr } = await admin
+      .from('companies')
+      .insert({
+        name: `Expired ${EXP_TAG}`,
+        slug: EXP_TAG,
+        default_currency: 'USD',
+        default_language: 'en',
+        default_measurement_system: 'metric',
+        plan_code: 'trial',
+        subscription_status: 'trialing',
+        trial_started_at: new Date(Date.now() - 20 * 86400000).toISOString(),
+        trial_ends_at: new Date(Date.now() - 6 * 86400000).toISOString(),
+        stripe_subscription_id: null,
+      })
+      .select('id')
+      .single();
+
+    let expCleanupId = null;
+    if (expErr) {
+      record(false, `expired-trial fixture insert failed: ${expErr.message}`);
+    } else {
+      expCleanupId = expCo.id;
+
+      // Effective plan + active flag.
+      const { data: planData } = await admin.rpc('company_effective_plan_code', { p_company_id: expCleanupId });
+      const { data: activeData } = await admin.rpc('company_effective_plan_active', { p_company_id: expCleanupId });
+      record(planData === 'starter',
+        `expired trial: effective_plan = 'starter' (got ${planData})`);
+      record(activeData === false,
+        `expired trial: effective_active = false (got ${activeData})`);
+
+      // create_quote_atomic must refuse with P0001. We call it via
+      // service-role admin (RPC is locked down to service_role anyway).
+      // P0001 = subscription_inactive per the SQL helper conventions.
+      const ownerUserId = userId; // re-use the fixture user from setup
+      const { error: rpcErr } = await admin.rpc('create_quote_atomic', {
+        p_company_id: expCleanupId,
+        p_user_id: ownerUserId,
+        p_payload: { customer_name: 'should not be created', job_name: 'should not be created' },
+      });
+      if (rpcErr && (rpcErr.code === 'P0001' || rpcErr.message?.includes('subscription_inactive'))) {
+        console.log(`  [PASS] create_quote_atomic refuses with P0001 subscription_inactive`);
+        pass++;
+      } else if (rpcErr) {
+        console.log(`  [FAIL] create_quote_atomic refused but with unexpected code: ${rpcErr.code} ${rpcErr.message?.slice(0,80)}`);
+        fail++;
+        failures.push('create_quote_atomic unexpected SQLSTATE on expired trial');
+      } else {
+        console.log(`  [FAIL] create_quote_atomic SUCCEEDED on expired trial — write window leak`);
+        fail++;
+        failures.push('create_quote_atomic succeeded on expired trial');
+      }
+
+      // Cleanup any quote/usage row that did sneak through, then the
+      // company itself.
+      try { await admin.from('quotes').delete().eq('company_id', expCleanupId); } catch {}
+      try { await admin.from('company_quote_usage').delete().eq('company_id', expCleanupId); } catch {}
+      await admin.from('companies').delete().eq('id', expCleanupId);
+    }
+
   } catch (e) {
     console.error(`\nFatal: ${e.message}`);
     fail++;
