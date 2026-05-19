@@ -112,16 +112,50 @@ function pickVariant(ent: CompanyEntitlements): Variant | null {
       };
     }
     case 'trialing': {
-      const left = daysUntil(ent.trialEndsAt);
-      if (left !== null && left <= 3 && left >= 0) {
+      // Smoke #1 (2026-05-19): three distinct states for a trialing
+      // company. daysUntil() returns whole days; we want hour-grained
+      // detection of the “ending today” window and a distinct expired
+      // state. Use the raw timestamp.
+      if (!ent.trialEndsAt) return null;
+      const ends = new Date(ent.trialEndsAt).getTime();
+      const now = Date.now();
+      const diffMs = ends - now;
+
+      // Expired (post-cron will flip to canceled, but until then we MUST
+      // surface the hard expired state — mutations are already blocked by
+      // company_effective_plan_active() returning false).
+      if (diffMs <= 0) {
+        return {
+          tone: 'red',
+          title: 'Your trial has expired.',
+          description:
+            'Choose a plan now to keep your data and continue using QuoteCore+.',
+          ctaLabel: 'Choose a plan',
+        };
+      }
+
+      const hoursLeft = diffMs / (60 * 60 * 1000);
+      if (hoursLeft <= 24) {
         return {
           tone: 'amber',
-          title: left === 0 ? 'Trial ends today.' : `Trial ends in ${left} day${left === 1 ? '' : 's'}.`,
+          title: 'Trial ends today.',
+          description:
+            'Choose a plan now to keep your data and continue using QuoteCore+.',
+          ctaLabel: 'Choose a plan',
+        };
+      }
+
+      const daysLeft = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+      if (daysLeft <= 3) {
+        return {
+          tone: 'amber',
+          title: `Trial ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`,
           description:
             'Pick a plan to keep your work, quotes and email sends after the trial ends.',
           ctaLabel: 'Upgrade',
         };
       }
+
       return null;
     }
     case 'active':

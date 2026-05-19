@@ -305,6 +305,8 @@ export default async function AccountPage() {
               hasActiveSubscription={hasActiveSubscription}
               trialEndsAt={entitlements.trialEndsAt}
               currentPeriodEnd={entitlements.currentPeriodEnd}
+              cancelAtPeriodEnd={Boolean(company.cancel_at_period_end)}
+              cancelAt={cancelAt}
               firstPaymentFailureAt={entitlements.firstPaymentFailureAt}
               storageUsedBytes={entitlements.storageUsedBytes}
               storageLimitBytes={entitlements.storageLimitBytes}

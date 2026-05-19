@@ -83,6 +83,17 @@ export interface BillingPanelProps {
   trialEndsAt: string | null;
   /** Current period end (ISO) when subscription is active. */
   currentPeriodEnd: string | null;
+  /**
+   * True when the user has scheduled cancellation at period end via the
+   * Stripe portal. Combined with `cancelAt` to render the “Cancelled —
+   * ending {date}” secondary pill on the current-plan card.
+   */
+  cancelAtPeriodEnd: boolean;
+  /**
+   * Explicit cancellation timestamp (ISO). Falls back to currentPeriodEnd
+   * when cancelAtPeriodEnd is true.
+   */
+  cancelAt: string | null;
   /** First payment failure (ISO) — drives the past_due banner. */
   firstPaymentFailureAt: string | null;
   /** Storage usage. */
@@ -128,16 +139,34 @@ function formatDate(iso: string | null): string {
 }
 
 /**
- * Days remaining until trial_ends_at, floored to 0. Used by the trial
- * countdown on the current-plan card.
+ * Tri-state trial countdown.
+ *   - `null` — not on a trial / no trial timestamp.
+ *   - `{ state: 'ending-today', hoursLeft }` — trial ends within 24 hours.
+ *   - `{ state: 'active', daysLeft }` — trial still has N>=1 days left.
+ *   - `{ state: 'expired' }` — trial_ends_at is in the past.
+ *
+ * Replaces the old `trialDaysLeft` which clamped both “last day” and
+ * “expired” at 0, conflating two very different UX states (smoke #1).
  */
-function trialDaysLeft(trialEndsAt: string | null): number | null {
+type TrialState =
+  | { state: 'active'; daysLeft: number }
+  | { state: 'ending-today'; hoursLeft: number }
+  | { state: 'expired' };
+
+function trialState(trialEndsAt: string | null): TrialState | null {
   if (!trialEndsAt) return null;
   const ends = new Date(trialEndsAt).getTime();
   const now = Date.now();
   const diffMs = ends - now;
-  if (diffMs <= 0) return 0;
-  return Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+  if (diffMs <= 0) return { state: 'expired' };
+  const hoursLeft = diffMs / (60 * 60 * 1000);
+  if (hoursLeft <= 24) {
+    return { state: 'ending-today', hoursLeft: Math.max(1, Math.ceil(hoursLeft)) };
+  }
+  // Round UP so a sub at 13.5 days reads as “14 days”, matching the
+  // marketing promise and the user's mental model.
+  const daysLeft = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+  return { state: 'active', daysLeft };
 }
 
 /**
@@ -233,8 +262,29 @@ export function BillingPanel(props: BillingPanelProps) {
     ? Math.min(100, Math.round((props.storageUsedBytes / props.storageLimitBytes) * 100))
     : 0;
 
-  const daysLeft = trialDaysLeft(props.trialEndsAt);
-  const isOnTrial = props.subscriptionStatus === 'trialing' && daysLeft !== null;
+  const trial = trialState(props.trialEndsAt);
+  const isOnTrial = props.subscriptionStatus === 'trialing' && trial !== null;
+  // Distinguish “user is mid-trial right now” from “user was on a trial
+  // and it expired without a paid sub”. The status flag stays 'trialing'
+  // until the expire-trials cron flips it, but the user has effectively
+  // dropped to starter-effective — and (post-2026-05-19 migration
+  // 20260519120000) all writes are blocked too. We surface that as a hard
+  // expired-trial state in the UI.
+  const trialExpiredNoSub = isOnTrial && trial.state === 'expired' && !props.hasStripeCustomer;
+
+  // “Cancelled — ending {date}” secondary pill. Renders alongside the
+  // primary status pill when the user has scheduled cancellation at the
+  // end of their current period via the Stripe Portal.
+  const cancelDateIso = props.cancelAt ?? props.currentPeriodEnd;
+  const showCancellingPill =
+    (props.cancelAtPeriodEnd || (props.cancelAt && new Date(props.cancelAt).getTime() > Date.now()))
+    && cancelDateIso !== null
+    && props.subscriptionStatus !== 'canceled';
+
+  // Plan-switch modal (smoke #3). When a user with an active paid sub
+  // clicks another tier card, surface a modal pointing them at Manage
+  // Subscription rather than silently disabling the button.
+  const [showSwitchModal, setShowSwitchModal] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -283,25 +333,45 @@ export function BillingPanel(props: BillingPanelProps) {
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Current plan</p>
             <h3 className="text-lg font-semibold text-slate-900 mt-1 capitalize">
-              {props.effectivePlanCode.replace(/_/g, ' ')}
-              {props.effectivePlanCode !== props.purchasedPlanCode && (
-                <span className="ml-2 text-sm font-normal text-amber-700">
-                  (downgraded from {props.purchasedPlanCode.replace(/_/g, ' ')})
+              {trialExpiredNoSub
+                ? 'Trial expired'
+                : props.effectivePlanCode.replace(/_/g, ' ')}
+              {!trialExpiredNoSub
+                && props.effectivePlanCode !== props.purchasedPlanCode
+                && props.subscriptionStatus !== 'trialing'
+                && (
+                  <span className="ml-2 text-sm font-normal text-amber-700">
+                    (downgraded from {props.purchasedPlanCode.replace(/_/g, ' ')})
+                  </span>
+                )}
+            </h3>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span
+                className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${statusClass}`}
+              >
+                {props.subscriptionStatus.replace(/_/g, ' ')}
+              </span>
+              {showCancellingPill && (
+                <span className="inline-block text-xs px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-800">
+                  Cancelling — ending {formatDate(cancelDateIso)}
                 </span>
               )}
-            </h3>
-            <span
-              className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full font-medium ${statusClass}`}
-            >
-              {props.subscriptionStatus.replace(/_/g, ' ')}
-            </span>
-            {isOnTrial && (
+            </div>
+            {isOnTrial && trial.state === 'active' && (
               <p className="mt-2 text-sm text-blue-700 font-medium">
-                {daysLeft === 0
-                  ? 'Trial ends today — pick a plan to keep your data alive.'
-                  : daysLeft === 1
+                {trial.daysLeft === 1
                   ? '1 day left on your trial.'
-                  : `${daysLeft} days left on your trial.`}
+                  : `Trial ends in ${trial.daysLeft} days.`}
+              </p>
+            )}
+            {isOnTrial && trial.state === 'ending-today' && (
+              <p className="mt-2 text-sm text-amber-700 font-medium">
+                Trial ends today — choose a plan now to keep your data and continue using QuoteCore+.
+              </p>
+            )}
+            {trialExpiredNoSub && (
+              <p className="mt-2 text-sm text-red-700 font-medium">
+                Your trial has expired. Choose a plan now to keep your data and continue using QuoteCore+.
               </p>
             )}
           </div>
@@ -363,17 +433,19 @@ export function BillingPanel(props: BillingPanelProps) {
             const isCurrent = plan.code === props.purchasedPlanCode;
             const isActive = pending && activePlan === plan.code;
             // Plan-switch via Stripe Portal: when the user has an active
-            // paid sub, the 'Choose <plan>' buttons would create a SECOND
-            // subscription, which is wrong. Hide the direct-checkout path
-            // and route them through Manage Subscription (the Stripe
-            // portal handles plan switches with correct proration).
+            // paid sub, a fresh Checkout would create a SECOND
+            // subscription, which is wrong. Smoke #3 (2026-05-19): rather
+            // than silently disabling the button, KEEP the button clickable
+            // and open a modal pointing the user at Manage Subscription so
+            // they understand the path. The H-02 server-side guard still
+            // refuses a fresh Checkout call as defence-in-depth.
             const blockedByActiveSub = !plan.isTrial && props.hasActiveSubscription;
 
             const canChoose = !plan.comingSoon
               && !isCurrent
               && (plan.isTrial
                 ? !props.hasActiveSubscription && !props.hasStripeCustomer
-                : plan.hasStripePrice && !blockedByActiveSub);
+                : plan.hasStripePrice);
 
             // Trial-specific button copy + reason for disabled state.
             const buttonLabel = isActive
@@ -386,8 +458,6 @@ export function BillingPanel(props: BillingPanelProps) {
               ? props.hasStripeCustomer
                 ? 'Trial unavailable'
                 : 'Start 14-day trial'
-              : blockedByActiveSub
-              ? 'Manage to switch'
               : plan.hasStripePrice
               ? `Choose ${plan.displayName}`
               : 'Not yet available';
@@ -454,13 +524,19 @@ export function BillingPanel(props: BillingPanelProps) {
                   </button>
                   <button
                     type="button"
-                    onClick={() => onChoose(plan)}
+                    onClick={() => {
+                      if (blockedByActiveSub) {
+                        setShowSwitchModal(true);
+                        return;
+                      }
+                      onChoose(plan);
+                    }}
                     disabled={!canChoose || pending}
                     title={
                       plan.isTrial && props.hasStripeCustomer
                         ? 'The free trial is only available to new accounts.'
                         : blockedByActiveSub
-                        ? 'Use "Manage subscription" to switch plans — Stripe will pro-rate the difference.'
+                        ? 'You already have an active subscription — click to manage.'
                         : plan.comingSoon
                         ? 'This tier is not available yet.'
                         : isCurrent
@@ -487,6 +563,55 @@ export function BillingPanel(props: BillingPanelProps) {
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
           {error}
+        </div>
+      )}
+
+      {/* Switch-plan modal (smoke #3): when a user with an active paid
+          sub clicks another tier, we route them through Manage Subscription
+          rather than silently disabling the click. Server-side H-02 guard
+          still refuses a fresh Checkout call as defence-in-depth. */}
+      {showSwitchModal && (
+        <div
+          className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="switch-modal-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowSwitchModal(false);
+          }}
+        >
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 id="switch-modal-title" className="text-lg font-semibold text-slate-900">
+              You already have an active subscription
+            </h3>
+            <p className="text-sm text-slate-600 mt-2">
+              To switch plans, open <span className="font-medium text-slate-900">Manage Subscription</span>{' '}
+              to cancel your current plan first. Once it ends you can come back and pick your new tier.
+            </p>
+            <p className="text-xs text-slate-500 mt-2">
+              We don’t bill two subscriptions at once, so the switch happens after your current period ends.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowSwitchModal(false)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSwitchModal(false);
+                  onManage();
+                }}
+                disabled={pending}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
+              >
+                Manage subscription
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
