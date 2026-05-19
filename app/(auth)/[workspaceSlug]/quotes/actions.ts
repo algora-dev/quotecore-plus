@@ -772,11 +772,16 @@ export async function confirmQuote(id: string) {
     throw new Error(`Cannot confirm a quote in status '${existing.status}'.`);
   }
   
-  // Get next quote number if not already assigned
+  // Get next quote number if not already assigned. The SECDEF RPC is
+  // service_role-only per the C-02 audit (otherwise a user could bump
+  // another company's counter by passing a different p_company_id). The
+  // server action already verified company ownership via requireCompanyContext;
+  // call via the admin client.
   let quoteNumber = existing.quote_number;
   if (!quoteNumber) {
-    const { data: numberData, error: numError } = await supabase.rpc('get_next_quote_number', {
-      p_company_id: profile.company_id
+    const admin = createAdminClient();
+    const { data: numberData, error: numError } = await admin.rpc('get_next_quote_number', {
+      p_company_id: profile.company_id,
     });
     if (numError) throw new Error(`Failed to generate quote number: ${numError.message}`);
     quoteNumber = numberData;
@@ -1190,7 +1195,9 @@ export async function saveCustomerQuoteLines(
     && !quote.quote_number
     && lines.length > 0
   ) {
-    const { data: nextNum, error: numErr } = await supabase.rpc('get_next_quote_number', {
+    // Service_role-only RPC — see note in confirmQuote() above.
+    const admin = createAdminClient();
+    const { data: nextNum, error: numErr } = await admin.rpc('get_next_quote_number', {
       p_company_id: profile.company_id,
     });
     if (numErr) {
