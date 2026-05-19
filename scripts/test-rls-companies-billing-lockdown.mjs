@@ -272,6 +272,64 @@ async function main() {
         failures.push('UPDATE other company');
       }
     }
+
+    // ===== Smoke #10 / 2026-05-19: trigger path must still succeed =====
+    // The C-01 lockdown revokes table-level UPDATE on companies from
+    // authenticated AND only whitelists profile columns. Existing DB
+    // triggers that update billing-y columns (storage_used_bytes) on
+    // child-row inserts MUST still work — they own the only legitimate
+    // path to that column. Regression: insert into quote_files as the
+    // authenticated user; trg_update_company_storage must succeed and
+    // bump companies.storage_used_bytes.
+    console.log('\n--- Trigger path: authenticated INSERT into quote_files ---');
+    const { data: probeQuote, error: probeQuoteErr } = await admin.from('quotes').insert({
+      company_id: companyId,
+      created_by_user_id: userId,
+      customer_name: 'C01 trigger probe',
+      job_name: 'C01 trigger probe',
+      entry_mode: 'manual',
+      job_status: 'draft',
+      quote_number: 999,
+      status: 'draft',
+    }).select('id').single();
+    if (probeQuoteErr) {
+      console.log(`  [FAIL] could not create probe quote: ${probeQuoteErr.message}`);
+      fail++;
+      failures.push('probe quote insert');
+    } else {
+      const fileSize = 54321;
+      const r = await c.from('quote_files').insert({
+        company_id: companyId,
+        quote_id: probeQuote.id,
+        file_name: 'probe.png',
+        file_type: 'plan',
+        file_size: fileSize,
+        mime_type: 'image/png',
+        storage_path: `${companyId}/${probeQuote.id}/probe.png`,
+      });
+      if (r.error) {
+        console.log(`  [FAIL] authenticated INSERT into quote_files: ${r.error.code} ${r.error.message?.slice(0,80)}`);
+        fail++;
+        failures.push('authenticated quote_files insert');
+      } else {
+        const { data: coAfter } = await admin
+          .from('companies')
+          .select('storage_used_bytes')
+          .eq('id', companyId)
+          .single();
+        if (coAfter && coAfter.storage_used_bytes === fileSize) {
+          console.log(`  [PASS] insert succeeded + trigger bumped storage_used_bytes to ${coAfter.storage_used_bytes}`);
+          pass++;
+        } else {
+          console.log(`  [FAIL] insert succeeded but storage_used_bytes = ${coAfter?.storage_used_bytes} (expected ${fileSize})`);
+          fail++;
+          failures.push('storage_used_bytes not bumped');
+        }
+      }
+      try { await admin.from('quote_files').delete().eq('company_id', companyId); } catch {}
+      try { await admin.from('quotes').delete().eq('id', probeQuote.id); } catch {}
+    }
+
   } catch (e) {
     console.error(`\nFatal: ${e.message}`);
     fail++;
