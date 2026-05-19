@@ -203,8 +203,8 @@ Shaun and I have run smoke tests on the following. Treat as "happy path is confi
 These are gaps. Some are blockers; some are nice-to-have. Marked `[BLOCKER]` where appropriate.
 
 ### Stripe — live mode setup
-- **[BLOCKER]** Live-mode prices not yet created in Stripe (only test mode). All 4 paid tiers need MSRP prices + 4 launch coupons created in the live Stripe account before `STRIPE_LIVE_MODE` flips on.
-- **[BLOCKER]** `STRIPE_LIVE_*` env vars not yet set on `quotecore-plus-main`. Need: `STRIPE_SECRET_KEY` (live), `STRIPE_WEBHOOK_SECRET` (live), and `STRIPE_LIVE_MODE=true` flag.
+- **[BLOCKER]** Live-mode prices not yet created in Stripe (only test mode). All 4 paid tiers need MSRP prices + 4 launch coupons created in the live Stripe account before live mode flips on.
+- **[BLOCKER]** Live Stripe env vars not yet set on `quotecore-plus-main`. Need: `STRIPE_SECRET_KEY` (live), `STRIPE_WEBHOOK_SECRET` (live), and `STRIPE_MODE=live` (the canonical mode flag; the code in `app/lib/billing/stripe.ts` reads `STRIPE_MODE` and falls back to sniffing the secret-key prefix as `sk_live_*`).
 - Live Stripe webhook endpoint at `https://app.quote-core.com/api/webhooks/stripe` needs to be registered in the live Stripe dashboard with the right event subset.
 - **[BLOCKER for verified billing]** Shaun's Stripe account verification is still pending. Whole live-mode flow is gated on that.
 

@@ -24,7 +24,7 @@ Everything about your QuoteCore+ subscription lives at **Account > Billing**. Fr
 | **Growth** | $29/mo (~~$60~~) | 50 | 2 GB | + Digital takeoff, email send |
 | **Professional** | $39/mo (~~$90~~) | 100 | 3 GB | + Flashings, material orders, follow-ups |
 | **Pro Plus** | $59/mo (~~$120~~) | 200 | 5 GB | Higher caps, 3 included seats |
-| **Premium** | Coming soon | — | — | Extra features, larger caps |
+| **Premium** | Coming soon | - | - | Extra features, larger caps |
 
 <Callout type="note">
 The strikethrough prices are the original / MSRP price. The shown price is our launch pricing and renews at the launch price as long as you stay subscribed.
@@ -36,12 +36,12 @@ For the full caps breakdown (components, flashings, material orders), see [Tier 
 
 At the top of the billing page you'll see:
 
-- **Plan name** (capitalised) — e.g. Starter, Pro Plus.
-- **Status badge** — `active`, `trialing`, `past_due`, `grace`, `suspended`, or `canceled`.
-- **Trial countdown** — when you're on the trial, the number of days left.
-- **Next billing date** — when your next payment is scheduled.
-- **Storage usage** — how much of your plan's storage limit you've used, with a progress bar.
-- **Manage subscription** button — opens the Stripe customer portal for paying customers.
+- **Plan name** (capitalised) - e.g. Starter, Pro Plus.
+- **Status badge** - `active`, `trialing`, `past_due`, `grace`, `suspended`, or `canceled`.
+- **Trial countdown** - when you're on the trial, the number of days left.
+- **Next billing date** - when your next payment is scheduled.
+- **Storage usage** - how much of your plan's storage limit you've used, with a progress bar.
+- **Manage subscription** button - opens the Stripe customer portal for paying customers.
 
 If your effective plan differs from your purchased plan (during a payment failure grace period, for example), you'll see a "downgraded from X" note.
 
@@ -52,8 +52,8 @@ Below the current plan card is a grid of every available plan. Each card shows:
 - Display name and price (with strikethrough MSRP)
 - Tagline (e.g. "Entry plan for solo contractors")
 - A few headline numbers (quotes/month, storage)
-- **View** button — opens a modal with the full feature breakdown
-- **Choose / Start trial / Manage to switch** button — primary action
+- **View** button - opens a modal with the full feature breakdown
+- **Choose / Start trial / Manage to switch** button - primary action
 
 The card for your **current plan** has a green "CURRENT" badge and the action button is disabled.
 
@@ -61,9 +61,9 @@ The card for your **current plan** has a green "CURRENT" badge and the action bu
 
 Clicking **View** on any plan opens a modal showing:
 
-- **Numeric caps** — quotes/month, storage, components, flashings, material orders/month, included seats
-- **Feature checklist** — green tick or grey cross for each gated feature (digital takeoff, flashings, material orders, follow-ups, email send, activity card)
-- **Marketing bullets** — plain-English summary of what's included
+- **Numeric caps** - quotes/month, storage, components, flashings, material orders/month, included seats
+- **Feature checklist** - green tick or grey cross for each gated feature (digital takeoff, flashings, material orders, follow-ups, email send, activity card)
+- **Marketing bullets** - plain-English summary of what's included
 - **Close** and **Purchase** buttons
 
 The Purchase button triggers the same flow as the card's primary button (Stripe checkout for paid plans, instant activation for trial).
@@ -75,7 +75,7 @@ For **new accounts** (no active subscription):
 <Steps>
 
 1. Click **Choose &lt;plan&gt;** on the plan you want, or **Purchase** from inside the View modal.
-2. You're sent to a Stripe-hosted checkout page showing the launch discount applied (e.g. Growth: subtotal $60, discount −$31, total $29/mo).
+2. You're sent to a Stripe-hosted checkout page showing the launch discount applied (e.g. Growth: subtotal $60, discount -$31, total $29/mo).
 3. Enter your card details and confirm. Stripe charges you immediately.
 4. You're sent back to the billing page. A green banner confirms the subscription started.
 5. Your plan updates within a few seconds once Stripe's webhook confirms payment.
@@ -90,10 +90,10 @@ Both go through the **Manage subscription** button on the current-plan card, whi
 
 In the portal you can:
 
-- **Cancel subscription** — stops the renewal at the end of the current paid period. You keep paid features until the period ends.
-- **Switch plan** — moves you to a different tier. Stripe charges (or credits) the prorated difference immediately.
-- **Update card** — swap your payment method.
-- **Download invoices** — past invoices as PDFs.
+- **Cancel subscription** - stops the renewal at the end of the current paid period. You keep paid features until the period ends.
+- **Switch plan** - moves you to a different tier. Stripe charges (or credits) the prorated difference immediately.
+- **Update card** - swap your payment method.
+- **Download invoices** - past invoices as PDFs.
 
 <Callout type="tip">
 You don't lose what you paid for. If you cancel mid-month, you keep your current plan until the period ends, then collapse to **starter** (or stay on whatever you've moved to).
@@ -104,7 +104,7 @@ You don't lose what you paid for. If you cancel mid-month, you keep your current
 Every paid plan has caps. When you hit one:
 
 - The action that would exceed the cap (creating a new quote, adding a component, etc.) opens an **upgrade modal** with a "View plans" button.
-- Existing data is never deleted — caps only block *new* additions.
+- Existing data is never deleted - caps only block *new* additions.
 - Monthly counters (quotes, material orders) reset on the 1st of each month (UTC).
 - Lifetime counters (components, flashings) only reduce when you delete entries.
 
@@ -116,15 +116,15 @@ If a renewal payment fails:
 
 <Steps>
 
-1. **Day 0** — first failed payment. Status moves to `past_due`. Stripe automatically retries.
-2. **Day 3 / 5 / 7** — Stripe retries the card.
-3. **Day 14** — if still unpaid, status moves to `grace`. You keep read access; new mutations are limited.
-4. **Day 24** — if still unpaid, account is `suspended`. Sign-in works, all data is preserved, but creating/editing is blocked.
-5. **Day 75** — `pending_data_purge`. Final warning before deletion.
+1. **Day 0** - first failed payment. Status moves to `past_due`. Stripe automatically retries.
+2. **Day 3 / 5 / 7** - Stripe retries the card.
+3. **Day 14** - if still unpaid, status moves to `grace`. You keep read access; new mutations are limited.
+4. **Day 24** - if still unpaid, account is `suspended`. Sign-in works, all data is preserved, but creating/editing is blocked.
+5. **Day 75** - `pending_data_purge`. Account is suspended pending data review. Reach out to support before any data is removed; deletion is operator-initiated, not automatic at this stage.
 
 </Steps>
 
-You can recover any time before the purge by updating your card in the portal.
+You can recover at any time during the dunning curve by updating your card in the portal.
 
 ## Disputes and refunds
 
@@ -132,7 +132,7 @@ If you dispute a charge with your bank (chargeback):
 
 - We're notified automatically and a **support ticket** is created on your account.
 - Your subscription is marked `disputed` until the dispute closes.
-- When the dispute closes (won or lost), the ticket auto-resolves and your status returns to normal — or, if you won the chargeback, your subscription is cancelled.
+- When the dispute closes (won or lost), the ticket auto-resolves and your status returns to normal - or, if you won the chargeback, your subscription is cancelled.
 
 For refund requests outside of a dispute, contact us via [Support](/docs/help/support-and-contact).
 
@@ -142,8 +142,8 @@ For refund requests outside of a dispute, contact us via [Support](/docs/help/su
 
 ## Related
 
-- [Trial](/docs/account/trial) — how the 14-day trial works.
-- [Tier limits](/docs/account/tier-limits) — what each cap means.
-- [Upgrading and cancelling](/docs/account/upgrading-and-cancelling) — the step-by-step walkthrough.
-- [Storage and payment](/docs/files-and-quotes/storage-and-payment) — what happens if a payment fails mid-quote.
-- [Contact support](/docs/help/support-and-contact) — for refund questions or billing disputes.
+- [Trial](/docs/account/trial) - how the 14-day trial works.
+- [Tier limits](/docs/account/tier-limits) - what each cap means.
+- [Upgrading and cancelling](/docs/account/upgrading-and-cancelling) - the step-by-step walkthrough.
+- [Storage and payment](/docs/files-and-quotes/storage-and-payment) - what happens if a payment fails mid-quote.
+- [Contact support](/docs/help/support-and-contact) - for refund questions or billing disputes.
