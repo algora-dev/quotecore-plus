@@ -43,6 +43,11 @@ function isStaticAsset(pathname: string): boolean {
     pathname === '/favicon.ico' ||
     pathname === '/favicon.png' ||
     pathname === '/logo.png' ||
+    // Gerald audit M-04: SEO/discovery metadata routes must be reachable
+    // without auth. Without this, middleware redirects them to /login and
+    // breaks crawlers + sitemap generators.
+    pathname === '/robots.txt' ||
+    pathname === '/sitemap.xml' ||
     /\.(svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf)$/.test(pathname)
   );
 }
