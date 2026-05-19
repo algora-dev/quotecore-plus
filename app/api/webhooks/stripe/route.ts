@@ -31,10 +31,25 @@
  *     trusting the event payload. Webhook events can arrive out of order;
  *     subscription.retrieve(...) always returns the current truth.
  *
- *  6. ALWAYS 200 (mostly). Stripe retries any non-2xx for up to 3 days
- *     with exponential backoff. We return 200 for any event we have
- *     persisted (even if we then chose not to act on it). We only return
- *     non-200 for true infra failures (DB unreachable, signature missing).
+ *  6. CORRECT RETRY SEMANTICS (Gerald audit H-01). Stripe retries any
+ *     non-2xx for up to 3 days with exponential backoff. We return:
+ *       - 400 on signature failure (never retry; the event was malformed)
+ *       - 200 on duplicate-event (UNIQUE constraint hit; already handled)
+ *       - 200 on `quarantined:*` results (business no-op; event is on
+ *         file but we deliberately won't act on it — unknown_price,
+ *         stale_subscription, customer_not_found, etc.)
+ *       - 500 on retryable infra/Stripe/DB failures (handler threw via
+ *         the `retryable()` helper). processed_at stays NULL so Stripe
+ *         retries us and the idempotency table absorbs the duplicate
+ *         later when processing actually succeeds.
+ *
+ *  7. SUBSCRIPTION ID VALIDATION (Gerald audit H-03). Subscription and
+ *     invoice events validate against `companies.stripe_subscription_id`.
+ *     Events whose sub-id doesn't match the company's current sub are
+ *     quarantined so a stale event from a replaced/cancelled sub cannot
+ *     bounce the company into past_due/grace. The one exception is
+ *     `customer.subscription.created` for a company with no current
+ *     sub — the first-link case.
  *
  * ---------------------------------------------------------------------------
  * Events handled (phase 1)
@@ -149,7 +164,16 @@ export async function POST(request: Request) {
   const deliveryId = existing.id;
 
   // ----- Dispatch -----
+  //
+  // Handler contract (H-01):
+  //   - Return a string starting with 'ok' or 'quarantined:' or
+  //     'ignored:' for events we deliberately won't retry.
+  //   - THROW for transient infra failures we want Stripe to retry.
+  // Strings starting with 'error:' from a handler are legacy and treated
+  // as quarantined (handler decided the event is invalid and shouldn't
+  // retry). Truly retryable errors should throw.
   let result: string;
+  let retryable = false;
   try {
     switch (event.type) {
       case 'checkout.session.completed':
@@ -177,8 +201,21 @@ export async function POST(request: Request) {
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error(`[webhook/stripe] handler error on ${event.type}:`, msg);
-    result = `error:${msg.slice(0, 200)}`;
+    console.error(`[webhook/stripe] retryable error on ${event.type}:`, msg);
+    result = `retryable_error:${msg.slice(0, 200)}`;
+    retryable = true;
+  }
+
+  if (retryable) {
+    // Leave processed_at NULL so a retry attempts processing again. The
+    // payload + signature_verified flag are already persisted so we
+    // don't lose the event. Record the latest attempt's failure reason
+    // so on-call has visibility without grepping logs.
+    await admin
+      .from('webhook_deliveries')
+      .update({ processing_result: result })
+      .eq('id', deliveryId);
+    return NextResponse.json({ ok: false, retry: true, result }, { status: 500 });
   }
 
   // Mark processed (idempotent UPDATE).
@@ -188,6 +225,23 @@ export async function POST(request: Request) {
     .eq('id', deliveryId);
 
   return NextResponse.json({ ok: true, result });
+}
+
+// ---------------------------------------------------------------------------
+// Helper: tag retryable infra errors so handlers can THROW them cleanly.
+// ---------------------------------------------------------------------------
+function retryable(msg: string): Error {
+  return new Error(`retryable: ${msg}`);
+}
+
+// Stripe's TS types for `Invoice` omit the `subscription` field in some
+// API versions even though it's present on the wire. Read it defensively.
+function extractInvoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+  const raw = (invoice as unknown as { subscription?: string | { id?: string } | null }).subscription;
+  if (!raw) return null;
+  if (typeof raw === 'string') return raw;
+  if (typeof raw === 'object' && typeof raw.id === 'string') return raw.id;
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -205,7 +259,7 @@ export async function POST(request: Request) {
  */
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promise<string> {
   const companyId = session.client_reference_id;
-  if (!companyId) return 'error:no_client_reference_id';
+  if (!companyId) return 'quarantined:no_client_reference_id';
 
   const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
   const subscriptionId =
@@ -213,8 +267,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
 
   if (!customerId || !subscriptionId) {
     // Checkout completed but no subscription was created: unexpected for
-    // our flow (we only create subscription-mode sessions). Log and bail.
-    return 'error:missing_customer_or_subscription';
+    // our flow (we only create subscription-mode sessions). Quarantine.
+    return 'quarantined:missing_customer_or_subscription';
   }
 
   const admin = createAdminClient();
@@ -226,7 +280,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
     })
     .eq('id', companyId);
 
-  if (error) return `error:${error.message}`;
+  // DB failure on the canonical first-link write IS retryable.
+  if (error) throw retryable(`companies update: ${error.message}`);
   return 'ok';
 }
 
@@ -245,30 +300,53 @@ async function handleSubscriptionEvent(
 ): Promise<string> {
   const stripe = requireStripe();
   const subFromEvent = event.data.object as Stripe.Subscription;
-  // Refetch authoritative state.
-  const sub = await stripe.subscriptions.retrieve(subFromEvent.id);
+  // Refetch authoritative state. Stripe API failures are retryable.
+  let sub: Stripe.Subscription;
+  try {
+    sub = await stripe.subscriptions.retrieve(subFromEvent.id);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw retryable(`stripe.subscriptions.retrieve: ${msg}`);
+  }
 
   const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
 
   const admin = createAdminClient();
   const { data: company, error: companyErr } = await admin
     .from('companies')
-    .select('id, plan_code, subscription_status')
+    .select('id, plan_code, subscription_status, stripe_subscription_id')
     .eq('stripe_customer_id', customerId)
     .maybeSingle();
 
-  if (companyErr) return `error:${companyErr.message}`;
-  if (!company) return 'error:company_not_found_for_customer';
+  if (companyErr) throw retryable(`companies lookup: ${companyErr.message}`);
+  if (!company) return 'quarantined:company_not_found_for_customer';
+
+  // Gerald audit H-03: validate the event's subscription id against the
+  // company's current subscription. Mismatches happen when:
+  //   - a stale event from a previously-cancelled sub arrives late
+  //   - duplicate subs exist (which H-02 prevents on our side, but Stripe
+  //     dashboard/manual operations could still create them)
+  //   - the user replaced their sub via the Customer Portal and the
+  //     `customer.subscription.deleted` for the old sub races us
+  // We accept the event ONLY when:
+  //   - it matches the current subscription_id, OR
+  //   - the company has no subscription_id yet AND the event type is
+  //     `customer.subscription.created` (the first-link case).
+  const isFirstLink =
+    !company.stripe_subscription_id && event.type === 'customer.subscription.created';
+  if (!isFirstLink && company.stripe_subscription_id && sub.id !== company.stripe_subscription_id) {
+    return `quarantined:stale_subscription:${sub.id}_vs_current_${company.stripe_subscription_id}`;
+  }
 
   // Resolve the primary Price ID to our plan code.
   const priceId = sub.items.data[0]?.price?.id;
-  if (!priceId) return 'error:no_price_on_subscription';
+  if (!priceId) return 'quarantined:no_price_on_subscription';
 
   const planCode = await resolvePlanCodeForStripePrice(priceId);
   if (!planCode) {
     // Allowlist miss. Log & skip mutation. The user is on a plan in Stripe
     // that we don't recognise; manual intervention needed.
-    return 'error:unknown_price';
+    return 'quarantined:unknown_price';
   }
 
   const newStatus = event.type === 'customer.subscription.deleted'
@@ -318,10 +396,10 @@ async function handleSubscriptionEvent(
   }
 
   const { error: updErr } = await admin.from('companies').update(update).eq('id', company.id);
-  if (updErr) return `error:${updErr.message}`;
+  if (updErr) throw retryable(`companies update: ${updErr.message}`);
 
   // Audit row.
-  await admin.from('subscription_events').insert({
+  const { error: auditErr } = await admin.from('subscription_events').insert({
     company_id: company.id,
     event_type: event.type === 'customer.subscription.deleted' ? 'downgraded' : 'updated',
     from_plan_code: company.plan_code,
@@ -333,6 +411,7 @@ async function handleSubscriptionEvent(
     stripe_event_created: new Date(event.created * 1000).toISOString(),
     stripe_payload: eventJson as never,
   });
+  if (auditErr) throw retryable(`subscription_events insert: ${auditErr.message}`);
 
   return 'ok';
 }
@@ -343,16 +422,27 @@ async function handleSubscriptionEvent(
  */
 async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<string> {
   const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
-  if (!customerId) return 'error:no_customer_on_invoice';
+  if (!customerId) return 'quarantined:no_customer_on_invoice';
+
+  // Gerald audit H-03: invoice events also have to validate against the
+  // company's current subscription_id. invoice.subscription points at
+  // the sub that generated the invoice; if it's not the current one,
+  // ignore the event so a stale dunning event from a replaced sub can't
+  // bounce the company into past_due/grace.
+  const invoiceSubId = extractInvoiceSubscriptionId(invoice);
 
   const admin = createAdminClient();
   const { data: company, error: companyErr } = await admin
     .from('companies')
-    .select('id, subscription_status, plan_code')
+    .select('id, subscription_status, plan_code, stripe_subscription_id')
     .eq('stripe_customer_id', customerId)
     .maybeSingle();
-  if (companyErr) return `error:${companyErr.message}`;
-  if (!company) return 'error:company_not_found_for_customer';
+  if (companyErr) throw retryable(`companies lookup: ${companyErr.message}`);
+  if (!company) return 'quarantined:company_not_found_for_customer';
+
+  if (invoiceSubId && company.stripe_subscription_id && invoiceSubId !== company.stripe_subscription_id) {
+    return `quarantined:stale_subscription:${invoiceSubId}_vs_current_${company.stripe_subscription_id}`;
+  }
 
   // Restore to active if we were in any payment-failure state.
   const wasRecovering = ['past_due', 'grace', 'pending_data_purge'].includes(
@@ -370,16 +460,17 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<string> {
   if (wasRecovering) update.subscription_status = 'active';
 
   const { error: updErr } = await admin.from('companies').update(update).eq('id', company.id);
-  if (updErr) return `error:${updErr.message}`;
+  if (updErr) throw retryable(`companies update: ${updErr.message}`);
 
   if (wasRecovering) {
-    await admin.from('subscription_events').insert({
+    const { error: auditErr } = await admin.from('subscription_events').insert({
       company_id: company.id,
       event_type: 'reactivated',
       from_status: company.subscription_status,
       to_status: 'active',
       notes: `Recovered from ${company.subscription_status} on invoice.payment_succeeded`,
     });
+    if (auditErr) throw retryable(`subscription_events insert: ${auditErr.message}`);
   }
   return 'ok';
 }
@@ -390,16 +481,22 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<string> {
  */
 async function handleInvoiceFailed(invoice: Stripe.Invoice): Promise<string> {
   const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
-  if (!customerId) return 'error:no_customer_on_invoice';
+  if (!customerId) return 'quarantined:no_customer_on_invoice';
+
+  const invoiceSubId = extractInvoiceSubscriptionId(invoice);
 
   const admin = createAdminClient();
   const { data: company, error: companyErr } = await admin
     .from('companies')
-    .select('id, subscription_status, plan_code, first_payment_failure_at')
+    .select('id, subscription_status, plan_code, first_payment_failure_at, stripe_subscription_id')
     .eq('stripe_customer_id', customerId)
     .maybeSingle();
-  if (companyErr) return `error:${companyErr.message}`;
-  if (!company) return 'error:company_not_found_for_customer';
+  if (companyErr) throw retryable(`companies lookup: ${companyErr.message}`);
+  if (!company) return 'quarantined:company_not_found_for_customer';
+
+  if (invoiceSubId && company.stripe_subscription_id && invoiceSubId !== company.stripe_subscription_id) {
+    return `quarantined:stale_subscription:${invoiceSubId}_vs_current_${company.stripe_subscription_id}`;
+  }
 
   const now = new Date().toISOString();
   const update: {
@@ -416,15 +513,16 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice): Promise<string> {
   }
 
   const { error: updErr } = await admin.from('companies').update(update).eq('id', company.id);
-  if (updErr) return `error:${updErr.message}`;
+  if (updErr) throw retryable(`companies update: ${updErr.message}`);
 
-  await admin.from('subscription_events').insert({
+  const { error: auditErr } = await admin.from('subscription_events').insert({
     company_id: company.id,
     event_type: 'payment_failed',
     from_status: company.subscription_status,
     to_status: 'past_due',
     notes: 'invoice.payment_failed webhook',
   });
+  if (auditErr) throw retryable(`subscription_events insert: ${auditErr.message}`);
   return 'ok';
 }
 
@@ -435,13 +533,18 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice): Promise<string> {
  */
 async function handleDisputeCreated(dispute: Stripe.Dispute): Promise<string> {
   const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id;
-  if (!chargeId) return 'error:no_charge_on_dispute';
+  if (!chargeId) return 'quarantined:no_charge_on_dispute';
 
   // Look up the company via the charge -> customer -> companies path.
   const stripe = requireStripe();
-  const charge = await stripe.charges.retrieve(chargeId);
+  let charge: Stripe.Charge;
+  try {
+    charge = await stripe.charges.retrieve(chargeId);
+  } catch (err) {
+    throw retryable(`stripe.charges.retrieve: ${err instanceof Error ? err.message : String(err)}`);
+  }
   const customerId = typeof charge.customer === 'string' ? charge.customer : charge.customer?.id;
-  if (!customerId) return 'error:no_customer_on_charge';
+  if (!customerId) return 'quarantined:no_customer_on_charge';
 
   const admin = createAdminClient();
   const { data: company, error: companyErr } = await admin
@@ -449,14 +552,14 @@ async function handleDisputeCreated(dispute: Stripe.Dispute): Promise<string> {
     .select('id, subscription_status, plan_code')
     .eq('stripe_customer_id', customerId)
     .maybeSingle();
-  if (companyErr) return `error:${companyErr.message}`;
-  if (!company) return 'error:company_not_found_for_customer';
+  if (companyErr) throw retryable(`companies lookup: ${companyErr.message}`);
+  if (!company) return 'quarantined:company_not_found_for_customer';
 
   const { error: updErr } = await admin
     .from('companies')
     .update({ subscription_status: 'disputed' })
     .eq('id', company.id);
-  if (updErr) return `error:${updErr.message}`;
+  if (updErr) throw retryable(`companies update: ${updErr.message}`);
 
   // Auto-create the support ticket. 48h auto-close per brief. user_id is
   // NOT NULL on support_tickets; pick the company's first user as a
@@ -505,12 +608,17 @@ async function handleDisputeCreated(dispute: Stripe.Dispute): Promise<string> {
  */
 async function handleDisputeClosed(dispute: Stripe.Dispute): Promise<string> {
   const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id;
-  if (!chargeId) return 'error:no_charge_on_dispute';
+  if (!chargeId) return 'quarantined:no_charge_on_dispute';
 
   const stripe = requireStripe();
-  const charge = await stripe.charges.retrieve(chargeId);
+  let charge: Stripe.Charge;
+  try {
+    charge = await stripe.charges.retrieve(chargeId);
+  } catch (err) {
+    throw retryable(`stripe.charges.retrieve: ${err instanceof Error ? err.message : String(err)}`);
+  }
   const customerId = typeof charge.customer === 'string' ? charge.customer : charge.customer?.id;
-  if (!customerId) return 'error:no_customer_on_charge';
+  if (!customerId) return 'quarantined:no_customer_on_charge';
 
   const admin = createAdminClient();
   const { data: company, error: companyErr } = await admin
@@ -518,8 +626,8 @@ async function handleDisputeClosed(dispute: Stripe.Dispute): Promise<string> {
     .select('id, subscription_status')
     .eq('stripe_customer_id', customerId)
     .maybeSingle();
-  if (companyErr) return `error:${companyErr.message}`;
-  if (!company) return 'error:company_not_found_for_customer';
+  if (companyErr) throw retryable(`companies lookup: ${companyErr.message}`);
+  if (!company) return 'quarantined:company_not_found_for_customer';
 
   const won = dispute.status === 'won';
   const newStatus = won ? 'active' : 'canceled';
@@ -527,7 +635,7 @@ async function handleDisputeClosed(dispute: Stripe.Dispute): Promise<string> {
     .from('companies')
     .update({ subscription_status: newStatus })
     .eq('id', company.id);
-  if (updErr) return `error:${updErr.message}`;
+  if (updErr) throw retryable(`companies update: ${updErr.message}`);
 
   // Close the auto-created support ticket.
   await admin
