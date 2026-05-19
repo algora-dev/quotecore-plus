@@ -107,11 +107,32 @@ export async function createCheckoutSession(
 
   const { data: company, error: companyErr } = await admin
     .from('companies')
-    .select('id, stripe_customer_id')
+    .select('id, stripe_customer_id, stripe_subscription_id, subscription_status, cancel_at_period_end, cancel_at')
     .eq('id', profile.company_id)
     .maybeSingle();
   if (companyErr || !company) {
     return { ok: false, code: 'company_not_found', message: 'Company record missing.' };
+  }
+
+  // Gerald audit H-02: prevent duplicate-subscription Checkout. If the
+  // company already has a Stripe subscription that isn't in a final
+  // terminal state, route them through the Customer Portal instead so
+  // Stripe handles proration/replacement. Treat cancel_at_period_end /
+  // future cancel_at as STILL ACTIVE — the sub is winding down but not
+  // yet replaced; a fresh Checkout would create a second concurrent sub.
+  // Only `canceled` (Stripe has sent customer.subscription.deleted) or
+  // `suspended` (we've stopped charging entirely) are safe to bypass.
+  const TERMINAL_STATUSES = new Set(['canceled', 'suspended']);
+  if (
+    company.stripe_subscription_id &&
+    !TERMINAL_STATUSES.has(company.subscription_status)
+  ) {
+    return {
+      ok: false,
+      code: 'subscription_exists',
+      message:
+        'You already have an active subscription. Use Manage Subscription to change plans, update payment, or cancel.',
+    };
   }
 
   const { data: userRow } = await admin
