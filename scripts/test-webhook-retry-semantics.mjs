@@ -3,9 +3,11 @@
 // Invokes the Stripe webhook route handler directly (no live Stripe call)
 // with a Stripe-SDK-signed payload, then asserts:
 //   - signature failure -> 400
-//   - duplicate event   -> 200 + idempotent flag
+//   - duplicate event with processed_at SET -> 200 + idempotent flag
 //   - quarantined event -> 200 + processing_result starts with 'quarantined:'
 //                          AND webhook_deliveries.processed_at is SET
+//   - H-01R duplicate event with processed_at NULL -> handler REPROCESSES
+//     (not silent 200 idempotent), processed_at becomes SET
 //   - retryable failure -> 500 AND processed_at is NULL
 //   - H-03 stale_subscription event is quarantined
 //
@@ -201,8 +203,52 @@ async function main() {
     record(companyAfter.first_payment_failure_at === null,
       `company first_payment_failure_at still null`);
 
-    // ====== Test 5: H-01 unknown event type is 'ignored:phase_2', not retryable ======
-    console.log('\n--- Test 5: unknown event type -> ignored ---');
+    // ====== Test 5: H-01R duplicate-after-retryable-failure reprocesses ======
+    // Simulate the scenario Gerald flagged: a prior attempt 500'd after
+    // raw insert, so webhook_deliveries has the row with processed_at=NULL.
+    // Stripe's retry of the same event id MUST reprocess (not idempotent-ack).
+    console.log('\n--- Test H-01R: duplicate event with processed_at=NULL reprocesses ---');
+    const eventIdR = `evt_test_h01r_${Date.now()}`;
+    // Plant a webhook_deliveries row that looks like a prior 500'd attempt.
+    const plantedPayload = {
+      id: eventIdR,
+      type: 'invoice.payment_failed',
+      created: Math.floor(Date.now() / 1000),
+      data: { object: { customer: 'cus_unprocessed_retry', subscription: 'sub_x' } },
+    };
+    const plant = await admin.from('webhook_deliveries').insert({
+      provider: 'stripe',
+      event_id: eventIdR,
+      event_type: 'invoice.payment_failed',
+      signature_verified: true,
+      payload: plantedPayload,
+      processing_result: 'retryable_error:simulated prior 500',
+      // processed_at intentionally NULL
+    }).select('id, processed_at').single();
+    if (plant.error) {
+      console.log(`  [FAIL] could not plant prior-500 row: ${plant.error.message}`);
+      fail++;
+      failures.push('plant prior-500');
+    } else if (plant.data.processed_at !== null) {
+      console.log(`  [FAIL] planted row has processed_at set unexpectedly`);
+      fail++;
+      failures.push('plant prior-500 state');
+    } else {
+      // Now POST the same event id. The handler should detect the 23505,
+      // see processed_at IS NULL, and reprocess (then mark processed_at).
+      const rR = await POST(makeSignedRequest(plantedPayload));
+      record(rR.status === 200, `retry returns 200 (got ${rR.status})`);
+      const dR = await getDelivery(eventIdR);
+      record(dR?.processed_at !== null,
+        `processed_at is now SET after retry (got ${dR?.processed_at})`);
+      // Result string should NOT still say 'retryable_error:...' — it
+      // should be the new processing outcome (quarantined:company_not_found_for_customer).
+      record(!dR?.processing_result?.startsWith('retryable_error:'),
+        `processing_result updated past retryable_error (got "${dR?.processing_result}")`);
+    }
+
+    // ====== Test 6: H-01 unknown event type is 'ignored:phase_2', not retryable ======
+    console.log('\n--- Test 6: unknown event type -> ignored ---');
     const eventId5 = `evt_test_q5_${Date.now()}`;
     const r5 = await POST(makeSignedRequest({
       id: eventId5,

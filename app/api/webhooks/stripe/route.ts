@@ -10,9 +10,10 @@
  *
  *  2. RAW LOG FIRST, MUTATION SECOND. The first DB write is into
  *     webhook_deliveries with the entire payload. The UNIQUE constraint
- *     on (provider, event_id) is our idempotency key. If Stripe retries
- *     a delivery (and it will), the second attempt no-ops on insert and
- *     we skip processing.
+ *     on (provider, event_id) is our idempotency anchor. On a duplicate
+ *     event we read the prior row's processed_at: if set, idempotent-200;
+ *     if NULL (prior attempt 500ed under invariant 6), reprocess now so
+ *     Stripe's retry actually makes progress (Gerald audit H-01R).
  *
  *  3. PLAN_CODE IS SACRED. We NEVER overwrite companies.plan_code from a
  *     payment failure. Failed payments drive subscription_status and the
@@ -135,8 +136,11 @@ export async function POST(request: Request) {
   // JSON.parse(JSON.stringify(...)) to get a plain structural value.
   const eventJson = JSON.parse(JSON.stringify(event));
 
-  // Invariant 2: raw log first. UNIQUE(provider, event_id) gives us
-  // free idempotency: a retried delivery silently skips here.
+  // Invariant 2: raw log first. UNIQUE(provider, event_id) is the
+  // idempotency anchor BUT (Gerald audit H-01R) we must distinguish
+  // 'already-processed duplicate' (200 idempotent) from 'previously-
+  // attempted-then-500ed duplicate' (must reprocess so Stripe's retry
+  // actually causes progress).
   const { data: existing, error: insertErr } = await admin
     .from('webhook_deliveries')
     .insert({
@@ -149,19 +153,46 @@ export async function POST(request: Request) {
     .select('id, processed_at')
     .single();
 
+  let deliveryId: string;
+
   if (insertErr) {
-    // 23505 = unique_violation. Treat as a successful idempotent no-op.
-    if ((insertErr as { code?: string }).code === '23505') {
-      console.log(`[webhook/stripe] duplicate event ${event.id} (already processed); skipping`);
+    if ((insertErr as { code?: string }).code !== '23505') {
+      console.error('[webhook/stripe] failed to log webhook delivery:', insertErr);
+      // Non-23505 insert error is a real infra problem; return 500 so Stripe
+      // retries us.
+      return NextResponse.json({ error: 'log_failed' }, { status: 500 });
+    }
+
+    // Duplicate event: fetch the existing row to read its processed_at
+    // state. The original insert path lost this distinction and 200-acked
+    // every duplicate, which silently swallowed Stripe's retry after a
+    // transient 500.
+    const { data: prior, error: fetchErr } = await admin
+      .from('webhook_deliveries')
+      .select('id, processed_at')
+      .eq('provider', 'stripe')
+      .eq('event_id', event.id)
+      .maybeSingle();
+    if (fetchErr || !prior) {
+      console.error('[webhook/stripe] duplicate-event fetch failed:', fetchErr);
+      // Treat as retryable infra failure.
+      return NextResponse.json({ error: 'duplicate_fetch_failed' }, { status: 500 });
+    }
+
+    if (prior.processed_at) {
+      console.log(`[webhook/stripe] duplicate event ${event.id} already processed; idempotent ack`);
       return NextResponse.json({ ok: true, idempotent: true });
     }
-    console.error('[webhook/stripe] failed to log webhook delivery:', insertErr);
-    // Non-23505 insert error is a real infra problem; return 500 so Stripe
-    // retries us.
-    return NextResponse.json({ error: 'log_failed' }, { status: 500 });
-  }
 
-  const deliveryId = existing.id;
+    // processed_at IS NULL -> prior attempt ended in a retryable failure.
+    // Fall through and process now using the freshly-verified payload
+    // from THIS request (the existing row's payload is the same event id
+    // either way; signature was just re-verified above).
+    console.log(`[webhook/stripe] duplicate event ${event.id} reprocessing (prior attempt unprocessed)`);
+    deliveryId = prior.id;
+  } else {
+    deliveryId = existing.id;
+  }
 
   // ----- Dispatch -----
   //
