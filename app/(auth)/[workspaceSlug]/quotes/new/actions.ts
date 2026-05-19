@@ -200,9 +200,13 @@ export async function uploadRoofPlanFile(quoteId: string, file: File): Promise<v
   const fileName = `plan-${Date.now()}.${fileExt}`;
   const storagePath = `${company.id}/${quoteId}/${fileName}`;
 
-  // Upload to Supabase Storage from the server. Bucket is private; the
-  // service-role-backed server client handles auth.
-  const { error: uploadError } = await supabase.storage
+  // Upload to Supabase Storage from the server. Bucket is private; this
+  // path runs AFTER server-side ownership verification (above), so we
+  // use the admin client to bypass the new H-05 storage RLS (authenticated
+  // direct-INSERT is denied; signed-upload-URL is the only client path).
+  const { createAdminClient } = await import('@/app/lib/supabase/admin');
+  const admin = createAdminClient();
+  const { error: uploadError } = await admin.storage
     .from(BUCKETS.QUOTE_DOCUMENTS)
     .upload(storagePath, file, {
       contentType: file.type,

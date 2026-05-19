@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import { finaliseUpload } from '@/app/lib/files/upload-finaliser';
@@ -39,7 +40,13 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const { error: uploadError } = await supabase.storage
+    // Gerald audit H-05: authenticated users no longer have direct
+    // INSERT on storage.objects for QUOTE-DOCUMENTS. This route runs
+    // server-side AFTER auth + ownership checks above, so it's safe to
+    // bypass RLS via the admin client for the storage write itself. The
+    // finaliseUpload call below remains the canonical post-upload check.
+    const admin = createAdminClient();
+    const { error: uploadError } = await admin.storage
       .from(BUCKETS.QUOTE_DOCUMENTS)
       .upload(storagePath, buffer, {
         contentType: file.type,
@@ -90,7 +97,7 @@ export async function POST(request: NextRequest) {
       console.error('[Upload] Metadata insert error:', metadataError);
       // The object is in storage but we couldn't write the metadata row.
       // Best-effort cleanup so we don't leak bytes that aren't tracked.
-      await supabase.storage.from(BUCKETS.QUOTE_DOCUMENTS).remove([storagePath]).catch(() => {});
+      await admin.storage.from(BUCKETS.QUOTE_DOCUMENTS).remove([storagePath]).catch(() => {});
       return NextResponse.json({ error: `Metadata error: ${metadataError.message}` }, { status: 500 });
     }
 

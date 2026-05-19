@@ -6,6 +6,7 @@ import { createClient } from '@/app/lib/supabase/client';
 import { FileUploader } from '@/app/components/FileUploader';
 import { SummaryFileRow } from './SummaryFileRow';
 import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-actions';
+import { mintQuoteDocumentUploadUrl } from '@/app/lib/files/signed-upload';
 
 interface FileEntry {
   id: string;
@@ -36,33 +37,39 @@ export function SummaryFilesPanel({ quoteId, companyId, files }: Props) {
   const [uploaderOpen, setUploaderOpen] = useState(false);
 
   async function handleSupportingUpload(file: File) {
-    // Quota check via the existing company action so the user gets a friendly
-    // error instead of a 500 from Storage.
+    // Gerald audit H-05: signed-upload-URL flow. The server mints a
+    // path under {companyId}/{quoteId}/ after verifying tier + quota.
+    // checkStorageQuota retained for the optimistic UX banner path; the
+    // mint endpoint is the authoritative gate.
     const hasQuota = await checkStorageQuota(companyId, file.size);
     if (!hasQuota) {
       throw new Error('Storage quota exceeded. Please upgrade your plan.');
     }
 
-    const supabase = createClient();
-    const fileExt = file.name.split('.').pop() || 'bin';
-    const fileName = `supporting-${Date.now()}.${fileExt}`;
-    const storagePath = `${companyId}/${quoteId}/supporting/${fileName}`;
+    const mint = await mintQuoteDocumentUploadUrl({
+      scope: { kind: 'quote', quoteId },
+      filename: file.name,
+      contentType: file.type || 'application/octet-stream',
+      claimedSize: file.size,
+    });
+    if (!mint.ok) throw new Error(mint.message);
 
-    // Bucket is private; client upload still works via the user's auth session,
-    // and the page re-renders with a freshly-signed URL on router.refresh().
+    const supabase = createClient();
     const { error: uploadError } = await supabase.storage
-      .from('QUOTE-DOCUMENTS')
-      .upload(storagePath, file, { upsert: true });
+      .from(mint.bucket)
+      .uploadToSignedUrl(mint.storagePath, mint.token, file, {
+        contentType: file.type || undefined,
+      });
     if (uploadError) throw new Error(uploadError.message);
 
     await saveFileMetadata({
       companyId,
       quoteId,
       fileType: 'supporting',
-      fileName,
+      fileName: file.name,
       fileSize: file.size,
       mimeType: file.type,
-      storagePath,
+      storagePath: mint.storagePath,
     });
 
     setUploaderOpen(false);

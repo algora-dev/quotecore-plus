@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/app/lib/supabase/client';
 import { FileUploader } from '@/app/components/FileUploader';
 import { checkStorageQuota, saveFileMetadata, getQuoteFileSignedUrl } from '@/app/lib/files/storage-actions';
+import { mintQuoteDocumentUploadUrl } from '@/app/lib/files/signed-upload';
 import { deleteFile } from './actions-files';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 
@@ -48,33 +49,36 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
       throw new Error('Storage quota exceeded. Please upgrade your plan.');
     }
 
-    const supabase = createClient();
-    const fileExt = file.name.split('.').pop();
-    const fileName = `plan-${Date.now()}.${fileExt}`;
-    const storagePath = `${companyId}/${quoteId}/${fileName}`;
-    
-    const { error: uploadError } = await supabase.storage
-      .from(QUOTE_DOCS_BUCKET)
-      .upload(storagePath, file, { upsert: true });
+    // Gerald audit H-05: signed-upload-URL flow.
+    const mint = await mintQuoteDocumentUploadUrl({
+      scope: { kind: 'quote', quoteId },
+      filename: file.name,
+      contentType: file.type || 'application/octet-stream',
+      claimedSize: file.size,
+    });
+    if (!mint.ok) throw new Error(mint.message);
 
-    if (uploadError) {
-      throw new Error(uploadError.message);
-    }
+    const supabase = createClient();
+    const { error: uploadError } = await supabase.storage
+      .from(mint.bucket)
+      .uploadToSignedUrl(mint.storagePath, mint.token, file, {
+        contentType: file.type || undefined,
+      });
+    if (uploadError) throw new Error(uploadError.message);
 
     await saveFileMetadata({
       companyId,
       quoteId,
       fileType: 'plan',
-      fileName,
+      fileName: file.name,
       fileSize: file.size,
       mimeType: file.type,
-      storagePath,
+      storagePath: mint.storagePath,
     });
 
-    // Mint a signed URL via a server action (private bucket).
-    const signedUrl = await getQuoteFileSignedUrl(storagePath);
+    const signedUrl = await getQuoteFileSignedUrl(mint.storagePath);
     setPlanUrl(signedUrl);
-    setPlanName(fileName);
+    setPlanName(file.name);
     router.refresh();
   }
 
@@ -84,36 +88,39 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
       throw new Error('Storage quota exceeded. Please upgrade your plan.');
     }
 
-    const supabase = createClient();
-    const fileExt = file.name.split('.').pop();
-    const fileName = `supporting-${Date.now()}.${fileExt}`;
-    const storagePath = `${companyId}/${quoteId}/supporting/${fileName}`;
-    
-    const { error: uploadError } = await supabase.storage
-      .from(QUOTE_DOCS_BUCKET)
-      .upload(storagePath, file, { upsert: true });
+    const mint = await mintQuoteDocumentUploadUrl({
+      scope: { kind: 'quote', quoteId },
+      filename: file.name,
+      contentType: file.type || 'application/octet-stream',
+      claimedSize: file.size,
+    });
+    if (!mint.ok) throw new Error(mint.message);
 
-    if (uploadError) {
-      throw new Error(uploadError.message);
-    }
+    const supabase = createClient();
+    const { error: uploadError } = await supabase.storage
+      .from(mint.bucket)
+      .uploadToSignedUrl(mint.storagePath, mint.token, file, {
+        contentType: file.type || undefined,
+      });
+    if (uploadError) throw new Error(uploadError.message);
 
     await saveFileMetadata({
       companyId,
       quoteId,
       fileType: 'supporting',
-      fileName,
+      fileName: file.name,
       fileSize: file.size,
       mimeType: file.type,
-      storagePath,
+      storagePath: mint.storagePath,
     });
 
     // Mint a signed URL via a server action (private bucket).
-    const signedUrl = await getQuoteFileSignedUrl(storagePath);
+    const signedUrl = await getQuoteFileSignedUrl(mint.storagePath);
 
     const newFile: SupportingFile = {
-      id: storagePath, // transient — router.refresh() below replaces this with the real DB id
-      storagePath,
-      fileName,
+      id: mint.storagePath, // transient — router.refresh() below replaces this with the real DB id
+      storagePath: mint.storagePath,
+      fileName: file.name,
       fileSize: file.size,
       url: signedUrl,
       uploadedAt: new Date().toISOString(),

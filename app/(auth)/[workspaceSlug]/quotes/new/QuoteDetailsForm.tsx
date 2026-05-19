@@ -6,6 +6,7 @@ import { createQuoteWithDetails } from './actions';
 import { FileUploader } from '@/app/components/FileUploader';
 import { createClient } from '@/app/lib/supabase/client';
 import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-actions';
+import { mintQuoteDocumentUploadUrl } from '@/app/lib/files/signed-upload';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
 
 interface Template {
@@ -90,33 +91,47 @@ export function QuoteDetailsForm({
   }, [searchParams, templates]);
 
   async function handlePlanUpload(file: File) {
-    const hasQuota = await checkStorageQuota(companyId, file.size);
-    if (!hasQuota) {
-      throw new Error('Storage quota exceeded. Please upgrade your plan.');
+    // Gerald audit H-05: the client no longer has direct INSERT on the
+    // private bucket. Ask the server to mint a signed upload URL after
+    // it has verified company context + tier + storage quota.
+    const mint = await mintQuoteDocumentUploadUrl({
+      scope: { kind: 'pending' },
+      filename: file.name,
+      contentType: file.type || 'application/octet-stream',
+      claimedSize: file.size,
+    });
+    if (!mint.ok) {
+      // Surface a billing-style message that the existing storage_quota
+      // UI banner already handles.
+      if (mint.code === 'storage_quota_exceeded') {
+        throw new Error('Storage quota exceeded. Please upgrade your plan.');
+      }
+      throw new Error(mint.message);
     }
 
-    // Upload to storage only (don't save metadata yet - quote doesn't exist).
-    // Path MUST start with the company id so the storage RLS policy
-    // (`first segment === caller's company_id`) accepts the write.
     const supabase = createClient();
-    const fileExt = file.name.split('.').pop();
-    const fileName = `plan-${Date.now()}.${fileExt}`;
-    const tempPath = `${companyId}/_pending/${fileName}`;
-    
     const { error: uploadError } = await supabase.storage
-      .from('QUOTE-DOCUMENTS')
-      .upload(tempPath, file, { upsert: true });
-
+      .from(mint.bucket)
+      .uploadToSignedUrl(mint.storagePath, mint.token, file, {
+        contentType: file.type || undefined,
+      });
     if (uploadError) {
       throw new Error(uploadError.message);
     }
 
     // Store file info in state - will save metadata after quote creation
-    setUploadedPlanPath(tempPath);
+    setUploadedPlanPath(mint.storagePath);
     setPlanUploaded(true);
-    
-    // Store file details for later metadata save
-    (window as any).__pendingPlanFile = { fileName, fileSize: file.size, mimeType: file.type, tempPath };
+
+    // Store file details for later metadata save. fileName is just for
+    // display + filetype detection; the canonical path is mint.storagePath.
+    const displayName = file.name;
+    (window as { __pendingPlanFile?: unknown }).__pendingPlanFile = {
+      fileName: displayName,
+      fileSize: file.size,
+      mimeType: file.type,
+      tempPath: mint.storagePath,
+    };
   }
 
   async function handleSubmit(e: React.FormEvent) {

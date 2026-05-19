@@ -1,6 +1,7 @@
 'use server';
 
-import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import { requireCompanyContext } from '@/app/lib/supabase/server';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 
 /**
@@ -23,7 +24,10 @@ export async function uploadCanvasImage(
   suffix: string = '',
 ): Promise<string> {
   const profile = await requireCompanyContext();
-  const supabase = await createSupabaseServerClient();
+  // Gerald audit H-05: storage RLS denies direct authenticated INSERT on
+  // QUOTE-DOCUMENTS. This server action already runs under server auth +
+  // requireCompanyContext above; bypass storage RLS via the admin client.
+  const admin = createAdminClient();
 
   // Convert data URL to blob
   const base64Data = dataUrl.split(',')[1];
@@ -40,7 +44,7 @@ export async function uploadCanvasImage(
   const filename = `canvas-${quoteId}${suffix ? '-' + suffix : ''}-${timestamp}.png`;
   const filePath = `${profile.company_id}/${quoteId}/${filename}`;
 
-  const { data, error } = await supabase.storage
+  const { data, error } = await admin.storage
     .from(BUCKETS.QUOTE_DOCUMENTS)
     .upload(filePath, blob, {
       contentType: 'image/png',
