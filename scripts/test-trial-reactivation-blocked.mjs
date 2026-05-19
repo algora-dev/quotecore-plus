@@ -169,6 +169,63 @@ async function main() {
         `no live companies with NULL trial_started_at remain (orphans: ${realOrphans.length})`);
     }
 
+    // 7. M-01R-P2: signup/onboarding minimal-insert path. Mirror exactly
+    // what app/signup/actions.ts and app/(auth)/onboarding/actions.ts do:
+    // insert with profile fields only and let the BEFORE INSERT trigger
+    // (set_company_trial_defaults) fill plan_code, subscription_status,
+    // trial_ends_at AND now also trial_started_at. If the trigger fix
+    // didn't land, this test fails.
+    console.log('\n--- Test 7: signup-path minimal insert sets trial_started_at via trigger ---');
+    const SIGNUP_TAG = `m01r-p2-signup-${Date.now()}`;
+    const { data: signupCo, error: signupErr } = await admin
+      .from('companies')
+      .insert({
+        name: `Signup ${SIGNUP_TAG}`,
+        slug: SIGNUP_TAG,
+        default_currency: 'USD',
+        default_language: 'en',
+        default_measurement_system: 'metric',
+        // INTENTIONALLY no plan_code / subscription_status / trial_ends_at /
+        // trial_started_at — same as signup/onboarding actions today.
+      })
+      .select('id, plan_code, subscription_status, trial_ends_at, trial_started_at')
+      .single();
+
+    let signupCleanupId = null;
+    if (signupErr) {
+      record(false, `signup-style insert failed: ${signupErr.message}`);
+    } else {
+      signupCleanupId = signupCo.id;
+      record(signupCo.plan_code === 'trial',
+        `auto-trial: plan_code='${signupCo.plan_code}' (expected 'trial')`);
+      record(signupCo.subscription_status === 'trialing',
+        `auto-trial: subscription_status='${signupCo.subscription_status}' (expected 'trialing')`);
+      record(signupCo.trial_ends_at !== null,
+        `auto-trial: trial_ends_at is SET`);
+      record(signupCo.trial_started_at !== null,
+        `auto-trial: trial_started_at is SET (M-01R-P2 trigger fix) (got ${signupCo.trial_started_at})`);
+
+      // Now expire the auto-trial and verify a follow-up activateTrial call
+      // would still be refused because trial_started_at remains set.
+      await admin.from('companies').update({
+        trial_ends_at: new Date(Date.now() - 86400000).toISOString(),
+        subscription_status: 'canceled',
+      }).eq('id', signupCleanupId);
+
+      const { data: postExpireSignup } = await admin
+        .from('companies')
+        .select('trial_started_at')
+        .eq('id', signupCleanupId)
+        .single();
+      record(postExpireSignup.trial_started_at !== null,
+        `signup-path trial_started_at persists post-expiry (would block activateTrial)`);
+    }
+
+    // Cleanup the signup-style fixture.
+    if (signupCleanupId) {
+      await admin.from('companies').delete().eq('id', signupCleanupId);
+    }
+
   } catch (e) {
     console.error(`\nFatal: ${e.message}`);
     fail++;
