@@ -264,22 +264,29 @@ export async function activateTrial(): Promise<BillingActionResult> {
   const admin = createAdminClient();
   const { data: company, error: companyErr } = await admin
     .from('companies')
-    .select('id, plan_code, subscription_status, stripe_subscription_id, stripe_customer_id, cancel_at_period_end, cancel_at, trial_ends_at')
+    .select('id, plan_code, subscription_status, stripe_subscription_id, stripe_customer_id, cancel_at_period_end, cancel_at, trial_ends_at, trial_started_at')
     .eq('id', profile.company_id)
     .maybeSingle();
   if (companyErr || !company) {
     return { ok: false, code: 'company_not_found', message: 'Company record missing.' };
   }
 
-  // Trial is once-per-company forever. The presence of a stripe_customer_id
-  // (set on first Checkout) is the canonical 'this company has paid us at
-  // some point' marker. Even if their current sub is cancelled or winding
-  // down, they don't get a fresh trial.
+  // Gerald audit M-01R: durable once-per-company trial marker. Previously
+  // we used `stripe_customer_id` as the proxy, which only fires after
+  // first Checkout — a non-paying company whose trial expired could
+  // re-invoke this action and get another 14 days. `trial_started_at` is
+  // set on first successful activation and is the authoritative gate.
+  if (company.trial_started_at) {
+    return {
+      ok: false,
+      code: 'trial_not_available',
+      message: 'The free trial is for new accounts only. Pick a paid plan to keep using QuoteCore+.',
+    };
+  }
+
+  // Belt-and-braces: stripe_customer_id is a separate proxy for "this
+  // company has paid us at some point". Keep blocking on it too.
   if (company.stripe_customer_id) {
-    // One narrow exception: a sub that is winding down but hasn't yet had
-    // its stripe_customer_id set is impossible (customer is created on
-    // the FIRST checkout, before any cancel can happen). So if
-    // stripe_customer_id is set, they paid at least once.
     return {
       ok: false,
       code: 'trial_not_available',
@@ -302,11 +309,10 @@ export async function activateTrial(): Promise<BillingActionResult> {
     };
   }
 
-  // Re-roll guard. Today: allow re-activation if there's no active trial
-  // (trial_ends_at < now()). Production tightening to come — Shaun wants
-  // to be able to flip onto trial repeatedly during testing, so we
-  // intentionally do NOT block recently-ended trials yet. The 14-day
-  // expiry still applies; users can't extend by re-activating.
+  // If we get here trial_started_at is NULL, so this is the first-ever
+  // activation for this company. Friendly already-active check is still
+  // useful for the (impossible-after-M-01R) edge case where state got
+  // poked into 'trialing' without setting trial_started_at.
   if (company.subscription_status === 'trialing' && company.trial_ends_at) {
     const ends = new Date(company.trial_ends_at).getTime();
     if (Date.now() < ends) {
@@ -320,12 +326,16 @@ export async function activateTrial(): Promise<BillingActionResult> {
 
   const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
+  const nowIso = new Date().toISOString();
   const { error: updateErr } = await admin
     .from('companies')
     .update({
       plan_code: 'trial',
       subscription_status: 'trialing',
       trial_ends_at: trialEndsAt,
+      // M-01R: stamp the durable once-per-company marker. Subsequent calls
+      // refuse via the trial_started_at guard above.
+      trial_started_at: nowIso,
       // Clear any leftover dunning state so the trial isn't immediately
       // suspended by a stale past-due timer.
       first_payment_failure_at: null,

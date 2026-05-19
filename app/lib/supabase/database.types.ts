@@ -189,6 +189,7 @@ export type Database = {
           stripe_subscription_id: string | null
           subscription_status: string
           trial_ends_at: string | null
+          trial_started_at: string | null
           updated_at: string
         }
         Insert: {
@@ -223,6 +224,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           subscription_status?: string
           trial_ends_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -257,6 +259,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           subscription_status?: string
           trial_ends_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2713,7 +2716,60 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      subscription_events_audit_v1: {
+        Row: {
+          actor_user_id: string | null
+          company_id: string | null
+          created_at: string | null
+          event_type: string | null
+          from_plan_code: string | null
+          from_status: string | null
+          id: string | null
+          notes: string | null
+          to_plan_code: string | null
+          to_status: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          event_type?: string | null
+          from_plan_code?: string | null
+          from_status?: string | null
+          id?: string | null
+          notes?: string | null
+          to_plan_code?: string | null
+          to_status?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          event_type?: string | null
+          from_plan_code?: string | null
+          from_status?: string | null
+          id?: string | null
+          notes?: string | null
+          to_plan_code?: string | null
+          to_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_events_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       check_storage_quota: {
