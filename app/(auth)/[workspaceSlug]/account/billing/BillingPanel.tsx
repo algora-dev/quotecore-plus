@@ -258,6 +258,27 @@ export function BillingPanel(props: BillingPanelProps) {
   };
   const statusClass = statusBadgeClass[props.subscriptionStatus] || 'bg-slate-100 text-slate-700';
 
+  // Pill label + colour (smoke #9, 2026-05-19). The raw
+  // subscription_status is too internal for a user-facing pill:
+  //   trialing + not expired → 'Trial Active' (blue)
+  //   trialing + expired (no paid sub) → 'Expired' (red)
+  //   anything else → humanised status name with default colour map
+  // trialExpiredNoSub is computed a few lines below; for tidiness keep the
+  // helper next to the badge map and recompute the predicate locally.
+  const _trialForPill = trialState(props.trialEndsAt);
+  const _isPillExpired =
+    props.subscriptionStatus === 'trialing'
+    && _trialForPill?.state === 'expired'
+    && !props.hasStripeCustomer;
+  const statusPillLabel: string =
+    props.subscriptionStatus === 'trialing'
+      ? _isPillExpired ? 'Expired' : 'Trial Active'
+      : props.subscriptionStatus.replace(/_/g, ' ');
+  const statusPillClass: string =
+    props.subscriptionStatus === 'trialing'
+      ? _isPillExpired ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+      : statusClass;
+
   const storagePct = props.storageLimitBytes
     ? Math.min(100, Math.round((props.storageUsedBytes / props.storageLimitBytes) * 100))
     : 0;
@@ -347,9 +368,9 @@ export function BillingPanel(props: BillingPanelProps) {
             </h3>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <span
-                className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${statusClass}`}
+                className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${statusPillClass}`}
               >
-                {props.subscriptionStatus.replace(/_/g, ' ')}
+                {statusPillLabel}
               </span>
               {showCancellingPill && (
                 <span className="inline-block text-xs px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-800">
