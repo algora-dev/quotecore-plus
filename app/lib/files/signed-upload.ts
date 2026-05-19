@@ -30,6 +30,7 @@ import { requireCompanyContext } from '@/app/lib/supabase/server';
 import { assertCanUseStorage } from '@/app/lib/billing/entitlements';
 import { isBillingError } from '@/app/lib/billing/errors';
 import { BUCKETS } from '@/app/lib/storage/buckets';
+import type { MintUploadInput, MintUploadResult } from './signed-upload-types';
 
 /**
  * Hard cap on a single file's bytes regardless of remaining quota. Browser
@@ -41,46 +42,6 @@ const MAX_SINGLE_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
 
 /** Allowed MIME prefixes for QUOTE-DOCUMENTS. Mirrors UI accept attrs. */
 const ALLOWED_MIME_PREFIXES = ['image/', 'application/pdf', 'application/zip'];
-
-export interface MintUploadInput {
-  /**
-   * Where the upload is going. `_pending` is the pre-quote-creation staging
-   * area; `{quoteId}` is for in-quote uploads (FilesManager etc).
-   */
-  scope:
-    | { kind: 'pending' }
-    | { kind: 'quote'; quoteId: string };
-  /** Original filename. Used only to derive an extension; not trusted otherwise. */
-  filename: string;
-  /** Browser-claimed content type. Validated against an allowlist. */
-  contentType: string;
-  /** Browser-claimed byte size. Pre-flight only; finaliser re-reads real size. */
-  claimedSize: number;
-}
-
-export type MintUploadResult =
-  | {
-      ok: true;
-      bucket: typeof BUCKETS.QUOTE_DOCUMENTS;
-      /** Path the client should pass to `uploadToSignedUrl`. */
-      storagePath: string;
-      /** Signed upload URL from Supabase Storage. */
-      signedUrl: string;
-      /** Token paired with the path (Supabase native). */
-      token: string;
-    }
-  | {
-      ok: false;
-      code:
-        | 'unauthenticated'
-        | 'invalid_input'
-        | 'unsupported_type'
-        | 'too_large'
-        | 'storage_quota_exceeded'
-        | 'subscription_inactive'
-        | 'mint_failed';
-      message: string;
-    };
 
 function safeExt(filename: string): string {
   const dot = filename.lastIndexOf('.');
