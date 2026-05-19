@@ -133,8 +133,13 @@ function record(ok, label) {
 // ---------------------------------------------------------------------------
 
 // Feature flags from the seed INSERT in subscription_plans.
+// NOTE 2026-05-19: trial flags updated post-tier_gating_v3 — trial is now
+// "try ANY tier for 14 days" so it has every gated feature on; the cap
+// columns (component_limit / flashing_limit / monthly_quote_limit) still
+// hold it on a leash. On trial expiry the effective-plan helper collapses
+// it to starter.
 const PLAN_FEATURES = {
-  trial:      { digital_takeoff: true,  flashings: false, material_orders: false, followups: false, email_send: false, activity_card: true  },
+  trial:      { digital_takeoff: true,  flashings: true,  material_orders: true,  followups: true,  email_send: true,  activity_card: true  },
   starter:    { digital_takeoff: false, flashings: false, material_orders: false, followups: false, email_send: false, activity_card: false },
   growth:     { digital_takeoff: true,  flashings: false, material_orders: false, followups: false, email_send: true,  activity_card: true  },
   pro:        { digital_takeoff: true,  flashings: true,  material_orders: true,  followups: true,  email_send: true,  activity_card: true  },
