@@ -45,6 +45,7 @@ export default async function ComponentsPage(props: {params: Promise<{workspaceS
         componentCount={ent.componentCount}
         effectivePlanCode={ent.effectivePlanCode}
         flashingsFeatureEnabled={ent.features.flashings}
+        subscriptionActive={ent.isActive}
       />
     </>
   );

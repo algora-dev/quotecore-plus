@@ -73,3 +73,33 @@ All five fixes land on `development` in one commit chain after Shaun finishes th
 5. Regression coverage: extend `test-trial-reactivation-blocked.mjs` with a day-15 fixture asserting `isActive=false` + write attempts refused; add quote-page smoke test for #5 fix.
 
 After Shaun signs off smoke on this branch's preview, fast-forward `development → main`.
+
+---
+
+# Smoke pass #2 — 2026-05-19 (post-fix verification on dev preview)
+
+## #7 — Block "+ New Quote" entry on expired trial (smoke #2 extension)
+**Current behaviour:** Shaun confirmed mutations refuse at the DB (smoke #2 fix lands P0001). UI lets the user click `+ New Quote`, fill the form, and only fails on submit with a generic error.
+**Required UX (Shaun):** intercept the click on `/{slug}/quotes` page's `+ New Quote` button when isActive=false. Open a modal: "Your trial period has ended. Subscribe to a plan to create more quotes." Buttons: Close + View Plans (links to `/{slug}/account?tab=billing`).
+**Fix scope:** intercept at the button-render layer, not the DB — the DB gate stays as defence-in-depth. Mirror the existing "upgrade to access" modal pattern used for gated features (`FeatureGatedModal` or similar) so the visual language is consistent.
+
+## #8 — Same modal for "+ Add Component" on expired trial
+**Current behaviour:** same shape as #7 — user can click `+ Add Component` and the form refuses on submit.
+**Required UX:** intercept the click on the components page. Same modal copy template, same Close + View Plans buttons.
+
+## #9 — Status pill copy: "Trial Active" / "Expired" (smoke #1 extension)
+**Current behaviour:** pill shows raw `subscription_status.replace('_', ' ')` — "trialing" while active, still "trialing" while expired (until cron flips it).
+**Required UX (Shaun):**
+- `subscription_status='trialing'` AND trial NOT expired → pill: **"Trial Active"** (current colour, blue).
+- `subscription_status='trialing'` AND trial IS expired AND no Stripe sub → pill: **"Expired"** in red.
+- Other statuses unchanged.
+**Fix scope:** computed-label switch in BillingPanel + EntitlementBanner. Drives off the same `trialState()` helper added in this batch.
+
+## #10 — Manual Mode upload panel still rendering Server Components error
+**Current behaviour (screenshot):** new quote, no files. Roof Plan upload area renders a red panel with React's production error placeholder text *between* the dashed upload area and "SUPPORTING FILES". The smoke #5 type-split fix is verified live (deployment timestamp post-push), so this is a separate cause.
+**Diagnosis so far:**
+- Type-split definitely shipped (Vercel preview age 27min, push 50min earlier).
+- Error text matches React's production-mode error-boundary string verbatim — something throws *during* render of a child of the Roof Plan box.
+- FileUploader catches errors via `try/catch` and sets local `error` state, so a server-action throw at click-time would render here as a styled red panel using `err.message`. The string matching React's production text suggests the server action threw an uncaught exception, NOT a billing error (which would return ok:false structured).
+- Possible upstream: `signed-upload-types.ts` imports `BUCKETS` for the `typeof BUCKETS.QUOTE_DOCUMENTS` literal type. If the bucket module has runtime-only code that breaks at import-from-types, the action module's chain would throw on first server call.
+**Fix scope (next batch):** repro locally with an expired-trial company + empty quote; add server-side logging into mintQuoteDocumentUploadUrl to capture the actual throw. Almost certainly a one-line fix; just need to see the message.

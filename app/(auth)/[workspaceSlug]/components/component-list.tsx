@@ -55,6 +55,7 @@ export function ComponentList({
   componentCount,
   effectivePlanCode,
   flashingsFeatureEnabled,
+  subscriptionActive,
 }: {
   initialComponents: ComponentLibraryRow[];
   workspaceSlug: string;
@@ -69,6 +70,14 @@ export function ComponentList({
   /** Whether the plan includes the flashings feature. Controls the
    *  Flashings entry button on this page. */
   flashingsFeatureEnabled: boolean;
+  /**
+   * Smoke #8 (2026-05-19): when the company's effective subscription is
+   * inactive (e.g. expired trial), block the + Add Component button at
+   * the click layer. DB triggers refuse the actual insert too
+   * (subscription_inactive via the H-04 cap trigger which fires P0001
+   * before reaching the cap check), so this is purely UX.
+   */
+  subscriptionActive: boolean;
 }) {
   const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);
   /** Local helper that picks the right unit suffix for a measurement type given the company's default system. */
@@ -91,6 +100,9 @@ export function ComponentList({
   const [showForm, setShowForm] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [flashingsUpgradeOpen, setFlashingsUpgradeOpen] = useState(false);
+  // Smoke #8 (2026-05-19): subscription-inactive upgrade modal. Mirrors
+  // the same pattern in QuotesList.
+  const [subBlockedOpen, setSubBlockedOpen] = useState(false);
 
   // Live cap calculation. We track the active count locally so cap
   // enforcement reflects deletes/toggles done in this session without a
@@ -323,6 +335,10 @@ export function ComponentList({
         <div className="flex gap-2">
           <button
             onClick={() => {
+              if (!subscriptionActive) {
+                setSubBlockedOpen(true);
+                return;
+              }
               if (atCap) {
                 setUpgradeOpen(true);
                 return;
@@ -741,6 +757,14 @@ export function ComponentList({
         title="Flashing drawings require a higher plan"
         description="Upgrade your account to access the flashings drawing tool and reusable flashing library."
         recommendedPlan="pro"
+      />
+      <UpgradeModal
+        open={subBlockedOpen}
+        onClose={() => setSubBlockedOpen(false)}
+        title="Your trial period has ended"
+        description="You need to subscribe to a plan to create more components. Your existing components remain viewable on any plan."
+        ctaLabel="View plans"
+        recommendedPlan="starter"
       />
     </div>
   );

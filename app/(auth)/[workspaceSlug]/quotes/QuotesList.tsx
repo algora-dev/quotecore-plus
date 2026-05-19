@@ -37,6 +37,15 @@ interface Props {
   monthlyQuoteUsed: number;
   monthlyQuoteLimit: number;
   effectivePlanCode: string;
+  /**
+   * Smoke #7 (2026-05-19): when the company's effective subscription is
+   * inactive (e.g. expired trial without a paid sub), block the New Quote
+   * entry point and open the subscription-blocked upgrade modal instead.
+   * The DB-level guard (smoke #2 migration) refuses the actual mutation,
+   * so this is a UX layer that surfaces the block cleanly rather than
+   * letting the user fill out a form for nothing.
+   */
+  subscriptionActive: boolean;
 }
 
 const JOB_STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string; dot: string }> = {
@@ -169,10 +178,16 @@ export function QuotesList({
   workspaceSlug,
   monthlyQuoteAtCap,
   monthlyQuoteUsed,
+  subscriptionActive,
   monthlyQuoteLimit,
   effectivePlanCode,
 }: Props) {
   const [capUpgradeOpen, setCapUpgradeOpen] = useState(false);
+  // Smoke #7 (2026-05-19): subscription-inactive (e.g. expired trial)
+  // opens this modal when the user clicks New Quote. The DB-level guard
+  // refuses the actual mutation anyway, so this is a clean UX surface
+  // instead of letting the user fill out a form for nothing.
+  const [subBlockedOpen, setSubBlockedOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'confirmed' | 'draft'>('confirmed');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'recently_active'>('newest');
@@ -477,7 +492,20 @@ export function QuotesList({
         </div>
 
         <div className="flex gap-2">
-          {monthlyQuoteAtCap ? (
+          {!subscriptionActive ? (
+            <button
+              type="button"
+              onClick={() => setSubBlockedOpen(true)}
+              title="Your trial period has ended — click for upgrade options"
+              data-copilot="new-quote"
+              className="inline-flex items-center gap-1.5 rounded-full bg-slate-300 px-5 py-2 text-sm font-semibold text-slate-600 cursor-pointer hover:bg-slate-400"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              New Quote
+            </button>
+          ) : monthlyQuoteAtCap ? (
             <button
               type="button"
               onClick={() => setCapUpgradeOpen(true)}
@@ -797,6 +825,14 @@ export function QuotesList({
         title={`Monthly quote limit reached (${monthlyQuoteUsed}/${monthlyQuoteLimit})`}
         description={`To create more quotes this month you need to upgrade your account tier, or wait until your quote limit resets next month. Plan: ${effectivePlanCode}.`}
         recommendedPlan={effectivePlanCode === 'trial' ? 'growth' : 'pro'}
+      />
+      <UpgradeModal
+        open={subBlockedOpen}
+        onClose={() => setSubBlockedOpen(false)}
+        title="Your trial period has ended"
+        description="You need to subscribe to a plan to create more quotes. Your existing quotes remain viewable on any plan."
+        ctaLabel="View plans"
+        recommendedPlan="starter"
       />
     </>
   );

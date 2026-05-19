@@ -105,6 +105,7 @@ export default async function QuotesPage({
         monthlyQuoteUsed={used}
         monthlyQuoteLimit={limit}
         effectivePlanCode={entitlements.effectivePlanCode}
+        subscriptionActive={entitlements.isActive}
       />
     </section>
   );
