@@ -157,8 +157,8 @@ Add every new table and column. All nullable. Server flag stays off.
 
 - `companies.default_trade trade not null default 'roofing'`
 - `quotes.trade trade not null default 'roofing'`
-- `quotes.component_collection_id uuid null references component_collections(id) on delete restrict`
-- `component_library.collection_id uuid null references component_collections(id) on delete restrict`
+- `quotes.component_collection_id uuid null` — referenced by a **composite FK** `(company_id, component_collection_id)` → `component_collections (company_id, id)` `on delete restrict`. (Round-3 H-03: composite FK blocks cross-company links at the DB layer. Requires `UNIQUE (company_id, id)` on `component_collections`.)
+- `component_library.collection_id uuid null` — referenced by a **composite FK** `(company_id, collection_id)` → `component_collections (company_id, id)` `on delete restrict`. (Round-3 H-03.)
 - `component_library.height_value_mm integer null`
 - `component_library.depth_value_mm integer null`
 - `component_library.waste_unit waste_unit not null default 'percent'`
@@ -196,9 +196,25 @@ Add every new table and column. All nullable. Server flag stays off.
   - `per_pack_coverage` → `pack_price` + `pack_size` (quantity per pack, e.g. 20L) + `pack_coverage_m2` all NOT NULL.
 - **`CHECK (is_combined = false OR combined_from IS NOT NULL)`** on `quote_component_entries` — a combined row must have its source data preserved.
 
-### 2.5 RLS
+### 2.5 RLS + column-level GRANTs
 
-Every new table follows `(SELECT company_id FROM users WHERE id = auth.uid())` pattern. Service-role bypasses. No billing-sensitive columns on these tables — no column-level GRANT pattern needed (C-01 doesn't apply here).
+Every new table follows the company-scoped pattern. Service-role bypasses. Two tables receive **column-level GRANT lockdowns** even though they have no billing-sensitive columns, because round-3 surfaced specific abuse paths each one addresses:
+
+- **`component_collections`** (Round-3 H-02):
+  - SELECT: `company_id = (SELECT company_id FROM users WHERE id = auth.uid())`.
+  - INSERT WITH CHECK adds `AND is_bootstrap = false` — authenticated users cannot create a bootstrap row.
+  - UPDATE USING + WITH CHECK both add `AND is_bootstrap = false` — authenticated users cannot touch an existing bootstrap row or flip the flag during an UPDATE.
+  - DELETE USING adds `AND is_bootstrap = false` — authenticated users cannot delete a bootstrap row.
+  - Column-level GRANT: `REVOKE UPDATE` from authenticated, then `GRANT UPDATE (name)` only. `is_bootstrap`, `company_id`, `id`, timestamps are all NOT in the whitelist. Bootstrap is genuinely service-role only via the SECDEF RPC.
+
+- **`takeoff_sessions`**: standard `FOR ALL` policy scoped by `quote_id IN (SELECT id FROM quotes WHERE company_id = ...)`. No column-GRANT needed.
+
+- **`takeoff_pages`** (Round-3 H-04):
+  - SELECT / UPDATE / DELETE: standard quote-scoped policies.
+  - INSERT WITH CHECK adds `AND image_storage_path IS NULL` — authenticated users cannot supply an arbitrary storage path at insert time.
+  - Column-level GRANT: `REVOKE UPDATE` from authenticated, then `GRANT UPDATE (page_name, page_order, scale_calibration, pan_zoom_state, session_id)` only. `image_storage_path`, `quote_id`, `id`, `created_at` are all NOT in the whitelist. The service-role signed-upload finaliser is the only path that writes/updates `image_storage_path` after verifying ownership, prefix, content type, and stored size.
+
+The C-01 column-level GRANT pattern is therefore used here as a defensive posture (round-3 made it mandatory), even though there's no billing leakage risk.
 
 ### 2.6 Indexes
 
