@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { saveTakeoffMeasurements } from './actions';
+import { saveTakeoffMeasurements, createTakeoffPage } from './actions';
 import { uploadCanvasImage } from './uploadCanvasImage';
 import { AlertModal } from '@/app/components/AlertModal';
 
@@ -111,7 +111,19 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [showConfirmedFlash, setShowConfirmedFlash] = useState(false);
   const [showCalibrationHelp, setShowCalibrationHelp] = useState(true);
   const [showRoofAreaInstructions, setShowRoofAreaInstructions] = useState(false);
-  
+
+  // Phase 7: multi-page takeoff state.
+  // Each page is an image with its own URL. We track which page the canvas
+  // is currently showing. Measurements are stored per-page in the takeoff
+  // state but all saved together via save_takeoff_atomic.
+  const [pages, setPages] = useState<Array<{ id?: string; url: string; name: string; order: number }>>([
+    { url: planUrl, name: 'Page 1', order: 1 },
+  ]);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [showUploadAnotherModal, setShowUploadAnotherModal] = useState(false);
+  const [uploadAnotherPageName, setUploadAnotherPageName] = useState('');
+  const [isUploadingPage, setIsUploadingPage] = useState(false);
+
   // Component colors (auto-assign on mount)
   const [componentColors, setComponentColors] = useState<ComponentColor[]>([]);
   const [activeComponentIds, setActiveComponentIds] = useState<string[]>([]);
@@ -180,7 +192,10 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     console.log('[Components] Colors assigned to', activeComponentIds.length, 'active components');
   }, [activeComponentIds]);
   
-  // Show roof area instructions after first calibration confirmed
+  // After calibration: show area instructions for roofing quotes (mandatory),
+  // or the optional "Do you want to measure an area?" prompt for generic
+  // quotes (Phase 7 — C2 spec). Keyed on quote.trade.
+  const quoteIsGeneric = (quote as { trade?: string }).trade === 'generic';
   useEffect(() => {
     if (calibrationConfirmed && calibrations.length > 0 && roofAreas.length === 0) {
       // Delay slightly to show after calibration flash
@@ -470,6 +485,54 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     setMultiLinealPoints([]);
     setMultiLinealSegmentObjects([]);
     setMultiLinealMode(false);
+  };
+
+  // Phase 7: load a new image onto the canvas. Used when switching pages.
+  // Clears all drawn objects first (areas, lines, markers) then loads the
+  // new image as the canvas background.
+  const loadPageImage = (imageUrl: string) => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    // Remove all objects (measurements, calibration lines, etc.).
+    canvas.clear();
+    canvas.backgroundColor = '#1e293b';
+    const imgElement = new Image();
+    imgElement.crossOrigin = 'anonymous';
+    imgElement.onload = () => {
+      const fabricImg = new FabricImage(imgElement);
+      const scaleX = CANVAS_WIDTH / imgElement.width;
+      const scaleY = CANVAS_HEIGHT / imgElement.height;
+      const scale = Math.min(scaleX, scaleY);
+      fabricImg.set({
+        scaleX: scale, scaleY: scale,
+        left: (CANVAS_WIDTH - imgElement.width * scale) / 2,
+        top: (CANVAS_HEIGHT - imgElement.height * scale) / 2,
+        originX: 'left', originY: 'top',
+        selectable: false, evented: false,
+      });
+      canvas.add(fabricImg);
+      canvas.sendObjectToBack(fabricImg);
+      canvas.renderAll();
+    };
+    imgElement.src = imageUrl;
+    // Also reset calibration + measurements for the fresh page.
+    setCalibrations([]);
+    setCalibrationConfirmed(false);
+    setComponentMeasurements([]);
+    setRoofAreas([]);
+    setAreaPoints([]);
+    setLinePoints([]);
+    setMultiLinealPoints([]);
+    setMultiLinealSegmentObjects([]);
+  };
+
+  // Switch the canvas to a different page by index.
+  const switchToPage = (idx: number) => {
+    if (idx === currentPageIndex) return;
+    const page = pages[idx];
+    if (!page) return;
+    setCurrentPageIndex(idx);
+    loadPageImage(page.url);
   };
 
   const handleSaveTakeoff = async () => {
@@ -1262,16 +1325,111 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           </Link>
           <h1 className="text-xl font-semibold">{quote.customer_name} - Digital Takeoff</h1>
         </div>
-        <button
-          onClick={handleSaveTakeoff}
-          disabled={calibrations.length === 0 || isSaving}
-          data-copilot="takeoff-save"
-          className="px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-          title={calibrations.length === 0 ? 'Calibrate the plan first' : ''}
-        >
-          {isSaving ? 'Saving...' : 'Save & Continue to Components'}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Phase 7: Upload another image (multi-page takeoff) */}
+          <button
+            onClick={() => setShowUploadAnotherModal(true)}
+            disabled={isSaving}
+            className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-full text-sm disabled:opacity-50 transition-all"
+            title="Add another plan image to measure from"
+          >
+            + Upload another image
+          </button>
+          <button
+            onClick={handleSaveTakeoff}
+            disabled={calibrations.length === 0 || isSaving}
+            data-copilot="takeoff-save"
+            className="px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            title={calibrations.length === 0 ? 'Calibrate the plan first' : ''}
+          >
+            {isSaving ? 'Saving...' : 'Save & Continue to Components'}
+          </button>
+        </div>
       </div>
+
+      {/* Phase 7: Page tabs — show when more than 1 page exists */}
+      {pages.length > 1 && (
+        <div className="flex gap-1 px-4 py-2 bg-slate-800 border-b border-slate-700">
+          {pages.map((page, idx) => (
+            <button
+              key={idx}
+              onClick={() => switchToPage(idx)}
+              className={`px-3 py-1 rounded-full text-sm transition-all ${
+                idx === currentPageIndex
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+              }`}
+            >
+              {page.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Phase 7: Upload another image modal */}
+      {showUploadAnotherModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 space-y-4">
+            <h3 className="font-semibold text-lg">Upload another image</h3>
+            <p className="text-sm text-slate-600">
+              Upload a second plan image to measure from. Your current measurements are saved when you switch pages.
+            </p>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Page name (optional)</label>
+              <input
+                type="text"
+                value={uploadAnotherPageName}
+                onChange={e => setUploadAnotherPageName(e.target.value)}
+                placeholder={`Page ${pages.length + 1}`}
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Select image file</label>
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                className="w-full text-sm"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setIsUploadingPage(true);
+                  try {
+                    // Create the page record first.
+                    const pageName = uploadAnotherPageName.trim() || `Page ${pages.length + 1}`;
+                    const pageResult = await createTakeoffPage(quote.id, pageName);
+                    if (!pageResult.ok) throw new Error(pageResult.error);
+
+                    // Read the file as a data URL and create an object URL for the canvas.
+                    const objectUrl = URL.createObjectURL(file);
+                    const newPage = { id: pageResult.pageId, url: objectUrl, name: pageName, order: pages.length + 1 };
+                    const newPages = [...pages, newPage];
+                    setPages(newPages);
+                    setCurrentPageIndex(newPages.length - 1);
+                    loadPageImage(objectUrl);
+                    setShowUploadAnotherModal(false);
+                    setUploadAnotherPageName('');
+                  } catch (err) {
+                    alert(err instanceof Error ? err.message : 'Upload failed');
+                  } finally {
+                    setIsUploadingPage(false);
+                  }
+                }}
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setShowUploadAnotherModal(false); setUploadAnotherPageName(''); }}
+                className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full text-sm"
+                disabled={isUploadingPage}
+              >
+                Cancel
+              </button>
+            </div>
+            {isUploadingPage && <p className="text-xs text-center text-slate-500">Creating page...</p>}
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar - Calibration, Roof Areas & Components */}
@@ -1575,14 +1733,17 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
               </button>
               <button
                 onClick={() => {
-                  const hasRoofAreaWithPitch = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0);
-                  if (!hasRoofAreaWithPitch) {
-                    showAlert(
-                      'Roof area required',
-                      'Create a roof area with pitch first — components are calculated against the roof pitch.',
-                      'info'
-                    );
-                    return;
+                  // Generic-trade quotes: no area required. Roofing: area with pitch required.
+                  if (!quoteIsGeneric) {
+                    const hasRoofAreaWithPitch = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0);
+                    if (!hasRoofAreaWithPitch) {
+                      showAlert(
+                        'Roof area required',
+                        'Create a roof area with pitch first — components are calculated against the roof pitch.',
+                        'info'
+                      );
+                      return;
+                    }
                   }
                   if (!selectedComponentId) {
                     showAlert('Select a component first', 'Pick a component from the list before measuring.', 'info');
@@ -1596,7 +1757,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   setMultiLinealSegmentObjects([]);
                   setLinePoints([]);
                 }}
-                disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
+                disabled={calibrationMode || calibrations.length === 0 || (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)))}
                 data-copilot="takeoff-tool-line"
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   lineMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
@@ -1626,14 +1787,17 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
               </button>
               <button
                 onClick={() => {
-                  const hasRoofAreaWithPitch = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0);
-                  if (!hasRoofAreaWithPitch) {
-                    showAlert(
-                      'Roof area required',
-                      'Create a roof area with pitch first — components are calculated against the roof pitch.',
-                      'info'
-                    );
-                    return;
+                  // Generic-trade quotes: no area required for point measurements.
+                  if (!quoteIsGeneric) {
+                    const hasRoofAreaWithPitch = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0);
+                    if (!hasRoofAreaWithPitch) {
+                      showAlert(
+                        'Roof area required',
+                        'Create a roof area with pitch first — components are calculated against the roof pitch.',
+                        'info'
+                      );
+                      return;
+                    }
                   }
                   if (!selectedComponentId) {
                     showAlert('Select a component first', 'Pick a component from the list before measuring.', 'info');
@@ -1646,7 +1810,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   setMultiLinealPoints([]);
                   setMultiLinealSegmentObjects([]);
                 }}
-                disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
+                disabled={calibrationMode || calibrations.length === 0 || (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)))}
                 data-copilot="takeoff-tool-point"
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   pointMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
@@ -1773,37 +1937,68 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       {showRoofAreaInstructions && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4">✅ Calibration Complete!</h2>
-            <h3 className="text-lg font-semibold mb-3 text-gray-700">Next: Create Your First Roof Area</h3>
-            <div className="space-y-3 text-sm">
-              <p className="text-gray-900">
-                Before measuring components, you must define at least one <span className="font-bold">roof area with a pitch angle</span>.
-              </p>
-              <div className="bg-gray-50/50 border border-gray-200 rounded p-3 space-y-2">
-                <p className="font-semibold text-blue-400">How to create a roof area:</p>
-                <ol className="list-decimal list-inside space-y-1.5 text-gray-900 ml-2">
-                  <li>Click the <span className="font-bold text-blue-400">&quot;Area&quot;</span> button in the toolbar above</li>
-                  <li>Click to place <span className="font-bold">at least 4 points</span> around the roof outline</li>
-                  <li>Close the shape by clicking <span className="font-bold">near your starting point</span></li>
-                  <li>Enter a <span className="font-bold">name</span> and <span className="font-bold text-orange-400">pitch angle</span> (in degrees)</li>
-                </ol>
-              </div>
-              <p className="text-gray-600 text-xs mt-3">
-                💡 The pitch angle is essential for accurate material calculations and component measurements.
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                setShowRoofAreaInstructions(false);
-                // Auto-activate Area mode to help user
-                setAreaMode(true);
-                setLineMode(false);
-                setPointMode(false);
-              }}
-              className="mt-6 w-full px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-            >
-              Got it, let&apos;s create a roof area!
-            </button>
+            <h2 className="text-xl font-semibold mb-4">Calibration Complete!</h2>
+            {quoteIsGeneric ? (
+              // Phase 7: generic trade — area is optional
+              <>
+                <h3 className="text-lg font-semibold mb-3 text-gray-700">Do you want to measure an area first?</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  For area-based components (e.g. flooring, cladding) you can draw an area now. For lineal or count-based work you can skip this and measure directly.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowRoofAreaInstructions(false);
+                      setAreaMode(true);
+                      setLineMode(false);
+                      setPointMode(false);
+                    }}
+                    className="flex-1 px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium text-sm transition-all"
+                  >
+                    Yes, add an area
+                  </button>
+                  <button
+                    onClick={() => setShowRoofAreaInstructions(false)}
+                    className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full font-medium text-sm transition-all"
+                  >
+                    No, skip
+                  </button>
+                </div>
+              </>
+            ) : (
+              // Roofing trade — area with pitch is required
+              <>
+                <h3 className="text-lg font-semibold mb-3 text-gray-700">Next: Create Your First Roof Area</h3>
+                <div className="space-y-3 text-sm">
+                  <p className="text-gray-900">
+                    Before measuring components, you must define at least one <span className="font-bold">roof area with a pitch angle</span>.
+                  </p>
+                  <div className="bg-gray-50/50 border border-gray-200 rounded p-3 space-y-2">
+                    <p className="font-semibold text-blue-400">How to create a roof area:</p>
+                    <ol className="list-decimal list-inside space-y-1.5 text-gray-900 ml-2">
+                      <li>Click the <span className="font-bold text-blue-400">&quot;Area&quot;</span> button in the toolbar above</li>
+                      <li>Click to place <span className="font-bold">at least 4 points</span> around the roof outline</li>
+                      <li>Close the shape by clicking <span className="font-bold">near your starting point</span></li>
+                      <li>Enter a <span className="font-bold">name</span> and <span className="font-bold text-orange-400">pitch angle</span> (in degrees)</li>
+                    </ol>
+                  </div>
+                  <p className="text-gray-600 text-xs mt-3">
+                    The pitch angle is essential for accurate material calculations and component measurements.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowRoofAreaInstructions(false);
+                    setAreaMode(true);
+                    setLineMode(false);
+                    setPointMode(false);
+                  }}
+                  className="mt-6 w-full px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                >
+                  Got it, let&apos;s create a roof area!
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

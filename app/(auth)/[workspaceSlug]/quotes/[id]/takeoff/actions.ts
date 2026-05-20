@@ -1,4 +1,4 @@
-'use server';
+﻿'use server';
 
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
@@ -251,4 +251,104 @@ export async function loadTakeoffMeasurements(quoteId: string) {
   }, {} as Record<string, any>);
   
   return Object.values(grouped);
+}
+
+// ─── Phase 7: Multi-page takeoff server actions ───────────────────────────
+
+import { createAdminClient } from '@/app/lib/supabase/admin';
+
+/**
+ * Get or create the takeoff session for a quote (one session per quote, v1).
+ * Uses service-role because takeoff_sessions RLS is company-scoped and we
+ * need to upsert atomically without a race.
+ */
+async function ensureTakeoffSession(quoteId: string, companyId: string): Promise<string> {
+  const admin = createAdminClient();
+  // Check for existing session first.
+  const { data: existing } = await admin
+    .from('takeoff_sessions')
+    .select('id')
+    .eq('quote_id', quoteId)
+    .maybeSingle();
+  if (existing?.id) return existing.id;
+
+  // Create one.
+  const { data: created, error } = await admin
+    .from('takeoff_sessions')
+    .insert({ quote_id: quoteId })
+    .select('id')
+    .single();
+  if (error || !created) throw new Error(`ensureTakeoffSession: ${error?.message}`);
+  return created.id;
+}
+
+/**
+ * Load all takeoff pages for a quote, ordered by page_order.
+ */
+export async function loadTakeoffPages(quoteId: string): Promise<{
+  id: string;
+  session_id: string;
+  quote_id: string;
+  image_storage_path: string | null;
+  page_order: number;
+  page_name: string | null;
+  scale_calibration: unknown;
+}[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('takeoff_pages')
+    .select('id, session_id, quote_id, image_storage_path, page_order, page_name, scale_calibration')
+    .eq('quote_id', quoteId)
+    .order('page_order', { ascending: true });
+  if (error) {
+    console.error('[loadTakeoffPages]', error);
+    return [];
+  }
+  return data ?? [];
+}
+
+/**
+ * Create a new takeoff page for a quote (or the first page for an existing
+ * single-page takeoff). Returns the new page's id.
+ * The image_storage_path is set by the signed-upload finaliser (service-role)
+ * after the image is uploaded. This action only creates the page row.
+ */
+export async function createTakeoffPage(
+  quoteId: string,
+  pageName?: string,
+): Promise<{ ok: boolean; pageId?: string; error?: string }> {
+  try {
+    const profile = await (await import('@/app/lib/supabase/server')).requireCompanyContext();
+    const admin = createAdminClient();
+
+    const sessionId = await ensureTakeoffSession(quoteId, profile.company_id);
+
+    // Count existing pages to determine page_order.
+    const { count: existingCount } = await admin
+      .from('takeoff_pages')
+      .select('id', { count: 'exact', head: true })
+      .eq('quote_id', quoteId);
+
+    const { data: page, error } = await admin
+      .from('takeoff_pages')
+      .insert({
+        session_id: sessionId,
+        quote_id: quoteId,
+        page_order: (existingCount ?? 0) + 1,
+        page_name: pageName ?? null,
+        image_storage_path: null, // set by finaliser
+      })
+      .select('id')
+      .single();
+
+    if (error || !page) {
+      return { ok: false, error: error?.message ?? 'Page insert returned no row' };
+    }
+
+    return { ok: true, pageId: page.id };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[createTakeoffPage]', msg);
+    return { ok: false, error: msg };
+  }
 }
