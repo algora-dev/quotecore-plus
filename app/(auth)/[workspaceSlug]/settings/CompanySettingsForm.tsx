@@ -18,6 +18,8 @@ interface Props {
   currentLaborMargin: number;
   currentLogoUrl: string | null;
   currentTaxes: EditableTax[];
+  /** Phase 8 (Generic Trades): only rendered when the client flag is on. */
+  currentDefaultTrade?: string | null;
 }
 
 export function CompanySettingsForm({
@@ -32,7 +34,13 @@ export function CompanySettingsForm({
   currentLaborMargin,
   currentLogoUrl,
   currentTaxes,
+  currentDefaultTrade,
 }: Props) {
+  const genericTradesEnabled =
+    (process.env.NEXT_PUBLIC_GENERIC_TRADES_V1 ?? '').toLowerCase() === 'true';
+  const [defaultTrade, setDefaultTrade] = useState<'roofing' | 'generic'>(
+    currentDefaultTrade === 'generic' ? 'generic' : 'roofing'
+  );
   const [companyName, setCompanyName] = useState(currentCompanyName);
   const [userName, setUserName] = useState(currentUserName);
   const [currency, setCurrency] = useState(currentCurrency);
@@ -99,6 +107,8 @@ export function CompanySettingsForm({
           measurement,
           materialMargin: matMargin,
           laborMargin: labMargin,
+          // Phase 8: only pass when flag is on.
+          ...(genericTradesEnabled ? { defaultTrade } : {}),
         });
 
         await saveCompanyTaxes(
@@ -249,6 +259,38 @@ export function CompanySettingsForm({
           </div>
         </label>
       </div>
+
+      {/* Phase 8 (Generic Trades): default trade selector */}
+      {genericTradesEnabled && (
+        <div className="space-y-3">
+          <label className="block">
+            <span className="text-sm font-semibold text-gray-900">Default Trade</span>
+            <p className="text-xs text-gray-600 mt-1 mb-2">
+              Pre-selects the trade when creating a new quote. You can override it per quote.
+            </p>
+            <div className="flex gap-3">
+              {(['roofing', 'generic'] as const).map(t => (
+                <label
+                  key={t}
+                  className={`flex items-center gap-2 px-4 py-3 flex-1 border rounded-lg cursor-pointer hover:bg-slate-50 ${
+                    defaultTrade === t ? 'border-orange-500 bg-orange-50' : 'border-slate-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    value={t}
+                    checked={defaultTrade === t}
+                    onChange={() => setDefaultTrade(t)}
+                    disabled={isPending}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm capitalize">{t}</span>
+                </label>
+              ))}
+            </div>
+          </label>
+        </div>
+      )}
 
       {/* Profit Margins */}
       <div className="border-t border-gray-200 pt-8">

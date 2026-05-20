@@ -29,6 +29,17 @@ export default async function NewQuotePage({
   const ent = await loadCompanyEntitlements(profile.company_id);
   const monthlyQuoteAtCap = ent.monthlyQuoteUsed >= ent.monthlyQuoteLimit;
 
+  // Phase 8 (Generic Trades): load collections + default trade for the
+  // trade/collection pickers. Only needed when the client flag is on, but
+  // cheap enough to load always so the server component stays simple.
+  const { data: componentCollections } = await supabase
+    .from('component_collections')
+    .select('id, name, is_bootstrap')
+    .eq('company_id', profile.company_id)
+    .order('is_bootstrap', { ascending: false }) // bootstrap first
+    .order('name', { ascending: true });
+  const defaultTrade = (company as { default_trade?: string }).default_trade ?? 'roofing';
+
   return (
     <div>
       <div className="max-w-2xl mx-auto">
@@ -49,6 +60,8 @@ export default async function NewQuotePage({
           monthlyQuoteUsed={ent.monthlyQuoteUsed}
           monthlyQuoteLimit={ent.monthlyQuoteLimit}
           effectivePlanCode={ent.effectivePlanCode}
+          defaultTrade={defaultTrade}
+          componentCollections={componentCollections ?? []}
         />
       </div>
     </div>

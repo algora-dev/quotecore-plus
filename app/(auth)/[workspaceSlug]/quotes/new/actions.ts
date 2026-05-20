@@ -59,6 +59,12 @@ interface CreateQuoteParams {
    * from their company default. After this insert it can never be changed.
    */
   measurementSystem: 'metric' | 'imperial_ft' | 'imperial_rs';
+  /**
+   * Phase 8 (Generic Trades): when supplied by the form (flag on), override
+   * the resolveQuoteCreationDefaults values with the user's explicit choice.
+   */
+  trade?: 'roofing' | 'generic';
+  componentCollectionId?: string | null;
 }
 
 export async function createQuoteWithDetails(params: CreateQuoteParams): Promise<CreateQuoteResult> {
@@ -168,14 +174,17 @@ async function createQuoteWithDetailsInner(params: CreateQuoteParams): Promise<C
   // No behaviour change while GENERIC_TRADES_V1_ENABLED is off; required
   // payload once it flips on.
   const defaults = await resolveQuoteCreationDefaults(profile.company_id);
+  // Phase 8: if the user explicitly picked a trade/collection in the form
+  // (generic-trades flag on), use their choice. Otherwise fall back to the
+  // company defaults from resolveQuoteCreationDefaults.
   const quoteId = await createQuoteAtomic(profile.company_id, profile.id, {
     customerName: params.customerName,
     jobName: params.jobName,
     taxRate: company.default_tax_rate ?? 0,
     measurementSystem: safeMeasurementSystem,
     entryMode: safeEntryMode,
-    trade: defaults.trade,
-    componentCollectionId: defaults.componentCollectionId,
+    trade: params.trade ?? defaults.trade,
+    componentCollectionId: params.componentCollectionId ?? defaults.componentCollectionId,
   });
 
   // Snapshot the company's tax library onto the new quote so totals work

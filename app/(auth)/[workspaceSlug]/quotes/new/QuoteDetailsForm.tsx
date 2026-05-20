@@ -30,6 +30,10 @@ interface Props {
   monthlyQuoteUsed: number;
   monthlyQuoteLimit: number;
   effectivePlanCode: string;
+  /** Phase 8 (Generic Trades): pre-seeded from company.default_trade. */
+  defaultTrade?: string;
+  /** Phase 8 (Generic Trades): collections the user can pick from. */
+  componentCollections?: Array<{ id: string; name: string; is_bootstrap: boolean }>;
 }
 
 const MEASUREMENT_OPTIONS: Array<{ value: MeasurementChoice; title: string; subtitle: string }> = [
@@ -48,7 +52,17 @@ export function QuoteDetailsForm({
   monthlyQuoteUsed,
   monthlyQuoteLimit,
   effectivePlanCode,
+  defaultTrade = 'roofing',
+  componentCollections = [],
 }: Props) {
+  // Phase 8 (Generic Trades): trade + collection pickers.
+  // Only rendered when NEXT_PUBLIC_GENERIC_TRADES_V1 is on.
+  const genericTradesEnabled =
+    (process.env.NEXT_PUBLIC_GENERIC_TRADES_V1 ?? '').toLowerCase() === 'true';
+  const [selectedTrade, setSelectedTrade] = useState<string>(defaultTrade);
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
+    componentCollections.find(c => c.is_bootstrap)?.id ?? componentCollections[0]?.id ?? ''
+  );
   const router = useRouter();
   const searchParams = useSearchParams();
   const [customerName, setCustomerName] = useState('');
@@ -168,6 +182,9 @@ export function QuoteDetailsForm({
         templateId: templateId || null,
         entryMode,
         measurementSystem,
+        // Phase 8 (Generic Trades): pass through when the flag is on.
+        ...(genericTradesEnabled && selectedTrade ? { trade: selectedTrade as 'roofing' | 'generic' } : {}),
+        ...(genericTradesEnabled && selectedCollectionId ? { componentCollectionId: selectedCollectionId } : {}),
       });
 
       // Structured failure path: server caught a billing error and returned
@@ -261,6 +278,42 @@ export function QuoteDetailsForm({
           )}
         </div>
       )}
+      {/* Phase 8 (Generic Trades): trade + collection pickers. Only when flag on. */}
+      {genericTradesEnabled && (
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+          <h3 className="text-sm font-semibold text-slate-800">Trade &amp; Component Collection</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-slate-600 mb-1">Trade</label>
+              <select
+                value={selectedTrade}
+                onChange={e => setSelectedTrade(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              >
+                <option value="roofing">Roofing</option>
+                <option value="generic">Generic</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-slate-600 mb-1">Component Collection</label>
+              {componentCollections.length === 0 ? (
+                <p className="text-xs text-slate-500 py-2">No collections found. Go to Components to create one.</p>
+              ) : (
+                <select
+                  value={selectedCollectionId}
+                  onChange={e => setSelectedCollectionId(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                >
+                  {componentCollections.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}{c.is_bootstrap ? '' : ''}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Customer Name */}
       <div data-copilot="quote-customer">
         <label className="block text-sm font-medium text-slate-700 mb-2">

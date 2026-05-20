@@ -147,6 +147,7 @@ export default async function AccountPage() {
             currentMaterialMargin={company.default_material_margin_percent || 0}
             currentLaborMargin={company.default_labor_margin_percent || 0}
             currentLogoUrl={logoUrl}
+            currentDefaultTrade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
             currentTaxes={taxes.map((t) => ({
               id: t.id,
               dbId: t.id,

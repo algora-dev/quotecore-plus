@@ -6,6 +6,9 @@ interface CompanySettings {
   name: string;
   default_tax_rate: number;
   default_currency: string;
+  /** Phase 8 (Generic Trades): optional. Only written when the generic-trades
+   *  feature is active. */
+  default_trade?: 'roofing' | 'generic' | null;
 }
 
 interface UserProfile {
@@ -28,6 +31,8 @@ export async function updateCompanySettings(companyId: string, settings: Company
       name: settings.name,
       default_tax_rate: settings.default_tax_rate,
       default_currency: settings.default_currency,
+      // Phase 8 (Generic Trades): only write when provided.
+      ...(settings.default_trade != null ? { default_trade: settings.default_trade } : {}),
     })
     .eq('id', companyId);
 

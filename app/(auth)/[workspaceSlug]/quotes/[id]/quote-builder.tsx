@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins, combineLinealEntries, splitLinealEntries } from '../actions';
+import { getTradeLabels } from '@/app/lib/trades/labels';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { entryLabel, addMoreLabel } from '@/app/lib/types';
 // Use the polymorphic helpers for any user-input -> metric conversion. They
@@ -84,6 +85,8 @@ export function QuoteBuilder({
     }
   };
   const [quote, setQuote] = useState(initialQuote);
+  // Phase 8: trade-aware labels. Falls back to roofing for legacy rows.
+  const tradeLabels = getTradeLabels((quote as { trade?: string }).trade);
   const { state: copilotState } = useCopilot();
   
   // Update quote state when props change (e.g., after currency change)
@@ -405,7 +408,7 @@ export function QuoteBuilder({
   }
 
   const phases: { key: Phase; label: string }[] = [
-    { key: 'areas', label: '1. Roof Areas' },
+    { key: 'areas', label: `1. ${tradeLabels.areaPluralLabel}` },
     { key: 'components', label: '2. Components' },
     { key: 'extras', label: '3. Extras' },
     { key: 'review', label: '4. Review' },
@@ -554,7 +557,7 @@ export function QuoteBuilder({
               data-copilot="quote-add-area"
               className="px-4 py-2 text-sm font-medium rounded-full bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50"
             >
-              Add Roof Area
+              {tradeLabels.addAreaCta}
             </button>
           </div>
           )}
@@ -616,7 +619,7 @@ export function QuoteBuilder({
               onClick={() => setPhase('areas')}
               className="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50"
             >
-              ← Roof Areas
+              ← {tradeLabels.areaPluralLabel}
             </button>
             <button
               onClick={() => setPhase('extras')}
