@@ -7,12 +7,13 @@ import { convertLinearToMetric, convertAreaFt2ToMetric } from '@/app/lib/measure
 
 interface TakeoffMeasurement {
   componentId: string | null; // null for informational roof areas
-  type: 'line' | 'area' | 'point';
+  type: 'line' | 'area' | 'point' | 'multi_lineal';
   value: number;
   pitch?: number; // Pitch in degrees (for roof areas)
   name?: string; // Name (for roof areas)
   points?: { x: number; y: number }[];
   visible: boolean;
+  pageId?: string | null; // Phase 7: optional takeoff_pages FK
 }
 
 export async function saveTakeoffMeasurements(
@@ -104,7 +105,9 @@ export async function saveTakeoffMeasurements(
           // - 'line' / 'point' (length, count) use linear conversion (or pass-through for points)
           // - 'area' uses area conversion
           let metricValue = m.value;
-          if (m.type === 'line') {
+          if (m.type === 'line' || m.type === 'multi_lineal') {
+            // multi_lineal value is the total polyline length — treat like a
+            // standard lineal measurement for metric conversion and pricing.
             metricValue = toMetricLinear(m.value);
           } else if (m.type === 'area') {
             metricValue = toMetricArea(m.value);
@@ -158,6 +161,9 @@ export async function saveTakeoffMeasurements(
     measurement_unit: unit,
     canvas_points: m.points ?? null,
     is_visible: m.visible,
+    // Phase 7: page_id passed through when the caller supplies it (multi-page
+    // takeoff). Omitted for single-page callers — RPC writes NULL.
+    ...(m.pageId ? { page_id: m.pageId } : {}),
   }));
 
   // Pass STORAGE PATHS to the RPC (Gerald audit pass 2). The RPC keeps
