@@ -4,6 +4,7 @@ import {  } from 'next/cache';
 import { createSupabaseServerClient, requireUser, requireCompanyContext } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { seedTemplateComponents } from '@/app/lib/seed/seedTemplateComponents';
+import { ensureCompanyHasCollection } from '@/app/lib/data/ensure-company-has-collection';
 
 interface OnboardingData {
   currency: string;
@@ -123,9 +124,22 @@ export async function completeGoogleOnboarding(formData: FormData) {
       });
   }
 
+  // Phase 3: bootstrap the "My Components" collection before seeding so the
+  // seeded components get tagged with the collection id. Same rationale as
+  // in signup/actions.ts — service-role RPC, idempotent, non-fatal.
+  let bootstrapCollectionId: string | null = null;
+  try {
+    bootstrapCollectionId = await ensureCompanyHasCollection(
+      company.id,
+      supabaseAdmin,
+    );
+  } catch (err) {
+    console.error('[completeGoogleOnboarding] ensureCompanyHasCollection failed:', err);
+  }
+
   // Seed canonical starter components into the new company. Non-fatal:
   // onboarding must still succeed if this fails.
-  await seedTemplateComponents(supabaseAdmin, company.id);
+  await seedTemplateComponents(supabaseAdmin, company.id, bootstrapCollectionId);
 
   // Skip redirect if requested (copilot intro step handles navigation)
   const skipRedirect = formData.get('skipRedirect') === 'true';

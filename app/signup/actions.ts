@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/app/lib/supabase/database.types';
 import { seedTemplateComponents } from '@/app/lib/seed/seedTemplateComponents';
+import { ensureCompanyHasCollection } from '@/app/lib/data/ensure-company-has-collection';
 
 type SignupInput = {
   companyName: string;
@@ -100,10 +101,26 @@ export async function signupWithCompany(input: SignupInput) {
     return { ok: false, error: profileError.message };
   }
 
+  // Phase 3: bootstrap the "My Components" collection so this company has
+  // a default container before we seed components into it. Service-role RPC
+  // under a per-company advisory lock + partial unique index, idempotent.
+  // Non-fatal: signup must still succeed if this fails. If the bootstrap
+  // misses, the components seed still works (collection_id falls back to
+  // NULL) and the collection can be created later via Phase 5 fallback.
+  let bootstrapCollectionId: string | null = null;
+  try {
+    bootstrapCollectionId = await ensureCompanyHasCollection(
+      company.id,
+      supabaseAdmin,
+    );
+  } catch (err) {
+    console.error('[signupWithCompany] ensureCompanyHasCollection failed:', err);
+  }
+
   // Seed the canonical starter components into the new company. Non-fatal:
   // signup must still succeed if this fails — the user can always create
   // their own components manually.
-  await seedTemplateComponents(supabaseAdmin, company.id);
+  await seedTemplateComponents(supabaseAdmin, company.id, bootstrapCollectionId);
 
   redirect('/login?signup=success');
 }

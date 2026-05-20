@@ -26,6 +26,13 @@ type Admin = SupabaseClient<Database>;
 export async function seedTemplateComponents(
   admin: Admin,
   newCompanyId: string,
+  /**
+   * Generic Trades Phase 3: when supplied, every seeded row is tagged with
+   * this collection id. Required on the live signup flow once Phase 3 ships;
+   * remains optional so backwards-compat callers (e.g. legacy scripts) don't
+   * break before the column is tightened to NOT NULL in Phase 4.
+   */
+  collectionId?: string | null,
 ): Promise<{ seeded: number; error: string | null }> {
   try {
     const { data: templates, error: loadError } = await admin
@@ -68,7 +75,12 @@ export async function seedTemplateComponents(
       show_dimensions_default: t.show_dimensions_default,
       show_price_default: t.show_price_default,
       sort_order: t.sort_order,
-    }));
+      // Phase 3: tag every seeded row with the bootstrap collection so the
+      // FK (company_id, collection_id) -> component_collections is set
+      // immediately. Falls back to NULL when no collection id supplied
+      // (legacy callers / pre-Phase-3 backfill paths).
+      ...(collectionId ? { collection_id: collectionId } : {}),
+    }) as TablesInsert<'component_library'>);
 
     const { error: insertError } = await admin.from('component_library').insert(rows);
     if (insertError) {
