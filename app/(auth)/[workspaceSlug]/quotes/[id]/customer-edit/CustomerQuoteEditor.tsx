@@ -384,6 +384,17 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     return acc;
   }, {} as Record<string, QuoteLine[]>);
 
+  // Phase 5: trade-aware label for the "no area" bucket. A generic-trade
+  // quote with zero areas puts everything in the 'extras' bucket by design,
+  // and the existing "Extras & Custom" heading reads wrong in that case.
+  // Use "Quote items" instead. Roofing quotes (or generic quotes that DO
+  // have areas) keep the existing label.
+  // quote.trade was added in Phase 2; database.types.ts hasn't been
+  // regenerated yet, so cast at the boundary.
+  const quoteTrade = (quote as { trade?: 'roofing' | 'generic' | null }).trade ?? 'roofing';
+  const isGenericNoArea = quoteTrade === 'generic' && roofAreas.length === 0;
+  const extrasBucketHeading = isGenericNoArea ? 'Quote items' : 'Extras & Custom';
+
   const visibleLines = lines.filter(l => l.isVisible);
   const subtotal = lines.filter(l => l.includeInTotal).reduce((sum, l) => sum + l.amount, 0); // Only include items with "Add $" checked
   const { lines: taxLines, total: taxTotal } = computeTaxLines(
@@ -538,10 +549,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 );
               })}
 
-              {/* Extras / ungrouped */}
+              {/* Extras / ungrouped (Phase 5: trade-aware heading) */}
               {linesByArea['extras'] && linesByArea['extras'].length > 0 && (
                 <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-slate-700 px-2">Extras & Custom</h3>
+                  <h3 className="text-sm font-semibold text-slate-700 px-2">{extrasBucketHeading}</h3>
                   {linesByArea['extras'].map(line => (
                     <div
                       key={line.id}

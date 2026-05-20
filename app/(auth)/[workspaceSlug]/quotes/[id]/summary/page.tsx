@@ -205,6 +205,17 @@ export default async function QuoteSummaryPage({
   
   const mainComps = componentsWithOverrides.filter(c => c.quote_roof_area_id);
   const extraComps = componentsWithOverrides.filter(c => !c.quote_roof_area_id);
+
+  // Phase 5: trade-aware heading for the "no area" bucket. A generic-trade
+  // quote with zero areas means every component lands in `extraComps` by
+  // design (no-area flow). Render it under "Quote items" instead of "Extras"
+  // so the page reads correctly for the no-area UX. Roofing quotes (or any
+  // quote that DOES have areas) keep the existing "Extras" heading.
+  // `quote.trade` is from Phase 2 (column landed in dark-schema migration);
+  // database.types.ts hasn't been regenerated yet, so cast at the boundary.
+  const quoteTrade = (quote as { trade?: 'roofing' | 'generic' | null }).trade ?? 'roofing';
+  const isGenericNoArea = quoteTrade === 'generic' && roofAreas.length === 0;
+  const extrasHeading = isGenericNoArea ? 'Quote items' : 'Extras';
   
   const engineComps = componentsWithOverrides.map(c => ({
     id: c.id, name: c.name, componentType: c.component_type as 'main' | 'extra',
@@ -395,10 +406,10 @@ export default async function QuoteSummaryPage({
 
         {extraComps.length > 0 && (
           <div>
-            <h3 className="font-semibold text-slate-900 mb-4">Extras</h3>
+            <h3 className="font-semibold text-slate-900 mb-4">{extrasHeading}</h3>
             <table className="w-full text-sm">
               <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-300">
-                <th className="pb-2 font-medium">Extra</th><th className="pb-2 text-right font-medium">Entries</th><th className="pb-2 text-right font-medium">Total Qty</th>
+                <th className="pb-2 font-medium">{isGenericNoArea ? 'Item' : 'Extra'}</th><th className="pb-2 text-right font-medium">Entries</th><th className="pb-2 text-right font-medium">Total Qty</th>
                 <th className="pb-2 text-right font-medium">Material</th><th className="pb-2 text-right font-medium">Labour</th><th className="pb-2 text-right font-medium">Total</th>
               </tr></thead>
               <tbody>{extraComps.map(c => {
