@@ -222,7 +222,7 @@ For each new table planned in Phase 2:
 
 - **Required pattern:** `(company_id = (SELECT company_id FROM users WHERE id = auth.uid()))` for SELECT/INSERT/UPDATE/DELETE — matches `component_library` exactly.
 - **No billing-sensitive columns** → C-01 column-level GRANT pattern not required.
-- **`is_bootstrap` column** is service-role-only writable (the SECDEF RPC writes it). RLS doesn't need a special policy — the RPC bypasses RLS via service-role; a user with column-level UPDATE on the rest of the table cannot toggle `is_bootstrap` because the partial unique index would block any second `true` insert and the RPC is the only path that writes the column to begin with. **Safe.**
+- **`is_bootstrap` column** — ~~SAFE~~ **CORRECTION (round-3 H-02): NOT SAFE as originally claimed.** Gerald flagged that the original RLS allowed authenticated users to: (a) INSERT a row with `is_bootstrap=true`, (b) UPDATE the `is_bootstrap` column on an existing bootstrap row to flip it false, (c) DELETE the bootstrap row entirely. The partial unique index only blocks two-`true` rows; it doesn't block toggling, clearing, or deleting. **Fix landed in `20260520120010_..._dark_schema.sql`:** INSERT/UPDATE/DELETE policies all require `is_bootstrap = false`, and a column-level GRANT whitelists only `name` for authenticated UPDATE. The SECDEF RPC bypasses both via service-role and remains the only path that can create or modify a bootstrap row.
 - **`ON DELETE RESTRICT`** from `component_collections` to `component_library.collection_id` blocks accidental wipes (already in C2 Phase 6.1).
 
 ### `takeoff_sessions`
@@ -289,22 +289,37 @@ For each new table planned in Phase 2:
 
 ---
 
-## Open questions for Gerald round-3
+## Open questions for Gerald round-3 — ANSWERED
 
-1. **Column-level GRANT on `takeoff_pages.image_storage_path`** — overkill, or worth the defensive margin given the storage-path -> signed-URL attack surface?
-2. **`save_takeoff_atomic` wipe-on-save semantics** — when Phase 7 lands multi-page, should the delete be scoped by `page_id` or stay quote-wide? Current behaviour wipes everything; multi-page workflow probably needs scoped deletes, but that's a Phase 7 design decision and might affect the Phase 2 SQL (specifically the `delete from quote_takeoff_measurements` line). Worth confirming now.
-3. **Trade-compat enforcement on `save_takeoff_atomic`** — the C2 patch puts it at the TS caller layer (`saveTakeoffMeasurements` in `actions.ts`). Is that sufficient, or should we add a CHECK constraint / trigger at the DB level as a second safety net?
-4. **The combined-entries `combined_from` JSONB** — should the server validate its shape on write (max array length, required fields)? Adding to Phase 6 build follow-up; not blocking Phase 2 SQL.
+Gerald's round-3 report resolved all four open questions and surfaced six more findings. All ten are patched in the round-3 commit. Summary:
+
+1. **Column-level GRANT on `takeoff_pages.image_storage_path`** — **YES, apply it (Gerald H-04).** Done: INSERT RLS enforces `image_storage_path IS NULL`; UPDATE column-GRANT excludes `image_storage_path`; only the service-role finaliser writes the column.
+2. **`save_takeoff_atomic` wipe-on-save semantics** — **Defer to Phase 7 design.** Gerald did not push back; the quote-wide wipe stays for Phase 2. Phase 7 will resolve when multi-page builds.
+3. **Trade-compat enforcement on `save_takeoff_atomic`** — **TS-only is acceptable for v1** (matches Gerald round-2 M-03 stance). DB CHECK/trigger reconsidered if money/security incidents emerge.
+4. **`combined_from` JSONB shape validation** — **YES, server MUST validate (Gerald L-01).** Promoted to an explicit Phase 6 acceptance bullet in `test-combined-lineal-entries.mjs` steps 7-10 (max array length 200, numeric/positive lengths, structural shape).
+
+### Additional findings opened in round-3 (all patched)
+
+5. **H-01:** PG transactional limit on enum + dependent CHECK — split into two migration files.
+6. **H-02:** `is_bootstrap` RLS lockdown (correction above).
+7. **H-03:** Composite FKs `(company_id, collection_id)` to block cross-company links.
+8. **M-01:** Composite FK `takeoff_pages(session_id, quote_id)` to `takeoff_sessions(id, quote_id)`.
+9. **M-02:** `UNIQUE (quote_id)` on `takeoff_sessions` for one-session-per-quote v1.
+10. **M-05:** Positive-value CHECKs on pack columns (price >= 0, size > 0, coverage > 0).
+
+All fixes live in `20260520120010_generic_trades_phase_2_dark_schema.sql`. Round-4 audit should focus on the migration diff + the two C2 doc sections.
 
 ---
 
 ## Conclusion
 
-**Phase 2 dark schema can be applied as planned, with the following confirmed assumptions:**
+**Original conclusion stood for the read-site audit. The migration draft itself needed round-3 fixes (10 findings) which have now landed.** Phase 2 dark schema is now ready to apply pending one final round-4 nod from Gerald on the migration diff + the two updated doc sections.
+
 - Pricing engine is already NULL-tolerant. ✅
 - `save_takeoff_atomic` is already NULL-tolerant for the no-area case. ✅
 - Only 3 server actions / pages need trade-aware adjustments, and all three are in Phases 5/6/7 (well after Phase 2 SQL lands). ✅
-- All new tables follow existing RLS patterns. ✅
+- All new tables follow existing RLS patterns + are hardened with column GRANTs and composite FKs per round-3. ✅
 - Zero UNKNOWNs — every read site classified. ✅
+- Round-3 security/integrity gaps closed. ✅
 
 **Phase 1 deliverable is complete.** Next: Phase 2 SQL migration draft (UNAPPLIED).

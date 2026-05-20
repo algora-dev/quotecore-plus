@@ -1,8 +1,8 @@
 # Generic Trades Expansion — Implementation Plan (revision 2)
 
-**For:** Gerald (round-3 audit) — please grade again before any code ships.
+**For:** Gerald (round-4 audit) — please grade again before any code ships.
 **Author:** Gavin (QuoteCore+ agent)
-**Status:** Draft 2 + round-2 patches + Shaun additions (multi-line takeoff, combined lineal entries, material pricing strategies). Supersedes `C-implementation-plan.md`.
+**Status:** Draft 2 + round-2 patches + Shaun additions + round-3 patches (security/integrity fixes from Gerald's 2026-05-20 audit). Supersedes `C-implementation-plan.md`.
 **Scope:** the bridge between `A-schema-delta.md` (v2) and `B-ux-walkthrough.md` (v2). All three docs are now mutually consistent.
 
 ---
@@ -18,6 +18,21 @@
 | M-03 trade-compat drift | Central server helper `assertComponentCompatibleWithQuote()` replaces all inline checks. Regression suite greps every `quote_components` mutation site for the import. |
 | M-04 `pricing_mode` drift | `pricing_mode` dropped from v1. `measurement_type` is the sole pricing driver. (See also Shaun addition 3 below: the new `pricing_strategy` column is a different concern.) |
 | L-01 schema type wording | Phase 2.2 now uses enum types directly (`trade`, `waste_unit`); no mixed text+CHECK wording. |
+
+### Gerald round-3 patches (2026-05-20)
+
+| Finding | Action |
+|---|---|
+| H-01 enum split | Phase 2 SQL split into TWO files: `20260520120000_..._enums.sql` (committed first) and `20260520120010_..._dark_schema.sql` (depends on enums committing first). PG refuses to use newly-added enum values inside the same transaction the values were added in. |
+| H-02 is_bootstrap user-writable | `component_collections` RLS hardened: authenticated users cannot INSERT bootstrap rows, UPDATE bootstrap rows, flip the flag, or DELETE bootstrap rows. Plus column-level GRANT restricts authenticated UPDATE to `name` only. Bootstrap is now genuinely service-role only, via the SECDEF RPC. |
+| H-03 cross-company FK | Composite FKs from `quotes(company_id, component_collection_id)` and `component_library(company_id, collection_id)` to `component_collections(company_id, id)`. DB rejects any cross-company link, even if a buggy server action ever supplies the wrong UUID. |
+| H-04 image_storage_path defensive lockdown | INSERT RLS on `takeoff_pages` enforces `image_storage_path IS NULL`. UPDATE column-GRANT excludes `image_storage_path` (and `quote_id`). Only the service-role finaliser sets/changes the path. |
+| M-01 session/quote consistency | Composite FK from `takeoff_pages(session_id, quote_id)` to `takeoff_sessions(id, quote_id)`. Page cannot point at one session and a different quote. |
+| M-02 one-session-per-quote enforced | `UNIQUE (quote_id)` on `takeoff_sessions`. Concurrent or repeated calls cannot create a second session. |
+| M-03 multi_lineal allowlist gap | `multi_lineal` added to the generic trade allowlist (Phase 6.2). Roofing kept as-is for v1. |
+| M-04 stale pricing_mode in Phase 5.1 | Replaced with `pricing_strategy`. No strategy switch happens in Phase 5 — the strategy table arrives with Phase 6; Phase 5 just uses the existing rate fields. |
+| M-05 zero/negative pack values | `ck_component_library_pack_values_positive` CHECK: `pack_price >= 0`, `pack_size > 0`, `pack_coverage_m2 > 0`. Prevents divide-by-zero in the pricing engine. |
+| L-01 combined_from server validation | Promoted to an explicit Phase 6 acceptance bullet in `test-combined-lineal-entries.mjs` (steps 7-10). |
 
 ### Shaun additions (2026-05-20)
 
@@ -315,7 +330,7 @@ Goal: a quote with `trade='generic'` and zero areas, with components attached at
 ### 5.1 Pricing engine
 
 `app/lib/pricing/engine.ts`:
-- Iterate `quote_components`. For each row, calculate price using `component.pricing_mode` + `component.height_value_mm` + `component.depth_value_mm` as appropriate.
+- Iterate `quote_components`. For each row, calculate price using the existing `material_rate` / `labour_rate` fields on the row, plus `component.height_value_mm` + `component.depth_value_mm` where applicable to `length_x_height` / `volume` components. **Phase 5 does NOT introduce the `pricing_strategy` switch** — that arrives in Phase 6 alongside the strategy table and the component-creator UI. Phase 5's only job here is to make the existing per-unit pricing path NULL-area-safe and `length_x_height` / `volume` aware. (Round-3 M-04: stale `pricing_mode` reference removed; this section was previously pointing at a column that was killed in M-04.)
 - For `quote_roof_area_id = NULL` rows: skip pitch / waste-by-area maths entirely. Use the entry's own qty / length / area.
 
 ### 5.2 Customer quote editor
@@ -353,7 +368,10 @@ Goal: a quote with `trade='generic'` and zero areas, with components attached at
 ```ts
 export const TRADE_ALLOWED_MEASUREMENT_TYPES = {
   roofing: new Set(['area','lineal','rafter','valley_hip']),
-  generic: new Set(['area','lineal','rafter','valley_hip','length_x_height','volume','hours_days','count','fixed','curved_line','irregular_area']),
+  generic: new Set(['area','lineal','rafter','valley_hip','length_x_height','volume','hours_days','count','fixed','curved_line','irregular_area','multi_lineal']),
+  // Round-3 M-03: multi_lineal added to generic. Roofing intentionally
+  // omits it for v1 — if a roofing workflow surfaces (gutters, cabling),
+  // we'll widen later. Keep test-trade-whitelist.mjs in sync.
 };
 ```
 
@@ -490,6 +508,12 @@ Customer PDF shows the **clean total length only** — no breakdown of "10 × 2m
 4. Assert one entry remains with `length=21, is_combined=true, combined_from=[10 rows]`.
 5. Call `splitEntries(componentId)` server action.
 6. Assert 10 entries restored with their original lengths, `is_combined=false`.
+
+**Round-3 L-01: malformed-input rejection** (the server action that writes `combined_from` MUST validate shape before insert; these tests fail-shut if validation is missing):
+7. Attempt to write `combined_from = "not-an-array"` → server action REJECTS with a structured `invalid_combined_from` error.
+8. Attempt to write `combined_from = [{ length: "oops" }]` (non-numeric length) → REJECTED.
+9. Attempt to write `combined_from = [...500 entries]` (exceeds max array length) → REJECTED. Max length cap: 200 entries for v1.
+10. Attempt to write `combined_from = [{ length: -5, waste: 0 }]` (negative length) → REJECTED.
 
 ### 6.7 Regression
 
