@@ -40,10 +40,17 @@ const log = (...a) => console.log(new Date().toISOString(), ...a);
 const pass = (msg) => log('PASS:', msg);
 const fail = (msg) => { console.error('FAIL:', msg); process.exit(1); };
 
-// Setup
-const { data: company } = await admin.from('companies').select('id').order('created_at', { ascending: true }).limit(1).single();
+// Setup: prefer a company with few components to avoid hitting plan cap.
+const { data: allCos } = await admin.from('companies').select('id');
+let company = null;
+for (const c of (allCos ?? [])) {
+  const { count } = await admin.from('component_library').select('id', { count: 'exact', head: true }).eq('company_id', c.id);
+  if ((count ?? 0) < 10) { company = c; break; }
+}
+if (!company) { console.error('No company with < 10 components'); process.exit(1); }
 const { data: user } = await admin.from('users').select('id').eq('company_id', company.id).limit(1).single();
-const { data: bootstrap } = await admin.from('component_collections').select('id').eq('company_id', company.id).eq('is_bootstrap', true).single();
+const { data: bootstrap } = await admin.from('component_collections').select('id').eq('company_id', company.id).eq('is_bootstrap', true).maybeSingle();
+if (!user || !bootstrap) { console.error('Missing user or bootstrap collection for company', company.id); process.exit(1); }
 
 const periodStart = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)).toISOString().slice(0, 10);
 const { data: counterRow } = await admin.from('company_quote_usage').select('quotes_created').eq('company_id', company.id).eq('period_start', periodStart).maybeSingle();

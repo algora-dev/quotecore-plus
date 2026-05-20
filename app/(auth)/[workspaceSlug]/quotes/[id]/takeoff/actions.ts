@@ -22,6 +22,9 @@ export async function saveTakeoffMeasurements(
   unit: string,
   canvasImagePath?: string,
   linesImagePath?: string,
+  /** Phase 7 scoped-delete: when supplied, only this page's measurements
+   *  are replaced. Omit for legacy single-page callers. */
+  currentPageId?: string | null,
 ) {
   const supabase = await createSupabaseServerClient();
 
@@ -172,6 +175,8 @@ export async function saveTakeoffMeasurements(
   const payload = {
     canvas_image_path: canvasImagePath ?? null,
     lines_image_path: linesImagePath ?? null,
+    // Phase 7 scoped-delete: passed through to the RPC.
+    current_page_id: currentPageId ?? null,
     measurements: measurementsPayload,
     roof_areas: roofAreasPayload,
     components: componentsPayload,

@@ -678,12 +678,17 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         }
       }
       
+      // Phase 7 scoped-delete: pass the current page's DB id so the RPC
+      // only clears this page's measurements. Falls back to quote-wide
+      // delete when no page id exists (single-page / legacy flow).
+      const currentPageDbId = pages[currentPageIndex]?.id ?? null;
       await saveTakeoffMeasurements(
         quote.id,
         allMeasurements,
         calibrations[0]?.unit || 'feet',
         canvasImagePath,
         linesImagePath,
+        currentPageDbId,
       );
       
       console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
