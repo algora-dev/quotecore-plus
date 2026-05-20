@@ -85,8 +85,9 @@ export function QuoteBuilder({
     }
   };
   const [quote, setQuote] = useState(initialQuote);
-  // Phase 8: trade-aware labels. Falls back to roofing for legacy rows.
+  // Phase 8: trade-aware labels + convenience flag.
   const tradeLabels = getTradeLabels((quote as { trade?: string }).trade);
+  const quoteIsGeneric = (quote as { trade?: string }).trade === 'generic';
   const { state: copilotState } = useCopilot();
   
   // Update quote state when props change (e.g., after currency change)
@@ -546,7 +547,7 @@ export function QuoteBuilder({
             <input
               value={newAreaLabel}
               onChange={e => setNewAreaLabel(e.target.value)}
-              placeholder="e.g. Main Roof, Garage"
+              placeholder={quoteIsGeneric ? 'e.g. Carpet area, Cladding, Foundation' : 'e.g. Main Roof, Garage'}
               data-copilot="quote-area-name"
               className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg"
               onKeyDown={e => e.key === 'Enter' && handleAddArea()}
@@ -576,6 +577,37 @@ export function QuoteBuilder({
 
       {phase === 'components' && (
         <div className="space-y-4" data-copilot="quote-components-phase">
+          {/* Phase 8: generic-trade quotes with no areas — show a flat
+              component list. For these quotes, all components live at the
+              quote level (quote_roof_area_id = NULL) rather than under an
+              area. We show ALL components here regardless of type. */}
+          {quoteIsGeneric && roofAreas.length === 0 && (
+            <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+              <h3 className="font-semibold text-slate-900">Components</h3>
+              {components.filter(c => !c.quote_roof_area_id).map((comp, idx) => (
+                <ExpandableComponent
+                  key={comp.id}
+                  comp={comp}
+                  entries={entries[comp.id] ?? []}
+                  roofAreas={roofAreas}
+                  quote={quote}
+                  currency={effectiveCurrency}
+                  onAddEntry={handleAddEntry}
+                  onRemoveEntry={handleRemoveEntry}
+                  onRemove={handleRemoveComponent}
+                  onUpdateSettings={handleUpdateCompSettings}
+                  onCombineEntries={handleCombineEntries}
+                  onSplitEntries={handleSplitEntries}
+                  copilotId={idx === 0 ? 'quote-first-component' : undefined}
+                />
+              ))}
+              <AddFromLibrary
+                library={libraryComponents}
+                onAdd={libId => handleAddFromLibrary(libId, null, 'main')}
+                copilotId="quote-add-from-library"
+              />
+            </div>
+          )}
           {roofAreas.map((area, areaIdx) => {
             const areaComps = mainComps.filter(c => c.quote_roof_area_id === area.id);
             return (
