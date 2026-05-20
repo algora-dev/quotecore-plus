@@ -113,8 +113,93 @@ export function totalRoofArea(areas: RoofArea[]): number {
   return areas.reduce((sum, a) => sum + (a.computedSqm ?? computeRoofArea(a)), 0);
 }
 
+// ─── Pricing Strategies (Generic Trades Phase 6) ─────
+
+export type PricingStrategy =
+  | 'per_unit'
+  | 'per_pack_length'
+  | 'per_pack_area'
+  | 'per_pack_coverage'
+  | 'per_pack_volume';
+
+/**
+ * Computes material cost for a component given its purchasing strategy.
+ *
+ * - `per_unit`: classic `qty * cost_per_unit` (today's behaviour).
+ * - `per_pack_length` / `per_pack_area` / `per_pack_volume`: roll/pack
+ *   purchases. Cost = `ceil(qty / pack_size) * pack_price`. Round-up
+ *   captures the next purchasable unit. Used when the user buys cable in
+ *   20m rolls, underlay in 50m² rolls, or concrete in 5m³ packs.
+ * - `per_pack_coverage`: paint-style. `pack_size` is the physical pack
+ *   quantity (e.g. 20L) for display only; `pack_coverage_m2` is what the
+ *   pack actually covers. Cost = `ceil(area_m2 / pack_coverage_m2) * pack_price`.
+ *
+ * Returns 0 for nonsense inputs rather than throwing — the DB
+ * ck_component_library_pack_values_positive CHECK already rejects bad
+ * data on write, so this is a defensive belt at the math layer.
+ */
+export function computeMaterialCostByStrategy(args: {
+  strategy: PricingStrategy;
+  totalQuantity: number;
+  materialRate: number;
+  packPrice: number | null;
+  packSize: number | null;
+  packCoverageM2: number | null;
+}): number {
+  const { strategy, totalQuantity, materialRate, packPrice, packSize, packCoverageM2 } = args;
+
+  if (totalQuantity <= 0) return 0;
+
+  switch (strategy) {
+    case 'per_unit': {
+      return totalQuantity * materialRate;
+    }
+    case 'per_pack_length':
+    case 'per_pack_area':
+    case 'per_pack_volume': {
+      if (!packPrice || !packSize || packSize <= 0) return 0;
+      const packs = Math.ceil(totalQuantity / packSize);
+      return packs * packPrice;
+    }
+    case 'per_pack_coverage': {
+      if (!packPrice || !packCoverageM2 || packCoverageM2 <= 0) return 0;
+      const packs = Math.ceil(totalQuantity / packCoverageM2);
+      return packs * packPrice;
+    }
+  }
+}
+
+/**
+ * Convenience: returns the number of packs the user will need to buy
+ * (useful for UI worked-example strings like "6 × 50m² rolls"). Returns 0
+ * for per_unit (the concept doesn't apply) or for missing pack data.
+ */
+export function computePackCount(args: {
+  strategy: PricingStrategy;
+  totalQuantity: number;
+  packSize: number | null;
+  packCoverageM2: number | null;
+}): number {
+  const { strategy, totalQuantity, packSize, packCoverageM2 } = args;
+  if (totalQuantity <= 0) return 0;
+  switch (strategy) {
+    case 'per_unit':
+      return 0;
+    case 'per_pack_length':
+    case 'per_pack_area':
+    case 'per_pack_volume':
+      if (!packSize || packSize <= 0) return 0;
+      return Math.ceil(totalQuantity / packSize);
+    case 'per_pack_coverage':
+      if (!packCoverageM2 || packCoverageM2 <= 0) return 0;
+      return Math.ceil(totalQuantity / packCoverageM2);
+  }
+}
+
 // ─── Quote Totals ────────────────────────────────────
 // Uses material_cost and labour_cost already stored on components (entry-based)
+// The per-component pricing_strategy switch lives in computeMaterialCostByStrategy
+// above; recalc helpers call it before writing material_cost back to the row.
 
 export function computeQuoteTotals(components: QuoteComponent[], context: QuoteContext): QuoteTotals {
   const totalMaterials = components.reduce((sum, c) => sum + (c.materialCost ?? 0), 0);

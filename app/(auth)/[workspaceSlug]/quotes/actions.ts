@@ -11,6 +11,10 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import { pickFields } from '@/app/lib/security/pickFields';
 import { createQuoteAtomic, resolveQuoteCreationDefaults } from '@/app/lib/billing/quote-creation';
+import {
+  assertComponentCompatibleWithQuote,
+  TradeIncompatibleError,
+} from '@/app/lib/trades/assertCompatible';
 
 /**
  * Quote-roof-area columns updatable from the client. Server-managed
@@ -149,7 +153,36 @@ export async function createQuoteFromTemplate(
   }
   const { data: templateComps } = await supabase.from('template_components').select('*, component_library(*)').eq('template_id', templateId).eq('is_included_by_default', true).order('sort_order');
   if (templateComps?.length) {
-    const quoteComponents = templateComps.map(tc => {
+    // Phase 6 (Gerald round-2 M-03): validate every template component
+    // against the new quote's trade BEFORE inserting. v1 trades are
+    // roofing-only at create-quote-from-template path so this is
+    // effectively a no-op now, but the guard catches future template
+    // flows that allow trade selection. Filter out incompatible rows
+    // rather than throwing, so a single bad component in a template
+    // doesn't block the whole template-apply.
+    const compatibilityResults = await Promise.all(
+      templateComps.map(async (tc) => {
+        if (!tc.component_library_id) return { tc, ok: true };
+        try {
+          await assertComponentCompatibleWithQuote({
+            quoteId: quote.id,
+            componentId: tc.component_library_id,
+            companyId: profile.company_id,
+          });
+          return { tc, ok: true };
+        } catch (err) {
+          console.warn(
+            `[createQuoteFromTemplate] skipping incompatible template component ${tc.id}:`,
+            err instanceof Error ? err.message : err,
+          );
+          return { tc, ok: false };
+        }
+      }),
+    );
+    const eligibleTemplateComps = compatibilityResults
+      .filter((r) => r.ok)
+      .map((r) => r.tc);
+    const quoteComponents = eligibleTemplateComps.map(tc => {
       const lib = tc.component_library;
       return {
         quote_id: quote.id, quote_roof_area_id: tc.template_roof_area_id ? (areaMapping[tc.template_roof_area_id] ?? null) : null,
@@ -163,7 +196,9 @@ export async function createQuoteFromTemplate(
         labour_rate: tc.override_labour_rate ?? lib.default_labour_rate ?? 0, sort_order: tc.sort_order,
       };
     });
-    await supabase.from('quote_components').insert(quoteComponents);
+    if (quoteComponents.length > 0) {
+      await supabase.from('quote_components').insert(quoteComponents);
+    }
   }
   await seedQuoteTaxesOnCreate(quote.id, profile.company_id);
   redirect(`/${company.slug}/quotes/${quote.id}`);
@@ -660,6 +695,28 @@ export async function addQuoteComponent(quoteId: string, input: any) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
   await verifyQuoteOwnership(supabase, quoteId, profile.company_id);
+
+  // Phase 6 (Gerald round-2 M-03): every quote_components write must pass
+  // the central trade-compat check. Only check when input has a real
+  // component_library_id; a custom one-off component without a library link
+  // bypasses the check (no library row exists to validate against). Throws
+  // TradeIncompatibleError when the component's measurement_type isn't
+  // allowed on the quote's trade.
+  if (input.component_library_id) {
+    try {
+      await assertComponentCompatibleWithQuote({
+        quoteId,
+        componentId: input.component_library_id,
+        companyId: profile.company_id,
+      });
+    } catch (err) {
+      if (err instanceof TradeIncompatibleError) {
+        throw new Error(`trade_incompatible: ${err.message}`);
+      }
+      throw err;
+    }
+  }
+
   const { data, error } = await supabase.from('quote_components').insert({
     quote_id: quoteId, quote_roof_area_id: input.quote_roof_area_id ?? null,
     component_library_id: input.component_library_id ?? null, name: input.name,
@@ -723,8 +780,60 @@ async function recalcComponentFromEntries(quoteComponentId: string) {
   const supabase = await createSupabaseServerClient();
   const { data: entries } = await supabase.from('quote_component_entries').select('value_after_waste').eq('quote_component_id', quoteComponentId);
   const totalQty = (entries ?? []).reduce((sum, e) => sum + Number(e.value_after_waste), 0);
-  const { data: comp } = await supabase.from('quote_components').select('material_rate, labour_rate').eq('id', quoteComponentId).single();
-  const materialCost = totalQty * (comp?.material_rate ?? 0);
+  const { data: comp } = await supabase
+    .from('quote_components')
+    .select('material_rate, labour_rate, component_library_id')
+    .eq('id', quoteComponentId)
+    .single();
+
+  // Phase 6: pricing_strategy + pack_* live on component_library, not the
+  // attached quote_components row. Look them up via the FK so the strategy
+  // switch in computeMaterialCostByStrategy can apply. Components with no
+  // library link (custom one-off components) fall through to per_unit.
+  // database.types.ts is stale on these Phase 2 columns; cast at boundary.
+  let strategy: 'per_unit' | 'per_pack_length' | 'per_pack_area' | 'per_pack_coverage' | 'per_pack_volume' = 'per_unit';
+  let packPrice: number | null = null;
+  let packSize: number | null = null;
+  let packCoverageM2: number | null = null;
+  if (comp?.component_library_id) {
+    const { data: libRow } = await (supabase as unknown as {
+      from: (t: string) => {
+        select: (cols: string) => {
+          eq: (col: string, val: string) => {
+            maybeSingle: () => Promise<{
+              data: {
+                pricing_strategy?: typeof strategy | null;
+                pack_price?: number | null;
+                pack_size?: number | null;
+                pack_coverage_m2?: number | null;
+              } | null;
+              error: Error | null;
+            }>;
+          };
+        };
+      };
+    })
+      .from('component_library')
+      .select('pricing_strategy, pack_price, pack_size, pack_coverage_m2')
+      .eq('id', comp.component_library_id)
+      .maybeSingle();
+    if (libRow) {
+      strategy = libRow.pricing_strategy ?? 'per_unit';
+      packPrice = libRow.pack_price ?? null;
+      packSize = libRow.pack_size ?? null;
+      packCoverageM2 = libRow.pack_coverage_m2 ?? null;
+    }
+  }
+
+  const { computeMaterialCostByStrategy } = await import('@/app/lib/pricing/engine');
+  const materialCost = computeMaterialCostByStrategy({
+    strategy,
+    totalQuantity: totalQty,
+    materialRate: comp?.material_rate ?? 0,
+    packPrice,
+    packSize,
+    packCoverageM2,
+  });
   const labourCost = totalQty * (comp?.labour_rate ?? 0);
   await supabase.from('quote_components').update({ final_quantity: totalQty, material_cost: materialCost, labour_cost: labourCost }).eq('id', quoteComponentId);
 }
@@ -1057,6 +1166,12 @@ export async function cloneQuote(id: string, newCustomerName: string) {
 
   const { data: comps } = await supabase.from('quote_components').select('*').eq('quote_id', id).order('sort_order');
   if (comps?.length) {
+    // Phase 6 (Gerald round-2 M-03): cloneQuote inherits source.trade in
+    // Phase 4 (see createQuoteAtomic call above). Source components were
+    // already validated when first attached, and the target trade equals the
+    // source trade, so each cloned component is provably compatible by
+    // construction. No per-component assertComponentCompatibleWithQuote call
+    // needed here.
     for (const comp of comps) {
       await supabase.from('quote_components').insert({
         quote_id: newQuote.id, quote_roof_area_id: comp.quote_roof_area_id ? (areaMapping[comp.quote_roof_area_id] ?? null) : null,

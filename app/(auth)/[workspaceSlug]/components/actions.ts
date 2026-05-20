@@ -202,6 +202,17 @@ const UPDATABLE_COMPONENT_FIELDS = [
   'flashing_ids',
   'is_active',
   'sort_order',
+  // Phase 2/6 (Generic Trades): new column writes allowed from the
+  // component edit UI. company_id, id, timestamps still intentionally
+  // excluded — same posture as Gerald audit M-03.
+  'collection_id',
+  'height_value_mm',
+  'depth_value_mm',
+  'waste_unit',
+  'pricing_strategy',
+  'pack_price',
+  'pack_size',
+  'pack_coverage_m2',
 ] as const;
 
 export async function updateComponent(id: string, input: Partial<ComponentLibraryInsert>) {
