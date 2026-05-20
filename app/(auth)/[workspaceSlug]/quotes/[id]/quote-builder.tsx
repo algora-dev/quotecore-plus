@@ -925,30 +925,10 @@ export function QuoteBuilder({
             >
               ← Back to Extras
             </button>
-            {/*
-              Guard: a confirmed manual quote with no roof areas or no main
-              components is a hollow quote (no line items, $0 totals, broken
-              customer-facing summary). Intercept the click here and show an
-              explanation modal; "OK" bounces the user back to the Roof Areas
-              phase so they can start over from the right place. Only when
-              both checks pass do we delegate to the real ConfirmQuoteButton.
-            */}
-            {roofAreas.length === 0 || mainComps.length === 0 ? (
-              <button
-                type="button"
-                data-copilot="quote-confirm"
-                onClick={() =>
-                  setShowEmptyQuoteGuard(
-                    roofAreas.length === 0 ? 'no-areas' : 'no-main-components',
-                  )
-                }
-                className="px-6 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-              >
-                {quote.status === 'draft' ? 'Confirm Quote →' : 'Save Changes →'}
-              </button>
-            ) : (
-              <ConfirmQuoteButton quoteId={quote.id} workspaceSlug={workspaceSlug} quoteStatus={quote.status} />
-            )}
+            {/* Guard removed per Shaun: areas are optional for generic quotes
+                and the roofing guard was more friction than value. Just show
+                the ConfirmQuoteButton directly. */}
+            <ConfirmQuoteButton quoteId={quote.id} workspaceSlug={workspaceSlug} quoteStatus={quote.status} />
           </div>
         </div>
       )}
