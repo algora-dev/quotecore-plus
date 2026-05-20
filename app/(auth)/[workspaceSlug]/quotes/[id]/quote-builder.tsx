@@ -757,6 +757,43 @@ export function QuoteBuilder({
             );
           })}
 
+          {/* H-04 (Gerald round-5): generic no-area main components were
+              invisible in Review because they aren't under a roof area or
+              in extraComps (which filters by component_type='extra'). */}
+          {quoteIsGeneric && roofAreas.length === 0 && (() => {
+            const noAreaComps = components.filter(c => !c.quote_roof_area_id);
+            if (noAreaComps.length === 0) return null;
+            return (
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <h3 className="font-semibold text-slate-900 mb-2">Quote items</h3>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-slate-500 border-b">
+                      <th className="py-1">Component</th>
+                      <th className="py-1 text-right">Entries</th>
+                      <th className="py-1 text-right">Total Qty</th>
+                      <th className="py-1 text-right">Material</th>
+                      <th className="py-1 text-right">Labour</th>
+                      <th className="py-1 text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {noAreaComps.map(c => (
+                      <tr key={c.id} className="border-b border-slate-100">
+                        <td className="py-1.5">{c.name}</td>
+                        <td className="py-1.5 text-right">{(entries[c.id] ?? []).length}</td>
+                        <td className="py-1.5 text-right">{formatQuantity(c.final_quantity ?? 0, c.measurement_type)}</td>
+                        <td className="py-1.5 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
+                        <td className="py-1.5 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
+                        <td className="py-1.5 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
+
           {extraComps.length > 0 && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
               <h3 className="font-semibold text-slate-900 mb-2">Extras</h3>
