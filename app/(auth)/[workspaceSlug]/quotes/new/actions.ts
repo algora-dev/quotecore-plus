@@ -3,7 +3,7 @@ import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { seedQuoteTaxesOnCreate } from '@/app/lib/taxes/seed';
 import { BUCKETS } from '@/app/lib/storage/buckets';
-import { createQuoteAtomic } from '@/app/lib/billing/quote-creation';
+import { createQuoteAtomic, resolveQuoteCreationDefaults } from '@/app/lib/billing/quote-creation';
 import {
   QuoteLimitReachedError,
   SubscriptionInactiveError,
@@ -164,12 +164,18 @@ async function createQuoteWithDetailsInner(params: CreateQuoteParams): Promise<C
   // transaction under a per-company advisory lock (Gerald audit H-02).
   // Any monthly-limit / subscription-inactive error bubbles up here and
   // is caught by the server-action outer handler at the form layer.
+  // Phase 4: tag with the company's bootstrap collection + 'roofing' trade.
+  // No behaviour change while GENERIC_TRADES_V1_ENABLED is off; required
+  // payload once it flips on.
+  const defaults = await resolveQuoteCreationDefaults(profile.company_id);
   const quoteId = await createQuoteAtomic(profile.company_id, profile.id, {
     customerName: params.customerName,
     jobName: params.jobName,
     taxRate: company.default_tax_rate ?? 0,
     measurementSystem: safeMeasurementSystem,
     entryMode: safeEntryMode,
+    trade: defaults.trade,
+    componentCollectionId: defaults.componentCollectionId,
   });
 
   // Snapshot the company's tax library onto the new quote so totals work

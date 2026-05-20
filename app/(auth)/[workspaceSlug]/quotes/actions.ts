@@ -10,7 +10,7 @@ import { seedQuoteTaxesOnCreate } from '@/app/lib/taxes/seed';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import { pickFields } from '@/app/lib/security/pickFields';
-import { createQuoteAtomic } from '@/app/lib/billing/quote-creation';
+import { createQuoteAtomic, resolveQuoteCreationDefaults } from '@/app/lib/billing/quote-creation';
 
 /**
  * Quote-roof-area columns updatable from the client. Server-managed
@@ -114,6 +114,10 @@ export async function createQuoteFromTemplate(
   // through as-is. entry_mode is nullable in the DB but the RPC defaults
   // to 'manual' when not supplied; this matches the previous behaviour
   // when entryMode was null.
+  // Phase 4: tag the new quote with the company's bootstrap collection +
+  // trade='roofing'. Both safe to pass with the feature flag off (RPC just
+  // stores them); required once the flag flips on.
+  const defaults = await resolveQuoteCreationDefaults(profile.company_id);
   const quoteId = await createQuoteAtomic(profile.company_id, profile.id, {
     templateId,
     customerName,
@@ -121,6 +125,8 @@ export async function createQuoteFromTemplate(
     taxRate: company.default_tax_rate ?? 0,
     measurementSystem: safeMeasurementSystem as 'metric' | 'imperial_ft' | 'imperial_rs',
     entryMode: (entryMode ?? 'manual') as 'manual' | 'digital',
+    trade: defaults.trade,
+    componentCollectionId: defaults.componentCollectionId,
   });
   // Re-load via the user's RLS-bound client so subsequent queries (template
   // copy-in below) operate as the caller, not the admin client.
@@ -460,11 +466,15 @@ export async function createBlankQuote(customerName: string, jobReference?: stri
         ? 'metric'
         : 'imperial_rs';
 
+  // Phase 4: see resolveQuoteCreationDefaults note in the template path above.
+  const defaults = await resolveQuoteCreationDefaults(profile.company_id);
   const quoteId = await createQuoteAtomic(profile.company_id, profile.id, {
     customerName,
     jobName: jobReference || null,
     taxRate: company.default_tax_rate ?? 0,
     measurementSystem: normalisedSystem,
+    trade: defaults.trade,
+    componentCollectionId: defaults.componentCollectionId,
   });
   await seedQuoteTaxesOnCreate(quoteId, profile.company_id);
   redirect(`/${company.slug}/quotes/${quoteId}`);
@@ -954,6 +964,18 @@ export async function cloneQuote(id: string, newCustomerName: string) {
   // Routes through create_quote_atomic so each clone counts against the
   // monthly quote limit (Shaun: clones always count, they're new quotes
   // operationally and get their own quote_number).
+  // Phase 4: clone inherits the source quote's trade + component_collection_id
+  // verbatim. Falls back to the company's bootstrap collection if the source
+  // somehow has neither set (legacy pre-Phase-2 row); this should be impossible
+  // post-backfill but defending against it costs nothing.
+  const sourceTrade = (originalQuote as { trade?: 'roofing' | 'generic' | null }).trade ?? null;
+  const sourceCollectionId = (originalQuote as { component_collection_id?: string | null }).component_collection_id ?? null;
+  let resolvedTrade: 'roofing' | 'generic' = sourceTrade ?? 'roofing';
+  let resolvedCollection: string | null = sourceCollectionId;
+  if (!resolvedCollection) {
+    const defaults = await resolveQuoteCreationDefaults(profile.company_id);
+    resolvedCollection = defaults.componentCollectionId;
+  }
   const newQuoteId = await createQuoteAtomic(profile.company_id, profile.id, {
     templateId: originalQuote.template_id,
     customerName: newCustomerName,
@@ -968,6 +990,8 @@ export async function cloneQuote(id: string, newCustomerName: string) {
     measurementSystem: (originalQuote.measurement_system as 'metric' | 'imperial_ft' | 'imperial_rs'),
     currency: originalQuote.currency ?? undefined,
     entryMode: (originalQuote.entry_mode as 'manual' | 'digital' | 'blank') ?? 'manual',
+    trade: resolvedTrade,
+    componentCollectionId: resolvedCollection,
   });
   const { data: newQuote, error: qErr } = await supabase
     .from('quotes')

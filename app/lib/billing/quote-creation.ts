@@ -31,6 +31,7 @@ import 'server-only';
 import type { Json } from '@/app/lib/supabase/database.types';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { ensureCompanyHasCollection } from '@/app/lib/data/ensure-company-has-collection';
 import {
   QuoteLimitReachedError,
   SubscriptionInactiveError,
@@ -66,6 +67,43 @@ export interface CreateQuotePayload {
   laborMarginPercent?: number | null;
   materialMarginEnabled?: boolean;
   laborMarginEnabled?: boolean;
+  /**
+   * Generic Trades Phase 4. When omitted, the RPC's column default
+   * ('roofing') applies. The server-side feature flag
+   * GENERIC_TRADES_V1_ENABLED can force this to be supplied (see
+   * createQuoteAtomic body).
+   */
+  trade?: 'roofing' | 'generic';
+  /**
+   * Generic Trades Phase 4. The collection this quote draws components
+   * from. When omitted, the column stays NULL. Composite FK
+   * (company_id, component_collection_id) -> component_collections
+   * (company_id, id) catches cross-company links at the constraint layer.
+   */
+  componentCollectionId?: string | null;
+}
+
+/**
+ * Resolve sensible Phase-4 defaults for a quote-create call: 'roofing' as
+ * the trade, and the company's bootstrap collection id. Safe to call from
+ * any quote-create path — idempotent + concurrency-safe via the SECDEF RPC
+ * (Gerald round-2 M-02).
+ *
+ * Returns `componentCollectionId: null` on failure rather than throwing, so
+ * quote creation never blocks on a bootstrap glitch. Existing roofing flow
+ * keeps working in that degraded case (the column stays NULL until Phase 5
+ * tightens it).
+ */
+export async function resolveQuoteCreationDefaults(
+  companyId: string,
+): Promise<{ trade: 'roofing'; componentCollectionId: string | null }> {
+  try {
+    const id = await ensureCompanyHasCollection(companyId);
+    return { trade: 'roofing', componentCollectionId: id };
+  } catch (err) {
+    console.error('[resolveQuoteCreationDefaults] bootstrap failed:', err);
+    return { trade: 'roofing', componentCollectionId: null };
+  }
 }
 
 /**
@@ -114,7 +152,32 @@ export async function createQuoteAtomic(
     labor_margin_percent: payload.laborMarginPercent ?? null,
     material_margin_enabled: payload.materialMarginEnabled ?? false,
     labor_margin_enabled: payload.laborMarginEnabled ?? false,
+    // Phase 4: optional generic-trade fields. Default behaviour (both
+    // undefined) produces a roofing quote with collection_id=NULL, identical
+    // to pre-Phase-4. With the server flag on, the wrapper above this enforces
+    // both being supplied; the RPC itself stays permissive.
+    trade: payload.trade ?? null,
+    component_collection_id: payload.componentCollectionId ?? null,
   } satisfies { [k: string]: Json };
+
+  // Server-side feature flag enforcement. When GENERIC_TRADES_V1_ENABLED is
+  // truthy, every quote-create call MUST supply trade + componentCollectionId
+  // explicitly. This is the gate that flips the new behaviour on without
+  // touching the RPC.
+  if (
+    (process.env.GENERIC_TRADES_V1_ENABLED ?? '').toLowerCase() === 'true'
+  ) {
+    if (!payload.trade) {
+      throw new Error(
+        'createQuoteAtomic: GENERIC_TRADES_V1_ENABLED is on; payload.trade is required.',
+      );
+    }
+    if (!payload.componentCollectionId) {
+      throw new Error(
+        'createQuoteAtomic: GENERIC_TRADES_V1_ENABLED is on; payload.componentCollectionId is required.',
+      );
+    }
+  }
 
   const admin = createAdminClient();
   const { data, error } = await admin.rpc('create_quote_atomic', {
