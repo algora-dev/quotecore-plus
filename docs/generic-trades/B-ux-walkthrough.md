@@ -7,6 +7,7 @@ Two flows: **Roofing (existing, with tiny tweaks)** and **Generic (new)**. After
 **Revision history:**
 - v1 (initial draft).
 - v2 (post-Gerald 2026-05-19): aligned with A v2 and C2. The new container is called a "collection" not a "library" (avoids name collision with the existing components table called `component_library`). Collections have NO trade. Trades and collections are picked independently in the create-quote form. Neither is auto-selected by default. Removed "library default" references.
+- v2.1 (Shaun additions 2026-05-20): added the multi-line takeoff tool UX (`multi_lineal` measurement type), the "Combine into total length + waste" affordance in the quote builder for lineal entries, and the material pricing strategies UX in the component creator (rolls-by-length, rolls-by-area, paint-style coverage, volume-pack).
 
 ---
 
@@ -172,7 +173,16 @@ Picking a type reveals type-specific fields:
 6. **If `fixed`:** no extra field.
 7. **If `curved_line` / `irregular_area`:** no extra field — these are drawing-mode hints for the takeoff tool.
 
-8. **Pricing fields** — same as today. Material cost / labour cost / total per unit.
+8. **Pricing fields** — enhanced with the new **Pricing strategy** dropdown (Shaun addition):
+   - Default: `Per unit` (current behaviour — enter cost per unit, multiplied by quantity).
+   - `Per pack — by length` (e.g. cable: 20m roll @ $50). Inputs: pack price, pack size (m).
+   - `Per pack — by area` (e.g. underlay: 50 m² roll @ $60). Inputs: pack price, pack size (m²).
+   - `Per pack — by coverage` (e.g. paint: 20L bucket covers 50 m² @ $100). Inputs: pack price, pack quantity (free-form, e.g. `20L` for display), coverage per pack (m²).
+   - `Per pack — by volume` (e.g. concrete: 5 m³ @ $100). Inputs: pack price, pack size (m³).
+   - The strategy dropdown is **filtered by the chosen `measurement_type`** so users can't pick incompatible combos (e.g. `per_pack_volume` only shows for `volume` components).
+   - Live worked example below the inputs: "280 m² ÷ 50 m²/roll = 6 rolls × $60 = $360" updates as user types. Helps with the mental model.
+   - The pricing engine rounds up to whole packs (a job needing 280 m² of 50 m² rolls always charges for 6 rolls, never 5.6).
+   - Labour cost / total per unit — unchanged.
 
 9. **Waste**:
    - Type: dropdown `% (percent) / Flat`. Default `%` for every type EXCEPT `hours_days`, where default is `Flat` (extra hours/days per line — users don't naturally think in "% waste on labour").
@@ -191,6 +201,47 @@ Same as today. Edits don't retroactively change lines in saved quotes (the quote
 If the collection contains components OR if any quote references the collection, deletion is REFUSED with a list of blockers. User must move/delete components and migrate or delete dependent quotes first. There is NO cascade-delete from collection → components at the DB level (`ON DELETE RESTRICT`) — accidentally wiping a catalogue is too dangerous even with a confirmation modal.
 
 ---
+
+## Common — Multi-line takeoff tool (Shaun addition, new)
+
+A new drawing tool on the takeoff canvas, for the `multi_lineal` measurement type. Sits alongside the existing area tool (closed polygon), lineal tool (point-to-point), and count tool.
+
+### UX
+
+1. User picks a `multi_lineal` component (e.g. "Electrical cable", "Skirting board", "Gutter").
+2. Canvas activates polyline mode:
+   - Click to drop point 1.
+   - Click again to drop point 2 — segment 1 renders + length appears.
+   - Click again, again, again — each new segment renders.
+   - Live readout: `Total: 14.2m (5 segments)`.
+   - Double-click, press Enter, or click "Finish" to commit.
+3. On commit:
+   - The N segments are summed into ONE measurement.
+   - **Component-level waste is applied per segment** (not on the total — this is critical for users on flat-per-length waste).
+     - Example: 10 segments of 2.0m with 5% waste → 21m total (each 2m becomes 2.1m).
+     - Example: 10 segments of 2.0m with 0.25m flat waste → 22.5m total (each 2m becomes 2.25m).
+4. The quote builder shows ONE line: `Electrical cable — 21m`. Not 10 × 2m lines.
+5. The PDF shows the same clean total.
+
+Difference vs the existing lineal tool: lineal is always point-A-to-point-B (one segment, one measurement, one row). Multi-line is N connected points summed into one row — perfect for runs that snake through space (cabling through a building, skirting around a room).
+
+Difference vs the area tool: multi-line is open (doesn't close back to point 1). Output is total length, not area.
+
+## Common — Quote-builder: combine lineal entries (Shaun addition, new)
+
+In the quote builder → Components tab, for any lineal-flavoured component (`lineal`, `multi_lineal`, `rafter`, `valley_hip`, `curved_line`) with 2+ entries:
+
+- A button appears: **"Combine into total length + waste"**.
+- Click it: the N entries collapse into one row showing the total length including per-entry waste.
+  - Example: 10 entries of 2m with 5% waste → one row labelled `21m (combined from 10 × 2m + 5% waste per length)`.
+  - Example: 10 entries of 2m with 0.25m flat waste → one row labelled `22.5m (combined from 10 × 2m + 0.25m waste per length)`.
+- The combined row stores the source rows in `combined_from` JSONB, so it's reversible.
+- An inverse button appears: **"Split back into individual lengths"**.
+  - Click it: the original N entries are restored exactly.
+- Same per-segment waste behaviour as the multi-line takeoff tool. Identical inputs produce identical outputs across the two paths.
+- Customer PDF renders the **clean total length only** — no `10 × 2m` breakdown. (Matches the existing lineal PDF rendering.)
+
+Use case: a takeoff produced 10 separate 2m cable runs through a digital takeoff using the regular lineal tool. The user wants the customer-facing quote to read "21m of cable" not "10 × 2m of cable." Click combine. Done.
 
 ## Common — Multi-image takeoff (recap of the new behaviour)
 

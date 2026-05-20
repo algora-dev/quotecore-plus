@@ -1,13 +1,35 @@
 # Generic Trades Expansion — Implementation Plan (revision 2)
 
-**For:** Gerald (round-2 audit) — please grade again before any code ships.
+**For:** Gerald (round-3 audit) — please grade again before any code ships.
 **Author:** Gavin (QuoteCore+ agent)
-**Status:** Draft 2, supersedes `C-implementation-plan.md`.
+**Status:** Draft 2 + round-2 patches + Shaun additions (multi-line takeoff, combined lineal entries, material pricing strategies). Supersedes `C-implementation-plan.md`.
 **Scope:** the bridge between `A-schema-delta.md` (v2) and `B-ux-walkthrough.md` (v2). All three docs are now mutually consistent.
 
 ---
 
-## What changed from C → C2 (Gerald's pass)
+## What changed C → C2 → C2-patched (post-Gerald round-2 + Shaun additions 2026-05-20)
+
+### Gerald round-2 patches applied
+
+| Finding | Action |
+|---|---|
+| M-01 wrong table name | Renamed `takeoff_measurements` → `quote_takeoff_measurements` everywhere. Added explicit note that `save_takeoff_atomic` must learn `page_id` in Phase 7. |
+| M-02 bootstrap concurrency | Bootstrap is now a SECURITY DEFINER RPC `ensure_company_has_collection(p_company_id uuid)` with `pg_advisory_xact_lock` + `component_collections.is_bootstrap` partial unique index. |
+| M-03 trade-compat drift | Central server helper `assertComponentCompatibleWithQuote()` replaces all inline checks. Regression suite greps every `quote_components` mutation site for the import. |
+| M-04 `pricing_mode` drift | `pricing_mode` dropped from v1. `measurement_type` is the sole pricing driver. (See also Shaun addition 3 below: the new `pricing_strategy` column is a different concern.) |
+| L-01 schema type wording | Phase 2.2 now uses enum types directly (`trade`, `waste_unit`); no mixed text+CHECK wording. |
+
+### Shaun additions (2026-05-20)
+
+| Addition | Action |
+|---|---|
+| **Multi-line takeoff tool** | New `measurement_type` value `multi_lineal`. Polyline-style takeoff tool that sums N segments into a single total-length measurement; component-level waste settings (percent OR flat-per-length) apply per segment. UX in Phase 7; schema in Phase 2. |
+| **Combine lineal entries in quote builder** | New `quote_component_entries.combined_from jsonb` + `is_combined boolean` columns let the user collapse N separate length entries into a single "total length + waste" entry, reversible. PDF renders the clean total. UX in Phase 6; schema in Phase 2. |
+| **Material pricing strategies** | New `pricing_strategy` enum + pack columns on `component_library` let users price a component by how they buy it (rolls by length, rolls by m², paint-style coverage, volume-pack, or per-unit). Pricing engine rounds up to whole packs. UX in Phase 6; schema in Phase 2. **Note for Gerald round-3:** this is NOT the `pricing_mode` column killed in M-04. M-04 killed a column that duplicated `measurement_type` with no use case. `pricing_strategy` is orthogonal to `measurement_type` (same measurement type, different purchasable-unit pattern) and has clear use cases. |
+
+---
+
+## Original C → C2 changes (Gerald round-1)
 
 | Finding | Action |
 |---|---|
@@ -111,29 +133,35 @@ Add every new table and column. All nullable. Server flag stays off.
 
 ### 2.1 New tables
 
-- `component_collections (id uuid pk, company_id uuid fk, name text not null, created_at timestamptz, updated_at timestamptz)`
+- `component_collections (id uuid pk, company_id uuid fk, name text not null, is_bootstrap boolean not null default false, created_at timestamptz, updated_at timestamptz)`
+  - **Partial unique index:** `unique (company_id) where is_bootstrap = true`. Makes duplicate bootstrap collections literally impossible. (Gerald M-02.)
 - `takeoff_sessions (id uuid pk, quote_id uuid fk, created_at timestamptz)`
 - `takeoff_pages (id uuid pk, session_id uuid fk, quote_id uuid fk, image_storage_path text, page_order int, page_name text, scale_calibration jsonb, pan_zoom_state jsonb, created_at timestamptz)`
 
 ### 2.2 New columns
 
-- `companies.default_trade text not null default 'roofing'` (CHECK against trade enum)
-- `quotes.trade text not null default 'roofing'` (CHECK against trade enum)
+- `companies.default_trade trade not null default 'roofing'`
+- `quotes.trade trade not null default 'roofing'`
 - `quotes.component_collection_id uuid null references component_collections(id) on delete restrict`
 - `component_library.collection_id uuid null references component_collections(id) on delete restrict`
 - `component_library.height_value_mm integer null`
 - `component_library.depth_value_mm integer null`
-- `component_library.waste_unit text not null default 'percent'` (CHECK: `'percent' | 'flat'`)
-- `component_library.pricing_mode text` (derived from measurement_type at insert time; CHECK against enum)
-- `takeoff_measurements.page_id uuid null references takeoff_pages(id) on delete cascade` (nullable for backfill; phase 7 tightens)
-- `takeoff_measurements.unassigned boolean not null default false`
+- `component_library.waste_unit waste_unit not null default 'percent'`
+- **`component_library.pricing_strategy pricing_strategy not null default 'per_unit'`** (Shaun addition — material pricing modes). Compatibility with `measurement_type` enforced by CHECK constraint, see 2.4.
+- **`component_library.pack_price numeric(12,4) null`** — price per pack/roll/bucket/unit. NULL when `pricing_strategy = 'per_unit'`.
+- **`component_library.pack_size numeric(12,4) null`** — pack size in metres (for `per_pack_length`), m² (for `per_pack_area`), or m³ (for `per_pack_volume`). NULL otherwise.
+- **`component_library.pack_coverage_m2 numeric(12,4) null`** — coverage in m² per pack (for `per_pack_coverage` only — the paint-style strategy where the pack quantity ≠ the area covered).
+- `quote_takeoff_measurements.page_id uuid null references takeoff_pages(id) on delete cascade` (nullable for backfill; phase 7 tightens after `save_takeoff_atomic` learns the field — see Gerald M-01 follow-up).
+- `quote_takeoff_measurements.unassigned boolean not null default false`
+- **`quote_component_entries.combined_from jsonb null`** (Shaun addition — combine lineal entries). Stores the source rows when a user collapses N entries into a single total-length entry, so the operation is reversible. Shape: `[{length: number, waste: number, label?: string}, ...]`.
+- **`quote_component_entries.is_combined boolean not null default false`** — flag for the UI to show "combined" affordance + the "Split back" action.
 
 ### 2.3 Enum extensions
 
-- `measurement_type` add: `length_x_height`, `volume`, `hours_days`, `count`, `fixed`, `curved_line`, `irregular_area`.
-- `pricing_mode` (new enum, same values as measurement_type).
+- `measurement_type` add: `length_x_height`, `volume`, `hours_days`, `count`, `fixed`, `curved_line`, `irregular_area`, **`multi_lineal`** (Shaun addition — polyline takeoff tool that sums N segments).
 - `waste_unit` (new enum: `percent`, `flat`).
 - `trade` (new enum: `roofing`, `generic`).
+- **`pricing_strategy` (new enum):** `per_unit`, `per_pack_length`, `per_pack_area`, `per_pack_coverage`, `per_pack_volume`. Default `per_unit` keeps every existing component behaviour-equivalent. (See M-04 disambiguation in the header changelog: this is NOT the killed `pricing_mode` enum — it is orthogonal to `measurement_type`.)
 
 ### 2.4 Constraints
 
@@ -141,6 +169,17 @@ Add every new table and column. All nullable. Server flag stays off.
 - `CHECK (measurement_type <> 'volume' OR depth_value_mm IS NOT NULL)`
 - `CHECK (height_value_mm IS NULL OR measurement_type = 'length_x_height')`
 - `CHECK (depth_value_mm IS NULL OR measurement_type = 'volume')`
+- **`CHECK` enforcing `pricing_strategy` ↔ `measurement_type` compatibility:**
+  - `per_unit` → allowed for ALL measurement types (current behaviour).
+  - `per_pack_length` → only `lineal`, `multi_lineal`, `rafter`, `valley_hip`, `curved_line`.
+  - `per_pack_area` → only `area`, `length_x_height`, `irregular_area`.
+  - `per_pack_coverage` → only `area`, `length_x_height`, `irregular_area`.
+  - `per_pack_volume` → only `volume`.
+- **`CHECK` enforcing pack columns nullable in lockstep with strategy:**
+  - `per_unit` → `pack_price`, `pack_size`, `pack_coverage_m2` all NULL.
+  - `per_pack_length` / `per_pack_area` / `per_pack_volume` → `pack_price` + `pack_size` NOT NULL, `pack_coverage_m2` NULL.
+  - `per_pack_coverage` → `pack_price` + `pack_size` (quantity per pack, e.g. 20L) + `pack_coverage_m2` all NOT NULL.
+- **`CHECK (is_combined = false OR combined_from IS NOT NULL)`** on `quote_component_entries` — a combined row must have its source data preserved.
 
 ### 2.5 RLS
 
@@ -149,8 +188,9 @@ Every new table follows `(SELECT company_id FROM users WHERE id = auth.uid())` p
 ### 2.6 Indexes
 
 - `component_collections (company_id)`
+- `component_collections (company_id) where is_bootstrap = true` — partial unique (Gerald M-02).
 - `takeoff_pages (session_id, page_order)`
-- `takeoff_measurements (page_id)`
+- `quote_takeoff_measurements (page_id)`
 - `quotes (component_collection_id)` partial WHERE NOT NULL
 - `component_library (collection_id)` partial WHERE NOT NULL
 
@@ -168,15 +208,60 @@ Every new table follows `(SELECT company_id FROM users WHERE id = auth.uid())` p
 
 ## Phase 3 — Bootstrap path
 
-Goal: deterministic helper that ensures every company has at least one collection, created idempotently.
+Goal: deterministic, **DB-concurrency-safe** helper that ensures every company has at least one collection, created idempotently.
 
-### 3.1 Helper
+### 3.1 Bootstrap RPC (Gerald M-02)
 
-`ensureCompanyHasCollection(companyId)` in `app/lib/data/company-context.ts` (or a new module):
-- Service-role only (admin client).
-- Idempotent. Safe to call any number of times.
-- Returns the company's "default" collection (oldest one if multiple exist, named "My Components" if just bootstrapped).
-- Wraps in a transaction.
+Implement bootstrap as a SECURITY DEFINER PostgreSQL RPC:
+
+```sql
+create or replace function public.ensure_company_has_collection(p_company_id uuid)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_collection_id uuid;
+begin
+  -- Per-company advisory lock; releases at end of transaction.
+  perform pg_advisory_xact_lock(hashtext(p_company_id::text));
+
+  -- Re-check inside the lock.
+  select id into v_collection_id
+  from component_collections
+  where company_id = p_company_id and is_bootstrap = true
+  limit 1;
+
+  if v_collection_id is null then
+    insert into component_collections (company_id, name, is_bootstrap)
+    values (p_company_id, 'My Components', true)
+    returning id into v_collection_id;
+  end if;
+
+  return v_collection_id;
+end;
+$$;
+
+revoke all on function public.ensure_company_has_collection(uuid) from public, anon, authenticated;
+-- Service-role only — call via admin client.
+```
+
+Key properties:
+- **Service-role only.** REVOKE ALL from public/anon/authenticated. The UI never calls this directly; server actions call it via the admin client.
+- **Per-company advisory lock** + the partial unique index from Phase 2 mean concurrent calls cannot create duplicate bootstrap rows.
+- **Idempotent.** Safe to call any number of times.
+- Returns the bootstrap collection id.
+
+### 3.1b TS wrapper
+
+`ensureCompanyHasCollection(companyId: string): Promise<string>` in `app/lib/data/company-context.ts`:
+- Resolves the admin client.
+- Calls `rpc('ensure_company_has_collection', { p_company_id })`.
+- Returns the resulting collection id.
+- Adds a structured log line on each call for observability.
+
+**Regression bullet:** spawn 5 concurrent calls to `ensure_company_has_collection` for the same company; assert exactly one bootstrap row exists afterwards.
 
 ### 3.2 Call sites
 
@@ -272,12 +357,48 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES = {
 };
 ```
 
-### 6.3 Server-side validation
+### 6.3 Server-side validation — one central helper (Gerald M-03)
 
-Every server action that adds a component to a quote (`addQuoteComponent`, `cloneQuote` re-attachment, `applyTemplate`, takeoff measurement → component conversion) MUST:
-1. Load the quote's `trade`.
-2. Load the component's `measurement_type`.
-3. Refuse the operation if not in `TRADE_ALLOWED_MEASUREMENT_TYPES[trade]`.
+Create one central server-side helper. **No inline checks anywhere.**
+
+```ts
+// app/lib/trades/assertCompatible.ts
+import { createAdminClient } from '@/lib/supabase/admin';
+import { TRADE_ALLOWED_MEASUREMENT_TYPES } from './measurement-type-whitelist';
+
+export class TradeIncompatibleError extends Error {
+  code = 'trade_incompatible' as const;
+  constructor(public trade: string, public measurementType: string) {
+    super(`Component with measurement_type=${measurementType} is not allowed on a ${trade} quote.`);
+  }
+}
+
+export async function assertComponentCompatibleWithQuote(args: {
+  quoteId: string;
+  componentId: string;
+  companyId: string;
+}): Promise<void> {
+  const admin = createAdminClient();
+  const [{ data: quote }, { data: component }] = await Promise.all([
+    admin.from('quotes').select('trade').eq('id', args.quoteId).eq('company_id', args.companyId).single(),
+    admin.from('component_library').select('measurement_type').eq('id', args.componentId).eq('company_id', args.companyId).single(),
+  ]);
+  if (!quote || !component) throw new Error('not_found');
+  const allowed = TRADE_ALLOWED_MEASUREMENT_TYPES[quote.trade];
+  if (!allowed?.has(component.measurement_type)) {
+    throw new TradeIncompatibleError(quote.trade, component.measurement_type);
+  }
+}
+```
+
+**Every server action that creates a `quote_components` row MUST import and call this helper before the write.** Specifically:
+- `addQuoteComponent`
+- `cloneQuote` (the re-attach loop for every cloned component)
+- `applyTemplate`
+- Takeoff measurement → component conversion (`save_takeoff_atomic` callers and any TS helper that materialises measurements as components)
+- Any other code path that inserts into `quote_components`.
+
+**Static regression guard** (`scripts/test-trade-helper-imports.mjs`): grep every server action file under `app/` for INSERT or UPSERT against `quote_components`. For each match, assert the file imports `assertComponentCompatibleWithQuote`. Fail otherwise. This is a static guard, not a runtime one; we catch regressions at PR time.
 
 Refusal returns a structured error (`trade_incompatible`) the UI surfaces as a tooltip/toast, not a 500.
 
@@ -285,7 +406,92 @@ Refusal returns a structured error (`trade_incompatible`) the UI surfaces as a t
 
 Components incompatible with the current quote's trade are shown disabled in the picker with a tooltip ("This component uses `volume`, which isn't supported on roofing quotes"). Pure UX polish; the server is the source of truth.
 
-### 6.5 Regression
+### 6.5 Material pricing strategies (Shaun addition)
+
+Goal: let users price a component by how they buy it. Materials don't always come per-unit — they come in rolls, buckets, packs, volumes. The pricing engine rounds up to whole packs.
+
+#### 6.5.1 Strategies
+
+| Strategy | Use case | Inputs | Cost formula |
+|---|---|---|---|
+| `per_unit` | Per-item pricing (bolts, fasteners). DEFAULT — current behaviour. | `cost_per_unit` (existing) | `qty * cost_per_unit` |
+| `per_pack_length` | Cable: 20m roll @ $50. | `pack_price=50, pack_size=20` | `ceil(total_lineal_m / pack_size) * pack_price` |
+| `per_pack_area` | Underlay: 50 m² roll @ $60. | `pack_price=60, pack_size=50` | `ceil(total_m2 / pack_size) * pack_price` |
+| `per_pack_coverage` | Paint: 20L bucket @ $100, covers 50 m². | `pack_price=100, pack_size=20 (litres), pack_coverage_m2=50` | `ceil(total_m2 / pack_coverage_m2) * pack_price` |
+| `per_pack_volume` | Concrete: 5 m³ unit @ $100. | `pack_price=100, pack_size=5` | `ceil(total_m3 / pack_size) * pack_price` |
+
+`pack_size` for `per_pack_coverage` stores the **physical pack quantity** (e.g. 20 litres) for display purposes; the cost math uses `pack_coverage_m2`. This lets the quote builder show "7 × 20L buckets = 140 litres" alongside the price.
+
+#### 6.5.2 UI in component creator
+
+Under "Pricing" in the component create/edit modal, add a **Pricing strategy** dropdown. Default `per_unit`. Selecting any other strategy reveals strategy-specific fields:
+
+- `per_pack_length`: `Pack price` ($), `Pack size` (m).
+- `per_pack_area`: `Pack price` ($), `Pack size` (m²).
+- `per_pack_coverage`: `Pack price` ($), `Pack size` (e.g. 20 litres — free-form quantity for display), `Coverage per pack` (m²).
+- `per_pack_volume`: `Pack price` ($), `Pack size` (m³).
+
+Dropdown options are **filtered by the component's `measurement_type`** so users can't pick incompatible combos (matches the CHECK in Phase 2.4). E.g. a `lineal` component only shows `per_unit` and `per_pack_length`.
+
+Live worked example below the inputs: "280 m² ÷ 50 m²/roll = 6 rolls × $60 = $360" updates as user types. Helps with mental model.
+
+#### 6.5.3 Pricing engine
+
+`app/lib/pricing/engine.ts` adds a strategy switch per component:
+
+```ts
+switch (component.pricing_strategy) {
+  case 'per_unit':           return qty * component.cost_per_unit;
+  case 'per_pack_length':    return Math.ceil(total / component.pack_size) * component.pack_price;
+  case 'per_pack_area':      return Math.ceil(total / component.pack_size) * component.pack_price;
+  case 'per_pack_coverage':  return Math.ceil(total / component.pack_coverage_m2) * component.pack_price;
+  case 'per_pack_volume':    return Math.ceil(total / component.pack_size) * component.pack_price;
+}
+```
+
+The `total` value is the measured value (length, area, or volume) already including any waste added at the component level. **Rounding up happens AFTER waste is applied** — the user has already padded for waste; the round-up captures the next purchasable unit on top.
+
+#### 6.5.4 PDF / customer editor display
+
+- Quote builder shows: `6 × 50 m² rolls × $60 = $360` for transparency.
+- Customer PDF shows just the line total ($360) plus a sub-note in italic for transparency: "6 rolls of underlay @ $60." Final wording TBD with Shaun in Phase 6 build.
+
+### 6.6 Combined lineal entries (Shaun addition)
+
+Goal: when a quote builder has many small lineal entries (e.g. 10 × 2m of cable), let the user **collapse them into one total-length-plus-waste entry**, reversibly.
+
+#### 6.6.1 UI
+
+In the quote builder → Components tab, for any `lineal` / `multi_lineal` / `rafter` / `valley_hip` / `curved_line` component with ≥2 entries:
+- Show button: **"Combine into total length + waste"**.
+- On click: collapse all entries into one row. New row's `length` = `sum(entry.length × (1 + waste%))` (or `sum(entry.length + waste_flat)` when waste_unit is `flat` — waste is per-length per Shaun's spec).
+- The new row stores the source data in `combined_from` JSONB.
+- New row UI label: `21m (combined from 10 × 2m + 5% waste per length)`.
+- Show inverse button: **"Split back into individual lengths"**, which restores from `combined_from` and deletes the combined row.
+
+#### 6.6.2 Waste math
+
+Waste is **always applied per source length**, regardless of waste_unit:
+- `waste_unit='percent', waste_value=5, entries=10 × 2m` → each segment becomes `2 + (2 × 0.05) = 2.1m` → combined = `21m`.
+- `waste_unit='flat', waste_value=0.25, entries=10 × 2m` → each segment becomes `2 + 0.25 = 2.25m` → combined = `22.5m`.
+
+This matches the multi-line takeoff tool's behaviour (Phase 7.7) so the two paths produce identical outputs for identical inputs.
+
+#### 6.6.3 PDF rendering
+
+Customer PDF shows the **clean total length only** — no breakdown of "10 × 2m". Same as the existing lineal PDF rendering. The `is_combined`/`combined_from` data is internal to the quote builder.
+
+#### 6.6.4 Regression
+
+`scripts/test-combined-lineal-entries.mjs`:
+1. Create a quote with a `lineal` component, `waste_unit=percent`, `waste_value=5`.
+2. Add 10 entries of 2m each.
+3. Call `combineEntries(componentId)` server action.
+4. Assert one entry remains with `length=21, is_combined=true, combined_from=[10 rows]`.
+5. Call `splitEntries(componentId)` server action.
+6. Assert 10 entries restored with their original lengths, `is_combined=false`.
+
+### 6.7 Regression
 
 - `test-trade-whitelist.mjs`:
   1. Create a roofing quote.
@@ -299,13 +505,19 @@ Components incompatible with the current quote's trade are shown disabled in the
 
 ---
 
-## Phase 7 — Multi-page takeoff
+## Phase 7 — Multi-page takeoff + multi-line tool
 
-Goal: takeoff supports many images per quote with per-page calibration, assignment modal, and existing signed-upload-URL finaliser flow.
+Goal: takeoff supports many images per quote with per-page calibration, assignment modal, and existing signed-upload-URL finaliser flow. Also: a new polyline takeoff tool for measurements that need N connected points summed into one total (cabling, fencing, gutters, etc.).
+
+### 7.0 `save_takeoff_atomic` updates (Gerald M-01 follow-up)
+
+Before Phase 7 schema tightening (7.1), `save_takeoff_atomic` must be updated to accept and persist `page_id` for every measurement row it writes. Without this, the page-aware path is incomplete and tightening `quote_takeoff_measurements.page_id` to NOT NULL will break the RPC.
+
+**Regression bullet:** round-trip `save_takeoff_atomic` → reload quote → confirm measurements still associated with their page.
 
 ### 7.1 Schema cleanup
 
-- `takeoff_measurements.page_id` → ALTER to NOT NULL after backfill (every existing measurement assigned to the single first page created per quote during phase 2 migration).
+- `quote_takeoff_measurements.page_id` → ALTER to NOT NULL after backfill (every existing measurement assigned to the single first page created per quote during phase 2 migration) **AND after `save_takeoff_atomic` has been updated per 7.0**.
 
 ### 7.2 Page upload
 
@@ -327,7 +539,45 @@ Goal: takeoff supports many images per quote with per-page calibration, assignme
 
 - Header button on quote builder. Opens takeoff canvas in add-page mode (skips empty-state upload screen).
 
-### 7.6 Regression
+### 7.7 Multi-line takeoff tool (Shaun addition)
+
+A new takeoff drawing tool for the `multi_lineal` measurement type. Mirrors the area tool's UX but draws an open polyline (not a closed polygon) and sums segment lengths into a single measurement.
+
+#### 7.7.1 UX
+
+- User picks a `multi_lineal` component (e.g. "Electrical cable").
+- Canvas activates polyline-drawing mode:
+  - Click to drop point 1.
+  - Click to drop point 2 — segment 1 renders.
+  - Click to drop point 3 — segment 2 renders.
+  - ... continue until N points.
+  - Double-click OR press Enter OR click "Finish" to commit.
+- During drawing, the live readout shows running total (`Total: 14.2m (5 segments)`).
+- On commit:
+  - One row written to `quote_takeoff_measurements` with `measurement_type='multi_lineal'`, `length_m = sum(segment_lengths)`, `points = JSON array of all vertices`.
+  - **Component-level waste is applied per source segment**, per Shaun's spec.
+    - `waste_unit='percent', value=5` + 10 × 2m segments → 21m total.
+    - `waste_unit='flat', value=0.25` + 10 × 2m segments → 22.5m total.
+  - This matches the manual quote builder's "Combine into total length + waste" output (Phase 6.6) for identical inputs.
+
+#### 7.7.2 Storage
+
+No new columns. `quote_takeoff_measurements.points` (existing JSONB) holds the vertex array. The renderer detects `measurement_type='multi_lineal'` and treats `points` as an open polyline instead of a closed polygon.
+
+#### 7.7.3 Pricing path
+
+Pricing engine treats `multi_lineal` exactly like `lineal` (length × $/m, plus pricing-strategy round-up if applicable). The only difference is the source of `length_m`.
+
+#### 7.7.4 Regression
+
+`scripts/test-multi-lineal-tool.mjs`:
+1. Create a `multi_lineal` component with `waste_unit=percent, value=5`.
+2. Programmatically save a takeoff with 10 segments of 2m each.
+3. Assert one measurement row with `length_m = 21` (10 × 2 × 1.05).
+4. Repeat with `waste_unit=flat, value=0.25` → assert `length_m = 22.5`.
+5. Assert pricing engine output matches the lineal-component pricing for the same total.
+
+### 7.8 Regression
 
 - `test-multi-image-takeoff.mjs`:
   1. Create quote → upload page 1 → calibrate → measure → upload page 2 → modal defaults to "first area created" → user changes to "new area" → measure on page 2 → assert both pages persist with their own calibration and measurements.
@@ -394,6 +644,11 @@ export const TRADE_LABELS = {
 | `test-trade-whitelist.mjs` | Every type × every trade allowlist combo |
 | `test-collection-isolation.mjs` | Components in collection A don't leak into quotes bound to B |
 | `test-roofing-not-broken.mjs` | Full existing roofing flow passes with flag ON |
+| `test-bootstrap-concurrency.mjs` | 5 concurrent `ensure_company_has_collection` calls produce exactly 1 bootstrap row (Gerald M-02) |
+| `test-trade-helper-imports.mjs` | Static grep — every `quote_components` mutation site imports `assertComponentCompatibleWithQuote` (Gerald M-03) |
+| `test-pricing-strategies.mjs` | Each of the 5 strategies prices correctly; round-up behaviour verified at boundaries (Shaun addition) |
+| `test-combined-lineal-entries.mjs` | Combine → split round-trip preserves all source data (Shaun addition) |
+| `test-multi-lineal-tool.mjs` | Multi-line takeoff sums correctly and applies per-segment waste (Shaun addition) |
 
 ### 9.2 Existing suite updates
 
@@ -418,6 +673,13 @@ Both env vars default `false` and flip together as the final phase-9 action.
 A future per-company DB flag is left as an option but not built into v1. The env-level two-layer approach is sufficient for "ship in stages with flag-on smoke before public default."
 
 ---
+
+## Risks Gerald should re-grade in round 3
+
+0. **The three Shaun additions (multi_lineal, combined entries, pricing_strategy).** Each adds schema + UI surface. Specifically:
+   - `pricing_strategy` is a new enum, NOT the killed `pricing_mode` — verify M-04's intent isn't being subverted. (Header changelog has the full disambiguation.)
+   - The combined-entries `combined_from` JSONB stores user-editable data; needs validation on the server (shape, max array length) — capture as a Phase 6 build follow-up.
+   - The `pricing_strategy` ↔ `measurement_type` CHECK constraint matrix is the bit most likely to need iteration. Single-strategy mistakes (e.g. allowing `per_pack_volume` on `area` components) would only surface during build.
 
 ## Risks Gerald should re-grade in round 2
 
