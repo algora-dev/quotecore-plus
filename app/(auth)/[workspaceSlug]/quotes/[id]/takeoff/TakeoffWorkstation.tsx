@@ -42,7 +42,7 @@ interface RoofArea {
 
 interface ComponentMeasurement {
   id: string;
-  type: 'line' | 'area' | 'point';
+  type: 'line' | 'area' | 'point' | 'multi_lineal';
   value: number; // length (ft/m) or area (sq ft/m)
   points?: { x: number; y: number }[];
   visible: boolean;
@@ -130,6 +130,10 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [lineMode, setLineMode] = useState(false);
   const [linePoints, setLinePoints] = useState<{ x: number; y: number }[]>([]);
   const [pointMode, setPointMode] = useState(false);
+  // Phase 7: multi-lineal mode — N connected points summed into one length measurement.
+  const [multiLinealMode, setMultiLinealMode] = useState(false);
+  const [multiLinealPoints, setMultiLinealPoints] = useState<{ x: number; y: number }[]>([]);
+  const [multiLinealSegmentObjects, setMultiLinealSegmentObjects] = useState<any[]>([]); // fabric objects drawn so far
   const [showLineMeasurementPrompt, setShowLineMeasurementPrompt] = useState(false);
   const [pendingLineMeasurement, setPendingLineMeasurement] = useState<{ points: { x: number; y: number }[], length: number } | null>(null);
   const [_showAreaMeasurementPrompt, _setShowAreaMeasurementPrompt] = useState(false);
@@ -307,13 +311,18 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       setLineMode(false);
       setAreaMode(false);
       setPointMode(false);
+      setMultiLinealMode(false);
+      setMultiLinealPoints([]);
+      setMultiLinealSegmentObjects([]);
       
       // Activate appropriate tool
-      if (measurementType === 'lineal') {
+      if (measurementType === 'lineal' || measurementType === 'linear') {
         setLineMode(true);
-      } else if (measurementType === 'area') {
+      } else if (measurementType === 'multi_lineal') {
+        setMultiLinealMode(true);
+      } else if (measurementType === 'area' || measurementType === 'length_x_height' || measurementType === 'irregular_area') {
         setAreaMode(true);
-      } else if (measurementType === 'quantity' || measurementType === 'fixed') {
+      } else if (measurementType === 'quantity' || measurementType === 'fixed' || measurementType === 'count' || measurementType === 'hours_days') {
         setPointMode(true);
       }
     }
@@ -403,6 +412,66 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     }));
   };
   
+  // Phase 7: commit the multi-lineal polyline as one measurement. Called by
+  // double-click on canvas OR the "Finish" button in the toolbar readout.
+  // Sums all segment lengths using the calibration scale and adds a single
+  // 'multi_lineal' measurement to the selected component.
+  const handleFinishMultiLineal = () => {
+    const currentPoints = multiLinealPointsRef.current;
+    if (currentPoints.length < 2) return;
+
+    const canvas = fabricRef.current;
+    const currentCalibrations = calibrationsRef.current;
+    if (!currentCalibrations.length || !canvas) return;
+
+    const avgScale = currentCalibrations.reduce((s, cal) => s + cal.scale, 0) / currentCalibrations.length;
+
+    // Sum all segment lengths in real-world units.
+    let totalLength = 0;
+    for (let i = 1; i < currentPoints.length; i++) {
+      const dx = currentPoints[i].x - currentPoints[i - 1].x;
+      const dy = currentPoints[i].y - currentPoints[i - 1].y;
+      totalLength += Math.sqrt(dx * dx + dy * dy) * avgScale;
+    }
+
+    const compId = selectedComponentIdRef.current;
+    if (!compId) return;
+
+    // Add measurement to state.
+    setComponentMeasurements(prev => prev.map(comp => {
+      if (comp.componentId !== compId) return comp;
+      return {
+        ...comp,
+        measurements: [
+          ...comp.measurements,
+          {
+            id: `ml-${Date.now()}`,
+            type: 'multi_lineal' as const,
+            value: totalLength,
+            points: currentPoints,
+            visible: true,
+            canvasObjects: multiLinealSegmentObjects,
+          },
+        ],
+      };
+    }));
+
+    // Reset multi-lineal state (keep objects on canvas, they're captured above).
+    setMultiLinealPoints([]);
+    setMultiLinealSegmentObjects([]);
+  };
+
+  const handleCancelMultiLineal = () => {
+    // Remove all drawn segment objects from canvas.
+    if (fabricRef.current) {
+      multiLinealSegmentObjects.forEach(obj => fabricRef.current!.remove(obj));
+      fabricRef.current.renderAll();
+    }
+    setMultiLinealPoints([]);
+    setMultiLinealSegmentObjects([]);
+    setMultiLinealMode(false);
+  };
+
   const handleSaveTakeoff = async () => {
     console.log('[SaveTakeoff] Starting save for quote:', quote.id);
     console.log('[SaveTakeoff] Component measurements:', componentMeasurements.length);
@@ -598,6 +667,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const lineModeRef = useRef(lineMode);
   const linePointsRef = useRef(linePoints);
   const pointModeRef = useRef(pointMode);
+  const multiLinealModeRef = useRef(multiLinealMode);
+  const multiLinealPointsRef = useRef(multiLinealPoints);
   const selectedComponentIdRef = useRef(selectedComponentId);
   const componentColorsRef = useRef(componentColors);
   
@@ -610,9 +681,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     lineModeRef.current = lineMode;
     linePointsRef.current = linePoints;
     pointModeRef.current = pointMode;
+    multiLinealModeRef.current = multiLinealMode;
+    multiLinealPointsRef.current = multiLinealPoints;
     selectedComponentIdRef.current = selectedComponentId;
     componentColorsRef.current = componentColors;
-  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, lineMode, linePoints, pointMode, selectedComponentId, componentColors]);
+  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints, selectedComponentId, componentColors]);
 
   // Stable ref for the signed plan URL. The signed URL is regenerated on
   // every server render (it embeds a fresh JWT), so reading it directly
@@ -775,6 +848,50 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         return;
       }
       
+      // Multi-lineal mode: click to add points forming an open polyline.
+      // Each click adds a segment; double-click or the "Finish" button commits.
+      if (multiLinealModeRef.current && !evt.altKey) {
+        const pointer = canvas.getScenePoint(opt.e);
+        const newPoint = { x: pointer.x, y: pointer.y };
+        const currentPoints = multiLinealPointsRef.current;
+        const componentColor = componentColorsRef.current.find(c => c.componentId === selectedComponentIdRef.current)?.color || '#10b981';
+
+        // Draw dot marker for this point.
+        const isFirst = currentPoints.length === 0;
+        const marker = new Circle({
+          left: newPoint.x,
+          top: newPoint.y,
+          radius: 4,
+          fill: isFirst ? '#f97316' : componentColor, // orange for first, component color for rest
+          stroke: '#000',
+          strokeWidth: 1.5,
+          originX: 'center',
+          originY: 'center',
+          selectable: false,
+          evented: false,
+        });
+        canvas.add(marker);
+        const newObjects: any[] = [marker];
+
+        // Draw segment line from previous point if this isn’t the first.
+        if (currentPoints.length > 0) {
+          const prev = currentPoints[currentPoints.length - 1];
+          const segLine = new Line([prev.x, prev.y, newPoint.x, newPoint.y], {
+            stroke: componentColor,
+            strokeWidth: 2,
+            selectable: false,
+            evented: false,
+          });
+          canvas.add(segLine);
+          newObjects.push(segLine);
+        }
+
+        canvas.renderAll();
+        setMultiLinealPoints([...currentPoints, newPoint]);
+        setMultiLinealSegmentObjects(prev => [...prev, ...newObjects]);
+        return;
+      }
+
       // Point mode: add single-click marker
       if (pointModeRef.current && !evt.altKey) {
         const pointer = canvas.getScenePoint(opt.e);
@@ -955,14 +1072,28 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
      
   }, []); // intentionally empty: see comment above the effect
 
-  // Update cursor when calibration/area/line/point mode changes
+  // Update cursor when calibration/area/line/point/multiLineal mode changes
   useEffect(() => {
     if (fabricRef.current) {
-      const cursor = (calibrationMode || areaMode || lineMode || pointMode) ? 'crosshair' : 'default';
+      const cursor = (calibrationMode || areaMode || lineMode || pointMode || multiLinealMode) ? 'crosshair' : 'default';
       fabricRef.current.defaultCursor = cursor;
       fabricRef.current.hoverCursor = cursor;
     }
-  }, [calibrationMode, areaMode, lineMode, pointMode]);
+  }, [calibrationMode, areaMode, lineMode, pointMode, multiLinealMode]);
+
+  // Double-click on canvas commits the multi-lineal polyline (mirrors closing the area tool).
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    const handleDblClick = () => {
+      if (!multiLinealModeRef.current) return;
+      if (multiLinealPointsRef.current.length < 2) return; // need at least 2 points
+      handleFinishMultiLineal();
+    };
+    canvas.on('mouse:dblclick', handleDblClick);
+    return () => { canvas.off('mouse:dblclick', handleDblClick); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [multiLinealMode]);
   
   // Update cursor when hovering near first point (to close loop)
   useEffect(() => {
@@ -1460,6 +1591,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   setLineMode(!lineMode);
                   setAreaMode(false);
                   setPointMode(false);
+                  setMultiLinealMode(false);
+                  setMultiLinealPoints([]);
+                  setMultiLinealSegmentObjects([]);
                   setLinePoints([]);
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
@@ -1476,6 +1610,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   setAreaMode(!areaMode);
                   setLineMode(false);
                   setPointMode(false);
+                  setMultiLinealMode(false);
+                  setMultiLinealPoints([]);
+                  setMultiLinealSegmentObjects([]);
                   setAreaPoints([]);
                 }}
                 disabled={calibrationMode || calibrations.length === 0}
@@ -1505,6 +1642,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   setPointMode(!pointMode);
                   setLineMode(false);
                   setAreaMode(false);
+                  setMultiLinealMode(false);
+                  setMultiLinealPoints([]);
+                  setMultiLinealSegmentObjects([]);
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))}
                 data-copilot="takeoff-tool-point"
@@ -1515,7 +1655,65 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
               >
                 Point
               </button>
+              {/* Phase 7: multi-lineal tool button */}
+              <button
+                onClick={() => {
+                  if (!selectedComponentId) {
+                    showAlert('Select a component first', 'Pick a multi-line component from the list before measuring.', 'info');
+                    return;
+                  }
+                  if (multiLinealMode) {
+                    // Toggling off — cancel in-progress polyline.
+                    handleCancelMultiLineal();
+                  } else {
+                    setMultiLinealMode(true);
+                    setLineMode(false);
+                    setAreaMode(false);
+                    setPointMode(false);
+                  }
+                }}
+                disabled={calibrationMode || calibrations.length === 0}
+                className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  multiLinealMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
+                }`}
+                title={calibrations.length === 0 ? 'Calibrate first' : 'Multi-line: click multiple points, double-click or Finish to commit as one total length'}
+              >
+                Multi-Line
+              </button>
             </div>
+
+            {/* Phase 7: Multi-lineal in-progress readout + Finish button */}
+            {multiLinealMode && multiLinealPoints.length >= 1 && (() => {
+              const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / (calibrations.length || 1);
+              let runningTotal = 0;
+              for (let i = 1; i < multiLinealPoints.length; i++) {
+                const dx = multiLinealPoints[i].x - multiLinealPoints[i - 1].x;
+                const dy = multiLinealPoints[i].y - multiLinealPoints[i - 1].y;
+                runningTotal += Math.sqrt(dx * dx + dy * dy) * avgScale;
+              }
+              const segCount = multiLinealPoints.length - 1;
+              return (
+                <div className="flex items-center gap-3 px-3 py-2 bg-orange-50 border border-orange-200 rounded-xl text-sm">
+                  <span className="text-orange-800 font-medium">
+                    Total: {runningTotal.toFixed(2)}m ({segCount} segment{segCount !== 1 ? 's' : ''})
+                  </span>
+                  <span className="text-orange-500 text-xs">Double-click or</span>
+                  <button
+                    onClick={handleFinishMultiLineal}
+                    disabled={multiLinealPoints.length < 2}
+                    className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-medium hover:bg-orange-600 disabled:opacity-40"
+                  >
+                    Finish
+                  </button>
+                  <button
+                    onClick={handleCancelMultiLineal}
+                    className="px-2 py-1 bg-gray-200 text-gray-700 rounded-full text-xs hover:bg-gray-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              );
+            })()}
 
             {/* Zoom Controls - Right Side */}
             <div className="flex gap-2">

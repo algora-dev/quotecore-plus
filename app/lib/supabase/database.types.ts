@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -172,6 +172,7 @@ export type Database = {
           default_material_margin_percent: number | null
           default_measurement_system: Database["public"]["Enums"]["measurement_system"]
           default_tax_rate: number
+          default_trade: Database["public"]["Enums"]["trade"]
           dunning_stage_entered_at: string | null
           first_payment_failure_at: string | null
           id: string
@@ -207,6 +208,7 @@ export type Database = {
           default_material_margin_percent?: number | null
           default_measurement_system?: Database["public"]["Enums"]["measurement_system"]
           default_tax_rate?: number
+          default_trade?: Database["public"]["Enums"]["trade"]
           dunning_stage_entered_at?: string | null
           first_payment_failure_at?: string | null
           id?: string
@@ -242,6 +244,7 @@ export type Database = {
           default_material_margin_percent?: number | null
           default_measurement_system?: Database["public"]["Enums"]["measurement_system"]
           default_tax_rate?: number
+          default_trade?: Database["public"]["Enums"]["trade"]
           dunning_stage_entered_at?: string | null
           first_payment_failure_at?: string | null
           id?: string
@@ -339,8 +342,44 @@ export type Database = {
           },
         ]
       }
+      component_collections: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          is_bootstrap: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          is_bootstrap?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          is_bootstrap?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "component_collections_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       component_library: {
         Row: {
+          collection_id: string | null
           company_id: string
           component_type: Database["public"]["Enums"]["component_type"]
           created_at: string
@@ -350,18 +389,26 @@ export type Database = {
           default_waste_fixed: number
           default_waste_percent: number
           default_waste_type: Database["public"]["Enums"]["waste_type"]
+          depth_value_mm: number | null
           eligible_for_orders: boolean | null
           flashing_ids: string[] | null
+          height_value_mm: number | null
           id: string
           is_active: boolean
           measurement_type: Database["public"]["Enums"]["measurement_type"]
           name: string
+          pack_coverage_m2: number | null
+          pack_price: number | null
+          pack_size: number | null
+          pricing_strategy: Database["public"]["Enums"]["pricing_strategy"]
           show_dimensions_default: boolean
           show_price_default: boolean
           sort_order: number
           updated_at: string
+          waste_unit: Database["public"]["Enums"]["waste_unit"]
         }
         Insert: {
+          collection_id?: string | null
           company_id: string
           component_type?: Database["public"]["Enums"]["component_type"]
           created_at?: string
@@ -371,18 +418,26 @@ export type Database = {
           default_waste_fixed?: number
           default_waste_percent?: number
           default_waste_type?: Database["public"]["Enums"]["waste_type"]
+          depth_value_mm?: number | null
           eligible_for_orders?: boolean | null
           flashing_ids?: string[] | null
+          height_value_mm?: number | null
           id?: string
           is_active?: boolean
           measurement_type: Database["public"]["Enums"]["measurement_type"]
           name: string
+          pack_coverage_m2?: number | null
+          pack_price?: number | null
+          pack_size?: number | null
+          pricing_strategy?: Database["public"]["Enums"]["pricing_strategy"]
           show_dimensions_default?: boolean
           show_price_default?: boolean
           sort_order?: number
           updated_at?: string
+          waste_unit?: Database["public"]["Enums"]["waste_unit"]
         }
         Update: {
+          collection_id?: string | null
           company_id?: string
           component_type?: Database["public"]["Enums"]["component_type"]
           created_at?: string
@@ -392,16 +447,23 @@ export type Database = {
           default_waste_fixed?: number
           default_waste_percent?: number
           default_waste_type?: Database["public"]["Enums"]["waste_type"]
+          depth_value_mm?: number | null
           eligible_for_orders?: boolean | null
           flashing_ids?: string[] | null
+          height_value_mm?: number | null
           id?: string
           is_active?: boolean
           measurement_type?: Database["public"]["Enums"]["measurement_type"]
           name?: string
+          pack_coverage_m2?: number | null
+          pack_price?: number | null
+          pack_size?: number | null
+          pricing_strategy?: Database["public"]["Enums"]["pricing_strategy"]
           show_dimensions_default?: boolean
           show_price_default?: boolean
           sort_order?: number
           updated_at?: string
+          waste_unit?: Database["public"]["Enums"]["waste_unit"]
         }
         Relationships: [
           {
@@ -410,6 +472,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_component_library_collection_same_company"
+            columns: ["company_id", "collection_id"]
+            isOneToOne: false
+            referencedRelation: "component_collections"
+            referencedColumns: ["company_id", "id"]
           },
         ]
       }
@@ -1329,24 +1398,30 @@ export type Database = {
       }
       quote_component_entries: {
         Row: {
+          combined_from: Json | null
           created_at: string
           id: string
+          is_combined: boolean
           quote_component_id: string
           raw_value: number
           sort_order: number
           value_after_waste: number
         }
         Insert: {
+          combined_from?: Json | null
           created_at?: string
           id?: string
+          is_combined?: boolean
           quote_component_id: string
           raw_value: number
           sort_order?: number
           value_after_waste: number
         }
         Update: {
+          combined_from?: Json | null
           created_at?: string
           id?: string
+          is_combined?: boolean
           quote_component_id?: string
           raw_value?: number
           sort_order?: number
@@ -1774,7 +1849,9 @@ export type Database = {
           measurement_type: string
           measurement_unit: string
           measurement_value: number
+          page_id: string | null
           quote_id: string
+          unassigned: boolean
           updated_at: string | null
         }
         Insert: {
@@ -1787,7 +1864,9 @@ export type Database = {
           measurement_type: string
           measurement_unit: string
           measurement_value: number
+          page_id?: string | null
           quote_id: string
+          unassigned?: boolean
           updated_at?: string | null
         }
         Update: {
@@ -1800,7 +1879,9 @@ export type Database = {
           measurement_type?: string
           measurement_unit?: string
           measurement_value?: number
+          page_id?: string | null
           quote_id?: string
+          unassigned?: boolean
           updated_at?: string | null
         }
         Relationships: [
@@ -1816,6 +1897,13 @@ export type Database = {
             columns: ["component_library_id"]
             isOneToOne: false
             referencedRelation: "component_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_takeoff_measurements_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "takeoff_pages"
             referencedColumns: ["id"]
           },
           {
@@ -1887,6 +1975,7 @@ export type Database = {
           acceptance_token_expires_at: string | null
           accepted_at: string | null
           company_id: string
+          component_collection_id: string | null
           cq_company_address: string | null
           cq_company_email: string | null
           cq_company_logo_url: string | null
@@ -1920,6 +2009,7 @@ export type Database = {
           takeoff_lines_url: string | null
           tax_rate: number
           template_id: string | null
+          trade: Database["public"]["Enums"]["trade"]
           updated_at: string
           withdrawn_at: string | null
           withdrawn_by_user_id: string | null
@@ -1929,6 +2019,7 @@ export type Database = {
           acceptance_token_expires_at?: string | null
           accepted_at?: string | null
           company_id: string
+          component_collection_id?: string | null
           cq_company_address?: string | null
           cq_company_email?: string | null
           cq_company_logo_url?: string | null
@@ -1962,6 +2053,7 @@ export type Database = {
           takeoff_lines_url?: string | null
           tax_rate?: number
           template_id?: string | null
+          trade?: Database["public"]["Enums"]["trade"]
           updated_at?: string
           withdrawn_at?: string | null
           withdrawn_by_user_id?: string | null
@@ -1971,6 +2063,7 @@ export type Database = {
           acceptance_token_expires_at?: string | null
           accepted_at?: string | null
           company_id?: string
+          component_collection_id?: string | null
           cq_company_address?: string | null
           cq_company_email?: string | null
           cq_company_logo_url?: string | null
@@ -2004,11 +2097,19 @@ export type Database = {
           takeoff_lines_url?: string | null
           tax_rate?: number
           template_id?: string | null
+          trade?: Database["public"]["Enums"]["trade"]
           updated_at?: string
           withdrawn_at?: string | null
           withdrawn_by_user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_quotes_component_collection_same_company"
+            columns: ["company_id", "component_collection_id"]
+            isOneToOne: false
+            referencedRelation: "component_collections"
+            referencedColumns: ["company_id", "id"]
+          },
           {
             foreignKeyName: "quotes_company_id_fkey"
             columns: ["company_id"]
@@ -2400,6 +2501,83 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      takeoff_pages: {
+        Row: {
+          created_at: string
+          id: string
+          image_storage_path: string | null
+          page_name: string | null
+          page_order: number
+          pan_zoom_state: Json | null
+          quote_id: string
+          scale_calibration: Json | null
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_storage_path?: string | null
+          page_name?: string | null
+          page_order?: number
+          pan_zoom_state?: Json | null
+          quote_id: string
+          scale_calibration?: Json | null
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_storage_path?: string | null
+          page_name?: string | null
+          page_order?: number
+          pan_zoom_state?: Json | null
+          quote_id?: string
+          scale_calibration?: Json | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_takeoff_pages_session_quote"
+            columns: ["session_id", "quote_id"]
+            isOneToOne: false
+            referencedRelation: "takeoff_sessions"
+            referencedColumns: ["id", "quote_id"]
+          },
+          {
+            foreignKeyName: "takeoff_pages_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      takeoff_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          quote_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          quote_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          quote_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "takeoff_sessions_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: true
+            referencedRelation: "quotes"
             referencedColumns: ["id"]
           },
         ]
@@ -2806,6 +2984,10 @@ export type Database = {
       }
       current_company_id: { Args: never; Returns: string }
       current_user_id: { Args: never; Returns: string }
+      ensure_company_has_collection: {
+        Args: { p_company_id: string }
+        Returns: string
+      }
       get_next_quote_number: { Args: { p_company_id: string }; Returns: number }
       prune_rate_limits: { Args: never; Returns: number }
       require_component_slot: {
@@ -2830,8 +3012,26 @@ export type Database = {
       input_mode: "final" | "calculated"
       line_type: "component" | "custom" | "roof_area_header"
       measurement_system: "metric" | "imperial" | "imperial_ft" | "imperial_rs"
-      measurement_type: "area" | "linear" | "quantity" | "fixed" | "lineal"
+      measurement_type:
+        | "area"
+        | "linear"
+        | "quantity"
+        | "fixed"
+        | "lineal"
+        | "length_x_height"
+        | "volume"
+        | "hours_days"
+        | "count"
+        | "curved_line"
+        | "irregular_area"
+        | "multi_lineal"
       pitch_type: "none" | "rafter" | "valley_hip"
+      pricing_strategy:
+        | "per_unit"
+        | "per_pack_length"
+        | "per_pack_area"
+        | "per_pack_coverage"
+        | "per_pack_volume"
       quote_status:
         | "draft"
         | "confirmed"
@@ -2840,7 +3040,9 @@ export type Database = {
         | "declined"
         | "expired"
         | "archived"
+      trade: "roofing" | "generic"
       waste_type: "percent" | "fixed" | "none"
+      waste_unit: "percent" | "flat"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2972,8 +3174,28 @@ export const Constants = {
       input_mode: ["final", "calculated"],
       line_type: ["component", "custom", "roof_area_header"],
       measurement_system: ["metric", "imperial", "imperial_ft", "imperial_rs"],
-      measurement_type: ["area", "linear", "quantity", "fixed", "lineal"],
+      measurement_type: [
+        "area",
+        "linear",
+        "quantity",
+        "fixed",
+        "lineal",
+        "length_x_height",
+        "volume",
+        "hours_days",
+        "count",
+        "curved_line",
+        "irregular_area",
+        "multi_lineal",
+      ],
       pitch_type: ["none", "rafter", "valley_hip"],
+      pricing_strategy: [
+        "per_unit",
+        "per_pack_length",
+        "per_pack_area",
+        "per_pack_coverage",
+        "per_pack_volume",
+      ],
       quote_status: [
         "draft",
         "confirmed",
@@ -2983,7 +3205,9 @@ export const Constants = {
         "expired",
         "archived",
       ],
+      trade: ["roofing", "generic"],
       waste_type: ["percent", "fixed", "none"],
+      waste_unit: ["percent", "flat"],
     },
   },
 } as const
