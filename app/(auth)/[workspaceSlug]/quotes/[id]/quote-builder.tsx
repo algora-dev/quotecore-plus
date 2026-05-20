@@ -318,29 +318,65 @@ export function QuoteBuilder({
   }
 
   /** Phase 6.5: collapse all entries on a lineal-shaped component into
-   *  one combined entry. Cheap reload via parent's existing setEntries shape
-   *  (server returns the combined-entry id; we refetch via the same
-   *  component's entry list after the server action commits). */
+   *  one combined entry. Updates local state in-place using the new entry
+   *  + recalculated component totals returned by the server action - no
+   *  page reload, which previously reset the manual-mode tab state back
+   *  to Roof Areas (the internal useState default in QuoteBuilder). */
   async function handleCombineEntries(compId: string) {
     const result = await combineLinealEntries(compId);
-    if (!result.ok) {
+    if (!result.ok || !result.combinedEntry) {
       alert(result.error ?? 'Could not combine entries.');
       return;
     }
-    // Force a router refresh so the server-rendered entries reload.
-    // This matches the existing pattern for write-then-redraw operations
-    // elsewhere in this builder.
-    if (typeof window !== 'undefined') window.location.reload();
+    // Replace this component's entries array with the single combined row.
+    // QuoteComponentEntryRow is stale on the Phase 2 is_combined / combined_from
+    // columns; the read sites cast at the boundary so the looser shape is fine.
+    setEntries((prev) => ({
+      ...prev,
+      [compId]: [result.combinedEntry as unknown as QuoteComponentEntryRow],
+    }));
+    if (result.componentTotals) {
+      setComponents((prev) =>
+        prev.map((c) =>
+          c.id === compId
+            ? {
+                ...c,
+                final_quantity: result.componentTotals!.final_quantity,
+                material_cost: result.componentTotals!.material_cost,
+                labour_cost: result.componentTotals!.labour_cost,
+              }
+            : c,
+        ),
+      );
+    }
   }
 
-  /** Phase 6.5: split a combined entry back into its source rows. */
+  /** Phase 6.5: split a combined entry back into its source rows. Same
+   *  in-place state update pattern as combine. */
   async function handleSplitEntries(compId: string) {
     const result = await splitLinealEntries(compId);
-    if (!result.ok) {
+    if (!result.ok || !result.restoredEntries) {
       alert(result.error ?? 'Could not split entries.');
       return;
     }
-    if (typeof window !== 'undefined') window.location.reload();
+    setEntries((prev) => ({
+      ...prev,
+      [compId]: result.restoredEntries as unknown as QuoteComponentEntryRow[],
+    }));
+    if (result.componentTotals) {
+      setComponents((prev) =>
+        prev.map((c) =>
+          c.id === compId
+            ? {
+                ...c,
+                final_quantity: result.componentTotals!.final_quantity,
+                material_cost: result.componentTotals!.material_cost,
+                labour_cost: result.componentTotals!.labour_cost,
+              }
+            : c,
+        ),
+      );
+    }
   }
 
   async function handleUpdateCompSettings(

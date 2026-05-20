@@ -778,20 +778,39 @@ export async function removeComponentEntry(entryId: string, quoteComponentId: st
 
 /**
  * Phase 6.5 (Generic Trades): collapse the N entries on a linear-shaped
- * component into ONE combined entry whose value equals the sum of
- * value_after_waste across the source rows. The source rows are preserved
- * in the combined row's `combined_from` JSONB so splitLinealEntries can
- * restore them exactly. The Phase 2 CHECK constraint enforces
- * `is_combined => combined_from IS NOT NULL`.
+ * component into ONE combined entry. The displayed value (raw_value AND
+ * value_after_waste) equals the sum of value_after_waste across the
+ * source rows - this preserves any pitch + waste multipliers that were
+ * applied to each individual entry. (Bug fix 2026-05-20: the combined
+ * row previously stored sum(raw_value) which dropped per-line waste.)
  *
- * Idempotent: re-combining a single-entry component is a no-op. Already-
- * combined components return early so a double-click doesn't lose data.
+ * The source rows are preserved in the combined row's `combined_from`
+ * JSONB so splitLinealEntries can restore them exactly. The Phase 2 CHECK
+ * constraint enforces `is_combined => combined_from IS NOT NULL`.
+ *
+ * Idempotent: already-combined components return early so a double-click
+ * doesn't lose data.
+ *
+ * Returns the new combined entry row + the component's updated
+ * material/labour/quantity totals so the caller can update React state
+ * in-place without a page reload.
  */
 export async function combineLinealEntries(quoteComponentId: string): Promise<{
   ok: boolean;
-  combinedEntryId?: string;
+  combinedEntry?: {
+    id: string;
+    raw_value: number;
+    value_after_waste: number;
+    sort_order: number;
+    is_combined: true;
+    combined_from: Array<{ raw: number; after: number; sort: number }>;
+  };
+  componentTotals?: {
+    final_quantity: number;
+    material_cost: number;
+    labour_cost: number;
+  };
   sourceCount?: number;
-  combinedTotal?: number;
   error?: string;
 }> {
   const profile = await requireCompanyContext();
@@ -806,8 +825,6 @@ export async function combineLinealEntries(quoteComponentId: string): Promise<{
   if (entriesErr) return { ok: false, error: entriesErr.message };
   if (!entries || entries.length === 0) return { ok: false, error: 'No entries to combine.' };
 
-  // database.types.ts is stale on the Phase 2 combined_from / is_combined
-  // columns. Cast at the boundary.
   type EntryRow = {
     id: string;
     raw_value: number;
@@ -817,13 +834,16 @@ export async function combineLinealEntries(quoteComponentId: string): Promise<{
   };
   const typed = entries as unknown as EntryRow[];
 
-  // If a combined row already exists, treat as success no-op.
   if (typed.some((e) => e.is_combined)) {
-    return { ok: true, combinedTotal: undefined, sourceCount: 0 };
+    return { ok: false, error: 'Component already has a combined entry.' };
   }
 
+  // CRITICAL: the combined row's displayed value is the sum of
+  // value_after_waste - NOT raw_value. value_after_waste already includes
+  // pitch + waste multipliers applied per source entry, which is what the
+  // user wants to see (and what the pricing engine should multiply by
+  // material_rate). Storing the raw sum would drop per-line waste.
   const totalAfterWaste = typed.reduce((s, e) => s + Number(e.value_after_waste), 0);
-  const totalRaw = typed.reduce((s, e) => s + Number(e.raw_value), 0);
 
   const combinedFromPayload = typed.map((e) => ({
     raw: Number(e.raw_value),
@@ -831,14 +851,10 @@ export async function combineLinealEntries(quoteComponentId: string): Promise<{
     sort: e.sort_order ?? 0,
   }));
 
-  // Round-3 L-01: validate combined_from shape before write. Max 200 entries
-  // (per the C2 acceptance bullet) - same posture as the upcoming
-  // test-combined-lineal-entries regression expects.
   if (combinedFromPayload.length > 200) {
     return { ok: false, error: `Cannot combine more than 200 entries (got ${combinedFromPayload.length}).` };
   }
 
-  // Delete the source rows in one statement.
   const ids = typed.map((e) => e.id);
   const { error: delErr } = await supabase
     .from('quote_component_entries')
@@ -846,35 +862,77 @@ export async function combineLinealEntries(quoteComponentId: string): Promise<{
     .in('id', ids);
   if (delErr) return { ok: false, error: delErr.message };
 
-  // Insert the single combined row. Cast for the new columns.
+  // The combined row's raw_value AND value_after_waste both equal the post-
+  // waste total. There's no "raw" state left to apply waste to - the
+  // combined entity IS the final pitched+wasted total. This also makes the
+  // recalc helper safe: it sums value_after_waste, gets totalAfterWaste,
+  // and the pricing math comes out correct.
   const { data: combined, error: insertErr } = await (supabase as unknown as {
     from: (t: string) => {
       insert: (row: Record<string, unknown>) => {
-        select: (cols: string) => { single: () => Promise<{ data: { id: string } | null; error: Error | null }> };
+        select: (cols: string) => { single: () => Promise<{ data: {
+          id: string;
+          raw_value: number;
+          value_after_waste: number;
+          sort_order: number;
+        } | null; error: Error | null }> };
       };
     };
   })
     .from('quote_component_entries')
     .insert({
       quote_component_id: quoteComponentId,
-      raw_value: totalRaw,
+      raw_value: totalAfterWaste,         // bug fix: was totalRaw
       value_after_waste: totalAfterWaste,
       sort_order: 0,
       is_combined: true,
       combined_from: combinedFromPayload,
     })
-    .select('id')
+    .select('id, raw_value, value_after_waste, sort_order')
     .single();
   if (insertErr || !combined) {
     return { ok: false, error: insertErr?.message ?? 'Combined insert returned no row.' };
   }
 
   await recalcComponentFromEntries(quoteComponentId);
+
+  // Read back the recalculated component totals so the caller can update
+  // their local state without a refetch. Cast for stale types.
+  const { data: compAfter } = await (supabase as unknown as {
+    from: (t: string) => {
+      select: (cols: string) => {
+        eq: (col: string, val: string) => {
+          maybeSingle: () => Promise<{
+            data: { final_quantity: number; material_cost: number; labour_cost: number } | null;
+            error: Error | null;
+          }>;
+        };
+      };
+    };
+  })
+    .from('quote_components')
+    .select('final_quantity, material_cost, labour_cost')
+    .eq('id', quoteComponentId)
+    .maybeSingle();
+
   return {
     ok: true,
-    combinedEntryId: combined.id,
+    combinedEntry: {
+      id: combined.id,
+      raw_value: Number(combined.raw_value),
+      value_after_waste: Number(combined.value_after_waste),
+      sort_order: combined.sort_order ?? 0,
+      is_combined: true,
+      combined_from: combinedFromPayload,
+    },
+    componentTotals: compAfter
+      ? {
+          final_quantity: Number(compAfter.final_quantity ?? 0),
+          material_cost: Number(compAfter.material_cost ?? 0),
+          labour_cost: Number(compAfter.labour_cost ?? 0),
+        }
+      : undefined,
     sourceCount: typed.length,
-    combinedTotal: totalAfterWaste,
   };
 }
 
@@ -882,10 +940,24 @@ export async function combineLinealEntries(quoteComponentId: string): Promise<{
  * Phase 6.5 (Generic Trades): inverse of combineLinealEntries. Restores
  * the source entries from combined_from JSONB and deletes the combined
  * row. No-op when the component has no combined row.
+ *
+ * Returns the restored entry rows + updated component totals so the
+ * caller can update React state in-place without a page reload.
  */
 export async function splitLinealEntries(quoteComponentId: string): Promise<{
   ok: boolean;
-  restoredCount?: number;
+  restoredEntries?: Array<{
+    id: string;
+    quote_component_id: string;
+    raw_value: number;
+    value_after_waste: number;
+    sort_order: number;
+  }>;
+  componentTotals?: {
+    final_quantity: number;
+    material_cost: number;
+    labour_cost: number;
+  };
   error?: string;
 }> {
   const profile = await requireCompanyContext();
@@ -915,25 +987,24 @@ export async function splitLinealEntries(quoteComponentId: string): Promise<{
 
   const combinedRow = entries.find((e) => e.is_combined);
   if (!combinedRow) {
-    return { ok: true, restoredCount: 0 }; // no-op: nothing combined.
+    return { ok: true, restoredEntries: [] };
   }
   if (!combinedRow.combined_from || combinedRow.combined_from.length === 0) {
     return { ok: false, error: 'Combined row has no source data to restore.' };
   }
 
-  // Insert the restored source rows.
   const restored = combinedRow.combined_from.map((src, idx) => ({
     quote_component_id: quoteComponentId,
     raw_value: src.raw,
     value_after_waste: src.after,
     sort_order: src.sort ?? idx,
   }));
-  const { error: insErr } = await supabase
+  const { data: insertedRows, error: insErr } = await supabase
     .from('quote_component_entries')
-    .insert(restored);
+    .insert(restored)
+    .select('id, quote_component_id, raw_value, value_after_waste, sort_order');
   if (insErr) return { ok: false, error: insErr.message };
 
-  // Delete the combined row.
   const { error: delErr } = await supabase
     .from('quote_component_entries')
     .delete()
@@ -941,7 +1012,41 @@ export async function splitLinealEntries(quoteComponentId: string): Promise<{
   if (delErr) return { ok: false, error: delErr.message };
 
   await recalcComponentFromEntries(quoteComponentId);
-  return { ok: true, restoredCount: restored.length };
+
+  const { data: compAfter } = await (supabase as unknown as {
+    from: (t: string) => {
+      select: (cols: string) => {
+        eq: (col: string, val: string) => {
+          maybeSingle: () => Promise<{
+            data: { final_quantity: number; material_cost: number; labour_cost: number } | null;
+            error: Error | null;
+          }>;
+        };
+      };
+    };
+  })
+    .from('quote_components')
+    .select('final_quantity, material_cost, labour_cost')
+    .eq('id', quoteComponentId)
+    .maybeSingle();
+
+  return {
+    ok: true,
+    restoredEntries: (insertedRows ?? []).map((r) => ({
+      id: r.id,
+      quote_component_id: r.quote_component_id,
+      raw_value: Number(r.raw_value),
+      value_after_waste: Number(r.value_after_waste),
+      sort_order: r.sort_order ?? 0,
+    })),
+    componentTotals: compAfter
+      ? {
+          final_quantity: Number(compAfter.final_quantity ?? 0),
+          material_cost: Number(compAfter.material_cost ?? 0),
+          labour_cost: Number(compAfter.labour_cost ?? 0),
+        }
+      : undefined,
+  };
 }
 
 async function recalcComponentFromEntries(quoteComponentId: string) {

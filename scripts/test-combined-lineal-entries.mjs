@@ -129,21 +129,25 @@ testCompId = comp.id;
 log(`Setup OK. Quote ${testQuoteId}, component ${testCompId}.`);
 
 try {
-  // --- Step 1: insert 10 entries (2m each, no waste) ---------------------
-  log('--- Step 1: insert 10 entries of 2m each ---');
-  const rows = Array.from({ length: 10 }, (_, i) => ({
+  // --- Step 1: insert 4 entries with WASTE applied per line ---------------
+  // Matches Shaun's smoke-test case: 4 entries of 4m raw, each with
+  // 0.81m flat waste applied -> after_waste = 4.81m. The combined total
+  // MUST be 4 * 4.81 = 19.24m (sum of after-waste), NOT 4 * 4 = 16m
+  // (sum of raw). The 2026-05-20 bug had it storing the raw sum.
+  log('--- Step 1: insert 4 entries of raw=4, after_waste=4.81 ---');
+  const rows = Array.from({ length: 4 }, (_, i) => ({
     quote_component_id: testCompId,
-    raw_value: 2,
-    value_after_waste: 2,
+    raw_value: 4,
+    value_after_waste: 4.81,
     sort_order: i,
   }));
   const { error: insErr } = await admin.from('quote_component_entries').insert(rows);
   if (insErr) fail(`Inserting entries failed: ${insErr.message}`);
-  pass('10 entries inserted');
+  pass('4 entries inserted with waste applied');
 
   // --- Step 2: simulate combineLinealEntries server-side ------------------
-  // (We can't call the server action directly from a script - same DB
-  // mutations done here.)
+  // Mirrors the actual server action's math (post bug-fix): the combined
+  // row stores totalAfterWaste in BOTH raw_value and value_after_waste.
   log('--- Step 2: combine ---');
   const { data: srcEntries } = await admin
     .from('quote_component_entries')
@@ -155,14 +159,13 @@ try {
     after: Number(e.value_after_waste),
     sort: e.sort_order,
   }));
-  const totalRaw = srcEntries.reduce((s, e) => s + Number(e.raw_value), 0);
   const totalAfter = srcEntries.reduce((s, e) => s + Number(e.value_after_waste), 0);
   await admin.from('quote_component_entries').delete().in('id', srcEntries.map((e) => e.id));
   const { data: combinedRow, error: combErr } = await admin
     .from('quote_component_entries')
     .insert({
       quote_component_id: testCompId,
-      raw_value: totalRaw,
+      raw_value: totalAfter,           // post-bug-fix: post-waste total, not raw sum
       value_after_waste: totalAfter,
       sort_order: 0,
       is_combined: true,
@@ -172,9 +175,19 @@ try {
     .single();
   if (combErr) fail(`Combine insert failed: ${combErr.message}`);
   if (!combinedRow.is_combined) fail('Combined row missing is_combined=true');
-  if (combinedRow.combined_from.length !== 10) fail(`combined_from should have 10 entries, got ${combinedRow.combined_from.length}`);
-  if (Math.abs(Number(combinedRow.raw_value) - 20) > 0.001) fail(`Expected raw=20, got ${combinedRow.raw_value}`);
-  pass(`combined into 1 entry (raw=${combinedRow.raw_value}, after=${combinedRow.value_after_waste}, from=${combinedRow.combined_from.length})`);
+  if (combinedRow.combined_from.length !== 4) fail(`combined_from should have 4 entries, got ${combinedRow.combined_from.length}`);
+  // CRITICAL assertion: the combined raw_value MUST equal the sum of
+  // value_after_waste (19.24m), NOT the sum of raw_value (16m). This is
+  // the 2026-05-20 Shaun-smoke-test bug fix.
+  if (Math.abs(Number(combinedRow.raw_value) - 19.24) > 0.001) {
+    fail(`Expected combined raw_value=19.24 (sum of after-waste), got ${combinedRow.raw_value}. ` +
+         `This is the 2026-05-20 bug: combined entry stored sum of raw_value (16) instead of sum of value_after_waste (19.24), ` +
+         `dropping per-line waste / pitch multipliers.`);
+  }
+  if (Math.abs(Number(combinedRow.value_after_waste) - 19.24) > 0.001) {
+    fail(`Expected combined value_after_waste=19.24, got ${combinedRow.value_after_waste}`);
+  }
+  pass(`combined into 1 entry: raw=${combinedRow.raw_value} (=sum of after-waste), value_after_waste=${combinedRow.value_after_waste}, from=${combinedRow.combined_from.length} sources`);
 
   // --- Step 3: split back ------------------------------------------------
   log('--- Step 3: split ---');
@@ -189,11 +202,16 @@ try {
   await admin.from('quote_component_entries').delete().eq('id', combinedRow.id);
   const { data: afterSplit } = await admin
     .from('quote_component_entries')
-    .select('id, raw_value, is_combined')
+    .select('id, raw_value, value_after_waste, is_combined')
     .eq('quote_component_id', testCompId);
-  if (afterSplit.length !== 10) fail(`Expected 10 entries after split, got ${afterSplit.length}`);
+  if (afterSplit.length !== 4) fail(`Expected 4 entries after split, got ${afterSplit.length}`);
   if (afterSplit.some((e) => e.is_combined)) fail('Found is_combined=true after split');
-  pass('split back into 10 entries, none combined');
+  // Source entries restored exactly: raw=4, after=4.81 each.
+  for (const e of afterSplit) {
+    if (Math.abs(Number(e.raw_value) - 4) > 0.001) fail(`Restored entry has raw=${e.raw_value}, expected 4`);
+    if (Math.abs(Number(e.value_after_waste) - 4.81) > 0.001) fail(`Restored entry has after_waste=${e.value_after_waste}, expected 4.81`);
+  }
+  pass('split back into 4 entries, none combined, raw + after-waste values preserved exactly');
 
   // --- Step 4: invariant - combined row without combined_from rejected ---
   log('--- Step 4: CHECK constraint enforces is_combined => combined_from NOT NULL ---');
