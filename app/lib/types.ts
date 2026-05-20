@@ -23,7 +23,50 @@ export type ComponentType = 'main' | 'extra';
  * write `'linear'`. The union includes it only because the generated
  * `Database` types do, and we want them to stay in lockstep.
  */
-export type MeasurementType = 'area' | 'lineal' | 'linear' | 'quantity' | 'fixed';
+/**
+ * `lineal` is canonical (per the 2026-05-05 db01973 backfill that cleaned up
+ * polluted rows). `linear` remains in the Postgres enum for backwards
+ * compatibility but has zero rows pointing at it; new code must never write
+ * `'linear'`. The union includes it only because the generated `Database`
+ * types do, and we want them to stay in lockstep.
+ *
+ * Phase 2 (Generic Trades) added 8 more enum values to the live
+ * `measurement_type` Postgres enum on 2026-05-20. They are listed here so
+ * the union narrows correctly in client code; database.types.ts will catch
+ * up on the next typegen run.
+ */
+export type MeasurementType =
+  | 'area'
+  | 'lineal'
+  | 'linear'
+  | 'quantity'
+  | 'fixed'
+  // Phase 2 additions:
+  | 'length_x_height'
+  | 'volume'
+  | 'hours_days'
+  | 'count'
+  | 'curved_line'
+  | 'irregular_area'
+  | 'multi_lineal';
+
+/** Phase 2 (Generic Trades): how a component is priced. Orthogonal to
+ *  measurement_type. Default `per_unit` matches today's behaviour. */
+export type PricingStrategy =
+  | 'per_unit'
+  | 'per_pack_length'
+  | 'per_pack_area'
+  | 'per_pack_coverage'
+  | 'per_pack_volume';
+
+/** Phase 2 (Generic Trades): how waste values are interpreted on a
+ *  component. `percent` is current behaviour; `flat` adds a fixed amount
+ *  per source segment/line. */
+export type WasteUnit = 'percent' | 'flat';
+
+/** Phase 2 (Generic Trades): trade tag on a quote, drives terminology +
+ *  measurement-type allowlist. */
+export type Trade = 'roofing' | 'generic';
 /**
  * Measurement system used for display in a quote (and as the company default).
  *
@@ -115,8 +158,16 @@ export function unitForMeasurement(mt: MeasurementType): string {
   switch (mt) {
     case 'area': return 'm²';
     case 'lineal': return 'm';
+    case 'linear': return 'm';                    // legacy alias
+    case 'multi_lineal': return 'm';
     case 'quantity': return 'each';
+    case 'count': return 'each';                  // Phase 2 alias
     case 'fixed': return 'fixed';
+    case 'length_x_height': return 'm²';          // length × component height
+    case 'volume': return 'm³';
+    case 'hours_days': return 'hr';               // unit refined by component config
+    case 'curved_line': return 'm';
+    case 'irregular_area': return 'm²';
     default: return '';
   }
 }
@@ -128,9 +179,17 @@ export function wasteAmountSuffix(wt: WasteType, mt: MeasurementType): string {
 export function entryLabel(mt: MeasurementType): string {
   switch (mt) {
     case 'area': return 'area';
-    case 'lineal': return 'length';
-    case 'quantity': return 'items';
+    case 'lineal':
+    case 'linear':
+    case 'multi_lineal':
+    case 'curved_line': return 'length';
+    case 'quantity':
+    case 'count': return 'items';
     case 'fixed': return 'value';
+    case 'length_x_height': return 'length';
+    case 'volume': return 'area';
+    case 'hours_days': return 'time';
+    case 'irregular_area': return 'area';
     default: return '';
   }
 }
@@ -138,9 +197,17 @@ export function entryLabel(mt: MeasurementType): string {
 export function addMoreLabel(mt: MeasurementType): string {
   switch (mt) {
     case 'area': return 'Add more areas';
-    case 'lineal': return 'Add more lengths';
-    case 'quantity': return 'Add more items';
+    case 'lineal':
+    case 'linear':
+    case 'multi_lineal':
+    case 'curved_line': return 'Add more lengths';
+    case 'quantity':
+    case 'count': return 'Add more items';
     case 'fixed': return 'Add entry';
+    case 'length_x_height': return 'Add more lengths';
+    case 'volume': return 'Add more areas';
+    case 'hours_days': return 'Add more time';
+    case 'irregular_area': return 'Add more areas';
     default: return 'Add entry';
   }
 }
