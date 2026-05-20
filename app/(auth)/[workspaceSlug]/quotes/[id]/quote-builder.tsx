@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins } from '../actions';
+import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins, combineLinealEntries, splitLinealEntries } from '../actions';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { entryLabel, addMoreLabel } from '@/app/lib/types';
 // Use the polymorphic helpers for any user-input -> metric conversion. They
@@ -317,6 +317,32 @@ export function QuoteBuilder({
     } : c));
   }
 
+  /** Phase 6.5: collapse all entries on a lineal-shaped component into
+   *  one combined entry. Cheap reload via parent's existing setEntries shape
+   *  (server returns the combined-entry id; we refetch via the same
+   *  component's entry list after the server action commits). */
+  async function handleCombineEntries(compId: string) {
+    const result = await combineLinealEntries(compId);
+    if (!result.ok) {
+      alert(result.error ?? 'Could not combine entries.');
+      return;
+    }
+    // Force a router refresh so the server-rendered entries reload.
+    // This matches the existing pattern for write-then-redraw operations
+    // elsewhere in this builder.
+    if (typeof window !== 'undefined') window.location.reload();
+  }
+
+  /** Phase 6.5: split a combined entry back into its source rows. */
+  async function handleSplitEntries(compId: string) {
+    const result = await splitLinealEntries(compId);
+    if (!result.ok) {
+      alert(result.error ?? 'Could not split entries.');
+      return;
+    }
+    if (typeof window !== 'undefined') window.location.reload();
+  }
+
   async function handleUpdateCompSettings(
     compId: string,
     updates: {
@@ -536,6 +562,8 @@ export function QuoteBuilder({
                     onRemoveEntry={handleRemoveEntry}
                     onRemove={handleRemoveComponent}
                     onUpdateSettings={handleUpdateCompSettings}
+                    onCombineEntries={handleCombineEntries}
+                    onSplitEntries={handleSplitEntries}
                     copilotId={areaIdx === 0 && compIdx === 0 ? 'quote-first-component' : undefined}
                   />
                 ))}
@@ -581,6 +609,8 @@ export function QuoteBuilder({
                 onRemoveEntry={handleRemoveEntry}
                 onRemove={handleRemoveComponent}
                 onUpdateSettings={handleUpdateCompSettings}
+                onCombineEntries={handleCombineEntries}
+                onSplitEntries={handleSplitEntries}
               />
             ))}
             <AddFromLibrary
@@ -1133,6 +1163,8 @@ function ExpandableComponent({
   onRemoveEntry,
   onRemove,
   onUpdateSettings,
+  onCombineEntries,
+  onSplitEntries,
   copilotId
 }: {
   comp: QuoteComponentRow;
@@ -1154,8 +1186,23 @@ function ExpandableComponent({
       custom_pitch_degrees?: number | null;
     }
   ) => Promise<void>;
+  onCombineEntries?: (compId: string) => Promise<void>;
+  onSplitEntries?: (compId: string) => Promise<void>;
   copilotId?: string;
 }) {
+  // Phase 6.5: combine/split UX. Linear-shaped measurement types only.
+  // database.types.ts is stale on the Phase 2 is_combined column; cast.
+  const LINEAR_LIKE_TYPES = new Set([
+    'lineal', 'linear', 'multi_lineal', 'curved_line',
+    'rafter', 'valley_hip',
+  ]);
+  const isLinearLike = LINEAR_LIKE_TYPES.has(comp.measurement_type as string);
+  const hasCombinedEntry = compEntries.some(
+    (e) => (e as unknown as { is_combined?: boolean }).is_combined === true,
+  );
+  const showCombineButton =
+    isLinearLike && !hasCombinedEntry && compEntries.length >= 2 && !!onCombineEntries;
+  const showSplitButton = isLinearLike && hasCombinedEntry && !!onSplitEntries;
   const [expanded, setExpanded] = useState(false);
   const [adding, setAdding] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -1316,26 +1363,61 @@ function ExpandableComponent({
             </button>
           )}
 
-          {compEntries.map((entry, idx) => (
-            <div key={entry.id} className="flex items-center gap-2 text-xs">
-              <span className="text-slate-400 w-6">#{idx + 1}</span>
-              <span className="text-slate-700">
-                {displayValue(entry.raw_value)}
-              </span>
-              {comp.waste_type !== 'none' && (
-                <span className="text-slate-400">
-                  → {displayValue(entry.value_after_waste)}{' '}
-                  <span className="text-slate-300">(+waste)</span>
+          {compEntries.map((entry, idx) => {
+            const isCombined = (entry as unknown as { is_combined?: boolean }).is_combined === true;
+            const sourceCount = isCombined
+              ? ((entry as unknown as { combined_from?: unknown[] }).combined_from ?? []).length
+              : 0;
+            return (
+              <div key={entry.id} className="flex items-center gap-2 text-xs">
+                <span className="text-slate-400 w-6">#{idx + 1}</span>
+                <span className="text-slate-700">
+                  {displayValue(entry.raw_value)}
                 </span>
+                {isCombined && (
+                  <span className="text-orange-600 font-medium text-[10px] bg-orange-50 px-1.5 py-0.5 rounded">
+                    combined from {sourceCount}
+                  </span>
+                )}
+                {comp.waste_type !== 'none' && !isCombined && (
+                  <span className="text-slate-400">
+                    → {displayValue(entry.value_after_waste)}{' '}
+                    <span className="text-slate-300">(+waste)</span>
+                  </span>
+                )}
+                {!isCombined && (
+                  <button
+                    onClick={() => onRemoveEntry(entry.id, comp.id)}
+                    className="ml-auto text-red-400 hover:text-red-600"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Phase 6.5: combine / split lineal entries */}
+          {(showCombineButton || showSplitButton) && (
+            <div className="flex items-center gap-2 mt-1 pt-1 border-t border-slate-100">
+              {showCombineButton && (
+                <button
+                  onClick={() => onCombineEntries?.(comp.id)}
+                  className="text-xs text-orange-600 hover:text-orange-800 font-medium"
+                >
+                  ⇋ Combine into total length + waste
+                </button>
               )}
-              <button
-                onClick={() => onRemoveEntry(entry.id, comp.id)}
-                className="ml-auto text-red-400 hover:text-red-600"
-              >
-                ×
-              </button>
+              {showSplitButton && (
+                <button
+                  onClick={() => onSplitEntries?.(comp.id)}
+                  className="text-xs text-slate-500 hover:text-slate-700 font-medium"
+                >
+                  ⇅ Split back into individual lengths
+                </button>
+              )}
             </div>
-          ))}
+          )}
 
           {adding ? (
             <div className="flex items-center gap-2 mt-1">

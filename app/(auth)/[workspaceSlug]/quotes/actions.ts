@@ -776,6 +776,174 @@ export async function removeComponentEntry(entryId: string, quoteComponentId: st
   await recalcComponentFromEntries(quoteComponentId);
 }
 
+/**
+ * Phase 6.5 (Generic Trades): collapse the N entries on a linear-shaped
+ * component into ONE combined entry whose value equals the sum of
+ * value_after_waste across the source rows. The source rows are preserved
+ * in the combined row's `combined_from` JSONB so splitLinealEntries can
+ * restore them exactly. The Phase 2 CHECK constraint enforces
+ * `is_combined => combined_from IS NOT NULL`.
+ *
+ * Idempotent: re-combining a single-entry component is a no-op. Already-
+ * combined components return early so a double-click doesn't lose data.
+ */
+export async function combineLinealEntries(quoteComponentId: string): Promise<{
+  ok: boolean;
+  combinedEntryId?: string;
+  sourceCount?: number;
+  combinedTotal?: number;
+  error?: string;
+}> {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+  await verifyComponentOwnership(supabase, quoteComponentId, profile.company_id);
+
+  const { data: entries, error: entriesErr } = await supabase
+    .from('quote_component_entries')
+    .select('id, raw_value, value_after_waste, sort_order')
+    .eq('quote_component_id', quoteComponentId)
+    .order('sort_order', { ascending: true });
+  if (entriesErr) return { ok: false, error: entriesErr.message };
+  if (!entries || entries.length === 0) return { ok: false, error: 'No entries to combine.' };
+
+  // database.types.ts is stale on the Phase 2 combined_from / is_combined
+  // columns. Cast at the boundary.
+  type EntryRow = {
+    id: string;
+    raw_value: number;
+    value_after_waste: number;
+    sort_order: number | null;
+    is_combined?: boolean | null;
+  };
+  const typed = entries as unknown as EntryRow[];
+
+  // If a combined row already exists, treat as success no-op.
+  if (typed.some((e) => e.is_combined)) {
+    return { ok: true, combinedTotal: undefined, sourceCount: 0 };
+  }
+
+  const totalAfterWaste = typed.reduce((s, e) => s + Number(e.value_after_waste), 0);
+  const totalRaw = typed.reduce((s, e) => s + Number(e.raw_value), 0);
+
+  const combinedFromPayload = typed.map((e) => ({
+    raw: Number(e.raw_value),
+    after: Number(e.value_after_waste),
+    sort: e.sort_order ?? 0,
+  }));
+
+  // Round-3 L-01: validate combined_from shape before write. Max 200 entries
+  // (per the C2 acceptance bullet) - same posture as the upcoming
+  // test-combined-lineal-entries regression expects.
+  if (combinedFromPayload.length > 200) {
+    return { ok: false, error: `Cannot combine more than 200 entries (got ${combinedFromPayload.length}).` };
+  }
+
+  // Delete the source rows in one statement.
+  const ids = typed.map((e) => e.id);
+  const { error: delErr } = await supabase
+    .from('quote_component_entries')
+    .delete()
+    .in('id', ids);
+  if (delErr) return { ok: false, error: delErr.message };
+
+  // Insert the single combined row. Cast for the new columns.
+  const { data: combined, error: insertErr } = await (supabase as unknown as {
+    from: (t: string) => {
+      insert: (row: Record<string, unknown>) => {
+        select: (cols: string) => { single: () => Promise<{ data: { id: string } | null; error: Error | null }> };
+      };
+    };
+  })
+    .from('quote_component_entries')
+    .insert({
+      quote_component_id: quoteComponentId,
+      raw_value: totalRaw,
+      value_after_waste: totalAfterWaste,
+      sort_order: 0,
+      is_combined: true,
+      combined_from: combinedFromPayload,
+    })
+    .select('id')
+    .single();
+  if (insertErr || !combined) {
+    return { ok: false, error: insertErr?.message ?? 'Combined insert returned no row.' };
+  }
+
+  await recalcComponentFromEntries(quoteComponentId);
+  return {
+    ok: true,
+    combinedEntryId: combined.id,
+    sourceCount: typed.length,
+    combinedTotal: totalAfterWaste,
+  };
+}
+
+/**
+ * Phase 6.5 (Generic Trades): inverse of combineLinealEntries. Restores
+ * the source entries from combined_from JSONB and deletes the combined
+ * row. No-op when the component has no combined row.
+ */
+export async function splitLinealEntries(quoteComponentId: string): Promise<{
+  ok: boolean;
+  restoredCount?: number;
+  error?: string;
+}> {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+  await verifyComponentOwnership(supabase, quoteComponentId, profile.company_id);
+
+  type EntryRow = {
+    id: string;
+    raw_value: number;
+    value_after_waste: number;
+    sort_order: number | null;
+    is_combined?: boolean | null;
+    combined_from?: Array<{ raw: number; after: number; sort?: number }> | null;
+  };
+  const { data: entries, error: entriesErr } = await (supabase as unknown as {
+    from: (t: string) => {
+      select: (cols: string) => {
+        eq: (col: string, val: string) => Promise<{ data: EntryRow[] | null; error: Error | null }>;
+      };
+    };
+  })
+    .from('quote_component_entries')
+    .select('id, raw_value, value_after_waste, sort_order, is_combined, combined_from')
+    .eq('quote_component_id', quoteComponentId);
+  if (entriesErr) return { ok: false, error: entriesErr.message };
+  if (!entries) return { ok: false, error: 'No entries.' };
+
+  const combinedRow = entries.find((e) => e.is_combined);
+  if (!combinedRow) {
+    return { ok: true, restoredCount: 0 }; // no-op: nothing combined.
+  }
+  if (!combinedRow.combined_from || combinedRow.combined_from.length === 0) {
+    return { ok: false, error: 'Combined row has no source data to restore.' };
+  }
+
+  // Insert the restored source rows.
+  const restored = combinedRow.combined_from.map((src, idx) => ({
+    quote_component_id: quoteComponentId,
+    raw_value: src.raw,
+    value_after_waste: src.after,
+    sort_order: src.sort ?? idx,
+  }));
+  const { error: insErr } = await supabase
+    .from('quote_component_entries')
+    .insert(restored);
+  if (insErr) return { ok: false, error: insErr.message };
+
+  // Delete the combined row.
+  const { error: delErr } = await supabase
+    .from('quote_component_entries')
+    .delete()
+    .eq('id', combinedRow.id);
+  if (delErr) return { ok: false, error: delErr.message };
+
+  await recalcComponentFromEntries(quoteComponentId);
+  return { ok: true, restoredCount: restored.length };
+}
+
 async function recalcComponentFromEntries(quoteComponentId: string) {
   const supabase = await createSupabaseServerClient();
   const { data: entries } = await supabase.from('quote_component_entries').select('value_after_waste').eq('quote_component_id', quoteComponentId);
