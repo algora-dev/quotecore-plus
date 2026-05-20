@@ -170,10 +170,11 @@ For v1: one session per quote, created lazily on first takeoff page upload by a 
 
 ### `measurement_type` enum (extend)
 
-Existing: `area`, `lineal`, `rafter`, `valley_hip`
-Add: `length_x_height`, `volume`, `hours_days`, `count`, `fixed`, `curved_line`, `irregular_area`, **`multi_lineal`** (Shaun addition — the polyline tool that sums N segments into one length).
+Existing (live in DB as of 2026-05-20): `area`, `linear`, `quantity`, `fixed`, `lineal`. The `linear` and `quantity` values are legacy carry-overs from patch_006/008; new code reads/writes `lineal`. There are NO `rafter` / `valley_hip` measurement types — those are values of the separate `pitch_type` enum (`none|rafter|valley_hip`). The pricing engine applies them as pitch FACTORS on top of an `area`/`lineal` measurement.
 
-The roofing-specific values stay so existing roofing components keep working.
+Add: `length_x_height`, `volume`, `hours_days`, `count`, `curved_line`, `irregular_area`, **`multi_lineal`** (Shaun addition — the polyline tool that sums N segments into one length).
+
+**Correction (pre-apply, 2026-05-20):** earlier v2/v2.1 drafts of this doc claimed `rafter`/`valley_hip` were measurement types. They are not. Discovered when verifying live enum state before applying the Phase 2 migration. The dark-schema CHECK was corrected before SQL apply.
 
 ### ~~`pricing_mode` enum~~ — DROPPED in v2.1 (Gerald M-04)
 

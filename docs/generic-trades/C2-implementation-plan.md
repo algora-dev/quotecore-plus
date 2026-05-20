@@ -186,7 +186,7 @@ Add every new table and column. All nullable. Server flag stays off.
 - `CHECK (depth_value_mm IS NULL OR measurement_type = 'volume')`
 - **`CHECK` enforcing `pricing_strategy` ↔ `measurement_type` compatibility:**
   - `per_unit` → allowed for ALL measurement types (current behaviour).
-  - `per_pack_length` → only `lineal`, `multi_lineal`, `rafter`, `valley_hip`, `curved_line`.
+  - `per_pack_length` → only `lineal`, `multi_lineal`, `curved_line`. (`rafter`/`valley_hip` are `pitch_type` values, NOT measurement types — corrected pre-apply.)
   - `per_pack_area` → only `area`, `length_x_height`, `irregular_area`.
   - `per_pack_coverage` → only `area`, `length_x_height`, `irregular_area`.
   - `per_pack_volume` → only `volume`.
@@ -383,11 +383,17 @@ Goal: a quote with `trade='generic'` and zero areas, with components attached at
 `app/lib/trades/measurement-type-whitelist.ts`:
 ```ts
 export const TRADE_ALLOWED_MEASUREMENT_TYPES = {
-  roofing: new Set(['area','lineal','rafter','valley_hip']),
-  generic: new Set(['area','lineal','rafter','valley_hip','length_x_height','volume','hours_days','count','fixed','curved_line','irregular_area','multi_lineal']),
+  roofing: new Set(['area','lineal']),
+  generic: new Set(['area','lineal','length_x_height','volume','hours_days','count','fixed','curved_line','irregular_area','multi_lineal']),
   // Round-3 M-03: multi_lineal added to generic. Roofing intentionally
   // omits it for v1 — if a roofing workflow surfaces (gutters, cabling),
   // we'll widen later. Keep test-trade-whitelist.mjs in sync.
+  //
+  // Correction (pre-apply, 2026-05-20): rafter and valley_hip are NOT
+  // measurement_type values — they live on the separate `pitch_type` enum
+  // (`none|rafter|valley_hip`). The pricing engine applies them as
+  // pitch FACTORS on top of an `area`/`lineal` measurement. Earlier drafts
+  // of this allowlist incorrectly listed them; removed before SQL apply.
 };
 ```
 

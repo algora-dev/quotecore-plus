@@ -248,13 +248,15 @@ ALTER TABLE public.component_library
   ADD CONSTRAINT ck_component_library_strategy_compat CHECK (
     pricing_strategy = 'per_unit'  -- per_unit works for ANY measurement type
     OR (pricing_strategy = 'per_pack_length'
-        AND measurement_type IN ('lineal', 'multi_lineal', 'rafter', 'valley_hip', 'curved_line'))
+        AND measurement_type IN ('lineal', 'multi_lineal', 'curved_line'))
     OR (pricing_strategy = 'per_pack_area'
         AND measurement_type IN ('area', 'length_x_height', 'irregular_area'))
     OR (pricing_strategy = 'per_pack_coverage'
         AND measurement_type IN ('area', 'length_x_height', 'irregular_area'))
     OR (pricing_strategy = 'per_pack_volume'
         AND measurement_type = 'volume')
+    -- Note: rafter/valley_hip are values of the `pitch_type` enum, NOT `measurement_type`.
+    -- Earlier drafts of this CHECK referenced them by mistake; corrected before apply.
   ) NOT VALID;
 -- NOT VALID: every existing row has pricing_strategy='per_unit' (the default),
 -- which is always compatible. The constraint is enforced on new INSERTs /
