@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { saveTakeoffMeasurements, createTakeoffPage } from './actions';
+import { saveTakeoffMeasurements, createTakeoffPage, initializeTakeoffPage, finalizeTakeoffPageImage } from './actions';
 import { uploadCanvasImage } from './uploadCanvasImage';
 import { AlertModal } from '@/app/components/AlertModal';
 
@@ -113,9 +113,6 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [showRoofAreaInstructions, setShowRoofAreaInstructions] = useState(false);
 
   // Phase 7: multi-page takeoff state.
-  // Each page is an image with its own URL. We track which page the canvas
-  // is currently showing. Measurements are stored per-page in the takeoff
-  // state but all saved together via save_takeoff_atomic.
   const [pages, setPages] = useState<Array<{ id?: string; url: string; name: string; order: number }>>([
     { url: planUrl, name: 'Page 1', order: 1 },
   ]);
@@ -123,6 +120,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [showUploadAnotherModal, setShowUploadAnotherModal] = useState(false);
   const [uploadAnotherPageName, setUploadAnotherPageName] = useState('');
   const [isUploadingPage, setIsUploadingPage] = useState(false);
+  // H-03: track unsaved changes so we can warn before switching pages.
+  const [isDirty, setIsDirty] = useState(false);
 
   // Component colors (auto-assign on mount)
   const [componentColors, setComponentColors] = useState<ComponentColor[]>([]);
@@ -192,6 +191,37 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     console.log('[Components] Colors assigned to', activeComponentIds.length, 'active components');
   }, [activeComponentIds]);
   
+  // H-03: mark dirty whenever measurements or areas change.
+  useEffect(() => {
+    if (componentMeasurements.length > 0 || roofAreas.length > 0) setIsDirty(true);
+  }, [componentMeasurements, roofAreas]);
+
+  // M-04 (Gerald round-5): ensure page-1 has a real DB row on mount.
+  // initializeTakeoffPage is idempotent so repeated mounts are safe.
+  useEffect(() => {
+    let cancelled = false;
+    async function ensurePage1() {
+      try {
+        const result = await initializeTakeoffPage(quote.id);
+        if (!cancelled && result.ok && result.pageId) {
+          setPages(prev => {
+            const updated = [...prev];
+            if (updated[0] && !updated[0].id) {
+              updated[0] = { ...updated[0], id: result.pageId };
+            }
+            return updated;
+          });
+        }
+      } catch (err) {
+        // Non-fatal: single-page save still works via quote-wide delete.
+        console.warn('[TakeoffWorkstation] initializeTakeoffPage failed:', err);
+      }
+    }
+    ensurePage1();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quote.id]);
+
   // After calibration: show area instructions for roofing quotes (mandatory),
   // or the optional "Do you want to measure an area?" prompt for generic
   // quotes (Phase 7 — C2 spec). Keyed on quote.trade.
@@ -527,10 +557,17 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   };
 
   // Switch the canvas to a different page by index.
+  // H-03: warn before discarding unsaved work.
   const switchToPage = (idx: number) => {
     if (idx === currentPageIndex) return;
     const page = pages[idx];
     if (!page) return;
+    if (isDirty) {
+      const confirmed = window.confirm(
+        'You have unsaved measurements on this page. Switch anyway? Unsaved work will be lost.'
+      );
+      if (!confirmed) return;
+    }
     setCurrentPageIndex(idx);
     loadPageImage(page.url);
   };
@@ -681,7 +718,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       // Phase 7 scoped-delete: pass the current page's DB id so the RPC
       // only clears this page's measurements. Falls back to quote-wide
       // delete when no page id exists (single-page / legacy flow).
+      // C-01: include pageId on every measurement so scoped delete works.
       const currentPageDbId = pages[currentPageIndex]?.id ?? null;
+      if (currentPageDbId) {
+        allMeasurements.forEach(m => { m.pageId = currentPageDbId; });
+      }
       await saveTakeoffMeasurements(
         quote.id,
         allMeasurements,
@@ -691,6 +732,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         currentPageDbId,
       );
       
+      setIsDirty(false);
       console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
       
       // Navigate to Quote Builder v2 (digital takeoff mode)
@@ -1377,7 +1419,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 space-y-4">
             <h3 className="font-semibold text-lg">Upload another image</h3>
             <p className="text-sm text-slate-600">
-              Upload a second plan image to measure from. Your current measurements are saved when you switch pages.
+              Upload another plan image to measure from. Save your current page before switching — unsaved measurements will be lost on page change.
             </p>
             <div>
               <label className="block text-xs text-slate-500 mb-1">Page name (optional)</label>
@@ -1400,12 +1442,23 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   if (!file) return;
                   setIsUploadingPage(true);
                   try {
-                    // Create the page record first.
                     const pageName = uploadAnotherPageName.trim() || `Page ${pages.length + 1}`;
+                    // Create the page DB row first.
                     const pageResult = await createTakeoffPage(quote.id, pageName);
-                    if (!pageResult.ok) throw new Error(pageResult.error);
+                    if (!pageResult.ok || !pageResult.pageId) throw new Error(pageResult.error);
 
-                    // Read the file as a data URL and create an object URL for the canvas.
+                    // H-02: convert file to data URL and upload to storage.
+                    const dataUrl = await new Promise<string>((resolve, reject) => {
+                      const reader = new FileReader();
+                      reader.onload = () => resolve(reader.result as string);
+                      reader.onerror = reject;
+                      reader.readAsDataURL(file);
+                    });
+                    const storagePath = await uploadCanvasImage(quote.id, dataUrl, `page-${pageResult.pageId}`);
+                    // Persist the storage path on the page row.
+                    await finalizeTakeoffPageImage(pageResult.pageId, storagePath);
+
+                    // Use an object URL for the canvas display (faster than re-signing).
                     const objectUrl = URL.createObjectURL(file);
                     const newPage = { id: pageResult.pageId, url: objectUrl, name: pageName, order: pages.length + 1 };
                     const newPages = [...pages, newPage];
@@ -1414,6 +1467,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                     loadPageImage(objectUrl);
                     setShowUploadAnotherModal(false);
                     setUploadAnotherPageName('');
+                    setIsDirty(false);
                   } catch (err) {
                     alert(err instanceof Error ? err.message : 'Upload failed');
                   } finally {

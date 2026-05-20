@@ -174,17 +174,21 @@ async function createQuoteWithDetailsInner(params: CreateQuoteParams): Promise<C
   // No behaviour change while GENERIC_TRADES_V1_ENABLED is off; required
   // payload once it flips on.
   const defaults = await resolveQuoteCreationDefaults(profile.company_id);
-  // Phase 8: if the user explicitly picked a trade/collection in the form
-  // (generic-trades flag on), use their choice. Otherwise fall back to the
-  // company defaults from resolveQuoteCreationDefaults.
+  // H-05 (Gerald round-5): only accept explicit trade/collection from the
+  // form when the server flag is actually on. Otherwise fall back to
+  // company defaults so a crafted request can't create generic quotes
+  // while the rollout flag is off.
+  const genericFlagOn = process.env.GENERIC_TRADES_V1_ENABLED === 'true';
   const quoteId = await createQuoteAtomic(profile.company_id, profile.id, {
     customerName: params.customerName,
     jobName: params.jobName,
     taxRate: company.default_tax_rate ?? 0,
     measurementSystem: safeMeasurementSystem,
     entryMode: safeEntryMode,
-    trade: params.trade ?? defaults.trade,
-    componentCollectionId: params.componentCollectionId ?? defaults.componentCollectionId,
+    trade: genericFlagOn ? (params.trade ?? defaults.trade) : defaults.trade,
+    componentCollectionId: genericFlagOn
+      ? (params.componentCollectionId ?? defaults.componentCollectionId)
+      : defaults.componentCollectionId,
   });
 
   // Snapshot the company's tax library onto the new quote so totals work

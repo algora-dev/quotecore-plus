@@ -38,8 +38,12 @@ export async function updateCompanySettings(
       default_measurement_system: settings.measurement,
       default_material_margin_percent: settings.materialMargin,
       default_labor_margin_percent: settings.laborMargin,
-      // Phase 8: only write when provided to keep the column clean.
-      ...(settings.defaultTrade != null ? { default_trade: settings.defaultTrade } : {}),
+      // H-05 (Gerald round-5): only write default_trade when the server
+      // flag is on, so a crafted request can't flip the trade while the
+      // generic-trades rollout is off.
+      ...(settings.defaultTrade != null && process.env.GENERIC_TRADES_V1_ENABLED === 'true'
+        ? { default_trade: settings.defaultTrade }
+        : {}),
     })
     .eq('id', companyId);
 

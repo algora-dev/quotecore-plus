@@ -140,6 +140,10 @@ export async function saveTakeoffMeasurements(
         return {
           component_library_id: componentId,
           name: libComp.name,
+          // M-02 (Gerald round-5): include the real measurement_type from
+          // component_library so the RPC doesn't hardcode 'lineal' for every
+          // component regardless of type.
+          measurement_type: libComp.measurement_type,
           material_rate: materialRate,
           labour_rate: labourRate,
           waste_type: wasteType,
@@ -269,6 +273,17 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
  */
 async function ensureTakeoffSession(quoteId: string, companyId: string): Promise<string> {
   const admin = createAdminClient();
+  // H-01 (Gerald round-5): verify the quote belongs to the caller's company
+  // BEFORE doing any admin writes. Use admin client for the read (bypasses
+  // RLS) but scope by company_id so cross-tenant access is rejected.
+  const { data: quoteCheck } = await admin
+    .from('quotes')
+    .select('id')
+    .eq('id', quoteId)
+    .eq('company_id', companyId)
+    .maybeSingle();
+  if (!quoteCheck) throw new Error(`ensureTakeoffSession: quote ${quoteId} not found for company ${companyId}`);
+
   // Check for existing session first.
   const { data: existing } = await admin
     .from('takeoff_sessions')
@@ -313,27 +328,66 @@ export async function loadTakeoffPages(quoteId: string): Promise<{
 }
 
 /**
- * Create a new takeoff page for a quote (or the first page for an existing
- * single-page takeoff). Returns the new page's id.
- * The image_storage_path is set by the signed-upload finaliser (service-role)
- * after the image is uploaded. This action only creates the page row.
+ * M-04 (Gerald round-5): initialise the session + page-1 row for a quote
+ * on workstation mount. Idempotent — returns the existing page id if one
+ * already exists. The workstation uses the returned id to scope saves.
+ */
+export async function initializeTakeoffPage(
+  quoteId: string,
+  initialImageStoragePath?: string | null,
+): Promise<{ ok: boolean; pageId?: string; error?: string }> {
+  try {
+    const { requireCompanyContext } = await import('@/app/lib/supabase/server');
+    const profile = await requireCompanyContext();
+    const admin = createAdminClient();
+    // H-01: ownership checked inside ensureTakeoffSession.
+    const sessionId = await ensureTakeoffSession(quoteId, profile.company_id);
+    // Return existing page-1 if already created.
+    const { data: existing } = await admin
+      .from('takeoff_pages')
+      .select('id')
+      .eq('quote_id', quoteId)
+      .eq('page_order', 1)
+      .maybeSingle();
+    if (existing?.id) return { ok: true, pageId: existing.id };
+    // Create page-1 with the original plan image path.
+    const { data: page, error } = await admin
+      .from('takeoff_pages')
+      .insert({
+        session_id: sessionId,
+        quote_id: quoteId,
+        page_order: 1,
+        page_name: 'Page 1',
+        image_storage_path: initialImageStoragePath ?? null,
+      })
+      .select('id')
+      .single();
+    if (error || !page) return { ok: false, error: error?.message ?? 'Page insert returned no row' };
+    return { ok: true, pageId: page.id };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[initializeTakeoffPage]', msg);
+    return { ok: false, error: msg };
+  }
+}
+
+/**
+ * Create a new takeoff page (page 2+). H-01 ownership enforced via
+ * ensureTakeoffSession which checks company_id before any admin write.
  */
 export async function createTakeoffPage(
   quoteId: string,
   pageName?: string,
 ): Promise<{ ok: boolean; pageId?: string; error?: string }> {
   try {
-    const profile = await (await import('@/app/lib/supabase/server')).requireCompanyContext();
+    const { requireCompanyContext } = await import('@/app/lib/supabase/server');
+    const profile = await requireCompanyContext();
     const admin = createAdminClient();
-
     const sessionId = await ensureTakeoffSession(quoteId, profile.company_id);
-
-    // Count existing pages to determine page_order.
     const { count: existingCount } = await admin
       .from('takeoff_pages')
       .select('id', { count: 'exact', head: true })
       .eq('quote_id', quoteId);
-
     const { data: page, error } = await admin
       .from('takeoff_pages')
       .insert({
@@ -341,19 +395,54 @@ export async function createTakeoffPage(
         quote_id: quoteId,
         page_order: (existingCount ?? 0) + 1,
         page_name: pageName ?? null,
-        image_storage_path: null, // set by finaliser
+        image_storage_path: null,
       })
       .select('id')
       .single();
-
-    if (error || !page) {
-      return { ok: false, error: error?.message ?? 'Page insert returned no row' };
-    }
-
+    if (error || !page) return { ok: false, error: error?.message ?? 'Page insert returned no row' };
     return { ok: true, pageId: page.id };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[createTakeoffPage]', msg);
+    return { ok: false, error: msg };
+  }
+}
+
+/**
+ * H-02 (Gerald round-5): after uploading a page image to storage, write
+ * its path back to the takeoff_pages row so it survives reload.
+ * Ownership enforced: only updates pages belonging to the caller's company.
+ */
+export async function finalizeTakeoffPageImage(
+  pageId: string,
+  storagePath: string,
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const { requireCompanyContext } = await import('@/app/lib/supabase/server');
+    const profile = await requireCompanyContext();
+    const admin = createAdminClient();
+    // Verify ownership via quote → company chain.
+    const { data: page } = await admin
+      .from('takeoff_pages')
+      .select('id, quote_id')
+      .eq('id', pageId)
+      .maybeSingle();
+    if (!page) return { ok: false, error: 'Page not found' };
+    const { data: quote } = await admin
+      .from('quotes')
+      .select('id')
+      .eq('id', page.quote_id)
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+    if (!quote) return { ok: false, error: 'Unauthorized' };
+    const { error } = await admin
+      .from('takeoff_pages')
+      .update({ image_storage_path: storagePath })
+      .eq('id', pageId);
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
     return { ok: false, error: msg };
   }
 }
