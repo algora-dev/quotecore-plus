@@ -49,7 +49,7 @@ export default async function Page({
   // Note: default_measurement_type is optional - if missing, auto-tool-selection won't work
   const { data: components, error: componentsError } = await supabase
     .from('component_library')
-    .select('id, name')
+    .select('id, name, measurement_type')
     .eq('company_id', profile.company_id)
     .order('name');
   
