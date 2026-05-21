@@ -21,6 +21,8 @@ declare module 'fabric' {
 interface Component {
   id: string;
   name: string;
+  measurement_type?: string; // matches ComponentLibraryRow field name
+  /** @deprecated alias kept for any callers that used the old name */
   default_measurement_type?: string;
 }
 
@@ -349,8 +351,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     
     // Auto-select tool based on component's default measurement type
     const component = components.find(c => c.id === componentId);
-    if (component && component.default_measurement_type) {
-      const measurementType = component.default_measurement_type.toLowerCase();
+    if (component && (component.measurement_type || component.default_measurement_type)) {
+      const measurementType = (component.measurement_type ?? component.default_measurement_type ?? '').toLowerCase();
       
       // Reset all tools first
       setLineMode(false);
@@ -486,7 +488,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     // is stored correctly and the save layer applies height conversion.
     const compForType = components.find(c => c.id === compId);
     const resolvedType: 'multi_lineal' | 'multi_lineal_lxh' =
-      (compForType?.default_measurement_type as string) === 'multi_lineal_lxh'
+      ((compForType?.measurement_type ?? compForType?.default_measurement_type) as string) === 'multi_lineal_lxh'
         ? 'multi_lineal_lxh'
         : 'multi_lineal';
 
