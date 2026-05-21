@@ -68,7 +68,8 @@ const PRICING_STRATEGY_LABELS: Record<PricingStrategy, string> = {
 
 const WASTE_UNIT_LABELS: Record<WasteUnit, string> = {
   percent: 'Percentage (% of measured)',
-  flat: 'Flat (added per source line)',
+  flat: 'Flat \u2014 total length (added once to total)',
+  flat_per_segment: 'Flat \u2014 per segment (added per point-to-point length)',
 };
 
 /** Which pricing strategies are allowed for which measurement types.
@@ -389,6 +390,8 @@ export function ComponentList({
 
     const input: Partial<ComponentLibraryInsert> = {
       name: fd.get('name') as string,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      measurement_type: formMeasurementType as any,
       default_material_rate: Number(fd.get('default_material_rate')) || 0,
       default_labour_rate: Number(fd.get('default_labour_rate')) || 0,
       default_waste_type: wasteType,
@@ -399,9 +402,8 @@ export function ComponentList({
       flashing_ids: assignedFlashings.length > 0 ? assignedFlashings : null,
     };
 
-    // Phase 6.5 (Generic Trades) additions: same as create. Measurement type
-    // itself is NOT editable post-create (would break attached quote_components),
-    // so we read the current type from `formMeasurementType` (set in startEdit).
+    // Phase 6.5 (Generic Trades) additions: same as create.
+    // `formMeasurementType` is set in startEdit() and updated by the edit form's dropdown.
     const inputWithGenericTrades = genericTradesEnabled
       ? ({
           ...input,
@@ -607,14 +609,58 @@ export function ComponentList({
                     ))}
                 </select>
               </div>
-              <div data-copilot="component-rates">
-                <label className="block text-xs text-slate-500 mb-1">Material Price ({unitForMeasurement(formMeasurementType)})</label>
-                <input name="default_material_rate" type="number" step="0.01" placeholder="0" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
-              </div>
               <div data-copilot="component-labour">
                 <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(formMeasurementType)})</label>
                 <input name="default_labour_rate" type="number" step="0.01" placeholder="0" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
               </div>
+
+              {/* Material pricing: single source of truth.
+                  When generic trades on: pricing strategy dropdown drives whether
+                  we show per-unit Material Price OR pack price/size fields.
+                  When flag off: always show the simple Material Price field. */}
+              {genericTradesEnabled && (
+                <div className="col-span-2">
+                  <label className="block text-xs text-slate-500 mb-1">Material pricing</label>
+                  <select
+                    value={formPricingStrategy}
+                    onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
+                    className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                  >
+                    {allowedStrategiesFor(formMeasurementType).map((s) => (
+                      <option key={s} value={s}>{PRICING_STRATEGY_LABELS[s]}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {(!genericTradesEnabled || formPricingStrategy === 'per_unit') && (
+                <div data-copilot="component-rates">
+                  <label className="block text-xs text-slate-500 mb-1">Material Price ({unitForMeasurement(formMeasurementType)})</label>
+                  <input name="default_material_rate" type="number" step="0.01" placeholder="0" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
+                </div>
+              )}
+              {genericTradesEnabled && formPricingStrategy !== 'per_unit' && (
+                <>
+                  {/* hidden zero so the form submission always has default_material_rate */}
+                  <input type="hidden" name="default_material_rate" value="0" />
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">Pack price ($)</label>
+                    <input type="number" step="0.01" placeholder="e.g. 60" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">
+                      Pack size ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
+                    </label>
+                    <input type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                  </div>
+                  {formPricingStrategy === 'per_pack_coverage' && (
+                    <div className="col-span-2">
+                      <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m\u00b2)</label>
+                      <input type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                    </div>
+                  )}
+                </>
+              )}
+
               <div data-copilot="component-waste">
                 <label className="block text-xs text-slate-500 mb-1">Waste Type</label>
                 <select
@@ -634,20 +680,29 @@ export function ComponentList({
                   <input name="waste_amount" type="number" step="0.01" placeholder={wasteAmountPlaceholderText} className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
                 </div>
               )}
+              {/* Flat waste mode: only relevant for multi_lineal + fixed. */}
+              {genericTradesEnabled && formWasteType === 'fixed' && formMeasurementType === 'multi_lineal' && (
+                <div className="col-span-2">
+                  <label className="block text-xs text-slate-500 mb-1">Fixed waste mode</label>
+                  <select
+                    value={formWasteUnit}
+                    onChange={(e) => setFormWasteUnit(e.target.value as WasteUnit)}
+                    className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                  >
+                    <option value="flat">{WASTE_UNIT_LABELS.flat}</option>
+                    <option value="flat_per_segment">{WASTE_UNIT_LABELS.flat_per_segment}</option>
+                  </select>
+                </div>
+              )}
             </div>
 
-            {/* Phase 6.5 (Generic Trades) — only visible with the client flag on. */}
+            {/* Type-specific fields (generic trades only): height, depth, time unit. */}
             {genericTradesEnabled && (
-              <GenericTradesFields
+              <TypeSpecificFields
                 measurementType={formMeasurementType}
                 heightMm={formHeightMm} setHeightMm={setFormHeightMm}
                 depthMm={formDepthMm} setDepthMm={setFormDepthMm}
                 hoursUnit={formHoursUnit} setHoursUnit={setFormHoursUnit}
-                wasteUnit={formWasteUnit} setWasteUnit={setFormWasteUnit}
-                pricingStrategy={formPricingStrategy} setPricingStrategy={setFormPricingStrategy}
-                packPrice={formPackPrice} setPackPrice={setFormPackPrice}
-                packSize={formPackSize} setPackSize={setFormPackSize}
-                packCoverageM2={formPackCoverageM2} setPackCoverageM2={setFormPackCoverageM2}
               />
             )}
 
@@ -743,13 +798,68 @@ export function ComponentList({
                       <input name="name" required defaultValue={comp.name} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-500 mb-1">Material Price ({unitForMeasurement(comp.measurement_type)})</label>
-                      <input name="default_material_rate" type="number" step="0.01" defaultValue={comp.default_material_rate ?? 0} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                      <label className="block text-xs text-slate-500 mb-1">Measurement</label>
+                      <select
+                        value={formMeasurementType}
+                        onChange={(e) => setFormMeasurementType(e.target.value as MeasurementType)}
+                        className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                      >
+                        {(Object.entries(MEASUREMENT_LABELS) as Array<[MeasurementType, string]>)
+                          .filter(([k]) => k !== 'linear')
+                          .filter(([k]) => genericTradesEnabled || ROOFING_DEFAULT_TYPES.has(k))
+                          .map(([k, v]) => (
+                            <option key={k} value={k}>{v}</option>
+                          ))}
+                      </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(comp.measurement_type)})</label>
+                      <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(formMeasurementType)})</label>
                       <input name="default_labour_rate" type="number" step="0.01" defaultValue={comp.default_labour_rate ?? 0} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                     </div>
+
+                    {/* Material pricing — unified: strategy dropdown drives per-unit vs pack. */}
+                    {genericTradesEnabled && (
+                      <div className="col-span-2">
+                        <label className="block text-xs text-slate-500 mb-1">Material pricing</label>
+                        <select
+                          value={formPricingStrategy}
+                          onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
+                          className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                        >
+                          {allowedStrategiesFor(formMeasurementType).map((s) => (
+                            <option key={s} value={s}>{PRICING_STRATEGY_LABELS[s]}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    {(!genericTradesEnabled || formPricingStrategy === 'per_unit') && (
+                      <div>
+                        <label className="block text-xs text-slate-500 mb-1">Material Price ({unitForMeasurement(formMeasurementType)})</label>
+                        <input name="default_material_rate" type="number" step="0.01" defaultValue={comp.default_material_rate ?? 0} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                      </div>
+                    )}
+                    {genericTradesEnabled && formPricingStrategy !== 'per_unit' && (
+                      <>
+                        <input type="hidden" name="default_material_rate" value="0" />
+                        <div>
+                          <label className="block text-xs text-slate-500 mb-1">Pack price ($)</label>
+                          <input type="number" step="0.01" placeholder="e.g. 60" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-slate-500 mb-1">
+                            Pack size ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
+                          </label>
+                          <input type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                        </div>
+                        {formPricingStrategy === 'per_pack_coverage' && (
+                          <div className="col-span-2">
+                            <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m\u00b2)</label>
+                            <input type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                          </div>
+                        )}
+                      </>
+                    )}
+
                     <div>
                       <label className="block text-xs text-slate-500 mb-1">Waste Type</label>
                       <select
@@ -765,7 +875,7 @@ export function ComponentList({
                     </div>
                     {formWasteType !== 'none' && (
                       <div>
-                        <label className="block text-xs text-slate-500 mb-1">Waste Amount {wasteAmountSuffix(formWasteType, comp.measurement_type)}</label>
+                        <label className="block text-xs text-slate-500 mb-1">Waste Amount {wasteAmountSuffix(formWasteType, formMeasurementType)}</label>
                         <input
                           name="waste_amount"
                           type="number"
@@ -775,20 +885,28 @@ export function ComponentList({
                         />
                       </div>
                     )}
+                    {genericTradesEnabled && formWasteType === 'fixed' && formMeasurementType === 'multi_lineal' && (
+                      <div className="col-span-2">
+                        <label className="block text-xs text-slate-500 mb-1">Fixed waste mode</label>
+                        <select
+                          value={formWasteUnit}
+                          onChange={(e) => setFormWasteUnit(e.target.value as WasteUnit)}
+                          className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                        >
+                          <option value="flat">{WASTE_UNIT_LABELS.flat}</option>
+                          <option value="flat_per_segment">{WASTE_UNIT_LABELS.flat_per_segment}</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Phase 6.5 (Generic Trades) — same fields as the create form. */}
+                  {/* Type-specific fields (generic trades only). */}
                   {genericTradesEnabled && (
-                    <GenericTradesFields
+                    <TypeSpecificFields
                       measurementType={formMeasurementType}
                       heightMm={formHeightMm} setHeightMm={setFormHeightMm}
                       depthMm={formDepthMm} setDepthMm={setFormDepthMm}
                       hoursUnit={formHoursUnit} setHoursUnit={setFormHoursUnit}
-                      wasteUnit={formWasteUnit} setWasteUnit={setFormWasteUnit}
-                      pricingStrategy={formPricingStrategy} setPricingStrategy={setFormPricingStrategy}
-                      packPrice={formPackPrice} setPackPrice={setFormPackPrice}
-                      packSize={formPackSize} setPackSize={setFormPackSize}
-                      packCoverageM2={formPackCoverageM2} setPackCoverageM2={setFormPackCoverageM2}
                     />
                   )}
 
@@ -957,16 +1075,12 @@ export function ComponentList({
 }
 
 /**
- * Phase 6.5 (Generic Trades) form section. Renders:
- *   - height/depth/hours-unit fields conditional on measurement_type
- *   - waste_unit dropdown (percent | flat)
- *   - pricing_strategy dropdown filtered by measurement_type compatibility
- *   - strategy-specific pack fields (price/size/coverage)
- *   - live worked-example string for pack strategies
- *
- * Shown only when NEXT_PUBLIC_GENERIC_TRADES_V1 is on (the caller gates it).
+ * Type-specific dimension fields shown only when the generic-trades flag is on.
+ * Handles measurement types that need extra configuration: height for
+ * length_x_height, depth for volume, time-unit for hours_days.
+ * Pricing strategy and waste interpretation are now inline in the main form.
  */
-function GenericTradesFields(props: {
+function TypeSpecificFields(props: {
   measurementType: MeasurementType;
   heightMm: string;
   setHeightMm: (v: string) => void;
@@ -974,176 +1088,33 @@ function GenericTradesFields(props: {
   setDepthMm: (v: string) => void;
   hoursUnit: 'hr' | 'day';
   setHoursUnit: (v: 'hr' | 'day') => void;
-  wasteUnit: WasteUnit;
-  setWasteUnit: (v: WasteUnit) => void;
-  pricingStrategy: PricingStrategy;
-  setPricingStrategy: (v: PricingStrategy) => void;
-  packPrice: string;
-  setPackPrice: (v: string) => void;
-  packSize: string;
-  setPackSize: (v: string) => void;
-  packCoverageM2: string;
-  setPackCoverageM2: (v: string) => void;
 }) {
-  const {
-    measurementType, heightMm, setHeightMm, depthMm, setDepthMm,
-    hoursUnit, setHoursUnit, wasteUnit, setWasteUnit,
-    pricingStrategy, setPricingStrategy,
-    packPrice, setPackPrice, packSize, setPackSize,
-    packCoverageM2, setPackCoverageM2,
-  } = props;
-  const allowedStrategies = allowedStrategiesFor(measurementType);
-
-  // Build a worked example string when a non-per_unit strategy is selected
-  // and the user has entered enough data. Pick a sensible sample quantity
-  // per strategy so the maths illustrates the round-up correctly.
-  let workedExample: string | null = null;
-  const priceNum = Number(packPrice);
-  const sizeNum = Number(packSize);
-  const coverageNum = Number(packCoverageM2);
-  if (pricingStrategy === 'per_pack_length' && priceNum > 0 && sizeNum > 0) {
-    const sample = sizeNum * 1.05; // a typical 5% over a single roll
-    const packs = computePackCount({ strategy: 'per_pack_length', totalQuantity: sample, packSize: sizeNum, packCoverageM2: null });
-    workedExample = `Example: ${sample.toFixed(1)}m → ${packs} × ${sizeNum}m rolls × $${priceNum} = $${(packs * priceNum).toFixed(2)}`;
-  } else if (pricingStrategy === 'per_pack_area' && priceNum > 0 && sizeNum > 0) {
-    const sample = sizeNum * 5.6; // ~280m² if pack is 50m²
-    const packs = computePackCount({ strategy: 'per_pack_area', totalQuantity: sample, packSize: sizeNum, packCoverageM2: null });
-    workedExample = `Example: ${sample.toFixed(0)}m² ÷ ${sizeNum}m²/pack = ${packs} packs × $${priceNum} = $${(packs * priceNum).toFixed(2)}`;
-  } else if (pricingStrategy === 'per_pack_coverage' && priceNum > 0 && coverageNum > 0) {
-    const sample = coverageNum * 6.4; // ~320m² if pack covers 50m²
-    const packs = computePackCount({ strategy: 'per_pack_coverage', totalQuantity: sample, packSize: null, packCoverageM2: coverageNum });
-    workedExample = `Example: ${sample.toFixed(0)}m² ÷ ${coverageNum}m² covered/pack = ${packs} packs × $${priceNum} = $${(packs * priceNum).toFixed(2)}`;
-  } else if (pricingStrategy === 'per_pack_volume' && priceNum > 0 && sizeNum > 0) {
-    const sample = sizeNum * 60.4; // ~302m³ if pack is 5m³
-    const packs = computePackCount({ strategy: 'per_pack_volume', totalQuantity: sample, packSize: sizeNum, packCoverageM2: null });
-    workedExample = `Example: ${sample.toFixed(0)}m³ ÷ ${sizeNum}m³/pack = ${packs} packs × $${priceNum} = $${(packs * priceNum).toFixed(2)}`;
-  }
-
+  const { measurementType, heightMm, setHeightMm, depthMm, setDepthMm, hoursUnit, setHoursUnit } = props;
+  if (!['length_x_height', 'volume', 'hours_days'].includes(measurementType)) return null;
   return (
-    <div className="border border-orange-200 bg-orange-50/50 rounded-lg p-3 space-y-3">
-      <h4 className="text-xs font-semibold text-orange-900">Generic Trades (beta)</h4>
-
-      {/* Conditional type-specific fields. */}
+    <div className="space-y-3 mt-1">
       {measurementType === 'length_x_height' && (
         <div>
-          <label className="block text-xs text-slate-600 mb-1">Component height (mm)</label>
-          <input
-            type="number"
-            step="1"
-            placeholder="e.g. 2400 for a 2.4m brick wall"
-            value={heightMm}
-            onChange={(e) => setHeightMm(e.target.value)}
-            className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
-          />
-          <p className="text-xs text-slate-500 mt-1">Used to compute area = measured length × height.</p>
+          <label className="block text-xs text-slate-500 mb-1">Component height (mm)</label>
+          <input type="number" step="1" placeholder="e.g. 2400" value={heightMm} onChange={(e) => setHeightMm(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+          <p className="text-xs text-slate-400 mt-1">Area = measured length x height.</p>
         </div>
       )}
       {measurementType === 'volume' && (
         <div>
-          <label className="block text-xs text-slate-600 mb-1">Component depth (mm)</label>
-          <input
-            type="number"
-            step="1"
-            placeholder="e.g. 100 for a 100mm concrete slab"
-            value={depthMm}
-            onChange={(e) => setDepthMm(e.target.value)}
-            className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
-          />
-          <p className="text-xs text-slate-500 mt-1">Used to compute volume = measured area × depth.</p>
+          <label className="block text-xs text-slate-500 mb-1">Component depth (mm)</label>
+          <input type="number" step="1" placeholder="e.g. 100" value={depthMm} onChange={(e) => setDepthMm(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+          <p className="text-xs text-slate-400 mt-1">Volume = measured area x depth.</p>
         </div>
       )}
       {measurementType === 'hours_days' && (
         <div>
-          <label className="block text-xs text-slate-600 mb-1">Time unit</label>
-          <select
-            value={hoursUnit}
-            onChange={(e) => setHoursUnit(e.target.value as 'hr' | 'day')}
-            className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
-          >
+          <label className="block text-xs text-slate-500 mb-1">Time unit</label>
+          <select value={hoursUnit} onChange={(e) => setHoursUnit(e.target.value as 'hr' | 'day')} className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
             <option value="hr">Hours</option>
             <option value="day">Days</option>
           </select>
         </div>
-      )}
-
-      {/* Waste unit dropdown. */}
-      <div>
-        <label className="block text-xs text-slate-600 mb-1">Waste interpretation</label>
-        <select
-          value={wasteUnit}
-          onChange={(e) => setWasteUnit(e.target.value as WasteUnit)}
-          className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
-        >
-          {(Object.entries(WASTE_UNIT_LABELS) as Array<[WasteUnit, string]>).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Pricing strategy. */}
-      <div>
-        <label className="block text-xs text-slate-600 mb-1">Material pricing strategy</label>
-        <select
-          value={pricingStrategy}
-          onChange={(e) => setPricingStrategy(e.target.value as PricingStrategy)}
-          className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
-        >
-          {allowedStrategies.map((s) => (
-            <option key={s} value={s}>{PRICING_STRATEGY_LABELS[s]}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Strategy-specific pack fields. */}
-      {pricingStrategy !== 'per_unit' && (
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs text-slate-600 mb-1">Pack price ($)</label>
-            <input
-              type="number"
-              step="0.01"
-              placeholder="e.g. 60"
-              value={packPrice}
-              onChange={(e) => setPackPrice(e.target.value)}
-              className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-600 mb-1">
-              Pack size {pricingStrategy === 'per_pack_length' ? '(m)' :
-                pricingStrategy === 'per_pack_area' ? '(m²)' :
-                pricingStrategy === 'per_pack_volume' ? '(m³)' :
-                '(quantity, e.g. 20 for a 20L bucket)'}
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              placeholder="e.g. 50"
-              value={packSize}
-              onChange={(e) => setPackSize(e.target.value)}
-              className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
-            />
-          </div>
-          {pricingStrategy === 'per_pack_coverage' && (
-            <div className="col-span-2">
-              <label className="block text-xs text-slate-600 mb-1">Coverage per pack (m²)</label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="e.g. 50 (one 20L bucket covers 50m²)"
-                value={packCoverageM2}
-                onChange={(e) => setPackCoverageM2(e.target.value)}
-                className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {workedExample && (
-        <p className="text-xs text-orange-900 bg-orange-100 px-2 py-1 rounded">
-          {workedExample}
-        </p>
       )}
     </div>
   );

@@ -99,6 +99,9 @@ export async function saveTakeoffMeasurements(
         const wasteType = libComp.default_waste_type || 'none';
         const wastePercent = libComp.default_waste_percent || 0;
         const wasteFixed = libComp.default_waste_fixed || 0;
+        // Phase 7 (flat_per_segment): read waste_unit from component_library.
+        // database.types.ts is stale on Phase 2 columns; cast at boundary.
+        const wasteUnit = (libComp as unknown as Record<string, unknown>).waste_unit as string | null ?? 'flat';
         const materialRate = libComp.default_material_rate || 0;
         const labourRate = libComp.default_labour_rate || 0;
 
@@ -117,6 +120,20 @@ export async function saveTakeoffMeasurements(
           }
           // 'point' is a count (each) and never needs unit conversion.
 
+          // flat_per_segment: multiply the fixed waste amount by the number of
+          // polyline segments so each joint/termination gets its own allowance.
+          // Segment count = points.length - 1. Falls back to standard fixed
+          // behaviour when points are absent or the type isn't multi_lineal.
+          let effectiveWasteFixed = wasteFixed;
+          if (
+            wasteType === 'fixed' &&
+            wasteUnit === 'flat_per_segment' &&
+            m.type === 'multi_lineal' &&
+            m.points && m.points.length >= 2
+          ) {
+            effectiveWasteFixed = wasteFixed * (m.points.length - 1);
+          }
+
           const result = applyPitchAndWaste(
             metricValue,
             true,
@@ -124,7 +141,7 @@ export async function saveTakeoffMeasurements(
             firstRoofAreaPitch,
             wasteType as any,
             wastePercent,
-            wasteFixed
+            effectiveWasteFixed
           );
           return {
             raw_value: metricValue,

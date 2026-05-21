@@ -62,7 +62,7 @@ export type PricingStrategy =
 /** Phase 2 (Generic Trades): how waste values are interpreted on a
  *  component. `percent` is current behaviour; `flat` adds a fixed amount
  *  per source segment/line. */
-export type WasteUnit = 'percent' | 'flat';
+export type WasteUnit = 'percent' | 'flat' | 'flat_per_segment';
 
 /** Phase 2 (Generic Trades): trade tag on a quote, drives terminology +
  *  measurement-type allowlist. */

@@ -1722,9 +1722,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                                     className="flex items-center gap-2 p-1 text-xs text-gray-900 bg-white/50 rounded"
                                   >
                                     <span className="flex-1">
-                                      {m.type === 'line' && `📏 ${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'}`}
-                                      {m.type === 'area' && `📐 ${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
-                                      {m.type === 'point' && `📍 1 item`}
+                                      {(m.type === 'line' || m.type === 'multi_lineal') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'}`}
+                                      {m.type === 'area' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
+                                      {m.type === 'point' && `1 item`}
                                     </span>
                                     <button
                                       onClick={() => handleToggleMeasurementVisibility(id, m.id)}
