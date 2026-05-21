@@ -188,7 +188,7 @@ export async function createQuoteFromTemplate(
         quote_id: quote.id, quote_roof_area_id: tc.template_roof_area_id ? (areaMapping[tc.template_roof_area_id] ?? null) : null,
         component_library_id: tc.component_library_id, template_component_id: tc.id, name: lib.name,
         component_type: tc.component_type, measurement_type: lib.measurement_type, input_mode: 'calculated' as InputMode,
-        waste_type: (tc.override_waste_type ?? lib.default_waste_type) as WasteType,
+        waste_type: (tc.override_waste_type ?? lib.default_waste_type) as any,
         waste_percent: tc.override_waste_percent ?? lib.default_waste_percent ?? 0,
         waste_fixed: tc.override_waste_fixed ?? lib.default_waste_fixed ?? 0,
         pitch_type: (tc.override_pitch_type ?? lib.default_pitch_type ?? 'none') as PitchType,

@@ -18,6 +18,7 @@ export type MeasurementType =
   | 'area'
   | 'lineal'
   | 'multi_lineal'
+  | 'multi_lineal_lxh'
   | 'length_x_height'
   | 'volume'
   | 'irregular_area'
@@ -45,6 +46,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'lineal',
     'linear',
     'multi_lineal',
+    'multi_lineal_lxh',
     'length_x_height',
     'volume',
     'irregular_area',

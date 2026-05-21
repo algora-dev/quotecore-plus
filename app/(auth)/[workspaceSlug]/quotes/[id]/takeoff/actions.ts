@@ -7,7 +7,7 @@ import { convertLinearToMetric, convertAreaFt2ToMetric } from '@/app/lib/measure
 
 interface TakeoffMeasurement {
   componentId: string | null; // null for informational roof areas
-  type: 'line' | 'area' | 'point' | 'multi_lineal';
+  type: 'line' | 'area' | 'point' | 'multi_lineal' | 'multi_lineal_lxh';
   value: number;
   pitch?: number; // Pitch in degrees (for roof areas)
   name?: string; // Name (for roof areas)
@@ -96,42 +96,47 @@ export async function saveTakeoffMeasurements(
         if (!libComp) return null;
         const componentMeasurements = measurements.filter(m => m.componentId === componentId);
         const pitchType = libComp.default_pitch_type || 'none';
-        const wasteType = libComp.default_waste_type || 'none';
+        // Cast: database.types.ts is stale; fixed_per_segment is a valid DB value.
+        const wasteType = (libComp.default_waste_type as string) || 'none';
         const wastePercent = libComp.default_waste_percent || 0;
         const wasteFixed = libComp.default_waste_fixed || 0;
-        // Phase 7 (flat_per_segment): read waste_unit from component_library.
-        // database.types.ts is stale on Phase 2 columns; cast at boundary.
-        const wasteUnit = (libComp as unknown as Record<string, unknown>).waste_unit as string | null ?? 'flat';
         const materialRate = libComp.default_material_rate || 0;
         const labourRate = libComp.default_labour_rate || 0;
+        // Phase 7+: height for multi_lineal_lxh area calculations.
+        const heightMm = (libComp as unknown as Record<string, unknown>).height_value_mm as number | null;
+        const heightM = heightMm ? heightMm / 1000 : 1;
 
         const entries = componentMeasurements.map((m, index) => {
           // Convert calibration-unit value -> canonical metric BEFORE pitch/waste
           // math, since material/labour rates are priced per metre or per m².
-          // - 'line' / 'point' (length, count) use linear conversion (or pass-through for points)
-          // - 'area' uses area conversion
           let metricValue = m.value;
           if (m.type === 'line' || m.type === 'multi_lineal') {
-            // multi_lineal value is the total polyline length — treat like a
-            // standard lineal measurement for metric conversion and pricing.
             metricValue = toMetricLinear(m.value);
+          } else if (m.type === 'multi_lineal_lxh') {
+            // multi_lineal_lxh: area = total polyline length × component height.
+            // Height is constant across all segments, so sum(seg_len × h) = total × h.
+            // m.value is the total polyline length in calibrated units (same as multi_lineal).
+            metricValue = toMetricLinear(m.value) * heightM;
           } else if (m.type === 'area') {
             metricValue = toMetricArea(m.value);
           }
           // 'point' is a count (each) and never needs unit conversion.
 
-          // flat_per_segment: multiply the fixed waste amount by the number of
-          // polyline segments so each joint/termination gets its own allowance.
-          // Segment count = points.length - 1. Falls back to standard fixed
-          // behaviour when points are absent or the type isn't multi_lineal.
+          // fixed_per_segment (waste_type): multiply fixed waste by segment
+          // count for multi_lineal / multi_lineal_lxh measurements.
+          // Segment count = points.length - 1.
+          let effectiveWasteType = wasteType as string;
           let effectiveWasteFixed = wasteFixed;
           if (
-            wasteType === 'fixed' &&
-            wasteUnit === 'flat_per_segment' &&
-            m.type === 'multi_lineal' &&
+            wasteType === 'fixed_per_segment' &&
+            (m.type === 'multi_lineal' || m.type === 'multi_lineal_lxh') &&
             m.points && m.points.length >= 2
           ) {
+            effectiveWasteType = 'fixed';
             effectiveWasteFixed = wasteFixed * (m.points.length - 1);
+          } else if (wasteType === 'fixed_per_segment') {
+            // Non-polyline component using fixed_per_segment — treat as plain fixed.
+            effectiveWasteType = 'fixed';
           }
 
           const result = applyPitchAndWaste(
@@ -139,7 +144,7 @@ export async function saveTakeoffMeasurements(
             true,
             pitchType as any,
             firstRoofAreaPitch,
-            wasteType as any,
+            effectiveWasteType as any,
             wastePercent,
             effectiveWasteFixed
           );

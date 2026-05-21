@@ -48,7 +48,8 @@ export type MeasurementType =
   | 'count'
   | 'curved_line'
   | 'irregular_area'
-  | 'multi_lineal';
+  | 'multi_lineal'
+  | 'multi_lineal_lxh';  // Phase 7+: polyline area tool (length × height per segment)
 
 /** Phase 2 (Generic Trades): how a component is priced. Orthogonal to
  *  measurement_type. Default `per_unit` matches today's behaviour. */
@@ -89,7 +90,7 @@ export function normalizeMeasurementSystem(
   return 'metric';
 }
 export type InputMode = 'final' | 'calculated';
-export type WasteType = 'percent' | 'fixed' | 'none';
+export type WasteType = 'percent' | 'fixed' | 'fixed_per_segment' | 'none';
 export type PitchType = 'none' | 'rafter' | 'valley_hip';
 export type QuoteStatus = 'draft' | 'confirmed' | 'sent' | 'accepted' | 'declined' | 'expired' | 'archived';
 export type LineType = 'component' | 'custom' | 'roof_area_header';
@@ -160,6 +161,7 @@ export function unitForMeasurement(mt: MeasurementType): string {
     case 'lineal': return 'm';
     case 'linear': return 'm';                    // legacy alias
     case 'multi_lineal': return 'm';
+    case 'multi_lineal_lxh': return 'm\u00b2';
     case 'quantity': return 'each';
     case 'count': return 'each';                  // Phase 2 alias
     case 'fixed': return 'fixed';
@@ -173,7 +175,9 @@ export function unitForMeasurement(mt: MeasurementType): string {
 }
 
 export function wasteAmountSuffix(wt: WasteType, mt: MeasurementType): string {
-  if (wt === 'percent') return '%'; if (wt === 'fixed') return unitForMeasurement(mt); return '';
+  if (wt === 'percent') return '%';
+  if (wt === 'fixed' || wt === 'fixed_per_segment') return unitForMeasurement(mt);
+  return '';
 }
 
 export function entryLabel(mt: MeasurementType): string {
@@ -182,6 +186,7 @@ export function entryLabel(mt: MeasurementType): string {
     case 'lineal':
     case 'linear':
     case 'multi_lineal':
+    case 'multi_lineal_lxh':
     case 'curved_line': return 'length';
     case 'quantity':
     case 'count': return 'items';
@@ -200,6 +205,7 @@ export function addMoreLabel(mt: MeasurementType): string {
     case 'lineal':
     case 'linear':
     case 'multi_lineal':
+    case 'multi_lineal_lxh':
     case 'curved_line': return 'Add more lengths';
     case 'quantity':
     case 'count': return 'Add more items';

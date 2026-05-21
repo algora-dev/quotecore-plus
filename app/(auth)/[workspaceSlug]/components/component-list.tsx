@@ -47,6 +47,7 @@ function buildMeasurementLabels(system: MeasurementSystem): Record<MeasurementTy
     curved_line: `Curved Line (${linealUnit})`,
     irregular_area: `Irregular Area (${areaUnit})`,
     multi_lineal: `Multi-Line Total (${linealUnit})`,
+    multi_lineal_lxh: `Multi-Line Height x Length (${areaUnit})`,
   };
 }
 
@@ -80,7 +81,7 @@ function allowedStrategiesFor(mt: MeasurementType): PricingStrategy[] {
   if (['lineal', 'linear', 'multi_lineal', 'curved_line'].includes(mt)) {
     base.push('per_pack_length');
   }
-  if (['area', 'length_x_height', 'irregular_area'].includes(mt)) {
+  if (['area', 'length_x_height', 'irregular_area', 'multi_lineal_lxh'].includes(mt)) {
     base.push('per_pack_area', 'per_pack_coverage');
   }
   if (mt === 'volume') {
@@ -92,7 +93,8 @@ function allowedStrategiesFor(mt: MeasurementType): PricingStrategy[] {
 const WASTE_LABELS: Record<WasteType, string> = {
   none: 'None',
   percent: 'Percentage',
-  fixed: 'Fixed amount',
+  fixed: 'Fixed (total)',
+  fixed_per_segment: 'Fixed (per segment)',
 };
 
 const PITCH_LABELS: Record<PitchType, string> = {
@@ -304,9 +306,10 @@ export function ComponentList({
       measurement_type: fd.get('measurement_type') as any,
       default_material_rate: Number(fd.get('default_material_rate')) || 0,
       default_labour_rate: Number(fd.get('default_labour_rate')) || 0,
-      default_waste_type: wasteType,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      default_waste_type: wasteType as any,
       default_waste_percent: wasteType === 'percent' ? wasteAmount : 0,
-      default_waste_fixed: wasteType === 'fixed' ? wasteAmount : 0,
+      default_waste_fixed: (wasteType === 'fixed' || wasteType === 'fixed_per_segment') ? wasteAmount : 0,
       default_pitch_type: formPitchEnabled ? (fd.get('default_pitch_type') as PitchType) : 'none',
       eligible_for_orders: fd.get('eligible_for_orders') === 'on',
       flashing_ids: assignedFlashings.length > 0 ? assignedFlashings : null,
@@ -319,7 +322,7 @@ export function ComponentList({
     const inputWithGenericTrades = genericTradesEnabled
       ? ({
           ...input,
-          height_value_mm: formMeasurementType === 'length_x_height' && formHeightMm
+          height_value_mm: (formMeasurementType === 'length_x_height' || formMeasurementType === 'multi_lineal_lxh') && formHeightMm
             ? Number(formHeightMm)
             : null,
           depth_value_mm: formMeasurementType === 'volume' && formDepthMm
@@ -394,9 +397,10 @@ export function ComponentList({
       measurement_type: formMeasurementType as any,
       default_material_rate: Number(fd.get('default_material_rate')) || 0,
       default_labour_rate: Number(fd.get('default_labour_rate')) || 0,
-      default_waste_type: wasteType,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      default_waste_type: wasteType as any,
       default_waste_percent: wasteType === 'percent' ? wasteAmount : 0,
-      default_waste_fixed: wasteType === 'fixed' ? wasteAmount : 0,
+      default_waste_fixed: (wasteType === 'fixed' || wasteType === 'fixed_per_segment') ? wasteAmount : 0,
       default_pitch_type: formPitchEnabled ? (fd.get('default_pitch_type') as PitchType) : 'none',
       eligible_for_orders: fd.get('eligible_for_orders') === 'on',
       flashing_ids: assignedFlashings.length > 0 ? assignedFlashings : null,
@@ -407,7 +411,7 @@ export function ComponentList({
     const inputWithGenericTrades = genericTradesEnabled
       ? ({
           ...input,
-          height_value_mm: formMeasurementType === 'length_x_height' && formHeightMm
+          height_value_mm: (formMeasurementType === 'length_x_height' || formMeasurementType === 'multi_lineal_lxh') && formHeightMm
             ? Number(formHeightMm)
             : null,
           depth_value_mm: formMeasurementType === 'volume' && formDepthMm
@@ -680,20 +684,7 @@ export function ComponentList({
                   <input name="waste_amount" type="number" step="0.01" placeholder={wasteAmountPlaceholderText} className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
                 </div>
               )}
-              {/* Flat waste mode: only relevant for multi_lineal + fixed. */}
-              {genericTradesEnabled && formWasteType === 'fixed' && formMeasurementType === 'multi_lineal' && (
-                <div className="col-span-2">
-                  <label className="block text-xs text-slate-500 mb-1">Fixed waste mode</label>
-                  <select
-                    value={formWasteUnit}
-                    onChange={(e) => setFormWasteUnit(e.target.value as WasteUnit)}
-                    className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
-                  >
-                    <option value="flat">{WASTE_UNIT_LABELS.flat}</option>
-                    <option value="flat_per_segment">{WASTE_UNIT_LABELS.flat_per_segment}</option>
-                  </select>
-                </div>
-              )}
+
             </div>
 
             {/* Type-specific fields (generic trades only): height, depth, time unit. */}
@@ -885,19 +876,7 @@ export function ComponentList({
                         />
                       </div>
                     )}
-                    {genericTradesEnabled && formWasteType === 'fixed' && formMeasurementType === 'multi_lineal' && (
-                      <div className="col-span-2">
-                        <label className="block text-xs text-slate-500 mb-1">Fixed waste mode</label>
-                        <select
-                          value={formWasteUnit}
-                          onChange={(e) => setFormWasteUnit(e.target.value as WasteUnit)}
-                          className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
-                        >
-                          <option value="flat">{WASTE_UNIT_LABELS.flat}</option>
-                          <option value="flat_per_segment">{WASTE_UNIT_LABELS.flat_per_segment}</option>
-                        </select>
-                      </div>
-                    )}
+
                   </div>
 
                   {/* Type-specific fields (generic trades only). */}
@@ -1090,10 +1069,10 @@ function TypeSpecificFields(props: {
   setHoursUnit: (v: 'hr' | 'day') => void;
 }) {
   const { measurementType, heightMm, setHeightMm, depthMm, setDepthMm, hoursUnit, setHoursUnit } = props;
-  if (!['length_x_height', 'volume', 'hours_days'].includes(measurementType)) return null;
+  if (!['length_x_height', 'multi_lineal_lxh', 'volume', 'hours_days'].includes(measurementType)) return null;
   return (
     <div className="space-y-3 mt-1">
-      {measurementType === 'length_x_height' && (
+      {(measurementType === 'length_x_height' || measurementType === 'multi_lineal_lxh') && (
         <div>
           <label className="block text-xs text-slate-500 mb-1">Component height (mm)</label>
           <input type="number" step="1" placeholder="e.g. 2400" value={heightMm} onChange={(e) => setHeightMm(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />

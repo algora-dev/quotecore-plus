@@ -42,7 +42,7 @@ interface RoofArea {
 
 interface ComponentMeasurement {
   id: string;
-  type: 'line' | 'area' | 'point' | 'multi_lineal';
+  type: 'line' | 'area' | 'point' | 'multi_lineal' | 'multi_lineal_lxh';
   value: number; // length (ft/m) or area (sq ft/m)
   points?: { x: number; y: number }[];
   visible: boolean;
@@ -363,7 +363,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       // Activate appropriate tool
       if (measurementType === 'lineal' || measurementType === 'linear') {
         setLineMode(true);
-      } else if (measurementType === 'multi_lineal') {
+      } else if (measurementType === 'multi_lineal' || measurementType === 'multi_lineal_lxh') {
         setMultiLinealMode(true);
       } else if (measurementType === 'area' || measurementType === 'length_x_height' || measurementType === 'irregular_area') {
         setAreaMode(true);
@@ -482,9 +482,17 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     const compId = selectedComponentIdRef.current;
     if (!compId) return;
 
+    // Use the component's actual measurement_type so multi_lineal_lxh
+    // is stored correctly and the save layer applies height conversion.
+    const compForType = components.find(c => c.id === compId);
+    const resolvedType: 'multi_lineal' | 'multi_lineal_lxh' =
+      (compForType?.default_measurement_type as string) === 'multi_lineal_lxh'
+        ? 'multi_lineal_lxh'
+        : 'multi_lineal';
+
     const newMeasurement: ComponentMeasurement = {
       id: `ml-${Date.now()}`,
-      type: 'multi_lineal' as const,
+      type: resolvedType,
       value: totalLength,
       points: currentPoints,
       visible: true,
@@ -1723,6 +1731,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                                   >
                                     <span className="flex-1">
                                       {(m.type === 'line' || m.type === 'multi_lineal') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'}`}
+                                      {m.type === 'multi_lineal_lxh' && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×h`}
                                       {m.type === 'area' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
                                       {m.type === 'point' && `1 item`}
                                     </span>
