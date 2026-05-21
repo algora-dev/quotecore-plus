@@ -482,24 +482,35 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     const compId = selectedComponentIdRef.current;
     if (!compId) return;
 
-    // Add measurement to state.
-    setComponentMeasurements(prev => prev.map(comp => {
-      if (comp.componentId !== compId) return comp;
-      return {
-        ...comp,
-        measurements: [
-          ...comp.measurements,
-          {
-            id: `ml-${Date.now()}`,
-            type: 'multi_lineal' as const,
-            value: totalLength,
-            points: currentPoints,
-            visible: true,
-            canvasObjects: multiLinealSegmentObjects,
-          },
-        ],
-      };
-    }));
+    const newMeasurement: ComponentMeasurement = {
+      id: `ml-${Date.now()}`,
+      type: 'multi_lineal' as const,
+      value: totalLength,
+      points: currentPoints,
+      visible: true,
+      canvasObjects: multiLinealSegmentObjects,
+    };
+
+    // Add measurement to state. Mirrors the create-or-update pattern used by
+    // Line / Area / Point handlers so the first measurement for a component
+    // doesn't get silently dropped when no prior entry exists. (Phase 7 bug:
+    // earlier version used prev.map only, which lost the very first
+    // multi_lineal measurement on a component and produced empty
+    // quote_components rows in the quote builder.)
+    setComponentMeasurements(prev => {
+      const exists = prev.some(c => c.componentId === compId);
+      if (exists) {
+        return prev.map(c =>
+          c.componentId === compId
+            ? { ...c, measurements: [...c.measurements, newMeasurement] }
+            : c
+        );
+      }
+      return [
+        ...prev,
+        { componentId: compId, measurements: [newMeasurement], expanded: true },
+      ];
+    });
 
     // Reset multi-lineal state (keep objects on canvas, they're captured above).
     setMultiLinealPoints([]);
@@ -1905,38 +1916,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
               </button>
             </div>
 
-            {/* Phase 7: Multi-lineal in-progress readout + Finish button */}
-            {multiLinealMode && multiLinealPoints.length >= 1 && (() => {
-              const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / (calibrations.length || 1);
-              let runningTotal = 0;
-              for (let i = 1; i < multiLinealPoints.length; i++) {
-                const dx = multiLinealPoints[i].x - multiLinealPoints[i - 1].x;
-                const dy = multiLinealPoints[i].y - multiLinealPoints[i - 1].y;
-                runningTotal += Math.sqrt(dx * dx + dy * dy) * avgScale;
-              }
-              const segCount = multiLinealPoints.length - 1;
-              return (
-                <div className="flex items-center gap-3 px-3 py-2 bg-orange-50 border border-orange-200 rounded-xl text-sm">
-                  <span className="text-orange-800 font-medium">
-                    Total: {runningTotal.toFixed(2)}m ({segCount} segment{segCount !== 1 ? 's' : ''})
-                  </span>
-                  <span className="text-orange-500 text-xs">Double-click or</span>
-                  <button
-                    onClick={handleFinishMultiLineal}
-                    disabled={multiLinealPoints.length < 2}
-                    className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-medium hover:bg-orange-600 disabled:opacity-40"
-                  >
-                    Finish
-                  </button>
-                  <button
-                    onClick={handleCancelMultiLineal}
-                    className="px-2 py-1 bg-gray-200 text-gray-700 rounded-full text-xs hover:bg-gray-300"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              );
-            })()}
+            {/* Phase 7: Multi-lineal in-progress readout floats below the toolbar
+                (see banner block further down) so it never reflows the tool buttons
+                or zoom controls when the user is mid-polyline. */}
 
             {/* Zoom Controls - Right Side */}
             <div className="flex gap-2">
@@ -1967,6 +1949,45 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
               </button>
             </div>
           </div>
+
+          {/* Phase 7: Multi-lineal in-progress floating banner. Lives BELOW the
+              toolbar instead of inside it so the tool buttons + zoom controls
+              never shift around when the user starts a polyline. Absolute-
+              positioned so it overlays the canvas top edge without consuming
+              its own layout row. */}
+          {multiLinealMode && multiLinealPoints.length >= 1 && (() => {
+            const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / (calibrations.length || 1);
+            let runningTotal = 0;
+            for (let i = 1; i < multiLinealPoints.length; i++) {
+              const dx = multiLinealPoints[i].x - multiLinealPoints[i - 1].x;
+              const dy = multiLinealPoints[i].y - multiLinealPoints[i - 1].y;
+              runningTotal += Math.sqrt(dx * dx + dy * dy) * avgScale;
+            }
+            const segCount = multiLinealPoints.length - 1;
+            return (
+              <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[96px] z-10">
+                <div className="pointer-events-auto flex items-center gap-3 px-4 py-2 bg-orange-50 border border-orange-300 rounded-full text-sm shadow-md">
+                  <span className="text-orange-800 font-medium whitespace-nowrap">
+                    Total: {runningTotal.toFixed(2)}m ({segCount} segment{segCount !== 1 ? 's' : ''})
+                  </span>
+                  <span className="text-orange-500 text-xs whitespace-nowrap">Double-click or</span>
+                  <button
+                    onClick={handleFinishMultiLineal}
+                    disabled={multiLinealPoints.length < 2}
+                    className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-medium hover:bg-orange-600 disabled:opacity-40"
+                  >
+                    Finish
+                  </button>
+                  <button
+                    onClick={handleCancelMultiLineal}
+                    className="px-2 py-1 bg-gray-200 text-gray-700 rounded-full text-xs hover:bg-gray-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Canvas */}
           <div className="flex-1 flex flex-col items-center justify-start p-6 pt-4 overflow-auto">
