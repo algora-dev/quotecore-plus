@@ -8,6 +8,7 @@ import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { saveTakeoffMeasurements, createTakeoffPage, initializeTakeoffPage, finalizeTakeoffPageImage } from './actions';
 import { uploadCanvasImage } from './uploadCanvasImage';
 import { AlertModal } from '@/app/components/AlertModal';
+import { getTradeLabels } from '@/app/lib/trades/labels';
 
 // Extend Fabric.js Canvas type with custom properties
 declare module 'fabric' {
@@ -224,10 +225,14 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quote.id]);
 
-  // After calibration: show area instructions for roofing quotes (mandatory),
-  // or the optional "Do you want to measure an area?" prompt for generic
-  // quotes (Phase 7 — C2 spec). Keyed on quote.trade.
-  const quoteIsGeneric = (quote as { trade?: string }).trade === 'generic';
+  // Trade-aware labels + config. Single source of truth for all copy that
+  // varies by trade (roofing / cladding / generic). Replaces the old
+  // quoteIsGeneric boolean — check tradeConfig.pitchRequired / .areaIsOptional
+  // instead of checking the trade string directly.
+  const tradeConfig = getTradeLabels((quote as { trade?: string }).trade);
+  // Keep this alias for any existing code that still references it; prefer
+  // tradeConfig properties in new code.
+  const quoteIsGeneric = !tradeConfig.pitchRequired;
   useEffect(() => {
     if (calibrationConfirmed && calibrations.length > 0 && roofAreas.length === 0) {
       // Delay slightly to show after calibration flash
@@ -2024,18 +2029,23 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         />
       )}
 
-      {/* Roof Area Instructions (after first calibration) */}
+      {/* Area Instructions (after first calibration) — trade-aware via tradeConfig */}
       {showRoofAreaInstructions && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md border border-gray-200">
             <h2 className="text-xl font-semibold mb-4">Calibration Complete!</h2>
-            {quoteIsGeneric ? (
-              // Phase 7: generic trade — area is optional
+            {tradeConfig.areaIsOptional ? (
+              // Optional-area trades (cladding, generic) — let the user choose
               <>
-                <h3 className="text-lg font-semibold mb-3 text-gray-700">Do you want to measure an area first?</h3>
+                <h3 className="text-lg font-semibold mb-3 text-gray-700">{tradeConfig.needAreaPrompt}</h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  For area-based components (e.g. flooring, cladding) you can draw an area now. For lineal or count-based work you can skip this and measure directly.
+                  {tradeConfig.firstAreaInstructionsBody}
                 </p>
+                {tradeConfig.toolGuidanceNote && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
+                    {tradeConfig.toolGuidanceNote}
+                  </div>
+                )}
                 <div className="flex gap-3">
                   <button
                     onClick={() => {
@@ -2046,20 +2056,20 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                     }}
                     className="flex-1 px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium text-sm transition-all"
                   >
-                    Yes, add an area
+                    {tradeConfig.optionalAreaConfirmCta}
                   </button>
                   <button
                     onClick={() => setShowRoofAreaInstructions(false)}
                     className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full font-medium text-sm transition-all"
                   >
-                    No, skip
+                    {tradeConfig.skipAreaCta}
                   </button>
                 </div>
               </>
             ) : (
-              // Roofing trade — area with pitch is required
+              // Mandatory-area trades (roofing) — pitch required
               <>
-                <h3 className="text-lg font-semibold mb-3 text-gray-700">Next: Create Your First Roof Area</h3>
+                <h3 className="text-lg font-semibold mb-3 text-gray-700">{tradeConfig.firstAreaInstructionsTitle}</h3>
                 <div className="space-y-3 text-sm">
                   <p className="text-gray-900">
                     Before measuring components, you must define at least one <span className="font-bold">roof area with a pitch angle</span>.
@@ -2086,7 +2096,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   }}
                   className="mt-6 w-full px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
                 >
-                  Got it, let&apos;s create a roof area!
+                  {tradeConfig.firstAreaConfirmCta}
                 </button>
               </>
             )}
@@ -2129,7 +2139,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       {/* Area Name Prompt */}
       {showAreaNamePrompt && (
         <AreaNameModal
-          isRoofing={!quoteIsGeneric}
+          isRoofing={tradeConfig.pitchRequired}
+          modalTitle={tradeConfig.createAreaModalTitle}
+          namePlaceholder={tradeConfig.areaNamePlaceholder}
           componentName={roofAreas.length === 0 ? null : (selectedComponentId ? displayComponents.find(c => c.id === selectedComponentId)?.name ?? null : null)}
           calculatedArea={pendingAreaPoints.length > 0 ? calculatePolygonArea(pendingAreaPoints) : 0}
           unit={calibrations[0]?.unit || 'feet'}
@@ -2272,9 +2284,12 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   );
 }
 
-// Area Name Modal — isRoofing controls whether pitch is shown/required
+// Area Name Modal — isRoofing controls whether pitch is shown/required.
+// modalTitle + namePlaceholder are trade-config-driven.
 function AreaNameModal({
   isRoofing,
+  modalTitle,
+  namePlaceholder,
   componentName,
   calculatedArea,
   unit,
@@ -2282,6 +2297,8 @@ function AreaNameModal({
   onCancel,
 }: {
   isRoofing: boolean;
+  modalTitle?: string;
+  namePlaceholder?: string;
   componentName: string | null;
   calculatedArea: number;
   unit: string;
@@ -2313,7 +2330,7 @@ function AreaNameModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-96 border border-gray-200">
         <h2 className="text-xl font-semibold mb-4">
-          {componentName ? 'Add Area to Component' : isRoofing ? 'Create Roof Area' : 'Create Area'}
+          {componentName ? 'Add Area to Component' : (modalTitle ?? (isRoofing ? 'Create Roof Area' : 'Create Area'))}
         </h2>
         
         {componentName && (
@@ -2336,7 +2353,7 @@ function AreaNameModal({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded"
-                  placeholder={isRoofing ? 'e.g. Main Roof' : 'e.g. North Wall'}
+                  placeholder={namePlaceholder ?? (isRoofing ? 'e.g. Main Roof' : 'e.g. North Wall')}
                   autoFocus
                   required
                 />

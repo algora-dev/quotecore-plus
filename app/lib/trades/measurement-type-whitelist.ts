@@ -12,7 +12,7 @@
  * cases can widen later). `rafter`/`valley_hip` are NOT measurement types
  * (they live on the `pitch_type` enum) so they don't appear here.
  */
-export type Trade = 'roofing' | 'generic';
+export type Trade = 'roofing' | 'generic' | 'cladding';
 
 export type MeasurementType =
   | 'area'
@@ -38,6 +38,20 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'lineal',
     'linear',     // legacy alias of lineal (patch_006 rename history)
     'quantity',   // legacy alias of count
+    'fixed',
+  ]),
+  // Cladding: area-producing types (direct area + lineal×height) plus lineal
+  // for trim/flashings and fixed/quantity for fittings.
+  cladding: new Set<MeasurementType>([
+    'area',
+    'multi_lineal_lxh',   // primary: wall length × height from plan view
+    'length_x_height',    // single-segment wall height × length
+    'irregular_area',     // odd-shaped wall sections
+    'lineal',
+    'linear',
+    'multi_lineal',
+    'quantity',
+    'count',
     'fixed',
   ]),
   // Generic v1: every type the UI offers, including the Phase 2 extensions.

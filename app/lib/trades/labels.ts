@@ -1,47 +1,190 @@
 /**
- * Generic Trades Phase 8 — trade-aware UI labels.
+ * Trade-aware UI labels — single source of truth for all copy that varies by trade.
  *
- * Single source of truth for copy that varies by trade. Import and use
- * instead of hardcoding "Roof Areas" / "Add Roof Area" anywhere in the UI.
+ * Each new trade is one entry in TRADE_LABELS plus an enum value in the DB.
+ * The rest of the UI picks up the right copy automatically via getTradeLabels().
  *
- * Extend this map when new trades are added (one TRADE_LABELS entry per
- * trade value in the `trade` enum). The rest of the UI picks up the right
- * copy automatically.
+ * Fields are grouped by usage context: area labels, modal copy, takeoff
+ * instructions, quote builder, customer quote, measurement type overrides.
  */
 
-export type Trade = 'roofing' | 'generic';
+export type Trade = 'roofing' | 'generic' | 'cladding';
 
 export interface TradeLabels {
-  /** Plural noun for the "areas" concept. e.g. "Roof Areas" or "Areas". */
+  // ── Identity ──────────────────────────────────────────────────────────────
+  /** Display name in dropdowns / headings. */
+  tradeLabel: string;
+
+  // ── Area labels ───────────────────────────────────────────────────────────
+  /** Plural noun: "Roof Areas" / "Wall Areas" / "Areas" */
   areaPluralLabel: string;
-  /** Button / CTA to add a new area. */
-  addAreaCta: string;
-  /** Post-calibration optional prompt (generic only; roofing has a mandatory flow). */
-  needAreaPrompt: string;
-  /** Label for the "skip area" button in the optional prompt. */
-  skipAreaCta: string;
-  /** Whether pitch is a required field on the add-area form. */
-  pitchRequired: boolean;
-  /** Singular noun. */
+  /** Singular noun: "Roof Area" / "Wall Area" / "Area" */
   areaSingularLabel: string;
+  /** CTA button to add a new area. */
+  addAreaCta: string;
+
+  // ── Pitch ─────────────────────────────────────────────────────────────────
+  /** Whether pitch is a required field on the add-area modal. */
+  pitchRequired: boolean;
+
+  // ── Create-area modal ─────────────────────────────────────────────────────
+  /** Modal heading when creating the primary named area. */
+  createAreaModalTitle: string;
+  /** Placeholder for the area name input. */
+  areaNamePlaceholder: string;
+
+  // ── Post-calibration instructions modal ───────────────────────────────────
+  /**
+   * Optional: shown below the calibration-complete heading.
+   * When null the modal skips the optional-area branch and goes straight
+   * to the mandatory pitch flow (roofing only).
+   */
+  firstAreaInstructionsTitle: string;
+  firstAreaInstructionsBody: string;
+  /** Primary CTA in the instructions modal. */
+  firstAreaConfirmCta: string;
+  /**
+   * Optional guidance note rendered in the modal for trades that support
+   * multiple measurement approaches (e.g. cladding elevation vs plan view).
+   * null = no note shown.
+   */
+  toolGuidanceNote: string | null;
+  /** Whether the area step is optional (generic/cladding) or mandatory (roofing). */
+  areaIsOptional: boolean;
+
+  // ── Optional-area prompt (areaIsOptional trades) ──────────────────────────
+  /** Prompt heading when area is optional. */
+  needAreaPrompt: string;
+  /** Confirm button copy. */
+  optionalAreaConfirmCta: string;
+  /** Skip button copy. */
+  skipAreaCta: string;
+
+  // ── Quote builder ─────────────────────────────────────────────────────────
+  /** Step 1 label in the phase nav: "1. Roof Areas" / "1. Wall Areas" */
+  builderStepLabel: string;
+  /** Empty-quote guard message when no area has been added. */
+  emptyAreaGuardMessage: string;
+
+  // ── Customer-facing quote ─────────────────────────────────────────────────
+  /** Section header on the customer quote document. */
+  customerQuoteSectionLabel: string;
+
+  // ── Measurement type display name overrides ───────────────────────────────
+  /**
+   * Map of measurement_type → display name for this trade.
+   * Keys not present fall back to the global default names.
+   */
+  measurementTypeLabels: Partial<Record<string, string>>;
 }
 
 export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
   roofing: {
+    tradeLabel: 'Roofing',
+
     areaPluralLabel: 'Roof Areas',
     areaSingularLabel: 'Roof Area',
     addAreaCta: 'Add Roof Area',
-    needAreaPrompt: 'Do you want to measure a roof area first?',
-    skipAreaCta: 'No, skip',
+
     pitchRequired: true,
+
+    createAreaModalTitle: 'Create Roof Area',
+    areaNamePlaceholder: 'e.g. Main Roof',
+
+    areaIsOptional: false,
+    firstAreaInstructionsTitle: 'Next: Create Your First Roof Area',
+    firstAreaInstructionsBody:
+      'Before measuring components, you must define at least one roof area with a pitch angle. ' +
+      'Click the Area button, draw around the roof outline, then enter a name and pitch angle.',
+    firstAreaConfirmCta: "Got it, let's create a roof area!",
+    toolGuidanceNote: null,
+
+    needAreaPrompt: 'Do you want to measure a roof area first?',
+    optionalAreaConfirmCta: 'Yes, add a roof area',
+    skipAreaCta: 'No, skip',
+
+    builderStepLabel: 'Roof Areas',
+    emptyAreaGuardMessage:
+      'A quote needs at least one roof area and one main component before it can be saved. ' +
+      "We'll take you back to Roof Areas so you can add one.",
+
+    customerQuoteSectionLabel: 'Roof Areas',
+
+    measurementTypeLabels: {},
   },
+
+  cladding: {
+    tradeLabel: 'Cladding',
+
+    areaPluralLabel: 'Wall Areas',
+    areaSingularLabel: 'Wall Area',
+    addAreaCta: 'Add Wall Area',
+
+    pitchRequired: false,
+
+    createAreaModalTitle: 'Create Wall Area',
+    areaNamePlaceholder: 'e.g. North Elevation',
+
+    areaIsOptional: true,
+    firstAreaInstructionsTitle: 'Next: Define Your Wall Areas',
+    firstAreaInstructionsBody:
+      'Define your wall areas before measuring components. ' +
+      'Use the Area tool to trace elevations directly, or use the Line / Multi-Line tools ' +
+      'for plan views — make sure your components are set up with Wall Length × Height.',
+    firstAreaConfirmCta: "Got it, let's add a wall area!",
+    toolGuidanceNote:
+      'Use the Area tool for elevation plans, or the Line / Multi-Line tools for plan view ' +
+      '(make sure your components are set up with Wall Length × Height).',
+
+    needAreaPrompt: 'Do you want to measure a wall area first?',
+    optionalAreaConfirmCta: 'Yes, add a wall area',
+    skipAreaCta: 'No, skip',
+
+    builderStepLabel: 'Wall Areas',
+    emptyAreaGuardMessage:
+      'A quote needs at least one wall area and one main component before it can be saved. ' +
+      "We'll take you back to Wall Areas so you can add one.",
+
+    customerQuoteSectionLabel: 'Wall Areas',
+
+    measurementTypeLabels: {
+      multi_lineal_lxh: 'Wall Length × Height',
+      length_x_height: 'Wall Height × Length',
+    },
+  },
+
   generic: {
+    tradeLabel: 'Generic',
+
     areaPluralLabel: 'Areas',
     areaSingularLabel: 'Area',
     addAreaCta: 'Add Area',
-    needAreaPrompt: 'Do you want to measure an area first?',
-    skipAreaCta: 'No, skip',
+
     pitchRequired: false,
+
+    createAreaModalTitle: 'Create Area',
+    areaNamePlaceholder: 'e.g. Zone A',
+
+    areaIsOptional: true,
+    firstAreaInstructionsTitle: 'Define Your Areas',
+    firstAreaInstructionsBody:
+      'For area-based components you can draw an area now. ' +
+      'For lineal or count-based work you can skip this and measure directly.',
+    firstAreaConfirmCta: 'Yes, add an area',
+    toolGuidanceNote: null,
+
+    needAreaPrompt: 'Do you want to measure an area first?',
+    optionalAreaConfirmCta: 'Yes, add an area',
+    skipAreaCta: 'No, skip',
+
+    builderStepLabel: 'Areas',
+    emptyAreaGuardMessage:
+      'A quote needs at least one area and one main component before it can be saved. ' +
+      "We'll take you back to Areas so you can add one.",
+
+    customerQuoteSectionLabel: 'Areas',
+
+    measurementTypeLabels: {},
   },
 };
 
@@ -50,6 +193,7 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
  * values so a stale database row never breaks the UI.
  */
 export function getTradeLabels(trade?: string | null): TradeLabels {
+  if (trade === 'cladding') return TRADE_LABELS.cladding;
   if (trade === 'generic') return TRADE_LABELS.generic;
   return TRADE_LABELS.roofing;
 }

@@ -63,7 +63,7 @@ interface CreateQuoteParams {
    * Phase 8 (Generic Trades): when supplied by the form (flag on), override
    * the resolveQuoteCreationDefaults values with the user's explicit choice.
    */
-  trade?: 'roofing' | 'generic';
+  trade?: 'roofing' | 'cladding' | 'generic';
   componentCollectionId?: string | null;
 }
 

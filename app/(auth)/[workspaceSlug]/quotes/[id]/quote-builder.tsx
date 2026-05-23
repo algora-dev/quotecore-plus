@@ -87,7 +87,8 @@ export function QuoteBuilder({
   const [quote, setQuote] = useState(initialQuote);
   // Phase 8: trade-aware labels + convenience flag.
   const tradeLabels = getTradeLabels((quote as { trade?: string }).trade);
-  const quoteIsGeneric = (quote as { trade?: string }).trade === 'generic';
+  // areaIsOptional covers both cladding and generic (anything that doesn't require pitch).
+  const quoteIsGeneric = tradeLabels.areaIsOptional;
   const { state: copilotState } = useCopilot();
   
   // Update quote state when props change (e.g., after currency change)
@@ -212,7 +213,7 @@ export function QuoteBuilder({
 
   function handleRemoveArea(id: string) {
     const area = roofAreas.find(a => a.id === id);
-    setAreaPendingDelete({ id, label: area?.label || 'this roof area' });
+    setAreaPendingDelete({ id, label: area?.label || `this ${tradeLabels.areaSingularLabel.toLowerCase()}` });
   }
 
   async function confirmRemoveArea() {
@@ -224,7 +225,7 @@ export function QuoteBuilder({
       setComponents(prev => prev.filter(c => c.quote_roof_area_id !== areaPendingDelete.id));
       setAreaPendingDelete(null);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete roof area');
+      alert(err instanceof Error ? err.message : `Failed to delete ${tradeLabels.areaSingularLabel.toLowerCase()}`);
     } finally {
       setAreaDeleting(false);
     }
@@ -409,7 +410,7 @@ export function QuoteBuilder({
   }
 
   const phases: { key: Phase; label: string }[] = [
-    { key: 'areas', label: `1. ${tradeLabels.areaPluralLabel}` },
+    { key: 'areas', label: `1. ${tradeLabels.builderStepLabel}` },
     { key: 'components', label: '2. Components' },
     { key: 'extras', label: '3. Extras' },
     { key: 'review', label: '4. Review' },
@@ -547,7 +548,7 @@ export function QuoteBuilder({
             <input
               value={newAreaLabel}
               onChange={e => setNewAreaLabel(e.target.value)}
-              placeholder={quoteIsGeneric ? 'e.g. Carpet area, Cladding, Foundation' : 'e.g. Main Roof, Garage'}
+              placeholder={tradeLabels.areaIsOptional ? tradeLabels.areaNamePlaceholder : 'e.g. Main Roof, Garage'}
               data-copilot="quote-area-name"
               className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg"
               onKeyDown={e => e.key === 'Enter' && handleAddArea()}
@@ -972,11 +973,11 @@ export function QuoteBuilder({
     </section>
     <ConfirmModal
       open={showEmptyQuoteGuard !== null}
-      title={showEmptyQuoteGuard === 'no-main-components' ? 'Add at least one component' : 'Add at least one roof area'}
+      title={showEmptyQuoteGuard === 'no-main-components' ? 'Add at least one component' : `Add at least one ${tradeLabels.areaSingularLabel.toLowerCase()}`}
       description={
         showEmptyQuoteGuard === 'no-main-components'
-          ? 'Your quote has a roof area but no main components yet. Add at least one component (corrugate, tiles, underlay, etc.) against the roof area before saving the quote.'
-          : 'A quote needs at least one roof area and one main component before it can be saved. We’ll take you back to Roof Areas so you can add one.'
+          ? `Your quote has a ${tradeLabels.areaSingularLabel.toLowerCase()} but no main components yet. Add at least one component before saving the quote.`
+          : tradeLabels.emptyAreaGuardMessage
       }
       confirmLabel="OK, take me there"
       cancelLabel="Stay here"
@@ -994,7 +995,7 @@ export function QuoteBuilder({
     />
     <ConfirmModal
       open={areaPendingDelete !== null}
-      title="Remove roof area"
+      title={`Remove ${tradeLabels.areaSingularLabel.toLowerCase()}`}
       description={
         areaPendingDelete
           ? `Remove "${areaPendingDelete.label}"? Every component attached to this area (and their entries, customer-quote lines, and labor-sheet lines) will also be deleted. This cannot be undone.`
@@ -1298,6 +1299,7 @@ function ExpandableComponent({
   const unit = getUnitLabel(comp.measurement_type as any, quote.measurement_system);
   const label = entryLabel(comp.measurement_type);
   const addLabel = addMoreLabel(comp.measurement_type);
+  const compTradeLabels = getTradeLabels((quote as { trade?: string }).trade);
   const totalCost = (comp.material_cost ?? 0) + (comp.labour_cost ?? 0);
   const hasPitch = comp.pitch_type !== 'none';
   const isAreaBased = comp.measurement_type === 'area';
@@ -1447,7 +1449,7 @@ function ExpandableComponent({
               onClick={() => onUseRoofArea(comp.id, roofArea.computed_sqm ?? 0)}
               className="text-xs text-emerald-600 hover:text-emerald-800 font-medium"
             >
-              → Use roof area total ({formatArea(roofArea.computed_sqm ?? 0, quote.measurement_system)})
+              → Use {compTradeLabels.areaSingularLabel.toLowerCase()} total ({formatArea(roofArea.computed_sqm ?? 0, quote.measurement_system)})
             </button>
           )}
 
