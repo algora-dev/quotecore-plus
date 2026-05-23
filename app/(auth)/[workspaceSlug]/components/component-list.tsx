@@ -18,6 +18,7 @@ import type {
 import {
   computePackCount,
 } from '@/app/lib/pricing/engine';
+import { getTradeLabels } from '@/app/lib/trades/labels';
 import type { MeasurementSystem } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { getUnitLabel } from '@/app/lib/measurements/displayHelpers';
@@ -107,6 +108,7 @@ export function ComponentList({
   initialComponents,
   workspaceSlug,
   companyMeasurementSystem = 'metric',
+  companyDefaultTrade = 'roofing',
   componentLimit,
   componentCount,
   effectivePlanCode,
@@ -117,6 +119,8 @@ export function ComponentList({
   workspaceSlug: string;
   /** Company default measurement system; drives unit labels on this page. */
   companyMeasurementSystem?: MeasurementSystem;
+  /** Company default trade; hides pitch for non-roofing trades. */
+  companyDefaultTrade?: string;
   /** Plan cap on lifetime active components. NULL = unlimited. */
   componentLimit: number | null;
   /** Lifetime active component count as of server render. Local state
@@ -136,6 +140,9 @@ export function ComponentList({
   subscriptionActive: boolean;
 }) {
   const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);
+  // Pitch is only relevant for roofing. All other trades hide the pitch
+  // checkbox — it would be silently ignored by the pricing engine anyway.
+  const pitchVisible = getTradeLabels(companyDefaultTrade).pitchRequired;
   /** Local helper that picks the right unit suffix for a measurement type given the company's default system. */
   const unitForMeasurement = (mt: MeasurementType) =>
     getUnitLabel(mt as 'area' | 'lineal' | 'quantity' | 'fixed', companyMeasurementSystem);
@@ -697,18 +704,22 @@ export function ComponentList({
               />
             )}
 
-            <div className="flex items-center gap-2" data-copilot="component-pitch">
-              <input type="checkbox" id="pitch-enabled" checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="rounded" />
-              <label htmlFor="pitch-enabled" className="text-xs text-slate-700">Apply pitch calculation</label>
-            </div>
-            {formPitchEnabled && (
-              <div data-copilot="component-pitch-type">
-                <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
-                <select name="default_pitch_type" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg">
-                  <option value="rafter">Rafter Pitch</option>
-                  <option value="valley_hip">Valley/Hip Pitch</option>
-                </select>
-              </div>
+            {pitchVisible && (
+              <>
+                <div className="flex items-center gap-2" data-copilot="component-pitch">
+                  <input type="checkbox" id="pitch-enabled" checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="rounded" />
+                  <label htmlFor="pitch-enabled" className="text-xs text-slate-700">Apply pitch calculation</label>
+                </div>
+                {formPitchEnabled && (
+                  <div data-copilot="component-pitch-type">
+                    <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
+                    <select name="default_pitch_type" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg">
+                      <option value="rafter">Rafter Pitch</option>
+                      <option value="valley_hip">Valley/Hip Pitch</option>
+                    </select>
+                  </div>
+                )}
+              </>
             )}
             <div className="border-t border-slate-200 pt-3 mt-3" data-copilot="component-flashings">
               <h4 className="text-xs font-semibold text-slate-700 mb-2">Material Orders</h4>
@@ -889,18 +900,22 @@ export function ComponentList({
                     />
                   )}
 
-                  <div className="flex items-center gap-2">
-                    <input type="checkbox" id={`pitch-${comp.id}`} checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="rounded" />
-                    <label htmlFor={`pitch-${comp.id}`} className="text-xs text-slate-700">Apply pitch calculation</label>
-                  </div>
-                  {formPitchEnabled && (
-                    <div>
-                      <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
-                      <select name="default_pitch_type" defaultValue={comp.default_pitch_type} className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
-                        <option value="rafter">Rafter Pitch</option>
-                        <option value="valley_hip">Valley/Hip Pitch</option>
-                      </select>
-                    </div>
+                  {pitchVisible && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" id={`pitch-${comp.id}`} checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="rounded" />
+                        <label htmlFor={`pitch-${comp.id}`} className="text-xs text-slate-700">Apply pitch calculation</label>
+                      </div>
+                      {formPitchEnabled && (
+                        <div>
+                          <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
+                          <select name="default_pitch_type" defaultValue={comp.default_pitch_type} className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
+                            <option value="rafter">Rafter Pitch</option>
+                            <option value="valley_hip">Valley/Hip Pitch</option>
+                          </select>
+                        </div>
+                      )}
+                    </>
                   )}
                   <div className="border-t border-slate-200 pt-3 mt-3">
                     <h4 className="text-xs font-semibold text-slate-700 mb-2">Material Orders</h4>

@@ -41,6 +41,7 @@ export default async function ComponentsPage(props: {params: Promise<{workspaceS
         initialComponents={components}
         workspaceSlug={workspaceSlug}
         companyMeasurementSystem={company.default_measurement_system}
+        companyDefaultTrade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
         componentLimit={ent.componentLimit}
         componentCount={ent.componentCount}
         effectivePlanCode={ent.effectivePlanCode}
