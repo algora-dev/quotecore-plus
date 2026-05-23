@@ -12,7 +12,7 @@ interface CompanySettings {
   materialMargin: number;
   laborMargin: number;
   /** Phase 8 (Generic Trades): optional; only written when provided. */
-  defaultTrade?: 'roofing' | 'generic' | null;
+  defaultTrade?: 'roofing' | 'cladding' | 'generic' | null;
 }
 
 export async function updateCompanySettings(

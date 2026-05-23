@@ -38,8 +38,10 @@ export function CompanySettingsForm({
 }: Props) {
   const genericTradesEnabled =
     (process.env.NEXT_PUBLIC_GENERIC_TRADES_V1 ?? '').toLowerCase() === 'true';
-  const [defaultTrade, setDefaultTrade] = useState<'roofing' | 'generic'>(
-    currentDefaultTrade === 'generic' ? 'generic' : 'roofing'
+  const [defaultTrade, setDefaultTrade] = useState<'roofing' | 'cladding' | 'generic'>(
+    currentDefaultTrade === 'cladding' ? 'cladding'
+    : currentDefaultTrade === 'generic' ? 'generic'
+    : 'roofing'
   );
   const [companyName, setCompanyName] = useState(currentCompanyName);
   const [userName, setUserName] = useState(currentUserName);
@@ -269,7 +271,7 @@ export function CompanySettingsForm({
               Pre-selects the trade when creating a new quote. You can override it per quote.
             </p>
             <div className="flex gap-3">
-              {(['roofing', 'generic'] as const).map(t => (
+              {(['roofing', 'cladding', 'generic'] as const).map(t => (
                 <label
                   key={t}
                   className={`flex items-center gap-2 px-4 py-3 flex-1 border rounded-lg cursor-pointer hover:bg-slate-50 ${

@@ -3041,7 +3041,7 @@ export type Database = {
         | "declined"
         | "expired"
         | "archived"
-      trade: "roofing" | "generic"
+      trade: "roofing" | "generic" | "cladding"
       waste_type: "percent" | "fixed" | "none" | "fixed_per_segment"
       waste_unit: "percent" | "flat" | "flat_per_segment"
     }
@@ -3207,7 +3207,7 @@ export const Constants = {
         "expired",
         "archived",
       ],
-      trade: ["roofing", "generic"],
+      trade: ["roofing", "generic", "cladding"],
       waste_type: ["percent", "fixed", "none", "fixed_per_segment"],
       waste_unit: ["percent", "flat", "flat_per_segment"],
     },
