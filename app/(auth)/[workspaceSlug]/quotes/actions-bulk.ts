@@ -91,8 +91,6 @@ export interface QuoteBundleData {
     createdAt: string;
     updatedAt: string;
     notes: string | null;
-    /** Trade type — drives section labels in customer quote output. */
-    trade: string | null;
     /** Branding snapshot for the customer quote. */
     branding: {
       companyName: string | null;
@@ -369,7 +367,6 @@ export async function loadQuoteBundleData(quoteId: string): Promise<QuoteBundleD
       createdAt: quote.created_at,
       updatedAt: quote.updated_at,
       notes: (quote as any).notes ?? null,
-      trade: (quote as any).trade ?? null,
       branding: {
         companyName: quote.cq_company_name,
         companyAddress: quote.cq_company_address,

@@ -197,17 +197,3 @@ export function getTradeLabels(trade?: string | null): TradeLabels {
   if (trade === 'generic') return TRADE_LABELS.generic;
   return TRADE_LABELS.roofing;
 }
-
-/**
- * Return the display name for a measurement type, applying any trade-specific
- * override from TradeLabels.measurementTypeLabels.
- * Falls back to the provided defaultLabel (or the raw key) when no override exists.
- */
-export function getMeasurementTypeLabel(
-  trade: string | null | undefined,
-  measurementType: string,
-  defaultLabel: string,
-): string {
-  const labels = getTradeLabels(trade).measurementTypeLabels;
-  return labels[measurementType] ?? defaultLabel;
-}

@@ -18,7 +18,6 @@ type CompanyContextRow = Pick<
   | 'default_tax_rate'
   | 'default_measurement_system'
   | 'default_currency'
-  | 'default_trade'
   | 'onboarding_completed_at'
   | 'created_at'
 >;
@@ -46,7 +45,7 @@ export async function loadCompanyContext(): Promise<CompanyContext> {
   console.log('[loadCompanyContext] Loaded company:', company?.default_measurement_system);
 
   if (error || !company) {
-    if (error?.message?.includes('default_language') || error?.message?.includes('default_tax_rate') || error?.message?.includes('default_measurement_system') || error?.message?.includes('default_trade')) {
+    if (error?.message?.includes('default_language') || error?.message?.includes('default_tax_rate') || error?.message?.includes('default_measurement_system')) {
       const { data: fallback, error: fallbackError } = await supabase
         .from('companies')
         .select('id, name, slug, created_at')
@@ -73,7 +72,6 @@ export async function loadCompanyContext(): Promise<CompanyContext> {
           default_measurement_system: 'metric',
           default_currency: 'NZD',
           onboarding_completed_at: null,
-        default_trade: 'roofing' as const,
         } satisfies CompanyContextRow,
       };
     }

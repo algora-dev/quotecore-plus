@@ -1578,7 +1578,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           )}
 
           <div className="border-t border-gray-200 pt-4">
-            <h2 className="text-sm font-semibold mb-3 text-gray-600">{tradeConfig.areaPluralLabel}</h2>
+            <h2 className="text-sm font-semibold mb-3 text-gray-600">{quoteIsGeneric ? 'Areas' : 'Roof Areas'}</h2>
             {roofAreas.length === 0 ? (
               <div className="text-sm text-gray-500">
                 {calibrationConfirmed ? 'Click "Area" to draw' : 'Calibrate first'}

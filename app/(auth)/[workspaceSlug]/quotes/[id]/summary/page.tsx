@@ -5,7 +5,6 @@ import {  } from '../../../components/actions';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import {  } from '@/app/lib/types';
 import { formatArea, getUnitLabel } from '@/app/lib/measurements/displayHelpers';
-import { getTradeLabels } from '@/app/lib/trades/labels';
 import {
   convertLinear,
   convertArea,
@@ -214,8 +213,8 @@ export default async function QuoteSummaryPage({
   // quote that DOES have areas) keep the existing "Extras" heading.
   // `quote.trade` is from Phase 2 (column landed in dark-schema migration);
   // database.types.ts hasn't been regenerated yet, so cast at the boundary.
-  const quoteTrade = (quote as { trade?: string | null }).trade ?? 'roofing';
-  const isGenericNoArea = getTradeLabels(quoteTrade).areaIsOptional && roofAreas.length === 0;
+  const quoteTrade = (quote as { trade?: 'roofing' | 'generic' | null }).trade ?? 'roofing';
+  const isGenericNoArea = quoteTrade === 'generic' && roofAreas.length === 0;
   const extrasHeading = isGenericNoArea ? 'Quote items' : 'Extras';
   
   const engineComps = componentsWithOverrides.map(c => ({
