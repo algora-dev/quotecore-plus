@@ -264,33 +264,24 @@ export function CompanySettingsForm({
 
       {/* Phase 8 (Generic Trades): default trade selector */}
       {genericTradesEnabled && (
-        <div className="space-y-3">
-          <label className="block">
-            <span className="text-sm font-semibold text-gray-900">Default Trade</span>
-            <p className="text-xs text-gray-600 mt-1 mb-2">
-              Pre-selects the trade when creating a new quote. You can override it per quote.
-            </p>
-            <div className="flex gap-3">
-              {(['roofing', 'cladding', 'generic'] as const).map(t => (
-                <label
-                  key={t}
-                  className={`flex items-center gap-2 px-4 py-3 flex-1 border rounded-lg cursor-pointer hover:bg-slate-50 ${
-                    defaultTrade === t ? 'border-orange-500 bg-orange-50' : 'border-slate-300'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    value={t}
-                    checked={defaultTrade === t}
-                    onChange={() => setDefaultTrade(t)}
-                    disabled={isPending}
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm capitalize">{t}</span>
-                </label>
-              ))}
-            </div>
+        <div className="space-y-1">
+          <label htmlFor="default-trade" className="block text-sm font-semibold text-gray-900">
+            Default Trade
           </label>
+          <p className="text-xs text-gray-600 mb-2">
+            Pre-selects the trade when creating a new quote. You can override it per quote.
+          </p>
+          <select
+            id="default-trade"
+            value={defaultTrade}
+            onChange={e => setDefaultTrade(e.target.value as 'roofing' | 'cladding' | 'generic')}
+            disabled={isPending}
+            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            <option value="roofing">Roofing</option>
+            <option value="cladding">Cladding</option>
+            <option value="generic">Generic</option>
+          </select>
         </div>
       )}
 

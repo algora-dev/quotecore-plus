@@ -261,7 +261,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       const polygon = new Polygon(pendingAreaPoints, {
         fill: 'rgba(59, 130, 246, 0.2)',
         stroke: '#3b82f6',
-        strokeWidth: 1,
+        strokeWidth: 1.25,
         selectable: false,
         evented: false,
       });
@@ -297,7 +297,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       const polygon = new Polygon(pendingAreaPoints, {
         fill: `${componentColor}33`,
         stroke: componentColor,
-        strokeWidth: 1,
+        strokeWidth: 1.25,
         selectable: false,
         evented: false,
       });
@@ -920,7 +920,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           const marker = new Circle({
             left: newPoint.x,
             top: newPoint.y,
-            radius: 4,
+            radius: 3,
             fill: componentColor,
             stroke: '#000',
             strokeWidth: 1,
@@ -939,7 +939,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           const marker = new Circle({
             left: newPoint.x,
             top: newPoint.y,
-            radius: 4,
+            radius: 3,
             fill: componentColor,
             stroke: '#000',
             strokeWidth: 1,
@@ -953,7 +953,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           // Draw line (component color)
           const line = new Line([firstPoint.x, firstPoint.y, newPoint.x, newPoint.y], {
             stroke: componentColor,
-            strokeWidth: 1,
+            strokeWidth: 1.25,
             selectable: false,
             evented: false,
           });
@@ -997,7 +997,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         const marker = new Circle({
           left: newPoint.x,
           top: newPoint.y,
-          radius: 4,
+          radius: 3,
           fill: isFirst ? '#f97316' : componentColor, // orange for first, component color for rest
           stroke: '#000',
           strokeWidth: 1,
@@ -1014,7 +1014,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           const prev = currentPoints[currentPoints.length - 1];
           const segLine = new Line([prev.x, prev.y, newPoint.x, newPoint.y], {
             stroke: componentColor,
-            strokeWidth: 1,
+            strokeWidth: 1.25,
             selectable: false,
             evented: false,
           });
@@ -1088,7 +1088,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         const marker = new Circle({
           left: newPoint.x,
           top: newPoint.y,
-          radius: 4,
+          radius: 3,
           fill: isFirstPoint ? '#10b981' : '#3b82f6', // green first, blue rest
           stroke: '#000',
           strokeWidth: 1,
@@ -1113,7 +1113,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           const marker = new Circle({
             left: newPoint.x,
             top: newPoint.y,
-            radius: 5,
+            radius: 3.75,
             fill: '#facc15',
             stroke: '#000',
             strokeWidth: 1,
@@ -1134,7 +1134,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           const marker2 = new Circle({
             left: newPoint.x,
             top: newPoint.y,
-            radius: 5,
+            radius: 3.75,
             fill: '#facc15',
             stroke: '#000',
             strokeWidth: 1,
@@ -1148,7 +1148,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           // Draw calibration line
           const line = new Line([point1.x, point1.y, point2.x, point2.y], {
             stroke: '#facc15', // yellow-400
-            strokeWidth: 1.5,
+            strokeWidth: 1.875,
             selectable: false,
             evented: false,
           });
