@@ -84,22 +84,29 @@ export interface CreateQuotePayload {
 }
 
 /**
- * Resolve sensible Phase-4 defaults for a quote-create call: 'roofing' as
- * the trade, and the company's bootstrap collection id. Safe to call from
- * any quote-create path — idempotent + concurrency-safe via the SECDEF RPC
- * (Gerald round-2 M-02).
+ * Resolve sensible Phase-4 defaults for a quote-create call. The trade
+ * falls back to the company’s `default_trade` (set in Company Settings),
+ * or ‘roofing’ if none is set. Bootstrap collection is resolved via the
+ * SECDEF RPC (Gerald round-2 M-02).
  *
  * Returns `componentCollectionId: null` on failure rather than throwing, so
- * quote creation never blocks on a bootstrap glitch. Existing roofing flow
- * keeps working in that degraded case (the column stays NULL until Phase 5
- * tightens it).
+ * quote creation never blocks on a bootstrap glitch.
  */
 export async function resolveQuoteCreationDefaults(
   companyId: string,
-): Promise<{ trade: 'roofing'; componentCollectionId: string | null }> {
+): Promise<{ trade: 'roofing' | 'cladding' | 'generic'; componentCollectionId: string | null }> {
   try {
-    const id = await ensureCompanyHasCollection(companyId);
-    return { trade: 'roofing', componentCollectionId: id };
+    const supabase = await createSupabaseServerClient();
+    const [collectionId, companyRow] = await Promise.all([
+      ensureCompanyHasCollection(companyId),
+      supabase.from('companies').select('default_trade').eq('id', companyId).single(),
+    ]);
+    const rawTrade = (companyRow.data as { default_trade?: string | null } | null)?.default_trade;
+    const trade: 'roofing' | 'cladding' | 'generic' =
+      rawTrade === 'cladding' ? 'cladding'
+      : rawTrade === 'generic' ? 'generic'
+      : 'roofing';
+    return { trade, componentCollectionId: collectionId };
   } catch (err) {
     console.error('[resolveQuoteCreationDefaults] bootstrap failed:', err);
     return { trade: 'roofing', componentCollectionId: null };

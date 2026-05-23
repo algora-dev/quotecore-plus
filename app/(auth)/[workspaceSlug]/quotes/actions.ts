@@ -752,9 +752,25 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
   await verifyComponentOwnership(supabase, quoteComponentId, profile.company_id);
   const { data: comp } = await supabase.from('quote_components').select('*').eq('id', quoteComponentId).single();
   if (!comp) throw new Error('Component not found');
+
+  // H-01 (Gerald round-7): length×height measurement types store a linear
+  // input from the user but price against area. Multiply entered length by
+  // the component's stored height before applying pitch/waste.
+  // raw_value is kept as the user-entered linear value for display;
+  // effectiveValue (area) drives value_after_waste and totals.
+  const LXH_TYPES = ['length_x_height', 'multi_lineal_lxh'];
+  let effectiveValue = rawValue;
+  if (comp.component_library_id && LXH_TYPES.includes(comp.measurement_type ?? '')) {
+    const { data: libRow } = await (supabase as unknown as {
+      from: (t: string) => { select: (c: string) => { eq: (col: string, val: string) => { maybeSingle: () => Promise<{ data: { height_value_mm?: number | null } | null }> } } }
+    }).from('component_library').select('height_value_mm').eq('id', comp.component_library_id).maybeSingle();
+    const heightM = ((libRow?.height_value_mm ?? 0)) / 1000;
+    if (heightM > 0) effectiveValue = rawValue * heightM;
+  }
+
   const isPlan = comp.input_mode === 'calculated';
   const pitchDegrees = comp.use_custom_pitch ? (comp.custom_pitch_degrees ?? 0) : (areaPitch ?? 0);
-  const { afterWaste } = applyPitchAndWaste(rawValue, isPlan, comp.pitch_type, pitchDegrees, comp.waste_type, comp.waste_percent, comp.waste_fixed);
+  const { afterWaste } = applyPitchAndWaste(effectiveValue, isPlan, comp.pitch_type, pitchDegrees, comp.waste_type, comp.waste_percent, comp.waste_fixed);
   const { data: entry, error } = await supabase.from('quote_component_entries').insert({
     quote_component_id: quoteComponentId, raw_value: rawValue, value_after_waste: afterWaste,
   }).select().single();
@@ -1058,12 +1074,26 @@ export async function splitLinealEntries(quoteComponentId: string): Promise<{
  */
 export async function recalcAllQuoteComponents(quoteId: string): Promise<void> {
   const supabase = await createSupabaseServerClient();
-  const { data: components } = await supabase
+  const { data: components, error } = await supabase
     .from('quote_components')
     .select('id')
     .eq('quote_id', quoteId);
+  if (error) {
+    console.error('[recalcAllQuoteComponents] failed to fetch components:', error.message);
+    return;
+  }
   if (!components?.length) return;
-  await Promise.all(components.map((c) => recalcComponentFromEntries(c.id)));
+  // Serial execution to avoid Supabase rate-limit bursts on large quotes.
+  // Each call is ~3 DB round-trips; concurrent fan-out on 20+ components
+  // risks 429s and silent partial failures.
+  for (const c of components) {
+    try {
+      await recalcComponentFromEntries(c.id);
+    } catch (err) {
+      console.error('[recalcAllQuoteComponents] recalc failed for component', c.id, err);
+      // Continue so one bad component doesn’t block the rest.
+    }
+  }
 }
 
 async function recalcComponentFromEntries(quoteComponentId: string) {

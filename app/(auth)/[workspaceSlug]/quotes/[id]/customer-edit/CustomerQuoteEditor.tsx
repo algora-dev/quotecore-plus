@@ -8,6 +8,7 @@ import { AddCustomLineModal } from './AddCustomLineModal';
 import { EditHeaderModal } from './EditHeaderModal';
 import { EditFooterModal } from './EditFooterModal';
 import { saveCustomerQuoteLines, saveCustomerQuoteBranding } from '../../actions';
+import { getTradeLabels } from '@/app/lib/trades/labels';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import {
   convertLinear,
@@ -391,8 +392,8 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   // have areas) keep the existing label.
   // quote.trade was added in Phase 2; database.types.ts hasn't been
   // regenerated yet, so cast at the boundary.
-  const quoteTrade = (quote as { trade?: 'roofing' | 'generic' | null }).trade ?? 'roofing';
-  const isGenericNoArea = quoteTrade === 'generic' && roofAreas.length === 0;
+  const quoteTrade = (quote as { trade?: string | null }).trade ?? 'roofing';
+  const isGenericNoArea = getTradeLabels(quoteTrade).areaIsOptional && roofAreas.length === 0;
   const extrasBucketHeading = isGenericNoArea ? 'Quote items' : 'Extras & Custom';
 
   const visibleLines = lines.filter(l => l.isVisible);

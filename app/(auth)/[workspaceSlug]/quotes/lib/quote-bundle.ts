@@ -20,6 +20,7 @@ import JSZip from 'jszip';
 import type { QuoteBundleData } from '../actions-bulk';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import type { MeasurementSystem } from '@/app/lib/types';
+import { getTradeLabels } from '@/app/lib/trades/labels';
 import {
   formatArea,
   getUnitLabel,
@@ -186,7 +187,7 @@ function buildSummaryPdf(b: QuoteBundleData): ArrayBuffer {
 
   // Roof areas.
   if (b.roofAreas.length > 0) {
-    writeLine(cur, 'Roof Areas', { bold: true, size: 12 });
+    writeLine(cur, getTradeLabels(b.quote.trade).customerQuoteSectionLabel, { bold: true, size: 12 });
     drawDivider(cur);
     for (const area of b.roofAreas) {
       const areaComps = b.components.filter((c) => c.roofAreaLabel === area.label);

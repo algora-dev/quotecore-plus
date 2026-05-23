@@ -18,7 +18,7 @@ import type {
 import {
   computePackCount,
 } from '@/app/lib/pricing/engine';
-import { getTradeLabels } from '@/app/lib/trades/labels';
+import { getTradeLabels, getMeasurementTypeLabel } from '@/app/lib/trades/labels';
 import type { MeasurementSystem } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { getUnitLabel } from '@/app/lib/measurements/displayHelpers';
@@ -616,7 +616,7 @@ export function ComponentList({
                     .filter(([k]) => k !== 'linear')
                     .filter(([k]) => genericTradesEnabled || ROOFING_DEFAULT_TYPES.has(k))
                     .map(([k, v]) => (
-                      <option key={k} value={k}>{v}</option>
+                      <option key={k} value={k}>{getMeasurementTypeLabel(companyDefaultTrade, k, v)}</option>
                     ))}
                 </select>
               </div>
@@ -810,7 +810,7 @@ export function ComponentList({
                           .filter(([k]) => k !== 'linear')
                           .filter(([k]) => genericTradesEnabled || ROOFING_DEFAULT_TYPES.has(k))
                           .map(([k, v]) => (
-                            <option key={k} value={k}>{v}</option>
+                            <option key={k} value={k}>{getMeasurementTypeLabel(companyDefaultTrade, k, v)}</option>
                           ))}
                       </select>
                     </div>
@@ -993,7 +993,7 @@ export function ComponentList({
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${comp.component_type === 'main' ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700'}`}>
                       {comp.component_type}
                     </span>
-                    <span className="text-xs text-slate-400">{MEASUREMENT_LABELS[comp.measurement_type]}</span>
+                    <span className="text-xs text-slate-400">{getMeasurementTypeLabel(companyDefaultTrade, comp.measurement_type, MEASUREMENT_LABELS[comp.measurement_type])}</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
                     Material: ${(comp.default_material_rate ?? 0).toFixed(2)}/{unitForMeasurement(comp.measurement_type)} · Labour: ${(comp.default_labour_rate ?? 0).toFixed(2)}/{unitForMeasurement(comp.measurement_type)}
