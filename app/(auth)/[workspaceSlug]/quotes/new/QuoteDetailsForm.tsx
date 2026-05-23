@@ -170,7 +170,7 @@ export function QuoteDetailsForm({
     }
 
     if (entryMode === 'digital' && !planUploaded) {
-      alert('Please upload a roof plan for digital takeoff');
+      alert('Please upload a plan or image for digital takeoff');
       return;
     }
 
@@ -520,7 +520,7 @@ export function QuoteDetailsForm({
             }`}
             title={!digitalTakeoffAvailable
               ? 'To access digital takeoff mode please upgrade your account'
-              : 'Upload your roof plan, measure and assign roof areas, roof component items (Faster)'}
+              : 'Upload your plans/images, measure and assign areas and components (Faster)'}
           >
             {!digitalTakeoffAvailable && (
               <span className="absolute top-2 right-2">
@@ -570,9 +570,9 @@ export function QuoteDetailsForm({
       {entryMode === 'digital' && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
           <div>
-            <h3 className="text-sm font-semibold text-slate-900 mb-1">Upload Roof Plan</h3>
+            <h3 className="text-sm font-semibold text-slate-900 mb-1">Upload Plans / Images</h3>
             <p className="text-xs text-slate-600 mb-3">
-              Upload roof plan (PDF or image) for digital takeoff. Max 10 MB.
+              Upload your plans or images (PDF or image). Max 10 MB.
             </p>
           </div>
           
@@ -581,7 +581,7 @@ export function QuoteDetailsForm({
               <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <span className="text-sm text-green-900 font-medium">Roof plan uploaded successfully!</span>
+              <span className="text-sm text-green-900 font-medium">Plan uploaded successfully!</span>
             </div>
           ) : (
             <FileUploader
@@ -589,7 +589,7 @@ export function QuoteDetailsForm({
               maxSize={10485760}
               onUpload={handlePlanUpload}
               currentFileUrl={null}
-              label="Upload Roof Plan"
+              label="Upload Plans / Images"
               description="PDF or image (max 10 MB)"
             />
           )}

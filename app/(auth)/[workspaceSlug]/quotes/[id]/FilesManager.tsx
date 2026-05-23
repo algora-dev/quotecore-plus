@@ -175,7 +175,7 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
-        Roof plans and files
+        Plans and files
         {totalFiles > 0 && (
           <span className="text-xs font-normal text-slate-500">({totalFiles})</span>
         )}
@@ -185,9 +185,9 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
         <div className="mt-3 mr-3 space-y-6 bg-white p-4 rounded-lg border border-slate-200">
           {/* Roof Plan Section */}
           <div>
-            <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">Roof Plan</h3>
+            <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">Plan / Image</h3>
             <p className="text-xs text-slate-500 mb-3">
-              Upload roof plan (PDF or image) for digital takeoff. Max 10 MB.
+              Upload your plan or image (PDF or image). Max 10 MB.
             </p>
 
             {planUrl && planName ? (
@@ -236,7 +236,7 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
                 maxSize={10485760}
                 onUpload={handlePlanUpload}
                 currentFileUrl={null}
-                label="Upload Roof Plan"
+                label="Upload Plans / Images"
                 description="PDF or image (max 10 MB)"
               />
             )}

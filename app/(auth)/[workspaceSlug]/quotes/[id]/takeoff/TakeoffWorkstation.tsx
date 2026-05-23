@@ -2119,7 +2119,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 <li>Click <span className="font-bold text-orange-600">&quot;Confirm Calibration&quot;</span> when done</li>
               </ol>
               <p className="text-gray-600 text-xs mt-4">
-                Tip: Use dimensions shown on the plan (like wall lengths or roof spans).
+                Tip: Use existing dimensions on your image, we suggest using the longest lengths to calibrate from.
               </p>
             </div>
             <button
