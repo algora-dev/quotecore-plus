@@ -1,7 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 
 export async function loginAction(formData: FormData) {
   const email = String(formData.get('email') || '').trim().toLowerCase();
@@ -13,7 +13,11 @@ export async function loginAction(formData: FormData) {
 
   const supabase = await createSupabaseServerClient();
 
-  const { error } = await supabase.auth.signInWithPassword({
+  // signInWithPassword sets session cookies AND returns the authed user.
+  // We use the same client instance for all subsequent queries so we rely
+  // on the in-memory session, not the just-set response cookies (which a
+  // freshly constructed client in the same request cannot read back yet).
+  const { error, data: authData } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -22,17 +26,29 @@ export async function loginAction(formData: FormData) {
     throw new Error(error.message);
   }
 
-  // Get company context (will redirect to /onboarding if needed)
-  const profile = await requireCompanyContext();
-  
-  // Load company to get workspace slug
+  const userId = authData.user.id;
+
+  // Use the same authenticated supabase instance (has the session in memory).
+  const { data: profile } = await supabase
+    .from('users')
+    .select('company_id')
+    .eq('id', userId)
+    .single();
+
+  if (!profile?.company_id) {
+    redirect('/onboarding');
+  }
+
+  // Check onboarding completion and get workspace slug in one query.
   const { data: company } = await supabase
     .from('companies')
-    .select('slug')
+    .select('slug, onboarding_completed_at')
     .eq('id', profile.company_id)
     .single();
-  
-  const workspaceSlug = company?.slug || 'workspace';
-  
-  redirect(`/${workspaceSlug}`);
+
+  if (!company?.onboarding_completed_at) {
+    redirect('/onboarding');
+  }
+
+  redirect(`/${company?.slug || 'workspace'}`);
 }
