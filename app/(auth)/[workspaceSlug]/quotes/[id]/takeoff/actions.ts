@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { applyPitchAndWaste, rafterPitchFactor } from '@/app/lib/pricing/engine';
 import { convertLinearToMetric, convertAreaFt2ToMetric } from '@/app/lib/measurements/conversions';
+import { recalcAllQuoteComponents } from '../../actions';
 
 interface TakeoffMeasurement {
   componentId: string | null; // null for informational roof areas
@@ -223,6 +224,12 @@ export async function saveTakeoffMeasurements(
     console.error('[SaveTakeoff] RPC error:', rpcError);
     throw new Error(`Failed to save takeoff: ${rpcError.message}`);
   }
+
+  // Gerald round-6 H-03: save_takeoff_atomic writes material_cost as quantity × rate
+  // (no pack rounding). Recalculate all components through computeMaterialCostByStrategy
+  // so pack pricing (per_pack_area, per_pack_coverage, etc.) is applied before the
+  // quote builder loads the stored totals.
+  await recalcAllQuoteComponents(quoteId);
 
   revalidatePath(`/[workspaceSlug]/quotes/${quoteId}`);
   return { success: true };

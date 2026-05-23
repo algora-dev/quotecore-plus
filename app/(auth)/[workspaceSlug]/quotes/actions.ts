@@ -1049,6 +1049,23 @@ export async function splitLinealEntries(quoteComponentId: string): Promise<{
   };
 }
 
+/**
+ * Recalculate material_cost / labour_cost for every component attached to a quote.
+ * Uses computeMaterialCostByStrategy so pack pricing (per_pack_area, per_pack_coverage, etc.)
+ * is applied correctly. Call this after any bulk operation that writes entries without going
+ * through the individual component server actions (e.g. save_takeoff_atomic).
+ * Gerald round-6 H-03 fix.
+ */
+export async function recalcAllQuoteComponents(quoteId: string): Promise<void> {
+  const supabase = await createSupabaseServerClient();
+  const { data: components } = await supabase
+    .from('quote_components')
+    .select('id')
+    .eq('quote_id', quoteId);
+  if (!components?.length) return;
+  await Promise.all(components.map((c) => recalcComponentFromEntries(c.id)));
+}
+
 async function recalcComponentFromEntries(quoteComponentId: string) {
   const supabase = await createSupabaseServerClient();
   const { data: entries } = await supabase.from('quote_component_entries').select('value_after_waste').eq('quote_component_id', quoteComponentId);

@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -3025,6 +3025,7 @@ export type Database = {
         | "curved_line"
         | "irregular_area"
         | "multi_lineal"
+        | "multi_lineal_lxh"
       pitch_type: "none" | "rafter" | "valley_hip"
       pricing_strategy:
         | "per_unit"
@@ -3041,8 +3042,8 @@ export type Database = {
         | "expired"
         | "archived"
       trade: "roofing" | "generic"
-      waste_type: "percent" | "fixed" | "none"
-      waste_unit: "percent" | "flat"
+      waste_type: "percent" | "fixed" | "none" | "fixed_per_segment"
+      waste_unit: "percent" | "flat" | "flat_per_segment"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3187,6 +3188,7 @@ export const Constants = {
         "curved_line",
         "irregular_area",
         "multi_lineal",
+        "multi_lineal_lxh",
       ],
       pitch_type: ["none", "rafter", "valley_hip"],
       pricing_strategy: [
@@ -3206,8 +3208,8 @@ export const Constants = {
         "archived",
       ],
       trade: ["roofing", "generic"],
-      waste_type: ["percent", "fixed", "none"],
-      waste_unit: ["percent", "flat"],
+      waste_type: ["percent", "fixed", "none", "fixed_per_segment"],
+      waste_unit: ["percent", "flat", "flat_per_segment"],
     },
   },
 } as const

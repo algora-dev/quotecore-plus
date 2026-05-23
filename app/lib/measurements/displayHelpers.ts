@@ -44,21 +44,55 @@ export function formatAreaRate(ratePerSqm: number, system: MeasurementSystem): s
   return `$${convertAreaRate(ratePerSqm)}/RS`;
 }
 
+// All measurement types that exist in the DB + app, including generic-trades additions.
+// area-valued: area, length_x_height, multi_lineal_lxh, irregular_area, volume
+// linear-valued: lineal, multi_lineal, curved_line
+// count-valued: quantity, fixed, point
+type MeasurementTypeArg =
+  | 'area' | 'lineal' | 'quantity' | 'fixed'         // original types
+  | 'length_x_height' | 'multi_lineal_lxh'            // area-producing generics
+  | 'irregular_area'                                   // area-producing generic
+  | 'multi_lineal' | 'curved_line'                    // linear generics
+  | 'volume'                                           // volume
+  | 'point'                                            // count
+  | string;                                            // forward-compat escape hatch
+
 /** Get just the unit label (no value) for a given measurement type + system. */
 export function getUnitLabel(
-  measurementType: 'area' | 'lineal' | 'quantity' | 'fixed',
+  measurementType: MeasurementTypeArg,
   system: MeasurementSystem
 ): string {
   const norm = normalizeMeasurementSystem(system);
-  if (measurementType === 'area') {
+
+  // Area-valued types (store m², display as area)
+  if (
+    measurementType === 'area' ||
+    measurementType === 'length_x_height' ||
+    measurementType === 'multi_lineal_lxh' ||
+    measurementType === 'irregular_area'
+  ) {
     if (norm === 'metric') return 'm²';
     if (norm === 'imperial_ft') return 'ft²';
     return 'RS';
   }
-  if (measurementType === 'lineal') {
+
+  // Linear-valued types (store m, display as length)
+  if (
+    measurementType === 'lineal' ||
+    measurementType === 'multi_lineal' ||
+    measurementType === 'curved_line'
+  ) {
     return norm === 'metric' ? 'm' : 'ft';
   }
-  if (measurementType === 'quantity') return 'each';
+
+  // Volume
+  if (measurementType === 'volume') {
+    return norm === 'metric' ? 'm³' : 'ft³';
+  }
+
+  // Count / fixed / point
+  if (measurementType === 'quantity' || measurementType === 'point') return 'each';
+
   return '';
 }
 
