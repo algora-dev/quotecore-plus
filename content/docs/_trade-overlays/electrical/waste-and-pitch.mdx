@@ -1,0 +1,64 @@
+---
+title: Waste, material costs, and pitch
+description: How the app converts your measured cable runs and counts into the quantities you actually order.
+order: 3
+status: published
+updated: 2026-05-24
+trade: electrical
+---
+
+# Waste, material costs, and pitch
+
+Three settings on every component decide how the app turns a measurement into an order quantity: **waste**, **material pricing**, and the **pitch multiplier**. All three live on the [component](/docs/components/creating-a-component) itself, and waste and pitch can be overridden on a single quote without changing the saved component.
+
+## Waste
+
+For electrical work, waste is most useful on cable runs - it adds a set allowance per run to account for terminations, slack loops, routing around obstacles, and offcuts.
+
+- **Fixed waste.** Adds a fixed length per run regardless of the total length measured. For example, "500mm extra per cable run" covers a standard termination allowance at each end. This is the most common setting for electrical cable components.
+- **Percentage waste.** Adds a percentage to the total measured length. Useful if you prefer a blanket allowance (e.g. 5% across all runs to cover reroutes and unknowns).
+
+Waste is off by default - turn it on for components where offcuts and termination allowances are a real cost.
+
+## Material price and pack sizing
+
+Most components are priced per unit - per metre, per item. That is the default.
+
+For cables and conduit that come on drums, reels, or in fixed lengths, use **per pack - by length** instead. Enter the drum price and the length per drum, and the app works out how many drums your measured run requires, then prices from that.
+
+Example: a 100m cable drum costs $120. You measure a 340m run with 500mm fixed waste per segment, giving 342.5m total. The app rounds up to 4 drums = $480 material cost.
+
+Other pack strategies available:
+
+- **Per pack - by area.** For sheet or roll materials priced by area.
+- **Per pack - by coverage.** For materials applied at a coverage rate.
+- **Per pack - by volume.** For bulk materials.
+
+Pack counts always round up to whole packs. Waste is applied before the pack count is calculated, so the final order already includes your waste allowance.
+
+## Pitch multiplier
+
+In most electrical work, measurements taken from a floor plan reflect the actual route length closely enough. But for cable runs through pitched roof spaces, the plan shows the horizontal distance while the real cable travels along the slope - and the difference matters on steep pitches.
+
+Enable **rafter pitch** on any component that runs through a pitched roof space. You enter the pitch angle during the quote builder, and the app scales the plan measurement to the actual cable length along the slope.
+
+**Valley and hip pitch types do not apply to electrical work.** Only rafter pitch is relevant.
+
+Pitch is only applied when the component has pitch enabled AND the quote is using a [Plan](/docs/concepts/plan-vs-actual) measurement. If you enter the measured cable length directly (Actual), the pitch step is skipped.
+
+<Callout type="warning">
+The pitch multiplier has to be set on the component itself. It cannot be added later in the quote builder. If you are quoting a roof space cable run and forget to enable rafter pitch, you will under-order. Double-check before saving the component.
+</Callout>
+
+## A worked example
+
+A floor plan shows a cable route of 12m running from the consumer unit to a light fitting, passing through a pitched roof space at 30 degrees (pitch factor ~1.155). Fixed waste: 500mm per run.
+
+- **Plan, rafter pitch on, 500mm fixed waste:** (12 x 1.155) + 0.5 = ~14.4m of cable ordered.
+- **Plan, pitch off, 500mm fixed waste:** 12 + 0.5 = 12.5m of cable ordered.
+- **Actual, pitch on, 500mm fixed waste:** 12 + 0.5 = 12.5m ordered. (Pitch skipped - the measured length is already the real run along the slope.)
+
+## Related
+
+- [Plan vs Actual](/docs/concepts/plan-vs-actual)
+- [Creating a component](/docs/components/creating-a-component)

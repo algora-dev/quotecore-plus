@@ -1,0 +1,92 @@
+---
+title: Creating a component
+description: Field-by-field walkthrough with three electrical examples.
+order: 2
+status: published
+updated: 2026-05-24
+trade: electrical
+---
+
+# Creating a component
+
+Walk through it once and you have the pattern for every component you will ever add. Most components take under a minute to set up.
+
+## Where to find it
+
+**Components > Add component**.
+
+## The fields
+
+**Component name.** This is how you search or find the component, and also what shows on your quote. You can edit it at any time.
+
+**Component type.** Main or Extra. **Main** is a core job component (most things you quote). **Extra** is a one-off item or anything you want separated for the customer quote or your records. See [Components vs Extras](/docs/concepts/components-vs-extras).
+
+**Measurement method.** How your component is normally measured:
+
+- **Lineal** - for cable runs, conduit, trunking, and anything measured by length.
+- **Multiple Cable Runs** (multi-lineal) - measures several runs separately and sums them. Use this when you want individual run lengths recorded but priced as a combined total.
+- **Curved Cable Run** (curved line) - for arcs and curved conduit paths measured on the plan.
+- **Area** (m2) - for components priced by floor or ceiling area, such as lighting layout or underfloor heating.
+- **Count** - for outlets, switches, light fittings, circuit breakers, data points, smoke detectors, and any item priced per unit.
+- **Fixed** - for a single flat price regardless of quantity (call-out fees, permit costs, etc.).
+- **Hours / Days** - for labor charged by the hour or day.
+
+**Material pricing.** How the material cost is calculated. The default is per unit. For cables and conduit that come on drums or in fixed lengths, use a pack strategy instead:
+
+- **Per pack - by length.** The most useful for electrical - enter the drum or reel price and the length per drum (e.g. a 100m cable drum at $120). The app calculates how many drums your measured run requires.
+- **Per pack - by area.** For sheet or roll materials priced by area.
+- **Per pack - by coverage.** For materials applied at a rate.
+- **Per pack - by volume.** For bulk materials priced by volume.
+
+Pack pricing rounds up to whole packs. Waste is applied before the pack count is calculated.
+
+**Labor price.** The labor rate per lineal metre, per unit, per hour, or per item.
+
+**Waste type.** For cable runs, Fixed waste is most useful - it adds a set length per run to account for terminations, slack, and routing allowances (e.g. 500mm extra per cable run). Percentage waste works if you prefer a blanket allowance across all runs.
+
+**Pitch multiplier.** For cable runs through roof spaces on a slope, enable rafter pitch. The app will scale the plan measurement up to the actual run length along the slope. Valley and hip pitch types do not apply to electrical work.
+
+**Material orders.** Tick if this component can be added to material orders. See [Creating material orders](/docs/material-orders/creating-orders).
+
+## Walked example: general cable run
+
+1. **Name:** General wiring - 2.5mm twin & earth.
+2. **Type:** Main.
+3. **Measurement:** Lineal.
+4. **Material pricing:** Per pack - by length. Pack price: $120. Pack size: 100m.
+5. **Labor price:** $8 per lineal metre.
+6. **Waste:** Fixed, 500mm per run.
+7. **Pitch multiplier:** Off (or Rafter pitch if running through a pitched roof space).
+8. **Material orders:** On.
+
+## Walked example: double power outlet
+
+1. **Name:** Double power outlet.
+2. **Type:** Main.
+3. **Measurement:** Count.
+4. **Material pricing:** Per unit - $18 per outlet.
+5. **Labor price:** $35 per outlet.
+6. **Waste:** Off.
+7. **Pitch multiplier:** Off.
+8. **Material orders:** On.
+
+## Walked example: call-out fee (Extra)
+
+1. **Name:** Call-out / travel fee.
+2. **Type:** Extra.
+3. **Measurement:** Fixed.
+4. **Material pricing:** Per unit - flat amount.
+5. **Labor price:** 0.
+6. **Waste:** Off.
+7. **Pitch multiplier:** Off.
+8. **Material orders:** Off.
+
+## After you save
+
+The component is in the dropdown when you add components in [Manual Quote](/docs/building-a-quote/manual-quote) or [digital takeoff](/docs/building-a-quote/digital-takeoff). You can edit or delete it any time; editing does not change quotes you have already built.
+
+## Related
+
+- [Components vs Extras](/docs/concepts/components-vs-extras)
+- [Waste and pitch](/docs/concepts/waste-and-pitch)
+- [Plan vs Actual](/docs/concepts/plan-vs-actual)

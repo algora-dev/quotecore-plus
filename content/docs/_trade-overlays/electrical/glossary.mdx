@@ -1,0 +1,62 @@
+---
+title: Glossary
+description: Short definitions of the QuoteCore+ terms and electrical measurement types you will see in the app.
+order: 4
+status: published
+updated: 2026-05-24
+trade: electrical
+---
+
+# Glossary
+
+Short definitions of the QuoteCore+ terms and electrical measurement types you will see in the app.
+
+## Electrical measurement types
+
+**Lineal.** Measures a single cable run or conduit route as a straight or jointed line on the plan. The primary measurement type for electrical cabling. Price is per metre.
+
+**Multiple Cable Runs.** Measures several individual runs on the plan and sums them into one total length. Use this when you want each run recorded separately but priced as a combined total. Equivalent to running the Lineal tool multiple times and adding the results.
+
+**Curved Cable Run.** Measures a curved arc or conduit path on the plan. Use for cable routes that follow a curved wall, ceiling arc, or conduit bend. The app calculates the true arc length from the curve you draw.
+
+**Area.** Measures a floor or ceiling zone. Use for components priced by the m2 - lighting layout calculations, underfloor heating, or any item where area is the unit of measure.
+
+**Count.** A quantity of items: outlets, switches, downlights, circuit breakers, data points, smoke detectors. Each point you place on the plan counts as one unit.
+
+**Fixed.** A single flat price regardless of quantity. Used for call-out fees, permit costs, or any item with a one-off charge.
+
+**Hours / Days.** Labor charged by the hour or day. Set a rate and enter hours in the quote builder.
+
+## QuoteCore+ terms
+
+**Actual measurement.** A real-world number entered directly - for example, a measured cable run length taken on site. Pitch is skipped; waste still applies.
+
+**Component.** A re-usable line you put in quotes. Has a name, measurement type, material price, labor price, waste, and optional pitch settings. See [Components overview](/docs/components/overview).
+
+**Customer quote.** The version of the quote your customer sees. Built from the master quote summary in the [customer quote editor](/docs/customer-facing/customer-quote-editor).
+
+**Digital takeoff.** Measuring directly off a digital floor plan or site drawing. See [Digital takeoff](/docs/building-a-quote/digital-takeoff).
+
+**Extra.** A line you want priced and recorded but kept separate from the main components. Call-out fees, travel, permit costs. See [Components vs Extras](/docs/concepts/components-vs-extras).
+
+**Manual quote.** A quote built line-by-line for jobs where you already have your run lengths and counts. See [Manual Quote](/docs/building-a-quote/manual-quote).
+
+**Pitch multiplier.** A factor applied to a plan measurement to account for slope - used for cable runs through pitched roof spaces. Only rafter pitch applies to electrical work. See [Waste and pitch](/docs/concepts/waste-and-pitch).
+
+**Plan measurement.** A measurement taken from a floor plan or drawing, before any pitch multiplier is applied. See [Plan vs Actual](/docs/concepts/plan-vs-actual).
+
+**Quote builder.** The flow that builds a quote: Areas, Components, Extras, Review. See [Quote builder](/docs/building-a-quote/quote-builder).
+
+**Takeoff.** The act of measuring a job - either digital (from a plan) or manual (on site or from your own notes).
+
+## Billing terms
+
+**Cap.** A numeric limit on something your plan allows - quotes per month, components total, storage bytes, etc. Hitting a cap blocks new additions but never deletes existing data. See [Tier limits](/docs/account/tier-limits).
+
+**Dunning.** The process Stripe (and we) follow when a renewal payment fails: automatic card retries, status escalation through `past_due` - `grace` - `suspended`, with chances to recover by updating the card. See [Billing](/docs/account/billing#payment-failures-and-dunning).
+
+**Effective plan.** What your account can actually use today. Usually the same as your purchased plan, but collapses to **Starter** during grace periods or after the trial ends.
+
+**Grace period.** A 10-day window after a payment failure where you keep read access but can't create new quotes. See [Billing](/docs/account/billing#payment-failures-and-dunning).
+
+**Trial.** A 14-day free taste of every feature, with tiny caps. One per account, ever. See [Free trial](/docs/account/trial).
