@@ -12,10 +12,27 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/*
+ * Light-only app. We pin colour-scheme to light in app/layout.tsx so
+ * Chromium's "force dark mode for web contents" flag stops inverting our
+ * form inputs (which was making typed text invisible). The defensive
+ * @media block below is a backup for browsers that ignore color-scheme:
+ * it forces inputs to readable light-mode colours even if the user agent
+ * is mid-inverting the page. If we ever ship a real dark mode, remove
+ * both the colorScheme pin AND this block.
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  input,
+  textarea,
+  select {
+    color: #0f172a !important;
+    background-color: #ffffff !important;
+    -webkit-text-fill-color: #0f172a !important;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #94a3b8 !important;
+    -webkit-text-fill-color: #94a3b8 !important;
   }
 }
 

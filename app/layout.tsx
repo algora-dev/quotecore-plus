@@ -61,6 +61,13 @@ export const metadata: Metadata = {
       { url: '/icon.png', type: 'image/png' },
     ],
   },
+  // Pin the app to a light colour scheme. Tells Chromium-based browsers
+  // (and any browser respecting CSS color-scheme) not to force-dark our
+  // form inputs and surfaces. Users on Google's "force dark mode for web
+  // contents" flag were seeing unreadable input text. If/when we ship a
+  // real dark mode, unpin this. Paired with a CSS fallback in globals.css
+  // for browsers that ignore the meta hint.
+  colorScheme: 'light',
 };
 
 export default function RootLayout({
