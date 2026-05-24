@@ -73,7 +73,7 @@ export interface CreateQuotePayload {
    * GENERIC_TRADES_V1_ENABLED can force this to be supplied (see
    * createQuoteAtomic body).
    */
-  trade?: 'roofing' | 'cladding' | 'generic' | 'electrical';
+  trade?: 'roofing' | 'cladding' | 'generic' | 'electrical' | 'plumbing';
   /**
    * Generic Trades Phase 4. The collection this quote draws components
    * from. When omitted, the column stays NULL. Composite FK

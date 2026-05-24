@@ -38,10 +38,11 @@ export function CompanySettingsForm({
 }: Props) {
   const genericTradesEnabled =
     (process.env.NEXT_PUBLIC_GENERIC_TRADES_V1 ?? '').toLowerCase() === 'true';
-  const [defaultTrade, setDefaultTrade] = useState<'roofing' | 'cladding' | 'generic' | 'electrical'>(
+  const [defaultTrade, setDefaultTrade] = useState<'roofing' | 'cladding' | 'generic' | 'electrical' | 'plumbing'>(
     currentDefaultTrade === 'cladding'   ? 'cladding'
     : currentDefaultTrade === 'generic'    ? 'generic'
     : currentDefaultTrade === 'electrical' ? 'electrical'
+    : currentDefaultTrade === 'plumbing'   ? 'plumbing'
     : 'roofing'
   );
   const [companyName, setCompanyName] = useState(currentCompanyName);
@@ -275,13 +276,14 @@ export function CompanySettingsForm({
           <select
             id="default-trade"
             value={defaultTrade}
-            onChange={e => setDefaultTrade(e.target.value as 'roofing' | 'cladding' | 'generic' | 'electrical')}
+            onChange={e => setDefaultTrade(e.target.value as 'roofing' | 'cladding' | 'generic' | 'electrical' | 'plumbing')}
             disabled={isPending}
             className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option value="roofing">Roofing</option>
             <option value="cladding">Cladding</option>
             <option value="electrical">Electrical</option>
+            <option value="plumbing">Plumbing</option>
             <option value="generic">Generic</option>
           </select>
         </div>

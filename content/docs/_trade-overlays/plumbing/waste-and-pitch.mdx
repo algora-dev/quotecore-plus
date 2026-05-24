@@ -1,0 +1,44 @@
+---
+title: Waste and material costs
+description: How the app converts your measured pipe runs and counts into the quantities you actually order.
+order: 3
+status: published
+updated: 2026-05-24
+trade: plumbing
+---
+
+# Waste and material costs
+
+Two settings on every component decide how the app turns a measurement into an order quantity: **waste** and **material pricing**. Both live on the [component](/docs/components/creating-a-component) itself, and waste can be overridden on a single quote without changing the saved component.
+
+Plumbing does not use a pitch multiplier - pipe runs are measured as actual lengths or horizontal plan lengths, and no slope correction is needed.
+
+## Waste
+
+For plumbing work, waste is most useful on pipe runs - it adds a set allowance per run to account for joints, offcuts, and routing adjustments.
+
+- **Fixed waste.** Adds a fixed length per run regardless of the total length measured. For example, "300mm extra per pipe run" covers a standard joint allowance at each end. This is the most common setting for pipe components.
+- **Percentage waste.** Adds a percentage to the total measured quantity. Useful for area-based materials like waterproofing membrane where a blanket allowance across the whole surface makes more sense.
+
+Waste is off by default - turn it on for components where offcuts and joint allowances are a real cost.
+
+## Material price and pack sizing
+
+Most components are priced per unit - per metre, per item. That is the default.
+
+For pipes and conduit sold in fixed lengths, use **per pack - by length** instead. Enter the pipe price and the length per piece, and the app works out how many lengths your measured run requires, then rounds up and prices from that.
+
+Example: 15mm copper pipe costs $45 per 6m length. You measure a 22m run with 300mm fixed waste per segment, giving 22.6m total. The app rounds up to 4 lengths = $180 material cost.
+
+Other pack strategies available:
+
+- **Per pack - by area.** For sheet or roll materials priced by area (waterproofing membrane, drainage mat).
+- **Per pack - by coverage.** For materials applied at a coverage rate (tanking compound, sealant).
+- **Per pack - by volume.** For bulk materials (concrete mix, backfill).
+
+Pack counts always round up to whole packs. Waste is applied before the pack count is calculated, so the final order already includes your waste allowance.
+
+## Related
+
+- [Plan vs Actual](/docs/concepts/plan-vs-actual)
+- [Creating a component](/docs/components/creating-a-component)

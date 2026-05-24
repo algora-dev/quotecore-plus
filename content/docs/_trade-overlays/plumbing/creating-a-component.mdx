@@ -1,0 +1,88 @@
+---
+title: Creating a component
+description: Field-by-field walkthrough with three plumbing examples.
+order: 2
+status: published
+updated: 2026-05-24
+trade: plumbing
+---
+
+# Creating a component
+
+Walk through it once and you have the pattern for every component you will ever add. Most components take under a minute to set up.
+
+## Where to find it
+
+**Components > Add component**.
+
+## The fields
+
+**Component name.** This is how you search or find the component, and also what shows on your quote. You can edit it at any time.
+
+**Component type.** Main or Extra. **Main** is a core job component (most things you quote). **Extra** is a one-off item or anything you want separated for the customer quote or your records. See [Components vs Extras](/docs/concepts/components-vs-extras).
+
+**Measurement method.** How your component is normally measured:
+
+- **Lineal** - for pipe runs, drain lines, conduit sleeves, and anything measured by length.
+- **Multiple Pipe Runs** (multi-lineal) - measures several runs separately and sums them. Use this when you want individual run lengths recorded but priced as a combined total.
+- **Curved Pipe Run** (curved line) - for bends, sweeps, or pipe routes following a curved wall or slab edge.
+- **Area** (m2) - for components priced by floor or wall area, such as waterproofing membrane or drainage mat.
+- **Volume** (m3) - for tanks, concrete surrounds, trench backfill, or any component priced by volume.
+- **Count** - for taps, valves, toilets, basins, showers, hot water units, floor wastes, and any item priced per unit.
+- **Fixed** - for a single flat price regardless of quantity (call-out fees, permit costs, inspection fees).
+- **Hours / Days** - for labor charged by the hour or day.
+
+**Material pricing.** How the material cost is calculated. The default is per unit. For pipes and fittings that come in fixed lengths or packs, use a pack strategy instead:
+
+- **Per pack - by length.** For pipes sold in fixed lengths (e.g. a 6m copper pipe length at $45). The app calculates how many lengths your measured run requires and rounds up to whole lengths.
+- **Per pack - by area.** For sheet or roll materials priced by area (e.g. waterproofing membrane rolls).
+- **Per pack - by coverage.** For materials applied at a coverage rate (e.g. tanking compound covering 4m2 per litre).
+- **Per pack - by volume.** For bulk materials (e.g. concrete mix bags by volume).
+
+Pack pricing rounds up to whole packs. Waste is applied before the pack count is calculated.
+
+**Labor price.** The labor rate per lineal metre, per unit, per m2, per m3, or per item.
+
+**Waste type.** For pipe runs, Fixed waste is useful for adding a set length per run to account for joints, offcuts, and routing allowances (e.g. 300mm per pipe run). Percentage waste suits materials like waterproofing where a blanket allowance across the whole area makes more sense.
+
+**Material orders.** Tick if this component can be added to material orders. See [Creating material orders](/docs/material-orders/creating-orders).
+
+## Walked example: copper pipe run
+
+1. **Name:** 15mm copper pipe.
+2. **Type:** Main.
+3. **Measurement:** Lineal.
+4. **Material pricing:** Per pack - by length. Pack price: $45. Pack size: 6m.
+5. **Labor price:** $12 per lineal metre.
+6. **Waste:** Fixed, 300mm per run.
+7. **Material orders:** On.
+
+## Walked example: toilet suite
+
+1. **Name:** Close-coupled toilet suite.
+2. **Type:** Main.
+3. **Measurement:** Count.
+4. **Material pricing:** Per unit - $280 per suite.
+5. **Labor price:** $120 per unit.
+6. **Waste:** Off.
+7. **Material orders:** On.
+
+## Walked example: call-out fee (Extra)
+
+1. **Name:** Call-out / travel fee.
+2. **Type:** Extra.
+3. **Measurement:** Fixed.
+4. **Material pricing:** Per unit - flat amount.
+5. **Labor price:** 0.
+6. **Waste:** Off.
+7. **Material orders:** Off.
+
+## After you save
+
+The component is in the dropdown when you add components in [Manual Quote](/docs/building-a-quote/manual-quote) or [digital takeoff](/docs/building-a-quote/digital-takeoff). You can edit or delete it any time; editing does not change quotes you have already built.
+
+## Related
+
+- [Components vs Extras](/docs/concepts/components-vs-extras)
+- [Waste and pitch](/docs/concepts/waste-and-pitch)
+- [Plan vs Actual](/docs/concepts/plan-vs-actual)
