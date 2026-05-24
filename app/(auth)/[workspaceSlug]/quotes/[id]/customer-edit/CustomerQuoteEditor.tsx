@@ -458,7 +458,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           {/* Left Panel: Component Selection */}
           <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4" data-copilot="cl-left-panel">
             <h2 className="text-lg font-semibold text-slate-900">Components & Items</h2>
-            
+            <p className="text-xs text-slate-400">
+              Easily click/unclick what you want to see or hide from your quote below
+            </p>
+
             <div className="space-y-4">
               {/* Grouped by roof areas */}
               {roofAreas.map(area => {

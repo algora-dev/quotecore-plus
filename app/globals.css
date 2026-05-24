@@ -161,25 +161,44 @@ a,
   animation: shimmer 0.975s linear 1 forwards;
 }
 
-/* Radio-style toggle for checkboxes */
+/* Radio-style toggle for checkboxes.
+   Used in the customer-quote editor side panel (Show / Price / Units /
+   Add $). Visually distinct so users see they're clickable - orange when
+   checked, soft orange border on hover. */
 .toggle-dot {
   appearance: none;
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  border: 2px solid #cbd5e1;
+  border: 2px solid #94a3b8;
   background: white;
   cursor: pointer;
   transition: all 0.15s ease;
   flex-shrink: 0;
+  position: relative;
+}
+.toggle-dot:hover:not(:disabled) {
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
 }
 .toggle-dot:checked {
-  border-color: #334155;
-  background: #334155;
+  border-color: #f97316;
+  background: #f97316;
+}
+.toggle-dot:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: white;
 }
 .toggle-dot:disabled {
-  opacity: 0.3;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 

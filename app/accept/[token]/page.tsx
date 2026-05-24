@@ -279,7 +279,11 @@ export default async function AcceptQuotePage({
                   className="flex items-start justify-between py-3 border-b border-black"
                 >
                   <div className="flex-1">
-                    <p className="text-black">{line.custom_text}</p>
+                    <p className="text-black">
+                      {line.show_units
+                        ? line.custom_text
+                        : line.custom_text.split('-')[0].trim()}
+                    </p>
                   </div>
                   {line.show_price && (
                     <div className="ml-4">
