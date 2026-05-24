@@ -6,7 +6,7 @@ import { BlankQuoteBuilder } from './BlankQuoteBuilder';
 import { getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
 /**
- * /quotes/[id]/blank-build — dedicated builder screen for quotes whose
+ * /quotes/[id]/blank-build - dedicated builder screen for quotes whose
  * `entry_mode` is `'blank'`.
  *
  * For blank quotes, the line items the user enters here ARE the master

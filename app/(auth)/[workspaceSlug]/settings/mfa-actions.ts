@@ -38,8 +38,8 @@ export async function getMfaRequired(): Promise<boolean> {
  * Flip the user's mfa_required flag. The slider in settings calls this.
  *
  * Turning the flag *on* without an enrolled verified factor is a no-op from a
- * security perspective — the middleware checks both flag AND a verified factor
- * before challenging — so the action lets the user toggle freely; the UI is
+ * security perspective - the middleware checks both flag AND a verified factor
+ * before challenging - so the action lets the user toggle freely; the UI is
  * responsible for keeping the slider sensible.
  */
 export async function setMfaRequired(required: boolean): Promise<void> {

@@ -41,7 +41,7 @@ function lengthInputToMm(value: number, unit: 'mm' | 'in'): number {
 /**
  * Loose shape of the JSONB blob fabric.js saves into `flashings.canvas_data`
  * and `flashings.measurements`. The columns are typed `Json` by the
- * generated DB types (correct — Postgres can hold any JSON there); this
+ * generated DB types (correct - Postgres can hold any JSON there); this
  * narrowed view is what our app code actually expects to see when loading
  * a saved drawing. Cast at the boundary, then operate normally.
  */
@@ -1862,13 +1862,13 @@ export function FlashingCanvas({
           <div>
             <span className="text-slate-600 font-medium">Length:</span>{' '}
             <span className="text-slate-900 font-bold">
-              {measurements_live?.length != null ? formatLength(measurements_live.length, lengthUnit) : '—'}{lengthUnit}
+              {measurements_live?.length != null ? formatLength(measurements_live.length, lengthUnit) : '-'}{lengthUnit}
             </span>
           </div>
           <div>
             <span className="text-slate-600 font-medium">Angle:</span>{' '}
             <span className="text-slate-900 font-bold">
-              {measurements_live?.angle !== null && measurements_live?.angle !== undefined ? `${measurements_live.angle}°` : '—'}
+              {measurements_live?.angle !== null && measurements_live?.angle !== undefined ? `${measurements_live.angle}°` : '-'}
             </span>
           </div>
         </div>
@@ -2086,7 +2086,7 @@ export function FlashingCanvas({
         </div>
       )}
 
-      {/* Edit Value Modal — replaces the old window.prompt() for editing
+      {/* Edit Value Modal - replaces the old window.prompt() for editing
           a measurement's length or angle value. Matches the visual style
           of the Adjust Points + Select All modals above so the flashing
           drawing experience reads as one coherent UI. */}

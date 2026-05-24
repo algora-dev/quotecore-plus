@@ -41,7 +41,7 @@ import { EditFooterModal } from '../customer-edit/EditFooterModal';
 
 /**
  * `line_type` matches the DB enum `line_type` which includes
- * `'roof_area_header'` as well — those rows are filtered out by the
+ * `'roof_area_header'` as well - those rows are filtered out by the
  * blank-quote loader but the prop type still has to admit them so the
  * page boundary stays typed.
  */
@@ -363,7 +363,7 @@ export function BlankQuoteBuilder({
                 }}
                 className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
               >
-                <option value="">— Choose a customer quote template —</option>
+                <option value="">- Choose a customer quote template -</option>
                 {templates.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name}

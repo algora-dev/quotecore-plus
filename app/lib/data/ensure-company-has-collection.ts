@@ -1,5 +1,5 @@
 /**
- * Generic Trades Phase 3 — bootstrap collection helper.
+ * Generic Trades Phase 3 - bootstrap collection helper.
  *
  * Returns the company's "My Components" bootstrap collection id, creating
  * it idempotently and concurrency-safely under a per-company advisory
@@ -8,7 +8,7 @@
  * created in `20260520120010_generic_trades_phase_2_dark_schema.sql`.
  *
  * Round-3 H-02 means this is the ONLY path that can create or modify a
- * bootstrap collection — authenticated users are RLS-blocked from touching
+ * bootstrap collection - authenticated users are RLS-blocked from touching
  * `is_bootstrap` at all.
  *
  * Call this:

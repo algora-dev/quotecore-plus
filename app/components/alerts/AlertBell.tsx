@@ -160,8 +160,8 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
                     <div className={!alert.is_read ? '' : 'ml-4'}>
                       <p className="text-sm font-medium text-slate-900">{alert.title}</p>
                       {alert.message && (
-                        // `whitespace-pre-line` so the alert_type='message_reply' body —
-                        // which is composed as `Re: <subject>\n\n<excerpt>` — actually
+                        // `whitespace-pre-line` so the alert_type='message_reply' body -
+                        // which is composed as `Re: <subject>\n\n<excerpt>` - actually
                         // renders the line break. `line-clamp-4` caps the row height for
                         // long replies; the full body is available on the quote summary's
                         // Sent Messages panel by clicking the row.

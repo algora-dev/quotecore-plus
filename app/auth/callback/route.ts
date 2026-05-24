@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 
           return NextResponse.redirect(`${origin}/${company?.slug || 'workspace'}`);
         } else {
-          // No profile or no company — redirect to onboarding
+          // No profile or no company - redirect to onboarding
           return NextResponse.redirect(`${origin}/onboarding`);
         }
       }

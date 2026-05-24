@@ -67,7 +67,7 @@ interface PdfCursor {
   y: number;
 }
 
-/** Format an amount with the quote's currency code (no fancy locale tricks — keeps the PDF deterministic). */
+/** Format an amount with the quote's currency code (no fancy locale tricks - keeps the PDF deterministic). */
 function fmtCurrency(amount: number, currency: string): string {
   const sign = amount < 0 ? '-' : '';
   const abs = Math.abs(amount);
@@ -75,9 +75,9 @@ function fmtCurrency(amount: number, currency: string): string {
 }
 
 function fmtDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return '—';
+  if (isNaN(d.getTime())) return '-';
   return d.toLocaleDateString('en-NZ', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
@@ -123,7 +123,7 @@ function writeKeyValue(cur: PdfCursor, key: string, value: string) {
   cur.doc.text(key, MARGIN, cur.y);
   cur.doc.setFont('helvetica', 'normal');
   // Right-aligned value column at content edge.
-  const wrapped = cur.doc.splitTextToSize(value || '—', CONTENT_WIDTH - 50);
+  const wrapped = cur.doc.splitTextToSize(value || '-', CONTENT_WIDTH - 50);
   cur.doc.text(wrapped, MARGIN + 50, cur.y);
   cur.y += LINE_HEIGHT * Math.max(1, wrapped.length);
   if (cur.y > PAGE_HEIGHT - MARGIN) {
@@ -161,7 +161,7 @@ function buildSummaryPdf(b: QuoteBundleData): ArrayBuffer {
 
   writeHeader(
     cur,
-    `Quote #${b.quote.quoteNumber ?? 'DRAFT'} — Internal Summary`,
+    `Quote #${b.quote.quoteNumber ?? 'DRAFT'} - Internal Summary`,
     `${b.quote.customerName}${b.quote.jobName ? ` · ${b.quote.jobName}` : ''}`
   );
 
@@ -178,7 +178,7 @@ function buildSummaryPdf(b: QuoteBundleData): ArrayBuffer {
     'Measurement',
     b.quote.measurementSystem
       ? describeMeasurementSystem(b.quote.measurementSystem as MeasurementSystem)
-      : '—'
+      : '-'
   );
   advance(cur);
 
@@ -190,7 +190,7 @@ function buildSummaryPdf(b: QuoteBundleData): ArrayBuffer {
     drawDivider(cur);
     for (const area of b.roofAreas) {
       const areaComps = b.components.filter((c) => c.roofAreaLabel === area.label);
-      writeLine(cur, `${area.label} — ${formatArea(area.computedSqm, system)}`, { bold: true });
+      writeLine(cur, `${area.label} - ${formatArea(area.computedSqm, system)}`, { bold: true });
       if (areaComps.length === 0) {
         writeLine(cur, '  (no components)', { size: 9 });
       } else {
@@ -204,7 +204,7 @@ function buildSummaryPdf(b: QuoteBundleData): ArrayBuffer {
             : (c.pricingUnit ?? '');
           writeLine(
             cur,
-            `  ${c.name} — qty ${dispQty.toFixed(1)} ${unit} · mat ${fmtCurrency(c.materialCost, b.quote.currency)} · lab ${fmtCurrency(c.labourCost, b.quote.currency)} · total ${fmtCurrency(total, b.quote.currency)}`,
+            `  ${c.name} - qty ${dispQty.toFixed(1)} ${unit} · mat ${fmtCurrency(c.materialCost, b.quote.currency)} · lab ${fmtCurrency(c.labourCost, b.quote.currency)} · total ${fmtCurrency(total, b.quote.currency)}`,
             { size: 9 }
           );
         }
@@ -226,7 +226,7 @@ function buildSummaryPdf(b: QuoteBundleData): ArrayBuffer {
         : (c.pricingUnit ?? '');
       writeLine(
         cur,
-        `${c.name} — qty ${dispQty.toFixed(1)} ${unit} · mat ${fmtCurrency(c.materialCost, b.quote.currency)} · lab ${fmtCurrency(c.labourCost, b.quote.currency)} · total ${fmtCurrency(total, b.quote.currency)}`,
+        `${c.name} - qty ${dispQty.toFixed(1)} ${unit} · mat ${fmtCurrency(c.materialCost, b.quote.currency)} · lab ${fmtCurrency(c.labourCost, b.quote.currency)} · total ${fmtCurrency(total, b.quote.currency)}`,
         { size: 9 }
       );
     }
@@ -246,7 +246,7 @@ function buildSummaryPdf(b: QuoteBundleData): ArrayBuffer {
   }
   writeKeyValue(cur, 'Adjusted Subtotal', fmtCurrency(b.totals.adjustedSubtotal, b.quote.currency));
   for (const t of b.totals.taxLines) {
-    writeKeyValue(cur, `Tax — ${t.name} (${t.ratePercent.toFixed(2)}%)`, fmtCurrency(t.amount, b.quote.currency));
+    writeKeyValue(cur, `Tax - ${t.name} (${t.ratePercent.toFixed(2)}%)`, fmtCurrency(t.amount, b.quote.currency));
   }
   writeKeyValue(cur, 'GRAND TOTAL', fmtCurrency(b.totals.grandTotal, b.quote.currency));
 
@@ -262,7 +262,7 @@ function buildCustomerQuotePdf(b: QuoteBundleData): ArrayBuffer | null {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const cur: PdfCursor = { doc, y: MARGIN };
 
-  // Branding header (best-effort — no logo embedding to keep the bundle deterministic).
+  // Branding header (best-effort - no logo embedding to keep the bundle deterministic).
   if (b.quote.branding.companyName) {
     writeLine(cur, b.quote.branding.companyName, { bold: true, size: 16 });
   }
@@ -331,7 +331,7 @@ function buildLabourSheetPdf(b: QuoteBundleData): ArrayBuffer | null {
 
   writeHeader(
     cur,
-    `Quote #${b.quote.quoteNumber ?? 'DRAFT'} — Labour Sheet`,
+    `Quote #${b.quote.quoteNumber ?? 'DRAFT'} - Labour Sheet`,
     b.quote.customerName + (b.quote.jobName ? ` · ${b.quote.jobName}` : '')
   );
 

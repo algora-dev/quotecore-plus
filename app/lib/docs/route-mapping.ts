@@ -39,7 +39,7 @@ export function pathnameToDocSlug(pathname: string | null | undefined): string {
     { match: /^flashings(\/|$)/,                           slug: 'flashings/flashings' },
     { match: /^material-orders(\/|$)/,                     slug: 'material-orders/creating-orders' },
 
-    // Account routes — the live app collapses to one /account page with
+    // Account routes - the live app collapses to one /account page with
     // ?tab=... query params; we match on the bare path here (the search
     // string isn't part of pathname).
     { match: /^account(\/|$)/,                             slug: 'account/account-and-security' },

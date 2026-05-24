@@ -41,7 +41,7 @@ export function ComponentsIntroModal() {
       await markComponentsIntroSeen();
     } catch (err) {
       console.error('[ComponentsIntroModal] markSeen failed:', err);
-      // We still close — re-showing the modal forever on a persistence
+      // We still close - re-showing the modal forever on a persistence
       // failure is worse than the user not seeing it again next visit.
     } finally {
       setOpen(false);

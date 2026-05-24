@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { LegalPageShell } from '@/app/components/LegalPageShell';
 
 export const metadata = {
-  title: 'Terms of Service — QuoteCore+',
+  title: 'Terms of Service - QuoteCore+',
   description: 'The terms under which QuoteCore+ is provided.',
 };
 
@@ -24,7 +24,7 @@ const TOC = [
 
 export default function TermsOfServicePage() {
   return (
-    <LegalPageShell title="Terms of Service" effectiveDate="9 May 2026 (v1.0 — Beta)" toc={TOC}>
+    <LegalPageShell title="Terms of Service" effectiveDate="9 May 2026 (v1.0 - Beta)" toc={TOC}>
       <div className="not-prose mb-8 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
         <p className="font-semibold">Beta notice</p>
         <p className="mt-1">

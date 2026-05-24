@@ -322,7 +322,7 @@ function LaborSheetPreview({
     <div data-pdf-labor>
       <div className="bg-white rounded-xl border border-black p-12 space-y-8">
         <div className="border-b-2 border-black pb-6">
-          <h1 className="text-xl font-bold text-black mb-4">LABOR SHEET — Quote #{quote.quote_number || 'DRAFT'}</h1>
+          <h1 className="text-xl font-bold text-black mb-4">LABOR SHEET - Quote #{quote.quote_number || 'DRAFT'}</h1>
           <p className="text-base text-black"><span className="font-semibold">Client:</span> {quote.customer_name}</p>
           {quote.job_name && <p className="text-base text-black"><span className="font-semibold">Job:</span> {quote.job_name}</p>}
         </div>

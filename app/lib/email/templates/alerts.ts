@@ -84,7 +84,7 @@ export function revisionRequestedEmail(input: RevisionRequestEmailInput) {
   const subject = `Re-quote requested for ${labelQuote(quoteNumber)}`;
   const heading = 'Re-quote requested';
 
-  // Cap notes length in email body — full notes still visible in-app.
+  // Cap notes length in email body - full notes still visible in-app.
   const trimmedNotes = notes.length > 500 ? `${notes.slice(0, 500)}…` : notes;
   const stateLabel =
     sourceState === 'active'

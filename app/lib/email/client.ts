@@ -1,7 +1,7 @@
 /**
  * Resend client singleton.
  *
- * Server-only — never import from a client component.
+ * Server-only - never import from a client component.
  * Reads RESEND_API_KEY from env. If missing, calls become no-ops with a logged
  * warning so missing config never crashes a request path (auth, quote actions,
  * etc.). Email is best-effort, never load-bearing.
@@ -16,7 +16,7 @@ export function getResendClient(): Resend | null {
   if (cached) return cached;
   const key = process.env.RESEND_API_KEY;
   if (!key) {
-    console.warn('[email] RESEND_API_KEY not set — emails will not be sent.');
+    console.warn('[email] RESEND_API_KEY not set - emails will not be sent.');
     return null;
   }
   cached = new Resend(key);

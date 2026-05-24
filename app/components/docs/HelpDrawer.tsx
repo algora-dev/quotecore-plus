@@ -193,7 +193,7 @@ export function HelpDrawerPanel() {
    * Record a helpful/not-helpful vote against the currently-loaded doc.
    * Persists to `docs_feedback` via /api/docs/feedback so we have real
    * telemetry on which pages are landing well (Gerald audit M-04). The
-   * write is best-effort — a failed POST just logs a warning and the UI
+   * write is best-effort - a failed POST just logs a warning and the UI
    * still shows the vote as recorded locally, because vote persistence is
    * never worth interrupting the user with a toast.
    */

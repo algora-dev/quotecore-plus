@@ -100,8 +100,8 @@ export function getUnitLabel(
 export function describeMeasurementSystem(system: MeasurementSystem): string {
   const norm = normalizeMeasurementSystem(system);
   if (norm === 'metric') return 'Metric (m, m²)';
-  if (norm === 'imperial_ft') return 'Imperial — feet & ft²';
-  return 'Imperial — feet & Roofing Squares';
+  if (norm === 'imperial_ft') return 'Imperial - feet & ft²';
+  return 'Imperial - feet & Roofing Squares';
 }
 
 /** Short label, e.g. for the convert button. */

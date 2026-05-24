@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { LegalPageShell } from '@/app/components/LegalPageShell';
 
 export const metadata = {
-  title: 'Cookie Policy — QuoteCore+',
+  title: 'Cookie Policy - QuoteCore+',
   description: 'Which cookies QuoteCore+ uses and why.',
 };
 

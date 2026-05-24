@@ -136,7 +136,7 @@ export async function saveTakeoffMeasurements(
             effectiveWasteType = 'fixed';
             effectiveWasteFixed = wasteFixed * (m.points.length - 1);
           } else if (wasteType === 'fixed_per_segment') {
-            // Non-polyline component using fixed_per_segment — treat as plain fixed.
+            // Non-polyline component using fixed_per_segment - treat as plain fixed.
             effectiveWasteType = 'fixed';
           }
 
@@ -192,7 +192,7 @@ export async function saveTakeoffMeasurements(
     canvas_points: m.points ?? null,
     is_visible: m.visible,
     // Phase 7: page_id passed through when the caller supplies it (multi-page
-    // takeoff). Omitted for single-page callers — RPC writes NULL.
+    // takeoff). Omitted for single-page callers - RPC writes NULL.
     ...(m.pageId ? { page_id: m.pageId } : {}),
   }));
 
@@ -358,7 +358,7 @@ export async function loadTakeoffPages(quoteId: string): Promise<{
 
 /**
  * M-04 (Gerald round-5): initialise the session + page-1 row for a quote
- * on workstation mount. Idempotent — returns the existing page id if one
+ * on workstation mount. Idempotent - returns the existing page id if one
  * already exists. The workstation uses the returned id to scope saves.
  */
 export async function initializeTakeoffPage(

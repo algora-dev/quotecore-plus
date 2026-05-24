@@ -7,7 +7,7 @@ import { getDocTree, getSearchIndex } from '@/app/lib/docs/tree';
  *
  * Also ships a `searchIndex` so the in-app help drawer can run client-side
  * fuzzy search without a second round-trip. The index is ~title + description
- * + section per page — still small, but enough to be useful.
+ * + section per page - still small, but enough to be useful.
  */
 export async function GET() {
   const tree = getDocTree();

@@ -304,7 +304,7 @@ export function QuotesList({
       const visibleIds = visibleQuotes.map((q) => q.id);
       const allSelected = visibleIds.every((id) => next.has(id));
       if (allSelected) {
-        // "Unselect all visible" — unconditionally clears them.
+        // "Unselect all visible" - unconditionally clears them.
         for (const id of visibleIds) next.delete(id);
         return next;
       }
@@ -496,7 +496,7 @@ export function QuotesList({
             <button
               type="button"
               onClick={() => setSubBlockedOpen(true)}
-              title="Your trial period has ended — click for upgrade options"
+              title="Your trial period has ended - click for upgrade options"
               data-copilot="new-quote"
               className="inline-flex items-center gap-1.5 rounded-full bg-slate-300 px-5 py-2 text-sm font-semibold text-slate-600 cursor-pointer hover:bg-slate-400"
             >
@@ -509,7 +509,7 @@ export function QuotesList({
             <button
               type="button"
               onClick={() => setCapUpgradeOpen(true)}
-              title="Monthly quote limit reached — click for upgrade options"
+              title="Monthly quote limit reached - click for upgrade options"
               data-copilot="new-quote"
               className="inline-flex items-center gap-1.5 rounded-full bg-slate-300 px-5 py-2 text-sm font-semibold text-slate-600 cursor-pointer hover:bg-slate-400"
             >

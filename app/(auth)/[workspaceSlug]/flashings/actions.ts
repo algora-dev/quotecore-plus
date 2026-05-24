@@ -334,7 +334,7 @@ export async function updateFlashingWithImage(id: string, formData: FormData): P
     throw new Error(`Failed to update flashing: ${error.message}`);
   }
 
-  // DB update succeeded — NOW it is safe to remove the old image.
+  // DB update succeeded - NOW it is safe to remove the old image.
   if (oldImageUrlToCleanUp) {
     const oldPath = oldImageUrlToCleanUp.split('/storage/v1/object/public/company-logos/')[1];
     if (oldPath) {

@@ -16,7 +16,7 @@ import type { Database, TablesInsert } from '@/app/lib/supabase/server';
 
 /**
  * Company id for the canonical "templates" account. Owned by
- * templates@gmail.com (fake mailbox — never email it). The 8 starter
+ * templates@gmail.com (fake mailbox - never email it). The 8 starter
  * components live here and are cloned into every new company on signup.
  */
 export const TEMPLATE_COMPANY_ID = 'a1f017e5-cd0b-4f01-97cf-105372fe5674';
@@ -54,7 +54,7 @@ export async function seedTemplateComponents(
     }
 
     // NOTE: `flashing_ids` references flashing_library rows in the template
-    // company — those ids will NOT exist in the new company. Strip them on
+    // company - those ids will NOT exist in the new company. Strip them on
     // copy so the new component just has no flashings attached. Users can
     // add their own flashings later. Same logic applies if/when we ever
     // seed flashings; for now flashing_ids is intentionally cleared.

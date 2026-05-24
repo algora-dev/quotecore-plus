@@ -122,7 +122,7 @@ function pickVariant(ent: CompanyEntitlements): Variant | null {
       const diffMs = ends - now;
 
       // Expired (post-cron will flip to canceled, but until then we MUST
-      // surface the hard expired state — mutations are already blocked by
+      // surface the hard expired state - mutations are already blocked by
       // company_effective_plan_active() returning false).
       if (diffMs <= 0) {
         return {

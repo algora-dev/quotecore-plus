@@ -82,7 +82,7 @@ export interface CompanyEntitlements {
   /**
    * True if the account is allowed to interact at all (read AND write paths).
    * False ONLY for suspended/canceled. Note: grace/pending_data_purge/
-   * cancellation_pending are STILL active here — the user has read access
+   * cancellation_pending are STILL active here - the user has read access
    * and can pay to recover. Feature gates handle the per-mutation refusal.
    */
   isActive: boolean;
@@ -94,7 +94,7 @@ export interface CompanyEntitlements {
   monthlyQuoteLimit: number;
   /**
    * Quotes created so far in the current calendar month (UTC). Counts BOTH
-   * drafts and finalised quotes — `create_quote_atomic` doesn't distinguish.
+   * drafts and finalised quotes - `create_quote_atomic` doesn't distinguish.
    * Resets implicitly on the first of the month when the cron rolls the row.
    */
   monthlyQuoteUsed: number;
@@ -166,7 +166,7 @@ interface PlanRowRaw {
  * into one query via SELECT FROM functions). Cached per request via React
  * `cache()` so multiple consumers in the same render share the result.
  *
- * Uses the admin (service-role) client so it works from anywhere — public
+ * Uses the admin (service-role) client so it works from anywhere - public
  * accept-token pages, webhooks, cron, server actions. Company authorisation
  * is the caller's responsibility; pass the right companyId.
  */
@@ -176,7 +176,7 @@ export const loadCompanyEntitlements = cache(
 
     // Pull the companies row + the effective-plan results in one go via a
     // raw SQL select. We can't use the `.from()` builder for the function
-    // calls cleanly, so we use admin.rpc for each then merge — three small
+    // calls cleanly, so we use admin.rpc for each then merge - three small
     // calls is fine since the helpers are STABLE and the company row pulls
     // the rest in a single select.
     const periodStart = new Date(Date.UTC(
@@ -293,7 +293,7 @@ export const loadCompanyEntitlements = cache(
  *   const profile = await requireCompanyContext();
  *   await requireFeature(profile.company_id, 'material_orders');
  *
- * For numeric limits (quotes/month, storage bytes) DO NOT call this —
+ * For numeric limits (quotes/month, storage bytes) DO NOT call this -
  * those are enforced at the DB layer via `create_quote_atomic` and the
  * upload finaliser respectively.
  */

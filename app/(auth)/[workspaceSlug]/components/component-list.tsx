@@ -62,10 +62,10 @@ const ROOFING_DEFAULT_TYPES = new Set<MeasurementType>([
 
 const PRICING_STRATEGY_LABELS: Record<PricingStrategy, string> = {
   per_unit: 'Per unit (default)',
-  per_pack_length: 'Per pack — by length (e.g. 20m cable rolls)',
-  per_pack_area: 'Per pack — by area (e.g. 50m² underlay rolls)',
-  per_pack_coverage: 'Per pack — by coverage (e.g. 20L paint covers 50m²)',
-  per_pack_volume: 'Per pack — by volume (e.g. 5m³ concrete units)',
+  per_pack_length: 'Per pack - by length (e.g. 20m cable rolls)',
+  per_pack_area: 'Per pack - by area (e.g. 50m² underlay rolls)',
+  per_pack_coverage: 'Per pack - by coverage (e.g. 20L paint covers 50m²)',
+  per_pack_volume: 'Per pack - by volume (e.g. 5m³ concrete units)',
 };
 
 const WASTE_UNIT_LABELS: Record<WasteUnit, string> = {
@@ -141,7 +141,7 @@ export function ComponentList({
 }) {
   const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);
   // Pitch is only relevant for roofing. All other trades hide the pitch
-  // checkbox — it would be silently ignored by the pricing engine anyway.
+  // checkbox - it would be silently ignored by the pricing engine anyway.
   const pitchVisible = getTradeLabels(companyDefaultTrade).pitchRequired;
   /** Local helper that picks the right unit suffix for a measurement type given the company's default system. */
   const unitForMeasurement = (mt: MeasurementType) =>
@@ -249,7 +249,7 @@ export function ComponentList({
     setFormPitchEnabled(comp.default_pitch_type !== 'none');
     setAssignedFlashings(comp.flashing_ids || []);
     setSelectedFlashingId('');
-    // Phase 6.5 (Generic Trades) state — read off the (stale-typed) row.
+    // Phase 6.5 (Generic Trades) state - read off the (stale-typed) row.
     const c = comp as unknown as Record<string, unknown>;
     setFormHeightMm(c.height_value_mm != null ? String(c.height_value_mm) : '');
     setFormDepthMm(c.depth_value_mm != null ? String(c.depth_value_mm) : '');
@@ -303,7 +303,7 @@ export function ComponentList({
 
     // database.types.ts has not been regenerated since Phase 2's enum
     // extension; the typed measurement_type column still narrows to the
-    // 5 legacy values. Cast at the boundary — the DB accepts every value
+    // 5 legacy values. Cast at the boundary - the DB accepts every value
     // in our MeasurementType union and ck_component_library_strategy_compat
     // catches anything that slips through.
     const input: ComponentLibraryInsert = {
@@ -819,7 +819,7 @@ export function ComponentList({
                       <input name="default_labour_rate" type="number" step="0.01" defaultValue={comp.default_labour_rate ?? 0} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                     </div>
 
-                    {/* Material pricing — unified: strategy dropdown drives per-unit vs pack. */}
+                    {/* Material pricing - unified: strategy dropdown drives per-unit vs pack. */}
                     {genericTradesEnabled && (
                       <div className="col-span-2">
                         <label className="block text-xs text-slate-500 mb-1">Material pricing</label>

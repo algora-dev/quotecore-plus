@@ -172,7 +172,7 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
               >
                 <div className="font-semibold text-sm text-orange-600">#{quote.quote_number}</div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-900 truncate">{quote.customer_name || '—'}</p>
+                  <p className="text-sm font-medium text-slate-900 truncate">{quote.customer_name || '-'}</p>
                   {quote.job_name && <p className="text-xs text-slate-400 truncate">{quote.job_name}</p>}
                 </div>
                 <div>
@@ -206,7 +206,7 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Customer</span>
-                <span className="text-slate-700">{selectedQuote.customer_name || '—'}</span>
+                <span className="text-slate-700">{selectedQuote.customer_name || '-'}</span>
               </div>
               {selectedQuote.job_name && (
                 <div className="flex justify-between text-sm">

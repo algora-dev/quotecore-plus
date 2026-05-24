@@ -224,7 +224,7 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
         {hasVerified && !mfaRequired && (
           <p className="mt-2 text-xs px-2 py-1.5 rounded bg-amber-50 border border-amber-200 text-amber-800">
             2FA is currently <strong>disabled</strong>. Your authenticator factor is still
-            saved — flip the switch back on whenever you want to require it at login again.
+            saved - flip the switch back on whenever you want to require it at login again.
           </p>
         )}
 
@@ -462,7 +462,7 @@ export function RecoveryCodesPanel({
       'QuoteCore+ Recovery Codes',
       '------------------------------',
       'Each code can be used ONCE if you lose access to your authenticator.',
-      'Using a code will reset your 2FA — you will be asked to re-enroll a fresh authenticator.',
+      'Using a code will reset your 2FA - you will be asked to re-enroll a fresh authenticator.',
       '',
       ...codes,
       '',

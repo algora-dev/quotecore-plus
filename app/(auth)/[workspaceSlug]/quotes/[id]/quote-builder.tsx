@@ -293,7 +293,7 @@ export function QuoteBuilder({
   async function handleUseRoofArea(compId: string, roofAreaSqm: number) {
     const _comp = components.find(c => c.id === compId);
     // Roof area total is already pitched - don't apply pitch again
-    // `useRoofAreaTotal` is a server action, not a React hook — React's
+    // `useRoofAreaTotal` is a server action, not a React hook - React's
     // rules-of-hooks heuristic flags it on the `use*` name. Renaming the
     // action is a larger change; suppress here is the lower-risk path.
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -578,7 +578,7 @@ export function QuoteBuilder({
 
       {phase === 'components' && (
         <div className="space-y-4" data-copilot="quote-components-phase">
-          {/* Phase 8: generic-trade quotes with no areas — show a flat
+          {/* Phase 8: generic-trade quotes with no areas - show a flat
               component list. For these quotes, all components live at the
               quote level (quote_roof_area_id = NULL) rather than under an
               area. We show ALL components here regardless of type. */}
@@ -715,7 +715,7 @@ export function QuoteBuilder({
             return (
               <div key={area.id} className="rounded-xl border border-slate-200 bg-white p-4">
                 <h3 className="font-semibold text-slate-900 mb-2">
-                  {area.label} — {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
+                  {area.label} - {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
                 </h3>
                 {areaComps.length > 0 ? (
                   <table className="w-full text-sm">
@@ -1057,7 +1057,7 @@ function RoofAreaCard({
   /**
    * Auto-submit the entry as soon as both fields hold a positive number.
    * Wired to onBlur on width / length so the user no longer needs to click
-   * the explicit "Add" button — entering W × L × pitch "just works" and the
+   * the explicit "Add" button - entering W × L × pitch "just works" and the
    * area's computed_sqm updates immediately. Reported by Shaun 2026-05-17.
    */
   function tryAutoSubmit() {

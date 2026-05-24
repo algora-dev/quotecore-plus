@@ -15,7 +15,7 @@ type Props = {
  *
  * Keeps a single field (full name) for now to stay focused. We deliberately
  * render email as read-only here because changing it goes through the
- * dedicated EmailChangeSection (with re-auth, AAL2, cooldown, etc.) — letting
+ * dedicated EmailChangeSection (with re-auth, AAL2, cooldown, etc.) - letting
  * the user type a new email into a normal text input would skip every
  * security gate.
  */

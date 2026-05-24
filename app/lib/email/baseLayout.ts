@@ -19,7 +19,7 @@ export type EmailLayoutInput = {
   /** Pre-rendered inner HTML (may contain <p>, <table>, etc.). */
   innerHtml: string;
   /**
-   * Optional preview text (preheader) — first ~100 chars shown in the inbox
+   * Optional preview text (preheader) - first ~100 chars shown in the inbox
    * preview line on most clients. Hidden visually inside the email.
    */
   preheader?: string;
@@ -83,7 +83,7 @@ export function note(text: string): string {
   return `<p style="margin:24px 0 0 0;font-size:13px;line-height:20px;color:#9CA3AF;">${escapeHtml(text)}</p>`;
 }
 
-/** A keyed-info block (label : value pairs) — used by security emails. */
+/** A keyed-info block (label : value pairs) - used by security emails. */
 export function infoTable(rows: { label: string; value: string }[]): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px 0;border-collapse:collapse;">
 ${rows

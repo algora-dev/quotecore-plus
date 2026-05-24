@@ -89,7 +89,7 @@ export function QuoteNameEditor({ quoteId, customerName, jobName }: Props) {
     <div className="flex items-start gap-3">
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">{customerName}</h1>
-        {jobName && <p className="text-sm text-slate-500 mt-0.5">— {jobName}</p>}
+        {jobName && <p className="text-sm text-slate-500 mt-0.5">- {jobName}</p>}
       </div>
       <button
         onClick={() => setEditing(true)}

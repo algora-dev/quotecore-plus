@@ -105,7 +105,7 @@ export function SuppressionsTable({ entries }: Props) {
                 <td className="px-4 py-3 text-slate-900">{e.companyName}</td>
                 <td className="px-4 py-3 text-slate-700 font-mono text-xs">{e.email}</td>
                 <td className="px-4 py-3 text-slate-500 text-xs max-w-xs truncate" title={e.reason ?? ''}>
-                  {e.reason ?? '—'}
+                  {e.reason ?? '-'}
                 </td>
                 <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">
                   {new Date(e.createdAt).toLocaleDateString('en-GB', {

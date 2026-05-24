@@ -24,7 +24,7 @@ export default async function TwoFactorRecoverPage({
 
   const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   if (aalData?.currentLevel === 'aal2') {
-    // Already verified — recovery codes shouldn't be needed; bounce them on.
+    // Already verified - recovery codes shouldn't be needed; bounce them on.
     redirect(redirectParam && redirectParam.startsWith('/') ? redirectParam : '/');
   }
 

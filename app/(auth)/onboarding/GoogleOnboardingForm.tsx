@@ -54,7 +54,7 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
         const result = await completeGoogleOnboarding(formData) as { slug?: string } | undefined;
         if (!result?.slug) {
           // Server should always return { slug } when skipRedirect=true. If not, we've got nothing
-          // safe to redirect to — don't guess (computed slugs collide / 404). Surface the error.
+          // safe to redirect to - don't guess (computed slugs collide / 404). Surface the error.
           setError('Onboarding completed but no workspace slug was returned. Please refresh and try again.');
           return;
         }
@@ -62,7 +62,7 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
         setStep(3);
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : '';
-        // skipRedirect=true is set above, so a NEXT_REDIRECT here means the server bypassed it —
+        // skipRedirect=true is set above, so a NEXT_REDIRECT here means the server bypassed it -
         // surface as an error rather than guessing a slug from the company name.
         setError(errMsg || 'Something went wrong');
       }
@@ -161,7 +161,7 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
                 <optgroup key={group.label} label={group.label}>
                   {group.currencies.map(c => (
                     <option key={c.code} value={c.code}>
-                      {c.symbol} {c.code} — {c.name}
+                      {c.symbol} {c.code} - {c.name}
                     </option>
                   ))}
                 </optgroup>
@@ -175,8 +175,8 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
             <div className="grid grid-cols-1 gap-2 mt-2">
               {[
                 { value: 'metric' as const, title: 'Metric', subtitle: 'Meters (m), Square meters (m²)' },
-                { value: 'imperial_ft' as const, title: 'Imperial — ft²', subtitle: 'Feet (ft), Square feet (ft²)' },
-                { value: 'imperial_rs' as const, title: 'Imperial — Roofing Squares', subtitle: 'Feet (ft), Roofing Squares (RS)' },
+                { value: 'imperial_ft' as const, title: 'Imperial - ft²', subtitle: 'Feet (ft), Square feet (ft²)' },
+                { value: 'imperial_rs' as const, title: 'Imperial - Roofing Squares', subtitle: 'Feet (ft), Roofing Squares (RS)' },
               ].map((opt) => (
                 <button
                   key={opt.value}

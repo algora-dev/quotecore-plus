@@ -9,7 +9,7 @@ import Link from 'next/link';
  * QuoteCore+ only sets strictly-necessary cookies today (Supabase auth
  * cookies + the short-lived `qcp_recovery` token used by the lost-email
  * recovery flow). Under the ePrivacy Directive, strictly-necessary cookies
- * are exempt from prior consent — but users still need to be informed that
+ * are exempt from prior consent - but users still need to be informed that
  * cookies are in use. So this is a NOTICE, not a consent gate: dismissible
  * with a single click, no "reject" button needed because nothing is set
  * conditionally.
@@ -66,7 +66,7 @@ export function CookieBanner() {
     try {
       window.localStorage.setItem(STORAGE_KEY, new Date().toISOString());
     } catch {
-      /* swallow — best-effort */
+      /* swallow - best-effort */
     }
     setDismissed(true);
   }

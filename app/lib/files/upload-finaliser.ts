@@ -97,7 +97,7 @@ export interface FinaliseUploadInput {
   bucket: typeof BUCKETS.QUOTE_DOCUMENTS;
   /**
    * Full storage path, MUST be prefixed with `${companyId}/`. The finaliser
-   * verifies this — it stops a malicious caller from finalising into
+   * verifies this - it stops a malicious caller from finalising into
    * another company's folder.
    */
   storagePath: string;
@@ -172,7 +172,7 @@ export async function finaliseUpload(
   const realMime = metadata.mimetype ?? 'application/octet-stream';
 
   if (typeof realSize !== 'number' || !Number.isFinite(realSize) || realSize < 0) {
-    // Storage object exists but has no readable size — refuse to commit.
+    // Storage object exists but has no readable size - refuse to commit.
     // Delete the orphan so it doesn't sit there indefinitely.
     await admin.storage.from(input.bucket).remove([input.storagePath]).catch(() => {});
     throw new Error('finaliseUpload: storage object has no readable size');
@@ -186,7 +186,7 @@ export async function finaliseUpload(
     const { error: rmErr } = await admin.storage.from(input.bucket).remove([input.storagePath]);
     if (rmErr) {
       // We logged it but can't recover; the orphan sweep will catch it.
-      // We do NOT swallow the original billing error — the user must see it.
+      // We do NOT swallow the original billing error - the user must see it.
       console.error(
         '[upload-finaliser] failed to remove over-quota object; orphan sweep will reclaim:',
         rmErr.message,

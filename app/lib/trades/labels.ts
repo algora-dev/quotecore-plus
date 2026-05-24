@@ -1,5 +1,5 @@
 /**
- * Trade-aware UI labels — single source of truth for all copy that varies by trade.
+ * Trade-aware UI labels - single source of truth for all copy that varies by trade.
  *
  * Each new trade is one entry in TRADE_LABELS plus an enum value in the DB.
  * The rest of the UI picks up the right copy automatically via getTradeLabels().
@@ -130,7 +130,7 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     firstAreaInstructionsBody:
       'Define your wall areas before measuring components. ' +
       'Use the Area tool to trace elevations directly, or use the Line / Multi-Line tools ' +
-      'for plan views — make sure your components are set up with Wall Length × Height.',
+      'for plan views - make sure your components are set up with Wall Length × Height.',
     firstAreaConfirmCta: "Got it, let's add a wall area!",
     toolGuidanceNote:
       'Use the Area tool for elevation plans, or the Line / Multi-Line tools for plan view ' +

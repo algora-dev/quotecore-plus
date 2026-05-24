@@ -28,7 +28,7 @@ interface Props {
  *
  * Renders the existing files (plan, takeoff snapshots, supporting uploads) and an
  * inline "Upload" affordance so users can add more supporting files without going
- * back to the Quote Builder. Uploaded files always go in as `supporting` — the
+ * back to the Quote Builder. Uploaded files always go in as `supporting` - the
  * single-slot Roof Plan is owned by the takeoff flow and shouldn't be replaced
  * from here.
  */
@@ -113,7 +113,7 @@ export function SummaryFilesPanel({ quoteId, companyId, files }: Props) {
             onUpload={handleSupportingUpload}
             currentFileUrl={null}
             label="Upload Supporting File"
-            description="PDF or image (max 10 MB) — added as a supporting file on this quote"
+            description="PDF or image (max 10 MB) - added as a supporting file on this quote"
           />
         </div>
       )}

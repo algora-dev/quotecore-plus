@@ -118,7 +118,7 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
     const signedUrl = await getQuoteFileSignedUrl(mint.storagePath);
 
     const newFile: SupportingFile = {
-      id: mint.storagePath, // transient — router.refresh() below replaces this with the real DB id
+      id: mint.storagePath, // transient - router.refresh() below replaces this with the real DB id
       storagePath: mint.storagePath,
       fileName: file.name,
       fileSize: file.size,
@@ -139,7 +139,7 @@ export function FilesManager({ quoteId, companyId, workspaceSlug, planUrl: initi
     const { id: fileId } = pendingDelete;
     setDeleting(fileId);
     try {
-      // Server derives the storage path from the DB row — we no longer
+      // Server derives the storage path from the DB row - we no longer
       // pass `storagePath` here (Gerald audit H-01, 2026-05-11).
       await deleteFile(fileId);
       setSupportingFiles(prev => prev.filter(f => f.id !== fileId));

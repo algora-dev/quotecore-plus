@@ -92,7 +92,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   // the parent re-rendered (e.g. on router.refresh(), or even on certain
   // child state cascades), because each render produced a fresh array
   // reference for the same content. That re-init wiped in-progress edits
-  // — most visibly on blank quotes, where both arrays are empty so the
+  // - most visibly on blank quotes, where both arrays are empty so the
   // re-init resolved to setLines([]) and silently destroyed the user's
   // custom lines after 3-4 entries (when something upstream triggered a
   // refresh).
@@ -222,7 +222,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       unit = 'units';
     }
 
-    return `${component.name} — ${displayQty.toFixed(1)} ${unit}`;
+    return `${component.name} - ${displayQty.toFixed(1)} ${unit}`;
   }
 
   function toggleVisibility(lineId: string) {
@@ -423,7 +423,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               <svg className="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>Back
             </Link>
             <h1 className="text-2xl font-semibold text-slate-900 mt-1">
-              {editorTitle} — Quote #{quote.quote_number || 'Draft'}
+              {editorTitle} - Quote #{quote.quote_number || 'Draft'}
             </h1>
           </div>
           <div className="flex items-center gap-4">

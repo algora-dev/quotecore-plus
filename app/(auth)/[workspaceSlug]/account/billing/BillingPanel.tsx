@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Billing tab — tier picker with View modals.
+ * Billing tab - tier picker with View modals.
  *
  * Three jobs:
  *   1. Show the company's current plan + status + key dates (trial end,
@@ -85,7 +85,7 @@ export interface BillingPanelProps {
   currentPeriodEnd: string | null;
   /**
    * True when the user has scheduled cancellation at period end via the
-   * Stripe portal. Combined with `cancelAt` to render the “Cancelled —
+   * Stripe portal. Combined with `cancelAt` to render the “Cancelled -
    * ending {date}” secondary pill on the current-plan card.
    */
   cancelAtPeriodEnd: boolean;
@@ -94,7 +94,7 @@ export interface BillingPanelProps {
    * when cancelAtPeriodEnd is true.
    */
   cancelAt: string | null;
-  /** First payment failure (ISO) — drives the past_due banner. */
+  /** First payment failure (ISO) - drives the past_due banner. */
   firstPaymentFailureAt: string | null;
   /** Storage usage. */
   storageUsedBytes: number;
@@ -130,7 +130,7 @@ function formatOriginalPrice(
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   return new Date(iso).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'short',
@@ -140,10 +140,10 @@ function formatDate(iso: string | null): string {
 
 /**
  * Tri-state trial countdown.
- *   - `null` — not on a trial / no trial timestamp.
- *   - `{ state: 'ending-today', hoursLeft }` — trial ends within 24 hours.
- *   - `{ state: 'active', daysLeft }` — trial still has N>=1 days left.
- *   - `{ state: 'expired' }` — trial_ends_at is in the past.
+ *   - `null` - not on a trial / no trial timestamp.
+ *   - `{ state: 'ending-today', hoursLeft }` - trial ends within 24 hours.
+ *   - `{ state: 'active', daysLeft }` - trial still has N>=1 days left.
+ *   - `{ state: 'expired' }` - trial_ends_at is in the past.
  *
  * Replaces the old `trialDaysLeft` which clamped both “last day” and
  * “expired” at 0, conflating two very different UX states (smoke #1).
@@ -170,12 +170,12 @@ function trialState(trialEndsAt: string | null): TrialState | null {
 }
 
 /**
- * Format a numeric cap with NULL = "Unlimited" and 0 = "—". Used inside
+ * Format a numeric cap with NULL = "Unlimited" and 0 = "-". Used inside
  * the View modal for component / flashing / order caps.
  */
 function formatCap(value: number | null, suffix = ''): string {
   if (value === null) return 'Unlimited';
-  if (value === 0) return '—';
+  if (value === 0) return '-';
   return `${value}${suffix}`;
 }
 
@@ -288,12 +288,12 @@ export function BillingPanel(props: BillingPanelProps) {
   // Distinguish “user is mid-trial right now” from “user was on a trial
   // and it expired without a paid sub”. The status flag stays 'trialing'
   // until the expire-trials cron flips it, but the user has effectively
-  // dropped to starter-effective — and (post-2026-05-19 migration
+  // dropped to starter-effective - and (post-2026-05-19 migration
   // 20260519120000) all writes are blocked too. We surface that as a hard
   // expired-trial state in the UI.
   const trialExpiredNoSub = isOnTrial && trial.state === 'expired' && !props.hasStripeCustomer;
 
-  // “Cancelled — ending {date}” secondary pill. Renders alongside the
+  // “Cancelled - ending {date}” secondary pill. Renders alongside the
   // primary status pill when the user has scheduled cancellation at the
   // end of their current period via the Stripe Portal.
   const cancelDateIso = props.cancelAt ?? props.currentPeriodEnd;
@@ -374,7 +374,7 @@ export function BillingPanel(props: BillingPanelProps) {
               </span>
               {showCancellingPill && (
                 <span className="inline-block text-xs px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-800">
-                  Cancelling — ending {formatDate(cancelDateIso)}
+                  Cancelling - ending {formatDate(cancelDateIso)}
                 </span>
               )}
             </div>
@@ -387,7 +387,7 @@ export function BillingPanel(props: BillingPanelProps) {
             )}
             {isOnTrial && trial.state === 'ending-today' && (
               <p className="mt-2 text-sm text-amber-700 font-medium">
-                Trial ends today — choose a plan now to keep your data and continue using QuoteCore+.
+                Trial ends today - choose a plan now to keep your data and continue using QuoteCore+.
               </p>
             )}
             {trialExpiredNoSub && (
@@ -510,7 +510,7 @@ export function BillingPanel(props: BillingPanelProps) {
                   </div>
                   <p className="text-lg font-semibold text-slate-900 mt-1 flex items-baseline gap-2">
                     <span>
-                      {plan.isTrial ? 'Free' : plan.comingSoon ? '—' : formatPrice(plan.priceCentsMonthly)}
+                      {plan.isTrial ? 'Free' : plan.comingSoon ? '-' : formatPrice(plan.priceCentsMonthly)}
                     </span>
                     {!plan.isTrial && !plan.comingSoon && (() => {
                       const original = formatOriginalPrice(plan.priceCentsMonthlyOriginal, plan.priceCentsMonthly);
@@ -557,7 +557,7 @@ export function BillingPanel(props: BillingPanelProps) {
                       plan.isTrial && props.hasStripeCustomer
                         ? 'The free trial is only available to new accounts.'
                         : blockedByActiveSub
-                        ? 'You already have an active subscription — click to manage.'
+                        ? 'You already have an active subscription - click to manage.'
                         : plan.comingSoon
                         ? 'This tier is not available yet.'
                         : isCurrent

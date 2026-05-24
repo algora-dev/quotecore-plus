@@ -72,7 +72,7 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
       .order('sort_order', { ascending: true });
     
     // Load takeoff measurements (digital mode - linked to component_library_id).
-    // measurement_type is REQUIRED here — the order-form normalisation downstream
+    // measurement_type is REQUIRED here - the order-form normalisation downstream
     // branches on it ('line' / 'area' / 'point') to pick linear vs area conversion.
     // Forgetting it makes every imperial digital order silently double-convert.
     const { data: takeoffMeasurements } = await supabase

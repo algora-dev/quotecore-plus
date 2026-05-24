@@ -1,7 +1,7 @@
 /**
  * Curated list of suggested security questions, plus a "Custom" sentinel.
  *
- * Why curate: a free-form question creates two failure modes — users picking
+ * Why curate: a free-form question creates two failure modes - users picking
  * questions whose answers can be Googled (DOB, mother's maiden name on social
  * media), and support staff getting answers in a hundred different shapes.
  * The curated list keeps support's verification workflow predictable and

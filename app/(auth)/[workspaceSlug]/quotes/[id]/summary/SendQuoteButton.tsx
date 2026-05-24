@@ -56,7 +56,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   /**
    * Open the Templates page on the Message tab so the user can build
    * a reusable quote_send template. The `kind` + `return` query params
-   * are aspirational — the TemplatesPageClient currently honours `tab`
+   * are aspirational - the TemplatesPageClient currently honours `tab`
    * but not the others; they're recorded in the URL so the Phase 2
    * wiring can pick them up without breaking the navigation now.
    */
@@ -75,7 +75,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   // Sync local token state to the server prop when it changes.
   // Without this, `router.refresh()` (used by ReopenQuoteButton, the
   // post-send prompt, etc.) re-runs the server component and updates
-  // `existingToken` — but the client component's `token` state stays
+  // `existingToken` - but the client component's `token` state stays
   // stuck on whatever was first passed at mount. Result: after a
   // reopen, ensureToken() reuses the now-deleted token and the user
   // gets a "Quote Not Found" page. Mirror the prop into local state
@@ -102,11 +102,11 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   // send through the Messages pipeline we offer three optional
   // follow-up rules, each toggleable and configurable independently:
   //
-  //   1. After no response — fires N days after this send.
-  //   2. After acceptance  — fires N days after the customer accepts
+  //   1. After no response - fires N days after this send.
+  //   2. After acceptance  - fires N days after the customer accepts
   //                          (parked with sentinel timestamps until
   //                          activated by the accept handler).
-  //   3. After decline     — fires N days after the customer declines.
+  //   3. After decline     - fires N days after the customer declines.
   //
   // Each rule has its own template + delay. The prompt is hidden
   // when all rules are scheduled or the user dismisses it.
@@ -244,13 +244,13 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
           triggerEvent: triggerByKey[key],
           // Translate the rule's (value, unit) pair into the
           // scheduleQuoteFollowUp contract. "Immediately" means
-          // both numbers are zero — the activator will dispatch
+          // both numbers are zero - the activator will dispatch
           // inline as soon as the event fires.
           waitDays: rule.delayUnit === 'days' ? rule.delayValue : 0,
           waitHours: rule.delayUnit === 'hours' ? rule.delayValue : 0,
           // "no_response" implies require_no_response. The accepted /
           // declined triggers don't gate on response because the
-          // event ITSELF is the gate — if the customer accepts, we
+          // event ITSELF is the gate - if the customer accepts, we
           // want the thank-you to fire regardless of whether they
           // also replied to the previous message.
           requireNoResponse: key === 'no_response',
@@ -529,7 +529,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                       onChange={e => handleTemplateChange(e.target.value)}
                       className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                     >
-                      <option value="">— Select template —</option>
+                      <option value="">- Select template -</option>
                       {emailTemplates.map(t => (
                         <option key={t.id} value={t.id}>{t.name}{t.is_default ? ' (Default)' : ''}</option>
                       ))}
@@ -608,7 +608,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                   />
                 </div>
 
-                {/* Template selector — reused from email mode. No template
+                {/* Template selector - reused from email mode. No template
                     is required; users can type a one-off message inline.
                     The hint below the dropdown nudges them to save
                     repeated messages as templates for next time. */}
@@ -620,7 +620,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                       onChange={(e) => handleTemplateChange(e.target.value)}
                       className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                     >
-                      <option value="">— None (custom message) —</option>
+                      <option value="">- None (custom message) -</option>
                       {emailTemplates.map((t) => (
                         <option key={t.id} value={t.id}>
                           {t.name}
@@ -786,7 +786,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                                   }}
                                   className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
                                 >
-                                  {/* Immediately is only meaningful for event triggers —
+                                  {/* Immediately is only meaningful for event triggers -
                                       a 'no response' chase 0 seconds after sending makes no
                                       sense and the server would reject it. */}
                                   {key !== 'no_response' ? (

@@ -37,7 +37,7 @@
  *       - 400 on signature failure (never retry; the event was malformed)
  *       - 200 on duplicate-event (UNIQUE constraint hit; already handled)
  *       - 200 on `quarantined:*` results (business no-op; event is on
- *         file but we deliberately won't act on it — unknown_price,
+ *         file but we deliberately won't act on it - unknown_price,
  *         stale_subscription, customer_not_found, etc.)
  *       - 500 on retryable infra/Stripe/DB failures (handler threw via
  *         the `retryable()` helper). processed_at stays NULL so Stripe
@@ -50,7 +50,7 @@
  *     quarantined so a stale event from a replaced/cancelled sub cannot
  *     bounce the company into past_due/grace. The one exception is
  *     `customer.subscription.created` for a company with no current
- *     sub — the first-link case.
+ *     sub - the first-link case.
  *
  * ---------------------------------------------------------------------------
  * Events handled (phase 1)

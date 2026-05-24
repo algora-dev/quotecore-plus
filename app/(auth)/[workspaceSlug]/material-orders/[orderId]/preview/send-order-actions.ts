@@ -41,7 +41,7 @@ export async function sendOrderMessage(
   // pipeline: the user must have material_orders to operate this surface
   // at all, AND email_send to dispatch a real email through Resend.
   // Without email_send they can still generate the supplier link via
-  // the order page and copy it manually — that path doesn't go through
+  // the order page and copy it manually - that path doesn't go through
   // this action.
   try {
     await requireFeature(profile.company_id, 'material_orders');

@@ -27,7 +27,7 @@ export default async function TwoFactorPage({
 
   const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   if (aalData?.currentLevel === 'aal2') {
-    // Already verified — bounce back to the original destination (or root).
+    // Already verified - bounce back to the original destination (or root).
     redirect(redirectParam && redirectParam.startsWith('/') ? redirectParam : '/');
   }
 
@@ -35,7 +35,7 @@ export default async function TwoFactorPage({
   const verifiedTotp = (factorsData?.totp ?? []).find((f) => f.status === 'verified');
 
   if (!verifiedTotp) {
-    // No factor enrolled — nothing to challenge against. Send them through.
+    // No factor enrolled - nothing to challenge against. Send them through.
     redirect(redirectParam && redirectParam.startsWith('/') ? redirectParam : '/');
   }
 

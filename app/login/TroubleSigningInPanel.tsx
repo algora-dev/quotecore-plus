@@ -8,11 +8,11 @@ import { createBrowserClient } from '@supabase/ssr';
  * Inline expandable card on the login page that branches into two recovery
  * paths:
  *
- *   1. Forgot password — user still has email access; we send a reset link to
+ *   1. Forgot password - user still has email access; we send a reset link to
  *      the email they enter. Reuses Supabase's built-in resetPasswordForEmail
  *      and the branded recovery template we already configured.
  *
- *   2. Lost email access — user can't reach their old inbox. We send them to
+ *   2. Lost email access - user can't reach their old inbox. We send them to
  *      /login/recover where the multi-step security-question flow lives.
  *
  * The card stays inline (no modal) so on mobile the user never loses context;
@@ -49,7 +49,7 @@ export function TroubleSigningInPanel() {
         });
         if (error) {
           setStatus('error');
-          // Generic error — don't surface enumeration cues if Supabase ever
+          // Generic error - don't surface enumeration cues if Supabase ever
           // says "user not found" (it shouldn't, but defensive).
           setErrorMessage("We couldn't send a reset email. Please try again.");
         } else {
@@ -101,7 +101,7 @@ export function TroubleSigningInPanel() {
             className="w-full text-left p-3 rounded-lg border border-slate-200 bg-white hover:border-orange-300 hover:bg-orange-50/40 transition"
           >
             <p className="text-sm font-medium text-slate-900">🔑 Forgot password</p>
-            <p className="text-xs text-slate-500 mt-0.5">I just need a new password — I still have my email.</p>
+            <p className="text-xs text-slate-500 mt-0.5">I just need a new password - I still have my email.</p>
           </button>
           <Link
             href="/login/recover"

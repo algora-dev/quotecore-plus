@@ -10,29 +10,29 @@ updated: 2026-05-18
 
 A running log of features added and significant changes.
 
-## 2026-05-18 — Subscription tiers and launch pricing
+## 2026-05-18 - Subscription tiers and launch pricing
 
 Major release. Subscription billing goes live with a 14-day free trial and five paid tiers.
 
 ### Plans
 
-- **14-day Trial** — Free, all features unlocked with tiny caps. Once per account.
-- **Starter** — $19/mo (~~$40~~), 25 quotes/month, 200 MB storage.
-- **Growth** — $29/mo (~~$60~~), 50 quotes/month, 2 GB, + digital takeoff and email send.
-- **Professional** — $39/mo (~~$90~~), 100 quotes/month, 3 GB, all features.
-- **Pro Plus** — $59/mo (~~$120~~), 200 quotes/month, 5 GB, 3 included seats.
-- **Premium** — coming soon, placeholder card on the billing page.
+- **14-day Trial** - Free, all features unlocked with tiny caps. Once per account.
+- **Starter** - $19/mo (~~$40~~), 25 quotes/month, 200 MB storage.
+- **Growth** - $29/mo (~~$60~~), 50 quotes/month, 2 GB, + digital takeoff and email send.
+- **Professional** - $39/mo (~~$90~~), 100 quotes/month, 3 GB, all features.
+- **Pro Plus** - $59/mo (~~$120~~), 200 quotes/month, 5 GB, 3 included seats.
+- **Premium** - coming soon, placeholder card on the billing page.
 
 Launch discounts are auto-applied at checkout and renew at the launch price for the lifetime of the subscription.
 
 ### What's now feature-gated
 
-- **Digital takeoff** — Growth and above.
-- **Email send from inside the app** — Growth and above.
-- **Flashings drawing tool and library** — Pro and above.
-- **Material orders** — Pro and above.
-- **Automated follow-ups** — Pro and above.
-- **Activity card on quotes** — Growth and above.
+- **Digital takeoff** - Growth and above.
+- **Email send from inside the app** - Growth and above.
+- **Flashings drawing tool and library** - Pro and above.
+- **Material orders** - Pro and above.
+- **Automated follow-ups** - Pro and above.
+- **Activity card on quotes** - Growth and above.
 
 ### New numeric caps
 
@@ -44,7 +44,7 @@ When you hit a cap, an upgrade modal appears with a "View plans" button.
 
 - New plan-grid layout with **View** modals showing full feature breakdowns per plan.
 - **Start 14-day trial** button on the Trial card.
-- **Manage subscription** button always visible when there's a Stripe customer record — opens Stripe's customer portal for plan switches, card updates, invoices, and cancellation.
+- **Manage subscription** button always visible when there's a Stripe customer record - opens Stripe's customer portal for plan switches, card updates, invoices, and cancellation.
 - Trial countdown on the current-plan card.
 
 ### Subscription lifecycle
@@ -58,7 +58,7 @@ When you hit a cap, an upgrade modal appears with a "View plans" button.
 - Stripe Checkout for new subscriptions, with auto-applied launch discount coupons.
 - Customer portal handles plan switch, cancel, and card update.
 - Webhook handlers maintain DB state on every Stripe event.
-- Webhook events are idempotent — replaying an event won't double-fire.
+- Webhook events are idempotent - replaying an event won't double-fire.
 
 ### Disputes
 
@@ -66,34 +66,34 @@ When you hit a cap, an upgrade modal appears with a "View plans" button.
 - Subscription status moves to `disputed` until the dispute closes.
 - On dispute close the ticket auto-resolves.
 
-## 2026-05-11 — Settings overhaul
+## 2026-05-11 - Settings overhaul
 
 - All settings consolidated into a single **Account** page with tabs (Profile, Company, Security, Notifications, Billing, Support).
 - Legacy `/settings` subroutes redirect to the new tabbed page.
 
-## 2026-05-04 — Support tickets
+## 2026-05-04 - Support tickets
 
 - New **Account > Support** tab. Create tickets directly from the app and view your own ticket history.
 - Admin support inbox at `/admin/support-tickets` for the team.
 
-## 2026-04-26 — Security upgrades
+## 2026-04-26 - Security upgrades
 
 - Two-factor authentication (TOTP) for sign-in.
 - One-time recovery codes you can print or store in a password manager.
 - Security questions for account recovery when both 2FA and email access are lost.
 
-## 2026-04-15 — Blank quote mode
+## 2026-04-15 - Blank quote mode
 
 - New **Blank Quote** entry mode skips the builder entirely and lets you write a custom quote line-by-line.
 - Auto-confirms on first save when at least one line is present.
 - Numbering uses the same sequence as manual/digital quotes.
 
-## 2026-04-08 — Imperial measurement system
+## 2026-04-08 - Imperial measurement system
 
-- Companies can pick **Metric**, **Imperial — ft²**, or **Imperial — Roofing Squares (RS)**.
+- Companies can pick **Metric**, **Imperial - ft²**, or **Imperial - Roofing Squares (RS)**.
 - Per-quote measurement system locks at creation time.
 - Flashings drawing tool now respects company unit preference (mm vs inches).
 
-## 2026-03-30 — Public docs
+## 2026-03-30 - Public docs
 
 - This help site went live with full coverage of components, quotes, templates, flashings, material orders, files, and account management.

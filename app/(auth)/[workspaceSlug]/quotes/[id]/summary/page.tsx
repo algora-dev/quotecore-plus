@@ -357,7 +357,7 @@ export default async function QuoteSummaryPage({
         {/* PDF Header */}
         <div className="mb-8 pb-4 border-b border-slate-200">
           <h1 className="text-2xl font-bold text-slate-900 mb-4">
-            Quote #{quote.quote_number || 'DRAFT'} — Summary
+            Quote #{quote.quote_number || 'DRAFT'} - Summary
           </h1>
           <p className="text-base text-slate-700 mb-2">{quote.customer_name}</p>
           {quote.job_name && <p className="text-sm text-slate-500 mb-2">{quote.job_name}</p>}
@@ -368,7 +368,7 @@ export default async function QuoteSummaryPage({
           const areaComps = mainComps.filter(c => c.quote_roof_area_id === area.id);
           return (
             <div key={area.id}>
-              <h3 className="font-semibold text-slate-900 mb-4">{area.label} — {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}</h3>
+              <h3 className="font-semibold text-slate-900 mb-4">{area.label} - {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}</h3>
               {areaComps.length > 0 ? (
                 <table className="w-full text-sm">
                   <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-300">

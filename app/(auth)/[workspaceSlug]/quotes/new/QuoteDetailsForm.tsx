@@ -38,8 +38,8 @@ interface Props {
 
 const MEASUREMENT_OPTIONS: Array<{ value: MeasurementChoice; title: string; subtitle: string }> = [
   { value: 'metric', title: 'Metric', subtitle: 'meters & m²' },
-  { value: 'imperial_ft', title: 'Imperial — ft²', subtitle: 'feet & square feet' },
-  { value: 'imperial_rs', title: 'Imperial — Roofing Squares', subtitle: 'feet & Roofing Squares (RS)' },
+  { value: 'imperial_ft', title: 'Imperial - ft²', subtitle: 'feet & square feet' },
+  { value: 'imperial_rs', title: 'Imperial - Roofing Squares', subtitle: 'feet & Roofing Squares (RS)' },
 ];
 
 export function QuoteDetailsForm({
@@ -351,7 +351,7 @@ export function QuoteDetailsForm({
           Measurement System <span className="text-red-500">*</span>
         </label>
         <p className="text-xs text-slate-500 mb-3">
-          Pick now — this <strong>cannot be changed later</strong> for this quote. Default comes from your company settings.
+          Pick now - this <strong>cannot be changed later</strong> for this quote. Default comes from your company settings.
         </p>
         <div className="grid grid-cols-1 gap-2">
           {MEASUREMENT_OPTIONS.map((opt) => {
@@ -454,7 +454,7 @@ export function QuoteDetailsForm({
           {templates.map((template) => (
             <option key={template.id} value={template.id}>
               {template.name}
-              {template.description ? ` — ${template.description}` : ''}
+              {template.description ? ` - ${template.description}` : ''}
             </option>
           ))}
         </select>
@@ -555,7 +555,7 @@ export function QuoteDetailsForm({
             title="For fully custom quotes without using components or areas"
           >
             <div className="flex items-center justify-center mb-2">
-              {/* Document-with-pencil icon — reads as "freeform write". */}
+              {/* Document-with-pencil icon - reads as "freeform write". */}
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-3M16.5 3.5a2.121 2.121 0 113 3L12 14l-4 1 1-4 7.5-7.5z" />
               </svg>

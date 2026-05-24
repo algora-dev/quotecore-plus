@@ -134,7 +134,7 @@ export type PricingStrategy =
  *   quantity (e.g. 20L) for display only; `pack_coverage_m2` is what the
  *   pack actually covers. Cost = `ceil(area_m2 / pack_coverage_m2) * pack_price`.
  *
- * Returns 0 for nonsense inputs rather than throwing — the DB
+ * Returns 0 for nonsense inputs rather than throwing - the DB
  * ck_component_library_pack_values_positive CHECK already rejects bad
  * data on write, so this is a defensive belt at the math layer.
  */

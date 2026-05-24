@@ -10,7 +10,7 @@
  * Two entry points: createCheckoutSession (new subscription / plan change
  * for non-customers) and createCustomerPortalSession (existing customers
  * manage cards, invoices, cancel, switch plan). We deliberately keep both
- * thin — all real state changes happen via Stripe webhooks. These actions
+ * thin - all real state changes happen via Stripe webhooks. These actions
  * only mint URLs.
  *
  * Both actions require an authenticated user with a company context. Both
@@ -118,7 +118,7 @@ export async function createCheckoutSession(
   // company already has a Stripe subscription that isn't in a final
   // terminal state, route them through the Customer Portal instead so
   // Stripe handles proration/replacement. Treat cancel_at_period_end /
-  // future cancel_at as STILL ACTIVE — the sub is winding down but not
+  // future cancel_at as STILL ACTIVE - the sub is winding down but not
   // yet replaced; a fresh Checkout would create a second concurrent sub.
   // Only `canceled` (Stripe has sent customer.subscription.deleted) or
   // `suspended` (we've stopped charging entirely) are safe to bypass.
@@ -273,7 +273,7 @@ export async function activateTrial(): Promise<BillingActionResult> {
 
   // Gerald audit M-01R: durable once-per-company trial marker. Previously
   // we used `stripe_customer_id` as the proxy, which only fires after
-  // first Checkout — a non-paying company whose trial expired could
+  // first Checkout - a non-paying company whose trial expired could
   // re-invoke this action and get another 14 days. `trial_started_at` is
   // set on first successful activation and is the authoritative gate.
   if (company.trial_started_at) {
@@ -348,7 +348,7 @@ export async function activateTrial(): Promise<BillingActionResult> {
   }
 
   // Audit row in subscription_events so future debugging can correlate.
-  // Schema mirrors what the Stripe webhook handler writes — the
+  // Schema mirrors what the Stripe webhook handler writes - the
   // distinguishing field is event_type='trial.activated'.
   await admin.from('subscription_events').insert({
     company_id: company.id,
@@ -359,7 +359,7 @@ export async function activateTrial(): Promise<BillingActionResult> {
   });
 
   // The success URL goes back to the billing tab so we can flash a
-  // banner — keep the same pattern as Stripe checkout success.
+  // banner - keep the same pattern as Stripe checkout success.
   const base = await baseUrl();
   revalidatePath(`/${slug}/account`);
   return { ok: true, url: `${base}/${slug}/account?tab=billing&trial=activated` };

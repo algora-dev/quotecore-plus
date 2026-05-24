@@ -67,7 +67,7 @@ export class FeatureGatedError extends BillingError {
  * Thrown when the company's subscription is not in an active or recoverable
  * state. Maps to the day-75 `suspended` / `canceled` lifecycle states.
  *
- * NOT thrown for trial / past_due / grace / pending_data_purge — those keep
+ * NOT thrown for trial / past_due / grace / pending_data_purge - those keep
  * read access and limited mutation. Use `FeatureGatedError` for those gates.
  */
 export class SubscriptionInactiveError extends BillingError {

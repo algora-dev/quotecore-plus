@@ -79,7 +79,7 @@ export default async function CustomerQuoteTemplatesPage({
                       )}
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600">
-                      {template.company_name || '—'}
+                      {template.company_name || '-'}
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       <Link

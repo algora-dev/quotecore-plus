@@ -154,7 +154,7 @@ export function CopilotProvider({ children, userId, companyId, initialState }: P
     } else if (pathname?.includes('/quotes/') && pathname?.includes('/labor-sheet')) {
       guideId = 'labor-sheet';
     } else if (pathname?.includes('/quotes/') && (pathname?.includes('/summary') || pathname?.includes('/customer-edit'))) {
-      // Check if labor tab is active — if so, start labor-sheet guide instead
+      // Check if labor tab is active - if so, start labor-sheet guide instead
       const laborTabActive = document.querySelector('[data-copilot="tab-labor"][data-tab-active="true"]');
       if (laborTabActive && !state.guidesCompleted.includes('labor-sheet')) {
         guideId = 'labor-sheet';
@@ -255,7 +255,7 @@ export function CopilotProvider({ children, userId, companyId, initialState }: P
 
     setNudgeMessage(null);
     
-    // Move to next step — don't skip missing targets, wait for them
+    // Move to next step - don't skip missing targets, wait for them
     const nextIdx = state.currentStep + 1;
     
     if (nextIdx >= currentGuide.steps.length) {

@@ -72,7 +72,7 @@ export async function getEmailChangeStatus(): Promise<{
     ? new Date(last.getTime() + COOLDOWN_MS).toISOString()
     : null;
 
-  // Detect whether MFA is in play (any verified factor) — the UI uses this to
+  // Detect whether MFA is in play (any verified factor) - the UI uses this to
   // know whether to render the TOTP step. Not a security gate by itself; the
   // server action below independently enforces AAL2.
   const { data: factorData } = await supabase.auth.mfa.listFactors();
@@ -121,7 +121,7 @@ export async function requestEmailChange(
     return { ok: false, code: 'same_email', message: 'New email is the same as your current email.' };
   }
 
-  // Block OAuth-only users — their email is governed by their IdP.
+  // Block OAuth-only users - their email is governed by their IdP.
   const identities = user.identities ?? [];
   const hasEmailPasswordIdentity = identities.some((i) => i.provider === 'email');
   if (identities.length > 0 && !hasEmailPasswordIdentity) {
@@ -165,7 +165,7 @@ export async function requestEmailChange(
 
   // Re-auth: verify the current password by signing in via a SEPARATE Supabase
   // client that doesn't write cookies. We create a no-op cookie store so the
-  // "ephemeral" client never touches the live session — even if the password
+  // "ephemeral" client never touches the live session - even if the password
   // is correct, we don't want to roll the access token here. signInWithPassword
   // returns an error on bad password without affecting the existing session.
   const ephemeral = createServerClient(
@@ -174,7 +174,7 @@ export async function requestEmailChange(
     {
       cookies: {
         getAll() { return []; },
-        setAll() { /* intentionally a no-op — never persist this session */ },
+        setAll() { /* intentionally a no-op - never persist this session */ },
       },
     }
   );
@@ -188,7 +188,7 @@ export async function requestEmailChange(
   // Best-effort: sign the ephemeral client out so its access token is invalidated.
   void ephemeral.auth.signOut().catch(() => undefined);
 
-  // All gates passed — initiate the email change. Supabase will send the two
+  // All gates passed - initiate the email change. Supabase will send the two
   // confirmation emails; we don't write to public.users.email here. That sync
   // happens in /auth/callback once both confirmations are clicked.
   const { error: updateErr } = await supabase.auth.updateUser(

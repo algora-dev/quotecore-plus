@@ -144,7 +144,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [lineMode, setLineMode] = useState(false);
   const [linePoints, setLinePoints] = useState<{ x: number; y: number }[]>([]);
   const [pointMode, setPointMode] = useState(false);
-  // Phase 7: multi-lineal mode — N connected points summed into one length measurement.
+  // Phase 7: multi-lineal mode - N connected points summed into one length measurement.
   const [multiLinealMode, setMultiLinealMode] = useState(false);
   const [multiLinealPoints, setMultiLinealPoints] = useState<{ x: number; y: number }[]>([]);
   const [multiLinealSegmentObjects, setMultiLinealSegmentObjects] = useState<any[]>([]); // fabric objects drawn so far
@@ -227,7 +227,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
 
   // Trade-aware labels + config. Single source of truth for all copy that
   // varies by trade (roofing / cladding / generic). Replaces the old
-  // quoteIsGeneric boolean — check tradeConfig.pitchRequired / .areaIsOptional
+  // quoteIsGeneric boolean - check tradeConfig.pitchRequired / .areaIsOptional
   // instead of checking the trade string directly.
   const tradeConfig = getTradeLabels((quote as { trade?: string }).trade);
   // Keep this alias for any existing code that still references it; prefer
@@ -826,7 +826,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   // Stable ref for the signed plan URL. The signed URL is regenerated on
   // every server render (it embeds a fresh JWT), so reading it directly
   // would tie the Fabric init effect to a value that changes on every
-  // parent re-render — which is exactly the bug we're fixing here.
+  // parent re-render - which is exactly the bug we're fixing here.
   // Reading it through a ref means the closure always sees the latest URL
   // for the initial image load, but the effect's dep array stays stable.
   const planUrlRef = useRef(planUrl);
@@ -838,7 +838,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   //
   // Previously this effect was keyed on `[planUrl]`, which meant any parent
   // re-render that regenerated the signed URL on the server (a refresh, a
-  // tab focus, a child state cascade) tore down and rebuilt the canvas —
+  // tab focus, a child state cascade) tore down and rebuilt the canvas -
   // wiping every line, area, marker, and calibration the user had drawn.
   // The signed URL changes string-identity on every render even when the
   // underlying storage path is identical, so the effect kept firing.
@@ -1202,7 +1202,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       canvas.dispose();
       // Reset the init guard on unmount so re-mounting the component
       // (e.g. a Next route remount) gets a fresh canvas. We don't reset on
-      // re-renders — those are exactly what we're guarding against.
+      // re-renders - those are exactly what we're guarding against.
       canvasInitedRef.current = false;
     };
      
@@ -1420,7 +1420,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         </div>
       </div>
 
-      {/* Phase 7: Page tabs — show when more than 1 page exists */}
+      {/* Phase 7: Page tabs - show when more than 1 page exists */}
       {pages.length > 1 && (
         <div className="flex gap-1 px-4 py-2 bg-slate-800 border-b border-slate-700">
           {pages.map((page, idx) => (
@@ -1445,7 +1445,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 space-y-4">
             <h3 className="font-semibold text-lg">Upload another image</h3>
             <p className="text-sm text-slate-600">
-              Upload another plan image to measure from. Save your current page before switching — unsaved measurements will be lost on page change.
+              Upload another plan image to measure from. Save your current page before switching - unsaved measurements will be lost on page change.
             </p>
             <div>
               <label className="block text-xs text-slate-500 mb-1">Page name (optional)</label>
@@ -1825,7 +1825,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                     if (!hasRoofAreaWithPitch) {
                       showAlert(
                         'Roof area required',
-                        'Create a roof area with pitch first — components are calculated against the roof pitch.',
+                        'Create a roof area with pitch first - components are calculated against the roof pitch.',
                         'info'
                       );
                       return;
@@ -1879,7 +1879,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                     if (!hasRoofAreaWithPitch) {
                       showAlert(
                         'Roof area required',
-                        'Create a roof area with pitch first — components are calculated against the roof pitch.',
+                        'Create a roof area with pitch first - components are calculated against the roof pitch.',
                         'info'
                       );
                       return;
@@ -1913,7 +1913,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                     return;
                   }
                   if (multiLinealMode) {
-                    // Toggling off — cancel in-progress polyline.
+                    // Toggling off - cancel in-progress polyline.
                     handleCancelMultiLineal();
                   } else {
                     setMultiLinealMode(true);
@@ -2029,13 +2029,13 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         />
       )}
 
-      {/* Area Instructions (after first calibration) — trade-aware via tradeConfig */}
+      {/* Area Instructions (after first calibration) - trade-aware via tradeConfig */}
       {showRoofAreaInstructions && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md border border-gray-200">
             <h2 className="text-xl font-semibold mb-4">Calibration Complete!</h2>
             {tradeConfig.areaIsOptional ? (
-              // Optional-area trades (cladding, generic) — let the user choose
+              // Optional-area trades (cladding, generic) - let the user choose
               <>
                 <h3 className="text-lg font-semibold mb-3 text-gray-700">{tradeConfig.needAreaPrompt}</h3>
                 <p className="text-sm text-gray-600 mb-4">
@@ -2067,7 +2067,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 </div>
               </>
             ) : (
-              // Mandatory-area trades (roofing) — pitch required
+              // Mandatory-area trades (roofing) - pitch required
               <>
                 <h3 className="text-lg font-semibold mb-3 text-gray-700">{tradeConfig.firstAreaInstructionsTitle}</h3>
                 <div className="space-y-3 text-sm">
@@ -2284,7 +2284,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   );
 }
 
-// Area Name Modal — isRoofing controls whether pitch is shown/required.
+// Area Name Modal - isRoofing controls whether pitch is shown/required.
 // modalTitle + namePlaceholder are trade-config-driven.
 function AreaNameModal({
   isRoofing,

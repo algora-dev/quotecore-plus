@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { LegalPageShell } from '@/app/components/LegalPageShell';
 
 export const metadata = {
-  title: 'Privacy Policy — QuoteCore+',
+  title: 'Privacy Policy - QuoteCore+',
   description: 'How QuoteCore+ collects, uses, and protects your personal data.',
 };
 
@@ -106,20 +106,20 @@ export default function PrivacyPolicyPage() {
 
       <h2 id="why-we-use-it">Why we use it</h2>
       <ul>
-        <li><strong>To run the Service</strong> — store your quotes, send acceptance links, generate PDFs, etc.</li>
-        <li><strong>To authenticate you</strong> — verify your password, manage 2FA, mint sessions</li>
-        <li><strong>To send transactional emails</strong> — quote-accepted alerts, password reset links, security notifications. We do not send marketing email.</li>
-        <li><strong>To keep your account safe</strong> — detect suspicious recovery attempts via the audit log, enforce cooldowns on sensitive actions</li>
-        <li><strong>To comply with the law</strong> — keep records we are legally required to retain</li>
+        <li><strong>To run the Service</strong> - store your quotes, send acceptance links, generate PDFs, etc.</li>
+        <li><strong>To authenticate you</strong> - verify your password, manage 2FA, mint sessions</li>
+        <li><strong>To send transactional emails</strong> - quote-accepted alerts, password reset links, security notifications. We do not send marketing email.</li>
+        <li><strong>To keep your account safe</strong> - detect suspicious recovery attempts via the audit log, enforce cooldowns on sensitive actions</li>
+        <li><strong>To comply with the law</strong> - keep records we are legally required to retain</li>
       </ul>
 
       <h2 id="lawful-basis">Lawful basis (GDPR)</h2>
       <p>If GDPR or UK GDPR applies to you, we rely on:</p>
       <ul>
-        <li><strong>Contract</strong> (Art. 6(1)(b)) — to deliver the Service you signed up for</li>
-        <li><strong>Legitimate interests</strong> (Art. 6(1)(f)) — to keep the Service secure and working, and to defend against abuse</li>
-        <li><strong>Legal obligation</strong> (Art. 6(1)(c)) — to retain records required by law</li>
-        <li><strong>Consent</strong> (Art. 6(1)(a)) — only where strictly required (e.g. specific opt-in features added in future)</li>
+        <li><strong>Contract</strong> (Art. 6(1)(b)) - to deliver the Service you signed up for</li>
+        <li><strong>Legitimate interests</strong> (Art. 6(1)(f)) - to keep the Service secure and working, and to defend against abuse</li>
+        <li><strong>Legal obligation</strong> (Art. 6(1)(c)) - to retain records required by law</li>
+        <li><strong>Consent</strong> (Art. 6(1)(a)) - only where strictly required (e.g. specific opt-in features added in future)</li>
       </ul>
 
       <h2 id="sharing">Who we share with</h2>
@@ -148,23 +148,23 @@ export default function PrivacyPolicyPage() {
 
       <h2 id="retention">How long we keep it</h2>
       <ul>
-        <li><strong>Active account data</strong> — kept while your account is active and for as long as you use the Service</li>
-        <li><strong>Closed accounts</strong> — deleted within 90 days of account closure, unless we have a legal obligation to retain longer</li>
-        <li><strong>Audit logs</strong> (account recovery attempts, sign-in events) — kept indefinitely for security purposes; we can review and reduce this retention window on request</li>
-        <li><strong>Server logs</strong> from Vercel/Supabase — held by those providers per their own retention policies</li>
-        <li><strong>Email delivery logs</strong> at Resend — held per Resend&apos;s policy (typically 30-90 days)</li>
+        <li><strong>Active account data</strong> - kept while your account is active and for as long as you use the Service</li>
+        <li><strong>Closed accounts</strong> - deleted within 90 days of account closure, unless we have a legal obligation to retain longer</li>
+        <li><strong>Audit logs</strong> (account recovery attempts, sign-in events) - kept indefinitely for security purposes; we can review and reduce this retention window on request</li>
+        <li><strong>Server logs</strong> from Vercel/Supabase - held by those providers per their own retention policies</li>
+        <li><strong>Email delivery logs</strong> at Resend - held per Resend&apos;s policy (typically 30-90 days)</li>
       </ul>
 
       <h2 id="your-rights">Your rights</h2>
       <p>You have the following rights over your personal data. Contact us at <a href="mailto:info@quote-core.com">info@quote-core.com</a> to exercise any of them; we&apos;ll respond within one month.</p>
       <ul>
-        <li><strong>Access</strong> — get a copy of the personal data we hold about you</li>
-        <li><strong>Rectification</strong> — correct inaccurate data</li>
-        <li><strong>Erasure</strong> (&ldquo;right to be forgotten&rdquo;) — delete your account and the associated personal data, subject to any legal retention requirements</li>
-        <li><strong>Portability</strong> — receive your data in a structured, machine-readable format</li>
-        <li><strong>Restriction</strong> — pause our processing of your data while a dispute is resolved</li>
-        <li><strong>Objection</strong> — object to processing based on our legitimate interests</li>
-        <li><strong>Withdraw consent</strong> — where we process based on consent, you can withdraw it at any time</li>
+        <li><strong>Access</strong> - get a copy of the personal data we hold about you</li>
+        <li><strong>Rectification</strong> - correct inaccurate data</li>
+        <li><strong>Erasure</strong> (&ldquo;right to be forgotten&rdquo;) - delete your account and the associated personal data, subject to any legal retention requirements</li>
+        <li><strong>Portability</strong> - receive your data in a structured, machine-readable format</li>
+        <li><strong>Restriction</strong> - pause our processing of your data while a dispute is resolved</li>
+        <li><strong>Objection</strong> - object to processing based on our legitimate interests</li>
+        <li><strong>Withdraw consent</strong> - where we process based on consent, you can withdraw it at any time</li>
       </ul>
       <p>
         If you live in California, you also have rights under the CCPA/CPRA

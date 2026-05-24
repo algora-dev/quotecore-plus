@@ -24,7 +24,7 @@ export default async function LaborSheetPage({
   
   const supabase = await createSupabaseServerClient();
 
-  // There is no `companies.default_logo_url` column — the original lookup
+  // There is no `companies.default_logo_url` column - the original lookup
   // here was dead code that always resolved to null. Per-quote logos live
   // on `quotes.cq_company_logo_url`; if we ever introduce a true company-
   // wide default, add the column and revisit this path.

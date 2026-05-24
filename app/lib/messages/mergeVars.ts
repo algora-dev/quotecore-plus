@@ -90,7 +90,7 @@ export function renderMergeVars(template: string, context: MergeVarContext): str
 /**
  * Which variable set a given template `kind` exposes. Drives the picker
  * UI in the template editor and is also enforced at send time (we don't
- * gate substitution — unknown keys are simply left literal — but the UI
+ * gate substitution - unknown keys are simply left literal - but the UI
  * uses this to show the right list of insertable variables).
  */
 export function variablesForKind(

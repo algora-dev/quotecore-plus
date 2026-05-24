@@ -20,7 +20,7 @@ import {
  * Quote-roof-area columns updatable from the client. Server-managed
  * fields (`id`, `quote_id`, `template_roof_area_id`, `created_at`,
  * `updated_at`) and the server-computed `computed_sqm` are explicitly
- * out of scope — the action body sets `computed_sqm` itself before the
+ * out of scope - the action body sets `computed_sqm` itself before the
  * update so it's never trusted from the client. Gerald audit M-03.
  */
 const UPDATABLE_QUOTE_ROOF_AREA_FIELDS = [
@@ -39,7 +39,7 @@ const UPDATABLE_QUOTE_ROOF_AREA_FIELDS = [
 /**
  * Quote columns updatable via the generic `updateQuoteSettings` action.
  * The narrow window allowed here intentionally excludes status, accept
- * tokens, withdrawn flags, company_id, created_at, etc. — those have
+ * tokens, withdrawn flags, company_id, created_at, etc. - those have
  * dedicated server actions (`confirmQuote`, `acceptQuote`,
  * `withdrawQuote`, etc.) that enforce their own state-machine rules.
  */
@@ -259,7 +259,7 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
  * URL stops working immediately. The quote remains intact (just no longer
  * "sent") and the user can mint a fresh URL whenever they're ready.
  *
- * Refuses to withdraw if the quote has already been accepted or declined —
+ * Refuses to withdraw if the quote has already been accepted or declined -
  * those final states stand.
  */
 export async function withdrawQuote(quoteId: string): Promise<void> {
@@ -274,16 +274,16 @@ export async function withdrawQuote(quoteId: string): Promise<void> {
     .single();
 
   if (loadErr || !quote) throw new Error('Quote not found');
-  if ((quote as any).accepted_at) throw new Error('Cannot withdraw — the customer has already accepted this quote.');
-  if ((quote as any).declined_at) throw new Error('Cannot withdraw — the customer has already declined this quote.');
+  if ((quote as any).accepted_at) throw new Error('Cannot withdraw - the customer has already accepted this quote.');
+  if ((quote as any).declined_at) throw new Error('Cannot withdraw - the customer has already declined this quote.');
   if (!quote.acceptance_token && !(quote as any).withdrawn_at) {
-    // Nothing to withdraw — no active link in the first place.
+    // Nothing to withdraw - no active link in the first place.
     throw new Error('No active acceptance link to withdraw.');
   }
 
   // We KEEP the token but stamp withdrawn_at. This way the public URL still
   // resolves so the customer can submit a fresh-quote request through the
-  // same flow used for expired/responded links — but accept/decline are
+  // same flow used for expired/responded links - but accept/decline are
   // refused server-side because the quote is withdrawn. When the user mints
   // a new URL via generateAcceptanceToken, that path replaces the token
   // (the old one becomes invalid).
@@ -331,7 +331,7 @@ export async function reopenQuote(quoteId: string): Promise<{ ok: true; cancelle
     .single();
 
   if (loadErr || !quote) return { ok: false, error: 'Quote not found.' };
-  // Refuse to reopen a quote that's already in a fresh state — nothing
+  // Refuse to reopen a quote that's already in a fresh state - nothing
   // to do, and silently no-oping would mask a UI bug.
   if (!(quote as any).accepted_at && !(quote as any).declined_at && !(quote as any).withdrawn_at) {
     return { ok: false, error: 'This quote is already open. There\u2019s nothing to reopen.' };
@@ -418,7 +418,7 @@ export async function updateQuoteJobStatus(quoteId: string, jobStatus: JobStatus
   // still actionable, and they're also the inputs for the WithdrawQuote
   // / SendQuote button states on the summary page. Before this change,
   // a user manually flipping job_status away from 'accepted' would
-  // leave `accepted_at` stamped — so the summary chrome and the public
+  // leave `accepted_at` stamped - so the summary chrome and the public
   // link still believed the quote was accepted. Conversely, manually
   // setting 'accepted' without stamping accepted_at meant a customer
   // could later click the public link and override the manual decision.
@@ -1154,7 +1154,7 @@ export async function updateQuoteSettings(quoteId: string, input: Record<string,
  * binds its server action at render time. If a user reaches the page while
  * the quote is draft, confirms once, then navigates back via the browser
  * and re-submits the same cached form, the second submission still calls
- * this function. We must not 500 in that case — the original error message
+ * this function. We must not 500 in that case - the original error message
  * "Only draft quotes can be confirmed" was the production 500 reported
  * 2026-05-17 (quote a58760fc-...).
  */
@@ -1172,7 +1172,7 @@ export async function confirmQuote(id: string) {
     
   if (!existing) throw new Error('Quote not found');
   if (existing.status === 'confirmed') {
-    // Already confirmed — nothing to do. Revalidate the listing so the
+    // Already confirmed - nothing to do. Revalidate the listing so the
     // "Drafts vs Confirmed" buckets stay in sync if the cache is stale.
     revalidatePath('/quotes');
     return;
@@ -1212,7 +1212,7 @@ export async function confirmQuote(id: string) {
 
 export async function confirmQuoteAndRedirect(id: string, workspaceSlug: string) {
   'use server';
-  // confirmQuote is idempotent (see its doc comment) — re-submitting a
+  // confirmQuote is idempotent (see its doc comment) - re-submitting a
   // stale form on an already-confirmed quote is a silent no-op now, not
   // a 500. Either way we land the user on the summary.
   await confirmQuote(id);
@@ -1287,7 +1287,7 @@ export async function updateQuoteNames(id: string, customerName: string, jobName
  *   2. Collect every storage path attached to the quote (quote_files +
  *      takeoff canvas snapshot URLs stored on the quote row).
  *   3. Remove storage objects FIRST. If that fails, do NOT delete the DB row
- *      — the user can retry. Without this rule, a transient storage error
+ *      - the user can retry. Without this rule, a transient storage error
  *      would leave the database clean but the bucket polluted forever.
  *   4. Delete the quote row (FK cascades clean up children).
  */
@@ -1484,7 +1484,7 @@ export async function cloneQuote(id: string, newCustomerName: string) {
   // resolve references.
   // NOTE: the components loop above doesn't currently capture the new
   // component IDs because the original code didn't need them. For now we
-  // re-query in component-name order — not 100% reliable if two components
+  // re-query in component-name order - not 100% reliable if two components
   // share a name. Safer: re-fetch matched by (sort_order, name) which is
   // unique inside one quote in practice.
   const componentIdMapping: Record<string, string> = {};
@@ -1624,7 +1624,7 @@ export async function saveCustomerQuoteLines(
     && !quote.quote_number
     && lines.length > 0
   ) {
-    // Service_role-only RPC — see note in confirmQuote() above.
+    // Service_role-only RPC - see note in confirmQuote() above.
     const admin = createAdminClient();
     const { data: nextNum, error: numErr } = await admin.rpc('get_next_quote_number', {
       p_company_id: profile.company_id,
@@ -1701,7 +1701,7 @@ export async function loadCustomerQuoteTemplates() {
 export async function loadCustomerQuoteTemplate(_templateId: string): Promise<never> {
   'use server';
   throw new Error(
-    'loadCustomerQuoteTemplate is not implemented — the customer_quote_template_lines table does not exist. Use loadCustomerQuoteTemplates() to fetch the template list.'
+    'loadCustomerQuoteTemplate is not implemented - the customer_quote_template_lines table does not exist. Use loadCustomerQuoteTemplates() to fetch the template list.'
   );
 }
 

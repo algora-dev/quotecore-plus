@@ -181,9 +181,9 @@ export function OrderList({ orders, workspaceSlug }: Props) {
             className="grid sm:grid-cols-[160px_1fr_1fr_130px_80px_70px] gap-4 items-center rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
           >
             <div className="font-semibold text-sm text-orange-600">{order.order_number}</div>
-            <div className="text-sm text-slate-700 truncate">{order.reference || order.job_name || '—'}</div>
+            <div className="text-sm text-slate-700 truncate">{order.reference || order.job_name || '-'}</div>
             <div className="text-sm text-slate-700 truncate flex items-center gap-2">
-              <span className="truncate">{order.to_supplier || order.supplier_name || '—'}</span>
+              <span className="truncate">{order.to_supplier || order.supplier_name || '-'}</span>
               <SupplierResponseBadge
                 confirmedAt={order.confirmed_at}
                 changesRequestedAt={order.changes_requested_at}

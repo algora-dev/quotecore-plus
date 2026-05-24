@@ -17,7 +17,7 @@ interface CompanySettings {
 
 export async function updateCompanySettings(
   companyId: string,
-  _userId: string, // Ignored — we use the authenticated user's ID instead
+  _userId: string, // Ignored - we use the authenticated user's ID instead
   settings: CompanySettings
 ) {
   const profile = await requireCompanyContext();

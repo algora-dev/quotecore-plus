@@ -59,7 +59,7 @@ export default async function AcceptQuotePage({
     .single();
 
   if (error || !quote) {
-    // No quote at all — we can't show a re-quote button because we have no
+    // No quote at all - we can't show a re-quote button because we have no
     // company to route the request to. Show the original generic message.
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -71,7 +71,7 @@ export default async function AcceptQuotePage({
     );
   }
 
-  // Withdrawn by the sender — same UI as expired, since from the customer's
+  // Withdrawn by the sender - same UI as expired, since from the customer's
   // perspective both states mean "this quote is no longer valid". We don't
   // distinguish them in the customer-facing copy because the user might have
   // withdrawn for any number of reasons.
@@ -96,7 +96,7 @@ export default async function AcceptQuotePage({
     );
   }
 
-  // Check token expiry — we still surface the re-quote CTA so an aged-out
+  // Check token expiry - we still surface the re-quote CTA so an aged-out
   // link becomes an inbound lead instead of a dead end.
   if (quote.acceptance_token_expires_at && new Date(quote.acceptance_token_expires_at) < new Date()) {
     return (
@@ -119,7 +119,7 @@ export default async function AcceptQuotePage({
     );
   }
 
-  // Check if already responded — same idea, surface the re-quote CTA so
+  // Check if already responded - same idea, surface the re-quote CTA so
   // the customer can re-engage if circumstances change.
   if (quote.accepted_at || quote.declined_at) {
     const wasAccepted = !!quote.accepted_at;
@@ -202,7 +202,7 @@ export default async function AcceptQuotePage({
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-4xl mx-auto p-8 space-y-6">
         {/*
-          Quote Document — exact same format as internal Customer Quote
+          Quote Document - exact same format as internal Customer Quote
           preview. The id is used by the DownloadQuoteButton's print-mode
           CSS to single this element out for print-to-PDF.
         */}

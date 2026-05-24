@@ -71,7 +71,7 @@ function formatTimestamp(iso: string): string {
 }
 
 export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNumber: _quoteNumber, chromeless = false }: Props) {
-  // Raw partitions — the optimistic-aware versions are computed
+  // Raw partitions - the optimistic-aware versions are computed
   // below once the optimistic state hooks are declared.
   const rawPending = requests.filter((r) => !r.resolved_at);
   const rawResolved = requests.filter((r) => r.resolved_at);
@@ -150,7 +150,7 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
     });
   }
 
-  // Multi-select operates over both pending and resolved — the user
+  // Multi-select operates over both pending and resolved - the user
   // might want to delete resolved noise. "Select all" covers every row
   // that's currently visible in the panel (pending always; resolved
   // only if the user has expanded the resolved drawer).
@@ -168,7 +168,7 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
     setSelected(new Set());
   }
 
-  // Single-row delete — used by the inline hover affordance on resolved
+  // Single-row delete - used by the inline hover affordance on resolved
   // rows so the user doesn't have to enter select mode just to drop one
   // piece of noise. Mirrors the inline delete on Sent Messages rows.
   const [singleDeletingId, setSingleDeletingId] = useState<string | null>(null);
@@ -302,7 +302,7 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
     });
   }
 
-  // "All visible selected" — every row currently in the panel is in
+  // "All visible selected" - every row currently in the panel is in
   // the selected set. We use this to flip the Select-all toggle
   // between "Select all" and "Clear all".
   const visibleCount = pending.length + (showResolved ? resolved.length : 0);
@@ -438,7 +438,7 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
 
       {(expanded || chromeless) && (
         <div className={chromeless ? "space-y-3" : "mt-4 space-y-3"}>
-          {/* Select toolbar — promoted to a visible pill button so the
+          {/* Select toolbar - promoted to a visible pill button so the
               user can find it. Available whenever there's at least one
               row in the panel (resolved-only counts; the user has to
               be able to delete noise). */}
@@ -618,7 +618,7 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
                             </div>
                           </div>
                           {/* Inline single-row delete affordance for
-                              resolved rows. Hidden in select mode — the
+                              resolved rows. Hidden in select mode - the
                               bulk bar owns deletion then. Two-click
                               confirm so a wrong tap doesn't drop history. */}
                           {!selectMode ? (
@@ -665,7 +665,7 @@ export function RevisionRequestsPanel({ requests, fallbackCustomerName, quoteNum
             </div>
           )}
 
-          {/* Bulk action bar — bottom placement. Top placement is
+          {/* Bulk action bar - bottom placement. Top placement is
               rendered above by `renderBulkBar('top')` so the user can
               find actions immediately on entering select mode. */}
           {renderBulkBar('bottom')}

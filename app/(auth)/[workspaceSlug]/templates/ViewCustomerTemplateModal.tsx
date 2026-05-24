@@ -32,27 +32,27 @@ export function ViewCustomerTemplateModal({ template, onClose }: Props) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Company Name</label>
-                <p className="text-sm text-slate-900">{template.company_name || '—'}</p>
+                <p className="text-sm text-slate-900">{template.company_name || '-'}</p>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Phone</label>
-                <p className="text-sm text-slate-900">{template.company_phone || '—'}</p>
+                <p className="text-sm text-slate-900">{template.company_phone || '-'}</p>
               </div>
 
               <div className="col-span-2">
                 <label className="block text-xs font-medium text-slate-500 mb-1">Address</label>
-                <p className="text-sm text-slate-900">{template.company_address || '—'}</p>
+                <p className="text-sm text-slate-900">{template.company_address || '-'}</p>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Email</label>
-                <p className="text-sm text-slate-900">{template.company_email || '—'}</p>
+                <p className="text-sm text-slate-900">{template.company_email || '-'}</p>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Logo URL</label>
-                <p className="text-sm text-slate-900 truncate">{template.company_logo_url || '—'}</p>
+                <p className="text-sm text-slate-900 truncate">{template.company_logo_url || '-'}</p>
               </div>
             </div>
 
@@ -72,7 +72,7 @@ export function ViewCustomerTemplateModal({ template, onClose }: Props) {
           <div className="pt-6 border-t border-slate-200">
             <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-3">Footer Text</h3>
             <p className="text-sm text-slate-700 whitespace-pre-wrap">
-              {template.footer_text || '—'}
+              {template.footer_text || '-'}
             </p>
           </div>
 

@@ -3,12 +3,12 @@ import { RecoverFlow } from './RecoverFlow';
 import { PublicFooter } from '@/app/components/PublicFooter';
 
 /**
- * Account recovery flow — "I've lost access to my email."
+ * Account recovery flow - "I've lost access to my email."
  *
  * The page itself is a thin server shell; all interactive state lives in the
  * client RecoverFlow component below. The flow has 4 visible screens:
  *   1. Identify (enter old email)
- *   2. Verify (answer security questions)  — only if step 1 found an account
+ *   2. Verify (answer security questions)  - only if step 1 found an account
  *   3. New email (set the new address)
  *   4. Done (instructions to check the new inbox)
  *

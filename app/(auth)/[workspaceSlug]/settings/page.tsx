@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 
 /**
- * Legacy /settings route — kept alive only as a 308 redirect to /account
+ * Legacy /settings route - kept alive only as a 308 redirect to /account
  * so any stale bookmarks / shared links continue to work.
  *
  * The whole settings UI moved to /account/* as part of the sidebar

@@ -51,7 +51,7 @@ export function QuoteBuilderV2Wrapper(props: Props) {
 
   // Sync with URL changes
   // Sync the active phase from the URL search params. React 19 warns
-  // about setState inside effects — here the URL is an external source we
+  // about setState inside effects - here the URL is an external source we
   // mirror; the equality guard prevents render loops.
   useEffect(() => {
     const step = searchParams.get('step') || 'roof-areas';

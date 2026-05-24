@@ -275,8 +275,8 @@ export default async function AccountPage() {
 
       // Whether the company has an active Stripe sub. Used to gate the
       // trial activation button so paying customers can't accidentally
-      // downgrade themselves. A sub is treated as 'winding down' — and
-      // therefore effectively gone for trial-activation purposes — when
+      // downgrade themselves. A sub is treated as 'winding down' - and
+      // therefore effectively gone for trial-activation purposes - when
       // EITHER cancel_at_period_end=true OR cancel_at is a future
       // timestamp. Both flags can be set by Stripe Dashboard cancel
       // flows (the portal sets cancel_at_period_end; some dashboard

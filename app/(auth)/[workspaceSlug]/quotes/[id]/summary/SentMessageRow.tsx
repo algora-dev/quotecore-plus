@@ -33,7 +33,7 @@ interface Props {
    * `message_suppressions` row exists, these surface the reason / when
    * the suppression was added so the row can explain why the send was
    * blocked. Without this Shaun has no visible signal that a send was
-   * dropped — the row just sits there.
+   * dropped - the row just sits there.
    */
   suppressionReason?: string | null;
   suppressionAt?: string | null;
@@ -185,7 +185,7 @@ export function SentMessageRow({
             <polyline points="6 9 12 15 18 9" />
           </svg>
           {/* Hover-revealed delete affordance. Hidden while the panel
-              is in multi-select mode — the parent bulk action bar owns
+              is in multi-select mode - the parent bulk action bar owns
               deletion in that case. Two-click confirm to avoid
               accidental removal of a long alert thread. */}
           {selectMode ? null : confirmDelete ? (
@@ -286,7 +286,7 @@ function SuppressionBanner({
         <line x1="12" y1="17" x2="12.01" y2="17" />
       </svg>
       <div className="min-w-0">
-        <p className="font-medium">Not sent — recipient is on your suppression list.</p>
+        <p className="font-medium">Not sent - recipient is on your suppression list.</p>
         <p className="mt-0.5 text-amber-800">
           {reason ? <>Reason: {reason}. </> : <>No reason recorded. </>}
           {suppressedAt ? (

@@ -1,5 +1,5 @@
 /**
- * Generic Trades Phase 6 — central trade-compatibility helper.
+ * Generic Trades Phase 6 - central trade-compatibility helper.
  *
  * Gerald round-2 M-03: every server action that creates a `quote_components`
  * row MUST call this helper before the write. No inline checks anywhere.
@@ -50,7 +50,7 @@ export class TradeIncompatibleError extends Error {
  * before the caller writes a `quote_components` link between them.
  *
  * Uses the admin client to read both rows under service-role (bypasses RLS)
- * — same posture as createQuoteAtomic and ensureCompanyHasCollection. The
+ * - same posture as createQuoteAtomic and ensureCompanyHasCollection. The
  * caller still validates ownership separately; this helper only validates
  * trade/measurement compatibility.
  *

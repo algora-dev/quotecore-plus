@@ -19,12 +19,12 @@ import { computeTaxLines } from '@/app/lib/taxes/types';
 import { getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
 const QUOTE_DOCUMENTS_BUCKET = 'QUOTE-DOCUMENTS';
-const SIGNED_URL_TTL_SECONDS = 60 * 30; // 30 minutes — plenty for a download cycle
+const SIGNED_URL_TTL_SECONDS = 60 * 30; // 30 minutes - plenty for a download cycle
 
 /**
  * Hard cap on how many quotes a single bulk operation can touch. Mirrored on
  * the client (see `MAX_BULK_SELECTION` in QuotesList.tsx). The server check
- * is authoritative — the client cap is just for UX. Picked at 25 because:
+ * is authoritative - the client cap is just for UX. Picked at 25 because:
  *   - building 25 zipped quote bundles fits comfortably in browser memory,
  *   - 25 sequential server round-trips finish in well under a minute,
  *   - 25 deletes is a small enough blast radius that an accidental click is
@@ -127,7 +127,7 @@ export interface QuoteBundleData {
 /**
  * Start an audit log entry for a bulk action. Returns the log row id so the
  * caller can write the outcome back when the work finishes. Best-effort: if
- * insertion fails we log a warning and return null — audit log failure should
+ * insertion fails we log a warning and return null - audit log failure should
  * NOT block the user from running the operation.
  */
 async function beginBulkAudit(
@@ -434,7 +434,7 @@ export async function loadQuoteBundleData(quoteId: string): Promise<QuoteBundleD
  *
  * For each quote we:
  *   1. Look up storage paths from quote_files
- *   2. Remove storage objects (best-effort — we still proceed if storage is gone)
+ *   2. Remove storage objects (best-effort - we still proceed if storage is gone)
  *   3. Delete the quote row (cascades clean up children)
  */
 export async function bulkDeleteQuotes(ids: string[]): Promise<{ deleted: number; skipped: number }> {

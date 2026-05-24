@@ -66,7 +66,7 @@ export async function listSecurityQuestions(): Promise<SecurityQuestionRecord[]>
 
 /**
  * Upsert one slot. If the user is replacing an existing answer, we re-hash
- * the new one rather than trying to detect "no change" — this keeps the
+ * the new one rather than trying to detect "no change" - this keeps the
  * action idempotent on retry.
  */
 export async function upsertSecurityQuestion(input: {

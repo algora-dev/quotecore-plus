@@ -47,7 +47,7 @@ export async function completeOnboarding(companyId: string, data: OnboardingData
 
   console.log('[completeOnboarding] Success! Onboarding completed.');
 
-  // Don't revalidate here — client handles the copilot intro step transition
+  // Don't revalidate here - client handles the copilot intro step transition
   // revalidatePath will cause server to re-render and redirect before copilot step shows
 }
 
@@ -126,7 +126,7 @@ export async function completeGoogleOnboarding(formData: FormData) {
 
   // Phase 3: bootstrap the "My Components" collection before seeding so the
   // seeded components get tagged with the collection id. Same rationale as
-  // in signup/actions.ts — service-role RPC, idempotent, non-fatal.
+  // in signup/actions.ts - service-role RPC, idempotent, non-fatal.
   let bootstrapCollectionId: string | null = null;
   try {
     bootstrapCollectionId = await ensureCompanyHasCollection(

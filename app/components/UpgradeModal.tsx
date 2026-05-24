@@ -11,7 +11,7 @@ interface Props {
   title: string;
   /**
    * Body copy. Plain string; newlines render via whitespace-pre-line.
-   * Keep it short — one sentence explaining what's gated and why.
+   * Keep it short - one sentence explaining what's gated and why.
    */
   description: string;
   /**

@@ -36,7 +36,7 @@ export type AccountTabKey =
  * Tab descriptor. `disabled` items are rendered but un-clickable; we use
  * this for the Team tab today (multi-user support not yet built). The
  * disabled item is NOT a member of `AccountTabKey` because it never becomes
- * the active tab — typing `?tab=team` resolves to `profile` instead.
+ * the active tab - typing `?tab=team` resolves to `profile` instead.
  */
 type Tab =
   | { key: AccountTabKey; label: string; icon: ReactNode; disabled?: false }
@@ -141,7 +141,7 @@ export function AccountTabs({ panels }: AccountTabsProps) {
 
   // Keep state in sync with the URL when the user navigates back/forward or
   // when an external link sets `?tab=...`. React 19's stricter rule warns
-  // about setState inside effects — here the URL is an external source we
+  // about setState inside effects - here the URL is an external source we
   // intentionally mirror into local state. The set is guarded against
   // redundant updates so it doesn't loop.
   useEffect(() => {

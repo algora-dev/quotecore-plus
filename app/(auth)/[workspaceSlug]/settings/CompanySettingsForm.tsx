@@ -198,7 +198,7 @@ export function CompanySettingsForm({
               <optgroup key={group.label} label={group.label}>
                 {group.currencies.map(c => (
                   <option key={c.code} value={c.code}>
-                    {c.symbol} {c.code} — {c.name}
+                    {c.symbol} {c.code} - {c.name}
                   </option>
                 ))}
               </optgroup>
@@ -239,9 +239,9 @@ export function CompanySettingsForm({
           </p>
           <div className="flex flex-col gap-2">
             {[
-              { value: 'metric', label: 'Metric — meters & m²' },
-              { value: 'imperial_ft', label: 'Imperial — feet & ft²' },
-              { value: 'imperial_rs', label: 'Imperial — feet & Roofing Squares (RS)' },
+              { value: 'metric', label: 'Metric - meters & m²' },
+              { value: 'imperial_ft', label: 'Imperial - feet & ft²' },
+              { value: 'imperial_rs', label: 'Imperial - feet & Roofing Squares (RS)' },
             ].map((opt) => (
               <label
                 key={opt.value}

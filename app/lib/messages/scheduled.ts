@@ -163,7 +163,7 @@ export async function scheduleQuoteFollowUp(
   // Zero-wait is allowed for event triggers (the row fires the moment
   // the customer accepts / declines via the activator's inline
   // dispatch). For chase-style triggers (quote_sent / manual) a zero
-  // delay would be incoherent — you can't chase a non-response that
+  // delay would be incoherent - you can't chase a non-response that
   // happened zero seconds ago.
   const isEventTrigger =
     input.triggerEvent === 'quote_accepted' ||
@@ -283,7 +283,7 @@ export async function scheduleQuoteFollowUp(
   }
 
   // Compute fire time. When the anchor is the pending-event sentinel
-  // we keep fire_at on the sentinel too — the activator (accept /
+  // we keep fire_at on the sentinel too - the activator (accept /
   // decline handler) will compute the real fire time using the same
   // waitDays/waitHours stored on the row.
   const isPendingEvent = anchor.getTime() === new Date(PENDING_EVENT_SENTINEL_ISO).getTime();
@@ -319,7 +319,7 @@ export async function scheduleQuoteFollowUp(
       trigger_anchor_at: anchor.toISOString(),
       fire_at: finalFire.toISOString(),
       // Event-triggered rules (accepted / declined / revision-requested)
-      // never gate on "customer responded" — the event IS the response.
+      // never gate on "customer responded" - the event IS the response.
       // Forcing false here belt-and-braces the dispatcher fix so even a
       // legacy caller that passes true can't break event rules.
       require_no_response:
@@ -407,7 +407,7 @@ export async function activateEventScheduledMessages(input: {
     );
     // "Immediately" (zero wait) bypasses quiet hours regardless of
     // respect_quiet_hours. Quiet hours apply to deliberately
-    // delayed follow-ups, not to event-driven immediate sends —
+    // delayed follow-ups, not to event-driven immediate sends -
     // the customer just accepted/declined seconds ago, they're
     // clearly awake.
     const isImmediate = days === 0 && hours === 0;
@@ -435,7 +435,7 @@ export async function activateEventScheduledMessages(input: {
     }
   }
 
-  // Cancel opposite-trigger pending rows — they're now irrelevant.
+  // Cancel opposite-trigger pending rows - they're now irrelevant.
   const { count: cancelledCount } = await admin
     .from('scheduled_messages')
     .update(
@@ -453,7 +453,7 @@ export async function activateEventScheduledMessages(input: {
 
   // Dispatch due-now rows inline so the email lands within seconds
   // of the customer's accept/decline action. Each dispatchOne call
-  // runs the same code path as the cron sweep — same safety checks,
+  // runs the same code path as the cron sweep - same safety checks,
   // same audit trail, same final status flip. Best-effort: failures
   // are logged but don't bubble up because the customer's action
   // already succeeded.
@@ -517,7 +517,7 @@ export async function cancelScheduledMessage(id: string): Promise<CancelResultOk
  * Ownership scoping uses the caller's company_id rather than the
  * admin flag; if the row belongs to a different company the query
  * returns nothing (RLS would also block it). We deliberately don't
- * gate this on `is_admin` — the gate was overzealous and made the
+ * gate this on `is_admin` - the gate was overzealous and made the
  * affordance invisible to normal users for no real safety gain.
  */
 export async function forceRunScheduledMessage(id: string): Promise<CancelResultOk | CancelResultErr> {
@@ -658,7 +658,7 @@ async function dispatchOne(
   // emails sent for free after they downgraded.
   //
   // Skipped rows are marked cancelled with a distinct reason string that
-  // the UI keys off to render the amber "Plan downgrade — not sent" pill.
+  // the UI keys off to render the amber "Plan downgrade - not sent" pill.
   // We use the existing markCancelled() so the alert + audit are written
   // exactly the way users expect.
   try {
@@ -673,7 +673,7 @@ async function dispatchOne(
       await markCancelled(admin, row.id, reason);
       return 'cancelled';
     }
-    // Unexpected error in the gate itself — mark failed so we can retry,
+    // Unexpected error in the gate itself - mark failed so we can retry,
     // and let the caller see the original error via the failed_error column.
     await markFailed(
       admin,
@@ -706,7 +706,7 @@ async function dispatchOne(
   // Cancel-on-response only applies to follow-ups whose whole purpose
   // is to chase a missing reply (quote_sent / manual reminders).
   // For event-triggered follow-ups (quote_accepted / quote_declined /
-  // quote_revision_requested) the event itself IS the trigger —
+  // quote_revision_requested) the event itself IS the trigger -
   // cancelling because the trigger happened would mean those rows can
   // never fire, which was the exact bug Shaun hit (decline follow-up
   // cancelled itself with reason "Customer declined the quote.").
@@ -864,7 +864,7 @@ async function markCancelled(
   id: string,
   reason: string,
 ) {
-  // Flip the row first — we use the WHERE status='scheduled' clause as
+  // Flip the row first - we use the WHERE status='scheduled' clause as
   // an idempotency lock so concurrent dispatcher invocations can't
   // double-cancel.
   const { data: updated } = await admin
@@ -879,7 +879,7 @@ async function markCancelled(
   // Surface auto-cancels via the bell icon so the user finds out
   // without having to revisit the quote summary. We deliberately
   // don't write an alert for user-initiated cancellations (they did
-  // it; they know about it) — that path uses `cancelled_by_user` as
+  // it; they know about it) - that path uses `cancelled_by_user` as
   // its reason and is bypassed here because it goes through the
   // server action, not the dispatcher.
   const { data: quote } = await admin

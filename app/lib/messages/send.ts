@@ -1,5 +1,5 @@
 /**
- * Outbound Messages pipeline — single entry point.
+ * Outbound Messages pipeline - single entry point.
  *
  * Every outbound user-initiated message (quote send, order send, follow-up,
  * decline response, freeform custom) goes through `sendOutboundMessage`.
@@ -172,7 +172,7 @@ export type { MessageTokenPayload };
 /**
  * The pipeline entry point.
  *
- * Returns `{ ok: true }` for both sent and suppressed messages — both are
+ * Returns `{ ok: true }` for both sent and suppressed messages - both are
  * "the user's intent was honoured" outcomes. Truly failed sends (e.g.
  * Resend down) return `{ ok: false, error }` AND leave the
  * outbound_messages row at `status='failed'` so the user can retry.

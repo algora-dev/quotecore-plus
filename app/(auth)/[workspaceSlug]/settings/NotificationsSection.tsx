@@ -12,7 +12,7 @@ type Props = {
  * Toggle for receiving in-app alerts via email.
  *
  * Note: security emails (password change, recovery code login, 2FA changes,
- * email-change confirmations) are NOT controlled by this setting — they always
+ * email-change confirmations) are NOT controlled by this setting - they always
  * send. The copy reflects that distinction.
  */
 export function NotificationsSection({ initialEnabled, userEmail }: Props) {
@@ -22,7 +22,7 @@ export function NotificationsSection({ initialEnabled, userEmail }: Props) {
 
   const handleToggle = (next: boolean) => {
     setError(null);
-    // Optimistic update — rolled back on error.
+    // Optimistic update - rolled back on error.
     setEnabled(next);
     startTransition(async () => {
       try {

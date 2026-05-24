@@ -59,7 +59,7 @@ export function OrderBody({ order, lines, flashings }: Props) {
             gap: 6mm !important;
           }
 
-          /* Keep each line card together — a tall flashing card (e.g.
+          /* Keep each line card together - a tall flashing card (e.g.
              barge) is pushed to the next page instead of being clipped. */
           [data-print-card] {
             page-break-inside: avoid;

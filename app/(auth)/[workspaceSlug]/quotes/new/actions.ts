@@ -35,7 +35,7 @@ export type CreateQuoteResult =
         | 'storage_quota_exceeded'
         | 'unknown';
       message: string;
-      /** Extra context for the UI — only populated for some codes. */
+      /** Extra context for the UI - only populated for some codes. */
       details?: Record<string, string | number | null>;
     };
 
@@ -54,7 +54,7 @@ interface CreateQuoteParams {
    */
   entryMode: 'manual' | 'digital' | 'blank';
   /**
-   * The measurement system locked into this quote at creation. Required —
+   * The measurement system locked into this quote at creation. Required -
    * the new-quote form forces the user to confirm the choice if it differs
    * from their company default. After this insert it can never be changed.
    */
@@ -73,7 +73,7 @@ export async function createQuoteWithDetails(params: CreateQuoteParams): Promise
   } catch (err) {
     // Convert known billing errors into structured failure payloads so the
     // client form can render the typed amber banner with the upgrade CTA.
-    // Anything else re-throws — those are genuine bugs and should reach the
+    // Anything else re-throws - those are genuine bugs and should reach the
     // error overlay / 500 page.
     if (isBillingError(err)) {
       if (err instanceof QuoteLimitReachedError) {
@@ -121,7 +121,7 @@ export async function createQuoteWithDetails(params: CreateQuoteParams): Promise
           },
         };
       }
-      // Unknown billing error subclass — still better than masking it.
+      // Unknown billing error subclass - still better than masking it.
       return { ok: false, code: 'unknown', message: err.message };
     }
     throw err;
@@ -131,7 +131,7 @@ export async function createQuoteWithDetails(params: CreateQuoteParams): Promise
 async function createQuoteWithDetailsInner(params: CreateQuoteParams): Promise<CreateQuoteResult> {
   const { profile, company } = await loadCompanyContext();
 
-  // Whitelist defensively — client could send anything.
+  // Whitelist defensively - client could send anything.
   const safeMeasurementSystem =
     params.measurementSystem === 'metric' ||
     params.measurementSystem === 'imperial_ft' ||
@@ -139,7 +139,7 @@ async function createQuoteWithDetailsInner(params: CreateQuoteParams): Promise<C
       ? params.measurementSystem
       : 'metric';
 
-  // Whitelist entry mode the same way — unknown values fall back to manual.
+  // Whitelist entry mode the same way - unknown values fall back to manual.
   const safeEntryMode: 'manual' | 'digital' | 'blank' =
     params.entryMode === 'manual' || params.entryMode === 'digital' || params.entryMode === 'blank'
       ? params.entryMode
@@ -238,7 +238,7 @@ export async function uploadRoofPlanFile(quoteId: string, file: File): Promise<v
 
   // Finalise: re-read real size from storage, assert quota, delete on
   // overage. The finaliser throws StorageQuotaExceededError /
-  // SubscriptionInactiveError on a gated upload — those bubble up to the
+  // SubscriptionInactiveError on a gated upload - those bubble up to the
   // form layer and are rendered as upgrade prompts.
   const finalised = await finaliseUpload({
     companyId: company.id,

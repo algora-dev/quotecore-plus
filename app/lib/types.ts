@@ -71,9 +71,9 @@ export type Trade = 'roofing' | 'generic';
 /**
  * Measurement system used for display in a quote (and as the company default).
  *
- * - `metric`       : meters and square meters (m / m²) — canonical storage units
- * - `imperial_ft`  : feet and square feet (ft / ft²) — typical for US roofers
- * - `imperial_rs`  : feet and Roofing Squares (ft / RS, 1 RS = 100 ft²) — typical for NZ/AU/UK roofers
+ * - `metric`       : meters and square meters (m / m²) - canonical storage units
+ * - `imperial_ft`  : feet and square feet (ft / ft²) - typical for US roofers
+ * - `imperial_rs`  : feet and Roofing Squares (ft / RS, 1 RS = 100 ft²) - typical for NZ/AU/UK roofers
  * - `imperial`     : DEPRECATED legacy value, treated as `imperial_rs` everywhere.
  *                    Kept in the union (and Postgres enum) so old data still type-checks;
  *                    new code paths must never write this value.

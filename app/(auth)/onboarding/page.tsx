@@ -14,7 +14,7 @@ export default async function OnboardingPage() {
     .eq('id', authUser.id)
     .single();
 
-  // Case 1: No profile at all (Google OAuth new user) — show company setup form
+  // Case 1: No profile at all (Google OAuth new user) - show company setup form
   if (!profile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center p-6">
@@ -54,7 +54,7 @@ export default async function OnboardingPage() {
     );
   }
 
-  // Case 3: Has profile + company — check if onboarding complete
+  // Case 3: Has profile + company - check if onboarding complete
   const { data: company } = await supabase
     .from('companies')
     .select('id, name, slug, default_currency, default_language, default_measurement_system, onboarding_completed_at')
@@ -65,7 +65,7 @@ export default async function OnboardingPage() {
     redirect(`/${company.slug}`);
   }
 
-  // Case 4: Company exists but onboarding not complete — show preferences form
+  // Case 4: Company exists but onboarding not complete - show preferences form
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center p-6">
       <div className="max-w-2xl w-full">

@@ -21,7 +21,7 @@ export default async function ComponentsPage(props: {params: Promise<{workspaceS
     );
   }
 
-  // Component library is per-company — shared across every quote regardless of
+  // Component library is per-company - shared across every quote regardless of
   // measurement system. We render rates in the company default so an Imperial
   // shop sees ft²/RS labels here, with a note that per-quote display still
   // follows the quote's own measurement_system.

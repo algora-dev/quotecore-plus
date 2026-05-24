@@ -177,7 +177,7 @@ export function LaborSheetPreview({ quote, roofAreas: _roofAreas, components, sa
                   <div key={line.id} className="flex justify-between py-2 border-b border-black">
                     <div className="flex-1">
                       <p className="text-sm text-black">
-                        {line.show_units ? line.custom_text : line.custom_text.split('—')[0].trim()}
+                        {line.show_units ? line.custom_text : line.custom_text.split('-')[0].trim()}
                       </p>
                     </div>
                     {line.show_price && (

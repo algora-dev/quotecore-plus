@@ -41,7 +41,7 @@ export async function getSignedUrl(bucket: string, path: string, expiresIn: numb
  * Returns one entry per input path, in the same order. If an individual
  * path fails to sign (e.g. file missing), its `signedUrl` is null and
  * `error` carries the reason. The function does not throw on partial
- * failures — callers can render placeholders for nulls.
+ * failures - callers can render placeholders for nulls.
  */
 export async function getSignedUrls(
   bucket: string,
@@ -57,7 +57,7 @@ export async function getSignedUrls(
     throw new Error(`Failed to create signed URLs: ${error.message}`);
   }
   // The Supabase response is parallel by index but the `path` field on each
-  // entry is authoritative — use it so the caller does not have to trust
+  // entry is authoritative - use it so the caller does not have to trust
   // ordering.
   return (data ?? []).map((entry) => ({
     path: entry.path ?? '',

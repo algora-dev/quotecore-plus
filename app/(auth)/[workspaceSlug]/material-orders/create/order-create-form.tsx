@@ -110,14 +110,14 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
   // Order line items
   const [orderLines, setOrderLines] = useState<OrderLineItem[]>([]);
   
-  // Auto-populate from quote data — hydrate ONCE on mount.
+  // Auto-populate from quote data - hydrate ONCE on mount.
   //
   // Same pattern as BlankQuoteBuilder / the customer editor: a single
   // hydratedRef guard so a parent re-render (router.refresh, identical-
   // content prop ref change, RSC revalidation bubbling from elsewhere)
   // can NEVER wipe in-progress edits. The previous `quoteLoaded` state
   // approach worked at first paint but allowed a stale `existingOrder`
-  // payload to clobber unsaved form state seconds later — the classic
+  // payload to clobber unsaved form state seconds later - the classic
   // "editor reverted to last saved" bug.
   const hydratedFromQuoteRef = useRef(false);
   useEffect(() => {
@@ -169,7 +169,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
       const hasMeasurements = comp.measurements && comp.measurements.length > 0;
 
       if (hasMeasurements) {
-        // Multiple-entries mode — the stored measurement_values are in
+        // Multiple-entries mode - the stored measurement_values are in
         // canonical metric (m for linear, m² for area), so convert each into
         // the display system before rendering.
         const isLineal = comp.measurement_type === 'lineal';
@@ -224,12 +224,12 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
     }
   }, [quoteData, flashings]);
   
-  // Load existing order for edit — hydrate ONCE on mount.
+  // Load existing order for edit - hydrate ONCE on mount.
   //
   // Critical: do NOT re-run this effect when `existingOrder` reference
   // changes after a router.refresh or a sibling-component revalidation.
   // If we did, the user's unsaved edits would be replaced by the last
-  // server-persisted snapshot every few seconds — the "auto-save
+  // server-persisted snapshot every few seconds - the "auto-save
   // revert" bug Shaun has flagged across editors. Guard with a ref so
   // the effect short-circuits on every render after the first.
   const hydratedFromExistingRef = useRef(false);

@@ -1,5 +1,5 @@
 /**
- * Security email templates. Always sent — never gated by user preference.
+ * Security email templates. Always sent - never gated by user preference.
  *
  * Each one has the same structure:
  *  - Reassuring heading + summary
@@ -78,7 +78,7 @@ export function twoFactorEnabledEmail(input: SecurityEventBase) {
     para(input.recipientName ? `Hi ${input.recipientName},` : 'Hi,') +
     para('Two-factor authentication has been turned on for your QuoteCore+ account. From now on, sign-ins will require a code from your authenticator app.') +
     infoTable(whenWhereRows(input)) +
-    para("If you didn't turn this on, your account may be at risk — secure it now.") +
+    para("If you didn't turn this on, your account may be at risk - secure it now.") +
     ctaBlock('Secure my account', input.secureAccountUrl) +
     note('Keep your recovery codes in a safe place. They are the only way to regain access if you lose your authenticator.');
   return {
@@ -97,7 +97,7 @@ export function twoFactorDisabledEmail(input: SecurityEventBase) {
     para(input.recipientName ? `Hi ${input.recipientName},` : 'Hi,') +
     para('Two-factor authentication has been turned off for your QuoteCore+ account. Your account is now protected by your password alone.') +
     infoTable(whenWhereRows(input)) +
-    para("If you didn't turn this off, secure your account immediately — re-enabling 2FA is strongly recommended.") +
+    para("If you didn't turn this off, secure your account immediately - re-enabling 2FA is strongly recommended.") +
     ctaBlock('Secure my account', input.secureAccountUrl);
   return {
     subject,

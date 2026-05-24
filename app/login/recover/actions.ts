@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * Account recovery flow — "Lost access to my email" (Flow 2 from the brief).
+ * Account recovery flow - "Lost access to my email" (Flow 2 from the brief).
  *
  * Threat model:
  *   - We MUST NOT leak whether an email is registered (account enumeration).
@@ -15,7 +15,7 @@
  *
  * Data preservation:
  *   Recovery touches ONLY auth.users.email + public.users.email. Quotes,
- *   files, components, settings, the user's UUID — none of it is altered.
+ *   files, components, settings, the user's UUID - none of it is altered.
  *   The user signs back in to the same account with a new email.
  *
  * Stages (enforced by a signed cookie token):
@@ -177,7 +177,7 @@ export async function lookupRecovery(oldEmail: string): Promise<LookupResult> {
     .eq('email', trimmed)
     .maybeSingle();
 
-  // Generic "no recovery available" surface — same response whether the email
+  // Generic "no recovery available" surface - same response whether the email
   // is unknown OR the account has no security questions. Prevents enumeration.
   if (!profile) {
     await logAttempt({ userId: null, oldEmail: trimmed, outcome: 'lookup_no_match' });
@@ -328,7 +328,7 @@ export async function finaliseRecovery(newEmail: string): Promise<FinaliseResult
     return { ok: false, code: 'in_use', message: 'That email is already in use by another QuoteCore+ account.' };
   }
 
-  // Update the auth user — set the new email AND mark it confirmed so the
+  // Update the auth user - set the new email AND mark it confirmed so the
   // user can sign in straight after the password reset.
   const { error: updErr } = await admin.auth.admin.updateUserById(payload.sub, {
     email: trimmed,

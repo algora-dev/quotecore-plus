@@ -102,7 +102,7 @@ export async function generateRecoveryCodes(): Promise<string[]> {
  * On success the entire batch of recovery codes is wiped, not just the one
  * that was used. This prevents the previously-reported bug where a user could
  * recover with code A, set up a fresh authenticator, then later recover again
- * with code B from the *same* batch — effectively making one batch good for
+ * with code B from the *same* batch - effectively making one batch good for
  * multiple takeovers. A user who wants more recovery codes after using one
  * generates a fresh batch from settings; that's an explicit step.
  */
@@ -130,7 +130,7 @@ export async function consumeRecoveryCode(rawCode: string): Promise<boolean> {
     .eq('user_id', user.id);
   if (delErr) throw new Error(delErr.message);
 
-  // Best-effort security email — always sent regardless of user preference.
+  // Best-effort security email - always sent regardless of user preference.
   // We await here (not fire-and-forget) because Vercel serverless functions
   // terminate the moment the handler returns, killing any in-flight Promise.
   // notifyRecoveryCodeUsed swallows its own errors so this can't break the

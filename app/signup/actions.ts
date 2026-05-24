@@ -118,7 +118,7 @@ export async function signupWithCompany(input: SignupInput) {
   }
 
   // Seed the canonical starter components into the new company. Non-fatal:
-  // signup must still succeed if this fails — the user can always create
+  // signup must still succeed if this fails - the user can always create
   // their own components manually.
   await seedTemplateComponents(supabaseAdmin, company.id, bootstrapCollectionId);
 

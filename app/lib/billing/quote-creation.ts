@@ -86,7 +86,7 @@ export interface CreateQuotePayload {
 /**
  * Resolve sensible Phase-4 defaults for a quote-create call: 'roofing' as
  * the trade, and the company's bootstrap collection id. Safe to call from
- * any quote-create path — idempotent + concurrency-safe via the SECDEF RPC
+ * any quote-create path - idempotent + concurrency-safe via the SECDEF RPC
  * (Gerald round-2 M-02).
  *
  * Returns `componentCollectionId: null` on failure rather than throwing, so

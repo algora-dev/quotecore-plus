@@ -295,7 +295,7 @@ export function CopilotOverlay() {
 
   return (
     <div className="fixed inset-0 z-[100] pointer-events-none">
-      {/* SVG dim overlay with rounded cutout — pointer-events: none so page is fully interactive */}
+      {/* SVG dim overlay with rounded cutout - pointer-events: none so page is fully interactive */}
       {windowSize.w > 0 && (
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none"

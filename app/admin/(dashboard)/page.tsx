@@ -68,7 +68,7 @@ export default async function AdminHome() {
               ].join(' ')}
             >
               <p className="text-xs uppercase tracking-wide text-slate-500">{s.label}</p>
-              <p className="mt-2 text-3xl font-semibold text-slate-900">{s.value ?? '—'}</p>
+              <p className="mt-2 text-3xl font-semibold text-slate-900">{s.value ?? '-'}</p>
             </div>
           );
           return s.href ? (

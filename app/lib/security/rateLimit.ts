@@ -26,7 +26,7 @@ let cachedClient: ReturnType<typeof createServiceClient<Database>> | null = null
 
 /**
  * One module-scoped admin client. We deliberately use service_role here
- * because the RPC is SECURITY DEFINER and bucket keys are opaque strings —
+ * because the RPC is SECURITY DEFINER and bucket keys are opaque strings -
  * there's no user-data leakage surface to widen. Using an RLS-bound user
  * client would force every caller to wire one in; not worth it.
  */

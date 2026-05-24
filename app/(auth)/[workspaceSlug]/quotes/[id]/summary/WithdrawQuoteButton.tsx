@@ -61,7 +61,7 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
     );
   }
 
-  // Nothing live and no withdrawal history — the quote was never sent, so
+  // Nothing live and no withdrawal history - the quote was never sent, so
   // there's nothing for this button to control. Hide entirely.
   if (!hasActiveToken && !isAlreadyWithdrawn) return null;
 

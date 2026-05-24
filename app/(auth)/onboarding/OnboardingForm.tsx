@@ -208,8 +208,8 @@ export function OnboardingForm({
         <div className="grid grid-cols-1 gap-3">
           {[
             { value: 'metric' as const, title: 'Metric', subtitle: 'Meters (m), Square meters (m²)' },
-            { value: 'imperial_ft' as const, title: 'Imperial — ft²', subtitle: 'Feet (ft), Square feet (ft²)' },
-            { value: 'imperial_rs' as const, title: 'Imperial — Roofing Squares', subtitle: 'Feet (ft), Roofing Squares (RS)' },
+            { value: 'imperial_ft' as const, title: 'Imperial - ft²', subtitle: 'Feet (ft), Square feet (ft²)' },
+            { value: 'imperial_rs' as const, title: 'Imperial - Roofing Squares', subtitle: 'Feet (ft), Roofing Squares (RS)' },
           ].map((opt) => (
             <button
               key={opt.value}

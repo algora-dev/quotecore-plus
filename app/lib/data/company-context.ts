@@ -59,7 +59,7 @@ export async function loadCompanyContext(): Promise<CompanyContext> {
 
       console.log('[loadCompanyContext] Using fallback - defaulting to metric');
 
-      // Match the DB NOT NULL defaults rather than nulling these out —
+      // Match the DB NOT NULL defaults rather than nulling these out -
       // companies.default_currency and companies.default_language are NOT
       // NULL with defaults of 'NZD' and 'en' respectively; the previous
       // null fallback was a typing lie that the generated types now catch.

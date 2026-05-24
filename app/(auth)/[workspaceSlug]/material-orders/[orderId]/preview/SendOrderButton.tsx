@@ -179,7 +179,7 @@ export function SendOrderButton({
   function goCreateTemplate() {
     // Open the templates page on the Message tab. The query params for
     // `kind=` (prefill the template kind) and `return=` (back-nav after
-    // save) are not yet wired in TemplatesPageClient — they’re here so
+    // save) are not yet wired in TemplatesPageClient - they’re here so
     // the navigation intent is captured for the Phase 2 wiring without
     // breaking the current URL.
     const returnPath = encodeURIComponent(
@@ -301,7 +301,7 @@ export function SendOrderButton({
                       onChange={(e) => handleTemplateChange(e.target.value)}
                       className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                     >
-                      <option value="">— None (custom message) —</option>
+                      <option value="">- None (custom message) -</option>
                       {templates.map((t) => (
                         <option key={t.id} value={t.id}>
                           {t.name}

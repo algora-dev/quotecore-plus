@@ -12,7 +12,7 @@ function isValidUUID(str: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 }
 
-// Loose email validator — we accept anything that looks like one or skip the
+// Loose email validator - we accept anything that looks like one or skip the
 // field. The customer can still get help via the mailto fallback even without
 // providing a structured email.
 function isPlausibleEmail(str: string): boolean {
@@ -111,7 +111,7 @@ export async function submitRevisionRequest(
   const supabase = createAdminClient();
 
   // Look up the quote by token. We DON'T require the token to be unexpired
-  // here — the whole point is that expired/withdrawn links can still trigger
+  // here - the whole point is that expired/withdrawn links can still trigger
   // a re-quote.
   const { data: quote, error: fetchErr } = await supabase
     .from('quotes')
@@ -123,7 +123,7 @@ export async function submitRevisionRequest(
     return { success: false, error: 'Quote not found.' };
   }
 
-  // Classify state for the user's awareness. Order matters — a withdrawal
+  // Classify state for the user's awareness. Order matters - a withdrawal
   // supersedes responded/expired because it's the user's deliberate signal
   // that this quote shouldn't be acted on.
   let sourceState: 'active' | 'expired' | 'responded' | 'withdrawn' = 'active';
@@ -165,12 +165,12 @@ export async function submitRevisionRequest(
     company_id: quote.company_id,
     quote_id: quote.id,
     alert_type: 'revision_requested',
-    title: `Re-Quote Requested — #${quote.quote_number ?? 'DRAFT'}`,
+    title: `Re-Quote Requested - #${quote.quote_number ?? 'DRAFT'}`,
     message: `${cleanName || quote.customer_name || 'Customer'} has requested a revision (${sourceState}). Notes: ${trimmedNotes.slice(0, 200)}${trimmedNotes.length > 200 ? '…' : ''}`,
   });
 
   // Best-effort email notification (gated by user preference). Failures are
-  // swallowed inside notifyRevisionRequested — the in-app alert above is the
+  // swallowed inside notifyRevisionRequested - the in-app alert above is the
   // source of truth. We MUST await here, not fire-and-forget: Vercel
   // serverless functions terminate the moment the handler returns, killing
   // any in-flight Promise.
@@ -218,7 +218,7 @@ export type RevisionRequestActionResult =
  * Bulk-resolve a set of revision requests in a single round-trip.
  *
  * Used by the multi-select bar on the quote summary's revision
- * requests panel — same UX as the Sent Messages bulk delete. RLS
+ * requests panel - same UX as the Sent Messages bulk delete. RLS
  * still filters cross-company rows; we also match company_id
  * explicitly as belt-and-braces.
  */
@@ -255,13 +255,13 @@ export async function bulkResolveRevisionRequests(
 
 /**
  * Hard-delete a set of revision requests by id. Mirrors
- * deleteSentMessagesBulk for the messages panel — same shape, same
+ * deleteSentMessagesBulk for the messages panel - same shape, same
  * limits, same audit log.
  *
  * We deliberately allow deleting BOTH pending and resolved rows here:
  * the user might want to clear noise. If a request is mid-resolve in
  * another tab, the second delete will still succeed because the row
- * exists — idempotent enough for this UX.
+ * exists - idempotent enough for this UX.
  */
 export async function bulkDeleteRevisionRequests(
   requestIds: string[],
@@ -301,7 +301,7 @@ export async function respondToQuote(token: string, action: 'accept' | 'decline'
 
   const supabase = createAdminClient();
 
-  // Load quote by token — select ONLY needed fields
+  // Load quote by token - select ONLY needed fields
   const { data: quote, error: fetchErr } = await supabase
     .from('quotes')
     .select('id, company_id, customer_name, quote_number, accepted_at, declined_at, acceptance_token_expires_at, withdrawn_at')
@@ -322,7 +322,7 @@ export async function respondToQuote(token: string, action: 'accept' | 'decline'
   const now = new Date().toISOString();
   const isAccept = action === 'accept';
 
-  // Update quote — double-check token matches (prevents parameter manipulation)
+  // Update quote - double-check token matches (prevents parameter manipulation)
   const { error } = await supabase
     .from('quotes')
     .update(isAccept
@@ -346,7 +346,7 @@ export async function respondToQuote(token: string, action: 'accept' | 'decline'
   // Activate any pre-staged quote_accepted / quote_declined follow-ups
   // for this quote. The accept/decline modal in the post-send prompt
   // creates these in advance with sentinel timestamps; this is where
-  // we flip them live. Best-effort — we don't fail the customer
+  // we flip them live. Best-effort - we don't fail the customer
   // response if activation has trouble. Same await-not-fire-and-forget
   // discipline as notifyQuoteResponse below.
   try {

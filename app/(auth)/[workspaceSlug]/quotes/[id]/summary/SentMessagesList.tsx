@@ -99,7 +99,7 @@ export function SentMessagesList({ messages }: Props) {
     if (selected.size === 0) return;
     setError(null);
     const ids = Array.from(selected);
-    // Hide selected rows IMMEDIATELY — the perceived speedup is the
+    // Hide selected rows IMMEDIATELY - the perceived speedup is the
     // whole point. router.refresh() takes the canonical state.
     setOptimisticHiddenIds((prev) => {
       const next = new Set(prev);

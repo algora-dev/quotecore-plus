@@ -8,7 +8,7 @@ import Link from 'next/link';
  *   - Single place to update brand chrome when it changes
  *   - All three pages need the same anonymous nav (no auth, no workspace)
  *
- * The shell is intentionally simple — no client JS, no interactivity. Anchors
+ * The shell is intentionally simple - no client JS, no interactivity. Anchors
  * inside the document handle in-page navigation. Each section in a legal doc
  * uses an `<h2 id="...">` so the table-of-contents on the right column links
  * straight to it via standard browser hash behaviour.
@@ -21,7 +21,7 @@ export function LegalPageShell({
 }: {
   title: string;
   effectiveDate: string;
-  /** [{ id, label }] — id must match an `<h2 id="">` in `children`. */
+  /** [{ id, label }] - id must match an `<h2 id="">` in `children`. */
   toc: { id: string; label: string }[];
   children: React.ReactNode;
 }) {

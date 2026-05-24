@@ -3,7 +3,7 @@
 /**
  * File-storage server actions.
  *
- * These are NOT settings — they are uploaded-file lifecycle helpers used by
+ * These are NOT settings - they are uploaded-file lifecycle helpers used by
  * the quote builder, supporting-files manager, plan uploader, and the summary
  * files panel. Historically they lived inside `app/(auth)/[slug]/account/actions.ts`
  * because the only "settings" page that uploaded a file (the company logo)
@@ -133,7 +133,7 @@ export async function saveFileMetadata(data: {
     data.fileType === 'logo' ? BUCKETS.COMPANY_LOGOS : BUCKETS.QUOTE_DOCUMENTS;
 
   // 6. Read actual object metadata from Storage. This is the source of truth
-  //    for size and mime — the browser doesn't get to lie about either.
+  //    for size and mime - the browser doesn't get to lie about either.
   //    `list()` with the parent prefix and a `search` filter is the documented
   //    way to look up a single object's metadata.
   const lastSlash = data.storagePath.lastIndexOf('/');
@@ -166,7 +166,7 @@ export async function saveFileMetadata(data: {
   // Quota gate (Gerald H-03). The browser ran a pre-upload checkStorageQuota
   // but the size it sent is untrusted. Now we have the SERVER-MEASURED size;
   // assert against the live limit and delete the orphan on overage. Logo
-  // uploads (PUBLIC company-logos bucket) are exempt for phase 1 — they're
+  // uploads (PUBLIC company-logos bucket) are exempt for phase 1 - they're
   // tiny, infrequent, and don't share the QUOTE-DOCUMENTS quota pool.
   if (data.fileType !== 'logo') {
     try {

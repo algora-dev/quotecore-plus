@@ -13,7 +13,7 @@ type Props = {
  * Optional onboarding step. Encourages but never blocks.
  *
  * Layout: two slots, each with a question selector + answer field. Both slots
- * are optional individually — partial save is allowed. The "Skip for now"
+ * are optional individually - partial save is allowed. The "Skip for now"
  * button bypasses entirely. The hard sell is in the copy: this is the safety
  * net for losing email access.
  */
@@ -40,7 +40,7 @@ export function SecurityQuestionsStep({ onDone }: Props) {
       .filter((s) => s.answer.trim().length > 0);
 
     if (filled.length === 0) {
-      // Treat as a skip — nothing to save.
+      // Treat as a skip - nothing to save.
       onDone();
       return;
     }

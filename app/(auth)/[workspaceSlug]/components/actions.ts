@@ -204,7 +204,7 @@ const UPDATABLE_COMPONENT_FIELDS = [
   'sort_order',
   // Phase 2/6 (Generic Trades): new column writes allowed from the
   // component edit UI. company_id, id, timestamps still intentionally
-  // excluded — same posture as Gerald audit M-03.
+  // excluded - same posture as Gerald audit M-03.
   'collection_id',
   'height_value_mm',
   'depth_value_mm',

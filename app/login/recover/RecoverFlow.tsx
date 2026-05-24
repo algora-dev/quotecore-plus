@@ -19,7 +19,7 @@ type Step =
 /**
  * State machine for the recovery flow. Each branch is a discriminated union
  * member; the renderer below dispatches off `step.kind`. We never let the user
- * jump steps client-side — every transition goes through the corresponding
+ * jump steps client-side - every transition goes through the corresponding
  * server action which is the source of truth (and re-issues the cookie token).
  */
 export function RecoverFlow() {
@@ -84,7 +84,7 @@ function IdentifyStep({ onResult }: { onResult: (s: Step) => void }) {
       } else if (res.code === 'rate_limited') {
         setError(res.message);
       } else {
-        // 'no_recovery_available' — generic surface, may mean no account OR
+        // 'no_recovery_available' - generic surface, may mean no account OR
         // no security questions on the account. We never tell the user which.
         onResult({ kind: 'noRecovery', message: res.message });
       }
@@ -255,13 +255,13 @@ function DoneStep({ newEmail }: { newEmail: string }) {
 
 function ContactSupportCard({ message }: { message: string }) {
   // Pre-fill a mailto with subject + body so the user has the easiest path
-  // to support. We deliberately don't include the email they entered — we
+  // to support. We deliberately don't include the email they entered - we
   // don't want to confirm to a casual observer that the email was/was not
   // recognised in our system.
   const mailto =
     'mailto:info@quote-core.com' +
     '?subject=' +
-    encodeURIComponent('QuoteCore+ account recovery — lost email access') +
+    encodeURIComponent('QuoteCore+ account recovery - lost email access') +
     '&body=' +
     encodeURIComponent(
       "Hi QuoteCore+ team,\n\nI've lost access to the email on my account and can't recover it through the website. Please help me regain access.\n\nMy company name: \nMy approximate sign-up date: \nAny details you can verify: \n\nThank you,\n"

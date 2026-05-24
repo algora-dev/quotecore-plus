@@ -29,7 +29,7 @@ function storagePathFromPublicUrl(url: string, bucket: string): string | null {
 }
 
 /**
- * Delete a quote file. The caller passes ONLY the file id — the storage
+ * Delete a quote file. The caller passes ONLY the file id - the storage
  * path is loaded from the DB row, never trusted from the client. Both the
  * storage remove and the row delete are then scoped to `id AND company_id`
  * so a hijacked file id from a different company is rejected at the SQL
@@ -67,7 +67,7 @@ export async function deleteFile(fileId: string): Promise<void> {
     throw new Error('Unauthorized');
   }
 
-  // Remove the storage object at the DB-recorded path. Best-effort — even if
+  // Remove the storage object at the DB-recorded path. Best-effort - even if
   // the storage call fails (file already gone, permissions glitch, etc.) we
   // still proceed to delete the metadata row so the user doesn't see a
   // ghost entry in the UI.
@@ -136,7 +136,7 @@ export async function deleteTakeoffCanvas(
       .from(BUCKETS.QUOTE_DOCUMENTS)
       .remove([storagePath]);
     if (storageError) {
-      // Log but proceed — columns still get cleared so the user no longer sees the file.
+      // Log but proceed - columns still get cleared so the user no longer sees the file.
       console.warn('[deleteTakeoffCanvas] Storage remove warning:', storageError.message);
     }
   } else if (currentUrl) {

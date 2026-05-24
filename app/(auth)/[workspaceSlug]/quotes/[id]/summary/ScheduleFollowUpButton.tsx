@@ -238,7 +238,7 @@ export function ScheduleFollowUpButton({
                   {triggerOptions.map((opt) => (
                     <option key={opt.value} value={opt.value} disabled={!opt.available}>
                       {opt.label}
-                      {!opt.available && opt.disabledReason ? ` — ${opt.disabledReason}` : ''}
+                      {!opt.available && opt.disabledReason ? ` - ${opt.disabledReason}` : ''}
                     </option>
                   ))}
                 </select>
@@ -315,7 +315,7 @@ export function ScheduleFollowUpButton({
                   </label>
                 ) : (
                   <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-                    Event follow-ups fire when the trigger event happens — the customer&apos;s response IS what activates this rule, so it won&apos;t auto-cancel on their action.
+                    Event follow-ups fire when the trigger event happens - the customer&apos;s response IS what activates this rule, so it won&apos;t auto-cancel on their action.
                   </p>
                 )}
                 <label className="flex items-start gap-2 text-xs text-slate-700">
@@ -334,7 +334,7 @@ export function ScheduleFollowUpButton({
 
               {/* Preview + nudge. For pre-event triggers (no
                   accepted_at / declined_at yet) we can't compute a
-                  real fire time — the wait clock starts when the
+                  real fire time - the wait clock starts when the
                   event happens. Show wait-window copy instead. */}
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                 {form.triggerEvent === 'quote_accepted' && !quote.accepted_at ? (

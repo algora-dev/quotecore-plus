@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     siteName: 'QuoteCore+',
-    title: 'QuoteCore+ — Roofing measurement and quoting platform',
+    title: 'QuoteCore+ - Roofing measurement and quoting platform',
     description: 'Measure, quote, send, and track jobs in one place.',
     url: '/',
     images: [

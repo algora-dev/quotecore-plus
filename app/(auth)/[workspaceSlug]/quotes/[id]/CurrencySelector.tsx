@@ -69,7 +69,7 @@ export function CurrencySelector({ quoteId, currentCurrency, companyDefaultCurre
               .filter(c => c.code !== companyDefaultCurrency)  // Don't duplicate company default
               .map(currency => (
                 <option key={currency.code} value={currency.code}>
-                  {currency.code} — {currency.name}
+                  {currency.code} - {currency.name}
                 </option>
               ))}
           </optgroup>

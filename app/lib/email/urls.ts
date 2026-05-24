@@ -28,7 +28,7 @@ export function quoteSummaryUrl(workspaceSlug: string, quoteId: string): string 
 /** Builds the URL the user clicks from a security email to start a password reset. */
 export function passwordResetStartUrl(): string {
   // Send them to login page; they can use "Forgot password?" from there.
-  // Direct deep-linking would require a server-issued one-time link — overkill
+  // Direct deep-linking would require a server-issued one-time link - overkill
   // for "secure your account now" CTAs.
   return `${getSiteUrl()}/login`;
 }

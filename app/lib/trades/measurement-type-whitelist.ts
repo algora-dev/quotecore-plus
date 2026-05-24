@@ -1,5 +1,5 @@
 /**
- * Generic Trades Phase 6 — measurement_type compatibility allowlist by trade.
+ * Generic Trades Phase 6 - measurement_type compatibility allowlist by trade.
  *
  * Single source of truth used by `assertComponentCompatibleWithQuote()` to
  * decide whether a given component is allowed to attach to a given quote.
@@ -75,7 +75,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
 /**
  * Returns true when `measurementType` is allowed on a quote with the given
  * `trade`. Used for both UI gating (disabled options + tooltip) and the
- * server-side assertion. Never throws — call sites decide the policy.
+ * server-side assertion. Never throws - call sites decide the policy.
  */
 export function isMeasurementTypeAllowed(
   trade: Trade,
