@@ -1403,7 +1403,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           <button
             onClick={() => setShowUploadAnotherModal(true)}
             disabled={isSaving}
-            className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-full text-sm disabled:opacity-50 transition-all"
+            className="px-3 py-2 bg-black hover:bg-slate-900 text-white rounded-full text-sm disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(249,115,22,0.45)]"
             title="Add another plan image to measure from"
           >
             + Upload another image
@@ -1412,7 +1412,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
             onClick={handleSaveTakeoff}
             disabled={calibrations.length === 0 || isSaving}
             data-copilot="takeoff-save"
-            className="px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(249,115,22,0.5)]"
             title={calibrations.length === 0 ? 'Calibrate the plan first' : ''}
           >
             {isSaving ? 'Saving...' : 'Save & Continue to Components'}
@@ -1653,7 +1653,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 {/* Active Components */}
                 {activeComponentIds.length > 0 && (
                   <div>
-                    <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Active ({activeComponentIds.length})</h3>
+                    <h3 className="text-xs font-semibold text-orange-500 uppercase tracking-wide mb-2">Active ({activeComponentIds.length})</h3>
                     <div className="space-y-2">
                       {activeComponentIds.map((id) => {
                         const comp = displayComponents.find(c => c.id === id);
@@ -1670,8 +1670,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                               onClick={() => setSelectedComponentId(comp.id)}
                               className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-all ${
                                 isSelected 
-                                  ? 'bg-gray-200 ring-1 ring-orange-500' 
-                                  : 'bg-gray-100 hover:bg-slate-650'
+                                  ? 'bg-orange-100 ring-1 ring-orange-500' 
+                                  : 'bg-orange-50 hover:bg-orange-100'
                               }`}
                             >
                               <div
@@ -1768,9 +1768,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                 )}
 
                 {/* Available Components.
-                    Whole row is clickable to activate the component - the
-                    orange + button is the visible affordance but users can
-                    click anywhere on the row. */}
+                    Whole row is clickable to activate the component.
+                    Resting state: empty orange ring + orange plus text.
+                    Hover state: solid orange circle, white plus, no row background. */}
                 <div>
                   <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Available</h3>
                   <div className="space-y-1">
@@ -1781,12 +1781,12 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                             key={comp.id}
                             type="button"
                             onClick={() => handleAddComponent(comp.id)}
-                            className="w-full flex items-center gap-2 p-1.5 rounded hover:bg-orange-50 transition group text-left cursor-pointer"
+                            className="w-full flex items-center gap-2 p-1.5 rounded transition group text-left cursor-pointer"
                             aria-label={`Add ${comp.name}`}
                           >
                             <div className="flex-1 text-sm text-slate-700 group-hover:text-slate-900">{comp.name}</div>
                             <span
-                              className="w-7 h-7 flex items-center justify-center bg-orange-500 text-white group-hover:bg-orange-600 rounded-full text-base font-bold transition-colors shadow-sm flex-shrink-0"
+                              className="w-7 h-7 flex items-center justify-center rounded-full text-base font-bold transition-all flex-shrink-0 border-2 border-orange-500 text-orange-500 group-hover:bg-orange-500 group-hover:text-white"
                               aria-hidden="true"
                             >
                               +
