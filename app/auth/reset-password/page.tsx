@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
+import { PasswordField } from '@/app/components/ui/PasswordField';
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
@@ -83,13 +84,12 @@ export default function ResetPasswordPage() {
             <div className="grid gap-4">
               <label className="block">
                 <span className="block text-sm font-medium text-slate-700 mb-1">New Password</span>
-                <input
-                  type="password"
+                <PasswordField
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   minLength={8}
                   required
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  inputClassName="w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="••••••••"
                 />
                 <p className="text-xs text-slate-500 mt-1">At least 8 characters</p>
@@ -97,13 +97,12 @@ export default function ResetPasswordPage() {
 
               <label className="block">
                 <span className="block text-sm font-medium text-slate-700 mb-1">Confirm Password</span>
-                <input
-                  type="password"
+                <PasswordField
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   minLength={8}
                   required
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  inputClassName="w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="••••••••"
                 />
               </label>

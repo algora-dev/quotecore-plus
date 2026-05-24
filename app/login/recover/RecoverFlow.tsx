@@ -8,6 +8,7 @@ import {
   finaliseRecovery,
   type RecoveryQuestion,
 } from './actions';
+import { PasswordField } from '@/app/components/ui/PasswordField';
 
 type Step =
   | { kind: 'identify' }
@@ -151,13 +152,12 @@ function VerifyStep({
       {questions.map((q) => (
         <label key={q.slot} className="block">
           <span className="block text-sm font-medium text-slate-700 mb-1">{q.question}</span>
-          <input
-            type="password"
+          <PasswordField
             required
             value={answers[q.slot] ?? ''}
             onChange={(e) => setAnswers((prev) => ({ ...prev, [q.slot]: e.target.value }))}
             autoComplete="off"
-            className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+            inputClassName="w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
           />
         </label>
       ))}

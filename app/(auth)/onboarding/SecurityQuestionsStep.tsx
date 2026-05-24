@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { setOnboardingSecurityQuestions } from '@/app/(auth)/[workspaceSlug]/settings/security-questions-actions';
 import { SUGGESTED_QUESTIONS, CUSTOM_QUESTION_LABEL, QUESTION_SLOTS } from '@/app/lib/security/questions';
+import { PasswordField } from '@/app/components/ui/PasswordField';
 
 type Props = {
   /** Called after the step completes (whether the user filled it in or skipped). */
@@ -105,14 +106,13 @@ export function SecurityQuestionsStep({ onDone }: Props) {
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           )}
-          <input
-            type="password"
+          <PasswordField
             placeholder="Your answer"
             value={slot.answer}
             onChange={(e) => updateSlot(idx, { answer: e.target.value })}
             maxLength={200}
             autoComplete="off"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            inputClassName="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
         </div>
       ))}

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { signupWithCompany } from './actions';
 import { GoogleSignInButton } from '@/app/components/auth/GoogleSignInButton';
 import { PublicFooter } from '@/app/components/PublicFooter';
+import { PasswordField } from '@/app/components/ui/PasswordField';
 
 export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
@@ -96,12 +97,11 @@ export default function SignupPage() {
 
               <label className="block">
                 <span className="block text-sm font-medium text-slate-700 mb-1">Password</span>
-                <input 
-                  name="password" 
-                  type="password" 
-                  minLength={8} 
-                  required 
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                <PasswordField
+                  name="password"
+                  minLength={8}
+                  required
+                  inputClassName="w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="••••••••"
                 />
                 <p className="text-xs text-slate-500 mt-1">At least 8 characters</p>

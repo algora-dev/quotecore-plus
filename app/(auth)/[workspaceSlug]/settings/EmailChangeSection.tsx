@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useEffect } from 'react';
 import { requestEmailChange, getEmailChangeStatus, type EmailChangeResult } from './email-change-actions';
+import { PasswordField } from '@/app/components/ui/PasswordField';
 
 type Props = {
   currentEmail: string;
@@ -162,14 +163,13 @@ export function EmailChangeSection({ currentEmail, authProvider }: Props) {
 
               <label className="block">
                 <span className="block text-xs font-medium text-slate-700 mb-1">Current password</span>
-                <input
-                  type="password"
+                <PasswordField
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   autoComplete="current-password"
-                  className="w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  inputClassName="w-full px-3 py-2 pr-10 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                 />
               </label>
 

@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { upsertSecurityQuestion, deleteSecurityQuestion, type SecurityQuestionRecord } from './security-questions-actions';
 import { SUGGESTED_QUESTIONS, CUSTOM_QUESTION_LABEL, QUESTION_SLOTS } from '@/app/lib/security/questions';
+import { PasswordField } from '@/app/components/ui/PasswordField';
 
 type Props = {
   initialQuestions: SecurityQuestionRecord[];
@@ -185,12 +186,11 @@ function SecurityQuestionEditor({
 
           <label className="block">
             <span className="block text-xs font-medium text-slate-700 mb-1">Answer</span>
-            <input
-              type="password"
+            <PasswordField
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               maxLength={200}
-              className="w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+              inputClassName="w-full px-3 py-2 pr-10 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
               autoComplete="off"
             />
             <p className="text-xs text-slate-400 mt-1">Case insensitive. Extra spaces are ignored.</p>
@@ -198,12 +198,11 @@ function SecurityQuestionEditor({
 
           <label className="block">
             <span className="block text-xs font-medium text-slate-700 mb-1">Confirm answer</span>
-            <input
-              type="password"
+            <PasswordField
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               maxLength={200}
-              className="w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+              inputClassName="w-full px-3 py-2 pr-10 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
               autoComplete="off"
             />
           </label>

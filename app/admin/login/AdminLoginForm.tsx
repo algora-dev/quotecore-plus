@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminLoginAction } from './actions';
+import { PasswordField } from '@/app/components/ui/PasswordField';
 
 interface Props {
   redirectTo: string;
@@ -56,13 +57,12 @@ export function AdminLoginForm({ redirectTo }: Props) {
       </label>
       <label className="block">
         <span className="block text-sm font-medium text-slate-700 mb-1">Password</span>
-        <input
-          type="password"
+        <PasswordField
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"
-          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          inputClassName="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
         />
       </label>
 

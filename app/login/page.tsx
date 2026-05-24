@@ -7,6 +7,7 @@ import { loginAction } from './actions';
 import { GoogleSignInButton } from '@/app/components/auth/GoogleSignInButton';
 import { TroubleSigningInPanel } from './TroubleSigningInPanel';
 import { PublicFooter } from '@/app/components/PublicFooter';
+import { PasswordField } from '@/app/components/ui/PasswordField';
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
@@ -68,11 +69,10 @@ export default function LoginPage() {
 
               <label className="block">
                 <span className="block text-sm font-medium text-slate-700 mb-1">Password</span>
-                <input 
-                  name="password" 
-                  type="password" 
-                  required 
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                <PasswordField
+                  name="password"
+                  required
+                  inputClassName="w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="••••••••"
                 />
               </label>
