@@ -1,20 +1,20 @@
 ---
 title: Glossary
-description: Plain-English definitions for the terms used in the app.
+description: Short definitions of the QuoteCore+ terms you will see in the app.
 order: 4
 status: published
-updated: 2026-05-18
+updated: 2026-05-24
 ---
 
 # Glossary
 
-Short definitions of the QuoteCore+ and roofing terms you will see in the app.
+Short definitions of the QuoteCore+ terms you will see in the app.
 
 ## QuoteCore+ terms
 
 **Actual measurement.** A real-world number. The opposite of a [plan measurement](/docs/concepts/plan-vs-actual). Pitch is skipped; waste still applies.
 
-**Component.** A re-usable line you put in quotes. Has a name, measurement type, material price, labor price, waste, and optional pitch settings. See [Components overview](/docs/components/overview).
+**Component.** A re-usable line you put in quotes. Has a name, measurement type, material price, labor price, waste, and optional pitch/angle settings. See [Components overview](/docs/components/overview).
 
 **Customer quote.** The version of the quote your customer sees. Built from the master quote summary in the [customer quote editor](/docs/customer-facing/customer-quote-editor).
 
@@ -26,11 +26,11 @@ Short definitions of the QuoteCore+ and roofing terms you will see in the app.
 
 **Main component.** A regular component, as opposed to an Extra. Most things you quote are Main.
 
-**Manual quote.** A quote built line-by-line for trades that do not need takeoff or pitch maths. See [Manual quote](/docs/building-a-quote/manual-quote).
+**Manual quote.** A quote built line-by-line for users who already have their takeoff values. See [Manual Quote](/docs/building-a-quote/manual-quote).
 
-**Manual Quote.** A quote built using saved components and your own measurements, with no digital plan involved. See [Manual Quote](/docs/building-a-quote/manual-quote).
+**Pitch multiplier.** A factor applied to a plan measurement to convert it to the actual material length or area, accounting for slope or angle. Set on the component. See [Waste and pitch](/docs/concepts/waste-and-pitch).
 
-**Plan measurement.** A flat number off a roof plan or aerial image, before pitch is applied. See [Plan vs Actual](/docs/concepts/plan-vs-actual).
+**Plan measurement.** A flat number off a plan view or aerial image, before the pitch multiplier is applied. See [Plan vs Actual](/docs/concepts/plan-vs-actual).
 
 **Quote builder.** The four-phase flow that builds a quote: Areas, Components, Extras, Review. See [Quote builder](/docs/building-a-quote/quote-builder).
 
@@ -46,7 +46,7 @@ Short definitions of the QuoteCore+ and roofing terms you will see in the app.
 
 **Cap.** A numeric limit on something your plan allows - quotes per month, components total, storage bytes, etc. Hitting a cap blocks new additions but never deletes existing data. See [Tier limits](/docs/account/tier-limits).
 
-**Dunning.** The process Stripe (and we) follow when a renewal payment fails: automatic card retries, status escalation through `past_due` → `grace` → `suspended`, with chances to recover by updating the card. See [Billing](/docs/account/billing#payment-failures-and-dunning).
+**Dunning.** The process Stripe (and we) follow when a renewal payment fails: automatic card retries, status escalation through `past_due` - `grace` - `suspended`, with chances to recover by updating the card. See [Billing](/docs/account/billing#payment-failures-and-dunning).
 
 **Effective plan.** What your account can actually use today. Usually the same as your purchased plan, but collapses to **Starter** during grace periods or after the trial ends.
 
@@ -65,27 +65,3 @@ Short definitions of the QuoteCore+ and roofing terms you will see in the app.
 **Trial.** A 14-day free taste of every feature, with tiny caps. One per account, ever. See [Free trial](/docs/account/trial).
 
 **Winding down.** A paid subscription that's been cancelled but is still serving out the paid period. Status is technically still `active`, but it will collapse to Starter at the period end.
-
-## Roofing terms
-
-**Barge.** The flashing along the gable end of a roof - the angled edge.
-
-**Downpipe.** The vertical pipe that takes water from the gutter to the ground.
-
-**Fascia.** The horizontal board (often metal) along the eaves where the gutter mounts.
-
-**Fixings.** Screws, nails, clips, brackets - anything that holds materials in place.
-
-**Gutter / Spouting.** The horizontal channel along the eaves that catches roof water.
-
-**Hip.** The external angle where two roof slopes meet, running from ridge to eave.
-
-**Longrun.** Long-length metal roofing iron, run from ridge to eave in a single sheet.
-
-**Rafter pitch.** The pitch type for the main roof slope. Covers tiles, longrun, underlay.
-
-**Ridge.** The horizontal line at the top of the roof where two slopes meet. Also the flashing that covers it.
-
-**Underlay.** The membrane laid under the roofing material for water protection.
-
-**Valley.** The internal angle where two roof slopes meet, running from ridge to gutter.

@@ -55,7 +55,7 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > Measure directly from a digital plan or image. One of the best tools for roofers and trades that quote from plans.
 
 **Generic rewrite:**
-> _[blank]_
+Measure directly from a digital plan or image. One of the best tools for fast and accurate measuring.
 
 ---
 
@@ -65,7 +65,7 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > The digital takeoff system is one of our best solutions for roofers and trades who want to measure directly from a digital plan or image.
 
 **Generic rewrite:**
-> _[blank]_
+Measure directly from a digital plan or image. One of the best tools for fast and accurate measuring.
 
 ---
 
@@ -77,7 +77,9 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > So long as you are confident in the accuracy of that measurement, you can essentially measure anything that is an area or a lineal item. The system is designed for roofs, but is also used for cladding, flooring, foundations, and more.
 
 **Generic rewrite:**
-> _[blank]_
+> All you need is a reliable scale or defined measurement on that plan that you know is correct. In digital takeoff, the first step is calibrating the measurement system using that scale.
+>
+> So long as you are confident in the accuracy of that measurement, you can essentially measure anything that is an area or a lineal item. Tip: Use the longest measurements (Roofline, longest wall etc) on the plan for best accuracy when calibrating.
 
 **Notes:** This paragraph is the strongest place to position the tool as universal. Suggested angle: define digital takeoff as "measuring from any scaled plan or image", with a short list of common trades.
 
@@ -92,7 +94,10 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > All measurements are saved and auto-calculated to pre-populate the next phase in the quote builder.
 
 **Generic rewrite:**
-> _[blank]_
+> - Multiple areas or sections
+> - Individual components by area, lineal length, lineal x height (area), or as **points** for fixed or quantity-based components.
+>
+> All measurements are saved and auto-calculated to pre-populate the next phase in the quote builder.
 
 **Notes:** "Roof sections" is the main roofing word. The generic equivalent in the codebase is "area" (`roof_areas` table, but the user-facing label varies). Keep it consistent with whatever the create-quote form labels them as in non-roofing trades.
 
@@ -104,7 +109,7 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > When you continue from digital takeoff into the [quote builder](/docs/building-a-quote/quote-builder), you will see each roof area, each component you measured, and its associated items. You can edit and adjust if needed, or continue quickly to the next step.
 
 **Generic rewrite:**
-> _[blank]_
+> When you continue from digital takeoff into the [quote builder](/docs/building-a-quote/quote-builder), you will see each area you created, each component you measured, and its associated items. You can edit and adjust if needed, or continue quickly to the next step.
 
 ---
 
@@ -118,7 +123,11 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > These are useful for printing out and doing site measures, or to clearly define what you actually measured at a later point if you need to reference it.
 
 **Generic rewrite:**
-> _[blank]_
+> - Your initial image or plan.
+> - A digital takeoff version of the image showing your lines, measurements, areas, and items overlaid on the plan.
+> - A clean image without your uploaded image and only your digital takeoff lines / items, so you can clearly see what you measured.
+>
+> These are useful for printing out and doing site measures, or to clearly define what you actually measured at a later point if you need to reference it.
 
 **Notes:** Mostly trade-neutral already. Just check "site measures" reads OK for every trade.
 
@@ -134,7 +143,9 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > - **Quantity** or **Fixed** - for downpipes, chimney flashings, skylights, items priced per unit.
 
 **Generic rewrite:**
-> _[blank]_
+> - **Area** (ft2 / m2 / m3) - for main area based items like walls, floors, foundations etc
+> - **Lineal** - for anything measure by length per unit
+> - **Quantity** or **Fixed** - items with set price or hourly rate per unit
 
 **Notes:** The unit labels (Area / Lineal / Quantity / Fixed) ARE the UI labels and don't change. Only the example items need to be generic. Suggested generic examples: cladding boards / flooring sheets / membrane (area); trim / edge profile / skirting (lineal); fixings / fittings / per-unit items (quantity / fixed).
 
@@ -152,7 +163,7 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > Pitch auto-calculates plan measurements into actual lengths, with waste added. You enter the actual pitch angle later during the quote builder. The hip and valley pitch types currently support 45-degree angles in plan view; tapered hips or valleys need extra length added manually.
 
 **Generic rewrite:**
-> _[blank]_
+Pitch is mainly for roofing (Use Roofing trade option) but can be applied to other items where a measurement is being taken from a plan view, but need to allow for pitch. You can apply pitch to an area, and also to lineal lengths (Exluding Lineal x Height), enter the pitch, then when you measure an area or length, the app calculates what the actual length or area is including the pitch allowance.
 
 **Notes:** This is the biggest conceptual rewrite. For cladding and similar trades, the equivalent of pitch is **height** (a wall has a length on plan and a height that multiplies it into area). The Generic doc needs a clean way of describing "the multiplier that converts a plan measurement into an actual material quantity" without locking it to roof slope. One option: describe pitch / height / multiplier as a single family of "plan-to-actual multipliers" and list the variants the system supports. Keep the existing roof variants accessible from the Roofing overlay; the Generic version explains the concept.
 
@@ -171,7 +182,13 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > 8. **Material orders:** On.
 
 **Generic rewrite (suggested: a cladding board or flooring sheet as the area example):**
-> _[blank]_
+> 1. **Name:** Main outdoor deck
+> 2. **Type:** Main.
+> 3. **Measurement:** Area.
+> 4. **Material price:** $10 per m2.
+> 5. **Labor price:** $5 per m2.
+> 6. **Waste:** Percentage, 5%.
+> 7. **Material orders:** On.
 
 ---
 
@@ -185,10 +202,16 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > 5. **Labor price:** per linear meter.
 > 6. **Waste:** Fixed, 100mm per length.
 > 7. **Pitch:** Off (ridges sit horizontally).
-> 8. **Material orders:** On. Attach a flashing drawing if you have one.
+> 8. **Material orders:** On. Attach a drawing if you need
 
 **Generic rewrite (suggested: a trim / edge profile / skirting as the lineal example):**
-> _[blank]_
+> 1. **Name:** Garden edging
+> 2. **Type:** Main.
+> 3. **Measurement:** Lineal.
+> 4. **Material price:** per lineal meter.
+> 5. **Labor price:** per lineal meter.
+> 6. **Waste:** Fixed, 100mm per length.
+> 7. **Material orders:** On. Attach a drawing if you need
 
 ---
 
@@ -205,7 +228,14 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > 8. **Material orders:** Off.
 
 **Generic rewrite:**
-> _[blank]_
+> 1. **Name:** Skip hire.
+> 2. **Type:** Extra.
+> 3. **Measurement:** Quantity.
+> 4. **Material price:** flat amount per skip.
+> 5. **Labor price:** 0.
+> 6. **Waste:** Off.
+> 7. **Pitch:** Off.
+> 8. **Material orders:** Off.
 
 **Notes:** Skip hire is already pretty universal across building trades — could stay. Or generalise to "site cleanup" / "delivery fee" if you want full neutrality.
 
@@ -219,7 +249,7 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > title: Waste and pitch
 
 **Generic rewrite:**
-> _[blank — e.g. "Waste and multipliers" or "Waste and plan-to-actual"]_
+> title: Waste, material costs, and pitch
 
 **Notes:** The slug `waste-and-pitch` is referenced from at least 3 other docs. If we rename, we either keep the slug and just retitle, or add a redirect. Simpler: keep the slug, retitle to something more generic.
 
@@ -245,7 +275,9 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > </Callout>
 
 **Generic rewrite:**
-> _[blank]_
+
+See above change, repeated here
+> Pitch is mainly for roofing (Use Roofing trade option) but can be applied to other items where a measurement is being taken from a plan view, but need to allow for pitch. You can apply pitch to an area, and also to lineal lengths (Exluding Lineal x Height), enter the pitch, then when you measure an area or length, the app calculates what the actual length or area is including the pitch allowance.
 
 **Notes:** This is the core rewrite. The Generic version needs to describe the concept of a **plan-to-actual multiplier** (pitch for roofs, height for cladding, etc.). The Callout should be kept but reworded to reference "the multiplier" rather than "pitch type". The trade-specific multiplier names (rafter pitch, hip pitch, height) live in trade overlays.
 
@@ -263,7 +295,11 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > - **Actual, pitch on, 5% waste:** 100 x 1.05 = 105 m2 ordered. (Pitch skipped because the number is already real.)
 
 **Generic rewrite:**
-> _[blank]_
+> A landscaping plan shows a 100 m2 area at 30 degrees (uses rafter (roofing) pitch factor ~1.155). Waste is 5%.
+>
+> - **Plan, pitch on, 5% waste:** 100 x 1.155 x 1.05 = ~121 m2 actual.
+> - **Plan, pitch off, 5% waste:** 100 x 1.05 = 105 m2 actual.
+> - **Actual, pitch on, 5% waste:** 100 x 1.05 = 105 m2 actual. (Pitch skipped because the number is already real.)
 
 **Notes:** Either generalise the example (e.g. "a plan shows 100 m of wall length, height 2.4m, so 240 m2 of material with 5% waste = 252 m2"), or keep two examples (one roofing, one cladding) inside the Generic doc to show the same maths applies to both. The latter is probably clearer.
 
@@ -277,7 +313,7 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > The hip and valley pitch types currently support the standard 45-degree angle in plan view. Tapered valleys or hips will need either extra length added manually, or you can measure them as Actual and enter the real length.
 
 **Generic rewrite:**
-> _[blank — likely "remove from Generic, keep in Roofing overlay only"]_
+> _[blank — likely "remove from Generic, keep in Roofing overlay only"]_ Yes, remove from generic
 
 **Notes:** This section is roofing-only. Recommended: drop it from the Generic doc entirely and keep it in a roofing-specific overlay.
 
@@ -288,10 +324,10 @@ Work through each passage and write the Generic version. Once Generic is locked,
 ### 4a. Intro paragraph
 
 **Roofing (current):**
-> Components are the core of the targeted quoting system. This is where you create, edit, and define what items end up in your quote or pricing. Each component has a name, measurement type (lineal or area squared), cost per unit, labor cost per unit, pitch calculations for roofing, component waste settings, ability to add to orders, and more.
+> Components are the core of the targeted quoting system. This is where you create, edit, and define what items end up in your quote or pricing. Each component has a name, measurement type (lineal, fixed per unit, or area squared), cost per unit, labor cost per unit, pitch calculations for roofing, component waste settings, ability to add to orders, and more.
 
 **Generic rewrite:**
-> _[blank]_
+> Components are the core of the targeted quoting system. This is where you create, edit, and define what items end up in your quote or pricing. Each component has a name, measurement type (lineal, fixed per unit, or area squared), cost per unit, labor cost per unit, pitch calculations for roofing, component waste settings, ability to add to orders, and more.
 
 **Notes:** "pitch calculations for roofing" is the only roofing-specific phrase. Replace with "plan-to-actual multipliers (pitch, height, etc.)" or similar.
 
@@ -307,7 +343,7 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > You may only have 4 or 5 key components that you use, or you may have hundreds. Either way, you can create and fully customise everything about them.
 
 **Generic rewrite:**
-> _[blank]_
+> Any materials you use on jobs, fittings, trims, consumables, hourly rates, hire costs, materials only, labor only etc.
 
 **Notes:** Suggested generic list: "Materials, fittings, trims, fixings, consumables, hire items, or anything else you use or install on a job." Keep the 4-or-5 vs hundreds line — that's universal.
 
@@ -316,12 +352,14 @@ Work through each passage and write the Generic version. Once Generic is locked,
 ### 4c. "Why components matter"
 
 **Roofing (current):**
-> Set them up once and every quote after that is faster, more consistent, and harder to get wrong. You change a price once and every new quote uses the new price.
+> Set them up once and every quote after that is faster, more consistent, and more accurate. You change a price once and every new quote uses the new price.
 >
-> The library scales with the work. The system is tailored for roofing but can be adapted to include cladding, foundations, windows, flooring, and more.
+> The library scales with the work. The system is designed in a way that it can be adapted to include anything including cladding, foundations, windows, flooring, electrical, plumbing and more.
 
 **Generic rewrite:**
-> _[blank]_
+> Set them up once and every quote after that is faster, more consistent, and more accurate. You change a price once and every new quote uses the new price.
+>
+> The library scales with the work. The system is designed in a way that it can be adapted to include anything including cladding, foundations, windows, flooring, electrical, plumbing and more.
 
 **Notes:** Remove "tailored for roofing" — the Generic doc positions the system as trade-agnostic by default. Keep the trade list as an "any of these" example.
 
@@ -335,7 +373,7 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > Short definitions of the QuoteCore+ and roofing terms you will see in the app.
 
 **Generic rewrite:**
-> _[blank]_
+> Short definitions of the QuoteCore+ and terms you will see in the app.
 
 ---
 
@@ -367,7 +405,7 @@ Work through each passage and write the Generic version. Once Generic is locked,
 > **Valley.** The internal angle where two roof slopes meet, running from ridge to gutter.
 
 **Generic rewrite:**
-> _[blank — recommended: REMOVE this entire section from the Generic doc and keep it in a Roofing-only overlay. The Generic glossary covers only QuoteCore+ and Billing terms.]_
+> _[blank — recommended: REMOVE this entire section from the Generic doc and keep it in a Roofing-only overlay. The Generic glossary covers only QuoteCore+ and Billing terms.]_ yes agreed
 
 **Notes:** This whole "Roofing terms" section is the only trade-specific vocabulary in any doc. The Generic doc should drop it. Cladding, flooring, etc. don't need a glossary section unless they have novel terms.
 
@@ -378,22 +416,22 @@ Work through each passage and write the Generic version. Once Generic is locked,
 Two QuoteCore+ glossary entries mention roofing or pitch implicitly:
 
 **"Component" (current):**
-> A re-usable line you put in quotes. Has a name, measurement type, material price, labor price, waste, and optional pitch settings.
+> A re-usable line you put in quotes. Has a name, measurement type, material price, labor price, waste, and optional pitch/angle settings.
 
 **Generic rewrite:**
-> _[blank — replace "optional pitch settings" with the generic equivalent, e.g. "optional plan-to-actual multiplier"]_
+> A re-usable line you put in quotes. Has a name, measurement type, material price, labor price, waste, and optional pitch/angle settings.
 
 **"Plan measurement" (current):**
 > A flat number off a roof plan or aerial image, before pitch is applied.
 
 **Generic rewrite:**
-> _[blank — e.g. "A flat number off a digital plan or image, before any plan-to-actual multiplier is applied"]_
+> > A flat number off a plan view or aerial image.
 
 **"Manual quote" (current — note: this is duplicated in the source, both entries):**
 > A quote built line-by-line for trades that do not need takeoff or pitch maths.
 
 **Generic rewrite:**
-> _[blank — drop "pitch maths" specifically, e.g. "for jobs that do not need digital takeoff"]_
+> A quote built line-by-line for users who already have their takeoff values.
 
 ---
 
@@ -401,22 +439,26 @@ Two QuoteCore+ glossary entries mention roofing or pitch implicitly:
 
 These come up repeatedly across the rewrite. Decide once, apply everywhere.
 
-1. **Naming for "the multiplier that converts plan to actual".** Roofing has pitch. Cladding has height. Suggested umbrella term: **"plan-to-actual multiplier"** or simply **"multiplier"**. Pick one and use it consistently in the Generic doc.
+1. **Naming for "the multiplier that converts plan to actual".** Roofing has pitch. Cladding has height. Suggested umbrella term: **"plan-to-actual multiplier"** or simply **"multiplier"**. Pick one and use it consistently in the Generic doc. 
+> "plan-to-actual multiplier"
 
-2. **Naming for the area entity.** Roofing has "roof area". The code calls it `roof_areas`. The UI may or may not show "Area" / "Section" depending on trade. Decide what the Generic doc calls it — "area", "section", or "zone" are all candidates.
+2. **Naming for the area entity.** Roofing has "roof area". The code calls it `roof_areas`. The UI may or may not show "Area" / "Section" depending on trade. Decide what the Generic doc calls it — "area", "section", or "zone" are all candidates. 
+> "Area"
 
 3. **Treatment of pitch types in the Generic doc.** Two options:
-   - **(a)** Generic doc describes the concept of multipliers abstractly, never names rafter / hip / valley. The Roofing overlay lists them.
+   - **(a)** Generic doc describes the concept of multipliers abstractly, never names rafter / hip / valley. The Roofing overlay lists them. 
    - **(b)** Generic doc lists every multiplier supported by the system (rafter pitch, hip pitch, valley pitch, height, etc.) as a single combined list, with a note that they appear contextually based on trade. This is more transparent but more cluttered.
 
    Recommend (a) for the help docs, (b) for the internal docs.
+
+   > use A
 
 4. **Where roofing-specific content lives after the rewrite.** Two options:
    - **(a)** Trade-specific overlay docs (a small set of `.mdx` files that exist only for trades with extra vocabulary). Loaded conditionally based on the company's `default_trade`.
    - **(b)** Inline "When you're in roofing mode" callouts inside the Generic doc.
 
    Recommend (a) — keeps the Generic doc clean and lets each trade add only what it needs.
-
+> A
 ---
 
 ## After Generic is done

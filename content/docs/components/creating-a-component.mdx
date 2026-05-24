@@ -3,7 +3,7 @@ title: Creating a component
 description: Field-by-field walkthrough with three examples.
 order: 2
 status: published
-updated: 2026-05-11
+updated: 2026-05-24
 ---
 
 # Creating a component
@@ -22,57 +22,58 @@ Walk through it once and you have the pattern for every component you will ever 
 
 **Measurement method.** How your component is normally measured:
 
-- **Area** (Rs / ft2 / m2) - for main roofing materials like tiles, longrun, membrane.
-- **Lineal** - for flashings, gutter, spouting.
-- **Quantity** or **Fixed** - for downpipes, chimney flashings, skylights, items priced per unit.
+- **Area** (ft2 / m2 / m3) - for main area-based items like walls, floors, foundations, and similar.
+- **Lineal** - for anything measured by length per unit.
+- **Quantity** or **Fixed** - for items with a set price or hourly rate per unit.
 
-**Material price.** What that component costs you per area, per lineal length, or per item.
+**Material pricing.** How the material cost is calculated. The default is per unit (per m2, per lineal metre, per item). For materials that come in packs - rolls, bags, sheets, or similar - choose a pack strategy instead:
+
+- **Per pack - by length.** For rolls or lengths (e.g. a 20m cable roll). Enter the pack price and roll length in metres.
+- **Per pack - by area.** For rolls or sheets covering a fixed area (e.g. a 50m2 underlay roll). Enter the pack price and roll area in m2.
+- **Per pack - by coverage.** For materials applied at a rate (e.g. 20L paint covering 50m2). Enter the pack price and coverage area in m2.
+- **Per pack - by volume.** For bulk materials (e.g. a 5m3 concrete unit). Enter the pack price and volume in m3.
+
+Pack pricing rounds up to whole packs automatically. Waste is applied before the pack count is calculated, so the final order already includes your waste allowance.
 
 **Labor price.** The labor rate you (or a contractor) charge per area, per lineal length, or per item.
 
 **Waste type.** Percentage or Fixed. Percentage is best for area-based materials; Fixed (e.g. 100mm per length) is best for lineal materials. See [Waste and pitch](/docs/concepts/waste-and-pitch).
 
-**Pitch calculation.** Tick to apply a pitch type:
+**Pitch multiplier.** Tick to apply a pitch type when your measurements are taken from a plan view but the real material follows a slope or angle. Pitch auto-calculates plan measurements into actual lengths or areas. You enter the pitch angle during the quote builder. See [Waste and pitch](/docs/concepts/waste-and-pitch).
 
-- **Rafter pitch** - main roof areas (tiles, longrun, underlay).
-- **Hip pitch** - hip rafters.
-- **Valley pitch** - valley rafters.
+**Material orders.** Tick if this component can be added to material orders. You can also pre-assign a drawing or image to represent the component. See [Creating material orders](/docs/material-orders/creating-orders).
 
-Pitch auto-calculates plan measurements into actual lengths, with waste added. You enter the actual pitch angle later during the quote builder. The hip and valley pitch types currently support 45-degree angles in plan view; tapered hips or valleys need extra length added manually.
+## Walked example: outdoor deck
 
-**Material orders.** Tick if this component can be added to material orders. You can also pre-assign a flashing drawing or image to represent the component. See [Creating material orders](/docs/material-orders/creating-orders).
-
-## Walked example: roofing tiles
-
-1. **Name:** Roofing tiles - terracotta.
+1. **Name:** Main outdoor deck.
 2. **Type:** Main.
 3. **Measurement:** Area.
-4. **Material price:** $10 per m2.
+4. **Material pricing:** Per unit - $10 per m2.
 5. **Labor price:** $5 per m2.
 6. **Waste:** Percentage, 5%.
-7. **Pitch:** Rafter pitch.
+7. **Pitch multiplier:** Off.
 8. **Material orders:** On.
 
-## Walked example: ridge cap
+## Walked example: garden edging
 
-1. **Name:** Ridge cap - 240 standard.
+1. **Name:** Garden edging.
 2. **Type:** Main.
 3. **Measurement:** Lineal.
-4. **Material price:** per linear meter.
-5. **Labor price:** per linear meter.
+4. **Material pricing:** Per unit - price per lineal metre.
+5. **Labor price:** per lineal metre.
 6. **Waste:** Fixed, 100mm per length.
-7. **Pitch:** Off (ridges sit horizontally).
-8. **Material orders:** On. Attach a flashing drawing if you have one.
+7. **Pitch multiplier:** Off.
+8. **Material orders:** On. Attach a drawing if needed.
 
 ## Walked example: skip hire (Extra)
 
 1. **Name:** Skip hire.
 2. **Type:** Extra.
 3. **Measurement:** Quantity.
-4. **Material price:** flat amount per skip.
+4. **Material pricing:** Per unit - flat amount per skip.
 5. **Labor price:** 0.
 6. **Waste:** Off.
-7. **Pitch:** Off.
+7. **Pitch multiplier:** Off.
 8. **Material orders:** Off.
 
 ## After you save
