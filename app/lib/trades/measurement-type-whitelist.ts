@@ -12,7 +12,7 @@
  * cases can widen later). `rafter`/`valley_hip` are NOT measurement types
  * (they live on the `pitch_type` enum) so they don't appear here.
  */
-export type Trade = 'roofing' | 'generic' | 'cladding';
+export type Trade = 'roofing' | 'generic' | 'cladding' | 'electrical';
 
 export type MeasurementType =
   | 'area'
@@ -69,6 +69,24 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'count',
     'quantity',
     'fixed',
+  ]),
+  // Electrical: lineal cable runs and curved paths are primary; count-based
+  // for fittings/outlets/panels; area for lighting or solar coverage; hours
+  // for labor. No wall-height types (multi_lineal_lxh / length_x_height) and
+  // no volume - neither applies to electrical work.
+  // Pitch is allowed at the component level (rafter pitch for roof cable runs);
+  // valley_hip pitch types don't apply but are not enforced here - steer via
+  // docs and component setup instead.
+  electrical: new Set<MeasurementType>([
+    'lineal',
+    'linear',       // legacy alias
+    'multi_lineal', // multiple cable runs summed
+    'curved_line',  // curved conduit / cable paths
+    'area',         // floor/ceiling area (lighting layout, solar)
+    'count',
+    'quantity',     // legacy alias
+    'fixed',
+    'hours_days',   // hourly / day-rate labor
   ]),
 };
 

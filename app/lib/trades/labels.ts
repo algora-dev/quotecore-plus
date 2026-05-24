@@ -8,7 +8,7 @@
  * instructions, quote builder, customer quote, measurement type overrides.
  */
 
-export type Trade = 'roofing' | 'generic' | 'cladding';
+export type Trade = 'roofing' | 'generic' | 'cladding' | 'electrical';
 
 export interface TradeLabels {
   // ── Identity ──────────────────────────────────────────────────────────────
@@ -79,6 +79,48 @@ export interface TradeLabels {
 }
 
 export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
+  electrical: {
+    tradeLabel: 'Electrical',
+
+    areaPluralLabel: 'Areas',
+    areaSingularLabel: 'Area',
+    addAreaCta: 'Add Area',
+
+    pitchRequired: false,
+
+    createAreaModalTitle: 'Create Area',
+    areaNamePlaceholder: 'e.g. Ground Floor, Roof Space',
+
+    areaIsOptional: true,
+    firstAreaInstructionsTitle: 'Define Job Areas',
+    firstAreaInstructionsBody:
+      'You can optionally draw areas to break the job into zones (floors, circuits, sections). ' +
+      'Or skip this and measure cable runs and fittings directly.',
+    firstAreaConfirmCta: "Yes, add an area",
+    toolGuidanceNote:
+      'Use the Line / Multi-Line tools for cable runs and conduit. ' +
+      'Use the Curved Line tool for curved cable paths. ' +
+      'Use Point for outlets, fittings, and panels.',
+
+    needAreaPrompt: 'Do you want to define a job area first?',
+    optionalAreaConfirmCta: 'Yes, add an area',
+    skipAreaCta: 'No, skip',
+
+    builderStepLabel: 'Areas',
+    emptyAreaGuardMessage:
+      'A quote needs at least one component before it can be saved. ' +
+      "We'll take you back so you can add one.",
+
+    customerQuoteSectionLabel: 'Electrical Works',
+
+    measurementTypeLabels: {
+      multi_lineal:  'Multiple Cable Runs',
+      curved_line:   'Curved Cable Run',
+      hours_days:    'Hours / Days',
+      count:         'Count',
+    },
+  },
+
   roofing: {
     tradeLabel: 'Roofing',
 
@@ -193,7 +235,8 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
  * values so a stale database row never breaks the UI.
  */
 export function getTradeLabels(trade?: string | null): TradeLabels {
-  if (trade === 'cladding') return TRADE_LABELS.cladding;
-  if (trade === 'generic') return TRADE_LABELS.generic;
+  if (trade === 'cladding')   return TRADE_LABELS.cladding;
+  if (trade === 'generic')    return TRADE_LABELS.generic;
+  if (trade === 'electrical') return TRADE_LABELS.electrical;
   return TRADE_LABELS.roofing;
 }

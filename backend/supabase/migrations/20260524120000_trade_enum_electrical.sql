@@ -1,0 +1,7 @@
+-- Migration: Add 'electrical' to the trade enum
+-- Extends quotes.trade and companies.default_trade to support the Electrical trade option.
+
+ALTER TYPE public.trade ADD VALUE IF NOT EXISTS 'electrical';
+
+COMMENT ON TYPE public.trade IS
+  'Trade types: roofing (original), generic (Phase 7), cladding (Phase 8 - wall area / Wall Length x Height focus), electrical (Phase 8 - lineal cable runs, curved paths, count-based fittings, hours).';

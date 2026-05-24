@@ -183,7 +183,7 @@ export function QuoteDetailsForm({
         entryMode,
         measurementSystem,
         // Phase 8 (Generic Trades): pass through when the flag is on.
-        ...(genericTradesEnabled && selectedTrade ? { trade: selectedTrade as 'roofing' | 'cladding' | 'generic' } : {}),
+        ...(genericTradesEnabled && selectedTrade ? { trade: selectedTrade as 'roofing' | 'cladding' | 'generic' | 'electrical' } : {}),
         ...(genericTradesEnabled && selectedCollectionId ? { componentCollectionId: selectedCollectionId } : {}),
       });
 
@@ -292,6 +292,7 @@ export function QuoteDetailsForm({
               >
                 <option value="roofing">Roofing</option>
                 <option value="cladding">Cladding</option>
+                <option value="electrical">Electrical</option>
                 <option value="generic">Generic</option>
               </select>
             </div>
