@@ -1767,25 +1767,31 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                   </div>
                 )}
 
-                {/* Available Components */}
+                {/* Available Components.
+                    Whole row is clickable to activate the component - the
+                    orange + button is the visible affordance but users can
+                    click anywhere on the row. */}
                 <div>
                   <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Available</h3>
                   <div className="space-y-1">
                     {displayComponents
                       .filter(comp => !activeComponentIds.includes(comp.id))
                       .map((comp) => (
-                          <div
+                          <button
                             key={comp.id}
-                            className="flex items-center gap-2 p-1.5 rounded hover:bg-gray-100 transition"
+                            type="button"
+                            onClick={() => handleAddComponent(comp.id)}
+                            className="w-full flex items-center gap-2 p-1.5 rounded hover:bg-orange-50 transition group text-left cursor-pointer"
+                            aria-label={`Add ${comp.name}`}
                           >
-                            <div className="flex-1 text-sm text-slate-600">{comp.name}</div>
-                            <button
-                              onClick={() => handleAddComponent(comp.id)}
-                              className="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-orange-500 hover:bg-orange-50 rounded-full text-xs font-bold transition-colors"
+                            <div className="flex-1 text-sm text-slate-700 group-hover:text-slate-900">{comp.name}</div>
+                            <span
+                              className="w-7 h-7 flex items-center justify-center bg-orange-500 text-white group-hover:bg-orange-600 rounded-full text-base font-bold transition-colors shadow-sm flex-shrink-0"
+                              aria-hidden="true"
                             >
                               +
-                            </button>
-                          </div>
+                            </span>
+                          </button>
                       ))}
                   </div>
                 </div>
