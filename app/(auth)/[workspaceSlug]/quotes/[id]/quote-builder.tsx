@@ -1036,8 +1036,11 @@ function RoofAreaCard({
   // Track in-flight submission so two near-simultaneous onBlur events
   // (e.g. width blur firing while length is autofilled) don't double-fire.
   const submittingRef = useRef(false);
-  // Only show the pitch field for trades that require pitch (roofing).
-  const areaPitchVisible = getTradeLabels((quote as { trade?: string }).trade).pitchRequired;
+  // Show the pitch field for trades that require pitch (roofing) or support it optionally
+  // (landscaping, concrete, insulation, electrical). Label changes per trade.
+  const _areaTradeLabels = getTradeLabels((quote as { trade?: string }).trade);
+  const areaPitchVisible = _areaTradeLabels.pitchRequired || !!_areaTradeLabels.pitchOptional;
+  const areaPitchLabel = _areaTradeLabels.areaPitchLabel ?? 'Pitch (°)';
   const widthRef = useRef<HTMLInputElement>(null);
 
   async function handleSubmit() {
@@ -1116,7 +1119,7 @@ function RoofAreaCard({
           <div>
               {areaPitchVisible && <div className="mb-2" data-copilot="quote-pitch">
                 <div className="flex items-center gap-2">
-                  <label className="text-xs text-slate-500">Pitch (°)</label>
+                  <label className="text-xs text-slate-500">{areaPitchLabel}</label>
                   <input
                     type="number"
                     step="0.5"
@@ -1144,7 +1147,7 @@ function RoofAreaCard({
                 </div>
                 {(area.calc_pitch_degrees ?? 0) >= 60 && (
                   <p className="mt-1 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-                    Steep pitch ({area.calc_pitch_degrees}°): pitch-calculated quantities (rafter lengths, lineal flashings on slope) get very large near vertical. Double-check the value is right for your roof.
+                    High angle ({area.calc_pitch_degrees}°): calculated quantities get very large near vertical. Double-check the value is correct.
                   </p>
                 )}
               </div>}

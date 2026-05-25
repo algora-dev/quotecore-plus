@@ -61,6 +61,12 @@ export interface TradeLabels {
    */
   pitchRafterLabel?: string;
   /**
+   * Label for the pitch input field shown on the area in the quote builder.
+   * Only shown when pitchRequired or pitchOptional is true.
+   * Defaults to "Pitch (°)" when not specified.
+   */
+  areaPitchLabel?: string;
+  /**
    * Label shown next to the "Apply pitch calculation" checkbox in the
    * component form. Defaults to "Apply pitch calculation" when not
    * specified.
@@ -174,6 +180,7 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     pitchHidesValleyHip: true,
     pitchCheckboxLabel: 'Apply pitch calculation (roof-space runs)',
     pitchRafterLabel: 'Rise over run',
+    areaPitchLabel: 'Pitch (°)',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Ground Floor, Roof Space',
@@ -328,6 +335,7 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     pitchHidesValleyHip: true,
     pitchCheckboxLabel: 'Apply angle / slope calculation',
     pitchRafterLabel: 'Rise over run',
+    areaPitchLabel: 'Slope (°)',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Front Garden, Driveway, Patio',
@@ -512,6 +520,7 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     pitchHidesValleyHip: true,
     pitchCheckboxLabel: 'Apply pitch calculation (roof / loft)',
     pitchRafterLabel: 'Rise over run',
+    areaPitchLabel: 'Pitch (°)',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Ceiling, Loft, Wall North',
@@ -654,6 +663,7 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     pitchHidesValleyHip: true,
     pitchCheckboxLabel: 'Apply slope / pitch calculation (fall to drainage)',
     pitchRafterLabel: 'Rise over run',
+    areaPitchLabel: 'Fall / Slope (°)',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Driveway, Garage Slab, Patio',

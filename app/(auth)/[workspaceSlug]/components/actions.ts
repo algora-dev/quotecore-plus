@@ -94,7 +94,7 @@ export async function markComponentsIntroSeen(): Promise<{ ok: boolean; error?: 
   }
 }
 
-export async function loadComponentLibrary() {
+export async function loadComponentLibrary(collectionId?: string | null) {
   let profile;
   try {
     profile = await requireCompanyContext();
@@ -104,11 +104,18 @@ export async function loadComponentLibrary() {
   }
   
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from('component_library')
     .select('*')
     .eq('company_id', profile.company_id)
     .order('name');
+
+  // When a specific collection is requested, filter to only that collection's components.
+  if (collectionId) {
+    query = query.eq('collection_id', collectionId);
+  }
+
+  const { data, error } = await query;
   
   if (error) {
     console.error('Database error loading components:', error);
@@ -293,6 +300,39 @@ export async function createComponentCollection(
     }
     revalidatePath('/components');
     return { ok: true, id: data.id, name: data.name };
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+/**
+ * Rename an existing component collection. Bootstrap collections can be
+ * renamed (they just lose the default name label in the UI).
+ */
+export async function renameComponentCollection(
+  id: string,
+  name: string,
+): Promise<{ ok: true; name: string } | { ok: false; message: string }> {
+  const trimmed = name.trim();
+  if (!trimmed) return { ok: false, message: 'Library name cannot be empty.' };
+  if (trimmed.length > 80) return { ok: false, message: 'Library name must be 80 characters or fewer.' };
+
+  try {
+    const profile = await requireCompanyContext();
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from('component_collections')
+      .update({ name: trimmed })
+      .eq('id', id)
+      .eq('company_id', profile.company_id)
+      .select('name')
+      .single();
+    if (error) {
+      if (error.code === '23505') return { ok: false, message: 'A library with that name already exists.' };
+      return { ok: false, message: error.message };
+    }
+    revalidatePath('/components');
+    return { ok: true, name: data.name };
   } catch (err) {
     return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
   }

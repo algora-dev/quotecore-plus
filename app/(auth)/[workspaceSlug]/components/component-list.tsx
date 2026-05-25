@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createComponent, updateComponent, deleteComponent, createComponentCollection } from './actions';
+import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection } from './actions';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
 import type {
   ComponentLibraryRow,
@@ -207,6 +207,13 @@ export function ComponentList({
   const [creatingLibrary, setCreatingLibrary] = useState(false);
   const [createLibraryError, setCreateLibraryError] = useState('');
 
+  // Active library filter: '' = All Libraries, otherwise a collection id.
+  const [activeLibraryId, setActiveLibraryId] = useState<string>('');
+  // Inline rename state
+  const [renamingLibraryId, setRenamingLibraryId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [renaming, setRenaming] = useState(false);
+
   // Form state for dynamic fields
   const [formWasteType, setFormWasteType] = useState<WasteType>('none');
   const [formMeasurementType, setFormMeasurementType] = useState<MeasurementType>('area');
@@ -251,7 +258,12 @@ export function ComponentList({
   }, []);
 
   let filtered = filter === 'all' ? components : components.filter((c) => c.component_type === filter);
-  
+
+  // Library filter: when a specific library is selected, show only its components.
+  if (activeLibraryId) {
+    filtered = filtered.filter(c => (c as unknown as { collection_id?: string | null }).collection_id === activeLibraryId);
+  }
+
   // Measurement/pitch filter
   if (measurementFilter === 'rafter') {
     filtered = filtered.filter(c => c.default_pitch_type === 'rafter');
@@ -313,6 +325,20 @@ export function ComponentList({
 
   function removeFlashing(flashingId: string) {
     setAssignedFlashings(prev => prev.filter(id => id !== flashingId));
+  }
+
+  async function handleRenameLibrary() {
+    if (!renamingLibraryId || !renameValue.trim()) return;
+    setRenaming(true);
+    const result = await renameComponentCollection(renamingLibraryId, renameValue);
+    setRenaming(false);
+    if (!result.ok) {
+      alert(result.message);
+      return;
+    }
+    setCollections(prev => prev.map(c => c.id === renamingLibraryId ? { ...c, name: result.name } : c));
+    setRenamingLibraryId(null);
+    setRenameValue('');
   }
 
   async function handleCreateLibrary() {
@@ -656,22 +682,101 @@ export function ComponentList({
         ))}
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search components..."
-          className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
-        />
-        <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        {searchQuery && (
-          <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">✕</button>
+      {/* Library filter + Search row */}
+      <div className="flex items-center gap-3 flex-wrap">
+        {collections.length > 0 && (
+          <select
+            value={activeLibraryId}
+            onChange={e => setActiveLibraryId(e.target.value)}
+            className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
+          >
+            <option value="">All Libraries</option>
+            {collections.map(col => (
+              <option key={col.id} value={col.id}>
+                {col.is_bootstrap ? 'My Components (default)' : col.name}
+              </option>
+            ))}
+          </select>
         )}
+        <div className="relative flex-1 max-w-sm">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search components..."
+            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+          />
+          <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">&times;</button>
+          )}
+        </div>
       </div>
+
+      {/* Active library title + rename */}
+      {collections.length > 0 && (
+        <div className="flex items-center gap-2">
+          {renamingLibraryId && renamingLibraryId === (activeLibraryId || null) ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={renameValue}
+                onChange={e => setRenameValue(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') { e.preventDefault(); void handleRenameLibrary(); }
+                  if (e.key === 'Escape') { setRenamingLibraryId(null); setRenameValue(''); }
+                }}
+                maxLength={80}
+                className="px-2 py-1 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={() => void handleRenameLibrary()}
+                disabled={renaming || !renameValue.trim()}
+                className="px-3 py-1 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50"
+              >
+                {renaming ? 'Saving...' : 'Save'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setRenamingLibraryId(null); setRenameValue(''); }}
+                className="px-3 py-1 text-xs rounded-full border border-slate-300 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <>
+              <span className="text-sm font-medium text-slate-700">
+                {activeLibraryId
+                  ? (collections.find(c => c.id === activeLibraryId)?.is_bootstrap
+                      ? 'My Components (default)'
+                      : collections.find(c => c.id === activeLibraryId)?.name ?? 'Library')
+                  : 'All Libraries'}
+              </span>
+              {activeLibraryId && (
+                <button
+                  type="button"
+                  title="Rename library"
+                  onClick={() => {
+                    const col = collections.find(c => c.id === activeLibraryId);
+                    if (col) { setRenamingLibraryId(activeLibraryId); setRenameValue(col.name); }
+                  }}
+                  className="text-slate-400 hover:text-slate-700 transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {showForm && (
         <div className="mb-4 p-4 border border-slate-200 rounded-xl bg-white">

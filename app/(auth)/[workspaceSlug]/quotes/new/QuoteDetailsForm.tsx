@@ -60,6 +60,7 @@ export function QuoteDetailsForm({
   const genericTradesEnabled =
     (process.env.NEXT_PUBLIC_GENERIC_TRADES_V1 ?? '').toLowerCase() === 'true';
   const [selectedTrade, setSelectedTrade] = useState<string>(defaultTrade);
+  // '' = All Components (no filter); pre-select bootstrap if it exists.
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
     componentCollections.find(c => c.is_bootstrap)?.id ?? componentCollections[0]?.id ?? ''
   );
@@ -316,8 +317,11 @@ export function QuoteDetailsForm({
                   onChange={e => setSelectedCollectionId(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 >
+                  <option value="">All Components</option>
                   {componentCollections.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}{c.is_bootstrap ? '' : ''}</option>
+                    <option key={c.id} value={c.id}>
+                      {c.is_bootstrap ? 'My Components (default)' : c.name}
+                    </option>
                   ))}
                 </select>
               )}

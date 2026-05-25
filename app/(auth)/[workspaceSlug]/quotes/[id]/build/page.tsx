@@ -16,21 +16,24 @@ export default async function QuoteBuilderV2Page({
   const { workspaceSlug, id } = await params;
   const { step = 'roof-areas' } = await searchParams;
 
-  // Load quote data (same as v1)
+  // Load quote first so we can use its collection_id to filter the library.
   const supabase = await createSupabaseServerClient();
-  const [quote, roofAreas, roofAreaEntries, components, entries, libraryComponents] = await Promise.all([
-    loadQuote(id),
-    loadQuoteRoofAreas(id),
-    loadAllRoofAreaEntriesForQuote(id),
-    loadQuoteComponents(id),
-    loadAllEntriesForQuote(id),
-    loadComponentLibrary(),
-  ]);
+  const quote = await loadQuote(id);
 
   // Validate entry mode
   if (quote.entry_mode !== 'digital') {
     redirect(`/${workspaceSlug}/quotes/${id}`);
   }
+
+  // Load remaining data in parallel, now that we have the quote's collection_id.
+  const collectionId = (quote as unknown as { component_collection_id?: string | null }).component_collection_id;
+  const [roofAreas, roofAreaEntries, components, entries, libraryComponents] = await Promise.all([
+    loadQuoteRoofAreas(id),
+    loadAllRoofAreaEntriesForQuote(id),
+    loadQuoteComponents(id),
+    loadAllEntriesForQuote(id),
+    loadComponentLibrary(collectionId),
+  ]);
 
   // Load files (same as v1)
   const { data: planFile } = await supabase

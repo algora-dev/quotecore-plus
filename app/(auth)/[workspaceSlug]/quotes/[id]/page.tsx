@@ -33,7 +33,7 @@ export default async function QuoteBuilderPage({
     loadQuoteRoofAreas(id),
     loadAllRoofAreaEntriesForQuote(id),
     loadQuoteComponents(id),
-    loadComponentLibrary(),
+    loadComponentLibrary((quote as { component_collection_id?: string | null }).component_collection_id),
     loadAllEntriesForQuote(id),
     loadTakeoffMeasurements(id),
   ]);
