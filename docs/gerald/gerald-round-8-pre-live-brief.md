@@ -11,7 +11,7 @@
 This is the final audit before QuoteCore+ goes properly live. The previous audit (Round 7) signed off the core platform. Since Round 7, significant new surface has been added. We also have a concrete go-live checklist that needs your sign-off before execution.
 
 **Repo:** `github.com/algora-dev/quotecore-plus`  
-**Branch under review:** `development` (HEAD `279f542`)  
+**Branch under review:** `development` (HEAD `9f58dfa`)  
 **Target:** fast-forward merge into `main`, then cut over to `app.quote-core.com`
 
 ---
@@ -149,7 +149,7 @@ Once live, we want to run two controlled Stripe test round-trips using real card
 | Phase 2 data purge (export-before-delete for suspended accounts) | Parked |
 | `takeoff_canvas_url` / `takeoff_lines_url` column drop | Post-go-live |
 | EU/UK Article 27 representative + Costa Rica PRODHAB | Shaun parked until after paid testing |
-| `database.types.ts` regen (stale on Phase 2 columns) | Pre-merge recommended |
+| `database.types.ts` regen (stale on Phase 2 columns) | Done — regenerated 2026-05-25, all Phase 2+ types live |
 
 ---
 
