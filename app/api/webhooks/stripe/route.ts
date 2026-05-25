@@ -343,13 +343,40 @@ async function handleSubscriptionEvent(
   const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
 
   const admin = createAdminClient();
-  const { data: company, error: companyErr } = await admin
+  let { data: company, error: companyErr } = await admin
     .from('companies')
     .select('id, plan_code, subscription_status, stripe_subscription_id')
     .eq('stripe_customer_id', customerId)
     .maybeSingle();
 
   if (companyErr) throw retryable(`companies lookup: ${companyErr.message}`);
+
+  // Race-condition fallback: customer.subscription.created can arrive before
+  // checkout.session.completed has written stripe_customer_id to the company
+  // row (both events fire within ~1 second of each other). When the customer
+  // ID lookup misses, try finding the company via subscription metadata.company_id
+  // which is stamped at session-creation time and is always present on new subs.
+  if (!company && event.type === 'customer.subscription.created') {
+    const metaCompanyId = sub.metadata?.company_id;
+    if (metaCompanyId) {
+      const { data: companyByMeta, error: metaErr } = await admin
+        .from('companies')
+        .select('id, plan_code, subscription_status, stripe_subscription_id')
+        .eq('id', metaCompanyId)
+        .maybeSingle();
+      if (metaErr) throw retryable(`companies metadata lookup: ${metaErr.message}`);
+      if (companyByMeta) {
+        // Backfill customer_id + subscription_id now so subsequent events resolve correctly.
+        const { error: backfillErr } = await admin
+          .from('companies')
+          .update({ stripe_customer_id: customerId, stripe_subscription_id: sub.id })
+          .eq('id', metaCompanyId);
+        if (backfillErr) throw retryable(`companies backfill customer_id: ${backfillErr.message}`);
+        company = companyByMeta;
+      }
+    }
+  }
+
   if (!company) return 'quarantined:company_not_found_for_customer';
 
   // Gerald audit H-03: validate the event's subscription id against the
