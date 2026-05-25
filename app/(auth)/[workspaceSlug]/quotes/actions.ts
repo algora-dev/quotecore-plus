@@ -752,11 +752,36 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
   await verifyComponentOwnership(supabase, quoteComponentId, profile.company_id);
   const { data: comp } = await supabase.from('quote_components').select('*').eq('id', quoteComponentId).single();
   if (!comp) throw new Error('Component not found');
+
+  // H-02 (Gerald Round 8): for length_x_height and multi_lineal_lxh, the user
+  // enters a length but the stored unit is area (length × height). Apply the
+  // component's height multiplier before pricing, matching what digital takeoff
+  // already does in saveTakeoffMeasurements.
+  let adjustedValue = rawValue;
+  const needsHeightMultiplier =
+    comp.measurement_type === 'length_x_height' ||
+    comp.measurement_type === 'multi_lineal_lxh';
+  if (needsHeightMultiplier && comp.component_library_id) {
+    const { data: lib } = await supabase
+      .from('component_library')
+      .select('height_value_mm')
+      .eq('id', comp.component_library_id)
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+    const heightM = lib?.height_value_mm ? lib.height_value_mm / 1000 : null;
+    if (heightM && heightM > 0) {
+      adjustedValue = rawValue * heightM;
+    }
+  }
+
   const isPlan = comp.input_mode === 'calculated';
   const pitchDegrees = comp.use_custom_pitch ? (comp.custom_pitch_degrees ?? 0) : (areaPitch ?? 0);
-  const { afterWaste } = applyPitchAndWaste(rawValue, isPlan, comp.pitch_type, pitchDegrees, comp.waste_type, comp.waste_percent, comp.waste_fixed);
+  const { afterWaste } = applyPitchAndWaste(adjustedValue, isPlan, comp.pitch_type, pitchDegrees, comp.waste_type, comp.waste_percent, comp.waste_fixed);
   const { data: entry, error } = await supabase.from('quote_component_entries').insert({
-    quote_component_id: quoteComponentId, raw_value: rawValue, value_after_waste: afterWaste,
+    // Store the adjusted area as raw_value (consistent with digital takeoff).
+    // The user sees their entered length in the UI; the entry reflects the
+    // priced area so totals are correct.
+    quote_component_id: quoteComponentId, raw_value: adjustedValue, value_after_waste: afterWaste,
   }).select().single();
   if (error) throw new Error(error.message);
   await recalcComponentFromEntries(quoteComponentId);
