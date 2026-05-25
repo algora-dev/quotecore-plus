@@ -17,7 +17,8 @@
 2. Complete onboarding (company name, currency, security questions)
 3. Go to **Account → Billing** → upgrade to **Professional** ($39/month)
 4. Complete Stripe Checkout with Card B
-5. **Pass:** Billing page shows **Professional — Active**. No feature gates visible anywhere in the app.
+5. After the Stripe redirect, **wait 30–60 seconds, then sign out and sign back in**
+6. **Pass:** After fresh login, Billing page still shows **Professional — Active** with a period end date. No feature gates visible anywhere in the app. *(This confirms the Stripe webhook persisted the subscription, not just the redirect.)*
 
 ## Test 2 — Generic trade quote (Landscaping)
 1. Click **New Quote**
@@ -28,10 +29,10 @@
 
 ## Test 3 — length_x_height component pricing (H-02 smoke test)
 1. Go to **Components** and create a component with measurement type **Length × Height**
-2. Set a height value (e.g. 2.4m) and a unit rate (e.g. $25/m²)
+2. Set height = **2.4m**, unit rate = **$25/m²**, waste = **none**, pitch = **none**
 3. Add this component to the Landscaping quote from Test 2
 4. Enter a length of **10m** in the manual builder
-5. **Pass:** The calculated area shows **24m²** (10 × 2.4), not 10m². Total cost = $600, not $250. This confirms the H-02 fix is working correctly on production.
+5. **Pass:** The calculated area shows **24m²** (10 × 2.4), not 10m². The line subtotal before tax = **$600.00**, not $250. This confirms the H-02 fix is working on production. *(If you see $250 the height multiplier is not applying — stop and report.)*
 
 ## Test 4 — Digital takeoff
 1. Open a quote and go to the **Takeoff** tab
@@ -54,7 +55,10 @@
 1. Open the email received in Test 5 and click **View Quote**
 2. Confirm URL is `https://app.quote-core.com/accept/<token>`
 3. Accept the quote as the customer
-4. **Pass:** Acceptance page loads and works. Quote status in the dashboard updates to **Accepted**. The no-response follow-up from Test 6 is cancelled/deactivated (customer responded).
+4. **Pass:** Acceptance page loads and works. Quote status in the dashboard updates to **Accepted**.
+5. Back in the dashboard, go to the Scheduled Messages list on the quote summary
+6. Force-run the no-response follow-up row (the one from Test 6)
+7. **Pass:** Row marks as **Cancelled** with a reason of "Customer accepted the quote". No email is sent to the customer. This confirms the suppress-on-acceptance logic works at dispatch time.
 
 ## Test 8 — Activity card
 1. Open the quote from Tests 5–7
@@ -89,18 +93,26 @@
 4. Create a new quote — confirm **Landscaping** is pre-selected as the trade
 5. **Pass:** Default trade persists and pre-populates on new quote creation.
 
+## Test 13 — Cancel subscription (cleanup)
+1. Go to **Account → Billing**
+2. Note down the Stripe subscription ID shown on the page (or retrieve from Stripe dashboard) for ops records
+3. Click **Cancel subscription** and confirm
+4. **Pass:** Status updates to **Cancellation pending**. Access continues until period end. A cancellation banner is visible.
+5. Record the Stripe customer ID and subscription ID for reconciliation.
+
 ---
 
 ## Summary checklist
-- [ ] T1 Sign up + upgrade to Professional via Stripe
+- [ ] T1 Sign up + upgrade to Professional via Stripe (+ fresh session verify)
 - [ ] T2 Generic trade quote (Landscaping)
-- [ ] T3 length_x_height pricing correct (H-02 live verification)
+- [ ] T3 length_x_height pricing correct — 24m² / $600 (H-02 live verification)
 - [ ] T4 Digital takeoff — save, reload, components populate
 - [ ] T5 Email send — arrives at customer inbox from info@quote-core.com
 - [ ] T6 Automated follow-up scheduled
-- [ ] T7 Customer accepts via app.quote-core.com/accept/<token>
+- [ ] T7 Customer accepts via app.quote-core.com/accept/<token> + force-run follow-up cancels
 - [ ] T8 Activity card shows full timeline
 - [ ] T9 Flashing drawing saved to library
 - [ ] T10 Material order created and sent
 - [ ] T11 Multiple component libraries used in quote
 - [ ] T12 Default trade setting persists
+- [ ] T13 Cancel subscription + record Stripe IDs

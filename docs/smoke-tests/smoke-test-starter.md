@@ -22,7 +22,8 @@
 2. Confirm status shows **Trialing** with a trial end date
 3. Click upgrade → select **Starter** ($19/month)
 4. Complete Stripe Checkout with Card A
-5. **Pass:** Redirected back to the app. Billing page now shows **Starter — Active** with a current period end date. No trial banner.
+5. After the Stripe redirect, **wait 30–60 seconds, then sign out and sign back in**
+6. **Pass:** After fresh login, Billing page still shows **Starter — Active** with a current period end date. No trial banner. *(Confirms webhook persisted the subscription, not just the redirect.)*
 
 ## Test 3 — Create a Roofing quote (manual builder)
 1. Click **New Quote**
@@ -60,13 +61,22 @@
 1. In the sidebar, click **Material Orders**
 2. **Pass:** An upgrade prompt appears. You cannot create a material order.
 
-## Test 10 — Component library
+## Test 10 — Gating: follow-ups blocked
+1. Open the quote from Test 3 summary page
+2. Click **Send Quote → Send via QuoteCore+** — if blocked by email gate, attempt to access the Schedule Follow-up button directly on the summary page
+3. **Pass:** The schedule follow-up option either does not appear or shows an upgrade prompt for Pro. No follow-up can be scheduled.
+
+## Test 11 — Gating: activity card hidden
+1. On any quote summary page, look for an **Activity** tab or card
+2. **Pass:** The activity card/tab is either hidden or shows an upgrade prompt. No activity timeline is visible.
+
+## Test 12 — Component library
 1. Go to **Components**
 2. Create a new component library named "Test Library"
 3. Add a component with a unit rate
 4. **Pass:** Library and component are saved. Component appears in the quote builder when creating a new quote.
 
-## Test 11 — Billing page accuracy
+## Test 13 — Billing page accuracy
 1. Go to **Account → Billing**
 2. Verify:
    - Plan shows **Starter**
@@ -75,7 +85,7 @@
    - Quotes used this month reflects the quote you created
 3. **Pass:** All values are accurate and consistent.
 
-## Test 12 — Cancel subscription
+## Test 14 — Cancel subscription
 1. On the Billing page, click **Cancel subscription**
 2. Confirm the cancellation flow completes
 3. **Pass:** Status updates to **Cancellation pending** (not immediately suspended — access continues until period end). A banner confirms cancellation.
@@ -84,7 +94,7 @@
 
 ## Summary checklist
 - [ ] T1 Sign up + onboarding
-- [ ] T2 Upgrade to Starter via Stripe
+- [ ] T2 Upgrade to Starter via Stripe (+ fresh session verify)
 - [ ] T3 Manual Roofing quote with components
 - [ ] T4 PDF download
 - [ ] T5 Customer accepts quote on app.quote-core.com/accept/<token>
@@ -92,6 +102,8 @@
 - [ ] T7 Digital takeoff gated
 - [ ] T8 Flashings gated
 - [ ] T9 Material orders gated
-- [ ] T10 Component library create + use
-- [ ] T11 Billing page accuracy
-- [ ] T12 Cancel subscription
+- [ ] T10 Follow-ups gated
+- [ ] T11 Activity card gated
+- [ ] T12 Component library create + use
+- [ ] T13 Billing page accuracy
+- [ ] T14 Cancel subscription
