@@ -14,6 +14,19 @@ This is the final audit before QuoteCore+ goes properly live. The previous audit
 **Branch under review:** `development` (HEAD `9f58dfa`)  
 **Target:** fast-forward merge into `main`, then cut over to `app.quote-core.com`
 
+## Round 8 Status Update (post-Gerald response)
+
+All three actionable findings resolved. Gerald please re-verify at HEAD `beecab6`.
+
+| Finding | Status |
+|---|---|
+| H-01 save_takeoff_atomic bypass | Fixed - migration `20260525120000` adds `is_measurement_type_allowed_for_trade()` SQL helper + pre-write validation loop. Applied live. |
+| H-02 manual builder lxh underpricing | Fixed - `addComponentEntry()` now fetches `height_value_mm` and applies multiplier before `applyPitchAndWaste()`. |
+| M-01 legacy account/actions.ts default_trade | Fixed - `GENERIC_TRADES_V1_ENABLED` gate added, matching settings/actions.ts. |
+| M-02 dunning test card | Noted - test plan updated: use Stripe Test Clocks in test mode only. |
+
+Go-live checklist and paid subscription test plan updated with Gerald's additions. Ready for re-check and sign-off.
+
 ---
 
 ## What Has Changed Since Round 7
