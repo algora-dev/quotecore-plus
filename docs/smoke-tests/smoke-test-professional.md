@@ -35,10 +35,13 @@
 5. **Pass:** The calculated area shows **24m²** (10 × 2.4), not 10m². The line subtotal before tax = **$600.00**, not $250. This confirms the H-02 fix is working on production. *(If you see $250 the height multiplier is not applying — stop and report.)*
 
 ## Test 4 — Digital takeoff
-1. Open the Landscaping quote from Test 2 and go to the **Takeoff** tab
-2. Upload a plan image and draw at least 2 measurements
-3. Click **Save & Continue to Components**
-4. **Pass:** Takeoff saves without error. Measurements appear as component entries with correct values. Canvas is preserved on reload.
+1. Click **New Quote** and select a trade (e.g. Roofing)
+2. Choose the **Digital takeoff** entry path
+3. Upload a plan image and draw at least 2 measurements
+4. Click **Save & Continue to Components**
+5. **Pass:** Takeoff saves without error. Measurements appear as component entries with correct values. Canvas is preserved on reload.
+
+> Note: this is a separate quote from the Landscaping quote in T2. Takeoff requires a plan file to be uploaded at quote creation — it cannot be added to a manually-built quote after the fact.
 
 ## Test 5 — Send quote via email pipeline
 1. From a quote summary page, click **Send Quote → Send via QuoteCore+**
