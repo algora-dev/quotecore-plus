@@ -410,7 +410,7 @@ export function BillingPanel(props: BillingPanelProps) {
         </div>
 
         <dl className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          {props.trialEndsAt && (
+          {props.trialEndsAt && isOnTrial && (
             <div>
               <dt className="text-xs text-slate-500">Trial ends</dt>
               <dd className="font-medium text-slate-900">{formatDate(props.trialEndsAt)}</dd>
