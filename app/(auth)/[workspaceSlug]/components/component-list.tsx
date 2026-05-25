@@ -140,9 +140,14 @@ export function ComponentList({
   subscriptionActive: boolean;
 }) {
   const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);
-  // Pitch is only relevant for roofing. All other trades hide the pitch
-  // checkbox - it would be silently ignored by the pricing engine anyway.
-  const pitchVisible = getTradeLabels(companyDefaultTrade).pitchRequired;
+  // Pitch is shown when the trade requires it (roofing) or opts in optionally
+  // (landscaping, concrete, insulation, electrical). pitchOptional trades show
+  // the checkbox but do not require a pitch on areas.
+  const _tradeLabels = getTradeLabels(companyDefaultTrade);
+  const pitchVisible = _tradeLabels.pitchRequired || !!_tradeLabels.pitchOptional;
+  const pitchCheckboxLabel = _tradeLabels.pitchCheckboxLabel ?? 'Apply pitch calculation';
+  // When true, only Rafter Pitch is offered (no Valley/Hip).
+  const pitchHidesValleyHip = !!_tradeLabels.pitchHidesValleyHip;
   /** Local helper that picks the right unit suffix for a measurement type given the company's default system. */
   const unitForMeasurement = (mt: MeasurementType) =>
     getUnitLabel(mt as 'area' | 'lineal' | 'quantity' | 'fixed', companyMeasurementSystem);
@@ -708,14 +713,14 @@ export function ComponentList({
               <>
                 <div className="flex items-center gap-2" data-copilot="component-pitch">
                   <input type="checkbox" id="pitch-enabled" checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="rounded" />
-                  <label htmlFor="pitch-enabled" className="text-xs text-slate-700">Apply pitch calculation</label>
+                  <label htmlFor="pitch-enabled" className="text-xs text-slate-700">{pitchCheckboxLabel}</label>
                 </div>
                 {formPitchEnabled && (
                   <div data-copilot="component-pitch-type">
                     <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
                     <select name="default_pitch_type" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg">
                       <option value="rafter">Rafter Pitch</option>
-                      <option value="valley_hip">Valley/Hip Pitch</option>
+                      {!pitchHidesValleyHip && <option value="valley_hip">Valley/Hip Pitch</option>}
                     </select>
                   </div>
                 )}
@@ -904,14 +909,14 @@ export function ComponentList({
                     <>
                       <div className="flex items-center gap-2">
                         <input type="checkbox" id={`pitch-${comp.id}`} checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="rounded" />
-                        <label htmlFor={`pitch-${comp.id}`} className="text-xs text-slate-700">Apply pitch calculation</label>
+                        <label htmlFor={`pitch-${comp.id}`} className="text-xs text-slate-700">{pitchCheckboxLabel}</label>
                       </div>
                       {formPitchEnabled && (
                         <div>
                           <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
                           <select name="default_pitch_type" defaultValue={comp.default_pitch_type} className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
                             <option value="rafter">Rafter Pitch</option>
-                            <option value="valley_hip">Valley/Hip Pitch</option>
+                            {!pitchHidesValleyHip && <option value="valley_hip">Valley/Hip Pitch</option>}
                           </select>
                         </div>
                       )}

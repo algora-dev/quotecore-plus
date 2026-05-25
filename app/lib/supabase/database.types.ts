@@ -3041,7 +3041,21 @@ export type Database = {
         | "declined"
         | "expired"
         | "archived"
-      trade: "roofing" | "generic" | "cladding" | "electrical" | "plumbing"
+      trade:
+        | "roofing"
+        | "generic"
+        | "cladding"
+        | "electrical"
+        | "plumbing"
+        | "landscaping"
+        | "flooring"
+        | "tiling"
+        | "foundations"
+        | "insulation"
+        | "painting"
+        | "fencing"
+        | "concrete"
+        | "construction"
       waste_type: "percent" | "fixed" | "none" | "fixed_per_segment"
       waste_unit: "percent" | "flat" | "flat_per_segment"
     }
@@ -3207,7 +3221,22 @@ export const Constants = {
         "expired",
         "archived",
       ],
-      trade: ["roofing", "generic", "cladding", "electrical", "plumbing"],
+      trade: [
+        "roofing",
+        "generic",
+        "cladding",
+        "electrical",
+        "plumbing",
+        "landscaping",
+        "flooring",
+        "tiling",
+        "foundations",
+        "insulation",
+        "painting",
+        "fencing",
+        "concrete",
+        "construction",
+      ],
       waste_type: ["percent", "fixed", "none", "fixed_per_segment"],
       waste_unit: ["percent", "flat", "flat_per_segment"],
     },

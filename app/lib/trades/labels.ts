@@ -8,7 +8,21 @@
  * instructions, quote builder, customer quote, measurement type overrides.
  */
 
-export type Trade = 'roofing' | 'generic' | 'cladding' | 'electrical' | 'plumbing';
+export type Trade =
+  | 'roofing'
+  | 'generic'
+  | 'cladding'
+  | 'electrical'
+  | 'plumbing'
+  | 'landscaping'
+  | 'flooring'
+  | 'tiling'
+  | 'foundations'
+  | 'insulation'
+  | 'painting'
+  | 'fencing'
+  | 'concrete'
+  | 'construction';
 
 export interface TradeLabels {
   // ── Identity ──────────────────────────────────────────────────────────────
@@ -26,6 +40,26 @@ export interface TradeLabels {
   // ── Pitch ─────────────────────────────────────────────────────────────────
   /** Whether pitch is a required field on the add-area modal. */
   pitchRequired: boolean;
+  /**
+   * Whether the pitch UI on the component form should be shown for this
+   * trade even when pitchRequired is false. Roofing has pitchRequired=true
+   * which implicitly shows pitch; landscaping/concrete/insulation set
+   * pitchOptional=true to show pitch as an optional checkbox.
+   * Defaults to false (hidden) when not specified.
+   */
+  pitchOptional?: boolean;
+  /**
+   * When true, the pitch type dropdown only offers Rafter pitch (no
+   * valley/hip). Used by trades where slope/angle applies but only as a
+   * single multiplier - landscaping, concrete, insulation, electrical.
+   */
+  pitchHidesValleyHip?: boolean;
+  /**
+   * Label shown next to the "Apply pitch calculation" checkbox in the
+   * component form. Defaults to "Apply pitch calculation" when not
+   * specified.
+   */
+  pitchCheckboxLabel?: string;
 
   // ── Create-area modal ─────────────────────────────────────────────────────
   /** Modal heading when creating the primary named area. */
@@ -130,6 +164,9 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     addAreaCta: 'Add Area',
 
     pitchRequired: false,
+    pitchOptional: true,
+    pitchHidesValleyHip: true,
+    pitchCheckboxLabel: 'Apply pitch calculation (roof-space runs)',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Ground Floor, Roof Space',
@@ -271,6 +308,417 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
 
     measurementTypeLabels: {},
   },
+
+  landscaping: {
+    tradeLabel: 'Landscaping',
+
+    areaPluralLabel: 'Areas',
+    areaSingularLabel: 'Area',
+    addAreaCta: 'Add Area',
+
+    pitchRequired: false,
+    pitchOptional: true,
+    pitchHidesValleyHip: true,
+    pitchCheckboxLabel: 'Apply angle / slope calculation',
+
+    createAreaModalTitle: 'Create Area',
+    areaNamePlaceholder: 'e.g. Front Garden, Driveway, Patio',
+
+    areaIsOptional: true,
+    firstAreaInstructionsTitle: 'Define Your Job Areas',
+    firstAreaInstructionsBody:
+      'You can draw areas to break the job into zones (garden beds, paving, driveway, lawn). ' +
+      'Or skip this and measure paths, edging, and items directly.',
+    firstAreaConfirmCta: 'Yes, add an area',
+    toolGuidanceNote:
+      'Use the Area tool for gardens, lawns, paving, and decking. ' +
+      'Use the Line / Multi-Line tools for paths, edging, retaining walls, and fence lines. ' +
+      'Use the Curved Line tool for curved garden edges or winding paths. ' +
+      'Use Point for trees, planters, fittings, and items priced per unit.',
+
+    needAreaPrompt: 'Do you want to define a job area first?',
+    optionalAreaConfirmCta: 'Yes, add an area',
+    skipAreaCta: 'No, skip',
+
+    builderStepLabel: 'Areas',
+    emptyAreaGuardMessage:
+      'A quote needs at least one component before it can be saved. ' +
+      "We'll take you back so you can add one.",
+
+    customerQuoteSectionLabel: 'Landscaping Works',
+
+    measurementTypeLabels: {
+      multi_lineal:    'Multiple Lines',
+      curved_line:     'Curved Line',
+      hours_days:      'Hours / Days',
+      count:           'Count',
+      volume:          'Volume',
+      irregular_area:  'Irregular Area',
+    },
+  },
+
+  flooring: {
+    tradeLabel: 'Flooring',
+
+    areaPluralLabel: 'Areas',
+    areaSingularLabel: 'Area',
+    addAreaCta: 'Add Area',
+
+    pitchRequired: false,
+
+    createAreaModalTitle: 'Create Area',
+    areaNamePlaceholder: 'e.g. Living Room, Hallway, Kitchen',
+
+    areaIsOptional: true,
+    firstAreaInstructionsTitle: 'Define Your Floor Areas',
+    firstAreaInstructionsBody:
+      'Draw each floor area you are quoting (room by room, or as a single open zone). ' +
+      'Or skip this and measure components directly.',
+    firstAreaConfirmCta: 'Yes, add an area',
+    toolGuidanceNote:
+      'Use the Area tool for room floor areas. ' +
+      'Use the Line / Multi-Line tools for skirting, edge trims, and transition strips. ' +
+      'Use Point for fittings and items priced per unit.',
+
+    needAreaPrompt: 'Do you want to measure a floor area first?',
+    optionalAreaConfirmCta: 'Yes, add an area',
+    skipAreaCta: 'No, skip',
+
+    builderStepLabel: 'Areas',
+    emptyAreaGuardMessage:
+      'A quote needs at least one component before it can be saved. ' +
+      "We'll take you back so you can add one.",
+
+    customerQuoteSectionLabel: 'Flooring Works',
+
+    measurementTypeLabels: {
+      multi_lineal:    'Multiple Trim Runs',
+      curved_line:     'Curved Trim Run',
+      hours_days:      'Hours / Days',
+      count:           'Count',
+      volume:          'Volume (screed / levelling)',
+      irregular_area:  'Irregular Floor Area',
+    },
+  },
+
+  tiling: {
+    tradeLabel: 'Tiling',
+
+    areaPluralLabel: 'Areas',
+    areaSingularLabel: 'Area',
+    addAreaCta: 'Add Area',
+
+    pitchRequired: false,
+
+    createAreaModalTitle: 'Create Area',
+    areaNamePlaceholder: 'e.g. Bathroom, Kitchen Splashback',
+
+    areaIsOptional: true,
+    firstAreaInstructionsTitle: 'Define Your Tiling Areas',
+    firstAreaInstructionsBody:
+      'Draw your tiling areas - floor zones from a plan, or walls measured directly. ' +
+      'For wall tiling from a floor plan, use the Line / Multi-Line tools with components ' +
+      'set up as Wall Length × Height.',
+    firstAreaConfirmCta: 'Yes, add an area',
+    toolGuidanceNote:
+      'Use the Area tool for floor tiling and direct elevation plans. ' +
+      'Use the Line / Multi-Line tools for wall runs in plan view ' +
+      '(set components to Wall Length × Height). ' +
+      'Use Point for fittings and items priced per unit.',
+
+    needAreaPrompt: 'Do you want to measure a tiling area first?',
+    optionalAreaConfirmCta: 'Yes, add an area',
+    skipAreaCta: 'No, skip',
+
+    builderStepLabel: 'Areas',
+    emptyAreaGuardMessage:
+      'A quote needs at least one component before it can be saved. ' +
+      "We'll take you back so you can add one.",
+
+    customerQuoteSectionLabel: 'Tiling Works',
+
+    measurementTypeLabels: {
+      multi_lineal_lxh: 'Wall Length × Height',
+      length_x_height:  'Wall Height × Length',
+      multi_lineal:     'Multiple Trim Runs',
+      curved_line:      'Curved Trim Run',
+      hours_days:       'Hours / Days',
+      count:            'Count',
+      irregular_area:   'Irregular Area',
+    },
+  },
+
+  foundations: {
+    tradeLabel: 'Foundations',
+
+    areaPluralLabel: 'Areas',
+    areaSingularLabel: 'Area',
+    addAreaCta: 'Add Area',
+
+    pitchRequired: false,
+
+    createAreaModalTitle: 'Create Area',
+    areaNamePlaceholder: 'e.g. Main Slab, Garage Footing',
+
+    areaIsOptional: true,
+    firstAreaInstructionsTitle: 'Define Your Foundation Areas',
+    firstAreaInstructionsBody:
+      'Draw the slab outline or excavation footprint. ' +
+      'Use the Line tools to trace footings, beams, and the perimeter directly.',
+    firstAreaConfirmCta: 'Yes, add an area',
+    toolGuidanceNote:
+      'Use the Area tool for slab footprints and excavation zones. ' +
+      'Use the Line / Multi-Line tools for footings, ring beams, and perimeter runs. ' +
+      'Use Point for piers, pads, and items priced per unit.',
+
+    needAreaPrompt: 'Do you want to measure a slab or excavation area first?',
+    optionalAreaConfirmCta: 'Yes, add an area',
+    skipAreaCta: 'No, skip',
+
+    builderStepLabel: 'Areas',
+    emptyAreaGuardMessage:
+      'A quote needs at least one component before it can be saved. ' +
+      "We'll take you back so you can add one.",
+
+    customerQuoteSectionLabel: 'Foundation Works',
+
+    measurementTypeLabels: {
+      multi_lineal:    'Multiple Footings',
+      curved_line:     'Curved Footing',
+      hours_days:      'Hours / Days',
+      count:           'Count',
+      volume:          'Volume (concrete / excavation)',
+      irregular_area:  'Irregular Slab Area',
+    },
+  },
+
+  insulation: {
+    tradeLabel: 'Insulation',
+
+    areaPluralLabel: 'Areas',
+    areaSingularLabel: 'Area',
+    addAreaCta: 'Add Area',
+
+    pitchRequired: false,
+    pitchOptional: true,
+    pitchHidesValleyHip: true,
+    pitchCheckboxLabel: 'Apply pitch calculation (roof / loft)',
+
+    createAreaModalTitle: 'Create Area',
+    areaNamePlaceholder: 'e.g. Ceiling, Loft, Wall North',
+
+    areaIsOptional: true,
+    firstAreaInstructionsTitle: 'Define Your Insulation Areas',
+    firstAreaInstructionsBody:
+      'Draw each area you are insulating - ceiling, floor, or walls. ' +
+      'For wall insulation from a floor plan use the Line / Multi-Line tools with ' +
+      'components set up as Wall Length × Height.',
+    firstAreaConfirmCta: 'Yes, add an area',
+    toolGuidanceNote:
+      'Use the Area tool for ceiling, floor, and elevation areas. ' +
+      'Use the Line / Multi-Line tools for wall insulation in plan view ' +
+      '(set components to Wall Length × Height). ' +
+      'Enable rafter pitch on roof / loft components that follow the slope.',
+
+    needAreaPrompt: 'Do you want to measure an insulation area first?',
+    optionalAreaConfirmCta: 'Yes, add an area',
+    skipAreaCta: 'No, skip',
+
+    builderStepLabel: 'Areas',
+    emptyAreaGuardMessage:
+      'A quote needs at least one component before it can be saved. ' +
+      "We'll take you back so you can add one.",
+
+    customerQuoteSectionLabel: 'Insulation Works',
+
+    measurementTypeLabels: {
+      multi_lineal_lxh: 'Wall Length × Height',
+      length_x_height:  'Wall Height × Length',
+      multi_lineal:     'Multiple Edge Runs',
+      hours_days:       'Hours / Days',
+      count:            'Count (bags / rolls / batts)',
+      irregular_area:   'Irregular Area',
+    },
+  },
+
+  painting: {
+    tradeLabel: 'Painting',
+
+    areaPluralLabel: 'Areas',
+    areaSingularLabel: 'Area',
+    addAreaCta: 'Add Area',
+
+    pitchRequired: false,
+
+    createAreaModalTitle: 'Create Area',
+    areaNamePlaceholder: 'e.g. Living Room, External North Wall',
+
+    areaIsOptional: true,
+    firstAreaInstructionsTitle: 'Define Your Painting Areas',
+    firstAreaInstructionsBody:
+      'Draw each area you are painting - ceiling, walls, or external elevations. ' +
+      'For wall painting from a floor plan use the Line / Multi-Line tools with ' +
+      'components set up as Wall Length × Height.',
+    firstAreaConfirmCta: 'Yes, add an area',
+    toolGuidanceNote:
+      'Use the Area tool for ceilings and direct elevation plans. ' +
+      'Use the Line / Multi-Line tools for walls in plan view ' +
+      '(set components to Wall Length × Height). ' +
+      'Use the Line tools for skirtings, architraves, and trim.',
+
+    needAreaPrompt: 'Do you want to measure a painting area first?',
+    optionalAreaConfirmCta: 'Yes, add an area',
+    skipAreaCta: 'No, skip',
+
+    builderStepLabel: 'Areas',
+    emptyAreaGuardMessage:
+      'A quote needs at least one component before it can be saved. ' +
+      "We'll take you back so you can add one.",
+
+    customerQuoteSectionLabel: 'Painting Works',
+
+    measurementTypeLabels: {
+      multi_lineal_lxh: 'Wall Length × Height',
+      length_x_height:  'Wall Height × Length',
+      multi_lineal:     'Multiple Trim Runs',
+      curved_line:      'Curved Trim Run',
+      hours_days:       'Hours / Days',
+      count:            'Count',
+      irregular_area:   'Irregular Area',
+    },
+  },
+
+  fencing: {
+    tradeLabel: 'Fencing',
+
+    areaPluralLabel: 'Areas',
+    areaSingularLabel: 'Area',
+    addAreaCta: 'Add Area',
+
+    pitchRequired: false,
+
+    createAreaModalTitle: 'Create Area',
+    areaNamePlaceholder: 'e.g. Boundary, Paddock',
+
+    areaIsOptional: true,
+    firstAreaInstructionsTitle: 'Define Your Fencing Job',
+    firstAreaInstructionsBody:
+      'For most fencing jobs you can skip the area step and measure fence runs directly. ' +
+      'Or draw an area first if you want to record the enclosed zone.',
+    firstAreaConfirmCta: 'Yes, add an area',
+    toolGuidanceNote:
+      'Use the Line / Multi-Line tools for fence runs. ' +
+      'Use the Curved Line tool for curved boundaries. ' +
+      'Use Point for posts, gates, and fittings priced per unit.',
+
+    needAreaPrompt: 'Do you want to define an area first?',
+    optionalAreaConfirmCta: 'Yes, add an area',
+    skipAreaCta: 'No, skip',
+
+    builderStepLabel: 'Areas',
+    emptyAreaGuardMessage:
+      'A quote needs at least one component before it can be saved. ' +
+      "We'll take you back so you can add one.",
+
+    customerQuoteSectionLabel: 'Fencing Works',
+
+    measurementTypeLabels: {
+      multi_lineal:     'Multiple Fence Runs',
+      multi_lineal_lxh: 'Panel Length × Height',
+      length_x_height:  'Panel Height × Length',
+      curved_line:      'Curved Fence Run',
+      hours_days:       'Hours / Days',
+      count:            'Count (posts / gates)',
+      irregular_area:   'Irregular Area',
+    },
+  },
+
+  concrete: {
+    tradeLabel: 'Concrete',
+
+    areaPluralLabel: 'Areas',
+    areaSingularLabel: 'Area',
+    addAreaCta: 'Add Area',
+
+    pitchRequired: false,
+    pitchOptional: true,
+    pitchHidesValleyHip: true,
+    pitchCheckboxLabel: 'Apply slope / pitch calculation (fall to drainage)',
+
+    createAreaModalTitle: 'Create Area',
+    areaNamePlaceholder: 'e.g. Driveway, Garage Slab, Patio',
+
+    areaIsOptional: true,
+    firstAreaInstructionsTitle: 'Define Your Concrete Areas',
+    firstAreaInstructionsBody:
+      'Draw the slab or pour outline. ' +
+      'Use the Line tools to trace kerbs, edges, expansion joints, and sawn cuts directly.',
+    firstAreaConfirmCta: 'Yes, add an area',
+    toolGuidanceNote:
+      'Use the Area tool for slab footprints. ' +
+      'Use the Line / Multi-Line tools for kerbs, edge restraints, joints, and sawn cuts. ' +
+      'Use the Curved Line tool for curved kerbs and edges. ' +
+      'Use Point for items priced per unit.',
+
+    needAreaPrompt: 'Do you want to measure a slab area first?',
+    optionalAreaConfirmCta: 'Yes, add an area',
+    skipAreaCta: 'No, skip',
+
+    builderStepLabel: 'Areas',
+    emptyAreaGuardMessage:
+      'A quote needs at least one component before it can be saved. ' +
+      "We'll take you back so you can add one.",
+
+    customerQuoteSectionLabel: 'Concrete Works',
+
+    measurementTypeLabels: {
+      multi_lineal:    'Multiple Kerb / Edge Runs',
+      curved_line:     'Curved Kerb / Edge',
+      hours_days:      'Hours / Days',
+      count:           'Count',
+      volume:          'Volume (concrete pour)',
+      irregular_area:  'Irregular Slab Area',
+    },
+  },
+
+  construction: {
+    tradeLabel: 'Construction',
+
+    areaPluralLabel: 'Areas',
+    areaSingularLabel: 'Area',
+    addAreaCta: 'Add Area',
+
+    pitchRequired: false,
+
+    createAreaModalTitle: 'Create Area',
+    areaNamePlaceholder: 'e.g. Zone A, Ground Floor, Extension',
+
+    areaIsOptional: true,
+    firstAreaInstructionsTitle: 'Define Your Areas',
+    firstAreaInstructionsBody:
+      'For area-based components you can draw an area now. ' +
+      'For lineal or count-based work you can skip this and measure directly.',
+    firstAreaConfirmCta: 'Yes, add an area',
+    toolGuidanceNote:
+      'Use the Area tool for room or zone outlines. ' +
+      'Use the Line / Multi-Line tools for lineal runs (footings, framing, trim, fence lines). ' +
+      'Use the Curved Line tool for curved paths or edges. ' +
+      'Use Point for items priced per unit. ' +
+      'Enable pitch on individual components when measuring roof work from plan view.',
+
+    needAreaPrompt: 'Do you want to measure an area first?',
+    optionalAreaConfirmCta: 'Yes, add an area',
+    skipAreaCta: 'No, skip',
+
+    builderStepLabel: 'Areas',
+    emptyAreaGuardMessage:
+      'A quote needs at least one area and one main component before it can be saved. ' +
+      "We'll take you back to Areas so you can add one.",
+
+    customerQuoteSectionLabel: 'Construction Works',
+
+    measurementTypeLabels: {},
+  },
 };
 
 /**
@@ -278,9 +726,18 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
  * values so a stale database row never breaks the UI.
  */
 export function getTradeLabels(trade?: string | null): TradeLabels {
-  if (trade === 'cladding')   return TRADE_LABELS.cladding;
-  if (trade === 'generic')    return TRADE_LABELS.generic;
-  if (trade === 'electrical') return TRADE_LABELS.electrical;
-  if (trade === 'plumbing')   return TRADE_LABELS.plumbing;
+  if (trade === 'cladding')     return TRADE_LABELS.cladding;
+  if (trade === 'generic')      return TRADE_LABELS.generic;
+  if (trade === 'electrical')   return TRADE_LABELS.electrical;
+  if (trade === 'plumbing')     return TRADE_LABELS.plumbing;
+  if (trade === 'landscaping')  return TRADE_LABELS.landscaping;
+  if (trade === 'flooring')     return TRADE_LABELS.flooring;
+  if (trade === 'tiling')       return TRADE_LABELS.tiling;
+  if (trade === 'foundations')  return TRADE_LABELS.foundations;
+  if (trade === 'insulation')   return TRADE_LABELS.insulation;
+  if (trade === 'painting')     return TRADE_LABELS.painting;
+  if (trade === 'fencing')      return TRADE_LABELS.fencing;
+  if (trade === 'concrete')     return TRADE_LABELS.concrete;
+  if (trade === 'construction') return TRADE_LABELS.construction;
   return TRADE_LABELS.roofing;
 }

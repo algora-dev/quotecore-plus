@@ -38,12 +38,12 @@ export function CompanySettingsForm({
 }: Props) {
   const genericTradesEnabled =
     (process.env.NEXT_PUBLIC_GENERIC_TRADES_V1 ?? '').toLowerCase() === 'true';
-  const [defaultTrade, setDefaultTrade] = useState<'roofing' | 'cladding' | 'generic' | 'electrical' | 'plumbing'>(
-    currentDefaultTrade === 'cladding'   ? 'cladding'
-    : currentDefaultTrade === 'generic'    ? 'generic'
-    : currentDefaultTrade === 'electrical' ? 'electrical'
-    : currentDefaultTrade === 'plumbing'   ? 'plumbing'
-    : 'roofing'
+  type TradeOption = 'roofing' | 'cladding' | 'generic' | 'electrical' | 'plumbing' | 'landscaping' | 'flooring' | 'tiling' | 'foundations' | 'insulation' | 'painting' | 'fencing' | 'concrete' | 'construction';
+  const tradeOptions: TradeOption[] = ['roofing', 'cladding', 'electrical', 'plumbing', 'landscaping', 'flooring', 'tiling', 'foundations', 'insulation', 'painting', 'fencing', 'concrete', 'construction', 'generic'];
+  const [defaultTrade, setDefaultTrade] = useState<TradeOption>(
+    tradeOptions.includes(currentDefaultTrade as TradeOption)
+      ? (currentDefaultTrade as TradeOption)
+      : 'roofing'
   );
   const [companyName, setCompanyName] = useState(currentCompanyName);
   const [userName, setUserName] = useState(currentUserName);
@@ -276,7 +276,7 @@ export function CompanySettingsForm({
           <select
             id="default-trade"
             value={defaultTrade}
-            onChange={e => setDefaultTrade(e.target.value as 'roofing' | 'cladding' | 'generic' | 'electrical' | 'plumbing')}
+            onChange={e => setDefaultTrade(e.target.value as TradeOption)}
             disabled={isPending}
             className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
@@ -284,6 +284,15 @@ export function CompanySettingsForm({
             <option value="cladding">Cladding</option>
             <option value="electrical">Electrical</option>
             <option value="plumbing">Plumbing</option>
+            <option value="landscaping">Landscaping</option>
+            <option value="flooring">Flooring</option>
+            <option value="tiling">Tiling</option>
+            <option value="foundations">Foundations</option>
+            <option value="insulation">Insulation</option>
+            <option value="painting">Painting</option>
+            <option value="fencing">Fencing</option>
+            <option value="concrete">Concrete</option>
+            <option value="construction">Construction</option>
             <option value="generic">Generic</option>
           </select>
         </div>

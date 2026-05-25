@@ -12,7 +12,21 @@
  * cases can widen later). `rafter`/`valley_hip` are NOT measurement types
  * (they live on the `pitch_type` enum) so they don't appear here.
  */
-export type Trade = 'roofing' | 'generic' | 'cladding' | 'electrical' | 'plumbing';
+export type Trade =
+  | 'roofing'
+  | 'generic'
+  | 'cladding'
+  | 'electrical'
+  | 'plumbing'
+  | 'landscaping'
+  | 'flooring'
+  | 'tiling'
+  | 'foundations'
+  | 'insulation'
+  | 'painting'
+  | 'fencing'
+  | 'concrete'
+  | 'construction';
 
 export type MeasurementType =
   | 'area'
@@ -104,6 +118,152 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'quantity',     // legacy alias
     'fixed',
     'hours_days',   // hourly / day-rate labor
+  ]),
+  // Landscaping: full measurement palette - paths, retaining walls, gardens,
+  // driveways, decks, planting, fencing. Pitch is shown as "Angle / Slope"
+  // for batters, driveway gradient, and tier steps (rafter only, no valley/hip).
+  landscaping: new Set<MeasurementType>([
+    'area',
+    'irregular_area',
+    'lineal',
+    'linear',
+    'multi_lineal',
+    'multi_lineal_lxh',
+    'length_x_height',
+    'volume',          // bulk materials: soil, mulch, aggregate, concrete
+    'curved_line',     // garden edging, curved paths
+    'count',
+    'quantity',
+    'fixed',
+    'hours_days',
+  ]),
+  // Flooring: area-dominant (floor coverings) with lineal trims/edges and
+  // volume for screed/levelling. No wall-height types, no pitch.
+  flooring: new Set<MeasurementType>([
+    'area',
+    'irregular_area',
+    'lineal',          // skirtings, edge trims, transition strips
+    'linear',
+    'multi_lineal',
+    'curved_line',
+    'volume',          // screed, self-levelling compound
+    'count',
+    'quantity',
+    'fixed',
+    'hours_days',
+  ]),
+  // Tiling: full area palette including wall tiling (multi_lineal_lxh + lxh
+  // for splashbacks/showers). No volume, no pitch.
+  tiling: new Set<MeasurementType>([
+    'area',
+    'irregular_area',
+    'multi_lineal_lxh',   // wall tiling from plan view
+    'length_x_height',    // single wall: shower, splashback
+    'lineal',             // trims, edges
+    'linear',
+    'multi_lineal',
+    'curved_line',
+    'count',
+    'quantity',
+    'fixed',
+    'hours_days',
+  ]),
+  // Foundations: area for slab, lineal for footings/beams, volume for
+  // concrete/excavation, count for piers/pads. No wall-height, no pitch.
+  foundations: new Set<MeasurementType>([
+    'area',
+    'irregular_area',
+    'lineal',          // strip footings, beams, perimeter
+    'linear',
+    'multi_lineal',
+    'curved_line',
+    'volume',          // concrete pour, excavation
+    'count',
+    'quantity',
+    'fixed',
+    'hours_days',
+  ]),
+  // Insulation: area-dominant (ceiling/floor batts, sheets) plus wall area
+  // types for wall insulation. Pitch supported (rafter only) for loft and
+  // roof-space insulation measured from plan view.
+  insulation: new Set<MeasurementType>([
+    'area',
+    'irregular_area',
+    'multi_lineal_lxh',
+    'length_x_height',
+    'lineal',          // edge seal, tape, perimeter trim
+    'linear',
+    'multi_lineal',
+    'count',           // bags, rolls, batts
+    'quantity',
+    'fixed',
+    'hours_days',
+  ]),
+  // Painting: area-dominant with wall-area types for plan-view takeoff.
+  // Lineal for trims/skirtings/architraves. No volume, no pitch.
+  painting: new Set<MeasurementType>([
+    'area',
+    'irregular_area',
+    'multi_lineal_lxh',
+    'length_x_height',
+    'lineal',          // skirtings, architraves, trim
+    'linear',
+    'multi_lineal',
+    'curved_line',
+    'count',
+    'quantity',
+    'fixed',
+    'hours_days',
+  ]),
+  // Fencing: lineal-dominant with area for paved zones and wall-area types
+  // for panel area when needed. No volume, no pitch.
+  fencing: new Set<MeasurementType>([
+    'lineal',
+    'linear',
+    'multi_lineal',
+    'multi_lineal_lxh',   // panel area when measured from plan
+    'length_x_height',
+    'area',               // paved areas, gates
+    'irregular_area',
+    'curved_line',        // curved fence lines
+    'count',              // posts, gates, fittings
+    'quantity',
+    'fixed',
+    'hours_days',
+  ]),
+  // Concrete: area + volume primary (slabs, pours), lineal for kerbs/edges/
+  // joints/sawn cuts. Pitch shown as "Slope / Pitch" for slab fall to drainage
+  // (rafter only, no valley/hip). No wall-height types.
+  concrete: new Set<MeasurementType>([
+    'area',
+    'irregular_area',
+    'lineal',          // kerbs, edges, expansion joints, sawn cuts
+    'linear',
+    'multi_lineal',
+    'curved_line',
+    'volume',          // slabs, pours
+    'count',
+    'quantity',
+    'fixed',
+    'hours_days',
+  ]),
+  // Construction (umbrella): full measurement palette like generic - covers
+  // any general construction job mixing multiple disciplines. Pitch off at
+  // trade level; per-component pitch can still be enabled for roof work.
+  construction: new Set<MeasurementType>([
+    'area',
+    'lineal',
+    'linear',
+    'multi_lineal',
+    'multi_lineal_lxh',
+    'length_x_height',
+    'volume',
+    'irregular_area',
+    'curved_line',
+    'hours_days',
+    'count',
+    'quantity',
+    'fixed',
   ]),
 };
 
