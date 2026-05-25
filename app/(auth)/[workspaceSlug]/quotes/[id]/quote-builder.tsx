@@ -1036,6 +1036,8 @@ function RoofAreaCard({
   // Track in-flight submission so two near-simultaneous onBlur events
   // (e.g. width blur firing while length is autofilled) don't double-fire.
   const submittingRef = useRef(false);
+  // Only show the pitch field for trades that require pitch (roofing).
+  const areaPitchVisible = getTradeLabels((quote as { trade?: string }).trade).pitchRequired;
   const widthRef = useRef<HTMLInputElement>(null);
 
   async function handleSubmit() {
@@ -1112,7 +1114,7 @@ function RoofAreaCard({
             </div>
           </div>
           <div>
-              <div className="mb-2" data-copilot="quote-pitch">
+              {areaPitchVisible && <div className="mb-2" data-copilot="quote-pitch">
                 <div className="flex items-center gap-2">
                   <label className="text-xs text-slate-500">Pitch (°)</label>
                   <input
@@ -1145,7 +1147,7 @@ function RoofAreaCard({
                     Steep pitch ({area.calc_pitch_degrees}°): pitch-calculated quantities (rafter lengths, lineal flashings on slope) get very large near vertical. Double-check the value is right for your roof.
                   </p>
                 )}
-              </div>
+              </div>}
               {entries.map((entry, idx) => (
                 <div key={entry.id} className="flex items-center gap-2 text-xs mb-1">
                   <span className="text-slate-400 w-6">#{idx + 1}</span>

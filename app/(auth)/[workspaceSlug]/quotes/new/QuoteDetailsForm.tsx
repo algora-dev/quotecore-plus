@@ -290,20 +290,20 @@ export function QuoteDetailsForm({
                 onChange={e => setSelectedTrade(e.target.value)}
                 className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               >
+                <option value="generic">Generic</option>
                 <option value="roofing">Roofing</option>
                 <option value="cladding">Cladding</option>
                 <option value="electrical">Electrical</option>
-                <option value="plumbing">Plumbing</option>
                 <option value="landscaping">Landscaping</option>
+                <option value="concrete">Concrete</option>
+                <option value="plumbing">Plumbing</option>
                 <option value="flooring">Flooring</option>
                 <option value="tiling">Tiling</option>
                 <option value="foundations">Foundations</option>
                 <option value="insulation">Insulation</option>
                 <option value="painting">Painting</option>
                 <option value="fencing">Fencing</option>
-                <option value="concrete">Concrete</option>
                 <option value="construction">Construction</option>
-                <option value="generic">Generic</option>
               </select>
             </div>
             <div>

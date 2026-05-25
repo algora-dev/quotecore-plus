@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createComponent, updateComponent, deleteComponent } from './actions';
+import { createComponent, updateComponent, deleteComponent, createComponentCollection } from './actions';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
 import type {
   ComponentLibraryRow,
@@ -109,6 +109,7 @@ export function ComponentList({
   workspaceSlug,
   companyMeasurementSystem = 'metric',
   companyDefaultTrade = 'roofing',
+  componentCollections = [],
   componentLimit,
   componentCount,
   effectivePlanCode,
@@ -121,6 +122,8 @@ export function ComponentList({
   companyMeasurementSystem?: MeasurementSystem;
   /** Company default trade; hides pitch for non-roofing trades. */
   companyDefaultTrade?: string;
+  /** Component collections for the company (for library assignment UI). */
+  componentCollections?: { id: string; name: string; is_bootstrap: boolean }[];
   /** Plan cap on lifetime active components. NULL = unlimited. */
   componentLimit: number | null;
   /** Lifetime active component count as of server render. Local state
@@ -148,6 +151,13 @@ export function ComponentList({
   const pitchCheckboxLabel = _tradeLabels.pitchCheckboxLabel ?? 'Apply pitch calculation';
   // When true, only Rafter Pitch is offered (no Valley/Hip).
   const pitchHidesValleyHip = !!_tradeLabels.pitchHidesValleyHip;
+  // Label for the rafter pitch option - 'Rafter Pitch' for roofing, 'Rise over run' for others.
+  const pitchRafterLabel = _tradeLabels.pitchRafterLabel ?? 'Rafter Pitch';
+  // Material orders image label - flashings terminology only applies to roofing.
+  const isRoofingTrade = companyDefaultTrade === 'roofing';
+  const imageAssignLabel = isRoofingTrade ? 'Assign Flashings (Optional)' : 'Assign Image (Optional)';
+  const imageSelectPlaceholder = isRoofingTrade ? 'Select a flashing...' : 'Select an image...';
+  const imageHelperText = isRoofingTrade ? 'Add flashing drawings to use in material order forms' : 'Add images/drawings to use in material order forms';
   /** Local helper that picks the right unit suffix for a measurement type given the company's default system. */
   const unitForMeasurement = (mt: MeasurementType) =>
     getUnitLabel(mt as 'area' | 'lineal' | 'quantity' | 'fixed', companyMeasurementSystem);
@@ -186,6 +196,16 @@ export function ComponentList({
   const [measurementFilter, setMeasurementFilter] = useState<'all' | MeasurementType | 'rafter' | 'valley_hip'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Component collection (library) state
+  const [collections, setCollections] = useState(componentCollections);
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
+    componentCollections.find(c => c.is_bootstrap)?.id ?? componentCollections[0]?.id ?? ''
+  );
+  const [showCreateLibraryModal, setShowCreateLibraryModal] = useState(false);
+  const [newLibraryName, setNewLibraryName] = useState('');
+  const [creatingLibrary, setCreatingLibrary] = useState(false);
+  const [createLibraryError, setCreateLibraryError] = useState('');
 
   // Form state for dynamic fields
   const [formWasteType, setFormWasteType] = useState<WasteType>('none');
@@ -263,6 +283,13 @@ export function ComponentList({
     setFormPackPrice(c.pack_price != null ? String(c.pack_price) : '');
     setFormPackSize(c.pack_size != null ? String(c.pack_size) : '');
     setFormPackCoverageM2(c.pack_coverage_m2 != null ? String(c.pack_coverage_m2) : '');
+    // Seed collection dropdown with the component's existing collection, or bootstrap fallback.
+    const existingCollectionId = (c.collection_id as string | null) ?? '';
+    setSelectedCollectionId(
+      existingCollectionId && collections.some(col => col.id === existingCollectionId)
+        ? existingCollectionId
+        : collections.find(col => col.is_bootstrap)?.id ?? collections[0]?.id ?? ''
+    );
   }
 
   function cancelEdit() {
@@ -286,6 +313,23 @@ export function ComponentList({
 
   function removeFlashing(flashingId: string) {
     setAssignedFlashings(prev => prev.filter(id => id !== flashingId));
+  }
+
+  async function handleCreateLibrary() {
+    if (!newLibraryName.trim()) return;
+    setCreatingLibrary(true);
+    setCreateLibraryError('');
+    const result = await createComponentCollection(newLibraryName);
+    setCreatingLibrary(false);
+    if (!result.ok) {
+      setCreateLibraryError(result.message);
+      return;
+    }
+    const newCollection = { id: result.id, name: result.name, is_bootstrap: false };
+    setCollections(prev => [...prev, newCollection]);
+    setSelectedCollectionId(result.id);
+    setNewLibraryName('');
+    setShowCreateLibraryModal(false);
   }
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
@@ -348,8 +392,9 @@ export function ComponentList({
             formPricingStrategy === 'per_pack_coverage' && formPackCoverageM2
               ? Number(formPackCoverageM2)
               : null,
+          collection_id: selectedCollectionId || null,
         } as unknown as ComponentLibraryInsert)
-      : input;
+      : { ...input, collection_id: selectedCollectionId || null };
 
     try {
       const result = await createComponent(inputWithGenericTrades);
@@ -437,8 +482,9 @@ export function ComponentList({
             formPricingStrategy === 'per_pack_coverage' && formPackCoverageM2
               ? Number(formPackCoverageM2)
               : null,
+          collection_id: selectedCollectionId || null,
         } as unknown as Partial<ComponentLibraryInsert>)
-      : input;
+      : { ...input, collection_id: selectedCollectionId || null };
 
     try {
       const updated = await updateComponent(id, inputWithGenericTrades);
@@ -473,6 +519,50 @@ export function ComponentList({
 
   return (
     <div className="space-y-5">
+      {/* Create Library Modal */}
+      {showCreateLibraryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4">
+            <h2 className="text-base font-semibold text-slate-900 mb-4">Create New Library</h2>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Library Name</label>
+                <input
+                  type="text"
+                  value={newLibraryName}
+                  onChange={e => setNewLibraryName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleCreateLibrary(); } }}
+                  placeholder="e.g. Residential, Commercial"
+                  maxLength={80}
+                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  autoFocus
+                />
+              </div>
+              {createLibraryError && (
+                <p className="text-xs text-red-600">{createLibraryError}</p>
+              )}
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => void handleCreateLibrary()}
+                  disabled={creatingLibrary || !newLibraryName.trim()}
+                  className="flex-1 px-3 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50"
+                >
+                  {creatingLibrary ? 'Creating...' : 'Create Library'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowCreateLibraryModal(false); setNewLibraryName(''); setCreateLibraryError(''); }}
+                  className="px-3 py-2 text-sm rounded-full border border-slate-300 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Components</h1>
@@ -719,7 +809,7 @@ export function ComponentList({
                   <div data-copilot="component-pitch-type">
                     <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
                     <select name="default_pitch_type" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg">
-                      <option value="rafter">Rafter Pitch</option>
+                      <option value="rafter">{pitchRafterLabel}</option>
                       {!pitchHidesValleyHip && <option value="valley_hip">Valley/Hip Pitch</option>}
                     </select>
                   </div>
@@ -733,14 +823,14 @@ export function ComponentList({
                 <label htmlFor="eligible-orders" className="text-xs text-slate-700">Include in material orders</label>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Assign Flashings (Optional)</label>
+                <label className="block text-xs text-slate-500 mb-1">{imageAssignLabel}</label>
                 <div className="flex gap-2">
                   <select 
                     value={selectedFlashingId} 
                     onChange={(e) => setSelectedFlashingId(e.target.value)}
                     className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded"
                   >
-                    <option value="">Select a flashing...</option>
+                    <option value="">{imageSelectPlaceholder}</option>
                     {flashings.map(flashing => (
                       <option key={flashing.id} value={flashing.id}>
                         {flashing.name} {flashing.description && `- ${flashing.description}`}
@@ -777,9 +867,34 @@ export function ComponentList({
                     })}
                   </div>
                 )}
-                <p className="text-xs text-slate-400 mt-1">Add flashing drawings to use in material order forms</p>
+                <p className="text-xs text-slate-400 mt-1">{imageHelperText}</p>
               </div>
             </div>
+            {collections.length > 0 && (
+              <div className="border-t border-slate-200 pt-3 mt-3">
+                <label className="block text-xs text-slate-500 mb-1">Save to Library</label>
+                <div className="flex gap-2">
+                  <select
+                    value={selectedCollectionId}
+                    onChange={e => {
+                      if (e.target.value === '__create_new__') {
+                        setShowCreateLibraryModal(true);
+                      } else {
+                        setSelectedCollectionId(e.target.value);
+                      }
+                    }}
+                    className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded-lg"
+                  >
+                    {collections.map(col => (
+                      <option key={col.id} value={col.id}>
+                        {col.is_bootstrap ? 'My Components (default)' : col.name}
+                      </option>
+                    ))}
+                    <option value="__create_new__">+ Create New Library</option>
+                  </select>
+                </div>
+              </div>
+            )}
             <div className="flex gap-2 pt-2" data-copilot="component-save">
               <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50">
                 {saving ? 'Saving...' : 'Create'}
@@ -915,7 +1030,7 @@ export function ComponentList({
                         <div>
                           <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
                           <select name="default_pitch_type" defaultValue={comp.default_pitch_type} className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
-                            <option value="rafter">Rafter Pitch</option>
+                            <option value="rafter">{pitchRafterLabel}</option>
                             {!pitchHidesValleyHip && <option value="valley_hip">Valley/Hip Pitch</option>}
                           </select>
                         </div>
@@ -929,14 +1044,14 @@ export function ComponentList({
                       <label htmlFor={`eligible-orders-${comp.id}`} className="text-xs text-slate-700">Include in material orders</label>
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-500 mb-1">Assign Flashings (Optional)</label>
+                      <label className="block text-xs text-slate-500 mb-1">{imageAssignLabel}</label>
                       <div className="flex gap-2">
                         <select 
                           value={selectedFlashingId} 
                           onChange={(e) => setSelectedFlashingId(e.target.value)}
                           className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded"
                         >
-                          <option value="">Select a flashing...</option>
+                          <option value="">{imageSelectPlaceholder}</option>
                           {flashings.map(flashing => (
                             <option key={flashing.id} value={flashing.id}>
                               {flashing.name} {flashing.description && `- ${flashing.description}`}
@@ -973,9 +1088,34 @@ export function ComponentList({
                           })}
                         </div>
                       )}
-                      <p className="text-xs text-slate-400 mt-1">Add flashing drawings to use in material order forms</p>
+                      <p className="text-xs text-slate-400 mt-1">{imageHelperText}</p>
                     </div>
                   </div>
+                  {collections.length > 0 && (
+                    <div className="border-t border-slate-200 pt-3 mt-3">
+                      <label className="block text-xs text-slate-500 mb-1">Save to Library</label>
+                      <div className="flex gap-2">
+                        <select
+                          value={selectedCollectionId}
+                          onChange={e => {
+                            if (e.target.value === '__create_new__') {
+                              setShowCreateLibraryModal(true);
+                            } else {
+                              setSelectedCollectionId(e.target.value);
+                            }
+                          }}
+                          className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded-lg"
+                        >
+                          {collections.map(col => (
+                            <option key={col.id} value={col.id}>
+                              {col.is_bootstrap ? 'My Components (default)' : col.name}
+                            </option>
+                          ))}
+                          <option value="__create_new__">+ Create New Library</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex gap-2 pt-2">
                     <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50">
                       {saving ? 'Saving...' : 'Save'}

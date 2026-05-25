@@ -55,6 +55,12 @@ export interface TradeLabels {
    */
   pitchHidesValleyHip?: boolean;
   /**
+   * Label for the rafter pitch option in the pitch type dropdown.
+   * Defaults to "Rafter Pitch" (roofing). Non-roofing pitch trades use
+   * "Rise over run" to avoid roofing-specific terminology.
+   */
+  pitchRafterLabel?: string;
+  /**
    * Label shown next to the "Apply pitch calculation" checkbox in the
    * component form. Defaults to "Apply pitch calculation" when not
    * specified.
@@ -167,6 +173,7 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     pitchOptional: true,
     pitchHidesValleyHip: true,
     pitchCheckboxLabel: 'Apply pitch calculation (roof-space runs)',
+    pitchRafterLabel: 'Rise over run',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Ground Floor, Roof Space',
@@ -320,6 +327,7 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     pitchOptional: true,
     pitchHidesValleyHip: true,
     pitchCheckboxLabel: 'Apply angle / slope calculation',
+    pitchRafterLabel: 'Rise over run',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Front Garden, Driveway, Patio',
@@ -503,6 +511,7 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     pitchOptional: true,
     pitchHidesValleyHip: true,
     pitchCheckboxLabel: 'Apply pitch calculation (roof / loft)',
+    pitchRafterLabel: 'Rise over run',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Ceiling, Loft, Wall North',
@@ -644,6 +653,7 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     pitchOptional: true,
     pitchHidesValleyHip: true,
     pitchCheckboxLabel: 'Apply slope / pitch calculation (fall to drainage)',
+    pitchRafterLabel: 'Rise over run',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Driveway, Garage Slab, Patio',

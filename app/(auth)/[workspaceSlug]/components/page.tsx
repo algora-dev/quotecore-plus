@@ -1,4 +1,4 @@
-import { loadComponentLibrary, hasSeenComponentsIntro } from './actions';
+import { loadComponentLibrary, hasSeenComponentsIntro, loadComponentCollections } from './actions';
 import { ComponentList } from './component-list';
 import { ComponentsIntroModal } from './components-intro-modal';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
@@ -33,6 +33,7 @@ export default async function ComponentsPage(props: {params: Promise<{workspaceS
   // copilot auto-detect picks up and runs the `components` guide if the
   // user has copilot enabled.
   const introSeen = await hasSeenComponentsIntro();
+  const collections = await loadComponentCollections();
 
   return (
     <>
@@ -42,6 +43,7 @@ export default async function ComponentsPage(props: {params: Promise<{workspaceS
         workspaceSlug={workspaceSlug}
         companyMeasurementSystem={company.default_measurement_system}
         companyDefaultTrade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
+        componentCollections={collections}
         componentLimit={ent.componentLimit}
         componentCount={ent.componentCount}
         effectivePlanCode={ent.effectivePlanCode}

@@ -249,3 +249,51 @@ export async function deleteComponent(id: string) {
   if (error) throw new Error(error.message);
   revalidatePath('/components');
 }
+
+/**
+ * Load all component collections for the current company.
+ * Returns id + name + is_bootstrap, ordered bootstrap-first then alphabetically.
+ */
+export async function loadComponentCollections() {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('component_collections')
+    .select('id, name, is_bootstrap')
+    .eq('company_id', profile.company_id)
+    .order('is_bootstrap', { ascending: false })
+    .order('name');
+  if (error) throw new Error(`Failed to load component collections: ${error.message}`);
+  return data ?? [];
+}
+
+/**
+ * Create a new (non-bootstrap) component collection for the current company.
+ * Name must be non-empty and unique within the company.
+ */
+export async function createComponentCollection(
+  name: string,
+): Promise<{ ok: true; id: string; name: string } | { ok: false; message: string }> {
+  const trimmed = name.trim();
+  if (!trimmed) return { ok: false, message: 'Library name cannot be empty.' };
+  if (trimmed.length > 80) return { ok: false, message: 'Library name must be 80 characters or fewer.' };
+
+  try {
+    const profile = await requireCompanyContext();
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from('component_collections')
+      .insert({ company_id: profile.company_id, name: trimmed, is_bootstrap: false })
+      .select('id, name')
+      .single();
+    if (error) {
+      // Unique constraint on (company_id, name)
+      if (error.code === '23505') return { ok: false, message: 'A library with that name already exists.' };
+      return { ok: false, message: error.message };
+    }
+    revalidatePath('/components');
+    return { ok: true, id: data.id, name: data.name };
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
