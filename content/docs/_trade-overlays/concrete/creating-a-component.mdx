@@ -1,0 +1,93 @@
+---
+title: Creating a component
+description: Field-by-field walkthrough with three concrete examples.
+order: 2
+status: published
+updated: 2026-05-25
+trade: concrete
+---
+
+# Creating a component
+
+Walk through it once and you have the pattern for every component you will ever add. Most components take under a minute to set up.
+
+## Where to find it
+
+**Components > Add component**.
+
+## The fields
+
+**Component name.** Short and recognisable - "25 MPa pour - 100mm slab", "SL72 mesh", "Timber formwork".
+
+**Component type.** Main for normal job items. Extra for call-outs, pump hire, allowances, or anything you want hidden from the customer quote.
+
+**Measurement method.** How your component is normally measured:
+
+- **Volume** - the primary measure for concrete pours, measured in m³. Use this for ready-mix.
+- **Area** - slab area in m², mesh sheets, finishing, sealer.
+- **Irregular Area** - non-rectangular slabs, paths with curves, multi-shape pours.
+- **Lineal** - kerbs, edges, expansion joints, sawn cuts, perimeter strip.
+- **Multiple Kerb/Edge Runs (multi_lineal)** - several kerb or edge runs added together.
+- **Curved Kerb/Edge (curved_line)** - curved kerb following a driveway or radius.
+- **Count** - individual items - dowels, anchors, joints.
+- **Fixed** - pump hire, delivery, excavation, allowances.
+- **Hours / Days** - labor on the pour or finishing days.
+
+**Material pricing.** Tell the app how the product is sold so it can convert your measurement into the right number of units.
+
+- Pack by **volume** - the standard for ready-mix concrete. e.g. priced per m³ from the supplier, with a minimum truck/order size.
+- Pack by **area** - mesh sheets sold by sheet coverage (e.g. SL72 sheet = 6 m × 2.4 m = 14.4 m²).
+- Pack by **length** - formwork timber, expansion joint material sold by metre.
+- Pack by **count** - rebar bars, joints, dowels.
+- Single unit - per-bag, per-sheet pricing.
+
+**Labor price.** Per m³ placed, per m² finished, per metre of edge/joint, per hour, per day, or fixed per pour.
+
+**Waste type.** For concrete a percentage (3-5%) covers overpour and formwork bulge. For mesh use either a percentage or fixed allowance per pour. For formwork timber, 5% covers cuts.
+
+**Pitch multiplier.** Only relevant when your plan area is the flat plan view but the slab has a designed fall to drainage and you want surface area / sealer / mesh corrected for slope. Turn on rafter pitch (the only available pitch type) - it converts plan area to actual sloped surface area. For most slabs the fall is too small to matter; only use it when the drainage fall is significant.
+
+**Material orders.** Decide whether the order quantity rounds up to whole m³ (truck increments often round to 0.5 m³), whole sheets, or stays exact.
+
+## Walked example: 25 MPa pour - 100mm slab
+
+1. Component name: `25 MPa pour - 100mm slab`.
+2. Component type: Main.
+3. Measurement method: Volume.
+4. Material pricing: pack by volume, $245/m³ ready-mix.
+5. Labor: $48/m² (place + screed + power-trowel).
+6. Waste: 5% overpour.
+7. Pitch multiplier: off (fall is minor).
+8. Material orders: round up to 0.5 m³ increments.
+
+## Walked example: Timber formwork
+
+1. Component name: `Timber formwork - 100mm`.
+2. Component type: Main.
+3. Measurement method: Lineal.
+4. Material pricing: pack by length, $14/m (timber + stakes).
+5. Labor: $22/m (set, brace, strip).
+6. Waste: 5% (offcuts and reuse limits).
+7. Pitch multiplier: not applicable.
+8. Material orders: round up to whole metres.
+
+## Walked example: Pump hire (extra)
+
+1. Component name: `Concrete pump hire`.
+2. Component type: Extra.
+3. Measurement method: Fixed.
+4. Material pricing: $0.
+5. Labor: $850 fixed (full day pump + operator).
+6. Waste: none.
+7. Pitch multiplier: not applicable.
+8. Material orders: not applicable.
+
+## After you save
+
+The component is in the dropdown when you add components in [Manual Quote](/docs/building-a-quote/manual-quote) or [digital takeoff](/docs/building-a-quote/digital-takeoff). You can edit or delete it any time; editing does not change quotes you have already built.
+
+## Related
+
+- [Components vs Extras](/docs/concepts/components-vs-extras)
+- [Waste and pitch](/docs/concepts/waste-and-pitch)
+- [Plan vs Actual](/docs/concepts/plan-vs-actual)

@@ -1,0 +1,71 @@
+---
+title: Waste, material costs, and slope
+description: How the app converts your concrete measurements into the quantities you actually order.
+order: 4
+status: published
+updated: 2026-05-25
+trade: concrete
+---
+
+# Waste, material costs, and slope
+
+Three settings - waste, material pricing, and (for sloped slabs) the pitch multiplier - decide how the app turns a plan measurement into a quantity you can actually order. Set them on each component once and every quote stays consistent.
+
+## Waste
+
+Concrete waste varies by item:
+
+- **Ready-mix pour** - 3-5% covers overpour, formwork bulge, and load tolerance. 5% is sensible for normal slabs, higher for awkward footings.
+- **Reinforcing mesh** - 5-8% for cuts and overlaps (mesh laps are typically two cells).
+- **Rebar** - 5% for ties and overlaps.
+- **Formwork timber** - 5-10% for cuts and reuse limits.
+- **Sawn cuts / expansion joints** - usually no waste, you cut what you mark.
+
+Set waste against each component so it applies automatically every time you use that component.
+
+## Material price and pack sizing
+
+How a product is sold determines how the app converts measurement to order quantity. Get this right and you stop over- or under-ordering trucks.
+
+- **Pack by volume** - the standard for ready-mix concrete. Priced per m³ with a minimum truck/order quantity. The app converts area × thickness to volume, applies waste, and rounds up to your minimum increment.
+- **Pack by area** - mesh sheets (e.g. SL72 = 14.4 m² per sheet).
+- **Pack by length** - formwork timber, expansion joint material.
+- **Pack by count** - rebar bars, dowels, joint inserts.
+- **Single unit** - per-sheet, per-bar pricing.
+
+For pours, set a realistic minimum order increment. Many suppliers charge a small-load fee under 3 m³ - put that in a Fixed extra component.
+
+## Slope / pitch calculation (fall to drainage)
+
+For most slabs the design fall to drainage (typically 1-2%) is small enough to ignore. When the slope is significant - a steep ramp, a drained washdown bay, a sloped car wash pad - turn on the pitch multiplier to convert plan area into actual sloped surface area for mesh, sealer, finishing, and surface coatings.
+
+Only **rafter pitch** is supported. Valley and hip pitches don't apply to concrete work.
+
+When to use it:
+
+- A drained ramp where the surface area is materially larger than the plan area.
+- A sloped equipment pad where finishing area needs to match the slope.
+
+When to leave it off:
+
+- Standard slabs with 1-2% fall to drainage (the maths barely changes - 1% slope = ×1.00005 multiplier).
+- Footings, footings, vertical formwork.
+- Anything not measured plan-view.
+
+## A worked example
+
+A 100mm thick 25 MPa slab over 60 m² of garage floor:
+
+- Plan area: 60 m²
+- Slab thickness: 100mm = 0.1 m
+- Plan volume: 60 × 0.1 = 6.0 m³
+- Waste at 5%: 6.0 × 1.05 = 6.3 m³
+- Supplier minimum increment: 0.5 m³ → round up to **6.5 m³** ordered
+- Cost: 6.5 × $245/m³ = $1,592 concrete material
+
+The plan area is also driving mesh (one sheet of SL72 = 14.4 m² → 5 sheets after waste) and labor ($48/m² × 60 m² = $2,880 finish).
+
+## Related
+
+- [Plan vs Actual](/docs/concepts/plan-vs-actual)
+- [Creating a component](/docs/components/creating-a-component)

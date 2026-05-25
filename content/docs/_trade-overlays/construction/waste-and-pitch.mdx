@@ -1,0 +1,59 @@
+---
+title: Waste and material costs
+description: How the app converts your construction measurements into the quantities you actually order.
+order: 4
+status: published
+updated: 2026-05-25
+trade: construction
+---
+
+# Waste and material costs
+
+Two settings - waste and material pricing - decide how the app turns a measurement into a quantity you can actually order. Set them on each component once and every quote stays consistent.
+
+Construction is the umbrella trade. Pitch is not applied at trade level - if a specific component (like rafter framing measured from a plan) needs it, turn on the per-component pitch multiplier just for that component.
+
+## Waste
+
+Construction waste varies by material:
+
+- **Timber framing** - 7-10% for offcuts, miscuts, and damaged ends. 8% is a sensible default.
+- **Sheet cladding / lining** - 5-10% for sheet cuts around openings and corners.
+- **Concrete** - 3-5% for overpour and formwork bulge.
+- **Roofing sheets** - 5-8% for end laps and trims.
+- **Hardware (bolts, nails, fixings)** - 5-15% as small items are easy to lose or over-order.
+- **Subcontract allowances and PC sums** - zero waste.
+
+Set waste against each component so it applies automatically every time you use that component.
+
+## Material price and pack sizing
+
+How a product is sold determines how the app converts measurement to order quantity. Get this right and you stop over- or under-ordering on a multi-trade job.
+
+- **Pack by length** - timber and trim sold by metre or in standard lengths (e.g. 2.7m, 3.0m).
+- **Pack by area** - sheet products by m² coverage (e.g. 2.4×1.2 m = 2.88 m² per sheet).
+- **Pack by volume** - ready-mix concrete by m³ with truck minimums.
+- **Pack by count** - bars, bolts, fixings, windows, doors.
+- **Single unit** - per-item pricing.
+
+For construction jobs the supplier pack format varies more than other trades - set each component's pack accurately and the multi-discipline quote stays clean.
+
+## Per-component pitch
+
+For roof framing or sheeting measured from a plan view, the actual length on the slope is longer than the plan length. Turn on the per-component pitch multiplier (rafter pitch only - no valley/hip) on those specific components.
+
+For everything else - walls, slabs, cladding faces, fascia, decks - leave it off.
+
+## A worked example
+
+A small extension involves cladding 28 m² of external wall plus 14 m of framing studs at 600 centres:
+
+- **Cladding**: 28 m² × 1.07 (7% waste) = 29.96 m² → 29.96 ÷ 2.88 m²/sheet = 10.4 → **11 sheets** at $68 = $748
+- **Studs (90×45 H2)**: 14 m of wall at 600 centres = ~24 studs × 2.7m height = 64.8 m of timber. Add 8% waste: 64.8 × 1.08 = 70 m → 70 ÷ 2.7m length = **26 lengths** at $22.14 = $576
+
+Set both as their own components with their own pack and waste rules, and a mixed-discipline quote breaks down cleanly.
+
+## Related
+
+- [Plan vs Actual](/docs/concepts/plan-vs-actual)
+- [Creating a component](/docs/components/creating-a-component)

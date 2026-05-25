@@ -1,0 +1,70 @@
+---
+title: Glossary
+description: Short definitions of the QuoteCore+ terms and construction measurement types you will see in the app.
+order: 5
+status: published
+updated: 2026-05-25
+trade: construction
+---
+
+# Glossary
+
+Short definitions of the QuoteCore+ terms and construction measurement types you will see in the app.
+
+## Construction measurement types
+
+**Area.** A flat surface measured in m² - cladding, sheeting, roofing, decking, lining, slabs.
+
+**Irregular Area.** An area that isn't a simple rectangle - L-shapes, multi-section roofs or walls, raked walls.
+
+**Lineal.** A single continuous run measured in metres - framing, fascia, gutter, trim, formwork, beams.
+
+**Multiple Lines (multi_lineal).** Several lineal runs of the same material added together as one component line.
+
+**Wall Length × Height (multi_lineal_lxh).** Several wall runs measured plan-view as lengths with a shared height. Quick way to quote whole-wall framing or cladding.
+
+**Wall Height × Length (length_x_height).** A single wall measured length × height. Used for one-off walls.
+
+**Volume.** A measurement in m³ - concrete pours, bulk fill, footings.
+
+**Curved Line (curved_line).** A curved run measured along its curve - radius framing, decorative trim, curved fascia.
+
+**Count.** Individual items - windows, doors, fixtures, hardware items, beams, columns.
+
+**Fixed.** A flat amount that doesn't scale with measurement - subcontract allowances, PC sums, site costs, plant hire.
+
+**Hours / Days.** Labor billed by time rather than by quantity installed.
+
+## QuoteCore+ terms
+
+**Actual measurement.** The real-world measurement after waste (and per-component pitch, if used) has been applied to the plan measurement.
+
+**Component.** A reusable construction item with its own price, pack size, labor rate, and waste settings.
+
+**Customer quote.** The polished, customer-facing version of the quote. For construction work the default label is **Construction Works**.
+
+**Digital takeoff.** Tracing measurements directly on an uploaded plan, elevation, or site drawing.
+
+**Extra.** A non-core component bucket for subcontract allowances, PC sums, hidden items, or anything outside the main scope.
+
+**Manual quote.** A quote built by typing measurements straight into the quote builder, without a digital takeoff.
+
+**Pitch multiplier.** A factor that converts plan-view length or area into actual sloped length or area. Available per-component (not at trade level) for construction - turn it on for roof framing or sheeting measured from a plan view.
+
+**Plan measurement.** The raw measurement taken from the plan, before waste or pitch is applied.
+
+**Quote builder.** The screen where you assemble areas, components, prices, and notes into the final quote.
+
+**Takeoff.** The list of measurements that drives the quote - whether digital or manual.
+
+## Billing terms
+
+**Cap.** A numeric limit on something your plan allows - quotes per month, components total, storage bytes, etc. Hitting a cap blocks new additions but never deletes existing data. See [Tier limits](/docs/account/tier-limits).
+
+**Dunning.** The process Stripe (and we) follow when a renewal payment fails: automatic card retries, status escalation through `past_due` - `grace` - `suspended`, with chances to recover by updating the card. See [Billing](/docs/account/billing#payment-failures-and-dunning).
+
+**Effective plan.** What your account can actually use today. Usually the same as your purchased plan, but collapses to **Starter** during grace periods or after the trial ends.
+
+**Grace period.** A 10-day window after a payment failure where you keep read access but can't create new quotes. See [Billing](/docs/account/billing#payment-failures-and-dunning).
+
+**Trial.** A 14-day free taste of every feature, with tiny caps. One per account, ever. See [Free trial](/docs/account/trial).

@@ -1,0 +1,92 @@
+---
+title: Creating a component
+description: Field-by-field walkthrough with three insulation examples.
+order: 2
+status: published
+updated: 2026-05-25
+trade: insulation
+---
+
+# Creating a component
+
+Walk through it once and you have the pattern for every component you will ever add. Most components take under a minute to set up.
+
+## Where to find it
+
+**Components > Add component**.
+
+## The fields
+
+**Component name.** Short and recognisable - "Loft roll 200mm", "R3.5 ceiling batts", "Blown cellulose".
+
+**Component type.** Main for normal job items. Extra for call-outs, allowances, or anything you want hidden from the customer quote.
+
+**Measurement method.** How your component is normally measured:
+
+- **Area** - flat ceiling, floor, or roof batts/rolls measured straight off the plan.
+- **Irregular Area** - rooms, lofts, or wall sections that aren't simple rectangles.
+- **Wall Length × Height (multi_lineal_lxh)** - external or internal walls measured plan-view, with a shared height applied to multiple runs.
+- **Wall Height × Length (length_x_height)** - a single wall measured length × height.
+- **Multiple Edge Runs (multi_lineal)** - several edge bead, tape, or sealing runs added together.
+- **Lineal** - one continuous run of edge seal, perimeter tape, or expanding foam.
+- **Count** - bags of blown fill, rolls, batts by the pack, downlight covers, fire collars.
+- **Fixed** - delivery, access lift, allowances.
+- **Hours / Days** - labor.
+
+**Material pricing.** Tell the app how the product is sold so it can convert your measurement into the right number of packs.
+
+- Pack by **area** - a roll covers x m².
+- Pack by **length** - a roll is x metres long, used for lineal or area where width is fixed.
+- Pack by **count** - a pack contains x bags / batts.
+- Single unit - per-bag or per-roll pricing where one pack is one item.
+
+**Labor price.** Per m², per metre, per hour, per day, or a fixed amount per quote.
+
+**Waste type.** For batts and rolls a percentage waste (5-10%) usually covers offcuts. For blown insulation use a percentage to allow for settling/overfill. For tape and lineal seal a small percentage or a fixed allowance works.
+
+**Pitch multiplier.** Only relevant when you measure roof or loft insulation from a plan view and the material sits on the slope - turn on rafter pitch so plan area is converted to actual slope area. For ceiling-flat or floor work, leave it off.
+
+**Material orders.** Decide whether the order quantity rounds up to whole packs, rolls, or bags - or stays exact for items billed by the unit.
+
+## Walked example: R3.5 ceiling batts
+
+1. Component name: `R3.5 ceiling batts`.
+2. Component type: Main.
+3. Measurement method: Area.
+4. Material pricing: pack by area, 1 pack covers 8.6 m², $84/pack.
+5. Labor: $6/m² install.
+6. Waste: 7% (offcuts around penetrations).
+7. Pitch multiplier: off (flat ceiling).
+8. Material orders: round up to whole packs.
+
+## Walked example: Loft roll 200mm
+
+1. Component name: `Loft roll 200mm`.
+2. Component type: Main.
+3. Measurement method: Area.
+4. Material pricing: pack by area, 1 roll covers 6.84 m², $58/roll.
+5. Labor: $5/m².
+6. Waste: 8%.
+7. Pitch multiplier: on (rafter pitch) - plan loft area gets multiplied to actual roof slope area where roll is laid between rafters.
+8. Material orders: round up to whole rolls.
+
+## Walked example: Delivery & access (extra)
+
+1. Component name: `Delivery & access`.
+2. Component type: Extra.
+3. Measurement method: Fixed.
+4. Material pricing: $0 (no material).
+5. Labor: $120 fixed.
+6. Waste: none.
+7. Pitch multiplier: off.
+8. Material orders: not applicable.
+
+## After you save
+
+The component is in the dropdown when you add components in [Manual Quote](/docs/building-a-quote/manual-quote) or [digital takeoff](/docs/building-a-quote/digital-takeoff). You can edit or delete it any time; editing does not change quotes you have already built.
+
+## Related
+
+- [Components vs Extras](/docs/concepts/components-vs-extras)
+- [Waste and pitch](/docs/concepts/waste-and-pitch)
+- [Plan vs Actual](/docs/concepts/plan-vs-actual)

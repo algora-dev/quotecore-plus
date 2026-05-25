@@ -1,0 +1,63 @@
+---
+title: Creating a component
+description: Field-by-field walkthrough with three foundation examples.
+order: 2
+---
+
+# Creating a component
+
+One screen, a handful of fields, and you have a reusable foundation line.
+
+## Where to find it
+
+Components > Add component.
+
+## The fields
+
+**Measurement method.** Pick how this component gets measured on a job:
+
+- **Area** — slabs, DPM, waterproofing, gas membrane
+- **Irregular Area** — slabs with cut-outs, oversite areas with awkward shapes
+- **Lineal** — strip footings, ground beams, single perimeter footing runs, edge formwork
+- **Multiple Footings** — several footing or beam runs gathered into one component
+- **Curved Footing** — sweeping or curved footing runs around bays or feature walls
+- **Volume** — concrete pours, excavation, fill, sub-base
+- **Count** — piers, pads, pile caps, starter bar bundles, individual fittings
+- **Fixed** — flat-fee items like surveying, building control, site setup
+- **Hours / Days** — labor crews, plant hire, machine time, day-rate excavator
+
+**Material price.** Per unit (per m², per m, per m³, per item) or per pack. Concrete is typically priced per m³ from the mix supplier. Rebar is priced per m or per kg. Pad foundations are priced per item. Set the pack size if a material comes in fixed quantities (mesh sheets, rebar lengths) so the order rounds up.
+
+**Labor price.** Per unit of the same measurement, or roll labor into hours/days as a separate component for crews and plant hire.
+
+**Waste type.** For foundations the most useful options are:
+
+- **Fixed** — concrete is usually ordered as a fixed extra on top of calculated volume (the truck adds half a metre for spillage/over-dig)
+- **Percentage** — 5% for concrete to cover over-dig and spillage, 5–10% for mesh and rebar offcuts, 10% for formwork
+- **None** — for count items like piers where you order exactly what's installed
+
+**Pitch multiplier.** Not applicable for foundation work. Foundations are measured flat from plan view. Leave the slope setting off.
+
+**Material orders.** Tag the supplier and order code so the order list pulls clean line items — concrete supplier separate from steel supplier separate from plant hire.
+
+## Walked example 1: Ground floor slab — 150 mm concrete
+
+Volume component. Per m³. £140 material (C25/30 mix), £45 labor. 5% waste percentage to cover over-dig and spillage. Pack note: concrete supplier rounds to 0.5 m³ increments.
+
+## Walked example 2: Strip footing — 600×300
+
+Lineal component. Per m. Material price covers concrete + rebar at this section size (£95 per m), labor at £60 per m. 10% waste percentage.
+
+## Walked example 3: Building control inspection fees
+
+Fixed component. £680. Zero waste. Tag as an extra so it lives outside the measured area totals.
+
+## After you save
+
+The component shows up in the Components list and is available in every quote you create from now on. Edit it any time — changes only affect new quotes, not ones already sent.
+
+## Related
+
+- [Components overview](/docs/components/overview)
+- [Digital takeoff](/docs/building-a-quote/digital-takeoff)
+- [Waste and material costs](/docs/components/waste-and-pitch)

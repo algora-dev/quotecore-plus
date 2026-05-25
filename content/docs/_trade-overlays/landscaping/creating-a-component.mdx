@@ -1,0 +1,65 @@
+---
+title: Creating a component
+description: Field-by-field walkthrough with three landscaping examples.
+order: 2
+---
+
+# Creating a component
+
+One screen, a handful of fields, and you have a reusable landscaping line.
+
+## Where to find it
+
+Components > Add component.
+
+## The fields
+
+**Measurement method.** Pick how this component gets measured on a job:
+
+- **Area** — turf, paving, decking surface, ground cover
+- **Irregular Area** — lawns and beds with curved or odd-shaped boundaries
+- **Lineal** — edging, kerbing, single retaining wall runs, irrigation pipe
+- **Multiple Lines** — several runs of edging or kerb in one component
+- **Wall Length × Height** (multi_lineal_lxh) — retaining walls measured as several runs with heights
+- **Wall Height × Length** (length_x_height) — a single wall face by its height and length
+- **Volume** — topsoil, mulch, aggregate, sand, gravel
+- **Curved Line** — sweeping path edges, garden borders, curved kerbs
+- **Count** — plants, trees, shrubs, sprinklers, posts
+- **Fixed** — flat-fee items like a design package or callout
+- **Hours / Days** — labor crews, plant hire, machine time
+
+**Material price.** Per unit (per m², per m, per m³, per item) or per pack. If you buy turf in 1 m² rolls, set per unit. If mulch comes in 1 m³ bulk bags, set the pack size and QuoteCore+ rounds up.
+
+**Labor price.** Per unit of the same measurement, or roll it into hours/days as a separate component.
+
+**Waste type.** For landscaping the most useful options are:
+
+- **Percentage** — 5–10% for turf, 10–15% for paving and tile cuts
+- **Fixed** — extra bags of mulch or sleepers kept on site
+- **None** — for count items like plants where you buy exactly what's needed
+
+**Angle / Slope multiplier.** Use this when the component is measured from plan view but the actual surface is sloped — driveway gradients, batters, retaining wall faces on a slope. Only the rafter-style slope is available for landscaping (no valley or hip variants). Skip it for flat lawns and patios.
+
+**Material orders.** Tag the supplier and order code so the order list pulls clean line items.
+
+## Walked example 1: Turf supply and lay
+
+Area component. Per m². £4.50 material, £6.00 labor. 10% waste percentage. No slope multiplier on a flat lawn. Add a pack note for 1 m² rolls.
+
+## Walked example 2: Timber sleeper retaining wall
+
+Wall Length × Height component. Per m² of wall face. £85 material (sleepers + fixings), £55 labor. 5% waste. Add the slope multiplier if the wall is on a graded site so the face area is correct.
+
+## Walked example 3: Site clearance and tip fee
+
+Fixed component. £450. Zero waste. Tag as an extra so it lives outside the measured area totals.
+
+## After you save
+
+The component shows up in the Components list and is available in every quote you create from now on. Edit it any time — changes only affect new quotes, not ones already sent.
+
+## Related
+
+- [Components overview](/docs/components/overview)
+- [Digital takeoff](/docs/building-a-quote/digital-takeoff)
+- [Waste, material costs, and slope](/docs/components/waste-and-pitch)

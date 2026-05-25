@@ -1,0 +1,95 @@
+---
+title: Creating a component
+description: Field-by-field walkthrough with three painting examples.
+order: 2
+status: published
+updated: 2026-05-25
+trade: painting
+---
+
+# Creating a component
+
+Walk through it once and you have the pattern for every component you will ever add. Most components take under a minute to set up.
+
+## Where to find it
+
+**Components > Add component**.
+
+## The fields
+
+**Component name.** Short and recognisable - "Wall emulsion - 2 coat", "Skirting gloss", "Internal door".
+
+**Component type.** Main for normal job items. Extra for call-outs, dust sheets, allowances, or anything you want hidden from the customer quote.
+
+**Measurement method.** How your component is normally measured:
+
+- **Area** - walls and ceilings measured face-on. Used for paint billed by coverage.
+- **Irregular Area** - non-rectangular walls or ceilings, raked walls, bay extensions.
+- **Wall Length × Height (multi_lineal_lxh)** - several wall runs measured plan-view with a shared height. Quick way to quote whole-room walls.
+- **Wall Height × Length (length_x_height)** - a single wall measured length × height.
+- **Multiple Trim Runs (multi_lineal)** - several skirting, architrave, or trim runs added together.
+- **Curved Trim Run (curved_line)** - curved skirting, arched architrave, or bay reveal.
+- **Lineal** - single continuous run of skirting, architrave, dado, or picture rail.
+- **Count** - per door, per window, per radiator, per shutter.
+- **Fixed** - call-out, site protection, allowance.
+- **Hours / Days** - labor.
+
+**Material pricing.** Tell the app how the paint is sold and what it covers so it can convert your measurement into tins.
+
+- Pack by **area** (coverage) - e.g. 5L tin covers 60 m² (two coats covers 30 m²). This is the standard for wall/ceiling paint, primer, and undercoat.
+- Pack by **length** - rare for paint, sometimes used for prepped trim ordered per metre.
+- Pack by **count** - tins or boxes per pack.
+- Single unit - per-tin pricing.
+
+For paint, coverage per litre is the most important number. Use the supplier's two-coat coverage, not the optimistic one-coat figure.
+
+**Labor price.** Per m², per metre, per door, per window, per hour, per day, or fixed per quote.
+
+**Waste type.** A percentage covers most paint waste (in-tin residue, rollers, touch-ups). 5-10% is a sensible band.
+
+**Pitch multiplier.** Not applicable for painting work - omit this setting.
+
+**Material orders.** Decide whether the order quantity rounds up to whole tins or stays exact for items billed by the unit.
+
+## Walked example: Wall emulsion - 2 coat
+
+1. Component name: `Wall emulsion - 2 coat`.
+2. Component type: Main.
+3. Measurement method: Area.
+4. Material pricing: pack by area, 5L tin covers 30 m² (2 coats), $52/tin.
+5. Labor: $9/m².
+6. Waste: 8%.
+7. Pitch multiplier: not applicable.
+8. Material orders: round up to whole tins.
+
+## Walked example: Skirting gloss
+
+1. Component name: `Skirting gloss - prep & 2 coat`.
+2. Component type: Main.
+3. Measurement method: Lineal.
+4. Material pricing: pack by count, 1L tin covers ~70 lineal m on 150mm skirting, $34/tin.
+5. Labor: $7/m.
+6. Waste: 5%.
+7. Pitch multiplier: not applicable.
+8. Material orders: round up to whole tins.
+
+## Walked example: Call-out & site protection (extra)
+
+1. Component name: `Call-out & site protection`.
+2. Component type: Extra.
+3. Measurement method: Fixed.
+4. Material pricing: $0 material.
+5. Labor: $180 fixed (dust sheets, masking, setup time).
+6. Waste: none.
+7. Pitch multiplier: not applicable.
+8. Material orders: not applicable.
+
+## After you save
+
+The component is in the dropdown when you add components in [Manual Quote](/docs/building-a-quote/manual-quote) or [digital takeoff](/docs/building-a-quote/digital-takeoff). You can edit or delete it any time; editing does not change quotes you have already built.
+
+## Related
+
+- [Components vs Extras](/docs/concepts/components-vs-extras)
+- [Waste and pitch](/docs/concepts/waste-and-pitch)
+- [Plan vs Actual](/docs/concepts/plan-vs-actual)

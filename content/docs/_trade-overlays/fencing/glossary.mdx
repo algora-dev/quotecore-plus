@@ -1,0 +1,66 @@
+---
+title: Glossary
+description: Short definitions of the QuoteCore+ terms and fencing measurement types you will see in the app.
+order: 5
+status: published
+updated: 2026-05-25
+trade: fencing
+---
+
+# Glossary
+
+Short definitions of the QuoteCore+ terms and fencing measurement types you will see in the app.
+
+## Fencing measurement types
+
+**Lineal.** The primary fence measurement. A single continuous run measured in metres - palings, panels, rails, chain-link.
+
+**Multiple Fence Runs (multi_lineal).** Several fence runs added together as one component line. Useful when the same fence wraps around a property in several directions.
+
+**Panel Length × Height (multi_lineal_lxh).** Several panel runs measured plan-view as lengths with a shared height. Used for clad/sheet panel systems where panel height varies by job.
+
+**Panel Height × Length (length_x_height).** A single panel section measured length × height.
+
+**Area.** Sheet panel area, mesh area for tennis courts or pool enclosures, or general enclosed regions where the material is priced per m².
+
+**Irregular Area.** Non-rectangular mesh or sheet runs around odd-shaped boundaries.
+
+**Curved Fence Run (curved_line).** A curved section measured along its curve - driveway radius, garden boundary.
+
+**Count.** Individual items - posts, gates, latches, hinges, fittings, drop bolts.
+
+**Fixed.** A flat amount that doesn't scale with measurement - old fence removal, dump fees, site allowances.
+
+**Hours / Days.** Labor billed by time rather than by quantity installed.
+
+## QuoteCore+ terms
+
+**Actual measurement.** The real-world measurement after waste has been applied to the plan measurement.
+
+**Component.** A reusable fencing item with its own price, pack size, labor rate, and waste settings.
+
+**Customer quote.** The polished, customer-facing version of the quote. For fencing work the default label is **Fencing Works**.
+
+**Digital takeoff.** Tracing measurements directly on an uploaded site plan or boundary drawing.
+
+**Extra.** A non-core component bucket for call-outs, removal allowances, hidden items, or anything outside the main scope.
+
+**Manual quote.** A quote built by typing measurements straight into the quote builder, without a digital takeoff.
+
+**Plan measurement.** The raw measurement taken from the plan, before waste is applied.
+
+**Quote builder.** The screen where you assemble areas, components, prices, and notes into the final quote.
+
+**Takeoff.** The list of measurements that drives the quote - whether digital or manual.
+
+## Billing terms
+
+**Cap.** A numeric limit on something your plan allows - quotes per month, components total, storage bytes, etc. Hitting a cap blocks new additions but never deletes existing data. See [Tier limits](/docs/account/tier-limits).
+
+**Dunning.** The process Stripe (and we) follow when a renewal payment fails: automatic card retries, status escalation through `past_due` - `grace` - `suspended`, with chances to recover by updating the card. See [Billing](/docs/account/billing#payment-failures-and-dunning).
+
+**Effective plan.** What your account can actually use today. Usually the same as your purchased plan, but collapses to **Starter** during grace periods or after the trial ends.
+
+**Grace period.** A 10-day window after a payment failure where you keep read access but can't create new quotes. See [Billing](/docs/account/billing#payment-failures-and-dunning).
+
+**Trial.** A 14-day free taste of every feature, with tiny caps. One per account, ever. See [Free trial](/docs/account/trial).

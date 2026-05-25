@@ -1,0 +1,52 @@
+---
+title: Waste and material costs
+description: How the app converts your fencing measurements into the quantities you actually order.
+order: 4
+status: published
+updated: 2026-05-25
+trade: fencing
+---
+
+# Waste and material costs
+
+Two settings - waste and material pricing - decide how the app turns a measurement into a quantity you can actually order. Set them on each component once and every quote stays consistent.
+
+## Waste
+
+Fencing waste is usually small but worth setting:
+
+- **Palings / planks** - 5-8% covers cuts to length at end posts and corners.
+- **Rails (timber)** - 5% for end cuts and butt-joins.
+- **Sheet panels** - either a small percentage, or a fixed allowance per run for awkward corner cuts.
+- **Wire and mesh** - 3-5% for tensioning slack and joins.
+- **Posts and gates** - zero. You buy what you set.
+
+Set waste against each component so it applies automatically every time you use that component.
+
+## Material price and pack sizing
+
+How a product is sold determines how the app converts measurement to order quantity. Get this right and you stop over- or under-ordering.
+
+- **Pack by length** - the standard for fencing. Panels and rails sold by lineal metre, palings sold per length.
+- **Pack by area** - sheet panel material sold by m² for clad systems.
+- **Pack by count** - posts, gates, latches, hinges sold as discrete items.
+- **Single unit** - per-post, per-gate, per-fitting pricing.
+
+For palings, factor in the spacing (e.g. 90mm palings at 100mm centres = palings per metre × waste).
+
+## A worked example
+
+35 lineal metres of 1.8m colorbond fence with one corner and one gate post:
+
+- Plan length: 35 m
+- Waste at 3%: 35 × 1.03 = 36.05 m
+- Panel pricing: $78/m → 36.05 × $78 = **$2,812 material**
+- Posts (separate component, count): 1 corner + 1 gate + intermediates at 2.4m spacing → 16 posts
+- Labor: 35 m × $42/m = $1,470 install + 16 × $55/post = $880
+
+Set the panels as a Lineal component with 3% waste and the posts as a Count component with zero waste, and the quote breaks down cleanly.
+
+## Related
+
+- [Plan vs Actual](/docs/concepts/plan-vs-actual)
+- [Creating a component](/docs/components/creating-a-component)

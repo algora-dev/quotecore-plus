@@ -1,0 +1,63 @@
+---
+title: Glossary
+description: Short definitions of the QuoteCore+ terms and tiling measurement types you will see in the app.
+order: 5
+---
+
+# Glossary
+
+## Tiling measurement types
+
+**Area.** A flat surface measured in m². Floor tiles, waterproofing, adhesive and grout coverage.
+
+**Irregular Area.** An area with a non-rectangular shape, traced as a polygon. Shaped floors, splashbacks with cut-outs.
+
+**Wall Length × Height (multi_lineal_lxh).** Multiple wall faces measured as a list of runs with individual heights. Standard for showers and full bathroom walls.
+
+**Wall Height × Length (length_x_height).** A single wall face measured by its height and length. Standard for splashbacks and feature walls.
+
+**Multiple Trim Runs.** Several lineal trim runs bundled into one component.
+
+**Curved Trim Run.** A flowing or curved length of trim — around a niche, feature, or shaped edge.
+
+**Lineal.** A single run of trim or edge profile measured in metres.
+
+**Count.** A whole-number tally — corner pieces, niches, shower drains, fittings.
+
+**Fixed.** A flat-fee line — delivery charges, removal of existing tiles, lift fees.
+
+**Hours / Days.** Time-based pricing for fitting crews or day-rate labor.
+
+## QuoteCore+ terms
+
+**Actual measurement.** A real-world number entered directly. Waste still applies.
+
+**Component.** A re-usable line you put in quotes. Has a name, measurement type, material price, labor price, and waste settings. See [Components overview](/docs/components/overview).
+
+**Customer quote.** The version of the quote your customer sees, labelled **Tiling Works**. See [customer quote editor](/docs/customer-facing/customer-quote-editor).
+
+**Digital takeoff.** Measuring directly off a digital floor plan or elevation drawing. See [Digital takeoff](/docs/building-a-quote/digital-takeoff).
+
+**Extra.** A line you want priced and recorded but kept separate from the main components. See [Components vs Extras](/docs/concepts/components-vs-extras).
+
+**Manual quote.** A quote built line-by-line for users who already have their measurements. See [Manual Quote](/docs/building-a-quote/manual-quote).
+
+**Pitch multiplier.** Not applicable for tiling — floors and walls are measured flat. The setting exists in the app but isn't used here.
+
+**Plan measurement.** A measurement taken from a plan or drawing. See [Plan vs Actual](/docs/concepts/plan-vs-actual).
+
+**Quote builder.** The flow that builds a quote: Areas, Components, Extras, Review. See [Quote builder](/docs/building-a-quote/quote-builder).
+
+**Takeoff.** The act of measuring a job — either digital (from a plan) or manual (on site or from your own notes).
+
+## Billing terms
+
+**Cap.** A numeric limit on something your plan allows - quotes per month, components total, storage bytes, etc. Hitting a cap blocks new additions but never deletes existing data. See [Tier limits](/docs/account/tier-limits).
+
+**Dunning.** The process Stripe (and we) follow when a renewal payment fails: automatic card retries, status escalation through `past_due` - `grace` - `suspended`, with chances to recover by updating the card. See [Billing](/docs/account/billing#payment-failures-and-dunning).
+
+**Effective plan.** What your account can actually use today. Usually the same as your purchased plan, but collapses to **Starter** during grace periods or after the trial ends.
+
+**Grace period.** A 10-day window after a payment failure where you keep read access but can't create new quotes. See [Billing](/docs/account/billing#payment-failures-and-dunning).
+
+**Trial.** A 14-day free taste of every feature, with tiny caps. One per account, ever. See [Free trial](/docs/account/trial).

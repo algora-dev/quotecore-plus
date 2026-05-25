@@ -1,0 +1,93 @@
+---
+title: Creating a component
+description: Field-by-field walkthrough with three fencing examples.
+order: 2
+status: published
+updated: 2026-05-25
+trade: fencing
+---
+
+# Creating a component
+
+Walk through it once and you have the pattern for every component you will ever add. Most components take under a minute to set up.
+
+## Where to find it
+
+**Components > Add component**.
+
+## The fields
+
+**Component name.** Short and recognisable - "1.8m colorbond panel", "100×100 H4 post", "Single pedestrian gate".
+
+**Component type.** Main for normal job items. Extra for call-outs, removal allowances, or anything you want hidden from the customer quote.
+
+**Measurement method.** How your component is normally measured:
+
+- **Lineal** - the primary fence measurement. A single continuous run measured in metres - palings, panels, rails, chain-link.
+- **Multiple Fence Runs (multi_lineal)** - several fence runs added together where the same product is used.
+- **Panel Length × Height (multi_lineal_lxh)** - several panel runs measured plan-view as lengths with a shared height. Used for clad/sheet panel pricing where height varies by job.
+- **Panel Height × Length (length_x_height)** - a single panel section measured length × height.
+- **Area** - sheet panel area, mesh area for tennis courts or pool fencing.
+- **Irregular Area** - non-rectangular mesh or sheet runs.
+- **Curved Fence Run (curved_line)** - curved sections following a driveway or boundary.
+- **Count** - posts, gates, latches, hinges, fittings.
+- **Fixed** - removal of old fence, dump fees, allowances.
+- **Hours / Days** - labor.
+
+**Material pricing.** Tell the app how the product is sold so it can convert your measurement into the right number of units.
+
+- Pack by **length** - panels or palings sold per metre, rails per length of timber.
+- Pack by **area** - sheet panel material sold by m².
+- Pack by **count** - posts, gates, fittings sold as discrete items.
+- Single unit - per-post or per-panel pricing.
+
+**Labor price.** Per lineal metre installed, per post, per gate, per hour, per day, or fixed per quote.
+
+**Waste type.** For palings, rails, and wire a small percentage (5%) covers offcuts. For panels often a fixed allowance per run is better. For posts and gates, waste is usually zero - you buy what you install.
+
+**Pitch multiplier.** Not applicable for fencing work - omit this setting.
+
+**Material orders.** Decide whether the order quantity rounds up to whole panels, posts, or stays exact for lineal metre items.
+
+## Walked example: 1.8m colorbond fence
+
+1. Component name: `1.8m colorbond fence`.
+2. Component type: Main.
+3. Measurement method: Lineal.
+4. Material pricing: pack by length, $78 per lineal metre (panel + rails).
+5. Labor: $42/m install.
+6. Waste: 3% (panel cuts at corners).
+7. Pitch multiplier: not applicable.
+8. Material orders: round up to whole metres.
+
+## Walked example: 100×100 H4 corner posts
+
+1. Component name: `100×100 H4 corner post`.
+2. Component type: Main.
+3. Measurement method: Count.
+4. Material pricing: single unit, $34/post.
+5. Labor: $55 per post (dig + concrete in).
+6. Waste: 0 (count what you set).
+7. Pitch multiplier: not applicable.
+8. Material orders: exact count.
+
+## Walked example: Old fence removal & dump (extra)
+
+1. Component name: `Old fence removal & dump`.
+2. Component type: Extra.
+3. Measurement method: Fixed.
+4. Material pricing: $0.
+5. Labor: $280 fixed (removal + tip fees).
+6. Waste: none.
+7. Pitch multiplier: not applicable.
+8. Material orders: not applicable.
+
+## After you save
+
+The component is in the dropdown when you add components in [Manual Quote](/docs/building-a-quote/manual-quote) or [digital takeoff](/docs/building-a-quote/digital-takeoff). You can edit or delete it any time; editing does not change quotes you have already built.
+
+## Related
+
+- [Components vs Extras](/docs/concepts/components-vs-extras)
+- [Waste and pitch](/docs/concepts/waste-and-pitch)
+- [Plan vs Actual](/docs/concepts/plan-vs-actual)

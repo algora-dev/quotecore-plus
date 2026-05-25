@@ -1,0 +1,43 @@
+---
+title: Waste and material costs
+description: How waste and volume-based pricing turn measurements into foundation order quantities.
+order: 4
+---
+
+Two settings on every component decide how a raw measurement becomes the number you actually order: waste and material price/pack sizing. For foundations, volume pricing dominates and supplier rounding rules matter.
+
+## Waste
+
+Foundation waste is mostly about over-dig, spillage, and offcuts on reinforcement.
+
+- **Concrete:** 5% percentage, or a fixed half-cubic-metre buffer per pour. Suppliers round to 0.25 or 0.5 m³ increments anyway, so a fixed extra often makes more sense
+- **Excavation:** Usually no waste setting — you're moving what you dig
+- **Mesh and rebar:** 5–10% percentage to cover offcuts and laps
+- **Formwork:** 10% percentage for cuts and re-use losses
+- **DPM and membrane:** 5–10% percentage for laps and tape sealing
+- **Piers, pads, fittings:** None — count what's installed
+
+## Material price and pack sizing
+
+Two strategies depending on how you buy:
+
+**Per unit.** Concrete per m³, rebar per m or per kg, piers per item. Simple and exact for most foundation materials.
+
+**Per pack.** Mesh comes in fixed sheet sizes (typically 2.4 × 4.8 m). DPM comes in rolls of fixed width and length. Rebar comes in fixed-length bars (typically 12 m). Set the pack size and unit price, and QuoteCore+ rounds the order up to whole sheets, rolls, or bars.
+
+For concrete, set the supplier's rounding increment (commonly 0.25 m³) so the order matches what the truck actually delivers.
+
+## Pitch multiplier
+
+Not applicable for foundation work. Foundations are measured flat from plan view. Leave it off.
+
+## A worked example
+
+10 m × 8 m slab, 150 mm thick. Plan area: 80 m². Volume: 80 × 0.15 = 12 m³. Waste at 5%: 12.6 m³. Supplier rounding to 0.25 m³: order 12.75 m³. Mesh: 80 m² + 10% laps = 88 m² → 8 sheets of 2.4×4.8 m (~92 m²). DPM: 80 m² + 10% = 88 m² → 1 roll of 25×4 m (100 m²).
+
+That's what the customer is charged for material on the quote, and what your supplier sees on the order list.
+
+## Related
+
+- [Components overview](/docs/components/overview)
+- [Plan vs Actual](/docs/concepts/plan-vs-actual)

@@ -1,0 +1,69 @@
+---
+title: Waste, material costs, and pitch
+description: How the app converts your insulation measurements into the quantities you actually order.
+order: 4
+status: published
+updated: 2026-05-25
+trade: insulation
+---
+
+# Waste, material costs, and pitch
+
+Three settings - waste, material pricing, and (for roof/loft work) pitch - decide how the app turns a plan measurement into a quantity you can actually order. Set them on each component once and every quote stays consistent.
+
+## Waste
+
+Insulation almost always has some waste:
+
+- **Batts and rolls** - 5-10% covers offcuts at edges, around penetrations, and between irregular joists. 7% is a sensible default.
+- **Blown / loose-fill** - 5-8% to allow for settling and slight overfill in tight corners.
+- **Vapour barrier / membrane** - 8-12% because of overlaps and tears at junctions.
+- **Edge tape / sealing bead** - either a small percentage or a fixed allowance per quote.
+
+Set waste against each component so it applies automatically every time you use that component.
+
+## Material price and pack sizing
+
+How a product is sold determines how the app converts measurement to order quantity. Get this right and you stop over- or under-ordering.
+
+- **Pack by area** - e.g. a roll covers 6.84 m². The app divides plan-adjusted area (after waste and pitch) by 6.84 and rounds up.
+- **Pack by length** - a roll is x metres long. Useful for vapour barrier sold by linear metre at a fixed width.
+- **Pack by count** - x bags per pallet for blown insulation, or x batts per pack.
+- **Single unit** - per-bag or per-pack price where one unit equals one pack.
+
+Use realistic pack sizes from your supplier - it's the single biggest driver of accurate material cost.
+
+## Pitch calculation (roof / loft)
+
+When you measure a loft or roof space from a floor plan, you're seeing the plan area, not the actual slope area where the insulation sits between or over rafters. Turning on the **pitch multiplier** corrects for that.
+
+Only **rafter pitch** is supported. Valley and hip pitches are not used for insulation - they don't apply to the way batts and rolls are laid.
+
+When to use it:
+
+- Loft roll between rafters on a sloped roof.
+- Insulation laid over rafters in a vaulted ceiling.
+- Any roof-space insulation where the material follows the slope.
+
+When to leave it off:
+
+- Flat ceiling insulation laid on joists (the plan area is the actual area).
+- Floor insulation.
+- Wall insulation (use wall length × height instead).
+
+## A worked example
+
+Loft roll 200mm laid between rafters on a 25° pitch roof:
+
+- Plan loft area: 80 m²
+- Rafter pitch multiplier (25°): ×1.103 → 88.2 m² actual slope area
+- Waste at 8%: 88.2 × 1.08 = 95.3 m²
+- Roll coverage: 6.84 m² per roll
+- Order quantity: 95.3 ÷ 6.84 = 13.9 → **14 rolls**
+
+Same loft without the pitch multiplier turned on would have ordered 13 rolls and come up short.
+
+## Related
+
+- [Plan vs Actual](/docs/concepts/plan-vs-actual)
+- [Creating a component](/docs/components/creating-a-component)

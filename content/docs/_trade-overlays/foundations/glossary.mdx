@@ -1,0 +1,61 @@
+---
+title: Glossary
+description: Short definitions of the QuoteCore+ terms and foundation measurement types you will see in the app.
+order: 5
+---
+
+# Glossary
+
+## Foundation measurement types
+
+**Area.** A flat surface measured in m². Slabs, DPM, waterproofing, gas membrane, mesh coverage.
+
+**Irregular Area.** An area with a non-rectangular shape, traced as a polygon. Shaped slabs, stepped slabs, oversite with cut-outs.
+
+**Lineal.** A single run measured in metres. Strip footings, ground beams, perimeter footings, formwork edges, rebar runs.
+
+**Multiple Footings.** Several lineal footing or beam runs gathered into one component — useful for jobs with several footing types or multiple beam grids.
+
+**Curved Footing.** A flowing or curved footing run measured along its centreline — for bays, rounded corners, shaped footprints.
+
+**Volume.** Measured in m³. Concrete pours, excavation, fill, sub-base.
+
+**Count.** A whole-number tally — piers, pads, pile caps, starter bar bundles.
+
+**Fixed.** A flat-fee line — surveying, building control fees, site setup, mobilisation.
+
+**Hours / Days.** Time-based pricing for labor crews, plant hire, excavator day rate.
+
+## QuoteCore+ terms
+
+**Actual measurement.** A real-world number entered directly. Waste still applies.
+
+**Component.** A re-usable line you put in quotes. Has a name, measurement type, material price, labor price, and waste settings. See [Components overview](/docs/components/overview).
+
+**Customer quote.** The version of the quote your customer sees, labelled **Foundation Works**. See [customer quote editor](/docs/customer-facing/customer-quote-editor).
+
+**Digital takeoff.** Measuring directly off a digital structural drawing or site plan. See [Digital takeoff](/docs/building-a-quote/digital-takeoff).
+
+**Extra.** A line you want priced and recorded but kept separate from the main components. See [Components vs Extras](/docs/concepts/components-vs-extras).
+
+**Manual quote.** A quote built line-by-line for users who already have their measurements. See [Manual Quote](/docs/building-a-quote/manual-quote).
+
+**Pitch multiplier.** Not applicable for foundation work — foundations are measured flat from plan view. The setting exists in the app but isn't used here.
+
+**Plan measurement.** A measurement taken from a plan or drawing. See [Plan vs Actual](/docs/concepts/plan-vs-actual).
+
+**Quote builder.** The flow that builds a quote: Areas, Components, Extras, Review. See [Quote builder](/docs/building-a-quote/quote-builder).
+
+**Takeoff.** The act of measuring a job — either digital (from a plan) or manual (on site or from your own notes).
+
+## Billing terms
+
+**Cap.** A numeric limit on something your plan allows - quotes per month, components total, storage bytes, etc. Hitting a cap blocks new additions but never deletes existing data. See [Tier limits](/docs/account/tier-limits).
+
+**Dunning.** The process Stripe (and we) follow when a renewal payment fails: automatic card retries, status escalation through `past_due` - `grace` - `suspended`, with chances to recover by updating the card. See [Billing](/docs/account/billing#payment-failures-and-dunning).
+
+**Effective plan.** What your account can actually use today. Usually the same as your purchased plan, but collapses to **Starter** during grace periods or after the trial ends.
+
+**Grace period.** A 10-day window after a payment failure where you keep read access but can't create new quotes. See [Billing](/docs/account/billing#payment-failures-and-dunning).
+
+**Trial.** A 14-day free taste of every feature, with tiny caps. One per account, ever. See [Free trial](/docs/account/trial).

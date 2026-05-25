@@ -1,0 +1,66 @@
+---
+title: Glossary
+description: Short definitions of the QuoteCore+ terms and concrete measurement types you will see in the app.
+order: 5
+status: published
+updated: 2026-05-25
+trade: concrete
+---
+
+# Glossary
+
+Short definitions of the QuoteCore+ terms and concrete measurement types you will see in the app.
+
+## Concrete measurement types
+
+**Volume.** The primary concrete measure, in m³. Used for ready-mix pours. The app multiplies slab area × slab thickness to get volume automatically when both are set on the component.
+
+**Area.** A flat slab surface in m² - driveways, paths, garages, patios. Drives mesh, finishing, sealer, and per-m² labor.
+
+**Irregular Area.** Non-rectangular slabs - L-shapes, multi-bay slabs, paths with curves.
+
+**Lineal.** A single continuous run measured in metres - kerb, edge strip, expansion joint, sawn cut, perimeter formwork.
+
+**Multiple Kerb/Edge Runs (multi_lineal).** Several kerb or edge runs added together as one component line.
+
+**Curved Kerb/Edge (curved_line).** A curved run measured along its curve - driveway radius, garden bed edge.
+
+**Count.** Individual items - dowels, joint inserts, anchors, drainage fittings.
+
+**Fixed.** A flat amount that doesn't scale with measurement - pump hire, small-load fee, excavation, allowances.
+
+**Hours / Days.** Labor billed by time - pour day, finishing day, supervision.
+
+## QuoteCore+ terms
+
+**Actual measurement.** The real-world measurement after waste and (if relevant) slope have been applied to the plan measurement.
+
+**Component.** A reusable concrete item with its own price, pack size, labor rate, and waste settings.
+
+**Customer quote.** The polished, customer-facing version of the quote. For concrete work the default label is **Concrete Works**.
+
+**Digital takeoff.** Tracing measurements directly on an uploaded site plan or slab drawing.
+
+**Extra.** A non-core component bucket for pump hire, allowances, hidden items, or anything outside the main scope.
+
+**Manual quote.** A quote built by typing measurements straight into the quote builder, without a digital takeoff.
+
+**Pitch multiplier.** A factor that converts plan-view slab area into actual sloped surface area where a significant fall to drainage applies.
+
+**Plan measurement.** The raw measurement taken from the plan, before waste or slope is applied.
+
+**Quote builder.** The screen where you assemble areas, components, prices, and notes into the final quote.
+
+**Takeoff.** The list of measurements that drives the quote - whether digital or manual.
+
+## Billing terms
+
+**Cap.** A numeric limit on something your plan allows - quotes per month, components total, storage bytes, etc. Hitting a cap blocks new additions but never deletes existing data. See [Tier limits](/docs/account/tier-limits).
+
+**Dunning.** The process Stripe (and we) follow when a renewal payment fails: automatic card retries, status escalation through `past_due` - `grace` - `suspended`, with chances to recover by updating the card. See [Billing](/docs/account/billing#payment-failures-and-dunning).
+
+**Effective plan.** What your account can actually use today. Usually the same as your purchased plan, but collapses to **Starter** during grace periods or after the trial ends.
+
+**Grace period.** A 10-day window after a payment failure where you keep read access but can't create new quotes. See [Billing](/docs/account/billing#payment-failures-and-dunning).
+
+**Trial.** A 14-day free taste of every feature, with tiny caps. One per account, ever. See [Free trial](/docs/account/trial).

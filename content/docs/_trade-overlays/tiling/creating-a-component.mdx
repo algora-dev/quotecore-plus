@@ -1,0 +1,64 @@
+---
+title: Creating a component
+description: Field-by-field walkthrough with three tiling examples.
+order: 2
+---
+
+# Creating a component
+
+One screen, a handful of fields, and you have a reusable tiling line.
+
+## Where to find it
+
+Components > Add component.
+
+## The fields
+
+**Measurement method.** Pick how this component gets measured on a job:
+
+- **Area** — floor tiles, waterproofing membrane, adhesive coverage, grout coverage
+- **Irregular Area** — floors with cut-outs, awkward bathroom shapes, shaped splashbacks
+- **Wall Length × Height** (multi_lineal_lxh) — multiple wall faces in a shower or bathroom with individual heights
+- **Wall Height × Length** (length_x_height) — a single wall face by its height and length, perfect for a splashback or feature wall
+- **Multiple Trim Runs** — several runs of tile trim or edge profile in one component
+- **Curved Trim Run** — curved trim around a feature, niche, or shaped edge
+- **Lineal** — single runs of tile trim, edge profile, or corner moulding
+- **Count** — corner pieces, niches, shower drains, fittings
+- **Fixed** — flat-fee items like delivery, lift charges, removal of existing tiles
+- **Hours / Days** — labor crews, day-rate fitting
+
+**Material price.** Per unit (per m², per m, per item) or per pack. Tiles come in boxes that cover a known m². Set the pack size and QuoteCore+ rounds up to whole boxes. Adhesive and grout are bought in bags with a coverage rate — set the bag size and coverage and QuoteCore+ works out how many bags you need for the measured area.
+
+**Labor price.** Per unit of the same measurement, or roll fitting into hours/days as a separate component.
+
+**Waste type.** For tiling the most useful options are:
+
+- **Percentage** — 10–15% standard for floor and wall tiles, 15–20% for diagonal lays, mosaics, or large-format tile
+- **Fixed** — extra box kept for matching repairs later
+- **None** — for count fittings and fixed fees
+
+**Pitch multiplier.** Not applicable for tiling work. Floors and walls are measured flat — no slope adjustment to apply. Leave it off.
+
+**Material orders.** Tag the supplier and order code so the order list pulls clean line items.
+
+## Walked example 1: Porcelain floor tile supply and fit
+
+Area component. Per m². £35 material, £45 labor. 12% waste percentage. Pack size 1.4 m² per box — QuoteCore+ rounds up to whole boxes.
+
+## Walked example 2: Chrome tile trim
+
+Lineal component. Per m. £8 material, £4 labor. 10% waste percentage to cover cuts and mitres at corners.
+
+## Walked example 3: Wet-room waterproofing and prep
+
+Fixed component. £320. Zero waste. Tag as an extra so it lives outside the measured area totals.
+
+## After you save
+
+The component shows up in the Components list and is available in every quote you create from now on. Edit it any time — changes only affect new quotes, not ones already sent.
+
+## Related
+
+- [Components overview](/docs/components/overview)
+- [Digital takeoff](/docs/building-a-quote/digital-takeoff)
+- [Waste and material costs](/docs/components/waste-and-pitch)
