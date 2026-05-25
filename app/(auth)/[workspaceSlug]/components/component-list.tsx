@@ -633,9 +633,7 @@ export function ComponentList({
             <>
               <span className="text-base font-semibold text-slate-900">
                 {activeLibraryId
-                  ? (collections.find(c => c.id === activeLibraryId)?.is_bootstrap
-                      ? 'My Components (default)'
-                      : collections.find(c => c.id === activeLibraryId)?.name ?? 'Library')
+                  ? ((collections.find(c => c.id === activeLibraryId)?.name ?? 'Library') + (collections.find(c => c.id === activeLibraryId)?.is_bootstrap ? ' (default)' : ''))
                   : 'All Libraries'}
               </span>
               {activeLibraryId && (
@@ -756,7 +754,7 @@ export function ComponentList({
             <option value="">All Libraries</option>
             {collections.map(col => (
               <option key={col.id} value={col.id}>
-                {col.is_bootstrap ? 'My Components (default)' : col.name}
+                {col.name}{col.is_bootstrap ? ' (default)' : ''}
               </option>
             ))}
           </select>
@@ -992,7 +990,7 @@ export function ComponentList({
                   >
                     {collections.map(col => (
                       <option key={col.id} value={col.id}>
-                        {col.is_bootstrap ? 'My Components (default)' : col.name}
+                        {col.name}{col.is_bootstrap ? ' (default)' : ''}
                       </option>
                     ))}
                     <option value="__create_new__">+ Create New Library</option>
@@ -1213,7 +1211,7 @@ export function ComponentList({
                         >
                           {collections.map(col => (
                             <option key={col.id} value={col.id}>
-                              {col.is_bootstrap ? 'My Components (default)' : col.name}
+                              {col.name}{col.is_bootstrap ? ' (default)' : ''}
                             </option>
                           ))}
                           <option value="__create_new__">+ Create New Library</option>

@@ -320,7 +320,7 @@ export function QuoteDetailsForm({
                   <option value="">All Components</option>
                   {componentCollections.map(c => (
                     <option key={c.id} value={c.id}>
-                      {c.is_bootstrap ? 'My Components (default)' : c.name}
+                      {c.name}{c.is_bootstrap ? ' (default)' : ''}
                     </option>
                   ))}
                 </select>
