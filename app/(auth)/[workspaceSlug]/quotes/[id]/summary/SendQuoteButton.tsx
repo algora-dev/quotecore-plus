@@ -94,6 +94,10 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   // Send mode state (Messages pipeline). Reuses subject/body from email
   // mode so the user can flip between Copy and Send without retyping.
   const [recipientEmail, setRecipientEmail] = useState('');
+  // Count URLs in the email body - more than 1 is a spam risk.
+  const urlCountInBody = (emailBody.match(/https?:\/\/[^\s]+/gi) ?? []).length;
+  const bodyHasExtraUrls = urlCountInBody > 1;
+
   const [sendError, setSendError] = useState<string | null>(null);
   const [sendSuccess, setSendSuccess] = useState<'sent' | 'suppressed' | null>(null);
   const [isSending, startSendTransition] = useTransition();
@@ -563,8 +567,22 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                     value={emailBody}
                     onChange={e => setEmailBody(e.target.value)}
                     rows={12}
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                    className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none ${
+                      bodyHasExtraUrls
+                        ? 'border-amber-400 focus:border-amber-500'
+                        : 'border-slate-300 focus:border-orange-500'
+                    }`}
                   />
+                  {bodyHasExtraUrls && (
+                    <div className="mt-2 flex gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <svg className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                      </svg>
+                      <p className="text-xs text-amber-800">
+                        <strong>Spam risk:</strong> This email contains {urlCountInBody} links. Emails with multiple URLs are more likely to land in spam or junk. Remove any extra links and let the quote button do the work.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between pt-2">
@@ -656,11 +674,26 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                     value={emailBody}
                     onChange={(e) => setEmailBody(e.target.value)}
                     rows={10}
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                    className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none ${
+                      bodyHasExtraUrls
+                        ? 'border-amber-400 focus:border-amber-500'
+                        : 'border-slate-300 focus:border-orange-500'
+                    }`}
                   />
-                  <p className="mt-1 text-xs text-slate-500">
-                    The recipient sees a &ldquo;Respond now&rdquo; button below this text that opens a reply page in their browser.
-                  </p>
+                  {bodyHasExtraUrls ? (
+                    <div className="mt-2 flex gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <svg className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                      </svg>
+                      <p className="text-xs text-amber-800">
+                        <strong>Spam risk:</strong> This message contains {urlCountInBody} links. Emails with multiple URLs are more likely to land in spam or junk. Remove any extra links — the quote button is included automatically.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-xs text-slate-500">
+                      The recipient sees a &ldquo;Respond now&rdquo; button below this text that opens a reply page in their browser.
+                    </p>
+                  )}
                 </div>
 
                 {sendError ? (
