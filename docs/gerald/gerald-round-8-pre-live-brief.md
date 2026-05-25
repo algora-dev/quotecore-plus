@@ -16,11 +16,11 @@ This is the final audit before QuoteCore+ goes properly live. The previous audit
 
 ## Round 8 Status Update (post-Gerald response)
 
-All three actionable findings resolved. Gerald please re-verify at HEAD `beecab6`.
+All three actionable findings resolved. Gerald please re-verify at HEAD `[see latest push]`.
 
 | Finding | Status |
 |---|---|
-| H-01 save_takeoff_atomic bypass | Fixed - migration `20260525120000` adds `is_measurement_type_allowed_for_trade()` SQL helper + pre-write validation loop. Applied live. |
+| H-01 save_takeoff_atomic bypass | Fixed (v2) - migration `20260525130000` corrects column names (C-01). `20260525120000` was a bad draft. adds `is_measurement_type_allowed_for_trade()` SQL helper + pre-write validation loop. Applied live. |
 | H-02 manual builder lxh underpricing | Fixed - `addComponentEntry()` now fetches `height_value_mm` and applies multiplier before `applyPitchAndWaste()`. |
 | M-01 legacy account/actions.ts default_trade | Fixed - `GENERIC_TRADES_V1_ENABLED` gate added, matching settings/actions.ts. |
 | M-02 dunning test card | Noted - test plan updated: use Stripe Test Clocks in test mode only. |
@@ -150,7 +150,10 @@ Once live, we want to run two controlled Stripe test round-trips using real card
 10. Downgrade from Pro Plus to Starter — confirm entitlement cap enforcement kicks in (read-only on components over cap)
 
 ### Payment failure / dunning test
-11. With Test Account A, update card to Stripe's `4000000000000341` (always fails on charge) and trigger a renewal cycle — confirm `past_due` → `grace` transition, grace period read-only behaviour, recovery via card update
+11. **Run dunning/failure tests in Stripe test mode using Test Clocks before live cutover. Do not use Stripe test cards against the live environment.**
+    - Advance Test Clock past renewal to trigger failed payment
+    - Confirm past_due -> grace -> pending_data_purge -> suspended transitions
+    - Recover via payment method update, confirm return to active
 
 ---
 
