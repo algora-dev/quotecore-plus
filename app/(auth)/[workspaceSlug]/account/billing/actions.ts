@@ -228,9 +228,35 @@ export async function createCustomerPortalSession(): Promise<BillingActionResult
     });
     return { ok: true, url: session.url };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'stripe_portal_failed';
+    const msg = err instanceof Error ? err.message : '';
+    // Detect mode-mismatch or "no such customer" errors and attempt repair
+    if (
+      msg.includes('No such customer') ||
+      msg.includes('a similar object exists in test mode') ||
+      msg.includes('a similar object exists in live mode')
+    ) {
+      const { repairStripeCustomerIfStale } = await import('@/app/lib/billing/stripe');
+      const repair = await repairStripeCustomerIfStale(company.id);
+      if (!repair.ok) {
+        return { ok: false, code: 'stripe_error', message: repair.message };
+      }
+      // Repair succeeded — re-fetch the updated customer ID and retry once
+      const { data: fixed } = await (await import('@/app/lib/supabase/admin')).createAdminClient()
+        .from('companies')
+        .select('stripe_customer_id')
+        .eq('id', company.id)
+        .maybeSingle();
+      if (!fixed?.stripe_customer_id) {
+        return { ok: false, code: 'stripe_error', message: 'Billing record repaired but no customer ID available. Please try again.' };
+      }
+      const retrySession = await stripe.billingPortal.sessions.create({
+        customer: fixed.stripe_customer_id,
+        return_url: `${base}/${slug}/account?tab=billing`,
+      });
+      return { ok: true, url: retrySession.url };
+    }
     console.error('[billing] createCustomerPortalSession failed:', msg);
-    return { ok: false, code: 'stripe_error', message: msg };
+    return { ok: false, code: 'stripe_error', message: msg || 'stripe_portal_failed' };
   }
 }
 

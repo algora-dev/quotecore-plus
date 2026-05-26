@@ -186,6 +186,7 @@ export type Database = {
           storage_topup_bytes: number
           storage_used_bytes: number
           stripe_customer_id: string | null
+          stripe_mode: string | null
           stripe_price_id: string | null
           stripe_subscription_id: string | null
           subscription_status: string
@@ -222,6 +223,7 @@ export type Database = {
           storage_topup_bytes?: number
           storage_used_bytes?: number
           stripe_customer_id?: string | null
+          stripe_mode?: string | null
           stripe_price_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string
@@ -258,6 +260,7 @@ export type Database = {
           storage_topup_bytes?: number
           storage_used_bytes?: number
           stripe_customer_id?: string | null
+          stripe_mode?: string | null
           stripe_price_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string
@@ -2989,6 +2992,10 @@ export type Database = {
         Returns: string
       }
       get_next_quote_number: { Args: { p_company_id: string }; Returns: number }
+      is_measurement_type_allowed_for_trade: {
+        Args: { p_mtype: string; p_trade: string }
+        Returns: boolean
+      }
       prune_rate_limits: { Args: never; Returns: number }
       require_component_slot: {
         Args: { p_company_id: string }

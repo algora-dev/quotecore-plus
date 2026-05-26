@@ -1,0 +1,17 @@
+-Potentially add quote/component/image drawings quota in billing too, not just on each page. This way users can go to billing, see their account type, when it expires/renews, how much storage they have left, their quote/component/order limit for that month.
+
+-The customer quote editor page radio button show/hide has the correct on hover effect, but now the orange fill for the button is gone when hiding. Circle should be empty when hidden, solid orange when showing, the orange glow on hover (no matter if solid or empty circle)
+
+-Copilot needs to warn the user they need to complete the action not just click next on each copilot modal. Placement of copilot modal is in the way of components button (step 6). Add roof are step 3 change to Name your roof area.
+
+We might need to do to Co-pilot what we did for other trades in the help/docs. We need to improve roofing copilot, then create 1 other "generic" copilot system that works for all other trades. Lets come up with a plan for this. We also need to create a rule that a pop up box CANNOT ever cover the next action item, this should help for users running different aspect ratios/screen sizes. It should be a rule, define how many pixels and their location of the action item, example: Next step is click exponents button, and make sure the copilot modal never covers that pixel area/location defined above. This should be the rule across all copilot lessons. Another issue we are having is some users clicking next on the copilot modal expecting it to complete the step for them, but they actually need to complete the task in the actual app. Whats a better solution for this system because currently, sometimes completing the step auto triggers copilot to the next step (good) but other times, it requires the user to manually click next on the co pilot modal.
+
+-Include in help/docs about resetting copilot lessons to use copilot again. Maybe after a user completes a lesson with Copilot, it prompts them saying to do this lesson again, reset here linking to the notifications page and highlighting this reset copilot lessons function.
+
+-Long dashes everywhere instead of "-", in send from quotecore+ email messages, sign up flow (recovery questions) and anywhere else you see it.
+
+-Orders probably need to have their own activity system like quotes do for sending emails etc. Is that easily replicated? It would allow users to see whats happening with an order, if its been accepted, if there was a request for more info etc.
+
+-Drawings/images upload page button needs to change to "Upload/Draw Images", its currently good for roofing, but not for any other trade, best to have a blanket rule then change wording where needed.
+
+-Stop users being able to measure a component in digital takeoff with the wrong tool, this is a big one, currently I can select an area measured component, but in digital take off, use length/multi length, point to record measurements. I think the best solution is that when a user selects any component, it auto selects the measurement method defined in the actual component details, if the user tries to use another measurement tool, a pop up modal appears warning the user the takeoff may not be accurate as they are using a different measurement method than what is currently saved in that specific component.

@@ -23,6 +23,9 @@ interface Props {
   existingToken: string | null;
   hasCustomerQuote: boolean;
   emailTemplates: EmailTemplate[];
+  /** Whether this company's plan includes scheduled follow-up messages.
+   *  Pro+ only. When false the post-send follow-up prompt is hidden. */
+  canFollowups: boolean;
   quoteMeta: {
     customerName: string;
     quoteNumber: number | null;
@@ -50,7 +53,7 @@ function replacePlaceholders(text: string, data: Record<string, string>): string
     .replace(/\{\{quote_date\}\}/g, sanitize(data.quote_date || ''));
 }
 
-export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCustomerQuote, emailTemplates, quoteMeta }: Props) {
+export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCustomerQuote, emailTemplates, canFollowups, quoteMeta }: Props) {
   const router = useRouter();
 
   /**
@@ -713,7 +716,18 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                     after-decline revival. Each is opt-in with its own
                     template + delay. Hidden once all enabled rules are
                     scheduled, or the user dismisses it. */}
-                {sendSuccess === 'sent' && !postSendDismissed && emailTemplates.length > 0 ? (
+                {sendSuccess === 'sent' && canFollowups && !postSendDismissed && emailTemplates.length === 0 ? (
+                  <div className="rounded-lg border border-orange-200 bg-orange-50/60 p-3">
+                    <p className="text-sm font-medium text-slate-900">Schedule follow-ups?</p>
+                    <p className="text-xs text-slate-500 mt-1">Your plan includes automated follow-ups, but you have no message templates yet.</p>
+                    <button
+                      onClick={goCreateTemplate}
+                      className="mt-2 text-xs font-medium text-orange-600 hover:text-orange-700 underline"
+                    >
+                      Create your first follow-up template
+                    </button>
+                  </div>
+                ) : sendSuccess === 'sent' && canFollowups && !postSendDismissed && emailTemplates.length > 0 ? (
                   <div className="rounded-lg border border-orange-200 bg-orange-50/60 p-3 space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-start gap-2">

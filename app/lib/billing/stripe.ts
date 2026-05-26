@@ -237,3 +237,117 @@ export function stripeStatusToInternal(
       return 'past_due';
   }
 }
+
+// ---------------------------------------------------------------------------
+// Stripe customer repair helper (P0-1, 2026-05-26)
+// ---------------------------------------------------------------------------
+// Handles the case where companies.stripe_customer_id points to a customer
+// that doesn't exist in the current Stripe mode (e.g. a test-mode customer
+// referenced by a live-mode key). Conservative: repair from subscription
+// first; only null the ID when the billing lifecycle is terminal.
+// ---------------------------------------------------------------------------
+
+export type RepairStripeCustomerResult =
+  | { ok: true; repaired: boolean }
+  | { ok: false; code: 'repair_failed' | 'no_stripe_key'; message: string };
+
+/**
+ * Called when a Stripe portal or checkout API returns a "No such customer"
+ * or mode-mismatch error. Attempts to repair `companies.stripe_customer_id`
+ * using the stored `stripe_subscription_id`.
+ *
+ * Safety rules:
+ *   1. If stripe_subscription_id exists → retrieve subscription in current
+ *      mode; if valid, overwrite stripe_customer_id from subscription.customer.
+ *   2. If local subscription_status is active/past_due/trialing AND repair
+ *      fails → do NOT null the ID. Return repair_failed so the caller can
+ *      surface a "contact support" message.
+ *   3. Only if subscription_status is terminal (cancelled/suspended) AND no
+ *      valid subscription found → null stripe_customer_id so the next
+ *      checkout creates a fresh customer.
+ *
+ * Also stamps companies.stripe_mode with the current mode on every repair.
+ */
+export async function repairStripeCustomerIfStale(
+  companyId: string,
+): Promise<RepairStripeCustomerResult> {
+  const stripe = getStripeOrNull();
+  if (!stripe) {
+    return { ok: false, code: 'no_stripe_key', message: 'Stripe is not configured.' };
+  }
+
+  const admin = createAdminClient();
+  const { data: company } = await admin
+    .from('companies')
+    .select('id, stripe_customer_id, stripe_subscription_id, subscription_status')
+    .eq('id', companyId)
+    .maybeSingle();
+
+  if (!company) {
+    return { ok: false, code: 'repair_failed', message: 'Company not found.' };
+  }
+
+  const currentMode = getStripeMode();
+  const terminalStatuses = ['canceled', 'cancelled', 'suspended'];
+  const isTerminal =
+    !company.subscription_status ||
+    terminalStatuses.includes(company.subscription_status);
+
+  // Step 1: attempt repair from subscription
+  if (company.stripe_subscription_id) {
+    try {
+      const sub = await stripe.subscriptions.retrieve(
+        company.stripe_subscription_id,
+      );
+      const repairedCustomerId =
+        typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
+
+      await admin
+        .from('companies')
+        .update({
+          stripe_customer_id: repairedCustomerId,
+          stripe_mode: currentMode,
+        })
+        .eq('id', companyId);
+
+      console.info(
+        `[stripe] repairStripeCustomerIfStale: repaired customer for company ${companyId}`,
+        { old: company.stripe_customer_id, new: repairedCustomerId, mode: currentMode },
+      );
+      return { ok: true, repaired: true };
+    } catch (err) {
+      console.error(
+        `[stripe] repairStripeCustomerIfStale: subscription retrieve failed for company ${companyId}:`,
+        err,
+      );
+      // Fall through to step 2
+    }
+  }
+
+  // Step 2: repair failed or no subscription_id — check if safe to null
+  if (!isTerminal) {
+    // Active billing — do not null. Caller must surface support message.
+    console.error(
+      `[stripe] repairStripeCustomerIfStale: cannot repair and subscription is active for company ${companyId}. Manual intervention required.`,
+      { stripe_customer_id: company.stripe_customer_id, subscription_status: company.subscription_status },
+    );
+    return {
+      ok: false,
+      code: 'repair_failed',
+      message:
+        'We could not automatically repair your billing record. Please contact support and we will fix it within 1 business day.',
+    };
+  }
+
+  // Step 3: terminal status + no valid subscription — safe to null
+  await admin
+    .from('companies')
+    .update({ stripe_customer_id: null, stripe_mode: currentMode })
+    .eq('id', companyId);
+
+  console.info(
+    `[stripe] repairStripeCustomerIfStale: nulled stale customer for terminal company ${companyId}`,
+    { old: company.stripe_customer_id, mode: currentMode },
+  );
+  return { ok: true, repaired: true };
+}

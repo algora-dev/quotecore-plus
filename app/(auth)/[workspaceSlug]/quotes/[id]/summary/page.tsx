@@ -341,6 +341,7 @@ export default async function QuoteSummaryPage({
               existingToken={quote.acceptance_token && !quote.withdrawn_at ? quote.acceptance_token : null}
               hasCustomerQuote={hasCustomerQuote}
               emailTemplates={emailTemplates || []}
+              canFollowups={entitlements.features.followups}
               quoteMeta={{
                 customerName: quote.customer_name,
                 quoteNumber: quote.quote_number,
