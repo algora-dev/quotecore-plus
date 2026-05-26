@@ -102,6 +102,9 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   const bodyHasExtraUrls = urlCountInBody > 1;
 
   const [sendError, setSendError] = useState<string | null>(null);
+  // True when the server returned a plan-gate error. Disables the Send
+  // button so the user can't re-submit a request that will always fail.
+  const isPlanGated = sendError?.includes("isn't included in your current plan") ?? false;
   const [sendSuccess, setSendSuccess] = useState<'sent' | 'suppressed' | null>(null);
   const [isSending, startSendTransition] = useTransition();
 
@@ -928,7 +931,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                   </button>
                   <button
                     onClick={handleSendSubmit}
-                    disabled={isSending || sendSuccess === 'sent'}
+                    disabled={isSending || sendSuccess === 'sent' || isPlanGated}
                     className="px-4 py-2 text-sm font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
                   >
                     {isSending ? 'Sending…' : sendSuccess === 'sent' ? 'Sent' : 'Send message'}
