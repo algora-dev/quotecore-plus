@@ -1,6 +1,7 @@
 'use client';
 import dynamic from 'next/dynamic';
 import type { QuoteRow } from '@/app/lib/types';
+import type { TakeoffHydrationData } from './actions';
 
 const TakeoffWorkstation = dynamic(
   () => import('./TakeoffWorkstation').then(mod => ({ default: mod.TakeoffWorkstation })),
@@ -25,15 +26,17 @@ interface Props {
   quote: QuoteRow;
   planUrl: string;
   components: Component[];
+  hydrationData: TakeoffHydrationData | null;
 }
 
-export function TakeoffPage({ workspaceSlug, quote, planUrl, components }: Props) {
+export function TakeoffPage({ workspaceSlug, quote, planUrl, components, hydrationData }: Props) {
   return (
     <TakeoffWorkstation
       workspaceSlug={workspaceSlug}
       quote={quote}
       planUrl={planUrl}
       components={components}
+      hydrationData={hydrationData}
     />
   );
 }

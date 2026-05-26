@@ -6,6 +6,7 @@ import { Canvas, FabricImage, Line, Circle, Polygon, Triangle } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { saveTakeoffMeasurements, createTakeoffPage, initializeTakeoffPage, finalizeTakeoffPageImage } from './actions';
+import type { TakeoffHydrationData } from './actions';
 import { uploadCanvasImage } from './uploadCanvasImage';
 import { AlertModal } from '@/app/components/AlertModal';
 import { getTradeLabels } from '@/app/lib/trades/labels';
@@ -63,6 +64,8 @@ interface Props {
   quote: QuoteRow;
   planUrl: string;
   components: Component[];
+  /** P1-1a C-01: Hydrated state from DB, loaded server-side. Null = fresh takeoff. */
+  hydrationData: TakeoffHydrationData | null;
 }
 
 const CANVAS_WIDTH = 800;
@@ -97,7 +100,7 @@ interface Calibration {
   scale: number;
 }
 
-export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }: Props) {
+export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components, hydrationData }: Props) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<Canvas | null>(null);
@@ -125,6 +128,13 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [isUploadingPage, setIsUploadingPage] = useState(false);
   // H-03: track unsaved changes so we can warn before switching pages.
   const [isDirty, setIsDirty] = useState(false);
+
+  // P1-1a: session version for optimistic concurrency guard.
+  const [sessionVersion, setSessionVersion] = useState<number | null>(
+    hydrationData?.sessionVersion ?? null,
+  );
+  // Guard so the one-shot hydration effect only fires on first mount.
+  const hydrationAppliedRef = useRef<boolean>(false);
 
   // Component colors (auto-assign on mount)
   const [componentColors, setComponentColors] = useState<ComponentColor[]>([]);
@@ -224,6 +234,54 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quote.id]);
+
+  // P1-1a C-01: One-shot hydration from server-loaded DB state.
+  // Restores componentMeasurements panel data + pages list from the last saved session.
+  // Canvas shapes are NOT reconstructed here (P1-1b); values show in the panel.
+  useEffect(() => {
+    if (hydrationAppliedRef.current) return;
+    if (!hydrationData || hydrationData.measurements.length === 0) return;
+    hydrationAppliedRef.current = true;
+
+    // Restore pages list from DB (preserves IDs needed for scoped save).
+    if (hydrationData.pages.length > 0) {
+      setPages(
+        hydrationData.pages.map(p => ({
+          id: p.id,
+          url: p.imageUrl ?? planUrl, // fall back to route-level planUrl if signed URL failed
+          name: p.pageName ?? `Page ${p.pageOrder}`,
+          order: p.pageOrder,
+        }))
+      );
+    }
+
+    // Group measurements by component and restore componentMeasurements state.
+    const grouped = new Map<string, ComponentWithMeasurements>();
+    hydrationData.measurements
+      .filter(m => m.componentId !== null)
+      .forEach(m => {
+        const cid = m.componentId!;
+        if (!grouped.has(cid)) {
+          grouped.set(cid, { componentId: cid, measurements: [], expanded: false });
+        }
+        grouped.get(cid)!.measurements.push({
+          id: m.id,
+          type: m.type as ComponentMeasurement['type'],
+          value: m.value,
+          points: m.points ?? undefined,
+          visible: m.visible,
+          // canvasObjects intentionally empty: canvas shapes not yet reconstructed (P1-1b).
+        });
+      });
+
+    if (grouped.size > 0) {
+      setComponentMeasurements(Array.from(grouped.values()));
+      setActiveComponentIds(Array.from(grouped.keys()));
+      console.info('[Hydration] Restored', grouped.size, 'components from DB');
+    }
+  // Intentionally only runs once on mount.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Trade-aware labels + config. Single source of truth for all copy that
   // varies by trade (roofing / cladding / generic). Replaces the old
@@ -756,8 +814,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         canvasImagePath,
         linesImagePath,
         currentPageDbId,
+        sessionVersion, // P1-1a: optimistic version guard
       );
-      
+
+      // P1-1a: increment local version to match what the RPC wrote.
+      setSessionVersion(prev => (prev != null ? prev + 1 : 1));
       setIsDirty(false);
       console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
       
@@ -765,11 +826,17 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
     } catch (error) {
       console.error('[SaveTakeoff] Error:', error);
-      // Surface the real error message so we can diagnose Imperial save bugs
-      // and any future RPC issues. The native alert() that used to live here
-      // hid the underlying cause behind a generic message.
       const message = error instanceof Error ? error.message : 'Unknown error';
-      showAlert('Failed to save measurements', message, 'error');
+      // P1-1a: stale version = another tab saved. Prompt reload, don't show generic error.
+      if (message.includes('STALE_TAKEOFF_VERSION')) {
+        showAlert(
+          'Takeoff edited in another tab',
+          'Your takeoff was saved from another browser tab. Reload this page to see the latest version, then continue measuring.',
+          'error',
+        );
+      } else {
+        showAlert('Failed to save measurements', message, 'error');
+      }
     } finally {
       setIsSaving(false);
     }

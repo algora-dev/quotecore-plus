@@ -2,6 +2,7 @@ import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/sup
 import { getSignedUrl } from '@/app/lib/storage/helpers';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import { TakeoffPage } from './TakeoffPage';
+import { loadTakeoffHydrationData } from './actions';
 import { notFound } from 'next/navigation';
 
 export default async function Page({
@@ -67,6 +68,10 @@ export default async function Page({
     console.warn('[Takeoff] ⚠️ NO COMPONENTS FOUND - Check component_library table for company:', profile.company_id);
   }
 
+  // P1-1a C-01: Load existing takeoff state so TakeoffWorkstation can
+  // hydrate from DB instead of starting blank. Null = fresh takeoff (no session yet).
+  const hydrationData = await loadTakeoffHydrationData(quoteId);
+
   return (
     <TakeoffPage
       workspaceSlug={workspaceSlug}
@@ -74,6 +79,7 @@ export default async function Page({
       quote={quote}
       planUrl={planUrl}
       components={components || []}
+      hydrationData={hydrationData}
     />
   );
 }

@@ -15,6 +15,9 @@ interface TakeoffMeasurement {
   points?: { x: number; y: number }[];
   visible: boolean;
   pageId?: string | null; // Phase 7: optional takeoff_pages FK
+  /** P1-1a H-01: unit override for measurements loaded from DB (other pages).
+   *  When set, this overrides the top-level `unit` param for this measurement. */
+  measurementUnit?: string;
 }
 
 export async function saveTakeoffMeasurements(
@@ -26,6 +29,9 @@ export async function saveTakeoffMeasurements(
   /** Phase 7 scoped-delete: when supplied, only this page's measurements
    *  are replaced. Omit for legacy single-page callers. */
   currentPageId?: string | null,
+  /** P1-1a version guard: client submits the version it last read.
+   *  RPC rejects with STALE_TAKEOFF_VERSION if it has advanced. */
+  sessionVersion?: number | null,
 ) {
   const supabase = await createSupabaseServerClient();
 
@@ -81,8 +87,42 @@ export async function saveTakeoffMeasurements(
   const firstRoofAreaPitch = roofAreaMeasurements[0]?.pitch || 0;
 
   // 2. Components + their entries (linear measurements grouped by componentId).
+  //
+  // P1-1a H-01 FIX: For multi-page quotes, component totals must reflect ALL
+  // pages, not just the current page's in-memory measurements. Before building
+  // componentsPayload, fetch measurements from OTHER pages out of the DB and
+  // merge them with the current page's in-memory measurements.
+  //
+  // Safety: we fetch BEFORE the RPC runs (RPC hasn't changed the DB yet),
+  // so "other pages" data is the last committed state. After the RPC inserts
+  // the current page's new measurements, the combined picture is correct.
+  let allMeasurementsForComponents = measurements;
+
+  if (currentPageId) {
+    const { data: otherPageRows } = await supabase
+      .from('quote_takeoff_measurements')
+      .select('component_library_id, measurement_type, measurement_value, measurement_unit, canvas_points, is_visible, page_id')
+      .eq('quote_id', quoteId)
+      .neq('page_id', currentPageId)
+      .not('component_library_id', 'is', null); // only component rows, not roof areas
+
+    if (otherPageRows && otherPageRows.length > 0) {
+      const otherMeasurements: TakeoffMeasurement[] = otherPageRows.map(row => ({
+        componentId: row.component_library_id!,
+        type: row.measurement_type as TakeoffMeasurement['type'],
+        value: Number(row.measurement_value),
+        points: (row.canvas_points as { x: number; y: number }[] | null) ?? undefined,
+        visible: row.is_visible ?? true,
+        pageId: row.page_id,
+        measurementUnit: row.measurement_unit ?? unit, // use stored unit for correct metric conversion
+      }));
+      // Prepend other pages' measurements; current page's override on conflict.
+      allMeasurementsForComponents = [...otherMeasurements, ...measurements];
+    }
+  }
+
   // We need to fetch the component_library rows up-front to compute pitch/waste correctly.
-  const componentIds = [...new Set(measurements.filter(m => m.componentId).map(m => m.componentId!))];
+  const componentIds = [...new Set(allMeasurementsForComponents.filter(m => m.componentId).map(m => m.componentId!))];
   let componentsPayload: Array<Record<string, unknown>> = [];
   if (componentIds.length > 0) {
     const { data: libComps } = await supabase
@@ -95,7 +135,8 @@ export async function saveTakeoffMeasurements(
       .map(componentId => {
         const libComp = libById.get(componentId);
         if (!libComp) return null;
-        const componentMeasurements = measurements.filter(m => m.componentId === componentId);
+        // P1-1a H-01: use allMeasurementsForComponents (includes other pages).
+        const componentMeasurements = allMeasurementsForComponents.filter(m => m.componentId === componentId);
         const pitchType = libComp.default_pitch_type || 'none';
         // Cast: database.types.ts is stale; fixed_per_segment is a valid DB value.
         const wasteType = (libComp.default_waste_type as string) || 'none';
@@ -108,18 +149,26 @@ export async function saveTakeoffMeasurements(
         const heightM = heightMm ? heightMm / 1000 : 1;
 
         const entries = componentMeasurements.map((m, index) => {
+          // P1-1a H-01: each measurement may come from a different page with its
+          // own calibration unit. Use m.measurementUnit if set (DB rows from other
+          // pages), otherwise fall back to the top-level `unit` param (current page).
+          const mUnit = m.measurementUnit ?? unit;
+          const mIsImperialFeet = mUnit === 'feet';
+          const mToMetricLinear = (v: number) => mIsImperialFeet ? convertLinearToMetric(v) : v;
+          const mToMetricArea = (v: number) => mIsImperialFeet ? convertAreaFt2ToMetric(v) : v;
+
           // Convert calibration-unit value -> canonical metric BEFORE pitch/waste
           // math, since material/labour rates are priced per metre or per m².
           let metricValue = m.value;
           if (m.type === 'line' || m.type === 'multi_lineal') {
-            metricValue = toMetricLinear(m.value);
+            metricValue = mToMetricLinear(m.value);
           } else if (m.type === 'multi_lineal_lxh') {
             // multi_lineal_lxh: area = total polyline length × component height.
             // Height is constant across all segments, so sum(seg_len × h) = total × h.
             // m.value is the total polyline length in calibrated units (same as multi_lineal).
-            metricValue = toMetricLinear(m.value) * heightM;
+            metricValue = mToMetricLinear(m.value) * heightM;
           } else if (m.type === 'area') {
-            metricValue = toMetricArea(m.value);
+            metricValue = mToMetricArea(m.value);
           }
           // 'point' is a count (each) and never needs unit conversion.
 
@@ -204,6 +253,8 @@ export async function saveTakeoffMeasurements(
     lines_image_path: linesImagePath ?? null,
     // Phase 7 scoped-delete: passed through to the RPC.
     current_page_id: currentPageId ?? null,
+    // P1-1a version guard: RPC rejects if DB version has advanced.
+    ...(sessionVersion != null ? { session_version: sessionVersion } : {}),
     measurements: measurementsPayload,
     roof_areas: roofAreasPayload,
     components: componentsPayload,
@@ -222,6 +273,10 @@ export async function saveTakeoffMeasurements(
 
   if (rpcError) {
     console.error('[SaveTakeoff] RPC error:', rpcError);
+    // P1-1a version guard: surface a clear reload prompt instead of a generic error.
+    if (rpcError.message?.includes('STALE_TAKEOFF_VERSION')) {
+      throw new Error('STALE_TAKEOFF_VERSION: Your takeoff was edited in another tab. Please reload the page to continue.');
+    }
     throw new Error(`Failed to save takeoff: ${rpcError.message}`);
   }
 
@@ -233,6 +288,108 @@ export async function saveTakeoffMeasurements(
 
   revalidatePath(`/[workspaceSlug]/quotes/${quoteId}`);
   return { success: true };
+}
+
+// ─── P1-1a: Hydration helpers ────────────────────────────────────────────
+
+export interface TakeoffHydrationPage {
+  id: string;
+  pageOrder: number;
+  pageName: string | null;
+  imagePath: string | null;
+  imageUrl: string | null; // signed URL, minted server-side
+}
+
+export interface TakeoffHydrationMeasurement {
+  id: string;
+  componentId: string | null;
+  type: string;
+  value: number;
+  unit: string;
+  points: { x: number; y: number }[] | null;
+  visible: boolean;
+  pageId: string | null;
+}
+
+export interface TakeoffHydrationData {
+  sessionId: string | null;
+  sessionVersion: number;
+  pages: TakeoffHydrationPage[];
+  measurements: TakeoffHydrationMeasurement[];
+}
+
+/**
+ * Load all saved takeoff state for a quote so TakeoffWorkstation can
+ * initialise from DB rather than starting blank. Returns null if no
+ * session exists yet (fresh takeoff).
+ */
+export async function loadTakeoffHydrationData(
+  quoteId: string,
+): Promise<TakeoffHydrationData | null> {
+  const supabase = await createSupabaseServerClient();
+  const { getSignedUrl } = await import('@/app/lib/storage/helpers');
+  const { BUCKETS } = await import('@/app/lib/storage/buckets');
+
+  // 1. Session
+  const { data: session } = await supabase
+    .from('takeoff_sessions')
+    .select('id, version')
+    .eq('quote_id', quoteId)
+    .maybeSingle();
+
+  if (!session) return null;
+
+  // 2. Pages (ordered)
+  const { data: pages } = await supabase
+    .from('takeoff_pages')
+    .select('id, page_order, page_name, image_storage_path')
+    .eq('quote_id', quoteId)
+    .order('page_order', { ascending: true });
+
+  const hydratedPages: TakeoffHydrationPage[] = await Promise.all(
+    (pages ?? []).map(async (p) => {
+      let imageUrl: string | null = null;
+      if (p.image_storage_path) {
+        try {
+          imageUrl = await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, p.image_storage_path);
+        } catch {
+          // Non-fatal: image URL generation failure
+        }
+      }
+      return {
+        id: p.id,
+        pageOrder: p.page_order,
+        pageName: p.page_name,
+        imagePath: p.image_storage_path,
+        imageUrl,
+      };
+    }),
+  );
+
+  // 3. Measurements for all pages
+  const { data: measurements } = await supabase
+    .from('quote_takeoff_measurements')
+    .select('id, component_library_id, measurement_type, measurement_value, measurement_unit, canvas_points, is_visible, page_id')
+    .eq('quote_id', quoteId)
+    .order('created_at', { ascending: true });
+
+  const hydratedMeasurements: TakeoffHydrationMeasurement[] = (measurements ?? []).map(m => ({
+    id: m.id,
+    componentId: m.component_library_id,
+    type: m.measurement_type,
+    value: Number(m.measurement_value),
+    unit: m.measurement_unit,
+    points: (m.canvas_points as { x: number; y: number }[] | null),
+    visible: m.is_visible ?? true,
+    pageId: m.page_id,
+  }));
+
+  return {
+    sessionId: session.id,
+    sessionVersion: (session as { id: string; version?: number }).version ?? 0,
+    pages: hydratedPages,
+    measurements: hydratedMeasurements,
+  };
 }
 
 export async function loadTakeoffMeasurements(quoteId: string) {

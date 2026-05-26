@@ -2564,16 +2564,19 @@ export type Database = {
           created_at: string
           id: string
           quote_id: string
+          version: number
         }
         Insert: {
           created_at?: string
           id?: string
           quote_id: string
+          version?: number
         }
         Update: {
           created_at?: string
           id?: string
           quote_id?: string
+          version?: number
         }
         Relationships: [
           {
@@ -3005,10 +3008,9 @@ export type Database = {
         Args: { p_company_id: string }
         Returns: undefined
       }
-      save_takeoff_atomic: {
-        Args: { p_payload: Json; p_quote_id: string }
-        Returns: undefined
-      }
+      save_takeoff_atomic:
+        | { Args: { p_payload: Json; p_quote_id: string }; Returns: undefined }
+        | { Args: { p_payload: Json; p_quote_id: string }; Returns: undefined }
       user_belongs_to_company: {
         Args: { target_company_id: string }
         Returns: boolean
