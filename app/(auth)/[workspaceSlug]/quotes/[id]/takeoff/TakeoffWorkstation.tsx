@@ -807,7 +807,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components, 
       if (currentPageDbId) {
         allMeasurements.forEach(m => { m.pageId = currentPageDbId; });
       }
-      await saveTakeoffMeasurements(
+      const saveResult = await saveTakeoffMeasurements(
         quote.id,
         allMeasurements,
         calibrations[0]?.unit || 'feet',
@@ -817,6 +817,22 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components, 
         sessionVersion, // P1-1a: optimistic version guard
       );
 
+      if (!saveResult.success) {
+        // Surface the actual error message — not hidden by Next.js production mode
+        // since we return errors rather than throwing.
+        const msg = saveResult.error;
+        if (msg.includes('STALE_TAKEOFF_VERSION')) {
+          showAlert(
+            'Takeoff edited in another tab',
+            'Your takeoff was saved from another browser tab. Reload this page to see the latest version, then continue measuring.',
+            'error',
+          );
+        } else {
+          showAlert('Failed to save measurements', msg, 'error');
+        }
+        return;
+      }
+
       // P1-1a: increment local version to match what the RPC wrote.
       setSessionVersion(prev => (prev != null ? prev + 1 : 1));
       setIsDirty(false);
@@ -825,18 +841,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components, 
       // Navigate to Quote Builder v2 (digital takeoff mode)
       router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
     } catch (error) {
-      console.error('[SaveTakeoff] Error:', error);
+      console.error('[SaveTakeoff] Unexpected error:', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
-      // P1-1a: stale version = another tab saved. Prompt reload, don't show generic error.
-      if (message.includes('STALE_TAKEOFF_VERSION')) {
-        showAlert(
-          'Takeoff edited in another tab',
-          'Your takeoff was saved from another browser tab. Reload this page to see the latest version, then continue measuring.',
-          'error',
-        );
-      } else {
-        showAlert('Failed to save measurements', message, 'error');
-      }
+      showAlert('Failed to save measurements', message, 'error');
     } finally {
       setIsSaving(false);
     }

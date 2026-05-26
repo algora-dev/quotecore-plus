@@ -32,7 +32,7 @@ export async function saveTakeoffMeasurements(
   /** P1-1a version guard: client submits the version it last read.
    *  RPC rejects with STALE_TAKEOFF_VERSION if it has advanced. */
   sessionVersion?: number | null,
-) {
+): Promise<{ success: true } | { success: false; error: string }> {
   const supabase = await createSupabaseServerClient();
 
   // Ownership check (RLS still applies inside the RPC, but this gives us a clearer error
@@ -44,7 +44,7 @@ export async function saveTakeoffMeasurements(
     .single();
 
   if (quoteError || !quote) {
-    throw new Error('Quote not found');
+    return { success: false, error: 'Quote not found' };
   }
 
   // ---------------------------------------------------------------------
@@ -275,9 +275,9 @@ export async function saveTakeoffMeasurements(
     console.error('[SaveTakeoff] RPC error:', rpcError);
     // P1-1a version guard: surface a clear reload prompt instead of a generic error.
     if (rpcError.message?.includes('STALE_TAKEOFF_VERSION')) {
-      throw new Error('STALE_TAKEOFF_VERSION: Your takeoff was edited in another tab. Please reload the page to continue.');
+      return { success: false, error: 'STALE_TAKEOFF_VERSION: Your takeoff was edited in another tab. Please reload the page to continue.' };
     }
-    throw new Error(`Failed to save takeoff: ${rpcError.message}`);
+    return { success: false, error: `Failed to save takeoff: ${rpcError.message}` };
   }
 
   // Gerald round-6 H-03: save_takeoff_atomic writes material_cost as quantity × rate
@@ -287,7 +287,7 @@ export async function saveTakeoffMeasurements(
   await recalcAllQuoteComponents(quoteId);
 
   revalidatePath(`/[workspaceSlug]/quotes/${quoteId}`);
-  return { success: true };
+  return { success: true as const };
 }
 
 // ─── P1-1a: Hydration helpers ────────────────────────────────────────────
