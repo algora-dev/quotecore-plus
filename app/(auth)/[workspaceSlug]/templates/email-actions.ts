@@ -113,7 +113,17 @@ export async function deleteEmailTemplate(id: string): Promise<void> {
     .eq('id', id)
     .eq('company_id', profile.company_id);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    // 23503 = foreign_key_violation. Surface a friendly message instead of
+    // the raw Postgres error so the UI doesn't show "Server Components render".
+    const code = (error as { code?: string }).code;
+    if (code === '23503') {
+      throw new Error(
+        'This template is still referenced by another record and cannot be deleted. If you keep seeing this, contact support.'
+      );
+    }
+    throw new Error(error.message);
+  }
 
   revalidatePath('/');
 }
