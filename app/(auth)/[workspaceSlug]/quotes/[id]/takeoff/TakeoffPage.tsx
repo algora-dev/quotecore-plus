@@ -33,6 +33,8 @@ interface Props {
   initialPageId?: string;
   /** P1-1b: human-readable page name for new-area entries. */
   initialPageName?: string;
+  /** P1-1b mode=add: existing roof areas to display in the panel (read-only). */
+  existingRoofAreas?: { id: string; label: string }[];
 }
 
 export function TakeoffPage({
@@ -44,6 +46,7 @@ export function TakeoffPage({
   takeoffMode,
   initialPageId,
   initialPageName,
+  existingRoofAreas,
 }: Props) {
   return (
     <TakeoffWorkstation
@@ -55,6 +58,7 @@ export function TakeoffPage({
       takeoffMode={takeoffMode}
       initialPageId={initialPageId}
       initialPageName={initialPageName}
+      existingRoofAreas={existingRoofAreas}
     />
   );
 }

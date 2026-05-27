@@ -73,6 +73,8 @@ interface Props {
   initialPageId?: string;
   /** P1-1b: human-readable label for the new page. */
   initialPageName?: string;
+  /** P1-1b mode=add: existing roof areas loaded from DB, shown read-only in the panel. */
+  existingRoofAreas?: { id: string; label: string }[];
 }
 
 const CANVAS_WIDTH = 800;
@@ -116,6 +118,7 @@ export function TakeoffWorkstation({
   takeoffMode,
   initialPageId,
   initialPageName,
+  existingRoofAreas = [],
 }: Props) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -314,6 +317,8 @@ export function TakeoffWorkstation({
   // tradeConfig properties in new code.
   const quoteIsGeneric = !tradeConfig.pitchRequired;
   useEffect(() => {
+    // P1-1b: suppress in mode=add — user is continuing on an existing area, not creating a new one.
+    if (takeoffMode === 'add') return;
     if (calibrationConfirmed && calibrations.length > 0 && roofAreas.length === 0) {
       // Delay slightly to show after calibration flash
       const timer = setTimeout(() => {
@@ -321,7 +326,7 @@ export function TakeoffWorkstation({
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [calibrationConfirmed, calibrations.length, roofAreas.length]);
+  }, [calibrationConfirmed, calibrations.length, roofAreas.length, takeoffMode]);
   
   const handleDeleteArea = (areaId: string) => {
     const area = roofAreas.find(a => a.id === areaId);
@@ -1674,7 +1679,22 @@ export function TakeoffWorkstation({
 
           <div className="border-t border-gray-200 pt-4">
             <h2 className="text-sm font-semibold mb-3 text-gray-600">{quoteIsGeneric ? 'Areas' : 'Roof Areas'}</h2>
-            {roofAreas.length === 0 ? (
+            {roofAreas.length === 0 && takeoffMode === 'add' && existingRoofAreas.length > 0 ? (
+              // P1-1b mode=add: show existing areas read-only (canvas not reconstructed).
+              <div className="space-y-2">
+                {existingRoofAreas.map(area => (
+                  <div
+                    key={area.id}
+                    className="p-2 rounded-lg bg-blue-50 border border-blue-300 flex items-center gap-2"
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{area.label}</div>
+                      <div className="text-xs text-slate-500">Existing area</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : roofAreas.length === 0 ? (
               <div className="text-sm text-gray-500">
                 {calibrationConfirmed ? 'Click "Area" to draw' : 'Calibrate first'}
               </div>

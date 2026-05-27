@@ -81,15 +81,25 @@ export default async function Page({
   if (mode === 'add') {
     // Determine the plan image: clean plan or lines overlay.
     let planUrl: string;
-    const linesPath = (quote as unknown as { takeoff_lines_path?: string | null }).takeoff_lines_path;
-    if (planMode === 'lines' && linesPath) {
-      planUrl = await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, linesPath);
+    // takeoff_canvas_path = full composite (original plan + coloured shapes).
+    // takeoff_lines_path  = lines only (no background). We use the canvas version
+    // so "Show measurements on plan" shows the plan WITH its coloured overlays.
+    const canvasPath = (quote as unknown as { takeoff_canvas_path?: string | null }).takeoff_canvas_path;
+    if (planMode === 'lines' && canvasPath) {
+      planUrl = await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, canvasPath);
     } else {
       planUrl = await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, planFile.storage_path);
     }
 
     // Load existing measurements so the panel hydrates.
     const hydrationData = await loadTakeoffHydrationData(quoteId);
+
+    // Load existing roof areas so the left panel can display them (no canvas reconstruction).
+    const { data: existingAreas } = await supabase
+      .from('quote_roof_areas')
+      .select('id, label')
+      .eq('quote_id', quoteId)
+      .order('sort_order', { ascending: true });
 
     return (
       <TakeoffPage
@@ -100,6 +110,7 @@ export default async function Page({
         components={components || []}
         hydrationData={hydrationData}
         takeoffMode="add"
+        existingRoofAreas={(existingAreas || []).map(a => ({ id: a.id, label: a.label }))}
       />
     );
   }

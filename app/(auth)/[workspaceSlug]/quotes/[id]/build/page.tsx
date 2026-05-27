@@ -57,10 +57,11 @@ export default async function QuoteBuilderV2Page({
     .eq('quote_id', id);
   const hasExistingTakeoff = (takeoffMeasurementCount ?? 0) > 0;
 
-  // P1-1b: Sign the lines-overlay image if it exists.
-  const linesPath = (quote as unknown as { takeoff_lines_path?: string | null }).takeoff_lines_path;
-  const linesImageUrl = linesPath
-    ? await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, linesPath)
+  // P1-1b: Sign the full canvas image (plan + coloured measurements) if it exists.
+  // takeoff_canvas_path holds the composite image; takeoff_lines_path is lines-only.
+  const canvasPath = (quote as unknown as { takeoff_canvas_path?: string | null }).takeoff_canvas_path;
+  const linesImageUrl = canvasPath
+    ? await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, canvasPath)
     : null;
 
   const { data: supportingFilesData } = await supabase

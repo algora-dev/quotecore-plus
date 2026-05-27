@@ -515,27 +515,33 @@ export function FilesManager({
 
             {/* Option A sub-toggle — plan mode */}
             {takeoffOption === 'continue' && linesImageUrl && (
-              <div className="ml-4 mb-3 flex rounded-lg overflow-hidden border border-slate-200">
-                <button
-                  onClick={() => setPlanMode('clean')}
-                  className={`flex-1 py-2 text-xs font-medium transition-colors ${
-                    planMode === 'clean'
-                      ? 'bg-slate-900 text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  Use clean plan
-                </button>
-                <button
-                  onClick={() => setPlanMode('lines')}
-                  className={`flex-1 py-2 text-xs font-medium transition-colors ${
-                    planMode === 'lines'
-                      ? 'bg-slate-900 text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  Show measurements on plan
-                </button>
+              <div className="ml-4 mb-3 space-y-2">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="planMode"
+                    checked={planMode === 'clean'}
+                    onChange={() => setPlanMode('clean')}
+                    className="w-4 h-4 accent-orange-500"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">Use clean plan</p>
+                    <p className="text-xs text-slate-500">Original plan without any markings</p>
+                  </div>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="planMode"
+                    checked={planMode === 'lines'}
+                    onChange={() => setPlanMode('lines')}
+                    className="w-4 h-4 accent-orange-500"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">Show measurements on plan</p>
+                    <p className="text-xs text-slate-500">Plan with previous measurements marked in colour</p>
+                  </div>
+                </label>
               </div>
             )}
 
