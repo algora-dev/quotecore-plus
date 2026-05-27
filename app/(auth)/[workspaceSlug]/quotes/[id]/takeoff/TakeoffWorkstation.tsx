@@ -174,6 +174,10 @@ export function TakeoffWorkstation({
   const [areaPoints, setAreaPoints] = useState<{ x: number; y: number }[]>([]);
   const [_tempAreaPolygon, _setTempAreaPolygon] = useState<any>(null);
   const [showAreaNamePrompt, setShowAreaNamePrompt] = useState(false);
+  // P1-1b new-page mode: pitch-only prompt after drawing the first area boundary.
+  // Bypasses AreaNameModal entirely so the name never has to be re-typed.
+  const [showPitchOnlyPrompt, setShowPitchOnlyPrompt] = useState(false);
+  const [pitchOnlyInput, setPitchOnlyInput] = useState('');
   const [pendingAreaPoints, setPendingAreaPoints] = useState<{ x: number; y: number }[]>([]);
   
   // Component measurements
@@ -1177,10 +1181,17 @@ export function TakeoffWorkstation({
           );
           
           if (distance < 15) {
-            // Close polygon - prompt for name
+            // Close polygon
             console.log('[Area] Closing polygon with', currentPoints.length, 'points');
             setPendingAreaPoints(currentPoints);
-            setShowAreaNamePrompt(true);
+            // P1-1b: in new-page mode, show a pitch-only prompt — the area
+            // name is already known from the re-entry modal (initialPageName).
+            if (takeoffMode === 'new-page' && roofAreas.length === 0) {
+              setPitchOnlyInput('');
+              setShowPitchOnlyPrompt(true);
+            } else {
+              setShowAreaNamePrompt(true);
+            }
             return;
           }
         }
@@ -2305,6 +2316,58 @@ export function TakeoffWorkstation({
         </div>
       )}
 
+      {/* P1-1b pitch-only prompt for new-page mode (first area boundary drawn) */}
+      {showPitchOnlyPrompt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-80 border border-gray-200 shadow-xl">
+            <h2 className="text-lg font-semibold mb-1">"{initialPageName || 'New Area'}"</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              {tradeConfig.pitchRequired
+                ? 'Enter the roof pitch for this area, or skip to use 0°.'
+                : 'Enter the slope or angle if applicable, or skip.'}
+            </p>
+            {tradeConfig.pitchRequired && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-700 mb-1">Pitch (degrees)</label>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  max="90"
+                  value={pitchOnlyInput}
+                  onChange={(e) => setPitchOnlyInput(e.target.value)}
+                  placeholder="e.g. 25"
+                  autoFocus
+                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded text-sm"
+                />
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowPitchOnlyPrompt(false);
+                  const pitch = pitchOnlyInput.trim() ? Number(pitchOnlyInput) : 0;
+                  handleSaveArea(initialPageName || 'New Area', pitch);
+                }}
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
+              >
+                {pitchOnlyInput.trim() ? `Save at ${pitchOnlyInput}°` : 'Save (0° flat)'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowPitchOnlyPrompt(false);
+                  setPendingAreaPoints([]);
+                  setAreaPoints([]);
+                }}
+                className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Area Name Prompt */}
       {showAreaNamePrompt && (
         <AreaNameModal
@@ -2312,7 +2375,7 @@ export function TakeoffWorkstation({
           modalTitle={tradeConfig.createAreaModalTitle}
           namePlaceholder={tradeConfig.areaNamePlaceholder}
           componentName={roofAreas.length === 0 ? null : (selectedComponentId ? displayComponents.find(c => c.id === selectedComponentId)?.name ?? null : null)}
-          initialName={takeoffMode === 'new-page' && roofAreas.length === 0 ? (initialPageName ?? '') : ''}
+          initialName={takeoffMode === 'new-page' ? (initialPageName ?? '') : ''}
           calculatedArea={pendingAreaPoints.length > 0 ? calculatePolygonArea(pendingAreaPoints) : 0}
           unit={calibrations[0]?.unit || 'feet'}
           onSave={handleSaveArea}
