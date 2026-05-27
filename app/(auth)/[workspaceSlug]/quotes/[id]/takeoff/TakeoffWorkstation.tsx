@@ -2305,6 +2305,7 @@ export function TakeoffWorkstation({
           modalTitle={tradeConfig.createAreaModalTitle}
           namePlaceholder={tradeConfig.areaNamePlaceholder}
           componentName={roofAreas.length === 0 ? null : (selectedComponentId ? displayComponents.find(c => c.id === selectedComponentId)?.name ?? null : null)}
+          initialName={takeoffMode === 'new-page' && roofAreas.length === 0 ? (initialPageName ?? '') : ''}
           calculatedArea={pendingAreaPoints.length > 0 ? calculatePolygonArea(pendingAreaPoints) : 0}
           unit={calibrations[0]?.unit || 'feet'}
           onSave={handleSaveArea}
@@ -2457,6 +2458,7 @@ function AreaNameModal({
   unit,
   onSave,
   onCancel,
+  initialName = '',
 }: {
   isRoofing: boolean;
   modalTitle?: string;
@@ -2466,8 +2468,10 @@ function AreaNameModal({
   unit: string;
   onSave: (name: string, pitch?: number) => void;
   onCancel: () => void;
+  /** Pre-fill the area name (used in new-page mode where the user already named the area). */
+  initialName?: string;
 }) {
-  const [name, setName] = useState('');
+  const [name, setName] = useState(initialName);
   const [pitch, setPitch] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
