@@ -30,13 +30,12 @@ export function SummaryFileRow({ quoteId, id, fileName, fileType, fileSize, stor
   function handleConfirmedDelete() {
     startTransition(async () => {
       try {
-        if (fileType === 'canvas') {
-          // Synthetic ids: 'canvas-image' → takeoff_canvas_url, 'canvas-lines' → takeoff_lines_url.
+        if (fileType === 'canvas' && (id === 'canvas-image' || id === 'canvas-lines')) {
+          // Legacy backward-compat: synthetic ids on old quotes → update quote columns.
           const kind: 'canvas' | 'lines' = id === 'canvas-lines' ? 'lines' : 'canvas';
           await deleteTakeoffCanvas(quoteId, kind);
         } else {
-          // Server derives the storage path from the DB row - we no longer
-          // pass `storagePath` here (Gerald audit H-01, 2026-05-11).
+          // Real quote_files row (including takeoff_canvas / takeoff_lines types).
           await deleteFile(id);
         }
         setConfirmOpen(false);
@@ -51,7 +50,10 @@ export function SummaryFileRow({ quoteId, id, fileName, fileType, fileSize, stor
   if (removed) return null;
 
   const label =
-    fileType === 'plan' ? 'Roof Plan' : fileType === 'canvas' ? 'Digital Takeoff' : 'Supporting File';
+    fileType === 'plan' ? 'Roof Plan'
+    : fileType === 'takeoff_canvas' || fileType === 'canvas' ? 'Digital Takeoff'
+    : fileType === 'takeoff_lines' ? 'Digital Takeoff'
+    : 'Supporting File';
   const sizeText = fileSize > 0 ? ` • ${(fileSize / 1024 / 1024).toFixed(2)} MB` : '';
 
   return (

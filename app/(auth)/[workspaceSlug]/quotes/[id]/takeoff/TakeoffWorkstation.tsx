@@ -75,6 +75,9 @@ interface Props {
   initialPageName?: string;
   /** P1-1b mode=add: existing roof areas loaded from DB, shown read-only in the panel. */
   existingRoofAreas?: { id: string; label: string }[];
+  /** P1-1b mode=new-page: pre-created quote_roof_areas ID. Passed as target_roof_area_id
+   *  to save_takeoff_atomic so components route to the correct area. */
+  initialRoofAreaId?: string;
 }
 
 const CANVAS_WIDTH = 800;
@@ -119,6 +122,7 @@ export function TakeoffWorkstation({
   initialPageId,
   initialPageName,
   existingRoofAreas = [],
+  initialRoofAreaId,
 }: Props) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -841,6 +845,8 @@ export function TakeoffWorkstation({
         linesImagePath,
         currentPageDbId,
         sessionVersion, // P1-1a: optimistic version guard
+        // P1-1b: route components to correct area for new-area saves.
+        takeoffMode === 'new-page' ? (initialRoofAreaId ?? null) : null,
       );
 
       if (!saveResult.success) {
@@ -2168,11 +2174,12 @@ export function TakeoffWorkstation({
               // the chance to draw its boundary for pitch calculations.
               <>
                 <h3 className="text-lg font-semibold mb-3 text-gray-700">
-                  Draw boundary for &ldquo;{initialPageName || 'New Area'}&rdquo;?
+                  &ldquo;{initialPageName || 'New Area'}&rdquo;
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Drawing the area boundary lets you set the pitch for accurate material calculations.
-                  Skip this if you want to go straight to adding component measurements.
+                  You can draw and measure the new area in this step, or skip and move straight
+                  to adding components to your newly named area. You can always add dimensions
+                  to the area manually after saving in the area step of the quote builder.
                 </p>
                 <div className="flex gap-3">
                   <button
@@ -2185,7 +2192,7 @@ export function TakeoffWorkstation({
                     }}
                     className="flex-1 px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium text-sm transition-all"
                   >
-                    Draw boundary
+                    Draw Area
                   </button>
                   <button
                     onClick={() => setShowRoofAreaInstructions(false)}
@@ -2474,20 +2481,26 @@ function AreaNameModal({
   const [name, setName] = useState(initialName);
   const [pitch, setPitch] = useState('');
 
+  // P1-1b: when initialName is pre-filled (new-page mode), name is locked —
+  // only pitch is needed from the user.
+  const nameIsLocked = initialName !== '';
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (componentName) {
       // Component area - no pitch needed
       onSave('');
     } else if (isRoofing) {
-      // Roof area - require name and pitch
-      if (name.trim() && pitch.trim()) {
-        onSave(name.trim(), Number(pitch));
+      // Roof area - require pitch; name comes from pre-fill or input
+      const effectiveName = nameIsLocked ? initialName : name.trim();
+      if (effectiveName && (pitch.trim() || nameIsLocked)) {
+        onSave(effectiveName, pitch.trim() ? Number(pitch) : 0);
       }
     } else {
       // Generic area - name only, pitch=0 (flat)
-      if (name.trim()) {
-        onSave(name.trim(), 0);
+      const effectiveName = nameIsLocked ? initialName : name.trim();
+      if (effectiveName) {
+        onSave(effectiveName, 0);
       }
     }
   };
@@ -2512,22 +2525,32 @@ function AreaNameModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           {!componentName && (
             <>
-              <div>
-                <label className="block text-sm mb-2">Area Name <span className="text-red-400">*</span></label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded"
-                  placeholder={namePlaceholder ?? (isRoofing ? 'e.g. Main Roof' : 'e.g. North Wall')}
-                  autoFocus
-                  required
-                />
-              </div>
+              {nameIsLocked ? (
+                // P1-1b new-page mode: name already set, show read-only.
+                <div>
+                  <label className="block text-sm mb-1 text-gray-500">Area</label>
+                  <p className="px-3 py-2 bg-slate-50 border border-slate-200 rounded text-sm font-medium text-slate-800">{initialName}</p>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm mb-2">Area Name <span className="text-red-400">*</span></label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded"
+                    placeholder={namePlaceholder ?? (isRoofing ? 'e.g. Main Roof' : 'e.g. North Wall')}
+                    autoFocus
+                    required
+                  />
+                </div>
+              )}
               {isRoofing && (
                 <>
                   <div>
-                    <label className="block text-sm mb-2">Roof Pitch (degrees) <span className="text-red-400">*</span></label>
+                    <label className="block text-sm mb-2">
+                      Roof Pitch (degrees){nameIsLocked ? ' — optional, enter 0 if flat' : <span className="text-red-400"> *</span>}
+                    </label>
                     <input
                       type="number"
                       step="0.5"
@@ -2536,8 +2559,9 @@ function AreaNameModal({
                       value={pitch}
                       onChange={(e) => setPitch(e.target.value)}
                       className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded"
-                      placeholder="e.g. 30"
-                      required
+                      placeholder={nameIsLocked ? 'e.g. 25 (or 0 for flat)' : 'e.g. 30'}
+                      required={!nameIsLocked}
+                      autoFocus={nameIsLocked}
                     />
                     <p className="text-xs text-gray-600 mt-1">
                       Used to calculate component lengths (rafters, hips, valleys)
@@ -2573,7 +2597,7 @@ function AreaNameModal({
             <button
               type="submit"
               className="px-4 py-2 bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-              disabled={!componentName && (!name.trim() || (isRoofing && !pitch.trim()))}
+              disabled={!componentName && !nameIsLocked && (!name.trim() || (isRoofing && !pitch.trim()))}
             >
               {componentName ? 'Add to Component' : isRoofing ? 'Create Roof Area' : 'Create Area'}
             </button>

@@ -32,6 +32,10 @@ export async function saveTakeoffMeasurements(
   /** P1-1a version guard: client submits the version it last read.
    *  RPC rejects with STALE_TAKEOFF_VERSION if it has advanced. */
   sessionVersion?: number | null,
+  /** P1-1b: pre-created quote_roof_areas ID for new-area saves.
+   *  When supplied: disables H-01 cross-page aggregation (this page's
+   *  components are routed to this area only, not merged with page 1). */
+  targetRoofAreaId?: string | null,
 ): Promise<{ success: true } | { success: false; error: string }> {
   const supabase = await createSupabaseServerClient();
 
@@ -98,7 +102,12 @@ export async function saveTakeoffMeasurements(
   // the current page's new measurements, the combined picture is correct.
   let allMeasurementsForComponents = measurements;
 
-  if (currentPageId) {
+  // P1-1b: for new-area saves (targetRoofAreaId set), skip H-01 cross-page
+  // aggregation. Each area's components are isolated — other pages' measurements
+  // stay under their own areas and must not pollute this area's entries.
+  const isIsolatedSave = !!targetRoofAreaId;
+
+  if (currentPageId && !isIsolatedSave) {
     const { data: otherPageRows } = await supabase
       .from('quote_takeoff_measurements')
       .select('component_library_id, measurement_type, measurement_value, measurement_unit, canvas_points, is_visible, page_id')
@@ -114,7 +123,7 @@ export async function saveTakeoffMeasurements(
         points: (row.canvas_points as { x: number; y: number }[] | null) ?? undefined,
         visible: row.is_visible ?? true,
         pageId: row.page_id,
-        measurementUnit: row.measurement_unit ?? unit, // use stored unit for correct metric conversion
+        measurementUnit: row.measurement_unit ?? unit,
       }));
       // Prepend other pages' measurements; current page's override on conflict.
       allMeasurementsForComponents = [...otherMeasurements, ...measurements];
@@ -255,6 +264,8 @@ export async function saveTakeoffMeasurements(
     current_page_id: currentPageId ?? null,
     // P1-1a version guard: RPC rejects if DB version has advanced.
     ...(sessionVersion != null ? { session_version: sessionVersion } : {}),
+    // P1-1b: route components to correct area for new-area saves.
+    ...(targetRoofAreaId ? { target_roof_area_id: targetRoofAreaId } : {}),
     measurements: measurementsPayload,
     roof_areas: roofAreasPayload,
     components: componentsPayload,
@@ -285,6 +296,47 @@ export async function saveTakeoffMeasurements(
   // so pack pricing (per_pack_area, per_pack_coverage, etc.) is applied before the
   // quote builder loads the stored totals.
   await recalcAllQuoteComponents(quoteId);
+
+  // P1-1b: create quote_files records for every canvas save so all takeoff
+  // images are visible in Files & Documents and users can delete old ones.
+  // We use the admin client for this since saveFileMetadata uses RLS-authed
+  // client and company_id is available from the earlier ownership check.
+  // P1-1b: create quote_files records so all canvas snapshots appear in
+  // Files & Documents. Non-fatal — a failed record doesn't affect the save.
+  if (canvasImagePath || linesImagePath) {
+    const admin = createAdminClient();
+    const pageLabel = currentPageId ? ` - Page ${currentPageId.slice(0, 6)}` : '';
+    type QFInsert = { company_id: string; quote_id: string; file_type: string; file_name: string; storage_path: string; file_size: number; mime_type: string };
+    const fileRecords: QFInsert[] = [];
+    if (canvasImagePath) {
+      fileRecords.push({
+        company_id: quote.company_id,
+        quote_id: quoteId,
+        file_type: 'takeoff_canvas',
+        file_name: `Digital Takeoff Canvas${pageLabel}`,
+        storage_path: canvasImagePath,
+        file_size: 0,
+        mime_type: 'image/png',
+      });
+    }
+    if (linesImagePath) {
+      fileRecords.push({
+        company_id: quote.company_id,
+        quote_id: quoteId,
+        file_type: 'takeoff_lines',
+        file_name: 'Takeoff Lines Only (Print Ready)',
+        storage_path: linesImagePath,
+        file_size: 0,
+        mime_type: 'image/png',
+      });
+    }
+    // Non-fatal: a failed record doesn't affect the save result.
+    try {
+      await admin.from('quote_files').insert(fileRecords);
+    } catch (err) {
+      console.warn('[SaveTakeoff] Failed to create quote_files record:', err);
+    }
+  }
 
   revalidatePath(`/[workspaceSlug]/quotes/${quoteId}`);
   return { success: true as const };
@@ -567,17 +619,46 @@ export async function createTakeoffPageForArea(
   quoteId: string,
   areaName: string,
   imagePath?: string | null,
-): Promise<{ ok: boolean; pageId?: string; error?: string }> {
+): Promise<{ ok: boolean; pageId?: string; roofAreaId?: string; error?: string }> {
   try {
     const { requireCompanyContext } = await import('@/app/lib/supabase/server');
     const profile = await requireCompanyContext();
     const admin = createAdminClient();
+
+    // H-01: ownership checked inside ensureTakeoffSession.
     const sessionId = await ensureTakeoffSession(quoteId, profile.company_id);
+
+    // P1-1b: create the quote_roof_areas entry FIRST so components can be
+    // routed to the correct area. input_mode='plan' + 0 values = placeholder
+    // until the user draws the boundary (or skips).
+    const { count: areaCount } = await admin
+      .from('quote_roof_areas')
+      .select('id', { count: 'exact', head: true })
+      .eq('quote_id', quoteId);
+    const { data: roofArea, error: areaError } = await admin
+      .from('quote_roof_areas')
+      .insert({
+        quote_id: quoteId,
+        label: areaName,
+        input_mode: 'calculated' as const,
+        final_value_sqm: 0,
+        computed_sqm: 0,
+        calc_pitch_degrees: 0,
+        is_locked: false,
+        sort_order: (areaCount ?? 0) + 1,
+      })
+      .select('id')
+      .single();
+    if (areaError || !roofArea) {
+      return { ok: false, error: areaError?.message ?? 'Roof area insert returned no row' };
+    }
+
+    // Create the takeoff page linked to the new roof area.
     const { count: existingCount } = await admin
       .from('takeoff_pages')
       .select('id', { count: 'exact', head: true })
       .eq('quote_id', quoteId);
-    const { data: page, error } = await admin
+    const { data: page, error: pageError } = await admin
       .from('takeoff_pages')
       .insert({
         session_id: sessionId,
@@ -585,11 +666,16 @@ export async function createTakeoffPageForArea(
         page_order: (existingCount ?? 0) + 1,
         page_name: areaName,
         image_storage_path: imagePath ?? null,
-      })
+        // P1-1b: quote_roof_area_id is new — cast until database.types.ts regen.
+        quote_roof_area_id: roofArea.id,
+      } as any)
       .select('id')
       .single();
-    if (error || !page) return { ok: false, error: error?.message ?? 'Page insert returned no row' };
-    return { ok: true, pageId: page.id };
+    if (pageError || !page) {
+      return { ok: false, error: pageError?.message ?? 'Page insert returned no row' };
+    }
+
+    return { ok: true, pageId: page.id, roofAreaId: roofArea.id };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[createTakeoffPageForArea]', msg);

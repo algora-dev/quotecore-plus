@@ -272,10 +272,11 @@ export function FilesManager({
           return;
         }
 
-        // 3. Navigate to takeoff with the new page.
+        // 3. Navigate to takeoff with the new page + roofAreaId.
         const encoded = encodeURIComponent(areaName.trim());
+        const raParam = result.roofAreaId ? `&roofAreaId=${result.roofAreaId}` : '';
         router.push(
-          `/${workspaceSlug}/quotes/${quoteId}/takeoff?mode=new-page&areaName=${encoded}&pageId=${result.pageId}`
+          `/${workspaceSlug}/quotes/${quoteId}/takeoff?mode=new-page&areaName=${encoded}&pageId=${result.pageId}${raParam}`
         );
         setShowTakeoffModal(false);
         return;

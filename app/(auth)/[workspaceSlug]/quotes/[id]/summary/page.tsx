@@ -127,20 +127,20 @@ export default async function QuoteSummaryPage({
   
   const _planFile = filesData?.find(f => f.file_type === 'plan');
   const _supportingFiles = filesData?.filter(f => f.file_type === 'supporting') || [];
-  
-  // QUOTE-DOCUMENTS is private; batch-sign every file's storage path so we
-  // hit the storage API once instead of N times.
-  // Takeoff canvas snapshots: prefer the stable storage path columns and sign
-  // on render. The legacy *_url columns are kept as a transition fallback for
-  // ancient quotes whose path column is still null after the backfill
-  // (Gerald audit pass 2 fix).
+
+  // P1-1b: new saves create quote_files records for each canvas snapshot so all
+  // takeoff images appear here. For older quotes that pre-date this change,
+  // fall back to quotes.takeoff_canvas_path (added manually below).
+  const hasCanvasFileRecords = (filesData || []).some(f => f.file_type === 'takeoff_canvas');
+  const hasLinesFileRecords  = (filesData || []).some(f => f.file_type === 'takeoff_lines');
+
   const canvasPath = quote.takeoff_canvas_path ?? null;
-  const linesPath = quote.takeoff_lines_path ?? null;
+  const linesPath  = quote.takeoff_lines_path  ?? null;
 
   const allPathsToSign = [
     ...(filesData || []).map((f) => f.storage_path),
-    ...(canvasPath ? [canvasPath] : []),
-    ...(linesPath ? [linesPath] : []),
+    ...(!hasCanvasFileRecords && canvasPath ? [canvasPath] : []),
+    ...(!hasLinesFileRecords  && linesPath  ? [linesPath]  : []),
   ];
   const signed = allPathsToSign.length > 0
     ? await getSignedUrls(BUCKETS.QUOTE_DOCUMENTS, allPathsToSign)
@@ -151,36 +151,39 @@ export default async function QuoteSummaryPage({
     url: signedByPath.get(file.storage_path) ?? '',
   }));
 
-  // Add canvas image if it exists
-  const canvasUrl = canvasPath
-    ? signedByPath.get(canvasPath) ?? ''
-    : (quote.takeoff_canvas_url ?? '');
-  if (canvasUrl) {
-    allFiles.push({
-      id: 'canvas-image',
-      file_type: 'canvas' as any,
-      file_name: 'Digital Takeoff Canvas',
-      file_size: 0,
-      storage_path: canvasPath ?? '',
-      uploaded_at: quote.updated_at,
-      url: canvasUrl,
-    });
+  // Backward-compat: add canvas images from quote columns only when no
+  // quote_files records exist yet (old quotes pre-dating P1-1b).
+  if (!hasCanvasFileRecords) {
+    const canvasUrl = canvasPath
+      ? signedByPath.get(canvasPath) ?? ''
+      : (quote.takeoff_canvas_url ?? '');
+    if (canvasUrl) {
+      allFiles.push({
+        id: 'canvas-image',
+        file_type: 'takeoff_canvas' as any,
+        file_name: 'Digital Takeoff Canvas',
+        file_size: 0,
+        storage_path: canvasPath ?? '',
+        uploaded_at: quote.updated_at,
+        url: canvasUrl,
+      });
+    }
   }
-
-  // Add lines-only canvas image if it exists
-  const linesUrl = linesPath
-    ? signedByPath.get(linesPath) ?? ''
-    : (quote.takeoff_lines_url ?? '');
-  if (linesUrl) {
-    allFiles.push({
-      id: 'canvas-lines',
-      file_type: 'canvas' as any,
-      file_name: 'Takeoff Lines Only (Print Ready)',
-      file_size: 0,
-      storage_path: linesPath ?? '',
-      uploaded_at: quote.updated_at,
-      url: linesUrl,
-    });
+  if (!hasLinesFileRecords) {
+    const linesUrl = linesPath
+      ? signedByPath.get(linesPath) ?? ''
+      : (quote.takeoff_lines_url ?? '');
+    if (linesUrl) {
+      allFiles.push({
+        id: 'canvas-lines',
+        file_type: 'takeoff_lines' as any,
+        file_name: 'Takeoff Lines Only (Print Ready)',
+        file_size: 0,
+        storage_path: linesPath ?? '',
+        uploaded_at: quote.updated_at,
+        url: linesUrl,
+      });
+    }
   }
 
 

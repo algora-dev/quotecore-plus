@@ -10,10 +10,10 @@ export default async function Page({
   searchParams,
 }: {
   params: Promise<{ workspaceSlug: string; id: string }>;
-  searchParams: Promise<{ mode?: string; areaName?: string; planMode?: string; pageId?: string }>;
+  searchParams: Promise<{ mode?: string; areaName?: string; planMode?: string; pageId?: string; roofAreaId?: string }>;
 }) {
   const { workspaceSlug, id: quoteId } = await params;
-  const { mode, areaName, planMode, pageId } = await searchParams;
+  const { mode, areaName, planMode, pageId, roofAreaId: urlRoofAreaId } = await searchParams;
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
@@ -119,8 +119,11 @@ export default async function Page({
     let resolvedPageId: string;
     let planUrl: string;
 
+    let resolvedRoofAreaId: string | undefined;
+
     if (pageId) {
       // Option C: page was already created by the client. Load its image.
+      // roofAreaId comes from the URL (set by FilesManager before navigating).
       const { data: page } = await supabase
         .from('takeoff_pages')
         .select('image_storage_path')
@@ -134,11 +137,12 @@ export default async function Page({
       }
 
       resolvedPageId = pageId;
+      resolvedRoofAreaId = urlRoofAreaId ?? undefined;
       planUrl = page.image_storage_path
         ? await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, page.image_storage_path)
         : await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, planFile.storage_path);
     } else {
-      // Option B: server creates the new page, cloning page-1's image.
+      // Option B: server creates the new page + roof area, cloning page-1's image.
       const name = areaName ? decodeURIComponent(areaName) : 'New Area';
       const result = await createTakeoffPageForArea(quoteId, name, planFile.storage_path);
       if (!result.ok || !result.pageId) {
@@ -146,6 +150,7 @@ export default async function Page({
         notFound();
       }
       resolvedPageId = result.pageId;
+      resolvedRoofAreaId = result.roofAreaId;
       planUrl = await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, planFile.storage_path);
     }
 
@@ -162,6 +167,7 @@ export default async function Page({
         takeoffMode="new-page"
         initialPageId={resolvedPageId}
         initialPageName={decodedAreaName}
+        initialRoofAreaId={resolvedRoofAreaId}
       />
     );
   }

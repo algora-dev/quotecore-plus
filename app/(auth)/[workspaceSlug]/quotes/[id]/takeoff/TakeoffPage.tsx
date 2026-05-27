@@ -35,6 +35,8 @@ interface Props {
   initialPageName?: string;
   /** P1-1b mode=add: existing roof areas to display in the panel (read-only). */
   existingRoofAreas?: { id: string; label: string }[];
+  /** P1-1b mode=new-page: pre-created quote_roof_areas ID for component routing. */
+  initialRoofAreaId?: string;
 }
 
 export function TakeoffPage({
@@ -47,6 +49,7 @@ export function TakeoffPage({
   initialPageId,
   initialPageName,
   existingRoofAreas,
+  initialRoofAreaId,
 }: Props) {
   return (
     <TakeoffWorkstation
@@ -59,6 +62,7 @@ export function TakeoffPage({
       initialPageId={initialPageId}
       initialPageName={initialPageName}
       existingRoofAreas={existingRoofAreas}
+      initialRoofAreaId={initialRoofAreaId}
     />
   );
 }
