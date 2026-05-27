@@ -51,6 +51,9 @@ interface Props {
   planUrl: string | null;
   planName: string | null;
   supportingFiles: SupportingFile[];
+  hasExistingTakeoff?: boolean;
+  linesImageUrl?: string | null;
+  planStoragePath?: string | null;
   takeoffData?: any[];
   externalPhase?: Phase; // NEW: For URL-based navigation (v2)
   onPhaseChange?: (phase: Phase) => void; // NEW: Callback when phase changes
@@ -68,6 +71,9 @@ export function QuoteBuilder({
   planUrl,
   planName,
   supportingFiles,
+  hasExistingTakeoff = false,
+  linesImageUrl = null,
+  planStoragePath = null,
   takeoffData: _takeoffData = [],
   externalPhase,
   onPhaseChange
@@ -502,6 +508,9 @@ export function QuoteBuilder({
         planUrl={planUrl}
         planName={planName}
         supportingFiles={supportingFiles}
+        hasExistingTakeoff={hasExistingTakeoff}
+        linesImageUrl={linesImageUrl}
+        planStoragePath={planStoragePath}
       />
 
       <nav className="flex gap-1 p-1 bg-slate-100 rounded-lg">

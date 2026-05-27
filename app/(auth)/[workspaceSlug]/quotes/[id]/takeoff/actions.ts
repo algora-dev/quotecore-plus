@@ -558,6 +558,46 @@ export async function initializeTakeoffPage(
 }
 
 /**
+ * P1-1b: Create a named takeoff page for a new quote area (Option B / C
+ * re-entry flow). Accepts the area name + an optional image storage path
+ * (same plan as page-1 for Option B, new upload for Option C).
+ * H-01 ownership enforced via ensureTakeoffSession.
+ */
+export async function createTakeoffPageForArea(
+  quoteId: string,
+  areaName: string,
+  imagePath?: string | null,
+): Promise<{ ok: boolean; pageId?: string; error?: string }> {
+  try {
+    const { requireCompanyContext } = await import('@/app/lib/supabase/server');
+    const profile = await requireCompanyContext();
+    const admin = createAdminClient();
+    const sessionId = await ensureTakeoffSession(quoteId, profile.company_id);
+    const { count: existingCount } = await admin
+      .from('takeoff_pages')
+      .select('id', { count: 'exact', head: true })
+      .eq('quote_id', quoteId);
+    const { data: page, error } = await admin
+      .from('takeoff_pages')
+      .insert({
+        session_id: sessionId,
+        quote_id: quoteId,
+        page_order: (existingCount ?? 0) + 1,
+        page_name: areaName,
+        image_storage_path: imagePath ?? null,
+      })
+      .select('id')
+      .single();
+    if (error || !page) return { ok: false, error: error?.message ?? 'Page insert returned no row' };
+    return { ok: true, pageId: page.id };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[createTakeoffPageForArea]', msg);
+    return { ok: false, error: msg };
+  }
+}
+
+/**
  * Create a new takeoff page (page 2+). H-01 ownership enforced via
  * ensureTakeoffSession which checks company_id before any admin write.
  */

@@ -6,6 +6,7 @@ import { Canvas, FabricImage, Line, Circle, Polygon, Triangle } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { saveTakeoffMeasurements, createTakeoffPage, initializeTakeoffPage, finalizeTakeoffPageImage } from './actions';
+import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import type { TakeoffHydrationData } from './actions';
 import { uploadCanvasImage } from './uploadCanvasImage';
 import { AlertModal } from '@/app/components/AlertModal';
@@ -66,6 +67,12 @@ interface Props {
   components: Component[];
   /** P1-1a C-01: Hydrated state from DB, loaded server-side. Null = fresh takeoff. */
   hydrationData: TakeoffHydrationData | null;
+  /** P1-1b: re-entry mode. 'add' = continue on page-1; 'new-page' = fresh area. */
+  takeoffMode?: 'add' | 'new-page';
+  /** P1-1b: pre-created page ID for new-area entries. Skips initializeTakeoffPage. */
+  initialPageId?: string;
+  /** P1-1b: human-readable label for the new page. */
+  initialPageName?: string;
 }
 
 const CANVAS_WIDTH = 800;
@@ -100,7 +107,16 @@ interface Calibration {
   scale: number;
 }
 
-export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components, hydrationData }: Props) {
+export function TakeoffWorkstation({
+  workspaceSlug,
+  quote,
+  planUrl,
+  components,
+  hydrationData,
+  takeoffMode,
+  initialPageId,
+  initialPageName,
+}: Props) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<Canvas | null>(null);
@@ -119,9 +135,13 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components, 
   const [showRoofAreaInstructions, setShowRoofAreaInstructions] = useState(false);
 
   // Phase 7: multi-page takeoff state.
-  const [pages, setPages] = useState<Array<{ id?: string; url: string; name: string; order: number }>>([
-    { url: planUrl, name: 'Page 1', order: 1 },
-  ]);
+  // P1-1b: when initialPageId is provided (new-area mode), seed pages with that page
+  // instead of page-1; the initializeTakeoffPage effect is skipped.
+  const [pages, setPages] = useState<Array<{ id?: string; url: string; name: string; order: number }>>(
+    initialPageId
+      ? [{ id: initialPageId, url: planUrl, name: initialPageName || 'New Area', order: 1 }]
+      : [{ url: planUrl, name: 'Page 1', order: 1 }]
+  );
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [showUploadAnotherModal, setShowUploadAnotherModal] = useState(false);
   const [uploadAnotherPageName, setUploadAnotherPageName] = useState('');
@@ -211,7 +231,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components, 
 
   // M-04 (Gerald round-5): ensure page-1 has a real DB row on mount.
   // initializeTakeoffPage is idempotent so repeated mounts are safe.
+  // P1-1b: skipped when initialPageId is provided (new-area flow already created the page).
   useEffect(() => {
+    if (initialPageId) return; // page already exists — skip
     let cancelled = false;
     async function ensurePage1() {
       try {
@@ -233,7 +255,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components, 
     ensurePage1();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quote.id]);
+  }, [quote.id, initialPageId]);
 
   // P1-1a C-01: One-shot hydration from server-loaded DB state.
   // Restores componentMeasurements panel data + pages list from the last saved session.
@@ -405,6 +427,23 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components, 
     }));
   };
   
+  // P1-2: Central tool-switching helper. Uses the canonical toolForMeasurementType
+  // helper so both handleAddComponent and active-component panel clicks stay in sync.
+  const applyToolForType = (measurementType: string) => {
+    setLineMode(false);
+    setAreaMode(false);
+    setPointMode(false);
+    setMultiLinealMode(false);
+    setMultiLinealPoints([]);
+    setMultiLinealSegmentObjects([]);
+    const tool = toolForMeasurementType(measurementType);
+    if (tool === 'line') setLineMode(true);
+    else if (tool === 'multi_line') setMultiLinealMode(true);
+    else if (tool === 'area') setAreaMode(true);
+    else if (tool === 'point') setPointMode(true);
+    // null → manual entry only; no tool active
+  };
+
   const handleAddComponent = (componentId: string) => {
     // Add to active list
     setActiveComponentIds([...activeComponentIds, componentId]);
@@ -412,29 +451,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components, 
     // Auto-select the newly added component
     setSelectedComponentId(componentId);
     
-    // Auto-select tool based on component's default measurement type
+    // P1-2: Auto-select tool via central helper.
     const component = components.find(c => c.id === componentId);
-    if (component && (component.measurement_type || component.default_measurement_type)) {
-      const measurementType = (component.measurement_type ?? component.default_measurement_type ?? '').toLowerCase();
-      
-      // Reset all tools first
-      setLineMode(false);
-      setAreaMode(false);
-      setPointMode(false);
-      setMultiLinealMode(false);
-      setMultiLinealPoints([]);
-      setMultiLinealSegmentObjects([]);
-      
-      // Activate appropriate tool
-      if (measurementType === 'lineal' || measurementType === 'linear') {
-        setLineMode(true);
-      } else if (measurementType === 'multi_lineal' || measurementType === 'multi_lineal_lxh') {
-        setMultiLinealMode(true);
-      } else if (measurementType === 'area' || measurementType === 'length_x_height' || measurementType === 'irregular_area') {
-        setAreaMode(true);
-      } else if (measurementType === 'quantity' || measurementType === 'fixed' || measurementType === 'count' || measurementType === 'hours_days') {
-        setPointMode(true);
-      }
+    if (component) {
+      const mt = (component.measurement_type ?? component.default_measurement_type ?? '').toLowerCase();
+      applyToolForType(mt);
     }
   };
   
@@ -1741,7 +1762,12 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components, 
                           <div key={comp.id}>
                             {/* Component header */}
                             <div
-                              onClick={() => setSelectedComponentId(comp.id)}
+                              onClick={() => {
+                                setSelectedComponentId(comp.id);
+                                // P1-2: auto-switch tool when clicking an active component.
+                                const mt = (comp.measurement_type ?? comp.default_measurement_type ?? '').toLowerCase();
+                                applyToolForType(mt);
+                              }}
                               className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-all ${
                                 isSelected 
                                   ? 'bg-orange-100 ring-1 ring-orange-500' 

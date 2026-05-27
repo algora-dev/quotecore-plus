@@ -25,6 +25,9 @@ interface Props {
   planUrl: string | null;
   planName: string | null;
   supportingFiles: SupportingFile[];
+  hasExistingTakeoff?: boolean;
+  linesImageUrl?: string | null;
+  planStoragePath?: string | null;
   initialStep: string;
 }
 
