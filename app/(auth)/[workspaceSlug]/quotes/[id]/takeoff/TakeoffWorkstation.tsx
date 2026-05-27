@@ -1184,8 +1184,21 @@ export function TakeoffWorkstation({
             // Close polygon
             console.log('[Area] Closing polygon with', currentPoints.length, 'points');
             setPendingAreaPoints(currentPoints);
-            // P1-1b: in new-page mode, show a pitch-only prompt — the area
-            // name is already known from the re-entry modal (initialPageName).
+            // Guard: if a roof area already exists and no component is selected,
+            // the user is trying to draw a second area boundary without attaching
+            // it to a component. Warn and cancel the polygon.
+            if (roofAreas.length > 0 && !selectedComponentId) {
+              setPendingAreaPoints([]);
+              setAreaPoints([]);
+              showAlert(
+                'Select a component first',
+                'To measure an area for a component, select it from the panel on the left before drawing.',
+                'info'
+              );
+              return;
+            }
+            // P1-1b: in new-page mode (first area), show a pitch-only prompt —
+            // the area name is already known from the re-entry modal.
             if (takeoffMode === 'new-page' && roofAreas.length === 0) {
               setPitchOnlyInput('');
               setShowPitchOnlyPrompt(true);
