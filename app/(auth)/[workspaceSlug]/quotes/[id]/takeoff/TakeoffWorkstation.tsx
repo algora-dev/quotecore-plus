@@ -182,6 +182,9 @@ export function TakeoffWorkstation({
   const [showPitchOnlyPrompt, setShowPitchOnlyPrompt] = useState(false);
   const [pitchOnlyInput, setPitchOnlyInput] = useState('');
   const [pendingAreaPoints, setPendingAreaPoints] = useState<{ x: number; y: number }[]>([]);
+  // Captures selectedComponentId at polygon-close time so it survives any
+  // canvas deselection that fires before the modal renders.
+  const [pendingComponentId, setPendingComponentId] = useState<string | null>(null);
   
   // Component measurements
   const [componentMeasurements, setComponentMeasurements] = useState<ComponentWithMeasurements[]>([]);
@@ -350,9 +353,14 @@ export function TakeoffWorkstation({
   
   const handleSaveArea = (name: string, pitch?: number) => {
     const calculatedArea = calculatePolygonArea(pendingAreaPoints);
-    
-    // If pitch is provided, this is a roof area
-    if (pitch !== undefined) {
+
+    // Route by pendingComponentId first (captured at polygon-close time).
+    // This is immune to selectedComponentId being cleared by canvas deselection.
+    const isComponentArea = !!pendingComponentId;
+    setPendingComponentId(null); // consume it
+
+    // Roof area: explicit pitch OR no component attached
+    if (!isComponentArea && pitch !== undefined) {
       // Create polygon on canvas
       const polygon = new Polygon(pendingAreaPoints, {
         fill: 'rgba(59, 130, 246, 0.2)',
@@ -385,10 +393,12 @@ export function TakeoffWorkstation({
       setAreaPoints([]);
       setAreaMode(false);
     } else {
-      // Component area (after roof area exists)
-      if (!selectedComponentId) return;
-      
-      const componentColor = componentColors.find(c => c.componentId === selectedComponentId)?.color || '#3b82f6';
+      // Component area: use the captured pendingComponentId (may already be consumed
+      // above; fall back to current selectedComponentId for non-modal code paths).
+      const componentId = selectedComponentId;
+      if (!componentId) return;
+
+      const componentColor = componentColors.find(c => c.componentId === componentId)?.color || '#3b82f6';
       
       const polygon = new Polygon(pendingAreaPoints, {
         fill: `${componentColor}33`,
@@ -408,17 +418,17 @@ export function TakeoffWorkstation({
         canvasObjects: [polygon],
       };
       
-      const compData = componentMeasurements.find(c => c.componentId === selectedComponentId);
+      const compData = componentMeasurements.find(c => c.componentId === componentId);
       if (compData) {
         setComponentMeasurements(componentMeasurements.map(c =>
-          c.componentId === selectedComponentId
+          c.componentId === componentId
             ? { ...c, measurements: [...c.measurements, newMeasurement] }
             : c
         ));
       } else {
         setComponentMeasurements([
           ...componentMeasurements,
-          { componentId: selectedComponentId, measurements: [newMeasurement], expanded: true }
+          { componentId, measurements: [newMeasurement], expanded: true }
         ]);
       }
       
@@ -1192,12 +1202,17 @@ export function TakeoffWorkstation({
             // Read current values via refs — canvas handlers capture stale closures.
             const currentRoofAreas = roofAreasRef.current;
             const currentSelectedId = selectedComponentIdRef.current;
+            // Capture the component ID NOW before any canvas deselection fires.
+            // Without this, selectedComponentId may be null by the time the
+            // modal renders, causing the area to be treated as a roof area.
+            setPendingComponentId(currentSelectedId);
             // Guard: if a roof area already exists and no component is selected,
             // the user is drawing a second boundary without attaching it to a
             // component. Warn and cancel the polygon.
             if (currentRoofAreas.length > 0 && !currentSelectedId) {
               setPendingAreaPoints([]);
               setAreaPoints([]);
+              setPendingComponentId(null);
               showAlert(
                 'Select a component first',
                 'To measure an area for a component, select it from the panel on the left before drawing.',
@@ -1207,6 +1222,7 @@ export function TakeoffWorkstation({
             }
             // P1-1b: in new-page mode and no roof area yet, show pitch-only prompt.
             if (takeoffMode === 'new-page' && currentRoofAreas.length === 0) {
+              setPendingComponentId(null); // first area is always a roof area
               setPitchOnlyInput('');
               setShowPitchOnlyPrompt(true);
             } else {
@@ -2328,7 +2344,7 @@ export function TakeoffWorkstation({
           isRoofing={tradeConfig.pitchRequired}
           modalTitle={tradeConfig.createAreaModalTitle}
           namePlaceholder={tradeConfig.areaNamePlaceholder}
-          componentName={roofAreas.length === 0 ? null : (selectedComponentId ? displayComponents.find(c => c.id === selectedComponentId)?.name ?? null : null)}
+          componentName={pendingComponentId ? (displayComponents.find(c => c.id === pendingComponentId)?.name ?? null) : null}
           initialName={takeoffMode === 'new-page' ? (initialPageName ?? '') : ''}
           calculatedArea={pendingAreaPoints.length > 0 ? calculatePolygonArea(pendingAreaPoints) : 0}
           unit={calibrations[0]?.unit || 'feet'}
