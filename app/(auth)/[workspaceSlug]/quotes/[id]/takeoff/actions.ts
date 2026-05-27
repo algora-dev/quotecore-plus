@@ -644,6 +644,17 @@ export async function createTakeoffPageForArea(
 
     let roofArea: { id: string } | null = existingArea ?? null;
 
+    // Sweep any OTHER empty unlocked areas with the same label (stranded
+    // duplicates created before the dedup fix was deployed). Keep at most one.
+    await admin
+      .from('quote_roof_areas')
+      .delete()
+      .eq('quote_id', quoteId)
+      .eq('label', areaName)
+      .eq('final_value_sqm', 0)
+      .eq('is_locked', false)
+      .not('id', 'eq', existingArea?.id ?? '00000000-0000-0000-0000-000000000000');
+
     if (!roofArea) {
       const { count: areaCount } = await admin
         .from('quote_roof_areas')
