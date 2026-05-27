@@ -170,6 +170,9 @@ export function TakeoffWorkstation({
   
   // Roof Areas
   const [roofAreas, setRoofAreas] = useState<RoofArea[]>([]);
+  // Keep roofAreasRef in sync for canvas event handlers (stale closures).
+  const roofAreasRef = useRef<RoofArea[]>([]);
+  roofAreasRef.current = roofAreas;
   const [areaMode, setAreaMode] = useState(false);
   const [areaPoints, setAreaPoints] = useState<{ x: number; y: number }[]>([]);
   const [_tempAreaPolygon, _setTempAreaPolygon] = useState<any>(null);
@@ -1184,10 +1187,15 @@ export function TakeoffWorkstation({
             // Close polygon
             console.log('[Area] Closing polygon with', currentPoints.length, 'points');
             setPendingAreaPoints(currentPoints);
+            // Use refs for current state — canvas handlers are stale closures
+            // and won't see state updated after the handler was set up.
+            // Read current values via refs — canvas handlers capture stale closures.
+            const currentRoofAreas = roofAreasRef.current;
+            const currentSelectedId = selectedComponentIdRef.current;
             // Guard: if a roof area already exists and no component is selected,
-            // the user is trying to draw a second area boundary without attaching
-            // it to a component. Warn and cancel the polygon.
-            if (roofAreas.length > 0 && !selectedComponentId) {
+            // the user is drawing a second boundary without attaching it to a
+            // component. Warn and cancel the polygon.
+            if (currentRoofAreas.length > 0 && !currentSelectedId) {
               setPendingAreaPoints([]);
               setAreaPoints([]);
               showAlert(
@@ -1197,9 +1205,8 @@ export function TakeoffWorkstation({
               );
               return;
             }
-            // P1-1b: in new-page mode (first area), show a pitch-only prompt —
-            // the area name is already known from the re-entry modal.
-            if (takeoffMode === 'new-page' && roofAreas.length === 0) {
+            // P1-1b: in new-page mode and no roof area yet, show pitch-only prompt.
+            if (takeoffMode === 'new-page' && currentRoofAreas.length === 0) {
               setPitchOnlyInput('');
               setShowPitchOnlyPrompt(true);
             } else {
