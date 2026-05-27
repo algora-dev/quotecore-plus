@@ -265,7 +265,19 @@ export function FilesManager({
           return;
         }
 
-        // 2. Create the new takeoff page with the uploaded image.
+        // 2. Record the new plan image in quote_files so it appears in
+        // Files & Documents on the quote summary (same as the original plan).
+        await saveFileMetadata({
+          companyId,
+          quoteId,
+          fileType: 'plan',
+          fileName: newPlanFile.name,
+          fileSize: newPlanFile.size,
+          mimeType: newPlanFile.type || 'image/png',
+          storagePath: mint.storagePath,
+        });
+
+        // 3. Create the new takeoff page with the uploaded image.
         const result = await createTakeoffPageForArea(quoteId, areaName.trim(), mint.storagePath);
         if (!result.ok || !result.pageId) {
           setTakeoffError(result.error || 'Failed to create new takeoff page.');
