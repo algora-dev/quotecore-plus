@@ -2172,117 +2172,51 @@ export function TakeoffWorkstation({
         />
       )}
 
-      {/* Area Instructions (after first calibration) - trade-aware via tradeConfig */}
+      {/* Area Instructions (after first calibration) — always optional, all trades, all modes */}
       {showRoofAreaInstructions && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4">
-              {takeoffMode === 'new-page' ? 'Ready to measure' : 'Calibration Complete!'}
-            </h2>
-            {takeoffMode === 'new-page' ? (
-              // P1-1b new-area mode: drawing the boundary is OPTIONAL.
-              // User named the area in the re-entry modal; this just offers
-              // the chance to draw its boundary for pitch calculations.
-              <>
-                <h3 className="text-lg font-semibold mb-3 text-gray-700">
-                  &ldquo;{initialPageName || 'New Area'}&rdquo;
-                </h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  You can draw and measure the new area in this step, or skip and move straight
-                  to adding components to your newly named area. You can always add dimensions
-                  to the area manually after saving in the area step of the quote builder.
-                </p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setShowRoofAreaInstructions(false);
-                      setAreaMode(true);
-                      setLineMode(false);
-                      setPointMode(false);
-                      setMultiLinealMode(false);
-                    }}
-                    className="flex-1 px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium text-sm transition-all"
-                  >
-                    Draw Area
-                  </button>
-                  <button
-                    onClick={() => setShowRoofAreaInstructions(false)}
-                    className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full font-medium text-sm transition-all"
-                  >
-                    Skip
-                  </button>
-                </div>
-              </>
-            ) : tradeConfig.areaIsOptional ? (
-              // Optional-area trades (cladding, generic) - let the user choose
-              <>
-                <h3 className="text-lg font-semibold mb-3 text-gray-700">{tradeConfig.needAreaPrompt}</h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  {tradeConfig.firstAreaInstructionsBody}
-                </p>
-                {tradeConfig.toolGuidanceNote && (
-                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
-                    {tradeConfig.toolGuidanceNote}
-                  </div>
-                )}
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setShowRoofAreaInstructions(false);
-                      setAreaMode(true);
-                      setLineMode(false);
-                      setPointMode(false);
-                    }}
-                    className="flex-1 px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium text-sm transition-all"
-                  >
-                    {tradeConfig.optionalAreaConfirmCta}
-                  </button>
-                  <button
-                    onClick={() => setShowRoofAreaInstructions(false)}
-                    className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full font-medium text-sm transition-all"
-                  >
-                    {tradeConfig.skipAreaCta}
-                  </button>
-                </div>
-              </>
+          <div className="bg-white rounded-2xl p-6 max-w-sm border border-gray-200 shadow-xl">
+            <h2 className="text-lg font-semibold mb-1">Calibration complete</h2>
+            {takeoffMode === 'new-page' && initialPageName ? (
+              <p className="text-sm text-slate-500 mb-4">
+                You can draw and measure the area boundary for &ldquo;{initialPageName}&rdquo;, or skip
+                and go straight to adding components. You can always add dimensions manually
+                in the area step of the quote builder.
+              </p>
             ) : (
-              // Mandatory-area trades (roofing) - pitch required
-              <>
-                <h3 className="text-lg font-semibold mb-3 text-gray-700">{tradeConfig.firstAreaInstructionsTitle}</h3>
-                <div className="space-y-3 text-sm">
-                  <p className="text-gray-900">
-                    Before measuring components, you must define at least one <span className="font-bold">roof area with a pitch angle</span>.
-                  </p>
-                  <div className="bg-gray-50/50 border border-gray-200 rounded p-3 space-y-2">
-                    <p className="font-semibold text-blue-400">How to create a roof area:</p>
-                    <ol className="list-decimal list-inside space-y-1.5 text-gray-900 ml-2">
-                      <li>Click the <span className="font-bold text-blue-400">&quot;Area&quot;</span> button in the toolbar above</li>
-                      <li>Click to place <span className="font-bold">at least 4 points</span> around the roof outline</li>
-                      <li>Close the shape by clicking <span className="font-bold">near your starting point</span></li>
-                      <li>Enter a <span className="font-bold">name</span> and <span className="font-bold text-orange-400">pitch angle</span> (in degrees)</li>
-                    </ol>
-                  </div>
-                  <p className="text-gray-600 text-xs mt-3">
-                    The pitch angle is essential for accurate material calculations and component measurements.
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowRoofAreaInstructions(false);
-                    setAreaMode(true);
-                    setLineMode(false);
-                    setPointMode(false);
-                  }}
-                  className="mt-6 w-full px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-                >
-                  {tradeConfig.firstAreaConfirmCta}
-                </button>
-              </>
+              <p className="text-sm text-slate-500 mb-4">
+                You can draw and measure an area now, or skip and go straight to adding
+                components. You can always add area dimensions manually in the quote builder.
+              </p>
             )}
+            {tradeConfig.toolGuidanceNote && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
+                {tradeConfig.toolGuidanceNote}
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowRoofAreaInstructions(false);
+                  setAreaMode(true);
+                  setLineMode(false);
+                  setPointMode(false);
+                  setMultiLinealMode(false);
+                }}
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
+              >
+                Draw Area
+              </button>
+              <button
+                onClick={() => setShowRoofAreaInstructions(false)}
+                className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+              >
+                Skip
+              </button>
+            </div>
           </div>
         </div>
       )}
-      {/* end showRoofAreaInstructions */}
 
       {/* Initial Calibration Help */}
       {showCalibrationHelp && calibrations.length === 0 && (
