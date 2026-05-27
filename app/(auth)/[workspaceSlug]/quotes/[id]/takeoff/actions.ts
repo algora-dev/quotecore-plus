@@ -629,28 +629,44 @@ export async function createTakeoffPageForArea(
     const sessionId = await ensureTakeoffSession(quoteId, profile.company_id);
 
     // P1-1b: create the quote_roof_areas entry FIRST so components can be
-    // routed to the correct area. input_mode='plan' + 0 values = placeholder
-    // until the user draws the boundary (or skips).
-    const { count: areaCount } = await admin
+    // routed to the correct area. Before inserting, check for an existing
+    // empty area with the same label (created by a previous navigation that
+    // was abandoned). Reuse it to prevent duplicate empty areas accumulating.
+    const { data: existingArea } = await admin
       .from('quote_roof_areas')
-      .select('id', { count: 'exact', head: true })
-      .eq('quote_id', quoteId);
-    const { data: roofArea, error: areaError } = await admin
-      .from('quote_roof_areas')
-      .insert({
-        quote_id: quoteId,
-        label: areaName,
-        input_mode: 'calculated' as const,
-        final_value_sqm: 0,
-        computed_sqm: 0,
-        calc_pitch_degrees: 0,
-        is_locked: false,
-        sort_order: (areaCount ?? 0) + 1,
-      })
       .select('id')
-      .single();
-    if (areaError || !roofArea) {
-      return { ok: false, error: areaError?.message ?? 'Roof area insert returned no row' };
+      .eq('quote_id', quoteId)
+      .eq('label', areaName)
+      .eq('final_value_sqm', 0)
+      .eq('is_locked', false)
+      .limit(1)
+      .maybeSingle();
+
+    let roofArea: { id: string } | null = existingArea ?? null;
+
+    if (!roofArea) {
+      const { count: areaCount } = await admin
+        .from('quote_roof_areas')
+        .select('id', { count: 'exact', head: true })
+        .eq('quote_id', quoteId);
+      const { data: newArea, error: areaError } = await admin
+        .from('quote_roof_areas')
+        .insert({
+          quote_id: quoteId,
+          label: areaName,
+          input_mode: 'calculated' as const,
+          final_value_sqm: 0,
+          computed_sqm: 0,
+          calc_pitch_degrees: 0,
+          is_locked: false,
+          sort_order: (areaCount ?? 0) + 1,
+        })
+        .select('id')
+        .single();
+      if (areaError || !newArea) {
+        return { ok: false, error: areaError?.message ?? 'Roof area insert returned no row' };
+      }
+      roofArea = newArea;
     }
 
     // Create the takeoff page linked to the new roof area.
