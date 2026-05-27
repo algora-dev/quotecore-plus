@@ -2159,8 +2159,43 @@ export function TakeoffWorkstation({
       {showRoofAreaInstructions && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4">Calibration Complete!</h2>
-            {tradeConfig.areaIsOptional ? (
+            <h2 className="text-xl font-semibold mb-4">
+              {takeoffMode === 'new-page' ? 'Ready to measure' : 'Calibration Complete!'}
+            </h2>
+            {takeoffMode === 'new-page' ? (
+              // P1-1b new-area mode: drawing the boundary is OPTIONAL.
+              // User named the area in the re-entry modal; this just offers
+              // the chance to draw its boundary for pitch calculations.
+              <>
+                <h3 className="text-lg font-semibold mb-3 text-gray-700">
+                  Draw boundary for &ldquo;{initialPageName || 'New Area'}&rdquo;?
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Drawing the area boundary lets you set the pitch for accurate material calculations.
+                  Skip this if you want to go straight to adding component measurements.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowRoofAreaInstructions(false);
+                      setAreaMode(true);
+                      setLineMode(false);
+                      setPointMode(false);
+                      setMultiLinealMode(false);
+                    }}
+                    className="flex-1 px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium text-sm transition-all"
+                  >
+                    Draw boundary
+                  </button>
+                  <button
+                    onClick={() => setShowRoofAreaInstructions(false)}
+                    className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full font-medium text-sm transition-all"
+                  >
+                    Skip
+                  </button>
+                </div>
+              </>
+            ) : tradeConfig.areaIsOptional ? (
               // Optional-area trades (cladding, generic) - let the user choose
               <>
                 <h3 className="text-lg font-semibold mb-3 text-gray-700">{tradeConfig.needAreaPrompt}</h3>
@@ -2229,6 +2264,7 @@ export function TakeoffWorkstation({
           </div>
         </div>
       )}
+      {/* end showRoofAreaInstructions */}
 
       {/* Initial Calibration Help */}
       {showCalibrationHelp && calibrations.length === 0 && (
