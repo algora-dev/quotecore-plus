@@ -1701,14 +1701,7 @@ export function TakeoffWorkstation({
           >
             ← Back
           </Link>
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold">{quote.customer_name} - Digital Takeoff</h1>
-            {pages.length > 1 && (
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                Plan {currentPageIndex + 1} of {pages.length}
-              </span>
-            )}
-          </div>
+          <h1 className="text-xl font-semibold">{quote.customer_name} - Digital Takeoff</h1>
         </div>
         <div className="flex items-center gap-2">
           {/* P1-3: Save current takeoff + upload another plan image. */}
