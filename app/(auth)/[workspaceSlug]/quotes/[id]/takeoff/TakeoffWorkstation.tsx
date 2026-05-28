@@ -160,6 +160,12 @@ export function TakeoffWorkstation({
     initialRoofAreaId ?? null,
   );
 
+  // P1-3: when true the user is adding measurements to an EXISTING area.
+  // Suppresses the area name modal (pitch-only instead) and skips writing
+  // new area rows to the DB on save. Trade-agnostic.
+  const [isExistingAreaMode, setIsExistingAreaMode] = useState(false);
+  const [existingAreaLabel, setExistingAreaLabel] = useState<string>('');
+
   // P1-3 (multi-page Save & Upload another plan): modal state.
   // - target = 'existing' attaches the new page to the FIRST existing roof area
   //   (mirrors FilesManager Option B: new page, same area target).
@@ -716,6 +722,9 @@ export function TakeoffWorkstation({
     setComponentMeasurements([]);
     setRoofAreas([]);
     setSelectedComponentId(null);
+    // P1-3: reset existing-area mode so a fresh plan doesn't inherit the constraint.
+    setIsExistingAreaMode(false);
+    setExistingAreaLabel('');
     setIsDirty(false);
   };
 
@@ -776,18 +785,23 @@ export function TakeoffWorkstation({
         });
       });
       
-      // Add roof areas as measurements (with null componentId for informational areas)
-      roofAreas.forEach(area => {
-        allMeasurements.push({
-          componentId: null,
-          type: 'area' as const,
-          value: area.area,
-          pitch: area.pitch, // Include pitch for roof areas
-          name: area.name, // Include user's name for roof area
-          points: area.points,
-          visible: area.visible,
+      // Add area measurements.
+      // In existing-area mode: skip writing area rows so Plan 1's area survives in DB.
+      // Component measurements route to the original area via activeSaveRoofAreaId.
+      // Trade-agnostic: applies to roofing and generic trades.
+      if (!isExistingAreaMode) {
+        roofAreas.forEach(area => {
+          allMeasurements.push({
+            componentId: null,
+            type: 'area' as const,
+            value: area.area,
+            pitch: area.pitch,
+            name: area.name,
+            points: area.points,
+            visible: area.visible,
+          });
         });
-      });
+      }
       
       console.log('[SaveTakeoff] Saving', allMeasurements.length, 'measurements to quote:', quote.id);
       
@@ -1008,6 +1022,7 @@ export function TakeoffWorkstation({
       let newPageId: string;
       let newRoofAreaId: string | null = null;
       let newPageName: string;
+      let resolvedFirstArea: { id: string; label: string } | null = null;
       if (uploadAnotherTarget === 'new') {
         const areaName = uploadAnotherAreaName.trim();
         const result = await createTakeoffPageForArea(quote.id, areaName, mint.storagePath);
@@ -1020,8 +1035,8 @@ export function TakeoffWorkstation({
         if (!pageResult.ok || !pageResult.pageId) { setUploadAnotherError(pageResult.error || 'Failed to create page.'); return; }
         newPageId = pageResult.pageId; newPageName = pageName;
         // Get the first roof area's DB ID so the next save routes to it.
-        const firstArea = await getFirstRoofAreaId(quote.id);
-        newRoofAreaId = firstArea?.id ?? null;
+        resolvedFirstArea = await getFirstRoofAreaId(quote.id);
+        newRoofAreaId = resolvedFirstArea?.id ?? null;
       }
       // 6. Persist image path on the new page row.
       await finalizeTakeoffPageImage(newPageId, mint.storagePath);
@@ -1033,8 +1048,17 @@ export function TakeoffWorkstation({
       setPages(updatedPages);
       setCurrentPageIndex(updatedPages.length - 1);
       loadPageImage(objectUrl);
-      // 8. Update save routing target + reset version for fresh page.
+      // 8. Update save routing target, existing-area mode flag, and version.
       setActiveSaveRoofAreaId(newRoofAreaId);
+      // P1-3: existing-area mode blocks the area name modal and skips area rows
+      // in the save payload. Works for roofing and generic trades.
+      if (uploadAnotherTarget === 'existing') {
+        setIsExistingAreaMode(true);
+        setExistingAreaLabel(resolvedFirstArea?.label ?? 'Existing Area');
+      } else {
+        setIsExistingAreaMode(false);
+        setExistingAreaLabel('');
+      }
       setSessionVersion(null);
       // Close modal and reset upload state.
       setShowUploadAnotherModal(false);
@@ -1082,6 +1106,7 @@ export function TakeoffWorkstation({
   const multiLinealPointsRef = useRef(multiLinealPoints);
   const selectedComponentIdRef = useRef(selectedComponentId);
   const componentColorsRef = useRef(componentColors);
+  const isExistingAreaModeRef = useRef(isExistingAreaMode);
   
   useEffect(() => {
     calibrationModeRef.current = calibrationMode;
@@ -1096,7 +1121,8 @@ export function TakeoffWorkstation({
     multiLinealPointsRef.current = multiLinealPoints;
     selectedComponentIdRef.current = selectedComponentId;
     componentColorsRef.current = componentColors;
-  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints, selectedComponentId, componentColors]);
+    isExistingAreaModeRef.current = isExistingAreaMode;
+  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints, selectedComponentId, componentColors, isExistingAreaMode]);
 
   // Stable ref for the signed plan URL. The signed URL is regenerated on
   // every server render (it embeds a fresh JWT), so reading it directly
@@ -1372,9 +1398,11 @@ export function TakeoffWorkstation({
               );
               return;
             }
-            // P1-1b: in new-page mode and no roof area yet, show pitch-only prompt.
-            if (takeoffMode === 'new-page' && currentRoofAreas.length === 0) {
-              setPendingComponentId(null); // first area is always a roof area
+            // P1-1b: new-page first area → pitch-only.
+            // P1-3: existing-area mode → pitch-only (no new area name; polygon is
+            //        visual-only, area row skipped on save so Plan 1's area survives).
+            if ((takeoffMode === 'new-page' && currentRoofAreas.length === 0) || isExistingAreaModeRef.current) {
+              setPendingComponentId(null);
               setPitchOnlyInput('');
               setShowPitchOnlyPrompt(true);
             } else {
@@ -1691,18 +1719,17 @@ export function TakeoffWorkstation({
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col p-4">
+      {/* Back link sits above the canvas card so it never crowds the header */}
+      <Link
+        href={`/${workspaceSlug}/quotes/${quote.id}`}
+        className="mb-2 text-sm text-slate-500 hover:text-slate-800 self-start"
+      >
+        ← Back to quote
+      </Link>
       <div className="flex-1 flex flex-col bg-white rounded-xl shadow-lg overflow-hidden">
-        {/* Header */}
+        {/* Header: title + action buttons only — no nav links */}
         <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link
-            href={`/${workspaceSlug}/quotes/${quote.id}`}
-            className="text-blue-400 hover:text-blue-300"
-          >
-            ← Back
-          </Link>
           <h1 className="text-xl font-semibold">{quote.customer_name} - Digital Takeoff</h1>
-        </div>
         <div className="flex items-center gap-2">
           {/* P1-3: Save current takeoff + upload another plan image. */}
           <button
@@ -2505,7 +2532,9 @@ export function TakeoffWorkstation({
       {showPitchOnlyPrompt && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-80 border border-gray-200 shadow-xl">
-            <h2 className="text-lg font-semibold mb-1">"{initialPageName || 'New Area'}"</h2>
+            <h2 className="text-lg font-semibold mb-1">
+              {isExistingAreaMode ? `Adding to: ${existingAreaLabel}` : `"${initialPageName || 'New Area'}"`}
+            </h2>
             <p className="text-sm text-slate-500 mb-4">
               {tradeConfig.pitchRequired
                 ? 'Enter the roof pitch for this area, or skip to use 0°.'
@@ -2532,7 +2561,7 @@ export function TakeoffWorkstation({
                 onClick={() => {
                   setShowPitchOnlyPrompt(false);
                   const pitch = pitchOnlyInput.trim() ? Number(pitchOnlyInput) : 0;
-                  handleSaveArea(initialPageName || 'New Area', pitch);
+                  handleSaveArea(isExistingAreaMode ? existingAreaLabel : (initialPageName || 'New Area'), pitch);
                 }}
                 className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
               >
