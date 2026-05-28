@@ -5,12 +5,15 @@ import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { saveTakeoffMeasurements, createTakeoffPage, initializeTakeoffPage, finalizeTakeoffPageImage } from './actions';
+import { saveTakeoffMeasurements, createTakeoffPageForArea, initializeTakeoffPage } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import type { TakeoffHydrationData } from './actions';
 import { uploadCanvasImage } from './uploadCanvasImage';
 import { AlertModal } from '@/app/components/AlertModal';
 import { getTradeLabels } from '@/app/lib/trades/labels';
+import { createClient as createSupabaseBrowserClient } from '@/app/lib/supabase/client';
+import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-actions';
+import { mintQuoteDocumentUploadUrl } from '@/app/lib/files/signed-upload';
 
 // Extend Fabric.js Canvas type with custom properties
 declare module 'fabric' {
@@ -150,8 +153,16 @@ export function TakeoffWorkstation({
       : [{ url: planUrl, name: 'Page 1', order: 1 }]
   );
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  // P1-3 (multi-page Save & Upload another plan): modal state.
+  // - target = 'existing' attaches the new page to the FIRST existing roof area
+  //   (mirrors FilesManager Option B: new page, same area target).
+  // - target = 'new' creates a new roof area + new page with the uploaded plan
+  //   (mirrors FilesManager Option C: new area, new plan).
   const [showUploadAnotherModal, setShowUploadAnotherModal] = useState(false);
-  const [uploadAnotherPageName, setUploadAnotherPageName] = useState('');
+  const [uploadAnotherTarget, setUploadAnotherTarget] = useState<'existing' | 'new'>('existing');
+  const [uploadAnotherAreaName, setUploadAnotherAreaName] = useState('');
+  const [uploadAnotherFile, setUploadAnotherFile] = useState<File | null>(null);
+  const [uploadAnotherError, setUploadAnotherError] = useState<string | null>(null);
   const [isUploadingPage, setIsUploadingPage] = useState(false);
   // H-03: track unsaved changes so we can warn before switching pages.
   const [isDirty, setIsDirty] = useState(false);
@@ -703,14 +714,26 @@ export function TakeoffWorkstation({
     loadPageImage(page.url);
   };
 
+  // P1-3: persist current measurements + canvas snapshots without navigating.
+  // Returns true on success so the multi-page "Save & Upload another plan"
+  // flow can chain the next step. The existing handleSaveTakeoff wraps this
+  // and navigates to the Quote Builder on success.
+  const persistTakeoffData = async (): Promise<boolean> => {
+    return await handleSaveTakeoffCore(false);
+  };
+
   const handleSaveTakeoff = async () => {
+    await handleSaveTakeoffCore(true);
+  };
+
+  const handleSaveTakeoffCore = async (navigateAfter: boolean): Promise<boolean> => {
     console.log('[SaveTakeoff] Starting save for quote:', quote.id);
     console.log('[SaveTakeoff] Component measurements:', componentMeasurements.length);
     console.log('[SaveTakeoff] Roof areas:', roofAreas.length);
     
     if (componentMeasurements.length === 0 && roofAreas.length === 0) {
       showAlert('No measurements to save', 'Please add some measurements first.', 'info');
-      return;
+      return false;
     }
     
     setIsSaving(true);
@@ -879,25 +902,177 @@ export function TakeoffWorkstation({
         } else {
           showAlert('Failed to save measurements', msg, 'error');
         }
-        return;
+        return false;
       }
 
       // P1-1a: increment local version to match what the RPC wrote.
       setSessionVersion(prev => (prev != null ? prev + 1 : 1));
       setIsDirty(false);
-      console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
       
-      // Navigate to Quote Builder v2 (digital takeoff mode)
-      router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
+      // P1-3: only navigate to Quote Builder when the user clicked the
+      // primary "Save & Continue to Components" CTA. The multi-page upload
+      // flow stays inside the workstation and reloads to the new page.
+      if (navigateAfter) {
+        console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
+        router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
+      } else {
+        console.log('[SaveTakeoff] Save complete (no navigation).');
+      }
+      return true;
     } catch (error) {
       console.error('[SaveTakeoff] Unexpected error:', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       showAlert('Failed to save measurements', message, 'error');
+      return false;
     } finally {
       setIsSaving(false);
     }
   };
-  
+
+  // P1-3: "Save & Upload another plan" — open the chooser modal.
+  // Pre-selects "existing" + pre-fills area name with the first roof area's
+  // label so the user can confirm-and-go without retyping when adding to it.
+  const openSaveAndUploadAnotherPlan = () => {
+    setUploadAnotherTarget('existing');
+    setUploadAnotherAreaName('');
+    setUploadAnotherFile(null);
+    setUploadAnotherError(null);
+    setShowUploadAnotherModal(true);
+  };
+
+  // P1-3: confirm flow for Save & Upload another plan.
+  // 1. Save current measurements (no navigation).
+  // 2. Upload the new plan image to QUOTE-DOCUMENTS + register in quote_files
+  //    so it shows up in Files & Documents on the quote summary.
+  // 3. Create the takeoff page, routing to either the first existing roof area
+  //    (target=existing) or a new named area (target=new).
+  // 4. Navigate to the takeoff page in mode=new-page with the new pageId so
+  //    the workstation reloads clean against the new plan + correct area.
+  const handleConfirmSaveAndUploadAnother = async () => {
+    setUploadAnotherError(null);
+
+    if (!uploadAnotherFile) {
+      setUploadAnotherError('Please choose a plan image to upload.');
+      return;
+    }
+
+    // Resolve the target area name BEFORE we save (saving may navigate state).
+    let targetAreaName: string;
+    if (uploadAnotherTarget === 'new') {
+      const trimmed = uploadAnotherAreaName.trim();
+      if (!trimmed) {
+        setUploadAnotherError('Please enter a name for the new area.');
+        return;
+      }
+      targetAreaName = trimmed;
+    } else {
+      // Attach to the FIRST existing roof area. Source-of-truth depends on mode:
+      // - mode=add re-entry: existingRoofAreas (loaded server-side).
+      // - mode=new-page re-entry: initialPageName is the current new area.
+      // - fresh entry: roofAreas[0] (drawn this session, will be saved by step 1).
+      const firstExisting = existingRoofAreas?.[0]?.label;
+      const firstLocal = roofAreas[0]?.name;
+      const newPageLabel = takeoffMode === 'new-page' ? initialPageName : undefined;
+      const resolved = firstExisting || newPageLabel || firstLocal;
+      if (!resolved) {
+        setUploadAnotherError(
+          'No existing area to attach to. Draw a roof area first, or choose "Create new area" instead.'
+        );
+        return;
+      }
+      targetAreaName = resolved;
+    }
+
+    setIsUploadingPage(true);
+    try {
+      // Step 1: persist current takeoff data (no navigation).
+      // Skip if nothing to save (e.g. user already saved + drew nothing new
+      // but wants another plan added) — but only when there are zero
+      // measurements and zero areas. persistTakeoffData() returns false in
+      // that case via the same "No measurements to save" guard; we treat
+      // that as "nothing to persist" and continue rather than blocking.
+      const hasUnsaved = componentMeasurements.length > 0 || roofAreas.length > 0;
+      if (hasUnsaved) {
+        const saved = await persistTakeoffData();
+        if (!saved) {
+          // persistTakeoffData already showed an alert on real failure.
+          return;
+        }
+      }
+
+      // Step 2: storage quota check.
+      const companyId = quote.company_id;
+      const hasQuota = await checkStorageQuota(companyId, uploadAnotherFile.size);
+      if (!hasQuota) {
+        setUploadAnotherError('Storage quota exceeded. Please upgrade your plan.');
+        return;
+      }
+
+      // Step 3: mint signed upload URL + upload the new plan file.
+      const mint = await mintQuoteDocumentUploadUrl({
+        scope: { kind: 'quote', quoteId: quote.id },
+        filename: uploadAnotherFile.name,
+        contentType: uploadAnotherFile.type || 'application/octet-stream',
+        claimedSize: uploadAnotherFile.size,
+      });
+      if (!mint.ok) {
+        setUploadAnotherError(mint.message || 'Failed to prepare upload.');
+        return;
+      }
+      const supabase = createSupabaseBrowserClient();
+      const { error: uploadError } = await supabase.storage
+        .from(mint.bucket)
+        .uploadToSignedUrl(mint.storagePath, mint.token, uploadAnotherFile, {
+          contentType: uploadAnotherFile.type || undefined,
+        });
+      if (uploadError) {
+        setUploadAnotherError(uploadError.message);
+        return;
+      }
+
+      // Step 4: register the new plan in quote_files so it shows in
+      // Files & Documents (same as FilesManager Option C).
+      await saveFileMetadata({
+        companyId,
+        quoteId: quote.id,
+        fileType: 'plan',
+        fileName: uploadAnotherFile.name,
+        fileSize: uploadAnotherFile.size,
+        mimeType: uploadAnotherFile.type || 'image/png',
+        storagePath: mint.storagePath,
+      });
+
+      // Step 5: create the takeoff page bound to the target area.
+      // createTakeoffPageForArea dedupes by (quote_id, label) so passing an
+      // existing area's label cleanly reuses the same quote_roof_areas row.
+      const result = await createTakeoffPageForArea(
+        quote.id,
+        targetAreaName,
+        mint.storagePath,
+      );
+      if (!result.ok || !result.pageId) {
+        setUploadAnotherError(result.error || 'Failed to create new takeoff page.');
+        return;
+      }
+
+      // Step 6: navigate (full reload) to the new page in mode=new-page.
+      // This mirrors FilesManager Option C exactly so the workstation hydrates
+      // against the new plan image + correct roof area target.
+      const encoded = encodeURIComponent(targetAreaName);
+      const raParam = result.roofAreaId ? `&roofAreaId=${result.roofAreaId}` : '';
+      router.push(
+        `/${workspaceSlug}/quotes/${quote.id}/takeoff?mode=new-page&areaName=${encoded}&pageId=${result.pageId}${raParam}`
+      );
+      setShowUploadAnotherModal(false);
+    } catch (err) {
+      console.error('[SaveAndUploadAnother] Failed:', err);
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setUploadAnotherError(message);
+    } finally {
+      setIsUploadingPage(false);
+    }
+  };
+
   // Calculate area using Shoelace formula
   const calculatePolygonArea = (points: { x: number; y: number }[]) => {
     let sum = 0;
@@ -1552,14 +1727,14 @@ export function TakeoffWorkstation({
           <h1 className="text-xl font-semibold">{quote.customer_name} - Digital Takeoff</h1>
         </div>
         <div className="flex items-center gap-2">
-          {/* Phase 7: Upload another image (multi-page takeoff) */}
+          {/* P1-3: Save current takeoff + upload another plan image. */}
           <button
-            onClick={() => setShowUploadAnotherModal(true)}
-            disabled={isSaving}
+            onClick={openSaveAndUploadAnotherPlan}
+            disabled={isSaving || isUploadingPage}
             className="px-3 py-2 bg-black hover:bg-slate-900 text-white rounded-full text-sm disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(249,115,22,0.45)]"
-            title="Add another plan image to measure from"
+            title="Save current measurements, then upload a new plan to keep measuring"
           >
-            + Upload another image
+            Save & Upload another plan
           </button>
           <button
             onClick={handleSaveTakeoff}
@@ -1592,79 +1767,142 @@ export function TakeoffWorkstation({
         </div>
       )}
 
-      {/* Phase 7: Upload another image modal */}
+      {/* P1-3: Save & Upload another plan modal.
+          Mirrors FilesManager Options B (existing area) and C (new area)
+          but stays inside the workstation — saves current measurements,
+          uploads the new plan, then reloads to mode=new-page with the new page.*/}
       {showUploadAnotherModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 space-y-4">
-            <h3 className="font-semibold text-lg">Upload another image</h3>
-            <p className="text-sm text-slate-600">
-              Upload another plan image to measure from. Save your current page before switching - unsaved measurements will be lost on page change.
-            </p>
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Page name (optional)</label>
-              <input
-                type="text"
-                value={uploadAnotherPageName}
-                onChange={e => setUploadAnotherPageName(e.target.value)}
-                placeholder={`Page ${pages.length + 1}`}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Select image file</label>
-              <input
-                type="file"
-                accept="image/*,.pdf"
-                className="w-full text-sm"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  setIsUploadingPage(true);
-                  try {
-                    const pageName = uploadAnotherPageName.trim() || `Page ${pages.length + 1}`;
-                    // Create the page DB row first.
-                    const pageResult = await createTakeoffPage(quote.id, pageName);
-                    if (!pageResult.ok || !pageResult.pageId) throw new Error(pageResult.error);
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-1">Save & upload another plan</h2>
+              <p className="text-sm text-slate-500 mb-5">
+                We’ll save your current measurements first, then load the new plan so you can keep measuring.
+              </p>
 
-                    // H-02: convert file to data URL and upload to storage.
-                    const dataUrl = await new Promise<string>((resolve, reject) => {
-                      const reader = new FileReader();
-                      reader.onload = () => resolve(reader.result as string);
-                      reader.onerror = reject;
-                      reader.readAsDataURL(file);
-                    });
-                    const storagePath = await uploadCanvasImage(quote.id, dataUrl, `page-${pageResult.pageId}`);
-                    // Persist the storage path on the page row.
-                    await finalizeTakeoffPageImage(pageResult.pageId, storagePath);
-
-                    // Use an object URL for the canvas display (faster than re-signing).
-                    const objectUrl = URL.createObjectURL(file);
-                    const newPage = { id: pageResult.pageId, url: objectUrl, name: pageName, order: pages.length + 1 };
-                    const newPages = [...pages, newPage];
-                    setPages(newPages);
-                    setCurrentPageIndex(newPages.length - 1);
-                    loadPageImage(objectUrl);
-                    setShowUploadAnotherModal(false);
-                    setUploadAnotherPageName('');
-                    setIsDirty(false);
-                  } catch (err) {
-                    alert(err instanceof Error ? err.message : 'Upload failed');
-                  } finally {
-                    setIsUploadingPage(false);
-                  }
-                }}
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => { setShowUploadAnotherModal(false); setUploadAnotherPageName(''); }}
-                className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full text-sm"
-                disabled={isUploadingPage}
+              {/* Option 1: attach to original area(s) */}
+              <label
+                className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors cursor-pointer block ${
+                  uploadAnotherTarget === 'existing'
+                    ? 'border-orange-500 bg-orange-50'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
               >
-                Cancel
-              </button>
+                <div className="flex items-start gap-3">
+                  <input
+                    type="radio"
+                    name="uploadAnotherTarget"
+                    checked={uploadAnotherTarget === 'existing'}
+                    onChange={() => setUploadAnotherTarget('existing')}
+                    className="mt-0.5 w-4 h-4 accent-orange-500"
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Add takeoff data to original area</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      New measurements from this plan flow into the first roof area on this quote.
+                    </p>
+                  </div>
+                </div>
+              </label>
+
+              {/* Option 2: new area */}
+              <label
+                className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors cursor-pointer block ${
+                  uploadAnotherTarget === 'new'
+                    ? 'border-orange-500 bg-orange-50'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <input
+                    type="radio"
+                    name="uploadAnotherTarget"
+                    checked={uploadAnotherTarget === 'new'}
+                    onChange={() => setUploadAnotherTarget('new')}
+                    className="mt-0.5 w-4 h-4 accent-orange-500"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-900">Create new area for this upload</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Adds a separate roof area for everything you measure on this plan.
+                    </p>
+                  </div>
+                </div>
+              </label>
+
+              {uploadAnotherTarget === 'new' && (
+                <div className="ml-4 mb-3">
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Area name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Garage Roof"
+                    value={uploadAnotherAreaName}
+                    onChange={e => setUploadAnotherAreaName(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+              )}
+
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-slate-700 mb-1">Plan / image</label>
+                {uploadAnotherFile ? (
+                  <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200">
+                    <span className="text-xs text-slate-700 flex-1 truncate">{uploadAnotherFile.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setUploadAnotherFile(null)}
+                      className="text-xs text-red-500 hover:text-red-700 flex-shrink-0"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 w-full px-3 py-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-orange-400 transition-colors">
+                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-xs text-slate-500">Choose plan (PDF or image, max 10 MB)</span>
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      className="hidden"
+                      onChange={e => {
+                        const f = e.target.files?.[0] || null;
+                        if (f && f.size > 10485760) {
+                          setUploadAnotherError('File exceeds 10 MB limit.');
+                          return;
+                        }
+                        setUploadAnotherFile(f);
+                        setUploadAnotherError(null);
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+
+              {uploadAnotherError && (
+                <p className="text-xs text-red-600 mb-3">{uploadAnotherError}</p>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowUploadAnotherModal(false)}
+                  disabled={isUploadingPage}
+                  className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmSaveAndUploadAnother}
+                  disabled={isUploadingPage}
+                  className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors disabled:opacity-50"
+                >
+                  {isUploadingPage ? 'Saving…' : 'Save & start new takeoff'}
+                </button>
+              </div>
             </div>
-            {isUploadingPage && <p className="text-xs text-center text-slate-500">Creating page...</p>}
           </div>
         </div>
       )}
