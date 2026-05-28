@@ -1754,7 +1754,7 @@ export function TakeoffWorkstation({
 
       {/* Phase 7: Page tabs - show when more than 1 page exists */}
       {pages.length > 1 && (
-        <div className="flex gap-1 px-4 py-2 bg-slate-800 border-b border-slate-700">
+        <div className="flex gap-1 px-4 py-2 bg-gray-50 border-b border-gray-200">
           {pages.map((page, idx) => (
             <button
               key={idx}
@@ -1762,7 +1762,7 @@ export function TakeoffWorkstation({
               className={`px-3 py-1 rounded-full text-sm transition-all ${
                 idx === currentPageIndex
                   ? 'bg-orange-500 text-white'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  : 'bg-white text-slate-600 border border-gray-200 hover:bg-gray-100'
               }`}
             >
               {page.name}
