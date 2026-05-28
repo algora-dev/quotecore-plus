@@ -694,15 +694,29 @@ export function TakeoffWorkstation({
       canvas.renderAll();
     };
     imgElement.src = imageUrl;
-    // Also reset calibration + measurements for the fresh page.
+    // Reset ALL tool modes + calibration + measurements for the fresh page.
+    // CRITICAL: mode resets must come first. Without them the canvas click
+    // handler routes to the wrong tool after the page switch (e.g. areaMode)
+    // so calibration points are silently dropped, leaving the user stuck.
+    setAreaMode(false);
+    setLineMode(false);
+    setPointMode(false);
+    setMultiLinealMode(false);
+    setCalibrationMode(false);
+    setCalibrationPoints([]);
+    setShowCalibrationModal(false);
+    setShowCalibrationHelp(true);
+    setShowConfirmedFlash(false);
     setCalibrations([]);
     setCalibrationConfirmed(false);
-    setComponentMeasurements([]);
-    setRoofAreas([]);
     setAreaPoints([]);
     setLinePoints([]);
     setMultiLinealPoints([]);
     setMultiLinealSegmentObjects([]);
+    setComponentMeasurements([]);
+    setRoofAreas([]);
+    setSelectedComponentId(null);
+    setIsDirty(false);
   };
 
   // Switch the canvas to a different page by index.
