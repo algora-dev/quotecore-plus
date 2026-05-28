@@ -1399,16 +1399,19 @@ export function TakeoffWorkstation({
               return;
             }
             // P1-1b: new-page first area → pitch-only.
-            // P1-3: existing-area mode → pitch-only (no new area name; polygon is
-            //        visual-only, area row skipped on save so Plan 1's area survives).
-            if ((takeoffMode === 'new-page' && currentRoofAreas.length === 0) || isExistingAreaModeRef.current) {
+            // P1-1b: new-page first area -> pitch-only (clear component; this is the boundary).
+            // P1-3 existing-area + NO component selected -> pitch-only (boundary drawing).
+            // P1-3 existing-area + component IS selected -> normal area modal (component measurement).
+            //   pendingComponentId was already captured above. Clearing it here misfiled
+            //   the component polygon as a second roof boundary instead of a component entry.
+            if ((takeoffMode === 'new-page' && currentRoofAreas.length === 0) ||
+                (isExistingAreaModeRef.current && !currentSelectedId)) {
               setPendingComponentId(null);
               setPitchOnlyInput('');
               setShowPitchOnlyPrompt(true);
             } else {
               setShowAreaNamePrompt(true);
             }
-            return;
           }
         }
         
