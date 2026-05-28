@@ -150,7 +150,7 @@ export function TakeoffWorkstation({
   const [pages, setPages] = useState<Array<{ id?: string; url: string; name: string; order: number }>>(
     initialPageId
       ? [{ id: initialPageId, url: planUrl, name: initialPageName || 'New Area', order: 1 }]
-      : [{ url: planUrl, name: 'Page 1', order: 1 }]
+      : [{ url: planUrl, name: 'Plan 1', order: 1 }]
   );
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   // P1-3: tracks the quote_roof_areas DB ID to route component measurements
