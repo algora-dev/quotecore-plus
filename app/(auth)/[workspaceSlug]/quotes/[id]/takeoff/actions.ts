@@ -748,6 +748,38 @@ export async function createTakeoffPage(
 }
 
 /**
+ * P1-3: Return the first (lowest sort_order) quote_roof_areas ID for a quote.
+ * Called after saving measurements so the next page can target the same area.
+ */
+export async function getFirstRoofAreaId(
+  quoteId: string,
+): Promise<{ id: string; label: string } | null> {
+  try {
+    const { requireCompanyContext } = await import('@/app/lib/supabase/server');
+    const profile = await requireCompanyContext();
+    const admin = createAdminClient();
+    // Verify quote ownership before returning area data.
+    const { data: quote } = await admin
+      .from('quotes')
+      .select('id')
+      .eq('id', quoteId)
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+    if (!quote) return null;
+    const { data: area } = await admin
+      .from('quote_roof_areas')
+      .select('id, label')
+      .eq('quote_id', quoteId)
+      .order('sort_order', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    return area ? { id: area.id, label: area.label } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * H-02 (Gerald round-5): after uploading a page image to storage, write
  * its path back to the takeoff_pages row so it survives reload.
  * Ownership enforced: only updates pages belonging to the caller's company.

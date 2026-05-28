@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { saveTakeoffMeasurements, createTakeoffPageForArea, initializeTakeoffPage } from './actions';
+import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import type { TakeoffHydrationData } from './actions';
 import { uploadCanvasImage } from './uploadCanvasImage';
@@ -153,6 +153,13 @@ export function TakeoffWorkstation({
       : [{ url: planUrl, name: 'Page 1', order: 1 }]
   );
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  // P1-3: tracks the quote_roof_areas DB ID to route component measurements
+  // to on the NEXT save. For initial mode=new-page load this is initialRoofAreaId;
+  // updated client-side whenever the user switches to a new uploaded plan page.
+  const [activeSaveRoofAreaId, setActiveSaveRoofAreaId] = useState<string | null>(
+    initialRoofAreaId ?? null,
+  );
+
   // P1-3 (multi-page Save & Upload another plan): modal state.
   // - target = 'existing' attaches the new page to the FIRST existing roof area
   //   (mirrors FilesManager Option B: new page, same area target).
@@ -885,8 +892,10 @@ export function TakeoffWorkstation({
         linesImagePath,
         currentPageDbId,
         sessionVersion, // P1-1a: optimistic version guard
-        // P1-1b: route components to correct area for new-area saves.
-        takeoffMode === 'new-page' ? (initialRoofAreaId ?? null) : null,
+        // P1-3: activeSaveRoofAreaId tracks the target area for the current
+        // page. Starts as initialRoofAreaId (for mode=new-page entries) and
+        // is updated client-side when the user uploads another plan.
+        activeSaveRoofAreaId,
       );
 
       if (!saveResult.success) {
@@ -941,133 +950,87 @@ export function TakeoffWorkstation({
   };
 
   // P1-3: confirm flow for Save & Upload another plan.
-  // 1. Save current measurements (no navigation).
-  // 2. Upload the new plan image to QUOTE-DOCUMENTS + register in quote_files
-  //    so it shows up in Files & Documents on the quote summary.
-  // 3. Create the takeoff page, routing to either the first existing roof area
-  //    (target=existing) or a new named area (target=new).
-  // 4. Navigate to the takeoff page in mode=new-page with the new pageId so
-  //    the workstation reloads clean against the new plan + correct area.
+  // Fully client-side: saves measurements, uploads image, switches canvas in-place.
+  // No router.push avoids the bug where the original plan + measurements reappeared.
   const handleConfirmSaveAndUploadAnother = async () => {
     setUploadAnotherError(null);
-
-    if (!uploadAnotherFile) {
-      setUploadAnotherError('Please choose a plan image to upload.');
-      return;
+    if (!uploadAnotherFile) { setUploadAnotherError('Please choose a plan image to upload.'); return; }
+    if (uploadAnotherTarget === 'new' && !uploadAnotherAreaName.trim()) {
+      setUploadAnotherError('Please enter a name for the new area.'); return;
     }
-
-    // Resolve the target area name BEFORE we save (saving may navigate state).
-    let targetAreaName: string;
-    if (uploadAnotherTarget === 'new') {
-      const trimmed = uploadAnotherAreaName.trim();
-      if (!trimmed) {
-        setUploadAnotherError('Please enter a name for the new area.');
-        return;
-      }
-      targetAreaName = trimmed;
-    } else {
-      // Attach to the FIRST existing roof area. Source-of-truth depends on mode:
-      // - mode=add re-entry: existingRoofAreas (loaded server-side).
-      // - mode=new-page re-entry: initialPageName is the current new area.
-      // - fresh entry: roofAreas[0] (drawn this session, will be saved by step 1).
-      const firstExisting = existingRoofAreas?.[0]?.label;
-      const firstLocal = roofAreas[0]?.name;
-      const newPageLabel = takeoffMode === 'new-page' ? initialPageName : undefined;
-      const resolved = firstExisting || newPageLabel || firstLocal;
-      if (!resolved) {
-        setUploadAnotherError(
-          'No existing area to attach to. Draw a roof area first, or choose "Create new area" instead.'
-        );
-        return;
-      }
-      targetAreaName = resolved;
-    }
-
     setIsUploadingPage(true);
     try {
-      // Step 1: persist current takeoff data (no navigation).
-      // Skip if nothing to save (e.g. user already saved + drew nothing new
-      // but wants another plan added) — but only when there are zero
-      // measurements and zero areas. persistTakeoffData() returns false in
-      // that case via the same "No measurements to save" guard; we treat
-      // that as "nothing to persist" and continue rather than blocking.
-      const hasUnsaved = componentMeasurements.length > 0 || roofAreas.length > 0;
-      if (hasUnsaved) {
+      // 1. Persist current measurements without navigating away.
+      if (componentMeasurements.length > 0 || roofAreas.length > 0) {
         const saved = await persistTakeoffData();
-        if (!saved) {
-          // persistTakeoffData already showed an alert on real failure.
-          return;
-        }
+        if (!saved) return;
       }
-
-      // Step 2: storage quota check.
       const companyId = quote.company_id;
+      // 2. Storage quota check.
       const hasQuota = await checkStorageQuota(companyId, uploadAnotherFile.size);
-      if (!hasQuota) {
-        setUploadAnotherError('Storage quota exceeded. Please upgrade your plan.');
-        return;
-      }
-
-      // Step 3: mint signed upload URL + upload the new plan file.
+      if (!hasQuota) { setUploadAnotherError('Storage quota exceeded. Please upgrade your plan.'); return; }
+      // 3. Mint signed upload URL and upload new plan file.
       const mint = await mintQuoteDocumentUploadUrl({
         scope: { kind: 'quote', quoteId: quote.id },
         filename: uploadAnotherFile.name,
         contentType: uploadAnotherFile.type || 'application/octet-stream',
         claimedSize: uploadAnotherFile.size,
       });
-      if (!mint.ok) {
-        setUploadAnotherError(mint.message || 'Failed to prepare upload.');
-        return;
-      }
+      if (!mint.ok) { setUploadAnotherError(mint.message || 'Failed to prepare upload.'); return; }
       const supabase = createSupabaseBrowserClient();
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadStorageError } = await supabase.storage
         .from(mint.bucket)
         .uploadToSignedUrl(mint.storagePath, mint.token, uploadAnotherFile, {
           contentType: uploadAnotherFile.type || undefined,
         });
-      if (uploadError) {
-        setUploadAnotherError(uploadError.message);
-        return;
-      }
-
-      // Step 4: register the new plan in quote_files so it shows in
-      // Files & Documents (same as FilesManager Option C).
+      if (uploadStorageError) { setUploadAnotherError(uploadStorageError.message); return; }
+      // 4. Register in quote_files so it appears in Files & Documents.
       await saveFileMetadata({
-        companyId,
-        quoteId: quote.id,
-        fileType: 'plan',
-        fileName: uploadAnotherFile.name,
-        fileSize: uploadAnotherFile.size,
-        mimeType: uploadAnotherFile.type || 'image/png',
-        storagePath: mint.storagePath,
+        companyId, quoteId: quote.id, fileType: 'plan',
+        fileName: uploadAnotherFile.name, fileSize: uploadAnotherFile.size,
+        mimeType: uploadAnotherFile.type || 'image/png', storagePath: mint.storagePath,
       });
-
-      // Step 5: create the takeoff page bound to the target area.
-      // createTakeoffPageForArea dedupes by (quote_id, label) so passing an
-      // existing area's label cleanly reuses the same quote_roof_areas row.
-      const result = await createTakeoffPageForArea(
-        quote.id,
-        targetAreaName,
-        mint.storagePath,
-      );
-      if (!result.ok || !result.pageId) {
-        setUploadAnotherError(result.error || 'Failed to create new takeoff page.');
-        return;
+      // 5. Create takeoff page row and resolve target area ID.
+      let newPageId: string;
+      let newRoofAreaId: string | null = null;
+      let newPageName: string;
+      if (uploadAnotherTarget === 'new') {
+        const areaName = uploadAnotherAreaName.trim();
+        const result = await createTakeoffPageForArea(quote.id, areaName, mint.storagePath);
+        if (!result.ok || !result.pageId) { setUploadAnotherError(result.error || 'Failed to create page.'); return; }
+        newPageId = result.pageId; newRoofAreaId = result.roofAreaId ?? null; newPageName = areaName;
+      } else {
+        // Existing area: create only the page row - reuse the first existing area.
+        const pageName = `Plan ${pages.length + 1}`;
+        const pageResult = await createTakeoffPage(quote.id, pageName);
+        if (!pageResult.ok || !pageResult.pageId) { setUploadAnotherError(pageResult.error || 'Failed to create page.'); return; }
+        newPageId = pageResult.pageId; newPageName = pageName;
+        // Get the first roof area's DB ID so the next save routes to it.
+        const firstArea = await getFirstRoofAreaId(quote.id);
+        newRoofAreaId = firstArea?.id ?? null;
       }
-
-      // Step 6: navigate (full reload) to the new page in mode=new-page.
-      // This mirrors FilesManager Option C exactly so the workstation hydrates
-      // against the new plan image + correct roof area target.
-      const encoded = encodeURIComponent(targetAreaName);
-      const raParam = result.roofAreaId ? `&roofAreaId=${result.roofAreaId}` : '';
-      router.push(
-        `/${workspaceSlug}/quotes/${quote.id}/takeoff?mode=new-page&areaName=${encoded}&pageId=${result.pageId}${raParam}`
-      );
+      // 6. Persist image path on the new page row.
+      await finalizeTakeoffPageImage(newPageId, mint.storagePath);
+      // 7. Switch canvas client-side: loadPageImage clears ALL canvas state.
+      // createObjectURL is immediate and doesn't require re-signing.
+      const objectUrl = URL.createObjectURL(uploadAnotherFile);
+      const newPage = { id: newPageId, url: objectUrl, name: newPageName, order: pages.length + 1 };
+      const updatedPages = [...pages, newPage];
+      setPages(updatedPages);
+      setCurrentPageIndex(updatedPages.length - 1);
+      loadPageImage(objectUrl);
+      // 8. Update save routing target + reset version for fresh page.
+      setActiveSaveRoofAreaId(newRoofAreaId);
+      setSessionVersion(null);
+      // Close modal and reset upload state.
       setShowUploadAnotherModal(false);
+      setUploadAnotherFile(null);
+      setUploadAnotherAreaName('');
+      setUploadAnotherError(null);
+      setIsDirty(false);
     } catch (err) {
       console.error('[SaveAndUploadAnother] Failed:', err);
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setUploadAnotherError(message);
+      setUploadAnotherError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setIsUploadingPage(false);
     }
@@ -1724,7 +1687,14 @@ export function TakeoffWorkstation({
           >
             ← Back
           </Link>
-          <h1 className="text-xl font-semibold">{quote.customer_name} - Digital Takeoff</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-semibold">{quote.customer_name} - Digital Takeoff</h1>
+            {pages.length > 1 && (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                Plan {currentPageIndex + 1} of {pages.length}
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {/* P1-3: Save current takeoff + upload another plan image. */}
