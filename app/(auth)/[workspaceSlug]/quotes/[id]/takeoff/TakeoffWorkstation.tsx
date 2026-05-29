@@ -55,6 +55,10 @@ interface ComponentMeasurement {
   points?: { x: number; y: number }[];
   visible: boolean;
   canvasObjects?: any[]; // fabric.js objects
+  /** The DB page_id this measurement came from. Set during hydration so that
+   *  cross-page saves don't re-save other pages' measurements under the wrong
+   *  page. Undefined for newly drawn measurements (they get the current page). */
+  fromPageId?: string | null;
 }
 
 interface ComponentWithMeasurements {
@@ -333,6 +337,11 @@ export function TakeoffWorkstation({
           value: m.value,
           points: m.points ?? undefined,
           visible: m.visible,
+          // fromPageId: records which DB page this measurement belongs to.
+          // handleSaveTakeoffCore uses this to exclude other pages' measurements
+          // from a current-page save, preventing H-01 double-counting when
+          // persistTakeoffData() is called from a mode=add session.
+          fromPageId: m.pageId ?? null,
           // canvasObjects intentionally empty: canvas shapes not yet reconstructed (P1-1b).
         });
       });
@@ -465,6 +474,9 @@ export function TakeoffWorkstation({
       setShowAreaNamePrompt(false);
       setPendingAreaPoints([]);
       setAreaPoints([]);
+      // Deactivate area mode after saving a component area so the canvas
+      // cursor returns to default and the user doesn't accidentally keep drawing.
+      setAreaMode(false);
     }
   };
   
@@ -778,9 +790,24 @@ export function TakeoffWorkstation({
       // Flatten component measurements
       const allMeasurements: any[] = [];
       
-      // Add component measurements
+      // Determine the current page's DB id before the measurement loop so
+      // we can scope the save correctly.
+      const currentPageDbIdEarly = pages[currentPageIndex]?.id ?? null;
+
+      // Add component measurements.
+      // IMPORTANT: only include measurements that belong to the current page.
+      // Hydrated measurements from OTHER pages (fromPageId != currentPage) must
+      // be excluded here — they are already in the DB under their correct pages.
+      // Including them causes H-01 to double-count: H-01 fetches the same data
+      // from the DB AND we include it again in allMeasurements, resulting in
+      // duplicate quote_component_entries (the P1-3 regression Shaun saw).
       componentMeasurements.forEach(comp => {
         comp.measurements.forEach(m => {
+          // fromPageId is set for hydrated measurements. Exclude any that belong
+          // to a different page so we don't re-save them as this page's data.
+          if (m.fromPageId && currentPageDbIdEarly && m.fromPageId !== currentPageDbIdEarly) {
+            return; // skip — belongs to a different page, already in DB
+          }
           allMeasurements.push({
             componentId: comp.componentId,
             type: m.type,
@@ -809,6 +836,19 @@ export function TakeoffWorkstation({
         });
       }
       
+      // After filtering, if there's nothing to save for the current page,
+      // treat this as a successful no-op. This happens in mode=add when
+      // the user opens the session but hasn't drawn anything new yet —
+      // all measurements in componentMeasurements are hydrated from other
+      // pages and were excluded above.
+      if (allMeasurements.length === 0) {
+        console.log('[SaveTakeoff] No new measurements for current page — skipping save.');
+        if (navigateAfter) {
+          router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
+        }
+        return true;
+      }
+
       console.log('[SaveTakeoff] Saving', allMeasurements.length, 'measurements to quote:', quote.id);
       
       // Export canvas as PNG (2 images: full canvas + lines-only).
