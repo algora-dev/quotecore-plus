@@ -220,6 +220,7 @@ const UPDATABLE_COMPONENT_FIELDS = [
   'pack_price',
   'pack_size',
   'pack_coverage_m2',
+  'notes',
 ] as const;
 
 export async function updateComponent(id: string, input: Partial<ComponentLibraryInsert>) {

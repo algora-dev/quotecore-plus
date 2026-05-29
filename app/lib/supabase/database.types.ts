@@ -400,6 +400,7 @@ export type Database = {
           is_active: boolean
           measurement_type: Database["public"]["Enums"]["measurement_type"]
           name: string
+          notes: string | null
           pack_coverage_m2: number | null
           pack_price: number | null
           pack_size: number | null
@@ -429,6 +430,7 @@ export type Database = {
           is_active?: boolean
           measurement_type: Database["public"]["Enums"]["measurement_type"]
           name: string
+          notes?: string | null
           pack_coverage_m2?: number | null
           pack_price?: number | null
           pack_size?: number | null
@@ -458,6 +460,7 @@ export type Database = {
           is_active?: boolean
           measurement_type?: Database["public"]["Enums"]["measurement_type"]
           name?: string
+          notes?: string | null
           pack_coverage_m2?: number | null
           pack_price?: number | null
           pack_size?: number | null

@@ -1,5 +1,7 @@
 ﻿'use client';
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { updateCompanySettings } from './actions';
 import { saveCompanyTaxes } from '@/app/lib/taxes/actions';
 import { CURRENCY_GROUPS } from '@/app/lib/currency/currencies';
@@ -36,6 +38,9 @@ export function CompanySettingsForm({
   currentTaxes,
   currentDefaultTrade,
 }: Props) {
+  const params = useParams<{ workspaceSlug: string }>();
+  const workspaceSlug = params?.workspaceSlug ?? '';
+
   const genericTradesEnabled =
     (process.env.NEXT_PUBLIC_GENERIC_TRADES_V1 ?? '').toLowerCase() === 'true';
   type TradeOption = 'roofing' | 'cladding' | 'generic' | 'electrical' | 'plumbing' | 'landscaping' | 'flooring' | 'tiling' | 'foundations' | 'insulation' | 'painting' | 'fencing' | 'concrete' | 'construction';
@@ -297,6 +302,20 @@ export function CompanySettingsForm({
           </select>
         </div>
       )}
+
+      {/* Templates shortcut — quick access from the trade section */}
+      <div className="flex items-center justify-between py-4 border-t border-slate-100">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">Templates</p>
+          <p className="text-xs text-slate-500 mt-0.5">Manage your reusable quote templates.</p>
+        </div>
+        <Link
+          href={`/${workspaceSlug}/templates`}
+          className="px-4 py-2 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+        >
+          Templates
+        </Link>
+      </div>
 
       {/* Profit Margins */}
       <div className="border-t border-gray-200 pt-8">

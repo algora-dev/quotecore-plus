@@ -10,6 +10,7 @@ interface OnboardingData {
   currency: string;
   language: string;
   measurement: 'metric' | 'imperial_ft' | 'imperial_rs';
+  defaultTrade?: string;
 }
 
 export async function completeOnboarding(companyId: string, data: OnboardingData) {
@@ -37,6 +38,7 @@ export async function completeOnboarding(companyId: string, data: OnboardingData
       default_language: data.language,
       default_measurement_system: data.measurement,
       onboarding_completed_at: new Date().toISOString(),
+      ...(data.defaultTrade ? { default_trade: data.defaultTrade as any } : {}),
     })
     .eq('id', companyId);
 
@@ -64,6 +66,7 @@ export async function completeGoogleOnboarding(formData: FormData) {
     rawMeasurement === 'metric' || rawMeasurement === 'imperial_ft' || rawMeasurement === 'imperial_rs'
       ? rawMeasurement
       : 'imperial_rs';
+  const defaultTrade = String(formData.get('defaultTrade') || 'roofing').trim();
 
   if (!companyName || !fullName) {
     throw new Error('Company name and your name are required.');
@@ -90,6 +93,7 @@ export async function completeGoogleOnboarding(formData: FormData) {
       default_currency: currency,
       default_language: language,
       default_measurement_system: measurement,
+      default_trade: defaultTrade as any,
       default_tax_rate: 15.0,
       onboarding_completed_at: new Date().toISOString(),
     })

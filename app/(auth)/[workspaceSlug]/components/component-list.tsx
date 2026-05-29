@@ -234,6 +234,7 @@ export function ComponentList({
   const [formPackPrice, setFormPackPrice] = useState<string>('');
   const [formPackSize, setFormPackSize] = useState<string>('');
   const [formPackCoverageM2, setFormPackCoverageM2] = useState<string>('');
+  const [formNotes, setFormNotes] = useState<string>('');
 
   // If user picks a strategy that isn't allowed for the chosen measurement
   // type, snap back to per_unit. Keeps the dropdown honest under rapid
@@ -295,6 +296,7 @@ export function ComponentList({
     setFormPackPrice(c.pack_price != null ? String(c.pack_price) : '');
     setFormPackSize(c.pack_size != null ? String(c.pack_size) : '');
     setFormPackCoverageM2(c.pack_coverage_m2 != null ? String(c.pack_coverage_m2) : '');
+    setFormNotes((c.notes as string | null) ?? '');
     // Seed collection dropdown with the component's existing collection, or bootstrap fallback.
     const existingCollectionId = (c.collection_id as string | null) ?? '';
     setSelectedCollectionId(
@@ -311,6 +313,7 @@ export function ComponentList({
     setFormPitchEnabled(false);
     setAssignedFlashings([]);
     setSelectedFlashingId('');
+    setFormNotes('');
   }
 
   function addFlashing() {
@@ -419,8 +422,9 @@ export function ComponentList({
               ? Number(formPackCoverageM2)
               : null,
           collection_id: selectedCollectionId || null,
+          notes: formNotes.trim() || null,
         } as unknown as ComponentLibraryInsert)
-      : { ...input, collection_id: selectedCollectionId || null };
+      : { ...input, collection_id: selectedCollectionId || null, notes: formNotes.trim() || null } as unknown as ComponentLibraryInsert;
 
     try {
       const result = await createComponent(inputWithGenericTrades);
@@ -449,6 +453,7 @@ export function ComponentList({
       setFormPackPrice('');
       setFormPackSize('');
       setFormPackCoverageM2('');
+      setFormNotes('');
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to create component');
     } finally {
@@ -509,8 +514,9 @@ export function ComponentList({
               ? Number(formPackCoverageM2)
               : null,
           collection_id: selectedCollectionId || null,
+          notes: formNotes.trim() || null,
         } as unknown as Partial<ComponentLibraryInsert>)
-      : { ...input, collection_id: selectedCollectionId || null };
+      : { ...input, collection_id: selectedCollectionId || null, notes: formNotes.trim() || null };
 
     try {
       const updated = await updateComponent(id, inputWithGenericTrades);
@@ -973,6 +979,23 @@ export function ComponentList({
                 <p className="text-xs text-slate-400 mt-1">{imageHelperText}</p>
               </div>
             </div>
+            {/* Notes */}
+            <div className="border-t border-slate-200 pt-3 mt-3">
+              <label className="block text-xs text-slate-500 mb-1">Notes <span className="text-slate-400 font-normal">(optional)</span></label>
+              <p className="text-xs text-slate-400 mb-1">Explainers or usage tips visible when this component is expanded.</p>
+              <textarea
+                value={formNotes}
+                onChange={e => setFormNotes(e.target.value)}
+                placeholder="e.g. Use for main field area. Check manufacturer spec for coverage rate."
+                rows={3}
+                maxLength={500}
+                className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-orange-400"
+              />
+              {formNotes.length > 0 && (
+                <p className="text-xs text-slate-400 text-right mt-0.5">{formNotes.length}/500</p>
+              )}
+            </div>
+
             {collections.length > 0 && (
               <div className="border-t border-slate-200 pt-3 mt-3">
                 <label className="block text-xs text-slate-500 mb-1">Save to Library</label>
@@ -1194,6 +1217,23 @@ export function ComponentList({
                       <p className="text-xs text-slate-400 mt-1">{imageHelperText}</p>
                     </div>
                   </div>
+                  {/* Notes */}
+                  <div className="border-t border-slate-200 pt-3 mt-3">
+                    <label className="block text-xs text-slate-500 mb-1">Notes <span className="text-slate-400 font-normal">(optional)</span></label>
+                    <p className="text-xs text-slate-400 mb-1">Explainers or usage tips visible when this component is expanded.</p>
+                    <textarea
+                      value={formNotes}
+                      onChange={e => setFormNotes(e.target.value)}
+                      placeholder="e.g. Use for main field area. Check manufacturer spec for coverage rate."
+                      rows={3}
+                      maxLength={500}
+                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-orange-400"
+                    />
+                    {formNotes.length > 0 && (
+                      <p className="text-xs text-slate-400 text-right mt-0.5">{formNotes.length}/500</p>
+                    )}
+                  </div>
+
                   {collections.length > 0 && (
                     <div className="border-t border-slate-200 pt-3 mt-3">
                       <label className="block text-xs text-slate-500 mb-1">Save to Library</label>
@@ -1250,6 +1290,11 @@ export function ComponentList({
                     )}
                     {comp.default_pitch_type !== 'none' && <> · {PITCH_LABELS[comp.default_pitch_type]}</>}
                   </p>
+                  {(comp as unknown as { notes?: string | null }).notes && (
+                    <p className="text-xs text-slate-400 italic mt-1 line-clamp-1">
+                      {(comp as unknown as { notes?: string | null }).notes}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); startEdit(comp); }}
