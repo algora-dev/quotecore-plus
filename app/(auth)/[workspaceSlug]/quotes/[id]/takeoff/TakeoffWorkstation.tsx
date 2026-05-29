@@ -357,6 +357,11 @@ export function TakeoffWorkstation({
   useEffect(() => {
     // P1-1b: suppress in mode=add — user is continuing on an existing area, not creating a new one.
     if (takeoffMode === 'add') return;
+    // P1-3: suppress in isExistingAreaMode — the user chose "add to existing area" via
+    // Save & Upload another plan. The "draw an area boundary" prompt is irrelevant here;
+    // showing it caused users to think they needed to draw a boundary and then go directly
+    // to component area drawing, which broke the polygon-close routing (deselection gotcha).
+    if (isExistingAreaMode) return;
     if (calibrationConfirmed && calibrations.length > 0 && roofAreas.length === 0) {
       // Delay slightly to show after calibration flash
       const timer = setTimeout(() => {
@@ -364,7 +369,7 @@ export function TakeoffWorkstation({
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [calibrationConfirmed, calibrations.length, roofAreas.length, takeoffMode]);
+  }, [calibrationConfirmed, calibrations.length, roofAreas.length, takeoffMode, isExistingAreaMode]);
   
   const handleDeleteArea = (areaId: string) => {
     const area = roofAreas.find(a => a.id === areaId);
@@ -380,7 +385,8 @@ export function TakeoffWorkstation({
 
     // Route by pendingComponentId first (captured at polygon-close time).
     // This is immune to selectedComponentId being cleared by canvas deselection.
-    const isComponentArea = !!pendingComponentId;
+    const capturedComponentId = pendingComponentId; // save before consuming
+    const isComponentArea = !!capturedComponentId;
     setPendingComponentId(null); // consume it
 
     // Roof area: explicit pitch OR no component attached
@@ -417,9 +423,9 @@ export function TakeoffWorkstation({
       setAreaPoints([]);
       setAreaMode(false);
     } else {
-      // Component area: use the captured pendingComponentId (may already be consumed
-      // above; fall back to current selectedComponentId for non-modal code paths).
-      const componentId = selectedComponentId;
+      // Component area: use the ID captured at polygon-close time (immune to Fabric
+      // deselection). capturedComponentId was read before setPendingComponentId(null).
+      const componentId = capturedComponentId || selectedComponentId;
       if (!componentId) return;
 
       const componentColor = componentColors.find(c => c.componentId === componentId)?.color || '#3b82f6';
@@ -1107,6 +1113,10 @@ export function TakeoffWorkstation({
   const selectedComponentIdRef = useRef(selectedComponentId);
   const componentColorsRef = useRef(componentColors);
   const isExistingAreaModeRef = useRef(isExistingAreaMode);
+  // Captures the component ID at the moment area mode is activated for a component.
+  // Unlike selectedComponentIdRef, this is NOT cleared by Fabric canvas deselection
+  // events that fire on the same click that closes the polygon.
+  const activeAreaComponentIdRef = useRef<string | null>(null);
   
   useEffect(() => {
     calibrationModeRef.current = calibrationMode;
@@ -1122,6 +1132,13 @@ export function TakeoffWorkstation({
     selectedComponentIdRef.current = selectedComponentId;
     componentColorsRef.current = componentColors;
     isExistingAreaModeRef.current = isExistingAreaMode;
+    // Sync activeAreaComponentIdRef when area mode turns on with a selected component.
+    // When area mode turns off (polygon closed or cancelled), clear it.
+    if (areaMode && selectedComponentId) {
+      activeAreaComponentIdRef.current = selectedComponentId;
+    } else if (!areaMode) {
+      activeAreaComponentIdRef.current = null;
+    }
   }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints, selectedComponentId, componentColors, isExistingAreaMode]);
 
   // Stable ref for the signed plan URL. The signed URL is regenerated on
@@ -1379,7 +1396,13 @@ export function TakeoffWorkstation({
             // and won't see state updated after the handler was set up.
             // Read current values via refs — canvas handlers capture stale closures.
             const currentRoofAreas = roofAreasRef.current;
-            const currentSelectedId = selectedComponentIdRef.current;
+            // IMPORTANT: read from activeAreaComponentIdRef, NOT selectedComponentIdRef.
+            // Fabric.js fires canvas deselection events on the same click that closes the
+            // polygon, clearing selectedComponentIdRef.current before we read it here.
+            // activeAreaComponentIdRef is set when area mode is activated for a component
+            // and is only cleared when area mode is explicitly turned off — it is immune
+            // to Fabric deselection side-effects.
+            const currentSelectedId = activeAreaComponentIdRef.current ?? selectedComponentIdRef.current;
             // Capture the component ID NOW before any canvas deselection fires.
             // Without this, selectedComponentId may be null by the time the
             // modal renders, causing the area to be treated as a roof area.
@@ -1398,17 +1421,27 @@ export function TakeoffWorkstation({
               );
               return;
             }
-            // P1-1b: new-page first area → pitch-only.
-            // P1-1b: new-page first area -> pitch-only (clear component; this is the boundary).
-            // P1-3 existing-area + NO component selected -> pitch-only (boundary drawing).
-            // P1-3 existing-area + component IS selected -> normal area modal (component measurement).
-            //   pendingComponentId was already captured above. Clearing it here misfiled
-            //   the component polygon as a second roof boundary instead of a component entry.
-            if ((takeoffMode === 'new-page' && currentRoofAreas.length === 0) ||
-                (isExistingAreaModeRef.current && !currentSelectedId)) {
+            // P1-1b: new-page first area → pitch-only (clear component; this is the boundary).
+            // P1-3 existing-area + NO component selected → warn instead of silently
+            //   creating a spurious roof-area boundary (isExistingAreaMode means no new
+            //   boundaries should be created client-side).
+            // P1-3 existing-area + component IS selected → normal area modal.
+            if (takeoffMode === 'new-page' && currentRoofAreas.length === 0 && !currentSelectedId) {
+              // Boundary drawing for a new page — show pitch-only prompt.
               setPendingComponentId(null);
               setPitchOnlyInput('');
               setShowPitchOnlyPrompt(true);
+            } else if (isExistingAreaModeRef.current && !currentSelectedId) {
+              // Existing-area mode but no component selected — can't create a new boundary.
+              setPendingAreaPoints([]);
+              setAreaPoints([]);
+              setPendingComponentId(null);
+              showAlert(
+                'Select a component first',
+                'You are adding measurements to an existing area. Select a component from the panel before drawing.',
+                'info'
+              );
+              return;
             } else {
               setShowAreaNamePrompt(true);
             }
