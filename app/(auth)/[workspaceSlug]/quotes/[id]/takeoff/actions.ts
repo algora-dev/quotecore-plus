@@ -90,45 +90,24 @@ export async function saveTakeoffMeasurements(
   });
   const firstRoofAreaPitch = roofAreaMeasurements[0]?.pitch || 0;
 
-  // 2. Components + their entries (linear measurements grouped by componentId).
+  // 2. Components + their entries (current page only).
   //
-  // P1-1a H-01 FIX: For multi-page quotes, component totals must reflect ALL
-  // pages, not just the current page's in-memory measurements. Before building
-  // componentsPayload, fetch measurements from OTHER pages out of the DB and
-  // merge them with the current page's in-memory measurements.
+  // Gerald audit 2026-05-29 H-01: the previous H-01 cross-page aggregation
+  // fetched other pages' measurements from quote_takeoff_measurements and
+  // merged them into allMeasurementsForComponents. The RPC then tagged every
+  // entry in the resulting payload as page_id = v_current_page_id, creating
+  // duplicate entries for other pages' measurements.
   //
-  // Safety: we fetch BEFORE the RPC runs (RPC hasn't changed the DB yet),
-  // so "other pages" data is the last committed state. After the RPC inserts
-  // the current page's new measurements, the combined picture is correct.
-  let allMeasurementsForComponents = measurements;
-
-  // P1-1b: for new-area saves (targetRoofAreaId set), skip H-01 cross-page
-  // aggregation. Each area's components are isolated — other pages' measurements
-  // stay under their own areas and must not pollute this area's entries.
-  const isIsolatedSave = !!targetRoofAreaId;
-
-  if (currentPageId && !isIsolatedSave) {
-    const { data: otherPageRows } = await supabase
-      .from('quote_takeoff_measurements')
-      .select('component_library_id, measurement_type, measurement_value, measurement_unit, canvas_points, is_visible, page_id')
-      .eq('quote_id', quoteId)
-      .neq('page_id', currentPageId)
-      .not('component_library_id', 'is', null); // only component rows, not roof areas
-
-    if (otherPageRows && otherPageRows.length > 0) {
-      const otherMeasurements: TakeoffMeasurement[] = otherPageRows.map(row => ({
-        componentId: row.component_library_id!,
-        type: row.measurement_type as TakeoffMeasurement['type'],
-        value: Number(row.measurement_value),
-        points: (row.canvas_points as { x: number; y: number }[] | null) ?? undefined,
-        visible: row.is_visible ?? true,
-        pageId: row.page_id,
-        measurementUnit: row.measurement_unit ?? unit,
-      }));
-      // Prepend other pages' measurements; current page's override on conflict.
-      allMeasurementsForComponents = [...otherMeasurements, ...measurements];
-    }
-  }
+  // The RPC already handles cross-page total recalculation correctly:
+  //   UPDATE quote_components SET final_quantity = SUM(value_after_waste)
+  //     FROM quote_component_entries WHERE quote_component_id = v_existing_id
+  // This sums ALL pages' entries after the current page's entries are inserted,
+  // so the final totals are always cross-page accurate.
+  //
+  // Fix: send ONLY current-page measurements in componentsPayload.entries.
+  // Do NOT fetch or merge other pages' DB rows here. recalcAllQuoteComponents
+  // is called after the RPC and recalculates final_quantity from all pages.
+  const allMeasurementsForComponents = measurements;
 
   // We need to fetch the component_library rows up-front to compute pitch/waste correctly.
   const componentIds = [...new Set(allMeasurementsForComponents.filter(m => m.componentId).map(m => m.componentId!))];
@@ -144,7 +123,7 @@ export async function saveTakeoffMeasurements(
       .map(componentId => {
         const libComp = libById.get(componentId);
         if (!libComp) return null;
-        // P1-1a H-01: use allMeasurementsForComponents (includes other pages).
+        // Current-page measurements only — no H-01 aggregation.
         const componentMeasurements = allMeasurementsForComponents.filter(m => m.componentId === componentId);
         const pitchType = libComp.default_pitch_type || 'none';
         // Cast: database.types.ts is stale; fixed_per_segment is a valid DB value.
@@ -158,13 +137,10 @@ export async function saveTakeoffMeasurements(
         const heightM = heightMm ? heightMm / 1000 : 1;
 
         const entries = componentMeasurements.map((m, index) => {
-          // P1-1a H-01: each measurement may come from a different page with its
-          // own calibration unit. Use m.measurementUnit if set (DB rows from other
-          // pages), otherwise fall back to the top-level `unit` param (current page).
-          const mUnit = m.measurementUnit ?? unit;
-          const mIsImperialFeet = mUnit === 'feet';
-          const mToMetricLinear = (v: number) => mIsImperialFeet ? convertLinearToMetric(v) : v;
-          const mToMetricArea = (v: number) => mIsImperialFeet ? convertAreaFt2ToMetric(v) : v;
+          // All measurements are from the current page and share the same unit.
+          // (H-01 multi-page unit mixing was removed per Gerald audit 2026-05-29.)
+          const mToMetricLinear = toMetricLinear;
+          const mToMetricArea = toMetricArea;
 
           // Convert calibration-unit value -> canonical metric BEFORE pitch/waste
           // math, since material/labour rates are priced per metre or per m².

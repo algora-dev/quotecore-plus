@@ -497,7 +497,11 @@ export function TakeoffWorkstation({
   
   // P1-2: Central tool-switching helper. Uses the canonical toolForMeasurementType
   // helper so both handleAddComponent and active-component panel clicks stay in sync.
-  const applyToolForType = (measurementType: string) => {
+  // M-01 (Gerald audit 2026-05-29): accepts an optional componentId and sets
+  // activeAreaComponentIdRef SYNCHRONOUSLY when switching to the area tool.
+  // Relying solely on the post-render useEffect left a narrow window where a
+  // canvas event could fire before the ref was updated.
+  const applyToolForType = (measurementType: string, forComponentId?: string) => {
     setLineMode(false);
     setAreaMode(false);
     setPointMode(false);
@@ -505,11 +509,23 @@ export function TakeoffWorkstation({
     setMultiLinealPoints([]);
     setMultiLinealSegmentObjects([]);
     const tool = toolForMeasurementType(measurementType);
-    if (tool === 'line') setLineMode(true);
-    else if (tool === 'multi_line') setMultiLinealMode(true);
-    else if (tool === 'area') setAreaMode(true);
-    else if (tool === 'point') setPointMode(true);
-    // null → manual entry only; no tool active
+    if (tool === 'line') {
+      setLineMode(true);
+      activeAreaComponentIdRef.current = null; // clear area ref when switching away
+    } else if (tool === 'multi_line') {
+      setMultiLinealMode(true);
+      activeAreaComponentIdRef.current = null;
+    } else if (tool === 'area') {
+      setAreaMode(true);
+      // Synchronously capture which component this area tool is for.
+      if (forComponentId) activeAreaComponentIdRef.current = forComponentId;
+    } else if (tool === 'point') {
+      setPointMode(true);
+      activeAreaComponentIdRef.current = null;
+    } else {
+      // null → manual entry only; no tool active.
+      activeAreaComponentIdRef.current = null;
+    }
   };
 
   const handleAddComponent = (componentId: string) => {
@@ -519,11 +535,12 @@ export function TakeoffWorkstation({
     // Auto-select the newly added component
     setSelectedComponentId(componentId);
     
-    // P1-2: Auto-select tool via central helper.
+    // P1-2: Auto-select tool via central helper, passing componentId so the
+    // area ref is set synchronously when the tool is 'area'.
     const component = components.find(c => c.id === componentId);
     if (component) {
       const mt = (component.measurement_type ?? component.default_measurement_type ?? '').toLowerCase();
-      applyToolForType(mt);
+      applyToolForType(mt, componentId);
     }
   };
   
@@ -837,12 +854,22 @@ export function TakeoffWorkstation({
       }
       
       // After filtering, if there's nothing to save for the current page,
-      // treat this as a successful no-op. This happens in mode=add when
-      // the user opens the session but hasn't drawn anything new yet —
-      // all measurements in componentMeasurements are hydrated from other
-      // pages and were excluded above.
+      // treat this as a SAFE SKIP — not a full save. This happens in mode=add
+      // when the user hasn't drawn anything new in the current session; all
+      // componentMeasurements are hydrated from other pages and excluded above.
+      //
+      // Contract (M-02 Gerald audit 2026-05-29):
+      //  – We do NOT advance the session version (no RPC call).
+      //  – We do NOT clear isDirty (no data was actually committed here).
+      //  – We only navigate if the caller explicitly requests it.
+      //  – This branch must NEVER be used when there are local unsaved changes
+      //    (those would have a null/undefined fromPageId and would NOT be filtered).
       if (allMeasurements.length === 0) {
-        console.log('[SaveTakeoff] No new measurements for current page — skipping save.');
+        console.log('[SaveTakeoff] Safe skip — no new measurements for current page. Not a full save.');
+        // navigateAfter=false means this was called from persistTakeoffData()
+        // before an upload — fine to skip silently.
+        // navigateAfter=true means the user clicked "Save & Continue" with no
+        // new data drawn — also fine to navigate, but we do NOT mark dirty=false.
         if (navigateAfter) {
           router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
         }
@@ -1172,12 +1199,14 @@ export function TakeoffWorkstation({
     selectedComponentIdRef.current = selectedComponentId;
     componentColorsRef.current = componentColors;
     isExistingAreaModeRef.current = isExistingAreaMode;
-    // Sync activeAreaComponentIdRef when area mode turns on with a selected component.
-    // When area mode turns off (polygon closed or cancelled), clear it.
-    if (areaMode && selectedComponentId) {
-      activeAreaComponentIdRef.current = selectedComponentId;
-    } else if (!areaMode) {
+    // Fallback: sync activeAreaComponentIdRef from state after render.
+    // applyToolForType sets this synchronously (M-01 Gerald audit 2026-05-29),
+    // but this effect serves as a safety net and handles the clear-on-mode-off case.
+    if (!areaMode) {
       activeAreaComponentIdRef.current = null;
+    } else if (areaMode && selectedComponentId && !activeAreaComponentIdRef.current) {
+      // Only set if not already set synchronously (avoid overwriting with stale state).
+      activeAreaComponentIdRef.current = selectedComponentId;
     }
   }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints, selectedComponentId, componentColors, isExistingAreaMode]);
 
@@ -2156,8 +2185,9 @@ export function TakeoffWorkstation({
                               onClick={() => {
                                 setSelectedComponentId(comp.id);
                                 // P1-2: auto-switch tool when clicking an active component.
+                                // Pass comp.id so activeAreaComponentIdRef is set synchronously.
                                 const mt = (comp.measurement_type ?? comp.default_measurement_type ?? '').toLowerCase();
-                                applyToolForType(mt);
+                                applyToolForType(mt, comp.id);
                               }}
                               className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-all ${
                                 isSelected 
