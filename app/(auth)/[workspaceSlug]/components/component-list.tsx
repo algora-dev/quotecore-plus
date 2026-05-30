@@ -51,6 +51,8 @@ function buildMeasurementLabels(system: MeasurementSystem): Record<MeasurementTy
     irregular_area: `Irregular Area (${areaUnit})`,
     multi_lineal: `Multi-Line Total (${linealUnit})`,
     multi_lineal_lxh: `Multi-Line Height x Length (${areaUnit})`,
+    length_x_height_freestyle: `Length × Height - Freestyle (${areaUnit})`,
+    multi_lineal_lxh_freestyle: `Multi-Line Height × Length - Freestyle (${areaUnit})`,
   };
 }
 
@@ -66,7 +68,7 @@ const PRICING_STRATEGY_LABELS: Record<PricingStrategy, string> = {
   per_unit: 'Per unit (default)',
   per_pack_length: 'Per pack - by length (e.g. 20m cable rolls)',
   per_pack_area: 'Per pack - by area (e.g. 50m² underlay rolls)',
-  per_pack_coverage: 'Per pack - by coverage (e.g. 20L paint covers 50m²)',
+  per_pack_coverage: 'Per Coverage Area (e.g. 20L paint coverage)',
   per_pack_volume: 'Per pack - by volume (e.g. 5m³ concrete units)',
 };
 
@@ -84,7 +86,7 @@ function allowedStrategiesFor(mt: MeasurementType): PricingStrategy[] {
   if (['lineal', 'linear', 'multi_lineal', 'curved_line'].includes(mt)) {
     base.push('per_pack_length');
   }
-  if (['area', 'length_x_height', 'irregular_area', 'multi_lineal_lxh'].includes(mt)) {
+  if (['area', 'length_x_height', 'length_x_height_freestyle', 'irregular_area', 'multi_lineal_lxh', 'multi_lineal_lxh_freestyle'].includes(mt)) {
     base.push('per_pack_area', 'per_pack_coverage');
   }
   if (mt === 'volume' || mt === 'volume_3d') {
@@ -379,6 +381,16 @@ export function ComponentList({
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
+
+    // Validate per_pack_coverage requires all three pack fields.
+    if (formPricingStrategy === 'per_pack_coverage') {
+      if (!formPackPrice || !formPackSize || !formPackCoverageM2) {
+        alert('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
+        setSaving(false);
+        return;
+      }
+    }
+
     const fd = new FormData(e.currentTarget);
 
     const wasteType = fd.get('default_waste_type') as WasteType;
@@ -479,6 +491,16 @@ export function ComponentList({
   async function handleUpdate(e: React.FormEvent<HTMLFormElement>, id: string) {
     e.preventDefault();
     setSaving(true);
+
+    // Validate per_pack_coverage requires all three pack fields.
+    if (formPricingStrategy === 'per_pack_coverage') {
+      if (!formPackPrice || !formPackSize || !formPackCoverageM2) {
+        alert('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
+        setSaving(false);
+        return;
+      }
+    }
+
     const fd = new FormData(e.currentTarget);
 
     const wasteType = fd.get('default_waste_type') as WasteType;
@@ -869,7 +891,7 @@ export function ComponentList({
                     // generic-trades flag is off; show every type when on.
                     // The legacy `linear` alias stays hidden in both modes
                     // because new rows must always use `lineal`.
-                    .filter(([k]) => k !== 'linear')
+                    .filter(([k]) => k !== 'linear' && k !== 'count' && k !== 'curved_line' && k !== 'irregular_area')
                     .filter(([k]) => genericTradesEnabled || ROOFING_DEFAULT_TYPES.has(k))
                     .map(([k, v]) => (
                       <option key={k} value={k}>{v}</option>
@@ -921,7 +943,7 @@ export function ComponentList({
                   </div>
                   {formPricingStrategy === 'per_pack_coverage' && (
                     <div className="col-span-2">
-                      <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m\u00b2)</label>
+                      <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
                       <input type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                     </div>
                   )}
@@ -1105,7 +1127,7 @@ export function ComponentList({
                         className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
                       >
                         {(Object.entries(MEASUREMENT_LABELS) as Array<[MeasurementType, string]>)
-                          .filter(([k]) => k !== 'linear')
+                          .filter(([k]) => k !== 'linear' && k !== 'count' && k !== 'curved_line' && k !== 'irregular_area')
                           .filter(([k]) => genericTradesEnabled || ROOFING_DEFAULT_TYPES.has(k))
                           .map(([k, v]) => (
                             <option key={k} value={k}>{v}</option>
@@ -1153,7 +1175,7 @@ export function ComponentList({
                         </div>
                         {formPricingStrategy === 'per_pack_coverage' && (
                           <div className="col-span-2">
-                            <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m\u00b2)</label>
+                            <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
                             <input type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                           </div>
                         )}

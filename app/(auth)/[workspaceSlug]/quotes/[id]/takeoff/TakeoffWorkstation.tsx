@@ -51,7 +51,7 @@ interface RoofArea {
 
 interface ComponentMeasurement {
   id: string;
-  type: 'line' | 'area' | 'point' | 'multi_lineal' | 'multi_lineal_lxh' | 'volume_3d';
+  type: 'line' | 'area' | 'point' | 'multi_lineal' | 'multi_lineal_lxh' | 'volume_3d' | 'length_x_height_freestyle' | 'multi_lineal_lxh_freestyle';
   value: number; // length (ft/m) or area (sq ft/m)
   points?: { x: number; y: number }[];
   visible: boolean;
@@ -215,6 +215,17 @@ export function TakeoffWorkstation({
   // Fires after the area polygon is closed for a volume_3d component.
   const [showVolumeDepthPrompt, setShowVolumeDepthPrompt] = useState(false);
   const [volumeDepthInput, setVolumeDepthInput] = useState('');
+
+  // Freestyle height prompt — fires after a line/polyline is drawn for a
+  // length_x_height_freestyle / multi_lineal_lxh_freestyle component.
+  const [showFreestyleHeightPrompt, setShowFreestyleHeightPrompt] = useState(false);
+  const [freestyleHeightInput, setFreestyleHeightInput] = useState('');
+  const [pendingFreestyleLength, setPendingFreestyleLength] = useState<number>(0);
+  const [pendingFreestyleComponentId, setPendingFreestyleComponentId] = useState<string | null>(null);
+  const [pendingFreestylePoints, setPendingFreestylePoints] = useState<{x:number;y:number}[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [pendingFreestyleCanvasObjects, setPendingFreestyleCanvasObjects] = useState<any[]>([]);
+  const [pendingFreestyleIsMultiLineal, setPendingFreestyleIsMultiLineal] = useState(false);
   const [pendingVolumeComponentId, setPendingVolumeComponentId] = useState<string | null>(null);
   const [pendingVolumeCalibratedArea, setPendingVolumeCalibratedArea] = useState<number>(0);
   const [pendingVolumePoints, setPendingVolumePoints] = useState<{x:number;y:number}[]>([]);
@@ -667,8 +678,25 @@ export function TakeoffWorkstation({
     // Use the component's actual measurement_type so multi_lineal_lxh
     // is stored correctly and the save layer applies height conversion.
     const compForType = components.find(c => c.id === compId);
+    const compMeasType = (compForType?.measurement_type ?? compForType?.default_measurement_type) as string;
+
+    // Freestyle: intercept multi_lineal_lxh_freestyle — show height prompt instead of committing.
+    if (compMeasType === 'multi_lineal_lxh_freestyle') {
+      const canvasObjs = [...multiLinealSegmentObjects];
+      setPendingFreestyleLength(totalLength);
+      setPendingFreestyleComponentId(compId);
+      setPendingFreestylePoints([...currentPoints]);
+      setPendingFreestyleCanvasObjects(canvasObjs);
+      setPendingFreestyleIsMultiLineal(true);
+      setFreestyleHeightInput('');
+      setShowFreestyleHeightPrompt(true);
+      setMultiLinealPoints([]);
+      setMultiLinealSegmentObjects([]);
+      return;
+    }
+
     const resolvedType: 'multi_lineal' | 'multi_lineal_lxh' =
-      ((compForType?.measurement_type ?? compForType?.default_measurement_type) as string) === 'multi_lineal_lxh'
+      compMeasType === 'multi_lineal_lxh'
         ? 'multi_lineal_lxh'
         : 'multi_lineal';
 
@@ -820,6 +848,43 @@ export function TakeoffWorkstation({
     setPendingVolumeComponentId(null);
     setVolumeDepthInput('');
     setAreaMode(false);
+    setIsDirty(true);
+  };
+
+  /** Confirm handler for the freestyle height prompt (length_x_height_freestyle / multi_lineal_lxh_freestyle). */
+  const handleConfirmFreestyleHeight = () => {
+    const height = parseFloat(freestyleHeightInput);
+    if (!height || height <= 0 || !pendingFreestyleComponentId) return;
+    const unit = calibrations[0]?.unit ?? 'meters';
+    const lengthM = unit === 'feet' ? convertLinearToMetric(pendingFreestyleLength) : pendingFreestyleLength;
+    const heightM = unit === 'feet' ? convertLinearToMetric(height) : height;
+    const areaM2 = lengthM * heightM;
+    const measType = pendingFreestyleIsMultiLineal ? 'multi_lineal_lxh_freestyle' : 'length_x_height_freestyle';
+    const componentId = pendingFreestyleComponentId;
+    const newMeasurement: ComponentMeasurement = {
+      id: `fs-${Date.now()}`,
+      type: measType as ComponentMeasurement['type'],
+      value: areaM2,
+      points: pendingFreestylePoints,
+      visible: true,
+      canvasObjects: pendingFreestyleCanvasObjects,
+    };
+    setComponentMeasurements(prev => {
+      const exists = prev.some(c => c.componentId === componentId);
+      if (exists) {
+        return prev.map(c =>
+          c.componentId === componentId
+            ? { ...c, measurements: [...c.measurements, newMeasurement] }
+            : c
+        );
+      }
+      return [...prev, { componentId, measurements: [newMeasurement], expanded: true }];
+    });
+    setShowFreestyleHeightPrompt(false);
+    setFreestyleHeightInput('');
+    setPendingFreestyleComponentId(null);
+    setPendingFreestylePoints([]);
+    setPendingFreestyleCanvasObjects([]);
     setIsDirty(true);
   };
 
@@ -2944,6 +3009,24 @@ export function TakeoffWorkstation({
           unit={calibrations[0]?.unit || 'feet'}
           onConfirm={() => {
             if (!selectedComponentId) return;
+
+            // Freestyle intercept: length_x_height_freestyle — show height prompt.
+            const selectedComp = components.find(c => c.id === selectedComponentId);
+            if ((selectedComp?.measurement_type as string) === 'length_x_height_freestyle') {
+              const objects = fabricRef.current?.getObjects() || [];
+              const canvasObjs = objects.slice(-3);
+              setPendingFreestyleLength(pendingLineMeasurement.length);
+              setPendingFreestyleComponentId(selectedComponentId);
+              setPendingFreestylePoints(pendingLineMeasurement.points);
+              setPendingFreestyleCanvasObjects(canvasObjs);
+              setPendingFreestyleIsMultiLineal(false);
+              setFreestyleHeightInput('');
+              setShowLineMeasurementPrompt(false);
+              setPendingLineMeasurement(null);
+              setLinePoints([]);
+              setShowFreestyleHeightPrompt(true);
+              return;
+            }
             
             // Collect canvas objects (line + markers) - last 3 objects added
             const objects = fabricRef.current?.getObjects() || [];
@@ -2998,6 +3081,77 @@ export function TakeoffWorkstation({
             setLinePoints([]);
           }}
         />
+      )}
+
+      {/* Freestyle height prompt — fires after line/polyline for length_x_height_freestyle / multi_lineal_lxh_freestyle */}
+      {showFreestyleHeightPrompt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-80 border border-gray-200 shadow-xl">
+            <h2 className="text-lg font-semibold mb-1">Enter Height</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Length measured:{' '}
+              {(calibrations[0]?.unit === 'feet'
+                ? convertLinearToMetric(pendingFreestyleLength)
+                : pendingFreestyleLength).toFixed(2)} m.
+              Now enter the height to calculate area.
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Height ({calibrations[0]?.unit === 'feet' ? 'ft' : 'm'})
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.001"
+                value={freestyleHeightInput}
+                onChange={e => setFreestyleHeightInput(e.target.value)}
+                placeholder={calibrations[0]?.unit === 'feet' ? 'e.g. 8.0' : 'e.g. 2.4'}
+                autoFocus
+                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded text-sm"
+              />
+              {freestyleHeightInput && parseFloat(freestyleHeightInput) > 0 && (
+                <p className="text-xs text-slate-400 mt-1">
+                  Area ≈ {(
+                    (calibrations[0]?.unit === 'feet'
+                      ? convertLinearToMetric(pendingFreestyleLength)
+                      : pendingFreestyleLength) *
+                    (calibrations[0]?.unit === 'feet'
+                      ? convertLinearToMetric(parseFloat(freestyleHeightInput))
+                      : parseFloat(freestyleHeightInput))
+                  ).toFixed(2)} m²
+                </p>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleConfirmFreestyleHeight}
+                disabled={!freestyleHeightInput || parseFloat(freestyleHeightInput) <= 0}
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 disabled:opacity-40 transition-colors"
+              >
+                {freestyleHeightInput && parseFloat(freestyleHeightInput) > 0
+                  ? `Confirm ${parseFloat(freestyleHeightInput).toFixed(2)} ${calibrations[0]?.unit === 'feet' ? 'ft' : 'm'} height`
+                  : 'Enter a height'}
+              </button>
+              <button
+                onClick={() => {
+                  if (fabricRef.current) {
+                    pendingFreestyleCanvasObjects.forEach(obj => fabricRef.current!.remove(obj));
+                    fabricRef.current.renderAll();
+                  }
+                  setShowFreestyleHeightPrompt(false);
+                  setFreestyleHeightInput('');
+                  setPendingFreestyleComponentId(null);
+                  setPendingFreestylePoints([]);
+                  setPendingFreestyleCanvasObjects([]);
+                  setLinePoints([]);
+                }}
+                className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* App-style alert replaces native alert() across this workstation. */}

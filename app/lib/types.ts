@@ -50,7 +50,9 @@ export type MeasurementType =
   | 'irregular_area'
   | 'multi_lineal'
   | 'multi_lineal_lxh'  // Phase 7+: polyline area tool (length × height per segment)
-  | 'volume_3d';         // True 3D volume: user enters L × W × D per measurement
+  | 'volume_3d'          // True 3D volume: user enters L × W × D per measurement
+  | 'length_x_height_freestyle'  // freestyle: user enters height at measurement time (canvas prompt / manual builder)
+  | 'multi_lineal_lxh_freestyle'; // freestyle polyline: user enters height after finishing polyline
 
 /** Phase 2 (Generic Trades): how a component is priced. Orthogonal to
  *  measurement_type. Default `per_unit` matches today's behaviour. */
@@ -169,6 +171,8 @@ export function unitForMeasurement(mt: MeasurementType): string {
     case 'length_x_height': return 'm²';          // length × component height
     case 'volume': return 'm³';
     case 'volume_3d': return 'm³';            // true 3D: L × W × D
+    case 'length_x_height_freestyle': return 'm²';
+    case 'multi_lineal_lxh_freestyle': return 'm²';
     case 'hours_days': return 'hr';               // unit refined by component config
     case 'curved_line': return 'm';
     case 'irregular_area': return 'm²';
@@ -196,6 +200,8 @@ export function entryLabel(mt: MeasurementType): string {
     case 'length_x_height': return 'length';
     case 'volume': return 'area';
     case 'volume_3d': return 'L × W × D';
+    case 'length_x_height_freestyle': return 'length × height';
+    case 'multi_lineal_lxh_freestyle': return 'length × height';
     case 'hours_days': return 'time';
     case 'irregular_area': return 'area';
     default: return '';
@@ -216,6 +222,8 @@ export function addMoreLabel(mt: MeasurementType): string {
     case 'length_x_height': return 'Add more lengths';
     case 'volume': return 'Add more areas';
     case 'volume_3d': return 'Add volume entry';
+    case 'length_x_height_freestyle': return 'Add more lengths';
+    case 'multi_lineal_lxh_freestyle': return 'Add more lengths';
     case 'hours_days': return 'Add more time';
     case 'irregular_area': return 'Add more areas';
     default: return 'Add entry';

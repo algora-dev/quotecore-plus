@@ -8,7 +8,7 @@ import { recalcAllQuoteComponents } from '../../actions';
 
 interface TakeoffMeasurement {
   componentId: string | null; // null for informational roof areas
-  type: 'line' | 'area' | 'point' | 'multi_lineal' | 'multi_lineal_lxh' | 'volume_3d';
+  type: 'line' | 'area' | 'point' | 'multi_lineal' | 'multi_lineal_lxh' | 'volume_3d' | 'length_x_height_freestyle' | 'multi_lineal_lxh_freestyle';
   value: number;
   pitch?: number; // Pitch in degrees (for roof areas)
   name?: string; // Name (for roof areas)
@@ -165,6 +165,10 @@ export async function saveTakeoffMeasurements(
             }
           } else if (m.type === 'volume_3d') {
             // Volume (L × W × D): value is already in m³, converted client-side.
+            metricValue = m.value;
+          } else if (m.type === 'length_x_height_freestyle' || m.type === 'multi_lineal_lxh_freestyle') {
+            // Freestyle: area pre-calculated client-side (length × user-entered height),
+            // both already converted to metric. Value is already m².
             metricValue = m.value;
           }
           // 'point' is a count (each) and never needs unit conversion.
