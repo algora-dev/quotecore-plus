@@ -15,6 +15,9 @@ interface Props {
   /** Lifetime flashing count as of server render. */
   flashingCount: number;
   effectivePlanCode: string;
+  /** Whether the company trade is roofing. Controls data-copilot attribute
+   *  so the correct guide (roofing vs generic) can target this button. */
+  isRoofing?: boolean;
 }
 
 /**
@@ -79,7 +82,7 @@ function printFlashing(flashing: FlashingLibraryRow) {
   w.document.close();
 }
 
-export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, flashingCount, effectivePlanCode }: Props) {
+export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, flashingCount, isRoofing = true, effectivePlanCode }: Props) {
   const router = useRouter();
   const [flashings, setFlashings] = useState(initialFlashings);
   const [showUploadForm, setShowUploadForm] = useState(false);
@@ -165,7 +168,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
               }
               router.push(`/${workspaceSlug}/flashings/draw`);
             }}
-            data-copilot="draw-flashing"
+            data-copilot={isRoofing ? 'draw-flashing' : 'create-drawing'}
             title={atCap ? 'Upgrade to create more flashings' : 'Create a new flashing/image'}
             className="px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all shadow-sm hover:shadow-md"
           >

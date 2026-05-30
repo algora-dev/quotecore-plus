@@ -3,8 +3,9 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
-import type { CopilotState } from './types';
+import type { CopilotState, CopilotGuide, CopilotStep } from './types';
 import { COPILOT_GUIDES } from './guides';
+import { COPILOT_GUIDES_GENERIC } from './guides.generic';
 
 interface TransitionPrompt {
   title: string;
@@ -18,8 +19,8 @@ interface TransitionPrompt {
 interface CopilotContextType {
   state: CopilotState;
   isActive: boolean;
-  currentGuide: typeof COPILOT_GUIDES[number] | null;
-  currentStepData: typeof COPILOT_GUIDES[number]['steps'][number] | null;
+  currentGuide: CopilotGuide | null;
+  currentStepData: CopilotStep | null;
   totalSteps: number;
   nudgeMessage: string | null;
   transitionPrompt: TransitionPrompt | null;
@@ -46,9 +47,14 @@ interface Props {
   userId: string;
   companyId: string;
   initialState: CopilotState | null;
+  /** Company default trade — determines which guide set to use. Defaults to 'roofing'. */
+  trade?: string;
 }
 
-export function CopilotProvider({ children, userId, companyId, initialState }: Props) {
+export function CopilotProvider({ children, userId, companyId, initialState, trade = 'roofing' }: Props) {
+  // Select guide set based on company trade. Roofing uses the roofing-specific
+  // guides; all other trades use the generic guide set.
+  const activeGuides: CopilotGuide[] = trade === 'roofing' ? COPILOT_GUIDES : COPILOT_GUIDES_GENERIC;
   const pathname = usePathname();
   const [nudgeMessage, setNudgeMessage] = useState<string | null>(null);
   const [transitionPrompt, setTransitionPrompt] = useState<TransitionPrompt | null>(null);
@@ -184,7 +190,7 @@ export function CopilotProvider({ children, userId, companyId, initialState }: P
 
     if (guideId && !state.guidesCompleted.includes(guideId)) {
       // Find the first step whose target exists in the DOM (skip already-completed steps)
-      const guide = COPILOT_GUIDES.find(g => g.id === guideId);
+      const guide = activeGuides.find(g => g.id === guideId);
       let startStep = -1;
       if (guide) {
         for (let i = 0; i < guide.steps.length; i++) {
@@ -201,7 +207,7 @@ export function CopilotProvider({ children, userId, companyId, initialState }: P
   }, [pathname, state.enabled, state.activeGuide, redetectTick]);
 
   const currentGuide = state.activeGuide
-    ? COPILOT_GUIDES.find(g => g.id === state.activeGuide) || null
+    ? activeGuides.find(g => g.id === state.activeGuide) || null
     : null;
 
   const currentStepData = currentGuide
@@ -314,7 +320,7 @@ export function CopilotProvider({ children, userId, companyId, initialState }: P
     setTransitionPrompt(null);
     // Close any open modals (e.g. Send Quote modal)
     window.dispatchEvent(new CustomEvent('copilot-close-modals'));
-    const guide = COPILOT_GUIDES.find(g => g.id === guideId);
+    const guide = activeGuides.find(g => g.id === guideId);
     let startStep = -1;
     if (guide) {
       for (let i = 0; i < guide.steps.length; i++) {

@@ -208,7 +208,20 @@ export function ComponentList({
   const [createLibraryError, setCreateLibraryError] = useState('');
 
   // Active library filter: '' = All Libraries, otherwise a collection id.
-  const [activeLibraryId, setActiveLibraryId] = useState<string>('');
+  // Initialise from localStorage so the user's last-set default is applied on landing.
+  const LOCAL_KEY = `qc-default-lib-${workspaceSlug}`;
+  const [activeLibraryId, setActiveLibraryId] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    const saved = localStorage.getItem(LOCAL_KEY);
+    // Validate saved id still exists in collections list before applying.
+    if (saved && componentCollections.some(c => c.id === saved)) return saved;
+    return '';
+  });
+  const [defaultLibraryFlash, setDefaultLibraryFlash] = useState<string | null>(null);
+  const [savedDefaultLibId, setSavedDefaultLibId] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem(LOCAL_KEY) ?? '';
+  });
   // Inline rename state
   const [renamingLibraryId, setRenamingLibraryId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -752,18 +765,55 @@ export function ComponentList({
       {/* Library filter + Search row */}
       <div className="flex items-center gap-3 flex-wrap">
         {collections.length > 0 && (
-          <select
-            value={activeLibraryId}
-            onChange={e => setActiveLibraryId(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
-          >
-            <option value="">All Libraries</option>
-            {collections.map(col => (
-              <option key={col.id} value={col.id}>
-                {col.name}{col.is_bootstrap ? ' (default)' : ''}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2">
+            <select
+              value={activeLibraryId}
+              onChange={e => setActiveLibraryId(e.target.value)}
+              className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
+            >
+              <option value="">All Libraries</option>
+              {collections.map(col => (
+                <option key={col.id} value={col.id}>
+                  {col.name}{col.is_bootstrap ? ' (bootstrap)' : ''}
+                </option>
+              ))}
+            </select>
+            {/* Set as default button — only shown when a specific library is selected */}
+            {activeLibraryId && (
+              <button
+                type="button"
+                title={savedDefaultLibId === activeLibraryId ? 'This is your default library' : 'Set as default library'}
+                onClick={() => {
+                  const isAlreadyDefault = savedDefaultLibId === activeLibraryId;
+                  if (isAlreadyDefault) {
+                    // Clear the default
+                    localStorage.removeItem(LOCAL_KEY);
+                    setSavedDefaultLibId('');
+                    setDefaultLibraryFlash('Default cleared');
+                  } else {
+                    localStorage.setItem(LOCAL_KEY, activeLibraryId);
+                    setSavedDefaultLibId(activeLibraryId);
+                    const name = collections.find(c => c.id === activeLibraryId)?.name ?? 'Library';
+                    setDefaultLibraryFlash(`"${name}" set as default`);
+                  }
+                  setTimeout(() => setDefaultLibraryFlash(null), 2000);
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-full border transition-all ${
+                  savedDefaultLibId === activeLibraryId
+                    ? 'bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100'
+                    : 'bg-white border-slate-300 text-slate-500 hover:border-orange-300 hover:text-orange-500'
+                }`}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill={savedDefaultLibId === activeLibraryId ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+                {savedDefaultLibId === activeLibraryId ? 'Default' : 'Set as default'}
+              </button>
+            )}
+            {defaultLibraryFlash && (
+              <span className="text-xs text-orange-500 font-medium animate-pulse">{defaultLibraryFlash}</span>
+            )}
+          </div>
         )}
         <div className="relative flex-1 max-w-sm">
           <input

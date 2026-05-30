@@ -68,7 +68,7 @@ export default async function WorkspaceLayout({
   const unreadCount = (alerts || []).filter(a => !a.is_read).length;
 
   return (
-    <CopilotProvider userId={profile.id} companyId={company.id} initialState={copilotState}>
+    <CopilotProvider userId={profile.id} companyId={company.id} initialState={copilotState} trade={(company as { default_trade?: string }).default_trade ?? 'roofing'}>
       <HelpDrawerProvider>
         {/*
           The help drawer panel mounts at the viewport's left edge. It's
