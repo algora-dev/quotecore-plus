@@ -763,21 +763,9 @@ export function TakeoffWorkstation({
     setIsDirty(false);
   };
 
-  // Switch the canvas to a different page by index.
-  // H-03: warn before discarding unsaved work.
-  const switchToPage = (idx: number) => {
-    if (idx === currentPageIndex) return;
-    const page = pages[idx];
-    if (!page) return;
-    if (isDirty) {
-      const confirmed = window.confirm(
-        'You have unsaved measurements on this page. Switch anyway? Unsaved work will be lost.'
-      );
-      if (!confirmed) return;
-    }
-    setCurrentPageIndex(idx);
-    loadPageImage(page.url);
-  };
+  // switchToPage removed (Issue 1): plan tabs are now a read-only visual
+  // indicator. Tabs were non-functional (no canvas re-hydration on switch)
+  // and the window.confirm was replaced with a Plan X of Y display.
 
   // P1-3: persist current measurements + canvas snapshots without navigating.
   // Returns true on success so the multi-page "Save & Upload another plan"
@@ -1102,14 +1090,21 @@ export function TakeoffWorkstation({
         if (!result.ok || !result.pageId) { setUploadAnotherError(result.error || 'Failed to create page.'); return; }
         newPageId = result.pageId; newRoofAreaId = result.roofAreaId ?? null; newPageName = areaName;
       } else {
-        // Existing area: create only the page row - reuse the first existing area.
+        // Existing area: create only the page row - reuse the current working area.
         const pageName = `Plan ${pages.length + 1}`;
         const pageResult = await createTakeoffPage(quote.id, pageName);
         if (!pageResult.ok || !pageResult.pageId) { setUploadAnotherError(pageResult.error || 'Failed to create page.'); return; }
         newPageId = pageResult.pageId; newPageName = pageName;
-        // Get the first roof area's DB ID so the next save routes to it.
-        resolvedFirstArea = await getFirstRoofAreaId(quote.id);
-        newRoofAreaId = resolvedFirstArea?.id ?? null;
+        // Issue 3 fix: use activeSaveRoofAreaId if already set (e.g. mode=new-page
+        // for a non-first area). getFirstRoofAreaId always returns the lowest
+        // sort_order area which is wrong when the current session targets a later area.
+        if (activeSaveRoofAreaId) {
+          newRoofAreaId = activeSaveRoofAreaId;
+          resolvedFirstArea = { id: activeSaveRoofAreaId, label: existingAreaLabel || initialPageName || 'Current Area' };
+        } else {
+          resolvedFirstArea = await getFirstRoofAreaId(quote.id);
+          newRoofAreaId = resolvedFirstArea?.id ?? null;
+        }
       }
       // 6. Persist image path on the new page row.
       await finalizeTakeoffPageImage(newPageId, mint.storagePath);
@@ -1857,22 +1852,14 @@ export function TakeoffWorkstation({
         </div>
       </div>
 
-      {/* Phase 7: Page tabs - show when more than 1 page exists */}
+      {/* Phase 7: Plan indicator - shows current plan position when multi-page takeoff */}
       {pages.length > 1 && (
-        <div className="flex gap-1 px-4 py-2 bg-gray-50 border-b border-gray-200">
-          {pages.map((page, idx) => (
-            <button
-              key={idx}
-              onClick={() => switchToPage(idx)}
-              className={`px-3 py-1 rounded-full text-sm transition-all ${
-                idx === currentPageIndex
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-white text-slate-600 border border-gray-200 hover:bg-gray-100'
-              }`}
-            >
-              {page.name}
-            </button>
-          ))}
+        <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
+          <span className="text-xs text-slate-500">Plan</span>
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-500 text-white">
+            {currentPageIndex + 1} of {pages.length}
+          </span>
+          <span className="text-xs text-slate-400">{pages[currentPageIndex]?.name}</span>
         </div>
       )}
 
@@ -2646,22 +2633,23 @@ export function TakeoffWorkstation({
                 ? 'Enter the roof pitch for this area, or skip to use 0°.'
                 : 'Enter the slope or angle if applicable, or skip.'}
             </p>
-            {tradeConfig.pitchRequired && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-700 mb-1">Pitch (degrees)</label>
-                <input
-                  type="number"
-                  step="0.5"
-                  min="0"
-                  max="90"
-                  value={pitchOnlyInput}
-                  onChange={(e) => setPitchOnlyInput(e.target.value)}
-                  placeholder="e.g. 25"
-                  autoFocus
-                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded text-sm"
-                />
-              </div>
-            )}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                {tradeConfig.pitchRequired ? 'Pitch (degrees)' : 'Slope / angle (degrees)'}
+                {!tradeConfig.pitchRequired && <span className="text-slate-400 font-normal ml-1">(optional)</span>}
+              </label>
+              <input
+                type="number"
+                step="0.5"
+                min="0"
+                max="90"
+                value={pitchOnlyInput}
+                onChange={(e) => setPitchOnlyInput(e.target.value)}
+                placeholder={tradeConfig.pitchRequired ? 'e.g. 25' : 'e.g. 10 — or leave blank for flat'}
+                autoFocus
+                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded text-sm"
+              />
+            </div>
             <div className="flex gap-3">
               <button
                 onClick={() => {
