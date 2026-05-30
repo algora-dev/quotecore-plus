@@ -8,7 +8,7 @@ import { recalcAllQuoteComponents } from '../../actions';
 
 interface TakeoffMeasurement {
   componentId: string | null; // null for informational roof areas
-  type: 'line' | 'area' | 'point' | 'multi_lineal' | 'multi_lineal_lxh';
+  type: 'line' | 'area' | 'point' | 'multi_lineal' | 'multi_lineal_lxh' | 'volume_3d';
   value: number;
   pitch?: number; // Pitch in degrees (for roof areas)
   name?: string; // Name (for roof areas)
@@ -135,6 +135,9 @@ export async function saveTakeoffMeasurements(
         // Phase 7+: height for multi_lineal_lxh area calculations.
         const heightMm = (libComp as unknown as Record<string, unknown>).height_value_mm as number | null;
         const heightM = heightMm ? heightMm / 1000 : 1;
+        // Preset depth for Volume (Preset Depth) components.
+        const depthMm = (libComp as unknown as Record<string, unknown>).depth_value_mm as number | null;
+        const depthM = depthMm ? depthMm / 1000 : null;
 
         const entries = componentMeasurements.map((m, index) => {
           // All measurements are from the current page and share the same unit.
@@ -153,7 +156,16 @@ export async function saveTakeoffMeasurements(
             // m.value is the total polyline length in calibrated units (same as multi_lineal).
             metricValue = mToMetricLinear(m.value) * heightM;
           } else if (m.type === 'area') {
-            metricValue = mToMetricArea(m.value);
+            const areaM2 = mToMetricArea(m.value);
+            // Volume (Preset Depth): multiply area by the preset depth from the component.
+            if (libComp.measurement_type === 'volume' && depthM) {
+              metricValue = areaM2 * depthM;
+            } else {
+              metricValue = areaM2;
+            }
+          } else if (m.type === 'volume_3d') {
+            // Volume (L × W × D): value is already in m³, converted client-side.
+            metricValue = m.value;
           }
           // 'point' is a count (each) and never needs unit conversion.
 

@@ -42,7 +42,9 @@ function buildMeasurementLabels(system: MeasurementSystem): Record<MeasurementTy
     // Phase 2 (Generic Trades) additions. Visible in the dropdown only when
     // NEXT_PUBLIC_GENERIC_TRADES_V1 is on; otherwise filtered out below.
     length_x_height: `Length × Height (${areaUnit})`,
-    volume: `Volume (${volumeUnit})`,
+    volume: `Volume - Preset Depth (${volumeUnit})`,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    volume_3d: `Volume (${volumeUnit})`,
     hours_days: 'Hours / Days',
     count: 'Count (each)',
     curved_line: `Curved Line (${linealUnit})`,
@@ -85,7 +87,7 @@ function allowedStrategiesFor(mt: MeasurementType): PricingStrategy[] {
   if (['area', 'length_x_height', 'irregular_area', 'multi_lineal_lxh'].includes(mt)) {
     base.push('per_pack_area', 'per_pack_coverage');
   }
-  if (mt === 'volume') {
+  if (mt === 'volume' || mt === 'volume_3d') {
     base.push('per_pack_volume');
   }
   return base;
@@ -1427,7 +1429,7 @@ function TypeSpecificFields(props: {
   setHoursUnit: (v: 'hr' | 'day') => void;
 }) {
   const { measurementType, heightMm, setHeightMm, depthMm, setDepthMm, hoursUnit, setHoursUnit } = props;
-  if (!['length_x_height', 'multi_lineal_lxh', 'volume', 'hours_days'].includes(measurementType)) return null;
+  if (!['length_x_height', 'multi_lineal_lxh', 'volume', 'volume_3d', 'hours_days'].includes(measurementType)) return null;
   return (
     <div className="space-y-3 mt-1">
       {(measurementType === 'length_x_height' || measurementType === 'multi_lineal_lxh') && (
@@ -1437,6 +1439,7 @@ function TypeSpecificFields(props: {
           <p className="text-xs text-slate-400 mt-1">Area = measured length x height.</p>
         </div>
       )}
+      {/* volume_3d has NO preset depth — depth is entered per measurement in the quote builder / takeoff */}
       {measurementType === 'volume' && (
         <div>
           <label className="block text-xs text-slate-500 mb-1">Component depth (mm)</label>

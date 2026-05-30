@@ -281,6 +281,7 @@ export function QuoteBuilder({
     } else if (comp?.measurement_type === 'lineal') {
       rawValue = linearInputToMetric(rawInputValue, quote.measurement_system);
     }
+    // volume_3d: rawInputValue is already in m³ (converted in ExpandableComponent before calling)
     const areaPitch = comp?.quote_roof_area_id
       ? roofAreas.find(a => a.id === comp.quote_roof_area_id)?.calc_pitch_degrees ?? null
       : null;
@@ -1306,10 +1307,16 @@ function ExpandableComponent({
   const showCombineButton =
     isLinearLike && !hasCombinedEntry && compEntries.length >= 2 && !!onCombineEntries;
   const showSplitButton = isLinearLike && hasCombinedEntry && !!onSplitEntries;
+  const isVolume3d = (comp.measurement_type as string) === 'volume_3d';
   const [expanded, setExpanded] = useState(false);
   const [adding, setAdding] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  // volume_3d: separate L / W / D inputs
+  const [vol3dL, setVol3dL] = useState('');
+  const [vol3dW, setVol3dW] = useState('');
+  const [vol3dD, setVol3dD] = useState('');
+  const vol3dRef = useRef<HTMLInputElement>(null);
   const unit = getUnitLabel(comp.measurement_type as any, quote.measurement_system);
   const label = entryLabel(comp.measurement_type);
   const addLabel = addMoreLabel(comp.measurement_type);
@@ -1340,10 +1347,29 @@ function ExpandableComponent({
     inputRef.current?.focus();
   }
 
+  async function handleSubmitVolume3d() {
+    const L = Number(vol3dL);
+    const W = Number(vol3dW);
+    const D = Number(vol3dD);
+    if (!L || L <= 0 || !W || W <= 0 || !D || D <= 0) return;
+    // Convert each dimension to metric then multiply.
+    const Lm = linearInputToMetric(L, quote.measurement_system);
+    const Wm = linearInputToMetric(W, quote.measurement_system);
+    const Dm = linearInputToMetric(D, quote.measurement_system);
+    await onAddEntry(comp.id, Lm * Wm * Dm);
+    setVol3dL('');
+    setVol3dW('');
+    setVol3dD('');
+    vol3dRef.current?.focus();
+  }
+
   function startAdding() {
     setAdding(true);
     setExpanded(true);
-    setTimeout(() => inputRef.current?.focus(), 50);
+    setTimeout(() => {
+      if (isVolume3d) { vol3dRef.current?.focus(); }
+      else { inputRef.current?.focus(); }
+    }, 50);
   }
 
   return (
@@ -1524,6 +1550,50 @@ function ExpandableComponent({
           )}
 
           {adding ? (
+            isVolume3d ? (
+              // Volume (L × W × D): three separate dimension inputs.
+              <div className="space-y-1 mt-1">
+                <div className="flex items-center gap-2">
+                  {[
+                    { label: 'L', val: vol3dL, set: setVol3dL, ref: vol3dRef },
+                    { label: 'W', val: vol3dW, set: setVol3dW, ref: undefined },
+                    { label: 'D', val: vol3dD, set: setVol3dD, ref: undefined },
+                  ].map(({ label: lbl, val, set }) => (
+                    <>
+                      <span key={`${lbl}-label`} className="text-xs text-slate-500 w-4">{lbl}</span>
+                      <input
+                        key={lbl}
+                        ref={lbl === 'L' ? vol3dRef : undefined}
+                        type="number"
+                        step="0.01"
+                        value={val}
+                        onChange={e => set(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') void handleSubmitVolume3d(); }}
+                        placeholder="0"
+                        className="w-20 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+                      />
+                    </>
+                  ))}
+                  <span className="text-xs text-slate-400">{unit}</span>
+                </div>
+                {vol3dL && vol3dW && vol3dD && Number(vol3dL) > 0 && Number(vol3dW) > 0 && Number(vol3dD) > 0 && (
+                  <p className="text-xs text-slate-400">
+                    = {(linearInputToMetric(Number(vol3dL), quote.measurement_system) *
+                        linearInputToMetric(Number(vol3dW), quote.measurement_system) *
+                        linearInputToMetric(Number(vol3dD), quote.measurement_system)).toFixed(3)} m³
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <button onClick={() => void handleSubmitVolume3d()}
+                    disabled={!vol3dL || !vol3dW || !vol3dD || Number(vol3dL) <= 0 || Number(vol3dW) <= 0 || Number(vol3dD) <= 0}
+                    className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 transition-all">
+                    Add
+                  </button>
+                  <button onClick={() => { setAdding(false); setVol3dL(''); setVol3dW(''); setVol3dD(''); }}
+                    className="px-2 py-0.5 text-xs text-slate-500 hover:text-slate-700">Done</button>
+                </div>
+              </div>
+            ) : (
             <div className="flex items-center gap-2 mt-1">
               <input
                 ref={inputRef}
@@ -1558,6 +1628,7 @@ function ExpandableComponent({
                 Done
               </button>
             </div>
+            )
           ) : (
             <button
               onClick={startAdding}

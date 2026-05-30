@@ -14,6 +14,7 @@ import { getTradeLabels } from '@/app/lib/trades/labels';
 import { createClient as createSupabaseBrowserClient } from '@/app/lib/supabase/client';
 import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-actions';
 import { mintQuoteDocumentUploadUrl } from '@/app/lib/files/signed-upload';
+import { convertLinearToMetric, convertAreaFt2ToMetric } from '@/app/lib/measurements/conversions';
 
 // Extend Fabric.js Canvas type with custom properties
 declare module 'fabric' {
@@ -50,7 +51,7 @@ interface RoofArea {
 
 interface ComponentMeasurement {
   id: string;
-  type: 'line' | 'area' | 'point' | 'multi_lineal' | 'multi_lineal_lxh';
+  type: 'line' | 'area' | 'point' | 'multi_lineal' | 'multi_lineal_lxh' | 'volume_3d';
   value: number; // length (ft/m) or area (sq ft/m)
   points?: { x: number; y: number }[];
   visible: boolean;
@@ -209,6 +210,16 @@ export function TakeoffWorkstation({
   // Bypasses AreaNameModal entirely so the name never has to be re-typed.
   const [showPitchOnlyPrompt, setShowPitchOnlyPrompt] = useState(false);
   const [pitchOnlyInput, setPitchOnlyInput] = useState('');
+
+  // Volume (L × W × D) — depth prompt state.
+  // Fires after the area polygon is closed for a volume_3d component.
+  const [showVolumeDepthPrompt, setShowVolumeDepthPrompt] = useState(false);
+  const [volumeDepthInput, setVolumeDepthInput] = useState('');
+  const [pendingVolumeComponentId, setPendingVolumeComponentId] = useState<string | null>(null);
+  const [pendingVolumeCalibratedArea, setPendingVolumeCalibratedArea] = useState<number>(0);
+  const [pendingVolumePoints, setPendingVolumePoints] = useState<{x:number;y:number}[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [pendingVolumePolygon, setPendingVolumePolygon] = useState<any | null>(null);
   const [pendingAreaPoints, setPendingAreaPoints] = useState<{ x: number; y: number }[]>([]);
   // Captures selectedComponentId at polygon-close time so it survives any
   // canvas deselection that fires before the modal renders.
@@ -766,6 +777,51 @@ export function TakeoffWorkstation({
   // switchToPage removed (Issue 1): plan tabs are now a read-only visual
   // indicator. Tabs were non-functional (no canvas re-hydration on switch)
   // and the window.confirm was replaced with a Plan X of Y display.
+
+  /** Confirm handler for the volume_3d depth prompt. */
+  const handleConfirmVolumeDepth = () => {
+    const depth = parseFloat(volumeDepthInput);
+    if (!depth || depth <= 0 || !pendingVolumeComponentId) return;
+    const unit = calibrations[0]?.unit ?? 'meters';
+    const areaM2 = unit === 'feet'
+      ? convertAreaFt2ToMetric(pendingVolumeCalibratedArea)
+      : pendingVolumeCalibratedArea;
+    const depthM = unit === 'feet' ? convertLinearToMetric(depth) : depth;
+    const volumeM3 = areaM2 * depthM;
+    const componentId = pendingVolumeComponentId;
+    const newMeasurement: ComponentMeasurement = {
+      id: `meas-${Date.now()}`,
+      type: 'volume_3d',
+      value: volumeM3,
+      points: pendingVolumePoints,
+      visible: true,
+      canvasObjects: pendingVolumePolygon ? [pendingVolumePolygon] : [],
+    };
+    // Solid polygon (remove dash preview)
+    if (pendingVolumePolygon) {
+      pendingVolumePolygon.set({ strokeDashArray: null });
+      fabricRef.current?.renderAll();
+    }
+    const compData = componentMeasurements.find(c => c.componentId === componentId);
+    if (compData) {
+      setComponentMeasurements(componentMeasurements.map(c =>
+        c.componentId === componentId
+          ? { ...c, measurements: [...c.measurements, newMeasurement] }
+          : c
+      ));
+    } else {
+      setComponentMeasurements([
+        ...componentMeasurements,
+        { componentId, measurements: [newMeasurement], expanded: true },
+      ]);
+    }
+    setShowVolumeDepthPrompt(false);
+    setPendingVolumePolygon(null);
+    setPendingVolumeComponentId(null);
+    setVolumeDepthInput('');
+    setAreaMode(false);
+    setIsDirty(true);
+  };
 
   // P1-3: persist current measurements + canvas snapshots without navigating.
   // Returns true on success so the multi-page "Save & Upload another plan"
@@ -1507,7 +1563,31 @@ export function TakeoffWorkstation({
               );
               return;
             } else {
-              setShowAreaNamePrompt(true);
+              // volume_3d: skip area name modal, go straight to depth prompt.
+              const compForArea = components.find(c => c.id === currentSelectedId);
+              if ((compForArea?.measurement_type as string) === 'volume_3d') {
+                const areaCalibrated = calculatePolygonArea(currentPoints);
+                setPendingVolumeCalibratedArea(areaCalibrated);
+                setPendingVolumeComponentId(currentSelectedId);
+                setPendingVolumePoints([...currentPoints]);
+                // Draw a dashed preview polygon so the user sees the shape.
+                const compColor = componentColors.find(c => c.componentId === currentSelectedId)?.color || '#3b82f6';
+                const previewPoly = new Polygon(currentPoints, {
+                  fill: `${compColor}22`,
+                  stroke: compColor,
+                  strokeWidth: 1.5,
+                  strokeDashArray: [5, 4],
+                  selectable: false,
+                  evented: false,
+                });
+                fabricRef.current?.add(previewPoly);
+                fabricRef.current?.renderAll();
+                setPendingVolumePolygon(previewPoly);
+                setVolumeDepthInput('');
+                setShowVolumeDepthPrompt(true);
+              } else {
+                setShowAreaNamePrompt(true);
+              }
             }
           }
         }
@@ -1852,16 +1932,55 @@ export function TakeoffWorkstation({
         </div>
       </div>
 
-      {/* Phase 7: Plan indicator - shows current plan position when multi-page takeoff */}
-      {pages.length > 1 && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
-          <span className="text-xs text-slate-500">Plan</span>
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-500 text-white">
-            {currentPageIndex + 1} of {pages.length}
-          </span>
-          <span className="text-xs text-slate-400">{pages[currentPageIndex]?.name}</span>
-        </div>
-      )}
+      {/* Plan indicator + dynamic tool guidance bar */}
+      {(() => {
+        const selCompType = selectedComponentId
+          ? (components.find(c => c.id === selectedComponentId)?.measurement_type as string ?? null)
+          : null;
+        let guidance: string | null = null;
+        if (calibrationMode) {
+          guidance = 'Click two points that represent a known distance, then enter that distance.';
+        } else if (areaMode) {
+          if (!selectedComponentId) {
+            guidance = 'Select a component first, then draw its area on the plan.';
+          } else if (selCompType === 'volume_3d') {
+            guidance = 'Draw the footprint (L × W). Close the shape on the first point, then enter the depth in the prompt.';
+          } else {
+            guidance = 'Click to place points — at least 4. Click the first point again to close the shape.';
+          }
+        } else if (lineMode) {
+          guidance = 'Click two points to measure a length - confirm. Add multiple lines for the same component.';
+        } else if (multiLinealMode) {
+          guidance = 'Click to trace a path with multiple segments. Double-click or press Finish to complete.';
+        } else if (pointMode) {
+          guidance = 'Click on the plan to count this item. Each click adds one.';
+        }
+        if (!guidance && pages.length <= 1) return null;
+        return (
+          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
+            {pages.length > 1 && (
+              <>
+                <span className="text-xs text-slate-500">Plan</span>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-500 text-white">
+                  {currentPageIndex + 1} of {pages.length}
+                </span>
+                <span className="text-xs text-slate-400 mr-1">{pages[currentPageIndex]?.name}</span>
+                {guidance && <span className="text-xs text-slate-300">·</span>}
+              </>
+            )}
+            {guidance && (
+              <span className="text-xs text-slate-500 italic flex items-center gap-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-orange-400">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="16" x2="12" y2="12"/>
+                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+                {guidance}
+              </span>
+            )}
+          </div>
+        );
+      })()}
 
       {/* P1-3: Save & Upload another plan modal.
           Mirrors FilesManager Options B (existing area) and C (new area)
@@ -2617,6 +2736,75 @@ export function TakeoffWorkstation({
             >
               Got it, let&apos;s calibrate!
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Volume (L × W × D) depth prompt — fires after area polygon is closed for a volume_3d component */}
+      {showVolumeDepthPrompt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-80 border border-gray-200 shadow-xl">
+            <h2 className="text-lg font-semibold mb-1">Enter Depth</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Footprint drawn. Now enter the depth to calculate volume ({calibrations[0]?.unit === 'feet' ? 'ft' : 'm'}).
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Depth ({calibrations[0]?.unit === 'feet' ? 'ft' : 'm'})
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.001"
+                value={volumeDepthInput}
+                onChange={e => setVolumeDepthInput(e.target.value)}
+                placeholder={calibrations[0]?.unit === 'feet' ? 'e.g. 1.0' : 'e.g. 0.3'}
+                autoFocus
+                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded text-sm"
+              />
+              {volumeDepthInput && parseFloat(volumeDepthInput) > 0 && (
+                <p className="text-xs text-slate-400 mt-1">
+                  Volume ≈ {(
+                    (calibrations[0]?.unit === 'feet'
+                      ? convertAreaFt2ToMetric(pendingVolumeCalibratedArea)
+                      : pendingVolumeCalibratedArea) *
+                    (calibrations[0]?.unit === 'feet'
+                      ? convertLinearToMetric(parseFloat(volumeDepthInput))
+                      : parseFloat(volumeDepthInput))
+                  ).toFixed(3)} m³
+                </p>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleConfirmVolumeDepth}
+                disabled={!volumeDepthInput || parseFloat(volumeDepthInput) <= 0}
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 disabled:opacity-40 transition-colors"
+              >
+                {volumeDepthInput && parseFloat(volumeDepthInput) > 0
+                  ? `Confirm ${parseFloat(volumeDepthInput).toFixed(2)} ${calibrations[0]?.unit === 'feet' ? 'ft' : 'm'} depth`
+                  : 'Enter a depth'}
+              </button>
+              <button
+                onClick={() => {
+                  // Remove preview polygon from canvas
+                  if (pendingVolumePolygon) {
+                    fabricRef.current?.remove(pendingVolumePolygon);
+                    fabricRef.current?.renderAll();
+                  }
+                  setShowVolumeDepthPrompt(false);
+                  setPendingVolumePolygon(null);
+                  setPendingVolumeComponentId(null);
+                  setPendingVolumePoints([]);
+                  setPendingAreaPoints([]);
+                  setAreaPoints([]);
+                  setVolumeDepthInput('');
+                }}
+                className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

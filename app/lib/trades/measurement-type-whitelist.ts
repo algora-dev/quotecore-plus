@@ -35,6 +35,7 @@ export type MeasurementType =
   | 'multi_lineal_lxh'
   | 'length_x_height'
   | 'volume'
+  | 'volume_3d'
   | 'irregular_area'
   | 'curved_line'
   | 'hours_days'
@@ -77,6 +78,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'multi_lineal_lxh',
     'length_x_height',
     'volume',
+    'volume_3d',
     'irregular_area',
     'curved_line',
     'hours_days',
@@ -96,6 +98,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'curved_line',  // curved pipe paths / bends
     'area',         // waterproofing, floor area
     'volume',       // tanks, concrete, excavation
+    'volume_3d',    // true 3D: user enters L × W × D per measurement
     'count',
     'quantity',     // legacy alias
     'fixed',
@@ -131,6 +134,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'multi_lineal_lxh',
     'length_x_height',
     'volume',          // bulk materials: soil, mulch, aggregate, concrete
+    'volume_3d',       // true 3D volume for excavation, soil, etc.
     'curved_line',     // garden edging, curved paths
     'count',
     'quantity',
@@ -147,6 +151,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'multi_lineal',
     'curved_line',
     'volume',          // screed, self-levelling compound
+    'volume_3d',       // true 3D: L × W × D
     'count',
     'quantity',
     'fixed',
@@ -178,6 +183,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'multi_lineal',
     'curved_line',
     'volume',          // concrete pour, excavation
+    'volume_3d',       // true 3D volume
     'count',
     'quantity',
     'fixed',
@@ -242,6 +248,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'multi_lineal',
     'curved_line',
     'volume',          // slabs, pours
+    'volume_3d',       // true 3D volume
     'count',
     'quantity',
     'fixed',
@@ -258,6 +265,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'multi_lineal_lxh',
     'length_x_height',
     'volume',
+    'volume_3d',
     'irregular_area',
     'curved_line',
     'hours_days',
