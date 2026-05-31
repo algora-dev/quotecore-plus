@@ -156,6 +156,91 @@ export type Database = {
           },
         ]
       }
+      catalog_rows: {
+        Row: {
+          catalog_id: string
+          company_id: string
+          id: string
+          raw_row: Json
+          row_index: number
+          search_text: string
+        }
+        Insert: {
+          catalog_id: string
+          company_id: string
+          id?: string
+          raw_row: Json
+          row_index: number
+          search_text: string
+        }
+        Update: {
+          catalog_id?: string
+          company_id?: string
+          id?: string
+          raw_row?: Json
+          row_index?: number
+          search_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_rows_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "catalogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalogs: {
+        Row: {
+          column_mapping: Json
+          company_id: string
+          created_at: string
+          data_bytes: number
+          headers: Json
+          id: string
+          name: string
+          original_filename: string | null
+          row_count: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          column_mapping?: Json
+          company_id: string
+          created_at?: string
+          data_bytes?: number
+          headers?: Json
+          id?: string
+          name: string
+          original_filename?: string | null
+          row_count?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          column_mapping?: Json
+          company_id?: string
+          created_at?: string
+          data_bytes?: number
+          headers?: Json
+          id?: string
+          name?: string
+          original_filename?: string | null
+          row_count?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalogs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           cancel_at: string | null
@@ -876,6 +961,54 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          created_at: string
+          current_page_at_signup: string | null
+          email: string
+          first_page_seen: string | null
+          form_type: string | null
+          id: string
+          landing_page: string | null
+          ref: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          created_at?: string
+          current_page_at_signup?: string | null
+          email: string
+          first_page_seen?: string | null
+          form_type?: string | null
+          id?: string
+          landing_page?: string | null
+          ref?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          created_at?: string
+          current_page_at_signup?: string | null
+          email?: string
+          first_page_seen?: string | null
+          form_type?: string | null
+          id?: string
+          landing_page?: string | null
+          ref?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: []
+      }
       material_order_lines: {
         Row: {
           component_id: string | null
@@ -1408,6 +1541,7 @@ export type Database = {
           created_at: string
           id: string
           is_combined: boolean
+          page_id: string | null
           quote_component_id: string
           raw_value: number
           sort_order: number
@@ -1418,6 +1552,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_combined?: boolean
+          page_id?: string | null
           quote_component_id: string
           raw_value: number
           sort_order?: number
@@ -1428,12 +1563,20 @@ export type Database = {
           created_at?: string
           id?: string
           is_combined?: boolean
+          page_id?: string | null
           quote_component_id?: string
           raw_value?: number
           sort_order?: number
           value_after_waste?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "quote_component_entries_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "takeoff_pages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "quote_component_entries_quote_component_id_fkey"
             columns: ["quote_component_id"]
@@ -2344,12 +2487,14 @@ export type Database = {
       subscription_plans: {
         Row: {
           active: boolean
+          catalog_limit: number | null
           code: string
           coming_soon: boolean
           component_limit: number | null
           created_at: string
           display_name: string
           feat_activity_card: boolean
+          feat_catalogs: boolean
           feat_digital_takeoff: boolean
           feat_email_send: boolean
           feat_flashings: boolean
@@ -2372,12 +2517,14 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          catalog_limit?: number | null
           code: string
           coming_soon?: boolean
           component_limit?: number | null
           created_at?: string
           display_name: string
           feat_activity_card?: boolean
+          feat_catalogs?: boolean
           feat_digital_takeoff?: boolean
           feat_email_send?: boolean
           feat_flashings?: boolean
@@ -2400,12 +2547,14 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          catalog_limit?: number | null
           code?: string
           coming_soon?: boolean
           component_limit?: number | null
           created_at?: string
           display_name?: string
           feat_activity_card?: boolean
+          feat_catalogs?: boolean
           feat_digital_takeoff?: boolean
           feat_email_send?: boolean
           feat_flashings?: boolean
@@ -2513,35 +2662,44 @@ export type Database = {
       }
       takeoff_pages: {
         Row: {
+          canvas_image_path: string | null
           created_at: string
           id: string
           image_storage_path: string | null
+          lines_image_path: string | null
           page_name: string | null
           page_order: number
           pan_zoom_state: Json | null
           quote_id: string
+          quote_roof_area_id: string | null
           scale_calibration: Json | null
           session_id: string
         }
         Insert: {
+          canvas_image_path?: string | null
           created_at?: string
           id?: string
           image_storage_path?: string | null
+          lines_image_path?: string | null
           page_name?: string | null
           page_order?: number
           pan_zoom_state?: Json | null
           quote_id: string
+          quote_roof_area_id?: string | null
           scale_calibration?: Json | null
           session_id: string
         }
         Update: {
+          canvas_image_path?: string | null
           created_at?: string
           id?: string
           image_storage_path?: string | null
+          lines_image_path?: string | null
           page_name?: string | null
           page_order?: number
           pan_zoom_state?: Json | null
           quote_id?: string
+          quote_roof_area_id?: string | null
           scale_calibration?: Json | null
           session_id?: string
         }
@@ -2558,6 +2716,13 @@ export type Database = {
             columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "takeoff_pages_quote_roof_area_id_fkey"
+            columns: ["quote_roof_area_id"]
+            isOneToOne: false
+            referencedRelation: "quote_roof_areas"
             referencedColumns: ["id"]
           },
         ]
@@ -2959,10 +3124,15 @@ export type Database = {
       }
     }
     Functions: {
+      adjust_company_storage: {
+        Args: { p_company_id: string; p_delta_bytes: number }
+        Returns: undefined
+      }
       check_storage_quota: {
         Args: { p_company_id: string; p_file_size: number }
         Returns: boolean
       }
+      company_catalog_count: { Args: { p_company_id: string }; Returns: number }
       company_component_count: {
         Args: { p_company_id: string }
         Returns: number
@@ -3003,6 +3173,10 @@ export type Database = {
         Returns: boolean
       }
       prune_rate_limits: { Args: never; Returns: number }
+      require_catalog_slot: {
+        Args: { p_company_id: string }
+        Returns: undefined
+      }
       require_component_slot: {
         Args: { p_company_id: string }
         Returns: undefined
@@ -3011,9 +3185,28 @@ export type Database = {
         Args: { p_company_id: string }
         Returns: undefined
       }
-      save_takeoff_atomic:
-        | { Args: { p_payload: Json; p_quote_id: string }; Returns: undefined }
-        | { Args: { p_payload: Json; p_quote_id: string }; Returns: undefined }
+      save_takeoff_atomic: {
+        Args: { p_payload: Json; p_quote_id: string }
+        Returns: undefined
+      }
+      search_catalog_rows: {
+        Args: {
+          p_catalog_id: string
+          p_company_id: string
+          p_limit?: number
+          p_query: string
+        }
+        Returns: {
+          catalog_id: string
+          catalog_name: string
+          id: string
+          raw_row: Json
+          row_index: number
+          search_text: string
+        }[]
+      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       user_belongs_to_company: {
         Args: { target_company_id: string }
         Returns: boolean
@@ -3038,6 +3231,9 @@ export type Database = {
         | "irregular_area"
         | "multi_lineal"
         | "multi_lineal_lxh"
+        | "volume_3d"
+        | "length_x_height_freestyle"
+        | "multi_lineal_lxh_freestyle"
       pitch_type: "none" | "rafter" | "valley_hip"
       pricing_strategy:
         | "per_unit"
@@ -3215,6 +3411,9 @@ export const Constants = {
         "irregular_area",
         "multi_lineal",
         "multi_lineal_lxh",
+        "volume_3d",
+        "length_x_height_freestyle",
+        "multi_lineal_lxh_freestyle",
       ],
       pitch_type: ["none", "rafter", "valley_hip"],
       pricing_strategy: [

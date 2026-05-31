@@ -128,11 +128,11 @@ UPDATE public.subscription_plans
        catalog_limit = 3
  WHERE code = 'pro';
 
--- Pro Max: 5 active catalogs
+-- Pro Plus: 5 active catalogs (mid-tier between Professional and Premium)
 UPDATE public.subscription_plans
    SET feat_catalogs = true,
        catalog_limit = 5
- WHERE code = 'pro_max';
+ WHERE code = 'pro_plus';
 
 -- Premium: unlimited (NULL)
 UPDATE public.subscription_plans
@@ -145,7 +145,7 @@ UPDATE public.subscription_plans
 UPDATE public.subscription_plans
    SET feat_catalogs = false,
        catalog_limit = 0
- WHERE code NOT IN ('pro', 'pro_max', 'premium');
+ WHERE code NOT IN ('pro', 'pro_plus', 'premium');
 
 -- -----------------------------------------------------------------------
 -- 5. Extend company_has_feature() with 'catalogs' arm
