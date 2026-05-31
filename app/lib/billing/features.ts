@@ -14,6 +14,7 @@ export const FEATURES = [
   'followups',
   'email_send',
   'activity_card',
+  'catalogs',
 ] as const;
 
 export type Feature = (typeof FEATURES)[number];
@@ -30,6 +31,7 @@ export const FEATURE_LABELS: Record<Feature, string> = {
   followups: 'Automated follow-ups',
   email_send: 'Send emails from QuoteCore+',
   activity_card: 'Activity card on quotes',
+  catalogs: 'Catalog library',
 };
 
 /**
@@ -53,6 +55,7 @@ export const FEATURE_MIN_PLAN: Record<Feature, string> = {
   followups: 'pro',
   email_send: 'growth',
   activity_card: 'growth',
+  catalogs: 'pro',
 };
 
 /**

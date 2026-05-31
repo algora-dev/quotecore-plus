@@ -167,6 +167,26 @@ export class StorageQuotaExceededError extends BillingError {
 }
 
 /**
+ * Thrown when the company has hit its active-catalog cap.
+ * Raised by `require_catalog_slot` (Postgres P0013).
+ */
+export class CatalogLimitReachedError extends BillingError {
+  readonly used: number;
+  readonly limit: number;
+  readonly planCode: string;
+
+  constructor(args: { used: number; limit: number; planCode: string }) {
+    super(
+      'catalog_limit_reached',
+      `Catalog library cap reached for plan "${args.planCode}": ${args.used} of ${args.limit} catalogs used.`,
+    );
+    this.used = args.used;
+    this.limit = args.limit;
+    this.planCode = args.planCode;
+  }
+}
+
+/**
  * Defensive helper: narrow an unknown error to one of our billing errors.
  * Useful inside server-action catch blocks for type-safe pattern matching.
  */

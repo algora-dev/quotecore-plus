@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
 import { QuotePreview } from './QuotePreview';
 import { AddCustomLineModal } from './AddCustomLineModal';
+import { CatalogSearchModal } from './CatalogSearchModal';
 import { EditHeaderModal } from './EditHeaderModal';
 import { EditFooterModal } from './EditFooterModal';
 import { saveCustomerQuoteLines, saveCustomerQuoteBranding } from '../../actions';
@@ -75,6 +76,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [saving, setSaving] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showAddCustomLine, setShowAddCustomLine] = useState(false);
+  const [showCatalogSearch, setShowCatalogSearch] = useState(false);
   const [showEditHeader, setShowEditHeader] = useState(false);
   const [showEditFooter, setShowEditFooter] = useState(false);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
@@ -638,12 +640,20 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               )}
             </div>
 
-            <button 
-              onClick={() => setShowAddCustomLine(true)}
-              className="w-full py-2 text-sm font-medium text-orange-600 border border-orange-200 rounded-full hover:bg-orange-50 hover:border-orange-300 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]"
-            >
-              + Add Custom Line
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setShowAddCustomLine(true)}
+                className="flex-1 py-2 text-sm font-medium text-orange-600 border border-orange-200 rounded-full hover:bg-orange-50 hover:border-orange-300 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]"
+              >
+                + Add Custom Line
+              </button>
+              <button
+                onClick={() => setShowCatalogSearch(true)}
+                className="flex-1 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-full hover:bg-slate-50 hover:border-slate-300 transition-all"
+              >
+                Search Catalog
+              </button>
+            </div>
 
             {/* Taxes */}
             <div className="pt-4 border-t space-y-3">
@@ -904,6 +914,15 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         <AddCustomLineModal
           onAdd={addCustomLine}
           onClose={() => setShowAddCustomLine(false)}
+        />
+      )}
+
+      {/* Catalog Search Modal */}
+      {showCatalogSearch && (
+        <CatalogSearchModal
+          workspaceSlug={workspaceSlug}
+          onAdd={addCustomLine}
+          onClose={() => setShowCatalogSearch(false)}
         />
       )}
     </div>

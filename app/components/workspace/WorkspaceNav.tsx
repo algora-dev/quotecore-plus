@@ -8,7 +8,7 @@ import type { Feature } from '@/app/lib/billing/features';
 import { FEATURE_LABELS, FEATURE_MIN_PLAN } from '@/app/lib/billing/features';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
 
-type NavKey = 'components' | 'quotes' | 'material-orders';
+type NavKey = 'components' | 'quotes' | 'material-orders' | 'catalogs';
 
 interface NavItem {
   key: NavKey;
@@ -45,6 +45,13 @@ const makeNavItems = (slug: string): NavItem[] => {
       label: 'Material Orders',
       copilot: 'nav-orders',
       gatedBy: 'material_orders',
+    },
+    {
+      key: 'catalogs',
+      href: `${base}/catalogs`,
+      label: 'Catalogs',
+      copilot: 'nav-catalogs',
+      gatedBy: 'catalogs',
     },
   ];
 };

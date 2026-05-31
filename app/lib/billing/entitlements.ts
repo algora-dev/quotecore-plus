@@ -33,6 +33,7 @@ import {
   type Feature,
 } from './features';
 import {
+  CatalogLimitReachedError,
   ComponentLimitReachedError,
   FeatureGatedError,
   FlashingLimitReachedError,
@@ -108,6 +109,11 @@ export interface CompanyEntitlements {
    */
   flashingLimit: number | null;
   flashingCount: number;
+  /**
+   * Active-catalog cap. NULL = unlimited. Archived catalogs excluded from count.
+   */
+  catalogLimit: number | null;
+  catalogCount: number;
   storageLimitBytes: number;
   storageUsedBytes: number;
   storageTopupBytes: number;
@@ -152,12 +158,14 @@ interface PlanRowRaw {
   included_seats: number;
   component_limit: number | null;
   flashing_limit: number | null;
+  catalog_limit: number | null;
   feat_digital_takeoff: boolean;
   feat_flashings: boolean;
   feat_material_orders: boolean;
   feat_followups: boolean;
   feat_email_send: boolean;
   feat_activity_card: boolean;
+  feat_catalogs: boolean;
 }
 
 /**
@@ -191,6 +199,7 @@ export const loadCompanyEntitlements = cache(
       effActiveResult,
       compCountResult,
       flashCountResult,
+      catalogCountResult,
       usageResult,
     ] = await Promise.all([
       admin
@@ -205,6 +214,8 @@ export const loadCompanyEntitlements = cache(
       admin.rpc('company_effective_plan_active', { p_company_id: companyId }),
       admin.rpc('company_component_count', { p_company_id: companyId }),
       admin.rpc('company_flashing_count',  { p_company_id: companyId }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (admin as any).rpc('company_catalog_count', { p_company_id: companyId }),
       admin
         .from('company_quote_usage')
         .select('quotes_created')
@@ -226,10 +237,11 @@ export const loadCompanyEntitlements = cache(
 
     // Now resolve the effective plan row so we can read its feature flags
     // and numeric caps.
-    const { data: planRowData, error: planErr } = await admin
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: planRowData, error: planErr } = await (admin as any)
       .from('subscription_plans')
       .select(
-        'code, monthly_quote_limit, storage_limit_bytes, included_seats, component_limit, flashing_limit, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card',
+        'code, monthly_quote_limit, storage_limit_bytes, included_seats, component_limit, flashing_limit, catalog_limit, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card, feat_catalogs',
       )
       .eq('code', effectivePlanCode)
       .limit(1)
@@ -258,6 +270,8 @@ export const loadCompanyEntitlements = cache(
       componentCount: (compCountResult.data as number | null) ?? 0,
       flashingLimit:  plan.flashing_limit,
       flashingCount:  (flashCountResult.data as number | null) ?? 0,
+      catalogLimit:   plan.catalog_limit,
+      catalogCount:   (catalogCountResult.data as number | null) ?? 0,
       storageLimitBytes: plan.storage_limit_bytes + company.storage_topup_bytes,
       storageUsedBytes: company.storage_used_bytes,
       storageTopupBytes: company.storage_topup_bytes,
@@ -269,6 +283,7 @@ export const loadCompanyEntitlements = cache(
         followups: plan.feat_followups,
         email_send: plan.feat_email_send,
         activity_card: plan.feat_activity_card,
+        catalogs: plan.feat_catalogs,
       },
       trialEndsAt: company.trial_ends_at,
       currentPeriodEnd: company.current_period_end,
@@ -401,6 +416,8 @@ export async function entitlementsForClient(
   componentCount: number;
   flashingLimit: number | null;
   flashingCount: number;
+  catalogLimit: number | null;
+  catalogCount: number;
   storageUsedBytes: number;
   storageLimitBytes: number;
   trialEndsAt: string | null;
@@ -420,6 +437,8 @@ export async function entitlementsForClient(
     componentCount: ent.componentCount,
     flashingLimit: ent.flashingLimit,
     flashingCount: ent.flashingCount,
+    catalogLimit: ent.catalogLimit,
+    catalogCount: ent.catalogCount,
     storageUsedBytes: ent.storageUsedBytes,
     storageLimitBytes: ent.storageLimitBytes,
     trialEndsAt: ent.trialEndsAt,
@@ -468,6 +487,40 @@ export async function requireComponentSlot(companyId: string): Promise<void> {
  * `require_flashing_slot`. Throws FeatureGatedError if the plan doesn't
  * include flashings at all, otherwise FlashingLimitReachedError on cap.
  */
+/**
+ * Acquire one catalog slot for the given company. Wraps
+ * `require_catalog_slot`. Throws FeatureGatedError if the plan doesn't
+ * include catalogs at all, or CatalogLimitReachedError on cap.
+ */
+export async function requireCatalogSlot(companyId: string): Promise<void> {
+  const admin = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (admin as any).rpc('require_catalog_slot', { p_company_id: companyId });
+  if (!error) return;
+  const code = (error as { code?: string }).code;
+  if (code === 'P0001') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new SubscriptionInactiveError(ent.subscriptionStatus);
+  }
+  if (code === 'P0013') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new CatalogLimitReachedError({
+      used:     ent.catalogCount,
+      limit:    ent.catalogLimit ?? 0,
+      planCode: ent.effectivePlanCode,
+    });
+  }
+  if (code === 'P0012') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new FeatureGatedError({
+      feature: 'catalogs',
+      currentPlan: ent.effectivePlanCode,
+      requiredPlan: FEATURE_MIN_PLAN.catalogs,
+    });
+  }
+  throw new Error(`require_catalog_slot failed: ${error.message}`);
+}
+
 export async function requireFlashingSlot(companyId: string): Promise<void> {
   const admin = createAdminClient();
   const { error } = await admin.rpc('require_flashing_slot', { p_company_id: companyId });
@@ -508,6 +561,7 @@ export {
   QuoteLimitReachedError,
   ComponentLimitReachedError,
   FlashingLimitReachedError,
+  CatalogLimitReachedError,
   StorageQuotaExceededError,
   isBillingError,
 } from './errors';
