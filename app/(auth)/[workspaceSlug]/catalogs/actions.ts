@@ -356,13 +356,19 @@ export async function loadCatalogEntitlements() {
 // loadCatalogsForSearch — minimal list for the quote-line search modal
 // ---------------------------------------------------------------------------
 
-export async function loadCatalogsForSearch(): Promise<Array<{ id: string; name: string }>> {
+export interface CatalogSearchMeta {
+  id: string;
+  name: string;
+  column_mapping: Record<string, string | null>;
+}
+
+export async function loadCatalogsForSearch(): Promise<CatalogSearchMeta[]> {
   const profile = await requireCompanyContext();
   const admin = createAdminClient() as AdminAny;
 
   const { data, error } = await admin
     .from('catalogs')
-    .select('id, name')
+    .select('id, name, column_mapping')
     .eq('company_id', profile.company_id)
     .eq('status', 'ready')
     .order('name', { ascending: true });
@@ -371,5 +377,5 @@ export async function loadCatalogsForSearch(): Promise<Array<{ id: string; name:
     console.error('[loadCatalogsForSearch]', error);
     return [];
   }
-  return (data ?? []) as Array<{ id: string; name: string }>;
+  return (data ?? []) as CatalogSearchMeta[];
 }

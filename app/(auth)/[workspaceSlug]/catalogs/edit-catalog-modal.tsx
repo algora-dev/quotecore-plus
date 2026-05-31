@@ -12,6 +12,12 @@ interface Props {
 
 type Tab = 'rename' | 'remap';
 
+const MAPPING_FIELDS: { key: 'description' | 'quantity' | 'price'; label: string }[] = [
+  { key: 'description', label: 'Item / Description' },
+  { key: 'quantity', label: 'Description / Quantity' },
+  { key: 'price', label: 'Price' },
+];
+
 export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
   const [tab, setTab] = useState<Tab>('rename');
   const [name, setName] = useState(catalog.name);
@@ -24,16 +30,15 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
   const [error, setError] = useState<string | null>(null);
   const headers = catalog.headers as string[];
 
+  const inputCls = 'w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none';
+
   const handleRename = async () => {
     if (!name.trim()) return;
     setSaving(true);
     setError(null);
     const result = await renameCatalog(catalog.id, name);
     setSaving(false);
-    if (!result.ok) {
-      setError(result.message);
-      return;
-    }
+    if (!result.ok) { setError(result.message); return; }
     onSaved();
   };
 
@@ -42,100 +47,89 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
     setError(null);
     const result = await updateCatalogMapping(catalog.id, mapping);
     setSaving(false);
-    if (!result.ok) {
-      setError(result.message);
-      return;
-    }
+    if (!result.ok) { setError(result.message); return; }
     onSaved();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="relative w-full max-w-md rounded-2xl bg-white shadow-xl p-6">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
-          aria-label="Close"
-        >
-          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-          </svg>
-        </button>
-
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Edit catalog</h2>
-
-        {/* Tab bar */}
-        <div className="flex gap-1 mb-5 border-b border-slate-200">
-          {(['rename', 'remap'] as Tab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-3 py-1.5 text-sm font-medium capitalize border-b-2 transition-colors -mb-px ${
-                tab === t
-                  ? 'border-black text-black'
-                  : 'border-transparent text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              {t === 'rename' ? 'Rename' : 'Column mapping'}
-            </button>
-          ))}
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+        <div className="border-b px-6 py-4 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-slate-900">Edit catalog</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
-        {tab === 'rename' && (
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-black focus:ring-1 focus:ring-black"
-              maxLength={120}
-              autoFocus
-            />
-          </div>
-        )}
-
-        {tab === 'remap' && (
-          <div className="space-y-4">
-            <p className="text-xs text-slate-500">
-              Update which columns map to each field without re-uploading the file. Changes apply to future quote line inserts from this catalog.
-            </p>
-            {(['description', 'quantity', 'price'] as const).map((field) => (
-              <div key={field}>
-                <label className="block text-sm font-medium text-slate-700 mb-1 capitalize">{field}</label>
-                <select
-                  value={mapping[field] ?? ''}
-                  onChange={(e) => setMapping((m) => ({ ...m, [field]: e.target.value || null }))}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-black focus:ring-1 focus:ring-black"
-                >
-                  <option value="">— Skip —</option>
-                  {headers.map((h) => (
-                    <option key={h} value={h}>{h}</option>
-                  ))}
-                </select>
-              </div>
+        <div className="p-6">
+          {/* Tab bar */}
+          <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit mb-5">
+            {(['rename', 'remap'] as Tab[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
+                  tab === t ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                {t === 'rename' ? 'Rename' : 'Column mapping'}
+              </button>
             ))}
           </div>
-        )}
 
-        {error && (
-          <p className="mt-3 text-sm text-red-600">{error}</p>
-        )}
+          {tab === 'rename' && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={inputCls}
+                maxLength={120}
+                autoFocus
+              />
+            </div>
+          )}
 
-        <div className="mt-5 flex gap-3 justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-slate-600 rounded-lg border border-slate-200 hover:bg-slate-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={tab === 'rename' ? handleRename : handleRemap}
-            disabled={saving || (tab === 'rename' && !name.trim())}
-            className="px-4 py-2 text-sm font-medium text-white bg-black rounded-lg disabled:opacity-40 hover:bg-slate-800 transition-colors"
-          >
-            {saving ? 'Saving...' : 'Save'}
-          </button>
+          {tab === 'remap' && (
+            <div className="space-y-4">
+              <p className="text-xs text-slate-500">
+                Update which columns map to each field without re-uploading. Item and Description combine into the quote line text.
+              </p>
+              {MAPPING_FIELDS.map((field) => (
+                <div key={field.key}>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{field.label}</label>
+                  <select
+                    value={mapping[field.key] ?? ''}
+                    onChange={(e) => setMapping((m) => ({ ...m, [field.key]: e.target.value || null }))}
+                    className={inputCls + ' bg-white'}
+                  >
+                    <option value="">— Skip —</option>
+                    {headers.map((h) => (
+                      <option key={h} value={h}>{h}</option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+
+          <div className="mt-6 flex gap-3 justify-end">
+            <button onClick={onClose} className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50">
+              Cancel
+            </button>
+            <button
+              onClick={tab === 'rename' ? handleRename : handleRemap}
+              disabled={saving || (tab === 'rename' && !name.trim())}
+              className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-40"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
