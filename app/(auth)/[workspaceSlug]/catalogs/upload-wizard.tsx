@@ -295,7 +295,16 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose }: UploadWizar
     }
   }, [parsed, catalogName, columnMapping, file, workspaceSlug, onComplete]);
 
-  const TOTAL_STEPS = 5;
+  const TOTAL_STEPS = 4;
+
+  // Which mapping slot (if any) a header is assigned to — drives the column
+  // highlight in the combined preview/map step.
+  const slotForHeader = (h: string): { label: string; color: string } | null => {
+    if (columnMapping.description === h) return { label: 'Item / Description', color: 'bg-orange-100 text-orange-700 border-orange-300' };
+    if (columnMapping.quantity === h) return { label: 'Description / Quantity', color: 'bg-blue-100 text-blue-700 border-blue-300' };
+    if (columnMapping.price === h) return { label: 'Price', color: 'bg-emerald-100 text-emerald-700 border-emerald-300' };
+    return null;
+  };
 
   const inputCls = 'w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none';
   const primaryBtn = 'px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-40 disabled:cursor-not-allowed';
@@ -313,16 +322,14 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose }: UploadWizar
             <h3 className="text-lg font-semibold text-slate-900">
               {step === 0 && 'Upload CSV'}
               {step === 1 && 'Name your catalog'}
-              {step === 2 && 'Preview data'}
-              {step === 3 && 'Map columns'}
-              {step === 4 && 'Save catalog'}
+              {step === 2 && 'Preview & map columns'}
+              {step === 3 && 'Save catalog'}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
               {step === 0 && 'Choose a CSV file to import as a searchable catalog.'}
               {step === 1 && 'Give this catalog a name so you can find it later.'}
-              {step === 2 && 'Check your data looks right before saving.'}
-              {step === 3 && 'Choose which columns map to each field.'}
-              {step === 4 && 'Review and save your catalog.'}
+              {step === 2 && 'Check your data and choose which columns map to each field.'}
+              {step === 3 && 'Review and save your catalog.'}
             </p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
@@ -404,10 +411,11 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose }: UploadWizar
             </div>
           )}
 
-          {/* Step 2: Preview */}
+          {/* Step 2: Preview + Map (combined) */}
           {step === 2 && parsed && (
             <div>
-              <div className="flex items-center justify-between mb-3">
+              {/* Preview table */}
+              <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-slate-500">
                   Showing first {Math.min(5, parsed.rows.length)} of {parsed.rows.length.toLocaleString()} rows
                 </p>
@@ -425,16 +433,26 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose }: UploadWizar
                 <table className="min-w-full text-xs">
                   <thead className="bg-slate-50">
                     <tr>
-                      {parsed.headers.map((h) => (
-                        <th key={h} className="px-3 py-2 text-left font-medium text-slate-600 whitespace-nowrap">{h}</th>
-                      ))}
+                      {parsed.headers.map((h) => {
+                        const slot = slotForHeader(h);
+                        return (
+                          <th key={h} className="px-3 py-2 text-left font-medium text-slate-600 whitespace-nowrap align-top">
+                            <span className="block">{h}</span>
+                            {slot && (
+                              <span className={`mt-1 inline-block rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${slot.color}`}>
+                                {slot.label}
+                              </span>
+                            )}
+                          </th>
+                        );
+                      })}
                     </tr>
                   </thead>
                   <tbody>
                     {parsed.rows.slice(0, 5).map((row, i) => (
                       <tr key={i} className="border-t border-slate-100">
                         {parsed.headers.map((h) => (
-                          <td key={h} className="px-3 py-2 text-slate-700 whitespace-nowrap max-w-[150px] truncate">{row[h] ?? ''}</td>
+                          <td key={h} className={`px-3 py-2 whitespace-nowrap max-w-[150px] truncate ${slotForHeader(h) ? 'text-slate-900 bg-slate-50/60' : 'text-slate-700'}`}>{row[h] ?? ''}</td>
                         ))}
                       </tr>
                     ))}
@@ -442,8 +460,38 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose }: UploadWizar
                 </table>
               </div>
               {parsed.synthesised && (
-                <p className="mt-2 text-xs text-slate-400">No headers detected — columns labelled A, B, C… You&apos;ll map them in the next step.</p>
+                <p className="mt-2 text-xs text-slate-400">No headers detected — columns labelled A, B, C…</p>
               )}
+
+              {/* Mapping */}
+              <div className="mt-5 border-t border-slate-100 pt-4">
+                <p className="text-xs text-slate-500 mb-3">
+                  Choose which columns map to each field. All optional — unmapped fields are skipped. Item and Description combine into the quote line text.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {MAPPING_FIELDS.map((field) => (
+                    <div key={field.key}>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{field.label}</label>
+                      <select
+                        value={columnMapping[field.key] ?? ''}
+                        onChange={(e) => setColumnMapping((m) => ({ ...m, [field.key]: e.target.value || null }))}
+                        className={inputCls + ' bg-white'}
+                      >
+                        <option value="">— Skip —</option>
+                        {parsed.headers.map((h) => (
+                          <option key={h} value={h}>{h}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+                {columnMapping.price && (
+                  <p className="mt-2 text-xs text-slate-500">
+                    Price preview: {parsed.rows[0]?.[columnMapping.price] ?? '—'} → {parsePrice(parsed.rows[0]?.[columnMapping.price] ?? '').toFixed(2)}
+                  </p>
+                )}
+              </div>
+
               <div className="mt-6 flex gap-3 justify-end">
                 <button onClick={() => setStep(1)} className={ghostBtn}>Back</button>
                 <button onClick={() => setStep(3)} className={primaryBtn}>Next</button>
@@ -451,42 +499,8 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose }: UploadWizar
             </div>
           )}
 
-          {/* Step 3: Map columns */}
+          {/* Step 3: Save */}
           {step === 3 && parsed && (
-            <div>
-              <p className="text-xs text-slate-500 mb-4">
-                Map your columns to each field. All are optional — unmapped fields are simply skipped. The Item and Description fields combine into the quote line text.
-              </p>
-              {MAPPING_FIELDS.map((field) => (
-                <div key={field.key} className="mb-4">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">{field.label}</label>
-                  <select
-                    value={columnMapping[field.key] ?? ''}
-                    onChange={(e) => setColumnMapping((m) => ({ ...m, [field.key]: e.target.value || null }))}
-                    className={inputCls + ' bg-white'}
-                  >
-                    <option value="">— Skip —</option>
-                    {parsed.headers.map((h) => (
-                      <option key={h} value={h}>{h}</option>
-                    ))}
-                  </select>
-                  <p className="mt-1 text-xs text-slate-400">{field.hint}</p>
-                  {field.key === 'price' && columnMapping.price && (
-                    <p className="mt-1 text-xs text-slate-500">
-                      Price preview: {parsed.rows[0]?.[columnMapping.price] ?? '—'} → {parsePrice(parsed.rows[0]?.[columnMapping.price] ?? '').toFixed(2)}
-                    </p>
-                  )}
-                </div>
-              ))}
-              <div className="mt-6 flex gap-3 justify-end">
-                <button onClick={() => setStep(2)} className={ghostBtn}>Back</button>
-                <button onClick={() => setStep(4)} className={primaryBtn}>Next</button>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Save */}
-          {step === 4 && parsed && (
             <div>
               {!uploading && !uploadError && (
                 <>
@@ -498,7 +512,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose }: UploadWizar
                     <div className="flex justify-between"><span className="text-slate-500">Price</span><span className="font-medium text-slate-800">{columnMapping.price ?? 'Not mapped'}</span></div>
                   </div>
                   <div className="flex gap-3 justify-end">
-                    <button onClick={() => setStep(3)} className={ghostBtn}>Back</button>
+                    <button onClick={() => setStep(2)} className={ghostBtn}>Back</button>
                     <button onClick={handleUpload} className={primaryBtn}>Save catalog</button>
                   </div>
                 </>
