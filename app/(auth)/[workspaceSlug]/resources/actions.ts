@@ -81,7 +81,7 @@ export async function createTemplate(data: TemplateData) {
     }
   }
 
-  revalidatePath('/templates');
+  revalidatePath('/resources');
   return template.id;
 }
 
@@ -181,7 +181,7 @@ export async function updateTemplate(templateId: string, data: TemplateData) {
     }
   }
 
-  revalidatePath('/templates');
+  revalidatePath('/resources');
   return templateId;
 }
 
@@ -242,7 +242,7 @@ export async function deleteTemplate(templateId: string) {
     throw new Error(error.message);
   }
 
-  revalidatePath('/templates');
+  revalidatePath('/resources');
 }
 
 export async function updateCustomerQuoteTemplate(
@@ -293,7 +293,7 @@ export async function updateCustomerQuoteTemplate(
     throw new Error(error.message);
   }
 
-  revalidatePath('/templates');
+  revalidatePath('/resources');
 }
 
 export async function deleteCustomerQuoteTemplate(templateId: string) {
@@ -325,5 +325,5 @@ export async function deleteCustomerQuoteTemplate(templateId: string) {
     throw new Error(error.message);
   }
 
-  revalidatePath('/templates');
+  revalidatePath('/resources');
 }

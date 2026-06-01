@@ -185,7 +185,7 @@ export function SendOrderButton({
     const returnPath = encodeURIComponent(
       `/${workspaceSlug}/material-orders/${orderId}/preview`,
     );
-    router.push(`/${workspaceSlug}/templates?tab=email&kind=order_send&return=${returnPath}`);
+    router.push(`/${workspaceSlug}/resources?tab=email&kind=order_send&return=${returnPath}`);
   }
 
   const orderUrl = token ? `${typeof window !== 'undefined' ? window.location.origin : ''}/orders/${token}` : null;

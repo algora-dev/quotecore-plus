@@ -67,7 +67,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
     const returnPath = encodeURIComponent(
       `/${workspaceSlug}/quotes/${quoteId}/summary`,
     );
-    router.push(`/${workspaceSlug}/templates?tab=email&kind=quote_send&return=${returnPath}`);
+    router.push(`/${workspaceSlug}/resources?tab=email&kind=quote_send&return=${returnPath}`);
   }
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'choose' | 'url' | 'email' | 'send'>('choose');

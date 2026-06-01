@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { MaterialOrderTemplateRow, MaterialOrderRow } from '@/app/lib/types';
-import { TemplateManager } from './template-manager-new';
 import { OrderList } from './order-list';
 
 interface Props {
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrders }: Props) {
-  const [showTemplates, setShowTemplates] = useState(false);
+  const router = useRouter();
 
   return (
     <div className="space-y-6">
@@ -57,9 +57,9 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
           </div>
         </Link>
 
-        {/* Manage Templates */}
+        {/* Order Templates — managed in Resource Library */}
         <button
-          onClick={() => setShowTemplates(true)}
+          onClick={() => router.push(`/${workspaceSlug}/resources?tab=order`)}
           className="block w-full p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group text-left"
         >
           <div className="flex items-start gap-4">
@@ -69,7 +69,7 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
               </svg>
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 mb-1">Supplier Templates</h3>
+              <h3 className="font-semibold text-slate-900 mb-1">Order Templates</h3>
               <p className="text-sm text-slate-600">Manage reusable supplier info ({initialTemplates.length} saved)</p>
             </div>
           </div>
@@ -82,13 +82,7 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
         <OrderList orders={recentOrders} workspaceSlug={workspaceSlug} />
       </div>
 
-      {/* Template Manager Modal */}
-      {showTemplates && (
-        <TemplateManager
-          initialTemplates={initialTemplates}
-          onClose={() => setShowTemplates(false)}
-        />
-      )}
+
     </div>
   );
 }

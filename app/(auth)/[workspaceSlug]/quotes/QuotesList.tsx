@@ -532,10 +532,10 @@ export function QuotesList({
             </Link>
           )}
           <Link
-            href={`/${workspaceSlug}/templates`}
+            href={`/${workspaceSlug}/resources`}
             className="inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
-            Templates
+            Resource Library
           </Link>
         </div>
       </div>
