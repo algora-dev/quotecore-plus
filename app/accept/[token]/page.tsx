@@ -8,6 +8,7 @@ import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { loadQuoteTaxesByQuoteId } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
 import { AttachmentsCard } from '@/app/components/public/AttachmentsCard';
+import { displayLineText } from '@/app/lib/quotes/lineText';
 
 /**
  * Validate token format up front so a malformed URL fails fast without
@@ -269,9 +270,7 @@ export default async function AcceptQuotePage({
                 >
                   <div className="flex-1">
                     <p className="text-black">
-                      {line.show_units
-                        ? line.custom_text
-                        : line.custom_text.split('-')[0].trim()}
+                      {displayLineText(line.custom_text, line.quantity_text, line.show_units)}
                     </p>
                   </div>
                   {line.show_price && (

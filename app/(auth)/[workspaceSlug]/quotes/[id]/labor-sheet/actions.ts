@@ -9,6 +9,10 @@ export async function saveLaborSheetLines(
     lineType: 'component' | 'custom';
     componentId?: string;
     text: string;
+    // Accepted for shape-compat with saveCustomerQuoteLines; labor_sheet_lines
+    // has no quantity_text column (catalog lines are a customer-quote feature),
+    // so this is intentionally not persisted here.
+    quantityText?: string | null;
     amount: number;
     showPrice: boolean;
     showUnits: boolean;

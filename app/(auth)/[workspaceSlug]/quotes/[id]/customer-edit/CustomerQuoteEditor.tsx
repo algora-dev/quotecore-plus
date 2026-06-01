@@ -10,6 +10,7 @@ import { EditHeaderModal } from './EditHeaderModal';
 import { EditFooterModal } from './EditFooterModal';
 import { saveCustomerQuoteLines, saveCustomerQuoteBranding } from '../../actions';
 import { formatCurrency } from '@/app/lib/currency/currencies';
+import { displayLineText } from '@/app/lib/quotes/lineText';
 import {
   convertLinear,
   convertArea,
@@ -49,6 +50,12 @@ interface QuoteLine {
   componentId?: string;
   roofAreaId?: string;
   text: string;
+  /**
+   * Toggle-able quantity portion for catalog lines (fix #5). When set, `text`
+   * is the description and this is hidden by the Units toggle without string
+   * splitting. Null for component + legacy lines (hyphen-strip fallback).
+   */
+  quantityText?: string | null;
   amount: number;
   showPrice: boolean;
   showUnits: boolean;
@@ -151,6 +158,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             componentId: undefined,
             roofAreaId: undefined,
             text: saved.custom_text || '',
+            quantityText: (saved as { quantity_text?: string | null }).quantity_text ?? null,
             amount: saved.custom_amount || 0,
             showPrice: saved.show_price ?? true,
             showUnits: saved.show_units ?? true,
@@ -227,6 +235,13 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     return `${component.name} - ${displayQty.toFixed(1)} ${unit}`;
   }
 
+  // Editor list always shows the COMPLETE line (description + quantity); the
+  // Units toggle only affects the preview / PDF / public output, so we render
+  // with showUnits=true here regardless of the line's toggle state.
+  function lineDisplay(line: QuoteLine): string {
+    return displayLineText(line.text, line.quantityText, true);
+  }
+
   function toggleVisibility(lineId: string) {
     setLines(prev => prev.map(l => 
       l.id === lineId ? { ...l, isVisible: !l.isVisible } : l
@@ -277,11 +292,17 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     setIsDirty(true);
   }
 
-  function addCustomLine(text: string, amount: number, showPrice: boolean) {
+  function addCustomLine(
+    text: string,
+    amount: number,
+    showPrice: boolean,
+    quantityText: string | null = null,
+  ) {
     const newLine: QuoteLine = {
       id: `custom-${Date.now()}`,
       type: 'custom',
       text,
+      quantityText,
       amount,
       showPrice,
       showUnits: true,
@@ -324,6 +345,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         lineType: line.type,
         componentId: line.componentId,
         text: line.text,
+        quantityText: line.quantityText ?? null,
         amount: line.amount,
         showPrice: line.showPrice,
         showUnits: line.showUnits,
@@ -483,7 +505,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                           <div className="flex-1">
                             <div className="flex items-baseline justify-between gap-2">
                               <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
-                                {line.text}
+                                {lineDisplay(line)}
                               </p>
                               <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
                                 {formatCurrency(line.amount, currency)}
@@ -569,7 +591,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                         <div className="flex-1">
                           <div className="flex items-baseline justify-between gap-2">
                             <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
-                              {line.text}
+                              {lineDisplay(line)}
                             </p>
                             <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
                               {formatCurrency(line.amount, currency)}

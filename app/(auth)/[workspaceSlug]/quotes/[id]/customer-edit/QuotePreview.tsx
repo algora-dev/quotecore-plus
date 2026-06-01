@@ -2,10 +2,13 @@
 import type { TaxLine } from '@/app/lib/taxes/types';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import { LineEditForm } from './LineEditForm';
+import { displayLineText } from '@/app/lib/quotes/lineText';
 
 interface QuoteLine {
   id: string;
   text: string;
+  /** Toggle-able quantity portion for catalog lines (fix #5). */
+  quantityText?: string | null;
   amount: number;
   showPrice: boolean;
   showUnits: boolean;
@@ -58,12 +61,9 @@ export function QuotePreview({
   showEditButtons = true,
   currency,
 }: Props) {
-  // Helper to remove units from text (everything after "-")
-  function removeUnits(text: string): string {
-    const dashIndex = text.indexOf('-');
-    if (dashIndex === -1) return text;
-    return text.substring(0, dashIndex).trim();
-  }
+  // Render a line's text honouring the Units toggle. Catalog lines hide the
+  // separate quantity_text; legacy/component lines fall back to hyphen-strip.
+  // (fix #5 - logic centralised in displayLineText.)
 
   return (
     <div className="space-y-6">
@@ -138,7 +138,7 @@ export function QuotePreview({
             ) : (
               <div key={line.id} className="flex items-start justify-between py-2 border-b border-slate-100">
                 <div className="flex-1">
-                  <p className="text-sm text-slate-900">{line.showUnits ? line.text : removeUnits(line.text)}</p>
+                  <p className="text-sm text-slate-900">{displayLineText(line.text, line.quantityText, line.showUnits)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   {line.showPrice && (

@@ -5,6 +5,7 @@ import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow } from '@/app/lib/ty
 import type { QuoteTaxRow } from '@/app/lib/taxes/types';
 import { computeTaxLines } from '@/app/lib/taxes/types';
 import { formatCurrency } from '@/app/lib/currency/currencies';
+import { displayLineText } from '@/app/lib/quotes/lineText';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -177,7 +178,7 @@ export function LaborSheetPreview({ quote, roofAreas: _roofAreas, components, sa
                   <div key={line.id} className="flex justify-between py-2 border-b border-black">
                     <div className="flex-1">
                       <p className="text-sm text-black">
-                        {line.show_units ? line.custom_text : line.custom_text.split('-')[0].trim()}
+                        {displayLineText(line.custom_text, line.quantity_text, line.show_units)}
                       </p>
                     </div>
                     {line.show_price && (

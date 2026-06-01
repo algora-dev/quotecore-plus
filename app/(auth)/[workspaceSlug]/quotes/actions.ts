@@ -1578,6 +1578,7 @@ export async function saveCustomerQuoteLines(
     lineType: 'component' | 'custom';
     componentId?: string;
     text: string;
+    quantityText?: string | null;
     amount: number;
     showPrice: boolean;
     showUnits: boolean;
@@ -1615,6 +1616,7 @@ export async function saveCustomerQuoteLines(
       line_type: line.lineType,
       quote_component_id: line.componentId || null,
       custom_text: line.text,
+      quantity_text: line.quantityText ?? null,
       custom_amount: line.amount,
       show_price: line.showPrice,
       show_units: line.showUnits,

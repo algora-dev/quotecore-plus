@@ -24,7 +24,12 @@ interface ColumnMapping {
 
 interface Props {
   workspaceSlug: string;
-  onAdd: (text: string, amount: number, showPrice: boolean) => void;
+  /**
+   * `quantity` is the toggle-able quantity portion (fix #5). It is stored in
+   * the line's `quantity_text` so the Units toggle can hide it cleanly without
+   * string-splitting the description.
+   */
+  onAdd: (text: string, amount: number, showPrice: boolean, quantity: string | null) => void;
   onClose: () => void;
 }
 
@@ -40,22 +45,29 @@ function parsePrice(raw: string): { value: number; hasPrice: boolean } {
   return { value: Math.round(parsed * 100) / 100, hasPrice: true };
 }
 
-/** Build the quote-line text from a hit using the catalog's column mapping. */
-function composeLineText(hit: SearchHit, mapping: ColumnMapping): string {
-  const parts: string[] = [];
+/**
+ * Split a catalog hit into the description (always shown) and the quantity
+ * (toggle-able via the Units control). Returns them separately so the line
+ * can store `quantity_text` distinctly from `custom_text` (fix #5).
+ */
+function composeLineParts(
+  hit: SearchHit,
+  mapping: ColumnMapping,
+): { description: string; quantity: string | null } {
   const descVal = mapping.description ? hit.rawRow[mapping.description] : null;
   const qtyVal = mapping.quantity ? hit.rawRow[mapping.quantity] : null;
 
-  if (descVal && descVal.trim()) parts.push(descVal.trim());
-  if (qtyVal && qtyVal.trim()) parts.push(qtyVal.trim());
+  let description = descVal && descVal.trim() ? descVal.trim() : '';
+  const quantity = qtyVal && qtyVal.trim() ? qtyVal.trim() : null;
 
-  // Fallback: if nothing mapped resolved, use the first non-empty raw value
-  if (parts.length === 0) {
+  // Fallback: if no description mapped, use the first non-empty raw value so
+  // the line is never blank.
+  if (!description) {
     const firstVal = Object.values(hit.rawRow).find((v) => v && String(v).trim());
-    if (firstVal) parts.push(String(firstVal).trim());
+    if (firstVal) description = String(firstVal).trim();
   }
 
-  return parts.join(' — ');
+  return { description, quantity };
 }
 
 // ---------------------------------------------------------------------------
@@ -138,10 +150,10 @@ export function CatalogSearchModal({ workspaceSlug, onAdd, onClose }: Props) {
 
   function handleSelectHit(hit: SearchHit) {
     const mapping = getMapping(hit.catalogId);
-    const text = composeLineText(hit, mapping);
+    const { description, quantity } = composeLineParts(hit, mapping);
     const rawPrice = mapping.price ? hit.rawRow[mapping.price] ?? '' : '';
     const { value: amount, hasPrice } = parsePrice(rawPrice);
-    onAdd(text, amount, hasPrice && amount > 0);
+    onAdd(description, amount, hasPrice && amount > 0, quantity);
     onClose();
   }
 
