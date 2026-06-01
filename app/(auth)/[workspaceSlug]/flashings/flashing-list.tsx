@@ -6,6 +6,7 @@ import { createFlashing, deleteFlashing } from './actions';
 import type { FlashingLibraryRow } from '@/app/lib/types';
 import Image from 'next/image';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
+import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 
 interface Props {
   initialFlashings: FlashingLibraryRow[];
@@ -18,6 +19,8 @@ interface Props {
   /** Whether the company trade is roofing. Controls data-copilot attribute
    *  so the correct guide (roofing vs generic) can target this button. */
   isRoofing?: boolean;
+  /** When true the company is over storage — block image uploads. */
+  isOverStorage?: boolean;
 }
 
 /**
@@ -82,7 +85,7 @@ function printFlashing(flashing: FlashingLibraryRow) {
   w.document.close();
 }
 
-export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, flashingCount, isRoofing = true, effectivePlanCode }: Props) {
+export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, flashingCount, isRoofing = true, effectivePlanCode, isOverStorage }: Props) {
   const router = useRouter();
   const [flashings, setFlashings] = useState(initialFlashings);
   const [showUploadForm, setShowUploadForm] = useState(false);
@@ -91,6 +94,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
   const [deleteFlashingId, setDeleteFlashingId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [storageBlocked, setStorageBlocked] = useState(false);
 
   // Live cap: prefer the local count once we've started mutating the list,
   // but never undershoot the server-side count (defends against concurrent
@@ -176,10 +180,8 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
           </button>
           <button
             onClick={() => {
-              if (atCap) {
-                setUpgradeOpen(true);
-                return;
-              }
+              if (atCap) { setUpgradeOpen(true); return; }
+              if (isOverStorage) { setStorageBlocked(true); return; }
               setShowUploadForm(true);
             }}
             title={atCap ? 'Upgrade to upload more flashings' : 'Upload an existing flashing/image'}
@@ -324,6 +326,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
         </div>
       )}
 
+      <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
       <UpgradeModal
         open={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}

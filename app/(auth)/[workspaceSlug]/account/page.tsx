@@ -138,6 +138,7 @@ export default async function AccountPage() {
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6" data-copilot="account-company">
           <CompanySettingsForm
             companyId={company.id}
+            isOverStorage={entitlements.isOverStorage}
             userId={profile.id}
             currentCompanyName={company.name}
             currentUserName={user?.full_name || ''}

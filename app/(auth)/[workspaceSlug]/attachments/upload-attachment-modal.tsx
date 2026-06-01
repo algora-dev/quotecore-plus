@@ -4,10 +4,13 @@ import { useState } from 'react';
 import { createClient } from '@/app/lib/supabase/client';
 import { mintQuoteDocumentUploadUrl } from '@/app/lib/files/signed-upload';
 import { createAttachment } from './actions';
+import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 
 interface Props {
   onClose: () => void;
   onSaved: () => void;
+  /** When true the company is over storage — block file uploads. */
+  isOverStorage?: boolean;
 }
 
 const MAX_BYTES = 52428800; // 50 MB
@@ -18,8 +21,9 @@ function stripExtension(filename: string): string {
   return dot > 0 ? filename.slice(0, dot) : filename;
 }
 
-export function UploadAttachmentModal({ onClose, onSaved }: Props) {
+export function UploadAttachmentModal({ onClose, onSaved, isOverStorage }: Props) {
   const [file, setFile] = useState<File | null>(null);
+  const [storageBlocked, setStorageBlocked] = useState(false);
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -136,24 +140,32 @@ export function UploadAttachmentModal({ onClose, onSaved }: Props) {
                 </button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center cursor-pointer hover:border-orange-300 hover:bg-orange-50/40 transition">
-                <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M17 8l-5-5m0 0L7 8m5-5v12"
-                  />
-                </svg>
-                <span className="text-sm font-medium text-slate-600">Choose a file</span>
-                <span className="text-xs text-slate-400">PDF, image or ZIP &middot; max 50 MB</span>
-                <input
-                  type="file"
-                  accept={ACCEPT}
-                  className="hidden"
-                  onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
-                />
-              </label>
+              <>
+                <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
+                <label
+                  className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center cursor-pointer hover:border-orange-300 hover:bg-orange-50/40 transition"
+                  onClick={isOverStorage ? (e) => { e.preventDefault(); setStorageBlocked(true); } : undefined}
+                >
+                  <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M17 8l-5-5m0 0L7 8m5-5v12"
+                    />
+                  </svg>
+                  <span className="text-sm font-medium text-slate-600">Choose a file</span>
+                  <span className="text-xs text-slate-400">PDF, image or ZIP &middot; max 50 MB</span>
+                  {!isOverStorage && (
+                    <input
+                      type="file"
+                      accept={ACCEPT}
+                      className="hidden"
+                      onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+                    />
+                  )}
+                </label>
+              </>
             )}
           </div>
 

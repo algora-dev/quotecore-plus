@@ -16,6 +16,8 @@ interface Props {
   catalogCount: number;
   effectivePlanCode: string;
   subscriptionActive: boolean;
+  /** When true the company is over storage — block CSV uploads. */
+  isOverStorage?: boolean;
 }
 
 function timeAgo(dateStr: string): string {
@@ -61,6 +63,7 @@ export function CatalogList({
   catalogLimit,
   catalogCount,
   subscriptionActive,
+  isOverStorage,
 }: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -320,7 +323,7 @@ export function CatalogList({
 
       {/* Upload wizard */}
       {wizardOpen && (
-        <UploadWizard workspaceSlug={workspaceSlug} onComplete={handleWizardComplete} onClose={() => setWizardOpen(false)} />
+        <UploadWizard workspaceSlug={workspaceSlug} onComplete={handleWizardComplete} onClose={() => setWizardOpen(false)} isOverStorage={isOverStorage} />
       )}
 
       {/* Edit modal */}

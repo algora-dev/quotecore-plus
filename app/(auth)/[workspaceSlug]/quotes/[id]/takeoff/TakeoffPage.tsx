@@ -37,6 +37,8 @@ interface Props {
   existingRoofAreas?: { id: string; label: string }[];
   /** P1-1b mode=new-page: pre-created quote_roof_areas ID for component routing. */
   initialRoofAreaId?: string;
+  /** When true the company is over storage — block plan-image uploads. */
+  isOverStorage?: boolean;
 }
 
 export function TakeoffPage({
@@ -50,6 +52,7 @@ export function TakeoffPage({
   initialPageName,
   existingRoofAreas,
   initialRoofAreaId,
+  isOverStorage,
 }: Props) {
   return (
     <TakeoffWorkstation
@@ -63,6 +66,7 @@ export function TakeoffPage({
       initialPageName={initialPageName}
       existingRoofAreas={existingRoofAreas}
       initialRoofAreaId={initialRoofAreaId}
+      isOverStorage={isOverStorage}
     />
   );
 }

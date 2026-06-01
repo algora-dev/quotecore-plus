@@ -31,6 +31,7 @@ export default async function CatalogsPage(props: {
       catalogCount={ent.catalogCount}
       effectivePlanCode={ent.effectivePlanCode}
       subscriptionActive={ent.isActive}
+      isOverStorage={ent.isOverStorage}
     />
   );
 }

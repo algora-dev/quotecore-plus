@@ -28,6 +28,7 @@ interface Props {
     attachmentCount: number;
     isActive: boolean;
     effectivePlanCode: string;
+    isOverStorage?: boolean;
   };
   orderTemplates: MaterialOrderTemplateRow[];
   catalogs: CatalogRow[];
@@ -146,6 +147,7 @@ export function TemplatesPageClient({
           catalogCount={catalogCount}
           effectivePlanCode={catalogEffectivePlanCode}
           subscriptionActive={catalogSubscriptionActive}
+          isOverStorage={attachmentEntitlements.isOverStorage}
         />
       ) : activeTab === 'order' ? (
         <div className="space-y-4">
@@ -194,6 +196,7 @@ export function TemplatesPageClient({
                 setShowOrderTemplatesModal(false);
                 router.refresh();
               }}
+              isOverStorage={attachmentEntitlements.isOverStorage}
             />
           )}
         </div>
@@ -386,6 +389,7 @@ export function TemplatesPageClient({
             setEditingCustomerTemplate(null);
             router.refresh();
           }}
+          isOverStorage={attachmentEntitlements.isOverStorage}
         />
       )}
 

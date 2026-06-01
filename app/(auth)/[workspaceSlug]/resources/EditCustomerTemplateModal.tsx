@@ -9,9 +9,11 @@ interface Props {
   companyId: string;
   onClose: () => void;
   onSaved: () => void;
+  /** When true the company is over storage — block logo upload. */
+  isOverStorage?: boolean;
 }
 
-export function EditCustomerTemplateModal({ template, companyId, onClose, onSaved }: Props) {
+export function EditCustomerTemplateModal({ template, companyId, onClose, onSaved, isOverStorage }: Props) {
   const [name, setName] = useState(template.name);
   const [companyName, setCompanyName] = useState(template.company_name || '');
   const [companyAddress, setCompanyAddress] = useState(template.company_address || '');
@@ -131,6 +133,7 @@ export function EditCustomerTemplateModal({ template, companyId, onClose, onSave
                 templateId={template.id}
                 currentLogoUrl={companyLogoUrl}
                 onUploadComplete={(url) => setCompanyLogoUrl(url)}
+                isOverStorage={isOverStorage}
               />
             </div>
           </div>

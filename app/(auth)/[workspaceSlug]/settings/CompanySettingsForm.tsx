@@ -22,6 +22,8 @@ interface Props {
   currentTaxes: EditableTax[];
   /** Phase 8 (Generic Trades): only rendered when the client flag is on. */
   currentDefaultTrade?: string | null;
+  /** When true the company is over storage — block logo uploads. */
+  isOverStorage?: boolean;
 }
 
 export function CompanySettingsForm({
@@ -37,6 +39,7 @@ export function CompanySettingsForm({
   currentLogoUrl,
   currentTaxes,
   currentDefaultTrade,
+  isOverStorage,
 }: Props) {
   const params = useParams<{ workspaceSlug: string }>();
   const workspaceSlug = params?.workspaceSlug ?? '';
@@ -184,7 +187,7 @@ export function CompanySettingsForm({
           </div>
 
           {/* Company Logo */}
-          <LogoUploader companyId={companyId} currentLogoUrl={currentLogoUrl} />
+          <LogoUploader companyId={companyId} currentLogoUrl={currentLogoUrl} isOverStorage={isOverStorage} />
         </div>
       </div>
 

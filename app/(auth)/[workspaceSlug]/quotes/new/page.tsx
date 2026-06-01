@@ -62,6 +62,7 @@ export default async function NewQuotePage({
           effectivePlanCode={ent.effectivePlanCode}
           defaultTrade={defaultTrade}
           componentCollections={componentCollections ?? []}
+          isOverStorage={ent.isOverStorage}
         />
       </div>
     </div>

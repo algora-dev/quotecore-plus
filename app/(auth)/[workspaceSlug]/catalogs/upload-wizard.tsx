@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 import Papa from 'papaparse';
 import { createCatalogMeta, markCatalogError } from './actions';
 import type { CatalogRow } from './actions';
@@ -27,6 +28,8 @@ interface UploadWizardProps {
   workspaceSlug: string;
   onComplete: (catalog: Partial<CatalogRow>) => void;
   onClose: () => void;
+  /** When true the company is over storage — block CSV uploads. */
+  isOverStorage?: boolean;
 }
 
 const MAX_ROWS = 20_000;
@@ -164,7 +167,7 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
 // Main wizard
 // ---------------------------------------------------------------------------
 
-export function UploadWizard({ workspaceSlug, onComplete, onClose }: UploadWizardProps) {
+export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage }: UploadWizardProps) {
   const [step, setStep] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [parsed, setParsed] = useState<ParsedCsv | null>(null);
@@ -176,6 +179,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose }: UploadWizar
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [storageBlocked, setStorageBlocked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const runParse = useCallback(async (f: File, asHeader: boolean) => {
@@ -223,9 +227,10 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose }: UploadWizar
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    if (isOverStorage) { setStorageBlocked(true); return; }
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) void handleFileSelect(droppedFile);
-  }, [handleFileSelect]);
+  }, [handleFileSelect, isOverStorage]);
 
   const handleUpload = useCallback(async () => {
     if (!parsed || !catalogName.trim()) return;
@@ -345,10 +350,11 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose }: UploadWizar
           {/* Step 0: Upload */}
           {step === 0 && (
             <div>
+              <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
               <div
                 onDrop={handleDrop}
                 onDragOver={(e) => e.preventDefault()}
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => { if (isOverStorage) { setStorageBlocked(true); return; } fileInputRef.current?.click(); }}
                 className="border-2 border-dashed border-slate-300 rounded-xl p-10 text-center cursor-pointer hover:border-orange-300 hover:bg-orange-50/40 transition-colors"
               >
                 <svg className="h-10 w-10 mx-auto text-slate-300 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>

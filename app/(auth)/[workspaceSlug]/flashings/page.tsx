@@ -74,6 +74,7 @@ export default async function FlashingsPage(props: Props) {
         flashingCount={ent.flashingCount}
         effectivePlanCode={ent.effectivePlanCode}
         isRoofing={(company as { default_trade?: string }).default_trade !== 'generic'}
+        isOverStorage={ent.isOverStorage}
       />
     </section>
   );

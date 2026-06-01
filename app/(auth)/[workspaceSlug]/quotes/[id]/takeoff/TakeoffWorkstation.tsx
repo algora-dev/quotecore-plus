@@ -10,6 +10,7 @@ import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-t
 import type { TakeoffHydrationData } from './actions';
 import { uploadCanvasImage } from './uploadCanvasImage';
 import { AlertModal } from '@/app/components/AlertModal';
+import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 import { getTradeLabels } from '@/app/lib/trades/labels';
 import { createClient as createSupabaseBrowserClient } from '@/app/lib/supabase/client';
 import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-actions';
@@ -86,6 +87,8 @@ interface Props {
   /** P1-1b mode=new-page: pre-created quote_roof_areas ID. Passed as target_roof_area_id
    *  to save_takeoff_atomic so components route to the correct area. */
   initialRoofAreaId?: string;
+  /** When true the company is over storage — block plan-image uploads. */
+  isOverStorage?: boolean;
 }
 
 const CANVAS_WIDTH = 800;
@@ -131,6 +134,7 @@ export function TakeoffWorkstation({
   initialPageName,
   existingRoofAreas = [],
   initialRoofAreaId,
+  isOverStorage,
 }: Props) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -181,6 +185,7 @@ export function TakeoffWorkstation({
   const [uploadAnotherAreaName, setUploadAnotherAreaName] = useState('');
   const [uploadAnotherFile, setUploadAnotherFile] = useState<File | null>(null);
   const [uploadAnotherError, setUploadAnotherError] = useState<string | null>(null);
+  const [storageBlocked, setStorageBlocked] = useState(false);
   const [isUploadingPage, setIsUploadingPage] = useState(false);
   // H-03: track unsaved changes so we can warn before switching pages.
   const [isDirty, setIsDirty] = useState(false);
@@ -1152,6 +1157,7 @@ export function TakeoffWorkstation({
   // Pre-selects "existing" + pre-fills area name with the first roof area's
   // label so the user can confirm-and-go without retyping when adding to it.
   const openSaveAndUploadAnotherPlan = () => {
+    if (isOverStorage) { setStorageBlocked(true); return; }
     setUploadAnotherTarget('existing');
     setUploadAnotherAreaName('');
     setUploadAnotherFile(null);
@@ -1963,6 +1969,8 @@ export function TakeoffWorkstation({
   };
 
   return (
+    <>
+    <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
     <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col p-4">
       {/* Back link sits above the canvas card so it never crowds the header */}
       <Link
@@ -3164,6 +3172,7 @@ export function TakeoffWorkstation({
       />
       </div>
     </div>
+    </>
   );
 }
 

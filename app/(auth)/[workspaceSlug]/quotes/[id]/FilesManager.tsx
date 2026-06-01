@@ -37,6 +37,8 @@ interface Props {
   linesImageUrl?: string | null;
   /** Raw storage path for the current plan file — used when cloning page-1 for a new area. */
   planStoragePath?: string | null;
+  /** When true the company is over storage — block file uploads. */
+  isOverStorage?: boolean;
 }
 
 type TakeoffOption = 'continue' | 'new-area-same-plan' | 'new-area-new-plan';
@@ -52,6 +54,7 @@ export function FilesManager({
   hasExistingTakeoff = false,
   linesImageUrl = null,
   planStoragePath = null,
+  isOverStorage,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [supportingExpanded, setSupportingExpanded] = useState(false);
@@ -378,6 +381,7 @@ export function FilesManager({
                 currentFileUrl={null}
                 label="Upload Plans / Images"
                 description="PDF or image (max 10 MB)"
+                isOverStorage={isOverStorage}
               />
             )}
           </div>
@@ -427,6 +431,7 @@ export function FilesManager({
                       currentFileUrl={null}
                       label="Upload Supporting File"
                       description="PDF or image (max 10 MB)"
+                      isOverStorage={isOverStorage}
                     />
                   </div>
                 )}

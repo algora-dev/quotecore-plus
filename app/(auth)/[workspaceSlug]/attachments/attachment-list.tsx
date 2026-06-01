@@ -13,6 +13,8 @@ import { UploadAttachmentModal } from './upload-attachment-modal';
 
 interface Props {
   attachments: AttachmentRow[];
+  /** When true the company is over storage — block new uploads. */
+  isOverStorage?: boolean;
 }
 
 function formatBytes(bytes: number): string {
@@ -21,7 +23,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-export function AttachmentList({ attachments }: Props) {
+export function AttachmentList({ attachments, isOverStorage }: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
 
@@ -199,6 +201,7 @@ export function AttachmentList({ attachments }: Props) {
         <UploadAttachmentModal
           onClose={() => setUploadOpen(false)}
           onSaved={() => refresh()}
+          isOverStorage={isOverStorage}
         />
       )}
 

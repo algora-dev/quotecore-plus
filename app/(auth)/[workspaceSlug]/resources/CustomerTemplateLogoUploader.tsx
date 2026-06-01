@@ -8,9 +8,11 @@ interface Props {
   templateId: string;
   currentLogoUrl: string | null;
   onUploadComplete: (url: string) => void;
+  /** When true the company is over storage — block logo upload. */
+  isOverStorage?: boolean;
 }
 
-export function CustomerTemplateLogoUploader({ companyId, templateId, currentLogoUrl, onUploadComplete }: Props) {
+export function CustomerTemplateLogoUploader({ companyId, templateId, currentLogoUrl, onUploadComplete, isOverStorage }: Props) {
   const [logoUrl, setLogoUrl] = useState(currentLogoUrl);
   const [_uploading, setUploading] = useState(false);
 
@@ -69,6 +71,7 @@ export function CustomerTemplateLogoUploader({ companyId, templateId, currentLog
         maxSize={2 * 1024 * 1024}
         accept="image/*"
         label="Drop logo here or click to browse"
+        isOverStorage={isOverStorage}
       />
 
       {logoUrl && (

@@ -123,6 +123,15 @@ export interface CompanyEntitlements {
   storageLimitBytes: number;
   storageUsedBytes: number;
   storageTopupBytes: number;
+  /**
+   * True when storage_used_bytes exceeds the effective limit (plan + topup).
+   * The company is "red": all FILE uploads are blocked (catalog/attachment/
+   * quote files/logos) until they free space or upgrade. Non-file actions
+   * (quotes, components, drawings) are governed by their own quotas and are
+   * NOT affected. Set by Shaun's option-3 catalog-import policy + general
+   * over-quota state. storageLimitBytes already includes topup.
+   */
+  isOverStorage: boolean;
   includedSeats: number;
 
   /**
@@ -288,6 +297,8 @@ export const loadCompanyEntitlements = cache(
       storageLimitBytes: plan.storage_limit_bytes + company.storage_topup_bytes,
       storageUsedBytes: company.storage_used_bytes,
       storageTopupBytes: company.storage_topup_bytes,
+      isOverStorage:
+        company.storage_used_bytes > plan.storage_limit_bytes + company.storage_topup_bytes,
       includedSeats: Math.max(plan.included_seats, company.seat_count),
       features: {
         digital_takeoff: plan.feat_digital_takeoff,
@@ -434,6 +445,7 @@ export async function entitlementsForClient(
   catalogCount: number;
   storageUsedBytes: number;
   storageLimitBytes: number;
+  isOverStorage: boolean;
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
   firstPaymentFailureAt: string | null;
@@ -455,6 +467,7 @@ export async function entitlementsForClient(
     catalogCount: ent.catalogCount,
     storageUsedBytes: ent.storageUsedBytes,
     storageLimitBytes: ent.storageLimitBytes,
+    isOverStorage: ent.isOverStorage,
     trialEndsAt: ent.trialEndsAt,
     currentPeriodEnd: ent.currentPeriodEnd,
     firstPaymentFailureAt: ent.firstPaymentFailureAt,

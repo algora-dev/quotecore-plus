@@ -485,6 +485,7 @@ export default async function QuoteSummaryPage({
         <SummaryFilesPanel
           quoteId={id}
           companyId={quote.company_id}
+          isOverStorage={entitlements.isOverStorage}
           files={allFiles.map((f) => ({
             id: f.id,
             file_name: f.file_name,

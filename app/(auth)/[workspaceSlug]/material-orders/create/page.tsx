@@ -3,6 +3,8 @@ import { loadFlashingLibrary } from '../../flashings/actions';
 import { OrderCreateForm } from './order-create-form';
 import { loadQuoteData } from './quote-loader';
 import { loadOrderForEdit } from './order-loader';
+import { requireCompanyContext } from '@/app/lib/supabase/server';
+import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 
 interface Props {
   params: Promise<{ workspaceSlug: string }>;
@@ -18,11 +20,13 @@ export default async function CreateOrderPage(props: Props) {
   if (quoteId) {
   }
   
-  const [templates, flashings, quoteData, existingOrder] = await Promise.all([
+  const profile = await requireCompanyContext();
+  const [templates, flashings, quoteData, existingOrder, ent] = await Promise.all([
     loadOrderTemplates(),
     loadFlashingLibrary(),
     quoteId ? loadQuoteData(quoteId) : Promise.resolve(null),
     orderId ? loadOrderForEdit(orderId) : Promise.resolve(null),
+    loadCompanyEntitlements(profile.company_id),
   ]);
   
 
@@ -33,6 +37,7 @@ export default async function CreateOrderPage(props: Props) {
         flashings={flashings}
         quoteData={quoteData}
         existingOrder={existingOrder}
+        isOverStorage={ent.isOverStorage}
       />
     </div>
   );

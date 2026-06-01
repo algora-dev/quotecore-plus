@@ -57,6 +57,8 @@ interface Props {
   takeoffData?: any[];
   externalPhase?: Phase; // NEW: For URL-based navigation (v2)
   onPhaseChange?: (phase: Phase) => void; // NEW: Callback when phase changes
+  /** When true the company is over storage — block file uploads. */
+  isOverStorage?: boolean;
 }
 
 export function QuoteBuilder({
@@ -76,7 +78,8 @@ export function QuoteBuilder({
   planStoragePath = null,
   takeoffData: _takeoffData = [],
   externalPhase,
-  onPhaseChange
+  onPhaseChange,
+  isOverStorage,
 }: Props) {
   console.log('[QuoteBuilder] Received components:', initialComponents.length, initialComponents.map(c => ({ name: c.name, type: c.component_type })));
   const [internalPhase, setInternalPhase] = useState<Phase>('areas');
@@ -512,6 +515,7 @@ export function QuoteBuilder({
         hasExistingTakeoff={hasExistingTakeoff}
         linesImageUrl={linesImageUrl}
         planStoragePath={planStoragePath}
+        isOverStorage={isOverStorage}
       />
 
       <nav className="flex gap-1 p-1 bg-slate-100 rounded-lg">

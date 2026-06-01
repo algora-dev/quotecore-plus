@@ -12,11 +12,12 @@ interface Props {
     attachmentLimit: number | null;
     attachmentCount: number;
     effectivePlanCode: string;
+    isOverStorage?: boolean;
   };
 }
 
 export function AttachmentsTab({ workspaceSlug, attachments, entitlements }: Props) {
-  const { attachmentsEnabled, attachmentLimit, attachmentCount } = entitlements;
+  const { attachmentsEnabled, attachmentLimit, attachmentCount, isOverStorage } = entitlements;
 
   if (!attachmentsEnabled) {
     return (
@@ -55,7 +56,7 @@ export function AttachmentsTab({ workspaceSlug, attachments, entitlements }: Pro
           {attachmentCount} of {capLabel} used.
         </span>
       </p>
-      <AttachmentList attachments={attachments} />
+      <AttachmentList attachments={attachments} isOverStorage={isOverStorage} />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { BUCKETS } from '@/app/lib/storage/buckets';
 import { TakeoffPage } from './TakeoffPage';
 import { loadTakeoffHydrationData, createTakeoffPageForArea } from './actions';
 import { notFound } from 'next/navigation';
+import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 
 export default async function Page({
   params,
@@ -28,6 +29,9 @@ export default async function Page({
   if (quoteError || !quote) {
     notFound();
   }
+
+  const ent = await loadCompanyEntitlements(profile.company_id);
+  const isOverStorage = ent.isOverStorage;
 
   // Load roof plan file
   const { data: planFile, error: planError } = await supabase
@@ -111,6 +115,7 @@ export default async function Page({
         hydrationData={hydrationData}
         takeoffMode="add"
         existingRoofAreas={(existingAreas || []).map(a => ({ id: a.id, label: a.label }))}
+        isOverStorage={isOverStorage}
       />
     );
   }
@@ -168,6 +173,7 @@ export default async function Page({
         initialPageId={resolvedPageId}
         initialPageName={decodedAreaName}
         initialRoofAreaId={resolvedRoofAreaId}
+        isOverStorage={isOverStorage}
       />
     );
   }
@@ -184,6 +190,7 @@ export default async function Page({
       planUrl={planUrl}
       components={components || []}
       hydrationData={hydrationData}
+      isOverStorage={isOverStorage}
     />
   );
 }

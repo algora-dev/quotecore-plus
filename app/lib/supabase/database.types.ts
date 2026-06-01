@@ -3225,6 +3225,20 @@ export type Database = {
         Returns: string
       }
       get_next_quote_number: { Args: { p_company_id: string }; Returns: number }
+      import_catalog_rows_atomic: {
+        Args: {
+          p_catalog_id: string
+          p_company_id: string
+          p_is_first: boolean
+          p_is_last: boolean
+          p_rows: Json
+        }
+        Returns: {
+          data_bytes: number
+          over_quota: boolean
+          row_count: number
+        }[]
+      }
       is_measurement_type_allowed_for_trade: {
         Args: { p_mtype: string; p_trade: string }
         Returns: boolean

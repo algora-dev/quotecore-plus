@@ -1,13 +1,11 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { requireCompanyContext } from '@/app/lib/supabase/server';
 import {
   requireFeature,
   requireCatalogSlot,
-  assertCanUseStorage,
   CatalogLimitReachedError,
   FeatureGatedError,
   SubscriptionInactiveError,
@@ -79,11 +77,12 @@ export async function createCatalogMeta(args: {
 
     await requireFeature(profile.company_id, 'catalogs');
     await requireCatalogSlot(profile.company_id);
-    // Pre-flight quota check using the browser estimate (best-effort early
-    // rejection only). Authoritative byte accounting + the real quota gate
-    // happen server-side in the import-rows route as rows actually land
-    // (Gerald H-01). We do NOT charge storage here.
-    await assertCanUseStorage(profile.company_id, args.dataBytes);
+    // NOTE: no storage pre-flight here. Per Shaun's product decision
+    // (option 3), a catalog import is allowed to complete even if it pushes
+    // the company over their plan storage quota (capped at the 10MB/catalog
+    // ceiling). Authoritative byte accounting + the hard ceiling live in the
+    // import_catalog_rows_atomic RPC. Going over flips the company "red";
+    // assertCanUseStorage() then blocks FUTURE uploads app-wide.
 
     const admin = createAdminClient() as AdminAny;
 
@@ -130,31 +129,11 @@ export async function createCatalogMeta(args: {
 }
 
 // ---------------------------------------------------------------------------
-// finalizeCatalog — flip status importing → ready once all batches land
-// (called separately if the route handler's isLastBatch doesn't handle it)
+// (finalizeCatalog REMOVED — Gerald M-01-R.) There must be exactly ONE path
+// to status='ready': the import_catalog_rows_atomic RPC on the final batch,
+// which also charges storage. A second app-layer flip-to-ready could mark an
+// uncharged catalog searchable. Do not reintroduce.
 // ---------------------------------------------------------------------------
-
-export async function finalizeCatalog(catalogId: string): Promise<CatalogActionResult> {
-  try {
-    const profile = await requireCompanyContext();
-    const admin = createAdminClient() as AdminAny;
-
-    const { error } = await admin
-      .from('catalogs')
-      .update({ status: 'ready', updated_at: new Date().toISOString() })
-      .eq('id', catalogId)
-      .eq('company_id', profile.company_id)
-      .eq('status', 'importing');
-
-    if (error) throw new Error(error.message);
-
-    revalidatePath(`/[workspaceSlug]/catalogs`, 'page');
-    return { ok: true, data: undefined };
-  } catch (err) {
-    console.error('[finalizeCatalog]', err);
-    return { ok: false, code: 'unknown', message: err instanceof Error ? err.message : 'Unexpected error' };
-  }
-}
 
 // ---------------------------------------------------------------------------
 // markCatalogError — flip status to error on import failure (best-effort)
@@ -298,23 +277,20 @@ export async function deleteCatalog(catalogId: string): Promise<CatalogActionRes
     const profile = await requireCompanyContext();
     const admin = createAdminClient() as AdminAny;
 
-    // Fetch data_bytes + status before delete. Storage is only charged once
-    // a catalog reaches 'ready' (see import-rows route, Gerald H-01), so we
-    // only reverse the charge for catalogs that were actually charged.
-    // An abandoned 'importing'/'error' catalog carries a running data_bytes
-    // that was never charged and must NOT be reversed (would under-count).
-    // 'archived' catalogs were 'ready' before archiving, so they ARE charged.
+    // Fetch data_bytes before delete to reverse the storage charge. Under
+    // the atomic-import model storage is charged per-batch as rows land
+    // (import_catalog_rows_atomic), so ANY catalog with rows has been
+    // charged — regardless of status (importing/error/ready/archived).
+    // data_bytes is the authoritative charged total; reverse exactly it.
     const { data: catalogData, error: fetchErr } = await admin
       .from('catalogs')
-      .select('data_bytes, status')
+      .select('data_bytes')
       .eq('id', catalogId)
       .eq('company_id', profile.company_id)
       .single();
 
     if (fetchErr) throw new Error(fetchErr.message);
-    const meta = catalogData as { data_bytes: number; status: string } | null;
-    const wasCharged = meta?.status === 'ready' || meta?.status === 'archived';
-    const dataBytes = wasCharged ? (meta?.data_bytes ?? 0) : 0;
+    const dataBytes = ((catalogData as { data_bytes: number } | null)?.data_bytes) ?? 0;
 
     // Delete (catalog_rows cascade via FK)
     const { error } = await admin
@@ -325,7 +301,7 @@ export async function deleteCatalog(catalogId: string): Promise<CatalogActionRes
 
     if (error) throw new Error(error.message);
 
-    // Decrement storage only for previously-charged catalogs.
+    // Reverse the charged bytes.
     if (dataBytes > 0) {
       await (createAdminClient() as AdminAny).rpc('adjust_company_storage', {
         p_company_id: profile.company_id,
@@ -354,6 +330,7 @@ export async function loadCatalogEntitlements() {
     catalogCount: ent.catalogCount,
     isActive: ent.isActive,
     effectivePlanCode: ent.effectivePlanCode,
+    isOverStorage: ent.isOverStorage,
   };
 }
 

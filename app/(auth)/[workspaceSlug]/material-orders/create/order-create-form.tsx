@@ -15,12 +15,15 @@ import {
 import type { ExistingOrderData } from './order-loader';
 import { BackButton } from '@/app/components/BackButton';
 import { AlertModal } from '@/app/components/AlertModal';
+import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 
 interface OrderCreateFormProps {
   templates: MaterialOrderTemplateRow[];
   flashings: FlashingLibraryRow[];
   quoteData?: QuoteData | null;
   existingOrder?: ExistingOrderData | null;
+  /** When true the company is over storage — block logo upload. */
+  isOverStorage?: boolean;
 }
 
 interface Variable {
@@ -54,7 +57,7 @@ interface OrderLineItem {
   showMeasurements: boolean;
 }
 
-export function OrderCreateForm({ templates, flashings, quoteData, existingOrder }: OrderCreateFormProps) {
+export function OrderCreateForm({ templates, flashings, quoteData, existingOrder, isOverStorage }: OrderCreateFormProps) {
   const router = useRouter();
   
   // Layout state
@@ -102,6 +105,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
   // Header form state - RIGHT
   const [logoUrl, setLogoUrl] = useState('');
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [storageBlocked, setStorageBlocked] = useState(false);
   const [fromCompany, setFromCompany] = useState('');
   const [contactPerson, setContactPerson] = useState('');
   const [contactDetails, setContactDetails] = useState('');
@@ -321,6 +325,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
   
   
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (isOverStorage) { setStorageBlocked(true); return; }
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -518,6 +523,8 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
   }
   
   return (
+    <>
+    <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
     <div className="flex flex-col h-screen bg-slate-50">
       {/* Back Button */}
       <div className="px-6 pt-4">
@@ -1141,6 +1148,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
         onClose={closeAlert}
       />
     </div>
+    </>
   );
 }
 

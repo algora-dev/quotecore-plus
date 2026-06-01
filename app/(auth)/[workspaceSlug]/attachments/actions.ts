@@ -321,6 +321,7 @@ export async function loadAttachmentEntitlements() {
     attachmentCount: ent.attachmentCount,
     isActive: ent.isActive,
     effectivePlanCode: ent.effectivePlanCode,
+    isOverStorage: ent.isOverStorage,
   };
 }
 

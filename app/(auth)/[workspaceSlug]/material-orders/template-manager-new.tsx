@@ -8,9 +8,11 @@ import { TemplateForm } from './template-form';
 interface Props {
   initialTemplates: MaterialOrderTemplateRow[];
   onClose: () => void;
+  /** When true the company is over storage — block logo upload. */
+  isOverStorage?: boolean;
 }
 
-export function TemplateManager({ initialTemplates, onClose }: Props) {
+export function TemplateManager({ initialTemplates, onClose, isOverStorage }: Props) {
   const [templates, setTemplates] = useState(initialTemplates);
   const [showForm, setShowForm] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<MaterialOrderTemplateRow | null>(null);
@@ -107,6 +109,7 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
               onSubmit={handleCreateSubmit}
               onCancel={() => setShowForm(false)}
               saving={saving}
+              isOverStorage={isOverStorage}
             />
           </div>
         </div>
@@ -145,6 +148,7 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
               onSubmit={handleUpdateSubmit}
               onCancel={() => setEditingTemplate(null)}
               saving={saving}
+              isOverStorage={isOverStorage}
             />
           </div>
         </div>

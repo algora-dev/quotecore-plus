@@ -52,6 +52,20 @@ interface Variant {
 function pickVariant(ent: CompanyEntitlements): Variant | null {
   const billingHref = 'View billing';
 
+  // Storage-over-limit is independent of subscription status: a healthy,
+  // active plan can still be "red" on storage. Surface it first — file
+  // uploads are blocked until they free space or upgrade. (Non-file actions
+  // keep working.)
+  if (ent.isOverStorage) {
+    return {
+      tone: 'red',
+      title: 'Storage limit reached.',
+      description:
+        'You’re over your storage limit, so new file uploads are paused. Delete files or quotes to free up space, or upgrade your plan to continue uploading.',
+      ctaLabel: 'Manage storage',
+    };
+  }
+
   switch (ent.subscriptionStatus) {
     case 'past_due': {
       return {

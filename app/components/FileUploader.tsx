@@ -1,5 +1,6 @@
 'use client';
 import { useState, useRef } from 'react';
+import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 
 interface Props {
   accept?: string;
@@ -8,6 +9,10 @@ interface Props {
   currentFileUrl?: string | null;
   label?: string;
   description?: string;
+  /** When true the company is over its storage limit — file uploads are
+   *  blocked. Clicks/drops will open StorageBlockedModal instead of the
+   *  file dialog. Non-file actions are not affected. */
+  isOverStorage?: boolean;
 }
 
 export function FileUploader({
@@ -17,10 +22,12 @@ export function FileUploader({
   currentFileUrl,
   label = 'Upload File',
   description = 'Click to browse or drag and drop',
+  isOverStorage,
 }: Props) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [storageBlocked, setStorageBlocked] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function validateFile(file: File): string | null {
@@ -62,12 +69,13 @@ export function FileUploader({
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     setIsDragging(false);
-
+    if (isOverStorage) { setStorageBlocked(true); return; }
     const file = e.dataTransfer.files[0];
     if (file) handleFile(file);
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (isOverStorage) { setStorageBlocked(true); return; }
     const file = e.target.files?.[0];
     if (file) handleFile(file);
   }
@@ -90,11 +98,12 @@ export function FileUploader({
       )}
 
       {/* Upload zone */}
+      <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
       <div
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
-        onClick={() => inputRef.current?.click()}
+        onClick={() => { if (isOverStorage) { setStorageBlocked(true); return; } inputRef.current?.click(); }}
         className={`
           relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition
           ${isDragging ? 'border-orange-500 bg-blue-50' : 'border-slate-300 hover:border-slate-400 bg-white'}
