@@ -53,6 +53,8 @@ export type MintUploadResult =
         | 'too_large'
         | 'storage_quota_exceeded'
         | 'subscription_inactive'
+        | 'feature_gated'
+        | 'attachment_limit_reached'
         | 'mint_failed';
       message: string;
     };

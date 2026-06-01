@@ -79,6 +79,10 @@ export async function createCatalogMeta(args: {
 
     await requireFeature(profile.company_id, 'catalogs');
     await requireCatalogSlot(profile.company_id);
+    // Pre-flight quota check using the browser estimate (best-effort early
+    // rejection only). Authoritative byte accounting + the real quota gate
+    // happen server-side in the import-rows route as rows actually land
+    // (Gerald H-01). We do NOT charge storage here.
     await assertCanUseStorage(profile.company_id, args.dataBytes);
 
     const admin = createAdminClient() as AdminAny;
@@ -89,8 +93,11 @@ export async function createCatalogMeta(args: {
         company_id: profile.company_id,
         name: args.name.trim(),
         original_filename: args.originalFilename,
-        row_count: args.rowCount,
-        data_bytes: args.dataBytes,
+        row_count: 0,
+        // Authoritative size is computed + charged in import-rows as rows
+        // land. Start at 0 so storage accounting is never overstated by a
+        // browser-supplied estimate and delete reverses the true amount.
+        data_bytes: 0,
         column_mapping: args.columnMapping,
         headers: args.headers,
         status: 'importing',
@@ -101,15 +108,6 @@ export async function createCatalogMeta(args: {
     if (error) throw new Error(error.message);
 
     const catalogId = (data as { id: string }).id;
-
-    // Increment storage_used_bytes. Catalog rows are stored in the DB (not
-    // Supabase Storage), so the storage trigger doesn't fire — manual delta.
-    if (args.dataBytes > 0) {
-      await (createAdminClient() as AdminAny).rpc('adjust_company_storage', {
-        p_company_id: profile.company_id,
-        p_delta_bytes: args.dataBytes,
-      });
-    }
 
     revalidatePath(`/[workspaceSlug]/catalogs`, 'page');
     return { ok: true, data: { catalogId } };
@@ -300,16 +298,23 @@ export async function deleteCatalog(catalogId: string): Promise<CatalogActionRes
     const profile = await requireCompanyContext();
     const admin = createAdminClient() as AdminAny;
 
-    // Fetch data_bytes before delete to decrement storage
+    // Fetch data_bytes + status before delete. Storage is only charged once
+    // a catalog reaches 'ready' (see import-rows route, Gerald H-01), so we
+    // only reverse the charge for catalogs that were actually charged.
+    // An abandoned 'importing'/'error' catalog carries a running data_bytes
+    // that was never charged and must NOT be reversed (would under-count).
+    // 'archived' catalogs were 'ready' before archiving, so they ARE charged.
     const { data: catalogData, error: fetchErr } = await admin
       .from('catalogs')
-      .select('data_bytes')
+      .select('data_bytes, status')
       .eq('id', catalogId)
       .eq('company_id', profile.company_id)
       .single();
 
     if (fetchErr) throw new Error(fetchErr.message);
-    const dataBytes = ((catalogData as { data_bytes: number } | null)?.data_bytes) ?? 0;
+    const meta = catalogData as { data_bytes: number; status: string } | null;
+    const wasCharged = meta?.status === 'ready' || meta?.status === 'archived';
+    const dataBytes = wasCharged ? (meta?.data_bytes ?? 0) : 0;
 
     // Delete (catalog_rows cascade via FK)
     const { error } = await admin
@@ -320,7 +325,7 @@ export async function deleteCatalog(catalogId: string): Promise<CatalogActionRes
 
     if (error) throw new Error(error.message);
 
-    // Decrement storage
+    // Decrement storage only for previously-charged catalogs.
     if (dataBytes > 0) {
       await (createAdminClient() as AdminAny).rpc('adjust_company_storage', {
         p_company_id: profile.company_id,

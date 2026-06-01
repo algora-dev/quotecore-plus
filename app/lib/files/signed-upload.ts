@@ -27,7 +27,14 @@ import { randomUUID } from 'node:crypto';
 
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { requireCompanyContext } from '@/app/lib/supabase/server';
-import { assertCanUseStorage } from '@/app/lib/billing/entitlements';
+import {
+  assertCanUseStorage,
+  requireFeature,
+  requireAttachmentSlot,
+  FeatureGatedError,
+  AttachmentLimitReachedError,
+  SubscriptionInactiveError,
+} from '@/app/lib/billing/entitlements';
 import { isBillingError } from '@/app/lib/billing/errors';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import type { MintUploadInput, MintUploadResult } from './signed-upload-types';
@@ -105,7 +112,30 @@ export async function mintQuoteDocumentUploadUrl(
     }
   }
 
-  // 3) Pre-flight quota + subscription-active check
+  // 3a) Library scope (attachment library) requires the feature + an open
+  //     slot BEFORE we mint a URL or any bytes land. Without this gate a
+  //     disabled/Starter account, or a user at cap, could upload a file via
+  //     a direct mint call and orphan it in storage (Gerald H-02).
+  if (input.scope.kind === 'library') {
+    try {
+      await requireFeature(companyId, 'attachment_library');
+      await requireAttachmentSlot(companyId);
+    } catch (err) {
+      if (err instanceof SubscriptionInactiveError) {
+        return { ok: false, code: 'subscription_inactive', message: err.message };
+      }
+      if (err instanceof FeatureGatedError) {
+        return { ok: false, code: 'feature_gated', message: err.message };
+      }
+      if (err instanceof AttachmentLimitReachedError) {
+        return { ok: false, code: 'attachment_limit_reached', message: err.message };
+      }
+      const msg = err instanceof Error ? err.message : 'mint_failed';
+      return { ok: false, code: 'mint_failed', message: msg };
+    }
+  }
+
+  // 3b) Pre-flight quota + subscription-active check
   try {
     await assertCanUseStorage(companyId, input.claimedSize);
   } catch (err) {

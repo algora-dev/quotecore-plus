@@ -60,7 +60,6 @@ export function CatalogList({
   catalogsEnabled,
   catalogLimit,
   catalogCount,
-  effectivePlanCode,
   subscriptionActive,
 }: Props) {
   const router = useRouter();

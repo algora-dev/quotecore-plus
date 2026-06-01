@@ -33,13 +33,28 @@ Goal: at quote-send (and order-send), user chooses IF + WHAT to attach each time
 ## PHASE 6 — Wire selected files into the send pipeline
 Goal: chosen files actually get attached to the outbound email.
 
-1. **`SendOutboundMessageInput`** (`app/lib/messages/send.ts`): add `attachmentSources?: AttachmentSource[]` (import type from `app/lib/email/attachments.ts`).
-2. Inside `sendOutboundMessage`, after rendering, before `sendEmail(...)`:
-   `const attachments = input.attachmentSources?.length ? await buildEmailAttachments(input.attachmentSources) : undefined;`
+**REVISED PER GERALD H-03 (2026-06-01) — do NOT use the naive `attachmentSources?: AttachmentSource[]` design. It puts raw, downloadable storage paths on a long-lived public send input, so any future caller could pass client-supplied paths into a service-role downloader. Use the resolver pattern below instead.**
+
+1. **Do NOT expose raw `AttachmentSource[]` on `SendOutboundMessageInput`.** Instead add an ID-only selection field:
+   ```ts
+   attachmentSelection?: {
+     libraryAttachmentIds?: string[];
+     quoteFileIds?: string[];
+   };
+   ```
+   The send input already carries `companyId` and `relatedQuoteId` — those + the IDs are everything the resolver needs.
+2. **Add a server-only resolver** `resolveOutboundAttachmentSources({ companyId, quoteId, libraryAttachmentIds, quoteFileIds })` (new, e.g. in `app/lib/messages/attachmentResolver.ts`, `import 'server-only'`). It MUST:
+   - query `company_attachments` by `id IN (...) AND company_id = companyId AND archived_at IS NULL`;
+   - query `quote_files` by `id IN (...) AND quote_id = quoteId` (and verify that quote belongs to companyId);
+   - return `AttachmentSource[]` built ONLY from rows that passed those scoped checks (silently drop any id that didn't resolve — never trust the client list).
+3. Inside `sendOutboundMessage`, after rendering, before `sendEmail(...)`:
+   `const sources = input.attachmentSelection ? await resolveOutboundAttachmentSources({...}) : [];`
+   `const attachments = sources.length ? await buildEmailAttachments(sources) : undefined;`
    then pass `attachments` into the `sendEmail({ ... })` call.
-3. **Ownership gate (CRITICAL — judgment, do NOT skip):** the server action assembling the source list (`send-message-actions.ts` for quotes, order equivalent) MUST resolve `storage_path` ONLY from RLS-bound / company-scoped queries (`company_attachments` by id+company_id, `quote_files` by quote+company). NEVER accept a raw storage path from the client. Client sends attachment IDs; server resolves IDs→paths after verifying ownership, then builds `AttachmentSource[]`.
-4. **Accept-token auto-message path** (`app/accept/[token]/actions.ts`): if acceptance auto-messages send email and should carry the template's baked attachment, thread it the same way (resolve template `attachment_id` → company_attachments path → attachmentSources). Confirm whether this path calls `sendOutboundMessage`; if it uses a different send, wire there. (Verify — note says quote send currently sends a LINK only; the attachment pipeline is net-new here.)
-5. Remember: Vercel serverless — the `buildEmailAttachments` + `sendEmail` must be `await`ed (already are in the chokepoint). No fire-and-forget.
+4. **Lock down `buildEmailAttachments` as a defence-in-depth measure:** make it module-private to the send pipeline OR require a `companyId` param and assert every `storagePath` begins with `${companyId}/` before download. Prefix checks are not a substitute for the DB ownership checks in the resolver, but they catch misuse of the service-role downloader. (Gerald H-03 remediation #4.)
+5. **Client picker props carry IDs, not paths.** `loadAttachmentsForPicker()` currently returns `storage_path`; for the send picker, return `{id, name, file_name, file_size}` only — resolve `id → storage_path` server-side at send time. Keep raw storage paths out of client component props.
+6. **Accept-token auto-message path** (`app/accept/[token]/actions.ts`): if acceptance auto-messages send email and should carry the template's baked attachment, thread it the same way — resolve template `attachment_id` → via the resolver (server-side, company-scoped). Confirm whether this path calls `sendOutboundMessage`; if it uses a different send, wire there. (Verify — quote send currently sends a LINK only; the attachment pipeline is net-new here.)
+7. Remember: Vercel serverless — the resolver + `buildEmailAttachments` + `sendEmail` must be `await`ed (already are in the chokepoint). No fire-and-forget.
 
 ## Verification gate (MANDATORY before push)
 1. `npx tsc --noEmit` clean.

@@ -79,7 +79,7 @@ async function parseCsvFile(file: File, firstRowIsHeader: boolean): Promise<Pars
       skipEmptyLines: 'greedy',
       complete: (results) => {
         const warnings: string[] = [];
-        let matrix = results.data as string[][];
+        const matrix = results.data as string[][];
 
         if (matrix.length === 0) {
           resolve({ headers: [], rows: [], warnings: ['File appears to be empty.'], synthesised: false });

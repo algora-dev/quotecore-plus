@@ -43,13 +43,26 @@ export type EmailAttachment = {
 };
 
 /**
- * Resend's hard limit on total message size is ~40MB. We use a slightly
- * conservative ceiling to leave headroom for the html body, headers, and
- * base64 encoding overhead (~33% inflation on the wire). This is NOT a
- * product cap on file size - per-file limits and storage quotas live
- * elsewhere. This is purely the deliverability hard-fact guard.
+ * Resend's hard limit on total message size is ~40MB, measured on the WIRE
+ * (i.e. after base64 encoding). Attachments are base64-encoded, which
+ * inflates raw bytes by ~33% (4 chars per 3 bytes). The previous guard
+ * compared RAW bytes to 38MB, so ~38MB of files became ~50.7MB encoded and
+ * blew past Resend's limit (Gerald M-01). We now compute the ENCODED size
+ * of attachments + the html/text body + a header/MIME-boundary headroom and
+ * compare that to the wire ceiling.
+ *
+ * This is NOT a product cap on file size - per-file limits and storage
+ * quotas live elsewhere. This is purely the deliverability hard-fact guard.
  */
-const MAX_TOTAL_ATTACHMENT_BYTES = 38 * 1024 * 1024; // 38 MB raw
+const RESEND_WIRE_CEILING_BYTES = 40 * 1024 * 1024; // Resend hard limit (encoded)
+const MIME_HEADROOM_BYTES = 1 * 1024 * 1024; // headers, boundaries, encoded html safety
+// Conservative wire budget for attachments after reserving headroom.
+const MAX_ENCODED_BUDGET_BYTES = RESEND_WIRE_CEILING_BYTES - MIME_HEADROOM_BYTES;
+
+/** base64 encodes 3 raw bytes into 4 chars (with padding). */
+function base64EncodedSize(rawBytes: number): number {
+  return Math.ceil(rawBytes / 3) * 4;
+}
 
 export type SendEmailResult =
   | { ok: true; id: string }
@@ -69,14 +82,20 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
   // attachment payload exceeds the message-size ceiling. Base64 on the wire
   // inflates this further, so the conservative ceiling protects us.
   if (input.attachments && input.attachments.length > 0) {
-    const totalBytes = input.attachments.reduce((sum, a) => sum + a.content.length, 0);
-    if (totalBytes > MAX_TOTAL_ATTACHMENT_BYTES) {
-      const mb = (totalBytes / 1024 / 1024).toFixed(1);
+    const rawAttachmentBytes = input.attachments.reduce((sum, a) => sum + a.content.length, 0);
+    const encodedAttachmentBytes = base64EncodedSize(rawAttachmentBytes);
+    const bodyBytes =
+      Buffer.byteLength(input.html ?? '', 'utf8') + Buffer.byteLength(input.text ?? '', 'utf8');
+    const totalWireBytes = encodedAttachmentBytes + bodyBytes;
+    if (totalWireBytes > MAX_ENCODED_BUDGET_BYTES) {
+      // Report the usable RAW attachment budget to the user (more intuitive
+      // than encoded bytes). Roughly (budget - body) * 3/4.
+      const rawBudget = Math.max(0, Math.floor(((MAX_ENCODED_BUDGET_BYTES - bodyBytes) * 3) / 4));
+      const rawMb = (rawAttachmentBytes / 1024 / 1024).toFixed(1);
+      const budgetMb = (rawBudget / 1024 / 1024).toFixed(0);
       return {
         ok: false,
-        error: `Attachments total ${mb}MB, which exceeds the ${Math.round(
-          MAX_TOTAL_ATTACHMENT_BYTES / 1024 / 1024,
-        )}MB email limit. Remove or shrink some files and try again.`,
+        error: `Attachments total ${rawMb}MB, which exceeds the ~${budgetMb}MB email attachment limit once encoded. Remove or shrink some files and try again.`,
       };
     }
   }

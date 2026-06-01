@@ -73,17 +73,26 @@ export async function createAttachment(args: {
   claimedSize: number;
   mimeType: string | null;
 }): Promise<AttachmentActionResult<{ attachmentId: string }>> {
+  // Set once we've confirmed the object lives under this company's library
+  // prefix. If creation then fails (entitlement race, DB insert error, etc.)
+  // we delete the just-uploaded object so it cannot orphan + consume storage
+  // (Gerald H-02). Only ever set to a verified, company-owned path.
+  let cleanupPath: string | null = null;
   try {
     const profile = await requireCompanyContext();
 
-    await requireFeature(profile.company_id, 'attachment_library');
-    await requireAttachmentSlot(profile.company_id);
-
-    // Path ownership: the object MUST live under this company's library folder.
+    // Path ownership FIRST: the object MUST live under this company's library
+    // folder. Validate before the entitlement gate so a failed gate can
+    // safely trigger cleanup of the verified path.
     const expectedPrefix = `${profile.company_id}/library/`;
     if (!args.storagePath.startsWith(expectedPrefix)) {
       return { ok: false, code: 'invalid_path', message: 'Invalid storage path for attachment.' };
     }
+    cleanupPath = args.storagePath;
+
+    await requireFeature(profile.company_id, 'attachment_library');
+    await requireAttachmentSlot(profile.company_id);
+
     if (!args.name.trim()) {
       return { ok: false, code: 'validation', message: 'Please give the attachment a name.' };
     }
@@ -125,23 +134,46 @@ export async function createAttachment(args: {
     if (error) throw new Error(error.message);
 
     const attachmentId = (data as { id: string }).id;
+    cleanupPath = null; // success — keep the object
     revalidatePath(`/[workspaceSlug]/attachments`, 'page');
     return { ok: true, data: { attachmentId } };
   } catch (err) {
     if (err instanceof FeatureGatedError) {
+      await cleanupOrphan(cleanupPath);
       return { ok: false, code: 'feature_gated', message: err.message };
     }
     if (err instanceof AttachmentLimitReachedError) {
+      await cleanupOrphan(cleanupPath);
       return { ok: false, code: 'attachment_limit_reached', message: err.message };
     }
     if (err instanceof SubscriptionInactiveError) {
+      await cleanupOrphan(cleanupPath);
       return { ok: false, code: 'subscription_inactive', message: err.message };
     }
     if (isBillingError(err)) {
+      await cleanupOrphan(cleanupPath);
       return { ok: false, code: err.code, message: err.message };
     }
     console.error('[createAttachment]', err);
+    await cleanupOrphan(cleanupPath);
     return { ok: false, code: 'unknown', message: err instanceof Error ? err.message : 'Unexpected error' };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// cleanupOrphan — best-effort delete of a just-uploaded library object whose
+// metadata row failed to create. Caller passes only a company-verified path
+// (checked against the {companyId}/library/ prefix) so this can never remove
+// an object outside the caller's folder. The storage.objects DELETE trigger
+// decrements storage_used_bytes automatically.
+// ---------------------------------------------------------------------------
+async function cleanupOrphan(storagePath: string | null): Promise<void> {
+  if (!storagePath) return;
+  try {
+    const admin = createAdminClient() as AdminAny;
+    await admin.storage.from(BUCKETS.QUOTE_DOCUMENTS).remove([storagePath]);
+  } catch (e) {
+    console.error('[createAttachment] orphan cleanup failed for', storagePath, e);
   }
 }
 

@@ -304,14 +304,12 @@ export function CompanySettingsForm({
       )}
 
       {/* Templates shortcut — quick access from the trade section */}
-      <div className="flex items-center justify-between py-4 border-t border-slate-100">
-        <div>
-          <p className="text-sm font-semibold text-slate-900">Resource Library</p>
-          <p className="text-xs text-slate-500 mt-0.5">Manage all your quote templates, message templates, customer quote templates, order templates, catalog files, and upload library.</p>
-        </div>
+      <div className="py-4 border-t border-slate-100">
+        <p className="text-sm font-semibold text-slate-900">Resource Library</p>
+        <p className="text-xs text-slate-500 mt-0.5">Manage all your quote templates, message templates, customer quote templates, order templates, catalog files, and upload library.</p>
         <Link
           href={`/${workspaceSlug}/resources`}
-          className="px-4 py-2 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          className="inline-block mt-3 px-4 py-2 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] whitespace-nowrap"
         >
           Resource Library
         </Link>
