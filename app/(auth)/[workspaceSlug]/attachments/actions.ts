@@ -292,6 +292,20 @@ export async function deleteAttachment(attachmentId: string): Promise<Attachment
       }
     }
 
+    // Phase 4: explicitly null any email_templates baking this attachment as
+    // their default, scoped to this company. The FK is ON DELETE SET NULL so
+    // DB integrity is guaranteed either way, but doing it here makes the
+    // behaviour intentional and lets us revalidate the templates surface.
+    const { error: tmplErr } = await admin
+      .from('email_templates')
+      .update({ attachment_id: null })
+      .eq('attachment_id', attachmentId)
+      .eq('company_id', profile.company_id);
+    if (tmplErr) {
+      // Non-fatal: the FK will still null these on delete below.
+      console.error('[deleteAttachment] template unlink failed:', tmplErr.message);
+    }
+
     const { error } = await admin
       .from('company_attachments')
       .delete()
@@ -301,6 +315,7 @@ export async function deleteAttachment(attachmentId: string): Promise<Attachment
     if (error) throw new Error(error.message);
 
     revalidatePath(`/[workspaceSlug]/attachments`, 'page');
+    revalidatePath(`/[workspaceSlug]/resources`, 'page');
     return { ok: true, data: undefined };
   } catch (err) {
     console.error('[deleteAttachment]', err);

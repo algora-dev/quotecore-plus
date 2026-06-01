@@ -7,11 +7,22 @@ import {
   type MessageTemplateKind,
 } from './email-actions';
 import { variablesForKind, VAR_LABELS } from '@/app/lib/messages/mergeVars';
+import type { AttachmentRow } from '../attachments/actions';
 
 interface Props {
   template?: EmailTemplate | null;
+  /** Company attachment library (all rows; archived ones filtered out here). */
+  attachments?: AttachmentRow[];
+  /** Pro+ entitlement (feat_attachment_library). Gates the baked-file picker. */
+  attachmentsEnabled?: boolean;
   onClose: () => void;
   onSaved: () => void;
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 /**
@@ -86,7 +97,13 @@ Kind regards,
 {{company_name}}`,
 };
 
-export function EmailTemplateEditor({ template, onClose, onSaved }: Props) {
+export function EmailTemplateEditor({
+  template,
+  attachments = [],
+  attachmentsEnabled = false,
+  onClose,
+  onSaved,
+}: Props) {
   const [name, setName] = useState(template?.name || '');
   // `template.kind` was added in the 2026-05-12 migration; old rows default to 'custom'.
   const [kind, setKind] = useState<MessageTemplateKind>(
@@ -97,8 +114,19 @@ export function EmailTemplateEditor({ template, onClose, onSaved }: Props) {
   );
   const [body, setBody] = useState(template?.body || DEFAULT_BODY_BY_KIND.quote_send);
   const [isDefault, setIsDefault] = useState(template?.is_default || false);
+  // Baked default attachment (company_attachments id) — Phase 4. The send-time
+  // resolver re-verifies ownership; here we only offer this company's files.
+  const [attachmentId, setAttachmentId] = useState<string | null>(
+    template?.attachment_id ?? null,
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  // Active (non-archived) library files only.
+  const activeAttachments = useMemo(
+    () => attachments.filter((a) => !a.archived_at),
+    [attachments],
+  );
 
   const availableVars = useMemo(() => variablesForKind(kind), [kind]);
 
@@ -115,10 +143,20 @@ export function EmailTemplateEditor({ template, onClose, onSaved }: Props) {
     setSaving(true);
     setError('');
     try {
+      // Only persist a baked attachment when the company is entitled AND the
+      // chosen id still exists in the active library (guards a stale selection).
+      const bakedAttachmentId =
+        attachmentsEnabled && attachmentId && activeAttachments.some((a) => a.id === attachmentId)
+          ? attachmentId
+          : null;
       if (template) {
-        await updateEmailTemplate(template.id, { name, subject, body, is_default: isDefault, kind });
+        await updateEmailTemplate(template.id, {
+          name, subject, body, is_default: isDefault, kind, attachment_id: bakedAttachmentId,
+        });
       } else {
-        await createEmailTemplate({ name, subject, body, is_default: isDefault, kind });
+        await createEmailTemplate({
+          name, subject, body, is_default: isDefault, kind, attachment_id: bakedAttachmentId,
+        });
       }
       onSaved();
     } catch (err) {
@@ -251,6 +289,41 @@ export function EmailTemplateEditor({ template, onClose, onSaved }: Props) {
           />
           <span className="text-sm text-slate-600">Set as default for this kind</span>
         </label>
+
+        {/* Baked default attachment (Pro+) */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Default attachment</label>
+          {!attachmentsEnabled ? (
+            <p className="text-xs text-slate-500">
+              Attaching files to templates is available on Pro and above. Upgrade to bake a
+              file from your Attachment Library into this template.
+            </p>
+          ) : activeAttachments.length === 0 ? (
+            <p className="text-xs text-slate-500">
+              No files in your Attachment Library yet. Add files under the Attachments tab,
+              then return here to bake one in as a default.
+            </p>
+          ) : (
+            <>
+              <select
+                value={attachmentId ?? ''}
+                onChange={(e) => setAttachmentId(e.target.value || null)}
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+              >
+                <option value="">No attachment</option>
+                {activeAttachments.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} ({formatBytes(a.file_size)})
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-slate-500">
+                When this template is used, this file is pre-selected as a downloadable
+                attachment on the sent quote/order. The sender can change it per send.
+              </p>
+            </>
+          )}
+        </div>
 
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-2">

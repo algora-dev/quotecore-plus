@@ -36,6 +36,10 @@ export async function createEmailTemplate(input: {
   is_default?: boolean;
   kind?: MessageTemplateKind;
   category?: string | null;
+  // Optional company_attachments id baked into this template as a default
+  // attachment. Ownership is enforced at send time by the resolver (Phase 6);
+  // here we trust the picker, which only lists this company's attachments.
+  attachment_id?: string | null;
 }): Promise<EmailTemplate> {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
@@ -59,6 +63,7 @@ export async function createEmailTemplate(input: {
       is_default: input.is_default || false,
       kind: input.kind ?? 'custom',
       category: input.category ?? null,
+      attachment_id: input.attachment_id ?? null,
     })
     .select()
     .single();
@@ -78,6 +83,7 @@ export async function updateEmailTemplate(
     is_default?: boolean;
     kind?: MessageTemplateKind;
     category?: string | null;
+    attachment_id?: string | null;
   },
 ): Promise<void> {
   const profile = await requireCompanyContext();

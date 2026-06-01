@@ -410,6 +410,8 @@ export function TemplatesPageClient({
       {editingEmailTemplate !== undefined && (
         <EmailTemplateEditor
           template={editingEmailTemplate}
+          attachments={attachments}
+          attachmentsEnabled={attachmentEntitlements.attachmentsEnabled}
           onClose={() => setEditingEmailTemplate(undefined)}
           onSaved={() => {
             setEditingEmailTemplate(undefined);

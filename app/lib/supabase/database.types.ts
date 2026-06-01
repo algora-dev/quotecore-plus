@@ -853,6 +853,7 @@ export type Database = {
       }
       email_templates: {
         Row: {
+          attachment_id: string | null
           body: string
           category: string | null
           company_id: string
@@ -865,6 +866,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          attachment_id?: string | null
           body?: string
           category?: string | null
           company_id: string
@@ -877,6 +879,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          attachment_id?: string | null
           body?: string
           category?: string | null
           company_id?: string
@@ -889,6 +892,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "email_templates_attachment_id_fkey"
+            columns: ["attachment_id"]
+            isOneToOne: false
+            referencedRelation: "company_attachments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "email_templates_company_id_fkey"
             columns: ["company_id"]
