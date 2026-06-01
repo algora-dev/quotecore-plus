@@ -9,6 +9,8 @@ import { EditCustomerTemplateModal } from './EditCustomerTemplateModal';
 import { EmailTemplateEditor } from './EmailTemplateEditor';
 import { deleteEmailTemplate } from './email-actions';
 import type { EmailTemplate } from './email-actions';
+import { AttachmentsTab } from '../attachments/AttachmentsTab';
+import type { AttachmentRow } from '../attachments/actions';
 
 
 interface Props {
@@ -17,13 +19,21 @@ interface Props {
   quoteTemplates: TemplateRow[];
   customerQuoteTemplates: CustomerQuoteTemplateRow[];
   emailTemplates: EmailTemplate[];
+  attachments: AttachmentRow[];
+  attachmentEntitlements: {
+    attachmentsEnabled: boolean;
+    attachmentLimit: number | null;
+    attachmentCount: number;
+    isActive: boolean;
+    effectivePlanCode: string;
+  };
   initialTab: string;
 }
 
-export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, customerQuoteTemplates, emailTemplates, initialTab }: Props) {
+export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, customerQuoteTemplates, emailTemplates, attachments, attachmentEntitlements, initialTab }: Props) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'quote' | 'customer' | 'email'>(
-    initialTab === 'customer' ? 'customer' : initialTab === 'email' ? 'email' : 'quote'
+  const [activeTab, setActiveTab] = useState<'quote' | 'customer' | 'email' | 'attachments'>(
+    initialTab === 'customer' ? 'customer' : initialTab === 'email' ? 'email' : initialTab === 'attachments' ? 'attachments' : 'quote'
   );
   
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -60,8 +70,8 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
     <div className="space-y-5">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Templates</h1>
-          <p className="text-sm text-slate-500 mt-1">Manage quote, customer, and message templates.</p>
+          <h1 className="text-2xl font-semibold text-slate-900">Company Templates &amp; Attachments</h1>
+          <p className="text-sm text-slate-500 mt-1">Manage quote, customer, and message templates, plus your reusable attachment library.</p>
         </div>
 
         {/* Tabs */}
@@ -101,10 +111,26 @@ export function TemplatesPageClient({ workspaceSlug, companyId, quoteTemplates, 
           >
             Message
           </button>
+          <button
+            onClick={() => setActiveTab('attachments')}
+            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
+              activeTab === 'attachments'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
+            }`}
+          >
+            Attachments
+          </button>
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'email' ? (
+        {activeTab === 'attachments' ? (
+          <AttachmentsTab
+            workspaceSlug={workspaceSlug}
+            attachments={attachments}
+            entitlements={attachmentEntitlements}
+          />
+        ) : activeTab === 'email' ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-sm text-slate-500">Message templates for sending quotes, orders, and follow-ups directly from the app.</p>

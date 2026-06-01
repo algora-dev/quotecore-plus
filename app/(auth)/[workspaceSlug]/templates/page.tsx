@@ -1,6 +1,7 @@
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadCustomerQuoteTemplates } from '../quotes/actions';
 import { loadEmailTemplates } from './email-actions';
+import { loadAttachments, loadAttachmentEntitlements } from '../attachments/actions';
 import { TemplatesPageClient } from './TemplatesPageClient';
 import { BackButton } from '@/app/components/BackButton';
 
@@ -24,9 +25,11 @@ export default async function TemplatesPage({
     .eq('company_id', profile.company_id)
     .order('name');
 
-  const [customerQuoteTemplates, emailTemplates] = await Promise.all([
+  const [customerQuoteTemplates, emailTemplates, attachments, attachmentEntitlements] = await Promise.all([
     loadCustomerQuoteTemplates(),
     loadEmailTemplates(),
+    loadAttachments(),
+    loadAttachmentEntitlements(),
   ]);
 
   return (
@@ -38,6 +41,8 @@ export default async function TemplatesPage({
       quoteTemplates={quoteTemplates || []}
       customerQuoteTemplates={customerQuoteTemplates}
       emailTemplates={emailTemplates}
+      attachments={attachments}
+      attachmentEntitlements={attachmentEntitlements}
       initialTab={tab || 'quote'}
     />
     </section>
