@@ -103,3 +103,8 @@ Status: #1, #2, #3a, #3b, #3c, #4 BUILT + tsc clean + `next build` green. #5 sco
 - Net effect on attack surface: the page is reachable in the decided state where it previously returned a card. It exposes the same quote the token already authorised. No new query, no new field, no auth relaxation.
 
 **Other fixes (NOT Gerald surface, listed for completeness):** #1 picker dropdown (IDs-only unchanged), #2 recipient copy, #3a download-all (now uses the #3b forced-download hrefs), #3c per-row View/Download split (both go through the same gated route).
+
+**#5 — catalog Units toggle (commit `932203f`, NOT a security surface, courtesy mention):** added nullable `customer_quote_lines.quantity_text` (migration `20260601180000`) + shared `displayLineText()` so the Units toggle hides catalog quantities without string-splitting. No auth/RLS/external-surface change; additive nullable column, no backfill. **Requires migration applied to Supabase + `database.types.ts` regen before it works live** (Gavin has no DB creds in this workspace — Shaun applies).
+
+### Bundle HEAD for Gerald
+`development` after commit `932203f`. Re-audit scope = Round-9 catalog atomic-import (RPC `import_catalog_rows_atomic`, migration `20260601150000`) + Phase 6 gated-download route + #3b disposition change + #4 courtesy. #5 is informational only.
