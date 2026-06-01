@@ -47,6 +47,13 @@ interface Variant {
   title: string;
   description: string;
   ctaLabel: string;
+  /**
+   * When true, the CTA renders in the app's standard button style
+   * (black pill, text-sm font-medium) instead of the tone-coloured banner
+   * button. Used for the storage-over-limit variant so its CTA matches
+   * every other button in the app.
+   */
+  standardCta?: boolean;
 }
 
 function pickVariant(ent: CompanyEntitlements): Variant | null {
@@ -63,6 +70,7 @@ function pickVariant(ent: CompanyEntitlements): Variant | null {
       description:
         'You’re over your storage limit, so new file uploads are paused. Delete files or quotes to free up space, or upgrade your plan to continue uploading.',
       ctaLabel: 'Manage storage',
+      standardCta: true,
     };
   }
 
@@ -207,7 +215,11 @@ export function EntitlementBanner({ entitlements, workspaceSlug }: EntitlementBa
         <Link
           href={`/${workspaceSlug}/account?tab=billing`}
           prefetch={false}
-          className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-semibold ${CTA_TONE_CLASSES[variant.tone]}`}
+          className={
+            variant.standardCta
+              ? 'inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium text-white bg-black hover:bg-slate-800 transition-all'
+              : `inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-semibold ${CTA_TONE_CLASSES[variant.tone]}`
+          }
         >
           {variant.ctaLabel}
         </Link>
