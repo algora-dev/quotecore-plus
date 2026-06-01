@@ -14,6 +14,7 @@ import type { QuoteTaxRow } from '@/app/lib/taxes/types';
 import { TaxEditor, type EditableTax } from '@/app/components/TaxEditor';
 import { EditHeaderModal } from '../customer-edit/EditHeaderModal';
 import { EditFooterModal } from '../customer-edit/EditFooterModal';
+import { CatalogSearchModal } from '../customer-edit/CatalogSearchModal';
 
 /**
  * Blank Quote Builder.
@@ -156,6 +157,20 @@ export function BlankQuoteBuilder({
     setIsDirty(true);
   }, []);
 
+  // Catalog Search adds a fully-populated line in one shot. Mirrors the
+  // customer editor's addCustomLine signature so CatalogSearchModal's
+  // onAdd contract works unchanged.
+  const addCatalogLine = useCallback(
+    (text: string, amount: number, showPrice: boolean) => {
+      setLines((prev) => [
+        ...prev,
+        { id: tempLineId(), text, amount, showPrice },
+      ]);
+      setIsDirty(true);
+    },
+    [],
+  );
+
   const updateLine = useCallback((id: string, patch: Partial<QuoteLine>) => {
     setLines((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
     setIsDirty(true);
@@ -223,6 +238,7 @@ export function BlankQuoteBuilder({
 
   const [showHeader, setShowHeader] = useState(false);
   const [showFooter, setShowFooter] = useState(false);
+  const [showCatalogSearch, setShowCatalogSearch] = useState(false);
 
   const handleSave = useCallback(async () => {
     setSaving(true);
@@ -396,13 +412,22 @@ export function BlankQuoteBuilder({
           <section className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-slate-900">Quote lines</h2>
-              <button
-                type="button"
-                onClick={addLine}
-                className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.4)]"
-              >
-                + Add line
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCatalogSearch(true)}
+                  className="px-3 py-1.5 text-sm font-medium rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all"
+                >
+                  Search Catalog
+                </button>
+                <button
+                  type="button"
+                  onClick={addLine}
+                  className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.4)]"
+                >
+                  + Add line
+                </button>
+              </div>
             </div>
             {lines.length === 0 ? (
               <div className="rounded-lg border border-dashed border-slate-200 px-4 py-8 text-center">
@@ -699,6 +724,15 @@ export function BlankQuoteBuilder({
             setShowFooter(false);
           }}
           onCancel={() => setShowFooter(false)}
+        />
+      )}
+
+      {/* Catalog Search Modal — same component the customer editor uses */}
+      {showCatalogSearch && (
+        <CatalogSearchModal
+          workspaceSlug={workspaceSlug}
+          onAdd={addCatalogLine}
+          onClose={() => setShowCatalogSearch(false)}
         />
       )}
     </div>
