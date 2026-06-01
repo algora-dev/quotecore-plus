@@ -4,6 +4,7 @@ import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { OrderResponseForm } from './OrderResponseForm';
 import { OrderBody } from './OrderBody';
 import { DownloadOrderButton } from './DownloadOrderButton';
+import { AttachmentsCard } from '@/app/components/public/AttachmentsCard';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,6 +73,18 @@ export default async function PublicOrderPage({ params }: Props) {
 
   const companyName = order.from_company || company?.name || 'Sender';
 
+  // Hosted attachments for this order (Option B, library files only). Token
+  // already validated above; the gated download route re-validates it.
+  const { data: attachmentRows } = await supabase
+    .from('message_attachments')
+    .select('id, display_name')
+    .eq('order_id', order.id)
+    .order('created_at', { ascending: true });
+  const attachments = (attachmentRows ?? []).map((r) => ({
+    id: r.id,
+    displayName: r.display_name,
+  }));
+
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4">
       <div className="mx-auto max-w-3xl">
@@ -100,6 +113,12 @@ export default async function PublicOrderPage({ params }: Props) {
           alreadyResponded={!!latestResponse}
           downloadAction={<DownloadOrderButton />}
         />
+
+        {attachments.length > 0 ? (
+          <div className="mt-6">
+            <AttachmentsCard token={token} files={attachments} />
+          </div>
+        ) : null}
 
         <footer className="mt-10 text-center text-xs text-slate-400">
           Sent via QuoteCore<span className="text-orange-500">+</span>

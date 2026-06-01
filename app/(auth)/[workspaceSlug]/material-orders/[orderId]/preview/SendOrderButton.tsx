@@ -7,6 +7,11 @@ import {
   sendOrderMessage,
 } from './send-order-actions';
 import { generateOrderSupplierToken } from './supplier-link-actions';
+import {
+  AttachmentSendPicker,
+  type PickerFile,
+  type AttachmentSelection,
+} from '@/app/components/attachments/AttachmentSendPicker';
 
 interface Props {
   orderId: string;
@@ -18,6 +23,10 @@ interface Props {
   defaultRecipientEmail?: string | null;
   defaultRecipientName?: string | null;
   companyName: string | null;
+  /** Attachment-library files for the send picker (orders = library only). */
+  libraryFiles: PickerFile[];
+  /** True when the attachment library isn't in the company's plan. */
+  libraryLocked: boolean;
 }
 
 interface MessageTemplate {
@@ -53,6 +62,8 @@ export function SendOrderButton({
   defaultRecipientEmail,
   defaultRecipientName,
   companyName,
+  libraryFiles,
+  libraryLocked,
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -65,6 +76,11 @@ export function SendOrderButton({
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [recipientEmail, setRecipientEmail] = useState(defaultRecipientEmail ?? '');
+  // Send-time attachment selection (orders: library files only). IDs only.
+  const [attachmentSelection, setAttachmentSelection] = useState<AttachmentSelection>({
+    libraryAttachmentIds: [],
+    quoteFileIds: [],
+  });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<'sent' | 'suppressed' | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -147,6 +163,7 @@ export function SendOrderButton({
         body,
         recipientEmail: recipientEmail.trim(),
         recipientName: defaultRecipientName ?? null,
+        attachmentSelection,
       });
       if (result.ok) {
         setSuccess(result.status);
@@ -347,6 +364,16 @@ export function SendOrderButton({
                     The supplier sees a &ldquo;View order&rdquo; button below your text that opens the full order in their browser.
                   </p>
                 </div>
+
+                {/* Attachments picker. Orders attach library files only; the
+                    supplier downloads them from the order page. */}
+                <AttachmentSendPicker
+                  libraryFiles={libraryFiles}
+                  quoteFiles={[]}
+                  selection={attachmentSelection}
+                  onChange={setAttachmentSelection}
+                  libraryLocked={libraryLocked}
+                />
 
                 {error ? <p className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2">{error}</p> : null}
                 {success === 'sent' ? (

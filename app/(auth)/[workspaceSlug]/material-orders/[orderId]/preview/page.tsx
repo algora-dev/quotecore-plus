@@ -3,6 +3,8 @@ import { loadFlashingLibrary } from '../../../flashings/actions';
 import { OrderPreview } from './order-preview';
 import { SupplierResponsePanel } from './SupplierResponsePanel';
 import { notFound } from 'next/navigation';
+import { createAdminClient } from '@/app/lib/supabase/admin';
+import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 
 interface Props {
   params: Promise<{ workspaceSlug: string; orderId: string }>;
@@ -20,6 +22,23 @@ export default async function OrderPreviewPage(props: Props) {
     notFound();
   }
 
+  // Attachment library for the send picker (orders attach library files only,
+  // Pro+ gated). IDS + name + size only - never storage_path on client props.
+  const companyId = orderData.order.company_id;
+  const entitlements = await loadCompanyEntitlements(companyId);
+  const attachmentsEnabled = entitlements.features.attachment_library;
+  let libraryFiles: Array<{ id: string; name: string; fileSize: number }> = [];
+  if (attachmentsEnabled) {
+    const admin = createAdminClient();
+    const { data: libRows } = await admin
+      .from('company_attachments')
+      .select('id, name, file_size')
+      .eq('company_id', companyId)
+      .is('archived_at', null)
+      .order('name', { ascending: true });
+    libraryFiles = (libRows ?? []).map((r) => ({ id: r.id, name: r.name, fileSize: r.file_size }));
+  }
+
   return (
     <>
       <OrderPreview
@@ -27,6 +46,8 @@ export default async function OrderPreviewPage(props: Props) {
         lines={orderData.lines}
         flashings={flashings}
         workspaceSlug={workspaceSlug}
+        libraryFiles={libraryFiles}
+        libraryLocked={!attachmentsEnabled}
       />
       {/*
         Supplier responses live OUTSIDE the A4-sized print container so

@@ -7,6 +7,7 @@ import type { MaterialOrderRow, MaterialOrderLineRow, FlashingLibraryRow } from 
 import { markOrderAsOrdered } from '../../order-list-actions';
 import { SendOrderButton } from './SendOrderButton';
 import { OrderBody } from '@/app/orders/[token]/OrderBody';
+import type { PickerFile } from '@/app/components/attachments/AttachmentSendPicker';
 
 
 interface Props {
@@ -14,6 +15,10 @@ interface Props {
   lines: MaterialOrderLineRow[];
   flashings: FlashingLibraryRow[];
   workspaceSlug: string;
+  /** Attachment-library files for the send picker (orders = library only). */
+  libraryFiles: PickerFile[];
+  /** True when the attachment library isn't in the company's plan. */
+  libraryLocked: boolean;
 }
 
 /**
@@ -36,7 +41,7 @@ interface Props {
  * The header bar (Back / Mark / Edit / Print / Send) carries
  * `data-exclude-pdf` so OrderBody's print stylesheet hides it.
  */
-export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) {
+export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFiles, libraryLocked }: Props) {
   const router = useRouter();
   const [markingOrdered, setMarkingOrdered] = useState(false);
 
@@ -105,6 +110,8 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug }: Props) 
             existingToken={order.acceptance_token ?? null}
             defaultRecipientName={order.to_supplier}
             companyName={order.from_company}
+            libraryFiles={libraryFiles}
+            libraryLocked={libraryLocked}
           />
         </div>
       </div>

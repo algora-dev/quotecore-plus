@@ -22,6 +22,12 @@ export interface SendOrderMessageInput {
   body: string;
   recipientEmail: string;
   recipientName?: string | null;
+  /** Send-time attachment selection (IDs only; library files only for orders).
+   *  Ownership-checked server-side by the pipeline's resolver. */
+  attachmentSelection?: {
+    libraryAttachmentIds?: string[];
+    quoteFileIds?: string[];
+  };
 }
 
 export type SendOrderMessageResult =
@@ -140,6 +146,11 @@ export async function sendOrderMessage(
     companyEmail: profile.email ?? null,
     companyPhone: null,
     acceptanceToken,
+    // Orders attach library files only; the resolver ignores quoteFileIds
+    // for an order scope anyway, but we pass only the library ids to be safe.
+    attachmentSelection: input.attachmentSelection
+      ? { libraryAttachmentIds: input.attachmentSelection.libraryAttachmentIds }
+      : undefined,
   });
 
   if (!result.ok) {

@@ -77,12 +77,32 @@ export default async function QuoteSummaryPage({
   
   const hasLaborSheet = (laborSheetLines || []).length > 0;
 
-  // Load email templates for Send Quote modal
+  // Load email templates for Send Quote modal. attachment_id (Phase 4 baked
+  // default) is included so the send picker can pre-check the template's file.
   const { data: emailTemplates } = await supabase
     .from('email_templates')
-    .select('id, name, subject, body, is_default')
+    .select('id, name, subject, body, is_default, attachment_id')
     .eq('company_id', quote.company_id)
     .order('created_at', { ascending: false });
+
+  // Attachment library for the send picker (Pro+ gated). IDS + name + size
+  // only - never storage_path on client props (Gerald H-03 #5). When the
+  // company isn't entitled we pass an empty list and lock the source.
+  const attachmentsEnabled = entitlements.features.attachment_library;
+  let libraryPickerFiles: Array<{ id: string; name: string; fileSize: number }> = [];
+  if (attachmentsEnabled) {
+    const { data: libRows } = await supabase
+      .from('company_attachments')
+      .select('id, name, file_size')
+      .eq('company_id', quote.company_id)
+      .is('archived_at', null)
+      .order('name', { ascending: true });
+    libraryPickerFiles = (libRows ?? []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      fileSize: r.file_size,
+    }));
+  }
   
   // Build component override map (componentId -> custom_amount)
   const componentOverrides = new Map<string, number>();
@@ -345,6 +365,13 @@ export default async function QuoteSummaryPage({
               hasCustomerQuote={hasCustomerQuote}
               emailTemplates={emailTemplates || []}
               canFollowups={entitlements.features.followups}
+              libraryFiles={libraryPickerFiles}
+              libraryLocked={!attachmentsEnabled}
+              quoteFiles={(filesData || []).map((f) => ({
+                id: f.id,
+                name: f.file_name,
+                fileSize: f.file_size,
+              }))}
               quoteMeta={{
                 customerName: quote.customer_name,
                 quoteNumber: quote.quote_number,

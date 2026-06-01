@@ -4,6 +4,11 @@ import { useRouter } from 'next/navigation';
 import { generateAcceptanceToken } from '../../actions';
 import { sendQuoteMessage } from './send-message-actions';
 import { scheduleQuoteFollowUp } from '@/app/lib/messages/scheduled';
+import {
+  AttachmentSendPicker,
+  type PickerFile,
+  type AttachmentSelection,
+} from '@/app/components/attachments/AttachmentSendPicker';
 
 /**
  * Subset of the email_templates row used by SendQuoteButton. Nullability
@@ -15,6 +20,9 @@ interface EmailTemplate {
   subject: string;
   body: string;
   is_default: boolean | null;
+  /** Phase 4 baked default attachment (library file id). Pre-checks in the
+   *  send picker when this template is selected. */
+  attachment_id?: string | null;
 }
 
 interface Props {
@@ -26,6 +34,12 @@ interface Props {
   /** Whether this company's plan includes scheduled follow-up messages.
    *  Pro+ only. When false the post-send follow-up prompt is hidden. */
   canFollowups: boolean;
+  /** Company attachment-library files (IDs only). Empty when not entitled. */
+  libraryFiles: PickerFile[];
+  /** This quote's own files (all tiers). */
+  quoteFiles: PickerFile[];
+  /** True when the attachment library is not in the company's plan. */
+  libraryLocked: boolean;
   quoteMeta: {
     customerName: string;
     quoteNumber: number | null;
@@ -53,7 +67,7 @@ function replacePlaceholders(text: string, data: Record<string, string>): string
     .replace(/\{\{quote_date\}\}/g, sanitize(data.quote_date || ''));
 }
 
-export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCustomerQuote, emailTemplates, canFollowups, quoteMeta }: Props) {
+export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCustomerQuote, emailTemplates, canFollowups, libraryFiles, quoteFiles, libraryLocked, quoteMeta }: Props) {
   const router = useRouter();
 
   /**
@@ -97,6 +111,12 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   // Send mode state (Messages pipeline). Reuses subject/body from email
   // mode so the user can flip between Copy and Send without retyping.
   const [recipientEmail, setRecipientEmail] = useState('');
+  // Send-time attachment selection. Pre-checked from the chosen template's
+  // baked attachment_id; the user can add/remove freely. IDs only.
+  const [attachmentSelection, setAttachmentSelection] = useState<AttachmentSelection>({
+    libraryAttachmentIds: [],
+    quoteFileIds: [],
+  });
   // Count URLs in the email body - more than 1 is a spam risk.
   const urlCountInBody = (emailBody.match(/https?:\/\/[^\s]+/gi) ?? []).length;
   const bodyHasExtraUrls = urlCountInBody > 1;
@@ -209,6 +229,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
         body: emailBody,
         recipientEmail: recipientEmail.trim(),
         recipientName: quoteMeta.customerName,
+        attachmentSelection,
       });
       if (result.ok) {
         setSendSuccess(result.status);
@@ -304,6 +325,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
       setSelectedTemplateId(defaultTemplate.id);
       setEmailSubject(replacePlaceholders(defaultTemplate.subject, data));
       setEmailBody(replacePlaceholders(defaultTemplate.body, data));
+      prefillAttachmentFromTemplate(defaultTemplate);
     } else {
       setSelectedTemplateId('');
       setEmailSubject(`Quote #${quoteMeta.quoteNumber} from ${quoteMeta.companyName || 'us'}`);
@@ -313,8 +335,22 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
     setMode('email');
   }
 
+  // Pre-check the template's baked attachment (Phase 4) in the send picker
+  // when it exists + is in this company's active library. Replaces any prior
+  // library pre-selection so switching templates swaps the baked file rather
+  // than accumulating; the user's quote-file picks are preserved.
+  function prefillAttachmentFromTemplate(template: EmailTemplate | undefined) {
+    const bakedId = template?.attachment_id ?? null;
+    const inLibrary = bakedId ? libraryFiles.some((f) => f.id === bakedId) : false;
+    setAttachmentSelection((prev) => ({
+      ...prev,
+      libraryAttachmentIds: inLibrary && bakedId ? [bakedId] : [],
+    }));
+  }
+
   function handleTemplateChange(templateId: string) {
     setSelectedTemplateId(templateId);
+    prefillAttachmentFromTemplate(emailTemplates.find(t => t.id === templateId));
     const template = emailTemplates.find(t => t.id === templateId);
     if (template && token) {
       const url = `${window.location.origin}/accept/${token}`;
@@ -701,6 +737,17 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                     </p>
                   )}
                 </div>
+
+                {/* Attachments picker. Library files are Pro+-gated (hidden
+                    when libraryLocked); this quote's own files attach on any
+                    tier. The recipient downloads them from the accept page. */}
+                <AttachmentSendPicker
+                  libraryFiles={libraryFiles}
+                  quoteFiles={quoteFiles}
+                  selection={attachmentSelection}
+                  onChange={setAttachmentSelection}
+                  libraryLocked={libraryLocked}
+                />
 
                 {sendError ? (
                   <p className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2">{sendError}</p>

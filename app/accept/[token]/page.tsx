@@ -7,6 +7,7 @@ import { DownloadQuoteButton } from './DownloadQuoteButton';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { loadQuoteTaxesByQuoteId } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
+import { AttachmentsCard } from '@/app/components/public/AttachmentsCard';
 
 /**
  * Validate token format up front so a malformed URL fails fast without
@@ -198,6 +199,19 @@ export default async function AcceptQuotePage({
   }
   const total = subtotal + taxTotal;
 
+  // Hosted attachments for this quote (Option B). Token validation above has
+  // already proved access. Per-file Download hits the gated route, which
+  // re-validates this same token before minting any signed URL.
+  const { data: attachmentRows } = await supabase
+    .from('message_attachments')
+    .select('id, display_name')
+    .eq('quote_id', quote.id)
+    .order('created_at', { ascending: true });
+  const attachments = (attachmentRows ?? []).map((r) => ({
+    id: r.id,
+    displayName: r.display_name,
+  }));
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-4xl mx-auto p-8 space-y-6">
@@ -351,6 +365,8 @@ export default async function AcceptQuotePage({
           }
           secondaryAction={<DownloadQuoteButton printTargetId="public-quote-document" />}
         />
+
+        <AttachmentsCard token={token} files={attachments} />
       </div>
     </div>
   );

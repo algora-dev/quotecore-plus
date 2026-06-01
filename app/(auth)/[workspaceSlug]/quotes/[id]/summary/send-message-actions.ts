@@ -25,6 +25,12 @@ export interface SendQuoteMessageInput {
   body: string;
   recipientEmail: string;
   recipientName?: string | null;
+  /** Send-time attachment selection (IDs only). Resolved + ownership-checked
+   *  server-side by the pipeline's resolver. */
+  attachmentSelection?: {
+    libraryAttachmentIds?: string[];
+    quoteFileIds?: string[];
+  };
 }
 
 export type SendQuoteMessageResult =
@@ -234,6 +240,7 @@ export async function sendQuoteMessage(
     companyEmail,
     companyPhone,
     acceptanceToken,
+    attachmentSelection: input.attachmentSelection,
   });
 
   if (!result.ok) {
