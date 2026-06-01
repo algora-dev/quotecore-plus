@@ -38,7 +38,7 @@ import {
 import { getSiteUrl } from '@/app/lib/email/urls';
 import { signHmacToken, randomNonce } from '@/app/lib/security/hmacToken';
 import { renderMergeVars, type MergeVarContext } from './mergeVars';
-import { resolveOutboundAttachments } from './attachmentResolver';
+import { resolveOutboundAttachments, deleteMessageAttachmentsByIds } from './attachmentResolver';
 
 const MESSAGE_TOKEN_TTL_MS = 90 * 24 * 60 * 60 * 1000; // 90 days.
 const MESSAGE_TOKEN_SECRET_ENV = 'MESSAGES_SIGNING_SECRET';
@@ -325,6 +325,11 @@ export async function sendOutboundMessage(
   // so the message_attachments rows exist before the email links to them.
   let attachmentCount = 0;
   let standaloneAttachmentToken: string | null = null;
+  // Track rows created for THIS send so we can roll them back if the email
+  // dispatch fails (Gerald H-01-FU - public pages list attachments by scope
+  // with no message-status filter, so a failed send must not leave the file
+  // published on the token page).
+  let createdAttachmentIds: string[] = [];
   if (input.attachmentSelection) {
     const resolved = await resolveOutboundAttachments({
       companyId: input.companyId,
@@ -334,6 +339,7 @@ export async function sendOutboundMessage(
       quoteFileIds: input.attachmentSelection.quoteFileIds,
     });
     attachmentCount = resolved.length;
+    createdAttachmentIds = resolved.map((r) => r.id);
     // Standalone sends (no quote/order) carry a per-attachment access token.
     // We surface the first one as the {{attachment_link}} / fallback CTA so
     // the recipient has a single "Download file" destination. (Multi-file
@@ -426,6 +432,11 @@ export async function sendOutboundMessage(
       .from('outbound_messages')
       .update({ status: 'failed', send_error: result.error })
       .eq('id', messageId);
+    // Roll back this send's attachment rows so a failed dispatch never
+    // publishes the file on the public quote/order/file token page.
+    if (createdAttachmentIds.length > 0) {
+      await deleteMessageAttachmentsByIds(createdAttachmentIds);
+    }
     return { ok: false, messageId, error: result.error };
   }
 

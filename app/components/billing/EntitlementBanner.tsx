@@ -35,13 +35,6 @@ export interface EntitlementBannerProps {
   workspaceSlug: string;
 }
 
-function daysUntil(iso: string | null): number | null {
-  if (!iso) return null;
-  const ms = new Date(iso).getTime() - Date.now();
-  if (!Number.isFinite(ms)) return null;
-  return Math.ceil(ms / (24 * 60 * 60 * 1000));
-}
-
 interface Variant {
   tone: 'amber' | 'red' | 'slate' | 'purple';
   title: string;

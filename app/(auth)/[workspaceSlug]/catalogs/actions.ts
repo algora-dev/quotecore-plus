@@ -6,6 +6,7 @@ import { requireCompanyContext } from '@/app/lib/supabase/server';
 import {
   requireFeature,
   requireCatalogSlot,
+  assertCanUseStorage,
   CatalogLimitReachedError,
   FeatureGatedError,
   SubscriptionInactiveError,
@@ -77,12 +78,18 @@ export async function createCatalogMeta(args: {
 
     await requireFeature(profile.company_id, 'catalogs');
     await requireCatalogSlot(profile.company_id);
-    // NOTE: no storage pre-flight here. Per Shaun's product decision
-    // (option 3), a catalog import is allowed to complete even if it pushes
-    // the company over their plan storage quota (capped at the 10MB/catalog
-    // ceiling). Authoritative byte accounting + the hard ceiling live in the
-    // import_catalog_rows_atomic RPC. Going over flips the company "red";
-    // assertCanUseStorage() then blocks FUTURE uploads app-wide.
+    // Server-side red-state gate (Gerald H-02-R3): a company that is ALREADY
+    // over storage cannot START a new catalog import. The UI modal is not a
+    // security boundary, so we enforce it here. assertCanUseStorage(.., 0)
+    // throws StorageQuotaExceededError when storageUsedBytes already exceeds
+    // the (topup-inclusive) limit.
+    //
+    // This does NOT contradict Shaun's option-3 policy: an import that is
+    // already in flight may still COMPLETE and push the company over (capped
+    // at the 10MB/catalog ceiling); authoritative byte accounting + the hard
+    // ceiling live in the import_catalog_rows_atomic RPC. We only block
+    // STARTING a fresh import while already red.
+    await assertCanUseStorage(profile.company_id, 0);
 
     const admin = createAdminClient() as AdminAny;
 

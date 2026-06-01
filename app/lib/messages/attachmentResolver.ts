@@ -167,3 +167,24 @@ export async function resolveOutboundAttachments(
     accessToken: row.access_token,
   }));
 }
+
+/**
+ * Roll back attachment rows created for a single outbound send (Gerald
+ * H-01-FU). Called when the email dispatch fails: the rows were inserted
+ * before sendEmail, and public quote/order/file pages list attachments by
+ * scope with no message-status filter, so leaving them behind would publish
+ * the file to anyone holding the token even though the send failed.
+ *
+ * Best-effort: a failed cleanup is logged but never throws (the caller is
+ * already in its failure path). Ids come from this same send's resolve call,
+ * so each is unique to this attempt - we never delete a prior send's rows.
+ */
+export async function deleteMessageAttachmentsByIds(ids: string[]): Promise<void> {
+  const clean = cleanIds(ids);
+  if (clean.length === 0) return;
+  const admin = createAdminClient();
+  const { error } = await admin.from('message_attachments').delete().in('id', clean);
+  if (error) {
+    console.error('[deleteMessageAttachmentsByIds] cleanup failed:', error.message, clean);
+  }
+}

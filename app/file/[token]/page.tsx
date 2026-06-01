@@ -60,7 +60,9 @@ export default async function StandaloneFilePage({
   if (!resolved) return <NotFoundScreen />;
 
   const isImage = (resolved.mimeType ?? '').toLowerCase().startsWith('image/');
-  const downloadHref = `/api/attachments/${encodeURIComponent(token)}/download`;
+  // disposition=attachment forces save-to-device (Gerald M-02-FU); without it
+  // PDFs/images open inline despite the "Download" label.
+  const downloadHref = `/api/attachments/${encodeURIComponent(token)}/download?disposition=attachment`;
 
   // For images, mint a short-lived signed URL for the inline preview. Token
   // is already validated; the raw path is never exposed (only the temporary
@@ -96,7 +98,7 @@ export default async function StandaloneFilePage({
 
           {isImage && previewUrl ? (
             <div className="rounded-lg border border-slate-200 overflow-hidden bg-slate-50">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+              { }
               <img
                 src={previewUrl}
                 alt={resolved.displayName}
