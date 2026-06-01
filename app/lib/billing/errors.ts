@@ -187,6 +187,26 @@ export class CatalogLimitReachedError extends BillingError {
 }
 
 /**
+ * Thrown when creating a new company attachment would exceed the active
+ * (non-archived) attachment cap for the company's plan.
+ */
+export class AttachmentLimitReachedError extends BillingError {
+  readonly used: number;
+  readonly limit: number;
+  readonly planCode: string;
+
+  constructor(args: { used: number; limit: number; planCode: string }) {
+    super(
+      'attachment_limit_reached',
+      `Attachment library cap reached for plan "${args.planCode}": ${args.used} of ${args.limit} attachments used.`,
+    );
+    this.used = args.used;
+    this.limit = args.limit;
+    this.planCode = args.planCode;
+  }
+}
+
+/**
  * Defensive helper: narrow an unknown error to one of our billing errors.
  * Useful inside server-action catch blocks for type-safe pattern matching.
  */

@@ -33,6 +33,7 @@ import {
   type Feature,
 } from './features';
 import {
+  AttachmentLimitReachedError,
   CatalogLimitReachedError,
   ComponentLimitReachedError,
   FeatureGatedError,
@@ -114,6 +115,11 @@ export interface CompanyEntitlements {
    */
   catalogLimit: number | null;
   catalogCount: number;
+  /**
+   * Active (non-archived) company-attachment cap. NULL = unlimited.
+   */
+  attachmentLimit: number | null;
+  attachmentCount: number;
   storageLimitBytes: number;
   storageUsedBytes: number;
   storageTopupBytes: number;
@@ -159,6 +165,7 @@ interface PlanRowRaw {
   component_limit: number | null;
   flashing_limit: number | null;
   catalog_limit: number | null;
+  attachment_limit: number | null;
   feat_digital_takeoff: boolean;
   feat_flashings: boolean;
   feat_material_orders: boolean;
@@ -166,6 +173,7 @@ interface PlanRowRaw {
   feat_email_send: boolean;
   feat_activity_card: boolean;
   feat_catalogs: boolean;
+  feat_attachment_library: boolean;
 }
 
 /**
@@ -200,6 +208,7 @@ export const loadCompanyEntitlements = cache(
       compCountResult,
       flashCountResult,
       catalogCountResult,
+      attachmentCountResult,
       usageResult,
     ] = await Promise.all([
       admin
@@ -216,6 +225,8 @@ export const loadCompanyEntitlements = cache(
       admin.rpc('company_flashing_count',  { p_company_id: companyId }),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (admin as any).rpc('company_catalog_count', { p_company_id: companyId }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (admin as any).rpc('company_attachment_count', { p_company_id: companyId }),
       admin
         .from('company_quote_usage')
         .select('quotes_created')
@@ -241,7 +252,7 @@ export const loadCompanyEntitlements = cache(
     const { data: planRowData, error: planErr } = await (admin as any)
       .from('subscription_plans')
       .select(
-        'code, monthly_quote_limit, storage_limit_bytes, included_seats, component_limit, flashing_limit, catalog_limit, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card, feat_catalogs',
+        'code, monthly_quote_limit, storage_limit_bytes, included_seats, component_limit, flashing_limit, catalog_limit, attachment_limit, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card, feat_catalogs, feat_attachment_library',
       )
       .eq('code', effectivePlanCode)
       .limit(1)
@@ -272,6 +283,8 @@ export const loadCompanyEntitlements = cache(
       flashingCount:  (flashCountResult.data as number | null) ?? 0,
       catalogLimit:   plan.catalog_limit,
       catalogCount:   (catalogCountResult.data as number | null) ?? 0,
+      attachmentLimit: plan.attachment_limit,
+      attachmentCount: (attachmentCountResult.data as number | null) ?? 0,
       storageLimitBytes: plan.storage_limit_bytes + company.storage_topup_bytes,
       storageUsedBytes: company.storage_used_bytes,
       storageTopupBytes: company.storage_topup_bytes,
@@ -284,6 +297,7 @@ export const loadCompanyEntitlements = cache(
         email_send: plan.feat_email_send,
         activity_card: plan.feat_activity_card,
         catalogs: plan.feat_catalogs,
+        attachment_library: plan.feat_attachment_library,
       },
       trialEndsAt: company.trial_ends_at,
       currentPeriodEnd: company.current_period_end,
@@ -521,6 +535,40 @@ export async function requireCatalogSlot(companyId: string): Promise<void> {
   throw new Error(`require_catalog_slot failed: ${error.message}`);
 }
 
+/**
+ * Acquire one attachment-library slot for the given company. Wraps
+ * `require_attachment_slot`. Throws FeatureGatedError if the plan doesn't
+ * include the attachment library at all, or AttachmentLimitReachedError on cap.
+ */
+export async function requireAttachmentSlot(companyId: string): Promise<void> {
+  const admin = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (admin as any).rpc('require_attachment_slot', { p_company_id: companyId });
+  if (!error) return;
+  const code = (error as { code?: string }).code;
+  if (code === 'P0001') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new SubscriptionInactiveError(ent.subscriptionStatus);
+  }
+  if (code === 'P0014') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new AttachmentLimitReachedError({
+      used:     ent.attachmentCount,
+      limit:    ent.attachmentLimit ?? 0,
+      planCode: ent.effectivePlanCode,
+    });
+  }
+  if (code === 'P0012') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new FeatureGatedError({
+      feature: 'attachment_library',
+      currentPlan: ent.effectivePlanCode,
+      requiredPlan: FEATURE_MIN_PLAN.attachment_library,
+    });
+  }
+  throw new Error(`require_attachment_slot failed: ${error.message}`);
+}
+
 export async function requireFlashingSlot(companyId: string): Promise<void> {
   const admin = createAdminClient();
   const { error } = await admin.rpc('require_flashing_slot', { p_company_id: companyId });
@@ -562,6 +610,7 @@ export {
   ComponentLimitReachedError,
   FlashingLimitReachedError,
   CatalogLimitReachedError,
+  AttachmentLimitReachedError,
   StorageQuotaExceededError,
   isBillingError,
 } from './errors';

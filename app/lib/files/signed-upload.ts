@@ -128,7 +128,9 @@ export async function mintQuoteDocumentUploadUrl(
   const folder =
     input.scope.kind === 'pending'
       ? `${companyId}/_pending`
-      : `${companyId}/${input.scope.quoteId}`;
+      : input.scope.kind === 'library'
+        ? `${companyId}/library`
+        : `${companyId}/${input.scope.quoteId}`;
   const storagePath = `${folder}/${objectName}`;
 
   // 5) Mint via service-role admin client. The Supabase Storage signed
