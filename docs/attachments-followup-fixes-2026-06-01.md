@@ -85,3 +85,21 @@ These are Shaun's findings after smoke-testing Phases 5/6. Confirmed understandi
 Bundle for re-audit with the Round-9 catalog fixes (still pending his correct-HEAD re-audit):
 - #3b: gated-download route now sets download disposition (auth model unchanged).
 - #4 (courtesy): public token page no longer short-circuits post-decision; renders doc + attachments always. No auth change.
+
+### BUILT — consolidated re-audit note (commit `7b7f3fc` on `development`, 2026-06-01)
+Status: #1, #2, #3a, #3b, #3c, #4 BUILT + tsc clean + `next build` green. #5 scoped only (awaiting Shaun route decision).
+
+**#3b — gated-download route disposition change (Gerald SURFACE, auth UNCHANGED):**
+- File: `app/api/attachments/[token]/download/route.ts` + `app/lib/storage/helpers.ts`.
+- New optional `disposition=attachment` query param. When present, the route signs the URL with Supabase `createSignedUrl(path, 90, { download: <name> })` so the browser saves instead of inlining. When absent, behaviour is byte-identical to Phase 6 (inline 302).
+- Auth path UNCHANGED: still `isUuid(token)` -> IP rate-limit (fail-closed) -> `authorizeAttachmentDownload(token, fileId)` (token -> quote/order/standalone scope -> company match -> live source file) -> 90s signed URL -> 302. No bytes proxied through the route. Raw storage path still never leaves the server.
+- The filename fed into the download param is the `display_name` snapshot (a value WE control), and it is additionally run through `sanitizeFilename()` (strips CR/LF/quotes/slashes, caps 200 chars) before reaching the Content-Disposition. Defence-in-depth against header injection.
+- Question for Gerald: confirm you're satisfied the `download` param + sanitized snapshot name is an acceptable disposition-only change, OR whether you want option (b) byte-streaming instead. We chose (a) per the plan to minimise the surface delta.
+
+**#4 — public token page no longer short-circuits post-decision (courtesy, NO auth change):**
+- File: `app/accept/[token]/page.tsx` (+ `AcceptDeclineButtons.tsx`). Order page already had the always-render pattern.
+- Removed the `if (quote.accepted_at || quote.declined_at) return <status card>` early return. The page now always renders the quote document + attachments list; a status banner + DISABLED Accept/Decline are driven by the SERVER-fetched `accepted_at/declined_at` (not client state). Request Changes (`submitRevisionRequest`) stays live and already handled the `responded` source-state before this change.
+- No new data exposed: same admin-client token lookup that already gated the page; attachments list uses the same `message_attachments` rows the page already loaded. The decision timestamps were already selected via `select('*')`.
+- Net effect on attack surface: the page is reachable in the decided state where it previously returned a card. It exposes the same quote the token already authorised. No new query, no new field, no auth relaxation.
+
+**Other fixes (NOT Gerald surface, listed for completeness):** #1 picker dropdown (IDs-only unchanged), #2 recipient copy, #3a download-all (now uses the #3b forced-download hrefs), #3c per-row View/Download split (both go through the same gated route).
