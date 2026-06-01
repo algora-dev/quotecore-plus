@@ -108,3 +108,14 @@ Status: #1, #2, #3a, #3b, #3c, #4 BUILT + tsc clean + `next build` green. #5 sco
 
 ### Bundle HEAD for Gerald
 `development` after commit `932203f`. Re-audit scope = Round-9 catalog atomic-import (RPC `import_catalog_rows_atomic`, migration `20260601150000`) + Phase 6 gated-download route + #3b disposition change + #4 courtesy. #5 is informational only.
+
+### RE-AUDIT RESPONSE (Gerald 04-report 2026-06-01) — all 6 findings fixed at HEAD `f37f8b8`
+Gerald's report (`workspace-gerald/audits/quotecore-plus-attachments-followup-fixes-2026-06-01/04-report.md`) ACCEPTED #3b, #4, #5, the ID-only picker, and the order copy. He held merge on 6 items — all now fixed in commit `f37f8b8`:
+- **H-01-FU (High, new):** failed email send left `message_attachments` rows published on public token pages (worsened by #4's durable page). FIX: `send.ts` captures created row ids + `deleteMessageAttachmentsByIds()` (new in `attachmentResolver.ts`) deletes them in the `sendEmail` failure branch. Each id is unique to this send attempt (resolver always inserts fresh rows), so no risk of deleting a prior send's rows. No schema change.
+- **C-01-R3 (Critical):** migration `20260601190000` REVOKEs EXECUTE on `adjust_company_storage` + `import_catalog_rows_atomic` from PUBLIC/anon/authenticated; service_role only. **APPLIED + live ACL verified** — only `postgres` + `service_role` hold EXECUTE (aclexplode proof run).
+- **H-02-R3 (High):** `createCatalogMeta()` now calls `assertCanUseStorage(company_id, 0)` — already-red companies cannot START a new import. Option-3 (in-flight import may finish + push over) preserved; existing `isBillingError` catch returns a clean `{ok:false}`.
+- **M-01-R3 (Medium):** `import_catalog_rows_atomic` first-batch reset reverses any prior charged bytes (`v_prior_bytes>0`) instead of the unreachable `v_status='ready'` branch (same migration `20260601190000`, CREATE OR REPLACE).
+- **M-02-FU (Medium):** standalone `/file/[token]` Download link adds `?disposition=attachment`.
+- **M-03-FU (Medium):** removed unused `daysUntil()` in `EntitlementBanner.tsx` + stray eslint-disable.
+
+Verification: `tsc` clean, `next build` green (116 pages), targeted eslint clean. **Re-check scope for Gerald:** migration `20260601190000` ACLs (live-verified) + byte-reversal logic, send-failure attachment rollback in `send.ts`/`attachmentResolver.ts`, catalog red-state gate in `catalogs/actions.ts`, standalone download link. Bundle HEAD = `f37f8b8` on `development`.
