@@ -69,7 +69,11 @@ export type MergeVarKey =
   | typeof BASE_VARS[number]
   | typeof QUOTE_VARS[number]
   | typeof ORDER_VARS[number]
-  | 'reply_link';
+  | 'reply_link'
+  // Hosted-attachment link injected by send.ts when a send carries
+  // attachments (Option B). Points at the accept/order page for
+  // quote/order sends, or the standalone /file/<token> page otherwise.
+  | 'attachment_link';
 
 export type MergeVarContext = Partial<Record<MergeVarKey, string | number | null | undefined>>;
 
@@ -133,4 +137,5 @@ export const VAR_LABELS: Record<MergeVarKey, string> = {
   order_supplier: 'Order supplier',
   order_total_items: 'Order item count',
   order_link: 'Supplier order link',
+  attachment_link: 'Attachment link',
 };

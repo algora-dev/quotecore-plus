@@ -1403,6 +1403,78 @@ export type Database = {
           },
         ]
       }
+      message_attachments: {
+        Row: {
+          access_token: string | null
+          company_id: string
+          created_at: string
+          display_name: string
+          id: string
+          library_attachment_id: string | null
+          order_id: string | null
+          quote_file_id: string | null
+          quote_id: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          company_id: string
+          created_at?: string
+          display_name: string
+          id?: string
+          library_attachment_id?: string | null
+          order_id?: string | null
+          quote_file_id?: string | null
+          quote_id?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          company_id?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          library_attachment_id?: string | null
+          order_id?: string | null
+          quote_file_id?: string | null
+          quote_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_attachments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_attachments_library_attachment_id_fkey"
+            columns: ["library_attachment_id"]
+            isOneToOne: false
+            referencedRelation: "company_attachments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_attachments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "material_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_attachments_quote_file_id_fkey"
+            columns: ["quote_file_id"]
+            isOneToOne: false
+            referencedRelation: "quote_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_attachments_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_suppressions: {
         Row: {
           company_id: string

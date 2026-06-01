@@ -738,7 +738,7 @@ async function dispatchOne(
   // Load the template body + subject.
   const { data: template } = await admin
     .from('email_templates')
-    .select('id, subject, body')
+    .select('id, subject, body, attachment_id')
     .eq('id', row.template_id ?? '')
     .eq('company_id', row.company_id)
     .maybeSingle();
@@ -824,6 +824,14 @@ async function dispatchOne(
     companyEmail,
     companyPhone,
     acceptanceToken,
+    // Auto-message attachment wiring (Phase 6d, Shaun: "wire it"). The
+    // automated send has no per-use picker, so it relies solely on the
+    // template's baked default attachment. The resolver re-verifies the
+    // library file belongs to this company + is active and drops it
+    // silently otherwise, so a since-deleted baked file can't break the send.
+    attachmentSelection: template.attachment_id
+      ? { libraryAttachmentIds: [template.attachment_id] }
+      : undefined,
   });
 
   if (!sendResult.ok) {

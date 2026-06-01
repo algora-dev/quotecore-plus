@@ -38,6 +38,7 @@ import {
 import { getSiteUrl } from '@/app/lib/email/urls';
 import { signHmacToken, randomNonce } from '@/app/lib/security/hmacToken';
 import { renderMergeVars, type MergeVarContext } from './mergeVars';
+import { resolveOutboundAttachments } from './attachmentResolver';
 
 const MESSAGE_TOKEN_TTL_MS = 90 * 24 * 60 * 60 * 1000; // 90 days.
 const MESSAGE_TOKEN_SECRET_ENV = 'MESSAGES_SIGNING_SECRET';
@@ -97,6 +98,16 @@ export interface SendOutboundMessageInput {
    * the pipeline falls back to the generic /m/<replyToken> page.
    */
   acceptanceToken?: string | null;
+  /**
+   * Files to attach to this send (Option B - hosted + token-gated, NOT MIME).
+   * IDS ONLY, never raw storage paths (Gerald H-03 #1). The resolver verifies
+   * ownership, drops anything unauthorised, snapshots display names, and
+   * records `message_attachments` rows the hosted pages + download route read.
+   */
+  attachmentSelection?: {
+    libraryAttachmentIds?: string[];
+    quoteFileIds?: string[];
+  };
 }
 
 export type SendOutboundMessageResult =
@@ -308,8 +319,58 @@ export async function sendOutboundMessage(
       linkContext.order_link = `${siteUrl}/orders/${encodeURIComponent(input.acceptanceToken)}`;
     }
   }
+  // Resolve + persist any selected attachments (Option B hosted delivery).
+  // Server-side ownership checks live in the resolver; unauthorised ids are
+  // silently dropped. We await fully (Vercel serverless - no fire-and-forget)
+  // so the message_attachments rows exist before the email links to them.
+  let attachmentCount = 0;
+  let standaloneAttachmentToken: string | null = null;
+  if (input.attachmentSelection) {
+    const resolved = await resolveOutboundAttachments({
+      companyId: input.companyId,
+      quoteId: input.relatedQuoteId ?? null,
+      orderId: input.relatedOrderId ?? null,
+      libraryAttachmentIds: input.attachmentSelection.libraryAttachmentIds,
+      quoteFileIds: input.attachmentSelection.quoteFileIds,
+    });
+    attachmentCount = resolved.length;
+    // Standalone sends (no quote/order) carry a per-attachment access token.
+    // We surface the first one as the {{attachment_link}} / fallback CTA so
+    // the recipient has a single "Download file" destination. (Multi-file
+    // standalone sends still each get their own row + token for the file
+    // page; the link points at the first, which lists/serves that file.)
+    const standalone = resolved.find((r) => r.accessToken);
+    if (standalone?.accessToken) {
+      standaloneAttachmentToken = standalone.accessToken;
+    }
+  }
+
+  // Build the hosted attachment link, if any. For quote/order sends the
+  // attachments live on the accept/order page (already the primary CTA), so
+  // {{attachment_link}} simply points there. For standalone sends it points
+  // at the dedicated /file/<token> page.
+  if (attachmentCount > 0) {
+    if (standaloneAttachmentToken) {
+      linkContext.attachment_link = `${siteUrl}/file/${encodeURIComponent(standaloneAttachmentToken)}`;
+    } else if (input.acceptanceToken) {
+      if (input.kind === 'order_send') {
+        linkContext.attachment_link = `${siteUrl}/orders/${encodeURIComponent(input.acceptanceToken)}`;
+      } else {
+        linkContext.attachment_link = `${siteUrl}/accept/${encodeURIComponent(input.acceptanceToken)}`;
+      }
+    }
+  }
+
   const bodyWithLinks = renderMergeVars(bodyWithReplyLink, linkContext);
   const subjectWithLinks = renderMergeVars(subjectWithReplyLink, linkContext);
+
+  // For a standalone attachment send (no quote/order CTA), repoint the
+  // primary button at the file page so the recipient has a clear download
+  // destination instead of the generic reply page.
+  const effectiveCta =
+    standaloneAttachmentToken && !input.primaryCta && !input.acceptanceToken
+      ? { label: 'Download file', url: linkContext.attachment_link as string }
+      : primaryCta;
 
   const html = renderOutboundMessageHtml({
     companyName: input.companyName,
@@ -317,15 +378,15 @@ export async function sendOutboundMessage(
     companyEmail: input.companyEmail ?? null,
     companyPhone: input.companyPhone ?? null,
     bodyText: bodyWithLinks,
-    replyUrl: primaryCta.url,
-    replyCtaLabel: primaryCta.label,
+    replyUrl: effectiveCta.url,
+    replyCtaLabel: effectiveCta.label,
     unsubscribeUrl,
   });
   const text = renderOutboundMessageText({
     companyName: input.companyName,
     bodyText: bodyWithLinks,
-    replyUrl: primaryCta.url,
-    replyCtaLabel: primaryCta.label,
+    replyUrl: effectiveCta.url,
+    replyCtaLabel: effectiveCta.label,
     unsubscribeUrl,
     companyEmail: input.companyEmail ?? null,
     companyPhone: input.companyPhone ?? null,
