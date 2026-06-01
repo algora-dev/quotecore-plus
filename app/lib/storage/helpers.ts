@@ -25,9 +25,22 @@ function getStorageAdminClient() {
  * fresh URL, so 1 hour is plenty for view sessions and short enough that
  * leaked URLs become useless quickly.
  */
-export async function getSignedUrl(bucket: string, path: string, expiresIn: number = 3600): Promise<string> {
+export async function getSignedUrl(
+  bucket: string,
+  path: string,
+  expiresIn: number = 3600,
+  /**
+   * When set, Supabase adds a `Content-Disposition: attachment; filename=...`
+   * to the signed URL so the browser saves the file instead of rendering it
+   * inline (PDFs/images otherwise open in-tab). Auth model is unchanged - the
+   * caller has already authorised access before asking us to sign.
+   */
+  downloadName?: string,
+): Promise<string> {
   const supabase = getStorageAdminClient();
-  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn);
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(path, expiresIn, downloadName ? { download: downloadName } : undefined);
   if (error) {
     throw new Error(`Failed to create signed URL: ${error.message}`);
   }

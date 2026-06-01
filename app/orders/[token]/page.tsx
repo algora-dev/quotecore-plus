@@ -91,7 +91,7 @@ export default async function PublicOrderPage({ params }: Props) {
         <header className="mb-6 text-center">
           <p className="text-xs uppercase tracking-wide text-slate-500">{companyName}</p>
           <h1 className="mt-2 text-2xl font-semibold text-slate-900">
-            Material order {order.order_number}
+            Order {order.order_number}
           </h1>
           {order.reference ? (
             <p className="mt-1 text-sm text-slate-500">Ref: {order.reference}</p>

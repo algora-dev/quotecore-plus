@@ -64,7 +64,7 @@ Kind regards,
 {{company_name}}`,
   order_send: `Hi {{order_supplier}},
 
-Please review our material order {{order_number}}.
+Please review our order {{order_number}}.
 
 Order reference: {{order_reference}}
 Items: {{order_total_items}}

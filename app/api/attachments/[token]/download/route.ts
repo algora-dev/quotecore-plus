@@ -28,6 +28,12 @@ export const dynamic = 'force-dynamic';
  * quote/order context; the standalone access_token already identifies the
  * single row). Anything that doesn't resolve returns 404 - we never leak
  * whether a token/file exists.
+ *
+ * The optional `disposition=attachment` query param forces a save-to-device
+ * download (Content-Disposition: attachment) by signing the URL with the
+ * file's display name. Omitted/any other value = inline (View) behaviour.
+ * This ONLY affects the response disposition - the auth model (token -> scope
+ * -> company -> live source file) is unchanged.
  */
 export async function GET(
   request: Request,
@@ -55,6 +61,7 @@ export async function GET(
 
   const url = new URL(request.url);
   const fileId = url.searchParams.get('file');
+  const forceDownload = url.searchParams.get('disposition') === 'attachment';
 
   const resolved = await authorizeAttachmentDownload(token, fileId);
   if (!resolved) {
@@ -65,7 +72,15 @@ export async function GET(
 
   let signedUrl: string;
   try {
-    signedUrl = await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, resolved.storagePath, 90);
+    signedUrl = await getSignedUrl(
+      BUCKETS.QUOTE_DOCUMENTS,
+      resolved.storagePath,
+      90,
+      // Force save-to-device only when the caller asked for it; otherwise the
+      // signed URL renders inline (View). Sanitise the display name for the
+      // Content-Disposition filename.
+      forceDownload ? sanitizeFilename(resolved.displayName) : undefined,
+    );
   } catch (err) {
     console.error('[attachments/download] sign failed:', err);
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
@@ -73,4 +88,17 @@ export async function GET(
 
   // 302 to the short-lived signed URL. The raw storage path stays server-side.
   return NextResponse.redirect(signedUrl, 302);
+}
+
+/**
+ * Strip path separators / control chars from a display name before it goes
+ * into the Content-Disposition filename. Defence-in-depth: display_name is a
+ * snapshot we control, but never trust a stored string in a header.
+ */
+function sanitizeFilename(name: string): string {
+  const cleaned = (name || 'download')
+    .replace(/[\r\n"]/g, '')
+    .replace(/[/\\]/g, '_')
+    .trim();
+  return cleaned.length > 0 ? cleaned.slice(0, 200) : 'download';
 }

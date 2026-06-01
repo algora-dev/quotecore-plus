@@ -2,12 +2,17 @@ import { DownloadAllAttachments } from './DownloadAllAttachments';
 
 /**
  * Public, read-only Attachments card shown on the hosted quote (/accept) and
- * order (/orders) pages. Each Download link hits the gated download route,
- * which validates the page's token server-side before minting a short-lived
- * signed URL. No storage paths are ever rendered here.
+ * order (/orders) pages. Each link hits the gated download route, which
+ * validates the page's token server-side before minting a short-lived signed
+ * URL. No storage paths are ever rendered here.
+ *
+ * Per-row actions (fix #3c, 2026-06-01):
+ *   - View     : opens the file inline in a new tab (no disposition param).
+ *   - Download : forces save-to-device via `disposition=attachment` on the
+ *                gated route, which signs the URL with the file's name.
  *
  * Download-all is sequential per-file (v1, not a zip) - handled client-side by
- * DownloadAllAttachments, which opens each gated link in turn.
+ * DownloadAllAttachments, which triggers each gated DOWNLOAD link in turn.
  */
 export interface PublicAttachmentItem {
   id: string;
@@ -19,20 +24,28 @@ interface Props {
   files: PublicAttachmentItem[];
 }
 
-function downloadHref(token: string, fileId: string): string {
+function baseHref(token: string, fileId: string): string {
   return `/api/attachments/${encodeURIComponent(token)}/download?file=${encodeURIComponent(fileId)}`;
+}
+
+function viewHref(token: string, fileId: string): string {
+  return baseHref(token, fileId);
+}
+
+function downloadHref(token: string, fileId: string): string {
+  return `${baseHref(token, fileId)}&disposition=attachment`;
 }
 
 export function AttachmentsCard({ token, files }: Props) {
   if (files.length === 0) return null;
 
-  const hrefs = files.map((f) => downloadHref(token, f.id));
+  const downloadHrefs = files.map((f) => downloadHref(token, f.id));
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-base font-semibold text-slate-900">Attachments</h2>
-        {files.length > 1 ? <DownloadAllAttachments hrefs={hrefs} /> : null}
+        {files.length > 1 ? <DownloadAllAttachments hrefs={downloadHrefs} /> : null}
       </div>
       <ul className="divide-y divide-slate-100">
         {files.map((file) => (
@@ -52,12 +65,24 @@ export function AttachmentsCard({ token, files }: Props) {
               </svg>
               <span className="text-sm text-slate-700 truncate">{file.displayName}</span>
             </div>
-            <a
-              href={downloadHref(token, file.id)}
-              className="px-3 py-1.5 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all whitespace-nowrap"
-            >
-              Download
-            </a>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* View: inline in a new tab. */}
+              <a
+                href={viewHref(token, file.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all whitespace-nowrap"
+              >
+                View
+              </a>
+              {/* Download: forces save-to-device. */}
+              <a
+                href={downloadHref(token, file.id)}
+                className="px-3 py-1.5 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all whitespace-nowrap"
+              >
+                Download
+              </a>
+            </div>
           </li>
         ))}
       </ul>

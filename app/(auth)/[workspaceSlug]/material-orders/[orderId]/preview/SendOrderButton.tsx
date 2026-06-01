@@ -104,10 +104,10 @@ export function SendOrderButton({
           setBody(def.body);
         } else {
           setSubject(
-            `Material order ${orderNumber}${companyName ? ` from ${companyName}` : ''}`,
+            `Order ${orderNumber}${companyName ? ` from ${companyName}` : ''}`,
           );
           setBody(
-            `Hi${defaultRecipientName ? ` ${defaultRecipientName}` : ''},\n\nPlease review our material order ${orderNumber}. You can confirm, request changes, or ask a question using the button below.\n\nThanks.`,
+            `Hi${defaultRecipientName ? ` ${defaultRecipientName}` : ''},\n\nPlease review our order ${orderNumber}. You can confirm, request changes, or ask a question using the button below.\n\nThanks.`,
           );
         }
       })
