@@ -1,7 +1,49 @@
-# Gerald Round 9 — Re-audit Request (fixes applied)
+# Gerald Round 9 — 2nd Re-audit Request (H-01-R / H-02-R / M-01-R fixed)
 
 **Date:** 2026-06-01
 **Author:** Gavin
+**Re:** Your re-audit report `quotecore-plus-round-9-catalog-attachments-reaudit-2026-06-01/04-report.md`, which CLOSED C-01, H-02, H-03, M-01, L-01 but HELD merge on **H-01-R, H-02-R, M-01-R** (catalog import accounting).
+**Branch:** `development` HEAD `03e47d1` (was `1366089` at your re-audit).
+**New migration applied to Supabase:** `backend/supabase/migrations/20260601150000_catalog_atomic_import.sql`.
+
+This brief covers ONLY the catalog-import rework that closes your three held findings, plus the new storage-over-limit ("red") product behaviour that rides on it. C-01/H-02/H-03/M-01/L-01 you already closed — unchanged since.
+
+---
+
+## H-01-R / H-02-R / M-01-R — catalog import is now atomic + honestly charged
+
+Your core objection: charging storage only on the final batch let a client persist rows without ever being charged (never send `isLastBatch`), the read-modify-write accounting was raceable, duplicate `row_index` was accepted, and `finalizeCatalog()` was a second uncharged path to `ready`. All addressed by moving the entire operation into one serialised DB transaction.
+
+**New RPC `import_catalog_rows_atomic(p_company_id, p_catalog_id, p_rows jsonb, p_is_first, p_is_last)`** (`SECURITY DEFINER`, `service_role` only) — `backend/supabase/migrations/20260601150000_catalog_atomic_import.sql`:
+1. `pg_advisory_xact_lock(hashtext('catalog_import:'||catalog_id))` — serialises all batches for a catalog. Closes **H-02-R** race.
+2. `SELECT ... FOR UPDATE` on the catalog row; verifies ownership + importable status.
+3. On first batch: clears rows; if prior status was `ready`, reverses that charge (replace-file no double-charge).
+4. Computes batch bytes SERVER-SIDE from the JSONB (`octet_length`), builds `search_text` in SQL.
+5. Enforces HARD ceiling **10 MB / 250k rows** (`RAISE ... P0017`) — abuse guard, rejects before storing.
+6. Inserts rows, then **charges `storage_used_bytes` by the batch delta IMMEDIATELY** (per batch, not deferred). Closes **H-01-R**: an abandoned/interrupted import is already charged for what landed — no unpaid durable rows.
+7. Updates `row_count`/`data_bytes`; sets `ready` only on `p_is_last`.
+8. Returns `{row_count, data_bytes, over_quota}`.
+
+**Supporting changes:**
+- `import-rows/route.ts` is now a thin auth + delegate wrapper; it computes no bytes itself, just shapes the payload and calls the RPC, mapping SQLSTATEs (P0015/P0016/P0017) to HTTP codes.
+- **`finalizeCatalog()` REMOVED** from `catalogs/actions.ts` — closes **M-01-R**. The RPC's final batch is the only path to `ready`.
+- `deleteCatalog` now reverses `data_bytes` regardless of status (everything with rows is charged now), so abandoned/error catalogs free their bytes on delete.
+- `adjust_company_storage` changed `integer` → `bigint` (storage columns are bigint; the old signature could mistype large deltas).
+- Added `UNIQUE (catalog_id, row_index)` on `catalog_rows` (+ dedupe of any pre-existing) — closes the duplicate/replay vector you noted.
+
+**Deliberate non-enforcement (product decision by Shaun — please sanity-check, not a bug):**
+- The RPC does NOT block an import that pushes the company OVER its plan storage quota. Per Shaun's "option 3", an import is allowed to COMPLETE and push the company "red" (max overspill bounded by the 10MB ceiling). `over_quota=true` is returned. Going red then blocks ALL FUTURE file uploads (catalog/attachment/quote-file/logo) via the existing app-layer `assertCanUseStorage()`. Quote/component/drawing creation use separate quotas and are intentionally NOT affected.
+- New storage-red UI: `isOverStorage` flag on entitlements, a red `EntitlementBanner` variant (fires independent of subscription status), and a `StorageBlockedModal` wired into all 15 file-upload portals.
+
+**Please confirm:** (1) per-batch charging + the advisory lock close H-01-R/H-02-R; (2) removing finalizeCatalog closes M-01-R; (3) the option-3 "allow over, go red" policy is an acceptable accounting model (bytes are always charged; the company simply goes over and is blocked from further uploads).
+
+**Smoke test (incl. SQL to force/reset the red state):** `docs/smoke-tests/storage-limit-smoke-test.md`.
+
+---
+
+## ARCHIVE — original re-audit brief (findings you already closed) below
+
+**Date:** 2026-06-01
 **Re:** Your Round 9 report `04-report.md` (C-01, H-01, H-02, H-03, M-01..M-04, L-01).
 **Branch:** `development` HEAD `1366089` (was `1da0b48` at your review).
 **Migration applied to Supabase:** `backend/supabase/migrations/20260601140000_round9_security_fixes.sql`.

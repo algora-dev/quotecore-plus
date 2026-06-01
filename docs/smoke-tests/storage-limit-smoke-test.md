@@ -64,20 +64,29 @@ the test (note the original number from the find-query above), OR recompute the
 catalog portion and set files to 0 if this is a clean test company:
 
 ```sql
--- Option 1 (preferred): restore the exact pre-test value you recorded.
-update public.companies set storage_used_bytes = <ORIGINAL_VALUE>
- where id = '<COMPANY_ID>';
-
--- Option 2 (clean test company only): recompute catalog bytes; assumes no
--- other uploaded files. Do NOT use on a company with real uploaded files.
+-- PREFERRED RESET: recompute the true value from ALL storage sources
+-- (quote_files + company_attachments + catalogs). Verified to match the
+-- live counter exactly on untouched accounts (2026-06-01). No need to have
+-- recorded the original number — this reconstructs it.
 update public.companies c
-   set storage_used_bytes = coalesce(
-         (select sum(cat.data_bytes) from public.catalogs cat where cat.company_id = c.id), 0)
+   set storage_used_bytes =
+         coalesce((select sum(file_size)  from public.quote_files        where company_id = c.id), 0)
+       + coalesce((select sum(file_size)  from public.company_attachments where company_id = c.id), 0)
+       + coalesce((select sum(data_bytes) from public.catalogs           where company_id = c.id), 0)
+ where c.id = '<COMPANY_ID>';
+
+-- Verify back to honest + not over:
+select c.slug, c.storage_used_bytes,
+       (sp.storage_limit_bytes + c.storage_topup_bytes) as effective_limit_bytes,
+       (c.storage_used_bytes > sp.storage_limit_bytes + c.storage_topup_bytes) as is_over
+  from public.companies c
+  join public.subscription_plans sp on sp.code = public.company_effective_plan_code(c.id)
  where c.id = '<COMPANY_ID>';
 ```
 
-> **Always record the original `storage_used_bytes` before forcing red** so you can
-> restore it exactly. Note it in the find-query output.
+> The recompute above is the safe default. If you'd rather, you can also note
+> the original `storage_used_bytes` from the find-query before forcing red and
+> restore that exact number instead.
 
 ---
 
