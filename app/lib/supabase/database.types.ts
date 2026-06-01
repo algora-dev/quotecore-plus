@@ -677,6 +677,7 @@ export type Database = {
           is_visible: boolean
           line_set_type: string | null
           line_type: Database["public"]["Enums"]["line_type"]
+          quantity_text: string | null
           quote_component_id: string | null
           quote_id: string
           show_dimensions: boolean
@@ -694,6 +695,7 @@ export type Database = {
           is_visible?: boolean
           line_set_type?: string | null
           line_type?: Database["public"]["Enums"]["line_type"]
+          quantity_text?: string | null
           quote_component_id?: string | null
           quote_id: string
           show_dimensions?: boolean
@@ -711,6 +713,7 @@ export type Database = {
           is_visible?: boolean
           line_set_type?: string | null
           line_type?: Database["public"]["Enums"]["line_type"]
+          quantity_text?: string | null
           quote_component_id?: string | null
           quote_id?: string
           show_dimensions?: boolean
