@@ -65,3 +65,25 @@ export async function getSignedUrls(
     error: entry.error ?? null,
   }));
 }
+
+/**
+ * Download a private storage object's raw bytes as a Buffer.
+ *
+ * Used by the email-attachment builder, which needs the actual file content
+ * (not a URL) to hand to Resend. Goes through the service-role client because
+ * email sending happens in server contexts where object ownership is enforced
+ * by the caller (the caller has already verified the file belongs to the
+ * company/quote before asking us to attach it).
+ *
+ * Throws on failure so the caller can decide whether to skip the attachment
+ * or abort the whole send.
+ */
+export async function downloadStorageObject(bucket: string, path: string): Promise<Buffer> {
+  const supabase = getStorageAdminClient();
+  const { data, error } = await supabase.storage.from(bucket).download(path);
+  if (error || !data) {
+    throw new Error(`Failed to download storage object ${path}: ${error?.message ?? 'no data'}`);
+  }
+  const arrayBuffer = await data.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
