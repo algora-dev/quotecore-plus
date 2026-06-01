@@ -363,6 +363,53 @@ export type Database = {
           },
         ]
       }
+      company_attachments: {
+        Row: {
+          archived_at: string | null
+          company_id: string
+          created_at: string
+          file_name: string
+          file_size: number
+          id: string
+          mime_type: string | null
+          name: string
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          company_id: string
+          created_at?: string
+          file_name: string
+          file_size?: number
+          id?: string
+          mime_type?: string | null
+          name: string
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          company_id?: string
+          created_at?: string
+          file_name?: string
+          file_size?: number
+          id?: string
+          mime_type?: string | null
+          name?: string
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_attachments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_quote_usage: {
         Row: {
           company_id: string
@@ -2487,6 +2534,7 @@ export type Database = {
       subscription_plans: {
         Row: {
           active: boolean
+          attachment_limit: number | null
           catalog_limit: number | null
           code: string
           coming_soon: boolean
@@ -2494,6 +2542,7 @@ export type Database = {
           created_at: string
           display_name: string
           feat_activity_card: boolean
+          feat_attachment_library: boolean
           feat_catalogs: boolean
           feat_digital_takeoff: boolean
           feat_email_send: boolean
@@ -2517,6 +2566,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          attachment_limit?: number | null
           catalog_limit?: number | null
           code: string
           coming_soon?: boolean
@@ -2524,6 +2574,7 @@ export type Database = {
           created_at?: string
           display_name: string
           feat_activity_card?: boolean
+          feat_attachment_library?: boolean
           feat_catalogs?: boolean
           feat_digital_takeoff?: boolean
           feat_email_send?: boolean
@@ -2547,6 +2598,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          attachment_limit?: number | null
           catalog_limit?: number | null
           code?: string
           coming_soon?: boolean
@@ -2554,6 +2606,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           feat_activity_card?: boolean
+          feat_attachment_library?: boolean
           feat_catalogs?: boolean
           feat_digital_takeoff?: boolean
           feat_email_send?: boolean
@@ -3132,6 +3185,10 @@ export type Database = {
         Args: { p_company_id: string; p_file_size: number }
         Returns: boolean
       }
+      company_attachment_count: {
+        Args: { p_company_id: string }
+        Returns: number
+      }
       company_catalog_count: { Args: { p_company_id: string }; Returns: number }
       company_component_count: {
         Args: { p_company_id: string }
@@ -3173,6 +3230,10 @@ export type Database = {
         Returns: boolean
       }
       prune_rate_limits: { Args: never; Returns: number }
+      require_attachment_slot: {
+        Args: { p_company_id: string }
+        Returns: undefined
+      }
       require_catalog_slot: {
         Args: { p_company_id: string }
         Returns: undefined

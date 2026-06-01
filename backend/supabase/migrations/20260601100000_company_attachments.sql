@@ -11,7 +11,7 @@
 -- New table:    company_attachments
 -- New functions: company_attachment_count, require_attachment_slot
 -- Plan changes: attachment_limit + feat_attachment_library on subscription_plans
--- Tiers:        Pro=10, Pro Plus=25, Premium=unlimited, all others=false/0
+-- Tiers:        Pro=3, Pro Plus=5, Premium=unlimited, all others=false/0
 --
 -- Storage: files live in the existing private QUOTE-DOCUMENTS bucket under
 -- the path prefix {companyId}/library/. Byte accounting is handled by the
@@ -86,16 +86,16 @@ COMMENT ON COLUMN public.subscription_plans.attachment_limit IS
 COMMENT ON COLUMN public.subscription_plans.feat_attachment_library IS
   'Whether the reusable company Attachment Library is available on this plan tier. One-off per-quote attachments are NOT gated by this.';
 
--- Pro: 10 reusable attachments
+-- Pro: 3 reusable attachments (matches catalog_limit)
 UPDATE public.subscription_plans
    SET feat_attachment_library = true,
-       attachment_limit = 10
+       attachment_limit = 3
  WHERE code = 'pro';
 
--- Pro Plus: 25
+-- Pro Plus: 5 (matches catalog_limit)
 UPDATE public.subscription_plans
    SET feat_attachment_library = true,
-       attachment_limit = 25
+       attachment_limit = 5
  WHERE code = 'pro_plus';
 
 -- Premium: unlimited (NULL)
