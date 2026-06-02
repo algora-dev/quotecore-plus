@@ -19,6 +19,10 @@ interface Props {
   /** Whether the company trade is roofing. Controls data-copilot attribute
    *  so the correct guide (roofing vs generic) can target this button. */
   isRoofing?: boolean;
+  /** Trade-aware plural label: 'Flashings' / 'Drawings & Images'. */
+  featureLabel?: string;
+  /** Trade-aware singular label: 'Flashing' / 'Drawing/Image'. */
+  featureLabelSingular?: string;
   /** When true the company is over storage — block image uploads. */
   isOverStorage?: boolean;
 }
@@ -85,7 +89,10 @@ function printFlashing(flashing: FlashingLibraryRow) {
   w.document.close();
 }
 
-export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, flashingCount, isRoofing = true, effectivePlanCode, isOverStorage }: Props) {
+export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, flashingCount, isRoofing = true, featureLabel = 'Flashings', featureLabelSingular = 'Flashing', effectivePlanCode, isOverStorage }: Props) {
+  // Lowercased forms for inline copy.
+  const featureLower = featureLabel.toLowerCase();
+  const featureSingularLower = featureLabelSingular.toLowerCase();
   const router = useRouter();
   const [flashings, setFlashings] = useState(initialFlashings);
   const [showUploadForm, setShowUploadForm] = useState(false);
@@ -156,7 +163,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
     <div>
       <div className="mb-6 flex justify-between items-center">
         <p className="text-sm text-slate-500">
-          {flashings.length} {flashings.length === 1 ? 'flashing' : 'flashings'} in library
+          {flashings.length} {flashings.length === 1 ? featureSingularLower : featureLower} in library
         </p>
         <div className="flex gap-2 items-center">
           {flashingLimit !== null && (
@@ -173,7 +180,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
               router.push(`/${workspaceSlug}/flashings/draw`);
             }}
             data-copilot={isRoofing ? 'draw-flashing' : 'create-drawing'}
-            title={atCap ? 'Upgrade to create more flashings' : 'Create a new flashing/image'}
+            title={atCap ? `Upgrade to create more ${featureLower}` : `Create a new ${featureSingularLower}`}
             className="px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all shadow-sm hover:shadow-md"
           >
             Create
@@ -184,7 +191,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
               if (isOverStorage) { setStorageBlocked(true); return; }
               setShowUploadForm(true);
             }}
-            title={atCap ? 'Upgrade to upload more flashings' : 'Upload an existing flashing/image'}
+            title={atCap ? `Upgrade to upload more ${featureLower}` : `Upload an existing ${featureSingularLower}`}
             className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all shadow-sm hover:shadow-md"
           >
             Upload
@@ -194,7 +201,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
 
       {showUploadForm && (
         <div className="mb-6 p-4 border border-slate-200 rounded-xl bg-white">
-          <h3 className="font-semibold text-slate-900 mb-3">Upload New Flashing</h3>
+          <h3 className="font-semibold text-slate-900 mb-3">Upload New {featureLabelSingular}</h3>
           <form onSubmit={handleCreate} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -202,7 +209,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
                 <input
                   name="name"
                   required
-                  placeholder="e.g., Ridge Flashing"
+                  placeholder={isRoofing ? 'e.g., Ridge Flashing' : 'e.g., Site Plan'}
                   className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
                 />
               </div>
@@ -225,7 +232,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
                 className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
               />
               <p className="text-xs text-slate-400 mt-1">
-                Upload a PNG or JPG image of the flashing design
+                Upload a PNG or JPG image of the {featureSingularLower}
               </p>
             </div>
             <div className="flex gap-2 pt-2">
@@ -252,9 +259,9 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
 
       {flashings.length === 0 ? (
         <div className="text-center py-12 border border-dashed border-slate-300 rounded-xl bg-slate-50">
-          <p className="text-slate-500 mb-2">No flashings in your library yet</p>
+          <p className="text-slate-500 mb-2">No {featureLower} in your library yet</p>
           <p className="text-xs text-slate-400">
-            Upload standard flashing designs to use in material order forms
+            Upload standard {featureSingularLower} designs to use in material order forms
           </p>
         </div>
       ) : (
@@ -287,21 +294,21 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
               <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
                 <button
                   onClick={(e) => { e.stopPropagation(); downloadFlashing(flashing); }}
-                  title="Download flashing image"
+                  title={`Download ${featureSingularLower} image`}
                   className="icon-btn border-slate-300 bg-white"
                 >
                   <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); printFlashing(flashing); }}
-                  title="Print flashing image"
+                  title={`Print ${featureSingularLower} image`}
                   className="icon-btn border-slate-300 bg-white"
                 >
                   <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); setDeleteFlashingId(flashing.id); }}
-                  title="Delete flashing"
+                  title={`Delete ${featureSingularLower}`}
                   className="icon-btn icon-btn--danger border-slate-300 bg-white"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -316,8 +323,8 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
       {deleteFlashingId && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-900">Delete Flashing</h3>
-            <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The flashing will be permanently deleted.</p>
+            <h3 className="text-lg font-semibold text-slate-900">Delete {featureLabelSingular}</h3>
+            <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The {featureSingularLower} will be permanently deleted.</p>
             <div className="flex gap-3 justify-end mt-6">
               <button onClick={() => setDeleteFlashingId(null)} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={deleteLoading}>Cancel</button>
               <button onClick={confirmDeleteFlashing} className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Delete'}</button>
@@ -330,8 +337,8 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
       <UpgradeModal
         open={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}
-        title={`Flashing library full on ${effectivePlanCode === 'trial' ? 'the free trial' : `the ${effectivePlanCode} plan`}`}
-        description={`You've reached your ${flashingLimit ?? 0} flashing limit. Upgrade your plan to add more flashing designs to your library.`}
+        title={`${featureLabelSingular} library full on ${effectivePlanCode === 'trial' ? 'the free trial' : `the ${effectivePlanCode} plan`}`}
+        description={`You've reached your ${flashingLimit ?? 0} ${featureSingularLower} limit. Upgrade your plan to add more ${featureSingularLower} designs to your library.`}
         recommendedPlan="pro"
       />
 
@@ -350,14 +357,14 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
               <div className="flex items-center gap-1 flex-shrink-0">
                 <button
                   onClick={() => downloadFlashing(viewingFlashing)}
-                  title="Download flashing image"
+                  title={`Download ${featureSingularLower} image`}
                   className="icon-btn border-slate-300 bg-white"
                 >
                   <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 </button>
                 <button
                   onClick={() => printFlashing(viewingFlashing)}
-                  title="Print flashing image"
+                  title={`Print ${featureSingularLower} image`}
                   className="icon-btn border-slate-300 bg-white"
                 >
                   <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>

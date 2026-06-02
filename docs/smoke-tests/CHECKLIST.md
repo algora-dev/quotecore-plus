@@ -52,8 +52,11 @@
 ## C. Storage-red policy
 - [x] **Over-limit blocks uploads** — red company: catalog/attachment/quote-file/logo uploads all blocked w/ banner + modal across portals.
 > Pass
-- [ ] **Quote/component/drawing still work** — these use separate quotas, NOT blocked by storage-red.
-- [ ] **Catalog import option-3** — an in-flight import may finish + push over (capped 10MB/catalog); company goes red after.
+> BOUNDARY PASS (2026-06-02): set used to 500KB-under limit, attempted 0.68MB attachment upload → blocked pre-commit with "Storage quota exceeded: ... would exceed limit". Confirms attachment/quote-file/logo uploads are gated BEFORE commit (assertCanUseStorage), not allowed to tip over. (Catalog import is the only allowed-to-overspill path — separate item.)
+- [x] **Quote/component/drawing still work** — these use separate quotas, NOT blocked by storage-red.
+> PASS (2026-06-02): while red, attachment/logo/quote-file/2nd-catalog-import all blocked; quote/component/drawing creation all still worked.
+- [x] **Catalog import option-3** — an in-flight import may finish + push over (capped 10MB/catalog); company goes red after.
+> PASS (2026-06-02): from 500KB-under, imported a 781KB CSV (6,590 rows) → import allowed to start, completed (catalog Ready), account flipped red afterward with banner. Banner CTA wrap fixed `5ca8217`.
 - [ ] **Top-up threshold (Gavin #4)** — company with a storage top-up is NOT flagged red below `limit + topup` (red triggers only past the combined threshold).
 
 ## D. Resource Library restructure

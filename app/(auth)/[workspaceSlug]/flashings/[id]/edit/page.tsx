@@ -3,6 +3,7 @@ import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/sup
 import type { FlashingLibraryRow } from '@/app/lib/types';
 import { EditFlashingForm } from './edit-form';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
+import { getTradeLabels } from '@/app/lib/trades/labels';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,12 +37,22 @@ export default async function EditFlashingPage(props: Props) {
     notFound();
   }
 
+  // Trade-aware singular label ('Flashing' / 'Drawing/Image'). Display only.
+  const { data: companyRow } = await supabase
+    .from('companies')
+    .select('default_trade')
+    .eq('id', profile.company_id)
+    .maybeSingle();
+  const featureLabelSingular = getTradeLabels(
+    (companyRow as { default_trade?: string } | null)?.default_trade,
+  ).featureLabelSingular;
+
   return (
     <div className="max-w-4xl mx-auto p-6 bg-slate-50 min-h-screen">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Edit Flashing</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Edit {featureLabelSingular}</h1>
         <p className="text-sm text-slate-600 mt-1">
-          Update flashing details and measurement values
+          Update {featureLabelSingular.toLowerCase()} details and measurement values
         </p>
       </div>
       

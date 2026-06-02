@@ -3,6 +3,7 @@ import { FlashingCanvas } from './FlashingCanvas';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
+import { getTradeLabels } from '@/app/lib/trades/labels';
 
 interface Props {
   params: Promise<{ workspaceSlug: string }>;
@@ -30,5 +31,17 @@ export default async function DrawFlashingPage(props: Props) {
   const system = normalizeMeasurementSystem(company.default_measurement_system);
   const lengthUnit: 'mm' | 'in' = system === 'metric' ? 'mm' : 'in';
 
-  return <FlashingCanvas workspaceSlug={workspaceSlug} lengthUnit={lengthUnit} />;
+  // Trade-aware singular label: 'Flashing' for roofing, 'Drawing/Image' for
+  // all other trades. Display copy only.
+  const featureLabelSingular = getTradeLabels(
+    (company as { default_trade?: string }).default_trade,
+  ).featureLabelSingular;
+
+  return (
+    <FlashingCanvas
+      workspaceSlug={workspaceSlug}
+      lengthUnit={lengthUnit}
+      featureLabelSingular={featureLabelSingular}
+    />
+  );
 }

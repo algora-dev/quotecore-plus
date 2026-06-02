@@ -159,6 +159,9 @@ export function ComponentList({
   const pitchRafterLabel = _tradeLabels.pitchRafterLabel ?? 'Rafter Pitch';
   // Material orders image label - flashings terminology only applies to roofing.
   const isRoofingTrade = companyDefaultTrade === 'roofing';
+  // Drawing-library feature label: 'Flashings' for roofing, 'Drawings & Images' for all others.
+  const featureLabel = _tradeLabels.featureLabel ?? 'Flashings';
+  const featureLabelSingular = _tradeLabels.featureLabelSingular ?? 'Flashing';
   const imageAssignLabel = isRoofingTrade ? 'Assign Flashings (Optional)' : 'Assign Image (Optional)';
   const imageSelectPlaceholder = isRoofingTrade ? 'Select a flashing...' : 'Select an image...';
   const imageHelperText = isRoofingTrade ? 'Add flashing drawings to use in material order forms' : 'Add images/drawings to use in material order forms';
@@ -745,19 +748,19 @@ export function ComponentList({
               href={`/${workspaceSlug}/flashings`}
               className="inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
-              Flashings
+              {featureLabel}
             </Link>
           ) : (
             <button
               type="button"
               onClick={() => setFlashingsUpgradeOpen(true)}
-              title="Flashings requires a higher plan"
+              title={`${featureLabel} requires a higher plan`}
               className="inline-flex items-center rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-500 cursor-pointer hover:bg-slate-300"
             >
               <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              Flashings
+              {featureLabel}
             </button>
           )}
         </div>
@@ -1419,8 +1422,8 @@ export function ComponentList({
       <UpgradeModal
         open={flashingsUpgradeOpen}
         onClose={() => setFlashingsUpgradeOpen(false)}
-        title="Flashing drawings require a higher plan"
-        description="Upgrade your account to access the flashings drawing tool and reusable flashing library."
+        title={`${featureLabelSingular} drawings require a higher plan`}
+        description={`Upgrade your account to access the ${featureLabel.toLowerCase()} drawing tool and reusable library.`}
         recommendedPlan="pro"
       />
       <UpgradeModal
