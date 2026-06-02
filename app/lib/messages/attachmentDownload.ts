@@ -26,9 +26,29 @@ export function isUuid(value: string | null | undefined): boolean {
   return typeof value === 'string' && UUID_RE.test(value);
 }
 
+/**
+ * Build the filename used for a save-to-device download. `display_name` is the
+ * user-facing snapshot (often with no extension, e.g. "Warranty Certificate"),
+ * so a browser saving it produces an extension-less generic "file". We append
+ * the source file's real extension when the display name is missing one, so
+ * the saved file opens with the right viewer. Display in the UI is unchanged.
+ */
+export function buildDownloadName(displayName: string, sourceFileName: string): string {
+  const base = (displayName || '').trim() || (sourceFileName || '').trim() || 'download';
+  const extMatch = /\.([A-Za-z0-9]{1,8})$/.exec(sourceFileName || '');
+  const ext = extMatch ? extMatch[1].toLowerCase() : '';
+  if (!ext) return base;
+  // Already ends with the right extension? Leave it.
+  if (new RegExp(`\\.${ext}$`, 'i').test(base)) return base;
+  return `${base}.${ext}`;
+}
+
 export interface ResolvedDownload {
   storagePath: string;
+  /** User-facing name (snapshot). Used for inline/View; may lack an extension. */
   displayName: string;
+  /** Real source file name (carries the extension). Used to build the save-as name. */
+  sourceFileName: string;
   mimeType: string | null;
   companyId: string;
 }
@@ -56,7 +76,7 @@ async function resolveSourceFile(
   if (row.library_attachment_id) {
     const { data } = await admin
       .from('company_attachments')
-      .select('storage_path, mime_type, company_id')
+      .select('storage_path, file_name, mime_type, company_id')
       .eq('id', row.library_attachment_id)
       .eq('company_id', row.company_id)
       .maybeSingle();
@@ -64,6 +84,7 @@ async function resolveSourceFile(
     return {
       storagePath: data.storage_path,
       displayName: row.display_name,
+      sourceFileName: data.file_name ?? row.display_name,
       mimeType: data.mime_type,
       companyId: data.company_id,
     };
@@ -71,7 +92,7 @@ async function resolveSourceFile(
   if (row.quote_file_id) {
     const { data } = await admin
       .from('quote_files')
-      .select('storage_path, mime_type, company_id')
+      .select('storage_path, file_name, mime_type, company_id')
       .eq('id', row.quote_file_id)
       .eq('company_id', row.company_id)
       .maybeSingle();
@@ -79,6 +100,7 @@ async function resolveSourceFile(
     return {
       storagePath: data.storage_path,
       displayName: row.display_name,
+      sourceFileName: data.file_name ?? row.display_name,
       mimeType: data.mime_type,
       companyId: data.company_id,
     };

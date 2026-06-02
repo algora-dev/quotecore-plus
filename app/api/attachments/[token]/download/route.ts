@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import {
   authorizeAttachmentDownload,
+  buildDownloadName,
   isUuid,
 } from '@/app/lib/messages/attachmentDownload';
 import { getSignedUrl } from '@/app/lib/storage/helpers';
@@ -79,7 +80,9 @@ export async function GET(
       // Force save-to-device only when the caller asked for it; otherwise the
       // signed URL renders inline (View). Sanitise the display name for the
       // Content-Disposition filename.
-      forceDownload ? sanitizeFilename(resolved.displayName) : undefined,
+      forceDownload
+        ? sanitizeFilename(buildDownloadName(resolved.displayName, resolved.sourceFileName))
+        : undefined,
     );
   } catch (err) {
     console.error('[attachments/download] sign failed:', err);

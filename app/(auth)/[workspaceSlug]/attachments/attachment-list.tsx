@@ -251,7 +251,7 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Delete attachment</h3>
             <p className="text-sm text-slate-500 mt-2">
-              Permanently delete <strong className="text-slate-700">{deleteTarget.name}</strong>? This removes the file and frees {formatBytes(deleteTarget.file_size)} of storage. This cannot be undone.
+              Permanently delete <strong className="text-slate-700">{deleteTarget.name}</strong>? This removes the file and frees {formatBytes(deleteTarget.file_size)} of storage, and clears it from any email template that uses it as a default. If this file was already sent on a quote or order, those existing download links will stop working. This cannot be undone.
             </p>
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
             <div className="flex gap-3 justify-end mt-6">
