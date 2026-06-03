@@ -88,22 +88,21 @@
 > GAVIN-VERIFIED PASS (2026-06-02): hit dev download route with a random valid-format token + file id → generic 404, empty body, no existence leak. My job, done. No Shaun test needed.
 ---
 
-## H. AI Assistant — Phase 3 Guide-me (dev only, flag-gated; NOT part of attachments merge gate)
-_Pending verification (Shaun testing 2026-06-03, dev `9c73d66`):_
-- [ ] **Respond mode is concise** — "How do I create a quote?" returns a tight summary (not all 7 steps) + offers "Switch to Guide me."
-- [ ] **Guide-me auto-starts** — switching to Guide me on a workflow page (e.g. quotes) auto-kicks and narrates the CURRENT step, one at a time (no full dump).
-- [ ] **Guide-me grounded in real workflow** — step content matches the Copilot guide for that screen (create-quote / quote-builder / components / takeoff / send-to-customer).
-- [ ] **Mid-guide question** — asking a free-form question mid-guide answers naturally, then steers back to the next step.
-- [ ] **Tool-call follow-up no longer errors** (`7f11e80`) — a 2nd message that triggers search_help_docs streams a reply (previously "Assistant error").
-- [ ] **No false "I did it"** — assistant only tells user what to click; never claims to have performed an action (read-only).
-> Known calibration follow-ups (not blockers): /quotes/new and /quotes/[id] both map to create-quote guide; Guide-me reads but doesn't advance step progress. See `app/lib/assistant/README.md`.
-
-_Pending verification — Phase 4 visual highlight (dev `ad75b73`):_
-- [ ] **Guide-me highlights the control** — in Guide me, the current step's button/field gets a visible glow/outline on screen and the page scrolls to it.
-- [ ] **Highlight points at the RIGHT element** — the highlighted control matches what the assistant is describing.
-- [ ] **Off-screen control handled** — if the assistant references a control not on the current screen, it describes where to find it (no highlight, no error).
-- [ ] **Highlight auto-clears** — the glow disappears after a few seconds / when the next step highlights.
-- [ ] **No selectors leak** — (dev-tools/network) the SSE `highlight` event carries only an `elementId`, never a CSS selector.
+## H. AI Assistant — Guide-me re-architecture (dev only, flag-gated; in the merge bundle but OFF on main via flags)
+_Re-architected 2026-06-03 eve, dev 3cfbd60. Legacy Copilot fully removed; assistant is the sole helper. Core calibration CONFIRMED by Shaun. Remaining = confirmatory pass + items below._
+- [x] **Ask-first** — Guide-me orients on current screen and ASKS what you want (no forced tour). Shaun confirmed.
+- [x] **Cross-page routing** — a goal on another page routes you there (e.g. add a component to a quote, from Components). Shaun confirmed.
+- [x] **Next / Back / Reset** — instant step nav; Reset re-syncs to real step (or asks if ambiguous). Shaun confirmed.
+- [x] **Highlight release on click** — glow clears on any click incl. the target, stays cleared until step changes; Back→Next re-fires. Shaun confirmed.
+- [x] **Finish** — last step shows Finish; clicking clears the guide bar + warm sign-off. Shaun confirmed.
+- [ ] **Respond mode concise** — a how-to returns a tight summary (not a full dump) + offers Guide-me.
+- [ ] **Facts auto-advance** — doing a step action on a tagged control advances the highlight without clicking Next.
+- [ ] **Highlights OFF** — toggled off: assistant names the actual control (never the highlighted), no glow.
+- [ ] **Read-only / no chatter** — only tells you what to click; never claims to act; no write-permission caveats volunteered.
+- [ ] **No selectors leak** — (network) SSE highlight + guide_start carry only elementId / workflowId, never a CSS selector.
+- [ ] **Security spot-check** — GET /api/assistant/workflow?id= resolves trade from session (not spoofable via query).
+> Recommend a Gerald security re-audit of the rearchitecture before the development->main merge (read-only invariant, recentActions trust model, new workflow endpoint auth).
+> App-side (NOT assistant): component-create on a read-only account shows a raw unexpected-response error — friendly-message catch later.
 
 ---
 
