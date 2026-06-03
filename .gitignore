@@ -45,3 +45,7 @@ next-env.d.ts
 supabase/.temp/
 supabase/.branches/
 .git-commit-msg.txt
+
+# AI Assistant: never commit the raw OpenAI key file
+docs/ChatAssistant/OpenAI/
+**/OpenAiKey.txt

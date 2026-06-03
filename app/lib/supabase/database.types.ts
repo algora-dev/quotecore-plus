@@ -103,6 +103,205 @@ export type Database = {
           },
         ]
       }
+      assistant_events: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          session_id: string | null
+          tool_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          tool_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          tool_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "assistant_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assistant_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          session_id: string
+          tool_calls: Json | null
+          tool_results: Json | null
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          role: string
+          session_id: string
+          tool_calls?: Json | null
+          tool_results?: Json | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          session_id?: string
+          tool_calls?: Json | null
+          tool_results?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "assistant_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assistant_sessions: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          last_active_at: string
+          retention_until: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+          visibility: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          last_active_at?: string
+          retention_until?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+          visibility?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          last_active_at?: string
+          retention_until?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_sessions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assistant_token_usage: {
+        Row: {
+          company_id: string
+          id: string
+          month_key: string
+          total_tokens: number
+          updated_at: string
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          id?: string
+          month_key?: string
+          total_tokens?: number
+          updated_at?: string
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          id?: string
+          month_key?: string
+          total_tokens?: number
+          updated_at?: string
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_token_usage_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assistant_workflow_progress: {
+        Row: {
+          company_id: string
+          current_step: string | null
+          current_workflow: string | null
+          id: string
+          updated_at: string
+          user_id: string
+          workflows_completed: string[]
+        }
+        Insert: {
+          company_id: string
+          current_step?: string | null
+          current_workflow?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+          workflows_completed?: string[]
+        }
+        Update: {
+          company_id?: string
+          current_step?: string | null
+          current_workflow?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+          workflows_completed?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_workflow_progress_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bulk_operations_log: {
         Row: {
           actual_count: number
@@ -791,6 +990,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      doc_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          content_hash: string
+          embedding: string
+          heading: string
+          id: string
+          section: string
+          slug: string
+          token_count: number
+          updated_at: string
+        }
+        Insert: {
+          chunk_index?: number
+          content: string
+          content_hash: string
+          embedding: string
+          heading?: string
+          id?: string
+          section?: string
+          slug: string
+          token_count?: number
+          updated_at?: string
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          content_hash?: string
+          embedding?: string
+          heading?: string
+          id?: string
+          section?: string
+          slug?: string
+          token_count?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       docs_feedback: {
         Row: {
@@ -3327,6 +3565,21 @@ export type Database = {
       is_measurement_type_allowed_for_trade: {
         Args: { p_mtype: string; p_trade: string }
         Returns: boolean
+      }
+      match_doc_chunks: {
+        Args: {
+          filter_section?: string
+          match_count?: number
+          query_embedding: string
+        }
+        Returns: {
+          chunk_index: number
+          content: string
+          heading: string
+          section: string
+          similarity: number
+          slug: string
+        }[]
       }
       prune_rate_limits: { Args: never; Returns: number }
       require_attachment_slot: {

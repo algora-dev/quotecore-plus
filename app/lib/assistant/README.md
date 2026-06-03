@@ -22,9 +22,21 @@ needed. Everything is gated off by default (`AI_ASSISTANT_V1_ENABLED=false`).
 - **All chat guardrails are acceptance criteria, not later hardening** (rate limit fail-closed, cost caps, size/timeouts, retention).
 - **Read-only V1**: every live tool `requiresWrite: false`; future tools cannot leak into the live set (`assertRegistryReadOnly`).
 
+## Phase 0B — Knowledge + registry + flow pipeline (SHIPPED)
+
+| Artifact | Purpose |
+|----------|---------|
+| `backend/supabase/migrations/20260603100000_ai_assistant_foundation.sql` | pgvector + `doc_chunks` (REVOKEd) + `assistant_sessions/messages/events` + `assistant_token_usage` + `assistant_workflow_progress` + `match_doc_chunks` RPC. APPLIED to Supabase, types regenerated, lockdown verified (anon+authd denied on doc_chunks/RPC/token_usage). |
+| `scripts/embed-docs.mjs` | Walks `content/docs/*.mdx`, heading-chunks, content-hash diff, embeds (text-embedding-3-small, 1536d), upserts `doc_chunks`, deletes stale. **585 chunks embedded** from 95 docs. Run: `node scripts/embed-docs.mjs`. |
+| `costGuard.ts` (updated) | Now wired to the live `assistant_token_usage` table (queryUsage/recordTokenUsage). |
+| `scripts/seed-ui-registry.mjs` | Inventories `data-copilot` anchors → `uiRegistry.generated.ts` (91 static ids) + flags 4 dynamic anchors for hand-registration. |
+| `uiRegistry.ts` | Curated registry over the seed: semantic-only entries (no selector), `webSelectorFor`, `canHighlight` allowlist. |
+| `scripts/build-workflows.mjs` + `content/workflows/*.flow.md` | `.flow.md` compiler — strict `ui:`(registry) + `until:`(validator grammar) validation, fails loud. `create-component.flow.md` converted → `workflows.generated.json`. |
+
+**Retrieval eval:** 82% strict top-5 substring hit-rate; effective ~95% (the 3 'misses' returned the correct doc under a different slug). Known content gap: **no catalog doc exists yet** (recent feature) — write docs then re-run `embed-docs`.
+
 ### Not yet built (next phases)
-- **0B:** migrations (pgvector + `doc_chunks` w/ REVOKE, `assistant_sessions/messages/events`, `assistant_workflow_progress`, `assistant_token_usage`), `embed-docs.ts`, UI Element Registry seed, `.flow.md` compiler. *Needs `OPENAI_API_KEY` for embedding.*
-- **1:** `/api/assistant/chat` SSE endpoint + orchestrator + `search_help_docs` handler + chat persistence.
+- **1:** `/api/assistant/chat` SSE endpoint + orchestrator + `search_help_docs` handler (uses `match_doc_chunks` RPC) + chat persistence + the Phase-1 acceptance gates (auth, fail-closed RL, cost caps, SSE abort).
 - **3:** headless `workflowService` extraction, context/workflow tools, mode toggle.
 - **4:** highlight tool + web executor.
 - **5:** retire legacy Copilot UI.

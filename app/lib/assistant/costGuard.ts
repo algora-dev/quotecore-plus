@@ -6,25 +6,35 @@
  * the assistant can never run away with spend (Gerald review H-02). This file
  * defines the CONTRACT and a fail-closed default in Phase 0A.
  *
- * The persistent token-accounting store (an `assistant_token_usage` table /
- * RPC, akin to the rate-limit pattern) is created in Phase 0B's migrations.
- * Until that exists, {@link checkCostBudget} fails CLOSED when accounting is
- * unavailable AND the feature flag is on — we would rather refuse than spend
- * blind. When the assistant flag is OFF, the endpoint never reaches here.
- *
- * Phase 1 wires `recordTokenUsage` to the real store and flips
- * `ACCOUNTING_READY` on once the migration lands.
+ * The persistent token-accounting store is the `assistant_token_usage` table
+ * (Phase 0B migration `20260603100000`). It is service-role only. This module
+ * reads/writes it via a service client. If accounting is structurally
+ * unavailable (e.g. missing service env) we fail CLOSED — refuse rather than
+ * spend blind. When the assistant flag is OFF, the endpoint never reaches here.
  */
 
+import { createClient as createServiceClient } from '@supabase/supabase-js';
+import type { Database } from '@/app/lib/supabase/database.types';
 import { COST_LIMITS } from './config';
 
-/**
- * Set to `true` in Phase 0B once `assistant_token_usage` + its RPC exist and
- * {@link queryUsage} / {@link recordTokenUsage} are implemented against them.
- * Kept as an explicit constant so the fail-closed behaviour below is obvious
- * and intentional rather than an accident of an unimplemented function.
- */
-const ACCOUNTING_READY = false;
+let cachedClient: ReturnType<typeof createServiceClient<Database>> | null = null;
+function getClient() {
+  if (cachedClient) return cachedClient;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null; // accounting unavailable -> callers fail closed
+  cachedClient = createServiceClient<Database>(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  return cachedClient;
+}
+
+function utcDay(): string {
+  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+}
+function monthKey(): string {
+  return new Date().toISOString().slice(0, 7); // YYYY-MM (UTC)
+}
 
 export interface CostGuardInput {
   userId: string;
@@ -47,12 +57,15 @@ export interface CostGuardResult {
 export async function checkCostBudget(
   input: CostGuardInput
 ): Promise<CostGuardResult> {
-  if (!ACCOUNTING_READY) {
-    // No durable accounting yet → cannot prove we're under budget → refuse.
+  let usage: UsageSnapshot;
+  try {
+    const snapshot = await queryUsage(input);
+    if (!snapshot) return { allowed: false, failedClosed: true };
+    usage = snapshot;
+  } catch {
+    // Cannot prove we're under budget -> refuse.
     return { allowed: false, failedClosed: true };
   }
-
-  const usage = await queryUsage(input);
 
   if (usage.dailyUserTokens >= COST_LIMITS.dailyTokensPerUser) {
     return { allowed: false, exceeded: 'dailyUser' };
@@ -74,24 +87,90 @@ interface UsageSnapshot {
 }
 
 /**
- * Read current token usage. Implemented in Phase 0B/1 against
- * `assistant_token_usage`. Throws until then; callers never reach it while
- * {@link ACCOUNTING_READY} is false.
+ * Read current token usage from `assistant_token_usage`. Returns null when the
+ * service client is unavailable (caller then fails closed).
  */
-async function queryUsage(_input: CostGuardInput): Promise<UsageSnapshot> {
-  throw new Error(
-    'costGuard.queryUsage: token accounting store not implemented yet (Phase 0B)'
+async function queryUsage(
+  input: CostGuardInput
+): Promise<UsageSnapshot | null> {
+  const supabase = getClient();
+  if (!supabase) return null;
+
+  const today = utcDay();
+  const month = monthKey();
+
+  // Today's per-user + per-company rows.
+  const { data: dayRows, error: dayErr } = await supabase
+    .from('assistant_token_usage')
+    .select('user_id, total_tokens')
+    .eq('company_id', input.companyId)
+    .eq('usage_date', today);
+  if (dayErr) throw dayErr;
+
+  // Month-to-date company total.
+  const { data: monthRows, error: monthErr } = await supabase
+    .from('assistant_token_usage')
+    .select('total_tokens')
+    .eq('company_id', input.companyId)
+    .eq('month_key', month);
+  if (monthErr) throw monthErr;
+
+  const dailyUserTokens = (dayRows ?? [])
+    .filter((r) => r.user_id === input.userId)
+    .reduce((sum, r) => sum + Number(r.total_tokens ?? 0), 0);
+  const dailyCompanyTokens = (dayRows ?? []).reduce(
+    (sum, r) => sum + Number(r.total_tokens ?? 0),
+    0
   );
+  const monthlyCompanyTokens = (monthRows ?? []).reduce(
+    (sum, r) => sum + Number(r.total_tokens ?? 0),
+    0
+  );
+
+  return { dailyUserTokens, dailyCompanyTokens, monthlyCompanyTokens };
 }
 
 /**
- * Record the tokens a completed turn consumed. Implemented in Phase 0B/1.
- * No-op until accounting is ready so Phase 0A callers can wire the call site
- * without crashing.
+ * Record the tokens a completed turn consumed. Upserts the (company,user,day)
+ * row, incrementing total_tokens. Best-effort: logs and swallows errors so a
+ * recording blip never breaks the user's turn (the pre-turn check is the gate).
  */
 export async function recordTokenUsage(
-  _input: CostGuardInput & { totalTokens: number }
+  input: CostGuardInput & { totalTokens: number }
 ): Promise<void> {
-  if (!ACCOUNTING_READY) return;
-  // Phase 0B: upsert into assistant_token_usage (day + month buckets).
+  const supabase = getClient();
+  if (!supabase || input.totalTokens <= 0) return;
+
+  const today = utcDay();
+  const month = monthKey();
+
+  try {
+    const { data: existing } = await supabase
+      .from('assistant_token_usage')
+      .select('id, total_tokens')
+      .eq('company_id', input.companyId)
+      .eq('user_id', input.userId)
+      .eq('usage_date', today)
+      .maybeSingle();
+
+    if (existing) {
+      await supabase
+        .from('assistant_token_usage')
+        .update({
+          total_tokens: Number(existing.total_tokens ?? 0) + input.totalTokens,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existing.id);
+    } else {
+      await supabase.from('assistant_token_usage').insert({
+        company_id: input.companyId,
+        user_id: input.userId,
+        usage_date: today,
+        month_key: month,
+        total_tokens: input.totalTokens,
+      });
+    }
+  } catch (err) {
+    console.warn('[assistant.costGuard] recordTokenUsage failed:', err);
+  }
 }
