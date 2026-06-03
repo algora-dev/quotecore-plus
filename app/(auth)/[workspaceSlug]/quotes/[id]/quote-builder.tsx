@@ -25,7 +25,6 @@ import { ConfirmQuoteButton } from './ConfirmQuoteButton';
 import { CurrencySelector } from './CurrencySelector';
 import { FilesManager } from './FilesManager';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
-import { useCopilot } from '@/app/components/copilot/CopilotProvider';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
@@ -98,8 +97,6 @@ export function QuoteBuilder({
   const tradeLabels = getTradeLabels((quote as { trade?: string }).trade);
   // areaIsOptional covers both cladding and generic (anything that doesn't require pitch).
   const quoteIsGeneric = tradeLabels.areaIsOptional;
-  const { state: copilotState } = useCopilot();
-  
   // Update quote state when props change (e.g., after currency change)
   useEffect(() => {
     setQuote(initialQuote);
@@ -117,8 +114,6 @@ export function QuoteBuilder({
   const [marginSaving, setMarginSaving] = useState(false);
   
   const [roofAreas, setRoofAreas] = useState(initialRoofAreas);
-  const copilotActive = copilotState.enabled && copilotState.activeGuide === 'quote-builder';
-  const hasUnconfirmedArea = roofAreas.some(a => !a.is_locked);
   const [roofAreaEntries, setRoofAreaEntries] = useState(initialRoofAreaEntries);
   const [components, setComponents] = useState(initialComponents);
   const [entries, setEntries] = useState(initialEntries);
@@ -556,8 +551,8 @@ export function QuoteBuilder({
               onRemove={handleRemoveArea}
             />
           ))}
-          {/* Hide add-area input during copilot if there's an unconfirmed area */}
-          {(!copilotActive || !hasUnconfirmedArea) && (
+          {/* Add-area input. (Previously hidden mid-Copilot-guide when an area
+              was unconfirmed; Copilot removed, so it always shows now.) */}
           <div className="flex gap-2" data-copilot="quote-add-area-row">
             <input
               value={newAreaLabel}
@@ -576,7 +571,6 @@ export function QuoteBuilder({
               {tradeLabels.addAreaCta}
             </button>
           </div>
-          )}
           <div className="flex justify-end">
             <button
               onClick={() => setPhase('components')}

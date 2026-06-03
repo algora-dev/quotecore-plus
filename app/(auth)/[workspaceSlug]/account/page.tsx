@@ -9,7 +9,6 @@ import { PasswordSection } from '@/app/(auth)/[workspaceSlug]/settings/PasswordS
 import { MfaSection, RecoveryCodesPanel } from '@/app/(auth)/[workspaceSlug]/settings/MfaSection';
 import { SecurityQuestionsSection } from '@/app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection';
 import { NotificationsSection } from '@/app/(auth)/[workspaceSlug]/settings/NotificationsSection';
-import { CopilotSettings } from '@/app/(auth)/[workspaceSlug]/settings/CopilotSettings';
 import { SupportSection } from './support/SupportSection';
 
 import { loadCompanyTaxes } from '@/app/lib/taxes/actions';
@@ -194,7 +193,7 @@ export default async function AccountPage() {
       <section className="space-y-6">
         <div>
           <h2 className="text-xl font-semibold text-slate-900">Notifications</h2>
-          <p className="text-sm text-slate-500 mt-1">Decide which app alerts also reach your inbox, and how Copilot guides you.</p>
+          <p className="text-sm text-slate-500 mt-1">Decide which app alerts also reach your inbox.</p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4" data-copilot="account-notifications">
           <div>
@@ -204,13 +203,6 @@ export default async function AccountPage() {
             initialEnabled={user?.email_notifications_enabled ?? true}
             userEmail={userEmail}
           />
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4" data-copilot="account-copilot">
-          <div>
-            <h3 className="text-base font-semibold text-slate-900">Copilot</h3>
-            <p className="text-sm text-slate-500 mt-1">Interactive tutorials that guide you through each feature.</p>
-          </div>
-          <CopilotSettings />
         </div>
       </section>
     ),

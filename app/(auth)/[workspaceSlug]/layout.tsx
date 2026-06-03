@@ -5,9 +5,6 @@ import { redirect } from 'next/navigation';
 import { LogoutButton } from '@/app/components/auth/LogoutButton';
 import { WorkspaceNav } from '@/app/components/workspace/WorkspaceNav';
 import { AlertBell } from '@/app/components/alerts/AlertBell';
-import { CopilotProvider } from '@/app/components/copilot/CopilotProvider';
-import { CopilotToggle } from '@/app/components/copilot/CopilotToggle';
-import { CopilotOverlay } from '@/app/components/copilot/CopilotOverlay';
 import { HelpDrawerTrigger, HelpDrawerPanel } from '@/app/components/docs/HelpDrawer';
 import { HelpDrawerProvider } from '@/app/components/docs/HelpDrawerContext';
 import { HelpDrawerLayout } from '@/app/components/docs/HelpDrawerLayout';
@@ -43,21 +40,6 @@ export default async function WorkspaceLayout({
 
   const supabase = await createSupabaseServerClient();
 
-  // Load copilot progress
-  const { data: copilotData } = await supabase
-    .from('copilot_progress')
-    .select('copilot_enabled, copilot_visible, guides_completed, current_guide, current_step')
-    .eq('user_id', profile.id)
-    .single();
-
-  const copilotState = copilotData ? {
-    enabled: copilotData.copilot_enabled ?? true,
-    visible: (copilotData as any).copilot_visible ?? true,
-    activeGuide: copilotData.current_guide,
-    currentStep: copilotData.current_step ?? 0,
-    guidesCompleted: copilotData.guides_completed ?? [],
-  } : null;
-
   // Load alerts for bell
   const { data: alerts } = await supabase
     .from('alerts')
@@ -69,7 +51,6 @@ export default async function WorkspaceLayout({
   const unreadCount = (alerts || []).filter(a => !a.is_read).length;
 
   return (
-    <CopilotProvider userId={profile.id} companyId={company.id} initialState={copilotState} trade={(company as { default_trade?: string }).default_trade ?? 'roofing'}>
       <HelpDrawerProvider>
         {/*
           The help drawer panel mounts at the viewport's left edge. It's
@@ -90,7 +71,6 @@ export default async function WorkspaceLayout({
                   </Link>
                   <div className="flex items-center gap-3">
                     <HelpDrawerTrigger />
-                    <CopilotToggle />
                     <AlertBell
                       initialAlerts={alerts || []}
                       initialUnreadCount={unreadCount}
@@ -114,12 +94,11 @@ export default async function WorkspaceLayout({
             <EntitlementBanner entitlements={entitlements} workspaceSlug={slug} />
 
             <main className="mx-auto w-full max-w-6xl px-6 py-10">{children}</main>
-            <CopilotOverlay />
             {/*
-              AI Assistant widget (Phase 2). Self-gates on
-              NEXT_PUBLIC_AI_ASSISTANT_V1 — renders nothing when the flag is
-              off. Runs in parallel with the legacy Copilot UI until Phase 5
-              retirement; the Help Drawer remains as a deterministic fallback.
+              AI Assistant widget. Self-gates on NEXT_PUBLIC_AI_ASSISTANT_V1 —
+              renders nothing when the flag is off. This is now the SOLE
+              in-app help surface (legacy Copilot removed); the Help Drawer
+              remains as a deterministic docs fallback.
             */}
             <AssistantWidget
               userId={profile.id}
@@ -129,6 +108,5 @@ export default async function WorkspaceLayout({
           </div>
         </HelpDrawerLayout>
       </HelpDrawerProvider>
-    </CopilotProvider>
   );
 }
