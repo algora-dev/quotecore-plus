@@ -33,14 +33,32 @@ export function AssistantWidget(_props: Props) {
   const dragRef = useRef<{ dx: number; dy: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const { messages, status, send, cancel, reset } = useAssistantChat();
+  const { messages, status, send, sendKickoff, cancel, reset } = useAssistantChat();
   const { buildHints } = useAssistantHints();
+  // Guard so the guide-mode kickoff fires once per (open, screen) and never
+  // mid-stream or over an existing conversation.
+  const kickedOffRef = useRef<string | null>(null);
 
   // Auto-scroll to the latest message while streaming.
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
+
+  // Proactive Guide-me: when the panel is open in guide mode and the
+  // conversation is empty (fresh / after New), auto-start guidance for the
+  // current screen. Fires once per screen; won't interrupt an existing chat
+  // or an in-flight stream. Switching to Respond, or having any messages,
+  // suppresses it.
+  useEffect(() => {
+    if (!open || mode !== 'guide_me') return;
+    if (messages.length > 0 || status === 'streaming') return;
+    const hints = buildHints();
+    const screenKey = hints.screenKey;
+    if (kickedOffRef.current === screenKey) return;
+    kickedOffRef.current = screenKey;
+    void sendKickoff({ hints, mode: 'guide_me' });
+  }, [open, mode, messages.length, status, buildHints, sendKickoff]);
 
   // Drag handling (pointer events on the header).
   const onPointerDownHeader = useCallback((e: React.PointerEvent) => {

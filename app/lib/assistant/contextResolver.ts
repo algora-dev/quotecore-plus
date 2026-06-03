@@ -52,6 +52,9 @@ export interface AssistantServerContext {
   /** From session — never the request body. */
   userId: string;
   companyId: string;
+  /** Company default trade ('roofing' | other), server-resolved. Drives which
+   *  workflow guide set Guide-me uses. Never client-supplied. */
+  trade: string;
   serverPermissions: ServerPermissions;
   /** Echoed only if the screen key is structurally valid. */
   screenKey: ScreenKey;
@@ -194,6 +197,22 @@ export async function resolveServerContext(
     throw new AssistantContextError('unauthorized', 'Not authenticated.');
   }
 
+  // Company default trade (server-resolved, drives Guide-me's guide set).
+  // Fail-soft to roofing — a missing/erroring lookup must not break the turn.
+  let trade = 'roofing';
+  try {
+    const admin = getAdmin();
+    const { data: companyRow } = await admin
+      .from('companies')
+      .select('default_trade')
+      .eq('id', profile.company_id)
+      .maybeSingle();
+    const dt = (companyRow as { default_trade?: string | null } | null)?.default_trade;
+    if (typeof dt === 'string' && dt) trade = dt;
+  } catch {
+    /* keep default */
+  }
+
   // 3. Server-computed permissions (never client-supplied).
   const ent = await loadCompanyEntitlements(profile.company_id);
   const serverPermissions: ServerPermissions = {
@@ -241,6 +260,7 @@ export async function resolveServerContext(
   return {
     userId: profile.id,
     companyId: profile.company_id,
+    trade,
     serverPermissions,
     screenKey,
     featureKey,

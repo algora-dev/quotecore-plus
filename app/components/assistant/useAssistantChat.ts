@@ -170,7 +170,19 @@ export function useAssistantChat() {
     [messages, status]
   );
 
-  return { messages, status, send, cancel, reset };
+  /**
+   * Proactive kickoff for Guide-me: sends a turn that asks the assistant to
+   * start guiding from the user's current screen/step. It renders as a normal
+   * user message (clear + honest about what happened) and reuses `send` so all
+   * streaming/abort logic is shared.
+   */
+  const sendKickoff = useCallback(
+    (opts: SendOptions) =>
+      send('Guide me from where I am on this screen.', opts),
+    [send]
+  );
+
+  return { messages, status, send, sendKickoff, cancel, reset };
 }
 
 /**

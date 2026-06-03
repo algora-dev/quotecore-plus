@@ -61,11 +61,24 @@ Mounted in `app/(auth)/[workspaceSlug]/layout.tsx` next to `CopilotOverlay`, in 
 
 > Phase 2 deferred to later phases: real markdown rendering (currently whitespace-pre-wrap, no new dep), streaming tool-call/highlight UI.
 
+## Phase 3 - Guide-me connected (SHIPPED 2026-06-03)
+Option A (Shaun): reuse the authored Copilot guides as workflow content rather than re-authoring `.flow.md`.
+
+| File | Role |
+|------|------|
+| `workflowService.ts` | **Headless, zero-DOM** source of truth. Imports Copilot guide DATA (`COPILOT_GUIDES` roofing + `COPILOT_GUIDES_GENERIC`), maps each `CopilotGuide`->semantic `Workflow`: CSS selectors STRIPPED, `data-copilot="X"`->`elementId` X. `workflowIdForScreen(screenKey)` mirrors CopilotProvider's pathname->guide rules in the assistant screenKey vocabulary. Live progress read from `assistant_workflow_progress` (per-user row: `current_workflow`/`current_step` id/`workflows_completed`) - app owns progression, assistant only reads. Fail-soft to step 0. |
+| `orchestrator.ts` | Tool dispatch now wires `get_current_context` / `get_current_workflow` / `get_current_step` / `get_ui_element_details` (read-only). `request_ui_highlight` still withheld (Phase 4). System prompt sharpened: **respond=concise reactive** (no full-walkthrough dumps; offers Guide-me), **guide=one-step coach**. Guide mode injects a `[WORKFLOW CONTEXT]` priming note (pre-fetched current step) so it narrates the right step immediately. |
+| `contextResolver.ts` | Now resolves company `default_trade` (server-side, fail-soft roofing) into `ctx.trade` for guide-set selection. |
+| `AssistantWidget.tsx` / `useAssistantChat.ts` | `sendKickoff()` + auto-kickoff effect: switching to Guide-me on an empty conversation auto-starts guidance for the current screen (once per screen, never mid-stream / over an existing chat). |
+
+**Verified:** `next build` exit 0 with all wiring. **Source-of-truth decision (locked):** Copilot guides are the workflow content for V1; `.flow.md` compiler remains the future authoring path. `workflowService` is DOM-free so the same content serves web/mobile/voice.
+
 ### Not yet built (next phases)
-- **3:** headless `workflowService` + context/workflow tools + Guide-me proactive behaviour.
-- **4:** highlight tool + web executor. **5:** retire Copilot UI.
-- **3:** headless `workflowService` extraction, context/workflow tools, mode toggle.
-- **4:** highlight tool + web executor.
-- **5:** retire legacy Copilot UI.
+- **4:** `request_ui_highlight` tool + web executor (client highlights the named `elementId`).
+- **5:** retire legacy Copilot UI once Guide-me reaches parity.
+
+#### Phase 3 calibration follow-ups (post-test)
+- screenKey vocabulary maps both `/quotes/new` and `/quotes/[id]` to `quotes`->`create-quote`. If the builder landing needs the `quote-builder` guide distinctly, refine `pathnameToScreenKey` + `workflowIdForScreen` together.
+- `assistant_workflow_progress` is only WRITTEN by the app today via Copilot's flow; if Guide-me should advance steps itself, add a progression writer (still app-authoritative).
 
 Verified: `tsc --noEmit` 0 errors, `eslint` clean (2026-06-03).
