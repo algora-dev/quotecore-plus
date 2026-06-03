@@ -20,9 +20,15 @@ Sanity-check the architecture plan: catch anything I missed, anything structural
 
 **My architecture (plan §3):** headless Assistant **service layer** behind `/api/assistant/chat` (SSE) fusing 3 knowledge sources (pgvector-indexed docs [new], Copilot guides re-exported as workflow defs [reuse, no rewrite], live app-context object assembled by client) → GPT-5 Mini via OpenAI Responses API → fixed read-only tool registry (`search_help_docs`, `get_current_context`, `get_current_workflow`, `get_current_step`, `get_ui_element_details`, `request_ui_highlight`). Floating widget is just the first client. Future tools stubbed, disabled. New tables: `doc_chunks` (pgvector), `assistant_sessions`, `assistant_messages` (RLS owner-only). 6-phase delivery, all flag-gated behind `NEXT_PUBLIC_AI_ASSISTANT_V1`.
 
+## Updates since first draft (Shaun, 2026-06-03) — already folded into the plan
+- **§6 RESOLVED:** Copilot *feature* (toggle + `CopilotOverlay` UI) is **removed**. Engine kept headless as workflow state-provider. Mode toggle moves into the chat modal: "Respond only" (reactive) vs "Guide me" (sees user position, narrates next step + how-to, still allows free conversation between steps). Guide strings = model hints, never verbatim.
+- **§3.1a NEW — UI Element Registry (Shaun-requested, Phase 0):** single source of truth, `data-assistant-id` on every important element, registry = highlight allowlist + `visibleElements` vocabulary. Seeded from 99 existing `data-copilot` IDs (formalize + extend, not from-scratch).
+- **§6a NEW — Flow-authoring path (Shaun-requested):** near-English `.flow.md` format + compiler so Shaun can add/edit guided flows in ~6 lines; compiler validates every `ui:` against the registry.
+
 ## Specific questions I want your read on
 1. **§3 tool contract** — is the 6-tool read-only interface the right stable boundary? Anything that'll bite us when mobile/write-tools arrive?
-2. **§6 Copilot reuse decision** — I lean (a) keep CopilotProvider running *headless* as the workflow/validation engine and have the assistant read its state, vs (b) fully migrate progression into the new context layer. Agree (a) for V1, or is that tech debt?
+2. **§6 headless engine** — direction is locked (UI removed, engine kept headless). Validate the *approach* is sound, not whether to do it. Any hidden risk in running the old detection/validation engine with no UI?
+2b. **§3.1a registry + §6a flow authoring** — is registry-drift enforcement strong enough (CI + compiler fail-on-unknown-ID)? Is the `.flow.md` format the right balance of simple-for-Shaun vs parseable-for-compiler?
 3. **§9 mobile-readiness** — does this design *genuinely* avoid a V2 rewrite, or is there a hidden coupling (auth, context schema, transport) that breaks when a RN client shows up?
 4. **§11 risks** — anything I under-weighted? Esp. highlight security (allowlist from `visibleElements`), SSE-vs-WS on Vercel (I picked SSE re our fire-and-forget gotcha), chat-history PII/RLS, doc-chunk freshness (manual re-embed in V1).
 5. **Phasing (§10)** — right order? Anything that should move earlier (e.g. cost caps/rate-limit before any LLM call)?
