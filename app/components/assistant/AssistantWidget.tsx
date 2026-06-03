@@ -130,7 +130,7 @@ export function AssistantWidget(_props: Props) {
       {highlightRect && highlightRect.treatment === 'arrow' && (
         <div
           aria-hidden
-          className="pointer-events-none fixed z-[70] -translate-y-full text-blue-600"
+          className="pointer-events-none fixed z-[70] -translate-y-full text-[#ff6b35]"
           style={{
             top: highlightRect.top - 8,
             left: highlightRect.left + highlightRect.width / 2 - 8,
@@ -151,7 +151,7 @@ export function AssistantWidget(_props: Props) {
           onClick={() => setOpen(true)}
           data-assistant-id="assistant-launcher"
           aria-label={hasConversation ? 'Reopen assistant conversation' : 'Open assistant'}
-          className="group fixed bottom-5 right-5 z-[60] inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-transparent bg-slate-900 text-white shadow-lg transition-all duration-200 ease-in-out hover:bg-slate-800 hover:shadow-xl"
+          className="assistant-launcher group fixed bottom-5 right-5 z-[60] inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-transparent bg-slate-900 text-white transition-colors duration-200 ease-in-out hover:bg-slate-800"
         >
           {/* Message emblem (no emoji) */}
           <svg
@@ -168,7 +168,7 @@ export function AssistantWidget(_props: Props) {
             <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
           </svg>
           {hasConversation && (
-            <span className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-white bg-blue-500" />
+            <span className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-white bg-[#ff6b35]" />
           )}
         </button>
       )}
@@ -216,23 +216,23 @@ export function AssistantWidget(_props: Props) {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                title="Minimise"
-                aria-label="Minimise assistant"
-                className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
+                title="Click to Hide"
+                aria-label="Hide assistant"
+                className="group/hide inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-500 transition-all duration-200 hover:bg-slate-900 hover:text-white hover:shadow-[0_0_12px_rgba(255,107,53,0.5)]"
               >
-                {/* Down-chevron: retract to emblem (no emoji) */}
+                {/* Obvious ">" retract-to-emblem control (no emoji) */}
                 <svg
                   width="16"
                   height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   aria-hidden
                 >
-                  <path d="m6 9 6 6 6-6" />
+                  <path d="m9 18 6-6-6-6" />
                 </svg>
               </button>
             </div>
@@ -272,7 +272,7 @@ export function AssistantWidget(_props: Props) {
                 <span>Highlights</span>
                 <span
                   className={`relative inline-block h-4 w-7 rounded-full transition-colors ${
-                    highlightsOn ? 'bg-blue-600' : 'bg-slate-300'
+                    highlightsOn ? 'bg-[#ff6b35]' : 'bg-slate-300'
                   }`}
                 >
                   <span
@@ -328,7 +328,7 @@ export function AssistantWidget(_props: Props) {
               rows={1}
               placeholder="Ask the assistant…"
               data-assistant-id="assistant-input"
-              className="max-h-24 flex-1 resize-none rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="max-h-24 flex-1 resize-none rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none transition-colors focus:border-[#ff6b35] focus:ring-1 focus:ring-[#ff6b35]"
             />
             {status === 'streaming' ? (
               <button
@@ -342,7 +342,7 @@ export function AssistantWidget(_props: Props) {
               <button
                 type="submit"
                 disabled={!input.trim()}
-                className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-40"
+                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-40 disabled:hover:shadow-none"
               >
                 Send
               </button>
