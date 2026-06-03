@@ -47,6 +47,41 @@ function stepMessageText(step: GuideStep, highlightsOn: boolean): string {
   return lines.join('\n');
 }
 
+/**
+ * Reset / re-sync: infer the user's REAL current step from live browser facts,
+ * for when they've clicked Next too many times (or too few) and the pointer is
+ * out of line with reality. Conservative by design: returns a confident index
+ * or null (ambiguous), so the caller can fall back to asking the user.
+ *
+ * Heuristic (cheap, explainable):
+ *  - A step whose target elementId is currently VISIBLE is a strong candidate
+ *    for "where the user can act right now".
+ *  - If exactly one step's element is visible, that's the answer (high
+ *    confidence).
+ *  - If several are visible (elements repeat across steps), pick the EARLIEST
+ *    visible step at/after 0 that the user hasn't clearly completed — i.e. the
+ *    first actionable on-screen step — but only return it when it's unambiguous
+ *    enough; otherwise return null and let the chatbot ask.
+ */
+function inferCurrentStepIndex(
+  steps: GuideStep[],
+  visibleElementIds: string[]
+): number | null {
+  const visibleStepIdxs: number[] = [];
+  steps.forEach((s, i) => {
+    if (s.elementId && visibleElementIds.includes(s.elementId)) {
+      visibleStepIdxs.push(i);
+    }
+  });
+  if (visibleStepIdxs.length === 0) return null; // nothing on screen — ask
+  if (visibleStepIdxs.length === 1) return visibleStepIdxs[0]; // confident
+  // Multiple on-screen candidates: only commit if they're CONTIGUOUS (a normal
+  // single-screen run of steps) — then the earliest is the right place to be.
+  const first = visibleStepIdxs[0];
+  const contiguous = visibleStepIdxs.every((v, k) => v === first + k);
+  return contiguous ? first : null; // non-contiguous = genuinely ambiguous
+}
+
 /** Does a recent action / visible-element set satisfy this step's doneSignal? */
 function isStepDone(
   step: GuideStep,
@@ -269,6 +304,29 @@ export function AssistantWidget(_props: Props) {
     reset();
   }, [engine, reset]);
 
+  // Reset / re-sync position (Stage 4b): the user clicked Next too many times
+  // (or is otherwise out of line). Infer their REAL step from live facts and
+  // jump there if confident; if ambiguous, ask the chatbot to re-align.
+  const handleResyncPosition = useCallback(() => {
+    if (!engine.isActive) return;
+    const facts = getFacts();
+    const inferred = inferCurrentStepIndex(engine.steps, facts.visibleElementIds);
+    if (inferred !== null) {
+      engine.goToIndex(inferred);
+    } else {
+      // Can't tell from the screen — hand to the chatbot to ask the user.
+      const facts = getFacts();
+      void send(
+        "I've lost my place in the walkthrough — I'm not sure which step I'm actually on. Ask me what I've done so far and help me get back on the right step.",
+        {
+          hints: { ...buildHints(), recentActions: facts.recentActions },
+          mode,
+          highlightsOn,
+        }
+      );
+    }
+  }, [engine, getFacts, send, buildHints, highlightsOn, mode]);
+
   if (!ENABLED) return null;
 
   const panelStyle: React.CSSProperties = pos
@@ -489,6 +547,23 @@ export function AssistantWidget(_props: Props) {
                 {engine.workflowName ? `${engine.workflowName} · ` : ''}
                 Step {engine.currentIndex + 1} of {engine.steps.length}
               </span>
+              <button
+                type="button"
+                onClick={handleResyncPosition}
+                title="Lost your place? Re-sync to the step you're actually on"
+                className="shrink-0 rounded-full px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
+              >
+                Reset
+              </button>
+              <button
+                type="button"
+                onClick={() => engine.back()}
+                disabled={!engine.canGoBack}
+                title="Previous step"
+                className="shrink-0 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 disabled:cursor-default disabled:opacity-40"
+              >
+                ← Back
+              </button>
               <button
                 type="button"
                 onClick={() => engine.next()}

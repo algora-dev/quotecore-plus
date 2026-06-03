@@ -76,6 +76,12 @@ export interface GuideEngine {
   startWorkflow: (workflowId: string) => Promise<void>;
   /** Advance to the next step (instant — steps already in memory). */
   next: () => void;
+  /** Go back one step (instant). No-op at the first step. */
+  back: () => void;
+  /** True when there is a previous step to go back to. */
+  canGoBack: boolean;
+  /** Jump directly to a step index (used by Reset's facts-based re-sync). */
+  goToIndex: (index: number) => void;
   /** Stop guiding and clear engine state. */
   reset: () => void;
 }
@@ -139,6 +145,26 @@ export function useGuideEngine(): GuideEngine {
     });
   }, [steps.length]);
 
+  const back = useCallback(() => {
+    setCurrentIndex((prev) => {
+      if (prev <= 0) return prev; // already at the first step
+      setStepKey(nextStepKey());
+      return prev - 1;
+    });
+  }, []);
+
+  const goToIndex = useCallback(
+    (index: number) => {
+      setCurrentIndex((prev) => {
+        const clamped = Math.max(0, Math.min(index, steps.length - 1));
+        if (clamped === prev) return prev;
+        setStepKey(nextStepKey());
+        return clamped;
+      });
+    },
+    [steps.length]
+  );
+
   const reset = useCallback(() => {
     loadTokenRef.current++; // invalidate any in-flight fetch
     setStatus('idle');
@@ -153,6 +179,7 @@ export function useGuideEngine(): GuideEngine {
   const isActive = status === 'active';
   const current = isActive ? steps[currentIndex] ?? null : null;
   const upcoming = isActive ? steps[currentIndex + 1] ?? null : null;
+  const canGoBack = isActive && currentIndex > 0;
 
   // Build the highlight command for the current step's element. Only when the
   // step actually targets a registry element; the executor itself fails safe if
@@ -181,6 +208,9 @@ export function useGuideEngine(): GuideEngine {
     currentHighlight,
     startWorkflow,
     next,
+    back,
+    canGoBack,
+    goToIndex,
     reset,
   };
 }
