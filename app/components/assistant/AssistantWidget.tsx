@@ -11,11 +11,24 @@
  * Gated by NEXT_PUBLIC_AI_ASSISTANT_V1. The Help Drawer stays as a fallback.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import type { AssistantMode } from '@/app/lib/assistant/protocol';
+import { useCopilot } from '@/app/components/copilot/CopilotProvider';
+import type { CopilotEngineSnapshot } from '@/app/components/copilot/CopilotProvider';
 import { useAssistantChat } from './useAssistantChat';
 import { useAssistantHints } from './useAssistantHints';
 import { useAssistantHighlight } from './useAssistantHighlight';
+import type { ActiveHighlight } from './useAssistantChat';
+
+/** Pull a registry elementId out of a Copilot `target` selector, if present.
+ *  e.g. `[data-copilot="quote-customer"]` -> "quote-customer". Mirrors
+ *  workflowService.elementIdFromTarget; kept local so this stays client-only. */
+function elementIdFromCopilotTarget(target: string | undefined): string | null {
+  if (!target) return null;
+  const m = /\[data-copilot="([^"]+)"\]/.exec(target);
+  return m ? m[1] : null;
+}
 
 const ENABLED =
   (process.env.NEXT_PUBLIC_AI_ASSISTANT_V1 ?? '').toLowerCase() === 'true';
@@ -39,12 +52,57 @@ export function AssistantWidget(_props: Props) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const dragRef = useRef<{ dx: number; dy: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  // Hover-to-reveal tooltip (Guide-me only): the rect of the highlighted
+  // element while the user is hovering it. Null when not hovering.
+  const [hoverRect, setHoverRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
 
-  const { messages, status, highlight, send, sendKickoff, cancel, reset } = useAssistantChat();
+  const { messages, status, highlight, send, cancel, reset } = useAssistantChat();
   const { buildHints } = useAssistantHints();
-  // Phase 4: execute server-issued highlight commands on the page — gated by
-  // the user's Highlights preference.
-  const highlightRect = useAssistantHighlight(highlight, highlightsOn);
+  const pathname = usePathname();
+
+  // Live Copilot engine state (the "brain"). In Guide-me we subscribe to this
+  // and follow its step progression rather than blind DB polling.
+  const {
+    isActive: copilotActive,
+    currentStepData,
+    beginAssistantEngine,
+    endAssistantEngine,
+  } = useCopilot();
+
+  // SPIKE SCOPE: only the create-quote flow on /quotes/new is rewired to the
+  // live Copilot engine. Everywhere else, Guide-me keeps its existing
+  // server-SSE highlight behaviour untouched.
+  const guideMeOnThisScreen =
+    mode === 'guide_me' && !!pathname && /\/quotes\/new$/.test(pathname);
+
+  // While Guide-me is live on this screen, derive the highlight from Copilot's
+  // CURRENT step element. This is ADDITIVE to the server-SSE highlight path
+  // (which still drives respond mode / other screens). When guiding, the
+  // Copilot-derived highlight takes precedence.
+  const copilotElementId = elementIdFromCopilotTarget(currentStepData?.target);
+  const guiding = guideMeOnThisScreen && open && copilotActive;
+
+  const copilotHighlight: ActiveHighlight | null = useMemo(() => {
+    if (!guiding || !copilotElementId) return null;
+    return {
+      type: 'highlight',
+      elementId: copilotElementId,
+      treatment: 'pulse',
+      // Stable key per element so the executor re-fires as steps advance but
+      // not on every render.
+      key: `copilot-${copilotElementId}`,
+    };
+  }, [guiding, copilotElementId]);
+
+  // Phase 4: execute highlight commands on the page — gated by the user's
+  // Highlights preference. In Guide-me on this screen, drive from Copilot's
+  // live step; otherwise use the server-issued highlight.
+  const activeHighlight = copilotHighlight ?? highlight;
+  const highlightRect = useAssistantHighlight(
+    activeHighlight,
+    highlightsOn,
+    /* persistent (follow-along) only when Copilot is driving */ !!copilotHighlight
+  );
 
   // Load the persisted Highlights preference once on mount (default ON).
   useEffect(() => {
@@ -67,9 +125,10 @@ export function AssistantWidget(_props: Props) {
       return next;
     });
   }, []);
-  // Guard so the guide-mode kickoff fires once per (open, screen) and never
-  // mid-stream or over an existing conversation.
-  const kickedOffRef = useRef<string | null>(null);
+  // Snapshot of the user's real Copilot state, captured when Guide-me takes
+  // over the engine so we can restore it exactly on exit (never clobber the
+  // user's persisted Copilot preference).
+  const engineSnapshotRef = useRef<CopilotEngineSnapshot | null>(null);
 
   // Auto-scroll to the latest message while streaming.
   useEffect(() => {
@@ -77,20 +136,77 @@ export function AssistantWidget(_props: Props) {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
-  // Proactive Guide-me: when the panel is open in guide mode and the
-  // conversation is empty (fresh / after New), auto-start guidance for the
-  // current screen. Fires once per screen; won't interrupt an existing chat
-  // or an in-flight stream. Switching to Respond, or having any messages,
-  // suppresses it.
+  // Guide-me engine lifecycle (create-quote on /quotes/new only, this spike).
+  // When Guide-me is open on this screen, we (1) start Copilot's detection
+  // engine ephemerally (snapshotting the user's real pref), and (2) set a body
+  // marker so the legacy CopilotOverlay hides while its engine keeps running
+  // underneath. On exit (mode change / close / navigate away) we clear the
+  // marker and restore the snapshot exactly.
+  //
+  // The chat is intentionally SILENT here: no auto-kickoff turn, no per-step
+  // narration. The flow is highlight + hover-tooltip driven. The chat only
+  // responds when the user types a question.
   useEffect(() => {
-    if (!open || mode !== 'guide_me') return;
-    if (messages.length > 0 || status === 'streaming') return;
-    const hints = buildHints();
-    const screenKey = hints.screenKey;
-    if (kickedOffRef.current === screenKey) return;
-    kickedOffRef.current = screenKey;
-    void sendKickoff({ hints, mode: 'guide_me' });
-  }, [open, mode, messages.length, status, buildHints, sendKickoff]);
+    if (!guideMeOnThisScreen || !open) return;
+
+    // Take over the engine (idempotent: only snapshot once).
+    if (!engineSnapshotRef.current) {
+      engineSnapshotRef.current = beginAssistantEngine('create-quote');
+    }
+    if (typeof document !== 'undefined') {
+      document.body.dataset.assistantGuiding = '1';
+    }
+
+    return () => {
+      if (typeof document !== 'undefined') {
+        delete document.body.dataset.assistantGuiding;
+      }
+      if (engineSnapshotRef.current) {
+        endAssistantEngine(engineSnapshotRef.current);
+        engineSnapshotRef.current = null;
+      }
+    };
+  }, [guideMeOnThisScreen, open, beginAssistantEngine, endAssistantEngine]);
+
+  // Hover-to-reveal tooltip wiring (Guide-me, this screen only). When Copilot
+  // is highlighting an element, attach hover listeners to that live DOM node so
+  // hovering reveals the authored step.description (INSTANT static text — the
+  // SAME string Copilot would show; no LLM). Desktop hover is fine (web app is
+  // desktop-first; mobile is a separate future app). When Guide-me is off, this
+  // effect doesn't run, so existing hover behaviour is unchanged.
+  useEffect(() => {
+    if (!copilotHighlight || !highlightsOn || typeof document === 'undefined') {
+      setHoverRect(null);
+      return;
+    }
+    const id = copilotHighlight.elementId;
+    const escaped = window.CSS?.escape ? window.CSS.escape(id) : id.replace(/"/g, '\\"');
+    const el =
+      document.querySelector<HTMLElement>(`[data-assistant-id="${escaped}"]`) ??
+      document.querySelector<HTMLElement>(`[data-copilot="${escaped}"]`);
+    if (!el) {
+      setHoverRect(null);
+      return;
+    }
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      setHoverRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+    };
+    const onEnter = () => measure();
+    const onLeave = () => setHoverRect(null);
+    el.addEventListener('mouseenter', onEnter);
+    el.addEventListener('mouseleave', onLeave);
+    // Keep the tooltip anchored if the page scrolls while hovering.
+    window.addEventListener('scroll', measure, true);
+    window.addEventListener('resize', measure);
+    return () => {
+      el.removeEventListener('mouseenter', onEnter);
+      el.removeEventListener('mouseleave', onLeave);
+      window.removeEventListener('scroll', measure, true);
+      window.removeEventListener('resize', measure);
+      setHoverRect(null);
+    };
+  }, [copilotHighlight, highlightsOn]);
 
   // Drag handling (pointer events on the header).
   const onPointerDownHeader = useCallback((e: React.PointerEvent) => {
@@ -128,12 +244,57 @@ export function AssistantWidget(_props: Props) {
 
   if (!ENABLED) return null;
 
+  // Hover tooltip text = the authored Copilot step.description (same string the
+  // legacy overlay shows). Rendered with the same _italic_ convention.
+  const hoverText = currentStepData?.description ?? '';
+  const showHoverTip = !!hoverRect && guiding && !!hoverText;
+  // Position: prefer to the right of the element, flip left near the edge,
+  // clamp to viewport. Tooltip width ~288px (w-72).
+  const TIP_W = 288;
+  let tipLeft = 0;
+  let tipTop = 0;
+  if (hoverRect) {
+    const spaceRight = window.innerWidth - (hoverRect.left + hoverRect.width);
+    tipLeft =
+      spaceRight > TIP_W + 24
+        ? hoverRect.left + hoverRect.width + 12
+        : Math.max(12, hoverRect.left - TIP_W - 12);
+    tipTop = Math.max(12, Math.min(hoverRect.top, window.innerHeight - 160));
+  }
+
   const panelStyle: React.CSSProperties = pos
     ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto' }
     : { right: 20, bottom: 20 };
 
   return (
     <>
+      {/* Guide-me hover-to-reveal tooltip: hovering the highlighted element
+          reveals the authored step description instantly (static text). */}
+      {showHoverTip && (
+        <div
+          role="tooltip"
+          className="pointer-events-none fixed z-[80] w-72 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-2xl"
+          style={{ top: tipTop, left: tipLeft }}
+        >
+          {currentStepData?.title && (
+            <p className="mb-1 text-sm font-semibold text-slate-900">
+              {currentStepData.title}
+            </p>
+          )}
+          <p className="text-xs leading-relaxed text-slate-600">
+            {hoverText.split(/(_[^_]+_)/g).map((part, i) =>
+              part.startsWith('_') && part.endsWith('_') ? (
+                <em key={i} className="italic text-slate-700">
+                  {part.slice(1, -1)}
+                </em>
+              ) : (
+                <span key={i}>{part}</span>
+              )
+            )}
+          </p>
+        </div>
+      )}
+
       {/* Phase 4: arrow pointer at the highlighted control (other treatments
           style the element itself via useAssistantHighlight). */}
       {highlightRect && highlightRect.treatment === 'arrow' && (

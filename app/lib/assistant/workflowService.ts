@@ -96,35 +96,6 @@ function mapStep(step: CopilotStep, index: number): WorkflowStep {
   };
 }
 
-/**
- * The in-app path a screenKey corresponds to, used to anchor the starting step
- * to the user's actual page. Mirrors useAssistantHints.pathnameToScreenKey in
- * reverse for the cases where a workflow spans multiple pages and the user can
- * land mid-flow. Returns null when the screen doesn't need anchoring.
- */
-function screenPathForKey(screenKey: string): string | null {
-  switch (screenKey) {
-    case 'quote.new':
-      return '/quotes/new';
-    default:
-      return null;
-  }
-}
-
-/**
- * Find the index of the first step whose `screenPath` matches the user's
- * current screen. Returns -1 when no step is anchored to this screen (so the
- * caller falls back to normal progress).
- */
-function firstStepIndexForScreen(
-  workflow: Workflow,
-  screenKey: string
-): number {
-  const path = screenPathForKey(screenKey);
-  if (!path) return -1;
-  return workflow.steps.findIndex((s) => s.screenPath === path);
-}
-
 function mapGuide(
   guide: CopilotGuide,
   trade: 'roofing' | 'generic'
@@ -309,16 +280,7 @@ export async function resolveCurrentStep(
   const workflow = getWorkflowForScreen(screenKey, trade);
   if (!workflow) return null;
   const progress = await getWorkflowProgress(userId, workflow);
-
-  // Screen anchoring: if this screen owns a later step than the stored progress
-  // (e.g. user is on /quotes/new but progress is still at step 1 "click
-  // Quotes"), start at the first step that belongs to THIS screen. This stops
-  // Guide-me coaching the user backwards to a control on a previous page. We
-  // only ever anchor FORWARD — never override progress that's already ahead.
-  const anchorIdx = firstStepIndexForScreen(workflow, screenKey);
-  const baseIdx =
-    anchorIdx > progress.currentStepIndex ? anchorIdx : progress.currentStepIndex;
-  const idx = Math.min(baseIdx, workflow.steps.length - 1);
+  const idx = Math.min(progress.currentStepIndex, workflow.steps.length - 1);
   return {
     workflow,
     progress,

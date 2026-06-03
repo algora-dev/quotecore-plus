@@ -32,6 +32,23 @@ interface CopilotContextType {
   dismissTransition: () => void;
   setVisible: (visible: boolean) => void;
   resetGuides: () => void;
+  /**
+   * Ephemerally enable the engine WITHOUT persisting to the DB. Used by the AI
+   * Assistant's Guide-me mode to run Copilot's detection engine underneath
+   * while the assistant presents the UI — the user's real Copilot preference
+   * must NOT be clobbered. Returns a snapshot of the prior {enabled, visible,
+   * activeGuide, currentStep} so the caller can restore it on exit.
+   */
+  beginAssistantEngine: (guideId: string) => CopilotEngineSnapshot;
+  /** Restore engine state captured by beginAssistantEngine (ephemeral, no persist). */
+  endAssistantEngine: (snapshot: CopilotEngineSnapshot) => void;
+}
+
+export interface CopilotEngineSnapshot {
+  enabled: boolean;
+  visible: boolean;
+  activeGuide: string | null;
+  currentStep: number;
 }
 
 const CopilotContext = createContext<CopilotContextType | null>(null);
@@ -351,10 +368,58 @@ export function CopilotProvider({ children, userId, companyId, initialState, tra
     persist(newState);
   }, [state, persist]);
 
+  // --- AI Assistant Guide-me bridge -------------------------------------
+  // The assistant runs Copilot's detection engine underneath (so step
+  // auto-advance / auto-skip still works) while presenting its own UI. These
+  // helpers mutate engine state WITHOUT persisting, so the user's real Copilot
+  // preference (the DB row) is never clobbered. The caller snapshots on entry
+  // and restores on exit.
+  const beginAssistantEngine = useCallback((guideId: string): CopilotEngineSnapshot => {
+    const snapshot: CopilotEngineSnapshot = {
+      enabled: state.enabled,
+      visible: state.visible,
+      activeGuide: state.activeGuide,
+      currentStep: state.currentStep,
+    };
+    // Enable the engine and start the guide at the first step whose target is
+    // present in the DOM (mirrors startGuide's detection). No persist.
+    const guide = activeGuides.find(g => g.id === guideId);
+    let startStep = -1;
+    if (guide) {
+      for (let i = 0; i < guide.steps.length; i++) {
+        const el = document.querySelector(guide.steps[i].target);
+        if (el) { startStep = i; break; }
+      }
+    }
+    setState(prev => ({
+      ...prev,
+      enabled: true,
+      // Keep visible as-is; the assistant marker (body dataset) is what
+      // suppresses the legacy overlay, not `visible`.
+      activeGuide: guideId,
+      currentStep: startStep >= 0 ? startStep : 0,
+    }));
+    return snapshot;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.enabled, state.visible, state.activeGuide, state.currentStep, activeGuides]);
+
+  const endAssistantEngine = useCallback((snapshot: CopilotEngineSnapshot) => {
+    // Restore exactly what we captured — no persist (we never persisted the
+    // ephemeral changes, so the DB row is already the user's real pref).
+    setState(prev => ({
+      ...prev,
+      enabled: snapshot.enabled,
+      visible: snapshot.visible,
+      activeGuide: snapshot.activeGuide,
+      currentStep: snapshot.currentStep,
+    }));
+  }, []);
+
   return (
     <CopilotContext.Provider value={{
       state, isActive, currentGuide, currentStepData, totalSteps, nudgeMessage,
       transitionPrompt, toggle, nextStep, prevStep, skipGuide, startGuide, dismissTransition, setVisible, resetGuides,
+      beginAssistantEngine, endAssistantEngine,
     }}>
       {children}
     </CopilotContext.Provider>

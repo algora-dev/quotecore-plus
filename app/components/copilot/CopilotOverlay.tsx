@@ -26,6 +26,22 @@ export function CopilotOverlay() {
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ mouseX: number; mouseY: number; offsetX: number; offsetY: number } | null>(null);
 
+  // When the AI Assistant is actively guiding, it presents its own UI and runs
+  // Copilot's engine underneath. We suppress the legacy overlay (tooltip /
+  // spotlight / Next button) while it owns the screen, but keep the engine
+  // (CopilotProvider) running so detection/auto-advance still works. The signal
+  // is a body dataset marker the assistant sets/clears; we subscribe via a
+  // MutationObserver so this stays a simple, robust cross-component flag.
+  const [assistantGuiding, setAssistantGuiding] = useState(false);
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const read = () => setAssistantGuiding(document.body.dataset.assistantGuiding === '1');
+    read();
+    const obs = new MutationObserver(read);
+    obs.observe(document.body, { attributes: true, attributeFilter: ['data-assistant-guiding'] });
+    return () => obs.disconnect();
+  }, []);
+
   // Track window size for SVG
   useEffect(() => {
     function update() { setWindowSize({ w: window.innerWidth, h: window.innerHeight }); }
@@ -194,6 +210,11 @@ export function CopilotOverlay() {
     setShowDismissMsg(true);
     setTimeout(() => setShowDismissMsg(false), 3000);
   }
+
+  // Assistant Guide-me owns the screen — suppress ALL legacy overlay UI
+  // (dismiss toast, transition prompt, spotlight/tooltip). The engine keeps
+  // running underneath via the provider so detection still works.
+  if (assistantGuiding) return null;
 
   // Dismiss message
   if (showDismissMsg) {

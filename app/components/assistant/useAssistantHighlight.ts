@@ -102,7 +102,14 @@ function findElement(elementId: string): HTMLElement | null {
  */
 export function useAssistantHighlight(
   highlight: ActiveHighlight | null,
-  enabled: boolean = true
+  enabled: boolean = true,
+  /**
+   * Persistent mode (Guide-me follow-along). When true, the highlight does NOT
+   * auto-clear after HIGHLIGHT_MS — it stays on the element until the highlight
+   * changes or is removed (i.e. until Copilot advances to the next step). The
+   * server-SSE highlight path keeps the default time-boxed behaviour.
+   */
+  persistent: boolean = false
 ): HighlightRect | null {
   const [rect, setRect] = useState<HighlightRect | null>(null);
 
@@ -140,20 +147,24 @@ export function useAssistantHighlight(
     window.addEventListener('scroll', updateRect, true);
     window.addEventListener('resize', updateRect);
 
-    const timer = window.setTimeout(() => {
-      el.classList.remove(...`assistant-hl assistant-hl-${treatment}`.split(' '));
-      setRect(null);
-    }, HIGHLIGHT_MS);
+    // Persistent (Guide-me) highlights stay until the step changes; time-boxed
+    // (server-SSE) highlights clear themselves after HIGHLIGHT_MS.
+    const timer = persistent
+      ? null
+      : window.setTimeout(() => {
+          el.classList.remove(...`assistant-hl assistant-hl-${treatment}`.split(' '));
+          setRect(null);
+        }, HIGHLIGHT_MS);
 
     return () => {
-      window.clearTimeout(timer);
+      if (timer !== null) window.clearTimeout(timer);
       window.removeEventListener('scroll', updateRect, true);
       window.removeEventListener('resize', updateRect);
       el.classList.remove(...`assistant-hl assistant-hl-${treatment}`.split(' '));
     };
     // Re-run whenever a new highlight (unique key) arrives or the preference
     // toggles.
-  }, [highlight?.key, highlight?.elementId, highlight?.treatment, highlight, enabled]);
+  }, [highlight?.key, highlight?.elementId, highlight?.treatment, highlight, enabled, persistent]);
 
   return rect;
 }
