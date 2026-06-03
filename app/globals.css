@@ -126,11 +126,15 @@ a,
 .assistant-launcher {
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.28);
   animation: assistant-launcher-pulse 3.2s ease-in-out infinite;
+  /* Smooth, quick scale on hover (the pulse keyframe only animates box-shadow,
+     so transform is free to transition independently). */
+  transition: transform 0.15s ease-out;
 }
 .assistant-launcher:hover {
   /* Match the app's black-button orange glow on hover (stronger than the
-     resting pulse), and lift the float slightly. */
+     resting pulse), lift the float, and enlarge slightly + quickly. */
   animation-play-state: paused;
+  transform: scale(1.12);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.32),
               0 0 16px 4px rgba(255, 107, 53, 0.55);
 }
