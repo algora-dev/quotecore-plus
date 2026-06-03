@@ -24,7 +24,12 @@ import { useEffect, useState } from 'react';
 import type { ActiveHighlight } from './useAssistantChat';
 
 const STYLE_ID = 'assistant-highlight-styles';
-const HIGHLIGHT_MS = 6000;
+/** Time-boxed (server-SSE) highlight lifetime. Kept comfortably readable. */
+const HIGHLIGHT_MS = 4000;
+/** Persistent (guided-step) highlight max lifetime before it self-clears, if
+ *  the user hasn't clicked anything yet. "Until next click OR this, whichever
+ *  comes first" — so the spotlight doesn't linger forever on an idle screen. */
+const PERSISTENT_MAX_MS = 4000;
 
 /** Rect of the highlighted element (for arrow rendering), in viewport coords. */
 export interface HighlightRect {
@@ -147,17 +152,35 @@ export function useAssistantHighlight(
     window.addEventListener('scroll', updateRect, true);
     window.addEventListener('resize', updateRect);
 
-    // Persistent (Guide-me) highlights stay until the step changes; time-boxed
-    // (server-SSE) highlights clear themselves after HIGHLIGHT_MS.
-    const timer = persistent
-      ? null
-      : window.setTimeout(() => {
-          el.classList.remove(...`assistant-hl assistant-hl-${treatment}`.split(' '));
-          setRect(null);
-        }, HIGHLIGHT_MS);
+    const clearHighlight = () => {
+      el.classList.remove(...`assistant-hl assistant-hl-${treatment}`.split(' '));
+      setRect(null);
+    };
+
+    // Persistent (Guide-me follow-along) highlights stay on the control until
+    // the step changes OR the user clicks anywhere OR a max timeout elapses,
+    // whichever comes first. Time-boxed (server-SSE) highlights just clear
+    // after HIGHLIGHT_MS. A one-shot capture-phase click listener handles the
+    // "until next click" case so the spotlight doesn't fight the user's focus.
+    let onDocClick: ((e: MouseEvent) => void) | null = null;
+    if (persistent) {
+      onDocClick = () => {
+        clearHighlight();
+      };
+      // Defer attaching until after the current click that triggered the step,
+      // so we clear on the NEXT user click, not the one mid-flight.
+      window.setTimeout(() => {
+        if (onDocClick) document.addEventListener('click', onDocClick, { capture: true, once: true });
+      }, 0);
+    }
+    const timer = window.setTimeout(
+      clearHighlight,
+      persistent ? PERSISTENT_MAX_MS : HIGHLIGHT_MS
+    );
 
     return () => {
-      if (timer !== null) window.clearTimeout(timer);
+      window.clearTimeout(timer);
+      if (onDocClick) document.removeEventListener('click', onDocClick, { capture: true } as EventListenerOptions);
       window.removeEventListener('scroll', updateRect, true);
       window.removeEventListener('resize', updateRect);
       el.classList.remove(...`assistant-hl assistant-hl-${treatment}`.split(' '));

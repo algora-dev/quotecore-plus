@@ -19,6 +19,7 @@ import {
   type AssistantMode,
   type AssistantStreamEvent,
   type ChatMessage,
+  type GuideStartCommand,
   type HighlightCommand,
 } from '@/app/lib/assistant/protocol';
 
@@ -37,6 +38,13 @@ export type ChatStatus = 'idle' | 'streaming' | 'error';
 interface SendOptions {
   hints: Omit<AssistantClientHints, 'assistantProtocolVersion'>;
   mode: AssistantMode;
+  /** Client Highlights preference (default ON) — pure phrasing hint. */
+  highlightsOn?: boolean;
+}
+
+/** A guide_start command stamped with a key so the consumer fires once. */
+export interface ActiveGuideStart extends GuideStartCommand {
+  key: string;
 }
 
 let msgSeq = 0;
@@ -55,6 +63,7 @@ export function useAssistantChat() {
   const [messages, setMessages] = useState<UiMessage[]>([]);
   const [status, setStatus] = useState<ChatStatus>('idle');
   const [highlight, setHighlight] = useState<ActiveHighlight | null>(null);
+  const [guideStart, setGuideStart] = useState<ActiveGuideStart | null>(null);
   const sessionIdRef = useRef<string | undefined>(undefined);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -69,7 +78,23 @@ export function useAssistantChat() {
     setMessages([]);
     setStatus('idle');
     setHighlight(null);
+    setGuideStart(null);
   }, [cancel]);
+
+  /** Acknowledge a consumed guide_start so it doesn't re-trigger. */
+  const clearGuideStart = useCallback(() => setGuideStart(null), []);
+
+  /**
+   * Append a non-LLM assistant-style message to the thread. Used by the client
+   * step-engine (Fix 1) to render each guided step's instruction as a normal
+   * assistant bubble WITHOUT a model turn.
+   */
+  const pushAssistantMessage = useCallback((content: string) => {
+    setMessages((prev) => [
+      ...prev,
+      { id: nextId('a'), role: 'assistant', content },
+    ]);
+  }, []);
 
   const send = useCallback(
     async (text: string, opts: SendOptions) => {
@@ -111,6 +136,7 @@ export function useAssistantChat() {
             messages: wireMessages,
             sessionId: sessionIdRef.current,
             mode: opts.mode,
+            highlightsOn: opts.highlightsOn,
             hints: {
               ...opts.hints,
               assistantProtocolVersion: ASSISTANT_PROTOCOL_VERSION,
@@ -143,6 +169,12 @@ export function useAssistantChat() {
               setHighlight({
                 ...event.command,
                 key: nextId('hl'),
+              });
+              break;
+            case 'guide_start':
+              setGuideStart({
+                ...event.command,
+                key: nextId('gs'),
               });
               break;
             case 'error':
@@ -197,7 +229,18 @@ export function useAssistantChat() {
     [send]
   );
 
-  return { messages, status, highlight, send, sendKickoff, cancel, reset };
+  return {
+    messages,
+    status,
+    highlight,
+    guideStart,
+    clearGuideStart,
+    pushAssistantMessage,
+    send,
+    sendKickoff,
+    cancel,
+    reset,
+  };
 }
 
 /**

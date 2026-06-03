@@ -94,6 +94,10 @@ export async function POST(req: NextRequest) {
     return errorResponse('invalid_request', 'User message too long.', 413);
   }
   const mode = body.mode === 'guide_me' ? 'guide_me' : 'respond_only';
+  // Client Highlights preference (default ON). A pure UX hint: it only changes
+  // how the assistant PHRASES control references ("the highlighted control" vs
+  // naming the control explicitly). Never a permission/tenancy input.
+  const highlightsOn = body.highlightsOn !== false;
 
   // 2 + 6. Auth + trusted context (resolver throws on unauthorised/protocol).
   let context;
@@ -168,10 +172,12 @@ export async function POST(req: NextRequest) {
         const result = await runAssistantTurn({
           context,
           mode,
+          highlightsOn,
           history: body.messages,
           onToken: (text) => send({ type: 'token', text }),
           onToolCall: (name) => send({ type: 'tool_call', tool: name }),
           onHighlight: (command) => send({ type: 'highlight', command }),
+          onGuideStart: (command) => send({ type: 'guide_start', command }),
           signal: ac.signal,
         });
 

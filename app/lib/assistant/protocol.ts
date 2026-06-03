@@ -171,6 +171,13 @@ export interface AssistantChatRequest {
   sessionId?: string;
   /** Current assistant mode. */
   mode: AssistantMode;
+  /**
+   * Client Highlights preference (default ON when omitted). PURE UX hint: it
+   * only changes how the assistant phrases control references (refer to "the
+   * highlighted control" when ON, vs naming the control explicitly when OFF).
+   * Never used for any permission/tenancy decision.
+   */
+  highlightsOn?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -191,11 +198,26 @@ export interface HighlightCommand {
   reason?: string;
 }
 
+/**
+ * Guide-start command — tells the CLIENT step-engine to take over stepping for
+ * a workflow the model just confirmed in Guide-me. Carries the semantic
+ * workflowId (the client fetches the selector-free steps from
+ * /api/assistant/workflow) and the workflow's startPage. SEMANTIC, never a
+ * selector or route-as-selector. Emitted when the model calls `begin_guide`.
+ */
+export interface GuideStartCommand {
+  type: 'guide_start';
+  workflowId: WorkflowId;
+  /** In-app start path of the workflow (informational; may be null). */
+  startPage: string | null;
+}
+
 /** Discriminated union of everything the server streams back over SSE. */
 export type AssistantStreamEvent =
   | { type: 'session'; sessionId: string }
   | { type: 'token'; text: string }
   | { type: 'highlight'; command: HighlightCommand }
+  | { type: 'guide_start'; command: GuideStartCommand }
   | { type: 'tool_call'; tool: string }
   | { type: 'error'; code: AssistantErrorCode; message: string }
   | { type: 'done'; messageId: string };

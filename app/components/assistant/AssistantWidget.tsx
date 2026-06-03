@@ -19,10 +19,65 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AssistantMode } from '@/app/lib/assistant/protocol';
+import { getElement } from '@/app/lib/assistant/uiRegistry';
 import { useAssistantChat } from './useAssistantChat';
 import { useAssistantHints } from './useAssistantHints';
 import { useAssistantHighlight } from './useAssistantHighlight';
 import { useBrowserFacts } from './useBrowserFacts';
+import { useGuideEngine, type GuideStep } from './useGuideEngine';
+
+/**
+ * Render one guided step as an assistant-style chat message (Fix 1c + Fix 2).
+ * Names the actual control. Only says "highlighted" when highlights are ON; when
+ * OFF, it names the control explicitly (label via the UI registry, else the
+ * step title) and never implies a glow/pointer.
+ */
+function stepMessageText(step: GuideStep, highlightsOn: boolean): string {
+  const label = step.elementId ? getElement(step.elementId)?.label ?? null : null;
+  const controlName = label ?? step.title;
+  const lines = [`Step: ${step.title}`, '', step.instruction.trim()];
+  if (step.elementId) {
+    lines.push(
+      '',
+      highlightsOn
+        ? `I’ve highlighted ${controlName} for you on screen.`
+        : `Look for ${controlName} on screen.`
+    );
+  }
+  return lines.join('\n');
+}
+
+/** Does a recent action / visible-element set satisfy this step's doneSignal? */
+function isStepDone(
+  step: GuideStep,
+  recentActions: { elementId: string; kind: string }[],
+  visibleElementIds: string[]
+): boolean {
+  const sig = step.doneSignal;
+  switch (sig.kind) {
+    case 'manual':
+      return false; // never auto-advance — rely on the Next button
+    case 'clicked': {
+      const target = sig.elementId ?? step.elementId;
+      return !!target && recentActions.some((a) => a.elementId === target && a.kind === 'click');
+    }
+    case 'input-filled': {
+      const target = sig.elementId ?? step.elementId;
+      return (
+        !!target &&
+        recentActions.some(
+          (a) => a.elementId === target && (a.kind === 'input' || a.kind === 'change')
+        )
+      );
+    }
+    case 'element-appears': {
+      const target = sig.elementId;
+      return !!target && visibleElementIds.includes(target);
+    }
+    default:
+      return false;
+  }
+}
 
 const ENABLED =
   (process.env.NEXT_PUBLIC_AI_ASSISTANT_V1 ?? '').toLowerCase() === 'true';
@@ -45,14 +100,37 @@ export function AssistantWidget(_props: Props) {
   const dragRef = useRef<{ dx: number; dy: number; moved: boolean } | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const { messages, status, highlight, send, cancel, reset } = useAssistantChat();
+  const {
+    messages,
+    status,
+    highlight,
+    guideStart,
+    clearGuideStart,
+    pushAssistantMessage,
+    send,
+    cancel,
+    reset,
+  } = useAssistantChat();
   const { buildHints } = useAssistantHints();
   // Passive browser-facts observer (Stage 3). Its recentActions are merged into
   // the per-turn hints so the assistant can judge whether a guide step is done.
   const { getFacts } = useBrowserFacts();
 
-  // Execute server-issued highlight commands on the page, gated by preference.
-  const highlightRect = useAssistantHighlight(highlight, highlightsOn);
+  // CLIENT step-engine (Stage 4, Fix 1): once the model confirms a workflow and
+  // emits guide_start, the engine holds the full step list and drives stepping
+  // locally — instant, deterministic, zero LLM tokens per step.
+  const engine = useGuideEngine();
+
+  // The highlight to render: the engine's current-step highlight takes priority
+  // (persistent follow-along) while a workflow is active; otherwise the
+  // server-SSE one-off highlight from chat. Persistent mode is on iff the
+  // engine is driving.
+  const activeHighlight = engine.isActive ? engine.currentHighlight : highlight;
+  const highlightRect = useAssistantHighlight(
+    activeHighlight,
+    highlightsOn,
+    engine.isActive
+  );
 
   // Load the persisted Highlights preference once on mount (default ON).
   useEffect(() => {
@@ -129,11 +207,67 @@ export function AssistantWidget(_props: Props) {
         {
           hints: { ...buildHints(), recentActions: facts.recentActions },
           mode,
+          highlightsOn,
         }
       );
     },
-    [input, status, send, buildHints, getFacts, mode]
+    [input, status, send, buildHints, getFacts, mode, highlightsOn]
   );
+
+  // --- Client step-engine wiring (Fix 1c/1d/1e) ---------------------------
+
+  // When the model confirms a workflow (begin_guide → guide_start SSE), start
+  // the client engine. The chat coexists — chatting never resets the engine.
+  useEffect(() => {
+    if (!guideStart) return;
+    void engine.startWorkflow(guideStart.workflowId);
+    clearGuideStart();
+    // engine.startWorkflow is stable (useCallback); guideStart is the trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guideStart]);
+
+  // Render each new current step as an assistant-style message. Keyed on the
+  // engine's currentIndex so we post exactly one bubble per step (incl. step 0
+  // when a workflow starts). The highlight fires via activeHighlight above.
+  const lastPostedStepRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!engine.isActive || !engine.current) {
+      if (!engine.isActive) lastPostedStepRef.current = null;
+      return;
+    }
+    const stamp = `${engine.workflowId}:${engine.currentIndex}`;
+    if (lastPostedStepRef.current === stamp) return;
+    lastPostedStepRef.current = stamp;
+    pushAssistantMessage(stepMessageText(engine.current, highlightsOn));
+    // highlightsOn intentionally read at post time; step changes drive this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engine.isActive, engine.currentIndex, engine.workflowId, engine.current]);
+
+  // FACTS-BASED AUTO-ADVANCE (Fix 1d): poll live browser facts; if the current
+  // step's doneSignal is satisfied, advance without waiting for the button.
+  // Best-effort magic; the Next button is the reliable fallback. 'manual' steps
+  // never auto-advance.
+  useEffect(() => {
+    if (!engine.isActive || !engine.current) return;
+    if (engine.current.doneSignal.kind === 'manual') return;
+    const id = window.setInterval(() => {
+      const facts = getFacts();
+      if (
+        engine.current &&
+        isStepDone(engine.current, facts.recentActions, facts.visibleElementIds)
+      ) {
+        engine.next();
+      }
+    }, 700);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engine.isActive, engine.currentIndex, engine.workflowId]);
+
+  // Starting a brand-new conversation also stops any active guided workflow.
+  const handleReset = useCallback(() => {
+    engine.reset();
+    reset();
+  }, [engine, reset]);
 
   if (!ENABLED) return null;
 
@@ -227,7 +361,7 @@ export function AssistantWidget(_props: Props) {
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={reset}
+                onClick={handleReset}
                 title="Start a new conversation"
                 className="rounded-full px-2.5 py-1 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
               >
@@ -325,7 +459,17 @@ export function AssistantWidget(_props: Props) {
                       : 'bg-slate-100 text-slate-800'
                   }`}
                 >
-                  {m.content || (m.streaming ? '…' : '')}
+                  {m.content ? (
+                    m.content
+                  ) : m.streaming ? (
+                    <span className="assistant-typing" aria-label="Assistant is typing">
+                      <span />
+                      <span />
+                      <span />
+                    </span>
+                  ) : (
+                    ''
+                  )}
                   {m.error && (
                     <span className="mt-1 block text-xs text-red-500">{m.error}</span>
                   )}
@@ -333,6 +477,28 @@ export function AssistantWidget(_props: Props) {
               </div>
             ))}
           </div>
+
+          {/* Guided-workflow control bar (Fix 1c). Shown only while the client
+              step-engine is driving a workflow. "Next step →" is INSTANT — the
+              steps are already in memory (preloaded), so the click advances
+              with no fetch/LLM round-trip. Facts auto-advance can move ahead of
+              the button; this is the reliable fallback. */}
+          {engine.isActive && engine.current && (
+            <div className="flex items-center gap-2 border-t border-slate-100 bg-slate-50 px-3 py-2">
+              <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-500">
+                {engine.workflowName ? `${engine.workflowName} · ` : ''}
+                Step {engine.currentIndex + 1} of {engine.steps.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => engine.next()}
+                disabled={engine.upcoming === null}
+                className="shrink-0 rounded-full bg-[#ff6b35] px-3.5 py-1.5 text-xs font-semibold text-white transition-all hover:bg-[#e85f2e] disabled:cursor-default disabled:opacity-40"
+              >
+                {engine.upcoming === null ? 'Last step' : 'Next step →'}
+              </button>
+            </div>
+          )}
 
           {/* Composer */}
           <form

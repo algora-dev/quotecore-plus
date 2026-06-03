@@ -43,6 +43,7 @@ export const V1_TOOL_IDS = [
   'get_workflow_step',
   'get_ui_element_details',
   'request_ui_highlight',
+  'begin_guide',
 ] as const;
 
 export type V1ToolId = (typeof V1_TOOL_IDS)[number];
@@ -235,6 +236,23 @@ export const V1_TOOLS: Record<V1ToolId, ToolDefinition> = {
         },
       },
       required: ['elementId'],
+    },
+  },
+
+  begin_guide: {
+    id: 'begin_guide',
+    description:
+      'Hand the CONFIRMED workflow to the client step-engine so the user gets an instant "Next step →" button and follow-along highlighting WITHOUT another model turn per step. READ-ONLY: this only signals the client to start stepping the workflow you just confirmed — it changes no data. Call it exactly ONCE, right after the user confirms which workflow to be guided through, passing that workflowId. After calling it, present the FIRST step in chat as normal; the client drives subsequent steps. You can still answer questions mid-flow.',
+    requiresWrite: false,
+    parameters: {
+      type: 'object',
+      properties: {
+        workflowId: {
+          type: 'string',
+          description: 'The id of the workflow the user just confirmed they want guiding through.',
+        },
+      },
+      required: ['workflowId'],
     },
   },
 };

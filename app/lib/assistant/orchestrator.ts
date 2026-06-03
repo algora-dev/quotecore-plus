@@ -38,7 +38,12 @@ import {
 import type { LibraryWorkflow } from './library/types';
 import { MODEL_LIMITS } from './config';
 import type { AssistantServerContext } from './contextResolver';
-import type { AssistantMode, ChatMessage, HighlightCommand } from './protocol';
+import type {
+  AssistantMode,
+  ChatMessage,
+  GuideStartCommand,
+  HighlightCommand,
+} from './protocol';
 
 /** Trade label used for library lookups, derived from server context. */
 function tradeOf(ctx: AssistantServerContext): string {
@@ -71,12 +76,20 @@ export interface OrchestratorInput {
   context: AssistantServerContext;
   mode: AssistantMode;
   history: ChatMessage[];
+  /**
+   * Whether the client's Highlights preference is ON. Drives the Guide-me
+   * prompt branch: ON → refer to "the highlighted control"; OFF → name the
+   * control explicitly and never say "highlighted". Client-supplied hint.
+   */
+  highlightsOn: boolean;
   /** Stream a text delta to the client. */
   onToken: (text: string) => void;
   /** Notify the client a tool was invoked (name only). */
   onToolCall?: (name: string) => void;
   /** Emit a validated highlight command to the client. */
   onHighlight?: (command: HighlightCommand) => void;
+  /** Tell the client step-engine to start guiding a confirmed workflow. */
+  onGuideStart?: (command: GuideStartCommand) => void;
   signal?: AbortSignal;
 }
 
@@ -88,12 +101,13 @@ export interface OrchestratorResult {
 
 function buildSystemPrompt(
   ctx: AssistantServerContext,
-  mode: AssistantMode
+  mode: AssistantMode,
+  highlightsOn: boolean
 ): string {
   const base = [
     'You are the QuoteCore+ in-app assistant. QuoteCore+ is construction/roofing quoting software.',
     'Your job: explain, guide, clarify, teach, and answer questions about the app.',
-    'You are READ-ONLY: you cannot modify, create, or delete any data. Never claim to have done something in the app — only tell the user what to click/do.',
+    'You can only READ and explain — you guide the user through doing things themselves. Never claim to have changed anything in the app; tell the user what to click/do. Do NOT mention, volunteer, or caveat your own read-only status, "write permission", account permissions, or whether Save buttons are enabled — the user does not need to hear about that. Just help.',
     'When you use help docs, SUMMARISE and CONTEXTUALISE — never paste documentation verbatim.',
     'TOOLS you can call (all read-only):',
     '- get_current_context: where the user is right now — screenKey, visibleElementIds (server-trusted), recentActions (what they appear to have just clicked/typed — observation only), selectedEntities, tier, trade.',
@@ -117,12 +131,19 @@ function buildSystemPrompt(
   }
   if (mode === 'guide_me') {
     base.push(
+      highlightsOn
+        ? 'HIGHLIGHTS ARE ON: when a step’s control is on screen and you highlight it, you may refer to “the highlighted control” — the user will see the pointer/glow.'
+        : 'HIGHLIGHTS ARE OFF: NEVER say “the highlighted control/area” or imply anything is glowing/pointed at. ALWAYS name the actual control explicitly by its on-screen label (e.g. “the Component Type dropdown”, “the Save component button”) so the user can find it by reading.',
       'GUIDE-ME MODE — you are a hands-on conversational coach. Guide-me means the user wants to be SHOWN how to do something, step by step, not just told facts. You own the conversation and the progression; the library and live browser facts are your senses and reference.',
       'HOW TO RUN GUIDE-ME:',
       '1. ORIENT, THEN ASK FIRST. On your first guide turn, call get_current_context to see where the user is, then greet them with what you see and ASK what they want to do. DO NOT assume they want the workflow for their current page. Offer the obvious current-page workflow as ONE option, but make clear they can ask for anything (including things on other pages). Example: "I can see you’re on the Components page — do you want help creating or editing a component here, or are you trying to do something else?"',
       '2. MAP INTENT TO A WORKFLOW. When the user tells you their goal, call find_workflows with their words. Pick the best candidate and briefly confirm it ("Sounds like you want to …, I’ll walk you through it — yes?"). If their intent is vague or find_workflows is unclear, call list_workflows and offer a short menu of concrete options.',
       '3. CROSS-PAGE IS NORMAL. The chosen workflow may start on a DIFFERENT page than the user is on (check startPage vs get_current_context.screenKey). If so, tell the user you’ll guide them there and start from that page’s first step. A user on Components who says "add a component to a quote" should be routed into the quote workflow.',
-      '4. WALK ONE STEP AT A TIME. Track the stepIndex yourself, starting at 0. For each step call get_workflow_step {workflowId, stepIndex}. Tell the user the SINGLE next action (1–3 sentences): name the exact control, a brief why. If highlights are on AND the step’s elementId is present in get_current_context.visibleElementIds, call request_ui_highlight for it and refer to "the highlighted control". If the element is not visible (e.g. they’re on the wrong page yet), describe where it is instead.',
+      '4. WALK ONE STEP AT A TIME. Track the stepIndex yourself, starting at 0. For each step call get_workflow_step {workflowId, stepIndex}. Tell the user the SINGLE next action (1–3 sentences): name the exact control, a brief why.' +
+        (highlightsOn
+          ? ' If the step’s elementId is present in get_current_context.visibleElementIds, call request_ui_highlight for it and you may refer to "the highlighted control". If the element is not visible (e.g. they’re on the wrong page yet), describe where it is instead.'
+          : ' Highlights are OFF, so do NOT call request_ui_highlight and do NOT say "highlighted" — instead name the control by its exact label and say where it is.'),
+      'AFTER CONFIRMING THE WORKFLOW: call begin_guide {workflowId} ONCE (right after the user confirms), THEN present step 0. begin_guide hands the workflow to the client so the user gets an instant "Next step →" button and follow-along — you do not need to re-fetch each step for them to advance, though you stay available for questions.',
       '5. DETECT COMPLETION FROM LIVE FACTS — DO NOT rely on "tell me when you’re done" as the primary mechanism. After the user acts, re-read get_current_context and compare visibleElementIds + recentActions to the current step’s doneSignal:',
       '   • doneSignal.kind "clicked": done if recentActions shows a click on doneSignal.elementId (or the step’s elementId).',
       '   • doneSignal.kind "input-filled": done if recentActions shows an input/change on that elementId.',
@@ -155,6 +176,7 @@ const LIVE_TOOL_IDS = new Set([
   'get_workflow_step',
   'get_ui_element_details',
   'request_ui_highlight',
+  'begin_guide',
 ]);
 
 function toLlmTools(): LlmToolSchema[] {
@@ -175,7 +197,8 @@ async function dispatchTool(
   name: string,
   rawArgs: string,
   ctx: AssistantServerContext,
-  onHighlight?: (command: HighlightCommand) => void
+  onHighlight?: (command: HighlightCommand) => void,
+  onGuideStart?: (command: GuideStartCommand) => void
 ): Promise<{ ok: boolean; result: unknown }> {
   let args: Record<string, unknown> = {};
   try {
@@ -205,7 +228,6 @@ async function dispatchTool(
         result: {
           screenKey: ctx.screenKey,
           tier: ctx.serverPermissions.tier,
-          canWrite: ctx.serverPermissions.canWrite,
           selectedEntities: ctx.selectedEntities.map((e) => ({
             type: e.type,
             name: e.name,
@@ -409,6 +431,38 @@ async function dispatchTool(
       };
     }
 
+    case 'begin_guide': {
+      const workflowId = String(args.workflowId ?? '').trim();
+      const wf = workflowId ? getWorkflowById(workflowId, trade) : null;
+      if (!wf) {
+        return {
+          ok: true,
+          result: {
+            started: false,
+            note: `No workflow with id "${workflowId}" — confirm a valid id (find_workflows / list_workflows) before calling begin_guide.`,
+          },
+        };
+      }
+      // READ-ONLY signal: tell the client step-engine to take over stepping for
+      // this confirmed workflow. Changes no data — it only starts the client UI.
+      onGuideStart?.({
+        type: 'guide_start',
+        workflowId: wf.id,
+        startPage: wf.startPage,
+      });
+      return {
+        ok: true,
+        result: {
+          started: true,
+          workflowId: wf.id,
+          name: wf.name,
+          startPage: wf.startPage,
+          stepCount: wf.steps.length,
+          note: 'The client step-engine is now driving this workflow (the user has a "Next step →" button). Present the FIRST step (index 0) now; you do not need to call begin_guide again.',
+        },
+      };
+    }
+
     default:
       return { ok: false, result: { error: `tool "${name}" is not available` } };
   }
@@ -419,7 +473,10 @@ export async function runAssistantTurn(
 ): Promise<OrchestratorResult> {
   const tools = toLlmTools();
   const messages: LlmMessage[] = [
-    { role: 'system', content: buildSystemPrompt(input.context, input.mode) },
+    {
+      role: 'system',
+      content: buildSystemPrompt(input.context, input.mode, input.highlightsOn),
+    },
   ];
 
   messages.push(
@@ -467,7 +524,8 @@ export async function runAssistantTurn(
         call.name,
         call.arguments,
         input.context,
-        input.onHighlight
+        input.onHighlight,
+        input.onGuideStart
       );
       messages.push({
         role: 'tool',
