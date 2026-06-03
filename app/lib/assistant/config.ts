@@ -51,6 +51,8 @@ export const REQUEST_LIMITS = {
   maxSelectedEntityRefs: envInt('ASSISTANT_MAX_SELECTED_ENTITY_REFS', 8),
   /** Max visible element ids a client may report. */
   maxVisibleElementIds: envInt('ASSISTANT_MAX_VISIBLE_ELEMENT_IDS', 60),
+  /** Max recent client-observed actions a client may report (rolling buffer). */
+  maxRecentActions: envInt('ASSISTANT_MAX_RECENT_ACTIONS', 8),
 } as const;
 
 // ---------------------------------------------------------------------------

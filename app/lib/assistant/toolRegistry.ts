@@ -24,12 +24,23 @@
 // Tool ids
 // ---------------------------------------------------------------------------
 
-/** The ONLY tools the live V1 registry exposes. All read-only. */
+/**
+ * The ONLY tools the live V1 registry exposes. All read-only.
+ *
+ * Stage 3 (conversational orchestrator): the rigid screen→workflow auto-map
+ * tools (`get_current_workflow` / `get_current_step`, which read DB progress)
+ * are REPLACED by intent-first, library-backed tools. The chatbot now owns
+ * intent mapping + step progression; the library + live browser facts are its
+ * senses. `find_workflows` / `list_workflows` / `get_workflow` /
+ * `get_workflow_step` are all selector-free reads over the in-memory library.
+ */
 export const V1_TOOL_IDS = [
   'search_help_docs',
   'get_current_context',
-  'get_current_workflow',
-  'get_current_step',
+  'find_workflows',
+  'list_workflows',
+  'get_workflow',
+  'get_workflow_step',
   'get_ui_element_details',
   'request_ui_highlight',
 ] as const;
@@ -115,41 +126,72 @@ export const V1_TOOLS: Record<V1ToolId, ToolDefinition> = {
   get_current_context: {
     id: 'get_current_context',
     description:
-      'Return the SERVER-VALIDATED context for the current user: screen, server-verified selected entities, visible element ids, and server-computed permissions. Never trust client claims beyond what this returns.',
+      'Return the SERVER-VALIDATED context for the current user: screen, server-verified selected entities, visible element ids, recent client-observed actions, trade, and server-computed permissions. Use visibleElementIds + recentActions to judge where the user is and what they just did. Never trust client claims beyond what this returns; recentActions are observation only.',
     requiresWrite: false,
     parameters: { type: 'object', properties: {} },
   },
 
-  get_current_workflow: {
-    id: 'get_current_workflow',
+  find_workflows: {
+    id: 'find_workflows',
     description:
-      'Return the workflow definition (steps, instructions, required element ids, completion events) for the current or named workflow, from the compiled workflow service.',
+      "Map what the user SAID into candidate guided workflows. Pass the user's intent in their own words; returns ranked candidates [{id, name, summary, intents, startPage, stepCount}]. Candidates may start on a DIFFERENT page than the user is on (cross-page guidance is expected). Use this once you know what the user wants to do, then confirm the best match before guiding.",
     requiresWrite: false,
     parameters: {
       type: 'object',
       properties: {
-        workflowId: {
+        intent: {
           type: 'string',
           description:
-            'Optional workflow id; defaults to the current workflow from context.',
+            "The user's goal in natural language (e.g. 'add a component to a quote').",
         },
       },
+      required: ['intent'],
     },
   },
 
-  get_current_step: {
-    id: 'get_current_step',
+  list_workflows: {
+    id: 'list_workflows',
     description:
-      'Return the current step, its completion requirement, and the next valid step. The application decides progression; you only read and narrate it — never advance it yourself.',
+      'List every available guided workflow for the trade (id, name, summary, intents). Use this when the intent is vague and find_workflows did not return a clear winner, so you can offer the user concrete options.',
+    requiresWrite: false,
+    parameters: { type: 'object', properties: {} },
+  },
+
+  get_workflow: {
+    id: 'get_workflow',
+    description:
+      'Return a full workflow by id: its startPage and ordered steps (each with title, instruction, elementId, page, doneSignal). Selector-free. Use it to plan the walkthrough; never dump all steps to the user at once.',
     requiresWrite: false,
     parameters: {
       type: 'object',
       properties: {
         workflowId: {
           type: 'string',
-          description: 'Optional workflow id; defaults to current.',
+          description: 'The workflow id (from find_workflows / list_workflows).',
         },
       },
+      required: ['workflowId'],
+    },
+  },
+
+  get_workflow_step: {
+    id: 'get_workflow_step',
+    description:
+      'Return a single step (by 0-based index) of a workflow plus the following step. YOU track which stepIndex the user is on and pass it here — progression is driven by you reading live browser facts (visibleElementIds + recentActions vs the step doneSignal), not by any stored progress. Returns the step title/instruction/elementId/page/doneSignal and the next step.',
+    requiresWrite: false,
+    parameters: {
+      type: 'object',
+      properties: {
+        workflowId: {
+          type: 'string',
+          description: 'The workflow id.',
+        },
+        stepIndex: {
+          type: 'number',
+          description: '0-based index of the step you are currently guiding.',
+        },
+      },
+      required: ['workflowId', 'stepIndex'],
     },
   },
 

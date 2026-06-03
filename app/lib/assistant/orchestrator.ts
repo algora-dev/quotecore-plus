@@ -1,53 +1,68 @@
 /**
- * AI Assistant — Orchestrator (Phase 1)
- * ======================================
+ * AI Assistant — Orchestrator (Stage 3: Conversational Orchestrator)
+ * ===================================================================
  * Runs an assistant turn: system prompt + history -> model -> tool loop ->
- * final text. Phase 1 exposes ONLY `search_help_docs`; context/workflow/
- * highlight tools arrive in Phases 3/4.
+ * final text.
  *
- * The orchestrator receives ALREADY-TRUSTED context (resolved by the route
- * from the session). It never reads tenancy/permissions from client input.
- * Guards: tool-call depth cap, per-turn token accumulation, abort signal.
+ * STAGE 3 CHANGE — the chatbot is the BRAIN. Guide-me is no longer a rigid tour
+ * player driven by a screen->workflow auto-map and DB progress reads. Instead:
+ *   - the model ASKS the user what they want (using their current screen as
+ *     context, not as a forced workflow),
+ *   - maps that intent to a workflow via the intent-first LIBRARY
+ *     (find_workflows / list_workflows / get_workflow / get_workflow_step),
+ *   - walks ONE step at a time, and judges step completion itself by reading
+ *     LIVE BROWSER FACTS (visibleElementIds + recentActions) against the step's
+ *     selector-free doneSignal — only falling back to "tell me when you're
+ *     ready" when a step's doneSignal is `manual` or facts are inconclusive.
+ *
+ * The library + live facts are the model's senses and reference; the model owns
+ * the conversation and progression. There is NO hardcoded screen->workflow map
+ * and NO DB workflow-progress read here anymore (workflowService is de-wired).
+ *
+ * The orchestrator receives ALREADY-TRUSTED context (resolved by the route from
+ * the session). It never reads tenancy/permissions from client input. Guards:
+ * tool-call depth cap, per-turn token accumulation, abort signal. The read-only
+ * highlight VALIDATION (registry id + ctx.visibleElementIds) is preserved.
  */
 
 import { runChatStep, type LlmMessage, type LlmToolSchema } from './llmClient';
 import { searchHelpDocs } from './knowledge';
 import { getLiveToolDefinitions } from './toolRegistry';
-import { getElement } from './uiRegistry';
+import { getElement, isRegisteredElement } from './uiRegistry';
 import {
-  getWorkflow,
-  getWorkflowForScreen,
-  getWorkflowProgress,
-  getWorkflowStep,
-  type Workflow,
-} from './workflowService';
+  findWorkflowsByIntent,
+  getStep,
+  getWorkflowById,
+  listWorkflowSummaries,
+} from './library/workflowLibrary';
+import type { LibraryWorkflow } from './library/types';
 import { MODEL_LIMITS } from './config';
-import { isRegisteredElement } from './uiRegistry';
 import type { AssistantServerContext } from './contextResolver';
 import type { AssistantMode, ChatMessage, HighlightCommand } from './protocol';
 
-/** Trade label used for workflow lookups, derived from server context. */
+/** Trade label used for library lookups, derived from server context. */
 function tradeOf(ctx: AssistantServerContext): string {
-  // serverPermissions doesn't carry trade today; the screen-mapped workflows
-  // are keyed roofing|generic. Roofing is the default trade (mirrors
-  // CopilotProvider default). Generic trades resolve to the generic guide set.
-  // contextResolver can surface trade later; until then default roofing.
+  // contextResolver resolves the company default trade server-side; the library
+  // keys roofing|generic (roofing is the default, anything else -> generic).
   return ctx.trade ?? 'roofing';
 }
 
-/** Serialise a workflow for the model (selector-free, bounded). */
-function workflowForModel(wf: Workflow) {
+/** Serialise a full workflow for the model (selector-free, bounded). */
+function workflowForModel(wf: LibraryWorkflow) {
   return {
-    workflowId: wf.workflowId,
-    title: wf.title,
-    description: wf.description,
-    stepCount: wf.stepCount,
-    steps: wf.steps.map((s) => ({
-      index: s.index,
+    id: wf.id,
+    name: wf.name,
+    summary: wf.summary,
+    startPage: wf.startPage,
+    stepCount: wf.steps.length,
+    steps: wf.steps.map((s, index) => ({
+      index,
       id: s.id,
       title: s.title,
       instruction: s.instruction,
       elementId: s.elementId,
+      page: s.page,
+      doneSignal: s.doneSignal,
     })),
   };
 }
@@ -60,7 +75,7 @@ export interface OrchestratorInput {
   onToken: (text: string) => void;
   /** Notify the client a tool was invoked (name only). */
   onToolCall?: (name: string) => void;
-  /** Emit a validated highlight command to the client (Phase 4). */
+  /** Emit a validated highlight command to the client. */
   onHighlight?: (command: HighlightCommand) => void;
   signal?: AbortSignal;
 }
@@ -78,13 +93,20 @@ function buildSystemPrompt(
   const base = [
     'You are the QuoteCore+ in-app assistant. QuoteCore+ is construction/roofing quoting software.',
     'Your job: explain, guide, clarify, teach, and answer questions about the app.',
-    'CORE RULE: the application is the source of truth for workflow state. You never invent workflows or decide the next step yourself — you read it via the workflow tools and explain the step the app reports.',
-    'TOOLS: use get_current_workflow / get_current_step to ground guidance in the REAL workflow for the screen; use get_ui_element_details to explain a specific button/field; use search_help_docs for conceptual "how/why" questions; use request_ui_highlight to visually point the user at the exact on-screen control for the current step (pass the registry elementId). Prefer workflow tools over docs when the user is mid-task on a guided screen.',
-    'HIGHLIGHTING: only call request_ui_highlight with an elementId that get_current_step / get_current_workflow reported, or one you can see in get_current_context.visibleElementIds. If it returns highlighted:false (not on screen), do NOT keep retrying — just describe where to find it. One highlight per step is enough.',
-    'When you use help docs, SUMMARISE and CONTEXTUALISE — never paste documentation verbatim.',
     'You are READ-ONLY: you cannot modify, create, or delete any data. Never claim to have done something in the app — only tell the user what to click/do.',
+    'When you use help docs, SUMMARISE and CONTEXTUALISE — never paste documentation verbatim.',
+    'TOOLS you can call (all read-only):',
+    '- get_current_context: where the user is right now — screenKey, visibleElementIds (server-trusted), recentActions (what they appear to have just clicked/typed — observation only), selectedEntities, tier, trade.',
+    '- find_workflows {intent}: map what the user SAID into candidate guided workflows (may start on a different page).',
+    '- list_workflows: browse every available workflow when intent is unclear.',
+    '- get_workflow {workflowId}: the full step list for a workflow (plan with it; never dump it at the user).',
+    '- get_workflow_step {workflowId, stepIndex}: one step + the next; YOU track stepIndex.',
+    '- get_ui_element_details {elementId}: explain what a specific control does.',
+    '- request_ui_highlight {elementId}: visually point at an on-screen control (only works if it is currently visible).',
+    'HIGHLIGHTING: only call request_ui_highlight with an elementId you got from a workflow step or that appears in get_current_context.visibleElementIds. If it returns highlighted:false (not on screen), do NOT retry — just describe where to find it. One highlight per step is enough. Treatments: pulse, glow, spotlight, arrow.',
     `Current screen: ${ctx.screenKey || 'unknown'}.`,
     `User plan/tier: ${ctx.serverPermissions.tier}.`,
+    `Trade: ${tradeOf(ctx)}.`,
   ];
   if (ctx.selectedEntities.length > 0) {
     base.push(
@@ -95,20 +117,27 @@ function buildSystemPrompt(
   }
   if (mode === 'guide_me') {
     base.push(
-      'GUIDE MODE — you are a hands-on, step-by-step coach. Walk the user through ONE step at a time.',
-      'Rules for guide mode:',
-      '- Give the user the SINGLE next action to take, not the whole list. Keep it to 1-3 sentences.',
-      '- Name the exact button/field/control to use (from the workflow step), then briefly why it matters. When that control is on the current screen, call request_ui_highlight with its elementId so the user can SEE it, then refer to "the highlighted button/field".',
-      '- End by telling them to do it and that you’ll continue once they have (e.g. "Do that, then tell me when you’re ready / ask if you get stuck").',
-      '- If a [WORKFLOW CONTEXT] note is provided below, START from the current step it names. Do not re-explain steps already behind them.',
-      '- The user may ask free-form questions between steps — answer naturally, then steer back to the next step.',
-      '- Never dump all steps at once. That is RESPOND mode behaviour, not guide mode.'
+      'GUIDE-ME MODE — you are a hands-on conversational coach. Guide-me means the user wants to be SHOWN how to do something, step by step, not just told facts. You own the conversation and the progression; the library and live browser facts are your senses and reference.',
+      'HOW TO RUN GUIDE-ME:',
+      '1. ORIENT, THEN ASK FIRST. On your first guide turn, call get_current_context to see where the user is, then greet them with what you see and ASK what they want to do. DO NOT assume they want the workflow for their current page. Offer the obvious current-page workflow as ONE option, but make clear they can ask for anything (including things on other pages). Example: "I can see you’re on the Components page — do you want help creating or editing a component here, or are you trying to do something else?"',
+      '2. MAP INTENT TO A WORKFLOW. When the user tells you their goal, call find_workflows with their words. Pick the best candidate and briefly confirm it ("Sounds like you want to …, I’ll walk you through it — yes?"). If their intent is vague or find_workflows is unclear, call list_workflows and offer a short menu of concrete options.',
+      '3. CROSS-PAGE IS NORMAL. The chosen workflow may start on a DIFFERENT page than the user is on (check startPage vs get_current_context.screenKey). If so, tell the user you’ll guide them there and start from that page’s first step. A user on Components who says "add a component to a quote" should be routed into the quote workflow.',
+      '4. WALK ONE STEP AT A TIME. Track the stepIndex yourself, starting at 0. For each step call get_workflow_step {workflowId, stepIndex}. Tell the user the SINGLE next action (1–3 sentences): name the exact control, a brief why. If highlights are on AND the step’s elementId is present in get_current_context.visibleElementIds, call request_ui_highlight for it and refer to "the highlighted control". If the element is not visible (e.g. they’re on the wrong page yet), describe where it is instead.',
+      '5. DETECT COMPLETION FROM LIVE FACTS — DO NOT rely on "tell me when you’re done" as the primary mechanism. After the user acts, re-read get_current_context and compare visibleElementIds + recentActions to the current step’s doneSignal:',
+      '   • doneSignal.kind "clicked": done if recentActions shows a click on doneSignal.elementId (or the step’s elementId).',
+      '   • doneSignal.kind "input-filled": done if recentActions shows an input/change on that elementId.',
+      '   • doneSignal.kind "element-appears": done if doneSignal.elementId now appears in visibleElementIds.',
+      '   • doneSignal.kind "manual": no auto signal — THIS is the only case where you say "do that, then tell me when you’re ready" (also acceptable when facts are genuinely inconclusive, or when a navigation between pages just needs the user to arrive).',
+      '   When a step looks done, advance: increment stepIndex and present the next step automatically. When the whole workflow is done, congratulate briefly and ask if they want anything else.',
+      '6. STAY CONVERSATIONAL. Answer free-form questions mid-flow naturally (use get_ui_element_details / search_help_docs as needed), then steer back to the current step.',
+      'NEVER dump all the steps at once — that is Respond-mode behaviour. Give ONE step, judge completion from facts, then the next.'
     );
   } else {
     base.push(
       'RESPOND MODE — answer reactively and CONCISELY.',
       'Rules for respond mode:',
-      '- Answer the actual question asked. Do NOT pre-emptively dump an entire step-by-step walkthrough unless the user explicitly asks for the full steps.',
+      '- Answer the actual question asked. Use get_current_context to stay page-aware, get_ui_element_details to explain a specific control, and search_help_docs for conceptual "how/why" questions.',
+      '- Do NOT pre-emptively dump an entire step-by-step walkthrough unless the user explicitly asks for the full steps.',
       '- If a question genuinely has a short procedure, give a tight summary (2-4 bullets max), then offer: "Want me to walk you through it step by step? Switch to Guide me."',
       '- Be direct and practical. If you don’t know, say so and point to where to look.'
     );
@@ -116,57 +145,15 @@ function buildSystemPrompt(
   return base.join('\n');
 }
 
-/**
- * Guide-me priming: pre-fetch the workflow + current step for the screen and
- * return a system note so the model narrates the RIGHT step immediately,
- * without having to first decide to call a tool. Returns null when no workflow
- * maps to the screen (guide mode then just answers/offers help generally).
- * Fail-soft: any error returns null rather than breaking the turn.
- */
-async function buildGuidePriming(
-  ctx: AssistantServerContext
-): Promise<string | null> {
-  try {
-    const trade = tradeOf(ctx);
-    const wf = getWorkflowForScreen(ctx.screenKey, trade);
-    if (!wf) return null;
-    const progress = await getWorkflowProgress(ctx.userId, wf);
-    if (progress.completed) {
-      return `[WORKFLOW CONTEXT] The user is on a screen for the "${wf.title}" workflow, which they have already completed before. Offer a quick refresher or ask what they need — don't force them through every step again.`;
-    }
-    const idx = Math.min(progress.currentStepIndex, wf.steps.length - 1);
-    const cur = getWorkflowStep(wf, idx);
-    const next = getWorkflowStep(wf, idx + 1);
-    const lines = [
-      `[WORKFLOW CONTEXT] Active workflow: "${wf.title}" (${wf.stepCount} steps).`,
-      cur
-        ? `Current step ${cur.index}/${wf.stepCount}: "${cur.title}" — ${cur.instruction}${cur.elementId ? ` (control: ${cur.elementId})` : ''}`
-        : 'Current step: start.',
-    ];
-    if (next) {
-      lines.push(`Then next: "${next.title}".`);
-    }
-    lines.push(
-      'Narrate THIS current step to the user in your own words, one step at a time. Do not list all steps.'
-    );
-    return lines.join('\n');
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Tools dispatchable in Phase 3: search + the read-only context/workflow tools.
- * `request_ui_highlight` is Phase 4 (needs the client-side executor), so it is
- * intentionally still withheld from the live set here.
- */
+/** The tools dispatchable this turn (the live, library-backed read-only set). */
 const LIVE_TOOL_IDS = new Set([
   'search_help_docs',
   'get_current_context',
-  'get_current_workflow',
-  'get_current_step',
+  'find_workflows',
+  'list_workflows',
+  'get_workflow',
+  'get_workflow_step',
   'get_ui_element_details',
-  // Phase 4: highlight is now live (web executor renders it client-side).
   'request_ui_highlight',
 ]);
 
@@ -182,8 +169,8 @@ function toLlmTools(): LlmToolSchema[] {
 
 const HIGHLIGHT_TREATMENTS = new Set(['pulse', 'glow', 'spotlight', 'arrow']);
 
-/** Dispatch a tool call to its handler. Phase 4: search + context/workflow +
- *  request_ui_highlight. `onHighlight` emits validated highlight commands. */
+/** Dispatch a tool call to its handler. All handlers are read-only.
+ *  `onHighlight` emits validated highlight commands. */
 async function dispatchTool(
   name: string,
   rawArgs: string,
@@ -210,7 +197,9 @@ async function dispatchTool(
     }
 
     case 'get_current_context': {
-      // Server-validated context only — never client claims.
+      // Server-validated context only — never client claims. recentActions are
+      // client-observed (lower trust): for "what the user appears to have done",
+      // never for any permission decision.
       return {
         ok: true,
         result: {
@@ -222,54 +211,131 @@ async function dispatchTool(
             name: e.name,
           })),
           visibleElementIds: ctx.visibleElementIds,
+          recentActions: ctx.recentActions.map((a) => ({
+            elementId: a.elementId,
+            kind: a.kind,
+            at: a.at,
+          })),
           trade,
         },
       };
     }
 
-    case 'get_current_workflow': {
-      const wid = args.workflowId ? String(args.workflowId) : undefined;
-      const wf = wid
-        ? getWorkflow(wid, trade)
-        : getWorkflowForScreen(ctx.screenKey, trade);
+    case 'find_workflows': {
+      const intent = String(args.intent ?? '').trim();
+      if (!intent) {
+        return {
+          ok: false,
+          result: { error: 'find_workflows requires an "intent" string.' },
+        };
+      }
+      const matches = findWorkflowsByIntent(intent, trade)
+        .slice(0, 6)
+        .map((m) => ({
+          id: m.workflow.id,
+          name: m.workflow.name,
+          summary: m.workflow.summary,
+          intents: m.workflow.intents,
+          startPage: m.workflow.startPage,
+          stepCount: m.workflow.steps.length,
+          score: m.score,
+        }));
+      return {
+        ok: true,
+        result: {
+          candidates: matches,
+          note:
+            matches.length === 0
+              ? 'No strong match. Call list_workflows and offer the user options.'
+              : 'Confirm the best candidate with the user before guiding. A candidate may start on a different page than the user is currently on.',
+        },
+      };
+    }
+
+    case 'list_workflows': {
+      return {
+        ok: true,
+        result: { workflows: listWorkflowSummaries(trade) },
+      };
+    }
+
+    case 'get_workflow': {
+      const wid = String(args.workflowId ?? '');
+      const wf = wid ? getWorkflowById(wid, trade) : null;
       if (!wf) {
         return {
           ok: true,
           result: {
             workflow: null,
-            note: 'No guided workflow maps to this screen.',
+            note: `No workflow with id "${wid}". Use find_workflows / list_workflows to get a valid id.`,
           },
         };
       }
       return { ok: true, result: { workflow: workflowForModel(wf) } };
     }
 
-    case 'get_current_step': {
-      const wid = args.workflowId ? String(args.workflowId) : undefined;
-      const wf = wid
-        ? getWorkflow(wid, trade)
-        : getWorkflowForScreen(ctx.screenKey, trade);
+    case 'get_workflow_step': {
+      const wid = String(args.workflowId ?? '');
+      const rawIndex = args.stepIndex;
+      const stepIndex =
+        typeof rawIndex === 'number' && Number.isFinite(rawIndex)
+          ? Math.max(0, Math.trunc(rawIndex))
+          : 0;
+      const wf = wid ? getWorkflowById(wid, trade) : null;
       if (!wf) {
         return {
           ok: true,
-          result: { step: null, note: 'No guided workflow on this screen.' },
+          result: {
+            step: null,
+            note: `No workflow with id "${wid}".`,
+          },
         };
       }
-      const progress = await getWorkflowProgress(ctx.userId, wf);
-      const idx = Math.min(progress.currentStepIndex, wf.steps.length - 1);
-      const current = getWorkflowStep(wf, idx);
-      const next = getWorkflowStep(wf, idx + 1);
+      const current = getStep(wid, stepIndex, trade);
+      const next = getStep(wid, stepIndex + 1, trade);
+      if (!current) {
+        return {
+          ok: true,
+          result: {
+            workflowId: wf.id,
+            stepCount: wf.steps.length,
+            stepIndex,
+            completed: stepIndex >= wf.steps.length,
+            currentStep: null,
+            nextStep: null,
+            note:
+              stepIndex >= wf.steps.length
+                ? 'Past the last step — the workflow is complete.'
+                : 'No step at that index.',
+          },
+        };
+      }
       return {
         ok: true,
         result: {
-          workflowId: wf.workflowId,
-          completed: progress.completed,
-          stepCount: wf.stepCount,
-          currentStep: current
-            ? { index: current.index, title: current.title, instruction: current.instruction, elementId: current.elementId }
-            : null,
+          workflowId: wf.id,
+          stepCount: wf.steps.length,
+          stepIndex,
+          completed: false,
+          currentStep: {
+            index: stepIndex,
+            id: current.id,
+            title: current.title,
+            instruction: current.instruction,
+            elementId: current.elementId,
+            page: current.page,
+            doneSignal: current.doneSignal,
+          },
           nextStep: next
-            ? { index: next.index, title: next.title, instruction: next.instruction, elementId: next.elementId }
+            ? {
+                index: stepIndex + 1,
+                id: next.id,
+                title: next.title,
+                instruction: next.instruction,
+                elementId: next.elementId,
+                page: next.page,
+                doneSignal: next.doneSignal,
+              }
             : null,
         },
       };
@@ -355,13 +421,6 @@ export async function runAssistantTurn(
   const messages: LlmMessage[] = [
     { role: 'system', content: buildSystemPrompt(input.context, input.mode) },
   ];
-
-  // Guide mode: inject live workflow/step priming so the assistant starts from
-  // the user's actual current step instead of waiting to be asked.
-  if (input.mode === 'guide_me') {
-    const priming = await buildGuidePriming(input.context);
-    if (priming) messages.push({ role: 'system', content: priming });
-  }
 
   messages.push(
     ...(input.history.map((m) => ({

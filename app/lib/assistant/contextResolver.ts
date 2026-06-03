@@ -24,6 +24,7 @@ import {
   type AssistantClientHints,
   type EntityRef,
   type ElementId,
+  type RecentActionHint,
   type ScreenKey,
   isProtocolVersionSupported,
 } from './protocol';
@@ -63,6 +64,12 @@ export interface AssistantServerContext {
   selectedEntities: VerifiedEntity[];
   /** Visible element ids, bounded + deduped (registry-intersected in 0B). */
   visibleElementIds: ElementId[];
+  /**
+   * Recent CLIENT-OBSERVED actions (most-recent-last), bounded. LOWER TRUST
+   * than `visibleElementIds`: surfaced to the model so it can judge whether a
+   * guide step looks done, but NEVER used for any permission/tenancy decision.
+   */
+  recentActions: RecentActionHint[];
 }
 
 export class AssistantContextError extends Error {
@@ -154,6 +161,36 @@ function sanitiseScreenKey(raw: unknown): ScreenKey {
   return raw;
 }
 
+/**
+ * Validate + bound the client's reported recent actions. Observation only:
+ * each entry must have a non-empty string elementId, a known kind, and a finite
+ * timestamp; anything malformed is dropped. Bounded to `max` (most recent).
+ */
+function sanitiseRecentActions(
+  raw: unknown,
+  max: number
+): RecentActionHint[] {
+  if (!Array.isArray(raw)) return [];
+  const KINDS = new Set(['click', 'input', 'change']);
+  const out: RecentActionHint[] = [];
+  for (const v of raw) {
+    if (!v || typeof v !== 'object') continue;
+    const rec = v as Record<string, unknown>;
+    const elementId = rec.elementId;
+    const kind = rec.kind;
+    const at = rec.at;
+    if (typeof elementId !== 'string' || elementId.length === 0) continue;
+    if (typeof kind !== 'string' || !KINDS.has(kind)) continue;
+    out.push({
+      elementId,
+      kind: kind as RecentActionHint['kind'],
+      at: typeof at === 'number' && Number.isFinite(at) ? at : 0,
+    });
+  }
+  // Keep only the most recent `max`.
+  return out.length > max ? out.slice(out.length - max) : out;
+}
+
 function boundedUniqueStrings(raw: unknown, max: number): string[] {
   if (!Array.isArray(raw)) return [];
   const out: string[] = [];
@@ -232,6 +269,10 @@ export async function resolveServerContext(
     hints.visibleElementIds,
     REQUEST_LIMITS.maxVisibleElementIds
   );
+  const recentActions = sanitiseRecentActions(
+    hints.recentActions,
+    REQUEST_LIMITS.maxRecentActions
+  );
 
   // 5. Server-verify each claimed entity ref (deny-by-default).
   const claimedRefs = Array.isArray(hints.selectedEntityRefs)
@@ -266,5 +307,6 @@ export async function resolveServerContext(
     featureKey,
     selectedEntities,
     visibleElementIds,
+    recentActions,
   };
 }

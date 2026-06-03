@@ -22,6 +22,7 @@ import type { AssistantMode } from '@/app/lib/assistant/protocol';
 import { useAssistantChat } from './useAssistantChat';
 import { useAssistantHints } from './useAssistantHints';
 import { useAssistantHighlight } from './useAssistantHighlight';
+import { useBrowserFacts } from './useBrowserFacts';
 
 const ENABLED =
   (process.env.NEXT_PUBLIC_AI_ASSISTANT_V1 ?? '').toLowerCase() === 'true';
@@ -46,6 +47,9 @@ export function AssistantWidget(_props: Props) {
 
   const { messages, status, highlight, send, cancel, reset } = useAssistantChat();
   const { buildHints } = useAssistantHints();
+  // Passive browser-facts observer (Stage 3). Its recentActions are merged into
+  // the per-turn hints so the assistant can judge whether a guide step is done.
+  const { getFacts } = useBrowserFacts();
 
   // Execute server-issued highlight commands on the page, gated by preference.
   const highlightRect = useAssistantHighlight(highlight, highlightsOn);
@@ -116,9 +120,19 @@ export function AssistantWidget(_props: Props) {
       const text = input;
       if (!text.trim() || status === 'streaming') return;
       setInput('');
-      void send(text, { hints: buildHints(), mode });
+      // Merge live browser facts (recentActions) into the per-turn hints. Both
+      // buildHints and getFacts scan the DOM at send-time, so they agree on the
+      // current screen + visible elements; we add recentActions on top.
+      const facts = getFacts();
+      void send(
+        text,
+        {
+          hints: { ...buildHints(), recentActions: facts.recentActions },
+          mode,
+        }
+      );
     },
-    [input, status, send, buildHints, mode]
+    [input, status, send, buildHints, getFacts, mode]
   );
 
   if (!ENABLED) return null;

@@ -97,6 +97,24 @@ export interface EntityRef {
   id: string;
 }
 
+/**
+ * A CLIENT-OBSERVED user interaction on a registry element, reported as a hint
+ * so the assistant can reason about "what the user appears to have just done"
+ * (e.g. to judge whether a guide step's doneSignal was met). LOWER TRUST than
+ * server-verified `visibleElementIds`: these are observation only and MUST NOT
+ * drive any tenancy/permission decision. Mirrors `ObservedAction` from the
+ * client `useBrowserFacts` hook (kept selector-free — `elementId` is a semantic
+ * registry id, never a DOM selector).
+ */
+export interface RecentActionHint {
+  /** Semantic registry element id the action hit (data-assistant-id value). */
+  elementId: ElementId;
+  /** Kind of DOM interaction observed. */
+  kind: 'click' | 'input' | 'change';
+  /** Epoch ms when the client observed it (informational only). */
+  at: number;
+}
+
 // ---------------------------------------------------------------------------
 // Client -> Server: the hint envelope (UNTRUSTED)
 // ---------------------------------------------------------------------------
@@ -118,6 +136,13 @@ export interface AssistantClientHints {
   selectedEntityRefs?: EntityRef[];
   /** Registry element ids the client reports as currently visible. */
   visibleElementIds?: ElementId[];
+  /**
+   * Recent CLIENT-OBSERVED actions on registry elements (most-recent-last),
+   * from `useBrowserFacts`. Untrusted observation: the assistant may read these
+   * as "what the user appears to have done" to judge step completion, but the
+   * server never uses them for any permission/tenancy decision.
+   */
+  recentActions?: RecentActionHint[];
 }
 
 // ---------------------------------------------------------------------------
