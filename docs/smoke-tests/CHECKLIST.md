@@ -98,6 +98,13 @@ _Pending verification (Shaun testing 2026-06-03, dev `9c73d66`):_
 - [ ] **No false "I did it"** — assistant only tells user what to click; never claims to have performed an action (read-only).
 > Known calibration follow-ups (not blockers): /quotes/new and /quotes/[id] both map to create-quote guide; Guide-me reads but doesn't advance step progress. See `app/lib/assistant/README.md`.
 
+_Pending verification — Phase 4 visual highlight (dev `ad75b73`):_
+- [ ] **Guide-me highlights the control** — in Guide me, the current step's button/field gets a visible glow/outline on screen and the page scrolls to it.
+- [ ] **Highlight points at the RIGHT element** — the highlighted control matches what the assistant is describing.
+- [ ] **Off-screen control handled** — if the assistant references a control not on the current screen, it describes where to find it (no highlight, no error).
+- [ ] **Highlight auto-clears** — the glow disappears after a few seconds / when the next step highlights.
+- [ ] **No selectors leak** — (dev-tools/network) the SSE `highlight` event carries only an `elementId`, never a CSS selector.
+
 ---
 
 ## Passed (recent)
