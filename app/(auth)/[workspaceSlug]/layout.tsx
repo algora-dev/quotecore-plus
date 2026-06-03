@@ -11,6 +11,7 @@ import { CopilotOverlay } from '@/app/components/copilot/CopilotOverlay';
 import { HelpDrawerTrigger, HelpDrawerPanel } from '@/app/components/docs/HelpDrawer';
 import { HelpDrawerProvider } from '@/app/components/docs/HelpDrawerContext';
 import { HelpDrawerLayout } from '@/app/components/docs/HelpDrawerLayout';
+import { AssistantWidget } from '@/app/components/assistant/AssistantWidget';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
@@ -114,6 +115,17 @@ export default async function WorkspaceLayout({
 
             <main className="mx-auto w-full max-w-6xl px-6 py-10">{children}</main>
             <CopilotOverlay />
+            {/*
+              AI Assistant widget (Phase 2). Self-gates on
+              NEXT_PUBLIC_AI_ASSISTANT_V1 — renders nothing when the flag is
+              off. Runs in parallel with the legacy Copilot UI until Phase 5
+              retirement; the Help Drawer remains as a deterministic fallback.
+            */}
+            <AssistantWidget
+              userId={profile.id}
+              companyId={company.id}
+              trade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
+            />
           </div>
         </HelpDrawerLayout>
       </HelpDrawerProvider>

@@ -47,9 +47,22 @@ needed. Everything is gated off by default (`AI_ASSISTANT_V1_ENABLED=false`).
 
 **Smoke (2026-06-03):** retrieval path verified end-to-end (waste question → `concepts/waste-and-pitch` sim 0.63, bounded snippets); token-usage table reachable; tsc 0 errors; eslint clean. Endpoint is **flag-gated OFF** (`AI_ASSISTANT_V1_ENABLED` unset) — no production surface until Phase 2 wires the widget + we enable on dev.
 
+## Phase 2 — Floating widget, first client (SHIPPED)
+
+| File (`app/components/assistant/`) | Purpose |
+|------|---------|
+| `useAssistantChat.ts` | SSE consumer: POSTs to `/api/assistant/chat`, parses `data:` frames across chunk boundaries, accumulates streaming tokens, history, cancel/abort, error surfacing. Transport-only. |
+| `useAssistantHints.ts` | Assembles the UNTRUSTED hint envelope: semantic `screenKey` from route (no URL), `visibleElementIds` scanned from `data-assistant-id` (+ legacy `data-copilot` during migration). No tenancy/permissions (server derives those). |
+| `AssistantWidget.tsx` | Floating launcher + panel: draggable (pointer events on header), collapsible, New-conversation reset, **Respond / Guide-me mode toggle**, streaming bubbles, Stop button. Self-gates on `NEXT_PUBLIC_AI_ASSISTANT_V1`. |
+
+Mounted in `app/(auth)/[workspaceSlug]/layout.tsx` next to `CopilotOverlay`, in parallel with legacy Copilot UI (retired Phase 5). Help Drawer + `/docs` remain as fallback.
+
+**Verified:** `next build` passes with widget mounted + flags ON; `/api/assistant/chat` registers as dynamic route; tsc 0 errors, eslint clean. **Flags enabled on local dev** (`.env.local`): `NEXT_PUBLIC_AI_ASSISTANT_V1=true`, `AI_ASSISTANT_V1_ENABLED=true`. (Vercel dev env vars set separately by Shaun when deploying.)
+
+> Phase 2 deferred to later phases: real markdown rendering (currently whitespace-pre-wrap, no new dep), streaming tool-call/highlight UI.
+
 ### Not yet built (next phases)
-- **2:** `AssistantWidget` (floating, streaming, history) — first client; keep Help Drawer.
-- **3:** headless `workflowService` + context/workflow tools + mode toggle.
+- **3:** headless `workflowService` + context/workflow tools + Guide-me proactive behaviour.
 - **4:** highlight tool + web executor. **5:** retire Copilot UI.
 - **3:** headless `workflowService` extraction, context/workflow tools, mode toggle.
 - **4:** highlight tool + web executor.
