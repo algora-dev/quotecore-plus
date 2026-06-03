@@ -157,22 +157,22 @@ export function useAssistantHighlight(
       setRect(null);
     };
 
-    // Persistent (Guide-me follow-along) highlights stay on the control until
-    // the step changes OR the user clicks anywhere OR a max timeout elapses,
-    // whichever comes first. Time-boxed (server-SSE) highlights just clear
-    // after HIGHLIGHT_MS. A one-shot capture-phase click listener handles the
-    // "until next click" case so the spotlight doesn't fight the user's focus.
-    let onDocClick: ((e: MouseEvent) => void) | null = null;
-    if (persistent) {
-      onDocClick = () => {
-        clearHighlight();
-      };
-      // Defer attaching until after the current click that triggered the step,
-      // so we clear on the NEXT user click, not the one mid-flight.
-      window.setTimeout(() => {
-        if (onDocClick) document.addEventListener('click', onDocClick, { capture: true, once: true });
-      }, 0);
-    }
+    // RELEASE ON ANY CLICK (both modes). The highlight clears the instant the
+    // user clicks ANYWHERE — including the highlighted control itself. This
+    // kills the "sticky glow" UX glitches: the visual is a momentary pointer,
+    // not a persistent overlay that fights the user's focus. If the user forgets
+    // what was highlighted, Back→Next re-fires it. Facts auto-advance / the Next
+    // button drive the NEXT highlight when appropriate.
+    // Deferred by 0ms so the click that TRIGGERED this highlight (e.g. the Next
+    // button, or the action that advanced the step) doesn't immediately clear
+    // it — we clear on the user's NEXT click.
+    const onDocClick = () => clearHighlight();
+    window.setTimeout(() => {
+      document.addEventListener('click', onDocClick, { capture: true, once: true });
+    }, 0);
+
+    // Timer is now only a SAFETY BACKSTOP (in case no click ever comes). Click
+    // is the primary release mechanism for both modes.
     const timer = window.setTimeout(
       clearHighlight,
       persistent ? PERSISTENT_MAX_MS : HIGHLIGHT_MS
@@ -180,7 +180,7 @@ export function useAssistantHighlight(
 
     return () => {
       window.clearTimeout(timer);
-      if (onDocClick) document.removeEventListener('click', onDocClick, { capture: true } as EventListenerOptions);
+      document.removeEventListener('click', onDocClick, { capture: true } as EventListenerOptions);
       window.removeEventListener('scroll', updateRect, true);
       window.removeEventListener('resize', updateRect);
       el.classList.remove(...`assistant-hl assistant-hl-${treatment}`.split(' '));

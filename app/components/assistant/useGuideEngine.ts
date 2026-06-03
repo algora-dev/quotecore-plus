@@ -135,10 +135,11 @@ export function useGuideEngine(): GuideEngine {
 
   const next = useCallback(() => {
     setCurrentIndex((prev) => {
-      // No-op if not active or already at/after the last step.
+      // No-op at the last step — stay ACTIVE on it so the guide bar (and its
+      // "Finish" button) remains visible. Completion is now an explicit user
+      // action (the Finish button -> reset), not an implicit jump on next().
       if (prev + 1 >= steps.length) {
-        setStatus('complete');
-        return prev; // stay on last; complete state signals end
+        return prev;
       }
       setStepKey(nextStepKey());
       return prev + 1;

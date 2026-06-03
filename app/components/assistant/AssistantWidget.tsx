@@ -304,6 +304,15 @@ export function AssistantWidget(_props: Props) {
     reset();
   }, [engine, reset]);
 
+  // Finish a guided workflow: clear the Next/Back/Reset bar (clean chat) and
+  // post a warm sign-off. Called from the "Finish" button on the last step.
+  const handleFinishGuide = useCallback(() => {
+    pushAssistantMessage(
+      "Looks like you've finished — hope that was helpful. If you need a hand with anything else, just say the word and I'll walk you through it."
+    );
+    engine.reset();
+  }, [engine, pushAssistantMessage]);
+
   // Reset / re-sync position (Stage 4b): the user clicked Next too many times
   // (or is otherwise out of line). Infer their REAL step from live facts and
   // jump there if confident; if ambiguous, ask the chatbot to re-align.
@@ -564,14 +573,24 @@ export function AssistantWidget(_props: Props) {
               >
                 ← Back
               </button>
-              <button
-                type="button"
-                onClick={() => engine.next()}
-                disabled={engine.upcoming === null}
-                className="shrink-0 rounded-full bg-[#ff6b35] px-3.5 py-1.5 text-xs font-semibold text-white transition-all hover:bg-[#e85f2e] disabled:cursor-default disabled:opacity-40"
-              >
-                {engine.upcoming === null ? 'Last step' : 'Next step →'}
-              </button>
+              {engine.upcoming === null ? (
+                <button
+                  type="button"
+                  onClick={handleFinishGuide}
+                  title="Finish the walkthrough"
+                  className="shrink-0 rounded-full bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white transition-all hover:bg-emerald-700 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                >
+                  Finish ✓
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => engine.next()}
+                  className="shrink-0 rounded-full bg-[#ff6b35] px-3.5 py-1.5 text-xs font-semibold text-white transition-all hover:bg-[#e85f2e]"
+                >
+                  Next step →
+                </button>
+              )}
             </div>
           )}
 
