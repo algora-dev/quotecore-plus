@@ -35,8 +35,22 @@ needed. Everything is gated off by default (`AI_ASSISTANT_V1_ENABLED=false`).
 
 **Retrieval eval:** 82% strict top-5 substring hit-rate; effective ~95% (the 3 'misses' returned the correct doc under a different slug). Known content gap: **no catalog doc exists yet** (recent feature) — write docs then re-run `embed-docs`.
 
+## Phase 1 — Chat endpoint + orchestrator + search_help_docs (SHIPPED)
+
+| File | Purpose |
+|------|---------|
+| `knowledge.ts` | `searchHelpDocs()` — embed query → `match_doc_chunks` RPC (service client) → bounded snippets. Backs the `search_help_docs` tool. |
+| `llmClient.ts` | OpenAI SDK wrapper (`openai ^6.41`). `getEmbedding()` + `runChatStep()` (streaming Chat Completions tool-calling, usage out). Model-swappable via `MODEL_CONFIG`. |
+| `sessions.ts` | `ensureSession` (ownership-verified), `persistMessage` (scrubs URLs/token blobs), `recordEvent` (metadata-only audit). |
+| `orchestrator.ts` | `runAssistantTurn()` — system prompt (read-only, app-is-truth, respond/guide modes) + tool loop (Phase 1: `search_help_docs` only) + depth/token guards. |
+| `app/api/assistant/chat/route.ts` | `POST` SSE endpoint. Gates IN ORDER: flag → parse → protocol/shape → **auth+trusted context** → **rate limit (fail-closed)** → **cost budget (fail-closed)** → stream turn → persist + record usage + audit. Abort cleanup on client disconnect. |
+
+**Smoke (2026-06-03):** retrieval path verified end-to-end (waste question → `concepts/waste-and-pitch` sim 0.63, bounded snippets); token-usage table reachable; tsc 0 errors; eslint clean. Endpoint is **flag-gated OFF** (`AI_ASSISTANT_V1_ENABLED` unset) — no production surface until Phase 2 wires the widget + we enable on dev.
+
 ### Not yet built (next phases)
-- **1:** `/api/assistant/chat` SSE endpoint + orchestrator + `search_help_docs` handler (uses `match_doc_chunks` RPC) + chat persistence + the Phase-1 acceptance gates (auth, fail-closed RL, cost caps, SSE abort).
+- **2:** `AssistantWidget` (floating, streaming, history) — first client; keep Help Drawer.
+- **3:** headless `workflowService` + context/workflow tools + mode toggle.
+- **4:** highlight tool + web executor. **5:** retire Copilot UI.
 - **3:** headless `workflowService` extraction, context/workflow tools, mode toggle.
 - **4:** highlight tool + web executor.
 - **5:** retire legacy Copilot UI.
