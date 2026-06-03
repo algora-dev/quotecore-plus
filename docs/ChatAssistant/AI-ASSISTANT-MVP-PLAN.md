@@ -1,6 +1,8 @@
 # AI Assistant MVP — End-to-End Implementation Plan
 
-**Author:** Gavin · **Date:** 2026-06-03 · **Status:** DRAFT for Gerald second-opinion review
+**Author:** Gavin · **Date:** 2026-06-03 · **Status:** REVISED post-Gerald review (findings folded in) — ready for build
+
+> **Gerald review folded in (2026-06-03, report `audits/quotecore-plus-ai-assistant-mvp-plan-review-2026-06-03/04-report.md`).** Accepted in full. Key changes: (1) **security/tenancy envelope + rate-limit + cost caps + retention move to Phase 0/1, not Phase 6** — never expose an LLM endpoint without them; (2) **server derives auth/company/tier from the Supabase session; client context is hints only** — never trusted; (3) **extract a true headless `workflowService` first** — do NOT keep `CopilotProvider` mounted as the engine (it's DOM-coupled + mutates `copilot_progress`); (4) **semantic protocol layer** (`screenKey/elementId/actionId`) so mobile maps to native refs, not CSS selectors — avoids V2 rewrite; (5) **one canonical `data-assistant-id`**, schema-bound `.flow.md` grammar, future tools NOT in live registry, explicit REVOKE on `doc_chunks`. Inventory corrected to **103 `data-copilot` IDs across 18 files** (auto-generate the seed, don't hand-count).
 **Source spec:** `docs/ChatAssistant/AI Assistant MVP - Technical Specification & Architecture Brief.pdf`
 **Branch target:** `development` (feature-flagged; nothing merges to `main` until smoke-passed + Shaun sign-off)
 
@@ -62,74 +64,98 @@ This is NOT a chatbot bolt-on. It's the first version of an account-aware assist
 │  • Web floating widget (V1 — this MVP)                        │
 │  • Mobile app (future)   • Voice (future)                     │
 └───────────────┬─────────────────────────────────────────────┘
-                │  POST /api/assistant/chat  (SSE stream)
-                │  body: { messages[], context{}, sessionId }
+                │  POST /api/assistant/chat  (SSE stream)  [AUTH REQUIRED]
+                │  body: { messages[], hints{}, sessionId,
+                │          assistantProtocolVersion, clientCapabilities }
                 ▼
 ┌─────────────────────────────────────────────────────────────┐
+│  SECURITY ENVELOPE (Phase 0/1 — first, not last)             │
+│  • Supabase session → server-derived userId/companyId/tier   │
+│  • Client `hints` validated, never trusted                   │
+│  • Fail-CLOSED rate limit + token/cost caps + timeout/abort  │
+├─────────────────────────────────────────────────────────────┤
 │  ASSISTANT SERVICE LAYER  (app/lib/assistant/*)               │
 │  • Orchestrator: OpenAI Responses API + tool loop            │
 │  • System prompt: "explain/guide, never invent workflow"     │
-│  • Tool registry (read-only in V1)                           │
-│  • Chat history persistence (assistant_sessions/messages)    │
+│  • Tool registry (read-only in V1; future tools NOT live)    │
+│  • Chat persistence w/ retention policy (minimal metadata)   │
 └───┬───────────────┬───────────────┬─────────────────────────┘
     │               │               │
     ▼               ▼               ▼
 ┌─────────┐   ┌────────────┐   ┌──────────────────┐
-│ KNOWLEDGE│  │ WORKFLOW   │   │ LIVE CONTEXT      │
-│ SERVICE  │  │ SERVICE    │   │ (from client)     │
-│ pgvector │  │ Copilot    │   │ page/module/      │
-│ doc embed│  │ guides as  │   │ workflow/step/    │
-│ search   │  │ defs       │   │ item/elements     │
+│ KNOWLEDGE│  │ WORKFLOW   │   │ CONTEXT RESOLVER  │
+│ SERVICE  │  │ SERVICE    │   │ session(trusted)+ │
+│ pgvector │  │ headless   │   │ client hints      │
+│ doc embed│  │ (no DOM,   │   │ (validated) →     │
+│ search   │  │ compiled   │   │ server context    │
+│ svc-only │  │ JSON)      │   │ (entity refs      │
+│          │  │            │   │  server-verified) │
 └─────────┘   └────────────┘   └──────────────────┘
 ```
+
+**Three structural rules from Gerald, now binding:**
+- **Server is the source of tenancy/permissions.** `userId`, `companyId`, `tier`, entitlements come from the authenticated Supabase session — never the request body. The client sends a **hint envelope** only; every selected-entity ref is server-verified before any tool uses it.
+- **Workflow service is genuinely headless** — pure functions over compiled workflow JSON (route/screen key + trade + flags + progress → workflow/step/next/required element IDs). No DOM queries, no `copilot_progress` mutation, no overlay lifecycle. The old Copilot overlay (until retired) becomes just *one client* of this service, not the state owner.
+- **Protocol is semantic-first** — `screenKey / featureKey / workflowId / stepId / elementId / actionId` are canonical. Web maps `elementId → data-assistant-id`; mobile maps `elementId → native/accessibility ref`. Highlights return `{ type:'highlight', elementId, treatment, reason }`, not a selector.
 
 ### 3.1 Tool contract (the stable interface — design once, reuse forever)
 V1 tools (all **read-only**, per spec security model):
 - `search_help_docs(query, {section?, k?})` → top-k semantic doc chunks (title, slug, snippet, score).
-- `get_current_context()` → returns the client-supplied live context object (page, module, workflow, step, selectedItem, visibleElements, permissions).
-- `get_current_workflow(workflowId?)` → workflow definition (steps, instructions, target elements, completion events). Defaults to current workflow from context.
-- `get_current_step(workflowId?)` → current step + completion requirement + next valid step (app decides; AI only reads).
-- `get_ui_element_details(elementId)` → label/description/purpose of a visible element.
-- `request_ui_highlight(target, treatment?)` → returns structured `{action:"highlight", target, treatment}` for the client to execute. Server validates target is in the visibleElements allowlist (no arbitrary DOM access).
+- `get_current_context()` → returns **server-validated context** assembled from the authenticated session + bounded client hints (screenKey, server-verified selectedEntityRefs, visibleElementIds, server-computed permissions). **Never raw client claims.**
+- `get_current_workflow(workflowId?)` → workflow definition from the headless workflow service (steps, instructions, required element IDs, completion events). Defaults to current workflow from resolved context.
+- `get_current_step(workflowId?)` → current step + completion requirement + next valid step (workflow service decides; AI only reads).
+- `get_ui_element_details(elementId)` → label/role/description from the registry for a currently-visible element.
+- `request_ui_highlight(elementId, treatment?)` → returns `{ type:"highlight", elementId, treatment, reason }`. Server validates `elementId` against the registry **and** the current visible-element set. Client (web/mobile) maps it to its own render. No selector ever crosses the wire.
 
-**Future tools (stubbed in registry, NOT implemented in V1):** `get_schedule`, `get_tasks`, `get_notifications`, `get_account_summary`, `create_event_draft`, `create_task_draft`, `submit_user_action`. Registry is designed so adding these later = add a handler + permission scope, no orchestrator rewrite.
+**Future tools — NOT registered in the live registry (Gerald M-06).** `get_schedule`, `get_tasks`, `get_notifications`, `get_account_summary`, `create_event_draft`, `create_task_draft`, `submit_user_action` live in a **design doc / disabled module exported only in tests** — never wired into the live tool loop until implemented, permissioned, and tested. The live V1 registry contains the 6 read-only tools above and nothing else. The registry *shape* still supports adding them later (handler + permission scope) with no orchestrator rewrite.
 
 ### 3.1a UI Element Registry (NEW — Shaun-requested, Phase 0 foundation)
 
 **Single source of truth** mapping every important interactive element to a stable assistant-facing ID. Doing this early prevents a brutal refactor later and is the shared vocabulary for highlighting, guidance, onboarding, `visibleElements`, flow authoring (§6a), and future voice/mobile.
 
-- **`app/lib/assistant/uiRegistry.ts`** — declarative map: `id → { selector, label, page, role: 'button'|'input'|'dropdown'|'modal'|'table'|'menu-item', description }`. Example: `'add-component-button': { selector: '[data-assistant-id="add-component-button"]', label: 'Add Component', page: '/components', role: 'button', description: 'Opens the new-component form.' }`.
-- **DOM contract:** every registered element carries `data-assistant-id="<id>"`. We **migrate the 99 existing `data-copilot` IDs** into this scheme (alias both during transition; `data-copilot` keeps the headless engine working, `data-assistant-id` becomes canonical). New elements only need the one attribute.
-- **The registry is the highlight allowlist** — `request_ui_highlight(target)` only accepts registry IDs, and only those present in the current `visibleElements`. No arbitrary DOM access.
-- **`get_ui_element_details(id)`** reads label/role/description straight from the registry.
-- **Validation:** a build check fails CI if a workflow `.flow.md` references a `ui:` ID not in the registry, or if a registry ID's `data-assistant-id` is missing from the codebase (catches drift as the app grows).
+- **`app/lib/assistant/uiRegistry.ts`** — declarative semantic map: `elementId → { label, screenKey, role: 'button'|'input'|'dropdown'|'modal'|'table'|'menu-item', description }`. **No CSS selector in the canonical entry** — the web client resolves `elementId → data-assistant-id`; mobile resolves to a native/accessibility ref. From the registry, a typed `assistantElementIds` union is generated for compile-time safety.
+- **ONE canonical DOM attribute (Gerald M-01): `data-assistant-id="<id>"`.** The context scanner AND the highlight executor both read this single field — no mixing of `data-assistant` / `data-copilot` / `data-assistant-id`. During migration we *alias* legacy `data-copilot` only where the old engine still needs it; canonical is `data-assistant-id`. Prefer a small `<AssistantElement id="...">` wrapper over raw string attributes for new work.
+- **Seed is auto-generated, not hand-counted (Gerald L-02):** a `scripts/seed-ui-registry.ts` inventories the existing **103 `data-copilot` IDs across 18 files** (incl. dynamic `data-copilot={item.x}` cases) and emits a migration checklist. Dynamic/conditional IDs get explicit registry entries or are excluded deliberately.
+- **The registry is the highlight allowlist** — `request_ui_highlight(elementId)` only accepts registry IDs present in the current visible set.
+- **Drift enforcement (Gerald M-02), stronger than grep:** CI fails on (a) workflow IDs not in registry, (b) registry IDs with no code reference, (c) duplicate static IDs, (d) route/screen coverage gaps. Plus dev-only runtime diagnostics for visible duplicate IDs and missing current-step element IDs.
 
-### 3.2 Context object (assembled by app, never inferred by AI)
+### 3.2 Context: client hints (untrusted) → server-resolved context (trusted)
+
+**Two distinct objects (Gerald H-01).** The client sends *hints*; the server derives the authoritative context.
+
 ```ts
-interface AssistantContext {
-  userId: string; accountId: string;            // companyId
-  currentPage: string;                          // route key
-  currentModule: string | null;
-  currentWorkflow: string | null;               // maps to a guide id
-  currentStep: string | null;
-  selectedItem: { id: string; name: string } | null;
-  visibleElements: { id: string; label: string }[];  // also the highlight allowlist
-  permissions: { tier: string; canWrite: false }; // V1 always read-only
+// Sent by client — HINTS ONLY, never trusted for tenancy/permissions
+interface AssistantClientHints {
+  assistantProtocolVersion: string;             // e.g. "1.0"
+  clientCapabilities: string[];                 // e.g. ["web","highlight","sse"]
+  screenKey: string;                            // semantic screen, not raw URL
+  selectedEntityRefs: { type: string; id: string }[]; // server-verifies each
+  visibleElementIds: string[];                  // registry IDs only
+}
+
+// Built by SERVER from authenticated Supabase session + validated hints
+interface AssistantServerContext {
+  userId: string; companyId: string;            // from session, NOT body
+  serverPermissions: { tier: string; canWrite: boolean; entitlements: string[] }; // server-computed
+  screenKey: string;                            // echoed if valid
+  selectedEntities: { type: string; id: string; name: string }[]; // only server-verified refs survive
+  visibleElementIds: string[];                  // intersected with registry
+  workflow: { workflowId: string|null; stepId: string|null }; // from headless workflow service
 }
 ```
-A new client-side `AssistantContextProvider` assembles this — reusing Copilot's existing page-detection logic and `pathnameToDocSlug`, plus a lightweight `[data-assistant]`/`[data-copilot]` element scan for `visibleElements`.
+A client-side `AssistantContextProvider` assembles **hints** (semantic `screenKey` via a route→screen map reusing `pathnameToDocSlug` logic, plus a `data-assistant-id` scan for `visibleElementIds`). The server **never** accepts client `permissions` or unverified entity refs — it recomputes them. Mobile assembles its own hints (screen/native refs) against the same server contract.
 
 ---
 
 ## 4. Data model (new migrations — additive, nullable, pre-authorized)
 
 1. **Enable pgvector**: `create extension if not exists vector;`
-2. **`doc_chunks`**: `id, slug, section, heading, chunk_index, content text, token_count, embedding vector(1536), updated_at`. IVFFlat/HNSW index on `embedding`. **No RLS needed** (docs are non-tenant, public knowledge) — but served only via service layer, never client-direct.
-3. **`assistant_sessions`**: `id, user_id, company_id, title, created_at, updated_at, last_active_at`. RLS: owner-only.
-4. **`assistant_messages`**: `id, session_id, role (user|assistant|tool), content, tool_calls jsonb, tool_results jsonb, created_at`. RLS via session ownership.
-5. (Optional V1) **`assistant_events`**: audit log of tool calls / highlight requests for debugging + future write-action logging foundation.
+2. **`doc_chunks`**: `id, slug, section, heading, chunk_index, content text, token_count, content_hash, embedding vector(1536), updated_at`. IVFFlat/HNSW index. **Explicit lockdown (Gerald M-05):** `REVOKE ALL ON doc_chunks FROM anon, authenticated, PUBLIC;` — service-role only. Public docs today, but no client-direct DB habit, and future private/trade-overlay docs stay safe. Retrieval returns bounded snippets (slug/title/section + chunk), not full raw docs.
+3. **`assistant_sessions`**: `id, user_id, company_id, title, visibility ('user'|'company'), retention_until, created_at, updated_at, last_active_at`. RLS owner-only by default; `visibility` decided up front (Gerald M-04 — don't rely on vague 'owner-only' if teams later need shared support).
+4. **`assistant_messages`**: `id, session_id, role, content, tool_calls jsonb, tool_results jsonb, created_at`. RLS via session ownership. **No secrets/tokens/signed URLs/acceptance URLs/attachment URLs stored** in content (Gerald M-04). Default **retention window (30–90d, env-configurable)** + user/company delete controls land *with* this table, not later.
+5. **`assistant_events`** (V1, not optional): tool-call/highlight audit — **metadata only**, no raw prompts/chunks/context snapshots. Foundation for future write-action logging.
 
-Migrations applied via Management API per standing permissions; types regenerated. One DB serves dev+main — additive only.
+Every assistant table/RPC gets explicit `REVOKE`/`GRANT` in its migration (Gerald), even public ones. Migrations via Management API per standing permissions; types regenerated. One DB serves dev+main — additive only.
 
 ---
 
@@ -148,12 +174,14 @@ Migrations applied via Management API per standing permissions; types regenerate
 - **"Respond only" mode** — assistant is reactive: answers questions, no proactive guidance.
 - **"Guide me" mode** — assistant sees where the user is, tells them where they are, what the next step is, and how to complete it — AND the user can still converse freely in between steps in natural language (NOT rigid pre-written popups). The model *generates* the guidance conversationally; the pre-written guide `description` strings become **hints to the model, never user-facing copy shown verbatim.**
 
-**What we keep vs delete:**
-- **KEEP (headless):** the Copilot *engine* — page-detection (`pathname → workflowId`), step targeting, and step-completion validation logic from `CopilotProvider`. It runs with **no UI**, purely as a **state provider** the assistant reads via `get_current_workflow` / `get_current_step`. This preserves the working validation logic (lowest risk, ships fastest) and means the app stays the source of truth for *which* step the user is on — the AI only narrates it, never advances it.
-- **DELETE (user-facing):** `CopilotOverlay` (tooltip UI), `CopilotToggle`, the standalone enable/visible toggle, and the `account-copilot` settings tab in its current form. The mode toggle moves into the chat modal.
-- **CONVERT (to data):** the ~108 guide steps in `guides.ts` / `guides.roofing.ts` / `guides.generic.ts` become a pure **Workflow Definition DB** (see §6a authoring). `app/lib/assistant/workflows.ts` adapts `CopilotGuide`/`CopilotStep` → spec `WorkflowDefinition` (`workflowId`, `steps[].{id, instruction, targetElement, completionEvent}`): `description`→`instruction` (now a *hint*), `target`→`targetElement` (now a **registry ID**, see §5a), `validation`→`completionEvent`. Trade-aware (roofing/generic) preserved.
+**CRITICAL CORRECTION (Gerald H-03): "keep CopilotProvider mounted headless" is wrong and we are NOT doing that.** The current `CopilotProvider` is *not* a clean engine — it gates auto-detection on `state.enabled`/`state.visible` (`CopilotProvider.tsx:134`), queries the DOM directly (`:157,164,197,238,…`), persists UI state to `copilot_progress` (`:82-86`), and `setVisible(false)` disables the guide (`:343`). Mounting it hidden would mutate user progress, couple guidance to DOM timing, and break entirely on mobile (no DOM). Instead:
 
-Net: Copilot disappears as a product surface; its brain survives headless as the workflow engine behind the one assistant. This is the clean version of the original "(a) headless" lean, with the UI fully retired per Shaun.
+**What we EXTRACT vs delete:**
+- **EXTRACT into a pure `workflowService` (no React, no DOM, no `copilot_progress`):** a stateless module over **compiled workflow JSON**. Inputs: `screenKey`, `trade`, feature flags, current workflow progress. Outputs: `workflow`, `currentStep`, `validNextSteps`, `requiredElementIds`. This is what the assistant reads via `get_current_workflow`/`get_current_step`. App stays source of truth for *which* step; AI only narrates. Workflow *progress* lives in a new **`assistant_workflow_progress`** table — NOT overloaded onto `copilot_progress`.
+- **DELETE (user-facing):** `CopilotOverlay`, `CopilotToggle`, the standalone enable/visible toggle, and the `account-copilot` settings tab. The mode toggle moves into the chat modal. (Until Phase 5 retirement, the old overlay may stay live in parallel as one *client* of the workflow service — never the state owner.)
+- **CONVERT (to data):** the ~108 guide steps in `guides.ts`/`guides.roofing.ts`/`guides.generic.ts` are compiled to **Workflow Definition JSON** via the §6a pipeline. Mapping: `description`→`instruction`/`say` (model *hint*, never verbatim), `target`→semantic `elementId` (registry, §3.1a), `validation`→a typed `until:` completion check (§6a). Trade-aware (roofing/generic) preserved.
+
+Net: Copilot disappears as a product surface; its workflow *knowledge* survives as compiled JSON behind a genuinely headless service. Mobile reuses it directly because there's no DOM coupling left.
 
 ## 6a. Flow authoring — dead-simple path for Shaun to add/edit Copilot steps (NEW, Shaun-requested)
 
@@ -172,65 +200,68 @@ Net: Copilot disappears as a product surface; its brain survives headless as the
     - do: set the material price              ui: component-rate-input         until: filled
     - do: click Save                          ui: component-save-button        until: saved
   ```
-- Every `ui:` token is a **UI Element Registry ID** (§5a) — Shaun references the human label, Gavin/registry resolves it to a selector. If an ID doesn't exist yet, that's the signal to add it to the registry (one line) — surfacing exactly which new elements a new feature needs tagged.
-- A **compiler** `scripts/build-workflows.ts` parses `.flow.md` → validated `WorkflowDefinition` (checks every `ui:` exists in the registry, every `until:` maps to a known completion check) → emits the workflow DB the assistant reads. Fails loudly on unknown IDs so nothing silently breaks.
-- Result: Shaun describes a flow in ~6 lines of near-English; it wires into highlighting, guidance, onboarding, and (later) voice/mobile automatically. Adding/editing a flow = edit one `.flow.md` + (if new UI) add registry IDs. No assistant-logic changes.
+- Every `ui:` token is a **registry `elementId`** (§3.1a) — Shaun references the human label; the registry resolves it per-client (web `data-assistant-id`, mobile native ref). Unknown ID = compile error = the signal to register that element (one line).
+- **`until:` is a strict, schema-bound grammar (Gerald M-03) — NOT free text.** Allowed validators only: `clicked:<id>`, `input_non_empty:<id>`, `exists:<id>`, `route:<screenKey>`, `event:<eventName>`, `selected:<id>`. The human prose `until: name-field appears` above is authoring sugar that must map to one of these (e.g. `exists:component-name-input`); the compiler rejects anything it can't resolve. `do:`/`say:` is human copy only — never executable logic.
+- A **compiler** `scripts/build-workflows.ts` parses `.flow.md` → validated Workflow Definition JSON (every `ui:` in registry, every `until:` a known validator) → emits the compiled workflow the headless service reads. Emits a **readable error report** Shaun/Gavin can fix; fails the build on any unresolved ID or validator.
+- Result: Shaun describes a flow in ~6 lines; it wires into highlighting, guidance, onboarding, and (later) voice/mobile automatically. Adding/editing a flow = edit one `.flow.md` + (if new UI) add registry IDs.
 
-**Deliverable:** the `.flow.md` format spec + compiler + one converted example (migrate `create-component` guide to prove the path), landed in Phase 0/3.
+**Deliverable:** the `.flow.md` grammar spec + compiler + one converted example (`create-component`) — landed in Phase 0 (registry/compiler) so Phase 3 workflow tools consume compiled JSON, never the live DOM engine.
 
 ---
 
 ## 7. Assistant orchestrator (the brain)
 
 - **Provider**: OpenAI Responses API, model `gpt-5-mini` (per spec). Wrap behind a thin `llmClient` so model is swappable.
-- **Loop**: receive `{messages, context}` → inject system prompt + serialized context → stream model output → on tool call, dispatch to registry handler → feed tool result back → continue until final text. Stream tokens to client via **SSE** (simpler than WebSocket for one-way streaming; Vercel-friendly; spec allows either).
+- **Loop**: receive `{messages, hints}` → **server resolves trusted context** (§3.2) → inject system prompt + resolved context → stream model output → on tool call, dispatch to registry handler (re-validated against the trusted envelope) → feed result back → continue until final text. Stream via **SSE** (one-way, Vercel-friendly, `await`-safe re our fire-and-forget gotcha; with proper abort cleanup on disconnect).
 - **System prompt** encodes the Core Design Principle: explain/guide/clarify/teach/answer; never invent workflows; app is source of truth; summarise docs (don't paste); use `request_ui_highlight` for onboarding; stay read-only.
-- **Guardrails**: tool allowlist enforced server-side; highlight targets validated against `visibleElements`; per-user rate limit (reuse `consume_rate_limit` RPC, fail-closed); max tool-call depth; token budget cap per turn.
-- **Cost**: GPT-5 Mini + small embeddings = low. Add per-session + per-day token ceilings in service config.
+- **Guardrails are Phase-1 ACCEPTANCE CRITERIA, not later hardening (Gerald H-02):** auth required (no anon endpoint); `checkRateLimit(..., { failClosed: true })`; per-user + per-company + IP burst limits; max input chars / output tokens / tool-call depth; request timeout + SSE abort cleanup; daily/monthly token+cost ceilings (env-configurable); audit metadata only. Highlight `elementId` validated against registry + current visible set.
+- **Cost**: GPT-5 Mini + small embeddings = low, but the cap is the control. Ceilings enforced from the first live call.
 
 ---
 
 ## 8. Frontend — floating widget (first client)
 
 - **New** `app/components/assistant/AssistantWidget.tsx` (+ provider): floating, draggable, collapsible, persists across pages (mount in `[workspaceSlug]/layout.tsx`), chat history retained (from `assistant_sessions`), streaming responses (SSE consumer), markdown rendering.
-- **Highlight executor**: listens for `request_ui_highlight` results → applies pulsing outline / glow / spotlight to `[data-assistant="<target>"]` (reuse Copilot's existing spotlight CSS where possible). Detects completion to let the assistant progress narration.
-- **Context wiring**: `AssistantContextProvider` feeds the live context object into each `/api/assistant/chat` request.
-- **Replace Copilot UI**: behind feature flag `NEXT_PUBLIC_AI_ASSISTANT_V1`. When ON: hide `CopilotOverlay` + `CopilotToggle`, show `AssistantWidget`. When OFF: legacy Copilot. (Keep CopilotProvider mounted headless if we choose §6(a).) Clean rollback path.
-- **Modes designed-in**: widget abstracts transport so `text` (V1), `voice` (future), `mobile` (future) reuse the same `/api/assistant/chat` contract.
+- **Highlight executor (web client)**: listens for `{type:'highlight', elementId, treatment}` → resolves `elementId → [data-assistant-id="<id>"]` → applies pulsing outline / glow / spotlight (reuse Copilot spotlight CSS). The protocol carries no selector; only the web executor knows about `data-assistant-id`.
+- **Hints wiring**: `AssistantContextProvider` feeds the **hint envelope** (§3.2) into each request; server resolves trusted context.
+- **Replace Copilot UI**: behind `NEXT_PUBLIC_AI_ASSISTANT_V1`. ON: show `AssistantWidget`. Old overlay stays in parallel (as a workflow-service client) until Phase 5 retirement. Clean rollback path. **Keep Help Drawer/`/docs` available as deterministic fallback (Gerald L-01) through controlled go-live.**
+- **Modes designed-in**: widget abstracts transport so `text` (V1), `voice` (future), `mobile` (future) reuse the same `/api/assistant/chat` contract + semantic protocol.
 
 ---
 
 ## 9. Mobile-readiness (the non-negotiable foundation requirement)
 
-Everything that makes the assistant smart lives server-side behind `/api/assistant/*` and the tool contract — **the widget holds zero business logic**. Concretely:
-- Chat endpoint is a clean JSON+SSE API → any client (RN mobile, voice) calls it identically.
-- Context object is a documented schema → mobile assembles its own (mobile page/screen instead of web route).
-- Tools are a registry with permission scopes → mobile-only tools (`get_schedule`, `get_tasks`, write-drafts) added later without touching orchestrator.
-- Auth via Supabase session token in the API → mobile uses the same.
-- Highlight commands are structured JSON → mobile interprets them for native UI.
+Everything that makes the assistant smart lives server-side behind `/api/assistant/*` and the tool contract — **the widget holds zero business logic**. Gerald H-04 was right that a web-selector-shaped foundation would NOT actually avoid a V2 rewrite; the fix is a **semantic protocol layer**, now baked in:
+- **Canonical identifiers are semantic, not web-shaped:** `screenKey, featureKey, workflowId, stepId, elementId, actionId`. No CSS selector or web route is ever part of the protocol. Web resolves `elementId → data-assistant-id`; mobile resolves `elementId → native/accessibility ref`. Same for `screenKey` (web route map vs mobile screen map).
+- **Auth/tenancy server-derived** from the Supabase session → mobile uses the same session, sends the same hint envelope.
+- **Highlights are semantic JSON** (`{type, elementId, treatment, reason}`) → each client renders natively.
+- **Versioned:** every request carries `assistantProtocolVersion` + `clientCapabilities` from day one, so new clients negotiate features without breaking old ones.
+- **Tools** are a registry with permission scopes → mobile-only tools added later (handler + scope), no orchestrator rewrite. (Not pre-registered until built — §3.1.)
 
-**V2/mobile = new clients + new tools + write-action approval flow. No rewrite of the brain.** This is the architectural test the spec demands and this design passes it.
+**V2/mobile = new client adapters (screen map + element-ref map + native highlight executor) + new tools + write-action approval flow. No rewrite of the brain or protocol.** This is the architectural test the spec demands; with the semantic layer, the design passes it for real.
 
 ---
 
-## 10. Phased delivery
+## 10. Phased delivery (reordered per Gerald — security/protocol first)
 
-- **Phase 0 — Foundations (no UI):** deps (`openai`, pgvector helpers, SSE parser); migrations (pgvector + `doc_chunks` + `assistant_sessions/messages`); `embed-docs.ts` + embed all 95 docs + CLI retrieval test; **UI Element Registry (`uiRegistry.ts`) seeded from the 99 existing `data-copilot` IDs + `data-assistant-id` migration started**; **flow-authoring compiler (`build-workflows.ts`) + `.flow.md` format + one converted example (`create-component`)**. *Ship behind no flag — pure backend/foundation. Registry + compiler are dependencies for Phases 3–4.*
-- **Phase 1 — Service + knowledge tool:** assistant service layer, orchestrator + Responses API loop, `search_help_docs` tool, `/api/assistant/chat` SSE endpoint, chat persistence. Test via curl/script (documentation Q&A working headless). *This is the API the mobile app will use.*
-- **Phase 2 — Floating widget (docs-only):** `AssistantWidget` + provider, streaming UI, history, draggable/collapsible, behind `NEXT_PUBLIC_AI_ASSISTANT_V1`. Replaces Help Drawer for Q&A. Old Copilot UI still live in parallel until Phase 5.
-- **Phase 3 — Context + workflow tools:** `AssistantContextProvider`, context object, `get_current_context/workflow/step/ui_element_details`, workflow adapter over the (now headless) Copilot engine + workflow DB. Assistant becomes page/workflow-aware. Add the in-modal **"Respond only" / "Guide me" mode toggle** (§6).
-- **Phase 4 — UI highlighting:** `request_ui_highlight` tool + frontend executor + registry allowlist validation + visual treatments. Onboarding guidance parity with old Copilot, but conversational.
-- **Phase 5 — Copilot UI retirement:** flag ON by default; **delete `CopilotOverlay` + `CopilotToggle` + standalone Copilot enable option**; keep the engine headless + guide data as workflow source; migrate `account-copilot` settings tab → assistant settings (mode default, etc.).
-- **Phase 6 — Hardening + smoke:** rate limits, cost caps, error/empty-state UX, audit log, pre-live tier tests, smoke checklist entries. Then Shaun sign-off → merge.
+- **Phase 0A — Protocol + security envelope (FIRST):** define `AssistantClientHints` + `AssistantServerContext` (§3.2) + semantic protocol (`screenKey/elementId/actionId`, `assistantProtocolVersion`, `clientCapabilities`); server-side auth/company/tier/entitlement derivation from Supabase session; rate-limit (fail-closed) + token budget + cost ceiling + timeout + retention config — **all defined before any OpenAI call.** Deps (`openai`, pgvector helpers, SSE parser).
+- **Phase 0B — Foundations (no chat UI):** migrations (pgvector + `doc_chunks` w/ REVOKE, `assistant_sessions/messages/events`, `assistant_workflow_progress`); `embed-docs.ts` (content-hash diff, deletes stale chunks) + embed all 95 docs; service-role-only retrieval; **eval set of ~20 common QCP questions → expected source slugs**; **UI Element Registry auto-seeded** from the 103 `data-copilot` IDs (18 files) + `data-assistant-id` migration; **`.flow.md` grammar + `build-workflows.ts` compiler + `create-component` converted example.**
+- **Phase 1 — Headless chat endpoint:** assistant service + Responses API loop + **`search_help_docs` ONLY**; `/api/assistant/chat` SSE; chat persistence w/ retention. *Acceptance gates (Gerald H-02): auth, fail-closed rate limit, cost/token caps, SSE abort, empty-result behaviour — all tested via curl/script.* This is the API the mobile app will use.
+- **Phase 2 — Web widget, docs-only:** `AssistantWidget`, streaming UI, history, draggable/collapsible, behind `NEXT_PUBLIC_AI_ASSISTANT_V1`. **Keep Help Drawer + `/docs` available.** Do NOT touch Copilot yet.
+- **Phase 3 — Workflow service extraction:** build pure `workflowService` over compiled JSON; convert one guide; prove `get_current_workflow`/`get_current_step` **with no DOM coupling**; `AssistantContextProvider` (hints) + server context resolver; `get_current_context`/`get_ui_element_details`; in-modal **"Respond only" / "Guide me"** toggle (§6).
+- **Phase 4 — Registry + highlight:** `request_ui_highlight(elementId)` + semantic command protocol + web executor (`data-assistant-id` only) + visual treatments + allowlist validation.
+- **Phase 5 — Retire legacy Copilot UI:** only after the assistant guides the same core workflows + smoke passes. Flag ON by default; **delete `CopilotOverlay` + `CopilotToggle` + standalone toggle**; migrate `account-copilot` settings → assistant settings.
+- **Phase 6 — Final hardening + smoke + eval pack:** error/empty-state UX polish, pre-live tier tests, smoke checklist, **eval pack** (docs Q&A, workflow guidance, malicious-context tampering, cross-company entity-ref attempts, rate/cost-limit behaviour). Then Shaun sign-off → merge.
 
-Each phase ships to `development` independently, flag-gated, build-passing. Future-tool stubs land in Phase 1's registry but stay disabled.
+Each phase ships to `development` independently, flag-gated, build-passing. **No future tools in the live registry at any phase** (§3.1).
 
 ---
 
 ## 11. Risks / open decisions (flagged for Gerald)
 
-1. **§6 — RESOLVED by Shaun (2026-06-03):** retire Copilot UI/toggle entirely; keep the engine headless as workflow state-provider; mode toggle lives in the chat modal ("Respond only" / "Guide me"); guide strings are model *hints*, not verbatim copy. (Was an open a/b decision; now locked.) Gerald: validate the headless-engine approach is sound, not whether to do it.
-2. **OpenAI API key / billing**: not currently wired (no Stripe key either, separate matter). Need Shaun to provision `OPENAI_API_KEY` + confirm cost ceilings. **Blocks Phase 1 testing.**
+1. **§6 — LOCKED (Shaun) + CORRECTED (Gerald H-03):** retire Copilot UI/toggle; **extract a pure headless `workflowService`** (do NOT mount the DOM-coupled `CopilotProvider` as the engine); mode toggle in chat modal; guide strings are model hints. Resolved.
+2. **All Gerald findings (H-01→L-02) ACCEPTED and folded in** (see banner at top + inline tags). No open disputes.
+3. **OpenAI API key / billing**: Shaun confirmed he'll provision `OPENAI_API_KEY` when needed. Needed at **Phase 0B** (doc embedding) + cost ceilings before Phase 1.
 3. **Responses API + GPT-5 Mini availability/SDK**: confirm the `openai` SDK version supports Responses API tool-calling + streaming as spec assumes; fallback to Chat Completions tool-calling if needed (same tool contract, swappable client).
 4. **Doc chunk freshness**: manual re-embed in V1 acceptable? (Docs change rarely — Gavin says yes.)
 5. **Highlight security**: confirm allowlist-from-visibleElements is sufficient (prevents AI highlighting arbitrary/sensitive DOM).
