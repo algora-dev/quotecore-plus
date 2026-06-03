@@ -26,18 +26,47 @@ interface Props {
   trade?: string;
 }
 
+const HIGHLIGHTS_PREF_KEY = 'qc-assistant-highlights';
+
 export function AssistantWidget(_props: Props) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<AssistantMode>('respond_only');
   const [input, setInput] = useState('');
+  // Highlights preference (Guide-me only). Default ON; persisted per-browser.
+  // When off, server still emits highlight commands but the client draws
+  // nothing — the chat still describes where the control is.
+  const [highlightsOn, setHighlightsOn] = useState(true);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const dragRef = useRef<{ dx: number; dy: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const { messages, status, highlight, send, sendKickoff, cancel, reset } = useAssistantChat();
   const { buildHints } = useAssistantHints();
-  // Phase 4: execute server-issued highlight commands on the page.
-  const highlightRect = useAssistantHighlight(highlight);
+  // Phase 4: execute server-issued highlight commands on the page — gated by
+  // the user's Highlights preference.
+  const highlightRect = useAssistantHighlight(highlight, highlightsOn);
+
+  // Load the persisted Highlights preference once on mount (default ON).
+  useEffect(() => {
+    try {
+      const v = window.localStorage.getItem(HIGHLIGHTS_PREF_KEY);
+      if (v === 'off') setHighlightsOn(false);
+    } catch {
+      /* localStorage unavailable — keep default */
+    }
+  }, []);
+
+  const toggleHighlights = useCallback(() => {
+    setHighlightsOn((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(HIGHLIGHTS_PREF_KEY, next ? 'on' : 'off');
+      } catch {
+        /* ignore persistence failure */
+      }
+      return next;
+    });
+  }, []);
   // Guard so the guide-mode kickoff fires once per (open, screen) and never
   // mid-stream or over an existing conversation.
   const kickedOffRef = useRef<string | null>(null);
@@ -171,7 +200,7 @@ export function AssistantWidget(_props: Props) {
             </div>
           </div>
 
-          {/* Mode toggle */}
+          {/* Mode toggle (+ Highlights switch, Guide-me only) */}
           <div className="flex items-center gap-1 border-b border-slate-100 px-3 py-1.5 text-xs">
             <span className="text-slate-400">Mode:</span>
             {(['respond_only', 'guide_me'] as AssistantMode[]).map((m) => (
@@ -188,6 +217,27 @@ export function AssistantWidget(_props: Props) {
                 {m === 'respond_only' ? 'Respond' : 'Guide me'}
               </button>
             ))}
+            {mode === 'guide_me' && (
+              <button
+                type="button"
+                onClick={toggleHighlights}
+                role="switch"
+                aria-checked={highlightsOn}
+                title={
+                  highlightsOn
+                    ? 'Highlights on — the assistant points to the next control'
+                    : 'Highlights off — the assistant only describes where to go'
+                }
+                className={`ml-auto flex items-center gap-1 rounded-full px-2 py-0.5 font-medium transition ${
+                  highlightsOn
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'text-slate-400 hover:bg-slate-100'
+                }`}
+              >
+                <span>{highlightsOn ? '✨' : '○'}</span>
+                <span>Highlights</span>
+              </button>
+            )}
           </div>
 
           {/* Messages */}

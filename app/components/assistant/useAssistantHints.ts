@@ -33,6 +33,10 @@ function pathnameToScreenKey(pathname: string | null): string {
   if (/^quotes\/[^/]+\/build/.test(inner)) return 'quote.build';
   if (/^quotes\/[^/]+\/summary/.test(inner)) return 'quote.summary';
   if (/^quotes\/[^/]+\/customer/.test(inner)) return 'quote.customer';
+  // /quotes/new is the create-quote FORM (distinct from the /quotes hub) so the
+  // assistant can anchor Guide-me to the customer-details step instead of
+  // coaching the user back to "click Quotes".
+  if (/^quotes\/new$/.test(inner)) return 'quote.new';
   if (/^quotes/.test(inner)) return 'quotes';
   if (/^components/.test(inner)) return 'components';
   if (/^templates/.test(inner)) return 'templates';

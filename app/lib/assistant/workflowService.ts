@@ -45,6 +45,13 @@ export interface WorkflowStep {
    * `data-copilot="X"` → "X". Undefined when the target isn't a registry id.
    */
   elementId?: string;
+  /**
+   * In-app path this step belongs to (from the source guide's `page` field),
+   * e.g. "/quotes/new". Used to anchor the starting step to the user's actual
+   * screen when DB progress is empty/behind, so Guide-me doesn't coach the user
+   * backwards to an earlier step on a different page.
+   */
+  screenPath?: string;
   /** 1-based position for narration ("step 3 of 7"). */
   index: number;
 }
@@ -84,8 +91,38 @@ function mapStep(step: CopilotStep, index: number): WorkflowStep {
     title: step.title,
     instruction: step.description,
     elementId: elementIdFromTarget(step.target),
+    screenPath: step.page,
     index: index + 1,
   };
+}
+
+/**
+ * The in-app path a screenKey corresponds to, used to anchor the starting step
+ * to the user's actual page. Mirrors useAssistantHints.pathnameToScreenKey in
+ * reverse for the cases where a workflow spans multiple pages and the user can
+ * land mid-flow. Returns null when the screen doesn't need anchoring.
+ */
+function screenPathForKey(screenKey: string): string | null {
+  switch (screenKey) {
+    case 'quote.new':
+      return '/quotes/new';
+    default:
+      return null;
+  }
+}
+
+/**
+ * Find the index of the first step whose `screenPath` matches the user's
+ * current screen. Returns -1 when no step is anchored to this screen (so the
+ * caller falls back to normal progress).
+ */
+function firstStepIndexForScreen(
+  workflow: Workflow,
+  screenKey: string
+): number {
+  const path = screenPathForKey(screenKey);
+  if (!path) return -1;
+  return workflow.steps.findIndex((s) => s.screenPath === path);
 }
 
 function mapGuide(
@@ -131,11 +168,13 @@ function guidesForTrade(trade: string): Map<string, Workflow> {
  *   quotes | components | templates | customer-quote-templates | flashings
  *   material-orders | catalogs | attachments | account | home | <slug-rest>
  *
- * Note: useAssistantHints maps BOTH /quotes/new and /quotes/[id] to "quotes",
- * so "quotes" resolves to the create-quote walkthrough (the manual-quote
- * journey the user is testing). The quote-builder guide is reached at
- * quote.build. This is the deliberate V1 mapping; it can be refined when the
- * screenKey vocabulary distinguishes the builder landing more granularly.
+ * Note: the create-quote walkthrough spans /quotes (hub) -> /quotes/new (form).
+ * useAssistantHints distinguishes them: "quotes" = the hub landing (start at
+ * step 1, "click Quotes / + New Quote"), "quote.new" = the new-quote form
+ * (anchor to the customer-details step). Both resolve to the same create-quote
+ * workflow; resolveCurrentStep() anchors the starting step to the screen so the
+ * user isn't coached backwards. The quote-builder guide is reached at
+ * quote.build.
  */
 export function workflowIdForScreen(screenKey: string): string | null {
   switch (screenKey) {
@@ -151,6 +190,7 @@ export function workflowIdForScreen(screenKey: string): string | null {
     case 'quote.build':
       return 'quote-builder';
     case 'quotes':
+    case 'quote.new':
       return 'create-quote';
     case 'flashings':
       return 'flashings-orders';
@@ -269,7 +309,16 @@ export async function resolveCurrentStep(
   const workflow = getWorkflowForScreen(screenKey, trade);
   if (!workflow) return null;
   const progress = await getWorkflowProgress(userId, workflow);
-  const idx = Math.min(progress.currentStepIndex, workflow.steps.length - 1);
+
+  // Screen anchoring: if this screen owns a later step than the stored progress
+  // (e.g. user is on /quotes/new but progress is still at step 1 "click
+  // Quotes"), start at the first step that belongs to THIS screen. This stops
+  // Guide-me coaching the user backwards to a control on a previous page. We
+  // only ever anchor FORWARD — never override progress that's already ahead.
+  const anchorIdx = firstStepIndexForScreen(workflow, screenKey);
+  const baseIdx =
+    anchorIdx > progress.currentStepIndex ? anchorIdx : progress.currentStepIndex;
+  const idx = Math.min(baseIdx, workflow.steps.length - 1);
   return {
     workflow,
     progress,

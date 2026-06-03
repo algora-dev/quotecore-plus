@@ -93,14 +93,21 @@ function findElement(elementId: string): HTMLElement | null {
 /**
  * Apply the active highlight to the DOM. Returns the current target rect (for
  * the arrow pointer), updated on scroll/resize while the highlight is live.
+ *
+ * `enabled` is the user's Highlights preference (default true). When false, the
+ * executor no-ops: the server still validates + emits the highlight command (so
+ * the model's behaviour is unchanged and the chat still describes the control),
+ * but nothing is drawn on the page. This keeps the visual treatment a pure
+ * client-side, user-controllable layer with no backend/security impact.
  */
 export function useAssistantHighlight(
-  highlight: ActiveHighlight | null
+  highlight: ActiveHighlight | null,
+  enabled: boolean = true
 ): HighlightRect | null {
   const [rect, setRect] = useState<HighlightRect | null>(null);
 
   useEffect(() => {
-    if (!highlight) {
+    if (!highlight || !enabled) {
       setRect(null);
       return;
     }
@@ -144,8 +151,9 @@ export function useAssistantHighlight(
       window.removeEventListener('resize', updateRect);
       el.classList.remove(...`assistant-hl assistant-hl-${treatment}`.split(' '));
     };
-    // Re-run whenever a new highlight (unique key) arrives.
-  }, [highlight?.key, highlight?.elementId, highlight?.treatment, highlight]);
+    // Re-run whenever a new highlight (unique key) arrives or the preference
+    // toggles.
+  }, [highlight?.key, highlight?.elementId, highlight?.treatment, highlight, enabled]);
 
   return rect;
 }
