@@ -88,6 +88,18 @@
 > GAVIN-VERIFIED PASS (2026-06-02): hit dev download route with a random valid-format token + file id → generic 404, empty body, no existence leak. My job, done. No Shaun test needed.
 ---
 
+## H. AI Assistant — Phase 3 Guide-me (dev only, flag-gated; NOT part of attachments merge gate)
+_Pending verification (Shaun testing 2026-06-03, dev `9c73d66`):_
+- [ ] **Respond mode is concise** — "How do I create a quote?" returns a tight summary (not all 7 steps) + offers "Switch to Guide me."
+- [ ] **Guide-me auto-starts** — switching to Guide me on a workflow page (e.g. quotes) auto-kicks and narrates the CURRENT step, one at a time (no full dump).
+- [ ] **Guide-me grounded in real workflow** — step content matches the Copilot guide for that screen (create-quote / quote-builder / components / takeoff / send-to-customer).
+- [ ] **Mid-guide question** — asking a free-form question mid-guide answers naturally, then steers back to the next step.
+- [ ] **Tool-call follow-up no longer errors** (`7f11e80`) — a 2nd message that triggers search_help_docs streams a reply (previously "Assistant error").
+- [ ] **No false "I did it"** — assistant only tells user what to click; never claims to have performed an action (read-only).
+> Known calibration follow-ups (not blockers): /quotes/new and /quotes/[id] both map to create-quote guide; Guide-me reads but doesn't advance step progress. See `app/lib/assistant/README.md`.
+
+---
+
 ## Passed (recent)
 _(empty — move items here as they pass)_
 
