@@ -20,7 +20,7 @@
  * fails safe — if the element isn't in the DOM, it simply does nothing.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ActiveHighlight } from './useAssistantChat';
 
 const STYLE_ID = 'assistant-highlight-styles';
@@ -117,9 +117,19 @@ export function useAssistantHighlight(
   persistent: boolean = false
 ): HighlightRect | null {
   const [rect, setRect] = useState<HighlightRect | null>(null);
+  // The highlight key the user has DISMISSED with a click. Persists across
+  // re-renders so a cleared highlight does NOT re-apply (e.g. on scroll/resize
+  // re-runs) while the engine still points at the same step. A new step has a
+  // new key, so it highlights fresh.
+  const dismissedKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!highlight || !enabled) {
+      setRect(null);
+      return;
+    }
+    // Already dismissed by a click for THIS exact highlight — don't re-apply.
+    if (highlight.key && dismissedKeyRef.current === highlight.key) {
       setRect(null);
       return;
     }
@@ -166,7 +176,12 @@ export function useAssistantHighlight(
     // Deferred by 0ms so the click that TRIGGERED this highlight (e.g. the Next
     // button, or the action that advanced the step) doesn't immediately clear
     // it — we clear on the user's NEXT click.
-    const onDocClick = () => clearHighlight();
+    const onDocClick = () => {
+      // Mark THIS highlight key dismissed so the effect won't re-apply it on a
+      // subsequent re-render while the engine is still on the same step.
+      if (highlight.key) dismissedKeyRef.current = highlight.key;
+      clearHighlight();
+    };
     window.setTimeout(() => {
       document.addEventListener('click', onDocClick, { capture: true, once: true });
     }, 0);
