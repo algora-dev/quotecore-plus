@@ -22,8 +22,9 @@ import {
   type Workflow,
 } from './workflowService';
 import { MODEL_LIMITS } from './config';
+import { isRegisteredElement } from './uiRegistry';
 import type { AssistantServerContext } from './contextResolver';
-import type { AssistantMode, ChatMessage } from './protocol';
+import type { AssistantMode, ChatMessage, HighlightCommand } from './protocol';
 
 /** Trade label used for workflow lookups, derived from server context. */
 function tradeOf(ctx: AssistantServerContext): string {
@@ -59,6 +60,8 @@ export interface OrchestratorInput {
   onToken: (text: string) => void;
   /** Notify the client a tool was invoked (name only). */
   onToolCall?: (name: string) => void;
+  /** Emit a validated highlight command to the client (Phase 4). */
+  onHighlight?: (command: HighlightCommand) => void;
   signal?: AbortSignal;
 }
 
@@ -76,7 +79,8 @@ function buildSystemPrompt(
     'You are the QuoteCore+ in-app assistant. QuoteCore+ is construction/roofing quoting software.',
     'Your job: explain, guide, clarify, teach, and answer questions about the app.',
     'CORE RULE: the application is the source of truth for workflow state. You never invent workflows or decide the next step yourself — you read it via the workflow tools and explain the step the app reports.',
-    'TOOLS: use get_current_workflow / get_current_step to ground guidance in the REAL workflow for the screen; use get_ui_element_details to explain a specific button/field; use search_help_docs for conceptual "how/why" questions. Prefer workflow tools over docs when the user is mid-task on a guided screen.',
+    'TOOLS: use get_current_workflow / get_current_step to ground guidance in the REAL workflow for the screen; use get_ui_element_details to explain a specific button/field; use search_help_docs for conceptual "how/why" questions; use request_ui_highlight to visually point the user at the exact on-screen control for the current step (pass the registry elementId). Prefer workflow tools over docs when the user is mid-task on a guided screen.',
+    'HIGHLIGHTING: only call request_ui_highlight with an elementId that get_current_step / get_current_workflow reported, or one you can see in get_current_context.visibleElementIds. If it returns highlighted:false (not on screen), do NOT keep retrying — just describe where to find it. One highlight per step is enough.',
     'When you use help docs, SUMMARISE and CONTEXTUALISE — never paste documentation verbatim.',
     'You are READ-ONLY: you cannot modify, create, or delete any data. Never claim to have done something in the app — only tell the user what to click/do.',
     `Current screen: ${ctx.screenKey || 'unknown'}.`,
@@ -94,7 +98,7 @@ function buildSystemPrompt(
       'GUIDE MODE — you are a hands-on, step-by-step coach. Walk the user through ONE step at a time.',
       'Rules for guide mode:',
       '- Give the user the SINGLE next action to take, not the whole list. Keep it to 1-3 sentences.',
-      '- Name the exact button/field/control to use (from the workflow step), then briefly why it matters.',
+      '- Name the exact button/field/control to use (from the workflow step), then briefly why it matters. When that control is on the current screen, call request_ui_highlight with its elementId so the user can SEE it, then refer to "the highlighted button/field".',
       '- End by telling them to do it and that you’ll continue once they have (e.g. "Do that, then tell me when you’re ready / ask if you get stuck").',
       '- If a [WORKFLOW CONTEXT] note is provided below, START from the current step it names. Do not re-explain steps already behind them.',
       '- The user may ask free-form questions between steps — answer naturally, then steer back to the next step.',
@@ -156,17 +160,19 @@ async function buildGuidePriming(
  * `request_ui_highlight` is Phase 4 (needs the client-side executor), so it is
  * intentionally still withheld from the live set here.
  */
-const PHASE3_TOOL_IDS = new Set([
+const LIVE_TOOL_IDS = new Set([
   'search_help_docs',
   'get_current_context',
   'get_current_workflow',
   'get_current_step',
   'get_ui_element_details',
+  // Phase 4: highlight is now live (web executor renders it client-side).
+  'request_ui_highlight',
 ]);
 
 function toLlmTools(): LlmToolSchema[] {
   return getLiveToolDefinitions()
-    .filter((d) => PHASE3_TOOL_IDS.has(d.id))
+    .filter((d) => LIVE_TOOL_IDS.has(d.id))
     .map((d) => ({
       name: d.id,
       description: d.description,
@@ -174,11 +180,15 @@ function toLlmTools(): LlmToolSchema[] {
     }));
 }
 
-/** Dispatch a tool call to its handler. Phase 3: search + context/workflow. */
+const HIGHLIGHT_TREATMENTS = new Set(['pulse', 'glow', 'spotlight', 'arrow']);
+
+/** Dispatch a tool call to its handler. Phase 4: search + context/workflow +
+ *  request_ui_highlight. `onHighlight` emits validated highlight commands. */
 async function dispatchTool(
   name: string,
   rawArgs: string,
-  ctx: AssistantServerContext
+  ctx: AssistantServerContext,
+  onHighlight?: (command: HighlightCommand) => void
 ): Promise<{ ok: boolean; result: unknown }> {
   let args: Record<string, unknown> = {};
   try {
@@ -287,8 +297,53 @@ async function dispatchTool(
       };
     }
 
+    case 'request_ui_highlight': {
+      const elementId = String(args.elementId ?? '');
+      // Validation 1: must be a real registry id (semantic, never a selector).
+      if (!isRegisteredElement(elementId)) {
+        return {
+          ok: false,
+          result: { error: `Unknown element id "${elementId}" — not in the UI registry.` },
+        };
+      }
+      // Validation 2: must be CURRENTLY VISIBLE on the user's screen (server-
+      // trusted set). Prevents highlighting off-screen / wrong-page elements,
+      // which would point the user at nothing.
+      if (!ctx.visibleElementIds.includes(elementId)) {
+        return {
+          ok: true,
+          result: {
+            highlighted: false,
+            note: `"${elementId}" is a valid control but is not on the user's current screen, so it cannot be highlighted right now. Describe where to find it instead.`,
+          },
+        };
+      }
+      const treatment =
+        typeof args.treatment === 'string' && HIGHLIGHT_TREATMENTS.has(args.treatment)
+          ? (args.treatment as HighlightCommand['treatment'])
+          : 'glow';
+      const reason =
+        typeof args.reason === 'string' ? args.reason.slice(0, 200) : undefined;
+      const command: HighlightCommand = {
+        type: 'highlight',
+        elementId,
+        treatment,
+        reason,
+      };
+      onHighlight?.(command);
+      const entry = getElement(elementId);
+      return {
+        ok: true,
+        result: {
+          highlighted: true,
+          elementId,
+          label: entry?.label ?? elementId,
+          note: 'The control is now highlighted on the user\u2019s screen. Refer to it naturally (e.g. "the highlighted button").',
+        },
+      };
+    }
+
     default:
-      // request_ui_highlight (Phase 4) + anything else: not live yet.
       return { ok: false, result: { error: `tool "${name}" is not available` } };
   }
 }
@@ -349,7 +404,12 @@ export async function runAssistantTurn(
     for (const call of step.toolCalls) {
       input.onToolCall?.(call.name);
       toolsUsed.push(call.name);
-      const { result } = await dispatchTool(call.name, call.arguments, input.context);
+      const { result } = await dispatchTool(
+        call.name,
+        call.arguments,
+        input.context,
+        input.onHighlight
+      );
       messages.push({
         role: 'tool',
         tool_call_id: call.id,

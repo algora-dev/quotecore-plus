@@ -73,9 +73,22 @@ Option A (Shaun): reuse the authored Copilot guides as workflow content rather t
 
 **Verified:** `next build` exit 0 with all wiring. **Source-of-truth decision (locked):** Copilot guides are the workflow content for V1; `.flow.md` compiler remains the future authoring path. `workflowService` is DOM-free so the same content serves web/mobile/voice.
 
+## Phase 4 - Visual highlight (SHIPPED 2026-06-03)
+`request_ui_highlight` is now LIVE — the assistant can point the user at the exact on-screen control.
+
+| File | Role |
+|------|------|
+| `orchestrator.ts` | `request_ui_highlight` added to live tools + dispatch handler. **Two-layer validation:** (1) elementId must be in the UI registry (`isRegisteredElement`); (2) elementId must be in the server-trusted `ctx.visibleElementIds` — can't highlight off-screen/wrong-page controls (returns `highlighted:false` → model describes location instead). Validated commands emit via `onHighlight`. Prompt tells guide mode to highlight the current step's control. |
+| `route.ts` | Streams `{type:'highlight', command}` SSE from the `onHighlight` callback. |
+| `useAssistantChat.ts` | Consumes `highlight` SSE → exposes `highlight: ActiveHighlight` (stamped with a unique `key` so re-highlighting the same id re-fires). Cleared on reset. |
+| `useAssistantHighlight.ts` (NEW) | Web executor. Maps elementId→`[data-assistant-id="X"]` (legacy `[data-copilot]` fallback), scrolls into view, applies treatment (glow/pulse/spotlight/arrow) via an injected `<style>` (no new dep), auto-clears after 6s or on next highlight. Returns the target rect for the arrow pointer. Fails safe if the element isn't in the DOM. |
+| `AssistantWidget.tsx` | Runs the executor; renders a bouncing arrow pointer for the `arrow` treatment. |
+
+**Treatments:** `glow` (default), `pulse`, `spotlight` (dims the rest of the page), `arrow` (pointer). **Verified:** `next build` exit 0. Semantic protocol preserved — NO selectors on the wire; the web client owns the elementId→selector mapping.
+
 ### Not yet built (next phases)
-- **4:** `request_ui_highlight` tool + web executor (client highlights the named `elementId`).
-- **5:** retire legacy Copilot UI once Guide-me reaches parity.
+- **5:** retire legacy Copilot UI once Guide-me + highlight reach parity.
+- Calibration (post-test): highlight timing/treatment tuning; whether Guide-me should auto-highlight every step vs only on request.
 
 #### Phase 3 calibration follow-ups (post-test)
 - screenKey vocabulary maps both `/quotes/new` and `/quotes/[id]` to `quotes`->`create-quote`. If the builder landing needs the `quote-builder` guide distinctly, refine `pathnameToScreenKey` + `workflowIdForScreen` together.

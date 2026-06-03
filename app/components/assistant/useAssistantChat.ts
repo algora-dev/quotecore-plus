@@ -19,6 +19,7 @@ import {
   type AssistantMode,
   type AssistantStreamEvent,
   type ChatMessage,
+  type HighlightCommand,
 } from '@/app/lib/assistant/protocol';
 
 export interface UiMessage {
@@ -44,9 +45,16 @@ function nextId(prefix: string) {
   return `${prefix}-${Date.now()}-${msgSeq}`;
 }
 
+/** A highlight command stamped with a unique key so the executor re-fires even
+ *  when the same elementId is highlighted twice in a row. */
+export interface ActiveHighlight extends HighlightCommand {
+  key: string;
+}
+
 export function useAssistantChat() {
   const [messages, setMessages] = useState<UiMessage[]>([]);
   const [status, setStatus] = useState<ChatStatus>('idle');
+  const [highlight, setHighlight] = useState<ActiveHighlight | null>(null);
   const sessionIdRef = useRef<string | undefined>(undefined);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -60,6 +68,7 @@ export function useAssistantChat() {
     sessionIdRef.current = undefined;
     setMessages([]);
     setStatus('idle');
+    setHighlight(null);
   }, [cancel]);
 
   const send = useCallback(
@@ -130,6 +139,12 @@ export function useAssistantChat() {
             case 'token':
               patchAssistant((m) => ({ ...m, content: m.content + event.text }));
               break;
+            case 'highlight':
+              setHighlight({
+                ...event.command,
+                key: nextId('hl'),
+              });
+              break;
             case 'error':
               patchAssistant((m) => ({
                 ...m,
@@ -182,7 +197,7 @@ export function useAssistantChat() {
     [send]
   );
 
-  return { messages, status, send, sendKickoff, cancel, reset };
+  return { messages, status, highlight, send, sendKickoff, cancel, reset };
 }
 
 /**

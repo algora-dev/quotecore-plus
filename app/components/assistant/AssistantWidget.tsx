@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AssistantMode } from '@/app/lib/assistant/protocol';
 import { useAssistantChat } from './useAssistantChat';
 import { useAssistantHints } from './useAssistantHints';
+import { useAssistantHighlight } from './useAssistantHighlight';
 
 const ENABLED =
   (process.env.NEXT_PUBLIC_AI_ASSISTANT_V1 ?? '').toLowerCase() === 'true';
@@ -33,8 +34,10 @@ export function AssistantWidget(_props: Props) {
   const dragRef = useRef<{ dx: number; dy: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const { messages, status, send, sendKickoff, cancel, reset } = useAssistantChat();
+  const { messages, status, highlight, send, sendKickoff, cancel, reset } = useAssistantChat();
   const { buildHints } = useAssistantHints();
+  // Phase 4: execute server-issued highlight commands on the page.
+  const highlightRect = useAssistantHighlight(highlight);
   // Guard so the guide-mode kickoff fires once per (open, screen) and never
   // mid-stream or over an existing conversation.
   const kickedOffRef = useRef<string | null>(null);
@@ -102,6 +105,21 @@ export function AssistantWidget(_props: Props) {
 
   return (
     <>
+      {/* Phase 4: arrow pointer at the highlighted control (other treatments
+          style the element itself via useAssistantHighlight). */}
+      {highlightRect && highlightRect.treatment === 'arrow' && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed z-[70] -translate-y-full animate-bounce text-2xl"
+          style={{
+            top: highlightRect.top - 6,
+            left: highlightRect.left + highlightRect.width / 2 - 10,
+          }}
+        >
+          ⤵️
+        </div>
+      )}
+
       {/* Launcher */}
       {!open && (
         <button

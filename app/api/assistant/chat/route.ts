@@ -171,6 +171,7 @@ export async function POST(req: NextRequest) {
           history: body.messages,
           onToken: (text) => send({ type: 'token', text }),
           onToolCall: (name) => send({ type: 'tool_call', tool: name }),
+          onHighlight: (command) => send({ type: 'highlight', command }),
           signal: ac.signal,
         });
 

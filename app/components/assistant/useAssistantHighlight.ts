@@ -1,0 +1,151 @@
+'use client';
+
+/**
+ * useAssistantHighlight — web executor for highlight commands (Phase 4)
+ * ======================================================================
+ * Takes a server-issued, server-VALIDATED HighlightCommand (semantic elementId,
+ * never a selector) and renders it on the page:
+ *   - maps elementId -> `[data-assistant-id="X"]` (legacy `[data-copilot="X"]`
+ *     fallback during the migration window),
+ *   - scrolls it into view,
+ *   - applies a visual treatment (glow | pulse | spotlight | arrow),
+ *   - auto-clears after a few seconds (or when a new highlight arrives).
+ *
+ * The DOM-class styling is injected once via a <style> tag so no Tailwind build
+ * step or new dependency is needed. The "arrow" treatment additionally returns
+ * a target rect so the widget can render a pointer.
+ *
+ * Security note: this executor TRUSTS the server's validation (the element was
+ * checked against the registry + the visible-element set server-side). It still
+ * fails safe — if the element isn't in the DOM, it simply does nothing.
+ */
+
+import { useEffect, useState } from 'react';
+import type { ActiveHighlight } from './useAssistantChat';
+
+const STYLE_ID = 'assistant-highlight-styles';
+const HIGHLIGHT_MS = 6000;
+
+/** Rect of the highlighted element (for arrow rendering), in viewport coords. */
+export interface HighlightRect {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+  treatment: NonNullable<ActiveHighlight['treatment']>;
+}
+
+const CSS = `
+@keyframes assistant-hl-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.55); }
+  70%  { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+}
+.assistant-hl {
+  position: relative !important;
+  z-index: 50 !important;
+  border-radius: 6px;
+  transition: box-shadow 0.2s ease, outline-color 0.2s ease;
+}
+.assistant-hl-glow {
+  outline: 2px solid rgba(37, 99, 235, 0.9);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25), 0 0 18px 4px rgba(37, 99, 235, 0.45);
+}
+.assistant-hl-pulse {
+  outline: 2px solid rgba(37, 99, 235, 0.9);
+  outline-offset: 2px;
+  animation: assistant-hl-pulse 1.4s ease-out infinite;
+}
+.assistant-hl-spotlight {
+  outline: 3px solid rgba(37, 99, 235, 0.95);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.45);
+}
+.assistant-hl-arrow {
+  outline: 2px solid rgba(37, 99, 235, 0.9);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25);
+}
+`;
+
+function ensureStyles() {
+  if (typeof document === 'undefined') return;
+  if (document.getElementById(STYLE_ID)) return;
+  const el = document.createElement('style');
+  el.id = STYLE_ID;
+  el.textContent = CSS;
+  document.head.appendChild(el);
+}
+
+/** Resolve a registry elementId to a live DOM element, or null. */
+function findElement(elementId: string): HTMLElement | null {
+  if (typeof document === 'undefined') return null;
+  const escaped = window.CSS?.escape
+    ? window.CSS.escape(elementId)
+    : elementId.replace(/"/g, '\\"');
+  return (
+    document.querySelector<HTMLElement>(`[data-assistant-id="${escaped}"]`) ??
+    document.querySelector<HTMLElement>(`[data-copilot="${escaped}"]`)
+  );
+}
+
+/**
+ * Apply the active highlight to the DOM. Returns the current target rect (for
+ * the arrow pointer), updated on scroll/resize while the highlight is live.
+ */
+export function useAssistantHighlight(
+  highlight: ActiveHighlight | null
+): HighlightRect | null {
+  const [rect, setRect] = useState<HighlightRect | null>(null);
+
+  useEffect(() => {
+    if (!highlight) {
+      setRect(null);
+      return;
+    }
+    ensureStyles();
+
+    const el = findElement(highlight.elementId);
+    if (!el) {
+      // Server said it was visible, but it's gone now (race / unmount). Fail
+      // safe: render nothing, don't throw.
+      setRect(null);
+      return;
+    }
+
+    const treatment = highlight.treatment ?? 'glow';
+    const cls = `assistant-hl assistant-hl-${treatment}`;
+    el.classList.add(...cls.split(' '));
+    el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+
+    const updateRect = () => {
+      const r = el.getBoundingClientRect();
+      setRect({
+        top: r.top,
+        left: r.left,
+        width: r.width,
+        height: r.height,
+        treatment,
+      });
+    };
+    updateRect();
+    window.addEventListener('scroll', updateRect, true);
+    window.addEventListener('resize', updateRect);
+
+    const timer = window.setTimeout(() => {
+      el.classList.remove(...`assistant-hl assistant-hl-${treatment}`.split(' '));
+      setRect(null);
+    }, HIGHLIGHT_MS);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('scroll', updateRect, true);
+      window.removeEventListener('resize', updateRect);
+      el.classList.remove(...`assistant-hl assistant-hl-${treatment}`.split(' '));
+    };
+    // Re-run whenever a new highlight (unique key) arrives.
+  }, [highlight?.key, highlight?.elementId, highlight?.treatment, highlight]);
+
+  return rect;
+}
