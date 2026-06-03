@@ -19,8 +19,10 @@ import { usePathname } from 'next/navigation';
 import type { ClientCapability } from '@/app/lib/assistant/protocol';
 
 /** Map an in-app pathname to a coarse semantic screenKey. Mirrors the server's
- *  screen vocabulary; keep keys lowercase + dot/hyphen separated (no slashes). */
-function pathnameToScreenKey(pathname: string | null): string {
+ *  screen vocabulary; keep keys lowercase + dot/hyphen separated (no slashes).
+ *  Exported so sibling hooks (e.g. useBrowserFacts) reuse the SAME mapping
+ *  rather than forking it. */
+export function pathnameToScreenKey(pathname: string | null): string {
   if (!pathname) return 'unknown';
   const parts = pathname.replace(/^\//, '').split('/');
   // Drop the workspace slug (first segment) for in-app routes.
@@ -49,8 +51,9 @@ function pathnameToScreenKey(pathname: string | null): string {
   return inner || 'home';
 }
 
-/** Scan the DOM for currently-rendered registry element ids. */
-function scanVisibleElementIds(): string[] {
+/** Scan the DOM for currently-rendered registry element ids. Exported so
+ *  sibling hooks reuse the same scan logic instead of duplicating it. */
+export function scanVisibleElementIds(): string[] {
   if (typeof document === 'undefined') return [];
   const ids = new Set<string>();
   document.querySelectorAll('[data-assistant-id]').forEach((el) => {

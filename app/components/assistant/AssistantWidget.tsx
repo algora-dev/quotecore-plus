@@ -82,6 +82,12 @@ export function AssistantWidget(_props: Props) {
   // Drag handling (pointer events on the header). Tracks `moved` so a click on
   // the collapse control isn't swallowed by an accidental micro-drag.
   const onPointerDownHeader = useCallback((e: React.PointerEvent) => {
+    // Don't start a drag (and don't capture the pointer) when the press lands
+    // on an interactive control in the header — otherwise setPointerCapture
+    // swallows the control's click (this is what made the "hide" button dead).
+    if ((e.target as HTMLElement).closest('button, a, input, [role="switch"]')) {
+      return;
+    }
     const panel = (e.currentTarget as HTMLElement).closest(
       '[data-assistant-panel]'
     ) as HTMLElement | null;
@@ -176,8 +182,8 @@ export function AssistantWidget(_props: Props) {
       {open && (
         <div
           data-assistant-panel
-          style={panelStyle}
-          className="fixed z-[60] flex h-[34rem] w-[23rem] max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+          style={{ ...panelStyle, transformOrigin: pos ? 'center' : 'bottom right' }}
+          className="group/panel fixed z-[60] flex h-[34rem] w-[23rem] max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl transition-transform duration-150 ease-out hover:scale-[1.02]"
         >
           {/* Header (drag handle) */}
           <div
