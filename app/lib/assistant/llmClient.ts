@@ -85,12 +85,47 @@ export interface ChatTurnResult {
  * orchestrator loops this (feeding tool results back) until no tool calls
  * remain or the depth guard trips.
  */
+/**
+ * Convert our internal LlmMessage shape into the OpenAI Chat Completions wire
+ * format. Critically, assistant `tool_calls` must be nested under
+ * `{ id, type:'function', function:{ name, arguments } }` — passing our flat
+ * `{ id, name, arguments }` shape straight through (the old `as never`) made
+ * OpenAI reject any follow-up request after a tool call with a 400, which the
+ * route surfaced as the generic "Assistant error."
+ */
+function toOpenAiMessages(
+  messages: LlmMessage[]
+): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
+  return messages.map((m) => {
+    if (m.role === 'assistant' && m.tool_calls && m.tool_calls.length > 0) {
+      return {
+        role: 'assistant',
+        content: m.content || null,
+        tool_calls: m.tool_calls.map((tc) => ({
+          id: tc.id,
+          type: 'function' as const,
+          function: { name: tc.name, arguments: tc.arguments },
+        })),
+      };
+    }
+    if (m.role === 'tool') {
+      return {
+        role: 'tool',
+        tool_call_id: m.tool_call_id ?? '',
+        content: m.content,
+      };
+    }
+    return { role: m.role, content: m.content } as
+      OpenAI.Chat.Completions.ChatCompletionMessageParam;
+  });
+}
+
 export async function runChatStep(input: ChatTurnInput): Promise<ChatTurnResult> {
   const stream = await client().chat.completions.create(
     {
       model: MODEL_CONFIG.chatModel,
       max_completion_tokens: MODEL_LIMITS.maxOutputTokens,
-      messages: input.messages as never,
+      messages: toOpenAiMessages(input.messages),
       tools: input.tools.map((t) => ({
         type: 'function' as const,
         function: {
