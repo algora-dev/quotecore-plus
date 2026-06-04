@@ -378,7 +378,7 @@ export function AssistantWidget(_props: Props) {
           onClick={() => setOpen(true)}
           data-assistant-id="assistant-launcher"
           aria-label={hasConversation ? 'Reopen assistant conversation' : 'Open assistant'}
-          className="assistant-launcher group fixed bottom-5 right-5 z-[60] inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-transparent bg-slate-900 text-white transition-colors duration-200 ease-in-out hover:bg-slate-800"
+          className="assistant-launcher group fixed bottom-5 right-5 z-[60] inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-slate-200 bg-white text-slate-900 transition-colors duration-200 ease-in-out hover:bg-slate-50"
         >
           {/* Q's face. The orange glow/pulse + hover lift come from
               .assistant-launcher in globals.css. */}

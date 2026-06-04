@@ -32,6 +32,17 @@ const emptyMapping = (): Record<string, string | null> => ({
   price: null,
 });
 
+/** Spreadsheet-style column letter for a 0-based index: 0->A, 25->Z, 26->AA. */
+function columnLetter(index: number): string {
+  let n = index;
+  let s = '';
+  do {
+    s = String.fromCharCode(65 + (n % 26)) + s;
+    n = Math.floor(n / 26) - 1;
+  } while (n >= 0);
+  return s;
+}
+
 export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
   const [tab, setTab] = useState<Tab>('rename');
   const [name, setName] = useState(catalog.name);
@@ -137,10 +148,11 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
           <table className="w-full text-[11px]">
             <thead>
               <tr className="bg-slate-50">
-                {preview.headers.map((h) => {
+                {preview.headers.map((h, idx) => {
                   const assigned = fieldForHeader(mapping, h);
                   return (
                     <th key={h} className="px-2 py-1.5 text-left font-semibold text-slate-600 whitespace-nowrap border-b border-slate-200">
+                      <span className="block text-[9px] font-bold uppercase tracking-wide text-slate-400">Col {columnLetter(idx)}</span>
                       <span className="block">{h}</span>
                       {assigned && (
                         <span className="mt-0.5 inline-block rounded bg-orange-100 text-orange-700 px-1 py-0.5 text-[9px] font-medium">
