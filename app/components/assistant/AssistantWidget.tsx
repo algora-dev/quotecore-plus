@@ -148,7 +148,6 @@ export function AssistantWidget(_props: Props) {
     pushAssistantMessage,
     send,
     cancel,
-    reset,
   } = useAssistantChat();
   const { buildHints } = useAssistantHints();
   // Passive browser-facts observer (Stage 3). Its recentActions are merged into
@@ -302,12 +301,6 @@ export function AssistantWidget(_props: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engine.isActive, engine.currentIndex, engine.workflowId]);
 
-  // Starting a brand-new conversation also stops any active guided workflow.
-  const handleReset = useCallback(() => {
-    engine.reset();
-    reset();
-  }, [engine, reset]);
-
   // Finish a guided workflow: clear the Next/Back/Reset bar (clean chat) and
   // post a warm sign-off. Called from the "Finish" button on the last step.
   const handleFinishGuide = useCallback(() => {
@@ -378,6 +371,7 @@ export function AssistantWidget(_props: Props) {
           onClick={() => setOpen(true)}
           data-assistant-id="assistant-launcher"
           aria-label={hasConversation ? 'Reopen assistant conversation' : 'Open assistant'}
+          title="To fully hide chat, go to Account > Notifications"
           className="assistant-launcher group fixed bottom-5 right-5 z-[60] inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-slate-200 bg-white text-slate-900 transition-colors duration-200 ease-in-out hover:bg-slate-50"
         >
           {/* Q's face. The orange glow/pulse + hover lift come from
@@ -425,33 +419,12 @@ export function AssistantWidget(_props: Props) {
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={handleReset}
-                title="Start a new conversation"
-                className="rounded-full px-2.5 py-1 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
-              >
-                New
-              </button>
-              <button
-                type="button"
                 onClick={() => setOpen(false)}
-                title="Click to Hide"
+                title="Hide chat"
                 aria-label="Hide assistant"
-                className="group/hide inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-500 transition-all duration-200 hover:bg-slate-900 hover:text-white hover:shadow-[0_0_12px_rgba(255,107,53,0.5)]"
+                className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold text-slate-500 transition-all duration-200 hover:bg-slate-900 hover:text-white hover:shadow-[0_0_12px_rgba(255,107,53,0.5)]"
               >
-                {/* Obvious ">" retract-to-emblem control (no emoji) */}
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  <path d="m9 18 6-6-6-6" />
-                </svg>
+                Hide
               </button>
             </div>
           </div>

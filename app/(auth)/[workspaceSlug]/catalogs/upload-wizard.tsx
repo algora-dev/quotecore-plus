@@ -316,10 +316,9 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
   const ghostBtn = 'px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50';
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div
         className="bg-white rounded-xl shadow-2xl max-w-xl w-full mx-4 flex flex-col max-h-[90vh]"
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="border-b px-6 py-4 flex items-center justify-between">

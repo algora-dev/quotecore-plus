@@ -206,8 +206,8 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
   );
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className={`bg-white rounded-xl shadow-2xl w-full mx-4 max-h-[90vh] overflow-y-auto ${tab === 'maps' ? 'max-w-2xl' : 'max-w-md'}`} onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className={`bg-white rounded-xl shadow-2xl w-full mx-4 max-h-[90vh] overflow-y-auto ${tab === 'maps' ? 'max-w-2xl' : 'max-w-md'}`}>
         <div className="border-b px-6 py-4 flex items-center justify-between sticky top-0 bg-white">
           <h3 className="text-lg font-semibold text-slate-900">Edit catalog</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">

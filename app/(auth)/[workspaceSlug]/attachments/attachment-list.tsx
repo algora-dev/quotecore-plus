@@ -207,7 +207,7 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
 
       {/* Rename modal */}
       {renameTarget && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setRenameTarget(null)}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="border-b px-6 py-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Rename attachment</h3>

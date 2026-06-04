@@ -199,11 +199,9 @@ export function CatalogSearchModal({ workspaceSlug, onAdd, onClose }: Props) {
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-      onClick={onClose}
     >
       <div
         className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 flex flex-col max-h-[80vh]"
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="border-b px-6 py-4 flex items-center justify-between">
