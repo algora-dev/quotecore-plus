@@ -1606,6 +1606,7 @@ export type Database = {
           job_name: string | null
           last_supplier_response_at: string | null
           layout_mode: string | null
+          line_by_line_data: Json | null
           logo_url: string | null
           order_date: string | null
           order_number: string
@@ -1640,6 +1641,7 @@ export type Database = {
           job_name?: string | null
           last_supplier_response_at?: string | null
           layout_mode?: string | null
+          line_by_line_data?: Json | null
           logo_url?: string | null
           order_date?: string | null
           order_number: string
@@ -1674,6 +1676,7 @@ export type Database = {
           job_name?: string | null
           last_supplier_response_at?: string | null
           layout_mode?: string | null
+          line_by_line_data?: Json | null
           logo_url?: string | null
           order_date?: string | null
           order_number?: string

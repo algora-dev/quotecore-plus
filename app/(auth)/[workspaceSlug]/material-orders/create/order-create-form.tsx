@@ -35,6 +35,10 @@ interface OrderCreateFormProps {
   existingOrder?: ExistingOrderData | null;
   /** When true the company is over storage — block logo upload. */
   isOverStorage?: boolean;
+  /** Layout family chosen up front (orders hub picker) and locked for this
+   *  order. 'line_by_line' = customer-quote-style editor; 'components' (default)
+   *  = the Components + Images editor with single/double toggle. */
+  initialLayout?: 'line_by_line' | 'components';
 }
 
 interface Variable {
@@ -68,7 +72,7 @@ interface OrderLineItem {
   showMeasurements: boolean;
 }
 
-export function OrderCreateForm({ templates, flashings, components = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage }: OrderCreateFormProps) {
+export function OrderCreateForm({ templates, flashings, components = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components' }: OrderCreateFormProps) {
   const router = useRouter();
   
   // Layout state
@@ -532,7 +536,34 @@ export function OrderCreateForm({ templates, flashings, components = [], workspa
       setSaving(false);
     }
   }
-  
+
+  // LINE-BY-LINE LAYOUT (customer-quote-style editor).
+  // NOTE: full editor (CustomerQuoteEditor adapter + line_by_line_data save/load
+  // + preview/public/PDF render) is built in the next session. This branch keeps
+  // the up-front layout choice + routing wired and green. The components/single/
+  // double editor below is unchanged.
+  if (initialLayout === 'line_by_line') {
+    return (
+      <div className="flex flex-col h-screen bg-slate-50">
+        <div className="px-6 py-4">
+          <BackButton />
+        </div>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="max-w-md text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/order-layout-line-by-line.png" alt="Line by line" className="mx-auto mb-4 w-40 rounded-lg border border-slate-200" />
+            <h2 className="text-lg font-semibold text-slate-900">Line-by-line order</h2>
+            <p className="mt-2 text-sm text-slate-500">
+              This order is set to the line-by-line layout. The quote-style editor is being wired up
+              — you&rsquo;ll get the full Item / description / qty / price list with show, hide and edit
+              controls here.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />

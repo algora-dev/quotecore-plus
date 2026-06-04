@@ -9,12 +9,12 @@ import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 
 interface Props {
   params: Promise<{ workspaceSlug: string }>;
-  searchParams: Promise<{ quoteId?: string; orderId?: string }>;
+  searchParams: Promise<{ quoteId?: string; orderId?: string; layout?: string }>;
 }
 
 export default async function CreateOrderPage(props: Props) {
   const { workspaceSlug: _workspaceSlug } = await props.params;
-  const { quoteId, orderId } = await props.searchParams;
+  const { quoteId, orderId, layout } = await props.searchParams;
   
   
   // Run diagnostic test if quoteId present
@@ -32,6 +32,16 @@ export default async function CreateOrderPage(props: Props) {
   ]);
   
 
+  // Layout family is chosen up front (orders hub picker) and locked for the
+  // life of the order. When editing an existing order, its saved layout_mode
+  // wins. 'line_by_line' = customer-quote-style editor; otherwise the
+  // Components + Images editor (single/double toggle lives inside it).
+  const savedLayout = existingOrder?.order?.layout_mode;
+  const initialLayout: 'line_by_line' | 'components' =
+    (savedLayout === 'line_by_line' || (!savedLayout && layout === 'line_by_line'))
+      ? 'line_by_line'
+      : 'components';
+
   return (
     <div className="h-screen overflow-hidden">
       <OrderCreateForm
@@ -42,6 +52,7 @@ export default async function CreateOrderPage(props: Props) {
         quoteData={quoteData}
         existingOrder={existingOrder}
         isOverStorage={ent.isOverStorage}
+        initialLayout={initialLayout}
       />
     </div>
   );

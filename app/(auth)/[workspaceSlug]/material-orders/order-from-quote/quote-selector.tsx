@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 /**
  * Subset of the `quotes` row this picker needs. Shape matches the DB:
@@ -53,6 +53,9 @@ function timeAgo(dateStr: string): string {
 }
 
 export function QuoteSelector({ quotes, workspaceSlug }: Props) {
+  const searchParams = useSearchParams();
+  // Layout chosen up front on the orders hub; carried through to the editor.
+  const layout = searchParams.get('layout') === 'line_by_line' ? 'line_by_line' : 'components';
   const router = useRouter();
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -92,7 +95,7 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
 
   function handleConfirm() {
     if (!selectedQuote) return;
-    router.push(`/${workspaceSlug}/material-orders/create?quoteId=${selectedQuote.id}`);
+    router.push(`/${workspaceSlug}/material-orders/create?quoteId=${selectedQuote.id}&layout=${layout}`);
   }
 
   return (
