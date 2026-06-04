@@ -471,6 +471,50 @@ export interface CatalogMapRow {
   is_primary: boolean;
 }
 
+/** Catalog headers + a few sample rows, for the Maps-tab CSV preview. */
+export interface CatalogPreview {
+  headers: string[];
+  rows: Record<string, string>[];
+}
+
+/** First N rows of a catalog (default 5) for the in-modal CSV preview, so the
+ *  user can see the columns while building an extra map. */
+export async function loadCatalogPreview(
+  catalogId: string,
+  limit = 5,
+): Promise<CatalogPreview> {
+  const profile = await requireCompanyContext();
+  const admin = createAdminClient() as AdminAny;
+
+  const { data: cat, error: cErr } = await admin
+    .from('catalogs')
+    .select('headers')
+    .eq('id', catalogId)
+    .eq('company_id', profile.company_id)
+    .maybeSingle();
+  if (cErr || !cat) {
+    console.error('[loadCatalogPreview] catalog', cErr);
+    return { headers: [], rows: [] };
+  }
+
+  const { data: rows, error: rErr } = await admin
+    .from('catalog_rows')
+    .select('raw_row')
+    .eq('company_id', profile.company_id)
+    .eq('catalog_id', catalogId)
+    .order('row_index', { ascending: true })
+    .limit(Math.max(1, Math.min(limit, 20)));
+  if (rErr) {
+    console.error('[loadCatalogPreview] rows', rErr);
+    return { headers: (cat.headers ?? []) as string[], rows: [] };
+  }
+
+  return {
+    headers: (cat.headers ?? []) as string[],
+    rows: ((rows ?? []) as { raw_row: Record<string, string> }[]).map((r) => r.raw_row ?? {}),
+  };
+}
+
 /** List all maps for a catalog (primary first). */
 export async function loadCatalogMaps(catalogId: string): Promise<CatalogMapRow[]> {
   const profile = await requireCompanyContext();

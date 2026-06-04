@@ -94,6 +94,7 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
+        data-assistant-id="nav-alerts"
         className="relative p-2 rounded-full hover:bg-slate-100 transition"
       >
         {/* Bell icon */}

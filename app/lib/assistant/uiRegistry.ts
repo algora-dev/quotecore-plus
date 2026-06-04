@@ -84,6 +84,29 @@ const CURATED: Record<
     description:
       'Main-nav link. Navigates to the Material Orders page. May be plan-gated (opens an upgrade prompt instead if the tier lacks Material Orders).',
   },
+  'nav-account': {
+    label: 'Account',
+    role: 'menu-item',
+    description:
+      'The "Account" link in the TOP-RIGHT corner of the header (a text pill labelled "Account", NOT an avatar, photo, or initials). Opens Account settings: company details, security/password, notifications, billing, support.',
+  },
+  'nav-help': {
+    label: 'Help',
+    role: 'button',
+    description:
+      'The "Help" button in the top-right header (question-mark icon + "Help"). Opens the help/docs drawer.',
+  },
+  'nav-alerts': {
+    label: 'Alerts',
+    role: 'button',
+    description:
+      'The notifications bell icon in the top-right header. Opens the alerts/notifications dropdown; shows an unread count badge.',
+  },
+  'nav-logout': {
+    label: 'Logout',
+    role: 'button',
+    description: 'The "Logout" button in the top-right header. Signs the user out.',
+  },
 };
 
 function humanise(id: string): string {

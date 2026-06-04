@@ -50,6 +50,16 @@ export default async function WorkspaceLayout({
   
   const unreadCount = (alerts || []).filter(a => !a.is_read).length;
 
+  // Per-user Chat Assistant visibility preference (default ON). When false the
+  // widget renders nothing. Read directly here (not in the shared profile
+  // selector) to avoid touching getCurrentProfile's broad usage.
+  const { data: assistantPref } = await supabase
+    .from('users')
+    .select('assistant_enabled')
+    .eq('id', profile.id)
+    .maybeSingle();
+  const assistantEnabled = (assistantPref as { assistant_enabled?: boolean } | null)?.assistant_enabled ?? true;
+
   return (
       <HelpDrawerProvider>
         {/*
@@ -79,6 +89,7 @@ export default async function WorkspaceLayout({
                     <Link
                       href={`/${slug}/account`}
                       prefetch={false}
+                      data-assistant-id="nav-account"
                       className="inline-flex items-center rounded-full border-2 border-transparent bg-white px-3 py-1 text-sm font-semibold text-slate-600 pill-shimmer"
                     >
                       Account
@@ -104,6 +115,7 @@ export default async function WorkspaceLayout({
               userId={profile.id}
               companyId={company.id}
               trade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
+              enabled={assistantEnabled}
             />
           </div>
         </HelpDrawerLayout>

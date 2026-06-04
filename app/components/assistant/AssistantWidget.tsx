@@ -121,11 +121,15 @@ interface Props {
   userId: string;
   companyId: string;
   trade?: string;
+  /** Per-user Chat Assistant visibility preference (Account settings). Default
+   *  true. When false the widget renders nothing. */
+  enabled?: boolean;
 }
 
 const HIGHLIGHTS_PREF_KEY = 'qc-assistant-highlights';
 
 export function AssistantWidget(_props: Props) {
+  const userEnabled = _props.enabled !== false;
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<AssistantMode>('respond_only');
   const [input, setInput] = useState('');
@@ -336,7 +340,9 @@ export function AssistantWidget(_props: Props) {
     }
   }, [engine, getFacts, send, buildHints, highlightsOn, mode]);
 
-  if (!ENABLED) return null;
+  // Hidden when the feature flag is off OR the user turned the Chat Assistant
+  // off in Account settings.
+  if (!ENABLED || !userEnabled) return null;
 
   const panelStyle: React.CSSProperties = pos
     ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto' }
@@ -372,22 +378,19 @@ export function AssistantWidget(_props: Props) {
           onClick={() => setOpen(true)}
           data-assistant-id="assistant-launcher"
           aria-label={hasConversation ? 'Reopen assistant conversation' : 'Open assistant'}
-          className="assistant-launcher group fixed bottom-5 right-5 z-[60] inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-transparent bg-slate-900 text-white transition-colors duration-200 ease-in-out hover:bg-slate-800"
+          className="assistant-launcher group fixed bottom-5 right-5 z-[60] inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-transparent bg-slate-900 text-white transition-colors duration-200 ease-in-out hover:bg-slate-800"
         >
-          {/* Message emblem (no emoji) */}
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-          </svg>
+          {/* Q's face. The orange glow/pulse + hover lift come from
+              .assistant-launcher in globals.css. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/q-avatar.png"
+            alt="Q"
+            width={40}
+            height={40}
+            className="h-9 w-9 object-contain transition-transform duration-150 group-hover:scale-110"
+            draggable={false}
+          />
           {hasConversation && (
             <span className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-white bg-[#ff6b35]" />
           )}

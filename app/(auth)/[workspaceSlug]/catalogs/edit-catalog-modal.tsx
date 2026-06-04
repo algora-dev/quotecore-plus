@@ -8,8 +8,9 @@ import {
   createCatalogMap,
   updateCatalogMap,
   deleteCatalogMap,
+  loadCatalogPreview,
 } from './actions';
-import type { CatalogRow, CatalogMapRow } from './actions';
+import type { CatalogRow, CatalogMapRow, CatalogPreview } from './actions';
 
 interface Props {
   catalog: CatalogRow;
@@ -52,6 +53,8 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
     | { mode: 'edit'; id: string; name: string; mapping: Record<string, string | null>; isPrimary: boolean }
     | null
   >(null);
+  // CSV sample (first rows) so the user can see columns while choosing a map.
+  const [preview, setPreview] = useState<CatalogPreview | null>(null);
 
   const inputCls = 'w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none';
 
@@ -65,6 +68,9 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
   useEffect(() => {
     if (tab === 'maps' && maps.length === 0 && !mapsLoading) {
       void refreshMaps();
+    }
+    if (tab === 'maps' && !preview) {
+      void loadCatalogPreview(catalog.id, 5).then(setPreview).catch(() => setPreview({ headers: [], rows: [] }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
@@ -112,11 +118,63 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
     await refreshMaps();
   };
 
+  // Which mapping field each header is currently assigned to (for preview tags).
+  const fieldForHeader = (mapping: Record<string, string | null>, header: string): string | null => {
+    for (const f of MAPPING_FIELDS) {
+      if (mapping[f.key] === header) return f.label;
+    }
+    return null;
+  };
+
+  const csvPreview = (mapping: Record<string, string | null>) => {
+    if (!preview || preview.headers.length === 0) return null;
+    return (
+      <div className="rounded-lg border border-slate-200 overflow-hidden">
+        <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-200">
+          <p className="text-[11px] font-medium text-slate-500">File preview (first {preview.rows.length} rows)</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[11px]">
+            <thead>
+              <tr className="bg-slate-50">
+                {preview.headers.map((h) => {
+                  const assigned = fieldForHeader(mapping, h);
+                  return (
+                    <th key={h} className="px-2 py-1.5 text-left font-semibold text-slate-600 whitespace-nowrap border-b border-slate-200">
+                      <span className="block">{h}</span>
+                      {assigned && (
+                        <span className="mt-0.5 inline-block rounded bg-orange-100 text-orange-700 px-1 py-0.5 text-[9px] font-medium">
+                          {assigned}
+                        </span>
+                      )}
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {preview.rows.map((row, i) => (
+                <tr key={i} className="odd:bg-white even:bg-slate-50/50">
+                  {preview.headers.map((h) => (
+                    <td key={h} className="px-2 py-1 text-slate-600 whitespace-nowrap max-w-[160px] truncate">
+                      {row[h] ?? ''}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
   const mappingEditor = (
     value: Record<string, string | null>,
     onChange: (m: Record<string, string | null>) => void,
   ) => (
     <div className="space-y-3">
+      {csvPreview(value)}
       {MAPPING_FIELDS.map((field) => (
         <div key={field.key}>
           <label className="block text-sm font-medium text-slate-700 mb-1">{field.label}</label>
@@ -137,7 +195,7 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className={`bg-white rounded-xl shadow-2xl w-full mx-4 max-h-[90vh] overflow-y-auto ${tab === 'maps' ? 'max-w-2xl' : 'max-w-md'}`} onClick={(e) => e.stopPropagation()}>
         <div className="border-b px-6 py-4 flex items-center justify-between sticky top-0 bg-white">
           <h3 className="text-lg font-semibold text-slate-900">Edit catalog</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">

@@ -3426,6 +3426,7 @@ export type Database = {
       }
       users: {
         Row: {
+          assistant_enabled: boolean
           company_id: string
           created_at: string
           email: string
@@ -3439,6 +3440,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assistant_enabled?: boolean
           company_id: string
           created_at?: string
           email: string
@@ -3452,6 +3454,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assistant_enabled?: boolean
           company_id?: string
           created_at?: string
           email?: string

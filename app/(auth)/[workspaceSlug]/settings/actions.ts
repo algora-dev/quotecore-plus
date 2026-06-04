@@ -89,3 +89,21 @@ export async function updateEmailNotificationsEnabled(enabled: boolean): Promise
     throw new Error('Failed to update notification preference');
   }
 }
+
+/** Toggle the per-user Chat Assistant (Q) visibility. */
+export async function updateAssistantEnabled(enabled: boolean): Promise<void> {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  const { error } = await supabase
+    .from('users')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .update({ assistant_enabled: enabled } as any)
+    .eq('id', profile.id);
+
+  if (error) {
+    console.error('[Settings] updateAssistantEnabled failed:', error);
+    throw new Error('Failed to update Chat Assistant preference');
+  }
+  revalidatePath('/[workspaceSlug]', 'layout');
+}

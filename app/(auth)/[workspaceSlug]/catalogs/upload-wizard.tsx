@@ -496,6 +496,13 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                     Price preview: {parsed.rows[0]?.[columnMapping.price] ?? '—'} → {parsePrice(parsed.rows[0]?.[columnMapping.price] ?? '').toFixed(2)}
                   </p>
                 )}
+                <div className="mt-3 rounded-lg bg-blue-50 border border-blue-100 px-3 py-2">
+                  <p className="text-xs text-blue-700">
+                    💡 You can create <strong>additional maps</strong> for this catalog once it&rsquo;s saved — go to the
+                    Catalogs page, edit the catalog, and open the &ldquo;Maps&rdquo; tab. Extra maps reuse this same file
+                    (no re-upload, no extra storage).
+                  </p>
+                </div>
               </div>
 
               <div className="mt-6 flex gap-3 justify-end">

@@ -9,6 +9,7 @@ import { PasswordSection } from '@/app/(auth)/[workspaceSlug]/settings/PasswordS
 import { MfaSection, RecoveryCodesPanel } from '@/app/(auth)/[workspaceSlug]/settings/MfaSection';
 import { SecurityQuestionsSection } from '@/app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection';
 import { NotificationsSection } from '@/app/(auth)/[workspaceSlug]/settings/NotificationsSection';
+import { AssistantSection } from '@/app/(auth)/[workspaceSlug]/settings/AssistantSection';
 import { SupportSection } from './support/SupportSection';
 
 import { loadCompanyTaxes } from '@/app/lib/taxes/actions';
@@ -56,7 +57,7 @@ export default async function AccountPage() {
   ] = await Promise.all([
     supabase
       .from('users')
-      .select('full_name, email, email_notifications_enabled')
+      .select('full_name, email, email_notifications_enabled, assistant_enabled')
       .eq('id', profile.id)
       .single(),
     supabase.auth.getUser(),
@@ -202,6 +203,14 @@ export default async function AccountPage() {
           <NotificationsSection
             initialEnabled={user?.email_notifications_enabled ?? true}
             userEmail={userEmail}
+          />
+        </div>
+        <div>
+          <h3 className="text-base font-semibold text-slate-900">Chat Assistant</h3>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <AssistantSection
+            initialEnabled={(user as { assistant_enabled?: boolean } | null)?.assistant_enabled ?? true}
           />
         </div>
       </section>
