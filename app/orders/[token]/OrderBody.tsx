@@ -5,8 +5,11 @@ import { useRef } from 'react';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import {
   parseLineByLineData,
+  parseLineByLineFooter,
+  parseLineByLineTaxes,
   lineByLineTotal,
   lineDisplayText,
+  computeLineByLineTaxes,
   type LineByLineItem,
 } from '@/app/(auth)/[workspaceSlug]/material-orders/lineByLine';
 
@@ -43,7 +46,12 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
   const lblLines: LineByLineItem[] = isLineByLine
     ? parseLineByLineData(order.line_by_line_data).filter((l) => l.isVisible)
     : [];
-  const lblTotal = isLineByLine ? lineByLineTotal(parseLineByLineData(order.line_by_line_data)) : 0;
+  const lblSubtotal = isLineByLine ? lineByLineTotal(parseLineByLineData(order.line_by_line_data)) : 0;
+  const lblFooter = isLineByLine ? parseLineByLineFooter(order.line_by_line_data) : '';
+  const lblTaxes = isLineByLine ? parseLineByLineTaxes(order.line_by_line_data) : [];
+  const { taxLines: lblTaxLines, taxTotal: lblTaxTotal } = computeLineByLineTaxes(lblSubtotal, lblTaxes);
+  const lblTotal = lblSubtotal + lblTaxTotal;
+  const lblHasPrices = lblLines.some((l) => l.showPrice) || lblTaxLines.length > 0;
 
   return (
     <>
@@ -172,8 +180,28 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
                   ))
                 )}
               </tbody>
-              {lblLines.some((l) => l.showPrice) ? (
+              {lblHasPrices ? (
                 <tfoot>
+                  {lblTaxLines.length > 0 ? (
+                    <>
+                      <tr className="border-t border-slate-200">
+                        <td className="py-1.5 pr-3 text-right text-slate-600">Subtotal</td>
+                        <td className="py-1.5 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
+                          {formatCurrency(lblSubtotal, currency)}
+                        </td>
+                      </tr>
+                      {lblTaxLines.map((tl) => (
+                        <tr key={tl.id}>
+                          <td className="py-1.5 pr-3 text-right text-slate-600">
+                            {tl.name} ({tl.ratePercent}%)
+                          </td>
+                          <td className="py-1.5 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
+                            {formatCurrency(tl.amount, currency)}
+                          </td>
+                        </tr>
+                      ))}
+                    </>
+                  ) : null}
                   <tr className="border-t-2 border-slate-300">
                     <td className="py-2 pr-3 text-right font-semibold text-slate-700">Total</td>
                     <td className="py-2 pl-3 text-right font-bold text-slate-900 whitespace-nowrap tabular-nums">
@@ -183,6 +211,11 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
                 </tfoot>
               ) : null}
             </table>
+            {lblFooter.trim() ? (
+              <div className="mt-4 pt-3 border-t border-slate-200">
+                <p className="text-sm text-slate-600 italic whitespace-pre-line">{lblFooter}</p>
+              </div>
+            ) : null}
           </div>
         ) : (
         /* COMPONENTS layout.

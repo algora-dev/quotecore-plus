@@ -18,7 +18,13 @@ import { AlertModal } from '@/app/components/AlertModal';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 import { CatalogSearchModal } from '../../quotes/[id]/customer-edit/CatalogSearchModal';
 import { OrderLineByLineEditor } from './OrderLineByLineEditor';
-import { parseLineByLineData, type LineByLineItem } from '../lineByLine';
+import {
+  parseLineByLineData,
+  parseLineByLineFooter,
+  parseLineByLineTaxes,
+  type LineByLineItem,
+  type LineByLineTax,
+} from '../lineByLine';
 
 /** Minimal component-library option for the order item picker. */
 interface ComponentOption {
@@ -59,6 +65,10 @@ interface OrderCreateFormProps {
   initialColumn?: 'single' | 'double';
   /** Company currency code, for line-by-line price rendering. */
   currency?: string;
+  /** Full company component library, for the line-by-line "Add a component" picker. */
+  componentLibrary?: { id: string; name: string; collection_id: string | null }[];
+  /** Active company default taxes, for the line-by-line optional-tax picker. */
+  companyTaxes?: { id: string; name: string; rate_percent: number }[];
 }
 
 interface Variable {
@@ -92,7 +102,7 @@ interface OrderLineItem {
   showMeasurements: boolean;
 }
 
-export function OrderCreateForm({ templates, flashings, components = [], collections = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components', initialColumn = 'single', currency = 'GBP' }: OrderCreateFormProps) {
+export function OrderCreateForm({ templates, flashings, components = [], collections = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components', initialColumn = 'single', currency = 'GBP', componentLibrary = [], companyTaxes = [] }: OrderCreateFormProps) {
   const router = useRouter();
   
   // Layout state
@@ -101,6 +111,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   // Persisted to `material_orders.line_by_line_data`; hydrated on edit below.
   const isLineByLine = initialLayout === 'line_by_line';
   const [lineByLineLines, setLineByLineLines] = useState<LineByLineItem[]>([]);
+  const [lineByLineFooter, setLineByLineFooter] = useState('');
+  const [lineByLineTaxes, setLineByLineTaxes] = useState<LineByLineTax[]>([]);
   // App-style alert state. Replaces native alert() calls so the order flow
   // matches the rest of the app's modal styling.
   const [alertState, setAlertState] = useState<{
@@ -308,6 +320,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
     // those here (the components `orderLines` path below stays empty for them).
     if (order.layout_mode === 'line_by_line') {
       setLineByLineLines(parseLineByLineData(order.line_by_line_data));
+      setLineByLineFooter(parseLineByLineFooter(order.line_by_line_data));
+      setLineByLineTaxes(parseLineByLineTaxes(order.line_by_line_data));
     }
 
     // Map line items
@@ -537,7 +551,9 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
         logoUrl,
         orderDate,
         layoutMode: isLineByLine ? 'line_by_line' : layoutMode,
-        lineByLineData: isLineByLine ? lineByLineLines : undefined,
+        lineByLineData: isLineByLine
+          ? { lines: lineByLineLines, footer: lineByLineFooter, taxes: lineByLineTaxes }
+          : undefined,
         lineItems: isLineByLine ? [] : orderLines.map((line, index) => ({
           componentName: line.componentName,
           flashingId: line.flashingId,
@@ -597,6 +613,23 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
             {/* Order header (identifying fields) */}
             <div className="rounded-xl border border-slate-200 bg-white p-5">
               <h2 className="text-base font-semibold text-slate-900 mb-4">Line-by-line order</h2>
+              {templates.length > 0 && (
+                <div className="mb-4">
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Use Template (optional)</label>
+                  <select
+                    value={selectedTemplateId}
+                    onChange={(e) => handleTemplateChange(e.target.value)}
+                    className={lblInputCls}
+                  >
+                    <option value="">None — enter details manually</option>
+                    {templates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}{template.description ? ` - ${template.description}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">To (Supplier)</label>
@@ -624,8 +657,16 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
             {/* Line editor */}
             <OrderLineByLineEditor
               initialLines={lineByLineLines}
+              initialFooter={lineByLineFooter}
+              initialTaxes={lineByLineTaxes}
               currency={currency}
+              workspaceSlug={workspaceSlug}
+              collections={collections}
+              componentLibrary={componentLibrary}
+              companyTaxes={companyTaxes}
               onChange={setLineByLineLines}
+              onFooterChange={setLineByLineFooter}
+              onTaxesChange={setLineByLineTaxes}
             />
 
             {/* Actions */}

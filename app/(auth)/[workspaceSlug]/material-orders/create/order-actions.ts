@@ -2,7 +2,7 @@
 
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import type { LineByLineItem } from '../lineByLine';
+import type { LineByLineData } from '../lineByLine';
 import type { Json } from '@/app/lib/supabase/database.types';
 
 interface SaveOrderInput {
@@ -24,9 +24,10 @@ interface SaveOrderInput {
   logoUrl?: string;
   orderDate: string;
   layoutMode: 'single' | 'double' | 'line_by_line';
-  /** Line-by-line layout only: the editor's line array, persisted verbatim to
-   *  `material_orders.line_by_line_data`. Ignored for single/double. */
-  lineByLineData?: LineByLineItem[];
+  /** Line-by-line layout only: the editor's full state (lines + footer +
+   *  optional taxes), persisted verbatim to `material_orders.line_by_line_data`
+   *  as an envelope object. Ignored for single/double. */
+  lineByLineData?: LineByLineData;
   
   // Line items
   lineItems: {
@@ -93,7 +94,7 @@ export async function saveDraftOrder(input: SaveOrderInput) {
           layout_mode: input.layoutMode,
           line_by_line_data:
             input.layoutMode === 'line_by_line'
-              ? ((input.lineByLineData ?? []) as unknown as Json)
+              ? ((input.lineByLineData ?? { lines: [], footer: '', taxes: [] }) as unknown as Json)
               : null,
           updated_at: new Date().toISOString(),
         })
@@ -162,7 +163,7 @@ export async function saveDraftOrder(input: SaveOrderInput) {
           layout_mode: input.layoutMode,
           line_by_line_data:
             input.layoutMode === 'line_by_line'
-              ? ((input.lineByLineData ?? []) as unknown as Json)
+              ? ((input.lineByLineData ?? { lines: [], footer: '', taxes: [] }) as unknown as Json)
               : null,
           status: 'ready',
         })

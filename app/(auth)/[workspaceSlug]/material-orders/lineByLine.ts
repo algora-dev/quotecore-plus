@@ -26,13 +26,54 @@ export interface LineByLineItem {
 }
 
 /**
+ * Optional tax applied to a line-by-line order. Mirrors the minimal subset of
+ * the quote tax model the order needs. Default = NO taxes (empty array); the
+ * user opts in by adding a custom tax or applying a company default.
+ */
+export interface LineByLineTax {
+  id: string;
+  /** When sourced from a company default tax, the originating tax id. */
+  sourceTaxId: string | null;
+  name: string;
+  ratePercent: number;
+}
+
+export interface LineByLineTaxLine {
+  id: string;
+  name: string;
+  ratePercent: number;
+  amount: number;
+}
+
+/**
+ * Full saved state for a line-by-line order, persisted as one JSON object in
+ * `material_orders.line_by_line_data`. To stay backward compatible with the
+ * original bare-array shape (Phase 1), the parser below accepts EITHER:
+ *   - a bare LineByLineItem[]  (legacy), OR
+ *   - { lines, footer, taxes } (current envelope).
+ */
+export interface LineByLineData {
+  lines: LineByLineItem[];
+  /** Free-text footer rendered under the items (terms, notes). */
+  footer: string;
+  /** Optional taxes (default none). */
+  taxes: LineByLineTax[];
+}
+
+/**
  * Parse whatever is stored in `material_orders.line_by_line_data` into a
  * clean, validated LineByLineItem[]. Tolerant of nulls / legacy shapes so a
  * malformed row never crashes a render surface.
  */
 export function parseLineByLineData(raw: unknown): LineByLineItem[] {
-  if (!Array.isArray(raw)) return [];
-  return raw
+  // Accept both the legacy bare array and the current envelope shape.
+  const arr = Array.isArray(raw)
+    ? raw
+    : raw && typeof raw === 'object' && Array.isArray((raw as { lines?: unknown }).lines)
+      ? (raw as { lines: unknown[] }).lines
+      : null;
+  if (!arr) return [];
+  return arr
     .map((r, i): LineByLineItem | null => {
       if (!r || typeof r !== 'object') return null;
       const o = r as Record<string, unknown>;
@@ -69,4 +110,59 @@ export function lineDisplayText(line: LineByLineItem): string {
     return `${line.text} — ${line.quantityText}`;
   }
   return line.text;
+}
+
+/** Parse the footer string from whatever is stored (envelope only; legacy = none). */
+export function parseLineByLineFooter(raw: unknown): string {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    const f = (raw as { footer?: unknown }).footer;
+    return typeof f === 'string' ? f : '';
+  }
+  return '';
+}
+
+/** Parse the optional taxes array (envelope only; legacy = none). */
+export function parseLineByLineTaxes(raw: unknown): LineByLineTax[] {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return [];
+  const t = (raw as { taxes?: unknown }).taxes;
+  if (!Array.isArray(t)) return [];
+  return t
+    .map((r, i): LineByLineTax | null => {
+      if (!r || typeof r !== 'object') return null;
+      const o = r as Record<string, unknown>;
+      const rate = typeof o.ratePercent === 'number' ? o.ratePercent : Number(o.ratePercent);
+      const name = typeof o.name === 'string' ? o.name : '';
+      if (!name.trim()) return null;
+      return {
+        id: typeof o.id === 'string' && o.id ? o.id : `tax-${i}`,
+        sourceTaxId: typeof o.sourceTaxId === 'string' ? o.sourceTaxId : null,
+        name,
+        ratePercent: Number.isFinite(rate) ? rate : 0,
+      };
+    })
+    .filter((x): x is LineByLineTax => x !== null);
+}
+
+/** Parse the full envelope (lines + footer + taxes) from the JSON column. */
+export function parseLineByLineEnvelope(raw: unknown): LineByLineData {
+  return {
+    lines: parseLineByLineData(raw),
+    footer: parseLineByLineFooter(raw),
+    taxes: parseLineByLineTaxes(raw),
+  };
+}
+
+/** Compute per-tax amounts off the included-in-total subtotal. */
+export function computeLineByLineTaxes(
+  subtotal: number,
+  taxes: LineByLineTax[],
+): { taxLines: LineByLineTaxLine[]; taxTotal: number } {
+  const taxLines = taxes.map((t) => ({
+    id: t.id,
+    name: t.name,
+    ratePercent: t.ratePercent,
+    amount: Math.round(subtotal * (t.ratePercent / 100) * 100) / 100,
+  }));
+  const taxTotal = taxLines.reduce((s, l) => s + l.amount, 0);
+  return { taxLines, taxTotal };
 }

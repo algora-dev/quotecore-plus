@@ -6,6 +6,7 @@ import { loadQuoteData } from './quote-loader';
 import { loadOrderForEdit } from './order-loader';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
+import { loadCompanyTaxes } from '@/app/lib/taxes/actions';
 
 interface Props {
   params: Promise<{ workspaceSlug: string }>;
@@ -22,7 +23,7 @@ export default async function CreateOrderPage(props: Props) {
   }
   
   const profile = await requireCompanyContext();
-  const [templates, flashings, components, collections, quoteData, existingOrder, ent] = await Promise.all([
+  const [templates, flashings, components, collections, quoteData, existingOrder, ent, companyTaxes] = await Promise.all([
     loadOrderTemplates(),
     loadFlashingLibrary(),
     loadComponentLibrary(),
@@ -30,6 +31,7 @@ export default async function CreateOrderPage(props: Props) {
     quoteId ? loadQuoteData(quoteId) : Promise.resolve(null),
     orderId ? loadOrderForEdit(orderId) : Promise.resolve(null),
     loadCompanyEntitlements(profile.company_id),
+    loadCompanyTaxes(),
   ]);
   
 
@@ -63,7 +65,9 @@ export default async function CreateOrderPage(props: Props) {
         templates={templates}
         flashings={flashings}
         components={(components ?? []).map((c) => ({ id: c.id as string, name: c.name as string, collection_id: (c.collection_id as string | null) ?? null }))}
+        componentLibrary={(components ?? []).map((c) => ({ id: c.id as string, name: c.name as string, collection_id: (c.collection_id as string | null) ?? null }))}
         collections={(collections ?? []).map((c) => ({ id: c.id as string, name: c.name as string }))}
+        companyTaxes={(companyTaxes ?? []).map((t) => ({ id: t.id, name: t.name, rate_percent: Number(t.rate_percent) }))}
         workspaceSlug={_workspaceSlug}
         quoteData={quoteData}
         existingOrder={existingOrder}
