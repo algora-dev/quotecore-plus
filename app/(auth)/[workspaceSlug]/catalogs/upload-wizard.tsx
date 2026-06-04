@@ -434,35 +434,38 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                   First row contains column titles
                 </label>
               </div>
-              <div className="overflow-x-auto rounded-lg border border-slate-200">
-                <table className="min-w-full text-xs">
-                  <thead className="bg-slate-50">
-                    <tr>
-                      {parsed.headers.map((h) => {
-                        const slot = slotForHeader(h);
-                        return (
-                          <th key={h} className="px-3 py-2 text-left font-medium text-slate-600 whitespace-nowrap align-top">
-                            <span className="block">{h}</span>
-                            {slot && (
-                              <span className={`mt-1 inline-block rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${slot.color}`}>
-                                {slot.label}
-                              </span>
-                            )}
-                          </th>
-                        );
-                      })}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {parsed.rows.slice(0, 5).map((row, i) => (
-                      <tr key={i} className="border-t border-slate-100">
-                        {parsed.headers.map((h) => (
-                          <td key={h} className={`px-3 py-2 whitespace-nowrap max-w-[150px] truncate ${slotForHeader(h) ? 'text-slate-900 bg-slate-50/60' : 'text-slate-700'}`}>{row[h] ?? ''}</td>
-                        ))}
+              <div className="rounded-lg border border-slate-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-[11px]">
+                    <thead>
+                      <tr className="bg-slate-50">
+                        {parsed.headers.map((h, idx) => {
+                          const slot = slotForHeader(h);
+                          return (
+                            <th key={h} className="px-2 py-1.5 text-left font-semibold text-slate-600 whitespace-nowrap border-b border-slate-200">
+                              <span className="block text-[9px] font-bold uppercase tracking-wide text-slate-400">Col {columnLetter(idx)}</span>
+                              {!parsed.synthesised && <span className="block">{h}</span>}
+                              {slot && (
+                                <span className={`mt-0.5 inline-block rounded px-1 py-0.5 text-[9px] font-medium ${slot.color}`}>
+                                  {slot.label}
+                                </span>
+                              )}
+                            </th>
+                          );
+                        })}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {parsed.rows.slice(0, 5).map((row, i) => (
+                        <tr key={i} className="odd:bg-white even:bg-slate-50/50">
+                          {parsed.headers.map((h) => (
+                            <td key={h} className={`px-2 py-1 whitespace-nowrap max-w-[160px] truncate ${slotForHeader(h) ? 'text-slate-900 font-medium' : 'text-slate-600'}`}>{row[h] ?? ''}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
               {parsed.synthesised && (
                 <p className="mt-2 text-xs text-slate-400">No headers detected — columns labelled A, B, C…</p>

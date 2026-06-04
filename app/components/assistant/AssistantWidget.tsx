@@ -395,7 +395,7 @@ export function AssistantWidget(_props: Props) {
         <div
           data-assistant-panel
           style={{ ...panelStyle, transformOrigin: pos ? 'center' : 'bottom right' }}
-          className="group/panel fixed z-[60] flex h-[34rem] w-[23rem] max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl transition-transform duration-150 ease-out hover:scale-[1.02]"
+          className="group/panel fixed z-[60] flex h-[25.5rem] w-[23rem] max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl transition-transform duration-150 ease-out hover:scale-[1.02]"
         >
           {/* Header (drag handle) */}
           <div
