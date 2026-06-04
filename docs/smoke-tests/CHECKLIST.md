@@ -112,6 +112,11 @@ _(empty - move items here as they pass)_
 ---
 
 ## Pending verification (dev - line-by-line orders + catalog UX, 2026-06-04)
+- [ ] **Customer Quote Editor — unified "Add New Line" modal (Phase 1)** (`20b14f9`): under Components & Items there is now ONE "+ Add New Line" button (replaced the old Add Custom Line + Search Catalog pair). Clicking it opens a modal with 3 tabs:
+  - **Custom line**: Description (text) + Quantity/detail (text) + Price (number) → adds line + shows in preview.
+  - **Add a component**: Library dropdown (All + each collection) → Component dropdown (filtered, default All) → "Add to Quote" → line lands with component NAME only, qty + price blank, editable via the right-side pencil.
+  - **Search catalog**: opens the existing catalog search (unchanged) → add row works as before.
+  Verify all 3 paths add correctly, preview updates, save persists. (Phase 2 = clone this editor into the orders line-by-line flow — not yet built.)
 - [ ] **Takeoff component-add library selector** (`117bde2`): in a quote's takeoff panel, the Available components section shows a "Library" dropdown when collections exist. "All components" lists every company component (rows show `· LibraryName` suffix); selecting a named library filters to just that library's components. Defaults to the quote's pinned library if set, else All. Empty library shows "No components in this library."
 - [ ] Catalog upload preview: no "first row contains titles" toggle; shows `COL A` + title (when present); no duplicate letters; same in Maps tab + mapping dropdowns. (commits `d11c396`,`51e16c5`)
 - [ ] Assistant chat panel ~25% shorter. (`d11c396`)
