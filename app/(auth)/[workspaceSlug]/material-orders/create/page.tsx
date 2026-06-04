@@ -1,5 +1,6 @@
 ﻿import { loadOrderTemplates } from '../template-actions';
 import { loadFlashingLibrary } from '../../flashings/actions';
+import { loadComponentLibrary } from '../../components/actions';
 import { OrderCreateForm } from './order-create-form';
 import { loadQuoteData } from './quote-loader';
 import { loadOrderForEdit } from './order-loader';
@@ -21,9 +22,10 @@ export default async function CreateOrderPage(props: Props) {
   }
   
   const profile = await requireCompanyContext();
-  const [templates, flashings, quoteData, existingOrder, ent] = await Promise.all([
+  const [templates, flashings, components, quoteData, existingOrder, ent] = await Promise.all([
     loadOrderTemplates(),
     loadFlashingLibrary(),
+    loadComponentLibrary(),
     quoteId ? loadQuoteData(quoteId) : Promise.resolve(null),
     orderId ? loadOrderForEdit(orderId) : Promise.resolve(null),
     loadCompanyEntitlements(profile.company_id),
@@ -35,6 +37,8 @@ export default async function CreateOrderPage(props: Props) {
       <OrderCreateForm
         templates={templates}
         flashings={flashings}
+        components={(components ?? []).map((c) => ({ id: c.id as string, name: c.name as string }))}
+        workspaceSlug={_workspaceSlug}
         quoteData={quoteData}
         existingOrder={existingOrder}
         isOverStorage={ent.isOverStorage}

@@ -16,10 +16,21 @@ import type { ExistingOrderData } from './order-loader';
 import { BackButton } from '@/app/components/BackButton';
 import { AlertModal } from '@/app/components/AlertModal';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
+import { CatalogSearchModal } from '../../quotes/[id]/customer-edit/CatalogSearchModal';
+
+/** Minimal component-library option for the order item picker. */
+interface ComponentOption {
+  id: string;
+  name: string;
+}
 
 interface OrderCreateFormProps {
   templates: MaterialOrderTemplateRow[];
   flashings: FlashingLibraryRow[];
+  /** Company component library, for the "add from library" dropdown in the item modal. */
+  components?: ComponentOption[];
+  /** Workspace slug, needed by the catalog search modal endpoint. */
+  workspaceSlug?: string;
   quoteData?: QuoteData | null;
   existingOrder?: ExistingOrderData | null;
   /** When true the company is over storage — block logo upload. */
@@ -57,7 +68,7 @@ interface OrderLineItem {
   showMeasurements: boolean;
 }
 
-export function OrderCreateForm({ templates, flashings, quoteData, existingOrder, isOverStorage }: OrderCreateFormProps) {
+export function OrderCreateForm({ templates, flashings, components = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage }: OrderCreateFormProps) {
   const router = useRouter();
   
   // Layout state
@@ -1129,6 +1140,8 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
       {showAddItemModal && (
         <AddItemModal
           flashings={flashings}
+          components={components}
+          workspaceSlug={workspaceSlug}
           existingLine={editingLineId ? orderLines.find(l => l.id === editingLineId) : undefined}
           onSave={saveLineItem}
           onCancel={() => {
@@ -1155,6 +1168,10 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
 // Add Item Modal Component
 interface AddItemModalProps {
   flashings: FlashingLibraryRow[];
+  /** Company component library for the "add from library" dropdown. */
+  components?: ComponentOption[];
+  /** Workspace slug for the catalog search modal endpoint. */
+  workspaceSlug?: string;
   existingLine?: OrderLineItem;
   onSave: (data: {
     componentName: string;
@@ -1171,8 +1188,10 @@ interface AddItemModalProps {
   showAlert: (title: string, description?: string, variant?: 'info' | 'success' | 'error') => void;
 }
 
-function AddItemModal({ flashings, existingLine, onSave, onCancel, showAlert }: AddItemModalProps) {
+function AddItemModal({ flashings, components = [], workspaceSlug = '', existingLine, onSave, onCancel, showAlert }: AddItemModalProps) {
   const [componentName, setComponentName] = useState(existingLine?.componentName || '');
+  // Catalog search modal toggle (one of the three ways to fill the item name).
+  const [showCatalogSearch, setShowCatalogSearch] = useState(false);
   const [flashingId, setFlashingId] = useState(existingLine?.flashingId || '');
   const [entryMode, setEntryMode] = useState<'single' | 'multiple'>(existingLine?.entryMode || 'single');
   
@@ -1296,6 +1315,48 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel, showAlert }: 
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
+          {/* Three ways to fill the item name: (1) pick from the component
+              library, (2) search a catalog, (3) just type it. All three feed
+              the same Component Name field below. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Add from component library <span className="text-slate-400 font-normal">(Optional)</span>
+              </label>
+              <select
+                value=""
+                onChange={(e) => {
+                  const picked = components.find((c) => c.id === e.target.value);
+                  if (picked) setComponentName(picked.name);
+                }}
+                disabled={components.length === 0}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-slate-50 disabled:text-slate-400"
+              >
+                <option value="">
+                  {components.length === 0 ? 'No saved components' : 'Choose a component…'}
+                </option>
+                {components.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Or search a catalog <span className="text-slate-400 font-normal">(Optional)</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowCatalogSearch(true)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-left text-slate-600 bg-white hover:bg-slate-50 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 inline-flex items-center gap-2"
+              >
+                <svg className="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+                </svg>
+                Search catalog items…
+              </button>
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Component Name <span className="text-red-500">*</span>
@@ -1305,9 +1366,10 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel, showAlert }: 
               value={componentName}
               onChange={(e) => setComponentName(e.target.value)}
               required
-              placeholder="e.g., Ridge Flashing, Valley Gutter"
+              placeholder="e.g., Ridge Flashing, Valley Gutter — or pick/search above"
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
+            <p className="mt-1 text-xs text-slate-400">Pick from your library or search a catalog above, or type a custom item here.</p>
           </div>
 
           <div>
@@ -1613,6 +1675,22 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel, showAlert }: 
           </button>
         </div>
       </div>
+
+      {/* Catalog search — reuses the same modal as the blank-quote builder.
+          On pick it fills the Component Name (and appends the quantity text if
+          the catalog has one). It does not touch price; order lines price
+          separately. */}
+      {showCatalogSearch && (
+        <CatalogSearchModal
+          workspaceSlug={workspaceSlug}
+          onAdd={(text, _amount, _showPrice, quantity) => {
+            const composed = quantity ? `${text} — ${quantity}` : text;
+            setComponentName(composed);
+            setShowCatalogSearch(false);
+          }}
+          onClose={() => setShowCatalogSearch(false)}
+        />
+      )}
     </div>
   );
 }
