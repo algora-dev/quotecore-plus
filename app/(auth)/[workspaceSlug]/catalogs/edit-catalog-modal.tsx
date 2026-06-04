@@ -32,6 +32,13 @@ const emptyMapping = (): Record<string, string | null> => ({
   price: null,
 });
 
+/** A stored header that is just a synthesised "Column A/B/C" label has no real
+ *  title to display — we show only the positional letter for those. */
+function realTitle(header: string, idx: number): string | null {
+  const synthesised = header === `Column ${columnLetter(idx)}` || /^Column [A-Z]+$/.test(header);
+  return synthesised ? null : header;
+}
+
 /** Spreadsheet-style column letter for a 0-based index: 0->A, 25->Z, 26->AA. */
 function columnLetter(index: number): string {
   let n = index;
@@ -150,10 +157,11 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
               <tr className="bg-slate-50">
                 {preview.headers.map((h, idx) => {
                   const assigned = fieldForHeader(mapping, h);
+                  const title = realTitle(h, idx);
                   return (
                     <th key={h} className="px-2 py-1.5 text-left font-semibold text-slate-600 whitespace-nowrap border-b border-slate-200">
                       <span className="block text-[9px] font-bold uppercase tracking-wide text-slate-400">Col {columnLetter(idx)}</span>
-                      <span className="block">{h}</span>
+                      {title && <span className="block">{title}</span>}
                       {assigned && (
                         <span className="mt-0.5 inline-block rounded bg-orange-100 text-orange-700 px-1 py-0.5 text-[9px] font-medium">
                           {assigned}
@@ -196,9 +204,12 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
             className={inputCls + ' bg-white'}
           >
             <option value="">— Skip —</option>
-            {headers.map((h) => (
-              <option key={h} value={h}>{h}</option>
-            ))}
+            {headers.map((h, idx) => {
+              const title = realTitle(h, idx);
+              return (
+                <option key={h} value={h}>{`Col ${columnLetter(idx)}`}{title ? ` — ${title}` : ''}</option>
+              );
+            })}
           </select>
         </div>
       ))}

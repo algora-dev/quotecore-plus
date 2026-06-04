@@ -11,7 +11,10 @@ import type { CatalogRow } from './actions';
 // ---------------------------------------------------------------------------
 
 interface ParsedCsv {
+  /** Stable row-object keys + persisted header set. Real titles when row 1 was a header, else Column A/B/C. */
   headers: string[];
+  /** Display-only column titles, aligned to headers by index. null where no real title exists. */
+  titles: (string | null)[];
   rows: Record<string, string>[];
   warnings: string[];
   /** True when headers were synthesised (Column A/B/C...) rather than read from row 1. */
@@ -72,10 +75,32 @@ function parsePrice(raw: string): number {
 }
 
 /**
- * Parse CSV. When `firstRowIsHeader` is false (or headers come back blank),
- * synthesise Column A/B/C... names and treat every row as data.
+ * Auto-detect whether row 1 is a header row (no user toggle). Heuristic: row 1
+ * is treated as titles when it is mostly non-numeric text and the row beneath it
+ * has a different "shape" (i.e. introduces numeric/price-like values). Otherwise
+ * every row is data and titles are absent.
  */
-async function parseCsvFile(file: File, firstRowIsHeader: boolean): Promise<ParsedCsv> {
+function firstRowLooksLikeHeader(matrix: string[][]): boolean {
+  const first = matrix[0].map((c) => (c ?? '').trim());
+  if (first.every((c) => c === '')) return false; // blank row 1 -> not a header
+
+  const looksNumeric = (v: string) => v !== '' && /^[£$€]?\s*-?[\d.,]+%?$/.test(v.trim());
+  const headerNumericRatio = first.filter(looksNumeric).length / Math.max(1, first.length);
+  // A header row is rarely mostly numbers.
+  if (headerNumericRatio > 0.4) return false;
+
+  // If there's a second row, a header is more likely when row 2 introduces numbers
+  // that row 1 doesn't have (e.g. prices/quantities).
+  const second = (matrix[1] ?? []).map((c) => (c ?? '').trim());
+  if (second.length) {
+    const dataNumericRatio = second.filter(looksNumeric).length / Math.max(1, second.length);
+    if (dataNumericRatio > headerNumericRatio) return true;
+  }
+  // Fallback: row 1 is non-numeric text -> treat as header.
+  return headerNumericRatio === 0;
+}
+
+async function parseCsvFile(file: File): Promise<ParsedCsv> {
   return new Promise((resolve, reject) => {
     Papa.parse<string[]>(file, {
       header: false, // parse as arrays so we control header logic ourselves
@@ -85,36 +110,33 @@ async function parseCsvFile(file: File, firstRowIsHeader: boolean): Promise<Pars
         const matrix = results.data as string[][];
 
         if (matrix.length === 0) {
-          resolve({ headers: [], rows: [], warnings: ['File appears to be empty.'], synthesised: false });
+          resolve({ headers: [], titles: [], rows: [], warnings: ['File appears to be empty.'], synthesised: false });
           return;
         }
 
         const colCount = Math.max(...matrix.map((r) => r.length));
         let headers: string[];
+        let titles: (string | null)[];
         let dataRows: string[][];
         let synthesised = false;
 
-        // Decide header source
         const firstRow = matrix[0].map((c) => (c ?? '').trim());
-        const firstRowLooksBlank = firstRow.every((c) => c === '');
+        const useHeaderRow = firstRowLooksLikeHeader(matrix);
 
-        if (firstRowIsHeader && !firstRowLooksBlank) {
+        if (useHeaderRow) {
           headers = Array.from({ length: colCount }, (_, i) => {
             const h = (firstRow[i] ?? '').trim();
             return h || `Column ${columnLetter(i)}`;
           });
-          if (firstRow.some((c) => c === '')) {
-            warnings.push('Some columns had blank headers — labelled Column A/B/C automatically.');
-          }
+          // Display titles = the real header text where present, null where blank.
+          titles = Array.from({ length: colCount }, (_, i) => (firstRow[i] ?? '').trim() || null);
           dataRows = matrix.slice(1);
         } else {
-          // No headers: synthesise Column A/B/C... and treat row 1 as data
+          // No header row: synthesise Column A/B/C keys, no display titles.
           headers = Array.from({ length: colCount }, (_, i) => `Column ${columnLetter(i)}`);
+          titles = Array.from({ length: colCount }, () => null);
           dataRows = matrix;
           synthesised = true;
-          if (firstRowIsHeader && firstRowLooksBlank) {
-            warnings.push('First row was blank — treated all rows as data with Column A/B/C labels.');
-          }
         }
 
         if (dataRows.length > MAX_ROWS) {
@@ -137,7 +159,7 @@ async function parseCsvFile(file: File, firstRowIsHeader: boolean): Promise<Pars
             return obj;
           });
 
-        resolve({ headers, rows, warnings, synthesised });
+        resolve({ headers, titles, rows, warnings, synthesised });
       },
       error: (err: Error) => reject(err),
     });
@@ -173,7 +195,6 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
   const [parsed, setParsed] = useState<ParsedCsv | null>(null);
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
-  const [firstRowIsHeader, setFirstRowIsHeader] = useState(true);
   const [catalogName, setCatalogName] = useState('');
   const [columnMapping, setColumnMapping] = useState<ColumnMapping>({ description: null, quantity: null, price: null });
   const [uploading, setUploading] = useState(false);
@@ -182,11 +203,11 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
   const [storageBlocked, setStorageBlocked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const runParse = useCallback(async (f: File, asHeader: boolean) => {
+  const runParse = useCallback(async (f: File) => {
     setParsing(true);
     setParseError(null);
     try {
-      const result = await parseCsvFile(f, asHeader);
+      const result = await parseCsvFile(f);
       setParsed(result);
       if (!catalogName) {
         setCatalogName(f.name.replace(/\.csv$/i, '').replace(/[_-]/g, ' '));
@@ -215,15 +236,9 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
       return;
     }
     setFile(selectedFile);
-    await runParse(selectedFile, firstRowIsHeader);
+    await runParse(selectedFile);
     setStep(1);
-  }, [runParse, firstRowIsHeader]);
-
-  // Re-parse when the user flips the header toggle on the preview step
-  const toggleHeaderMode = useCallback(async (asHeader: boolean) => {
-    setFirstRowIsHeader(asHeader);
-    if (file) await runParse(file, asHeader);
-  }, [file, runParse]);
+  }, [runParse]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -420,19 +435,10 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
           {step === 2 && parsed && (
             <div>
               {/* Preview table */}
-              <div className="flex items-center justify-between mb-2">
+              <div className="mb-2">
                 <p className="text-xs text-slate-500">
                   Showing first {Math.min(5, parsed.rows.length)} of {parsed.rows.length.toLocaleString()} rows
                 </p>
-                <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={firstRowIsHeader}
-                    onChange={(e) => void toggleHeaderMode(e.target.checked)}
-                    className="w-4 h-4 text-orange-600 rounded border-slate-300 focus:ring-orange-500"
-                  />
-                  First row contains column titles
-                </label>
               </div>
               <div className="rounded-lg border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto">
@@ -444,7 +450,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                           return (
                             <th key={h} className="px-2 py-1.5 text-left font-semibold text-slate-600 whitespace-nowrap border-b border-slate-200">
                               <span className="block text-[9px] font-bold uppercase tracking-wide text-slate-400">Col {columnLetter(idx)}</span>
-                              {!parsed.synthesised && <span className="block">{h}</span>}
+                              {parsed.titles[idx] && <span className="block">{parsed.titles[idx]}</span>}
                               {slot && (
                                 <span className={`mt-0.5 inline-block rounded px-1 py-0.5 text-[9px] font-medium ${slot.color}`}>
                                   {slot.label}
@@ -486,8 +492,8 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                         className={inputCls + ' bg-white'}
                       >
                         <option value="">— Skip —</option>
-                        {parsed.headers.map((h) => (
-                          <option key={h} value={h}>{h}</option>
+                        {parsed.headers.map((h, idx) => (
+                          <option key={h} value={h}>{`Col ${columnLetter(idx)}`}{parsed.titles[idx] ? ` — ${parsed.titles[idx]}` : ''}</option>
                         ))}
                       </select>
                     </div>
