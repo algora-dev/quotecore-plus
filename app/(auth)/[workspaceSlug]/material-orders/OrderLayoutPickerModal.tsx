@@ -13,11 +13,18 @@
  *                     qty / price, with per-line show/hide/edit). Reuses the
  *                     CustomerQuoteEditor.
  *
- * The choice is passed downstream as a `layout` query param; the create page
- * routes to the matching editor and persists it on the order.
+ * Three cards, two underlying editors:
+ *   - 'line_by_line'   -> customer-quote-style line editor.
+ *   - 'single'/'double'-> the same Components + Images editor, pre-set to that
+ *                         column mode. Both resolve to layout family
+ *                         'components' downstream; the column is carried as a
+ *                         second hint so the editor lands ready-configured.
+ *
+ * The choice is passed downstream via query params; the create page routes to
+ * the matching editor and persists it on the order.
  */
 
-type LayoutChoice = 'line_by_line' | 'components';
+export type LayoutChoice = 'line_by_line' | 'single' | 'double';
 
 interface Props {
   onSelect: (layout: LayoutChoice) => void;
@@ -37,17 +44,23 @@ const OPTIONS: {
     img: '/order-layout-line-by-line.png',
   },
   {
-    key: 'components',
-    title: 'Components + Images',
-    blurb: 'Component blocks with flashing drawings and measurements. Single or double column.',
-    img: '/order-layout-components-images.png',
+    key: 'single',
+    title: 'Single Column',
+    blurb: 'Component blocks with flashing drawings and measurements, stacked in one column.',
+    img: '/order-layout-single-column.png',
+  },
+  {
+    key: 'double',
+    title: 'Double Column',
+    blurb: 'The same component blocks with drawings and measurements, arranged two per row.',
+    img: '/order-layout-double-column.png',
   },
 ];
 
 export function OrderLayoutPickerModal({ onSelect, onClose }: Props) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
         <div className="border-b px-6 py-4 flex items-center justify-between sticky top-0 bg-white">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">Choose an order layout</h3>
@@ -62,7 +75,7 @@ export function OrderLayoutPickerModal({ onSelect, onClose }: Props) {
           </button>
         </div>
 
-        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="p-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {OPTIONS.map((opt) => (
             <button
               key={opt.key}

@@ -18,13 +18,17 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
   // 'from-quote' -> quote selector first. null = picker closed.
   const [pickerFor, setPickerFor] = useState<'custom' | 'from-quote' | null>(null);
 
-  const handleLayoutSelected = (layout: 'line_by_line' | 'components') => {
-    const dest =
+  const handleLayoutSelected = (choice: 'line_by_line' | 'single' | 'double') => {
+    // 3 cards -> 2 layout families. Single/Double both use the 'components'
+    // editor, pre-set to that column via the `column` param.
+    const layout = choice === 'line_by_line' ? 'line_by_line' : 'components';
+    const columnParam = choice === 'single' || choice === 'double' ? `&column=${choice}` : '';
+    const base =
       pickerFor === 'from-quote'
-        ? `/${workspaceSlug}/material-orders/order-from-quote?layout=${layout}`
-        : `/${workspaceSlug}/material-orders/create?layout=${layout}`;
+        ? `/${workspaceSlug}/material-orders/order-from-quote`
+        : `/${workspaceSlug}/material-orders/create`;
     setPickerFor(null);
-    router.push(dest);
+    router.push(`${base}?layout=${layout}${columnParam}`);
   };
 
   return (

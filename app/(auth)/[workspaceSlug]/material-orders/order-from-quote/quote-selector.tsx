@@ -54,8 +54,11 @@ function timeAgo(dateStr: string): string {
 
 export function QuoteSelector({ quotes, workspaceSlug }: Props) {
   const searchParams = useSearchParams();
-  // Layout chosen up front on the orders hub; carried through to the editor.
+  // Layout (+ column for components) chosen up front on the orders hub; carried
+  // through to the editor.
   const layout = searchParams.get('layout') === 'line_by_line' ? 'line_by_line' : 'components';
+  const columnRaw = searchParams.get('column');
+  const columnParam = columnRaw === 'single' || columnRaw === 'double' ? `&column=${columnRaw}` : '';
   const router = useRouter();
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -95,7 +98,7 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
 
   function handleConfirm() {
     if (!selectedQuote) return;
-    router.push(`/${workspaceSlug}/material-orders/create?quoteId=${selectedQuote.id}&layout=${layout}`);
+    router.push(`/${workspaceSlug}/material-orders/create?quoteId=${selectedQuote.id}&layout=${layout}${columnParam}`);
   }
 
   return (

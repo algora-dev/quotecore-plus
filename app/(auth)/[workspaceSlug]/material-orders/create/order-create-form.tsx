@@ -39,6 +39,9 @@ interface OrderCreateFormProps {
    *  order. 'line_by_line' = customer-quote-style editor; 'components' (default)
    *  = the Components + Images editor with single/double toggle. */
   initialLayout?: 'line_by_line' | 'components';
+  /** Initial column mode for the Components editor (from the picker / saved
+   *  order). The user can still toggle single<->double inside the editor. */
+  initialColumn?: 'single' | 'double';
 }
 
 interface Variable {
@@ -72,11 +75,11 @@ interface OrderLineItem {
   showMeasurements: boolean;
 }
 
-export function OrderCreateForm({ templates, flashings, components = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components' }: OrderCreateFormProps) {
+export function OrderCreateForm({ templates, flashings, components = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components', initialColumn = 'single' }: OrderCreateFormProps) {
   const router = useRouter();
   
   // Layout state
-  const [layoutMode, setLayoutMode] = useState<'single' | 'double'>('single');
+  const [layoutMode, setLayoutMode] = useState<'single' | 'double'>(initialColumn);
   // App-style alert state. Replaces native alert() calls so the order flow
   // matches the rest of the app's modal styling.
   const [alertState, setAlertState] = useState<{

@@ -9,12 +9,12 @@ import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 
 interface Props {
   params: Promise<{ workspaceSlug: string }>;
-  searchParams: Promise<{ quoteId?: string; orderId?: string; layout?: string }>;
+  searchParams: Promise<{ quoteId?: string; orderId?: string; layout?: string; column?: string }>;
 }
 
 export default async function CreateOrderPage(props: Props) {
   const { workspaceSlug: _workspaceSlug } = await props.params;
-  const { quoteId, orderId, layout } = await props.searchParams;
+  const { quoteId, orderId, layout, column } = await props.searchParams;
   
   
   // Run diagnostic test if quoteId present
@@ -42,6 +42,11 @@ export default async function CreateOrderPage(props: Props) {
       ? 'line_by_line'
       : 'components';
 
+  // Column mode for the Components editor. Editing an existing order: use its
+  // saved layout_mode (single/double). New order: from the picker's `column`.
+  const initialColumn: 'single' | 'double' =
+    savedLayout === 'double' || (!savedLayout && column === 'double') ? 'double' : 'single';
+
   return (
     <div className="h-screen overflow-hidden">
       <OrderCreateForm
@@ -53,6 +58,7 @@ export default async function CreateOrderPage(props: Props) {
         existingOrder={existingOrder}
         isOverStorage={ent.isOverStorage}
         initialLayout={initialLayout}
+        initialColumn={initialColumn}
       />
     </div>
   );
