@@ -4,8 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
 import { QuotePreview } from './QuotePreview';
-import { AddCustomLineModal } from './AddCustomLineModal';
-import { CatalogSearchModal } from './CatalogSearchModal';
+import { AddLineModal } from './AddLineModal';
 import { EditHeaderModal } from './EditHeaderModal';
 import { EditFooterModal } from './EditFooterModal';
 import { saveCustomerQuoteLines, saveCustomerQuoteBranding } from '../../actions';
@@ -37,6 +36,10 @@ interface Props {
   previewTitle?: string; // Custom preview title (default: "Customer Quote Preview")
   includeMargins?: boolean; // Whether to include margins in line amounts (default: true)
   customSaveAction?: (quoteId: string, lines: any[]) => Promise<void>; // Custom save function (for labor sheet)
+  /** Named component libraries (collections) for the "Add a component" picker. */
+  collections?: { id: string; name: string }[];
+  /** Full company component library for the "Add a component" picker. */
+  componentLibrary?: { id: string; name: string; collection_id: string | null }[];
   initialTaxes: QuoteTaxRow[];
   /** Active company-level tax library, shown as a quick “add from defaults” picker. */
   companyTaxes: { id: string; name: string; rate_percent: number }[];
@@ -64,7 +67,7 @@ interface QuoteLine {
   sortOrder: number;
 }
 
-export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave: _disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true, customSaveAction, initialTaxes, companyTaxes, taxAudience = 'quote' }: Props) {
+export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave: _disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true, customSaveAction, initialTaxes, companyTaxes, taxAudience = 'quote', collections = [], componentLibrary = [] }: Props) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [taxes, setTaxes] = useState<EditableTax[]>(
@@ -82,8 +85,8 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [showAddCustomLine, setShowAddCustomLine] = useState(false);
-  const [showCatalogSearch, setShowCatalogSearch] = useState(false);
+  // Unified "Add new line" modal (Custom line / Add a component / Search catalog).
+  const [showAddLine, setShowAddLine] = useState(false);
   const [showEditHeader, setShowEditHeader] = useState(false);
   const [showEditFooter, setShowEditFooter] = useState(false);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
@@ -305,6 +308,28 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       quantityText,
       amount,
       showPrice,
+      showUnits: true,
+      isVisible: true,
+      includeInTotal: true,
+      sortOrder: lines.length,
+    };
+    setLines(prev => [...prev, newLine]);
+    setIsDirty(true);
+  }
+
+  /**
+   * Add a line seeded from a component library entry. Per spec: the component
+   * NAME is pre-filled; quantity and price stay blank so the user fills them
+   * via the right-side pencil (LineEditForm). Stored as a custom line.
+   */
+  function addComponentLine(name: string) {
+    const newLine: QuoteLine = {
+      id: `custom-${Date.now()}`,
+      type: 'custom',
+      text: name,
+      quantityText: null,
+      amount: 0,
+      showPrice: true,
       showUnits: true,
       isVisible: true,
       includeInTotal: true,
@@ -663,17 +688,11 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             </div>
 
             <div className="flex gap-2">
-              <button 
-                onClick={() => setShowAddCustomLine(true)}
+              <button
+                onClick={() => setShowAddLine(true)}
                 className="flex-1 py-2 text-sm font-medium text-orange-600 border border-orange-200 rounded-full hover:bg-orange-50 hover:border-orange-300 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]"
               >
-                + Add Custom Line
-              </button>
-              <button
-                onClick={() => setShowCatalogSearch(true)}
-                className="flex-1 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-full hover:bg-slate-50 hover:border-slate-300 transition-all"
-              >
-                Search Catalog
+                + Add New Line
               </button>
             </div>
 
@@ -931,20 +950,15 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         />
       )}
 
-      {/* Add Custom Line Modal */}
-      {showAddCustomLine && (
-        <AddCustomLineModal
-          onAdd={addCustomLine}
-          onClose={() => setShowAddCustomLine(false)}
-        />
-      )}
-
-      {/* Catalog Search Modal */}
-      {showCatalogSearch && (
-        <CatalogSearchModal
+      {/* Unified Add New Line modal: Custom line / Add a component / Search catalog */}
+      {showAddLine && (
+        <AddLineModal
           workspaceSlug={workspaceSlug}
-          onAdd={addCustomLine}
-          onClose={() => setShowCatalogSearch(false)}
+          collections={collections}
+          componentLibrary={componentLibrary}
+          onAddCustom={addCustomLine}
+          onAddComponent={addComponentLine}
+          onClose={() => setShowAddLine(false)}
         />
       )}
     </div>
