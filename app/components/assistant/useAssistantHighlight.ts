@@ -40,6 +40,21 @@ export interface HighlightRect {
   treatment: NonNullable<ActiveHighlight['treatment']>;
 }
 
+/**
+ * IMPORTANT (click-through): the highlight decoration is rendered entirely on a
+ * `::after` pseudo-element, which is `pointer-events: none` by default. This is
+ * the fix for "the highlight ring blocks the button click": previously the ring
+ * lived on the real element (outline + box-shadow) and we forced
+ * `position: relative; z-index: 50` on it, which lifted nav buttons over their
+ * neighbours and pushed the clickable outline-offset ring into the hit-test
+ * path — making the control hard to click "through". Now the element itself is
+ * never restyled in a way that affects hit-testing; only a non-interactive
+ * overlay ring is painted on top. The element stays 100% clickable.
+ *
+ * We still set `position` only when the element is `static` (so the absolutely
+ * positioned `::after` anchors to it), but we DO NOT raise z-index and we make
+ * the pseudo-element explicitly `pointer-events: none`.
+ */
 const CSS = `
 @keyframes assistant-hl-pulse {
   0%   { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.55); }
@@ -47,27 +62,38 @@ const CSS = `
   100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
 }
 .assistant-hl {
-  position: relative !important;
-  z-index: 50 !important;
+  /* Anchor the ::after ring without disturbing hit-testing or stacking.
+     position is only promoted from static; existing relative/absolute/fixed
+     positioned elements keep their own positioning. No z-index override. */
   border-radius: 6px;
-  transition: box-shadow 0.2s ease, outline-color 0.2s ease;
 }
-.assistant-hl-glow {
+.assistant-hl:where(:not([style*="position"])) {
+  position: relative;
+}
+.assistant-hl::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  pointer-events: none; /* <-- the fix: ring never intercepts clicks */
+  z-index: 2147483646; /* paint above the control, but it cannot be clicked */
+}
+.assistant-hl-glow::after {
   outline: 2px solid rgba(37, 99, 235, 0.9);
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25), 0 0 18px 4px rgba(37, 99, 235, 0.45);
 }
-.assistant-hl-pulse {
+.assistant-hl-pulse::after {
   outline: 2px solid rgba(37, 99, 235, 0.9);
   outline-offset: 2px;
   animation: assistant-hl-pulse 1.4s ease-out infinite;
 }
-.assistant-hl-spotlight {
+.assistant-hl-spotlight::after {
   outline: 3px solid rgba(37, 99, 235, 0.95);
   outline-offset: 3px;
   box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.45);
 }
-.assistant-hl-arrow {
+.assistant-hl-arrow::after {
   outline: 2px solid rgba(37, 99, 235, 0.9);
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25);

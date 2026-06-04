@@ -32,7 +32,7 @@ interface UploadWizardProps {
   isOverStorage?: boolean;
 }
 
-const MAX_ROWS = 20_000;
+const MAX_ROWS = 35_000;
 const CHUNK_SIZE = 2_000;
 
 const MAPPING_FIELDS: { key: keyof ColumnMapping; label: string; hint: string }[] = [
