@@ -408,22 +408,16 @@ export function AssistantWidget(_props: Props) {
             className="flex cursor-move select-none items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3"
           >
             <div className="flex items-center gap-2">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-white">
-                <svg
-                  width="13"
-                  height="13"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                </svg>
-              </span>
-              <span className="text-sm font-semibold text-slate-800">Assistant</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/q-avatar.png"
+                alt="Q"
+                width={28}
+                height={28}
+                className="h-7 w-7 rounded-full object-contain"
+                draggable={false}
+              />
+              <span className="text-sm font-semibold text-slate-800">Q</span>
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -509,10 +503,22 @@ export function AssistantWidget(_props: Props) {
           {/* Messages */}
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
             {!hasConversation && (
-              <p className="mx-auto mt-8 max-w-[16rem] text-center text-sm leading-relaxed text-slate-400">
-                Ask me anything about QuoteCore+ — how to build a quote, what a
-                field means, or where to find something.
-              </p>
+              <div className="mx-auto mt-8 max-w-[16rem] text-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/q-avatar.png"
+                  alt="Q"
+                  width={48}
+                  height={48}
+                  className="mx-auto mb-3 h-12 w-12 rounded-full object-contain"
+                  draggable={false}
+                />
+                <p className="text-sm font-semibold text-slate-700">Hey, I&rsquo;m Q.</p>
+                <p className="mt-1 text-sm leading-relaxed text-slate-400">
+                  Ask me anything about QuoteCore+ — building a quote, what a
+                  field does, or where to find something. I&rsquo;ll keep it short.
+                </p>
+              </div>
             )}
             {messages.map((m) => (
               <div
@@ -606,7 +612,7 @@ export function AssistantWidget(_props: Props) {
                 if (e.key === 'Enter' && !e.shiftKey) submit(e);
               }}
               rows={1}
-              placeholder="Ask the assistant…"
+              placeholder="Ask Q…"
               data-assistant-id="assistant-input"
               className="max-h-24 flex-1 resize-none rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none transition-colors focus:border-[#ff6b35] focus:ring-1 focus:ring-[#ff6b35]"
             />
