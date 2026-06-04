@@ -75,16 +75,19 @@ function composeLineParts(
 // ---------------------------------------------------------------------------
 
 export function CatalogSearchModal({ workspaceSlug, onAdd, onClose }: Props) {
+  // NOTE: `catalogs` is now one entry PER MAP (a catalog may expose several
+  // named maps over the same rows). The selector picks a MAP; search keys on
+  // that map's catalogId (rows source) and applies that map's column_mapping.
   const [catalogs, setCatalogs] = useState<CatalogSearchMeta[]>([]);
-  const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
+  const [selectedMapId, setSelectedMapId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchHit[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Lookup: catalogId -> column_mapping (populated from loadCatalogsForSearch)
-  const mappingByCatalog = useRef<Map<string, ColumnMapping>>(new Map());
+  // Lookup: mapId -> { catalogId, column_mapping } (from loadCatalogsForSearch)
+  const mappingByMap = useRef<Map<string, { catalogId: string; mapping: ColumnMapping }>>(new Map());
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -95,12 +98,18 @@ export function CatalogSearchModal({ workspaceSlug, onAdd, onClose }: Props) {
         setCatalogs(list);
         for (const c of list) {
           const m = (c.column_mapping ?? {}) as Record<string, string | null>;
-          mappingByCatalog.current.set(c.id, {
-            description: m.description ?? null,
-            quantity: m.quantity ?? null,
-            price: m.price ?? null,
+          mappingByMap.current.set(c.id, {
+            catalogId: c.catalogId,
+            mapping: {
+              description: m.description ?? null,
+              quantity: m.quantity ?? null,
+              price: m.price ?? null,
+            },
           });
         }
+        // Default to the first map (primary of the first catalog) so search is
+        // always unambiguous about which mapping to apply.
+        if (list.length > 0) setSelectedMapId(list[0].id);
         setLoading(false);
         setTimeout(() => searchInputRef.current?.focus(), 50);
       })
@@ -109,11 +118,15 @@ export function CatalogSearchModal({ workspaceSlug, onAdd, onClose }: Props) {
 
   // Debounced search
   const runSearch = useCallback(
-    async (q: string, catalogId: string | null) => {
+    async (q: string, mapId: string | null) => {
       if (!q.trim()) {
         setResults([]);
         return;
       }
+      // Resolve the map -> its catalog (the rows source the RPC searches).
+      const catalogId = mapId
+        ? mappingByMap.current.get(mapId)?.catalogId ?? null
+        : null;
       setSearching(true);
       setSearchError(null);
       try {
@@ -137,19 +150,24 @@ export function CatalogSearchModal({ workspaceSlug, onAdd, onClose }: Props) {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      void runSearch(query, selectedCatalogId);
+      void runSearch(query, selectedMapId);
     }, 300);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, selectedCatalogId, runSearch]);
+  }, [query, selectedMapId, runSearch]);
 
-  function getMapping(catalogId: string): ColumnMapping {
-    return mappingByCatalog.current.get(catalogId) ?? { description: null, quantity: null, price: null };
+  /** Mapping of the CURRENTLY SELECTED map (results are uniform within a map). */
+  function getMapping(): ColumnMapping {
+    if (selectedMapId) {
+      const entry = mappingByMap.current.get(selectedMapId);
+      if (entry) return entry.mapping;
+    }
+    return { description: null, quantity: null, price: null };
   }
 
   function handleSelectHit(hit: SearchHit) {
-    const mapping = getMapping(hit.catalogId);
+    const mapping = getMapping();
     const { description, quantity } = composeLineParts(hit, mapping);
     const rawPrice = mapping.price ? hit.rawRow[mapping.price] ?? '' : '';
     const { value: amount, hasPrice } = parsePrice(rawPrice);
@@ -159,7 +177,7 @@ export function CatalogSearchModal({ workspaceSlug, onAdd, onClose }: Props) {
 
   /** Result preview lines using the mapped columns (falls back to first values). */
   function getResultPreview(hit: SearchHit): { primary: string; secondary: string | null; price: string | null } {
-    const mapping = getMapping(hit.catalogId);
+    const mapping = getMapping();
     const descVal = mapping.description ? hit.rawRow[mapping.description] : null;
     const qtyVal = mapping.quantity ? hit.rawRow[mapping.quantity] : null;
     const priceVal = mapping.price ? hit.rawRow[mapping.price] : null;
@@ -221,21 +239,38 @@ export function CatalogSearchModal({ workspaceSlug, onAdd, onClose }: Props) {
             </div>
           ) : (
             <>
-              {/* Catalog selector */}
+              {/* Catalog / map selector. One catalog may expose several named
+                  maps over the same rows; they are grouped under the parent
+                  catalog. Each map applies its own column interpretation. */}
               {catalogs.length > 1 && (
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Catalog</label>
                   <select
-                    value={selectedCatalogId ?? ''}
-                    onChange={(e) => setSelectedCatalogId(e.target.value || null)}
+                    value={selectedMapId ?? ''}
+                    onChange={(e) => setSelectedMapId(e.target.value || null)}
                     className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
                   >
-                    <option value="">All catalogs</option>
-                    {catalogs.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
+                    {Object.entries(
+                      catalogs.reduce<Record<string, CatalogSearchMeta[]>>((acc, m) => {
+                        (acc[m.catalogName] ??= []).push(m);
+                        return acc;
+                      }, {}),
+                    ).map(([catalogName, maps]) =>
+                      maps.length === 1 && maps[0].isPrimary ? (
+                        // Single (primary-only) catalog: flat option, no group.
+                        <option key={maps[0].id} value={maps[0].id}>
+                          {catalogName}
+                        </option>
+                      ) : (
+                        <optgroup key={catalogName} label={catalogName}>
+                          {maps.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.isPrimary ? `${m.name} (default map)` : m.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ),
+                    )}
                   </select>
                 </div>
               )}
@@ -273,7 +308,7 @@ export function CatalogSearchModal({ workspaceSlug, onAdd, onClose }: Props) {
 
               {!query.trim() && (
                 <p className="text-xs text-slate-400 text-center py-6">
-                  Type to search across {selectedCatalogId ? 'this catalog' : 'all catalogs'}.
+                  Type to search this catalog.
                 </p>
               )}
 

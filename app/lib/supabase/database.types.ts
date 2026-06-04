@@ -355,6 +355,47 @@ export type Database = {
           },
         ]
       }
+      catalog_maps: {
+        Row: {
+          catalog_id: string
+          column_mapping: Json
+          company_id: string
+          created_at: string
+          id: string
+          is_primary: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          catalog_id: string
+          column_mapping?: Json
+          company_id: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          catalog_id?: string
+          column_mapping?: Json
+          company_id?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_maps_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "catalogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalog_rows: {
         Row: {
           catalog_id: string
@@ -1195,6 +1236,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      growth_briefs: {
+        Row: {
+          date: string
+          generated_at: string | null
+          id: string
+          metrics_snapshot: Json | null
+          narrative: string | null
+          recommendations: Json | null
+        }
+        Insert: {
+          date: string
+          generated_at?: string | null
+          id?: string
+          metrics_snapshot?: Json | null
+          narrative?: string | null
+          recommendations?: Json | null
+        }
+        Update: {
+          date?: string
+          generated_at?: string | null
+          id?: string
+          metrics_snapshot?: Json | null
+          narrative?: string | null
+          recommendations?: Json | null
+        }
+        Relationships: []
       }
       labor_sheet_lines: {
         Row: {

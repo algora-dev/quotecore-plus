@@ -115,6 +115,22 @@ export async function createCatalogMeta(args: {
 
     const catalogId = (data as { id: string }).id;
 
+    // Auto-create the catalog's PRIMARY map from the same mapping, named after
+    // the catalog. Every catalog has exactly one primary map (the upload's own
+    // mapping); extra maps are added later via createCatalogMap. Best-effort:
+    // the backfill migration also covers any catalog missing a primary map.
+    try {
+      await admin.from('catalog_maps').insert({
+        catalog_id: catalogId,
+        company_id: profile.company_id,
+        name: args.name.trim(),
+        column_mapping: args.columnMapping,
+        is_primary: true,
+      });
+    } catch (mapErr) {
+      console.error('[createCatalogMeta] primary map insert', mapErr);
+    }
+
     revalidatePath(`/[workspaceSlug]/catalogs`, 'page');
     return { ok: true, data: { catalogId } };
   } catch (err) {
@@ -208,6 +224,19 @@ export async function updateCatalogMapping(
       .eq('company_id', profile.company_id);
 
     if (error) throw new Error(error.message);
+
+    // Keep the catalog's PRIMARY map in sync (it mirrors the catalog's own
+    // mapping). Extra maps are independent and untouched.
+    try {
+      await admin
+        .from('catalog_maps')
+        .update({ column_mapping: columnMapping, updated_at: new Date().toISOString() })
+        .eq('catalog_id', catalogId)
+        .eq('company_id', profile.company_id)
+        .eq('is_primary', true);
+    } catch (mapErr) {
+      console.error('[updateCatalogMapping] primary map sync', mapErr);
+    }
 
     revalidatePath(`/[workspaceSlug]/catalogs`, 'page');
     return { ok: true, data: undefined };
@@ -346,25 +375,217 @@ export async function loadCatalogEntitlements() {
 // ---------------------------------------------------------------------------
 
 export interface CatalogSearchMeta {
+  /** Map id (selectable option id). */
   id: string;
+  /** The catalog whose ROWS this map searches (the rows source). */
+  catalogId: string;
+  /** Display name of THIS map (primary map = catalog name). */
   name: string;
+  /** Parent catalog name, for grouping in the picker. */
+  catalogName: string;
+  /** Whether this is the catalog's primary (auto-created) map. */
+  isPrimary: boolean;
   column_mapping: Record<string, string | null>;
 }
 
+/**
+ * Returns one entry PER MAP (not per catalog), flattened for the search picker.
+ * Multiple maps over the same catalog share `catalogId` (the rows source) but
+ * carry their own `column_mapping`. The search RPC keys on `catalogId`; the app
+ * applies the chosen map's column_mapping to the results. Ordered so each
+ * catalog's primary map leads, with its extra maps grouped under it.
+ */
 export async function loadCatalogsForSearch(): Promise<CatalogSearchMeta[]> {
   const profile = await requireCompanyContext();
   const admin = createAdminClient() as AdminAny;
 
-  const { data, error } = await admin
+  // Only maps belonging to READY catalogs are searchable.
+  const { data: catalogs, error: cErr } = await admin
     .from('catalogs')
-    .select('id, name, column_mapping')
+    .select('id, name')
     .eq('company_id', profile.company_id)
     .eq('status', 'ready')
     .order('name', { ascending: true });
 
-  if (error) {
-    console.error('[loadCatalogsForSearch]', error);
+  if (cErr) {
+    console.error('[loadCatalogsForSearch] catalogs', cErr);
     return [];
   }
-  return (data ?? []) as CatalogSearchMeta[];
+  const readyCatalogs = (catalogs ?? []) as { id: string; name: string }[];
+  if (readyCatalogs.length === 0) return [];
+
+  const catalogNameById = new Map(readyCatalogs.map((c) => [c.id, c.name]));
+  const readyIds = readyCatalogs.map((c) => c.id);
+
+  const { data: maps, error: mErr } = await admin
+    .from('catalog_maps')
+    .select('id, catalog_id, name, column_mapping, is_primary')
+    .eq('company_id', profile.company_id)
+    .in('catalog_id', readyIds)
+    .order('is_primary', { ascending: false })
+    .order('name', { ascending: true });
+
+  if (mErr) {
+    console.error('[loadCatalogsForSearch] maps', mErr);
+    return [];
+  }
+
+  const rows = (maps ?? []) as {
+    id: string;
+    catalog_id: string;
+    name: string;
+    column_mapping: Record<string, string | null>;
+    is_primary: boolean;
+  }[];
+
+  const flat: CatalogSearchMeta[] = rows.map((m) => ({
+    id: m.id,
+    catalogId: m.catalog_id,
+    name: m.name,
+    catalogName: catalogNameById.get(m.catalog_id) ?? m.name,
+    isPrimary: m.is_primary,
+    column_mapping: (m.column_mapping ?? {}) as Record<string, string | null>,
+  }));
+
+  // Group by parent catalog (primary first within each group), catalogs A->Z.
+  flat.sort((a, b) => {
+    if (a.catalogName !== b.catalogName) {
+      return a.catalogName.localeCompare(b.catalogName);
+    }
+    if (a.isPrimary !== b.isPrimary) return a.isPrimary ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  return flat;
+}
+
+// ---------------------------------------------------------------------------
+// Catalog maps CRUD (multiple column mappings over one uploaded catalog)
+// ---------------------------------------------------------------------------
+
+export interface CatalogMapRow {
+  id: string;
+  catalog_id: string;
+  name: string;
+  column_mapping: Record<string, string | null>;
+  is_primary: boolean;
+}
+
+/** List all maps for a catalog (primary first). */
+export async function loadCatalogMaps(catalogId: string): Promise<CatalogMapRow[]> {
+  const profile = await requireCompanyContext();
+  const admin = createAdminClient() as AdminAny;
+  const { data, error } = await admin
+    .from('catalog_maps')
+    .select('id, catalog_id, name, column_mapping, is_primary')
+    .eq('company_id', profile.company_id)
+    .eq('catalog_id', catalogId)
+    .order('is_primary', { ascending: false })
+    .order('name', { ascending: true });
+  if (error) {
+    console.error('[loadCatalogMaps]', error);
+    return [];
+  }
+  return (data ?? []) as CatalogMapRow[];
+}
+
+/** Create an extra (non-primary) map over an existing catalog. */
+export async function createCatalogMap(
+  catalogId: string,
+  name: string,
+  columnMapping: Record<string, string | null>,
+): Promise<CatalogActionResult> {
+  try {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      return { ok: false, code: 'unknown', message: 'Map name is required.' };
+    }
+    const profile = await requireCompanyContext();
+    const admin = createAdminClient() as AdminAny;
+
+    // Confirm the catalog belongs to this company (FK + RLS-equivalent check).
+    const { data: cat, error: cErr } = await admin
+      .from('catalogs')
+      .select('id')
+      .eq('id', catalogId)
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+    if (cErr) throw new Error(cErr.message);
+    if (!cat) return { ok: false, code: 'unknown', message: 'Catalog not found.' };
+
+    const { error } = await admin.from('catalog_maps').insert({
+      catalog_id: catalogId,
+      company_id: profile.company_id,
+      name: trimmed,
+      column_mapping: columnMapping,
+      is_primary: false,
+    });
+    if (error) throw new Error(error.message);
+
+    revalidatePath(`/[workspaceSlug]/catalogs`, 'page');
+    return { ok: true, data: undefined };
+  } catch (err) {
+    console.error('[createCatalogMap]', err);
+    return { ok: false, code: 'unknown', message: err instanceof Error ? err.message : 'Unexpected error' };
+  }
+}
+
+/** Update an existing map's name and/or column mapping. */
+export async function updateCatalogMap(
+  mapId: string,
+  name: string,
+  columnMapping: Record<string, string | null>,
+): Promise<CatalogActionResult> {
+  try {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      return { ok: false, code: 'unknown', message: 'Map name is required.' };
+    }
+    const profile = await requireCompanyContext();
+    const admin = createAdminClient() as AdminAny;
+    const { error } = await admin
+      .from('catalog_maps')
+      .update({ name: trimmed, column_mapping: columnMapping, updated_at: new Date().toISOString() })
+      .eq('id', mapId)
+      .eq('company_id', profile.company_id);
+    if (error) throw new Error(error.message);
+    revalidatePath(`/[workspaceSlug]/catalogs`, 'page');
+    return { ok: true, data: undefined };
+  } catch (err) {
+    console.error('[updateCatalogMap]', err);
+    return { ok: false, code: 'unknown', message: err instanceof Error ? err.message : 'Unexpected error' };
+  }
+}
+
+/** Delete an EXTRA map. The primary map cannot be deleted (delete the catalog). */
+export async function deleteCatalogMap(mapId: string): Promise<CatalogActionResult> {
+  try {
+    const profile = await requireCompanyContext();
+    const admin = createAdminClient() as AdminAny;
+
+    // Guard: never delete a primary map.
+    const { data: row, error: rErr } = await admin
+      .from('catalog_maps')
+      .select('id, is_primary')
+      .eq('id', mapId)
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+    if (rErr) throw new Error(rErr.message);
+    if (!row) return { ok: false, code: 'unknown', message: 'Map not found.' };
+    if (row.is_primary) {
+      return { ok: false, code: 'unknown', message: 'The primary map cannot be deleted. Delete the catalog instead.' };
+    }
+
+    const { error } = await admin
+      .from('catalog_maps')
+      .delete()
+      .eq('id', mapId)
+      .eq('company_id', profile.company_id);
+    if (error) throw new Error(error.message);
+    revalidatePath(`/[workspaceSlug]/catalogs`, 'page');
+    return { ok: true, data: undefined };
+  } catch (err) {
+    console.error('[deleteCatalogMap]', err);
+    return { ok: false, code: 'unknown', message: err instanceof Error ? err.message : 'Unexpected error' };
+  }
 }
