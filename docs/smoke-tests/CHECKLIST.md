@@ -111,7 +111,14 @@ _(empty — move items here as they pass)_
 
 ---
 
+## Pending verification (dev — line-by-line orders + catalog UX, 2026-06-04)
+- [ ] Catalog upload preview: no "first row contains titles" toggle; shows `COL A` + title (when present); no duplicate letters; same in Maps tab + mapping dropdowns. (commits `d11c396`,`51e16c5`)
+- [ ] Assistant chat panel ~25% shorter. (`d11c396`)
+- [ ] **Line-by-line order SAVE now works** (was failing pre-`0d8f047` due to layout_mode CHECK constraint; migration `20260604180000` applied). Create line-by-line order → add lines → Save → appears in orders list → reopen edit (lines rehydrate) → `/preview` + public token page + Print/PDF show priced table + header + correct currency.
+- [ ] (AFTER next session's clone rebuild) full CustomerQuoteEditor-style UX: header template pre-fill + minimize, left show/hide list, right pencil per-line edit, add-new-line modal (custom/component/catalog), footer, Order-from-Quote pre-populates lines+prices, reference pre-filled with quote number.
+
 ## Deferred / not blocking this merge (forward work)
+- Supplier (order) templates: add optional includable/excludable FOOTER (orders have no template footer yet; line-by-line footer is manual entry for now).
 - FOLLOW-UP A: richer over-storage billing-page UI (what's using space, per-file delete).
 - FOLLOW-UP B: Stripe storage-upgrade products (own session; no Stripe key yet).
 - P1-3 backlog: material-order entitlement gates + status pill migration + Confirm Order alert.
