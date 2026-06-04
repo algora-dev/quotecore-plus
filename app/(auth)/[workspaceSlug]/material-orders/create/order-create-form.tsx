@@ -109,13 +109,6 @@ export function OrderCreateForm({ templates, flashings, components = [], workspa
     ]);
   }
 
-  // Add a component-library item as a line (name only; price entered/edited
-  // inline afterwards — the component option here carries id+name only).
-  function addComponentLine(componentId: string) {
-    const comp = components.find((c) => c.id === componentId);
-    if (!comp) return;
-    addLineByLineItem({ text: comp.name, quantityText: null, amount: 0, showPrice: true });
-  }
   // App-style alert state. Replaces native alert() calls so the order flow
   // matches the rest of the app's modal styling.
   const [alertState, setAlertState] = useState<{
@@ -849,33 +842,12 @@ export function OrderCreateForm({ templates, flashings, components = [], workspa
           {headerSection}
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-5xl mx-auto px-6 py-6 space-y-5">
-              {/* Add from library / catalog */}
-              <div className="flex flex-wrap items-center gap-3">
-                <select
-                  value=""
-                  onChange={(e) => { if (e.target.value) { addComponentLine(e.target.value); e.target.value = ''; } }}
-                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
-                  data-assistant-id="order-lbl-add-component"
-                >
-                  <option value="">+ Add from component library…</option>
-                  {components.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setShowCatalogSearch(true)}
-                  className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition"
-                  data-assistant-id="order-lbl-add-catalog"
-                >
-                  Search catalog…
-                </button>
-              </div>
-
               <OrderLineByLineEditor
                 lines={lineByLineLines}
                 currency={currency}
                 onChange={setLineByLineLines}
+                components={components}
+                onRequestCatalog={() => setShowCatalogSearch(true)}
               />
             </div>
           </div>
