@@ -171,7 +171,12 @@ export function CatalogSearchModal({ workspaceSlug, onAdd, onClose }: Props) {
     const { description, quantity } = composeLineParts(hit, mapping);
     const rawPrice = mapping.price ? hit.rawRow[mapping.price] ?? '' : '';
     const { value: amount, hasPrice } = parsePrice(rawPrice);
-    onAdd(description, amount, hasPrice && amount > 0, quantity);
+    // Per spec: the first two mapped columns (description + quantity) both go
+    // into the line's Description so all the row's text is always visible; the
+    // price column goes into the line's Price. We pass the combined text as the
+    // description and null quantity so nothing is hidden by the Units toggle.
+    const combined = quantity ? `${description} — ${quantity}` : description;
+    onAdd(combined, amount, hasPrice && amount > 0, null);
     onClose();
   }
 
