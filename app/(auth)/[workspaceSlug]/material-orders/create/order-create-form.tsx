@@ -24,13 +24,26 @@ import { parseLineByLineData, type LineByLineItem } from '../lineByLine';
 interface ComponentOption {
   id: string;
   name: string;
+  /** Named library (component_collections.id) this component belongs to. Null = unfiled. */
+  collection_id?: string | null;
 }
+
+/** Named component library for the add-component library selector. */
+interface ComponentCollection {
+  id: string;
+  name: string;
+}
+
+/** Sentinel for the "All components" option in the library selector. */
+const ALL_LIBRARIES = '__all__';
 
 interface OrderCreateFormProps {
   templates: MaterialOrderTemplateRow[];
   flashings: FlashingLibraryRow[];
   /** Company component library, for the "add from library" dropdown in the item modal. */
   components?: ComponentOption[];
+  /** Named component libraries for the add-component library selector. */
+  collections?: ComponentCollection[];
   /** Workspace slug, needed by the catalog search modal endpoint. */
   workspaceSlug?: string;
   quoteData?: QuoteData | null;
@@ -79,7 +92,7 @@ interface OrderLineItem {
   showMeasurements: boolean;
 }
 
-export function OrderCreateForm({ templates, flashings, components = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components', initialColumn = 'single', currency = 'GBP' }: OrderCreateFormProps) {
+export function OrderCreateForm({ templates, flashings, components = [], collections = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components', initialColumn = 'single', currency = 'GBP' }: OrderCreateFormProps) {
   const router = useRouter();
   
   // Layout state
@@ -1249,6 +1262,7 @@ export function OrderCreateForm({ templates, flashings, components = [], workspa
         <AddItemModal
           flashings={flashings}
           components={components}
+          collections={collections}
           workspaceSlug={workspaceSlug}
           existingLine={editingLineId ? orderLines.find(l => l.id === editingLineId) : undefined}
           onSave={saveLineItem}
@@ -1278,6 +1292,8 @@ interface AddItemModalProps {
   flashings: FlashingLibraryRow[];
   /** Company component library for the "add from library" dropdown. */
   components?: ComponentOption[];
+  /** Named component libraries for the add-component library selector. */
+  collections?: ComponentCollection[];
   /** Workspace slug for the catalog search modal endpoint. */
   workspaceSlug?: string;
   existingLine?: OrderLineItem;
@@ -1296,8 +1312,11 @@ interface AddItemModalProps {
   showAlert: (title: string, description?: string, variant?: 'info' | 'success' | 'error') => void;
 }
 
-function AddItemModal({ flashings, components = [], workspaceSlug = '', existingLine, onSave, onCancel, showAlert }: AddItemModalProps) {
+function AddItemModal({ flashings, components = [], collections = [], workspaceSlug = '', existingLine, onSave, onCancel, showAlert }: AddItemModalProps) {
   const [componentName, setComponentName] = useState(existingLine?.componentName || '');
+  // Library filter for the "Add from component library" dropdown. "All" shows
+  // every company component regardless of which named library it belongs to.
+  const [selectedLibraryId, setSelectedLibraryId] = useState<string>(ALL_LIBRARIES);
   // Catalog search modal toggle (one of the three ways to fill the item name).
   const [showCatalogSearch, setShowCatalogSearch] = useState(false);
   const [flashingId, setFlashingId] = useState(existingLine?.flashingId || '');
@@ -1431,22 +1450,58 @@ function AddItemModal({ flashings, components = [], workspaceSlug = '', existing
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Add from component library <span className="text-slate-400 font-normal">(Optional)</span>
               </label>
-              <select
-                value=""
-                onChange={(e) => {
-                  const picked = components.find((c) => c.id === e.target.value);
-                  if (picked) setComponentName(picked.name);
-                }}
-                disabled={components.length === 0}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-slate-50 disabled:text-slate-400"
-              >
-                <option value="">
-                  {components.length === 0 ? 'No saved components' : 'Choose a component…'}
-                </option>
-                {components.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              {/* Library selector: pick a named library or "All components".
+                  Only shown when the company has named libraries. */}
+              {collections.length > 0 && (
+                <select
+                  value={selectedLibraryId}
+                  onChange={(e) => setSelectedLibraryId(e.target.value)}
+                  className="w-full px-3 py-2 mb-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  aria-label="Filter components by library"
+                >
+                  <option value={ALL_LIBRARIES}>All components</option>
+                  {collections.map((col) => (
+                    <option key={col.id} value={col.id}>{col.name}</option>
+                  ))}
+                </select>
+              )}
+              {(() => {
+                const filtered = components.filter((c) =>
+                  selectedLibraryId === ALL_LIBRARIES
+                    ? true
+                    : (c.collection_id ?? null) === selectedLibraryId,
+                );
+                const showLib = selectedLibraryId === ALL_LIBRARIES && collections.length > 0;
+                return (
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      const picked = components.find((c) => c.id === e.target.value);
+                      if (picked) setComponentName(picked.name);
+                    }}
+                    disabled={filtered.length === 0}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-slate-50 disabled:text-slate-400"
+                  >
+                    <option value="">
+                      {components.length === 0
+                        ? 'No saved components'
+                        : filtered.length === 0
+                          ? 'No components in this library'
+                          : 'Choose a component…'}
+                    </option>
+                    {filtered.map((c) => {
+                      const libName = showLib && c.collection_id
+                        ? collections.find((col) => col.id === c.collection_id)?.name
+                        : null;
+                      return (
+                        <option key={c.id} value={c.id}>
+                          {libName ? `${c.name} · ${libName}` : c.name}
+                        </option>
+                      );
+                    })}
+                  </select>
+                );
+              })()}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
