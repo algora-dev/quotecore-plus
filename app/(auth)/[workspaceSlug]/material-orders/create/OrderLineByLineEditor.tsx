@@ -23,9 +23,11 @@ import {
 } from '../lineByLine';
 
 interface Props {
-  initialLines: LineByLineItem[];
+  /** Controlled line list (owned by the parent form so catalog/component adds
+   *  appear instantly and the parent persists on save). */
+  lines: LineByLineItem[];
   currency: string;
-  /** Called on every change so the parent form can persist on save. */
+  /** Called on every change. */
   onChange: (lines: LineByLineItem[]) => void;
 }
 
@@ -33,10 +35,7 @@ function makeId(): string {
   return `lbl-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function OrderLineByLineEditor({ initialLines, currency, onChange }: Props) {
-  const [lines, setLines] = useState<LineByLineItem[]>(
-    initialLines.length > 0 ? initialLines : []
-  );
+export function OrderLineByLineEditor({ lines, currency, onChange }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Draft fields for the add/edit row.
@@ -47,7 +46,6 @@ export function OrderLineByLineEditor({ initialLines, currency, onChange }: Prop
   const commit = useCallback(
     (next: LineByLineItem[]) => {
       const reSorted = next.map((l, i) => ({ ...l, sortOrder: i }));
-      setLines(reSorted);
       onChange(reSorted);
     },
     [onChange]

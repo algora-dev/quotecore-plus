@@ -88,6 +88,34 @@ export function OrderCreateForm({ templates, flashings, components = [], workspa
   // Persisted to `material_orders.line_by_line_data`; hydrated on edit below.
   const isLineByLine = initialLayout === 'line_by_line';
   const [lineByLineLines, setLineByLineLines] = useState<LineByLineItem[]>([]);
+  // Catalog search modal for the line-by-line layout (component picks use the
+  // inline dropdown; catalog picks open this modal).
+  const [showCatalogSearch, setShowCatalogSearch] = useState(false);
+
+  // Append a line to the line-by-line list (used by catalog + component picks).
+  function addLineByLineItem(partial: { text: string; quantityText: string | null; amount: number; showPrice: boolean }) {
+    setLineByLineLines((prev) => [
+      ...prev,
+      {
+        id: `lbl-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        text: partial.text,
+        quantityText: partial.quantityText,
+        amount: partial.amount,
+        showPrice: partial.showPrice,
+        isVisible: true,
+        includeInTotal: true,
+        sortOrder: prev.length,
+      },
+    ]);
+  }
+
+  // Add a component-library item as a line (name only; price entered/edited
+  // inline afterwards — the component option here carries id+name only).
+  function addComponentLine(componentId: string) {
+    const comp = components.find((c) => c.id === componentId);
+    if (!comp) return;
+    addLineByLineItem({ text: comp.name, quantityText: null, amount: 0, showPrice: true });
+  }
   // App-style alert state. Replaces native alert() calls so the order flow
   // matches the rest of the app's modal styling.
   const [alertState, setAlertState] = useState<{
@@ -173,6 +201,43 @@ export function OrderCreateForm({ templates, flashings, components = [], workspa
       if (sys === 'imperial_ft') return convertAreaFt2(sqm);
       return Number(convertArea(sqm)); // imperial_rs -> RS
     };
+
+    // Order-from-Quote + line-by-line: map each quote component to a priced
+    // line. The quote conveys WHAT + HOW MUCH (name + qty/unit); the supplier
+    // PRICE is entered by the user, so amount starts at 0.
+    if (isLineByLine) {
+      const lblLines: LineByLineItem[] = quoteData.components.map((comp, idx) => {
+        const rawQty = comp.final_quantity || 0;
+        const unit =
+          comp.measurement_type === 'lineal'
+            ? lengthUnit
+            : comp.measurement_type === 'area'
+            ? areaUnit
+            : 'pcs';
+        const dispQty =
+          comp.measurement_type === 'lineal'
+            ? toDisplayLinear(rawQty)
+            : comp.measurement_type === 'area'
+            ? toDisplayArea(rawQty)
+            : rawQty;
+        const qtyText = rawQty ? `${Math.round(Number(dispQty) * 100) / 100} ${unit}`.trim() : null;
+        return {
+          id: `quote-${comp.id}`,
+          text: comp.name,
+          quantityText: qtyText,
+          amount: 0,
+          showPrice: true,
+          isVisible: true,
+          includeInTotal: true,
+          sortOrder: idx,
+        };
+      });
+      setLineByLineLines(lblLines);
+      if (quoteData.quote_number) {
+        setReference(`Order for ${quoteData.quote_number}`);
+      }
+      return;
+    }
 
     // Map quote components to order line items
     const mappedLines: OrderLineItem[] = quoteData.components.map((comp) => {
@@ -560,97 +625,11 @@ export function OrderCreateForm({ templates, flashings, components = [], workspa
     }
   }
 
-  // LINE-BY-LINE LAYOUT (Option B focused order editor).
-  // Reuses the order's TO/FROM/ref/date header (identifying info the user needs
-  // while editing), then the OrderLineByLineEditor for the priced item list.
-  // The full canonical header still renders on preview/public/PDF via OrderBody.
-  if (initialLayout === 'line_by_line') {
-    const lblInputCls = 'w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:border-orange-500 focus:outline-none';
-    return (
-      <>
-        <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-        <AlertModal
-          open={alertState.open}
-          title={alertState.title}
-          description={alertState.description}
-          variant={alertState.variant}
-          onClose={closeAlert}
-        />
-        <div className="min-h-screen bg-slate-50">
-          <div className="px-6 pt-4">
-            <BackButton />
-          </div>
-          <div className="max-w-5xl mx-auto px-6 py-4 space-y-6">
-            {/* Order header (identifying fields) */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5">
-              <h2 className="text-base font-semibold text-slate-900 mb-4">Line-by-line order</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">To (Supplier)</label>
-                  <input type="text" value={toSupplier} onChange={(e) => setToSupplier(e.target.value)} placeholder="To" className={lblInputCls} />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">From</label>
-                  <input type="text" value={fromCompany} onChange={(e) => setFromCompany(e.target.value)} placeholder="From" className={lblInputCls} />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Reference *</label>
-                  <input type="text" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Reference / Job name" className={lblInputCls} />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Order date</label>
-                  <input type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} className={lblInputCls} />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Order notes</label>
-                  <textarea value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder="Order notes (optional)" rows={2} className={lblInputCls} />
-                </div>
-              </div>
-            </div>
-
-            {/* Line editor */}
-            <OrderLineByLineEditor
-              initialLines={lineByLineLines}
-              currency={currency}
-              onChange={setLineByLineLines}
-            />
-
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-3 pb-10">
-              {existingOrder && (
-                <button
-                  type="button"
-                  onClick={() => window.open(`../material-orders/${existingOrder.order.id}/preview`, '_blank')}
-                  className="px-4 py-2 text-sm font-medium border border-slate-300 bg-white text-slate-700 rounded-full hover:bg-slate-50 transition"
-                >
-                  Preview
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={handleSaveDraft}
-                disabled={saving}
-                className="px-6 py-2 text-sm font-semibold bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-              >
-                {saving ? 'Saving…' : 'Save Order'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  return (
-    <>
-    <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-    <div className="flex flex-col h-screen bg-slate-50">
-      {/* Back Button */}
-      <div className="px-6 pt-4">
-        <BackButton />
-      </div>
-      
-      {/* Header Section */}
+  // Shared header section (template selector + manual To/From form + minimize
+  // button + collapsed bar). Rendered IDENTICALLY for both the Components and
+  // the Line-by-line layouts so the header behaviour/values match exactly and
+  // never drift. Only the body below the header differs per layout.
+  const headerSection = (
       <div className="flex-shrink-0">
         {headerExpanded ? (
           <div className="bg-white border-b border-slate-200 shadow-sm">
@@ -835,6 +814,107 @@ export function OrderCreateForm({ templates, flashings, components = [], workspa
           </div>
         )}
       </div>
+  );
+
+  // LINE-BY-LINE LAYOUT (Option B focused order editor).
+  // Same shared header (template + manual form + minimize) as the Components
+  // layout, then the OrderLineByLineEditor (free lines + component/catalog
+  // picks). Persists to material_orders.line_by_line_data; renders on
+  // preview/public/PDF via OrderBody.
+  if (initialLayout === 'line_by_line') {
+    return (
+      <>
+        <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
+        <AlertModal
+          open={alertState.open}
+          title={alertState.title}
+          description={alertState.description}
+          variant={alertState.variant}
+          onClose={closeAlert}
+        />
+        {showCatalogSearch && (
+          <CatalogSearchModal
+            workspaceSlug={workspaceSlug}
+            onAdd={(text, amount, showPrice, quantity) => {
+              addLineByLineItem({ text, quantityText: quantity, amount, showPrice });
+              setShowCatalogSearch(false);
+            }}
+            onClose={() => setShowCatalogSearch(false)}
+          />
+        )}
+        <div className="flex flex-col h-screen bg-slate-50">
+          <div className="px-6 pt-4">
+            <BackButton />
+          </div>
+          {headerSection}
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-5xl mx-auto px-6 py-6 space-y-5">
+              {/* Add from library / catalog */}
+              <div className="flex flex-wrap items-center gap-3">
+                <select
+                  value=""
+                  onChange={(e) => { if (e.target.value) { addComponentLine(e.target.value); e.target.value = ''; } }}
+                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+                  data-assistant-id="order-lbl-add-component"
+                >
+                  <option value="">+ Add from component library…</option>
+                  {components.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowCatalogSearch(true)}
+                  className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 bg-white hover:bg-slate-50 transition"
+                  data-assistant-id="order-lbl-add-catalog"
+                >
+                  Search catalog…
+                </button>
+              </div>
+
+              <OrderLineByLineEditor
+                lines={lineByLineLines}
+                currency={currency}
+                onChange={setLineByLineLines}
+              />
+            </div>
+          </div>
+
+          {/* Sticky actions */}
+          <div className="flex-shrink-0 border-t border-slate-200 bg-white px-6 py-3 flex items-center justify-end gap-3">
+            {existingOrder && (
+              <button
+                type="button"
+                onClick={() => window.open(`../material-orders/${existingOrder.order.id}/preview`, '_blank')}
+                className="px-4 py-2 text-sm font-medium border border-slate-300 bg-white text-slate-700 rounded-full hover:bg-slate-50 transition"
+              >
+                Preview
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={saving}
+              className="px-6 py-2 text-sm font-semibold bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            >
+              {saving ? 'Saving…' : 'Save Order'}
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+    <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
+    <div className="flex flex-col h-screen bg-slate-50">
+      {/* Back Button */}
+      <div className="px-6 pt-4">
+        <BackButton />
+      </div>
+
+      {headerSection}
 
       {/* Main Content Area - Sidebar + Order Form */}
       <div className="flex-1 flex overflow-hidden">
