@@ -589,122 +589,12 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
     }
   }
 
-  // LINE-BY-LINE LAYOUT (Option B focused order editor).
-  // Reuses the order's TO/FROM/ref/date header (identifying info the user needs
-  // while editing), then the OrderLineByLineEditor for the priced item list.
-  // The full canonical header still renders on preview/public/PDF via OrderBody.
-  if (initialLayout === 'line_by_line') {
-    const lblInputCls = 'w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:border-orange-500 focus:outline-none';
+  // Shared order header (template selector + To/From two-column form + minimize).
+  // Used by BOTH the components editor and the line-by-line editor so they
+  // share one identical header system (Shaun: line-by-line must use the same
+  // header as the single/double column flow).
+  function renderOrderHeader() {
     return (
-      <>
-        <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-        <AlertModal
-          open={alertState.open}
-          title={alertState.title}
-          description={alertState.description}
-          variant={alertState.variant}
-          onClose={closeAlert}
-        />
-        <div className="min-h-screen bg-slate-50">
-          <div className="px-6 pt-4">
-            <BackButton />
-          </div>
-          <div className="max-w-5xl mx-auto px-6 py-4 space-y-6">
-            {/* Order header (identifying fields) */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5">
-              <h2 className="text-base font-semibold text-slate-900 mb-4">Line-by-line order</h2>
-              {templates.length > 0 && (
-                <div className="mb-4">
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Use Template (optional)</label>
-                  <select
-                    value={selectedTemplateId}
-                    onChange={(e) => handleTemplateChange(e.target.value)}
-                    className={lblInputCls}
-                  >
-                    <option value="">None — enter details manually</option>
-                    {templates.map((template) => (
-                      <option key={template.id} value={template.id}>
-                        {template.name}{template.description ? ` - ${template.description}` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">To (Supplier)</label>
-                  <input type="text" value={toSupplier} onChange={(e) => setToSupplier(e.target.value)} placeholder="To" className={lblInputCls} />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">From</label>
-                  <input type="text" value={fromCompany} onChange={(e) => setFromCompany(e.target.value)} placeholder="From" className={lblInputCls} />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Reference *</label>
-                  <input type="text" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Reference / Job name" className={lblInputCls} />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Order date</label>
-                  <input type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} className={lblInputCls} />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Order notes</label>
-                  <textarea value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder="Order notes (optional)" rows={2} className={lblInputCls} />
-                </div>
-              </div>
-            </div>
-
-            {/* Line editor */}
-            <OrderLineByLineEditor
-              initialLines={lineByLineLines}
-              initialFooter={lineByLineFooter}
-              initialTaxes={lineByLineTaxes}
-              currency={currency}
-              workspaceSlug={workspaceSlug}
-              collections={collections}
-              componentLibrary={componentLibrary}
-              companyTaxes={companyTaxes}
-              onChange={setLineByLineLines}
-              onFooterChange={setLineByLineFooter}
-              onTaxesChange={setLineByLineTaxes}
-            />
-
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-3 pb-10">
-              {existingOrder && (
-                <button
-                  type="button"
-                  onClick={() => window.open(`../material-orders/${existingOrder.order.id}/preview`, '_blank')}
-                  className="px-4 py-2 text-sm font-medium border border-slate-300 bg-white text-slate-700 rounded-full hover:bg-slate-50 transition"
-                >
-                  Preview
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={handleSaveDraft}
-                disabled={saving}
-                className="px-6 py-2 text-sm font-semibold bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-              >
-                {saving ? 'Saving…' : 'Save Order'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  return (
-    <>
-    <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-    <div className="flex flex-col h-screen bg-slate-50">
-      {/* Back Button */}
-      <div className="px-6 pt-4">
-        <BackButton />
-      </div>
-      
-      {/* Header Section */}
       <div className="flex-shrink-0">
         {headerExpanded ? (
           <div className="bg-white border-b border-slate-200 shadow-sm">
@@ -732,80 +622,24 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               {/* LEFT COLUMN */}
               <div className="space-y-3">
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">To (Supplier)</h3>
-                
-                <input
-                  type="text"
-                  value={toSupplier}
-                  onChange={(e) => setToSupplier(e.target.value)}
-                  placeholder="To"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <input
-                  type="text"
-                  value={reference}
-                  onChange={(e) => setReference(e.target.value)}
-                  placeholder="Reference"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <input
-                  type="text"
-                  value={orderType}
-                  onChange={(e) => setOrderType(e.target.value)}
-                  placeholder="Order Type (optional)"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <input
-                  type="text"
-                  value={colours}
-                  onChange={(e) => setColours(e.target.value)}
-                  placeholder="Colours"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <input
-                  type="date"
-                  value={deliveryDate}
-                  onChange={(e) => setDeliveryDate(e.target.value)}
-                  placeholder="Delivery Date"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <textarea
-                  value={deliveryAddress}
-                  onChange={(e) => setDeliveryAddress(e.target.value)}
-                  placeholder="Delivery Address"
-                  rows={2}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <textarea
-                  value={orderNotes}
-                  onChange={(e) => setOrderNotes(e.target.value)}
-                  placeholder="Order Notes"
-                  rows={2}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
+                <input type="text" value={toSupplier} onChange={(e) => setToSupplier(e.target.value)} placeholder="To" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input type="text" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Reference" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input type="text" value={orderType} onChange={(e) => setOrderType(e.target.value)} placeholder="Order Type (optional)" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input type="text" value={colours} onChange={(e) => setColours(e.target.value)} placeholder="Colours" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} placeholder="Delivery Date" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <textarea value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} placeholder="Delivery Address" rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <textarea value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder="Order Notes" rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
               </div>
 
               {/* RIGHT COLUMN */}
               <div className="space-y-3">
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">From (Your Company)</h3>
-                
                 <div className="flex items-start gap-3">
                   {logoUrl ? (
                     <div className="relative w-20 h-20 border border-slate-200 rounded bg-white">
                       <img src={logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
-                      <button
-                        type="button"
-                        onClick={() => setLogoUrl('')}
-                        className="absolute -top-1 -right-1 p-0.5 bg-red-600 text-white rounded-full hover:bg-red-700"
-                      >
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                      <button type="button" onClick={() => setLogoUrl('')} className="absolute -top-1 -right-1 p-0.5 bg-red-600 text-white rounded-full hover:bg-red-700">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>
                     </div>
                   ) : (
@@ -814,60 +648,22 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
                     </div>
                   )}
                   <label className="cursor-pointer">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoUpload}
-                      disabled={uploadingLogo}
-                      className="hidden"
-                    />
+                    <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={uploadingLogo} className="hidden" />
                     <span className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded border border-slate-300 hover:bg-slate-50">
                       {uploadingLogo ? 'Uploading...' : 'Upload'}
                     </span>
                   </label>
                 </div>
-                
-                <input
-                  type="text"
-                  value={fromCompany}
-                  onChange={(e) => setFromCompany(e.target.value)}
-                  placeholder="From"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <input
-                  type="text"
-                  value={contactPerson}
-                  onChange={(e) => setContactPerson(e.target.value)}
-                  placeholder="Contact Person"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <input
-                  type="text"
-                  value={contactDetails}
-                  onChange={(e) => setContactDetails(e.target.value)}
-                  placeholder="Contact Details"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <input
-                  type="date"
-                  value={orderDate}
-                  onChange={(e) => setOrderDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
+                <input type="text" value={fromCompany} onChange={(e) => setFromCompany(e.target.value)} placeholder="From" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input type="text" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} placeholder="Contact Person" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input type="text" value={contactDetails} onChange={(e) => setContactDetails(e.target.value)} placeholder="Contact Details" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
               </div>
             </div>
 
             {/* Minimize Button */}
             <div className="px-6 py-2 border-t border-slate-100 bg-slate-50 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setHeaderExpanded(false)}
-                data-copilot="mo-minimize-header"
-                className="px-3 py-1.5 text-xs font-medium rounded border border-slate-300 hover:bg-white transition-colors"
-              >
+              <button type="button" onClick={() => setHeaderExpanded(false)} data-copilot="mo-minimize-header" className="px-3 py-1.5 text-xs font-medium rounded border border-slate-300 hover:bg-white transition-colors">
                 Minimize Header
               </button>
             </div>
@@ -879,16 +675,90 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               <span className="font-medium ml-2">From:</span> {fromCompany || 'Not set'} · 
               <span className="font-medium ml-2">Ref:</span> {reference || 'Not set'}
             </div>
-            <button
-              type="button"
-              onClick={() => setHeaderExpanded(true)}
-              className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors"
-            >
+            <button type="button" onClick={() => setHeaderExpanded(true)} className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors">
               Edit Header
             </button>
           </div>
         )}
       </div>
+    );
+  }
+
+  // LINE-BY-LINE LAYOUT (Phase 2 editor).
+  // Uses the SAME header system as the components (single/double) editor, then
+  // the OrderLineByLineEditor for the priced item list + footer + taxes.
+  if (initialLayout === 'line_by_line') {
+    return (
+      <>
+        <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
+        <AlertModal
+          open={alertState.open}
+          title={alertState.title}
+          description={alertState.description}
+          variant={alertState.variant}
+          onClose={closeAlert}
+        />
+        <div className="min-h-screen bg-slate-50">
+          <div className="px-6 pt-4">
+            <BackButton />
+          </div>
+          {/* Shared order header (template selector + To/From form + minimize) */}
+          {renderOrderHeader()}
+          <div className="max-w-5xl mx-auto px-6 py-6 space-y-6">
+            {/* Save action sits directly above the editor/preview so it's
+                reachable at 100% zoom without scrolling to the page bottom. */}
+            <div className="flex items-center justify-end gap-3">
+              {existingOrder && (
+                <button
+                  type="button"
+                  onClick={() => window.open(`../material-orders/${existingOrder.order.id}/preview`, '_blank')}
+                  className="px-4 py-2 text-sm font-medium border border-slate-300 bg-white text-slate-700 rounded-full hover:bg-slate-50 transition"
+                >
+                  Preview
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                disabled={saving}
+                className="px-6 py-2 text-sm font-semibold bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              >
+                {saving ? 'Saving…' : 'Save Order'}
+              </button>
+            </div>
+
+            {/* Line editor */}
+            <OrderLineByLineEditor
+              initialLines={lineByLineLines}
+              initialFooter={lineByLineFooter}
+              initialTaxes={lineByLineTaxes}
+              currency={currency}
+              workspaceSlug={workspaceSlug}
+              collections={collections}
+              componentLibrary={componentLibrary}
+              companyTaxes={companyTaxes}
+              onChange={setLineByLineLines}
+              onFooterChange={setLineByLineFooter}
+              onTaxesChange={setLineByLineTaxes}
+            />
+            <div className="pb-10" />
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+    <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
+    <div className="flex flex-col h-screen bg-slate-50">
+      {/* Back Button */}
+      <div className="px-6 pt-4">
+        <BackButton />
+      </div>
+      
+      {/* Header Section (shared with the line-by-line layout) */}
+      {renderOrderHeader()}
 
       {/* Main Content Area - Sidebar + Order Form */}
       <div className="flex-1 flex overflow-hidden">

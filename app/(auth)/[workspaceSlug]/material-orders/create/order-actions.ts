@@ -139,7 +139,8 @@ export async function saveDraftOrder(input: SaveOrderInput) {
           const match = lastOrder.order_number.match(/ON-(\d+)/);
           if (match) nextNum = parseInt(match[1], 10) + 1;
         }
-        orderNumber = `ON-${String(nextNum).padStart(6, '0')}`;
+        // One leading zero before the running number, e.g. ON-01234.
+        orderNumber = `ON-0${nextNum}`;
       }
       
       const { data: newOrder, error: orderError } = await supabase

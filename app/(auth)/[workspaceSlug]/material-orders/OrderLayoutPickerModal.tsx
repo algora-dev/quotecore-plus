@@ -46,13 +46,13 @@ const OPTIONS: {
   {
     key: 'single',
     title: 'Single Column',
-    blurb: 'Component blocks with flashing drawings and measurements, stacked in one column.',
+    blurb: 'Item blocks with images/drawings and measurements, stacked in one column.',
     img: '/order-layout-single-column.png',
   },
   {
     key: 'double',
     title: 'Double Column',
-    blurb: 'The same component blocks with drawings and measurements, arranged two per row.',
+    blurb: 'The same item blocks with images/drawings and measurements, arranged two per row.',
     img: '/order-layout-double-column.png',
   },
 ];
