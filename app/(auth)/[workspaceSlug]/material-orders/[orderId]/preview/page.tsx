@@ -26,6 +26,12 @@ export default async function OrderPreviewPage(props: Props) {
   // Pro+ gated). IDS + name + size only - never storage_path on client props.
   const companyId = orderData.order.company_id;
   const entitlements = await loadCompanyEntitlements(companyId);
+  const { data: companyRow } = await createAdminClient()
+    .from('companies')
+    .select('default_currency')
+    .eq('id', companyId)
+    .maybeSingle();
+  const currency = companyRow?.default_currency ?? 'GBP';
   const attachmentsEnabled = entitlements.features.attachment_library;
   let libraryFiles: Array<{ id: string; name: string; fileSize: number }> = [];
   if (attachmentsEnabled) {
@@ -48,6 +54,7 @@ export default async function OrderPreviewPage(props: Props) {
         workspaceSlug={workspaceSlug}
         libraryFiles={libraryFiles}
         libraryLocked={!attachmentsEnabled}
+        currency={currency}
       />
       {/*
         Supplier responses live OUTSIDE the A4-sized print container so

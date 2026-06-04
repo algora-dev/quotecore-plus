@@ -2,11 +2,20 @@
 
 import type { MaterialOrderRow, MaterialOrderLineRow, FlashingLibraryRow } from '@/app/lib/types';
 import { useRef } from 'react';
+import { formatCurrency } from '@/app/lib/currency/currencies';
+import {
+  parseLineByLineData,
+  lineByLineTotal,
+  lineDisplayText,
+  type LineByLineItem,
+} from '@/app/(auth)/[workspaceSlug]/material-orders/lineByLine';
 
 interface Props {
   order: MaterialOrderRow;
   lines: MaterialOrderLineRow[];
   flashings: Pick<FlashingLibraryRow, 'id' | 'name' | 'image_url'>[];
+  /** Currency code for line-by-line price rendering (defaults to GBP). */
+  currency?: string;
 }
 
 interface LengthEntry {
@@ -25,8 +34,16 @@ interface LengthEntry {
  * `[data-print-root]`. This is the same approach the in-app preview
  * uses and avoids server-side PDF generation in this batch.
  */
-export function OrderBody({ order, lines, flashings }: Props) {
+export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) {
   const printRootRef = useRef<HTMLDivElement | null>(null);
+
+  // Line-by-line orders store their priced item list in a single JSON column
+  // (`material_orders.line_by_line_data`) rather than in `material_order_lines`.
+  const isLineByLine = order.layout_mode === 'line_by_line';
+  const lblLines: LineByLineItem[] = isLineByLine
+    ? parseLineByLineData(order.line_by_line_data).filter((l) => l.isVisible)
+    : [];
+  const lblTotal = isLineByLine ? lineByLineTotal(parseLineByLineData(order.line_by_line_data)) : 0;
 
   return (
     <>
@@ -127,12 +144,53 @@ export function OrderBody({ order, lines, flashings }: Props) {
           </div>
         ) : null}
 
-        {/* Line items.
+        {/* LINE-BY-LINE layout: a priced item list (item / description / qty
+            / price), rendered identically on the in-app preview, the public
+            supplier page, and the print/PDF output. */}
+        {isLineByLine ? (
+          <div data-print-card>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b-2 border-slate-300 text-left">
+                  <th className="py-2 pr-3 font-semibold text-slate-600">Item / Description</th>
+                  <th className="py-2 pl-3 text-right font-semibold text-slate-600 whitespace-nowrap">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lblLines.length === 0 ? (
+                  <tr>
+                    <td colSpan={2} className="py-4 text-center text-slate-400 italic">No items on this order.</td>
+                  </tr>
+                ) : (
+                  lblLines.map((line) => (
+                    <tr key={line.id} className="border-b border-slate-100 align-top break-inside-avoid">
+                      <td className="py-2 pr-3 text-slate-800 whitespace-pre-line">{lineDisplayText(line)}</td>
+                      <td className="py-2 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
+                        {line.showPrice ? formatCurrency(line.amount, currency) : ''}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+              {lblLines.some((l) => l.showPrice) ? (
+                <tfoot>
+                  <tr className="border-t-2 border-slate-300">
+                    <td className="py-2 pr-3 text-right font-semibold text-slate-700">Total</td>
+                    <td className="py-2 pl-3 text-right font-bold text-slate-900 whitespace-nowrap tabular-nums">
+                      {formatCurrency(lblTotal, currency)}
+                    </td>
+                  </tr>
+                </tfoot>
+              ) : null}
+            </table>
+          </div>
+        ) : (
+        /* COMPONENTS layout.
             The order's saved `layout_mode` controls single- vs two-column
             grid here. The print stylesheet inherits the same grid (we
             don't override grid-template-columns in @media print) so the
             printed/PDF output matches what the user sees and what they
-            chose when saving. */}
+            chose when saving. */
         <div
           data-layout-mode={order.layout_mode === 'double' ? 'double' : 'single'}
           className={
@@ -188,6 +246,7 @@ export function OrderBody({ order, lines, flashings }: Props) {
             );
           })}
         </div>
+        )}
       </div>
 
       {/* Download button is now rendered by OrderResponseForm so it

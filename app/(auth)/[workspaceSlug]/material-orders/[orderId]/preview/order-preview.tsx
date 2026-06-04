@@ -19,6 +19,8 @@ interface Props {
   libraryFiles: PickerFile[];
   /** True when the attachment library isn't in the company's plan. */
   libraryLocked: boolean;
+  /** Company currency code for line-by-line price rendering. */
+  currency?: string;
 }
 
 /**
@@ -41,7 +43,7 @@ interface Props {
  * The header bar (Back / Mark / Edit / Print / Send) carries
  * `data-exclude-pdf` so OrderBody's print stylesheet hides it.
  */
-export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFiles, libraryLocked }: Props) {
+export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFiles, libraryLocked, currency = 'GBP' }: Props) {
   const router = useRouter();
   const [markingOrdered, setMarkingOrdered] = useState(false);
 
@@ -118,7 +120,7 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
 
       {/* Body \u2014 same renderer as the public order page. */}
       <div className="max-w-[210mm] mx-auto px-6 sm:px-8 py-6">
-        <OrderBody order={order} lines={lines} flashings={flashings} />
+        <OrderBody order={order} lines={lines} flashings={flashings} currency={currency} />
       </div>
 
       {/* Mark as Ordered Modal */}

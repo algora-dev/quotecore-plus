@@ -4,7 +4,7 @@ import { loadComponentLibrary } from '../../components/actions';
 import { OrderCreateForm } from './order-create-form';
 import { loadQuoteData } from './quote-loader';
 import { loadOrderForEdit } from './order-loader';
-import { requireCompanyContext } from '@/app/lib/supabase/server';
+import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 
 interface Props {
@@ -47,6 +47,15 @@ export default async function CreateOrderPage(props: Props) {
   const initialColumn: 'single' | 'double' =
     savedLayout === 'double' || (!savedLayout && column === 'double') ? 'double' : 'single';
 
+  // Company currency for line-by-line price rendering.
+  const supabase = await createSupabaseServerClient();
+  const { data: companyRow } = await supabase
+    .from('companies')
+    .select('default_currency')
+    .eq('id', profile.company_id)
+    .maybeSingle();
+  const currency = companyRow?.default_currency ?? 'GBP';
+
   return (
     <div className="h-screen overflow-hidden">
       <OrderCreateForm
@@ -59,6 +68,7 @@ export default async function CreateOrderPage(props: Props) {
         isOverStorage={ent.isOverStorage}
         initialLayout={initialLayout}
         initialColumn={initialColumn}
+        currency={currency}
       />
     </div>
   );

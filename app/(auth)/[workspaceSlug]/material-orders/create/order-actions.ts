@@ -2,6 +2,8 @@
 
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import type { LineByLineItem } from '../lineByLine';
+import type { Json } from '@/app/lib/supabase/database.types';
 
 interface SaveOrderInput {
   // Optional: edit existing order
@@ -21,7 +23,10 @@ interface SaveOrderInput {
   orderNotes?: string;
   logoUrl?: string;
   orderDate: string;
-  layoutMode: 'single' | 'double';
+  layoutMode: 'single' | 'double' | 'line_by_line';
+  /** Line-by-line layout only: the editor's line array, persisted verbatim to
+   *  `material_orders.line_by_line_data`. Ignored for single/double. */
+  lineByLineData?: LineByLineItem[];
   
   // Line items
   lineItems: {
@@ -86,6 +91,10 @@ export async function saveDraftOrder(input: SaveOrderInput) {
           logo_url: input.logoUrl || null,
           order_date: input.orderDate ? new Date(input.orderDate).toISOString() : null,
           layout_mode: input.layoutMode,
+          line_by_line_data:
+            input.layoutMode === 'line_by_line'
+              ? ((input.lineByLineData ?? []) as unknown as Json)
+              : null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', input.orderId)
@@ -151,6 +160,10 @@ export async function saveDraftOrder(input: SaveOrderInput) {
           logo_url: input.logoUrl || null,
           order_date: input.orderDate ? new Date(input.orderDate).toISOString() : null,
           layout_mode: input.layoutMode,
+          line_by_line_data:
+            input.layoutMode === 'line_by_line'
+              ? ((input.lineByLineData ?? []) as unknown as Json)
+              : null,
           status: 'ready',
         })
         .select()
@@ -164,8 +177,10 @@ export async function saveDraftOrder(input: SaveOrderInput) {
       order = newOrder;
     }
     
-    // Create line items with new schema
-    if (input.lineItems.length > 0) {
+    // Create line items with new schema.
+    // Line-by-line orders store their items in `line_by_line_data` (above),
+    // NOT in `material_order_lines`, so skip the relational line insert.
+    if (input.layoutMode !== 'line_by_line' && input.lineItems.length > 0) {
       const lineItemsData = input.lineItems.map((item) => ({
         order_id: order.id,
         component_id: null,

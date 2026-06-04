@@ -59,7 +59,7 @@ export default async function PublicOrderPage({ params }: Props) {
       .eq('order_id', order.id)
       .order('sort_order'),
     supabase.from('flashing_library').select('id, name, image_url').eq('company_id', order.company_id),
-    supabase.from('companies').select('name').eq('id', order.company_id).maybeSingle(),
+    supabase.from('companies').select('name, default_currency').eq('id', order.company_id).maybeSingle(),
   ]);
 
   // Latest response (if any) drives the inline status banner.
@@ -106,6 +106,7 @@ export default async function PublicOrderPage({ params }: Props) {
           order={order}
           lines={lines ?? []}
           flashings={flashings ?? []}
+          currency={company?.default_currency ?? 'GBP'}
         />
 
         <OrderResponseForm

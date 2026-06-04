@@ -17,6 +17,8 @@ import { BackButton } from '@/app/components/BackButton';
 import { AlertModal } from '@/app/components/AlertModal';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 import { CatalogSearchModal } from '../../quotes/[id]/customer-edit/CatalogSearchModal';
+import { OrderLineByLineEditor } from './OrderLineByLineEditor';
+import { parseLineByLineData, type LineByLineItem } from '../lineByLine';
 
 /** Minimal component-library option for the order item picker. */
 interface ComponentOption {
@@ -42,6 +44,8 @@ interface OrderCreateFormProps {
   /** Initial column mode for the Components editor (from the picker / saved
    *  order). The user can still toggle single<->double inside the editor. */
   initialColumn?: 'single' | 'double';
+  /** Company currency code, for line-by-line price rendering. */
+  currency?: string;
 }
 
 interface Variable {
@@ -75,11 +79,15 @@ interface OrderLineItem {
   showMeasurements: boolean;
 }
 
-export function OrderCreateForm({ templates, flashings, components = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components', initialColumn = 'single' }: OrderCreateFormProps) {
+export function OrderCreateForm({ templates, flashings, components = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components', initialColumn = 'single', currency = 'GBP' }: OrderCreateFormProps) {
   const router = useRouter();
   
   // Layout state
   const [layoutMode, setLayoutMode] = useState<'single' | 'double'>(initialColumn);
+  // Line-by-line layout lines (separate from the components `orderLines`).
+  // Persisted to `material_orders.line_by_line_data`; hydrated on edit below.
+  const isLineByLine = initialLayout === 'line_by_line';
+  const [lineByLineLines, setLineByLineLines] = useState<LineByLineItem[]>([]);
   // App-style alert state. Replaces native alert() calls so the order flow
   // matches the rest of the app's modal styling.
   const [alertState, setAlertState] = useState<{
@@ -283,6 +291,12 @@ export function OrderCreateForm({ templates, flashings, components = [], workspa
     // rendered UI doesn't receive unexpected values.
     setLayoutMode(order.layout_mode === 'double' ? 'double' : 'single');
 
+    // Line-by-line orders store their items in `line_by_line_data`; hydrate
+    // those here (the components `orderLines` path below stays empty for them).
+    if (order.layout_mode === 'line_by_line') {
+      setLineByLineLines(parseLineByLineData(order.line_by_line_data));
+    }
+
     // Map line items
     const mappedLines: OrderLineItem[] = lines.map(line => ({
       id: line.id,
@@ -481,7 +495,12 @@ export function OrderCreateForm({ templates, flashings, components = [], workspa
       return;
     }
 
-    if (orderLines.length === 0) {
+    if (isLineByLine) {
+      if (lineByLineLines.length === 0) {
+        showAlert('No lines', 'Please add at least one line before saving.', 'info');
+        return;
+      }
+    } else if (orderLines.length === 0) {
       showAlert('No components', 'Please add at least one component before saving.', 'info');
       return;
     }
@@ -504,8 +523,9 @@ export function OrderCreateForm({ templates, flashings, components = [], workspa
         orderNotes,
         logoUrl,
         orderDate,
-        layoutMode,
-        lineItems: orderLines.map((line, index) => ({
+        layoutMode: isLineByLine ? 'line_by_line' : layoutMode,
+        lineByLineData: isLineByLine ? lineByLineLines : undefined,
+        lineItems: isLineByLine ? [] : orderLines.map((line, index) => ({
           componentName: line.componentName,
           flashingId: line.flashingId,
           flashingImageUrl: line.flashingImageUrl,
@@ -540,30 +560,84 @@ export function OrderCreateForm({ templates, flashings, components = [], workspa
     }
   }
 
-  // LINE-BY-LINE LAYOUT (customer-quote-style editor).
-  // NOTE: full editor (CustomerQuoteEditor adapter + line_by_line_data save/load
-  // + preview/public/PDF render) is built in the next session. This branch keeps
-  // the up-front layout choice + routing wired and green. The components/single/
-  // double editor below is unchanged.
+  // LINE-BY-LINE LAYOUT (Option B focused order editor).
+  // Reuses the order's TO/FROM/ref/date header (identifying info the user needs
+  // while editing), then the OrderLineByLineEditor for the priced item list.
+  // The full canonical header still renders on preview/public/PDF via OrderBody.
   if (initialLayout === 'line_by_line') {
+    const lblInputCls = 'w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:border-orange-500 focus:outline-none';
     return (
-      <div className="flex flex-col h-screen bg-slate-50">
-        <div className="px-6 py-4">
-          <BackButton />
-        </div>
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="max-w-md text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/order-layout-line-by-line.png" alt="Line by line" className="mx-auto mb-4 w-40 rounded-lg border border-slate-200" />
-            <h2 className="text-lg font-semibold text-slate-900">Line-by-line order</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              This order is set to the line-by-line layout. The quote-style editor is being wired up
-              — you&rsquo;ll get the full Item / description / qty / price list with show, hide and edit
-              controls here.
-            </p>
+      <>
+        <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
+        <AlertModal
+          open={alertState.open}
+          title={alertState.title}
+          description={alertState.description}
+          variant={alertState.variant}
+          onClose={closeAlert}
+        />
+        <div className="min-h-screen bg-slate-50">
+          <div className="px-6 pt-4">
+            <BackButton />
+          </div>
+          <div className="max-w-5xl mx-auto px-6 py-4 space-y-6">
+            {/* Order header (identifying fields) */}
+            <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <h2 className="text-base font-semibold text-slate-900 mb-4">Line-by-line order</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">To (Supplier)</label>
+                  <input type="text" value={toSupplier} onChange={(e) => setToSupplier(e.target.value)} placeholder="To" className={lblInputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">From</label>
+                  <input type="text" value={fromCompany} onChange={(e) => setFromCompany(e.target.value)} placeholder="From" className={lblInputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Reference *</label>
+                  <input type="text" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Reference / Job name" className={lblInputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Order date</label>
+                  <input type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} className={lblInputCls} />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Order notes</label>
+                  <textarea value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder="Order notes (optional)" rows={2} className={lblInputCls} />
+                </div>
+              </div>
+            </div>
+
+            {/* Line editor */}
+            <OrderLineByLineEditor
+              initialLines={lineByLineLines}
+              currency={currency}
+              onChange={setLineByLineLines}
+            />
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3 pb-10">
+              {existingOrder && (
+                <button
+                  type="button"
+                  onClick={() => window.open(`../material-orders/${existingOrder.order.id}/preview`, '_blank')}
+                  className="px-4 py-2 text-sm font-medium border border-slate-300 bg-white text-slate-700 rounded-full hover:bg-slate-50 transition"
+                >
+                  Preview
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                disabled={saving}
+                className="px-6 py-2 text-sm font-semibold bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              >
+                {saving ? 'Saving…' : 'Save Order'}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
