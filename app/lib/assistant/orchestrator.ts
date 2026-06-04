@@ -118,6 +118,7 @@ function buildSystemPrompt(
     '- get_ui_element_details {elementId}: explain what a specific control does.',
     '- request_ui_highlight {elementId}: visually point at an on-screen control (only works if it is currently visible).',
     'HIGHLIGHTING: only call request_ui_highlight with an elementId you got from a workflow step or that appears in get_current_context.visibleElementIds. If it returns highlighted:false (not on screen), do NOT retry — just describe where to find it. One highlight per step is enough. Treatments: pulse, glow, spotlight, arrow.',
+    'NAVIGATION REQUESTS ("how do I get to the Quotes page?", "take me to material orders", "where are my components?"): the main navigation links are ALWAYS available at the top of the app and are registered as: nav-components (Components page), nav-quotes (Quotes page), nav-orders (Material Orders page). These are NOT workflows — do NOT call find_workflows / get_workflow for a pure "get me to page X" request. Instead, in ONE turn: call get_current_context, then if the target nav id is in visibleElementIds call request_ui_highlight on it (treatment "pulse") and reply with one short sentence ("Click the highlighted Quotes link at the top."). If it is not visible, just name it ("Use the Quotes link in the top navigation bar."). Keep it to a single highlight + one sentence — never spin through multiple tool calls for a simple navigation ask.',
     `Current screen: ${ctx.screenKey || 'unknown'}.`,
     `User plan/tier: ${ctx.serverPermissions.tier}.`,
     `Trade: ${tradeOf(ctx)}.`,
@@ -506,7 +507,44 @@ export async function runAssistantTurn(
     }
 
     if (depth === MODEL_LIMITS.maxToolCallDepth) {
-      // Out of tool budget — stop looping; return whatever text we have.
+      // Out of tool budget. If the model already produced text alongside its
+      // (ignored) tool calls, keep it. Otherwise force a FINAL no-tools
+      // completion so the user never gets an empty/blank reply — the model must
+      // answer from the tool results it has already gathered. This is the fix
+      // for the "typing dots that never resolve" hang on multi-tool turns
+      // (e.g. cross-page guide-me: context -> find -> begin -> step -> highlight
+      // exhausts the budget before any prose is emitted).
+      if (!finalText.trim()) {
+        messages.push({
+          role: 'assistant',
+          content: step.text,
+          tool_calls: step.toolCalls,
+        });
+        for (const call of step.toolCalls) {
+          input.onToolCall?.(call.name);
+          toolsUsed.push(call.name);
+          const { result } = await dispatchTool(
+            call.name,
+            call.arguments,
+            input.context,
+            input.onHighlight,
+            input.onGuideStart
+          );
+          messages.push({
+            role: 'tool',
+            tool_call_id: call.id,
+            content: JSON.stringify(result).slice(0, 6000),
+          });
+        }
+        const finalStep = await runChatStep({
+          messages,
+          tools: [], // no tools -> model is forced to produce prose now
+          onToken: input.onToken,
+          signal: input.signal,
+        });
+        totalTokens += finalStep.totalTokens;
+        finalText = finalStep.text;
+      }
       break;
     }
 

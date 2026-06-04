@@ -63,7 +63,13 @@ export const MODEL_LIMITS = {
   /** Max output tokens per assistant turn. */
   maxOutputTokens: envInt('ASSISTANT_MAX_OUTPUT_TOKENS', 1_200),
   /** Max tool-call iterations in a single turn (loop-guard). */
-  maxToolCallDepth: envInt('ASSISTANT_MAX_TOOL_CALL_DEPTH', 5),
+  // Cross-page guide-me legitimately chains several read-only tools in one turn
+  // (get_current_context -> find_workflows -> begin_guide -> get_workflow_step
+  // -> request_ui_highlight, plus a completion re-check). 5 was too tight and
+  // caused turns to exhaust the budget before emitting prose. 8 gives headroom;
+  // the orchestrator also force-completes if the budget is ever hit, so this is
+  // belt-and-braces. All tools are read-only, so a higher cap is safe.
+  maxToolCallDepth: envInt('ASSISTANT_MAX_TOOL_CALL_DEPTH', 8),
   /** Hard wall-clock timeout for a single chat turn (ms). */
   turnTimeoutMs: envInt('ASSISTANT_TURN_TIMEOUT_MS', 30_000),
 } as const;

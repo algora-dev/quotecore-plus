@@ -71,7 +71,18 @@ const CURATED: Record<
   'nav-components': {
     label: 'Components',
     role: 'menu-item',
-    description: 'Navigates to the Components page.',
+    description: 'Main-nav link. Navigates to the Components page.',
+  },
+  'nav-quotes': {
+    label: 'Quotes',
+    role: 'menu-item',
+    description: 'Main-nav link. Navigates to the Quotes page (your saved quotes).',
+  },
+  'nav-orders': {
+    label: 'Material Orders',
+    role: 'menu-item',
+    description:
+      'Main-nav link. Navigates to the Material Orders page. May be plan-gated (opens an upgrade prompt instead if the tier lacks Material Orders).',
   },
 };
 
