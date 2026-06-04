@@ -50,12 +50,22 @@ export default async function Page({
     notFound();
   }
 
-  // Load components from component library
+  // Load components from component library.
+  // `collection_id` lets the takeoff panel filter by named library (with an
+  // "All" option that shows every company component regardless of library).
   const { data: components, error: componentsError } = await supabase
     .from('component_library')
-    .select('id, name, measurement_type')
+    .select('id, name, measurement_type, collection_id')
     .eq('company_id', profile.company_id)
     .order('name');
+
+  // Named component libraries (collections) for the add-component selector.
+  const { data: collectionsRaw } = await supabase
+    .from('component_collections')
+    .select('id, name')
+    .eq('company_id', profile.company_id)
+    .order('name');
+  const collections = collectionsRaw ?? [];
 
   console.log('[Takeoff] Component query result:', {
     count: components?.length || 0,
@@ -112,6 +122,7 @@ export default async function Page({
         quote={quote}
         planUrl={planUrl}
         components={components || []}
+        collections={collections}
         hydrationData={hydrationData}
         takeoffMode="add"
         existingRoofAreas={(existingAreas || []).map(a => ({ id: a.id, label: a.label }))}
@@ -168,6 +179,7 @@ export default async function Page({
         quote={quote}
         planUrl={planUrl}
         components={components || []}
+        collections={collections}
         hydrationData={null}
         takeoffMode="new-page"
         initialPageId={resolvedPageId}
@@ -189,6 +201,7 @@ export default async function Page({
       quote={quote}
       planUrl={planUrl}
       components={components || []}
+      collections={collections}
       hydrationData={hydrationData}
       isOverStorage={isOverStorage}
     />

@@ -18,6 +18,12 @@ const TakeoffWorkstation = dynamic(
 interface Component {
   id: string;
   name: string;
+  collection_id?: string | null;
+}
+
+interface ComponentCollection {
+  id: string;
+  name: string;
 }
 
 interface Props {
@@ -26,6 +32,8 @@ interface Props {
   quote: QuoteRow;
   planUrl: string;
   components: Component[];
+  /** Named component libraries for the add-component selector. */
+  collections?: ComponentCollection[];
   hydrationData: TakeoffHydrationData | null;
   /** P1-1b: re-entry mode. Omit for first-ever entry. */
   takeoffMode?: 'add' | 'new-page';
@@ -46,6 +54,7 @@ export function TakeoffPage({
   quote,
   planUrl,
   components,
+  collections,
   hydrationData,
   takeoffMode,
   initialPageId,
@@ -60,6 +69,7 @@ export function TakeoffPage({
       quote={quote}
       planUrl={planUrl}
       components={components}
+      collections={collections}
       hydrationData={hydrationData}
       takeoffMode={takeoffMode}
       initialPageId={initialPageId}

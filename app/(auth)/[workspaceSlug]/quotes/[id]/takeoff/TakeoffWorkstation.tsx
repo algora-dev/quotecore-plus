@@ -30,9 +30,19 @@ interface Component {
   id: string;
   name: string;
   measurement_type?: string; // matches ComponentLibraryRow field name
+  /** Named library (component_collections.id) this component belongs to. Null = unfiled. */
+  collection_id?: string | null;
   /** @deprecated alias kept for any callers that used the old name */
   default_measurement_type?: string;
 }
+
+interface ComponentCollection {
+  id: string;
+  name: string;
+}
+
+/** Sentinel for the "All components" option in the library selector. */
+const ALL_LIBRARIES = '__all__';
 
 interface ComponentColor {
   componentId: string;
@@ -74,6 +84,8 @@ interface Props {
   quote: QuoteRow;
   planUrl: string;
   components: Component[];
+  /** Named component libraries for the add-component selector (with an "All" option). */
+  collections?: ComponentCollection[];
   /** P1-1a C-01: Hydrated state from DB, loaded server-side. Null = fresh takeoff. */
   hydrationData: TakeoffHydrationData | null;
   /** P1-1b: re-entry mode. 'add' = continue on page-1; 'new-page' = fresh area. */
@@ -128,6 +140,7 @@ export function TakeoffWorkstation({
   quote,
   planUrl,
   components,
+  collections = [],
   hydrationData,
   takeoffMode,
   initialPageId,
@@ -201,7 +214,16 @@ export function TakeoffWorkstation({
   const [componentColors, setComponentColors] = useState<ComponentColor[]>([]);
   const [activeComponentIds, setActiveComponentIds] = useState<string[]>([]);
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
-  
+
+  // Component-library filter for the Available list. Defaults to the quote's
+  // pinned library if it still exists, otherwise "All components". "All" shows
+  // every company component regardless of which named library it belongs to.
+  const [selectedLibraryId, setSelectedLibraryId] = useState<string>(() => {
+    const pinned = (quote as { component_collection_id?: string | null }).component_collection_id ?? null;
+    if (pinned && collections.some((c) => c.id === pinned)) return pinned;
+    return ALL_LIBRARIES;
+  });
+
   // Roof Areas
   const [roofAreas, setRoofAreas] = useState<RoofArea[]>([]);
   // Keep roofAreasRef in sync for canvas event handlers (stale closures).
@@ -2473,9 +2495,47 @@ export function TakeoffWorkstation({
                     Hover state: solid orange circle, white plus, no row background. */}
                 <div>
                   <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Available</h3>
-                  <div className="space-y-1">
-                    {displayComponents
+
+                  {/* Library selector: pick a named component library, or "All"
+                      to show every company component regardless of library.
+                      Mirrors the customer-quote-editor catalog picker. */}
+                  {collections.length > 0 && (
+                    <div className="mb-2">
+                      <label className="block text-[11px] font-medium text-gray-500 mb-1">Library</label>
+                      <select
+                        value={selectedLibraryId}
+                        onChange={(e) => setSelectedLibraryId(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
+                        aria-label="Filter components by library"
+                      >
+                        <option value={ALL_LIBRARIES}>All components</option>
+                        {collections.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {(() => {
+                    const available = displayComponents
                       .filter(comp => !activeComponentIds.includes(comp.id))
+                      .filter(comp =>
+                        selectedLibraryId === ALL_LIBRARIES
+                          ? true
+                          : (comp.collection_id ?? null) === selectedLibraryId,
+                      );
+                    if (available.length === 0) {
+                      return (
+                        <p className="text-xs text-gray-400 py-2">
+                          {selectedLibraryId === ALL_LIBRARIES
+                            ? 'All components are already active.'
+                            : 'No components in this library.'}
+                        </p>
+                      );
+                    }
+                    return (
+                  <div className="space-y-1">
+                    {available
                       .map((comp) => (
                           <button
                             key={comp.id}
@@ -2484,7 +2544,14 @@ export function TakeoffWorkstation({
                             className="w-full flex items-center gap-2 p-1.5 rounded transition group text-left cursor-pointer"
                             aria-label={`Add ${comp.name}`}
                           >
-                            <div className="flex-1 text-sm text-slate-700 group-hover:text-slate-900">{comp.name}</div>
+                            <div className="flex-1 min-w-0 text-sm text-slate-700 group-hover:text-slate-900">
+                              <span className="truncate">{comp.name}</span>
+                              {selectedLibraryId === ALL_LIBRARIES && comp.collection_id && (
+                                <span className="ml-1 text-xs text-slate-400">
+                                  · {collections.find(c => c.id === comp.collection_id)?.name ?? ''}
+                                </span>
+                              )}
+                            </div>
                             <span
                               className="w-7 h-7 flex items-center justify-center rounded-full text-base font-bold transition-all flex-shrink-0 border-2 border-orange-500 text-orange-500 group-hover:bg-orange-500 group-hover:text-white"
                               aria-hidden="true"
@@ -2494,6 +2561,8 @@ export function TakeoffWorkstation({
                           </button>
                       ))}
                   </div>
+                    );
+                  })()}
                 </div>
               </div>
               )}
