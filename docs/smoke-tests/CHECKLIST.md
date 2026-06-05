@@ -111,6 +111,14 @@ _(empty - move items here as they pass)_
 
 ---
 
+## Pending verification (dev - line-by-line order UX + collapsible panels, 2026-06-05)
+- [ ] **Order-from-quote → line-by-line populates** (`67779c0`): create order from a quote choosing the Line-by-Line layout → editor pre-fills priced lines (lines + prices + descriptions, matching the customer quote) + footer; **tax starts EMPTY by default** (user opts in). Reference pre-filled `Order for <n>`. Custom blank line-by-line still starts empty (untouched).
+- [ ] **Order-from-quote repeat save** (`b3e61e2`): save an order from the SAME quote twice → 2nd gets `ON-<n>-2` suffix, NO "Failed to save" error. Also: two custom orders back-to-back get consecutive numbers (no spurious `-2`, `3157462`).
+- [ ] **Hide-all-prices persists** (`5dcd23f`): tick "Hide all prices" beside Order items → Save → saved order, public/sent page, and Print/PDF all show ZERO pricing (no per-line price, subtotal, tax, total, Price header blank). Untick = per-line prices as set. Works on both new + edited orders.
+- [ ] **Line-by-line scroll + width** (`67779c0`→`57c61ae`): footer + taxes reachable by scrolling on any screen ratio; body lines up with full-width header; preview is the wider section; header is a rounded card.
+- [ ] **Collapsible panels — all editors** (`c2b16cc`→`8bf3a7a`): line-by-line order, components/column order, customer quote, AND labor sheet — click `«` to collapse the left controls → preview smoothly fills the space; expand tab (top-left, vertical label) returns to original dims. Header-collapse + panel-collapse work together. **Quote/labor: collapse preview is dominant when expanded.** Saving with a panel collapsed changes nothing (verified in code: save keyed to isDirty / data only; panelCollapsed is isolated layout state).
+- [ ] **Order editor tip** (`8bf3a7a`): both order editors show "Tip: to view the full preview with header, save, then view order." next to the preview label.
+
 ## Pending verification (dev - line-by-line orders + catalog UX, 2026-06-04)
 - [ ] **Customer Quote Editor — unified "Add New Line" modal (Phase 1)** (`20b14f9`): under Components & Items there is now ONE "+ Add New Line" button (replaced the old Add Custom Line + Search Catalog pair). Clicking it opens a modal with 3 tabs:
   - **Custom line**: Description (text) + Quantity/detail (text) + Price (number) → adds line + shows in preview.
