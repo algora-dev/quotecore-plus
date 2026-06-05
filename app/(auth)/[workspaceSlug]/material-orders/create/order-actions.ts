@@ -131,21 +131,33 @@ export async function saveDraftOrder(input: SaveOrderInput) {
       let baseNumber: string;
       const quoteMatch = input.reference?.match(/Order for (\d+)/);
       if (quoteMatch) {
+        // Order-from-quote: link the order to the quote number.
         baseNumber = `ON-${quoteMatch[1]}`;
       } else {
-        const { data: lastOrder } = await supabase
+        // Custom order: next sequential number. IMPORTANT: derive it from the
+        // numeric MAX across ALL existing ON-<n> numbers for the company, NOT
+        // from "the most recently created order". Quote-linked orders
+        // (ON-<quoteNumber>) share this same ON- namespace, so keying off the
+        // last-created row could land on a quote number (e.g. ON-1015) and
+        // compute ON-1016 — which sits BELOW the true custom sequence
+        // (ON-001024 already existed) and collides, forcing a spurious "-2"
+        // suffix. Taking the max+1 makes the counter monotonic and collision-
+        // free regardless of creation order or quote-number magnitudes.
+        const { data: allOrders } = await supabase
           .from('material_orders')
           .select('order_number')
           .eq('company_id', profile.company_id)
-          .like('order_number', 'ON-%')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-        let nextNum = 1;
-        if (lastOrder?.order_number) {
-          const match = lastOrder.order_number.match(/ON-(\d+)/);
-          if (match) nextNum = parseInt(match[1], 10) + 1;
+          .like('order_number', 'ON-%');
+        let maxNum = 0;
+        for (const row of allOrders ?? []) {
+          // Match the leading numeric run only (ignores any "-2" dedupe suffix).
+          const m = row.order_number?.match(/^ON-(\d+)/);
+          if (m) {
+            const n = parseInt(m[1], 10);
+            if (Number.isFinite(n) && n > maxNum) maxNum = n;
+          }
         }
+        const nextNum = maxNum + 1;
         // One leading zero before the running number, e.g. ON-01234.
         baseNumber = `ON-0${nextNum}`;
       }
