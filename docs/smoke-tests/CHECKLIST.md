@@ -111,6 +111,14 @@ _(empty - move items here as they pass)_
 
 ---
 
+## Pending verification (dev - help docs + Guide-Me coverage, 2026-06-05)
+- [ ] **New help docs render** (`26dbb9c`): on `quotecore-plus-dev.vercel.app/docs`, the sidebar shows new sections **Catalog Library**, **Attachments**, **Follow-ups**, plus new pages under **Material orders** (Order layouts / Line-by-line editor / Order from a quote) and **Help** (Meet Q / Guide Me / rewritten Chat Assistant). Each page opens, MDX/Callouts render, internal cross-links resolve (no 404).
+- [ ] **Help-drawer context mapping**: opening the in-app help drawer (`?`) on the Catalogs, Attachments, and Order-from-Quote screens opens the matching new doc, not the index fallback.
+- [ ] **Q answers from new docs** (embed-docs ran, 127 chunks): ask Q (Respond mode) "how do I upload a catalog?", "how do I attach a file to a quote?", "how do automated follow-ups work?" → answers cite/draw from the new docs.
+- [ ] **Wizard row-cap copy** (`ac7a575`): catalog upload wizard text now reads **35,000 rows** (was 20,000) in both spots.
+- [ ] **Content proofread**: Shaun final read of the published pages for any wording tweaks (drafts were `docs/DRAFT-docs-additions-2026-06-05.md`).
+- [ ] **(Deferred) Guide-Me flows**: the 5 new walkthroughs (`docs/DRAFT-guideme-flows-2026-06-05.md`) are NOT yet wired into `guides.generic.ts` — pending Shaun review of that draft + adding any missing `data-copilot` anchors.
+
 ## Pending verification (dev - line-by-line order UX + collapsible panels, 2026-06-05)
 - [ ] **Order-from-quote → line-by-line populates** (`67779c0`): create order from a quote choosing the Line-by-Line layout → editor pre-fills priced lines (lines + prices + descriptions, matching the customer quote) + footer; **tax starts EMPTY by default** (user opts in). Reference pre-filled `Order for <n>`. Custom blank line-by-line still starts empty (untouched).
 - [ ] **Order-from-quote repeat save** (`b3e61e2`): save an order from the SAME quote twice → 2nd gets `ON-<n>-2` suffix, NO "Failed to save" error. Also: two custom orders back-to-back get consecutive numbers (no spurious `-2`, `3157462`).
