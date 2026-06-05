@@ -125,27 +125,29 @@ interface ExpandTabProps {
 export function ExpandTab({ collapsed, onToggle, label = 'Show panel', className = '' }: ExpandTabProps) {
   if (!collapsed) return null;
   return (
+    // Top-aligned (self-start) and compact (fixed py height) so the tab sits
+    // next to the TOP of the preview — not stretched down the full column. The
+    // sticky offset keeps it in view if the preview is tall and the user
+    // scrolls. flex-shrink-0 so it never gets squeezed by the flex row.
     <button
       type="button"
       onClick={onToggle}
       title={label}
       aria-label={label}
       className={[
-        'hidden lg:flex flex-shrink-0 items-center justify-center self-stretch',
-        'w-7 rounded-lg border border-slate-200 bg-white text-slate-500',
+        'hidden lg:flex flex-shrink-0 self-start lg:sticky lg:top-4',
+        'flex-col items-center justify-center gap-2 py-3 w-7',
+        'rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm',
         'hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 transition-colors',
-        'shadow-sm',
         className,
       ].join(' ')}
     >
-      <span className="flex flex-col items-center gap-1.5">
-        {/* Chevrons-right (expand outward to the right) */}
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-        </svg>
-        <span className="text-[10px] font-semibold uppercase tracking-wider [writing-mode:vertical-rl]">
-          {label}
-        </span>
+      {/* Chevrons-right (expand outward to the right) */}
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+      </svg>
+      <span className="text-[10px] font-semibold uppercase tracking-wider [writing-mode:vertical-rl]">
+        {label}
       </span>
     </button>
   );

@@ -1020,8 +1020,9 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
         </div>
 
         {/* Expand tab — only visible when the sidebar is collapsed. Lives
-            between the sidebar and the form pane so it is never clipped. */}
-        <div className="flex items-stretch px-1 py-2">
+            between the sidebar and the form pane so it is never clipped.
+            items-start keeps it pinned to the TOP of the column. */}
+        <div className="flex items-start px-1 py-2">
           <ExpandTab
             collapsed={componentsPanelCollapsed}
             onToggle={() => setComponentsPanelCollapsed(false)}
