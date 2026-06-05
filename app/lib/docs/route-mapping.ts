@@ -37,6 +37,13 @@ export function pathnameToDocSlug(pathname: string | null | undefined): string {
     { match: /^customer-quote-templates(\/|$)/,            slug: 'templates/customer-quote-templates' },
 
     { match: /^flashings(\/|$)/,                           slug: 'flashings/flashings' },
+
+    { match: /^catalogs(\/|$)/,                            slug: 'catalog/overview' },
+    { match: /^attachments(\/|$)/,                         slug: 'attachments/overview' },
+
+    // Material orders - more specific first.
+    { match: /^material-orders\/order-from-quote(\/|$)/,   slug: 'material-orders/order-from-a-quote' },
+    { match: /^material-orders\/create(\/|$)/,             slug: 'material-orders/order-layouts' },
     { match: /^material-orders(\/|$)/,                     slug: 'material-orders/creating-orders' },
 
     // Account routes - the live app collapses to one /account page with

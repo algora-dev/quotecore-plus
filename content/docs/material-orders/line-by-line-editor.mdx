@@ -1,0 +1,64 @@
+---
+title: Line-by-line order editor
+description: Add, edit, and control priced lines in a Line by Line material order.
+order: 3
+status: published
+updated: 2026-06-05
+---
+
+# Line-by-line order editor
+
+The line-by-line editor is the editor for orders created with the **Line by Line** layout. It works similarly to the customer quote editor — each line has a description, an optional price, and per-line controls for visibility and totalling.
+
+## Layout
+
+The editor is split into two panels:
+
+- **Left — Order items:** the line list, footer, and tax controls.
+- **Right — Preview:** a live preview of how the order will look when sent or printed.
+
+You can collapse the left panel using the collapse button to give the preview more space.
+
+## Adding lines
+
+Click **+ Add New Line** at the bottom of the order items panel. A modal opens with three tabs:
+
+- **Custom** — type an item description, optional quantity/detail text, and a price.
+- **Add a component** — pick a component from your library. The line lands with the component name pre-filled; you set the price in the preview.
+- **Search catalog** — search your uploaded catalog files. See [Using catalog items in quotes](/docs/catalog/using-catalog-items).
+
+## Per-line controls
+
+Each line has the following controls:
+
+| Control | What it does |
+|---------|-------------|
+| **Edit** | Opens the line edit form to change the description, quantity text, or price. |
+| **Show** | Tick to include the line in the order; untick to hide it from the preview, PDF, and customer copy. |
+| **Price** | Tick to show the line's price; untick to hide the price on this line only. |
+| **In total** | Tick to include this line in the order subtotal; untick to show the line but exclude it from the total. |
+| **▲ / ▼** | Move the line up or down in the list. |
+
+## Hide all prices
+
+The **Hide all prices** checkbox at the top of the order items panel overrides all per-line price settings with a single click. When ticked, no prices, subtotals, or totals appear anywhere in the preview or on the sent order. Untick to restore individual line settings.
+
+This is useful if you want a "labour order" or quantities-only version without manually unticking every line.
+
+## Footer
+
+Below the line list is a free-text footer field. The footer appears at the bottom of the order document — use it for delivery notes, supplier references, or any other instructions.
+
+## Taxes (optional)
+
+Optional tax lines can be added below the footer. You can type a custom tax name and rate, or apply one of your company's saved default taxes.
+
+## Order number
+
+Orders are numbered automatically in the format **ON-0NNNN** (e.g. ON-01234). The number is shown on the order preview and on the order list page.
+
+## Related
+
+- [Order layouts](/docs/material-orders/order-layouts)
+- [Order from a quote](/docs/material-orders/order-from-a-quote)
+- [Using catalog items in quotes](/docs/catalog/using-catalog-items)
