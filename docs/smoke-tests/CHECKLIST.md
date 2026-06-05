@@ -117,7 +117,40 @@ _(empty - move items here as they pass)_
 - [ ] **Q answers from new docs** (embed-docs ran, 127 chunks): ask Q (Respond mode) "how do I upload a catalog?", "how do I attach a file to a quote?", "how do automated follow-ups work?" → answers cite/draw from the new docs.
 - [ ] **Wizard row-cap copy** (`ac7a575`): catalog upload wizard text now reads **35,000 rows** (was 20,000) in both spots.
 - [ ] **Content proofread**: Shaun final read of the published pages for any wording tweaks (drafts were `docs/DRAFT-docs-additions-2026-06-05.md`).
-- [ ] **(Deferred) Guide-Me flows**: the 5 new walkthroughs (`docs/DRAFT-guideme-flows-2026-06-05.md`) are NOT yet wired into `guides.generic.ts` — pending Shaun review of that draft + adding any missing `data-copilot` anchors.
+- [x] **(Now wired) Guide-Me flows**: the 5 new walkthroughs ARE now wired into `guides.generic.ts` + `intents.ts` (`367dbfe`) with 20+ `data-copilot` anchors. See the dedicated nav + Guide-Me section below for the full test pass.
+
+## Pending verification (dev - navigation + Resources hub + Guide-Me flows, 2026-06-05)
+
+> Commits: Part A nav `ec6b100`, Guide-Me anchors+flows `367dbfe`, Part B Resources hub `6932d8a`. Assistant is dev-only (flag-gated); these need the AI Assistant ON (it is on the dev project).
+
+### N. Navigation changes (Part A)
+- [ ] **Nav order + labels**: main nav now reads **Components · Quotes · Orders · Resources**. "Material Orders" is renamed **Orders**; a new **Resources** item appears. Active-pill highlight follows the page you're on (no false highlight of Resources when on Orders, etc.).
+- [ ] **Orders link still works**: clicking **Orders** lands on the material-orders hub (same page as before, just renamed). Pro-gating unchanged: on a non-Pro account the Orders item still shows the lock + upgrade modal.
+- [ ] **Resources link works**: clicking **Resources** opens the new `/resources` cards hub.
+
+### O. Resources cards hub (Part B)
+- [ ] **Hub renders as cards**: `/resources` shows 8 cards styled like the dashboard (icon tile + title + description, orange hover glow), NO tab bar. Cards: Components, Drawings & Images, Catalogs, Attachments, Quote Templates, Quote Header Templates, Message Templates, Order Header Templates.
+- [ ] **Redirect cards**: **Components** card → `/components` (existing page); **Drawings & Images** card → `/flashings` (existing page). Both load their real pages unchanged.
+- [ ] **Sub-route cards — each opens its own URL with ONLY that section, no tab bar, page title = section name:**
+  - Catalogs → `/resources/catalogs`
+  - Attachments → `/resources/attachments`
+  - Quote Templates → `/resources/quote-templates`
+  - Quote Header Templates → `/resources/quote-header-templates`
+  - Message Templates → `/resources/message-templates`
+  - Order Header Templates → `/resources/order-header-templates`
+- [ ] **Section content intact**: inside each sub-route the existing UI works exactly as before (create/edit/delete templates; upload/rename/archive catalogs + attachments; Pro-gating + storage limits still enforced). Nothing about the panels changed — only the wrapper.
+- [ ] **Back button**: each sub-route has a Back button returning to the Resources hub. Hub itself has NO back button (it's a top-level destination).
+- [ ] **Back-compat redirects**: visiting old links `/resources?tab=catalogs`, `?tab=attachments`, `?tab=quote`, `?tab=customer`, `?tab=email`, `?tab=order` each 302-redirect to the matching new sub-route (no 404, no dead tab page). The dashboard "Resource Library" card (→ `/resources`) still works.
+- [ ] **Help drawer per section**: the `?` help icon on each sub-route opens the right doc — Catalogs→Catalog overview, Attachments→Attachment overview, Message Templates→Email templates, Order Header Templates→Supplier templates, etc.
+
+### P. Guide-Me flows (the 5 new walkthroughs) — run each in **Guide me** mode with **Highlights ON**
+- [ ] **Flow 1 — Upload & Map a Catalog**: ask Q "how do I upload a catalog?" (or start on `/catalogs`). Steps highlight in order: Upload catalog btn → drop zone → name input → column-map section → multi-maps note → Save catalog. Each highlight lands on the correct element; Next/Back/Finish work; highlight releases on click.
+- [ ] **Flow 2 — Add a Catalog Item to a Quote**: from inside a customer quote editor. Steps: (nav prompt) → **+ Add New Line** btn → **Search catalog** tab → search input → results → Save and Return. Highlights land correctly. _(Q narrates the nav into a specific quote; it can't deep-link an arbitrary quote — expected.)_
+- [ ] **Flow 3 — Attach & Send Files**: Steps: **Resources** nav → **Attachments card** (on the hub) → Upload file btn (on `/resources/attachments`) → (nav to a quote) → Send Quote → attachment picker → send mode. The re-pointed Attachments **card** highlight (not the old tab) is correct.
+- [ ] **Flow 4 — Build a Line-by-Line Order**: Steps: **Orders** nav → Custom Order card → layout picker → **Line by Line** card → Order items panel → + Add New Line → line controls → Footer → Taxes. Highlights land; layout-picker + line-by-line editor anchors resolve.
+- [ ] **Flow 5 — Create an Order from a Quote**: Steps: **Orders** nav → **Order from Quote** card → layout picker (Line by Line) → quote list → **Create Order** confirm btn → supplier header form → Save Order. The confirm button highlight matches the real **"Create Order"** label.
+- [ ] **Intent routing**: typing natural phrases routes to the right flow — e.g. "add a catalog item to a quote", "attach a file to a quote", "turn a quote into a material order", "build a line by line order".
+- [ ] **No stale anchors / console errors**: stepping through all 5 flows produces no "element not found" highlight failures and no console errors. Highlights release on any click (dismissedKeyRef) and the last step shows **Finish**.
 
 ## Pending verification (dev - line-by-line order UX + collapsible panels, 2026-06-05)
 - [ ] **Order-from-quote → line-by-line populates** (`67779c0`): create order from a quote choosing the Line-by-Line layout → editor pre-fills priced lines (lines + prices + descriptions, matching the customer quote) + footer; **tax starts EMPTY by default** (user opts in). Reference pre-filled `Order for <n>`. Custom blank line-by-line still starts empty (untouched).
