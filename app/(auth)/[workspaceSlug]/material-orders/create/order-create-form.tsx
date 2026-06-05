@@ -19,6 +19,7 @@ import { AlertModal } from '@/app/components/AlertModal';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 import { CatalogSearchModal } from '../../quotes/[id]/customer-edit/CatalogSearchModal';
 import { OrderLineByLineEditor } from './OrderLineByLineEditor';
+import { CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
 import {
   parseLineByLineData,
   parseLineByLineFooter,
@@ -142,6 +143,9 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
     if (cb) cb();
   };
   const [headerExpanded, setHeaderExpanded] = useState(true);
+  // Declutter: collapse the components control sidebar so the order-form
+  // preview fills the space. Pure layout state — sidebar stays mounted.
+  const [componentsPanelCollapsed, setComponentsPanelCollapsed] = useState(false);
   const [saving, setSaving] = useState(false);
   
   // Template selection
@@ -823,10 +827,26 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
 
       {/* Main Content Area - Sidebar + Order Form */}
       <div className="flex-1 flex overflow-hidden">
-        {/* LEFT SIDEBAR - Order Components Control Panel */}
-        <div className="w-80 bg-white border-r border-slate-200 flex flex-col overflow-hidden" data-copilot="mo-sidebar">
+        {/* LEFT SIDEBAR - Order Components Control Panel (collapsible). Width
+            animates to 0 on collapse; the flex-1 order-form pane auto-fills.
+            Sidebar stays mounted (no state loss) — only its width/opacity
+            transition. */}
+        <div
+          className={`bg-white border-r border-slate-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${
+            componentsPanelCollapsed ? 'w-0 opacity-0 pointer-events-none border-r-0' : 'w-80 opacity-100'
+          }`}
+          data-copilot="mo-sidebar"
+          aria-hidden={componentsPanelCollapsed}
+        >
           <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
-            <h3 className="font-semibold text-slate-900 text-sm">Order Components</h3>
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-semibold text-slate-900 text-sm">Order Components</h3>
+              <CollapseButton
+                collapsed={componentsPanelCollapsed}
+                onToggle={() => setComponentsPanelCollapsed(true)}
+                label="Collapse panel"
+              />
+            </div>
             <p className="text-xs text-slate-600 mt-0.5">
               Control what appears in the order form
             </p>
@@ -997,6 +1017,16 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               </div>
             )}
           </div>
+        </div>
+
+        {/* Expand tab — only visible when the sidebar is collapsed. Lives
+            between the sidebar and the form pane so it is never clipped. */}
+        <div className="flex items-stretch px-1 py-2">
+          <ExpandTab
+            collapsed={componentsPanelCollapsed}
+            onToggle={() => setComponentsPanelCollapsed(false)}
+            label="Components"
+          />
         </div>
 
         {/* RIGHT - Order Form Display */}

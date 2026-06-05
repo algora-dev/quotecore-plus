@@ -22,6 +22,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { formatCurrency } from '@/app/lib/currency/currencies';
+import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
 import { AddLineModal } from '../../quotes/[id]/customer-edit/AddLineModal';
 import { LineEditForm } from '../../quotes/[id]/customer-edit/LineEditForm';
 import {
@@ -101,6 +102,9 @@ export function OrderLineByLineEditor({
   // preview-only convenience state; it does not mutate the lines themselves.
   // Persisted to the envelope so the saved/sent order matches the editor.
   const [hideAllPrices, setHideAllPrices] = useState(initialHideAllPrices);
+  // Declutter: collapse the left controls so the preview fills the space.
+  // Pure layout state — panel stays mounted (no edit loss).
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
 
   const commit = useCallback(
     (next: LineByLineItem[]) => {
@@ -194,13 +198,20 @@ export function OrderLineByLineEditor({
     // (min-w-0 so the preview table can shrink/grow without overflow). The
     // gap between the two columns is preserved.
     <div className="flex flex-col lg:flex-row gap-6 items-start">
-      {/* LEFT: line controls + footer + taxes — fixed comfortable width
-          (slightly narrower so the preview gets more room and the whole row
-          shifts left toward the header's left frame). */}
-      <div className="w-full lg:w-[400px] lg:flex-shrink-0 space-y-4" data-assistant-id="order-lbl-controls">
+      {/* LEFT: line controls + footer + taxes — collapsible to declutter; on
+          collapse the preview (flex-1) auto-fills the freed space. */}
+      <CollapsiblePanel collapsed={panelCollapsed} widthClass="lg:w-[400px] lg:flex-shrink-0">
+      <div className="w-full lg:w-[400px] space-y-4" data-assistant-id="order-lbl-controls">
         <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-semibold text-slate-900">Order items</h3>
+            <div className="flex items-center gap-2">
+              <CollapseButton
+                collapsed={panelCollapsed}
+                onToggle={() => setPanelCollapsed(true)}
+                label="Collapse panel"
+              />
+              <h3 className="text-sm font-semibold text-slate-900">Order items</h3>
+            </div>
             <label
               className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none"
               title="Hide every price in the preview in one click (overrides each line's Price toggle). Untick to show prices as set per line."
@@ -438,6 +449,15 @@ export function OrderLineByLineEditor({
           )}
         </div>
       </div>
+      </CollapsiblePanel>
+
+      {/* Expand tab — only visible when collapsed; sits on the preview side so
+          it is never clipped by the collapsing panel's overflow. */}
+      <ExpandTab
+        collapsed={panelCollapsed}
+        onToggle={() => setPanelCollapsed(false)}
+        label="Order items"
+      />
 
       {/* RIGHT: live preview (mirrors OrderBody line-by-line table) — expands
           to fill the remaining body width up to the header's right frame edge. */}

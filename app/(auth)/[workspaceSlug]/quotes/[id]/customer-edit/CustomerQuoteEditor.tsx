@@ -10,6 +10,7 @@ import { EditFooterModal } from './EditFooterModal';
 import { saveCustomerQuoteLines, saveCustomerQuoteBranding } from '../../actions';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import { displayLineText } from '@/app/lib/quotes/lineText';
+import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
 import {
   convertLinear,
   convertArea,
@@ -89,6 +90,9 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [showAddLine, setShowAddLine] = useState(false);
   const [showEditHeader, setShowEditHeader] = useState(false);
   const [showEditFooter, setShowEditFooter] = useState(false);
+  // Declutter: collapse the left controls so the preview fills the space.
+  // Pure layout state — the panel stays mounted (no edit/autosave disruption).
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   
   // Branding state - use uploaded logo if quote doesn't have one yet
@@ -502,11 +506,22 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           </div>
         </div>
 
-        {/* Two-panel layout */}
-        <div className="grid grid-cols-2 gap-6">
-          {/* Left Panel: Component Selection */}
+        {/* Two-panel layout. Flex row (was a 2-col grid) so the left controls
+            can collapse and the preview (flex-1) smoothly fills the freed
+            space. Visually identical to the old 50/50 grid when expanded
+            (left keeps a 1fr-equivalent basis). */}
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+          {/* Left Panel: Component Selection — collapsible to declutter. */}
+          <CollapsiblePanel collapsed={panelCollapsed} widthClass="lg:flex-1 lg:basis-1/2">
           <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4" data-copilot="cl-left-panel">
-            <h2 className="text-lg font-semibold text-slate-900">Components & Items</h2>
+            <div className="flex items-center gap-2">
+              <CollapseButton
+                collapsed={panelCollapsed}
+                onToggle={() => setPanelCollapsed(true)}
+                label="Collapse panel"
+              />
+              <h2 className="text-lg font-semibold text-slate-900">Components & Items</h2>
+            </div>
             <p className="text-xs text-slate-400">
               Easily click/unclick what you want to see or hide from your quote below
             </p>
@@ -834,8 +849,21 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             </div>
           </div>
 
-          {/* Right Panel: Live Preview */}
-          <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4" data-copilot="cl-right-panel">
+          </CollapsiblePanel>
+
+          {/* Expand tab — only visible when collapsed; on the preview side so
+              it is never clipped by the collapsing panel's overflow. */}
+          <ExpandTab
+            collapsed={panelCollapsed}
+            onToggle={() => setPanelCollapsed(false)}
+            label="Components"
+          />
+
+          {/* Right Panel: Live Preview — expands to fill when left collapses. */}
+          <div
+            className="bg-white rounded-xl border border-slate-200 p-6 space-y-4 w-full lg:flex-1 lg:min-w-0"
+            data-copilot="cl-right-panel"
+          >
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">{previewTitle}</h2>
               <button
