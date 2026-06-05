@@ -1034,7 +1034,12 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
         <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
           {/* Toolbar */}
           <div className="px-6 py-3 bg-white border-b border-slate-200 flex items-center justify-between">
-            <h3 className="font-semibold text-slate-900">Order Form</h3>
+            <div className="flex items-baseline gap-3 flex-wrap">
+              <h3 className="font-semibold text-slate-900">Order Form</h3>
+              <p className="text-xs text-slate-400 italic">
+                Tip: to view the full preview with header, save, then view order.
+              </p>
+            </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-slate-600" data-copilot="mo-layout-toggle">
                 <button

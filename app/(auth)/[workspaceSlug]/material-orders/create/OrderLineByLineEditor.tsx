@@ -463,7 +463,12 @@ export function OrderLineByLineEditor({
           to fill the remaining body width up to the header's right frame edge. */}
       <div className="w-full lg:flex-1 lg:min-w-0 lg:sticky lg:top-4 h-fit">
         <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Preview</p>
+          <div className="flex items-baseline justify-between gap-3 flex-wrap">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Preview</p>
+            <p className="text-xs text-slate-400 italic">
+              Tip: to view the full preview with header, save, then view order.
+            </p>
+          </div>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b-2 border-slate-300 text-left">
