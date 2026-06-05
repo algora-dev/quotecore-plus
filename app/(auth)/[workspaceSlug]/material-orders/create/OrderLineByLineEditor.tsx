@@ -36,6 +36,7 @@ interface Props {
   initialLines: LineByLineItem[];
   initialFooter: string;
   initialTaxes: LineByLineTax[];
+  initialHideAllPrices: boolean;
   currency: string;
   /** Workspace slug for the catalog search modal endpoint. */
   workspaceSlug: string;
@@ -49,6 +50,7 @@ interface Props {
   onChange: (lines: LineByLineItem[]) => void;
   onFooterChange: (footer: string) => void;
   onTaxesChange: (taxes: LineByLineTax[]) => void;
+  onHideAllPricesChange: (hide: boolean) => void;
 }
 
 function makeId(): string {
@@ -59,6 +61,7 @@ export function OrderLineByLineEditor({
   initialLines,
   initialFooter,
   initialTaxes,
+  initialHideAllPrices,
   currency,
   workspaceSlug,
   collections,
@@ -67,6 +70,7 @@ export function OrderLineByLineEditor({
   onChange,
   onFooterChange,
   onTaxesChange,
+  onHideAllPricesChange,
 }: Props) {
   const [lines, setLines] = useState<LineByLineItem[]>(initialLines.length > 0 ? initialLines : []);
   const [footer, setFooter] = useState(initialFooter);
@@ -85,7 +89,8 @@ export function OrderLineByLineEditor({
     setLines(initialLines);
     setFooter(initialFooter);
     setTaxes(initialTaxes);
-  }, [initialLines, initialFooter, initialTaxes]);
+    setHideAllPrices(initialHideAllPrices);
+  }, [initialLines, initialFooter, initialTaxes, initialHideAllPrices]);
   const [showAddLine, setShowAddLine] = useState(false);
   // id of the line currently being edited in the right-hand preview (pencil).
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
@@ -94,7 +99,8 @@ export function OrderLineByLineEditor({
   // lines, no total) — it overrides each line's own showPrice. When false, the
   // preview honours each line's individual showPrice toggle as before. This is
   // preview-only convenience state; it does not mutate the lines themselves.
-  const [hideAllPrices, setHideAllPrices] = useState(false);
+  // Persisted to the envelope so the saved/sent order matches the editor.
+  const [hideAllPrices, setHideAllPrices] = useState(initialHideAllPrices);
 
   const commit = useCallback(
     (next: LineByLineItem[]) => {
@@ -202,7 +208,10 @@ export function OrderLineByLineEditor({
               <input
                 type="checkbox"
                 checked={hideAllPrices}
-                onChange={(e) => setHideAllPrices(e.target.checked)}
+                onChange={(e) => {
+                  setHideAllPrices(e.target.checked);
+                  onHideAllPricesChange(e.target.checked);
+                }}
                 className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
               />
               Hide all prices

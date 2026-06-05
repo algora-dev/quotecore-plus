@@ -23,6 +23,7 @@ import {
   parseLineByLineData,
   parseLineByLineFooter,
   parseLineByLineTaxes,
+  parseLineByLineHideAllPrices,
   type LineByLineItem,
   type LineByLineTax,
 } from '../lineByLine';
@@ -118,6 +119,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   const [lineByLineLines, setLineByLineLines] = useState<LineByLineItem[]>([]);
   const [lineByLineFooter, setLineByLineFooter] = useState('');
   const [lineByLineTaxes, setLineByLineTaxes] = useState<LineByLineTax[]>([]);
+  const [lineByLineHideAllPrices, setLineByLineHideAllPrices] = useState(false);
   // App-style alert state. Replaces native alert() calls so the order flow
   // matches the rest of the app's modal styling.
   const [alertState, setAlertState] = useState<{
@@ -327,6 +329,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
       setLineByLineLines(parseLineByLineData(order.line_by_line_data));
       setLineByLineFooter(parseLineByLineFooter(order.line_by_line_data));
       setLineByLineTaxes(parseLineByLineTaxes(order.line_by_line_data));
+      setLineByLineHideAllPrices(parseLineByLineHideAllPrices(order.line_by_line_data));
     }
 
     // Map line items
@@ -370,6 +373,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
     setLineByLineLines(initialLineByLine.lines);
     setLineByLineFooter(initialLineByLine.footer);
     setLineByLineTaxes(initialLineByLine.taxes);
+    setLineByLineHideAllPrices(initialLineByLine.hideAllPrices);
 
     // Pre-fill the reference the same way the components quote path does.
     if (quoteData?.quote_number) {
@@ -580,7 +584,12 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
         orderDate,
         layoutMode: isLineByLine ? 'line_by_line' : layoutMode,
         lineByLineData: isLineByLine
-          ? { lines: lineByLineLines, footer: lineByLineFooter, taxes: lineByLineTaxes }
+          ? {
+              lines: lineByLineLines,
+              footer: lineByLineFooter,
+              taxes: lineByLineTaxes,
+              hideAllPrices: lineByLineHideAllPrices,
+            }
           : undefined,
         lineItems: isLineByLine ? [] : orderLines.map((line, index) => ({
           componentName: line.componentName,
@@ -782,6 +791,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               initialLines={lineByLineLines}
               initialFooter={lineByLineFooter}
               initialTaxes={lineByLineTaxes}
+              initialHideAllPrices={lineByLineHideAllPrices}
               currency={currency}
               workspaceSlug={workspaceSlug}
               collections={collections}
@@ -790,6 +800,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               onChange={setLineByLineLines}
               onFooterChange={setLineByLineFooter}
               onTaxesChange={setLineByLineTaxes}
+              onHideAllPricesChange={setLineByLineHideAllPrices}
             />
             <div className="pb-10" />
           </div>

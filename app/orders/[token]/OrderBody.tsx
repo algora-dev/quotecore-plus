@@ -7,6 +7,7 @@ import {
   parseLineByLineData,
   parseLineByLineFooter,
   parseLineByLineTaxes,
+  parseLineByLineHideAllPrices,
   lineByLineTotal,
   lineDisplayText,
   computeLineByLineTaxes,
@@ -49,9 +50,12 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
   const lblSubtotal = isLineByLine ? lineByLineTotal(parseLineByLineData(order.line_by_line_data)) : 0;
   const lblFooter = isLineByLine ? parseLineByLineFooter(order.line_by_line_data) : '';
   const lblTaxes = isLineByLine ? parseLineByLineTaxes(order.line_by_line_data) : [];
+  // Master hide-all-prices override (persisted from the editor). When true, NO
+  // pricing renders anywhere on this surface, overriding each line's showPrice.
+  const lblHideAllPrices = isLineByLine ? parseLineByLineHideAllPrices(order.line_by_line_data) : false;
   const { taxLines: lblTaxLines, taxTotal: lblTaxTotal } = computeLineByLineTaxes(lblSubtotal, lblTaxes);
   const lblTotal = lblSubtotal + lblTaxTotal;
-  const lblHasPrices = lblLines.some((l) => l.showPrice) || lblTaxLines.length > 0;
+  const lblHasPrices = !lblHideAllPrices && (lblLines.some((l) => l.showPrice) || lblTaxLines.length > 0);
 
   return (
     <>
@@ -161,7 +165,9 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
               <thead>
                 <tr className="border-b-2 border-slate-300 text-left">
                   <th className="py-2 pr-3 font-semibold text-slate-600">Item / Description</th>
-                  <th className="py-2 pl-3 text-right font-semibold text-slate-600 whitespace-nowrap">Price</th>
+                  <th className="py-2 pl-3 text-right font-semibold text-slate-600 whitespace-nowrap">
+                    {lblHideAllPrices ? '' : 'Price'}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -174,7 +180,7 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
                     <tr key={line.id} className="border-b border-slate-100 align-top break-inside-avoid">
                       <td className="py-2 pr-3 text-slate-800 whitespace-pre-line">{lineDisplayText(line)}</td>
                       <td className="py-2 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
-                        {line.showPrice ? formatCurrency(line.amount, currency) : ''}
+                        {!lblHideAllPrices && line.showPrice ? formatCurrency(line.amount, currency) : ''}
                       </td>
                     </tr>
                   ))

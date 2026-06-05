@@ -58,6 +58,14 @@ export interface LineByLineData {
   footer: string;
   /** Optional taxes (default none). */
   taxes: LineByLineTax[];
+  /**
+   * Master "hide all prices" override. When true, NO pricing renders on ANY
+   * surface (in-app preview, public supplier page, print/PDF) — no per-line
+   * price, no subtotal, no tax lines, no total — regardless of each line's own
+   * showPrice flag. Default false (honour per-line showPrice). Persisted so the
+   * saved/sent order matches what the user chose in the editor.
+   */
+  hideAllPrices: boolean;
 }
 
 /**
@@ -121,6 +129,14 @@ export function parseLineByLineFooter(raw: unknown): string {
   return '';
 }
 
+/** Parse the master hide-all-prices flag (envelope only; legacy = false). */
+export function parseLineByLineHideAllPrices(raw: unknown): boolean {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    return (raw as { hideAllPrices?: unknown }).hideAllPrices === true;
+  }
+  return false;
+}
+
 /** Parse the optional taxes array (envelope only; legacy = none). */
 export function parseLineByLineTaxes(raw: unknown): LineByLineTax[] {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return [];
@@ -149,6 +165,7 @@ export function parseLineByLineEnvelope(raw: unknown): LineByLineData {
     lines: parseLineByLineData(raw),
     footer: parseLineByLineFooter(raw),
     taxes: parseLineByLineTaxes(raw),
+    hideAllPrices: parseLineByLineHideAllPrices(raw),
   };
 }
 

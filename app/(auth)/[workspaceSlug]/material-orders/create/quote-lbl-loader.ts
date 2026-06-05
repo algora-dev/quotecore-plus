@@ -22,7 +22,7 @@
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { normalizeMeasurementSystem, type MeasurementSystem } from '@/app/lib/types';
 import { convertLinear, convertArea, convertAreaFt2 } from '@/app/lib/measurements/conversions';
-import type { LineByLineData, LineByLineItem, LineByLineTax } from '../lineByLine';
+import type { LineByLineData, LineByLineItem } from '../lineByLine';
 
 /** Build the customer-facing default text for a component line (mirrors
  *  CustomerQuoteEditor.generateDefaultText): "<name> - <qty> <unit>". */
@@ -75,6 +75,7 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
       .select(
         'id, company_id, measurement_system, material_margin_enabled, material_margin_percent, labor_margin_enabled, labor_margin_percent, cq_footer_text',
       )
+      // (quote taxes intentionally NOT loaded — orders default to no tax)
       .eq('id', quoteId)
       .eq('company_id', profile.company_id)
       .single();
@@ -85,14 +86,13 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
     }
 
     // Components (priced) + saved customer lines (overrides/flags), in parallel.
-    const [{ data: components }, { data: savedLines }, { data: quoteTaxes }] = await Promise.all([
+    const [{ data: components }, { data: savedLines }] = await Promise.all([
       supabase.from('quote_components').select('*').eq('quote_id', quoteId).order('sort_order', { ascending: true }),
       supabase
         .from('customer_quote_lines')
         .select('*')
         .eq('quote_id', quoteId)
         .order('sort_order', { ascending: true }),
-      supabase.from('quote_taxes').select('*').eq('quote_id', quoteId).order('created_at', { ascending: true }),
     ]);
 
     const comps = components || [];
@@ -173,21 +173,15 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
 
     if (lines.length === 0) return null;
 
-    // Taxes — carry the quote's quote-facing taxes across.
-    const taxes: LineByLineTax[] = (quoteTaxes || [])
-      .filter((t: any) => t.include_in_quote !== false)
-      .map((t: any, i: number) => ({
-        id: `q-tax-${t.id ?? i}`,
-        sourceTaxId: (t.source_tax_id as string | null) ?? null,
-        name: typeof t.name === 'string' ? t.name : '',
-        ratePercent: Number(t.rate_percent) || 0,
-      }))
-      .filter((t) => t.name.trim() !== '');
-
+    // Taxes: orders default to NO tax (same as the custom blank line-by-line
+    // path). The user opts in via the editor's tax controls. We deliberately do
+    // NOT carry the quote's taxes across, even though the priced lines come from
+    // the quote — Shaun: order-from-quote must start tax-free by default.
     return {
       lines,
       footer: quote.cq_footer_text || '',
-      taxes,
+      taxes: [],
+      hideAllPrices: false,
     };
   } catch (error) {
     console.error('[quote-lbl-loader] Unexpected error:', error);
