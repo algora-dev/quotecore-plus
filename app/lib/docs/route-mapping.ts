@@ -40,6 +40,14 @@ export function pathnameToDocSlug(pathname: string | null | undefined): string {
 
     { match: /^catalogs(\/|$)/,                            slug: 'catalog/overview' },
     { match: /^attachments(\/|$)/,                         slug: 'attachments/overview' },
+
+    // Resource Library sub-routes - specific first, hub last.
+    { match: /^resources\/catalogs(\/|$)/,                 slug: 'catalog/overview' },
+    { match: /^resources\/attachments(\/|$)/,              slug: 'attachments/overview' },
+    { match: /^resources\/quote-templates(\/|$)/,          slug: 'templates/quote-templates' },
+    { match: /^resources\/quote-header-templates(\/|$)/,   slug: 'templates/customer-quote-templates' },
+    { match: /^resources\/message-templates(\/|$)/,        slug: 'templates/email-templates' },
+    { match: /^resources\/order-header-templates(\/|$)/,   slug: 'material-orders/supplier-templates' },
     { match: /^resources(\/|$)/,                           slug: 'catalog/overview' },
 
     // Material orders - more specific first.

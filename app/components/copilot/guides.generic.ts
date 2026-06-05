@@ -1008,14 +1008,14 @@ export const COPILOT_GUIDES_GENERIC: CopilotGuide[] = [
         validation: 'none',
       },
       {
-        id: 'attachments-send-tab',
-        target: '[data-copilot="resources-tab-attachments"]',
-        title: 'Attachments Tab',
-        description: 'Click the _"Attachments"_ tab to see your file library. You can upload images, drawings, PDFs — anything you regularly send with quotes. _Attachment library is available on Pro and above._',
+        id: 'attachments-send-card',
+        target: '[data-copilot="resources-card-attachments"]',
+        title: 'Open Attachments',
+        description: 'On the Resource Library, click the _"Attachments"_ card to open your file library. You can upload images, drawings, PDFs — anything you regularly send with quotes. _Attachment library is available on Pro and above._',
         position: 'bottom',
         page: '/resources',
         validation: 'click',
-        nudgeText: 'Please click the "Attachments" tab to continue.',
+        nudgeText: 'Please click the "Attachments" card to continue.',
       },
       {
         id: 'attachments-send-upload',
@@ -1023,7 +1023,7 @@ export const COPILOT_GUIDES_GENERIC: CopilotGuide[] = [
         title: 'Upload a File',
         description: 'Click _"Upload file"_ to add an image or document to your library. Give it a clear name — for example: _"Safety Data Sheet", "Product Spec Sheet", "Terms & Conditions"._ Once uploaded, it can be attached to any quote.',
         position: 'bottom',
-        page: '/resources',
+        page: '/resources/attachments',
         validation: 'none',
       },
       {

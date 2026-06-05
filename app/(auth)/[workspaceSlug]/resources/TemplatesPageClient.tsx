@@ -38,6 +38,8 @@ interface Props {
   catalogEffectivePlanCode: string;
   catalogSubscriptionActive: boolean;
   initialTab: string;
+  /** When true, render a single section with no tab bar (sub-route mode). */
+  hideTabBar?: boolean;
 }
 
 export function TemplatesPageClient({
@@ -56,6 +58,7 @@ export function TemplatesPageClient({
   catalogEffectivePlanCode,
   catalogSubscriptionActive,
   initialTab,
+  hideTabBar = false,
 }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'quote' | 'customer' | 'email' | 'order' | 'catalogs' | 'attachments'>(
@@ -98,39 +101,45 @@ export function TemplatesPageClient({
   }
 
   const TABS: { key: typeof activeTab; label: string }[] = [
-    { key: 'quote', label: 'Quote' },
-    { key: 'customer', label: 'Customer' },
-    { key: 'email', label: 'Message' },
-    { key: 'order', label: 'Order Templates' },
+    { key: 'quote', label: 'Quote Templates' },
+    { key: 'customer', label: 'Quote Header Templates' },
+    { key: 'email', label: 'Message Templates' },
+    { key: 'order', label: 'Order Header Templates' },
     { key: 'catalogs', label: 'Catalogs' },
     { key: 'attachments', label: 'Attachments' },
   ];
+
+  const activeTabLabel = TABS.find(t => t.key === activeTab)?.label ?? 'Resource Library';
 
   return (
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Resource Library</h1>
-        <p className="text-sm text-slate-500 mt-1">Manage quote, message, and order templates, catalog files, and your attachment library.</p>
+        <h1 className="text-2xl font-semibold text-slate-900">{hideTabBar ? activeTabLabel : 'Resource Library'}</h1>
+        {!hideTabBar && (
+          <p className="text-sm text-slate-500 mt-1">Manage quote, message, and order templates, catalog files, and your attachment library.</p>
+        )}
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit flex-wrap">
-        {TABS.map(tab => (
-          <button
-            key={tab.key}
-            data-copilot={`resources-tab-${tab.key}`}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
-              activeTab === tab.key
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {/* Tabs (hidden in sub-route mode) */}
+      {!hideTabBar && (
+        <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit flex-wrap">
+          {TABS.map(tab => (
+            <button
+              key={tab.key}
+              data-copilot={`resources-tab-${tab.key}`}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
+                activeTab === tab.key
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Tab Content */}
       {activeTab === 'attachments' ? (
