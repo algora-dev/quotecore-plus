@@ -40,6 +40,7 @@ export function pathnameToDocSlug(pathname: string | null | undefined): string {
 
     { match: /^catalogs(\/|$)/,                            slug: 'catalog/overview' },
     { match: /^attachments(\/|$)/,                         slug: 'attachments/overview' },
+    { match: /^resources(\/|$)/,                           slug: 'catalog/overview' },
 
     // Material orders - more specific first.
     { match: /^material-orders\/order-from-quote(\/|$)/,   slug: 'material-orders/order-from-a-quote' },
