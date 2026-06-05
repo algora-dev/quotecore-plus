@@ -20,7 +20,7 @@
 //   - Footer free-text (rendered on preview / public / PDF)
 //   - Optional taxes (default none; add custom OR apply a company default)
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import { AddLineModal } from '../../quotes/[id]/customer-edit/AddLineModal';
 import { LineEditForm } from '../../quotes/[id]/customer-edit/LineEditForm';
@@ -71,6 +71,21 @@ export function OrderLineByLineEditor({
   const [lines, setLines] = useState<LineByLineItem[]>(initialLines.length > 0 ? initialLines : []);
   const [footer, setFooter] = useState(initialFooter);
   const [taxes, setTaxes] = useState<LineByLineTax[]>(initialTaxes);
+
+  // Quote-from-order (Decision #4) hydrates the parent's line-by-line state
+  // ASYNCHRONOUSLY via effect, so the initial props arrive AFTER this editor's
+  // useState snapshot was taken (empty). Sync ONCE when a non-empty initial set
+  // first arrives. Ref-guarded so it can never clobber in-progress user edits
+  // on later parent re-renders. No-op for the blank/custom path (empty initial).
+  const seededRef = useRef(initialLines.length > 0);
+  useEffect(() => {
+    if (seededRef.current) return;
+    if (initialLines.length === 0 && initialTaxes.length === 0 && !initialFooter) return;
+    seededRef.current = true;
+    setLines(initialLines);
+    setFooter(initialFooter);
+    setTaxes(initialTaxes);
+  }, [initialLines, initialFooter, initialTaxes]);
   const [showAddLine, setShowAddLine] = useState(false);
   // id of the line currently being edited in the right-hand preview (pencil).
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
@@ -160,9 +175,15 @@ export function OrderLineByLineEditor({
     'w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:border-orange-500 focus:outline-none';
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* LEFT: line controls + footer + taxes */}
-      <div className="space-y-4" data-assistant-id="order-lbl-controls">
+    // Width model (Shaun, 2026-06-05): the LEFT column (Order items / Footer /
+    // Taxes) keeps its prior comfortable width; the RIGHT preview EXPANDS to
+    // fill the remaining space so the body's right edge lines up with the
+    // full-width header frame above. Fixed left basis + flexible preview
+    // (min-w-0 so the preview table can shrink/grow without overflow). The
+    // gap between the two columns is preserved.
+    <div className="flex flex-col lg:flex-row gap-6 items-start">
+      {/* LEFT: line controls + footer + taxes — fixed comfortable width */}
+      <div className="w-full lg:w-[460px] lg:flex-shrink-0 space-y-4" data-assistant-id="order-lbl-controls">
         <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-slate-900">Order items</h3>
@@ -389,8 +410,9 @@ export function OrderLineByLineEditor({
         </div>
       </div>
 
-      {/* RIGHT: live preview (mirrors OrderBody line-by-line table) */}
-      <div className="lg:sticky lg:top-4 h-fit">
+      {/* RIGHT: live preview (mirrors OrderBody line-by-line table) — expands
+          to fill the remaining body width up to the header's right frame edge. */}
+      <div className="w-full lg:flex-1 lg:min-w-0 lg:sticky lg:top-4 h-fit">
         <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Preview</p>
           <table className="w-full text-sm">

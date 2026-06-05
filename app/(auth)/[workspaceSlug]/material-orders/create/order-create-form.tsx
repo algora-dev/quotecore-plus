@@ -13,6 +13,7 @@ import {
   convertAreaFt2,
 } from '@/app/lib/measurements/conversions';
 import type { ExistingOrderData } from './order-loader';
+import type { LineByLineData } from '../lineByLine';
 import { BackButton } from '@/app/components/BackButton';
 import { AlertModal } from '@/app/components/AlertModal';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
@@ -69,6 +70,10 @@ interface OrderCreateFormProps {
   componentLibrary?: { id: string; name: string; collection_id: string | null }[];
   /** Active company default taxes, for the line-by-line optional-tax picker. */
   companyTaxes?: { id: string; name: string; rate_percent: number }[];
+  /** Decision #4: pre-built line-by-line envelope when creating a NEW order from
+   *  a quote in the line-by-line layout. Mirrors the customer quote editor's
+   *  priced lines + footer + taxes. Null for blank/custom + existing-order edits. */
+  initialLineByLine?: LineByLineData | null;
 }
 
 interface Variable {
@@ -102,7 +107,7 @@ interface OrderLineItem {
   showMeasurements: boolean;
 }
 
-export function OrderCreateForm({ templates, flashings, components = [], collections = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components', initialColumn = 'single', currency = 'GBP', componentLibrary = [], companyTaxes = [] }: OrderCreateFormProps) {
+export function OrderCreateForm({ templates, flashings, components = [], collections = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components', initialColumn = 'single', currency = 'GBP', componentLibrary = [], companyTaxes = [], initialLineByLine = null }: OrderCreateFormProps) {
   const router = useRouter();
   
   // Layout state
@@ -348,6 +353,29 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
     console.log('[OrderCreateForm] Loaded', mappedLines.length, 'line items');
     setOrderLines(mappedLines);
   }, [existingOrder]);
+
+  // Decision #4: hydrate the line-by-line editor from a quote-derived envelope
+  // when creating a NEW line-by-line order from a quote. Ref-guarded ONCE on
+  // mount (same anti-clobber pattern as the other hydrators) so a parent
+  // re-render can never wipe in-progress edits. Only fires when initialLineByLine
+  // is present (line-by-line + quoteId + no existingOrder); the custom blank
+  // line-by-line path passes null and is untouched.
+  const hydratedFromQuoteLblRef = useRef(false);
+  useEffect(() => {
+    if (hydratedFromQuoteLblRef.current) return;
+    if (!initialLineByLine) return;
+    if (initialLayout !== 'line_by_line') return;
+    hydratedFromQuoteLblRef.current = true;
+
+    setLineByLineLines(initialLineByLine.lines);
+    setLineByLineFooter(initialLineByLine.footer);
+    setLineByLineTaxes(initialLineByLine.taxes);
+
+    // Pre-fill the reference the same way the components quote path does.
+    if (quoteData?.quote_number) {
+      setReference((prev) => prev || `Order for ${quoteData.quote_number}`);
+    }
+  }, [initialLineByLine, initialLayout, quoteData]);
   
   // Template auto-fill
   function handleTemplateChange(templateId: string) {
@@ -698,13 +726,19 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           variant={alertState.variant}
           onClose={closeAlert}
         />
-        <div className="min-h-screen bg-slate-50">
-          <div className="px-6 pt-4">
+        {/* Flex column inside the page's h-screen/overflow-hidden wrapper. The
+            header stays put; the editor area owns its OWN vertical scroll so the
+            footer + taxes at the bottom are always reachable on any screen
+            ratio (previously the page wrapper clipped them). */}
+        <div className="flex flex-col h-screen bg-slate-50">
+          <div className="px-6 pt-4 flex-shrink-0">
             <BackButton />
           </div>
           {/* Shared order header (template selector + To/From form + minimize) */}
           {renderOrderHeader()}
-          <div className="max-w-5xl mx-auto px-6 py-6 space-y-6">
+          {/* Scrollable editor region. Full-width (px-6) so the body frame lines
+              up edge-to-edge with the full-width header above it. */}
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
             {/* Save action sits directly above the editor/preview so it's
                 reachable at 100% zoom without scrolling to the page bottom. */}
             <div className="flex items-center justify-end gap-3">

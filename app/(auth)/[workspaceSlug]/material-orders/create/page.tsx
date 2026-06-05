@@ -3,6 +3,7 @@ import { loadFlashingLibrary } from '../../flashings/actions';
 import { loadComponentLibrary, loadComponentCollections } from '../../components/actions';
 import { OrderCreateForm } from './order-create-form';
 import { loadQuoteData } from './quote-loader';
+import { loadQuoteLineByLineData } from './quote-lbl-loader';
 import { loadOrderForEdit } from './order-loader';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
@@ -45,6 +46,16 @@ export default async function CreateOrderPage(props: Props) {
       ? 'line_by_line'
       : 'components';
 
+  // Decision #4: a NEW order created from a quote in the line-by-line layout
+  // pre-populates EXACTLY like the customer quote editor (priced lines + footer
+  // + taxes). Only runs for new (no existingOrder) line-by-line+quote opens;
+  // editing a saved order hydrates from its own line_by_line_data instead, and
+  // the custom blank line-by-line path passes no quoteId so this stays null.
+  const initialLineByLine =
+    initialLayout === 'line_by_line' && quoteId && !existingOrder
+      ? await loadQuoteLineByLineData(quoteId)
+      : null;
+
   // Column mode for the Components editor. Editing an existing order: use its
   // saved layout_mode (single/double). New order: from the picker's `column`.
   const initialColumn: 'single' | 'double' =
@@ -74,6 +85,7 @@ export default async function CreateOrderPage(props: Props) {
         isOverStorage={ent.isOverStorage}
         initialLayout={initialLayout}
         initialColumn={initialColumn}
+        initialLineByLine={initialLineByLine}
         currency={currency}
       />
     </div>

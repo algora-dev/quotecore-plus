@@ -437,6 +437,11 @@ export function AssistantWidget(_props: Props) {
                   key={m}
                   type="button"
                   onClick={() => setMode(m)}
+                  title={
+                    m === 'respond_only'
+                      ? "Ask me any question about the app and I'll respond"
+                      : "I'll walk you through how to do something, just ask me what you want to learn to use"
+                  }
                   className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
                     mode === m
                       ? 'bg-white text-slate-900 shadow-sm'
