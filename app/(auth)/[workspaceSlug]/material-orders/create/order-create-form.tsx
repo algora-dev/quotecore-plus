@@ -713,7 +713,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
 
             {/* Minimize Button */}
             <div className="px-6 py-2 border-t border-slate-100 bg-slate-50 flex justify-end">
-              <button type="button" onClick={() => setHeaderExpanded(false)} data-copilot="mo-minimize-header" className="px-3 py-1.5 text-xs font-medium rounded border border-slate-300 hover:bg-white transition-colors">
+              <button type="button" onClick={() => setHeaderExpanded(false)} data-copilot="mo-minimize-header" className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-white transition-colors">
                 Minimize Header
               </button>
             </div>

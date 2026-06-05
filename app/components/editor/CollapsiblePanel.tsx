@@ -136,7 +136,7 @@ export function ExpandTab({ collapsed, onToggle, label = 'Show panel', className
       aria-label={label}
       className={[
         'hidden lg:flex flex-shrink-0 self-start lg:sticky lg:top-4',
-        'flex-col items-center justify-center gap-2 py-3 w-7',
+        'flex-col items-center justify-start gap-2 pt-3 pb-3 w-7',
         'rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm',
         'hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 transition-colors',
         className,

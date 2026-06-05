@@ -511,8 +511,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             space. Visually identical to the old 50/50 grid when expanded
             (left keeps a 1fr-equivalent basis). */}
         <div className="flex flex-col lg:flex-row gap-6 items-start">
-          {/* Left Panel: Component Selection — collapsible to declutter. */}
-          <CollapsiblePanel collapsed={panelCollapsed} widthClass="lg:flex-1 lg:basis-1/2">
+          {/* Left Panel: Component Selection — collapsible to declutter. Fixed
+              basis (not 1fr) so the PREVIEW is the dominant section, matching
+              the order editors; on collapse the preview goes full width. */}
+          <CollapsiblePanel collapsed={panelCollapsed} widthClass="lg:w-[420px] lg:flex-shrink-0">
           <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4" data-copilot="cl-left-panel">
             <div className="flex items-center gap-2">
               <CollapseButton
