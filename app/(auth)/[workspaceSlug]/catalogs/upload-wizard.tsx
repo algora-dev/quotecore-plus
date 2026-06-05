@@ -366,6 +366,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
             <div>
               <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
               <div
+                data-copilot="catalog-wizard-drop"
                 onDrop={handleDrop}
                 onDragOver={(e) => e.preventDefault()}
                 onClick={() => { if (isOverStorage) { setStorageBlocked(true); return; } fileInputRef.current?.click(); }}
@@ -405,6 +406,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Catalog name</label>
               <input
+                data-copilot="catalog-wizard-name"
                 type="text"
                 value={catalogName}
                 onChange={(e) => setCatalogName(e.target.value)}
@@ -478,7 +480,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
               )}
 
               {/* Mapping */}
-              <div className="mt-5 border-t border-slate-100 pt-4">
+              <div data-copilot="catalog-wizard-map" className="mt-5 border-t border-slate-100 pt-4">
                 <p className="text-xs text-slate-500 mb-3">
                   Choose which columns map to each field. All optional — unmapped fields are skipped. Item and Description combine into the quote line text.
                 </p>
@@ -534,7 +536,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                   </div>
                   <div className="flex gap-3 justify-end">
                     <button onClick={() => setStep(2)} className={ghostBtn}>Back</button>
-                    <button onClick={handleUpload} className={primaryBtn}>Save catalog</button>
+                    <button data-copilot="catalog-wizard-save" onClick={handleUpload} className={primaryBtn}>Save catalog</button>
                   </div>
                 </>
               )}

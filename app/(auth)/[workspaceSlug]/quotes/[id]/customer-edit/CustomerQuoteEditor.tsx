@@ -706,6 +706,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
 
             <div className="flex gap-2">
               <button
+                data-copilot="cl-add-line-btn"
                 onClick={() => setShowAddLine(true)}
                 className="flex-1 py-2 text-sm font-medium text-orange-600 border border-orange-200 rounded-full hover:bg-orange-50 hover:border-orange-300 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]"
               >

@@ -282,6 +282,7 @@ export function CatalogSearchModal({ workspaceSlug, onAdd, onClose }: Props) {
               <div className="relative">
                 <input
                   ref={searchInputRef}
+                  data-copilot="catalog-search-input"
                   type="text"
                   placeholder="Search by description, code, price..."
                   value={query}
@@ -322,7 +323,7 @@ export function CatalogSearchModal({ workspaceSlug, onAdd, onClose }: Props) {
               )}
 
               {results.length > 0 && (
-                <div className="grid gap-1">
+                <div data-copilot="catalog-search-results" className="grid gap-1">
                   {results.map((hit) => {
                     const preview = getResultPreview(hit);
                     return (

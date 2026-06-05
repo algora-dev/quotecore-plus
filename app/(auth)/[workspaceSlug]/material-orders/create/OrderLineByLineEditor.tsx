@@ -201,7 +201,7 @@ export function OrderLineByLineEditor({
       {/* LEFT: line controls + footer + taxes — collapsible to declutter; on
           collapse the preview (flex-1) auto-fills the freed space. */}
       <CollapsiblePanel collapsed={panelCollapsed} widthClass="lg:w-[400px] lg:flex-shrink-0">
-      <div className="w-full lg:w-[400px] space-y-4" data-assistant-id="order-lbl-controls">
+      <div className="w-full lg:w-[400px] space-y-4" data-assistant-id="order-lbl-controls" data-copilot="order-lbl-controls">
         <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -320,6 +320,7 @@ export function OrderLineByLineEditor({
 
           <button
             type="button"
+            data-copilot="order-lbl-add-line"
             onClick={() => setShowAddLine(true)}
             className="w-full py-2 text-sm font-medium text-orange-600 border border-orange-200 rounded-full hover:bg-orange-50 hover:border-orange-300 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]"
           >
@@ -328,7 +329,7 @@ export function OrderLineByLineEditor({
         </div>
 
         {/* Footer */}
-        <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
+        <div data-copilot="order-lbl-footer" className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
           <h3 className="text-sm font-semibold text-slate-900">Footer (optional)</h3>
           <p className="text-xs text-slate-500">Terms, notes, or anything to print under the items.</p>
           <textarea
@@ -344,7 +345,7 @@ export function OrderLineByLineEditor({
         </div>
 
         {/* Optional taxes (default none) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+        <div data-copilot="order-lbl-taxes" className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
           <div>
             <h3 className="text-sm font-semibold text-slate-900">Taxes (optional)</h3>
             <p className="text-xs text-slate-500 mt-0.5">

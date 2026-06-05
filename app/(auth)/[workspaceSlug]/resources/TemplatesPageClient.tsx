@@ -119,6 +119,7 @@ export function TemplatesPageClient({
         {TABS.map(tab => (
           <button
             key={tab.key}
+            data-copilot={`resources-tab-${tab.key}`}
             onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
               activeTab === tab.key

@@ -166,6 +166,7 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
     <div className="space-y-4">
       <div className="flex items-center justify-end">
         <button
+          data-copilot="attachment-upload-btn"
           onClick={() => setUploadOpen(true)}
           className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
         >

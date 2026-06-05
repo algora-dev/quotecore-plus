@@ -106,6 +106,44 @@ const BASE_INTENTS: Record<string, string[]> = {
     'set up supplier details on an order',
     'save and print a material order',
   ],
+  'catalog-upload': [
+    'upload a catalog',
+    'import a supplier price list',
+    'add a CSV price list',
+    'map columns in my catalog',
+    'how do I get supplier prices into the app',
+    'create a catalog',
+  ],
+  'catalog-add-to-quote': [
+    'add a catalog item to a quote',
+    'search catalog on a quote',
+    'find a supplier price and add it to my quote',
+    'insert a priced item from my catalog',
+    'use my catalog when quoting',
+  ],
+  'attachments-send': [
+    'attach a file to a quote',
+    'send images to a customer',
+    'attach drawings when sending a quote',
+    'upload a file to my attachment library',
+    'send a document with my quote',
+    'how do I attach files to a quote',
+  ],
+  'order-line-by-line': [
+    'build a line by line material order',
+    'create a text list order for a supplier',
+    'make a priced line order',
+    'order materials with individual line items',
+    'create a material order with prices',
+  ],
+  'order-from-quote': [
+    'create an order from a quote',
+    'order materials from a quote',
+    'pre-populate a material order',
+    'turn a quote into a material order',
+    'order from my quote',
+    'order materials for a job',
+  ],
 };
 
 /**

@@ -75,11 +75,12 @@ export function OrderLayoutPickerModal({ onSelect, onClose }: Props) {
           </button>
         </div>
 
-        <div className="p-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div data-copilot="order-layout-picker" className="p-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {OPTIONS.map((opt) => (
             <button
               key={opt.key}
               type="button"
+              data-copilot={opt.key === 'line_by_line' ? 'order-layout-line-by-line' : undefined}
               onClick={() => onSelect(opt.key)}
               className="group text-left border-2 border-slate-200 rounded-xl overflow-hidden hover:border-[#FF6B35] hover:shadow-lg transition-all focus:outline-none focus:border-[#FF6B35]"
             >

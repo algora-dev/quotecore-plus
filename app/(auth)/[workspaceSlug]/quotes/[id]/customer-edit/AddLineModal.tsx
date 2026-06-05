@@ -92,6 +92,7 @@ export function AddLineModal({
   const tabBtn = (key: Tab, label: string) => (
     <button
       type="button"
+      data-copilot={key === 'catalog' ? 'add-line-catalog-tab' : undefined}
       onClick={() => setTab(key)}
       className={`flex-1 px-3 py-2 text-sm font-medium rounded-full transition-all ${
         tab === key
@@ -117,7 +118,7 @@ export function AddLineModal({
 
         {/* Option selector */}
         <div className="px-6 pt-4">
-          <div className="flex gap-1 bg-slate-50 rounded-full p-1">
+          <div data-copilot="add-line-tabs" className="flex gap-1 bg-slate-50 rounded-full p-1">
             {tabBtn('custom', 'Custom line')}
             {tabBtn('component', 'Add a component')}
             {tabBtn('catalog', 'Search catalog')}

@@ -105,7 +105,7 @@ export function AttachmentSendPicker({
         : 'No files available';
 
   return (
-    <div className="space-y-2" ref={containerRef}>
+    <div className="space-y-2" ref={containerRef} data-copilot="attachment-send-picker">
       <div className="flex items-center justify-between">
         <label className="block text-sm font-medium text-slate-700">Attachments</label>
         {totalSelected > 0 ? (

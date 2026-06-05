@@ -165,7 +165,7 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
 
       {/* Rows */}
       {filtered.length > 0 ? (
-        <div className="grid gap-1">
+        <div data-copilot="order-from-quote-list" className="grid gap-1">
           {filtered.map((quote) => {
             const jobStatus = quote.job_status || 'unsent';
             const config = JOB_STATUS_CONFIG[jobStatus] || JOB_STATUS_CONFIG.unsent;
@@ -229,6 +229,7 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
                 Cancel
               </button>
               <button
+                data-copilot="order-from-quote-confirm"
                 onClick={handleConfirm}
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               >
