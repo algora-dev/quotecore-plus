@@ -621,11 +621,20 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   // Used by BOTH the components editor and the line-by-line editor so they
   // share one identical header system (Shaun: line-by-line must use the same
   // header as the single/double column flow).
-  function renderOrderHeader() {
+  // `rounded` = line-by-line variant: render the header as a rounded card
+  // (matches the rest of the app) instead of the full-bleed square header the
+  // components editor uses. Components editor calls this with no arg (false).
+  function renderOrderHeader(rounded = false) {
     return (
-      <div className="flex-shrink-0">
+      <div className={rounded ? 'flex-shrink-0 px-6 pt-4' : 'flex-shrink-0'}>
         {headerExpanded ? (
-          <div className="bg-white border-b border-slate-200 shadow-sm">
+          <div
+            className={
+              rounded
+                ? 'bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden'
+                : 'bg-white border-b border-slate-200 shadow-sm'
+            }
+          >
             {/* Template Selector */}
             <div className="px-6 py-3 border-b border-slate-100 bg-slate-50" data-copilot="mo-template">
               <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -697,7 +706,13 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
             </div>
           </div>
         ) : (
-          <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
+          <div
+            className={
+              rounded
+                ? 'bg-white border border-slate-200 rounded-xl shadow-sm px-6 py-3 flex items-center justify-between'
+                : 'bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between'
+            }
+          >
             <div className="text-sm text-slate-600">
               <span className="font-medium">To:</span> {toSupplier || 'Not set'} · 
               <span className="font-medium ml-2">From:</span> {fromCompany || 'Not set'} · 
@@ -734,8 +749,9 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           <div className="px-6 pt-4 flex-shrink-0">
             <BackButton />
           </div>
-          {/* Shared order header (template selector + To/From form + minimize) */}
-          {renderOrderHeader()}
+          {/* Shared order header (template selector + To/From form + minimize),
+              rounded-card variant to match the rest of the app. */}
+          {renderOrderHeader(true)}
           {/* Scrollable editor region. Full-width (px-6) so the body frame lines
               up edge-to-edge with the full-width header above it. */}
           <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">

@@ -89,6 +89,12 @@ export function OrderLineByLineEditor({
   const [showAddLine, setShowAddLine] = useState(false);
   // id of the line currently being edited in the right-hand preview (pencil).
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  // Master "hide all prices" override for long order forms. When true, the
+  // PREVIEW shows NO pricing at all (no per-line price, no subtotal, no tax
+  // lines, no total) — it overrides each line's own showPrice. When false, the
+  // preview honours each line's individual showPrice toggle as before. This is
+  // preview-only convenience state; it does not mutate the lines themselves.
+  const [hideAllPrices, setHideAllPrices] = useState(false);
 
   const commit = useCallback(
     (next: LineByLineItem[]) => {
@@ -182,11 +188,25 @@ export function OrderLineByLineEditor({
     // (min-w-0 so the preview table can shrink/grow without overflow). The
     // gap between the two columns is preserved.
     <div className="flex flex-col lg:flex-row gap-6 items-start">
-      {/* LEFT: line controls + footer + taxes — fixed comfortable width */}
-      <div className="w-full lg:w-[460px] lg:flex-shrink-0 space-y-4" data-assistant-id="order-lbl-controls">
+      {/* LEFT: line controls + footer + taxes — fixed comfortable width
+          (slightly narrower so the preview gets more room and the whole row
+          shifts left toward the header's left frame). */}
+      <div className="w-full lg:w-[400px] lg:flex-shrink-0 space-y-4" data-assistant-id="order-lbl-controls">
         <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <h3 className="text-sm font-semibold text-slate-900">Order items</h3>
+            <label
+              className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none"
+              title="Hide every price in the preview in one click (overrides each line's Price toggle). Untick to show prices as set per line."
+            >
+              <input
+                type="checkbox"
+                checked={hideAllPrices}
+                onChange={(e) => setHideAllPrices(e.target.checked)}
+                className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+              />
+              Hide all prices
+            </label>
           </div>
 
           {/* Existing lines with controls */}
@@ -419,7 +439,12 @@ export function OrderLineByLineEditor({
             <thead>
               <tr className="border-b-2 border-slate-300 text-left">
                 <th className="py-2 pr-3 font-semibold text-slate-600">Item / Description</th>
-                <th className="py-2 pl-3 text-right font-semibold text-slate-600 whitespace-nowrap">Price</th>
+                {/* Keep the 2nd column header for layout (it also carries the
+                    per-line pencil edit button), but blank the "Price" label
+                    when all prices are hidden so nothing pricing-related shows. */}
+                <th className="py-2 pl-3 text-right font-semibold text-slate-600 whitespace-nowrap">
+                  {hideAllPrices ? '' : 'Price'}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -448,7 +473,7 @@ export function OrderLineByLineEditor({
                       <td className="py-2 pr-3 text-slate-800 whitespace-pre-line">{lineDisplayText(line)}</td>
                       <td className="py-2 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
                         <div className="flex items-center justify-end gap-2">
-                          {line.showPrice ? formatCurrency(line.amount, currency) : ''}
+                          {!hideAllPrices && line.showPrice ? formatCurrency(line.amount, currency) : ''}
                           <button
                             type="button"
                             onClick={() => setEditingLineId(line.id)}
@@ -471,7 +496,7 @@ export function OrderLineByLineEditor({
                 )
               )}
             </tbody>
-            {(visibleLines.some((l) => l.showPrice) || taxLines.length > 0) ? (
+            {!hideAllPrices && (visibleLines.some((l) => l.showPrice) || taxLines.length > 0) ? (
               <tfoot>
                 {taxLines.length > 0 && (
                   <>
