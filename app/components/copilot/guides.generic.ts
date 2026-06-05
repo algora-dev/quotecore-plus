@@ -8,10 +8,11 @@ export const COPILOT_GUIDES_GENERIC: CopilotGuide[] = [
     steps: [
       {
         id: 'components-nav',
-        target: '[data-copilot="nav-components"]',
-        title: 'Components Page',
-        description: 'This is where you manage all your reusable components like materials, labour items, and extras - anything that appears in your quotes. Click "Components" to get started.',
+        target: '[data-copilot="resources-card-components"]',
+        title: 'Components',
+        description: 'Components are your reusable materials, labour items, and extras - anything that appears in your quotes. Open the _Resources_ menu and click the _"Components"_ card to manage them.',
         position: 'bottom',
+        page: '/resources',
         validation: 'none',
       },
       {

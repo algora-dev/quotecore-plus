@@ -3,6 +3,7 @@ import { ComponentList } from './component-list';
 import { ComponentsIntroModal } from './components-intro-modal';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
+import { BackButton } from '@/app/components/BackButton';
 
 export default async function ComponentsPage(props: {params: Promise<{workspaceSlug: string}>}) {
   const { workspaceSlug } = await props.params;
@@ -38,6 +39,7 @@ export default async function ComponentsPage(props: {params: Promise<{workspaceS
   return (
     <>
       {!introSeen && <ComponentsIntroModal />}
+      <BackButton />
       <ComponentList
         initialComponents={components}
         workspaceSlug={workspaceSlug}

@@ -68,21 +68,28 @@ const CURATED: Record<
     role: 'button',
     description: 'Saves the component to your library.',
   },
-  'nav-components': {
-    label: 'Components',
-    role: 'menu-item',
-    description: 'Main-nav link. Navigates to the Components page.',
-  },
   'nav-quotes': {
     label: 'Quotes',
     role: 'menu-item',
     description: 'Main-nav link. Navigates to the Quotes page (your saved quotes).',
   },
   'nav-orders': {
-    label: 'Material Orders',
+    label: 'Orders',
     role: 'menu-item',
     description:
-      'Main-nav link. Navigates to the Material Orders page. May be plan-gated (opens an upgrade prompt instead if the tier lacks Material Orders).',
+      'Main-nav link (labelled "Orders"). Navigates to the material orders hub. May be plan-gated (opens an upgrade prompt instead if the tier lacks Material Orders).',
+  },
+  'nav-resources': {
+    label: 'Resources',
+    role: 'menu-item',
+    description:
+      'Main-nav link. Opens the Resource Library hub - a cards page linking to Components, Drawings & Images, Catalogs, Attachments, and the template sections.',
+  },
+  'resources-card-components': {
+    label: 'Components',
+    role: 'menu-item',
+    description:
+      'The "Components" card on the Resource Library hub (/resources). Navigates to the Components page (manage reusable materials, labour items, and extras). Components is no longer in the main nav - reach it via Resources.',
   },
   'nav-account': {
     label: 'Account',
