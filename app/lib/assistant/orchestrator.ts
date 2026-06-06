@@ -466,9 +466,85 @@ async function dispatchTool(
   }
 }
 
+/**
+ * DETERMINISTIC GUIDE LAUNCH — take the decision away from the model.
+ * ------------------------------------------------------------------
+ * The model repeatedly narrated steps in chat instead of calling begin_guide,
+ * and re-asked "ready to begin?" after the user already said yes. Rather than
+ * keep steering it via the prompt, we detect a clear "show me how / guide me"
+ * intent (or an affirmative right after we offered a guide) SERVER-SIDE, match
+ * it to a workflow with the same candidate-finder the tool uses, and fire the
+ * guide_start ourselves. The on-screen step engine then owns the walkthrough.
+ * Returns a GuideStartCommand + one-line reply, or null to fall through to the
+ * normal model turn.
+ */
+const SHOW_ME_RE =
+  /\b(show me how|walk me through|guide me|step[\s-]?by[\s-]?step|how (do|can) i|how to|teach me|talk me through)\b/i;
+const AFFIRMATIVE_RE =
+  /^(yes|yep|yeah|yup|ya|sure|ok|okay|go|go ahead|do it|start|start it|begin|please do|guide me|let'?s go|already said yes)\b/i;
+const GUIDE_OFFER_RE =
+  /(walk you through|guide you through|step[\s-]?by[\s-]?step|start the guide|ready to begin|want me to (start|guide|show))/i;
+
+function tryDeterministicGuideLaunch(
+  input: OrchestratorInput
+): { command: GuideStartCommand; reply: string } | null {
+  const trade = tradeOf(input.context);
+  const history = input.history;
+  const lastUser = [...history].reverse().find((m) => m.role === 'user');
+  if (!lastUser) return null;
+  const text = lastUser.content.trim();
+  if (!text) return null;
+
+  const lastAssistant = [...history].reverse().find((m) => m.role === 'assistant');
+  const isAffirmativeToOffer =
+    AFFIRMATIVE_RE.test(text) &&
+    !!lastAssistant &&
+    GUIDE_OFFER_RE.test(lastAssistant.content);
+  const isShowMe = SHOW_ME_RE.test(text);
+  if (!isShowMe && !isAffirmativeToOffer) return null;
+
+  // For an affirmative, the intent is the PRIOR user message ("upload a catalog")
+  // since the affirmative itself ("yes") carries no task words.
+  let intentText = text;
+  if (isAffirmativeToOffer && !isShowMe) {
+    const priorUser = [...history]
+      .reverse()
+      .filter((m) => m.role === 'user')
+      .find((m) => m.content.trim() !== text);
+    if (priorUser) intentText = priorUser.content;
+    // Also fold in the assistant offer text so the workflow name is matchable.
+    if (lastAssistant) intentText += ' ' + lastAssistant.content;
+  }
+
+  const matches = findWorkflowsByIntent(intentText, trade);
+  if (matches.length === 0) return null;
+  // Confident if there's a clear top match (no near-tie with the runner-up).
+  const top = matches[0];
+  const runnerUp = matches[1];
+  const confident = !runnerUp || top.score >= runnerUp.score * 1.5 || top.score >= 8;
+  if (!confident) return null; // ambiguous — let the model disambiguate
+
+  const wf = getWorkflowById(top.workflow.id, trade);
+  if (!wf) return null;
+  return {
+    command: { type: 'guide_start', workflowId: wf.id, startPage: wf.startPage },
+    reply: `On it — I’ll walk you through “${wf.name}.” Follow the steps below.`,
+  };
+}
+
 export async function runAssistantTurn(
   input: OrchestratorInput
 ): Promise<OrchestratorResult> {
+  // Deterministic fast-path: if the user clearly wants to be shown how to do
+  // something (or just said "yes" to our guide offer), start the guide directly
+  // — no model discretion, no "ready to begin?" loop, no step-dump.
+  const direct = tryDeterministicGuideLaunch(input);
+  if (direct) {
+    input.onGuideStart?.(direct.command);
+    input.onToken?.(direct.reply);
+    return { finalText: direct.reply, totalTokens: 0, toolsUsed: ['begin_guide'] };
+  }
+
   const tools = toLlmTools();
   const messages: LlmMessage[] = [
     {
