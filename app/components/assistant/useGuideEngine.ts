@@ -29,6 +29,63 @@
 import { useCallback, useRef, useState } from 'react';
 import type { ActiveHighlight } from './useAssistantChat';
 import type { DoneSignal } from '@/app/lib/assistant/library/types';
+import { pathnameToScreenKey } from './useAssistantHints';
+
+/**
+ * Map a workflow's startPage to the SINGLE main-nav control that gets the user
+ * there, plus a human instruction. Every guided flow begins by making sure the
+ * user is on the right page; if they're not, we inject this as a synthetic
+ * step 0 so the walkthrough always starts from the correct location.
+ *
+ * Keyed by the coarse screenKey of the startPage (via pathnameToScreenKey) so
+ * it survives the workspace-slug prefix and the /resources/* nesting. Returns a
+ * registered nav elementId to highlight + a plain "how to get there" line.
+ */
+function navStepForScreenKey(screenKey: string): { elementId: string; title: string; instruction: string } | null {
+  switch (screenKey) {
+    case 'quotes':
+    case 'quote.new':
+      return { elementId: 'nav-quotes', title: 'Go to Quotes', instruction: 'First, open the Quotes page: click Quotes in the top navigation.' };
+    case 'material-orders':
+      return { elementId: 'nav-orders', title: 'Go to Orders', instruction: 'First, open the Orders page: click Orders in the top navigation.' };
+    case 'resources':
+      return { elementId: 'nav-resources', title: 'Go to Resources', instruction: 'First, open the Resource Library: click Resources in the top navigation.' };
+    case 'resources.catalogs':
+      return { elementId: 'nav-resources', title: 'Go to Resources → Catalogs', instruction: 'First, open the Resource Library: click Resources in the top navigation, then open the Catalogs card.' };
+    case 'resources.attachments':
+      return { elementId: 'nav-resources', title: 'Go to Resources → Attachments', instruction: 'First, open the Resource Library: click Resources in the top navigation, then open the Attachments card.' };
+    case 'components':
+      return { elementId: 'nav-resources', title: 'Go to Components', instruction: 'First, open the Resource Library: click Resources in the top navigation, then open the Components card.' };
+    case 'flashings':
+      return { elementId: 'nav-resources', title: 'Go to Drawings & Images', instruction: 'First, open the Resource Library: click Resources in the top navigation, then open the Drawings & Images card.' };
+    default:
+      return null;
+  }
+}
+
+/**
+ * Build a synthetic "navigate to the start page" step when the user isn't there
+ * yet. doneSignal is element-appears on the nav control's destination is hard
+ * to assert generically, so we use 'manual' (the user clicks Next once they've
+ * arrived) — simple and reliable. Returns null when no nav step is needed
+ * (already on the right page, or no startPage / unknown mapping).
+ */
+function buildNavStep(startPage: string | null, currentPathname: string | null): GuideStep | null {
+  if (!startPage) return null;
+  const targetKey = pathnameToScreenKey(startPage);
+  const currentKey = pathnameToScreenKey(currentPathname);
+  if (targetKey === currentKey) return null; // already on the right page
+  const nav = navStepForScreenKey(targetKey);
+  if (!nav) return null;
+  return {
+    id: `__nav-to-${targetKey}`,
+    title: nav.title,
+    instruction: nav.instruction,
+    elementId: nav.elementId,
+    page: null, // shown from wherever the user currently is
+    doneSignal: { kind: 'manual' },
+  };
+}
 
 /** One client-held workflow step (mirrors the endpoint projection). */
 export interface GuideStep {
@@ -72,8 +129,10 @@ export interface GuideEngine {
   isActive: boolean;
   /** Highlight command for the current step's element (drives the executor). */
   currentHighlight: ActiveHighlight | null;
-  /** Fetch the step list for a workflow id and start at index 0. */
-  startWorkflow: (workflowId: string) => Promise<void>;
+  /** Fetch the step list for a workflow id and start at index 0. Pass the
+   *  user's current pathname so the engine can prepend a "get to the start
+   *  page" step when they're not already there. */
+  startWorkflow: (workflowId: string, currentPathname?: string | null) => Promise<void>;
   /** Advance to the next step (instant — steps already in memory). */
   next: () => void;
   /** Go back one step (instant). No-op at the first step. */
@@ -99,7 +158,7 @@ export function useGuideEngine(): GuideEngine {
   // Guard against a stale fetch (a newer startWorkflow) overwriting state.
   const loadTokenRef = useRef(0);
 
-  const startWorkflow = useCallback(async (id: string) => {
+  const startWorkflow = useCallback(async (id: string, currentPathname?: string | null) => {
     const token = ++loadTokenRef.current;
     setStatus('loading');
     setWorkflowId(id);
@@ -121,9 +180,16 @@ export function useGuideEngine(): GuideEngine {
         setSteps([]);
         return;
       }
+      // EVERY flow begins by getting the user to the correct start page. If
+      // they're not already there, prepend a synthetic navigation step so the
+      // walkthrough starts from the right location instead of dumping step 1
+      // for a page they can't see.
+      const path = currentPathname ?? (typeof window !== 'undefined' ? window.location.pathname : null);
+      const navStep = buildNavStep(wf.startPage, path);
+      const steps = navStep ? [navStep, ...wf.steps] : wf.steps;
       setWorkflowName(wf.name);
       setStartPage(wf.startPage);
-      setSteps(wf.steps);
+      setSteps(steps);
       setCurrentIndex(0);
       setStepKey(nextStepKey());
       setStatus('active');

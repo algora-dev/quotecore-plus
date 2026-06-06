@@ -258,7 +258,12 @@ export function AssistantWidget(_props: Props) {
   // the client engine. The chat coexists — chatting never resets the engine.
   useEffect(() => {
     if (!guideStart) return;
-    void engine.startWorkflow(guideStart.workflowId);
+    // Pass the live pathname so the engine can prepend a "get to the start
+    // page" step when the user isn't already on the workflow's start page.
+    void engine.startWorkflow(
+      guideStart.workflowId,
+      typeof window !== 'undefined' ? window.location.pathname : null
+    );
     clearGuideStart();
     // engine.startWorkflow is stable (useCallback); guideStart is the trigger.
     // eslint-disable-next-line react-hooks/exhaustive-deps
