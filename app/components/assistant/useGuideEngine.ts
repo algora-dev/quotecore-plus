@@ -26,10 +26,11 @@
  * tenancy state; the endpoint resolves trade from the session.
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ActiveHighlight } from './useAssistantChat';
 import type { DoneSignal } from '@/app/lib/assistant/library/types';
 import { pathnameToScreenKey } from './useAssistantHints';
+import { loadGuide, saveGuide, clearGuide } from './assistantPersistence';
 
 /**
  * Map a workflow's startPage to the SINGLE main-nav control that gets the user
@@ -175,15 +176,19 @@ export interface GuideEngine {
 }
 
 export function useGuideEngine(): GuideEngine {
-  const [status, setStatus] = useState<GuideEngineStatus>('idle');
-  const [workflowId, setWorkflowId] = useState<string | null>(null);
-  const [workflowName, setWorkflowName] = useState<string | null>(null);
-  const [startPage, setStartPage] = useState<string | null>(null);
-  const [steps, setSteps] = useState<GuideStep[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // Rehydrate an in-progress guide so navigating to the highlighted page (which
+  // can remount this hook) doesn't drop the walkthrough mid-flow.
+  const restored = typeof window !== 'undefined' ? loadGuide() : null;
+  const [status, setStatus] = useState<GuideEngineStatus>(restored ? 'active' : 'idle');
+  const [workflowId, setWorkflowId] = useState<string | null>(restored?.workflowId ?? null);
+  const [workflowName, setWorkflowName] = useState<string | null>(restored?.workflowName ?? null);
+  const [startPage, setStartPage] = useState<string | null>(restored?.startPage ?? null);
+  const [steps, setSteps] = useState<GuideStep[]>((restored?.steps as GuideStep[]) ?? []);
+  const [currentIndex, setCurrentIndex] = useState(restored?.currentIndex ?? 0);
   // A unique key per (step entry) so the highlight executor re-fires even when
-  // two consecutive steps target the same elementId.
-  const [stepKey, setStepKey] = useState<string>('');
+  // two consecutive steps target the same elementId. Seeded on rehydrate so the
+  // restored step's highlight fires after a remount.
+  const [stepKey, setStepKey] = useState<string>(restored ? nextStepKey() : '');
   // Guard against a stale fetch (a newer startWorkflow) overwriting state.
   const loadTokenRef = useRef(0);
 
@@ -270,7 +275,15 @@ export function useGuideEngine(): GuideEngine {
     setSteps([]);
     setCurrentIndex(0);
     setStepKey('');
+    clearGuide();
   }, []);
+
+  // Persist the active guide (workflow + position) so it survives a remount.
+  useEffect(() => {
+    if (status === 'active' && workflowId && steps.length > 0) {
+      saveGuide({ workflowId, workflowName, startPage, steps, currentIndex });
+    }
+  }, [status, workflowId, workflowName, startPage, steps, currentIndex]);
 
   const isActive = status === 'active';
   const current = isActive ? steps[currentIndex] ?? null : null;

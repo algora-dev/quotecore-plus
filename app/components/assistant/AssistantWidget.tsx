@@ -25,6 +25,7 @@ import { useAssistantHints } from './useAssistantHints';
 import { useAssistantHighlight } from './useAssistantHighlight';
 import { useBrowserFacts } from './useBrowserFacts';
 import { useGuideEngine, type GuideStep } from './useGuideEngine';
+import { loadGuide } from './assistantPersistence';
 
 /**
  * Render one guided step as an assistant-style chat message (Fix 1c + Fix 2).
@@ -149,7 +150,12 @@ const HIGHLIGHTS_PREF_KEY = 'qc-assistant-highlights';
 
 export function AssistantWidget(_props: Props) {
   const userEnabled = _props.enabled !== false;
-  const [open, setOpen] = useState(false);
+  // Stay open on mount if a guide is mid-flow (e.g. we just navigated to the
+  // highlighted page) so the restored conversation + next step are visible
+  // rather than collapsing behind the emblem.
+  const [open, setOpen] = useState(
+    () => typeof window !== 'undefined' && !!loadGuide()
+  );
   const [mode, setMode] = useState<AssistantMode>('respond_only');
   const [input, setInput] = useState('');
   // Highlights preference (Guide-me only). Default ON; persisted per-browser.
@@ -291,7 +297,13 @@ export function AssistantWidget(_props: Props) {
   // Render each new current step as an assistant-style message. Keyed on the
   // engine's currentIndex so we post exactly one bubble per step (incl. step 0
   // when a workflow starts). The highlight fires via activeHighlight above.
-  const lastPostedStepRef = useRef<string | null>(null);
+  // Seed from a rehydrated guide (after a nav remount) so we DON'T re-post the
+  // restored current step — its bubble is already in the rehydrated thread.
+  const lastPostedStepRef = useRef<string | null>(
+    engine.isActive && engine.workflowId
+      ? `${engine.workflowId}:${engine.currentIndex}`
+      : null
+  );
   useEffect(() => {
     if (!engine.isActive || !engine.current) {
       if (!engine.isActive) lastPostedStepRef.current = null;

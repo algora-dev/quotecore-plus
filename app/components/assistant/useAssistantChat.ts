@@ -12,7 +12,8 @@
  * AssistantContextProvider) so this hook stays client-agnostic.
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { loadChat, saveChat, clearChat } from './assistantPersistence';
 import {
   ASSISTANT_PROTOCOL_VERSION,
   type AssistantClientHints,
@@ -60,12 +61,25 @@ export interface ActiveHighlight extends HighlightCommand {
 }
 
 export function useAssistantChat() {
-  const [messages, setMessages] = useState<UiMessage[]>([]);
+  // Rehydrate the thread from sessionStorage so a nav-triggered remount (e.g.
+  // clicking a highlighted nav link mid-guide) doesn't wipe the conversation.
+  const persisted = typeof window !== 'undefined' ? loadChat() : null;
+  const [messages, setMessages] = useState<UiMessage[]>(
+    (persisted?.messages as UiMessage[]) ?? []
+  );
   const [status, setStatus] = useState<ChatStatus>('idle');
   const [highlight, setHighlight] = useState<ActiveHighlight | null>(null);
   const [guideStart, setGuideStart] = useState<ActiveGuideStart | null>(null);
-  const sessionIdRef = useRef<string | undefined>(undefined);
+  const sessionIdRef = useRef<string | undefined>(persisted?.sessionId);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Persist the thread on every change (best-effort; strips streaming flags).
+  useEffect(() => {
+    saveChat({
+      messages: messages.map((m) => ({ ...m, streaming: false })),
+      sessionId: sessionIdRef.current,
+    });
+  }, [messages]);
 
   const cancel = useCallback(() => {
     abortRef.current?.abort();
@@ -79,6 +93,7 @@ export function useAssistantChat() {
     setStatus('idle');
     setHighlight(null);
     setGuideStart(null);
+    clearChat();
   }, [cancel]);
 
   /** Acknowledge a consumed guide_start so it doesn't re-trigger. */
@@ -161,6 +176,14 @@ export function useAssistantChat() {
           switch (event.type) {
             case 'session':
               sessionIdRef.current = event.sessionId;
+              // Persist the sessionId immediately (merged with any already-saved
+              // messages) so a remount keeps appending to the same server
+              // session rather than starting a fresh one. The messages effect
+              // keeps the thread itself in sync.
+              saveChat({
+                messages: (loadChat()?.messages as unknown[]) ?? [],
+                sessionId: event.sessionId,
+              });
               break;
             case 'token':
               patchAssistant((m) => ({ ...m, content: m.content + event.text }));
