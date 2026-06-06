@@ -101,6 +101,18 @@ const CURATED: Record<
     description:
       'The "Attachments" card on the Resource Library hub (/resources). Opens the attachment library (upload files once and reuse them across quotes and orders).',
   },
+  'resources-card-catalogs': {
+    label: 'Catalogs',
+    role: 'menu-item',
+    description:
+      'The "Catalogs" card on the Resource Library hub (/resources). Opens the Catalogs page where supplier CSV price lists are uploaded and searched when quoting.',
+  },
+  'resources-card-drawings': {
+    label: 'Drawings & Images',
+    role: 'menu-item',
+    description:
+      'The "Drawings & Images" card on the Resource Library hub (/resources). Opens the drawings/flashings library.',
+  },
   'order-layout-line-by-line': {
     label: 'Line by Line layout',
     role: 'button',

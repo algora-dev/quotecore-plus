@@ -172,7 +172,19 @@ export function useAssistantHighlight(
     const treatment = highlight.treatment ?? 'glow';
     const cls = `assistant-hl assistant-hl-${treatment}`;
     el.classList.add(...cls.split(' '));
-    el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    // Only scroll if the control is actually off-screen. A smooth scroll while
+    // the user is reaching for an already-visible control (e.g. a top-nav
+    // button) moves it mid-click, so the first click lands on empty space and
+    // they have to click again. Skip the scroll when it's already in view.
+    const vr = el.getBoundingClientRect();
+    const inView =
+      vr.top >= 0 &&
+      vr.left >= 0 &&
+      vr.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+      vr.right <= (window.innerWidth || document.documentElement.clientWidth);
+    if (!inView) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    }
 
     const updateRect = () => {
       const r = el.getBoundingClientRect();

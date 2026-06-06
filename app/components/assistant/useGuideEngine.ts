@@ -41,50 +41,79 @@ import { pathnameToScreenKey } from './useAssistantHints';
  * it survives the workspace-slug prefix and the /resources/* nesting. Returns a
  * registered nav elementId to highlight + a plain "how to get there" line.
  */
-function navStepForScreenKey(screenKey: string): { elementId: string; title: string; instruction: string } | null {
+/** One synthetic navigation hop: highlight a control + tell the user to click
+ *  it. Each hop is its OWN guide step so the user clicks one thing at a time. */
+interface NavHop {
+  elementId: string;
+  title: string;
+  instruction: string;
+  /** When set, this hop auto-completes once that elementId appears on screen
+   *  (i.e. the destination page rendered). Else it's manual (click Next). */
+  appearsTarget?: string;
+}
+
+/**
+ * The ordered list of navigation hops needed to REACH a workflow's start page
+ * from the top nav. Resource Library destinations are TWO hops: open Resources
+ * (top nav), then click the section card. Top-level pages are a single hop.
+ */
+function navHopsForScreenKey(screenKey: string): NavHop[] {
   switch (screenKey) {
     case 'quotes':
     case 'quote.new':
-      return { elementId: 'nav-quotes', title: 'Go to Quotes', instruction: 'First, open the Quotes page: click Quotes in the top navigation.' };
+      return [{ elementId: 'nav-quotes', title: 'Go to Quotes', instruction: 'Open the Quotes page: click Quotes in the top navigation.' }];
     case 'material-orders':
-      return { elementId: 'nav-orders', title: 'Go to Orders', instruction: 'First, open the Orders page: click Orders in the top navigation.' };
+      return [{ elementId: 'nav-orders', title: 'Go to Orders', instruction: 'Open the Orders page: click Orders in the top navigation.' }];
     case 'resources':
-      return { elementId: 'nav-resources', title: 'Go to Resources', instruction: 'First, open the Resource Library: click Resources in the top navigation.' };
+      return [{ elementId: 'nav-resources', title: 'Go to Resources', instruction: 'Open the Resource Library: click Resources in the top navigation.' }];
     case 'resources.catalogs':
-      return { elementId: 'nav-resources', title: 'Go to Resources → Catalogs', instruction: 'First, open the Resource Library: click Resources in the top navigation, then open the Catalogs card.' };
+      return [
+        { elementId: 'nav-resources', title: 'Open the Resource Library', instruction: 'Click Resources in the top navigation to open the Resource Library.', appearsTarget: 'resources-card-catalogs' },
+        { elementId: 'resources-card-catalogs', title: 'Open Catalogs', instruction: 'Click the Catalogs card to open your Catalog Library.', appearsTarget: 'upload-catalog' },
+      ];
     case 'resources.attachments':
-      return { elementId: 'nav-resources', title: 'Go to Resources → Attachments', instruction: 'First, open the Resource Library: click Resources in the top navigation, then open the Attachments card.' };
+      return [
+        { elementId: 'nav-resources', title: 'Open the Resource Library', instruction: 'Click Resources in the top navigation to open the Resource Library.', appearsTarget: 'resources-card-attachments' },
+        { elementId: 'resources-card-attachments', title: 'Open Attachments', instruction: 'Click the Attachments card to open your attachment library.' },
+      ];
     case 'components':
-      return { elementId: 'nav-resources', title: 'Go to Components', instruction: 'First, open the Resource Library: click Resources in the top navigation, then open the Components card.' };
+      return [
+        { elementId: 'nav-resources', title: 'Open the Resource Library', instruction: 'Click Resources in the top navigation to open the Resource Library.', appearsTarget: 'resources-card-components' },
+        { elementId: 'resources-card-components', title: 'Open Components', instruction: 'Click the Components card to open your component library.' },
+      ];
     case 'flashings':
-      return { elementId: 'nav-resources', title: 'Go to Drawings & Images', instruction: 'First, open the Resource Library: click Resources in the top navigation, then open the Drawings & Images card.' };
+      return [
+        { elementId: 'nav-resources', title: 'Open the Resource Library', instruction: 'Click Resources in the top navigation to open the Resource Library.', appearsTarget: 'resources-card-drawings' },
+        { elementId: 'resources-card-drawings', title: 'Open Drawings & Images', instruction: 'Click the Drawings & Images card.' },
+      ];
     default:
-      return null;
+      return [];
   }
 }
 
 /**
- * Build a synthetic "navigate to the start page" step when the user isn't there
- * yet. doneSignal is element-appears on the nav control's destination is hard
- * to assert generically, so we use 'manual' (the user clicks Next once they've
- * arrived) — simple and reliable. Returns null when no nav step is needed
- * (already on the right page, or no startPage / unknown mapping).
+ * Build the synthetic "navigate to the start page" steps when the user isn't
+ * there yet — ONE step per hop (e.g. Resources -> Catalogs card = two steps).
+ * Each hop auto-advances when its destination element appears (so clicking the
+ * highlighted control moves the guide on), falling back to manual Next.
+ * Returns [] when no navigation is needed (already on the right page / unknown).
  */
-function buildNavStep(startPage: string | null, currentPathname: string | null): GuideStep | null {
-  if (!startPage) return null;
+function buildNavSteps(startPage: string | null, currentPathname: string | null): GuideStep[] {
+  if (!startPage) return [];
   const targetKey = pathnameToScreenKey(startPage);
   const currentKey = pathnameToScreenKey(currentPathname);
-  if (targetKey === currentKey) return null; // already on the right page
-  const nav = navStepForScreenKey(targetKey);
-  if (!nav) return null;
-  return {
-    id: `__nav-to-${targetKey}`,
-    title: nav.title,
-    instruction: nav.instruction,
-    elementId: nav.elementId,
+  if (targetKey === currentKey) return []; // already on the right page
+  const hops = navHopsForScreenKey(targetKey);
+  return hops.map((hop, i) => ({
+    id: `__nav-${targetKey}-${i}`,
+    title: hop.title,
+    instruction: hop.instruction,
+    elementId: hop.elementId,
     page: null, // shown from wherever the user currently is
-    doneSignal: { kind: 'manual' },
-  };
+    doneSignal: hop.appearsTarget
+      ? { kind: 'element-appears', elementId: hop.appearsTarget }
+      : { kind: 'manual' },
+  }));
 }
 
 /** One client-held workflow step (mirrors the endpoint projection). */
@@ -185,8 +214,8 @@ export function useGuideEngine(): GuideEngine {
       // walkthrough starts from the right location instead of dumping step 1
       // for a page they can't see.
       const path = currentPathname ?? (typeof window !== 'undefined' ? window.location.pathname : null);
-      const navStep = buildNavStep(wf.startPage, path);
-      const steps = navStep ? [navStep, ...wf.steps] : wf.steps;
+      const navSteps = buildNavSteps(wf.startPage, path);
+      const steps = [...navSteps, ...wf.steps];
       setWorkflowName(wf.name);
       setStartPage(wf.startPage);
       setSteps(steps);
