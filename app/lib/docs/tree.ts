@@ -115,6 +115,10 @@ function walk(dir: string): string[] {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
+      // Skip private/source folders (e.g. _trade-overlays). The underscore
+      // prefix marks per-trade content variants that are served behind the
+      // scenes by trade, NOT flattened into the public docs sidebar.
+      if (entry.name.startsWith('_')) continue;
       out.push(...walk(full));
     } else if (entry.isFile() && entry.name.endsWith('.mdx')) {
       out.push(full);
