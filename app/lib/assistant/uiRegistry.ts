@@ -91,6 +91,58 @@ const CURATED: Record<
     description:
       'The "Components" card on the Resource Library hub (/resources). Navigates to the Components page (manage reusable materials, labour items, and extras). Components is no longer in the main nav - reach it via Resources.',
   },
+  // --- Dynamic/variable-bound anchors (ids computed at runtime, so the seed
+  //     script can't auto-register them). Hand-registered here so
+  //     request_ui_highlight will accept them. Keep in sync with
+  //     docs/guide-me-target-ledger.md (run scripts/audit-guide-targets.mjs).
+  'resources-card-attachments': {
+    label: 'Attachments',
+    role: 'menu-item',
+    description:
+      'The "Attachments" card on the Resource Library hub (/resources). Opens the attachment library (upload files once and reuse them across quotes and orders).',
+  },
+  'order-layout-line-by-line': {
+    label: 'Line by Line layout',
+    role: 'button',
+    description:
+      'The "Line by Line" card in the order layout picker. Chooses the clean itemised text layout (item, description, qty, price) for a material order. Layout cannot be changed after saving.',
+  },
+  'add-line-catalog-tab': {
+    label: 'Search catalog tab',
+    role: 'button',
+    description:
+      'The "Search catalog" tab inside the Add New Line picker on the Customer Quote editor. Switches the picker to catalog search so you can insert a priced supplier-catalog item as a quote line.',
+  },
+  'draw-flashing': {
+    label: 'Draw Flashing',
+    role: 'button',
+    description:
+      'The "Draw Flashing" button on the Flashings/Drawings library page (roofing trade). Opens the drawing canvas to create a flashing profile with measurements.',
+  },
+  'create-drawing': {
+    label: 'Create Drawing',
+    role: 'button',
+    description:
+      'The "Create Drawing" button on the Drawings & Images library page (generic trades). Opens the drawing canvas to create a drawing/image with measurements.',
+  },
+  'quote-add-from-library': {
+    label: 'Add from library',
+    role: 'button',
+    description:
+      'In the Quote Builder, the control that lets you pick a component from your library to add to the current roof/area.',
+  },
+  'quote-add-from-library-add-btn': {
+    label: 'Add component (confirm)',
+    role: 'button',
+    description:
+      'In the Quote Builder, the confirm/add button that actually drops the selected library component onto the quote.',
+  },
+  'quote-first-component': {
+    label: 'First component',
+    role: 'button',
+    description:
+      'In the Quote Builder, the first added component row — used to demonstrate expanding/editing a component on the quote.',
+  },
   'nav-account': {
     label: 'Account',
     role: 'menu-item',

@@ -3,8 +3,8 @@
  * Seed inventory of existing data-copilot anchors. The curated registry
  * (uiRegistry.ts) imports this and adds label/role/description.
  *
- * Static ids found: 91
- * Dynamic (hand-register) anchors: 4
+ * Static ids found: 107
+ * Dynamic (hand-register) anchors: 8
  */
 
 export interface SeedEntry {
@@ -19,11 +19,20 @@ export interface SeedEntry {
 export const UI_REGISTRY_SEED: SeedEntry[] = [
   { id: "account-billing", screenKey: "account", source: "app\\(auth)\\[workspaceSlug]\\account\\page.tsx" },
   { id: "account-company", screenKey: "account", source: "app\\(auth)\\[workspaceSlug]\\account\\page.tsx" },
-  { id: "account-copilot", screenKey: "account", source: "app\\(auth)\\[workspaceSlug]\\account\\page.tsx" },
   { id: "account-notifications", screenKey: "account", source: "app\\(auth)\\[workspaceSlug]\\account\\page.tsx" },
   { id: "account-recovery", screenKey: "account", source: "app\\(auth)\\[workspaceSlug]\\account\\page.tsx" },
   { id: "account-security", screenKey: "account", source: "app\\(auth)\\[workspaceSlug]\\account\\page.tsx" },
   { id: "add-component", screenKey: "components", source: "app\\(auth)\\[workspaceSlug]\\components\\component-list.tsx" },
+  { id: "add-line-tabs", screenKey: "quotes", source: "app\\(auth)\\[workspaceSlug]\\quotes\\[id]\\customer-edit\\AddLineModal.tsx" },
+  { id: "attachment-send-picker", screenKey: "components", source: "app\\components\\attachments\\AttachmentSendPicker.tsx" },
+  { id: "attachment-upload-btn", screenKey: "attachments", source: "app\\(auth)\\[workspaceSlug]\\attachments\\attachment-list.tsx" },
+  { id: "catalog-search-input", screenKey: "quotes", source: "app\\(auth)\\[workspaceSlug]\\quotes\\[id]\\customer-edit\\CatalogSearchModal.tsx" },
+  { id: "catalog-search-results", screenKey: "quotes", source: "app\\(auth)\\[workspaceSlug]\\quotes\\[id]\\customer-edit\\CatalogSearchModal.tsx" },
+  { id: "catalog-wizard-drop", screenKey: "catalogs", source: "app\\(auth)\\[workspaceSlug]\\catalogs\\upload-wizard.tsx" },
+  { id: "catalog-wizard-map", screenKey: "catalogs", source: "app\\(auth)\\[workspaceSlug]\\catalogs\\upload-wizard.tsx" },
+  { id: "catalog-wizard-name", screenKey: "catalogs", source: "app\\(auth)\\[workspaceSlug]\\catalogs\\upload-wizard.tsx" },
+  { id: "catalog-wizard-save", screenKey: "catalogs", source: "app\\(auth)\\[workspaceSlug]\\catalogs\\upload-wizard.tsx" },
+  { id: "cl-add-line-btn", screenKey: "quotes", source: "app\\(auth)\\[workspaceSlug]\\quotes\\[id]\\customer-edit\\CustomerQuoteEditor.tsx" },
   { id: "cl-back-options", screenKey: "quotes", source: "app\\(auth)\\[workspaceSlug]\\quotes\\[id]\\summary\\SendQuoteButton.tsx" },
   { id: "cl-copy-url-option", screenKey: "quotes", source: "app\\(auth)\\[workspaceSlug]\\quotes\\[id]\\summary\\SendQuoteButton.tsx" },
   { id: "cl-create-template-option", screenKey: "quotes", source: "app\\(auth)\\[workspaceSlug]\\quotes\\[id]\\summary\\SendQuoteButton.tsx" },
@@ -72,6 +81,13 @@ export const UI_REGISTRY_SEED: SeedEntry[] = [
   { id: "mo-sidebar", screenKey: "material-orders", source: "app\\(auth)\\[workspaceSlug]\\material-orders\\create\\order-create-form.tsx" },
   { id: "mo-template", screenKey: "material-orders", source: "app\\(auth)\\[workspaceSlug]\\material-orders\\create\\order-create-form.tsx" },
   { id: "new-quote", screenKey: "quotes", source: "app\\(auth)\\[workspaceSlug]\\quotes\\QuotesList.tsx" },
+  { id: "order-from-quote-confirm", screenKey: "material-orders", source: "app\\(auth)\\[workspaceSlug]\\material-orders\\order-from-quote\\quote-selector.tsx" },
+  { id: "order-from-quote-list", screenKey: "material-orders", source: "app\\(auth)\\[workspaceSlug]\\material-orders\\order-from-quote\\quote-selector.tsx" },
+  { id: "order-layout-picker", screenKey: "material-orders", source: "app\\(auth)\\[workspaceSlug]\\material-orders\\OrderLayoutPickerModal.tsx" },
+  { id: "order-lbl-add-line", screenKey: "material-orders", source: "app\\(auth)\\[workspaceSlug]\\material-orders\\create\\OrderLineByLineEditor.tsx" },
+  { id: "order-lbl-controls", screenKey: "material-orders", source: "app\\(auth)\\[workspaceSlug]\\material-orders\\create\\OrderLineByLineEditor.tsx" },
+  { id: "order-lbl-footer", screenKey: "material-orders", source: "app\\(auth)\\[workspaceSlug]\\material-orders\\create\\OrderLineByLineEditor.tsx" },
+  { id: "order-lbl-taxes", screenKey: "material-orders", source: "app\\(auth)\\[workspaceSlug]\\material-orders\\create\\OrderLineByLineEditor.tsx" },
   { id: "quote-add-area", screenKey: "quotes", source: "app\\(auth)\\[workspaceSlug]\\quotes\\[id]\\quote-builder.tsx" },
   { id: "quote-add-area-row", screenKey: "quotes", source: "app\\(auth)\\[workspaceSlug]\\quotes\\[id]\\quote-builder.tsx" },
   { id: "quote-add-measurement", screenKey: "quotes", source: "app\\(auth)\\[workspaceSlug]\\quotes\\[id]\\quote-builder.tsx" },
