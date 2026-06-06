@@ -45,10 +45,20 @@ export function pathnameToScreenKey(pathname: string | null): string {
   if (/^customer-quote-templates/.test(inner)) return 'customer-quote-templates';
   if (/^flashings/.test(inner)) return 'flashings';
   if (/^material-orders/.test(inner)) return 'material-orders';
-  if (/^catalogs/.test(inner)) return 'catalogs';
-  if (/^attachments/.test(inner)) return 'attachments';
+  // Resource Library lives under /resources/* after the restructure. Match the
+  // nested sub-routes FIRST so we emit a slash-free semantic key (the server
+  // rejects anything containing '/'). Order matters: specific before generic.
+  if (/^resources\/catalogs/.test(inner)) return 'resources.catalogs';
+  if (/^resources\/attachments/.test(inner)) return 'resources.attachments';
+  if (/^resources/.test(inner)) return 'resources';
+  // Legacy flat routes (kept for back-compat redirects).
+  if (/^catalogs/.test(inner)) return 'resources.catalogs';
+  if (/^attachments/.test(inner)) return 'resources.attachments';
   if (/^account/.test(pathname.replace(/^\//, ''))) return 'account';
-  return inner || 'home';
+  // Final safety net: never return a value with a slash (server rejects it).
+  // Collapse any remaining nested path to its first segment.
+  const fallback = inner.split('/')[0];
+  return fallback || 'home';
 }
 
 /** Scan the DOM for currently-rendered registry element ids. Exported so
