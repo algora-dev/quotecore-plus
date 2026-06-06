@@ -83,31 +83,50 @@ function inferCurrentStepIndex(
 }
 
 /** Does a recent action / visible-element set satisfy this step's doneSignal? */
+/**
+ * Baseline captured the moment a step becomes current. Auto-advance must only
+ * fire on a signal that is NEW relative to this baseline — otherwise a step
+ * whose done-element is ALREADY on screen (very common) would advance instantly,
+ * cascading through every step and fast-forwarding the whole guide to Finish.
+ */
+interface StepBaseline {
+  /** elementIds already visible when the step started (so 'element-appears'
+   *  only fires for elements that appear AFTER, as a result of the user act). */
+  visibleAtStart: Set<string>;
+  /** recentActions length at step start (so 'clicked'/'input' only count new
+   *  actions taken DURING this step, not stale ones from before). */
+  actionsAtStart: number;
+}
+
 function isStepDone(
   step: GuideStep,
   recentActions: { elementId: string; kind: string }[],
-  visibleElementIds: string[]
+  visibleElementIds: string[],
+  baseline: StepBaseline | null
 ): boolean {
   const sig = step.doneSignal;
+  // Only actions taken AFTER the step started count toward completion.
+  const freshActions = baseline ? recentActions.slice(baseline.actionsAtStart) : recentActions;
   switch (sig.kind) {
     case 'manual':
       return false; // never auto-advance — rely on the Next button
     case 'clicked': {
       const target = sig.elementId ?? step.elementId;
-      return !!target && recentActions.some((a) => a.elementId === target && a.kind === 'click');
+      return !!target && freshActions.some((a) => a.elementId === target && a.kind === 'click');
     }
     case 'input-filled': {
       const target = sig.elementId ?? step.elementId;
       return (
         !!target &&
-        recentActions.some(
+        freshActions.some(
           (a) => a.elementId === target && (a.kind === 'input' || a.kind === 'change')
         )
       );
     }
     case 'element-appears': {
       const target = sig.elementId;
-      return !!target && visibleElementIds.includes(target);
+      // Must NEWLY appear: visible now AND not already visible at step start.
+      return !!target && visibleElementIds.includes(target) && !(baseline?.visibleAtStart.has(target));
     }
     default:
       return false;
@@ -293,11 +312,20 @@ export function AssistantWidget(_props: Props) {
   useEffect(() => {
     if (!engine.isActive || !engine.current) return;
     if (engine.current.doneSignal.kind === 'manual') return;
+    // Capture the baseline at step start: what's already on screen + how many
+    // actions have happened. Auto-advance only fires on a signal NEW relative
+    // to this, so a step whose element is already visible does NOT instantly
+    // advance (which previously cascaded straight to Finish).
+    const startFacts = getFacts();
+    const baseline = {
+      visibleAtStart: new Set(startFacts.visibleElementIds),
+      actionsAtStart: startFacts.recentActions.length,
+    };
     const id = window.setInterval(() => {
       const facts = getFacts();
       if (
         engine.current &&
-        isStepDone(engine.current, facts.recentActions, facts.visibleElementIds)
+        isStepDone(engine.current, facts.recentActions, facts.visibleElementIds, baseline)
       ) {
         engine.next();
       }
