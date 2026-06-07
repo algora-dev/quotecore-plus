@@ -57,6 +57,8 @@ export interface InvoiceLineRow {
   unit_price: number;
   line_total: number;
   show_price: boolean;
+  show_quantity: boolean;
+  show_description: boolean;
   is_visible: boolean;
 }
 
@@ -132,8 +134,8 @@ export function InvoiceEditor({
       unit_price: Number(l.unit_price),
       line_total: Number(l.line_total),
       show_price: l.show_price,
-      show_quantity: (l as {show_quantity?: boolean}).show_quantity ?? true,
-      show_description: (l as {show_description?: boolean}).show_description ?? true,
+      show_quantity: l.show_quantity ?? true,
+      show_description: l.show_description ?? true,
       is_visible: l.is_visible,
     }))
   );
@@ -240,45 +242,48 @@ export function InvoiceEditor({
     }
   }
 
-  // ── Save ──
+  // ── Core save (no redirect) — used by auto-save and the Save button ──
+  async function persistChanges() {
+    await saveInvoiceLines(
+      initial.id,
+      lines.map((l, idx) => ({
+        sort_order: idx,
+        line_source_type: l.line_source_type,
+        source_id: l.source_id,
+        title: l.title,
+        description: l.description,
+        quantity: l.quantity,
+        unit: l.unit,
+        unit_price: l.unit_price,
+        line_total: l.line_total,
+        show_price: l.show_price,
+        show_quantity: l.show_quantity,
+        show_description: l.show_description,
+        is_visible: l.is_visible,
+      })),
+      { subtotal, taxTotal, discountTotal: 0, total }
+    );
+    await saveInvoiceMeta(initial.id, {
+      notes: notes || null,
+      terms: terms || null,
+      invoice_date: invoiceDate,
+      due_date: dueDate || null,
+      cq_company_name: companyName || null,
+      cq_company_address: companyAddress || null,
+      cq_company_email: companyEmail || null,
+      cq_company_phone: companyPhone || null,
+      cq_company_logo_url: companyLogoUrl || null,
+      cq_footer_text: footerText || null,
+    });
+    setIsDirty(false);
+    setLastSaved(new Date());
+  }
+
+  // ── Manual Save button — saves in place, no redirect ──
   async function handleSave() {
     setSaving(true);
     try {
-      await saveInvoiceLines(
-        initial.id,
-        lines.map((l, idx) => ({
-          sort_order: idx,
-          line_source_type: l.line_source_type,
-          source_id: l.source_id,
-          title: l.title,
-          description: l.description,
-          quantity: l.quantity,
-          unit: l.unit,
-          unit_price: l.unit_price,
-          line_total: l.line_total,
-          show_price: l.show_price,
-          show_quantity: l.show_quantity,
-          show_description: l.show_description,
-          is_visible: l.is_visible,
-        })),
-        { subtotal, taxTotal, discountTotal: 0, total }
-      );
-      await saveInvoiceMeta(initial.id, {
-        notes: notes || null,
-        terms: terms || null,
-        invoice_date: invoiceDate,
-        due_date: dueDate || null,
-        cq_company_name: companyName || null,
-        cq_company_address: companyAddress || null,
-        cq_company_email: companyEmail || null,
-        cq_company_phone: companyPhone || null,
-        cq_company_logo_url: companyLogoUrl || null,
-        cq_footer_text: footerText || null,
-      });
-      setIsDirty(false);
-      setLastSaved(new Date());
-      // Redirect back to invoice library after save
-      router.push(`/${workspaceSlug}/invoices`);
+      await persistChanges();
     } catch {
       alert('Failed to save. Please try again.');
     } finally {
@@ -304,7 +309,7 @@ export function InvoiceEditor({
     if (!isDirty) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      handleSave();
+      persistChanges().catch(() => {/* silent on auto-save fail */});
     }, 2000);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [isDirty, lines, notes, terms, invoiceDate, dueDate, companyName, companyAddress, companyEmail, companyPhone, companyLogoUrl, footerText]);
@@ -316,7 +321,7 @@ export function InvoiceEditor({
   return (
     <div className="flex flex-col min-h-screen">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white sticky top-0 z-10">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white sticky top-0 z-30">
         <div className="flex items-center gap-3 min-w-0">
           <Link
             href={`/${workspaceSlug}/invoices`}
@@ -541,37 +546,54 @@ export function InvoiceEditor({
                                 )}
                               </div>
                             </div>
-                            {/* ── Show/hide toggles — always visible on the row ── */}
+                            {/* ── Show/hide toggles — checkbox pattern matching CustomerQuoteEditor ── */}
                             {!isReadOnly && (
-                              <div className="flex items-center gap-3 mt-2 pt-2 border-t border-slate-100">
-                                <button type="button"
-                                  onClick={() => { updateLine(line.localId, { show_description: !line.show_description }); }}
-                                  className={`inline-flex items-center gap-1 text-xs rounded-full px-2 py-0.5 border transition-colors ${
-                                    line.show_description ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white border-slate-200 text-slate-400 line-through'
-                                  }`}>
-                                  Desc
-                                </button>
-                                <button type="button"
-                                  onClick={() => { updateLine(line.localId, { show_quantity: !line.show_quantity }); }}
-                                  className={`inline-flex items-center gap-1 text-xs rounded-full px-2 py-0.5 border transition-colors ${
-                                    line.show_quantity ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white border-slate-200 text-slate-400 line-through'
-                                  }`}>
-                                  Qty
-                                </button>
-                                <button type="button"
-                                  onClick={() => { updateLine(line.localId, { show_price: !line.show_price }); }}
-                                  className={`inline-flex items-center gap-1 text-xs rounded-full px-2 py-0.5 border transition-colors ${
-                                    line.show_price ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white border-slate-200 text-slate-400 line-through'
-                                  }`}>
+                              <div className="flex items-center gap-4 mt-2 pt-2 border-t border-slate-100">
+                                <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={line.is_visible}
+                                    onChange={() => updateLine(line.localId, { is_visible: !line.is_visible })}
+                                    className="toggle-dot"
+                                  />
+                                  Show
+                                </label>
+                                <label className={`flex items-center gap-1.5 text-xs cursor-pointer ${
+                                  line.is_visible ? 'text-slate-600' : 'text-slate-300'
+                                }`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={line.show_price}
+                                    disabled={!line.is_visible}
+                                    onChange={() => updateLine(line.localId, { show_price: !line.show_price })}
+                                    className="toggle-dot"
+                                  />
                                   Price
-                                </button>
-                                <button type="button"
-                                  onClick={() => { updateLine(line.localId, { is_visible: !line.is_visible }); }}
-                                  className={`inline-flex items-center gap-1 text-xs rounded-full px-2 py-0.5 border transition-colors ml-auto ${
-                                    line.is_visible ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white border-slate-200 text-slate-400 line-through'
-                                  }`}>
-                                  {line.is_visible ? 'Visible' : 'Hidden'}
-                                </button>
+                                </label>
+                                <label className={`flex items-center gap-1.5 text-xs cursor-pointer ${
+                                  line.is_visible ? 'text-slate-600' : 'text-slate-300'
+                                }`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={line.show_quantity}
+                                    disabled={!line.is_visible}
+                                    onChange={() => updateLine(line.localId, { show_quantity: !line.show_quantity })}
+                                    className="toggle-dot"
+                                  />
+                                  Qty
+                                </label>
+                                <label className={`flex items-center gap-1.5 text-xs cursor-pointer ${
+                                  line.is_visible ? 'text-slate-600' : 'text-slate-300'
+                                }`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={line.show_description}
+                                    disabled={!line.is_visible}
+                                    onChange={() => updateLine(line.localId, { show_description: !line.show_description })}
+                                    className="toggle-dot"
+                                  />
+                                  Desc
+                                </label>
                               </div>
                             )}
                           </div>
