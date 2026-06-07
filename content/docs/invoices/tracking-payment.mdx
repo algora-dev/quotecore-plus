@@ -1,0 +1,50 @@
+---
+title: Tracking payment
+description: How the payment flow works from customer to confirmed paid.
+order: 4
+status: published
+updated: 2026-06-07
+---
+
+# Tracking payment
+
+Once an invoice is sent, QuoteCore+ tracks the full payment journey.
+
+## Customer side
+
+On the public invoice page the customer can:
+
+- View all line items and totals.
+- Copy the payment reference (QCP-INV-YYYY-NNNNNN) for bank transfers.
+- Click **Pay Online** if you've set a payment link in your payment details.
+- Click **Payment Sent** once they've paid — this opens a short form where they can leave a note.
+- Click **Dispute Invoice** if they have a problem.
+
+## What you see
+
+When the customer acts, you get an in-app notification:
+
+| Event | Alert you receive |
+|---|---|
+| Customer views the invoice | "Invoice Viewed" alert |
+| Customer reports payment | "Payment Reported" alert |
+| Customer disputes the invoice | "Invoice Disputed" alert |
+
+## Confirming payment
+
+When the status is **Payment Reported**, a green **Confirm Payment** button appears in the invoice editor. Click it, confirm in the dialog, and the invoice moves to **Paid**. That's the final state — the invoice is closed.
+
+## Disputes
+
+When a dispute is raised the invoice moves to **Disputed** and you get an alert with the customer's reason. Contact the customer to resolve, then manually update the status as needed.
+
+## Cancelling an invoice
+
+Click **Cancel Invoice** in the editor top bar. You'll see a confirmation dialog first. Once cancelled:
+- The public invoice link stops working (customer sees "Invoice Not Found").
+- The invoice is removed from active totals.
+- Cancelled invoices can't be re-sent.
+
+## Payment reference
+
+Every invoice has a unique payment reference (e.g. QCP-INV-2026-000001). Ask customers to include this in their bank transfer description. It makes matching incoming payments to invoices instant.

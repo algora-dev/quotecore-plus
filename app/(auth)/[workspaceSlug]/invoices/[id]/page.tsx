@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
-import { InvoiceEditor, type InvoiceRow } from './InvoiceEditor';
+import { InvoiceEditor, type InvoiceRow, type InvoiceLineRow } from './InvoiceEditor';
 
 interface Props {
   params: Promise<{ workspaceSlug: string; id: string }>;
@@ -103,7 +103,7 @@ export default async function InvoicePage({ params }: Props) {
   return (
     <InvoiceEditor
       invoice={invoice as unknown as InvoiceRow}
-      savedLines={lines ?? []}
+      savedLines={(lines ?? []) as unknown as InvoiceLineRow[]}
       workspaceSlug={workspaceSlug}
       defaultLogoUrl={defaultLogoUrl}
       currency={invoice.currency ?? company?.default_currency ?? 'GBP'}

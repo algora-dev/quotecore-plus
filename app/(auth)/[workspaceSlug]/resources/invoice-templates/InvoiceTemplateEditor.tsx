@@ -253,7 +253,7 @@ export function InvoiceTemplateEditor({ workspaceSlug, companyId, template }: Pr
               <div className="flex justify-between items-center">
                 <span className="text-slate-600">Amount Due</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-slate-900">£1,500.00</span>
+                  <span className="font-bold text-slate-900">1,500.00</span>
                   <span className="text-xs text-orange-600 border border-orange-300 rounded-full px-2 py-0.5">Copy</span>
                 </div>
               </div>

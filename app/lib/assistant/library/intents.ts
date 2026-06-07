@@ -188,6 +188,30 @@ const BASE_INTENTS: Record<string, string[]> = {
     'payment reported on invoice',
     'confirm payment received',
   ],
+  'create-invoice': [
+    'create an invoice',
+    'make an invoice',
+    'invoice a customer',
+    'start a new invoice',
+    'generate an invoice from a quote',
+  ],
+  'invoice-editor': [
+    'add a line to my invoice',
+    'edit my invoice',
+    'build an invoice',
+    'set up payment details on an invoice',
+    'hide a line on an invoice',
+    'show hide toggles on invoice',
+    'add dollar toggle invoice',
+  ],
+  'send-invoice': [
+    'send an invoice',
+    'email an invoice to a customer',
+    'share an invoice link',
+    'how do I send an invoice',
+    'get paid for an invoice',
+    'track invoice payment',
+  ],
 };
 
 /**

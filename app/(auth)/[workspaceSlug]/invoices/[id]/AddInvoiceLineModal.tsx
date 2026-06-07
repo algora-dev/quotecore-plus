@@ -104,6 +104,7 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
       show_price: true,
       show_quantity: true,
       show_description: true,
+      include_in_total: true,
       is_visible: true,
     }]);
     onClose();
@@ -127,6 +128,7 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
       show_price: true,
       show_quantity: true,
       show_description: true,
+      include_in_total: true,
       is_visible: true,
     }]);
     onClose();
@@ -149,6 +151,7 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
       show_price: true,
       show_quantity: true,
       show_description: true,
+      include_in_total: true,
       is_visible: true,
     }]);
     onClose();

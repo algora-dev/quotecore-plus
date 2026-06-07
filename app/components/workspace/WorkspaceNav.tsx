@@ -38,7 +38,6 @@ const makeNavItems = (slug: string): NavItem[] => {
   const base = `/${slug}`;
   return [
     { key: 'quotes', href: `${base}/quotes`, label: 'Quotes', copilot: 'nav-quotes' },
-    { key: 'invoices', href: `${base}/invoices`, label: 'Invoices', copilot: 'nav-invoices' },
     {
       key: 'material-orders',
       href: `${base}/material-orders`,
@@ -46,6 +45,7 @@ const makeNavItems = (slug: string): NavItem[] => {
       copilot: 'nav-orders',
       gatedBy: 'material_orders',
     },
+    { key: 'invoices', href: `${base}/invoices`, label: 'Invoices', copilot: 'nav-invoices' },
     { key: 'resources', href: `${base}/resources`, label: 'Resources', copilot: 'nav-resources' },
   ];
 };

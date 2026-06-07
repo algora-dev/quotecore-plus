@@ -9,6 +9,7 @@ import { SendInvoiceButton, type EmailTemplate } from './SendInvoiceButton';
 import { AddInvoiceLineModal } from './AddInvoiceLineModal';
 import { InvoiceHeaderModal } from './InvoiceHeaderModal';
 import { formatCurrency } from '@/app/lib/currency/currencies';
+import { ConfirmModal } from '@/app/components/ConfirmModal';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -59,6 +60,7 @@ export interface InvoiceLineRow {
   show_price: boolean;
   show_quantity: boolean;
   show_description: boolean;
+  include_in_total: boolean;
   is_visible: boolean;
 }
 
@@ -75,6 +77,7 @@ export interface EditableLine {
   show_price: boolean;
   show_quantity: boolean;
   show_description: boolean;
+  include_in_total: boolean;
   is_visible: boolean;
 }
 
@@ -136,6 +139,7 @@ export function InvoiceEditor({
       show_price: l.show_price,
       show_quantity: l.show_quantity ?? true,
       show_description: l.show_description ?? true,
+      include_in_total: (l as { include_in_total?: boolean }).include_in_total ?? true,
       is_visible: l.is_visible,
     }))
   );
@@ -171,6 +175,10 @@ export function InvoiceEditor({
   const [showHeaderModal, setShowHeaderModal] = useState(false);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'lines' | 'details' | 'activity'>('lines');
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelPending, setCancelPending] = useState(false);
+  const [showConfirmPaymentModal, setShowConfirmPaymentModal] = useState(false);
+  const [confirmPaymentPending, setConfirmPaymentPending] = useState(false);
 
   const status = STATUS_LABELS[initial.status] ?? STATUS_LABELS.draft;
   const isReadOnly = ['cancelled', 'paid'].includes(initial.status);
@@ -216,9 +224,8 @@ export function InvoiceEditor({
     markDirty();
   }
 
-  // ── Totals ──
-  const visibleLines = lines.filter((l) => l.is_visible && l.show_price);
-  const subtotal = visibleLines.reduce((s, l) => s + l.line_total, 0);
+  // ── Totals (include_in_total drives the $, regardless of visibility/show_price) ──
+  const subtotal = lines.filter((l) => l.include_in_total).reduce((s, l) => s + l.line_total, 0);
   // Tax: flat rate approach (will extend to per-line taxes in a later phase)
   const taxTotal = 0; // Phase 2: add tax rows
   const total = subtotal + taxTotal;
@@ -259,6 +266,7 @@ export function InvoiceEditor({
         show_price: l.show_price,
         show_quantity: l.show_quantity,
         show_description: l.show_description,
+        include_in_total: l.include_in_total,
         is_visible: l.is_visible,
       })),
       { subtotal, taxTotal, discountTotal: 0, total }
@@ -291,16 +299,26 @@ export function InvoiceEditor({
     }
   }
 
-  async function handleConfirmPayment() {
-    if (!confirm('Confirm that payment has been received for this invoice?')) return;
-    await confirmPaymentReceived(initial.id);
-    router.refresh();
+  async function doConfirmPayment() {
+    setConfirmPaymentPending(true);
+    try {
+      await confirmPaymentReceived(initial.id);
+      router.refresh();
+    } finally {
+      setConfirmPaymentPending(false);
+      setShowConfirmPaymentModal(false);
+    }
   }
 
-  async function handleCancel() {
-    if (!confirm('Cancel this invoice? It will be marked as cancelled and cannot be sent further.')) return;
-    await cancelInvoice(initial.id);
-    router.push(`/${workspaceSlug}/invoices`);
+  async function doCancel() {
+    setCancelPending(true);
+    try {
+      await cancelInvoice(initial.id);
+      router.push(`/${workspaceSlug}/invoices`);
+    } finally {
+      setCancelPending(false);
+      setShowCancelModal(false);
+    }
   }
 
   // ── Auto-save after 2s of inactivity ──
@@ -364,7 +382,7 @@ export function InvoiceEditor({
           {initial.status === 'payment_reported' && (
             <button
               type="button"
-              onClick={handleConfirmPayment}
+              onClick={() => setShowConfirmPaymentModal(true)}
               className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-all"
             >
               Confirm Payment
@@ -394,7 +412,7 @@ export function InvoiceEditor({
           {!['cancelled', 'paid'].includes(initial.status) && (
             <button
               type="button"
-              onClick={handleCancel}
+              onClick={() => setShowCancelModal(true)}
               className="hidden sm:inline-flex items-center gap-1.5 text-xs text-red-600 border border-red-200 rounded-full px-3 py-1.5 hover:bg-red-50 transition-all"
             >
               Cancel Invoice
@@ -407,6 +425,7 @@ export function InvoiceEditor({
               type="button"
               onClick={handleSave}
               disabled={saving}
+              data-copilot="invoice-save"
               className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
             >
               {saving ? 'Saving…' : 'Save'}
@@ -582,17 +601,14 @@ export function InvoiceEditor({
                                   />
                                   Qty
                                 </label>
-                                <label className={`flex items-center gap-1.5 text-xs cursor-pointer ${
-                                  line.is_visible ? 'text-slate-600' : 'text-slate-300'
-                                }`}>
+                                <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
                                   <input
                                     type="checkbox"
-                                    checked={line.show_description}
-                                    disabled={!line.is_visible}
-                                    onChange={() => updateLine(line.localId, { show_description: !line.show_description })}
+                                    checked={line.include_in_total}
+                                    onChange={() => updateLine(line.localId, { include_in_total: !line.include_in_total })}
                                     className="toggle-dot"
                                   />
-                                  Desc
+                                  Add $
                                 </label>
                               </div>
                             )}
@@ -628,6 +644,7 @@ export function InvoiceEditor({
                   <button
                     type="button"
                     onClick={() => setShowAddLine(true)}
+                    data-copilot="invoice-add-line"
                     className="flex items-center justify-center gap-2 w-full rounded-xl border border-dashed border-slate-200 bg-white px-6 py-4 text-sm font-medium text-slate-500 hover:border-[#FF6B35] hover:text-[#FF6B35] transition-all"
                   >
                     <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
@@ -886,6 +903,32 @@ export function InvoiceEditor({
           onClose={() => setShowHeaderModal(false)}
         />
       )}
+
+      <ConfirmModal
+        open={showCancelModal}
+        title="Cancel this invoice?"
+        description="The invoice will be marked as cancelled. The customer link will stop working. This cannot be undone."
+        confirmLabel="Cancel Invoice"
+        cancelLabel="Keep Invoice"
+        destructive
+        pending={cancelPending}
+        pendingLabel="Cancelling…"
+        onCancel={() => setShowCancelModal(false)}
+        onConfirm={doCancel}
+      />
+
+      <ConfirmModal
+        open={showConfirmPaymentModal}
+        title="Confirm payment received?"
+        description="This will mark the invoice as Paid and close it out. Only do this once payment has cleared."
+        confirmLabel="Confirm Payment"
+        cancelLabel="Not yet"
+        destructive={false}
+        pending={confirmPaymentPending}
+        pendingLabel="Saving…"
+        onCancel={() => setShowConfirmPaymentModal(false)}
+        onConfirm={doConfirmPayment}
+      />
     </div>
   );
 }

@@ -335,6 +335,7 @@ export async function saveInvoiceLines(
         show_price: l.show_price ?? true,
         show_quantity: l.show_quantity ?? true,
         show_description: l.show_description ?? true,
+        include_in_total: (l as { include_in_total?: boolean }).include_in_total ?? true,
         is_visible: l.is_visible ?? true,
       }))
     );

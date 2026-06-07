@@ -219,6 +219,7 @@ export function SendInvoiceButton({
     <>
       <button
         onClick={handleOpen}
+        data-copilot="invoice-send"
         className="inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
