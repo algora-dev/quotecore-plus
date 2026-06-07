@@ -118,6 +118,7 @@ _(empty - move items here as they pass)_
 - [ ] **Wizard row-cap copy** (`ac7a575`): catalog upload wizard text now reads **35,000 rows** (was 20,000) in both spots.
 - [ ] **Content proofread**: Shaun final read of the published pages for any wording tweaks (drafts were `docs/DRAFT-docs-additions-2026-06-05.md`).
 - [x] **(Now wired) Guide-Me flows**: the 5 new walkthroughs ARE now wired into `guides.generic.ts` + `intents.ts` (`367dbfe`) with 20+ `data-copilot` anchors. See the dedicated nav + Guide-Me section below for the full test pass.
+- [ ] **Guide-Me nav-hop parity** (`af4ff28`, 2026-06-07): all 4 non-catalog flows now match the catalog flow's nav-hop behaviour. Launch EACH from an unrelated page (e.g. an open quote) and confirm the synthetic nav hop highlights + behaves like catalog: **catalog-add-to-quote** now shows a highlighted "Go to Quotes" hop (was missing entirely) -> click Quotes -> press Next; **attachments-send** "Go to Resources" hop AUTO-advances on landing (no manual Next); **order-line-by-line** + **order-from-quote** "Go to Orders" hop AUTO-advances on landing. After the hop, steps proceed individually as before.
 
 ## Pending verification (dev - navigation + Resources hub + Guide-Me flows, 2026-06-05)
 
