@@ -287,11 +287,12 @@ export function InvoiceEditor({
     setLastSaved(new Date());
   }
 
-  // ── Manual Save button — saves in place, no redirect ──
+  // ── Manual Save button — saves then returns to invoices list ──
   async function handleSave() {
     setSaving(true);
     try {
       await persistChanges();
+      router.push(`/${workspaceSlug}/invoices`);
     } catch {
       alert('Failed to save. Please try again.');
     } finally {
