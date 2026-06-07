@@ -98,6 +98,29 @@ const CSS = `
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25);
 }
+/* Clipped-target variant: when the highlighted element (or an ancestor) has
+   overflow:hidden — e.g. the order-layout picker CARDS (rounded + overflow
+   hidden for the image) — an OUTER ring (inset:-2px) gets clipped away and the
+   glow never shows. This variant draws the ring INSIDE the box (inset:0, inner
+   shadow, negative outline-offset) so it stays visible under the clip. The
+   .assistant-hl-clip class wins via later/specific declarations. */
+.assistant-hl-clip::after {
+  inset: 0;
+}
+.assistant-hl-clip.assistant-hl-glow::after {
+  outline: 2px solid rgba(37, 99, 235, 0.95);
+  outline-offset: -2px;
+  box-shadow: inset 0 0 0 4px rgba(37, 99, 235, 0.3), inset 0 0 18px 2px rgba(37, 99, 235, 0.45);
+}
+.assistant-hl-clip.assistant-hl-pulse::after {
+  outline: 2px solid rgba(37, 99, 235, 0.95);
+  outline-offset: -2px;
+}
+.assistant-hl-clip.assistant-hl-spotlight::after {
+  outline: 3px solid rgba(37, 99, 235, 0.95);
+  outline-offset: -3px;
+  box-shadow: inset 0 0 0 3px rgba(37, 99, 235, 0.5);
+}
 `;
 
 function ensureStyles() {
@@ -170,6 +193,19 @@ export function useAssistantHighlight(
     const apply = (el: HTMLElement) => {
     const cls = `assistant-hl assistant-hl-${treatment}`;
     el.classList.add(...cls.split(' '));
+    // If the element itself clips its overflow (e.g. the order-layout picker
+    // cards are rounded + overflow-hidden), an OUTER ring is clipped away and
+    // never shows. Detect that and switch to the INSET ring variant so the
+    // glow stays visible inside the clip boundary.
+    try {
+      const ov = window.getComputedStyle(el);
+      const clips = [ov.overflow, ov.overflowX, ov.overflowY].some(
+        (v) => v && v !== 'visible'
+      );
+      if (clips) el.classList.add('assistant-hl-clip');
+    } catch {
+      /* getComputedStyle can throw on detached nodes — ignore, use outer ring. */
+    }
     // Only scroll if the control is actually off-screen. A smooth scroll while
     // the user is reaching for an already-visible control (e.g. a top-nav
     // button) moves it mid-click, so the first click lands on empty space and
@@ -199,7 +235,7 @@ export function useAssistantHighlight(
     window.addEventListener('resize', updateRect);
 
     const clearHighlight = () => {
-      el.classList.remove(...`assistant-hl assistant-hl-${treatment}`.split(' '));
+      el.classList.remove(...`assistant-hl assistant-hl-${treatment} assistant-hl-clip`.split(' '));
       setRect(null);
     };
 
@@ -241,7 +277,7 @@ export function useAssistantHighlight(
       document.removeEventListener('click', onDocClick, { capture: true } as EventListenerOptions);
       window.removeEventListener('scroll', updateRect, true);
       window.removeEventListener('resize', updateRect);
-      el.classList.remove(...`assistant-hl assistant-hl-${treatment}`.split(' '));
+      el.classList.remove(...`assistant-hl assistant-hl-${treatment} assistant-hl-clip`.split(' '));
     });
     };
 
