@@ -62,11 +62,20 @@ function navHopsForScreenKey(screenKey: string): NavHop[] {
   switch (screenKey) {
     case 'quotes':
     case 'quote.new':
+    // The customer-quote editor (catalog-add-to-quote start page) is reached
+    // via the Quotes hub — same first hop. No registered quotes-hub arrival
+    // anchor exists, so this hop is manual (click Quotes → Next); the important
+    // fix is that a highlighted nav hop now EXISTS for this start page at all.
+    case 'quote.customer':
       return [{ elementId: 'nav-quotes', title: 'Go to Quotes', instruction: 'Open the Quotes page: click Quotes in the top navigation.' }];
     case 'material-orders':
-      return [{ elementId: 'nav-orders', title: 'Go to Orders', instruction: 'Open the Orders page: click Orders in the top navigation.' }];
+      // mo-custom-order renders on the orders hub on arrival, so the hop
+      // auto-advances the moment the Orders page loads (parity with catalog).
+      return [{ elementId: 'nav-orders', title: 'Go to Orders', instruction: 'Open the Orders page: click Orders in the top navigation.', appearsTarget: 'mo-custom-order' }];
     case 'resources':
-      return [{ elementId: 'nav-resources', title: 'Go to Resources', instruction: 'Open the Resource Library: click Resources in the top navigation.' }];
+      // resources-card-attachments renders on the Resource Library hub on
+      // arrival, so this hop auto-advances on landing (parity with catalog).
+      return [{ elementId: 'nav-resources', title: 'Go to Resources', instruction: 'Open the Resource Library: click Resources in the top navigation.', appearsTarget: 'resources-card-attachments' }];
     case 'resources.catalogs':
       return [
         { elementId: 'nav-resources', title: 'Open the Resource Library', instruction: 'Click Resources in the top navigation to open the Resource Library.', appearsTarget: 'resources-card-catalogs' },
