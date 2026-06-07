@@ -94,7 +94,7 @@ function PayRow({
           onClick={() => onCopy(value, copyKey)}
           className="flex-shrink-0 text-xs text-orange-600 border border-orange-300 rounded-full px-2 py-0.5 hover:bg-orange-100 transition-colors whitespace-nowrap"
         >
-          {copied === copyKey ? '✓' : 'Copy'}
+          {copied === copyKey ? (<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>) : (<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>)}
         </button>
       </div>
     </div>
@@ -400,7 +400,7 @@ export function PublicInvoiceView({ invoice, lines, token }: Props) {
                   onClick={() => copyToClipboard(formatCurrency(invoice.total, invoice.currency), 'amount')}
                   className="flex-shrink-0 text-xs text-orange-600 border border-orange-300 rounded-full px-2 py-0.5 hover:bg-orange-100 transition-colors whitespace-nowrap"
                 >
-                  {copied === 'amount' ? '✓' : 'Copy'}
+                  {copied === 'amount' ? (<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>) : (<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>)}
                 </button>
               </div>
             </div>
@@ -443,9 +443,13 @@ export function PublicInvoiceView({ invoice, lines, token }: Props) {
                   ].filter(Boolean).join('\n');
                   copyToClipboard(parts, 'all');
                 }}
-                className="w-full text-center text-sm text-orange-700 font-semibold hover:underline"
+                className="w-full inline-flex items-center justify-center gap-2 text-sm text-orange-700 font-semibold hover:underline"
               >
-                {copied === 'all' ? '✓ All Details Copied' : 'Copy All Payment Details'}
+                {copied === 'all' ? (
+                  <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> All Details Copied</>
+                ) : (
+                  <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg> Copy All Payment Details</>
+                )}
               </button>
             </div>
 
