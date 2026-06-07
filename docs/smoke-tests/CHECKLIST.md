@@ -174,6 +174,33 @@ _(empty - move items here as they pass)_
 - [ ] **Line-by-line order SAVE now works** (was failing pre-`0d8f047` due to layout_mode CHECK constraint; migration `20260604180000` applied). Create line-by-line order → add lines → Save → appears in orders list → reopen edit (lines rehydrate) → `/preview` + public token page + Print/PDF show priced table + header + correct currency.
 - [ ] **Line-by-line order editor — Phase 2 parity** (`f96825c`): pick "Line by Line" from the orders layout picker → editor shows: (1) header card with **Order Template dropdown** (selecting one pre-fills To/From/Ref/etc.) + To/From/Ref/Date/Notes; (2) **"+ Add New Line" modal** with 3 tabs — Custom line (desc+qty+price+show-price), Add a component (Library dropdown → component, lands name-only), Search catalog (live search → adds line); (3) left list per-line Show/Price/In-total toggles + reorder ▲▼ + Remove; (4) right preview **pencil edit** per line (text+price+show-price); (5) **Footer** free-text; (6) **optional Taxes** (default none — add custom tax OR tick a company default; subtotal/tax rows/total appear). Save → orders list → reopen edit (lines+footer+taxes rehydrate) → `/preview` + public token page + Print/PDF all show priced table + footer + tax lines + correct currency. Verify legacy line-by-line orders (saved pre-`f96825c` as a bare array) still render (back-compat envelope parse).
 
+## Pending verification (dev — Invoice System MVP, 2026-06-07, commit `4c00a21`)
+- [ ] **Nav: Invoices tab** — visible between Quotes and Orders in the workspace nav. Clicking navigates to `/invoices`.
+- [ ] **Invoice Library empty state** — fresh account shows empty state with "No invoices yet" + "New Invoice" CTA.
+- [ ] **Create blank invoice** — click New Invoice → Blank Invoice → enter customer name (+ optional email) → Create → lands on invoice editor with correct INV-YYYY-NNNNNN number and QCP-INV-YYYY-NNNNNN payment reference.
+- [ ] **Create from quote** — click New Invoice → From a Quote → search + select a quote → Create → invoice editor pre-populated with customer name, branding (cq_* fields), and line items imported from customer_quote_lines (visible lines only).
+- [ ] **From Job disabled** — "From a Job" option is disabled/greyed with "Coming soon" tooltip.
+- [ ] **Invoice editor: add custom line** — Add Line Item → Custom tab → fill title/qty/unit/unit price → Add → line appears in left panel + live preview updates. Line total = qty × unit price.
+- [ ] **Invoice editor: catalog line** — Add Line Item → Catalog tab → pick catalog → pick row → set qty/price → Add → line in preview.
+- [ ] **Invoice editor: inline edit** — click pencil on a line → inline form → edit title/description/qty/unit price → line total recalculates → Done.
+- [ ] **Invoice editor: reorder lines** — ▲▼ arrows move lines; preview updates order.
+- [ ] **Invoice editor: hide price** — uncheck "Show price" on a line → preview shows "—" for that line's price/total.
+- [ ] **Invoice editor: Details tab** — set invoice date, due date, notes, terms; preview reflects all changes.
+- [ ] **Invoice editor: Business Details** — click Edit → fill company name/address/email/phone/footer → Apply → preview header updates.
+- [ ] **Invoice editor: save** — click Save → "Saved" indicator → reload page → all lines + metadata persist.
+- [ ] **Invoice editor: auto-save** — make a change → wait 2s → "Saved" appears without clicking Save.
+- [ ] **Invoice totals** — subtotal in left panel and preview equals sum of visible show-price lines.
+- [ ] **Public invoice view** — open Customer View link from editor → `/invoice/<token>` renders: business header, customer block, line items table, totals, payment instructions with payment reference + copy button.
+- [ ] **Payment Sent flow** — on public view, click "Payment Sent" → optional message → Confirm → status on library changes to "Payment Reported"; alert fires in the app.
+- [ ] **Confirm Payment Received** — on editor with status payment_reported, click "Confirm Payment" → invoice status → Paid.
+- [ ] **Dispute flow** — on public view, click "Dispute Invoice" → fill name/reason/message → Submit → invoice status → Disputed; alert fires in app.
+- [ ] **Invoice Activity tab** — editor Activity tab shows: created, edited, viewed, payment_reported entries with timestamps.
+- [ ] **Cancel draft** — three-dot menu on library row → Delete Draft → removed from list.
+- [ ] **Cancel sent invoice** — three-dot menu → Cancel Invoice → status → Cancelled; public view shows "Invoice Not Found".
+- [ ] **Status filter tabs** — filter by Paid / Disputed / etc. shows correct subset.
+- [ ] **Search** — search by customer name or invoice number filters correctly.
+- [ ] **Invoice number uniqueness** — create 3 invoices → each gets a unique sequential number (INV-YYYY-000001, -000002, -000003).
+
 ## Deferred / not blocking this merge (forward work)
 - Supplier (order) templates: add optional includable/excludable FOOTER (orders have no template footer yet; line-by-line footer is manual entry for now).
 - FOLLOW-UP A: richer over-storage billing-page UI (what's using space, per-file delete).

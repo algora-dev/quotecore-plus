@@ -153,6 +153,41 @@ const BASE_INTENTS: Record<string, string[]> = {
     'order from my quote',
     'order materials for a job',
   ],
+  // ── Invoices (added 2026-06-07) ──
+  'invoices-hub': [
+    'create an invoice',
+    'make an invoice',
+    'go to invoices',
+    'open my invoice library',
+    'view my invoices',
+    'send an invoice to a customer',
+  ],
+  'invoice-from-quote': [
+    'create an invoice from a quote',
+    'turn a quote into an invoice',
+    'invoice a quote',
+    'generate an invoice from my quote',
+    'convert a quote to invoice',
+  ],
+  'invoice-blank': [
+    'create a blank invoice',
+    'new blank invoice',
+    'make an invoice from scratch',
+    'build an invoice manually',
+  ],
+  'invoice-send': [
+    'send an invoice',
+    'share an invoice link',
+    'email an invoice to a customer',
+    'how do I send an invoice',
+  ],
+  'invoice-payment': [
+    'confirm invoice payment',
+    'mark invoice as paid',
+    'customer said they paid',
+    'payment reported on invoice',
+    'confirm payment received',
+  ],
 };
 
 /**
