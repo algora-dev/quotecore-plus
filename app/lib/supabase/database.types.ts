@@ -61,6 +61,7 @@ export type Database = {
           company_id: string
           created_at: string | null
           id: string
+          invoice_id: string | null
           is_read: boolean | null
           message: string | null
           quote_id: string | null
@@ -71,6 +72,7 @@ export type Database = {
           company_id: string
           created_at?: string | null
           id?: string
+          invoice_id?: string | null
           is_read?: boolean | null
           message?: string | null
           quote_id?: string | null
@@ -81,6 +83,7 @@ export type Database = {
           company_id?: string
           created_at?: string | null
           id?: string
+          invoice_id?: string | null
           is_read?: boolean | null
           message?: string | null
           quote_id?: string | null
@@ -92,6 +95,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
           {
@@ -1263,6 +1273,325 @@ export type Database = {
           recommendations?: Json | null
         }
         Relationships: []
+      }
+      invoice_activity: {
+        Row: {
+          company_id: string
+          created_at: string
+          event_type: string
+          id: string
+          invoice_id: string
+          metadata: Json | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          invoice_id: string
+          metadata?: Json | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          invoice_id?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_activity_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_activity_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_disputes: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          invoice_id: string
+          message: string
+          reason: string
+          recipient_email: string | null
+          recipient_name: string
+          resolved_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          invoice_id: string
+          message?: string
+          reason?: string
+          recipient_email?: string | null
+          recipient_name?: string
+          resolved_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          message?: string
+          reason?: string
+          recipient_email?: string | null
+          recipient_name?: string
+          resolved_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_disputes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_disputes_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_lines: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          id: string
+          invoice_id: string
+          is_visible: boolean
+          line_source_type: string
+          line_total: number
+          quantity: number
+          show_price: boolean
+          sort_order: number
+          source_id: string | null
+          title: string
+          unit: string
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id: string
+          is_visible?: boolean
+          line_source_type?: string
+          line_total?: number
+          quantity?: number
+          show_price?: boolean
+          sort_order?: number
+          source_id?: string | null
+          title?: string
+          unit?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id?: string
+          is_visible?: boolean
+          line_source_type?: string
+          line_total?: number
+          quantity?: number
+          show_price?: boolean
+          sort_order?: number
+          source_id?: string | null
+          title?: string
+          unit?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_lines_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_lines_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_number_sequences: {
+        Row: {
+          company_id: string
+          created_at: string
+          next_number: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          next_number?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          next_number?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_number_sequences_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          business_snapshot: Json
+          cancelled_at: string | null
+          company_id: string
+          cq_company_address: string | null
+          cq_company_email: string | null
+          cq_company_logo_url: string | null
+          cq_company_name: string | null
+          cq_company_phone: string | null
+          cq_footer_text: string | null
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string
+          customer_snapshot: Json
+          discount_total: number
+          disputed_at: string | null
+          due_date: string | null
+          id: string
+          invoice_date: string
+          invoice_number: string
+          notes: string | null
+          paid_at: string | null
+          payment_reference: string
+          payment_reported_at: string | null
+          public_token: string
+          sent_at: string | null
+          source_id: string | null
+          source_type: string
+          status: Database["public"]["Enums"]["invoice_status"]
+          subtotal: number
+          tax_total: number
+          terms: string | null
+          total: number
+          updated_at: string
+          user_id: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          business_snapshot?: Json
+          cancelled_at?: string | null
+          company_id: string
+          cq_company_address?: string | null
+          cq_company_email?: string | null
+          cq_company_logo_url?: string | null
+          cq_company_name?: string | null
+          cq_company_phone?: string | null
+          cq_footer_text?: string | null
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_snapshot?: Json
+          discount_total?: number
+          disputed_at?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_reference: string
+          payment_reported_at?: string | null
+          public_token?: string
+          sent_at?: string | null
+          source_id?: string | null
+          source_type?: string
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_total?: number
+          terms?: string | null
+          total?: number
+          updated_at?: string
+          user_id?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          business_snapshot?: Json
+          cancelled_at?: string | null
+          company_id?: string
+          cq_company_address?: string | null
+          cq_company_email?: string | null
+          cq_company_logo_url?: string | null
+          cq_company_name?: string | null
+          cq_company_phone?: string | null
+          cq_footer_text?: string | null
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_snapshot?: Json
+          discount_total?: number
+          disputed_at?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_reference?: string
+          payment_reported_at?: string | null
+          public_token?: string
+          sent_at?: string | null
+          source_id?: string | null
+          source_type?: string
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_total?: number
+          terms?: string | null
+          total?: number
+          updated_at?: string
+          user_id?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       labor_sheet_lines: {
         Row: {
@@ -3621,6 +3950,10 @@ export type Database = {
         Args: { p_company_id: string }
         Returns: string
       }
+      generate_invoice_number: {
+        Args: { p_company_id: string }
+        Returns: string
+      }
       get_next_quote_number: { Args: { p_company_id: string }; Returns: number }
       import_catalog_rows_atomic: {
         Args: {
@@ -3702,6 +4035,14 @@ export type Database = {
     Enums: {
       component_type: "main" | "extra"
       input_mode: "final" | "calculated"
+      invoice_status:
+        | "draft"
+        | "sent"
+        | "viewed"
+        | "payment_reported"
+        | "paid"
+        | "disputed"
+        | "cancelled"
       line_type: "component" | "custom" | "roof_area_header"
       measurement_system: "metric" | "imperial" | "imperial_ft" | "imperial_rs"
       measurement_type:
@@ -3882,6 +4223,15 @@ export const Constants = {
     Enums: {
       component_type: ["main", "extra"],
       input_mode: ["final", "calculated"],
+      invoice_status: [
+        "draft",
+        "sent",
+        "viewed",
+        "payment_reported",
+        "paid",
+        "disputed",
+        "cancelled",
+      ],
       line_type: ["component", "custom", "roof_area_header"],
       measurement_system: ["metric", "imperial", "imperial_ft", "imperial_rs"],
       measurement_type: [

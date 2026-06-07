@@ -8,7 +8,7 @@ import type { Feature } from '@/app/lib/billing/features';
 import { FEATURE_LABELS, FEATURE_MIN_PLAN } from '@/app/lib/billing/features';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
 
-type NavKey = 'quotes' | 'material-orders' | 'resources';
+type NavKey = 'quotes' | 'invoices' | 'material-orders' | 'resources';
 
 interface NavItem {
   key: NavKey;
@@ -38,6 +38,7 @@ const makeNavItems = (slug: string): NavItem[] => {
   const base = `/${slug}`;
   return [
     { key: 'quotes', href: `${base}/quotes`, label: 'Quotes', copilot: 'nav-quotes' },
+    { key: 'invoices', href: `${base}/invoices`, label: 'Invoices', copilot: 'nav-invoices' },
     {
       key: 'material-orders',
       href: `${base}/material-orders`,
