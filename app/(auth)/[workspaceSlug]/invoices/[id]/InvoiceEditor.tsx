@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
 import { saveInvoiceLines, saveInvoiceMeta, saveInvoicePaymentDetails, cancelInvoice, confirmPaymentReceived } from '../actions';
 import { InvoicePreview } from './InvoicePreview';
+import { SendInvoiceButton, type EmailTemplate } from './SendInvoiceButton';
 import { AddInvoiceLineModal } from './AddInvoiceLineModal';
 import { InvoiceHeaderModal } from './InvoiceHeaderModal';
 import { formatCurrency } from '@/app/lib/currency/currencies';
@@ -78,6 +79,7 @@ export interface EditableLine {
 interface Props {
   invoice: InvoiceRow;
   savedLines: InvoiceLineRow[];
+  emailTemplates: EmailTemplate[];
   workspaceSlug: string;
   defaultLogoUrl: string | null;
   currency: string;
@@ -113,6 +115,7 @@ export function InvoiceEditor({
   collections,
   componentLibrary,
   activity,
+  emailTemplates,
 }: Props) {
   const router = useRouter();
 
@@ -362,6 +365,25 @@ export function InvoiceEditor({
               Confirm Payment
             </button>
           )}
+
+          {/* Send Invoice */}
+          <SendInvoiceButton
+            invoiceId={initial.id}
+            workspaceSlug={workspaceSlug}
+            publicToken={initial.public_token}
+            status={initial.status}
+            emailTemplates={emailTemplates}
+            invoiceMeta={{
+              customerName: initial.customer_name ?? '',
+              invoiceNumber: initial.invoice_number ?? '',
+              invoiceTotal: formatCurrency(Number(initial.total ?? 0), currency),
+              companyName: initial.cq_company_name ?? null,
+              dueDate: initial.due_date
+                ? new Date(initial.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                : null,
+            }}
+            defaultRecipientEmail={initial.customer_email}
+          />
 
           {/* Cancel */}
           {!['cancelled', 'paid'].includes(initial.status) && (

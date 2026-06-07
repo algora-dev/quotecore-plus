@@ -201,6 +201,15 @@ _(empty - move items here as they pass)_
 - [ ] **Search** — search by customer name or invoice number filters correctly.
 - [ ] **Invoice number uniqueness** — create 3 invoices → each gets a unique sequential number (INV-YYYY-000001, -000002, -000003).
 
+## Pending verification (dev - Send Invoice phase, 2026-06-07)
+- [ ] **Send Invoice — Send from QuoteCore+** — open invoice editor → click Send Invoice → "Send from QuoteCore+" → enter recipient email → fill subject/body → Send Invoice → invoice status updates to Sent; Activity tab logs "sent" event; in-app alert fires.
+- [ ] **Send Invoice — Copy URL** — Send Invoice → Copy URL Link → paste into browser → `/invoice/<token>` opens customer public view.
+- [ ] **Send Invoice — Generate Email** — Send Invoice → Generate Email → subject/body pre-filled (with template if one exists) → Copy Email copies both.
+- [ ] **Send Invoice — entitlement gate** — Starter plan (no email send): Send from QuoteCore+ shows plan-gate error; Copy URL still works.
+- [ ] **Send Invoice — invoice_send template** — create an email template with kind=invoice_send in Resources → Templates; it appears in the send modal dropdown and placeholders {{invoice_number}}, {{invoice_total}}, {{invoice_link}}, {{due_date}} all substitute correctly.
+- [ ] **Send Invoice — suppression** — send to a suppressed email → shows "blocked" message, invoice status stays draft.
+- [ ] **Send Invoice — hidden on paid/cancelled** — Send Invoice button absent on paid + cancelled invoices.
+
 ## Deferred / not blocking this merge (forward work)
 - Supplier (order) templates: add optional includable/excludable FOOTER (orders have no template footer yet; line-by-line footer is manual entry for now).
 - FOLLOW-UP A: richer over-storage billing-page UI (what's using space, per-file delete).

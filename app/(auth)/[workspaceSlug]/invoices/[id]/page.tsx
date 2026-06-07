@@ -91,6 +91,15 @@ export default async function InvoicePage({ params }: Props) {
     .order('created_at', { ascending: false })
     .limit(20);
 
+  // Load email templates for the send-invoice flow.
+  // Include both invoice_send and custom kinds so users can reuse generic templates.
+  const { data: emailTemplates } = await admin
+    .from('email_templates')
+    .select('id, name, subject, body, is_default')
+    .eq('company_id', profile.company_id)
+    .in('kind', ['invoice_send', 'custom'])
+    .order('name');
+
   return (
     <InvoiceEditor
       invoice={invoice as unknown as InvoiceRow}
@@ -103,6 +112,7 @@ export default async function InvoicePage({ params }: Props) {
       collections={collections ?? []}
       componentLibrary={componentLibrary ?? []}
       activity={(activity ?? []) as unknown as { id: string; event_type: string; metadata: Record<string, unknown> | null; created_at: string }[]}
+      emailTemplates={(emailTemplates ?? []) as { id: string; name: string; subject: string; body: string; is_default: boolean | null }[]}
     />
   );
 }

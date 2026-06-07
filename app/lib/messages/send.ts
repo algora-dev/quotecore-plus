@@ -46,6 +46,7 @@ const MESSAGE_TOKEN_SECRET_ENV = 'MESSAGES_SIGNING_SECRET';
 export type OutboundMessageKind =
   | 'quote_send'
   | 'order_send'
+  | 'invoice_send'
   | 'followup'
   | 'decline_response'
   | 'custom';
@@ -296,6 +297,8 @@ export async function sendOutboundMessage(
           return { label: 'View quote', url: `${siteUrl}/accept/${encodeURIComponent(tok)}` };
         case 'order_send':
           return { label: 'View order', url: `${siteUrl}/orders/${encodeURIComponent(tok)}` };
+        case 'invoice_send':
+          return { label: 'View invoice', url: `${siteUrl}/invoice/${encodeURIComponent(tok)}` };
         // decline_response + custom drop through to the reply-page default.
         default:
           break;
@@ -317,6 +320,9 @@ export async function sendOutboundMessage(
     }
     if (input.kind === 'order_send') {
       linkContext.order_link = `${siteUrl}/orders/${encodeURIComponent(input.acceptanceToken)}`;
+    }
+    if (input.kind === 'invoice_send') {
+      linkContext.invoice_link = `${siteUrl}/invoice/${encodeURIComponent(input.acceptanceToken)}`;
     }
   }
   // Resolve + persist any selected attachments (Option B hosted delivery).
