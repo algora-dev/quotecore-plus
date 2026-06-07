@@ -428,140 +428,127 @@ export function InvoiceEditor({
                         className={`rounded-xl border ${line.is_visible ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50 opacity-60'} p-3`}
                       >
                         {editingLineId === line.localId ? (
-                          /* Inline edit mode */
+                          /* ── Edit mode: content fields only ── */
                           <div className="space-y-2">
                             <input
                               type="text"
                               value={line.title}
                               onChange={(e) => updateLine(line.localId, { title: e.target.value })}
                               placeholder="Line title"
-                              className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                              autoFocus
+                              className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
                             />
                             <textarea
                               value={line.description ?? ''}
                               onChange={(e) => updateLine(line.localId, { description: e.target.value || null })}
                               placeholder="Description (optional)"
                               rows={2}
-                              className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
+                              className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm resize-none focus:border-orange-500 focus:outline-none"
                             />
                             <div className="grid grid-cols-3 gap-2">
                               <div>
                                 <label className="block text-xs text-slate-500 mb-0.5">Qty</label>
-                                <input
-                                  type="number"
-                                  value={line.quantity}
-                                  min={0}
-                                  step={0.01}
+                                <input type="number" value={line.quantity} min={0} step={0.01}
                                   onChange={(e) => updateLine(line.localId, { quantity: parseFloat(e.target.value) || 0 })}
-                                  className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                                />
+                                  className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
                               </div>
                               <div>
                                 <label className="block text-xs text-slate-500 mb-0.5">Unit</label>
-                                <input
-                                  type="text"
-                                  value={line.unit}
+                                <input type="text" value={line.unit} placeholder="item"
                                   onChange={(e) => updateLine(line.localId, { unit: e.target.value })}
-                                  placeholder="item"
-                                  className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                                />
+                                  className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
                               </div>
                               <div>
                                 <label className="block text-xs text-slate-500 mb-0.5">Unit Price</label>
-                                <input
-                                  type="number"
-                                  value={line.unit_price}
-                                  min={0}
-                                  step={0.01}
+                                <input type="number" value={line.unit_price} min={0} step={0.01}
                                   onChange={(e) => updateLine(line.localId, { unit_price: parseFloat(e.target.value) || 0 })}
-                                  className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                                />
+                                  className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
                               </div>
                             </div>
-                            <div className="flex items-center flex-wrap gap-3">
-                              <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                                <input type="checkbox" checked={line.show_description}
-                                  onChange={(e) => updateLine(line.localId, { show_description: e.target.checked })}
-                                  className="rounded" />
-                                Description
-                              </label>
-                              <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                                <input type="checkbox" checked={line.show_quantity}
-                                  onChange={(e) => updateLine(line.localId, { show_quantity: e.target.checked })}
-                                  className="rounded" />
-                                Qty
-                              </label>
-                              <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                                <input type="checkbox" checked={line.show_price}
-                                  onChange={(e) => updateLine(line.localId, { show_price: e.target.checked })}
-                                  className="rounded" />
-                                Price
-                              </label>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-semibold text-slate-700">
-                                  Line total: {formatCurrency(line.line_total, currency)}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => setEditingLineId(null)}
-                                  className="text-xs text-orange-600 font-medium hover:underline"
-                                >
-                                  Done
-                                </button>
-                              </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-semibold text-slate-700">
+                                Line total: {formatCurrency(line.line_total, currency)}
+                              </span>
+                              <button type="button" onClick={() => setEditingLineId(null)}
+                                className="text-xs text-orange-600 font-medium hover:underline">Done</button>
                             </div>
                           </div>
                         ) : (
-                          /* Display mode */
-                          <div className="flex items-start gap-2">
-                            <div className="flex flex-col gap-1 mr-1">
-                              <button
-                                type="button"
-                                onClick={() => moveLine(line.localId, 'up')}
-                                disabled={idx === 0 || isReadOnly}
-                                className="p-0.5 text-slate-300 hover:text-slate-600 disabled:opacity-30"
-                              >
-                                <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => moveLine(line.localId, 'down')}
-                                disabled={idx === lines.length - 1 || isReadOnly}
-                                className="p-0.5 text-slate-300 hover:text-slate-600 disabled:opacity-30"
-                              >
-                                <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-                              </button>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-slate-900 truncate">{line.title || 'Untitled'}</p>
-                              {line.description && <p className="text-xs text-slate-500 truncate">{line.description}</p>}
-                              <p className="text-xs text-slate-400 mt-0.5">
-                                {line.quantity} {line.unit} × {formatCurrency(line.unit_price, currency)}
-                              </p>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                              {line.show_price && (
-                                <p className="text-sm font-semibold text-slate-900">{formatCurrency(line.line_total, currency)}</p>
-                              )}
-                              {!line.show_price && (
-                                <p className="text-xs text-slate-400 italic">hidden</p>
-                              )}
-                            </div>
-                            {!isReadOnly && (
-                              <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => setEditingLineId(line.localId)}
-                                  className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-                                >
-                                  <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                          /* ── Display mode: content + inline toggles ── */
+                          <div>
+                            <div className="flex items-start gap-2">
+                              {/* Reorder arrows */}
+                              <div className="flex flex-col gap-0.5 mt-0.5">
+                                <button type="button" onClick={() => moveLine(line.localId, 'up')}
+                                  disabled={idx === 0 || isReadOnly}
+                                  className="p-0.5 text-slate-300 hover:text-slate-600 disabled:opacity-30">
+                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                                 </button>
-                                <button
-                                  type="button"
-                                  onClick={() => removeLine(line.localId)}
-                                  className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50"
-                                >
-                                  <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                <button type="button" onClick={() => moveLine(line.localId, 'down')}
+                                  disabled={idx === lines.length - 1 || isReadOnly}
+                                  className="p-0.5 text-slate-300 hover:text-slate-600 disabled:opacity-30">
+                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                </button>
+                              </div>
+                              {/* Content */}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-slate-900 truncate">{line.title || 'Untitled'}</p>
+                                {line.description && (
+                                  <p className="text-xs text-slate-500 truncate">{line.description}</p>
+                                )}
+                                <p className="text-xs text-slate-400 mt-0.5">
+                                  {line.quantity} {line.unit} × {formatCurrency(line.unit_price, currency)}
+                                </p>
+                              </div>
+                              {/* Total + actions */}
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                <span className="text-sm font-semibold text-slate-900 mr-1">
+                                  {line.show_price ? formatCurrency(line.line_total, currency) : <span className="text-xs text-slate-400 italic">hidden</span>}
+                                </span>
+                                {!isReadOnly && (
+                                  <>
+                                    <button type="button" onClick={() => setEditingLineId(line.localId)}
+                                      className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+                                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                    </button>
+                                    <button type="button" onClick={() => removeLine(line.localId)}
+                                      className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50">
+                                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            {/* ── Show/hide toggles — always visible on the row ── */}
+                            {!isReadOnly && (
+                              <div className="flex items-center gap-3 mt-2 pt-2 border-t border-slate-100">
+                                <button type="button"
+                                  onClick={() => { updateLine(line.localId, { show_description: !line.show_description }); }}
+                                  className={`inline-flex items-center gap-1 text-xs rounded-full px-2 py-0.5 border transition-colors ${
+                                    line.show_description ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white border-slate-200 text-slate-400 line-through'
+                                  }`}>
+                                  Desc
+                                </button>
+                                <button type="button"
+                                  onClick={() => { updateLine(line.localId, { show_quantity: !line.show_quantity }); }}
+                                  className={`inline-flex items-center gap-1 text-xs rounded-full px-2 py-0.5 border transition-colors ${
+                                    line.show_quantity ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white border-slate-200 text-slate-400 line-through'
+                                  }`}>
+                                  Qty
+                                </button>
+                                <button type="button"
+                                  onClick={() => { updateLine(line.localId, { show_price: !line.show_price }); }}
+                                  className={`inline-flex items-center gap-1 text-xs rounded-full px-2 py-0.5 border transition-colors ${
+                                    line.show_price ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white border-slate-200 text-slate-400 line-through'
+                                  }`}>
+                                  Price
+                                </button>
+                                <button type="button"
+                                  onClick={() => { updateLine(line.localId, { is_visible: !line.is_visible }); }}
+                                  className={`inline-flex items-center gap-1 text-xs rounded-full px-2 py-0.5 border transition-colors ml-auto ${
+                                    line.is_visible ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white border-slate-200 text-slate-400 line-through'
+                                  }`}>
+                                  {line.is_visible ? 'Visible' : 'Hidden'}
                                 </button>
                               </div>
                             )}

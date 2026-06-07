@@ -155,9 +155,9 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
               <p className="text-sm text-slate-500 mb-4">How would you like to create this invoice?</p>
 
               <button type="button" onClick={() => setStep('blank-form')}
-                className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group">
+                className="block w-full text-left p-4 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group">
                 <div className="flex items-start gap-4">
-                  <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 flex items-center justify-center flex-shrink-0 transition-colors">
+                  <div className="p-2 rounded-full bg-orange-50 group-hover:bg-orange-100 flex items-center justify-center flex-shrink-0 transition-colors">
                     <svg className="h-5 w-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
@@ -170,9 +170,9 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
               </button>
 
               <button type="button" onClick={() => setStep('from-quote')}
-                className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group">
+                className="block w-full text-left p-4 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group">
                 <div className="flex items-start gap-4">
-                  <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 flex items-center justify-center flex-shrink-0 transition-colors">
+                  <div className="p-2 rounded-full bg-orange-50 group-hover:bg-orange-100 flex items-center justify-center flex-shrink-0 transition-colors">
                     <svg className="h-5 w-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
@@ -184,9 +184,9 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
                 </div>
               </button>
 
-              <div className="block w-full text-left p-5 bg-white border-2 border-slate-100 rounded-xl opacity-50 cursor-not-allowed" title="Coming soon">
+              <div className="block w-full text-left p-4 bg-white border-2 border-slate-100 rounded-xl opacity-50 cursor-not-allowed" title="Coming soon">
                 <div className="flex items-start gap-4">
-                  <div className="p-2.5 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                  <div className="p-2 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
                     <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
@@ -222,7 +222,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
                 <button type="button" onClick={() => { if (!customerName.trim()) { setError('Customer name is required.'); return; } setError(null); goToTemplateStep('blank'); }}
                   disabled={!customerName.trim()}
                   className="flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-all">
-                  Next: Choose Template →
+                  Choose Template
                 </button>
               </div>
             </div>
@@ -271,7 +271,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
                 <button type="button" onClick={() => { if (!selectedQuoteId) { setError('Please select a quote.'); return; } setError(null); goToTemplateStep('from-quote'); }}
                   disabled={!selectedQuoteId}
                   className="flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-all">
-                  Next: Choose Template →
+                  Choose Template
                 </button>
               </div>
             </div>
