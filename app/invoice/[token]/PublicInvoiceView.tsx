@@ -14,6 +14,14 @@ export type InvoiceLine = {
   is_visible: boolean;
 };
 
+export type PaymentDetails = {
+  accountName?: string;
+  bankName?: string;
+  accountNumber?: string;
+  sortCode?: string;
+  paymentLink?: string;
+};
+
 export type Invoice = {
   id: string;
   invoice_number: string;
@@ -37,6 +45,7 @@ export type Invoice = {
   due_date: string | null;
   notes: string | null;
   terms: string | null;
+  payment_details: PaymentDetails | null;
   payment_reported_at: string | null;
   paid_at: string | null;
 };
@@ -54,6 +63,40 @@ function formatCurrency(amount: number, currency: string) {
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '—';
   return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+}
+
+// ── Payment row with copy button ────────────────────────────────────────────
+
+function PayRow({
+  label, value, copyKey, copied, onCopy, mono = false, highlight = false,
+}: {
+  label: string;
+  value: string;
+  copyKey: string;
+  copied: string | null;
+  onCopy: (text: string, key: string) => void;
+  mono?: boolean;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="flex justify-between items-center gap-3">
+      <span className="text-sm text-slate-600 flex-shrink-0">{label}</span>
+      <div className="flex items-center gap-2 min-w-0">
+        <span className={`text-sm font-semibold truncate ${
+          highlight ? 'text-orange-700 font-mono' : mono ? 'font-mono text-slate-900' : 'text-slate-900'
+        }`}>
+          {value}
+        </span>
+        <button
+          type="button"
+          onClick={() => onCopy(value, copyKey)}
+          className="flex-shrink-0 text-xs text-orange-600 border border-orange-300 rounded-full px-2 py-0.5 hover:bg-orange-100 transition-colors whitespace-nowrap"
+        >
+          {copied === copyKey ? '✓' : 'Copy'}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // ── Payment Sent form ──────────────────────────────────────────────────────
@@ -340,39 +383,66 @@ export function PublicInvoiceView({ invoice, lines, token }: Props) {
           {/* Payment instructions */}
           <div className="mx-8 mb-6 rounded-xl bg-orange-50 border border-orange-200 p-5">
             <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-4">Payment Instructions</p>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600">Amount Due</span>
-                <span className="text-lg font-bold text-slate-900">{formatCurrency(invoice.total, invoice.currency)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600">Payment Reference</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-sm font-semibold text-orange-700">{invoice.payment_reference}</span>
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard(invoice.payment_reference, 'ref')}
-                    className="text-xs text-orange-600 hover:text-orange-700 border border-orange-300 rounded px-2 py-0.5 hover:bg-orange-100 transition-colors"
-                  >
-                    {copied === 'ref' ? '✓ Copied' : 'Copy'}
-                  </button>
-                </div>
-              </div>
+
+            {/* Amount due */}
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-sm text-slate-600">Amount Due</span>
+              <span className="text-lg font-bold text-slate-900">{formatCurrency(invoice.total, invoice.currency)}</span>
             </div>
+
+            {/* Bank details — individual copy rows */}
+            {(invoice.payment_details?.accountName || invoice.payment_details?.accountNumber) && (
+              <div className="space-y-2 mb-3 pb-3 border-b border-orange-200">
+                {invoice.payment_details?.accountName && (
+                  <PayRow label="Account Name" value={invoice.payment_details.accountName} copyKey="payee" copied={copied} onCopy={copyToClipboard} mono={false} />
+                )}
+                {invoice.payment_details?.bankName && (
+                  <PayRow label="Bank" value={invoice.payment_details.bankName} copyKey="bank" copied={copied} onCopy={copyToClipboard} mono={false} />
+                )}
+                {invoice.payment_details?.accountNumber && (
+                  <PayRow label="Account Number" value={invoice.payment_details.accountNumber} copyKey="accnum" copied={copied} onCopy={copyToClipboard} mono={true} />
+                )}
+                {invoice.payment_details?.sortCode && (
+                  <PayRow label="Sort Code" value={invoice.payment_details.sortCode} copyKey="sort" copied={copied} onCopy={copyToClipboard} mono={true} />
+                )}
+              </div>
+            )}
+
+            {/* Payment reference */}
+            <PayRow label="Payment Reference" value={invoice.payment_reference} copyKey="ref" copied={copied} onCopy={copyToClipboard} mono={true} highlight />
+
+            {/* Copy everything button */}
             <div className="mt-3 pt-3 border-t border-orange-200">
               <button
                 type="button"
-                onClick={() => copyToClipboard(
-                  `Amount: ${formatCurrency(invoice.total, invoice.currency)}\nPayment Reference: ${invoice.payment_reference}`,
-                  'all'
-                )}
-                className="w-full text-center text-sm text-orange-700 font-medium hover:underline"
+                onClick={() => {
+                  const pd = invoice.payment_details ?? {};
+                  const parts = [
+                    `Amount: ${formatCurrency(invoice.total, invoice.currency)}`,
+                    pd.accountName ? `Account Name: ${pd.accountName}` : '',
+                    pd.bankName ? `Bank: ${pd.bankName}` : '',
+                    pd.accountNumber ? `Account Number: ${pd.accountNumber}` : '',
+                    pd.sortCode ? `Sort Code: ${pd.sortCode}` : '',
+                    `Payment Reference: ${invoice.payment_reference}`,
+                  ].filter(Boolean).join('\n');
+                  copyToClipboard(parts, 'all');
+                }}
+                className="w-full text-center text-sm text-orange-700 font-semibold hover:underline"
               >
-                {copied === 'all' ? '✓ Copied' : 'Copy Payment Details'}
+                {copied === 'all' ? '✓ All Details Copied' : 'Copy All Payment Details'}
               </button>
             </div>
+
+            {/* Pay online button */}
+            {invoice.payment_details?.paymentLink && (
+              <a href={invoice.payment_details.paymentLink} target="_blank" rel="noopener noreferrer"
+                className="mt-3 flex items-center justify-center gap-1.5 w-full rounded-full bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-700 transition-all">
+                Pay Online
+              </a>
+            )}
+
             {invoice.due_date && (
-              <p className="text-xs font-medium text-orange-700 mt-2 text-center">
+              <p className="text-xs font-medium text-orange-700 mt-3 text-center">
                 Payment due by {formatDate(invoice.due_date)}
               </p>
             )}

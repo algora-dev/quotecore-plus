@@ -19,6 +19,13 @@ interface Props {
   subtotal: number;
   taxTotal: number;
   total: number;
+  paymentDetails?: {
+    accountName?: string;
+    bankName?: string;
+    accountNumber?: string;
+    sortCode?: string;
+    paymentLink?: string;
+  };
 }
 
 function formatDate(dateStr: string) {
@@ -47,6 +54,7 @@ export function InvoicePreview({
   subtotal,
   taxTotal,
   total,
+  paymentDetails,
 }: Props) {
   const visibleLines = lines.filter((l) => l.is_visible);
   const customer = invoice.customer_snapshot as Record<string, string>;
@@ -160,11 +168,41 @@ export function InvoicePreview({
             <span className="text-slate-600">Amount Due</span>
             <span className="font-bold text-slate-900">{formatCurrency(total, currency)}</span>
           </div>
-          <div className="flex justify-between">
+          {paymentDetails?.accountName && (
+            <div className="flex justify-between">
+              <span className="text-slate-600">Account Name</span>
+              <span className="font-medium text-slate-900">{paymentDetails.accountName}</span>
+            </div>
+          )}
+          {paymentDetails?.bankName && (
+            <div className="flex justify-between">
+              <span className="text-slate-600">Bank</span>
+              <span className="font-medium text-slate-900">{paymentDetails.bankName}</span>
+            </div>
+          )}
+          {paymentDetails?.accountNumber && (
+            <div className="flex justify-between">
+              <span className="text-slate-600">Account Number</span>
+              <span className="font-mono font-medium text-slate-900">{paymentDetails.accountNumber}</span>
+            </div>
+          )}
+          {paymentDetails?.sortCode && (
+            <div className="flex justify-between">
+              <span className="text-slate-600">Sort Code</span>
+              <span className="font-mono font-medium text-slate-900">{paymentDetails.sortCode}</span>
+            </div>
+          )}
+          <div className="flex justify-between border-t border-orange-200 pt-2 mt-2">
             <span className="text-slate-600">Payment Reference</span>
             <span className="font-mono font-semibold text-orange-700">{invoice.payment_reference}</span>
           </div>
         </div>
+        {paymentDetails?.paymentLink && (
+          <a href={paymentDetails.paymentLink} target="_blank" rel="noopener noreferrer"
+            className="mt-3 flex items-center justify-center gap-1.5 w-full rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 transition-all">
+            Pay Online
+          </a>
+        )}
         <p className="text-xs text-slate-500 mt-3">
           Please include the payment reference when making your payment so we can identify it quickly.
         </p>

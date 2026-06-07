@@ -54,10 +54,10 @@ export async function createBlankInvoice(opts: {
 
   const paymentReference = 'QCP-' + invoiceNumber;
 
-  // Fetch company branding snapshot (only name + default_currency live on companies table)
+  // Fetch company branding + payment details snapshot
   const { data: company } = await admin
     .from('companies')
-    .select('name, default_currency')
+    .select('name, default_currency, payment_details')
     .eq('id', profile.company_id)
     .maybeSingle();
 
@@ -75,6 +75,7 @@ export async function createBlankInvoice(opts: {
       customer_snapshot: (opts.customerSnapshot ?? {}) as never,
       cq_company_name: company?.name ?? null,
       business_snapshot: { businessName: company?.name ?? '' } as never,
+      payment_details: (company?.payment_details ?? {}) as never,
       currency: opts.currency ?? company?.default_currency ?? 'GBP',
     })
     .select('id')
@@ -114,6 +115,13 @@ export async function createInvoiceFromQuote(quoteId: string): Promise<string> {
     .select('*')
     .eq('quote_id', quoteId)
     .order('sort_order');
+
+  // Fetch company payment details to snapshot
+  const { data: companyPayment } = await admin
+    .from('companies')
+    .select('payment_details')
+    .eq('id', profile.company_id)
+    .maybeSingle();
 
   // Generate invoice number
   const { data: invoiceNumber, error: numErr } = await admin.rpc(
@@ -158,6 +166,7 @@ export async function createInvoiceFromQuote(quoteId: string): Promise<string> {
       cq_company_logo_url: quote.cq_company_logo_url ?? null,
       cq_footer_text: quote.cq_footer_text ?? null,
       business_snapshot: businessSnapshot as never,
+      payment_details: (companyPayment?.payment_details ?? {}) as never,
       currency: quote.currency ?? 'GBP',
       notes: quote.notes_internal ?? null,
     })
@@ -385,6 +394,31 @@ export async function confirmPaymentReceived(invoiceId: string) {
     message: 'You confirmed payment received on this invoice.',
   });
 
+  revalidatePath(`/[workspaceSlug]/invoices/${invoiceId}`);
+}
+
+// ── Save invoice payment details ────────────────────────────────────────────
+
+export async function saveInvoicePaymentDetails(
+  invoiceId: string,
+  paymentDetails: {
+    accountName?: string;
+    bankName?: string;
+    accountNumber?: string;
+    sortCode?: string;
+    paymentLink?: string;
+  }
+) {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  const { error } = await supabase
+    .from('invoices')
+    .update({ payment_details: paymentDetails as never, updated_at: new Date().toISOString() })
+    .eq('id', invoiceId)
+    .eq('company_id', profile.company_id);
+
+  if (error) throw error;
   revalidatePath(`/[workspaceSlug]/invoices/${invoiceId}`);
 }
 

@@ -513,6 +513,7 @@ export type Database = {
           id: string
           name: string
           onboarding_completed_at: string | null
+          payment_details: Json | null
           plan_code: string
           plan_started_at: string
           seat_count: number
@@ -550,6 +551,7 @@ export type Database = {
           id?: string
           name: string
           onboarding_completed_at?: string | null
+          payment_details?: Json | null
           plan_code?: string
           plan_started_at?: string
           seat_count?: number
@@ -587,6 +589,7 @@ export type Database = {
           id?: string
           name?: string
           onboarding_completed_at?: string | null
+          payment_details?: Json | null
           plan_code?: string
           plan_started_at?: string
           seat_count?: number
@@ -1492,6 +1495,7 @@ export type Database = {
           invoice_number: string
           notes: string | null
           paid_at: string | null
+          payment_details: Json | null
           payment_reference: string
           payment_reported_at: string | null
           public_token: string
@@ -1530,6 +1534,7 @@ export type Database = {
           invoice_number: string
           notes?: string | null
           paid_at?: string | null
+          payment_details?: Json | null
           payment_reference: string
           payment_reported_at?: string | null
           public_token?: string
@@ -1568,6 +1573,7 @@ export type Database = {
           invoice_number?: string
           notes?: string | null
           paid_at?: string | null
+          payment_details?: Json | null
           payment_reference?: string
           payment_reported_at?: string | null
           public_token?: string

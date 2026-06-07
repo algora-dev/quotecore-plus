@@ -3,7 +3,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
-import { saveInvoiceLines, saveInvoiceMeta, cancelInvoice, confirmPaymentReceived } from '../actions';
+import { saveInvoiceLines, saveInvoiceMeta, saveInvoicePaymentDetails, cancelInvoice, confirmPaymentReceived } from '../actions';
 import { InvoicePreview } from './InvoicePreview';
 import { AddInvoiceLineModal } from './AddInvoiceLineModal';
 import { InvoiceHeaderModal } from './InvoiceHeaderModal';
@@ -36,6 +36,7 @@ export interface InvoiceRow {
   due_date: string | null;
   notes: string | null;
   terms: string | null;
+  payment_details: Record<string, string> | null;
   public_token: string;
   sent_at: string | null;
   paid_at: string | null;
@@ -142,6 +143,16 @@ export function InvoiceEditor({
   const [invoiceDate, setInvoiceDate] = useState(initial.invoice_date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState(initial.due_date?.slice(0, 10) ?? '');
 
+  // ── Payment details state ──
+  const pd = initial.payment_details ?? {};
+  const [payAccountName, setPayAccountName] = useState((pd as Record<string,string>).accountName ?? '');
+  const [payBankName, setPayBankName] = useState((pd as Record<string,string>).bankName ?? '');
+  const [payAccountNumber, setPayAccountNumber] = useState((pd as Record<string,string>).accountNumber ?? '');
+  const [paySortCode, setPaySortCode] = useState((pd as Record<string,string>).sortCode ?? '');
+  const [payPaymentLink, setPayPaymentLink] = useState((pd as Record<string,string>).paymentLink ?? '');
+  const [payDirty, setPayDirty] = useState(false);
+  const [paymentSaving, setPaymentSaving] = useState(false);
+
   // ── UI state ──
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -202,6 +213,25 @@ export function InvoiceEditor({
   // Tax: flat rate approach (will extend to per-line taxes in a later phase)
   const taxTotal = 0; // Phase 2: add tax rows
   const total = subtotal + taxTotal;
+
+  // ── Save payment details ──
+  async function handleSavePaymentDetails() {
+    setPaymentSaving(true);
+    try {
+      await saveInvoicePaymentDetails(initial.id, {
+        accountName: payAccountName,
+        bankName: payBankName,
+        accountNumber: payAccountNumber,
+        sortCode: paySortCode,
+        paymentLink: payPaymentLink,
+      });
+      setPayDirty(false);
+    } catch {
+      alert('Failed to save payment details.');
+    } finally {
+      setPaymentSaving(false);
+    }
+  }
 
   // ── Save ──
   async function handleSave() {
@@ -657,6 +687,64 @@ export function InvoiceEditor({
                     )}
                   </div>
                 </div>
+
+                {/* Payment Details — editable per-invoice */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment Details</p>
+                    {payDirty && !isReadOnly && (
+                      <button
+                        type="button"
+                        onClick={handleSavePaymentDetails}
+                        disabled={paymentSaving}
+                        className="text-xs text-orange-600 font-semibold hover:underline disabled:opacity-50"
+                      >
+                        {paymentSaving ? 'Saving…' : 'Save'}
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 mb-1">Account Name</label>
+                        <input type="text" value={payAccountName} onChange={(e) => { setPayAccountName(e.target.value); setPayDirty(true); }} disabled={isReadOnly}
+                          placeholder="e.g. Smith Roofing Ltd"
+                          className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs focus:border-orange-500 focus:outline-none disabled:bg-slate-50" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 mb-1">Bank Name</label>
+                        <input type="text" value={payBankName} onChange={(e) => { setPayBankName(e.target.value); setPayDirty(true); }} disabled={isReadOnly}
+                          placeholder="e.g. Barclays"
+                          className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs focus:border-orange-500 focus:outline-none disabled:bg-slate-50" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 mb-1">Account Number</label>
+                        <input type="text" value={payAccountNumber} onChange={(e) => { setPayAccountNumber(e.target.value); setPayDirty(true); }} disabled={isReadOnly}
+                          placeholder="12345678"
+                          className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-mono focus:border-orange-500 focus:outline-none disabled:bg-slate-50" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 mb-1">Sort Code</label>
+                        <input type="text" value={paySortCode} onChange={(e) => { setPaySortCode(e.target.value); setPayDirty(true); }} disabled={isReadOnly}
+                          placeholder="00-00-00"
+                          className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-mono focus:border-orange-500 focus:outline-none disabled:bg-slate-50" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">Payment Link <span className="text-slate-400 font-normal">(opt)</span></label>
+                      <input type="url" value={payPaymentLink} onChange={(e) => { setPayPaymentLink(e.target.value); setPayDirty(true); }} disabled={isReadOnly}
+                        placeholder="https://pay.stripe.com/…"
+                        className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs focus:border-orange-500 focus:outline-none disabled:bg-slate-50" />
+                    </div>
+                    {!payAccountName && !payBankName && !payAccountNumber && (
+                      <p className="text-xs text-slate-400">
+                        Set default payment details in{' '}
+                        <a href={`/${workspaceSlug}/account?tab=company`} className="text-orange-600 hover:underline">Account → Company</a>
+                        {' '}and they’ll auto-fill here.
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -707,6 +795,13 @@ export function InvoiceEditor({
             subtotal={subtotal}
             taxTotal={taxTotal}
             total={total}
+            paymentDetails={{
+              accountName: payAccountName,
+              bankName: payBankName,
+              accountNumber: payAccountNumber,
+              sortCode: paySortCode,
+              paymentLink: payPaymentLink,
+            }}
           />
         </div>
       </div>
