@@ -12,7 +12,11 @@
 >
 > **Reading this if you've never used the app:** Each test tells you exactly what to click and what a PASS looks like. Just follow the numbered steps. Where a step needs Gavin to check something technical behind the scenes, it says **(Gavin verifies)** — you don't need to do anything for those beyond reporting what you saw.
 >
-> Scope note: Starter is the floor tier. The job here is (1) the **happy path of core quoting works end-to-end**, (2) the **new signup → trade → seeding → copilot** flow is correct, and (3) **every higher-tier feature is correctly gated/blocked**. Keep it tight.
+> Scope note: Starter is the floor tier. The job here is (1) the **happy path of core quoting works end-to-end**, (2) the **new signup → trade → seeding → assistant** flow is correct, and (3) **every higher-tier feature is correctly gated/blocked**. Keep it tight.
+>
+> **Updated 2026-06-07** for the new nav/Resources hub + the AI Assistant “Q” (legacy Copilot removed). SUPERSEDES the older procedural `smoke-test-starter.md`.
+>
+> **Tier-gating source of truth (`subscription_plans`, verified 2026-06-07):** Starter has takeoff / flashings / orders / **follow-ups** / email / activity / catalogs / attachment-library ALL **OFF** (quotes + components only). So Section C gates below are all correct. The **AI Assistant is NOT tier-gated** — Starter SHOULD have Q (global env flag + per-user toggle), so do not treat Q appearing on Starter as a gating bug.
 
 ---
 
@@ -24,7 +28,7 @@
 
 ---
 
-## SECTION A — Signup, default trade, seeding, copilot (NEW since last tier test)
+## SECTION A — Signup, default trade, seeding, assistant (NEW since last tier test)
 
 ### A1 — Sign up + choose default trade = **Roofing** **[BLOCKER]**
 1. Sign up with a fresh email.
@@ -32,10 +36,11 @@
 3. **On the trade step, explicitly choose `Roofing` as the default trade.**
 4. **Pass:** Onboarding completes, you land in-app. No errors. Trial banner visible with days remaining.
 
-### A2 — Copilot intro flow **[BLOCKER]**
-1. Immediately after onboarding, the **copilot intro/guide** should kick in (post-onboarding step).
-2. Step through it.
-3. **Pass:** Copilot intro appears, steps advance correctly, and it can be completed/dismissed without breaking the dashboard. (Flag any step that points at a renamed/missing button.)
+### A2 — AI Assistant “Q” available (legacy Copilot removed) **[BLOCKER]**
+> The old Copilot intro/runtime is GONE. Q (floating bottom-right) is the sole in-app helper and is available on EVERY tier (not gated) — confirm it works even on Starter.
+1. After onboarding, confirm the **Q** launcher appears bottom-right and opens.
+2. Ask Q *"how do I create a quote?"* and try a Guide-Me (e.g. *"show me how to add a component"*).
+3. **Pass:** Q responds + the guide highlights/steps work; nav buttons activate on a single click; no references to a removed "Copilot tour"; no step points at a renamed/missing button (note the new **Components · Quotes · Orders · Resources** nav).
 
 ### A3 — Starter components were seeded (Roofing + Generic both) **[BLOCKER]**
 1. Go to **Components**.
@@ -102,7 +107,7 @@
 - Sidebar → **Material Orders** → **Pass:** upgrade prompt; you cannot create an order.
 
 ### C5 — Follow-ups blocked **[BLOCKER]**
-- Open a quote → try to schedule a follow-up → **Pass:** the option is hidden or shows an upgrade prompt; no follow-up is scheduled. *(Note: confirm with the Pro list whether follow-ups are a Pro feature or higher — the boundary must be consistent.)*
+- Open a quote → try to schedule a follow-up → **Pass:** the option is hidden or shows an upgrade prompt; no follow-up is scheduled. *(Entitlement CONFIRMED 2026-06-07: follow-ups are a **Pro+** feature — Starter `feat_followups = false`. Boundary is consistent with the Pro list.)*
 
 ### C6 — Activity card gated **[BLOCKER]**
 - Open a quote → look for an **Activity** tab/card → **Pass:** it's hidden or upgrade-prompted; no activity timeline is shown.
@@ -130,7 +135,7 @@
 
 ## Summary checklist
 - [ ] A1 Signup + default trade = Roofing
-- [ ] A2 Copilot intro flow works
+- [ ] A2 AI Assistant “Q” available + Guide-Me works (not tier-gated)
 - [ ] A3 Both Roofing + Generic collections seeded with components
 - [ ] A4 Chosen trade pre-selects on new quote
 - [ ] B1 Upgrade to Starter via Stripe (+ fresh-session persist)

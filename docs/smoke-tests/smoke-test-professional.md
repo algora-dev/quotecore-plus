@@ -1,3 +1,5 @@
+> ⚠️ **SUPERSEDED (2026-06-07).** Run **`pre-live-pro-list.md`** instead — it's the current go/no-go gate (correct tier-gating matrix, carried-over bugs with priority labels, dev-backlog + Section F for the 2026-06-04→07 batch, AI Assistant "Q"). This procedural version (with inline `>` feedback notes) is kept for reference only; those notes are now folded into the pre-live list.
+
 # Smoke Test — Professional Plan
 **URL:** https://app.quote-core.com  
 **Card:** Card B (your choice — real card, will be charged $39)  

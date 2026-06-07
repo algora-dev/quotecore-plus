@@ -13,6 +13,10 @@
 > **Reading this if you've never used the app:** Each test tells you what to click and what a PASS looks like — just follow the numbered steps. The security tests in Section D have a couple of "techy" actions (changing part of a web link, checking an account can't see another's data); each one spells out exactly what to type/click. Steps marked **(Gavin verifies)** are checked behind the scenes — you just report what you saw on screen.
 >
 > This list folds in the **entire dev backlog smoke pass** (attachments, catalog library, storage policy, generic-trade labelling) plus the carried-over findings from the previous Pro run. Items already verified on dev this session are marked **[PRE-VERIFIED dev]** — re-confirm on the live build after merge.
+>
+> **Updated 2026-06-07** for the 2026-06-04→07 batch: new nav + Resource Library hub, order layouts (line-by-line / single / double, order-from-quote, hide-all-prices), unified Add New Line modal, multi-map catalogs, per-user assistant toggle, and the **AI Assistant “Q” Guide-Me** flows (Section F). NOTE: the older procedural `smoke-test-professional.md` / `smoke-test-starter.md` are SUPERSEDED by these two `pre-live-*-list.md` gates — run these.
+>
+> **Tier-gating source of truth (`subscription_plans`, verified 2026-06-07):** Pro gets everything ON — takeoff, flashings, orders, **follow-ups**, email, activity, **catalogs (3)**, **attachment library (3)**. Starter gets NONE of those feature flags (quotes + components only). The **AI Assistant is NOT tier-gated** — it's a global env flag + a per-user `users.assistant_enabled` toggle (Account settings).
 
 ---
 
@@ -24,16 +28,18 @@
 
 ---
 
-## SECTION A — Signup, default trade, seeding, copilot (NEW since last tier test)
+## SECTION A — Signup, default trade, seeding, assistant (NEW since last tier test)
 
 ### A1 — Sign up + choose default trade = **a Generic trade** (e.g. Landscaping) **[BLOCKER]**
 1. Sign up fresh; complete onboarding.
 2. **On the trade step, choose a non-roofing trade — `Landscaping`.**
 3. **Pass:** Onboarding completes, lands in-app, trial banner visible. No roofing-specific assumptions leak into the UI.
 
-### A2 — Copilot intro flow (generic-trade variant) **[BLOCKER]**
-1. Step through the post-onboarding copilot intro.
-2. **Pass:** Copilot appears + completes cleanly. Any trade-specific guidance reads correctly for a generic trade (not roofing-only wording). Flag steps pointing at renamed/missing buttons (e.g. the Drawings & Images rename).
+### A2 — AI Assistant “Q” available + generic-trade-correct **[BLOCKER]**
+> The legacy Copilot intro/runtime is GONE — Q (the floating assistant) is now the sole in-app helper. It is gated by the global env flag + the per-user toggle, NOT by tier.
+1. After onboarding, confirm the **Q** launcher (bottom-right) is present and opens.
+2. Ask Q something generic (e.g. *"how do I create a quote?"*).
+3. **Pass:** Q responds; any trade-specific wording reads correctly for a generic trade (not roofing-only); no references to a removed "Copilot tour". Flag steps pointing at renamed/missing buttons (e.g. the Drawings & Images rename, the new Resources nav).
 
 ### A3 — Starter components seeded (Roofing + Generic both) **[BLOCKER]**
 1. **Components** → **Pass:** both **"Roofing"** and **"Generic"** collections exist, pre-filled (Roofing ~7, Generic ~9). *(Both seed regardless of chosen trade — intended.)*
@@ -86,7 +92,7 @@
 2. **Pass (if built):** system warns about raw URLs + offers the hyperlink insert (URL + custom display text, URL limited to system-generated links). **If not built:** mark `[~]` and ship as follow-up unless C5 email delivery/link behaviour fails.
 
 ### C7 — Automated follow-up + Pro gating boundary (CARRIED-OVER BUG — last run = FAIL) **[BLOCKER]**
-> **Expected entitlement:** Professional includes automated follow-ups. If product policy changes, update this test before running; do not leave this as an in-test decision. Last run: the post-send follow-up prompt **did not appear** for Pro.
+> **Entitlement CONFIRMED (`subscription_plans`, 2026-06-07): Professional HAS follow-ups (`feat_followups = true`).** So if the post-send prompt does not appear for Pro, that is a **bug to fix**, not a gating question — do not defer it. (Starter/Growth correctly have follow-ups OFF.) Last run: the post-send follow-up prompt **did not appear** for Pro.
 1. After sending (C5), the post-send follow-up prompt should appear for Pro.
 2. Enable **No response**, delay **1 day**, pick a template, **Schedule selected**.
 3. **Pass:** follow-up schedules + appears in Scheduled Messages with fire date ~1 day out.
@@ -187,6 +193,48 @@ Already exhaustively verified on dev this session (boundary, red-blocks-all-uplo
 
 ---
 
+## SECTION F — 2026-06-04→07 batch (nav, Resources hub, order layouts, Q Guide-Me) **[PRE-VERIFIED dev]**
+
+### F1 — New main nav + Resource Library hub **[BLOCKER]**
+1. Confirm main nav reads **Components · Quotes · Orders · Resources** ("Material Orders" renamed **Orders**). Active-pill highlight follows the current page (no false highlight).
+2. Click **Resources** → the `/resources` cards hub opens (Catalogs, Attachments, Components, Drawings & Images, templates).
+3. **Pass:** nav labels + Resources hub correct; each card opens its own URL; Pro-gating unchanged on Orders for non-Pro.
+
+### F2 — Order layouts: line-by-line vs single/double **[BLOCKER]**
+1. **Orders → Custom Order** → layout picker shows 3 cards (**Line by Line / Single Column / Double Column**).
+2. Build a **Line by Line** order: add lines via the shared **Add New Line** modal (custom / component / catalog), edit a line (pencil), add footer text, add an optional tax.
+3. **Pass:** order saves; preview/PDF render the lines + footer + tax; layout cannot be switched after save.
+
+### F3 — Order from Quote + hide-all-prices **[BLOCKER]**
+1. **Orders → Order from Quote** → pick a layout → select a quote → Create Order.
+2. **Pass:** order pre-populates with the quote's priced lines; order number is unique (no spurious `-2` / collision on repeat saves); tax starts empty by default.
+3. Toggle **hide all prices**; save; re-open + check public/preview/PDF.
+4. **Pass:** the hide-all-prices choice persists and is honoured everywhere (public + preview + PDF).
+
+### F4 — Unified Add New Line modal on a customer quote **[BLOCKER]**
+1. In the Customer Quote editor, click **+ Add New Line** → three tabs: **Custom / Component / Catalog search**.
+2. Add one of each (catalog tab requires an imported catalog).
+3. **Pass:** all three add correctly; desc+quantity merge into the line description; hyphenated descriptions not truncated; per-line pencil edit works.
+
+### F5 — Multi-map catalogs **[NICE]**
+1. Open an imported catalog → **Maps** tab → add a second column mapping of the same file.
+2. **Pass:** the same CSV can be mapped a second way without re-upload; both maps usable in Catalog Search.
+
+### F6 — Per-user assistant hide toggle **[BLOCKER]**
+1. **Account settings** → turn the **Chat Assistant** OFF.
+2. **Pass:** the Q launcher disappears app-wide for this user; turning it back ON restores it. (Per-user only — does not affect other users in the company.)
+
+### F7 — Q Guide-Me flows end-to-end (5 flows) **[BLOCKER]**
+> All verified on dev this session; re-confirm on live. Start each from an UNRELATED page so the nav-hop fires.
+1. **Catalog upload** (gold standard): ask *"how do I upload a catalog"* → Resources → Catalogs → wizard steps.
+2. **Add catalog item to quote**: *"add a catalog item to my quote"* → Quotes → open quote → Customer Quote tab → edit pencil → Add New Line → catalog search.
+3. **Send a quote with an attachment**: *"how do I send a quote with an attachment"* → quote summary → Send Quote → Add attachment picker (NOT the library-upload flow).
+4. **Upload to attachment library**: *"how do I upload a file to my attachment library"* → Resources → Attachments → Upload.
+5. **Line-by-line order** + **Order from quote**: each navigates correctly and the **Line by Line** card actually glows in the layout modal.
+6. **Pass for all:** nav buttons activate on a SINGLE click; highlights show (including inside the layout modal); step bubbles render emphasis as italic/bold (no raw `_underscores_`); steps proceed individually + auto-advance where designed; Finish appears on the last step.
+
+---
+
 ## Summary checklist
 - [ ] A1 Signup + default trade = Landscaping
 - [ ] A2 Copilot intro (generic variant) works
@@ -216,6 +264,13 @@ Already exhaustively verified on dev this session (boundary, red-blocks-all-uplo
 - [ ] D5 Drawing/Flashing create + save
 - [ ] D6 Public token abuse / rate-limit sanity **[SECURITY-BLOCKER for leaks]**
 - [ ] E1 Cancel via plan card + live Stripe customer resolves **[known bug]**
+- [ ] F1 New nav + Resource Library hub
+- [ ] F2 Order layouts: line-by-line vs single/double + Add New Line modal
+- [ ] F3 Order from Quote + hide-all-prices persists everywhere
+- [ ] F4 Unified Add New Line modal (custom/component/catalog) on a quote
+- [ ] F5 Multi-map catalogs **[NICE]**
+- [ ] F6 Per-user assistant hide toggle
+- [ ] F7 Q Guide-Me flows (5) end-to-end on live
 
 ---
 

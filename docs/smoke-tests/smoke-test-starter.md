@@ -1,3 +1,5 @@
+> ⚠️ **SUPERSEDED (2026-06-07).** Run **`pre-live-starter-list.md`** instead — it's the current go/no-go gate (correct tier-gating matrix, new nav/Resources hub, AI Assistant "Q", and feature additions). This procedural version is kept for reference only.
+
 # Smoke Test — Starter Plan
 **URL:** https://app.quote-core.com  
 **Card:** Card A (your choice — real card, will be charged $19)  
