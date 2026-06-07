@@ -1471,6 +1471,77 @@ export type Database = {
           },
         ]
       }
+      invoice_templates: {
+        Row: {
+          company_address: string | null
+          company_email: string | null
+          company_id: string
+          company_logo_url: string | null
+          company_name: string | null
+          company_phone: string | null
+          created_at: string
+          default_notes: string | null
+          default_terms: string | null
+          footer_text: string | null
+          id: string
+          name: string
+          payment_account_name: string | null
+          payment_account_number: string | null
+          payment_bank_name: string | null
+          payment_link: string | null
+          payment_sort_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_address?: string | null
+          company_email?: string | null
+          company_id: string
+          company_logo_url?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          created_at?: string
+          default_notes?: string | null
+          default_terms?: string | null
+          footer_text?: string | null
+          id?: string
+          name?: string
+          payment_account_name?: string | null
+          payment_account_number?: string | null
+          payment_bank_name?: string | null
+          payment_link?: string | null
+          payment_sort_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_address?: string | null
+          company_email?: string | null
+          company_id?: string
+          company_logo_url?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          created_at?: string
+          default_notes?: string | null
+          default_terms?: string | null
+          footer_text?: string | null
+          id?: string
+          name?: string
+          payment_account_name?: string | null
+          payment_account_number?: string | null
+          payment_bank_name?: string | null
+          payment_link?: string | null
+          payment_sort_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           business_snapshot: Json
@@ -1505,6 +1576,7 @@ export type Database = {
           status: Database["public"]["Enums"]["invoice_status"]
           subtotal: number
           tax_total: number
+          template_id: string | null
           terms: string | null
           total: number
           updated_at: string
@@ -1544,6 +1616,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal?: number
           tax_total?: number
+          template_id?: string | null
           terms?: string | null
           total?: number
           updated_at?: string
@@ -1583,6 +1656,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal?: number
           tax_total?: number
+          template_id?: string | null
           terms?: string | null
           total?: number
           updated_at?: string
@@ -1595,6 +1669,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_templates"
             referencedColumns: ["id"]
           },
         ]

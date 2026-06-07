@@ -11,8 +11,7 @@ import { SecurityQuestionsSection } from '@/app/(auth)/[workspaceSlug]/settings/
 import { NotificationsSection } from '@/app/(auth)/[workspaceSlug]/settings/NotificationsSection';
 import { AssistantSection } from '@/app/(auth)/[workspaceSlug]/settings/AssistantSection';
 import { SupportSection } from './support/SupportSection';
-import { PaymentDetailsForm } from '@/app/(auth)/[workspaceSlug]/settings/PaymentDetailsForm';
-import { loadPaymentDetails } from '@/app/(auth)/[workspaceSlug]/settings/payment-details-actions';
+
 
 import { loadCompanyTaxes } from '@/app/lib/taxes/actions';
 import { listMfaFactors, getMfaRequired } from '@/app/(auth)/[workspaceSlug]/settings/mfa-actions';
@@ -49,7 +48,6 @@ export default async function AccountPage() {
     companyRes,
     logoFileRes,
     taxes,
-    paymentDetailsRes,
     mfa,
     mfaRequired,
     recoveryStatus,
@@ -78,7 +76,6 @@ export default async function AccountPage() {
       .limit(1)
       .maybeSingle(),
     loadCompanyTaxes(),
-    loadPaymentDetails(),
     listMfaFactors(),
     getMfaRequired(),
     getRecoveryCodeStatus(),
@@ -160,16 +157,6 @@ export default async function AccountPage() {
               rate_percent: Number(t.rate_percent),
             }))}
           />
-        </div>
-        {/* Payment Details — auto-fills every new invoice */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-          <div className="mb-5">
-            <h3 className="text-base font-semibold text-slate-900">Payment Details</h3>
-            <p className="text-sm text-slate-500 mt-1">
-              Saved once and auto-filled into every new invoice. Customers see these in the payment instructions section with one-tap copy buttons.
-            </p>
-          </div>
-          <PaymentDetailsForm current={paymentDetailsRes} />
         </div>
       </section>
     ),

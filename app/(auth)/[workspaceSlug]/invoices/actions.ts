@@ -41,6 +41,7 @@ export async function createBlankInvoice(opts: {
   customerEmail?: string;
   customerSnapshot?: Record<string, unknown>;
   currency?: string;
+  templateId?: string;
 }): Promise<string> {
   const profile = await requireCompanyContext();
   const admin = createAdminClient();
@@ -54,12 +55,32 @@ export async function createBlankInvoice(opts: {
 
   const paymentReference = 'QCP-' + invoiceNumber;
 
-  // Fetch company branding + payment details snapshot
+  // Fetch company defaults + optional template
   const { data: company } = await admin
     .from('companies')
-    .select('name, default_currency, payment_details')
+    .select('name, default_currency')
     .eq('id', profile.company_id)
     .maybeSingle();
+
+  // Load template if specified
+  let tmpl: Record<string, string | null> | null = null;
+  if (opts.templateId) {
+    const { data: t } = await admin
+      .from('invoice_templates')
+      .select('*')
+      .eq('id', opts.templateId)
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+    tmpl = t as Record<string, string | null> | null;
+  }
+
+  const paymentDetails = tmpl ? {
+    accountName: tmpl.payment_account_name,
+    bankName: tmpl.payment_bank_name,
+    accountNumber: tmpl.payment_account_number,
+    sortCode: tmpl.payment_sort_code,
+    paymentLink: tmpl.payment_link,
+  } : {};
 
   const { data: invoice, error: insertErr } = await admin
     .from('invoices')
@@ -70,12 +91,22 @@ export async function createBlankInvoice(opts: {
       payment_reference: paymentReference,
       status: 'draft',
       source_type: 'blank',
+      source_id: null,
       customer_name: opts.customerName,
       customer_email: opts.customerEmail ?? null,
       customer_snapshot: (opts.customerSnapshot ?? {}) as never,
-      cq_company_name: company?.name ?? null,
-      business_snapshot: { businessName: company?.name ?? '' } as never,
-      payment_details: (company?.payment_details ?? {}) as never,
+      // Apply template branding (falls back to company name if no template)
+      cq_company_name: tmpl?.company_name ?? company?.name ?? null,
+      cq_company_address: tmpl?.company_address ?? null,
+      cq_company_email: tmpl?.company_email ?? null,
+      cq_company_phone: tmpl?.company_phone ?? null,
+      cq_company_logo_url: tmpl?.company_logo_url ?? null,
+      cq_footer_text: tmpl?.footer_text ?? null,
+      business_snapshot: { businessName: tmpl?.company_name ?? company?.name ?? '' } as never,
+      payment_details: paymentDetails as never,
+      template_id: opts.templateId ?? null,
+      notes: tmpl?.default_notes ?? null,
+      terms: tmpl?.default_terms ?? null,
       currency: opts.currency ?? company?.default_currency ?? 'GBP',
     })
     .select('id')
@@ -96,7 +127,7 @@ export async function createBlankInvoice(opts: {
 
 // ── Create invoice from quote ──────────────────────────────────────────────
 
-export async function createInvoiceFromQuote(quoteId: string): Promise<string> {
+export async function createInvoiceFromQuote(quoteId: string, templateId?: string): Promise<string> {
   const profile = await requireCompanyContext();
   const admin = createAdminClient();
 
@@ -116,12 +147,17 @@ export async function createInvoiceFromQuote(quoteId: string): Promise<string> {
     .eq('quote_id', quoteId)
     .order('sort_order');
 
-  // Fetch company payment details to snapshot
-  const { data: companyPayment } = await admin
-    .from('companies')
-    .select('payment_details')
-    .eq('id', profile.company_id)
-    .maybeSingle();
+  // Load optional template
+  let tmplFromQuote: Record<string, string | null> | null = null;
+  if (templateId) {
+    const { data: t } = await admin
+      .from('invoice_templates')
+      .select('*')
+      .eq('id', templateId)
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+    tmplFromQuote = t as Record<string, string | null> | null;
+  }
 
   // Generate invoice number
   const { data: invoiceNumber, error: numErr } = await admin.rpc(
@@ -159,16 +195,25 @@ export async function createInvoiceFromQuote(quoteId: string): Promise<string> {
       customer_name: quote.customer_name,
       customer_email: quote.customer_email ?? null,
       customer_snapshot: customerSnapshot as never,
-      cq_company_name: quote.cq_company_name ?? null,
-      cq_company_address: quote.cq_company_address ?? null,
-      cq_company_email: quote.cq_company_email ?? null,
-      cq_company_phone: quote.cq_company_phone ?? null,
-      cq_company_logo_url: quote.cq_company_logo_url ?? null,
-      cq_footer_text: quote.cq_footer_text ?? null,
+      // Template branding overrides quote cq_ fields when a template is selected
+      cq_company_name: (tmplFromQuote?.company_name ?? quote.cq_company_name) ?? null,
+      cq_company_address: (tmplFromQuote?.company_address ?? quote.cq_company_address) ?? null,
+      cq_company_email: (tmplFromQuote?.company_email ?? quote.cq_company_email) ?? null,
+      cq_company_phone: (tmplFromQuote?.company_phone ?? quote.cq_company_phone) ?? null,
+      cq_company_logo_url: (tmplFromQuote?.company_logo_url ?? quote.cq_company_logo_url) ?? null,
+      cq_footer_text: (tmplFromQuote?.footer_text ?? quote.cq_footer_text) ?? null,
       business_snapshot: businessSnapshot as never,
-      payment_details: (companyPayment?.payment_details ?? {}) as never,
+      payment_details: tmplFromQuote ? {
+        accountName: tmplFromQuote.payment_account_name,
+        bankName: tmplFromQuote.payment_bank_name,
+        accountNumber: tmplFromQuote.payment_account_number,
+        sortCode: tmplFromQuote.payment_sort_code,
+        paymentLink: tmplFromQuote.payment_link,
+      } as never : {} as never,
+      template_id: templateId ?? null,
       currency: quote.currency ?? 'GBP',
-      notes: quote.notes_internal ?? null,
+      notes: tmplFromQuote?.default_notes ?? quote.notes_internal ?? null,
+      terms: tmplFromQuote?.default_terms ?? null,
     })
     .select('id')
     .single();
