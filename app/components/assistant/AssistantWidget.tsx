@@ -17,7 +17,7 @@
  * Gated by NEXT_PUBLIC_AI_ASSISTANT_V1. The Help Drawer stays as a docs fallback.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { AssistantMode } from '@/app/lib/assistant/protocol';
 import { getElement } from '@/app/lib/assistant/uiRegistry';
 import { useAssistantChat } from './useAssistantChat';
@@ -26,6 +26,37 @@ import { useAssistantHighlight } from './useAssistantHighlight';
 import { useBrowserFacts } from './useBrowserFacts';
 import { useGuideEngine, type GuideStep } from './useGuideEngine';
 import { loadGuide } from './assistantPersistence';
+
+/**
+ * Render inline markdown emphasis (**bold**, _italic_ / *italic*) to React
+ * nodes so guide-step + assistant text shows formatted instead of leaking the
+ * raw markers (e.g. "_Order items_"). Deliberately tiny — emphasis only, no
+ * links/headings/code — so there is NO new dependency and no block parsing.
+ * Newlines are preserved by the bubble's `whitespace-pre-wrap`.
+ */
+function renderInlineMarkdown(text: string): ReactNode[] {
+  // Alternating split on **bold**, then _italic_ / *italic* within each piece.
+  const out: ReactNode[] = [];
+  let key = 0;
+  const boldParts = text.split(/(\*\*[^*]+\*\*)/g);
+  for (const part of boldParts) {
+    if (/^\*\*[^*]+\*\*$/.test(part)) {
+      out.push(<strong key={key++}>{part.slice(2, -2)}</strong>);
+      continue;
+    }
+    // Italic: _text_ or *text* (single). Split and wrap matches.
+    const italicParts = part.split(/(_[^_]+_|\*[^*]+\*)/g);
+    for (const ip of italicParts) {
+      if (!ip) continue;
+      if (/^_[^_]+_$/.test(ip) || /^\*[^*]+\*$/.test(ip)) {
+        out.push(<em key={key++}>{ip.slice(1, -1)}</em>);
+      } else {
+        out.push(<span key={key++}>{ip}</span>);
+      }
+    }
+  }
+  return out;
+}
 
 /**
  * Render one guided step as an assistant-style chat message (Fix 1c + Fix 2).
@@ -559,7 +590,11 @@ export function AssistantWidget(_props: Props) {
                   }`}
                 >
                   {m.content ? (
-                    m.content
+                    m.role === 'assistant' ? (
+                      renderInlineMarkdown(m.content)
+                    ) : (
+                      m.content
+                    )
                   ) : m.streaming ? (
                     <span className="assistant-typing" aria-label="Assistant is typing">
                       <span />

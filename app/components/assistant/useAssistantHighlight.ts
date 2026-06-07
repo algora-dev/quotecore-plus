@@ -161,15 +161,13 @@ export function useAssistantHighlight(
     }
     ensureStyles();
 
-    const el = findElement(highlight.elementId);
-    if (!el) {
-      // Server said it was visible, but it's gone now (race / unmount). Fail
-      // safe: render nothing, don't throw.
-      setRect(null);
-      return;
-    }
+    // Disposers registered by apply(); the effect cleanup runs all of them.
+    const disposers: Array<() => void> = [];
+    let retryTimer: number | null = null;
 
     const treatment = highlight.treatment ?? 'glow';
+
+    const apply = (el: HTMLElement) => {
     const cls = `assistant-hl assistant-hl-${treatment}`;
     el.classList.add(...cls.split(' '));
     // Only scroll if the control is actually off-screen. A smooth scroll while
@@ -218,7 +216,14 @@ export function useAssistantHighlight(
       // Mark THIS highlight key dismissed so the effect won't re-apply it on a
       // subsequent re-render while the engine is still on the same step.
       if (highlight.key) dismissedKeyRef.current = highlight.key;
-      clearHighlight();
+      // DEFER the visual clear. This listener runs in the CAPTURE phase, i.e.
+      // BEFORE the clicked control's own (React) handler. Calling
+      // clearHighlight() synchronously here does a setState mid-dispatch, which
+      // could re-render/teardown the element's stacking context before the
+      // click reaches it — the cause of "I have to click nav twice". Deferring
+      // to the next frame lets the original click complete its real action
+      // (navigation / button press) first, THEN we drop the ring.
+      requestAnimationFrame(() => clearHighlight());
     };
     window.setTimeout(() => {
       document.addEventListener('click', onDocClick, { capture: true, once: true });
@@ -231,12 +236,47 @@ export function useAssistantHighlight(
       persistent ? PERSISTENT_MAX_MS : HIGHLIGHT_MS
     );
 
-    return () => {
+    disposers.push(() => {
       window.clearTimeout(timer);
       document.removeEventListener('click', onDocClick, { capture: true } as EventListenerOptions);
       window.removeEventListener('scroll', updateRect, true);
       window.removeEventListener('resize', updateRect);
       el.classList.remove(...`assistant-hl assistant-hl-${treatment}`.split(' '));
+    });
+    };
+
+    // The target may not be in the DOM the instant the step becomes current —
+    // e.g. a layout-picker MODAL (order-layout-line-by-line) mounts a beat
+    // AFTER the click that opened it. Resolving once and bailing left those
+    // controls un-highlighted ("Q says it highlighted Line by Line but it
+    // isn't"). Apply immediately if present, else retry briefly until it
+    // appears (or we give up). All paths fail safe.
+    const immediate = findElement(highlight.elementId);
+    if (immediate) {
+      apply(immediate);
+    } else {
+      let attempts = 0;
+      const MAX_ATTEMPTS = 20; // ~1s (20 * 50ms)
+      retryTimer = window.setInterval(() => {
+        attempts += 1;
+        const found = findElement(highlight.elementId);
+        if (found) {
+          if (retryTimer !== null) window.clearInterval(retryTimer);
+          retryTimer = null;
+          if (!(highlight.key && dismissedKeyRef.current === highlight.key)) {
+            apply(found);
+          }
+        } else if (attempts >= MAX_ATTEMPTS) {
+          if (retryTimer !== null) window.clearInterval(retryTimer);
+          retryTimer = null;
+          setRect(null); // element never appeared — fail safe
+        }
+      }, 50);
+    }
+
+    return () => {
+      if (retryTimer !== null) window.clearInterval(retryTimer);
+      disposers.forEach((d) => d());
     };
     // Re-run whenever a new highlight (unique key) arrives or the preference
     // toggles.

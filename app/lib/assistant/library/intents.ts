@@ -121,13 +121,22 @@ const BASE_INTENTS: Record<string, string[]> = {
     'insert a priced item from my catalog',
     'use my catalog when quoting',
   ],
-  'attachments-send': [
-    'attach a file to a quote',
-    'send images to a customer',
-    'attach drawings when sending a quote',
+  'attachments-upload': [
     'upload a file to my attachment library',
-    'send a document with my quote',
-    'how do I attach files to a quote',
+    'add a file to my attachment library',
+    'upload an attachment',
+    'add images to my attachment library',
+    'store a document for reuse',
+    'how do I upload attachments',
+  ],
+  'attachments-send': [
+    'send a quote with an attachment',
+    'attach a file to a quote',
+    'attach a file when sending a quote',
+    'send images to a customer with a quote',
+    'include a document when I send a quote',
+    'add an attachment to a quote I am sending',
+    'how do I send a quote with an attachment',
   ],
   'order-line-by-line': [
     'build a line by line material order',
