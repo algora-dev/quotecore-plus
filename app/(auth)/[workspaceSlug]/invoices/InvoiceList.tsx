@@ -21,6 +21,7 @@ type InvoiceRow = {
   paid_at: string | null;
   created_at: string;
   updated_at: string;
+  public_token: string;
 };
 
 interface Props {
@@ -153,7 +154,7 @@ function InvoiceRowMenu({
             Edit
           </Link>
           <Link
-            href={`/invoice/${invoice.id}`}
+            href={`/invoice/${invoice.public_token}`}
             target="_blank"
             className="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50"
             onClick={() => setOpen(false)}

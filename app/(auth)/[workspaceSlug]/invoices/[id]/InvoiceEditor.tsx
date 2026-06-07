@@ -70,6 +70,8 @@ export interface EditableLine {
   unit_price: number;
   line_total: number;
   show_price: boolean;
+  show_quantity: boolean;
+  show_description: boolean;
   is_visible: boolean;
 }
 
@@ -127,6 +129,8 @@ export function InvoiceEditor({
       unit_price: Number(l.unit_price),
       line_total: Number(l.line_total),
       show_price: l.show_price,
+      show_quantity: (l as {show_quantity?: boolean}).show_quantity ?? true,
+      show_description: (l as {show_description?: boolean}).show_description ?? true,
       is_visible: l.is_visible,
     }))
   );
@@ -250,6 +254,8 @@ export function InvoiceEditor({
           unit_price: l.unit_price,
           line_total: l.line_total,
           show_price: l.show_price,
+          show_quantity: l.show_quantity,
+          show_description: l.show_description,
           is_visible: l.is_visible,
         })),
         { subtotal, taxTotal, discountTotal: 0, total }
@@ -268,8 +274,9 @@ export function InvoiceEditor({
       });
       setIsDirty(false);
       setLastSaved(new Date());
-      router.refresh();
-    } catch (e) {
+      // Redirect back to invoice library after save
+      router.push(`/${workspaceSlug}/invoices`);
+    } catch {
       alert('Failed to save. Please try again.');
     } finally {
       setSaving(false);
@@ -471,15 +478,24 @@ export function InvoiceEditor({
                                 />
                               </div>
                             </div>
-                            <div className="flex items-center justify-between">
-                              <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={line.show_price}
+                            <div className="flex items-center flex-wrap gap-3">
+                              <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                                <input type="checkbox" checked={line.show_description}
+                                  onChange={(e) => updateLine(line.localId, { show_description: e.target.checked })}
+                                  className="rounded" />
+                                Description
+                              </label>
+                              <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                                <input type="checkbox" checked={line.show_quantity}
+                                  onChange={(e) => updateLine(line.localId, { show_quantity: e.target.checked })}
+                                  className="rounded" />
+                                Qty
+                              </label>
+                              <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                                <input type="checkbox" checked={line.show_price}
                                   onChange={(e) => updateLine(line.localId, { show_price: e.target.checked })}
-                                  className="rounded"
-                                />
-                                Show price
+                                  className="rounded" />
+                                Price
                               </label>
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-semibold text-slate-700">

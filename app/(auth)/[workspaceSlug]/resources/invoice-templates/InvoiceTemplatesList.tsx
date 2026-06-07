@@ -1,8 +1,9 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { deleteInvoiceTemplate, type InvoiceTemplate } from '@/app/(auth)/[workspaceSlug]/invoices/template-actions';
-import { InvoiceTemplateModal } from './InvoiceTemplateModal';
+import { ConfirmModal } from '@/app/components/ConfirmModal';
 
 interface Props {
   workspaceSlug: string;
@@ -12,64 +13,53 @@ interface Props {
 export function InvoiceTemplatesList({ workspaceSlug, initialTemplates }: Props) {
   const router = useRouter();
   const [templates, setTemplates] = useState<InvoiceTemplate[]>(initialTemplates);
-  const [showCreate, setShowCreate] = useState(false);
-  const [editing, setEditing] = useState<InvoiceTemplate | null>(null);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  async function handleDelete(id: string) {
-    if (!confirm('Delete this template? This cannot be undone.')) return;
-    setDeleting(id);
+  const confirmTemplate = templates.find((t) => t.id === confirmDeleteId);
+
+  async function handleConfirmDelete() {
+    if (!confirmDeleteId) return;
+    setDeleting(true);
     try {
-      await deleteInvoiceTemplate(id);
-      setTemplates((prev) => prev.filter((t) => t.id !== id));
+      await deleteInvoiceTemplate(confirmDeleteId);
+      setTemplates((prev) => prev.filter((t) => t.id !== confirmDeleteId));
+      setConfirmDeleteId(null);
     } catch {
       alert('Failed to delete template.');
     } finally {
-      setDeleting(null);
+      setDeleting(false);
     }
-  }
-
-  function handleSaved(saved: InvoiceTemplate) {
-    setTemplates((prev) => {
-      const exists = prev.find((t) => t.id === saved.id);
-      if (exists) return prev.map((t) => (t.id === saved.id ? saved : t));
-      return [...prev, saved];
-    });
-    setShowCreate(false);
-    setEditing(null);
-    router.refresh();
   }
 
   return (
     <>
       {/* Toolbar */}
       <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={() => setShowCreate(true)}
+        <Link
+          href={`/${workspaceSlug}/resources/invoice-templates/new`}
           className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           New Template
-        </button>
+        </Link>
       </div>
 
       {/* List */}
       {templates.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
           <p className="text-sm text-slate-500">No invoice templates yet.</p>
-          <button
-            type="button"
-            onClick={() => setShowCreate(true)}
+          <Link
+            href={`/${workspaceSlug}/resources/invoice-templates/new`}
             className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Create First Template
-          </button>
+          </Link>
         </div>
       ) : (
         <div className="grid gap-1">
@@ -103,26 +93,24 @@ export function InvoiceTemplatesList({ workspaceSlug, initialTemplates }: Props)
                 </div>
               </div>
               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  type="button"
-                  onClick={() => setEditing(t)}
+                <Link
+                  href={`/${workspaceSlug}/resources/invoice-templates/${t.id}/edit`}
                   className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-all"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                   Edit
-                </button>
+                </Link>
                 <button
                   type="button"
-                  onClick={() => handleDelete(t.id)}
-                  disabled={deleting === t.id}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 transition-all"
+                  onClick={() => setConfirmDeleteId(t.id)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-all"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  {deleting === t.id ? 'Deleting…' : 'Delete'}
+                  Delete
                 </button>
               </div>
             </div>
@@ -130,13 +118,19 @@ export function InvoiceTemplatesList({ workspaceSlug, initialTemplates }: Props)
         </div>
       )}
 
-      {(showCreate || editing) && (
-        <InvoiceTemplateModal
-          template={editing ?? null}
-          onSaved={handleSaved}
-          onClose={() => { setShowCreate(false); setEditing(null); }}
-        />
-      )}
+      {/* App-style confirm delete modal */}
+      <ConfirmModal
+        open={confirmDeleteId !== null}
+        title={`Delete "${confirmTemplate?.name ?? 'template'}"?`}
+        description="This template will be permanently deleted. Invoices that used it won't be affected."
+        confirmLabel="Delete Template"
+        cancelLabel="Keep"
+        destructive
+        pending={deleting}
+        pendingLabel="Deleting…"
+        onCancel={() => setConfirmDeleteId(null)}
+        onConfirm={handleConfirmDelete}
+      />
     </>
   );
 }

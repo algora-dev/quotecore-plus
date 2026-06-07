@@ -272,7 +272,7 @@ export async function listInvoices() {
   const { data, error } = await supabase
     .from('invoices')
     .select(
-      'id, invoice_number, payment_reference, status, customer_name, customer_email, currency, subtotal, total, invoice_date, due_date, sent_at, paid_at, created_at, updated_at'
+      'id, invoice_number, payment_reference, status, customer_name, customer_email, currency, subtotal, total, invoice_date, due_date, sent_at, paid_at, created_at, updated_at, public_token'
     )
     .eq('company_id', profile.company_id)
     .order('created_at', { ascending: false });
@@ -297,6 +297,8 @@ export async function saveInvoiceLines(
     unit_price: number;
     line_total: number;
     show_price?: boolean;
+    show_quantity?: boolean;
+    show_description?: boolean;
     is_visible?: boolean;
   }>,
   totals: { subtotal: number; taxTotal: number; discountTotal: number; total: number }
@@ -331,6 +333,8 @@ export async function saveInvoiceLines(
         unit_price: l.unit_price,
         line_total: l.line_total,
         show_price: l.show_price ?? true,
+        show_quantity: l.show_quantity ?? true,
+        show_description: l.show_description ?? true,
         is_visible: l.is_visible ?? true,
       }))
     );

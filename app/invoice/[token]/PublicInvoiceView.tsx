@@ -11,6 +11,8 @@ export type InvoiceLine = {
   unit_price: number;
   line_total: number;
   show_price: boolean;
+  show_quantity: boolean;
+  show_description: boolean;
   is_visible: boolean;
 };
 
@@ -348,9 +350,13 @@ export function PublicInvoiceView({ invoice, lines, token }: Props) {
                   <tr key={line.id}>
                     <td className="py-3">
                       <p className="font-medium text-slate-900">{line.title}</p>
-                      {line.description && <p className="text-xs text-slate-500 mt-0.5">{line.description}</p>}
+                      {line.description && line.show_description && (
+                        <p className="text-xs text-slate-500 mt-0.5">{line.description}</p>
+                      )}
                     </td>
-                    <td className="py-3 text-right text-slate-700">{line.quantity} {line.unit}</td>
+                    <td className="py-3 text-right text-slate-700">
+                      {line.show_quantity ? `${line.quantity} ${line.unit}` : '—'}
+                    </td>
                     <td className="py-3 text-right text-slate-700 hidden sm:table-cell">
                       {line.show_price ? formatCurrency(line.unit_price, invoice.currency) : '—'}
                     </td>
@@ -384,10 +390,19 @@ export function PublicInvoiceView({ invoice, lines, token }: Props) {
           <div className="mx-8 mb-6 rounded-xl bg-orange-50 border border-orange-200 p-5">
             <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-4">Payment Instructions</p>
 
-            {/* Amount due */}
+            {/* Amount due with copy button */}
             <div className="flex justify-between items-center mb-3">
               <span className="text-sm text-slate-600">Amount Due</span>
-              <span className="text-lg font-bold text-slate-900">{formatCurrency(invoice.total, invoice.currency)}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-slate-900">{formatCurrency(invoice.total, invoice.currency)}</span>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(formatCurrency(invoice.total, invoice.currency), 'amount')}
+                  className="flex-shrink-0 text-xs text-orange-600 border border-orange-300 rounded-full px-2 py-0.5 hover:bg-orange-100 transition-colors whitespace-nowrap"
+                >
+                  {copied === 'amount' ? '✓' : 'Copy'}
+                </button>
+              </div>
             </div>
 
             {/* Bank details — individual copy rows */}
@@ -418,12 +433,13 @@ export function PublicInvoiceView({ invoice, lines, token }: Props) {
                 onClick={() => {
                   const pd = invoice.payment_details ?? {};
                   const parts = [
-                    `Amount: ${formatCurrency(invoice.total, invoice.currency)}`,
+                    `Amount Due: ${formatCurrency(invoice.total, invoice.currency)}`,
                     pd.accountName ? `Account Name: ${pd.accountName}` : '',
                     pd.bankName ? `Bank: ${pd.bankName}` : '',
                     pd.accountNumber ? `Account Number: ${pd.accountNumber}` : '',
                     pd.sortCode ? `Sort Code: ${pd.sortCode}` : '',
                     `Payment Reference: ${invoice.payment_reference}`,
+                    pd.paymentLink ? `Pay Online: ${pd.paymentLink}` : '',
                   ].filter(Boolean).join('\n');
                   copyToClipboard(parts, 'all');
                 }}

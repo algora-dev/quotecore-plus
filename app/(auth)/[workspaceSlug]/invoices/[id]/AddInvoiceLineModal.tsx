@@ -102,6 +102,8 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
       unit_price: p,
       line_total: Number((q * p).toFixed(2)),
       show_price: true,
+      show_quantity: true,
+      show_description: true,
       is_visible: true,
     }]);
     onClose();
@@ -123,6 +125,8 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
       unit_price: p,
       line_total: Number((q * p).toFixed(2)),
       show_price: true,
+      show_quantity: true,
+      show_description: true,
       is_visible: true,
     }]);
     onClose();
@@ -143,6 +147,8 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
       unit_price: p,
       line_total: Number((q * p).toFixed(2)),
       show_price: true,
+      show_quantity: true,
+      show_description: true,
       is_visible: true,
     }]);
     onClose();

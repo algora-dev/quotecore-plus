@@ -124,9 +124,13 @@ export function InvoicePreview({
                 <tr key={line.localId}>
                   <td className="py-3">
                     <p className="font-medium text-slate-900">{line.title || 'Untitled'}</p>
-                    {line.description && <p className="text-xs text-slate-500 mt-0.5">{line.description}</p>}
+                    {line.description && (line as {show_description?: boolean}).show_description !== false && (
+                      <p className="text-xs text-slate-500 mt-0.5">{line.description}</p>
+                    )}
                   </td>
-                  <td className="py-3 text-right text-slate-700">{line.quantity} {line.unit}</td>
+                  <td className="py-3 text-right text-slate-700">
+                    {(line as {show_quantity?: boolean}).show_quantity !== false ? `${line.quantity} ${line.unit}` : '—'}
+                  </td>
                   <td className="py-3 text-right text-slate-700">
                     {line.show_price ? formatCurrency(line.unit_price, currency) : '—'}
                   </td>

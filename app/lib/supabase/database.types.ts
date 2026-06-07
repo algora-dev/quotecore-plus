@@ -1381,7 +1381,9 @@ export type Database = {
           line_source_type: string
           line_total: number
           quantity: number
+          show_description: boolean
           show_price: boolean
+          show_quantity: boolean
           sort_order: number
           source_id: string | null
           title: string
@@ -1399,7 +1401,9 @@ export type Database = {
           line_source_type?: string
           line_total?: number
           quantity?: number
+          show_description?: boolean
           show_price?: boolean
+          show_quantity?: boolean
           sort_order?: number
           source_id?: string | null
           title?: string
@@ -1417,7 +1421,9 @@ export type Database = {
           line_source_type?: string
           line_total?: number
           quantity?: number
+          show_description?: boolean
           show_price?: boolean
+          show_quantity?: boolean
           sort_order?: number
           source_id?: string | null
           title?: string
