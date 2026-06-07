@@ -94,7 +94,7 @@ function PaymentSentForm({ invoiceId, token }: { invoiceId: string; token: strin
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+        className="w-full rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700 transition-all"
       >
         Payment Sent
       </button>
@@ -110,14 +110,14 @@ function PaymentSentForm({ invoiceId, token }: { invoiceId: string; token: strin
         onChange={(e) => setMessage(e.target.value)}
         placeholder="Optional message, e.g. Paid via bank transfer today."
         rows={3}
-        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:border-emerald-500 focus:outline-none"
       />
       <div className="flex gap-3">
-        <button type="button" onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+        <button type="button" onClick={() => setOpen(false)} className="flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
           Back
         </button>
         <button type="button" onClick={handleSubmit} disabled={submitting}
-          className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+          className="flex-1 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-all">
           {submitting ? 'Sending…' : 'Confirm Payment Sent'}
         </button>
       </div>
@@ -165,7 +165,7 @@ function DisputeForm({ token }: { token: string }) {
   if (!open) {
     return (
       <button type="button" onClick={() => setOpen(true)}
-        className="w-full rounded-xl border border-red-200 bg-red-50 px-6 py-3 text-sm font-medium text-red-700 hover:bg-red-100 transition-colors">
+        className="w-full rounded-full border border-red-200 bg-red-50 px-6 py-3 text-sm font-medium text-red-700 hover:bg-red-100 transition-all">
         Dispute Invoice
       </button>
     );
@@ -178,30 +178,30 @@ function DisputeForm({ token }: { token: string }) {
         <div>
           <label className="block text-xs font-medium text-slate-700 mb-1">Your Name <span className="text-red-500">*</span></label>
           <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name"
-            className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+            className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-red-500 focus:outline-none" />
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-700 mb-1">Your Email</label>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com"
-            className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+            className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-red-500 focus:outline-none" />
         </div>
       </div>
       <div>
         <label className="block text-xs font-medium text-slate-700 mb-1">Reason <span className="text-red-500">*</span></label>
         <input type="text" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Incorrect amount, work not completed…"
-          className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+          className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-red-500 focus:outline-none" />
       </div>
       <div>
         <label className="block text-xs font-medium text-slate-700 mb-1">Message <span className="text-red-500">*</span></label>
         <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={3} placeholder="Describe your dispute…"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-400" />
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:border-red-500 focus:outline-none" />
       </div>
       <div className="flex gap-3">
-        <button type="button" onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+        <button type="button" onClick={() => setOpen(false)} className="flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
           Back
         </button>
         <button type="button" onClick={handleSubmit} disabled={submitting || !name.trim() || !reason.trim() || !message.trim()}
-          className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50">
+          className="flex-1 rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-all">
           {submitting ? 'Submitting…' : 'Submit Dispute'}
         </button>
       </div>

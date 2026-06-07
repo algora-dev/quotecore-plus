@@ -28,16 +28,16 @@ interface Props {
   workspaceSlug: string;
 }
 
-// ── Status config ──────────────────────────────────────────────────────────
+// ── Status config — matches app badge patterns exactly ─────────────────────
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string; dot: string }> = {
-  draft:            { label: 'Draft',            bg: 'bg-slate-50',    text: 'text-slate-600',   border: 'border-slate-300',  dot: 'bg-slate-400' },
-  sent:             { label: 'Sent',             bg: 'bg-orange-50',   text: 'text-orange-700',  border: 'border-orange-300', dot: 'bg-orange-500' },
-  viewed:           { label: 'Viewed',           bg: 'bg-blue-50',     text: 'text-blue-700',    border: 'border-blue-300',   dot: 'bg-blue-500' },
-  payment_reported: { label: 'Payment Reported', bg: 'bg-amber-50',    text: 'text-amber-700',   border: 'border-amber-300',  dot: 'bg-amber-500' },
-  paid:             { label: 'Paid',             bg: 'bg-emerald-50',  text: 'text-emerald-700', border: 'border-emerald-300',dot: 'bg-emerald-500' },
-  disputed:         { label: 'Disputed',         bg: 'bg-red-50',      text: 'text-red-700',     border: 'border-red-300',    dot: 'bg-red-500' },
-  cancelled:        { label: 'Cancelled',        bg: 'bg-slate-50',    text: 'text-slate-400',   border: 'border-slate-200',  dot: 'bg-slate-300' },
+  draft:            { label: 'Draft',            bg: 'bg-slate-100',  text: 'text-slate-500',   border: 'border-slate-200',  dot: 'bg-slate-400' },
+  sent:             { label: 'Sent',             bg: 'bg-orange-100', text: 'text-orange-700',  border: 'border-orange-200', dot: 'bg-orange-500' },
+  viewed:           { label: 'Viewed',           bg: 'bg-blue-100',   text: 'text-blue-700',    border: 'border-blue-200',   dot: 'bg-blue-500' },
+  payment_reported: { label: 'Payment Reported', bg: 'bg-amber-100',  text: 'text-amber-700',   border: 'border-amber-200',  dot: 'bg-amber-500' },
+  paid:             { label: 'Paid',             bg: 'bg-emerald-100',text: 'text-emerald-700', border: 'border-emerald-200',dot: 'bg-emerald-500' },
+  disputed:         { label: 'Disputed',         bg: 'bg-red-100',    text: 'text-red-700',     border: 'border-red-200',    dot: 'bg-red-500' },
+  cancelled:        { label: 'Cancelled',        bg: 'bg-slate-100',  text: 'text-slate-400',   border: 'border-slate-100',  dot: 'bg-slate-300' },
 };
 
 const STATUS_FILTER_TABS = [
@@ -54,8 +54,7 @@ const STATUS_FILTER_TABS = [
 function timeAgo(dateStr: string): string {
   const now = new Date();
   const date = new Date(dateStr);
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
   if (diffDays === 0) return 'Today';
   if (diffDays === 1) return 'Yesterday';
   if (diffDays < 7) return `${diffDays} days ago`;
@@ -68,8 +67,8 @@ function timeAgo(dateStr: string): string {
 function StatusBadge({ status }: { status: string }) {
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.draft;
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
       {cfg.label}
     </span>
   );
@@ -105,7 +104,7 @@ function InvoiceRowMenu({
     try {
       await deleteInvoice(invoice.id);
       onDeleted(invoice.id);
-    } catch (e) {
+    } catch {
       alert('Failed to delete invoice.');
     } finally {
       setBusy(false);
@@ -114,12 +113,12 @@ function InvoiceRowMenu({
   }
 
   async function handleCancel() {
-    if (!confirm(`Cancel invoice ${invoice.invoice_number}? The invoice will be marked as cancelled.`)) return;
+    if (!confirm(`Cancel invoice ${invoice.invoice_number}? It will be marked as cancelled.`)) return;
     setBusy(true);
     try {
       await cancelInvoice(invoice.id);
       router.refresh();
-    } catch (e) {
+    } catch {
       alert('Failed to cancel invoice.');
     } finally {
       setBusy(false);
@@ -133,11 +132,11 @@ function InvoiceRowMenu({
         type="button"
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen((v) => !v); }}
         disabled={busy}
-        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+        className="icon-btn opacity-0 group-hover:opacity-100 p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
         aria-label="Invoice actions"
       >
-        <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
         </svg>
       </button>
 
@@ -148,18 +147,24 @@ function InvoiceRowMenu({
             className="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50"
             onClick={() => setOpen(false)}
           >
-            <svg className="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
             Edit
           </Link>
           <Link
-            href={`/${workspaceSlug}/invoices/${invoice.id}?preview=1`}
+            href={`/invoice/${invoice.id}`}
+            target="_blank"
             className="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50"
             onClick={() => setOpen(false)}
           >
-            <svg className="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" /></svg>
-            Preview
+            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            Customer View
           </Link>
-          {invoice.status !== 'cancelled' && invoice.status !== 'paid' && (
+          {!['cancelled', 'paid'].includes(invoice.status) && (
             <>
               <div className="my-1 border-t border-slate-100" />
               {invoice.status === 'draft' ? (
@@ -168,7 +173,9 @@ function InvoiceRowMenu({
                   onClick={handleDelete}
                   className="flex w-full items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50"
                 >
-                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
                   Delete Draft
                 </button>
               ) : (
@@ -177,7 +184,9 @@ function InvoiceRowMenu({
                   onClick={handleCancel}
                   className="flex w-full items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50"
                 >
-                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                   Cancel Invoice
                 </button>
               )}
@@ -196,11 +205,8 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreate, setShowCreate] = useState(false);
-  const router = useRouter();
 
-  const handleDeleted = (id: string) => {
-    setInvoices((prev) => prev.filter((inv) => inv.id !== id));
-  };
+  const handleDeleted = (id: string) => setInvoices((prev) => prev.filter((inv) => inv.id !== id));
 
   // Filter
   const filtered = invoices.filter((inv) => {
@@ -214,120 +220,112 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
     return matchesStatus && matchesSearch;
   });
 
-  // Counts per status for tab badges
   const countByStatus = invoices.reduce<Record<string, number>>((acc, inv) => {
     acc[inv.status] = (acc[inv.status] ?? 0) + 1;
     return acc;
   }, {});
 
+  const isOverdue = (inv: InvoiceRow) =>
+    !!inv.due_date &&
+    new Date(inv.due_date) < new Date() &&
+    !['paid', 'cancelled'].includes(inv.status);
+
   return (
     <>
       {/* Toolbar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+          <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
             type="text"
-            placeholder="Search customer or invoice number…"
+            placeholder="Search by customer or invoice number…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-400"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
           />
         </div>
 
         <button
           type="button"
           onClick={() => setShowCreate(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 transition-colors shadow-sm"
+          className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
         >
-          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           New Invoice
         </button>
       </div>
 
       {/* Status filter tabs */}
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex gap-1 flex-wrap">
         {STATUS_FILTER_TABS.map((tab) => {
           const count = tab.key === 'all' ? invoices.length : (countByStatus[tab.key] ?? 0);
+          if (tab.key !== 'all' && count === 0) return null;
           const isActive = statusFilter === tab.key;
           return (
             <button
               key={tab.key}
               type="button"
               onClick={() => setStatusFilter(tab.key)}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm transition-all ${
+              className={`px-3 py-1 text-xs font-medium rounded-full border transition ${
                 isActive
-                  ? 'bg-black text-white font-semibold'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-slate-900 text-white border-slate-900'
+                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
               }`}
             >
-              {tab.label}
-              {count > 0 && (
-                <span className={`text-xs rounded-full px-1.5 py-0.5 ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
-                  {count}
-                </span>
-              )}
+              {tab.label} {count > 0 && <span className="ml-1 opacity-70">{count}</span>}
             </button>
           );
         })}
       </div>
 
-      {/* Invoice list */}
+      {/* Invoice rows */}
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
-          <div className="mx-auto h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-            <svg className="h-6 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          {invoices.length === 0 ? (
-            <>
-              <p className="text-slate-900 font-semibold">No invoices yet</p>
-              <p className="text-slate-500 text-sm mt-1">Create your first invoice to get started.</p>
-              <button
-                type="button"
-                onClick={() => setShowCreate(true)}
-                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600"
-              >
-                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
-                New Invoice
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="text-slate-900 font-semibold">No results</p>
-              <p className="text-slate-500 text-sm mt-1">Try adjusting your search or filter.</p>
-            </>
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+          <p className="text-sm text-slate-500">
+            {invoices.length === 0
+              ? 'No invoices yet. Create your first invoice to get started.'
+              : 'No invoices match your search or filter.'}
+          </p>
+          {invoices.length === 0 && (
+            <button
+              type="button"
+              onClick={() => setShowCreate(true)}
+              className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              New Invoice
+            </button>
           )}
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden divide-y divide-slate-100">
+        <div className="grid gap-1">
           {filtered.map((inv) => (
             <Link
               key={inv.id}
               href={`/${workspaceSlug}/invoices/${inv.id}`}
-              className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition-colors group"
+              className="grid sm:grid-cols-[1fr_160px_120px_40px] gap-4 items-center rounded-xl border bg-white px-4 py-3 hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group border-slate-200"
             >
-              {/* Invoice number + customer */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm text-slate-900 group-hover:text-orange-600 transition-colors">
-                    {inv.invoice_number}
-                  </span>
+              {/* Customer + invoice number */}
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-semibold text-orange-600 text-sm">{inv.invoice_number}</span>
                   <StatusBadge status={inv.status} />
+                  {isOverdue(inv) && (
+                    <span className="text-xs text-red-600 font-medium">Overdue</span>
+                  )}
                 </div>
-                <p className="text-sm text-slate-600 mt-0.5 truncate">{inv.customer_name}</p>
-                {inv.customer_email && (
-                  <p className="text-xs text-slate-400 truncate">{inv.customer_email}</p>
-                )}
+                <p className="text-sm font-medium text-slate-900 truncate mt-0.5">{inv.customer_name}</p>
+                {inv.customer_email && <p className="text-xs text-slate-400 truncate">{inv.customer_email}</p>}
               </div>
 
-              {/* Amount */}
-              <div className="text-right hidden sm:block">
+              {/* Amount + date */}
+              <div className="hidden sm:block text-right">
                 <p className="text-sm font-semibold text-slate-900">
                   {formatCurrency(inv.total ?? 0, inv.currency ?? 'GBP')}
                 </p>
@@ -336,11 +334,11 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
                 </p>
               </div>
 
-              {/* Updated */}
-              <div className="text-right hidden md:block w-28">
+              {/* Last activity */}
+              <div className="hidden md:block text-right">
                 <p className="text-xs text-slate-400">{timeAgo(inv.updated_at)}</p>
                 {inv.due_date && (
-                  <p className={`text-xs mt-0.5 ${new Date(inv.due_date) < new Date() && !['paid','cancelled'].includes(inv.status) ? 'text-red-500 font-medium' : 'text-slate-400'}`}>
+                  <p className={`text-xs mt-0.5 ${isOverdue(inv) ? 'text-red-500 font-medium' : 'text-slate-400'}`}>
                     Due {new Date(inv.due_date).toLocaleDateString('en-GB')}
                   </p>
                 )}
@@ -359,7 +357,6 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
         </div>
       )}
 
-      {/* Create invoice modal */}
       {showCreate && (
         <CreateInvoiceModal
           workspaceSlug={workspaceSlug}

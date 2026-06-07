@@ -33,7 +33,7 @@ export function InvoiceHeaderModal({
   const [footerText, setFooterText] = useState(initialFooter);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200">
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100">
           <h2 className="text-lg font-semibold text-slate-900">Business Details</h2>
@@ -50,7 +50,7 @@ export function InvoiceHeaderModal({
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               placeholder="Your business name"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
             />
           </div>
           <div>
@@ -60,7 +60,7 @@ export function InvoiceHeaderModal({
               onChange={(e) => setCompanyAddress(e.target.value)}
               placeholder="Your business address"
               rows={3}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:border-orange-500 focus:outline-none"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -71,7 +71,7 @@ export function InvoiceHeaderModal({
                 value={companyEmail}
                 onChange={(e) => setCompanyEmail(e.target.value)}
                 placeholder="hello@business.com"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
               />
             </div>
             <div>
@@ -81,7 +81,7 @@ export function InvoiceHeaderModal({
                 value={companyPhone}
                 onChange={(e) => setCompanyPhone(e.target.value)}
                 placeholder="+44 7700 000000"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
               />
             </div>
           </div>
@@ -92,7 +92,7 @@ export function InvoiceHeaderModal({
               value={companyLogoUrl}
               onChange={(e) => setCompanyLogoUrl(e.target.value)}
               placeholder="https://…"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
             />
           </div>
           <div>
@@ -102,19 +102,19 @@ export function InvoiceHeaderModal({
               value={footerText}
               onChange={(e) => setFooterText(e.target.value)}
               placeholder="e.g. Thank you for your business!"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
             />
           </div>
         </div>
 
         <div className="px-6 pb-5 flex gap-3">
-          <button type="button" onClick={onClose} className="flex-1 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <button type="button" onClick={onClose} className="flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
             Cancel
           </button>
           <button
             type="button"
             onClick={() => onSave({ companyName, companyAddress, companyEmail, companyPhone, companyLogoUrl, footerText })}
-            className="flex-1 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600"
+            className="flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-all"
           >
             Apply
           </button>

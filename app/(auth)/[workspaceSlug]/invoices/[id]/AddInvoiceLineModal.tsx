@@ -156,7 +156,7 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200">
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100">
@@ -194,7 +194,7 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
                   onChange={(e) => setTitle(e.target.value)}
                   autoFocus
                   placeholder="e.g. Labour – Roof installation"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                 />
               </div>
               <div>
@@ -204,24 +204,24 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
                   onChange={(e) => setDescription(e.target.value)}
                   rows={2}
                   placeholder="Additional detail shown on the invoice"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:border-orange-500 focus:outline-none"
                 />
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1">Qty</label>
                   <input type="number" value={quantity} min={0} step={0.01} onChange={(e) => setQuantity(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                    className="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm focus:border-orange-500 focus:outline-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1">Unit</label>
                   <input type="text" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="item"
-                    className="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                    className="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm focus:border-orange-500 focus:outline-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1">Unit Price</label>
                   <input type="number" value={unitPrice} min={0} step={0.01} onChange={(e) => setUnitPrice(e.target.value)} placeholder="0.00"
-                    className="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                    className="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm focus:border-orange-500 focus:outline-none" />
                 </div>
               </div>
               {unitPrice && (
@@ -244,7 +244,7 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
                     <select
                       value={selectedCatalogId}
                       onChange={(e) => { setSelectedCatalogId(e.target.value); setSelectedCatalogRow(null); }}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                     >
                       {catalogs.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
@@ -258,7 +258,7 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
                       value={catalogSearch}
                       onChange={(e) => setCatalogSearch(e.target.value)}
                       placeholder="Search rows…"
-                      className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                      className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm focus:border-orange-500 focus:outline-none"
                     />
                   </div>
                   <div className="max-h-48 overflow-y-auto rounded-lg border border-slate-200 divide-y divide-slate-100">
@@ -291,12 +291,12 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
                       <div>
                         <label className="block text-xs font-medium text-slate-700 mb-1">Quantity</label>
                         <input type="number" value={catalogQty} min={0} step={0.01} onChange={(e) => setCatalogQty(e.target.value)}
-                          className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                          className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-700 mb-1">Unit Price</label>
                         <input type="number" value={catalogUnitPrice} min={0} step={0.01} onChange={(e) => setCatalogUnitPrice(e.target.value)}
-                          className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                          className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
                       </div>
                     </div>
                   )}
@@ -314,7 +314,7 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
                   <select
                     value={selectedCollection ?? ''}
                     onChange={(e) => { setSelectedCollection(e.target.value || null); setSelectedComponent(null); }}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                   >
                     <option value="">All collections</option>
                     {collections.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -342,12 +342,12 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
                   <div>
                     <label className="block text-xs font-medium text-slate-700 mb-1">Qty</label>
                     <input type="number" value={compQty} min={0} step={0.01} onChange={(e) => setCompQty(e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                      className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-700 mb-1">Unit Price</label>
                     <input type="number" value={compPrice} min={0} step={0.01} onChange={(e) => setCompPrice(e.target.value)} placeholder="0.00"
-                      className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                      className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
                   </div>
                 </div>
               )}
@@ -357,7 +357,7 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
 
         {/* Footer */}
         <div className="px-6 pb-5 flex gap-3 border-t border-slate-100 pt-4">
-          <button type="button" onClick={onClose} className="flex-1 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <button type="button" onClick={onClose} className="flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
             Cancel
           </button>
           <button
@@ -368,7 +368,7 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
               mode === 'catalog' ? !selectedCatalogRow :
               !selectedComponent
             }
-            className="flex-1 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50"
+            className="flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-all disabled:opacity-50 transition-all"
           >
             Add Line
           </button>
