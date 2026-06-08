@@ -154,7 +154,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
             <div className="space-y-3">
               <p className="text-sm text-slate-500 mb-4">How would you like to create this invoice?</p>
 
-              <button type="button" onClick={() => setStep('blank-form')}
+              <button type="button" data-copilot="invoice-method-blank" data-assistant-id="invoice-method-blank" onClick={() => setStep('blank-form')}
                 className="block w-full text-left p-4 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group">
                 <div className="flex items-start gap-4">
                   <div className="p-2 rounded-full bg-orange-50 group-hover:bg-orange-100 flex items-center justify-center flex-shrink-0 transition-colors">
@@ -169,7 +169,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
                 </div>
               </button>
 
-              <button type="button" onClick={() => setStep('from-quote')}
+              <button type="button" data-copilot="invoice-method-from-quote" data-assistant-id="invoice-method-from-quote" onClick={() => setStep('from-quote')}
                 className="block w-full text-left p-4 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group">
                 <div className="flex items-start gap-4">
                   <div className="p-2 rounded-full bg-orange-50 group-hover:bg-orange-100 flex items-center justify-center flex-shrink-0 transition-colors">
@@ -219,7 +219,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => { setStep('pick-method'); setError(null); }}
                   className="flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Back</button>
-                <button type="button" onClick={() => { if (!customerName.trim()) { setError('Customer name is required.'); return; } setError(null); goToTemplateStep('blank'); }}
+                <button type="button" data-copilot="invoice-choose-template" data-assistant-id="invoice-choose-template" onClick={() => { if (!customerName.trim()) { setError('Customer name is required.'); return; } setError(null); goToTemplateStep('blank'); }}
                   disabled={!customerName.trim()}
                   className="flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-all">
                   Choose Template
@@ -268,7 +268,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => { setStep('pick-method'); setError(null); setSelectedQuoteId(null); }}
                   className="flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Back</button>
-                <button type="button" onClick={() => { if (!selectedQuoteId) { setError('Please select a quote.'); return; } setError(null); goToTemplateStep('from-quote'); }}
+                <button type="button" data-copilot="invoice-choose-template" data-assistant-id="invoice-choose-template" onClick={() => { if (!selectedQuoteId) { setError('Please select a quote.'); return; } setError(null); goToTemplateStep('from-quote'); }}
                   disabled={!selectedQuoteId}
                   className="flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-all">
                   Choose Template
@@ -295,7 +295,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
               ) : (
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {/* No template option */}
-                  <button type="button" onClick={() => setSelectedTemplateId(null)}
+                  <button type="button" data-copilot="invoice-template-none" data-assistant-id="invoice-template-none" onClick={() => setSelectedTemplateId(null)}
                     className={`block w-full text-left p-3.5 rounded-xl border-2 transition-all ${selectedTemplateId === null ? 'border-[#FF6B35] bg-orange-50/40' : 'border-slate-200 hover:border-slate-300'}`}>
                     <p className="font-medium text-slate-900 text-sm">No template</p>
                     <p className="text-xs text-slate-500 mt-0.5">Skip — I&apos;ll fill in the details manually.</p>
@@ -330,7 +330,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => { goBackFromTemplate(); setError(null); }}
                   className="flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Back</button>
-                <button type="button" onClick={handleCreate} disabled={busy}
+                <button type="button" data-copilot="invoice-create-confirm" data-assistant-id="invoice-create-confirm" onClick={handleCreate} disabled={busy}
                   className="flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-all">
                   {busy ? 'Creating…' : 'Create Invoice'}
                 </button>

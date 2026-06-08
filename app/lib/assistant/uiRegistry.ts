@@ -178,6 +178,50 @@ const CURATED: Record<
     role: 'button',
     description: 'The "Logout" button in the top-right header. Signs the user out.',
   },
+  // --- Invoice create-flow anchors (Create Invoice modal). Hand-registered so
+  //     guide-me can highlight the in-modal choices (method + template). ---
+  'nav-invoices': {
+    label: 'Invoices',
+    role: 'menu-item',
+    description:
+      'Main-nav link. Navigates to the Invoices page (create, send, and track customer invoices).',
+  },
+  'new-invoice': {
+    label: 'New Invoice',
+    role: 'button',
+    description:
+      'The "+ New Invoice" button on the Invoices page. Opens the Create Invoice pop-up where you choose Blank or From a Quote.',
+  },
+  'invoice-method-blank': {
+    label: 'Blank Invoice',
+    role: 'button',
+    description:
+      'The "Blank Invoice" option in the Create Invoice pop-up. Starts a new invoice from scratch — you enter the customer name (and optional email), then pick a template.',
+  },
+  'invoice-method-from-quote': {
+    label: 'From a Quote',
+    role: 'button',
+    description:
+      'The "From a Quote" option in the Create Invoice pop-up. Imports an accepted quote’s customer details, branding, and line items into a new invoice.',
+  },
+  'invoice-choose-template': {
+    label: 'Choose Template',
+    role: 'button',
+    description:
+      'The "Choose Template" button in the Create Invoice pop-up (after entering customer/quote details). Advances to the template picker.',
+  },
+  'invoice-template-none': {
+    label: 'No template',
+    role: 'button',
+    description:
+      'The "No template" option in the Create Invoice template picker. Skips applying a saved invoice template — you fill business and payment details manually in the editor.',
+  },
+  'invoice-create-confirm': {
+    label: 'Create Invoice',
+    role: 'button',
+    description:
+      'The "Create Invoice" button on the template-picker step of the Create Invoice pop-up. Creates the invoice and opens the editor.',
+  },
 };
 
 function humanise(id: string): string {
