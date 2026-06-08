@@ -183,6 +183,168 @@ export async function createCheckoutSession(
 }
 
 /**
+ * IN-APP plan change for an EXISTING active subscriber (no Stripe Portal,
+ * no second subscription). This is the upgrade/downgrade path that replaces
+ * routing the user to the cancel-only Customer Portal.
+ *
+ *   - UPGRADE (higher sort_order): swap the subscription item to the target
+ *     plan's (already launch-discounted) Price, prorate the difference, and
+ *     charge immediately. Effective right away.
+ *   - DOWNGRADE (lower sort_order): schedule the price change for the END of
+ *     the current period via a Subscription Schedule, so the customer keeps
+ *     the higher tier they already paid for until the period rolls over.
+ *     No immediate charge or credit.
+ *
+ * State changes are persisted by the `customer.subscription.updated` webhook
+ * (LIVE STATE FETCH invariant), exactly like Checkout - this action does NOT
+ * write companies.* directly. It only drives Stripe; the webhook reconciles.
+ *
+ * Defence-in-depth: target must be an active, Stripe-priced plan in the
+ * current mode; trial is never a valid target here; the company must have a
+ * real active subscription (not winding down / canceled).
+ */
+export async function changePlan(
+  targetPlanCode: string,
+): Promise<BillingActionResult> {
+  if (!targetPlanCode || targetPlanCode === 'trial') {
+    return { ok: false, code: 'invalid_target', message: 'Pick a paid plan to switch to.' };
+  }
+
+  let ctx;
+  try {
+    ctx = await loadCompanyContext();
+  } catch {
+    return { ok: false, code: 'unauthenticated', message: 'Please sign in to manage billing.' };
+  }
+  const { profile, company: ctxCompany } = ctx;
+  const slug = ctxCompany.slug;
+
+  const admin = createAdminClient();
+  const { data: company, error: companyErr } = await admin
+    .from('companies')
+    .select('id, plan_code, subscription_status, stripe_subscription_id, cancel_at_period_end, cancel_at')
+    .eq('id', profile.company_id)
+    .maybeSingle();
+  if (companyErr || !company) {
+    return { ok: false, code: 'company_not_found', message: 'Company record missing.' };
+  }
+
+  // Must have a real, non-winding-down subscription to modify.
+  const windingDown =
+    company.cancel_at_period_end ||
+    (company.cancel_at != null && new Date(company.cancel_at).getTime() > Date.now());
+  const TERMINAL = new Set(['canceled', 'suspended']);
+  if (
+    !company.stripe_subscription_id ||
+    TERMINAL.has(company.subscription_status) ||
+    windingDown
+  ) {
+    return {
+      ok: false,
+      code: 'no_active_subscription',
+      message: 'No active subscription to change. Choose a plan to subscribe first.',
+    };
+  }
+
+  if (targetPlanCode === company.plan_code) {
+    return { ok: false, code: 'already_on_plan', message: 'You are already on that plan.' };
+  }
+
+  // Resolve current + target plan sort_order (direction) and the target Price.
+  const { data: planRows, error: planErr } = await admin
+    .from('subscription_plans')
+    .select('code, sort_order, active')
+    .in('code', [company.plan_code, targetPlanCode]);
+  if (planErr || !planRows) {
+    return { ok: false, code: 'plan_lookup_failed', message: 'Could not read plan data.' };
+  }
+  const currentRow = planRows.find((p) => p.code === company.plan_code);
+  const targetRow = planRows.find((p) => p.code === targetPlanCode);
+  if (!targetRow || !targetRow.active) {
+    return { ok: false, code: 'invalid_target', message: 'That plan is not available.' };
+  }
+
+  const checkout = await resolveStripeCheckoutForPlan(targetPlanCode);
+  if (!checkout) {
+    return {
+      ok: false,
+      code: 'plan_not_configured',
+      message: 'That plan is not set up for billing in this environment yet.',
+    };
+  }
+  const targetPriceId = checkout.priceId;
+
+  const isUpgrade =
+    typeof currentRow?.sort_order === 'number'
+      ? targetRow.sort_order > currentRow.sort_order
+      : true; // unknown current => treat as upgrade (charge now, safest for us)
+
+  const stripe = requireStripe();
+  try {
+    const sub = await stripe.subscriptions.retrieve(company.stripe_subscription_id);
+    const item = sub.items.data[0];
+    if (!item) {
+      return { ok: false, code: 'stripe_error', message: 'Subscription has no billable item.' };
+    }
+    // No-op guard: already on the target price.
+    if (item.price?.id === targetPriceId) {
+      return { ok: false, code: 'already_on_plan', message: 'You are already on that plan.' };
+    }
+
+    if (isUpgrade) {
+      // Immediate switch + proration; charge the difference now.
+      await stripe.subscriptions.update(company.stripe_subscription_id, {
+        items: [{ id: item.id, price: targetPriceId }],
+        proration_behavior: 'create_prorations',
+        payment_behavior: 'pending_if_incomplete',
+        metadata: {
+          company_id: company.id,
+          plan_code: targetPlanCode,
+        },
+      });
+    } else {
+      // Downgrade: take effect at period end so the customer keeps what they
+      // paid for. Use a Subscription Schedule anchored to the current sub.
+      const schedule = await stripe.subscriptionSchedules.create({
+        from_subscription: company.stripe_subscription_id,
+      });
+      const phase = schedule.phases[0];
+      await stripe.subscriptionSchedules.update(schedule.id, {
+        end_behavior: 'release',
+        phases: [
+          {
+            // Keep the current phase exactly as-is until period end.
+            items: [{ price: item.price.id, quantity: item.quantity ?? 1 }],
+            start_date: phase.start_date,
+            end_date: phase.end_date,
+          },
+          {
+            // Then roll onto the target plan's price.
+            items: [{ price: targetPriceId, quantity: 1 }],
+            metadata: {
+              company_id: company.id,
+              plan_code: targetPlanCode,
+            },
+          },
+        ],
+      });
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'stripe_change_failed';
+    console.error('[billing] changePlan failed:', msg);
+    return { ok: false, code: 'stripe_error', message: msg };
+  }
+
+  // The webhook reconciles companies.* from the live subscription. Revalidate
+  // so the page re-reads once the user lands back (the success banner explains
+  // the few-second sync window).
+  revalidatePath(`/${slug}/account`);
+  const base = await baseUrl();
+  const flag = isUpgrade ? 'upgraded' : 'downgrade_scheduled';
+  return { ok: true, url: `${base}/${slug}/account?tab=billing&change=${flag}` };
+}
+
+/**
  * Returns the Stripe-hosted Customer Portal URL for an existing subscriber.
  *
  * The portal handles plan switches, card updates, invoice history, and

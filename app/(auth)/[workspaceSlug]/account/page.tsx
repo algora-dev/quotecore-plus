@@ -253,6 +253,7 @@ export default async function AccountPage() {
         .map((p) => ({
           code: p.code,
           displayName: p.display_name,
+          sortOrder: p.sort_order,
           priceCentsMonthly: p.price_cents_monthly,
           priceCentsMonthlyOriginal: p.price_cents_monthly_original,
           monthlyQuoteLimit: p.monthly_quote_limit,

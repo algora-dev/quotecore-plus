@@ -20,6 +20,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   createCheckoutSession,
   createCustomerPortalSession,
+  changePlan,
   activateTrial,
   type BillingActionResult,
 } from './actions';
@@ -27,6 +28,9 @@ import {
 export interface BillingPlanInfo {
   code: string;
   displayName: string;
+  /** Tier ordering. Higher = more expensive tier; drives upgrade/downgrade
+   *  direction in the in-app plan switch. */
+  sortOrder: number;
   priceCentsMonthly: number;
   /**
    * Original (pre-discount) monthly price in cents. Renders as a
@@ -189,6 +193,7 @@ export function BillingPanel(props: BillingPanelProps) {
 
   const checkoutFlag = searchParams.get('checkout');
   const trialFlag = searchParams.get('trial');
+  const changeFlag = searchParams.get('change');
 
   function handleResult(result: BillingActionResult) {
     if (result.ok) {
@@ -230,6 +235,7 @@ export function BillingPanel(props: BillingPanelProps) {
     params.delete('checkout');
     params.delete('session_id');
     params.delete('trial');
+    params.delete('change');
     const qs = params.toString();
     router.replace(qs ? `?${qs}` : '?', { scroll: false });
   }
@@ -302,14 +308,59 @@ export function BillingPanel(props: BillingPanelProps) {
     && cancelDateIso !== null
     && props.subscriptionStatus !== 'canceled';
 
-  // Plan-switch modal (smoke #3). When a user with an active paid sub
-  // clicks another tier card, surface a modal pointing them at Manage
-  // Subscription rather than silently disabling the button.
-  const [showSwitchModal, setShowSwitchModal] = useState(false);
+  // In-app plan change: the target plan the user has clicked to switch to
+  // (active subscriber). Drives the confirm modal; null = closed.
+  const [changeTarget, setChangeTarget] = useState<BillingPlanInfo | null>(null);
+
+  // sort_order of the plan the user is CURRENTLY on, to label the switch as an
+  // upgrade or a downgrade in the confirm modal.
+  const currentSortOrder =
+    props.plans.find((p) => p.code === props.purchasedPlanCode)?.sortOrder ?? null;
+  const isUpgradeTarget =
+    changeTarget && currentSortOrder != null
+      ? changeTarget.sortOrder > currentSortOrder
+      : true;
+
+  function onConfirmChange(plan: BillingPlanInfo) {
+    setError(null);
+    setActivePlan(plan.code);
+    startTransition(async () => {
+      const result = await changePlan(plan.code);
+      handleResult(result);
+      setActivePlan(null);
+      setChangeTarget(null);
+    });
+  }
 
   return (
     <div className="space-y-6">
       {/* Stripe / trial redirect banners */}
+      {changeFlag === 'upgraded' && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 flex items-start justify-between">
+          <div>
+            <p className="text-sm font-medium text-emerald-900">Plan upgraded.</p>
+            <p className="text-xs text-emerald-700 mt-1">
+              Your new plan is active. The card on file is charged the prorated difference; your plan card updates within a few seconds once Stripe confirms.
+            </p>
+          </div>
+          <button onClick={dismissBanner} className="text-xs text-emerald-700 hover:underline">
+            Dismiss
+          </button>
+        </div>
+      )}
+      {changeFlag === 'downgrade_scheduled' && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 flex items-start justify-between">
+          <div>
+            <p className="text-sm font-medium text-blue-900">Plan change scheduled.</p>
+            <p className="text-xs text-blue-700 mt-1">
+              You keep your current plan until the end of this billing period, then it switches automatically. No charge now.
+            </p>
+          </div>
+          <button onClick={dismissBanner} className="text-xs text-blue-700 hover:underline">
+            Dismiss
+          </button>
+        </div>
+      )}
       {checkoutFlag === 'success' && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 flex items-start justify-between">
           <div>
@@ -479,6 +530,8 @@ export function BillingPanel(props: BillingPanelProps) {
               ? props.hasStripeCustomer
                 ? 'Trial unavailable'
                 : 'Start 14-day trial'
+              : blockedByActiveSub && plan.hasStripePrice
+              ? `Switch to ${plan.displayName}`
               : plan.hasStripePrice
               ? `Choose ${plan.displayName}`
               : 'Not yet available';
@@ -546,13 +599,16 @@ export function BillingPanel(props: BillingPanelProps) {
                   <button
                     type="button"
                     onClick={() => {
+                      // Active subscriber switching tiers -> in-app change flow
+                      // (upgrade/downgrade via subscriptions.update), NOT the
+                      // cancel-only Portal. Fresh subscribers -> Checkout.
                       if (blockedByActiveSub) {
-                        setShowSwitchModal(true);
+                        setChangeTarget(plan);
                         return;
                       }
                       onChoose(plan);
                     }}
-                    disabled={!canChoose || pending}
+                    disabled={(!canChoose && !blockedByActiveSub) || pending}
                     title={
                       plan.isTrial && props.hasStripeCustomer
                         ? 'The free trial is only available to new accounts.'
@@ -587,49 +643,60 @@ export function BillingPanel(props: BillingPanelProps) {
         </div>
       )}
 
-      {/* Switch-plan modal (smoke #3): when a user with an active paid
-          sub clicks another tier, we route them through Manage Subscription
-          rather than silently disabling the click. Server-side H-02 guard
-          still refuses a fresh Checkout call as defence-in-depth. */}
-      {showSwitchModal && (
+      {/* In-app plan change confirm modal (upgrade now / downgrade at period end). */}
+      {changeTarget && (
         <div
           className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50"
           role="dialog"
           aria-modal="true"
-          aria-labelledby="switch-modal-title"
+          aria-labelledby="change-modal-title"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setShowSwitchModal(false);
+            if (e.target === e.currentTarget && !pending) setChangeTarget(null);
           }}
         >
           <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 id="switch-modal-title" className="text-lg font-semibold text-slate-900">
-              You already have an active subscription
+            <h3 id="change-modal-title" className="text-lg font-semibold text-slate-900">
+              {isUpgradeTarget ? 'Upgrade' : 'Switch'} to {changeTarget.displayName}?
             </h3>
             <p className="text-sm text-slate-600 mt-2">
-              To switch plans, open <span className="font-medium text-slate-900">Manage Subscription</span>{' '}
-              to cancel your current plan first. Once it ends you can come back and pick your new tier.
+              You&apos;ll move to{' '}
+              <span className="font-medium text-slate-900">{changeTarget.displayName}</span> at{' '}
+              <span className="font-medium text-slate-900">{formatPrice(changeTarget.priceCentsMonthly)}</span>
+              {(() => {
+                const original = formatOriginalPrice(
+                  changeTarget.priceCentsMonthlyOriginal,
+                  changeTarget.priceCentsMonthly,
+                );
+                return original ? <span className="text-slate-400 line-through ml-1">{original}</span> : null;
+              })()}
+              .
             </p>
             <p className="text-xs text-slate-500 mt-2">
-              We don’t bill two subscriptions at once, so the switch happens after your current period ends.
+              {isUpgradeTarget
+                ? 'The change takes effect immediately. We\u2019ll prorate the difference for the rest of your current billing period and charge your card on file.'
+                : 'You keep your current plan until the end of this billing period, then it switches to the new plan automatically. No charge or credit now.'}
             </p>
+            {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setShowSwitchModal(false)}
-                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+                onClick={() => setChangeTarget(null)}
+                disabled={pending}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
               >
-                Close
+                Cancel
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setShowSwitchModal(false);
-                  onManage();
-                }}
+                onClick={() => onConfirmChange(changeTarget)}
                 disabled={pending}
                 className="px-4 py-2 text-sm font-medium rounded-lg bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
               >
-                Manage subscription
+                {pending
+                  ? 'Working\u2026'
+                  : isUpgradeTarget
+                  ? `Upgrade to ${changeTarget.displayName}`
+                  : `Switch to ${changeTarget.displayName}`}
               </button>
             </div>
           </div>
