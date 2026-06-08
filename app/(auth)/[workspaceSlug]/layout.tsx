@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { LogoutButton } from '@/app/components/auth/LogoutButton';
 import { WorkspaceNav } from '@/app/components/workspace/WorkspaceNav';
 import { AlertBell } from '@/app/components/alerts/AlertBell';
+import { InboxLink } from '@/app/components/alerts/InboxLink';
 import { HelpDrawerTrigger, HelpDrawerPanel } from '@/app/components/docs/HelpDrawer';
 import { HelpDrawerProvider } from '@/app/components/docs/HelpDrawerContext';
 import { HelpDrawerLayout } from '@/app/components/docs/HelpDrawerLayout';
@@ -80,12 +81,13 @@ export default async function WorkspaceLayout({
                     <img src="/logo.png" alt="QuoteCore" className="h-9" />
                   </Link>
                   <div className="flex items-center gap-3">
-                    <HelpDrawerTrigger />
                     <AlertBell
                       initialAlerts={alerts || []}
                       initialUnreadCount={unreadCount}
                       workspaceSlug={slug}
                     />
+                    <InboxLink workspaceSlug={slug} unreadCount={unreadCount} />
+                    <HelpDrawerTrigger />
                     <Link
                       href={`/${slug}/account`}
                       prefetch={false}

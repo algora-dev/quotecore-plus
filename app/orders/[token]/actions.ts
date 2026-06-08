@@ -6,7 +6,7 @@ import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 
 export interface SubmitOrderResponseInput {
   token: string;
-  action: 'confirm' | 'request_changes' | 'question';
+  action: 'accept' | 'decline' | 'request_info';
   body: string | null;
 }
 
@@ -35,10 +35,17 @@ export async function submitOrderResponse(
   if (!input.token || input.token.length < 16) {
     return { ok: false, error: 'This link is no longer valid.' };
   }
-  const ACTION_VALUES = ['confirm', 'request_changes', 'question'] as const;
+  const ACTION_VALUES = ['accept', 'decline', 'request_info'] as const;
   if (!ACTION_VALUES.includes(input.action)) {
     return { ok: false, error: 'Invalid response option.' };
   }
+  // Request Info requires a message; Accept/Decline can be bare.
+  if (input.action === 'request_info' && !input.body) {
+    return { ok: false, error: 'Please add a message describing what you need.' };
+  }
+  // Map the public action to the value stored in material_order_responses.
+  const storedAction =
+    input.action === 'accept' ? 'confirm' : input.action === 'decline' ? 'decline' : 'request_info';
   if (input.body !== null && (input.body.length < 1 || input.body.length > 8000)) {
     return { ok: false, error: 'Message must be between 1 and 8000 characters.' };
   }
@@ -55,7 +62,7 @@ export async function submitOrderResponse(
   const { data: order } = await supabase
     .from('material_orders')
     .select(
-      'id, company_id, order_number, to_supplier, acceptance_token_expires_at, confirmed_at, changes_requested_at',
+      'id, company_id, order_number, to_supplier, acceptance_token_expires_at, confirmed_at, declined_at, info_requested_at',
     )
     .eq('acceptance_token', input.token)
     .maybeSingle();
@@ -74,7 +81,7 @@ export async function submitOrderResponse(
   const { error: insertError } = await supabase.from('material_order_responses').insert({
     order_id: order.id,
     company_id: order.company_id,
-    action: input.action,
+    action: storedAction,
     body: input.body,
     ip,
     user_agent: hdrs.get('user-agent'),
@@ -84,12 +91,11 @@ export async function submitOrderResponse(
   }
 
   const now = new Date().toISOString();
-  const isFirstConfirm = input.action === 'confirm' && !order.confirmed_at;
-  const isFirstChangeRequest = input.action === 'request_changes' && !order.changes_requested_at;
-
   const orderUpdate: Record<string, string | null> = { last_supplier_response_at: now };
-  if (isFirstConfirm) orderUpdate.confirmed_at = now;
-  if (isFirstChangeRequest) orderUpdate.changes_requested_at = now;
+  // Stamp the lifecycle timestamp on the FIRST occurrence of each action.
+  if (input.action === 'accept' && !order.confirmed_at) orderUpdate.confirmed_at = now;
+  if (input.action === 'decline' && !order.declined_at) orderUpdate.declined_at = now;
+  if (input.action === 'request_info' && !order.info_requested_at) orderUpdate.info_requested_at = now;
 
   await supabase.from('material_orders').update(orderUpdate).eq('id', order.id);
 
@@ -99,9 +105,9 @@ export async function submitOrderResponse(
   // user wants to know about (e.g. "Confirmed" then "Actually I have a
   // question about delivery").
   const actionLabels: Record<typeof input.action, string> = {
-    confirm: 'Confirmed',
-    request_changes: 'Requested changes',
-    question: 'Asked a question',
+    accept: 'Accepted',
+    decline: 'Declined',
+    request_info: 'Requested info',
   };
   const supplierLabel = order.to_supplier || 'Supplier';
   const alertTitle = `${actionLabels[input.action]} \u2013 ${supplierLabel}`;
@@ -114,6 +120,7 @@ export async function submitOrderResponse(
     alert_type: 'order_supplier_response',
     title: alertTitle,
     message: alertBody,
+    order_id: order.id,
   });
 
   return { ok: true };

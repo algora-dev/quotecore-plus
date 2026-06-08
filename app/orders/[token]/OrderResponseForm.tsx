@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { submitOrderResponse } from './actions';
 
-type Action = 'confirm' | 'request_changes' | 'question';
+type Action = 'accept' | 'decline' | 'request_info';
 
 interface Props {
   token: string;
@@ -45,7 +45,7 @@ export function OrderResponseForm({ token, alreadyResponded, downloadAction }: P
       setError('Please choose an option.');
       return;
     }
-    if ((action === 'request_changes' || action === 'question') && !body.trim()) {
+    if (action === 'request_info' && !body.trim()) {
       setError('Please add a message describing what you need.');
       return;
     }
@@ -91,36 +91,36 @@ export function OrderResponseForm({ token, alreadyResponded, downloadAction }: P
       <div className="flex gap-3 justify-center flex-wrap">
         <button
           type="button"
-          onClick={() => setAction('confirm')}
+          onClick={() => setAction('accept')}
           className={`px-6 py-2.5 text-sm font-semibold rounded-full transition-all ${
-            action === 'confirm'
+            action === 'accept'
               ? 'bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-[0_0_12px_rgba(16,185,129,0.4)]'
               : 'bg-white text-emerald-700 border border-emerald-300 hover:bg-emerald-50'
           }`}
         >
-          Confirm order
+          Accept
         </button>
         <button
           type="button"
-          onClick={() => setAction('request_changes')}
+          onClick={() => setAction('decline')}
           className={`px-6 py-2.5 text-sm font-semibold rounded-full transition-all ${
-            action === 'request_changes'
-              ? 'bg-amber-500 text-white hover:bg-amber-600 hover:shadow-[0_0_12px_rgba(251,191,36,0.4)]'
-              : 'bg-white text-amber-700 border border-amber-300 hover:bg-amber-50'
+            action === 'decline'
+              ? 'bg-rose-600 text-white hover:bg-rose-700 hover:shadow-[0_0_12px_rgba(225,29,72,0.4)]'
+              : 'bg-white text-rose-700 border border-rose-300 hover:bg-rose-50'
           }`}
         >
-          Request changes
+          Decline
         </button>
         <button
           type="button"
-          onClick={() => setAction('question')}
+          onClick={() => setAction('request_info')}
           className={`px-6 py-2.5 text-sm font-semibold rounded-full transition-all ${
-            action === 'question'
+            action === 'request_info'
               ? 'bg-slate-900 text-white hover:bg-slate-800'
               : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
           }`}
         >
-          Ask a question
+          Request info
         </button>
         {downloadAction}
       </div>
@@ -129,7 +129,7 @@ export function OrderResponseForm({ token, alreadyResponded, downloadAction }: P
           their chosen action without losing what they've typed. */}
       <div className="text-left">
         <label className="block text-sm font-medium text-slate-700 mb-1">
-          Add a message {action === 'confirm' || action === null ? '(optional)' : ''}
+          Add a message {action === 'request_info' ? '' : '(optional)'}
         </label>
         <textarea
           value={body}
@@ -137,12 +137,12 @@ export function OrderResponseForm({ token, alreadyResponded, downloadAction }: P
           rows={4}
           maxLength={8000}
           placeholder={
-            action === 'confirm'
+            action === 'accept'
               ? 'Anything to add about delivery, lead time, etc?'
-              : action === 'request_changes'
-                ? 'What needs to change?'
-                : action === 'question'
-                  ? 'What would you like to know?'
+              : action === 'decline'
+                ? 'Let them know why, if you like (optional).'
+                : action === 'request_info'
+                  ? 'What information do you need?'
                   : 'Anything you\u2019d like to add?'
           }
           className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"

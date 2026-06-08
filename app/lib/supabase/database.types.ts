@@ -64,6 +64,7 @@ export type Database = {
           invoice_id: string | null
           is_read: boolean | null
           message: string | null
+          order_id: string | null
           quote_id: string | null
           title: string
         }
@@ -75,6 +76,7 @@ export type Database = {
           invoice_id?: string | null
           is_read?: boolean | null
           message?: string | null
+          order_id?: string | null
           quote_id?: string | null
           title: string
         }
@@ -86,6 +88,7 @@ export type Database = {
           invoice_id?: string | null
           is_read?: boolean | null
           message?: string | null
+          order_id?: string | null
           quote_id?: string | null
           title?: string
         }
@@ -102,6 +105,13 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "material_orders"
             referencedColumns: ["id"]
           },
           {
@@ -2021,11 +2031,13 @@ export type Database = {
           contact_details: string | null
           contact_person: string | null
           created_at: string
+          declined_at: string | null
           delivery_address: string | null
           delivery_date: string | null
           from_company: string | null
           header_notes: string | null
           id: string
+          info_requested_at: string | null
           is_sent: boolean | null
           job_colours: string[] | null
           job_name: string | null
@@ -2056,11 +2068,13 @@ export type Database = {
           contact_details?: string | null
           contact_person?: string | null
           created_at?: string
+          declined_at?: string | null
           delivery_address?: string | null
           delivery_date?: string | null
           from_company?: string | null
           header_notes?: string | null
           id?: string
+          info_requested_at?: string | null
           is_sent?: boolean | null
           job_colours?: string[] | null
           job_name?: string | null
@@ -2091,11 +2105,13 @@ export type Database = {
           contact_details?: string | null
           contact_person?: string | null
           created_at?: string
+          declined_at?: string | null
           delivery_address?: string | null
           delivery_date?: string | null
           from_company?: string | null
           header_notes?: string | null
           id?: string
+          info_requested_at?: string | null
           is_sent?: boolean | null
           job_colours?: string[] | null
           job_name?: string | null

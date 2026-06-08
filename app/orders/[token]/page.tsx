@@ -131,13 +131,18 @@ export default async function PublicOrderPage({ params }: Props) {
 
 function ResponseBanner({ action, createdAt }: { action: string; createdAt: string }) {
   const labels: Record<string, string> = {
-    confirm: 'You confirmed this order',
+    confirm: 'You accepted this order',
+    decline: 'You declined this order',
+    request_info: 'You requested more information on this order',
+    // legacy values (historical rows):
     request_changes: 'You requested changes on this order',
     question: 'You sent a question about this order',
     other: 'You responded to this order',
   };
   const tones: Record<string, string> = {
     confirm: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+    decline: 'border-rose-200 bg-rose-50 text-rose-900',
+    request_info: 'border-slate-200 bg-slate-50 text-slate-800',
     request_changes: 'border-amber-200 bg-amber-50 text-amber-900',
     question: 'border-blue-200 bg-blue-50 text-blue-900',
     other: 'border-slate-200 bg-slate-50 text-slate-800',
