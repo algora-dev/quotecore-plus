@@ -1,11 +1,23 @@
 import { redirect } from 'next/navigation';
-import { createSupabaseServerClient, requireUser } from '@/app/lib/supabase/server';
+import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { OnboardingForm } from './OnboardingForm';
 import { GoogleOnboardingForm } from './GoogleOnboardingForm';
 
 export default async function OnboardingPage() {
   const supabase = await createSupabaseServerClient();
-  const authUser = await requireUser();
+
+  // /onboarding is a PUBLIC path in middleware (so brand-new Google users with
+  // no profile row can reach it), which means auth is NOT enforced upstream.
+  // Therefore this page must handle the no-session case itself: redirect to
+  // login rather than throwing (requireUser() throws 'Unauthorized' -> 500).
+  // This was the cause of the "This page couldn't load" 500 on /onboarding
+  // when the session cookie wasn't yet established after signup/login.
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+  if (!authUser) {
+    redirect('/login?redirect=/onboarding');
+  }
 
   // Check if user has a profile in users table
   const { data: profile } = await supabase
