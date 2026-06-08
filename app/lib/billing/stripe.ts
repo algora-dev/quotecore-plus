@@ -154,29 +154,28 @@ export async function resolveStripePriceForPlan(
 }
 
 /**
- * Companion resolver that returns BOTH the Stripe Price ID and the
- * optional launch-discount Coupon ID for a plan. Used by
- * createCheckoutSession so the Stripe Checkout page can show:
+ * Resolver that returns the Stripe Price ID for a plan in the current
+ * Stripe mode (live vs test).
  *
- *   Subtotal:  $60.00
- *   Discount: -$31.00  (Growth Launch Discount)
- *   Total:    $29.00 / mo
+ * PRICING MODEL (locked 2026-06-08): the Stripe Price IS the price we
+ * charge. There is NO launch coupon and NO MSRP-on-Stripe + discount
+ * scheme. The "good deal" anchor is a DISPLAY-ONLY strikethrough driven
+ * by subscription_plans.price_cents_monthly_original in the UI; it never
+ * touches Stripe. To change a price, change the Stripe Price AND
+ * price_cents_monthly together so they always match. See MEMORY.md
+ * "PRICING — how to change a price".
  *
  * Returns null when the plan isn't active or has no Stripe price wired
  * up in the current mode (live vs test).
- *
- * Note: stripe_launch_coupon_id is environment-agnostic in our DB. Stripe
- * coupon ids live in both test and live mode under the same string id, so
- * we don't need a separate live/test column for the coupon.
  */
 export async function resolveStripeCheckoutForPlan(
   planCode: string,
-): Promise<{ priceId: string; couponId: string | null } | null> {
+): Promise<{ priceId: string } | null> {
   if (!planCode) throw new Error('resolveStripeCheckoutForPlan: planCode is required');
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('subscription_plans')
-    .select('stripe_price_id_live, stripe_price_id_test, stripe_launch_coupon_id, active')
+    .select('stripe_price_id_live, stripe_price_id_test, active')
     .eq('code', planCode)
     .limit(1)
     .maybeSingle();
@@ -185,7 +184,7 @@ export async function resolveStripeCheckoutForPlan(
   if (!data.active) return null;
   const priceId = getStripeMode() === 'live' ? data.stripe_price_id_live : data.stripe_price_id_test;
   if (!priceId) return null;
-  return { priceId, couponId: data.stripe_launch_coupon_id ?? null };
+  return { priceId };
 }
 
 /**

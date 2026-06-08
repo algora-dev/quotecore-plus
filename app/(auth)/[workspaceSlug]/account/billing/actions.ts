@@ -86,7 +86,7 @@ export async function createCheckoutSession(
   const { profile, company: ctxCompany } = ctx;
   const slug = ctxCompany.slug;
 
-  let checkout: { priceId: string; couponId: string | null } | null;
+  let checkout: { priceId: string } | null;
   try {
     checkout = await resolveStripeCheckoutForPlan(planCode);
   } catch (err) {
@@ -100,7 +100,7 @@ export async function createCheckoutSession(
       message: `Plan "${planCode}" is not yet available in this environment.`,
     };
   }
-  const { priceId, couponId } = checkout;
+  const { priceId } = checkout;
 
   const stripe = requireStripe();
   const admin = createAdminClient();
@@ -159,13 +159,9 @@ export async function createCheckoutSession(
       ...(company.stripe_customer_id
         ? { customer: company.stripe_customer_id }
         : { customer_email: userRow?.email ?? undefined }),
-      // Launch pricing: when a plan has a per-tier MSRP-to-launch coupon,
-      // attach it so Checkout shows the strikethrough subtotal and the
-      // discount line. Mutually exclusive with allow_promotion_codes per
-      // Stripe's API.
-      ...(couponId
-        ? { discounts: [{ coupon: couponId }] }
-        : { allow_promotion_codes: true }),
+      // No coupon scheme: the Price IS the deal price. Allow manual promo
+      // codes (e.g. one-off offers you create in the Stripe dashboard).
+      allow_promotion_codes: true,
       // {CHECKOUT_SESSION_ID} is Stripe's template literal; do NOT JS-interpolate.
       success_url: `${base}/${slug}/account?tab=billing&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}/${slug}/account?tab=billing&checkout=canceled`,
