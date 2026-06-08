@@ -22,12 +22,39 @@ import type { ClientCapability } from '@/app/lib/assistant/protocol';
  *  screen vocabulary; keep keys lowercase + dot/hyphen separated (no slashes).
  *  Exported so sibling hooks (e.g. useBrowserFacts) reuse the SAME mapping
  *  rather than forking it. */
+// Known in-app top-level route segments. Live URLs are slug-prefixed
+// (/<workspaceSlug>/invoices) but AUTHORED workflow startPages are slug-LESS
+// (/invoices). Without this set, the slug-strip below would eat the only
+// segment of a slug-less startPage ("/invoices" -> "" -> "home"), so every
+// top-level startPage resolved to `home` and the guide engine never built a
+// navigation hop (the "create-invoice guide skips navigating" bug).
+const IN_APP_TOP = new Set([
+  'quotes',
+  'invoices',
+  'material-orders',
+  'resources',
+  'components',
+  'templates',
+  'customer-quote-templates',
+  'flashings',
+  'catalogs',
+  'attachments',
+]);
+
 export function pathnameToScreenKey(pathname: string | null): string {
   if (!pathname) return 'unknown';
   const parts = pathname.replace(/^\//, '').split('/');
-  // Drop the workspace slug (first segment) for in-app routes.
+  // Drop the workspace slug (first segment) for in-app routes — BUT only when
+  // the first segment is actually a slug. If it's already a known in-app top
+  // route (a slug-less authored startPage like "/invoices"), keep it.
   const PUBLIC_TOP = new Set(['docs', 'login', 'signup', 'account', 'onboarding']);
-  if (parts.length > 0 && !PUBLIC_TOP.has(parts[0])) parts.shift();
+  if (
+    parts.length > 0 &&
+    !PUBLIC_TOP.has(parts[0]) &&
+    !IN_APP_TOP.has(parts[0])
+  ) {
+    parts.shift();
+  }
   const inner = parts.join('/');
 
   if (/^quotes\/[^/]+\/takeoff/.test(inner)) return 'quote.takeoff';
