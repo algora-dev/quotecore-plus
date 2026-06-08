@@ -112,6 +112,13 @@ export default async function PublicOrderPage({ params }: Props) {
         <OrderResponseForm
           token={token}
           alreadyResponded={!!latestResponse}
+          initialDecision={
+            order.confirmed_at
+              ? { status: 'accepted', decidedAt: order.confirmed_at }
+              : order.declined_at
+                ? { status: 'declined', decidedAt: order.declined_at }
+                : null
+          }
           downloadAction={<DownloadOrderButton />}
         />
 

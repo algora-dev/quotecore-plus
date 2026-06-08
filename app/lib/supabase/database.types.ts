@@ -66,6 +66,7 @@ export type Database = {
           message: string | null
           order_id: string | null
           quote_id: string | null
+          status: Database["public"]["Enums"]["alert_status"]
           title: string
         }
         Insert: {
@@ -78,6 +79,7 @@ export type Database = {
           message?: string | null
           order_id?: string | null
           quote_id?: string | null
+          status?: Database["public"]["Enums"]["alert_status"]
           title: string
         }
         Update: {
@@ -90,6 +92,7 @@ export type Database = {
           message?: string | null
           order_id?: string | null
           quote_id?: string | null
+          status?: Database["public"]["Enums"]["alert_status"]
           title?: string
         }
         Relationships: [
@@ -4149,6 +4152,7 @@ export type Database = {
       }
     }
     Enums: {
+      alert_status: "active" | "todo" | "archived"
       component_type: "main" | "extra"
       input_mode: "final" | "calculated"
       invoice_status:
@@ -4337,6 +4341,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      alert_status: ["active", "todo", "archived"],
       component_type: ["main", "extra"],
       input_mode: ["final", "calculated"],
       invoice_status: [

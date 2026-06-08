@@ -78,8 +78,8 @@ export function OnboardingForm({
         </div>
 
         <div className="text-center space-y-3">
-          <div className="w-16 h-16 mx-auto bg-orange-100 rounded-full flex items-center justify-center">
-            <span className="text-3xl font-bold text-orange-500">Q</span>
+          <div className="w-20 h-20 mx-auto rounded-full overflow-hidden ring-2 ring-orange-200 shadow-sm">
+            <img src="/q-avatar.png" alt="Q, your QuoteCore+ assistant" className="w-full h-full object-cover" />
           </div>
           <h2 className="text-xl font-semibold text-slate-900">Welcome to QuoteCore+</h2>
           <p className="text-sm text-slate-600 max-w-md mx-auto">

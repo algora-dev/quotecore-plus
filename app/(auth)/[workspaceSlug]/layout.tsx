@@ -86,7 +86,7 @@ export default async function WorkspaceLayout({
                       initialUnreadCount={unreadCount}
                       workspaceSlug={slug}
                     />
-                    <InboxLink workspaceSlug={slug} unreadCount={unreadCount} />
+                    <InboxLink workspaceSlug={slug} />
                     <HelpDrawerTrigger />
                     <Link
                       href={`/${slug}/account`}

@@ -212,6 +212,17 @@ const BASE_INTENTS: Record<string, string[]> = {
     'get paid for an invoice',
     'track invoice payment',
   ],
+  // ── Message Center (added 2026-06-08) ──
+  'message-center': [
+    'open my message center',
+    'where are all my alerts',
+    'see all my messages',
+    'view my inbox',
+    'how do I mark an alert done',
+    'move an alert to do later',
+    'archive a message',
+    'how do I delete an alert',
+  ],
 };
 
 /**

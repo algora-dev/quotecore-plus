@@ -55,6 +55,9 @@ export function pathnameToDocSlug(pathname: string | null | undefined): string {
     { match: /^material-orders\/create(\/|$)/,             slug: 'material-orders/order-layouts' },
     { match: /^material-orders(\/|$)/,                     slug: 'material-orders/creating-orders' },
 
+    // Message Center.
+    { match: /^inbox(\/|$)/,                               slug: 'message-center/overview' },
+
     // Account routes - the live app collapses to one /account page with
     // ?tab=... query params; we match on the bare path here (the search
     // string isn't part of pathname).
