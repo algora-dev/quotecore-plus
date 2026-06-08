@@ -161,8 +161,10 @@ export function InboxList({ initialAlerts, workspaceSlug }: Props) {
   return (
     <div className="flex gap-5">
       {/* LEFT PANEL — folders */}
-      <aside className="w-44 flex-shrink-0" data-assistant-id="inbox-folders" data-copilot="inbox-folders">
-        <nav className="space-y-1">
+      <aside className="w-44 flex-shrink-0">
+        {/* The guide highlight targets this <nav> (only the 3 folder buttons),
+            not the <aside> — the aside stretches to the full list height. */}
+        <nav className="space-y-1 self-start" data-assistant-id="inbox-folders" data-copilot="inbox-folders">
           {FOLDERS.map((f) => (
             <button
               key={f.key}
@@ -297,14 +299,23 @@ export function InboxList({ initialAlerts, workspaceSlug }: Props) {
                           Open
                         </button>
                       )}
-                      {/* Per-row quick actions, contextual to the folder */}
+                      {/* Per-row quick actions, contextual to the folder.
+                          `href` null => non-actionable (pure notification):
+                          no Open, no To-Do/Done task buttons — just Read +
+                          Dismiss so it can still be cleared from Active. */}
                       {folder === 'active' && (
                         <>
                           {!a.is_read && (
                             <button type="button" onClick={() => bulk('read', [a.id])} className="text-xs text-slate-500 hover:text-slate-700">Read</button>
                           )}
-                          <button type="button" onClick={() => bulk('todo', [a.id])} className="text-xs text-slate-500 hover:text-slate-700">To-Do</button>
-                          <button type="button" onClick={() => bulk('archive', [a.id])} className="text-xs text-slate-400 hover:text-emerald-600">Done</button>
+                          {href ? (
+                            <>
+                              <button type="button" onClick={() => bulk('todo', [a.id])} className="text-xs text-slate-500 hover:text-slate-700">To-Do</button>
+                              <button type="button" onClick={() => bulk('archive', [a.id])} className="text-xs text-slate-400 hover:text-emerald-600">Done</button>
+                            </>
+                          ) : (
+                            <button type="button" onClick={() => bulk('archive', [a.id])} className="text-xs text-slate-400 hover:text-slate-600">Dismiss</button>
+                          )}
                         </>
                       )}
                       {folder === 'todo' && (
