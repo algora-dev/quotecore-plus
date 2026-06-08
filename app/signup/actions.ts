@@ -4,7 +4,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/app/lib/supabase/database.types';
-import { seedTemplateComponents } from '@/app/lib/seed/seedTemplateComponents';
 import { ensureCompanyHasCollection } from '@/app/lib/data/ensure-company-has-collection';
 
 type SignupInput = {
@@ -120,10 +119,12 @@ export async function signupWithCompany(input: SignupInput) {
   // Seed the canonical starter components into the new company. Non-fatal:
   // signup must still succeed if this fails - the user can always create
   // their own components manually.
-  // This email/password signup path does not collect a trade, so the company
-  // gets the DB default_trade ('roofing'). Seed the matching Roofing starter
-  // set. (The onboarding path passes the user-selected trade.)
-  await seedTemplateComponents(supabaseAdmin, company.id, 'roofing', bootstrapCollectionId);
+  // NOTE: component seeding is intentionally NOT done here. The user picks
+  // their trade in the onboarding step that runs AFTER signup, so seeding here
+  // would always seed the default trade (roofing) regardless of their choice.
+  // completeOnboarding() seeds the correct trade's set once the trade is known.
+  // (bootstrapCollectionId is still created here so the collection exists.)
+  void bootstrapCollectionId;
 
   redirect('/login?signup=success');
 }

@@ -47,6 +47,39 @@ export async function completeOnboarding(companyId: string, data: OnboardingData
     throw new Error(error.message);
   }
 
+  // Seed the starter components for the SELECTED trade now that the trade is
+  // known (the standard email signup flow doesn't know the trade at
+  // company-creation time, so seeding was deferred to here). Idempotent: only
+  // seed if the company has no components yet, so re-running onboarding can't
+  // double-seed. Non-fatal: onboarding must still succeed if seeding fails.
+  try {
+    const admin = createAdminClient();
+    const { count } = await admin
+      .from('component_library')
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', companyId);
+    if (!count || count === 0) {
+      const bootstrapCollectionId = await ensureCompanyHasCollection(companyId, admin).catch(
+        (err) => {
+          console.error('[completeOnboarding] ensureCompanyHasCollection failed:', err);
+          return null;
+        },
+      );
+      const result = await seedTemplateComponents(
+        admin,
+        companyId,
+        data.defaultTrade ?? 'roofing',
+        bootstrapCollectionId,
+      );
+      console.log(
+        `[completeOnboarding] seeded ${result.seeded} components (trade=${data.defaultTrade ?? 'roofing'})`,
+        result.error ? `error=${result.error}` : '',
+      );
+    }
+  } catch (err) {
+    console.error('[completeOnboarding] seeding threw (non-fatal):', err);
+  }
+
   console.log('[completeOnboarding] Success! Onboarding completed.');
 
   // Don't revalidate here - client handles the copilot intro step transition
