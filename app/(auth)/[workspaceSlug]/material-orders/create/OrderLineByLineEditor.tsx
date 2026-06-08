@@ -25,6 +25,7 @@ import { formatCurrency } from '@/app/lib/currency/currencies';
 import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
 import { AddLineModal } from '../../quotes/[id]/customer-edit/AddLineModal';
 import { LineEditForm } from '../../quotes/[id]/customer-edit/LineEditForm';
+import { ConfirmModal } from '@/app/components/ConfirmModal';
 import {
   lineByLineTotal,
   lineDisplayText,
@@ -95,6 +96,9 @@ export function OrderLineByLineEditor({
   const [showAddLine, setShowAddLine] = useState(false);
   // id of the line currently being edited in the right-hand preview (pencil).
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  // Pending remove confirmation (destructive). Mirrors CustomerQuoteEditor:
+  // the X opens a ConfirmModal rather than deleting immediately.
+  const [removeLineId, setRemoveLineId] = useState<string | null>(null);
   // Master "hide all prices" override for long order forms. When true, the
   // PREVIEW shows NO pricing at all (no per-line price, no subtotal, no tax
   // lines, no total) — it overrides each line's own showPrice. When false, the
@@ -313,10 +317,12 @@ export function OrderLineByLineEditor({
                     </label>
                     <button
                       type="button"
-                      onClick={() => removeLine(line.id)}
-                      className="text-red-500 hover:text-red-600 ml-auto"
+                      onClick={() => setRemoveLineId(line.id)}
+                      title="Remove this line"
+                      aria-label="Remove line"
+                      className="p-0.5 text-red-400 hover:text-red-600 ml-auto"
                     >
-                      Remove
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                   </div>
                 </div>
@@ -589,6 +595,20 @@ export function OrderLineByLineEditor({
           onClose={() => setShowAddLine(false)}
         />
       )}
+
+      {/* Remove-line confirmation (destructive: fully deletes the line).
+          Matches CustomerQuoteEditor exactly for UX consistency. */}
+      <ConfirmModal
+        open={removeLineId !== null}
+        title="Remove this line?"
+        description="This removes the line from the order entirely."
+        confirmLabel="Remove"
+        onCancel={() => setRemoveLineId(null)}
+        onConfirm={() => {
+          if (removeLineId) removeLine(removeLineId);
+          setRemoveLineId(null);
+        }}
+      />
     </div>
   );
 }
