@@ -111,6 +111,16 @@ _(empty - move items here as they pass)_
 
 ---
 
+## Pending verification (dev - starter-test fixes, 2026-06-08, commit `223e189`)
+- [ ] **#1 Seed components (THE bug)**: sign up a NEW company as **Roofing** -> Components page shows the 8 Roofing starter components (not zero). Sign up another as a **generic trade** -> shows the 9 Generic starter components. (Root cause was the tier cap rolling back the seed; now seeded via cap-bypass RPC, trade-aware.)
+- [ ] **#1 Cap still enforced for users**: on a Starter/trial company, after seed, manually adding components past the limit (10) is still blocked with the limit message (seed bypass must NOT disable the user cap).
+- [ ] **#2 Remove line (customer quote editor)**: red **X** top-right of each line row -> ConfirmModal -> line is fully removed (not just hidden). Confirm order + invoice editors still remove cleanly too.
+- [ ] **#3 Pencil edit quantity + dash (customer quote + line-by-line order)**: add a custom line with a quantity; pencil-edit from preview -> Quantity field is editable; clearing it removes the “description — quantity” dash entirely; editing description and price still work.
+- [ ] **#4 Extras tooltip**: Quote Builder -> Extras phase shows the info note pointing to the customer quote editor for fully custom extra lines.
+- [ ] **#6 Highlights pill**: Guide-me toggle -> OFF = grey track + white knob left; ON = **orange** track + white knob slides right (no blue).
+
+---
+
 ## Pending verification (dev - help docs + Guide-Me coverage, 2026-06-05)
 - [ ] **New help docs render** (`26dbb9c`): on `quotecore-plus-dev.vercel.app/docs`, the sidebar shows new sections **Catalog Library**, **Attachments**, **Follow-ups**, plus new pages under **Material orders** (Order layouts / Line-by-line editor / Order from a quote) and **Help** (Meet Q / Guide Me / rewritten Chat Assistant). Each page opens, MDX/Callouts render, internal cross-links resolve (no 404).
 - [ ] **Help-drawer context mapping**: opening the in-app help drawer (`?`) on the Catalogs, Attachments, and Order-from-Quote screens opens the matching new doc, not the index fallback.
