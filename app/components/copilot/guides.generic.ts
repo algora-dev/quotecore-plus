@@ -1591,4 +1591,41 @@ export const COPILOT_GUIDES_GENERIC: CopilotGuide[] = [
       },
     ],
   },
+  // ────────────────────────────────────────────────────────────────────────
+  // Message Center (added 2026-06-08, generic trade set — mirror of base set)
+  // ────────────────────────────────────────────────────────────────────────
+  {
+    id: 'message-center',
+    name: 'Message Center',
+    description: 'Manage every alert and message from your quotes, orders and invoices in one inbox.',
+    steps: [
+      {
+        id: 'mc-open',
+        target: '[data-copilot="nav-inbox"]',
+        title: 'Open your Message Center',
+        description: 'Click the **orange envelope** in the top bar to open your Message Center. It collects every alert and message from your quotes, orders and invoices in one place — separate from the bell, which just shows your most recent alerts.',
+        position: 'bottom',
+        page: '/inbox',
+        validation: 'none',
+      },
+      {
+        id: 'mc-folders',
+        target: '[data-copilot="inbox-folders"]',
+        title: 'Active, To-Do & Archived',
+        description: 'Use the folders on the left to organise messages. **Active** is your main list. Push anything to deal with later into **To-Do**. Marking something **Done** moves it to **Archived**, where you can restore it or delete it permanently.',
+        position: 'right',
+        page: '/inbox',
+        validation: 'none',
+      },
+      {
+        id: 'mc-search',
+        target: '[data-copilot="inbox-search"]',
+        title: 'Search & filter',
+        description: 'Search the text of any message, or filter by type — **Quotes, Orders, Invoices, or Messages**. Tick the checkboxes to select several at once, then mark them read, move them to To-Do, or archive them in one go.',
+        position: 'bottom',
+        page: '/inbox',
+        validation: 'none',
+      },
+    ],
+  },
 ];

@@ -267,8 +267,10 @@ export function InboxList({ initialAlerts, workspaceSlug }: Props) {
               return (
                 <li
                   key={a.id}
-                  className={`rounded-xl border bg-white p-3 transition hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] ${
-                    a.is_read ? 'border-slate-200' : 'border-orange-200 bg-orange-50/40'
+                  className={`rounded-xl border-2 bg-white p-3 transition hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] ${
+                    a.is_read
+                      ? 'border-slate-300'
+                      : 'border-orange-300 bg-orange-50/40'
                   }`}
                 >
                   <div className="flex items-start gap-3">
