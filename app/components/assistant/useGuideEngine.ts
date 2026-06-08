@@ -68,6 +68,10 @@ function navHopsForScreenKey(screenKey: string): NavHop[] {
     // fix is that a highlighted nav hop now EXISTS for this start page at all.
     case 'quote.customer':
       return [{ elementId: 'nav-quotes', title: 'Go to Quotes', instruction: 'Open the Quotes page: click Quotes in the top navigation.' }];
+    case 'invoices':
+    case 'invoice.editor':
+      // new-invoice renders on the invoice list; auto-advance when it appears.
+      return [{ elementId: 'nav-invoices', title: 'Go to Invoices', instruction: 'Open the Invoices page: click Invoices in the top navigation.', appearsTarget: 'new-invoice' }];
     case 'material-orders':
       // mo-custom-order renders on the orders hub on arrival, so the hop
       // auto-advances the moment the Orders page loads (parity with catalog).

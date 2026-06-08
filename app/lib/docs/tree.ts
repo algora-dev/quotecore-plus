@@ -61,6 +61,7 @@ const SECTION_ORDER: string[] = [
   'flashings',
   'material-orders',
   'files-and-quotes',
+  'invoices',
   'account',
   'help',
   'concepts',
@@ -80,6 +81,7 @@ const SECTION_TITLES: Record<string, string> = {
   'flashings': 'Flashings',
   'material-orders': 'Material orders',
   'files-and-quotes': 'Files & quotes',
+  'invoices': 'Invoices',
   'account': 'Account',
   'help': 'Help',
 };

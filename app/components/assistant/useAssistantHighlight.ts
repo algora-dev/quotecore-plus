@@ -55,71 +55,64 @@ export interface HighlightRect {
  * positioned `::after` anchors to it), but we DO NOT raise z-index and we make
  * the pseudo-element explicitly `pointer-events: none`.
  */
+/**
+ * CLICK-THROUGH FIX (v2): Use outline + box-shadow directly on the element.
+ * No ::after pseudo-element, no position changes, no z-index. outline and
+ * box-shadow are purely visual in CSS and NEVER create pointer-event hit areas,
+ * so highlighted controls are always clickable on the first click regardless of
+ * stacking context, z-index, or browser quirks.
+ *
+ * The old ::after approach theoretically worked (pointer-events:none) but in
+ * practice nav Link elements still required 2 clicks. Switching to direct
+ * outline/box-shadow eliminates that class of issue entirely.
+ *
+ * For overflow:hidden elements (cards, clipped containers) where outline would
+ * extend outside and be clipped: the .assistant-hl-clip variant uses inset
+ * box-shadow instead, which stays inside the element boundary.
+ */
 const CSS = `
 @keyframes assistant-hl-pulse {
   0%   { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.55); }
   70%  { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
   100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
 }
-.assistant-hl {
-  /* Anchor the ::after ring without disturbing hit-testing or stacking.
-     position is only promoted from static; existing relative/absolute/fixed
-     positioned elements keep their own positioning. No z-index override. */
-  border-radius: 6px;
-}
-.assistant-hl:where(:not([style*="position"])) {
-  position: relative;
-}
-.assistant-hl::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: inherit;
-  pointer-events: none; /* <-- the fix: ring never intercepts clicks */
-  z-index: 2147483646; /* paint above the control, but it cannot be clicked */
-}
-.assistant-hl-glow::after {
+/* Base class — no layout changes, no z-index, no overlays. */
+.assistant-hl {}
+/* Clip variant: element has overflow:hidden — render ring inside. */
+.assistant-hl-clip {}
+/* ── Treatments ────────────────────────────────────────────────────────── */
+.assistant-hl-glow {
   outline: 2px solid rgba(37, 99, 235, 0.9);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25), 0 0 18px 4px rgba(37, 99, 235, 0.45);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2), 0 0 18px 4px rgba(37, 99, 235, 0.4);
 }
-.assistant-hl-pulse::after {
+.assistant-hl-pulse {
   outline: 2px solid rgba(37, 99, 235, 0.9);
-  outline-offset: 2px;
+  outline-offset: 3px;
   animation: assistant-hl-pulse 1.4s ease-out infinite;
 }
-.assistant-hl-spotlight::after {
+.assistant-hl-spotlight {
   outline: 3px solid rgba(37, 99, 235, 0.95);
   outline-offset: 3px;
   box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.45);
 }
-.assistant-hl-arrow::after {
+.assistant-hl-arrow {
   outline: 2px solid rgba(37, 99, 235, 0.9);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
 }
-/* Clipped-target variant: when the highlighted element (or an ancestor) has
-   overflow:hidden — e.g. the order-layout picker CARDS (rounded + overflow
-   hidden for the image) — an OUTER ring (inset:-2px) gets clipped away and the
-   glow never shows. This variant draws the ring INSIDE the box (inset:0, inner
-   shadow, negative outline-offset) so it stays visible under the clip. The
-   .assistant-hl-clip class wins via later/specific declarations. */
-.assistant-hl-clip::after {
-  inset: 0;
+/* ── Clip variants: inset ring stays inside the overflow boundary ──────── */
+.assistant-hl-clip.assistant-hl-glow {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.9), inset 0 0 18px 2px rgba(37, 99, 235, 0.4);
 }
-.assistant-hl-clip.assistant-hl-glow::after {
-  outline: 2px solid rgba(37, 99, 235, 0.95);
-  outline-offset: -2px;
-  box-shadow: inset 0 0 0 4px rgba(37, 99, 235, 0.3), inset 0 0 18px 2px rgba(37, 99, 235, 0.45);
+.assistant-hl-clip.assistant-hl-pulse {
+  outline: none;
+  animation: assistant-hl-pulse 1.4s ease-out infinite;
 }
-.assistant-hl-clip.assistant-hl-pulse::after {
-  outline: 2px solid rgba(37, 99, 235, 0.95);
-  outline-offset: -2px;
-}
-.assistant-hl-clip.assistant-hl-spotlight::after {
-  outline: 3px solid rgba(37, 99, 235, 0.95);
-  outline-offset: -3px;
-  box-shadow: inset 0 0 0 3px rgba(37, 99, 235, 0.5);
+.assistant-hl-clip.assistant-hl-spotlight {
+  outline: none;
+  box-shadow: inset 0 0 0 3px rgba(37, 99, 235, 0.95), 0 0 0 9999px rgba(15, 23, 42, 0.45);
 }
 `;
 
@@ -193,10 +186,9 @@ export function useAssistantHighlight(
     const apply = (el: HTMLElement) => {
     const cls = `assistant-hl assistant-hl-${treatment}`;
     el.classList.add(...cls.split(' '));
-    // If the element itself clips its overflow (e.g. the order-layout picker
-    // cards are rounded + overflow-hidden), an OUTER ring is clipped away and
-    // never shows. Detect that and switch to the INSET ring variant so the
-    // glow stays visible inside the clip boundary.
+    // If the element clips its overflow (e.g. the order-layout picker cards are
+    // rounded + overflow-hidden), the outer outline is clipped away. Detect and
+    // switch to the INSET box-shadow variant so the ring stays visible.
     try {
       const ov = window.getComputedStyle(el);
       const clips = [ov.overflow, ov.overflowX, ov.overflowY].some(
@@ -204,12 +196,11 @@ export function useAssistantHighlight(
       );
       if (clips) el.classList.add('assistant-hl-clip');
     } catch {
-      /* getComputedStyle can throw on detached nodes — ignore, use outer ring. */
+      /* getComputedStyle can throw on detached nodes — ignore. */
     }
     // Only scroll if the control is actually off-screen. A smooth scroll while
     // the user is reaching for an already-visible control (e.g. a top-nav
-    // button) moves it mid-click, so the first click lands on empty space and
-    // they have to click again. Skip the scroll when it's already in view.
+    // button) moves it mid-click. Skip the scroll when it's already in view.
     const vr = el.getBoundingClientRect();
     const inView =
       vr.top >= 0 &&
@@ -235,7 +226,7 @@ export function useAssistantHighlight(
     window.addEventListener('resize', updateRect);
 
     const clearHighlight = () => {
-      el.classList.remove(...`assistant-hl assistant-hl-${treatment} assistant-hl-clip`.split(' '));
+      el.classList.remove('assistant-hl', `assistant-hl-${treatment}`, 'assistant-hl-clip');
       setRect(null);
     };
 
@@ -277,7 +268,7 @@ export function useAssistantHighlight(
       document.removeEventListener('click', onDocClick, { capture: true } as EventListenerOptions);
       window.removeEventListener('scroll', updateRect, true);
       window.removeEventListener('resize', updateRect);
-      el.classList.remove(...`assistant-hl assistant-hl-${treatment} assistant-hl-clip`.split(' '));
+      el.classList.remove('assistant-hl', `assistant-hl-${treatment}`, 'assistant-hl-clip');
     });
     };
 

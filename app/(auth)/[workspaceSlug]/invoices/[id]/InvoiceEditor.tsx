@@ -447,6 +447,7 @@ export function InvoiceEditor({
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
+                  data-copilot={tab === 'lines' ? 'invoice-lines-tab' : tab === 'details' ? 'invoice-details-tab' : undefined}
                   className={`flex-1 py-2.5 text-sm font-medium capitalize transition-colors ${
                     activeTab === tab
                       ? 'border-b-2 border-orange-500 text-orange-600'
@@ -468,7 +469,7 @@ export function InvoiceEditor({
                     <p className="text-xs mt-1">Add a line item to get started.</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-2" data-copilot="invoice-lines-list">
                     {lines.map((line, idx) => (
                       <div
                         key={line.localId}
@@ -719,6 +720,7 @@ export function InvoiceEditor({
                       <button
                         type="button"
                         onClick={() => setShowHeaderModal(true)}
+                        data-copilot="invoice-edit-header"
                         className="text-xs text-orange-600 hover:underline"
                       >
                         Edit
@@ -754,7 +756,7 @@ export function InvoiceEditor({
                 </div>
 
                 {/* Payment Details — editable per-invoice */}
-                <div>
+                <div data-copilot="invoice-payment-details">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment Details</p>
                     {payDirty && !isReadOnly && (
@@ -842,7 +844,7 @@ export function InvoiceEditor({
         )}
 
         {/* ── Right panel: preview ── */}
-        <div className="flex-1 overflow-y-auto bg-slate-100 p-4">
+        <div className="flex-1 overflow-y-auto bg-slate-100 p-4" data-copilot="invoice-preview">
           <InvoicePreview
             invoice={initial}
             lines={lines}

@@ -51,6 +51,9 @@ export function pathnameToScreenKey(pathname: string | null): string {
   if (/^resources\/catalogs/.test(inner)) return 'resources.catalogs';
   if (/^resources\/attachments/.test(inner)) return 'resources.attachments';
   if (/^resources/.test(inner)) return 'resources';
+  // Invoice editor (/invoices/[id]/...) vs invoice list (/invoices)
+  if (/^invoices\/[^/]+/.test(inner)) return 'invoice.editor';
+  if (/^invoices/.test(inner)) return 'invoices';
   // Legacy flat routes (kept for back-compat redirects).
   if (/^catalogs/.test(inner)) return 'resources.catalogs';
   if (/^attachments/.test(inner)) return 'resources.attachments';
