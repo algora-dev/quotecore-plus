@@ -550,9 +550,13 @@ export function AssistantWidget(_props: Props) {
                   className="relative inline-block h-4 w-7 rounded-full transition-colors"
                   style={{ backgroundColor: highlightsOn ? '#ff6b35' : '#cbd5e1' }}
                 >
+                  {/* Knob pinned with an explicit left-0.5 base (without it the
+                      knob's `left:auto` drifted right, overhanging the track).
+                      Track 28px - knob 12px - 2px each side => ON travels 12px
+                      (translate-x-3) to sit flush right; OFF stays flush left. */}
                   <span
-                    className={`absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform ${
-                      highlightsOn ? 'translate-x-3.5' : 'translate-x-0.5'
+                    className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform ${
+                      highlightsOn ? 'translate-x-3' : 'translate-x-0'
                     }`}
                   />
                 </span>
