@@ -542,10 +542,13 @@ export function AssistantWidget(_props: Props) {
                 className="ml-auto inline-flex items-center gap-2 text-xs font-medium text-slate-600"
               >
                 <span>Highlights</span>
+                {/* Track: grey when OFF, solid orange when ON. Colour is set via
+                    inline style (not an arbitrary Tailwind class) so a purge or
+                    stale CSS bundle can never mute the ON state to a default
+                    blue/grey. Knob stays white and slides left->right. */}
                 <span
-                  className={`relative inline-block h-4 w-7 rounded-full transition-colors ${
-                    highlightsOn ? 'bg-[#ff6b35]' : 'bg-slate-300'
-                  }`}
+                  className="relative inline-block h-4 w-7 rounded-full transition-colors"
+                  style={{ backgroundColor: highlightsOn ? '#ff6b35' : '#cbd5e1' }}
                 >
                   <span
                     className={`absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform ${

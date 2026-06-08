@@ -120,7 +120,10 @@ export async function signupWithCompany(input: SignupInput) {
   // Seed the canonical starter components into the new company. Non-fatal:
   // signup must still succeed if this fails - the user can always create
   // their own components manually.
-  await seedTemplateComponents(supabaseAdmin, company.id, bootstrapCollectionId);
+  // This email/password signup path does not collect a trade, so the company
+  // gets the DB default_trade ('roofing'). Seed the matching Roofing starter
+  // set. (The onboarding path passes the user-selected trade.)
+  await seedTemplateComponents(supabaseAdmin, company.id, 'roofing', bootstrapCollectionId);
 
   redirect('/login?signup=success');
 }

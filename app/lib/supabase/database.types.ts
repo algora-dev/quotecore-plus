@@ -1376,6 +1376,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          include_in_total: boolean
           invoice_id: string
           is_visible: boolean
           line_source_type: string
@@ -1396,6 +1397,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          include_in_total?: boolean
           invoice_id: string
           is_visible?: boolean
           line_source_type?: string
@@ -1416,6 +1418,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          include_in_total?: boolean
           invoice_id?: string
           is_visible?: boolean
           line_source_type?: string
@@ -4117,6 +4120,10 @@ export type Database = {
           row_index: number
           search_text: string
         }[]
+      }
+      seed_starter_components: {
+        Args: { p_collection_id: string; p_company_id: string; p_rows: Json }
+        Returns: number
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }

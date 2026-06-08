@@ -143,7 +143,7 @@ export async function completeGoogleOnboarding(formData: FormData) {
 
   // Seed canonical starter components into the new company. Non-fatal:
   // onboarding must still succeed if this fails.
-  await seedTemplateComponents(supabaseAdmin, company.id, bootstrapCollectionId);
+  await seedTemplateComponents(supabaseAdmin, company.id, defaultTrade, bootstrapCollectionId);
 
   // Skip redirect if requested (copilot intro step handles navigation)
   const skipRedirect = formData.get('skipRedirect') === 'true';

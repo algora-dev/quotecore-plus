@@ -16,6 +16,37 @@
  * uses, so a line shows e.g. "Ridge cap — 12 lm" with units on, "Ridge cap"
  * with units off.
  */
+/**
+ * Split a line into its editable {description, quantity} parts for the pencil
+ * edit form.
+ *
+ * - Catalog lines already store them separately (custom_text + quantity_text),
+ *   so we just return them as-is.
+ * - Legacy / component lines bake the quantity into the text as
+ *   "<description> - <quantity>". We split on the FIRST hyphen so the user can
+ *   edit description and quantity independently; on save the caller stores them
+ *   separately (description in text, quantity in quantity_text), after which the
+ *   hyphen is driven purely by whether a quantity exists.
+ */
+export function splitLineParts(
+  customText: string,
+  quantityText: string | null | undefined,
+): { description: string; quantity: string | null } {
+  const raw = customText ?? '';
+  // Catalog line: already split.
+  if (quantityText != null && quantityText !== '') {
+    return { description: raw, quantity: quantityText };
+  }
+  // Legacy/component line: split on the first hyphen if present.
+  const dashIndex = raw.indexOf('-');
+  if (dashIndex === -1) {
+    return { description: raw.trim(), quantity: null };
+  }
+  const description = raw.substring(0, dashIndex).trim();
+  const quantity = raw.substring(dashIndex + 1).trim();
+  return { description, quantity: quantity === '' ? null : quantity };
+}
+
 export function displayLineText(
   customText: string,
   quantityText: string | null | undefined,

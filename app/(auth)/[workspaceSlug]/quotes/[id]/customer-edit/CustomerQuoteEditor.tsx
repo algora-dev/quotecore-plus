@@ -7,6 +7,7 @@ import { QuotePreview } from './QuotePreview';
 import { AddLineModal } from './AddLineModal';
 import { EditHeaderModal } from './EditHeaderModal';
 import { EditFooterModal } from './EditFooterModal';
+import { ConfirmModal } from '@/app/components/ConfirmModal';
 import { saveCustomerQuoteLines, saveCustomerQuoteBranding } from '../../actions';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import { displayLineText } from '@/app/lib/quotes/lineText';
@@ -299,6 +300,15 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     setIsDirty(true);
   }
 
+  // Fully REMOVE a line from the quote (distinct from "hide", which only flips
+  // isVisible). Asks for confirmation via ConfirmModal since it's destructive.
+  const [removeLineId, setRemoveLineId] = useState<string | null>(null);
+  function removeLine(lineId: string) {
+    setLines(prev => prev.filter(l => l.id !== lineId).map((l, i) => ({ ...l, sortOrder: i })));
+    if (editingLineId === lineId) setEditingLineId(null);
+    setIsDirty(true);
+  }
+
   function addCustomLine(
     text: string,
     amount: number,
@@ -343,9 +353,15 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     setIsDirty(true);
   }
 
-  function updateLine(lineId: string, text: string, amount: number, showPrice: boolean) {
-    setLines(prev => prev.map(l => 
-      l.id === lineId ? { ...l, text, amount, showPrice } : l
+  function updateLine(
+    lineId: string,
+    text: string,
+    quantityText: string | null,
+    amount: number,
+    showPrice: boolean,
+  ) {
+    setLines(prev => prev.map(l =>
+      l.id === lineId ? { ...l, text, quantityText, amount, showPrice } : l
     ));
     setEditingLineId(null);
     setIsDirty(true);
@@ -595,7 +611,16 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                               </label>
                             </div>
                           </div>
-                          <div className="flex flex-col gap-0.5">
+                          <div className="flex flex-col items-center gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => setRemoveLineId(line.id)}
+                              title="Remove this line"
+                              aria-label="Remove line"
+                              className="p-0.5 text-red-400 hover:text-red-600"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
                             <button
                               onClick={() => moveUp(line.id)}
                               className="p-0.5 text-slate-400 hover:text-slate-600 disabled:opacity-30"
@@ -681,7 +706,16 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                             </label>
                           </div>
                         </div>
-                        <div className="flex flex-col gap-0.5">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => setRemoveLineId(line.id)}
+                            title="Remove this line"
+                            aria-label="Remove line"
+                            className="p-0.5 text-red-400 hover:text-red-600"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
                           <button
                             onClick={() => moveUp(line.id)}
                             className="p-0.5 text-slate-400 hover:text-slate-600 disabled:opacity-30"
@@ -992,6 +1026,19 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           onClose={() => setShowAddLine(false)}
         />
       )}
+
+      {/* Remove-line confirmation (destructive: fully deletes the line). */}
+      <ConfirmModal
+        open={removeLineId !== null}
+        title="Remove this line?"
+        description="This removes the line from the quote entirely. To keep it but hide it from the customer, use the Show toggle instead."
+        confirmLabel="Remove"
+        onCancel={() => setRemoveLineId(null)}
+        onConfirm={() => {
+          if (removeLineId) removeLine(removeLineId);
+          setRemoveLineId(null);
+        }}
+      />
     </div>
   );
 }

@@ -176,8 +176,14 @@ export function OrderLineByLineEditor({
   };
 
   // Pencil save from the preview: updates text + amount + showPrice.
-  const saveLineEdit = (id: string, text: string, amount: number, showPrice: boolean) => {
-    commit(lines.map((l) => (l.id === id ? { ...l, text, amount, showPrice } : l)));
+  const saveLineEdit = (
+    id: string,
+    text: string,
+    quantityText: string | null,
+    amount: number,
+    showPrice: boolean,
+  ) => {
+    commit(lines.map((l) => (l.id === id ? { ...l, text, quantityText, amount, showPrice } : l)));
     setEditingLineId(null);
   };
 
@@ -496,9 +502,10 @@ export function OrderLineByLineEditor({
                       <td colSpan={2} className="py-2">
                         <LineEditForm
                           initialText={line.text}
+                          initialQuantity={line.quantityText}
                           initialAmount={line.amount}
                           initialShowPrice={line.showPrice}
-                          onSave={(text, amount, showPrice) => saveLineEdit(line.id, text, amount, showPrice)}
+                          onSave={(text, quantity, amount, showPrice) => saveLineEdit(line.id, text, quantity, amount, showPrice)}
                           onCancel={() => setEditingLineId(null)}
                         />
                       </td>

@@ -3,14 +3,31 @@ import { useState } from 'react';
 
 interface Props {
   initialText: string;
+  /** Quantity portion (e.g. "12 lm"), separate from the description. Optional —
+   *  empty/blank means no quantity, which removes the description–quantity dash
+   *  in the preview entirely. */
+  initialQuantity?: string | null;
   initialAmount: number;
   initialShowPrice: boolean;
-  onSave: (text: string, amount: number, showPrice: boolean) => void;
+  onSave: (
+    text: string,
+    quantity: string | null,
+    amount: number,
+    showPrice: boolean,
+  ) => void;
   onCancel: () => void;
 }
 
-export function LineEditForm({ initialText, initialAmount, initialShowPrice, onSave, onCancel }: Props) {
+export function LineEditForm({
+  initialText,
+  initialQuantity,
+  initialAmount,
+  initialShowPrice,
+  onSave,
+  onCancel,
+}: Props) {
   const [text, setText] = useState(initialText);
+  const [quantity, setQuantity] = useState(initialQuantity ?? '');
   const [amount, setAmount] = useState(initialAmount.toString());
   const [showPrice, setShowPrice] = useState(initialShowPrice);
 
@@ -21,25 +38,43 @@ export function LineEditForm({ initialText, initialAmount, initialShowPrice, onS
       alert('Please enter valid text and amount');
       return;
     }
-    onSave(text.trim(), amountNum, showPrice);
+    // Empty quantity -> null, so the preview drops the dash between description
+    // and quantity instead of rendering a trailing "Description -".
+    const qty = quantity.trim() === '' ? null : quantity.trim();
+    onSave(text.trim(), qty, amountNum, showPrice);
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-2 p-3 bg-slate-50 rounded-full border border-slate-300">
+    <form onSubmit={handleSubmit} className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-300">
       <div>
+        <label className="block text-xs font-medium text-slate-500 mb-1">Description</label>
         <input
           type="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
           className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
-          placeholder="Line text"
+          placeholder="Line description"
           autoFocus
           required
         />
       </div>
-      
+
+      <div>
+        <label className="block text-xs font-medium text-slate-500 mb-1">
+          Quantity <span className="font-normal text-slate-400">(optional)</span>
+        </label>
+        <input
+          type="text"
+          value={quantity}
+          onChange={(e) => setQuantity(e.target.value)}
+          className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+          placeholder="e.g. 12 lm — leave blank for none"
+        />
+      </div>
+
       <div className="flex gap-2 items-center">
         <div className="flex-1">
+          <label className="block text-xs font-medium text-slate-500 mb-1">Price</label>
           <div className="flex items-center gap-1">
             <span className="text-sm text-slate-600">$</span>
             <input
@@ -53,8 +88,8 @@ export function LineEditForm({ initialText, initialAmount, initialShowPrice, onS
             />
           </div>
         </div>
-        
-        <div className="flex items-center gap-1">
+
+        <div className="flex items-center gap-1 self-end pb-1">
           <input
             type="checkbox"
             id="edit-showPrice"

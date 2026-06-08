@@ -2,7 +2,7 @@
 import type { TaxLine } from '@/app/lib/taxes/types';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import { LineEditForm } from './LineEditForm';
-import { displayLineText } from '@/app/lib/quotes/lineText';
+import { displayLineText, splitLineParts } from '@/app/lib/quotes/lineText';
 
 interface QuoteLine {
   id: string;
@@ -31,7 +31,7 @@ interface Props {
   footerText: string;
   editingLineId?: string | null;
   onEditLine?: (lineId: string) => void;
-  onSaveLine?: (lineId: string, text: string, amount: number, showPrice: boolean) => void;
+  onSaveLine?: (lineId: string, text: string, quantity: string | null, amount: number, showPrice: boolean) => void;
   onCancelEdit?: () => void;
   onEditHeader?: () => void;
   onEditFooter?: () => void;
@@ -128,10 +128,11 @@ export function QuotePreview({
             editingLineId === line.id && onSaveLine && onCancelEdit ? (
               <div key={line.id} className="py-2">
                 <LineEditForm
-                  initialText={line.text}
+                  initialText={splitLineParts(line.text, line.quantityText).description}
+                  initialQuantity={splitLineParts(line.text, line.quantityText).quantity}
                   initialAmount={line.amount}
                   initialShowPrice={line.showPrice}
-                  onSave={(text, amount, showPrice) => onSaveLine(line.id, text, amount, showPrice)}
+                  onSave={(text, quantity, amount, showPrice) => onSaveLine(line.id, text, quantity, amount, showPrice)}
                   onCancel={onCancelEdit}
                 />
               </div>

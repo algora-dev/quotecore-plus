@@ -677,6 +677,12 @@ export function QuoteBuilder({
         <div className="space-y-4" data-copilot="quote-extras-phase">
           <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
             <h3 className="font-semibold text-slate-900">Extras</h3>
+            <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+              <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>You can only add pre-saved component extras here. To add fully custom &ldquo;Extras&rdquo; lines, use the customer quote editor.</span>
+            </div>
             {extraComps.map(comp => (
               <ExpandableComponent
                 key={comp.id}
