@@ -111,6 +111,17 @@ _(empty - move items here as they pass)_
 
 ---
 
+## Pending verification (dev - #5 in-app plan upgrade/downgrade, 2026-06-08, commit `91eedde`) - STRIPE TEST MODE
+> Requires a company with an ACTIVE test-mode Stripe subscription. Use a Stripe test card (4242 4242 4242 4242). Verify on the dev preview, NOT locally (no Stripe keys in local env).
+- [ ] **Upgrade now**: as an active Starter subscriber, click a higher tier (e.g. Growth) -> confirm modal says "Upgrade" + shows the **discounted** price (e.g. $29, not MSRP $60) -> confirm -> redirected with "Plan upgraded" banner; within seconds the Current pill moves to the new tier; Stripe test dashboard shows a prorated charge.
+- [ ] **Downgrade scheduled**: as an active higher-tier subscriber, click a lower tier -> modal says "Switch ... at period end", no immediate charge -> confirm -> "Plan change scheduled" banner; Stripe shows a Subscription Schedule with the price change at period end; Current pill stays on the existing tier until the period rolls.
+- [ ] **No double-subscription**: after an upgrade, Stripe test dashboard shows ONE subscription (item swapped), not two.
+- [ ] **Price shown is the launch price** everywhere in the flow (card, confirm modal) - never the strikethrough MSRP as the charge amount.
+- [ ] **Portal still does cancel/card only**: "Manage subscription" opens the Stripe portal for cancel + card update (no longer the plan-switch path).
+- [ ] **Guards**: trying to "switch" to the current plan, or with a winding-down/canceled sub, is rejected cleanly (no Stripe call error surfaced as a crash).
+
+---
+
 ## Pending verification (dev - starter-test fixes, 2026-06-08, commit `223e189`)
 - [ ] **#1 Seed components (THE bug)**: sign up a NEW company as **Roofing** -> Components page shows the 8 Roofing starter components (not zero). Sign up another as a **generic trade** -> shows the 9 Generic starter components. (Root cause was the tier cap rolling back the seed; now seeded via cap-bypass RPC, trade-aware.)
 - [ ] **#1 Cap still enforced for users**: on a Starter/trial company, after seed, manually adding components past the limit (10) is still blocked with the limit message (seed bypass must NOT disable the user cap).
