@@ -39,7 +39,7 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
   function hrefFor(alert: Alert): string {
     if (alert.quote_id) return `/${workspaceSlug}/quotes/${alert.quote_id}/summary`;
     if (alert.invoice_id) return `/${workspaceSlug}/invoices/${alert.invoice_id}`;
-    if (alert.order_id) return `/${workspaceSlug}/material-orders/${alert.order_id}`;
+    if (alert.order_id) return `/${workspaceSlug}/material-orders/${alert.order_id}/preview`;
     return `/${workspaceSlug}/inbox`;
   }
 

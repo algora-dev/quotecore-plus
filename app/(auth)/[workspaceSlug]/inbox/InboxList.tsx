@@ -118,7 +118,7 @@ export function InboxList({ initialAlerts, workspaceSlug }: Props) {
   function openHref(a: Alert): string | null {
     if (a.quote_id) return `/${workspaceSlug}/quotes/${a.quote_id}/summary`;
     if (a.invoice_id) return `/${workspaceSlug}/invoices/${a.invoice_id}`;
-    if (a.order_id) return `/${workspaceSlug}/material-orders/${a.order_id}`;
+    if (a.order_id) return `/${workspaceSlug}/material-orders/${a.order_id}/preview`;
     return null;
   }
 
@@ -330,7 +330,7 @@ export function InboxList({ initialAlerts, workspaceSlug }: Props) {
                       )}
                       <div className="flex items-center gap-2 flex-wrap mt-3">
                         {href && (
-                          <button type="button" onClick={() => open(a)} className="rounded-full bg-black px-3 py-1 text-xs font-medium text-white transition hover:shadow-[0_0_8px_rgba(255,107,53,0.4)]">
+                          <button type="button" onClick={() => open(a)} title="Click to open the full summary page" className="rounded-full bg-black px-3 py-1 text-xs font-medium text-white transition hover:shadow-[0_0_8px_rgba(255,107,53,0.4)]">
                             Open {badge.label.toLowerCase()}
                           </button>
                         )}
@@ -339,8 +339,8 @@ export function InboxList({ initialAlerts, workspaceSlug }: Props) {
                         {folder === 'active' && (
                           href ? (
                             <>
-                              <button type="button" onClick={() => bulk('todo', [a.id])} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:bg-white">To-Do</button>
-                              <button type="button" onClick={() => bulk('archive', [a.id])} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500 hover:bg-white hover:text-emerald-600">Done</button>
+                              <button type="button" onClick={() => bulk('todo', [a.id])} title='Click to add this alert to your "To Do" list' className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:bg-white">To-Do</button>
+                              <button type="button" onClick={() => bulk('archive', [a.id])} title='Click to mark this alert "Done" and add to archive list' className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500 hover:bg-white hover:text-emerald-600">Done</button>
                             </>
                           ) : (
                             <button type="button" onClick={() => bulk('archive', [a.id])} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500 hover:bg-white">Dismiss</button>
@@ -349,7 +349,7 @@ export function InboxList({ initialAlerts, workspaceSlug }: Props) {
                         {folder === 'todo' && (
                           <>
                             <button type="button" onClick={() => bulk('active', [a.id])} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:bg-white">Move to Active</button>
-                            <button type="button" onClick={() => bulk('archive', [a.id])} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500 hover:bg-white hover:text-emerald-600">Done</button>
+                            <button type="button" onClick={() => bulk('archive', [a.id])} title='Click to mark this alert "Done" and add to archive list' className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500 hover:bg-white hover:text-emerald-600">Done</button>
                           </>
                         )}
                         {folder === 'archived' && (
