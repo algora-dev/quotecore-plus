@@ -44,7 +44,7 @@ export default async function WorkspaceLayout({
   // Load alerts for bell
   const { data: alerts } = await supabase
     .from('alerts')
-    .select('id, alert_type, title, message, is_read, created_at, quote_id')
+    .select('id, alert_type, title, message, is_read, created_at, quote_id, order_id, invoice_id')
     .eq('company_id', company.id)
     .order('created_at', { ascending: false })
     .limit(20);

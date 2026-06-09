@@ -61,7 +61,17 @@ export function InboxList({ initialAlerts, workspaceSlug }: Props) {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
+
+  function toggleExpand(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   const folderCounts = useMemo(() => {
     const c: Record<AlertStatus, number> = { active: 0, todo: 0, archived: 0 };
@@ -266,72 +276,91 @@ export function InboxList({ initialAlerts, workspaceSlug }: Props) {
               const badge = CATEGORY_BADGE[cat];
               const href = openHref(a);
               const checked = selected.has(a.id);
+              const isOpen = expanded.has(a.id);
               return (
                 <li
                   key={a.id}
-                  className={`rounded-xl border-2 bg-white p-3 transition hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] ${
+                  className={`rounded-xl border-2 bg-white transition hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] ${
                     a.is_read
                       ? 'border-slate-300'
                       : 'border-orange-300 bg-orange-50/40'
                   }`}
                 >
-                  <div className="flex items-start gap-3">
+                  {/* Collapsed row — single line. Clicking the body expands
+                      in place; we no longer navigate on row click, so a
+                      missing/broken link can never 404. */}
+                  <div className="flex items-center gap-3 px-3 py-2.5">
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggle(a.id)}
-                      className="mt-1 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                      onClick={(e) => e.stopPropagation()}
+                      className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 flex-shrink-0"
                     />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {!a.is_read && <span className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0" />}
-                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.cls}`}>{badge.label}</span>
-                        <p className="text-sm font-medium text-slate-900 truncate">{a.title}</p>
-                      </div>
-                      {a.message && (
-                        <p className="text-xs text-slate-500 mt-1 whitespace-pre-line line-clamp-3">{a.message}</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        toggleExpand(a.id);
+                        if (!a.is_read) bulk('read', [a.id]);
+                      }}
+                      className="flex flex-1 min-w-0 items-center gap-2 text-left"
+                      aria-expanded={isOpen}
+                    >
+                      {!a.is_read && <span className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0" />}
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium flex-shrink-0 ${badge.cls}`}>{badge.label}</span>
+                      <span className="text-sm font-medium text-slate-900 truncate min-w-0">{a.title}</span>
+                      <span className="ml-auto text-xs text-slate-400 flex-shrink-0">{fmt(a.created_at)}</span>
+                      <svg
+                        className={`w-4 h-4 text-slate-300 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Expanded view — full message + contextual actions.
+                      Open only renders when openHref resolves (has FK). */}
+                  {isOpen && (
+                    <div className="border-t border-slate-100 px-3 py-3 pl-10">
+                      {a.message ? (
+                        <p className="text-sm text-slate-600 whitespace-pre-line">{a.message}</p>
+                      ) : (
+                        <p className="text-sm text-slate-400 italic">No additional details.</p>
                       )}
-                      <p className="text-xs text-slate-400 mt-1">{fmt(a.created_at)}</p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                      {href && (
-                        <button type="button" onClick={() => open(a)} className="rounded-full bg-black px-3 py-1 text-xs font-medium text-white transition hover:shadow-[0_0_8px_rgba(255,107,53,0.4)]">
-                          Open
-                        </button>
-                      )}
-                      {/* Per-row quick actions, contextual to the folder.
-                          `href` null => non-actionable (pure notification):
-                          no Open, no To-Do/Done task buttons — just Read +
-                          Dismiss so it can still be cleared from Active. */}
-                      {folder === 'active' && (
-                        <>
-                          {!a.is_read && (
-                            <button type="button" onClick={() => bulk('read', [a.id])} className="text-xs text-slate-500 hover:text-slate-700">Read</button>
-                          )}
-                          {href ? (
+                      <div className="flex items-center gap-2 flex-wrap mt-3">
+                        {href && (
+                          <button type="button" onClick={() => open(a)} className="rounded-full bg-black px-3 py-1 text-xs font-medium text-white transition hover:shadow-[0_0_8px_rgba(255,107,53,0.4)]">
+                            Open {badge.label.toLowerCase()}
+                          </button>
+                        )}
+                        {/* Folder-contextual actions. Link-less alerts simply
+                            omit To-Do/Done flow and offer Dismiss. */}
+                        {folder === 'active' && (
+                          href ? (
                             <>
-                              <button type="button" onClick={() => bulk('todo', [a.id])} className="text-xs text-slate-500 hover:text-slate-700">To-Do</button>
-                              <button type="button" onClick={() => bulk('archive', [a.id])} className="text-xs text-slate-400 hover:text-emerald-600">Done</button>
+                              <button type="button" onClick={() => bulk('todo', [a.id])} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:bg-white">To-Do</button>
+                              <button type="button" onClick={() => bulk('archive', [a.id])} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500 hover:bg-white hover:text-emerald-600">Done</button>
                             </>
                           ) : (
-                            <button type="button" onClick={() => bulk('archive', [a.id])} className="text-xs text-slate-400 hover:text-slate-600">Dismiss</button>
-                          )}
-                        </>
-                      )}
-                      {folder === 'todo' && (
-                        <>
-                          <button type="button" onClick={() => bulk('active', [a.id])} className="text-xs text-slate-500 hover:text-slate-700">Active</button>
-                          <button type="button" onClick={() => bulk('archive', [a.id])} className="text-xs text-slate-400 hover:text-emerald-600">Done</button>
-                        </>
-                      )}
-                      {folder === 'archived' && (
-                        <>
-                          <button type="button" onClick={() => bulk('active', [a.id])} className="text-xs text-slate-500 hover:text-slate-700">Restore</button>
-                          <button type="button" onClick={() => bulk('delete', [a.id])} className="text-xs text-slate-400 hover:text-red-500">Delete</button>
-                        </>
-                      )}
+                            <button type="button" onClick={() => bulk('archive', [a.id])} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500 hover:bg-white">Dismiss</button>
+                          )
+                        )}
+                        {folder === 'todo' && (
+                          <>
+                            <button type="button" onClick={() => bulk('active', [a.id])} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:bg-white">Move to Active</button>
+                            <button type="button" onClick={() => bulk('archive', [a.id])} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500 hover:bg-white hover:text-emerald-600">Done</button>
+                          </>
+                        )}
+                        {folder === 'archived' && (
+                          <>
+                            <button type="button" onClick={() => bulk('active', [a.id])} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:bg-white">Restore</button>
+                            <button type="button" onClick={() => bulk('delete', [a.id])} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-red-600 hover:bg-white">Delete</button>
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </li>
               );
             })}

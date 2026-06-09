@@ -15,6 +15,8 @@ interface Alert {
   is_read: boolean | null;
   created_at: string | null;
   quote_id: string | null;
+  order_id: string | null;
+  invoice_id: string | null;
 }
 
 interface Props {
@@ -29,6 +31,17 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  // Resolve an alert to its source item. Mirrors the inbox's openHref so
+  // order/invoice alerts route correctly instead of dead-clicking. Any
+  // alert without a recognised FK falls back to the full Message Center
+  // (never a 404).
+  function hrefFor(alert: Alert): string {
+    if (alert.quote_id) return `/${workspaceSlug}/quotes/${alert.quote_id}/summary`;
+    if (alert.invoice_id) return `/${workspaceSlug}/invoices/${alert.invoice_id}`;
+    if (alert.order_id) return `/${workspaceSlug}/material-orders/${alert.order_id}`;
+    return `/${workspaceSlug}/inbox`;
+  }
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -145,10 +158,8 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
                   key={alert.id}
                   onClick={() => {
                     if (!alert.is_read) markAsRead(alert.id);
-                    if (alert.quote_id) {
-                      router.push(`/${workspaceSlug}/quotes/${alert.quote_id}/summary`);
-                      setOpen(false);
-                    }
+                    router.push(hrefFor(alert));
+                    setOpen(false);
                   }}
                   className={`w-full text-left p-3 border-b border-slate-50 hover:bg-slate-50 transition ${
                     !alert.is_read ? 'bg-orange-50/50' : ''
