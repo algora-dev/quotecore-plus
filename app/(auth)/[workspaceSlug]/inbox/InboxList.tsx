@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateNotificationPref, updateChannelMaster } from './settings-actions';
+import type { EventPref, PrefSurface } from '@/app/lib/alerts/prefs';
 
 type NotificationChannelKey = 'quotes' | 'orders' | 'invoices';
 
@@ -50,19 +51,23 @@ const NOTIFICATION_MATRIX: {
 
 /**
  * Shared toggle switch — the exact rounded-full w-11 h-6 accent pattern used
- * throughout the app. Reused for every matrix row so they look identical.
+ * throughout the app. `color` selects the ON tint: orange for the in-app
+ * surface, blue for the email surface. Reused for every matrix row + master.
  */
 function Toggle({
   checked,
   disabled,
   onChange,
   label,
+  color = 'orange',
 }: {
   checked: boolean;
   disabled?: boolean;
   onChange: () => void;
   label: string;
+  color?: 'orange' | 'blue';
 }) {
+  const onClass = color === 'blue' ? 'bg-blue-500' : 'bg-[#FF6B35]';
   return (
     <button
       type="button"
@@ -72,7 +77,7 @@ function Toggle({
       disabled={disabled}
       onClick={onChange}
       className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition ${
-        checked ? 'bg-[#FF6B35]' : 'bg-slate-300'
+        checked ? onClass : 'bg-slate-300'
       } ${disabled ? 'opacity-60' : ''}`}
     >
       <span
@@ -102,9 +107,9 @@ interface Alert {
 interface Props {
   initialAlerts: Alert[];
   workspaceSlug: string;
-  /** Resolved in-app notification matrix: { "<alert_type>": boolean } for every
-   *  known event (default ON). Each key gates the matching owner alert. */
-  initialNotificationPrefs: Record<string, boolean>;
+  /** Resolved notification matrix: { "<alert_type>": { app, email } } for every
+   *  known event. `app` gates the in-app alert, `email` gates the alert email. */
+  initialNotificationPrefs: Record<string, EventPref>;
 }
 
 type TypeFilter = 'all' | 'quotes' | 'orders' | 'invoices' | 'messages';
@@ -142,7 +147,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
   const router = useRouter();
   const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
   const [view, setView] = useState<'inbox' | 'settings'>('inbox');
-  const [prefs, setPrefs] = useState<Record<string, boolean>>(initialNotificationPrefs);
+  const [prefs, setPrefs] = useState<Record<string, EventPref>>(initialNotificationPrefs);
   const [savingPref, setSavingPref] = useState(false);
   const [folder, setFolder] = useState<AlertStatus>('active');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
@@ -257,36 +262,45 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
   const sel = Array.from(selected);
   const selInVisible = sel.filter((id) => visible.some((a) => a.id === id));
 
-  // Master is ON if ANY child in the channel is on. Toggling master sets all
-  // children to the target value (master OFF -> all off; master ON -> all on).
-  function channelMasterOn(channelKey: NotificationChannelKey): boolean {
-    const ch = NOTIFICATION_MATRIX.find((c) => c.key === channelKey);
-    if (!ch) return false;
-    return ch.events.some((e) => prefs[e.key] ?? true);
+  function eventOn(eventKey: string, surface: PrefSurface): boolean {
+    const p = prefs[eventKey];
+    if (!p) return surface === 'app'; // app defaults ON, email handled by resolver
+    return p[surface];
   }
 
-  async function toggleEvent(eventKey: string) {
-    const next = !(prefs[eventKey] ?? true);
+  // A surface master is ON if ANY child in the channel has that surface on.
+  // Toggling sets every child's that-surface to the opposite of the master.
+  function channelMasterOn(channelKey: NotificationChannelKey, surface: PrefSurface): boolean {
+    const ch = NOTIFICATION_MATRIX.find((c) => c.key === channelKey);
+    if (!ch) return false;
+    return ch.events.some((e) => eventOn(e.key, surface));
+  }
+
+  async function toggleEvent(eventKey: string, surface: PrefSurface) {
+    const next = !eventOn(eventKey, surface);
     const prev = prefs;
-    setPrefs((p) => ({ ...p, [eventKey]: next })); // optimistic
+    setPrefs((p) => ({
+      ...p,
+      [eventKey]: { ...p[eventKey], [surface]: next },
+    })); // optimistic
     setSavingPref(true);
-    const res = await updateNotificationPref(eventKey, next).catch(() => null);
+    const res = await updateNotificationPref(eventKey, surface, next).catch(() => null);
     if (!res || !res.ok) setPrefs(prev); // rollback
     setSavingPref(false);
   }
 
-  async function toggleMaster(channelKey: NotificationChannelKey) {
+  async function toggleMaster(channelKey: NotificationChannelKey, surface: PrefSurface) {
     const ch = NOTIFICATION_MATRIX.find((c) => c.key === channelKey);
     if (!ch) return;
-    const next = !channelMasterOn(channelKey); // bulk-set all children
+    const next = !channelMasterOn(channelKey, surface); // bulk-set all children
     const prev = prefs;
     setPrefs((p) => {
       const copy = { ...p };
-      for (const e of ch.events) copy[e.key] = next;
+      for (const e of ch.events) copy[e.key] = { ...copy[e.key], [surface]: next };
       return copy;
     });
     setSavingPref(true);
-    const res = await updateChannelMaster(channelKey, next).catch(() => null);
+    const res = await updateChannelMaster(channelKey, surface, next).catch(() => null);
     if (!res || !res.ok) setPrefs(prev); // rollback
     setSavingPref(false);
   }
@@ -320,50 +334,81 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
           <div>
             <h2 className="text-sm font-semibold text-slate-900">Notifications</h2>
             <p className="text-xs text-slate-500 mt-1">
-              Choose which alerts the Message Center creates. ON = notify me. Each
-              channel’s master toggle switches all of its events at once. The
-              underlying status (Read, Accepted, Paid…) always updates either way —
-              these toggles only control the in-app alert.
+              Email + in-app alerts are configured per event below. The{' '}
+              <span className="font-medium text-[#FF6B35]">In-app</span> column
+              controls the Message Center alert; the{' '}
+              <span className="font-medium text-blue-500">Email</span> column
+              controls whether your team is emailed too. The underlying status
+              (Read, Accepted, Disputed…) always updates either way — these
+              toggles only control notifications.
             </p>
           </div>
 
           {NOTIFICATION_MATRIX.map((channel) => {
-            const masterOn = channelMasterOn(channel.key);
+            const appMasterOn = channelMasterOn(channel.key, 'app');
+            const emailMasterOn = channelMasterOn(channel.key, 'email');
             return (
               <div
                 key={channel.key}
                 className="rounded-xl border border-slate-200 bg-white overflow-hidden"
               >
-                {/* Channel header row + MASTER toggle */}
+                {/* Channel header row + per-surface MASTER toggles + column labels */}
                 <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-slate-100 bg-slate-50/60">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-slate-900">{channel.label}</p>
                     <p className="text-xs text-slate-500 mt-0.5">All {channel.label} alerts</p>
                   </div>
-                  <Toggle
-                    checked={masterOn}
-                    disabled={savingPref}
-                    onChange={() => toggleMaster(channel.key)}
-                    label={`All ${channel.label} alerts`}
-                  />
+                  <div className="flex items-end gap-6">
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-[11px] font-medium uppercase tracking-wide text-[#FF6B35]">In-app</span>
+                      <Toggle
+                        color="orange"
+                        checked={appMasterOn}
+                        disabled={savingPref}
+                        onChange={() => toggleMaster(channel.key, 'app')}
+                        label={`All ${channel.label} in-app alerts`}
+                      />
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-[11px] font-medium uppercase tracking-wide text-blue-500">Email</span>
+                      <Toggle
+                        color="blue"
+                        checked={emailMasterOn}
+                        disabled={savingPref}
+                        onChange={() => toggleMaster(channel.key, 'email')}
+                        label={`All ${channel.label} emails`}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                {/* Per-event child rows. Greyed + disabled when master is off. */}
-                <div className={`divide-y divide-slate-100 ${masterOn ? '' : 'opacity-50'}`}>
+                {/* Per-event child rows: two toggles each (in-app + email). */}
+                <div className="divide-y divide-slate-100">
                   {channel.events.map((event) => {
-                    const on = prefs[event.key] ?? true;
+                    const appOn = eventOn(event.key, 'app');
+                    const emailOn = eventOn(event.key, 'email');
                     return (
                       <div
                         key={event.key}
                         className="flex items-center justify-between gap-4 px-4 py-2.5 hover:bg-orange-50/40 transition"
                       >
                         <p className="text-sm text-slate-700">{event.label}</p>
-                        <Toggle
-                          checked={on}
-                          disabled={savingPref || !masterOn}
-                          onChange={() => toggleEvent(event.key)}
-                          label={`${channel.label} – ${event.label}`}
-                        />
+                        <div className="flex items-center gap-6">
+                          <Toggle
+                            color="orange"
+                            checked={appOn}
+                            disabled={savingPref}
+                            onChange={() => toggleEvent(event.key, 'app')}
+                            label={`${channel.label} – ${event.label} – in-app`}
+                          />
+                          <Toggle
+                            color="blue"
+                            checked={emailOn}
+                            disabled={savingPref}
+                            onChange={() => toggleEvent(event.key, 'email')}
+                            label={`${channel.label} – ${event.label} – email`}
+                          />
+                        </div>
                       </div>
                     );
                   })}
@@ -371,17 +416,6 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
               </div>
             );
           })}
-
-          <p className="text-xs text-slate-400">
-            Want email copies of these alerts too? Manage that in{' '}
-            <a
-              href={`/${workspaceSlug}/settings`}
-              className="text-orange-600 hover:underline"
-            >
-              Account → Notifications
-            </a>
-            .
-          </p>
         </div>
       ) : (
     <div className="flex gap-5">

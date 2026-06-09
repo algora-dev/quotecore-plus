@@ -8,7 +8,6 @@ import { CompanySettingsForm } from '@/app/(auth)/[workspaceSlug]/settings/Compa
 import { PasswordSection } from '@/app/(auth)/[workspaceSlug]/settings/PasswordSection';
 import { MfaSection, RecoveryCodesPanel } from '@/app/(auth)/[workspaceSlug]/settings/MfaSection';
 import { SecurityQuestionsSection } from '@/app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection';
-import { NotificationsSection } from '@/app/(auth)/[workspaceSlug]/settings/NotificationsSection';
 import { AssistantSection } from '@/app/(auth)/[workspaceSlug]/settings/AssistantSection';
 import { SupportSection } from './support/SupportSection';
 
@@ -195,16 +194,10 @@ export default async function AccountPage() {
       <section className="space-y-6">
         <div>
           <h2 className="text-xl font-semibold text-slate-900">Notifications</h2>
-          <p className="text-sm text-slate-500 mt-1">Decide which app alerts also reach your inbox.</p>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4" data-copilot="account-notifications">
-          <div>
-            <h3 className="text-base font-semibold text-slate-900">Email alerts</h3>
-          </div>
-          <NotificationsSection
-            initialEnabled={user?.email_notifications_enabled ?? true}
-            userEmail={userEmail}
-          />
+          <p className="text-sm text-slate-500 mt-1">
+            Email + in-app alerts are now configured per event in the Message
+            Center. Open the inbox and choose the Settings tab to manage them.
+          </p>
         </div>
         <div>
           <h3 className="text-base font-semibold text-slate-900">Chat Assistant</h3>

@@ -1,7 +1,7 @@
 'use server';
 import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
-import { alertEnabled } from '@/app/lib/alerts/prefs';
+import { alertEnabled, emailAlertEnabled } from '@/app/lib/alerts/prefs';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import {
   notifyQuoteResponse,
@@ -178,15 +178,17 @@ export async function submitRevisionRequest(
   // source of truth. We MUST await here, not fire-and-forget: Vercel
   // serverless functions terminate the moment the handler returns, killing
   // any in-flight Promise.
-  await notifyRevisionRequested({
-    companyId: quote.company_id,
-    quoteId: quote.id,
-    quoteNumber: quote.quote_number ?? null,
-    creatorUserId: (quote as { created_by_user_id?: string | null }).created_by_user_id ?? null,
-    customerNameForEmail: cleanName || quote.customer_name || null,
-    notes: trimmedNotes,
-    sourceState,
-  });
+  if (await emailAlertEnabled(supabase, quote.company_id, 'revision_requested')) {
+    await notifyRevisionRequested({
+      companyId: quote.company_id,
+      quoteId: quote.id,
+      quoteNumber: quote.quote_number ?? null,
+      creatorUserId: (quote as { created_by_user_id?: string | null }).created_by_user_id ?? null,
+      customerNameForEmail: cleanName || quote.customer_name || null,
+      notes: trimmedNotes,
+      sourceState,
+    });
+  }
 
   return { success: true };
 }
@@ -373,11 +375,13 @@ export async function respondToQuote(token: string, action: 'accept' | 'decline'
   // functions terminate the moment the handler returns, killing any
   // in-flight Promise. (That bug caused decline emails to silently drop
   // because the client state-change resolved faster than Resend.)
-  await notifyQuoteResponse({
-    companyId: quote.company_id,
-    quoteId: quote.id,
-    quoteNumber: quote.quote_number ?? null,
-    customerName: quote.customer_name ?? null,
-    isAccept,
-  });
+  if (await emailAlertEnabled(supabase, quote.company_id, isAccept ? 'quote_accepted' : 'quote_declined')) {
+    await notifyQuoteResponse({
+      companyId: quote.company_id,
+      quoteId: quote.id,
+      quoteNumber: quote.quote_number ?? null,
+      customerName: quote.customer_name ?? null,
+      isAccept,
+    });
+  }
 }

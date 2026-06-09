@@ -1,7 +1,9 @@
 'use server';
 
 import { createAdminClient } from '@/app/lib/supabase/admin';
-import { alertEnabled } from '@/app/lib/alerts/prefs';
+import { alertEnabled, emailAlertEnabled } from '@/app/lib/alerts/prefs';
+import { notifyGenericAlert } from '@/app/lib/email/notify';
+import { quoteSummaryUrl, orderPreviewUrl, invoiceDetailUrl } from '@/app/lib/email/urls';
 
 /**
  * Recipient-view stamping (Message Center Phase 3).
@@ -59,13 +61,28 @@ export async function stampQuoteViewed(token: string): Promise<void> {
     .eq('id', quote.id)
     .is('viewed_at', null); // guard against double-stamp race
 
+  const qTitle = `Quote #${quote.quote_number ?? 'DRAFT'} opened`;
+  const qBody = `${quote.customer_name ?? 'The recipient'} has opened Quote #${quote.quote_number ?? 'DRAFT'}.`;
   if (await alertEnabled(admin, quote.company_id, 'quote_viewed')) {
     await admin.from('alerts').insert({
       company_id: quote.company_id,
       quote_id: quote.id,
       alert_type: 'quote_viewed',
-      title: `Quote #${quote.quote_number ?? 'DRAFT'} opened`,
-      message: `${quote.customer_name ?? 'The recipient'} has opened Quote #${quote.quote_number ?? 'DRAFT'}.`,
+      title: qTitle,
+      message: qBody,
+    });
+  }
+  // Best-effort Read email, gated independently (default OFF).
+  if (await emailAlertEnabled(admin, quote.company_id, 'quote_viewed')) {
+    const { data: company } = await admin
+      .from('companies').select('slug').eq('id', quote.company_id).maybeSingle();
+    await notifyGenericAlert({
+      companyId: quote.company_id,
+      alertType: 'quote_viewed',
+      title: qTitle,
+      body: qBody,
+      ctaUrl: company?.slug ? quoteSummaryUrl(company.slug, quote.id) : null,
+      ctaLabel: 'View quote',
     });
   }
 }
@@ -94,13 +111,28 @@ export async function stampOrderViewed(token: string): Promise<void> {
     .eq('id', order.id)
     .is('viewed_at', null);
 
+  const oTitle = `Order ${order.order_number} opened`;
+  const oBody = `${order.to_supplier || 'The supplier'} has opened order ${order.order_number}.`;
   if (await alertEnabled(admin, order.company_id, 'order_viewed')) {
     await admin.from('alerts').insert({
       company_id: order.company_id,
       order_id: order.id,
       alert_type: 'order_viewed',
-      title: `Order ${order.order_number} opened`,
-      message: `${order.to_supplier || 'The supplier'} has opened order ${order.order_number}.`,
+      title: oTitle,
+      message: oBody,
+    });
+  }
+  // Best-effort Read email, gated independently (default OFF).
+  if (await emailAlertEnabled(admin, order.company_id, 'order_viewed')) {
+    const { data: company } = await admin
+      .from('companies').select('slug').eq('id', order.company_id).maybeSingle();
+    await notifyGenericAlert({
+      companyId: order.company_id,
+      alertType: 'order_viewed',
+      title: oTitle,
+      body: oBody,
+      ctaUrl: company?.slug ? orderPreviewUrl(company.slug, order.id) : null,
+      ctaLabel: 'View order',
     });
   }
 }
@@ -144,13 +176,27 @@ export async function stampInvoiceViewed(token: string): Promise<void> {
     metadata: { source: 'recipient_open' },
   });
 
+  const iBody = `${invoice.customer_name} has opened invoice ${invoice.invoice_number}.`;
   if (await alertEnabled(admin, invoice.company_id, 'invoice_viewed')) {
     await admin.from('alerts').insert({
       company_id: invoice.company_id,
       invoice_id: invoice.id,
       alert_type: 'invoice_viewed',
       title: 'Invoice Viewed',
-      message: `${invoice.customer_name} has opened invoice ${invoice.invoice_number}.`,
+      message: iBody,
+    });
+  }
+  // Best-effort Read email, gated independently (default OFF).
+  if (await emailAlertEnabled(admin, invoice.company_id, 'invoice_viewed')) {
+    const { data: company } = await admin
+      .from('companies').select('slug').eq('id', invoice.company_id).maybeSingle();
+    await notifyGenericAlert({
+      companyId: invoice.company_id,
+      alertType: 'invoice_viewed',
+      title: 'Invoice Viewed',
+      body: iBody,
+      ctaUrl: company?.slug ? invoiceDetailUrl(company.slug, invoice.id) : null,
+      ctaLabel: 'View invoice',
     });
   }
 }

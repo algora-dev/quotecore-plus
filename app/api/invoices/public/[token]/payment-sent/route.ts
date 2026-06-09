@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
-import { alertEnabled } from '@/app/lib/alerts/prefs';
+import { alertEnabled, emailAlertEnabled } from '@/app/lib/alerts/prefs';
+import { notifyGenericAlert } from '@/app/lib/email/notify';
+import { invoiceDetailUrl } from '@/app/lib/email/urls';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { headers } from 'next/headers';
 
@@ -57,13 +59,33 @@ export async function POST(
 
   // Alert account owner. Status update + activity log above always happen;
   // this alert is gated by the Message Center notification matrix.
+  const alertMessage = `${invoice.customer_name} has reported payment for invoice ${invoice.invoice_number}. Please check your bank and confirm receipt.${customerMessage ? ` Note: "${customerMessage}"` : ''}`;
   if (await alertEnabled(admin, invoice.company_id, 'invoice_payment_reported')) {
     await admin.from('alerts').insert({
       company_id: invoice.company_id,
       invoice_id: invoice.id,
       alert_type: 'invoice_payment_reported',
       title: 'Payment Reported',
-      message: `${invoice.customer_name} has reported payment for invoice ${invoice.invoice_number}. Please check your bank and confirm receipt.${customerMessage ? ` Note: "${customerMessage}"` : ''}`,
+      message: alertMessage,
+    });
+  }
+
+  // Best-effort alert email, gated independently (default OFF for this event).
+  if (await emailAlertEnabled(admin, invoice.company_id, 'invoice_payment_reported')) {
+    let ctaUrl: string | null = null;
+    const { data: company } = await admin
+      .from('companies')
+      .select('slug')
+      .eq('id', invoice.company_id)
+      .maybeSingle();
+    if (company?.slug) ctaUrl = invoiceDetailUrl(company.slug, invoice.id);
+    await notifyGenericAlert({
+      companyId: invoice.company_id,
+      alertType: 'invoice_payment_reported',
+      title: 'Payment Reported',
+      body: alertMessage,
+      ctaUrl,
+      ctaLabel: 'View invoice',
     });
   }
 

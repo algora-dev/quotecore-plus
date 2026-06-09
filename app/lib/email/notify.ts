@@ -19,6 +19,7 @@ import {
   quoteAcceptedEmail,
   quoteDeclinedEmail,
   revisionRequestedEmail,
+  genericAlertEmail,
 } from './templates/alerts';
 import {
   recoveryCodeUsedEmail,
@@ -123,6 +124,52 @@ export async function notifyRevisionRequested(input: {
     );
   } catch (err) {
     console.error('[email] notifyRevisionRequested failed:', err);
+  }
+}
+
+/**
+ * Generic alert email — the reusable path for order / invoice / read-receipt
+ * events that don't warrant a bespoke template. Sends one branded email to
+ * every company alert recipient. Best-effort: swallows all errors so it can
+ * never block the status update / response that triggered it.
+ *
+ * GATING IS THE CALLER'S JOB: check `emailAlertEnabled(client, companyId,
+ * alertType)` before calling this. We only tag the email with the alertType.
+ */
+export async function notifyGenericAlert(input: {
+  companyId: string;
+  alertType: string;
+  title: string;
+  body: string;
+  ctaUrl?: string | null;
+  ctaLabel?: string;
+}): Promise<void> {
+  try {
+    const recipients = await getCompanyAlertRecipients(input.companyId);
+    if (recipients.length === 0) return;
+    await Promise.all(
+      recipients.map((r) => {
+        const { subject, html, text } = genericAlertEmail({
+          recipientName: r.fullName,
+          title: input.title,
+          body: input.body,
+          ctaUrl: input.ctaUrl ?? null,
+          ctaLabel: input.ctaLabel,
+        });
+        return sendEmail({
+          to: r.email,
+          subject,
+          html,
+          text,
+          tags: [
+            { name: 'category', value: 'alert' },
+            { name: 'event', value: input.alertType },
+          ],
+        });
+      })
+    );
+  } catch (err) {
+    console.error(`[email] notifyGenericAlert (${input.alertType}) failed:`, err);
   }
 }
 

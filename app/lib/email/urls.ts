@@ -25,6 +25,16 @@ export function quoteSummaryUrl(workspaceSlug: string, quoteId: string): string 
   return `${getSiteUrl()}/${encodeURIComponent(workspaceSlug)}/quotes/${encodeURIComponent(quoteId)}/summary`;
 }
 
+/** Builds a fully qualified URL to the internal order preview page. */
+export function orderPreviewUrl(workspaceSlug: string, orderId: string): string {
+  return `${getSiteUrl()}/${encodeURIComponent(workspaceSlug)}/material-orders/${encodeURIComponent(orderId)}/preview`;
+}
+
+/** Builds a fully qualified URL to the internal invoice detail page. */
+export function invoiceDetailUrl(workspaceSlug: string, invoiceId: string): string {
+  return `${getSiteUrl()}/${encodeURIComponent(workspaceSlug)}/invoices/${encodeURIComponent(invoiceId)}`;
+}
+
 /** Builds the URL the user clicks from a security email to start a password reset. */
 export function passwordResetStartUrl(): string {
   // Send them to login page; they can use "Forgot password?" from there.

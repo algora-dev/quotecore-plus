@@ -2,8 +2,10 @@
 
 import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
-import { alertEnabled } from '@/app/lib/alerts/prefs';
+import { alertEnabled, emailAlertEnabled } from '@/app/lib/alerts/prefs';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
+import { notifyGenericAlert } from '@/app/lib/email/notify';
+import { orderPreviewUrl } from '@/app/lib/email/urls';
 
 export interface SubmitOrderResponseInput {
   token: string;
@@ -135,6 +137,26 @@ export async function submitOrderResponse(
       title: alertTitle,
       message: alertBody,
       order_id: order.id,
+    });
+  }
+
+  // Best-effort alert email, gated independently by the company email pref.
+  // The response row + lifecycle stamps above always happen regardless.
+  if (await emailAlertEnabled(supabase, order.company_id, alertType)) {
+    let ctaUrl: string | null = null;
+    const { data: company } = await supabase
+      .from('companies')
+      .select('slug')
+      .eq('id', order.company_id)
+      .maybeSingle();
+    if (company?.slug) ctaUrl = orderPreviewUrl(company.slug, order.id);
+    await notifyGenericAlert({
+      companyId: order.company_id,
+      alertType,
+      title: alertTitle,
+      body: alertBody,
+      ctaUrl,
+      ctaLabel: 'View order',
     });
   }
 

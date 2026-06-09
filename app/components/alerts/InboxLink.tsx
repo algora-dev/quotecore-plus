@@ -9,8 +9,9 @@ interface Props {
 /**
  * Envelope icon in the top nav that opens the Message Center (/inbox).
  * Deliberately does NOT show an unread count — that's the bell's job (quick
- * recent alerts). This is just a clean, always-orange envelope with a hover
- * effect and a tooltip. Heroicons outline envelope, 24x24.
+ * recent alerts). Clean black envelope by default; on hover it goes orange
+ * with a glow + slight enlarge (matches the bell's hover treatment).
+ * Heroicons outline envelope, 24x24.
  */
 export function InboxLink({ workspaceSlug }: Props) {
   return (
@@ -24,7 +25,7 @@ export function InboxLink({ workspaceSlug }: Props) {
       className="group inline-flex items-center justify-center rounded-full p-2 transition-all hover:bg-orange-50 hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]"
     >
       <svg
-        className="w-5 h-5 text-orange-500 transition-transform group-hover:scale-110"
+        className="w-5 h-5 text-slate-900 transition-all group-hover:text-orange-500 group-hover:scale-110"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
