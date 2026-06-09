@@ -112,6 +112,7 @@ _(empty - move items here as they pass)_
 ---
 
 ## Pending verification (dev - #5 in-app plan upgrade/downgrade, 2026-06-08, commit `91eedde`) - STRIPE TEST MODE
+- [ ] **Message Center alert rows (expand-in-place)** (2026-06-09, `145cb8a`): collapsed rows are single-line; clicking a row expands it (full message) + marks read; `Open <type>` button only inside the expanded view and deep-links to the right quote/order/invoice (no 404); link-less alerts show Dismiss only. Bell dropdown: clicking an order/invoice alert opens the correct item (not a quote 404); alert with no FK falls back to `/inbox`.
 > Requires a company with an ACTIVE test-mode Stripe subscription. Use a Stripe test card (4242 4242 4242 4242). Verify on the dev preview, NOT locally (no Stripe keys in local env).
 - [ ] **Upgrade now**: as an active Starter subscriber, click a higher tier (e.g. Growth) -> confirm modal says "Upgrade" + shows the **discounted** price (e.g. $29, not MSRP $60) -> confirm -> redirected with "Plan upgraded" banner; within seconds the Current pill moves to the new tier; Stripe test dashboard shows a prorated charge.
 - [ ] **Downgrade scheduled**: as an active higher-tier subscriber, click a lower tier -> modal says "Switch ... at period end", no immediate charge -> confirm -> "Plan change scheduled" banner; Stripe shows a Subscription Schedule with the price change at period end; Current pill stays on the existing tier until the period rolls.
