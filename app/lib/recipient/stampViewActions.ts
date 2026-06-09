@@ -134,15 +134,19 @@ export async function stampInvoiceViewed(token: string): Promise<void> {
     .maybeSingle();
 
   if (!invoice) return;
-  // Only flip on the first open while still 'sent'. Idempotent thereafter.
-  if (invoice.status !== 'sent') return;
+  // Flip to 'viewed' on the first genuine open from EITHER 'draft' or 'sent'.
+  // We accept 'draft' too because an owner may share the public link himself
+  // (markInvoiceSentByLink flips draft->sent, but if the recipient opens the
+  // link before any send-stamp fires the invoice can still be 'draft'). This
+  // makes Read robust in that exact scenario. Idempotent once viewed/beyond.
+  if (invoice.status !== 'sent' && invoice.status !== 'draft') return;
 
   const now = new Date().toISOString();
   await admin
     .from('invoices')
     .update({ status: 'viewed', viewed_at: now })
     .eq('id', invoice.id)
-    .eq('status', 'sent'); // guard against double-stamp race
+    .in('status', ['sent', 'draft']); // guard against double-stamp race
 
   // Activity log is independent of the alert preference.
   await admin.from('invoice_activity').insert({

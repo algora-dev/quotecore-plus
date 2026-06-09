@@ -354,7 +354,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
   return (
     <>
       {/* Toolbar */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3">
         <div className="relative flex-1 max-w-sm">
           <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -425,54 +425,79 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
           )}
         </div>
       ) : (
-        <div className="grid gap-1">
-          {filtered.map((inv) => (
-            <Link
-              key={inv.id}
-              href={`/${workspaceSlug}/invoices/${inv.id}`}
-              className="grid sm:grid-cols-[1fr_160px_120px_40px] gap-4 items-center rounded-xl border bg-white px-4 py-3 hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group border-slate-200"
-            >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-orange-600 text-sm">{inv.invoice_number}</span>
+        <div>
+          {/* Column headers — mirrors Quotes/Orders list header styling. Status
+              sits in its own column immediately before Last Activity. The grid
+              template MUST match the rows below so columns line up. */}
+          <div className="hidden sm:grid grid-cols-[1fr_1fr_140px_140px_120px_40px] gap-4 px-4 pb-2 text-xs font-medium text-slate-400 uppercase tracking-wide items-center">
+            <span>Invoice Number</span>
+            <span>Client / Job</span>
+            <span className="text-right">Value</span>
+            <span>Status</span>
+            <span>Last Activity</span>
+            <span></span>
+          </div>
+
+          <div className="grid gap-1">
+            {filtered.map((inv) => (
+              <Link
+                key={inv.id}
+                href={`/${workspaceSlug}/invoices/${inv.id}`}
+                className="grid sm:grid-cols-[1fr_1fr_140px_140px_120px_40px] gap-4 items-center rounded-xl border bg-white px-4 py-3 hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group border-slate-200"
+              >
+                {/* Invoice Number */}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-orange-600 text-sm">{inv.invoice_number}</span>
+                    {isOverdue(inv) && (
+                      <span className="text-xs text-red-600 font-medium">Overdue</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString('en-GB') : '—'}
+                  </p>
+                </div>
+
+                {/* Client / Job */}
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-slate-900 truncate">{inv.customer_name}</p>
+                  {inv.customer_email && <p className="text-xs text-slate-400 truncate">{inv.customer_email}</p>}
+                </div>
+
+                {/* Value */}
+                <div className="hidden sm:block text-right">
+                  <p className="text-sm font-semibold text-slate-900">
+                    {formatCurrency(inv.total ?? 0, inv.currency ?? 'GBP')}
+                  </p>
+                </div>
+
+                {/* Status — owner dropdown + recipient badge, beside Last Activity */}
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <InvoiceStatusDropdown invoiceId={inv.id} currentStatus={inv.status} />
                   <RecipientStatusBadge status={invoiceRecipientStatus(inv)} />
-                  {isOverdue(inv) && (
-                    <span className="text-xs text-red-600 font-medium">Overdue</span>
+                </div>
+
+                {/* Last Activity */}
+                <div className="hidden md:block">
+                  <p className="text-xs text-slate-400">{timeAgo(inv.updated_at)}</p>
+                  {inv.due_date && (
+                    <p className={`text-xs mt-0.5 ${isOverdue(inv) ? 'text-red-500 font-medium' : 'text-slate-400'}`}>
+                      Due {new Date(inv.due_date).toLocaleDateString('en-GB')}
+                    </p>
                   )}
                 </div>
-                <p className="text-sm font-medium text-slate-900 truncate mt-0.5">{inv.customer_name}</p>
-                {inv.customer_email && <p className="text-xs text-slate-400 truncate">{inv.customer_email}</p>}
-              </div>
 
-              <div className="hidden sm:block text-right">
-                <p className="text-sm font-semibold text-slate-900">
-                  {formatCurrency(inv.total ?? 0, inv.currency ?? 'GBP')}
-                </p>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString('en-GB') : '—'}
-                </p>
-              </div>
-
-              <div className="hidden md:block text-right">
-                <p className="text-xs text-slate-400">{timeAgo(inv.updated_at)}</p>
-                {inv.due_date && (
-                  <p className={`text-xs mt-0.5 ${isOverdue(inv) ? 'text-red-500 font-medium' : 'text-slate-400'}`}>
-                    Due {new Date(inv.due_date).toLocaleDateString('en-GB')}
-                  </p>
-                )}
-              </div>
-
-              {/* stopPropagation (not preventDefault) so inner links still navigate */}
-              <div onClick={(e) => e.stopPropagation()}>
-                <InvoiceRowMenu
-                  invoice={inv}
-                  workspaceSlug={workspaceSlug}
-                  onDeleted={handleDeleted}
-                />
-              </div>
-            </Link>
-          ))}
+                {/* stopPropagation (not preventDefault) so inner links still navigate */}
+                <div onClick={(e) => e.stopPropagation()} className="flex justify-end">
+                  <InvoiceRowMenu
+                    invoice={inv}
+                    workspaceSlug={workspaceSlug}
+                    onDeleted={handleDeleted}
+                  />
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       )}
 

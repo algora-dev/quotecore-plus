@@ -507,6 +507,64 @@ export async function updateInvoiceStatus(invoiceId: string, status: string) {
   revalidatePath(`/[workspaceSlug]/invoices`);
 }
 
+// ── Mark invoice sent by shared link (owner copies/opens public link) ───────
+
+/**
+ * Treat generating/opening the public "Customer View" link as the send event
+ * for a DRAFT invoice. The owner often skips QuoteCore+ email and shares the
+ * public link himself; without this the invoice stays 'draft'/"Unsent" and
+ * (because Read gates on status) the recipient open never stamped either.
+ *
+ * Idempotent: no-op unless status === 'draft'. Mirrors the email send path's
+ * status flip + activity log + owner alert, but sends NO email.
+ */
+export async function markInvoiceSentByLink(invoiceId: string): Promise<void> {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+  const admin = createAdminClient();
+
+  // Ownership check scoped to caller's company.
+  const { data: invoice } = await supabase
+    .from('invoices')
+    .select('id, invoice_number, status')
+    .eq('id', invoiceId)
+    .eq('company_id', profile.company_id)
+    .maybeSingle();
+
+  // Not found / not owned, or already past draft -> idempotent no-op.
+  if (!invoice || invoice.status !== 'draft') return;
+
+  const now = new Date().toISOString();
+
+  // Race-guarded flip: only stamps while still draft.
+  await supabase
+    .from('invoices')
+    .update({ status: 'sent', sent_at: now, updated_at: now })
+    .eq('id', invoice.id)
+    .eq('company_id', profile.company_id)
+    .eq('status', 'draft');
+
+  // Log invoice activity (source distinguishes from email send).
+  await admin.from('invoice_activity').insert({
+    invoice_id: invoice.id,
+    company_id: profile.company_id,
+    event_type: 'sent',
+    metadata: { source: 'link_shared', sent_by_user_id: profile.id },
+  });
+
+  // Same owner alert as the email path.
+  await admin.from('alerts').insert({
+    company_id: profile.company_id,
+    invoice_id: invoice.id,
+    alert_type: 'invoice_sent',
+    title: 'Invoice Sent',
+    message: `Invoice ${invoice.invoice_number} was shared via its public link.`,
+  });
+
+  revalidatePath(`/[workspaceSlug]/invoices/${invoiceId}`);
+  revalidatePath(`/[workspaceSlug]/invoices`);
+}
+
 // ── Delete invoice (draft only) ────────────────────────────────────────────
 
 export async function deleteInvoice(invoiceId: string) {

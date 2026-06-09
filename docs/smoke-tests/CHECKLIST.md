@@ -111,6 +111,9 @@ _(empty - move items here as they pass)_
 
 ---
 
+## Pending verification (dev - invoice share-link send + Read robustness + list layout, 2026-06-09)
+  - [ ] **Invoice share-link = Sent, Read activates, list layout** (2026-06-09): on a DRAFT invoice click **Customer View** in the editor -> status flips to **Sent** + an "Invoice Sent" alert is created (no email); recipient opens public `/invoice/<token>` -> status flips to **Viewed/Read** (+ Read alert if Notify-on-view ON) -> dispute -> **Action Required**. Invoices list now has column headers **Invoice Number | Client/Job | Value | Status | Last Activity** (Status in its own column beside Last Activity), **New Invoice** button on the right, header columns line up with rows.
+
 ## Pending verification (dev - #5 in-app plan upgrade/downgrade, 2026-06-08, commit `91eedde`) - STRIPE TEST MODE
 - [ ] **Message Center Phase 3+4 (recipient statuses + breadcrumb + inbox settings)** (2026-06-09): open an item from the inbox/bell -> destination "Back" returns to `/inbox` (`?from=inbox`); recipient opening a quote/order/invoice public link stamps **Read** in that list's Status column (server-action POST, not a GET); a dispute (invoice) or change/info request (order) or pending revision (quote) shows **Action Required** (NOT "Action Needed"); Invoices list Status is now the same dropdown as Orders/Quotes; inbox **Settings** tab toggles "Notify me when recipients open (Read)" (status updates regardless; toggle only gates the Read alert).
 - [ ] **Message Center alert rows (expand-in-place)** (2026-06-09, `145cb8a`): collapsed rows are single-line; clicking a row expands it (full message) + marks read; `Open <type>` button only inside the expanded view and deep-links to the right quote/order/invoice (no 404); link-less alerts show Dismiss only. Bell dropdown: clicking an order/invoice alert opens the correct item (not a quote 404); alert with no FK falls back to `/inbox`.

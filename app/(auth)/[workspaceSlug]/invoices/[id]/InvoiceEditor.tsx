@@ -3,7 +3,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
-import { saveInvoiceLines, saveInvoiceMeta, saveInvoicePaymentDetails, cancelInvoice, confirmPaymentReceived } from '../actions';
+import { saveInvoiceLines, saveInvoiceMeta, saveInvoicePaymentDetails, cancelInvoice, confirmPaymentReceived, markInvoiceSentByLink } from '../actions';
 import { InvoicePreview } from './InvoicePreview';
 import { SendInvoiceButton, type EmailTemplate } from './SendInvoiceButton';
 import { AddInvoiceLineModal } from './AddInvoiceLineModal';
@@ -344,6 +344,19 @@ export function InvoiceEditor({
     ? `${window.location.origin}/invoice/${initial.public_token}`
     : `/invoice/${initial.public_token}`;
 
+  // Sharing the public "Customer View" link counts as sending a DRAFT invoice.
+  // We flip status server-side (idempotent no-op once past draft) BEFORE
+  // opening the link, so a manually-shared invoice still shows as Sent and the
+  // recipient's later open can stamp Read. No email is sent here.
+  const openCustomerView = useCallback(() => {
+    // Open synchronously to dodge popup blockers, then fire the status flip.
+    const win = typeof window !== 'undefined' ? window.open(publicUrl, '_blank', 'noopener,noreferrer') : null;
+    markInvoiceSentByLink(initial.id)
+      .then(() => router.refresh())
+      .catch((err) => console.error('markInvoiceSentByLink failed:', err));
+    if (!win && typeof window !== 'undefined') window.location.href = publicUrl;
+  }, [publicUrl, initial.id, router]);
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Top bar */}
@@ -376,16 +389,15 @@ export function InvoiceEditor({
             <span className="text-xs text-slate-400">Saved</span>
           )}
 
-          {/* Public link */}
-          <a
-            href={publicUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          {/* Public link — sharing it flips a draft to Sent (no email). */}
+          <button
+            type="button"
+            onClick={openCustomerView}
             className="hidden sm:inline-flex items-center gap-1.5 text-xs text-slate-600 border border-slate-200 rounded-full px-3 py-1.5 hover:bg-slate-50 hover:border-slate-300 transition-all"
           >
             <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" /><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" /></svg>
             Customer View
-          </a>
+          </button>
 
           {/* Payment Reported action */}
           {initial.status === 'payment_reported' && (
