@@ -33,6 +33,16 @@ export default async function OrderPreviewPage(props: Props) {
     .maybeSingle();
   const currency = companyRow?.default_currency ?? 'GBP';
   const attachmentsEnabled = entitlements.features.attachment_library;
+  const canFollowups = entitlements.features.followups;
+
+  // Email templates for the order send modal + follow-up builder. Mirrors
+  // the quote summary page; attachment_id baked default included.
+  const { data: emailTemplates } = await createAdminClient()
+    .from('email_templates')
+    .select('id, name, subject, body, is_default, attachment_id')
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false });
+
   let libraryFiles: Array<{ id: string; name: string; fileSize: number }> = [];
   if (attachmentsEnabled) {
     const admin = createAdminClient();
@@ -55,6 +65,8 @@ export default async function OrderPreviewPage(props: Props) {
         libraryFiles={libraryFiles}
         libraryLocked={!attachmentsEnabled}
         currency={currency}
+        emailTemplates={emailTemplates ?? []}
+        canFollowups={canFollowups}
       />
       {/*
         Supplier responses live OUTSIDE the A4-sized print container so

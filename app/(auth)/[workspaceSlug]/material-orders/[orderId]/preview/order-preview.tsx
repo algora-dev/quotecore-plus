@@ -22,6 +22,19 @@ interface Props {
   libraryLocked: boolean;
   /** Company currency code for line-by-line price rendering. */
   currency?: string;
+  /** Email templates for the send modal + follow-up builder. */
+  emailTemplates?: OrderEmailTemplate[];
+  /** Whether this company's plan includes scheduled follow-up messages. */
+  canFollowups?: boolean;
+}
+
+export interface OrderEmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  body: string;
+  is_default: boolean | null;
+  attachment_id?: string | null;
 }
 
 /**
@@ -44,7 +57,7 @@ interface Props {
  * The header bar (Back / Mark / Edit / Print / Send) carries
  * `data-exclude-pdf` so OrderBody's print stylesheet hides it.
  */
-export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFiles, libraryLocked, currency = 'GBP' }: Props) {
+export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFiles, libraryLocked, currency = 'GBP', emailTemplates = [], canFollowups = false }: Props) {
   const router = useRouter();
   // When opened from the Message Center (?from=inbox) "Back" returns to the
   // inbox; otherwise keep the existing history-back behaviour.
@@ -157,6 +170,8 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
             companyName={order.from_company}
             libraryFiles={libraryFiles}
             libraryLocked={libraryLocked}
+            emailTemplates={emailTemplates}
+            canFollowups={canFollowups}
           />
         </div>
       </div>

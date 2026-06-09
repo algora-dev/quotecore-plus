@@ -45,6 +45,7 @@ import type {
   CancelResultOk,
   CancelResultErr,
   ScheduleQuoteFollowUpInput,
+  ScheduleOrderFollowUpInput,
   DispatchSweepResult,
 } from './scheduled-types';
 
@@ -96,7 +97,10 @@ function applyQuietHours(date: Date): Date {
 
 // --- Scheduling ------------------------------------------------------
 
+// Cap on open (status='scheduled') follow-up rules per parent entity.
+// Same value reused for quotes and orders.
 const MAX_OPEN_PER_QUOTE = 3;
+const MAX_OPEN_PER_ORDER = MAX_OPEN_PER_QUOTE;
 
 /**
  * Sentinel timestamp used to park a scheduled_messages row when its
@@ -355,6 +359,297 @@ export async function scheduleQuoteFollowUp(
 }
 
 /**
+ * Persist a new scheduled follow-up for a material ORDER.
+ *
+ * Mirrors scheduleQuoteFollowUp. A scheduled_messages row is for EITHER
+ * a quote OR an order — here order_id is set and quote_id stays null.
+ *
+ * Order triggers:
+ *   - order_sent: time-based chase. Anchored to the last successful
+ *     order send (outbound_messages kind='order_send'), fallback
+ *     order.updated_at. Requires a delay > 0; cancels on supplier reply.
+ *   - order_accepted / order_declined: event triggers. Parked with the
+ *     sentinel until the supplier accepts / declines; zero wait allowed.
+ */
+export async function scheduleOrderFollowUp(
+  input: ScheduleOrderFollowUpInput,
+): Promise<ScheduleResultOk | ScheduleResultErr> {
+  const profile = await requireCompanyContext();
+
+  // Entitlement gate (same feature flag as quote follow-ups).
+  try {
+    await requireFeature(profile.company_id, 'followups');
+  } catch (gateErr) {
+    if (gateErr instanceof FeatureGatedError) {
+      return {
+        ok: false,
+        error: `Automated follow-ups aren't included in your current plan. Upgrade to schedule follow-up messages.`,
+      };
+    }
+    if (gateErr instanceof BillingError) {
+      return {
+        ok: false,
+        error: 'Your subscription is not active. Reactivate to schedule follow-ups.',
+      };
+    }
+    throw gateErr;
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  // --- Validate input ----------------------------------------------
+  const waitDays = Number.isFinite(input.waitDays) ? Math.max(0, Math.floor(input.waitDays)) : 0;
+  const waitHours = Number.isFinite(input.waitHours ?? 0) ? Math.max(0, Math.floor(input.waitHours ?? 0)) : 0;
+  const waitMinutes = Number.isFinite(input.waitMinutes ?? 0) ? Math.max(0, Math.floor(input.waitMinutes ?? 0)) : 0;
+  const isEventTrigger =
+    input.triggerEvent === 'order_accepted' || input.triggerEvent === 'order_declined';
+  if (waitDays === 0 && waitHours === 0 && waitMinutes === 0 && !isEventTrigger) {
+    return { ok: false, error: 'Pick a delay greater than zero.' };
+  }
+  if (waitDays > 365) {
+    return { ok: false, error: 'Maximum delay is 365 days.' };
+  }
+  const recipient = input.recipientEmail.trim();
+  if (!recipient || !/^.+@.+\..+$/.test(recipient)) {
+    return { ok: false, error: 'Please enter a valid recipient email.' };
+  }
+
+  // Ownership: load the order scoped to the caller's company.
+  const { data: order, error: orderErr } = await supabase
+    .from('material_orders')
+    .select('id, to_supplier, status, confirmed_at, declined_at, info_requested_at, updated_at')
+    .eq('id', input.orderId)
+    .eq('company_id', profile.company_id)
+    .maybeSingle();
+  if (orderErr || !order) {
+    return { ok: false, error: 'Order not found.' };
+  }
+  // A cancelled order's supplier link is dead; no point scheduling.
+  if (order.status === 'cancelled') {
+    return { ok: false, error: 'Cannot schedule follow-ups on a cancelled order.' };
+  }
+
+  // Template ownership.
+  const { data: template, error: templateErr } = await supabase
+    .from('email_templates')
+    .select('id, name')
+    .eq('id', input.templateId)
+    .eq('company_id', profile.company_id)
+    .maybeSingle();
+  if (templateErr || !template) {
+    return { ok: false, error: 'Email template not found.' };
+  }
+
+  // Open-rule cap per order.
+  const { count: openCount } = await supabase
+    .from('scheduled_messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('order_id', input.orderId)
+    .eq('company_id', profile.company_id)
+    .eq('status', 'scheduled');
+  if ((openCount ?? 0) >= MAX_OPEN_PER_ORDER) {
+    return {
+      ok: false,
+      error: `You already have ${MAX_OPEN_PER_ORDER} scheduled follow-ups for this order. Cancel one before adding another.`,
+    };
+  }
+
+  // --- Resolve the anchor timestamp --------------------------------
+  const now = new Date();
+  let anchor: Date;
+  switch (input.triggerEvent) {
+    case 'order_sent': {
+      const { data: lastSend } = await supabase
+        .from('outbound_messages')
+        .select('sent_at, created_at')
+        .eq('related_order_id', input.orderId)
+        .eq('company_id', profile.company_id)
+        .eq('kind', 'order_send')
+        .in('status', ['sent', 'suppressed'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const anchorIso = lastSend?.sent_at ?? lastSend?.created_at ?? order.updated_at ?? now.toISOString();
+      anchor = new Date(anchorIso);
+      break;
+    }
+    case 'order_accepted':
+      anchor = order.confirmed_at ? new Date(order.confirmed_at) : new Date(PENDING_EVENT_SENTINEL_ISO);
+      break;
+    case 'order_declined':
+      anchor = order.declined_at ? new Date(order.declined_at) : new Date(PENDING_EVENT_SENTINEL_ISO);
+      break;
+    default:
+      return { ok: false, error: 'Unsupported order follow-up trigger.' };
+  }
+
+  const isPendingEvent = anchor.getTime() === new Date(PENDING_EVENT_SENTINEL_ISO).getTime();
+  let finalFire: Date;
+  if (isPendingEvent) {
+    finalFire = new Date(PENDING_EVENT_SENTINEL_ISO);
+  } else {
+    const rawFire = new Date(
+      anchor.getTime() + waitDays * 24 * 60 * 60 * 1000 + waitHours * 60 * 60 * 1000 + waitMinutes * 60 * 1000,
+    );
+    const isImmediate = waitDays === 0 && waitHours === 0 && waitMinutes === 0;
+    const fireAt = input.respectQuietHours && !isImmediate ? applyQuietHours(rawFire) : rawFire;
+    const minimumFire = new Date(now.getTime() + 5 * 60 * 1000);
+    finalFire = fireAt < minimumFire ? minimumFire : fireAt;
+  }
+
+  const { data: inserted, error: insertErr } = await supabase
+    .from('scheduled_messages')
+    .insert({
+      company_id: profile.company_id,
+      quote_id: null,
+      order_id: input.orderId,
+      template_id: input.templateId,
+      trigger_event: input.triggerEvent,
+      trigger_anchor_at: anchor.toISOString(),
+      fire_at: finalFire.toISOString(),
+      // Event triggers never gate on "no response" — the event IS the response.
+      require_no_response: isEventTrigger ? false : input.requireNoResponse,
+      respect_quiet_hours: input.respectQuietHours,
+      recipient_email: recipient.toLowerCase(),
+      recipient_name: input.recipientName ?? order.to_supplier ?? null,
+      status: 'scheduled',
+      created_by_user_id: profile.id,
+      pending_wait_days: isPendingEvent ? waitDays : null,
+      pending_wait_hours: isPendingEvent ? waitHours : null,
+      pending_wait_minutes: isPendingEvent ? waitMinutes : null,
+    })
+    .select('id, fire_at')
+    .single();
+
+  if (insertErr || !inserted) {
+    return { ok: false, error: insertErr?.message ?? 'Failed to schedule follow-up.' };
+  }
+
+  revalidatePath('/');
+  return { ok: true, id: inserted.id, fireAt: inserted.fire_at };
+}
+
+/**
+ * Activator for ORDER follow-ups. Called (best-effort) by the supplier
+ * response handler after stamping confirmed_at / declined_at /
+ * info_requested_at.
+ *
+ *   - 'accepted' | 'declined': activate the matching parked event rows
+ *     (compute the real fire_at from pending waits incl. minutes,
+ *     inline-dispatch the due-now ones) AND cancel the OTHER event
+ *     trigger's parked rows (accepted <-> declined are mutually
+ *     exclusive once the supplier responds).
+ *   - 'info_requested': cancel ALL parked order trigger rows (both
+ *     accepted AND declined) for the order. Nothing is activated — an
+ *     info request is not a follow-up trigger, it's a stop signal.
+ *
+ * Admin client because it runs from the public token flow.
+ */
+export async function activateOrderScheduledMessages(input: {
+  orderId: string;
+  companyId: string;
+  event: 'accepted' | 'declined' | 'info_requested';
+  eventAt: string; // ISO
+}): Promise<{ activated: number; cancelled: number; firedImmediately: number }> {
+  const admin = createAdminClient();
+  const ORDER_EVENT_TRIGGERS = ['order_accepted', 'order_declined'] as const;
+
+  // Info request: cancel BOTH parked order triggers, activate nothing.
+  if (input.event === 'info_requested') {
+    const { count: cancelledCount } = await admin
+      .from('scheduled_messages')
+      .update(
+        {
+          status: 'cancelled',
+          cancelled_reason: 'Supplier requested info; follow-ups cancelled.',
+        },
+        { count: 'exact' },
+      )
+      .eq('order_id', input.orderId)
+      .eq('company_id', input.companyId)
+      .eq('status', 'scheduled')
+      .in('trigger_event', ORDER_EVENT_TRIGGERS as unknown as string[])
+      .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
+    return { activated: 0, cancelled: cancelledCount ?? 0, firedImmediately: 0 };
+  }
+
+  const matchingTrigger = input.event === 'accepted' ? 'order_accepted' : 'order_declined';
+  const otherTrigger = input.event === 'accepted' ? 'order_declined' : 'order_accepted';
+
+  // Activate matching-trigger parked rows.
+  const { data: matchingRows } = await admin
+    .from('scheduled_messages')
+    .select('id, pending_wait_days, pending_wait_hours, pending_wait_minutes, respect_quiet_hours')
+    .eq('order_id', input.orderId)
+    .eq('company_id', input.companyId)
+    .eq('status', 'scheduled')
+    .eq('trigger_event', matchingTrigger)
+    .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
+
+  let activated = 0;
+  const dueNowRowIds: string[] = [];
+  const eventDate = new Date(input.eventAt);
+  const now = new Date();
+  for (const row of matchingRows ?? []) {
+    const days = row.pending_wait_days ?? 0;
+    const hours = row.pending_wait_hours ?? 0;
+    const minutes = row.pending_wait_minutes ?? 0;
+    const rawFire = new Date(
+      eventDate.getTime() + days * 24 * 60 * 60 * 1000 + hours * 60 * 60 * 1000 + minutes * 60 * 1000,
+    );
+    const isImmediate = days === 0 && hours === 0 && minutes === 0;
+    const adjusted = row.respect_quiet_hours && !isImmediate ? applyQuietHours(rawFire) : rawFire;
+    const isDueNow = adjusted.getTime() <= now.getTime();
+    const finalFire = isDueNow ? now : adjusted;
+    const { error: updateErr } = await admin
+      .from('scheduled_messages')
+      .update({ trigger_anchor_at: input.eventAt, fire_at: finalFire.toISOString() })
+      .eq('id', row.id)
+      .eq('status', 'scheduled')
+      .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
+    if (!updateErr) {
+      activated += 1;
+      if (isDueNow) dueNowRowIds.push(row.id);
+    }
+  }
+
+  // Cancel the OTHER event trigger's parked rows — mutually exclusive.
+  const { count: cancelledCount } = await admin
+    .from('scheduled_messages')
+    .update(
+      {
+        status: 'cancelled',
+        cancelled_reason: `Supplier ${input.event} the order; other trigger follow-ups no longer needed.`,
+      },
+      { count: 'exact' },
+    )
+    .eq('order_id', input.orderId)
+    .eq('company_id', input.companyId)
+    .eq('status', 'scheduled')
+    .eq('trigger_event', otherTrigger)
+    .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
+
+  // Inline-dispatch due-now rows so the follow-up lands within seconds.
+  let firedImmediately = 0;
+  for (const rowId of dueNowRowIds) {
+    try {
+      const { data: freshRow } = await admin
+        .from('scheduled_messages')
+        .select('*')
+        .eq('id', rowId)
+        .maybeSingle();
+      if (!freshRow || freshRow.status !== 'scheduled') continue;
+      const outcome = await dispatchOne(freshRow as ScheduledMessageRow, admin);
+      if (outcome === 'sent' || outcome === 'suppressed') firedImmediately += 1;
+    } catch (err) {
+      console.error('[activateOrderScheduledMessages] inline dispatch failed:', err);
+    }
+  }
+
+  return { activated, cancelled: cancelledCount ?? 0, firedImmediately };
+}
+
+/**
  * Activator: called by the accept/decline customer handlers when a
  * customer responds. Finds parked pending-event rows for the same
  * quote and trigger, computes their real fire_at (event timestamp +
@@ -600,6 +895,25 @@ export async function loadScheduledForQuote(
   return (data ?? []) as ScheduledMessageRow[];
 }
 
+/**
+ * Panel-data loader: scheduled-or-recent rows for one ORDER, newest
+ * first. Mirrors loadScheduledForQuote.
+ */
+export async function loadScheduledForOrder(
+  orderId: string,
+): Promise<ScheduledMessageRow[]> {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from('scheduled_messages')
+    .select('*')
+    .eq('order_id', orderId)
+    .eq('company_id', profile.company_id)
+    .order('created_at', { ascending: false })
+    .limit(20);
+  return (data ?? []) as ScheduledMessageRow[];
+}
+
 // --- Dispatcher (cron) -----------------------------------------------
 
 /**
@@ -670,7 +984,23 @@ async function dispatchOne(
   // zero affected rows here and skip. We deliberately don't move to
   // an intermediate 'dispatching' status because a crash would leave
   // the row stuck. The actual status flip happens at the very end.
-  if (!row.quote_id) {
+  if (!row.quote_id && !row.order_id) {
+    await markFailed(admin, row.id, 'No quote_id or order_id on scheduled row.');
+    return 'failed';
+  }
+
+  // ORDER rows take a dedicated path: the entitlement gate, order
+  // reload, merge context, token, and send plumbing all differ from
+  // quotes. The quote path below is left untouched.
+  if (row.order_id) {
+    return dispatchOrderRow(row, admin);
+  }
+
+  // From here the row is a QUOTE follow-up. Narrow quote_id to string
+  // for the type checker (the guard above already proved one of the two
+  // ids is present, and order_id was handled).
+  const quoteId = row.quote_id;
+  if (!quoteId) {
     await markFailed(admin, row.id, 'No quote_id on scheduled row.');
     return 'failed';
   }
@@ -714,7 +1044,7 @@ async function dispatchOne(
     .select(
       'id, customer_name, job_name, quote_number, currency, tax_rate, acceptance_token, acceptance_token_expires_at, withdrawn_at, status, accepted_at, declined_at, cq_company_name, cq_company_email, cq_company_phone, cq_company_logo_url',
     )
-    .eq('id', row.quote_id)
+    .eq('id', quoteId)
     .eq('company_id', row.company_id)
     .maybeSingle();
 
@@ -752,7 +1082,7 @@ async function dispatchOne(
     const { count: revisionCount } = await admin
       .from('quote_revision_requests')
       .select('id', { count: 'exact', head: true })
-      .eq('quote_id', row.quote_id)
+      .eq('quote_id', quoteId)
       .gte('created_at', row.trigger_anchor_at);
     if ((revisionCount ?? 0) > 0) {
       await markCancelled(admin, row.id, 'Customer submitted a revision request.');
@@ -892,6 +1222,197 @@ async function dispatchOne(
   return 'sent';
 }
 
+/**
+ * Dispatch a single ORDER follow-up row. Mirrors the quote path inside
+ * dispatchOne but reloads from material_orders, builds order merge
+ * context, mints/reuses the supplier acceptance_token, and sends via
+ * sendOutboundMessage with kind='order_send' + relatedOrderId so the
+ * supplier email carries the "View order" CTA pointing at /orders/<token>.
+ */
+async function dispatchOrderRow(
+  row: ScheduledMessageRow,
+  admin: ReturnType<typeof createAdminClient>,
+): Promise<'sent' | 'cancelled' | 'failed' | 'suppressed'> {
+  if (!row.order_id) {
+    await markFailed(admin, row.id, 'No order_id on scheduled order row.');
+    return 'failed';
+  }
+
+  // Fire-time entitlement gate. Orders require BOTH material_orders
+  // (to operate the surface) and followups (to auto-send). Mirrors the
+  // quote gate's downgrade protection.
+  try {
+    await assertCanSendMessage(row.company_id, 'scheduled_dispatch');
+    await requireFeature(row.company_id, 'material_orders');
+    await requireFeature(row.company_id, 'followups');
+  } catch (gateErr) {
+    if (gateErr instanceof BillingError) {
+      const reason =
+        gateErr instanceof FeatureGatedError
+          ? `Plan no longer includes "${gateErr.feature}". Reactivate to resume follow-ups.`
+          : 'Subscription not active.';
+      await markCancelled(admin, row.id, reason);
+      return 'cancelled';
+    }
+    await markFailed(
+      admin,
+      row.id,
+      `Entitlement check failed unexpectedly: ${(gateErr as Error)?.message ?? 'unknown'}`,
+    );
+    return 'failed';
+  }
+
+  // Reload the order with the shape sendOrderMessage uses.
+  const { data: order, error: orderErr } = await admin
+    .from('material_orders')
+    .select(
+      'id, order_number, reference, to_supplier, from_company, status, confirmed_at, declined_at, info_requested_at, acceptance_token, acceptance_token_expires_at',
+    )
+    .eq('id', row.order_id)
+    .eq('company_id', row.company_id)
+    .maybeSingle();
+
+  if (orderErr || !order) {
+    await markCancelled(admin, row.id, 'Order no longer exists.');
+    return 'cancelled';
+  }
+
+  // Cancel safety: a cancelled order's link is dead.
+  if (order.status === 'cancelled') {
+    await markCancelled(admin, row.id, 'Order was cancelled.');
+    return 'cancelled';
+  }
+
+  // Cancel-on-response only applies to the time-based chase
+  // (order_sent). Event triggers (order_accepted / order_declined) are
+  // fired BY the response, so they must never self-cancel on it. An
+  // info request cancels chases too (the supplier engaged — stop nagging).
+  const isEventTriggered =
+    row.trigger_event === 'order_accepted' || row.trigger_event === 'order_declined';
+  if (row.require_no_response && !isEventTriggered) {
+    if (order.confirmed_at) {
+      await markCancelled(admin, row.id, 'Supplier accepted the order.');
+      return 'cancelled';
+    }
+    if (order.declined_at) {
+      await markCancelled(admin, row.id, 'Supplier declined the order.');
+      return 'cancelled';
+    }
+    if (order.info_requested_at) {
+      await markCancelled(admin, row.id, 'Supplier requested info on the order.');
+      return 'cancelled';
+    }
+  }
+
+  // Load the template body + subject.
+  const { data: template } = await admin
+    .from('email_templates')
+    .select('id, subject, body, attachment_id')
+    .eq('id', row.template_id ?? '')
+    .eq('company_id', row.company_id)
+    .maybeSingle();
+  if (!template) {
+    await markFailed(admin, row.id, 'Email template was deleted.');
+    return 'failed';
+  }
+
+  // Refresh / mint the supplier acceptance token. Reuse a live one,
+  // else mint a fresh 90-day token (parity with generateOrderSupplierToken).
+  let acceptanceToken: string | null = null;
+  if (
+    order.acceptance_token &&
+    (!order.acceptance_token_expires_at || new Date(order.acceptance_token_expires_at) > new Date())
+  ) {
+    acceptanceToken = order.acceptance_token;
+  } else {
+    const token = crypto.randomUUID();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 90);
+    await admin
+      .from('material_orders')
+      .update({ acceptance_token: token, acceptance_token_expires_at: expiresAt.toISOString() })
+      .eq('id', order.id)
+      .eq('company_id', row.company_id);
+    acceptanceToken = token;
+  }
+
+  // Company branding + item count for merge context (mirrors sendOrderMessage).
+  const { data: company } = await admin
+    .from('companies')
+    .select('name')
+    .eq('id', row.company_id)
+    .maybeSingle();
+  const { count: itemCount } = await admin
+    .from('material_order_lines')
+    .select('id', { count: 'exact', head: true })
+    .eq('order_id', order.id);
+
+  const companyName = order.from_company || company?.name || 'QuoteCore+ user';
+
+  const sendResult = await sendOutboundMessage({
+    companyId: row.company_id,
+    senderUserId: row.created_by_user_id,
+    kind: 'order_send',
+    relatedOrderId: order.id,
+    templateId: template.id,
+    subject: template.subject,
+    body: template.body,
+    recipientEmail: row.recipient_email,
+    recipientName: row.recipient_name ?? order.to_supplier ?? null,
+    mergeContext: {
+      company_name: companyName,
+      today: new Date().toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }),
+      order_number: order.order_number,
+      order_reference: order.reference ?? undefined,
+      order_supplier: order.to_supplier ?? undefined,
+      order_total_items: itemCount != null ? String(itemCount) : undefined,
+      // {{order_link}} / "View order" CTA are substituted by the pipeline
+      // using acceptanceToken.
+    },
+    companyName,
+    companyLogoUrl: null,
+    companyEmail: null,
+    companyPhone: null,
+    acceptanceToken,
+    attachmentSelection: template.attachment_id
+      ? { libraryAttachmentIds: [template.attachment_id] }
+      : undefined,
+  });
+
+  if (!sendResult.ok) {
+    await markFailed(admin, row.id, sendResult.error);
+    return 'failed';
+  }
+
+  if (sendResult.status === 'suppressed') {
+    await admin
+      .from('scheduled_messages')
+      .update({
+        status: 'suppressed',
+        fired_at: new Date().toISOString(),
+        outbound_message_id: sendResult.messageId,
+      })
+      .eq('id', row.id)
+      .eq('status', 'scheduled');
+    return 'suppressed';
+  }
+
+  await admin
+    .from('scheduled_messages')
+    .update({
+      status: 'sent',
+      fired_at: new Date().toISOString(),
+      outbound_message_id: sendResult.messageId,
+    })
+    .eq('id', row.id)
+    .eq('status', 'scheduled');
+  return 'sent';
+}
+
 async function markCancelled(
   admin: ReturnType<typeof createAdminClient>,
   id: string,
@@ -905,16 +1426,35 @@ async function markCancelled(
     .update({ status: 'cancelled', cancelled_reason: reason })
     .eq('id', id)
     .eq('status', 'scheduled')
-    .select('company_id, quote_id, recipient_email')
+    .select('company_id, quote_id, order_id, recipient_email')
     .maybeSingle();
   if (!updated) return;
 
   // Surface auto-cancels via the bell icon so the user finds out
-  // without having to revisit the quote summary. We deliberately
+  // without having to revisit the quote / order page. We deliberately
   // don't write an alert for user-initiated cancellations (they did
   // it; they know about it) - that path uses `cancelled_by_user` as
   // its reason and is bypassed here because it goes through the
   // server action, not the dispatcher.
+  if (updated.order_id) {
+    const { data: order } = await admin
+      .from('material_orders')
+      .select('order_number')
+      .eq('id', updated.order_id)
+      .maybeSingle();
+    const orderRef = order?.order_number
+      ? `Order ${order.order_number}`
+      : 'A scheduled follow-up';
+    await admin.from('alerts').insert({
+      company_id: updated.company_id,
+      order_id: updated.order_id,
+      alert_type: 'followup_cancelled',
+      title: `${orderRef}: scheduled follow-up cancelled`,
+      message: `${reason} The follow-up to ${updated.recipient_email} was not sent.`,
+    });
+    return;
+  }
+
   const { data: quote } = await admin
     .from('quotes')
     .select('quote_number, customer_name')

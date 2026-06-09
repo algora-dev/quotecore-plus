@@ -6,6 +6,7 @@ import { alertEnabled, emailAlertEnabled } from '@/app/lib/alerts/prefs';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { notifyGenericAlert } from '@/app/lib/email/notify';
 import { orderPreviewUrl } from '@/app/lib/email/urls';
+import { activateOrderScheduledMessages } from '@/app/lib/messages/scheduled';
 
 export interface SubmitOrderResponseInput {
   token: string;
@@ -101,6 +102,29 @@ export async function submitOrderResponse(
   if (input.action === 'request_info' && !order.info_requested_at) orderUpdate.info_requested_at = now;
 
   await supabase.from('material_orders').update(orderUpdate).eq('id', order.id);
+
+  // Activate / cancel parked ORDER follow-ups based on this response.
+  // Best-effort: the supplier's response must never fail because of a
+  // follow-up hiccup, so we swallow errors here.
+  //   accept       -> activate order_accepted rules, cancel order_declined
+  //   decline      -> activate order_declined rules, cancel order_accepted
+  //   request_info -> cancel BOTH parked order trigger rules
+  try {
+    const followupEvent =
+      input.action === 'accept'
+        ? 'accepted'
+        : input.action === 'decline'
+          ? 'declined'
+          : 'info_requested';
+    await activateOrderScheduledMessages({
+      orderId: order.id,
+      companyId: order.company_id,
+      event: followupEvent,
+      eventAt: now,
+    });
+  } catch (err) {
+    console.error('[submitOrderResponse] follow-up activation failed:', err);
+  }
 
   // Fire the in-app alert. Always: every supplier response creates an
   // alert (unlike message_reply where only the first reply alerts).

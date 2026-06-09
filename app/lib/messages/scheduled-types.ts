@@ -11,6 +11,14 @@ export type ScheduledTriggerEvent =
   | 'quote_accepted'
   | 'quote_declined'
   | 'quote_revision_requested'
+  // Order follow-up triggers (Phase B). 'order_sent' is the time-based
+  // chase anchor (mirrors 'quote_sent'); 'order_accepted' / 'order_declined'
+  // are event triggers. Note: there is deliberately NO 'order_info_requested'
+  // trigger — a supplier requesting info CANCELS all parked order follow-ups
+  // rather than firing one.
+  | 'order_sent'
+  | 'order_accepted'
+  | 'order_declined'
   | 'manual';
 
 export type ScheduledStatus =
@@ -27,6 +35,20 @@ export type ScheduleResult = ScheduleResultOk | ScheduleResultErr;
 export interface CancelResultOk { ok: true }
 export interface CancelResultErr { ok: false; error: string }
 export type CancelResult = CancelResultOk | CancelResultErr;
+
+export interface ScheduleOrderFollowUpInput {
+  orderId: string;
+  templateId: string;
+  triggerEvent: ScheduledTriggerEvent;
+  waitDays: number;
+  waitHours?: number;
+  /** Minute-level granularity; honoured (not floored away). */
+  waitMinutes?: number;
+  requireNoResponse: boolean;
+  respectQuietHours: boolean;
+  recipientEmail: string;
+  recipientName?: string | null;
+}
 
 export interface ScheduleQuoteFollowUpInput {
   quoteId: string;
@@ -55,6 +77,7 @@ export interface ScheduledMessageRow {
   id: string;
   company_id: string;
   quote_id: string | null;
+  order_id: string | null;
   template_id: string | null;
   trigger_event: ScheduledTriggerEvent;
   trigger_anchor_at: string;

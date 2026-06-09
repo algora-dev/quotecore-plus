@@ -33,6 +33,11 @@ const TRIGGER_LABEL: Record<ScheduledTriggerEvent, string> = {
   quote_accepted: 'After acceptance',
   quote_declined: 'After decline',
   quote_revision_requested: 'After revision request',
+  // Order follow-up triggers (Phase B). Present here so this exhaustive
+  // map stays type-complete; this quote-scoped list won't render them.
+  order_sent: 'After order was sent',
+  order_accepted: 'After order accepted',
+  order_declined: 'After order declined',
   manual: 'Starting now',
 };
 
