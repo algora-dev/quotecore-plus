@@ -1,7 +1,8 @@
 'use client';
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { sendInvoiceMessage } from './send-invoice-actions';
+import { scheduleInvoiceFollowUp } from '@/app/lib/messages/scheduled';
 
 export interface EmailTemplate {
   id: string;
@@ -29,6 +30,8 @@ interface Props {
   invoiceMeta: InvoiceMeta;
   /** Pre-filled customer email (from invoice row). */
   defaultRecipientEmail?: string | null;
+  /** Whether this company's plan includes scheduled follow-ups. */
+  canFollowups?: boolean;
 }
 
 function sanitize(str: string): string {
@@ -58,11 +61,29 @@ export function SendInvoiceButton({
   emailTemplates,
   invoiceMeta,
   defaultRecipientEmail,
+  canFollowups = false,
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'choose' | 'url' | 'email' | 'send'>('choose');
   const [copied, setCopied] = useState(false);
+
+  // --- PRE-SEND follow-up flow (invoices = TIME-BASED only) ---------
+  // 'form' = compose, 'gate' = Send-now vs Add-follow-ups, 'followups'
+  // = the rule builder.
+  type SendStage = 'form' | 'gate' | 'followups';
+  const [sendStage, setSendStage] = useState<SendStage>('form');
+  type DraftRule = {
+    id: string;
+    delayDays: number;
+    delayHours: number;
+    delayMinutes: number;
+    templateId: string;
+    result: { ok: true; fireAt: string } | { ok: false; error: string } | null;
+  };
+  const [draftRules, setDraftRules] = useState<DraftRule[]>([]);
+  const [followUpSaving, setFollowUpSaving] = useState(false);
+  const [followUpError, setFollowUpError] = useState<string | null>(null);
 
   // Email/send state
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
@@ -142,6 +163,9 @@ export function SendInvoiceButton({
     setEmailCopied(false);
     setSendError(null);
     setSendSuccess(null);
+    setSendStage('form');
+    setDraftRules([]);
+    setFollowUpError(null);
   }
 
   async function handleCopyUrl() {
@@ -175,33 +199,137 @@ export function SendInvoiceButton({
     setTimeout(() => setEmailCopied(false), 2000);
   }
 
-  function handleSendSubmit() {
+  /** Validate the compose form before any send / gate decision. */
+  function validateComposeForm(): boolean {
     setSendError(null);
     setSendSuccess(null);
     if (!recipientEmail.trim()) {
       setSendError('Please enter a recipient email.');
-      return;
+      return false;
     }
     if (!emailSubject.trim() || !emailBody.trim()) {
       setSendError('Subject and body cannot be empty.');
+      return false;
+    }
+    return true;
+  }
+
+  /** Run the actual invoice send. Shared by both gate branches. */
+  function runSend(): Promise<{ ok: boolean }> {
+    return new Promise((resolve) => {
+      startSendTransition(async () => {
+        const result = await sendInvoiceMessage({
+          invoiceId,
+          templateId: selectedTemplateId || null,
+          subject: emailSubject,
+          body: emailBody,
+          recipientEmail: recipientEmail.trim(),
+          recipientName: invoiceMeta.customerName,
+        });
+        if (result.ok) {
+          setSendSuccess(result.status);
+          router.refresh();
+        } else {
+          setSendError(result.error);
+        }
+        resolve({ ok: result.ok });
+      });
+    });
+  }
+
+  /** Compose -> gate. */
+  function handleProceedToGate() {
+    if (!validateComposeForm()) return;
+    setSendStage('gate');
+  }
+
+  /** Gate branch A: send now, no follow-ups. */
+  async function handleSendNow() {
+    await runSend();
+    setSendStage('form');
+  }
+
+  /** Gate branch B: open the builder empty. */
+  function handleOpenFollowUps() {
+    setFollowUpError(null);
+    setSendStage('followups');
+  }
+
+  function defaultTemplateId(): string {
+    const def = emailTemplates.find((t) => t.is_default) || emailTemplates[0];
+    return def?.id ?? selectedTemplateId ?? '';
+  }
+
+  function addDraftRule() {
+    setFollowUpError(null);
+    if (draftRules.length >= 3) {
+      setFollowUpError('You can add at most 3 follow-ups per invoice.');
       return;
     }
-    startSendTransition(async () => {
-      const result = await sendInvoiceMessage({
-        invoiceId,
-        templateId: selectedTemplateId || null,
-        subject: emailSubject,
-        body: emailBody,
-        recipientEmail: recipientEmail.trim(),
-        recipientName: invoiceMeta.customerName,
-      });
-      if (result.ok) {
-        setSendSuccess(result.status);
-        router.refresh();
-      } else {
-        setSendError(result.error);
+    setDraftRules((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        delayDays: 3,
+        delayHours: 0,
+        delayMinutes: 0,
+        templateId: defaultTemplateId(),
+        result: null,
+      },
+    ]);
+  }
+
+  function updateDraftRule(id: string, patch: Partial<DraftRule>) {
+    setDraftRules((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  }
+
+  function removeDraftRule(id: string) {
+    setFollowUpError(null);
+    setDraftRules((prev) => prev.filter((r) => r.id !== id));
+  }
+
+  /** Persist each draft rule via scheduleInvoiceFollowUp, THEN send. */
+  async function handleConfirmFollowUpsAndSend() {
+    setFollowUpError(null);
+    const rules = draftRules.filter((r) => r.templateId);
+    if (rules.length === 0) {
+      setFollowUpError('Add at least one follow-up, or go back and choose “Send now”.');
+      return;
+    }
+    setFollowUpSaving(true);
+    try {
+      let anyError = false;
+      for (const rule of rules) {
+        const result = await scheduleInvoiceFollowUp({
+          invoiceId,
+          templateId: rule.templateId,
+          waitDays: rule.delayDays,
+          waitHours: rule.delayHours,
+          waitMinutes: rule.delayMinutes,
+          requireNoResponse: true,
+          respectQuietHours: true,
+          recipientEmail: recipientEmail.trim(),
+          recipientName: invoiceMeta.customerName,
+        });
+        updateDraftRule(rule.id, {
+          result: result.ok
+            ? { ok: true as const, fireAt: result.fireAt }
+            : { ok: false as const, error: result.error },
+        });
+        if (!result.ok) anyError = true;
       }
-    });
+      if (anyError) {
+        setFollowUpError('Some follow-ups could not be scheduled. Fix or remove them, then try again.');
+        return;
+      }
+      const sendResult = await runSend();
+      if (sendResult.ok) {
+        router.refresh();
+        setSendStage('form');
+      }
+    } finally {
+      setFollowUpSaving(false);
+    }
   }
 
   // Url counts in body for spam warning
@@ -491,18 +619,214 @@ export function SendInvoiceButton({
                   </p>
                 )}
 
-                <div className="flex items-center justify-between pt-1">
-                  <button onClick={() => setMode('choose')} className="text-sm text-slate-500 hover:text-slate-700">
-                    ← Back to options
-                  </button>
-                  <button
-                    onClick={handleSendSubmit}
-                    disabled={isSending || sendSuccess === 'sent' || isPlanGated}
-                    className="px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-                  >
-                    {isSending ? 'Sending…' : sendSuccess === 'sent' ? 'Sent ✓' : 'Send Invoice'}
-                  </button>
-                </div>
+                {/* PRE-SEND GATE: Send now vs Add Follow-ups (invoices = time-based only). */}
+                {sendStage === 'gate' && sendSuccess !== 'sent' && (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
+                    <p className="text-sm font-medium text-slate-900">Before we send — do you want payment reminders?</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={handleSendNow}
+                        disabled={isSending}
+                        title="No follow-ups needed"
+                        className="p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-orange-300 hover:bg-orange-50/40 transition text-left space-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M13 6l6 6-6 6" />
+                          </svg>
+                        </div>
+                        <h4 className="text-sm font-semibold text-slate-900">{isSending ? 'Sending…' : 'Send now'}</h4>
+                        <p className="text-xs text-slate-500">No follow-ups needed</p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleOpenFollowUps}
+                        disabled={isSending || !canFollowups}
+                        title={canFollowups ? 'Then send' : 'Automated follow-ups are not included in your current plan'}
+                        className="p-4 rounded-xl border-2 border-orange-300 bg-orange-50/50 hover:border-orange-400 hover:bg-orange-50 transition text-left space-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <div className="w-9 h-9 rounded-full bg-[#FF6B35] flex items-center justify-center">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <h4 className="text-sm font-semibold text-slate-900">Add Follow-ups</h4>
+                        <p className="text-xs text-slate-500">{canFollowups ? 'Then send' : 'Pro plan feature'}</p>
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSendStage('form')}
+                      className="text-sm text-slate-500 hover:text-slate-700"
+                    >
+                      ← Back to message
+                    </button>
+                  </div>
+                )}
+
+                {/* FOLLOW-UP BUILDER. Invoices: TIME-BASED chase only. Auto-cancels
+                    when the recipient reports payment, pays, or disputes. */}
+                {sendStage === 'followups' && sendSuccess !== 'sent' && (
+                  <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-slate-900">Add payment reminders</p>
+                      <span className="text-xs text-slate-500">{draftRules.length} / 3</span>
+                    </div>
+
+                    {emailTemplates.length === 0 ? (
+                      <div className="rounded-lg border border-slate-200 bg-white p-3">
+                        <p className="text-xs text-slate-500">You have no message templates yet — follow-ups need one.</p>
+                        <button onClick={goCreateTemplate} className="mt-2 text-xs font-medium text-orange-600 hover:text-orange-700 underline">
+                          Create your first reminder template
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={addDraftRule}
+                            disabled={draftRules.length >= 3}
+                            className="px-3 py-1.5 text-xs font-semibold rounded-full bg-black text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            + Time-based follow-up
+                          </button>
+                        </div>
+
+                        {draftRules.length === 0 ? (
+                          <p className="text-[11px] text-slate-500">
+                            Add a reminder above — it chases the customer if the invoice isn’t marked paid. You can add up to 3.
+                          </p>
+                        ) : null}
+
+                        {draftRules.map((rule) => {
+                          const isErr = rule.result && !rule.result.ok;
+                          const isOk = rule.result?.ok === true;
+                          return (
+                            <div
+                              key={rule.id}
+                              className={`rounded-xl border p-3 space-y-2 ${
+                                isOk ? 'border-emerald-200 bg-emerald-50' : isErr ? 'border-rose-200 bg-rose-50/60' : 'border-slate-200 bg-white'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-semibold text-slate-900">Time-based follow-up</span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeDraftRule(rule.id)}
+                                  className="text-slate-400 hover:text-rose-600 text-sm leading-none p-1"
+                                  aria-label="Remove follow-up"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+
+                              <div className="space-y-2">
+                                <p className="text-[11px] text-slate-500">Chases the customer if the invoice isn’t marked paid. Auto-cancels when they report payment, pay, or dispute. Respects quiet hours.</p>
+                                <div className="flex items-end gap-2">
+                                  <div className="w-24">
+                                    <label className="block text-[10px] font-medium text-slate-500 mb-0.5"># days</label>
+                                    <input
+                                      type="number" min={0} max={365}
+                                      value={rule.delayDays}
+                                      onChange={(e) => updateDraftRule(rule.id, { delayDays: Math.max(0, Math.min(365, Number(e.target.value) || 0)) })}
+                                      className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                                    />
+                                  </div>
+                                  <div className="w-24">
+                                    <label className="block text-[10px] font-medium text-slate-500 mb-0.5"># hours</label>
+                                    <input
+                                      type="number" min={0} max={23}
+                                      value={rule.delayHours}
+                                      onChange={(e) => updateDraftRule(rule.id, { delayHours: Math.max(0, Math.min(23, Number(e.target.value) || 0)) })}
+                                      className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                                    />
+                                  </div>
+                                  <div className="w-24">
+                                    <label className="block text-[10px] font-medium text-slate-500 mb-0.5"># minutes</label>
+                                    <input
+                                      type="number" min={0} max={59}
+                                      value={rule.delayMinutes}
+                                      onChange={(e) => updateDraftRule(rule.id, { delayMinutes: Math.max(0, Math.min(59, Number(e.target.value) || 0)) })}
+                                      className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-medium text-slate-500 mb-0.5">Template</label>
+                                <select
+                                  value={rule.templateId}
+                                  onChange={(e) => updateDraftRule(rule.id, { templateId: e.target.value })}
+                                  className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                                >
+                                  {emailTemplates.map((t) => (
+                                    <option key={t.id} value={t.id}>{t.name}{t.is_default ? ' (Default)' : ''}</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              {isOk ? <p className="text-[10px] text-emerald-700">Scheduled ✓</p> : null}
+                              {isErr ? <p className="text-[11px] text-rose-700">{(rule.result as { ok: false; error: string }).error}</p> : null}
+                            </div>
+                          );
+                        })}
+                      </>
+                    )}
+
+                    {followUpError ? (
+                      <p className="text-[11px] text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2">{followUpError}</p>
+                    ) : null}
+
+                    <div className="flex items-center justify-between pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setSendStage('gate')}
+                        className="text-sm text-slate-500 hover:text-slate-700"
+                      >
+                        ← Back
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleConfirmFollowUpsAndSend}
+                        disabled={followUpSaving || isSending || emailTemplates.length === 0 || draftRules.length === 0}
+                        className="px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                      >
+                        {followUpSaving || isSending ? 'Saving & sending…' : 'Save follow-ups & send'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Compose-stage footer: opens the pre-send gate (does not send
+                    directly). Hidden once gate/builder is showing or after a
+                    successful send. */}
+                {sendStage === 'form' && (
+                  <div className="flex items-center justify-between pt-1">
+                    <button onClick={() => setMode('choose')} className="text-sm text-slate-500 hover:text-slate-700">
+                      ← Back to options
+                    </button>
+                    {sendSuccess !== 'sent' ? (
+                      <button
+                        onClick={handleProceedToGate}
+                        disabled={isSending || isPlanGated}
+                        className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                      >
+                        Continue
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setOpen(false)}
+                        className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                      >
+                        Close
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

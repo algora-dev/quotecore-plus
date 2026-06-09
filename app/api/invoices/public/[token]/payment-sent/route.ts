@@ -49,6 +49,24 @@ export async function POST(
     .update({ status: 'payment_reported', payment_reported_at: now })
     .eq('id', invoice.id);
 
+  // Best-effort: cancel any pending time-based invoice follow-ups now
+  // that the recipient has reported payment. The dispatch-time guard in
+  // dispatchInvoiceRow is authoritative; this just makes the cancel snappy
+  // and keeps the UI clean. Failures here must not block the response.
+  try {
+    await admin
+      .from('scheduled_messages')
+      .update({
+        status: 'cancelled',
+        cancelled_reason: 'Recipient reported payment; reminder no longer needed.',
+      })
+      .eq('invoice_id', invoice.id)
+      .eq('company_id', invoice.company_id)
+      .eq('status', 'scheduled');
+  } catch (err) {
+    console.error('[payment-sent] cancel scheduled follow-ups failed:', err);
+  }
+
   // Log activity
   await admin.from('invoice_activity').insert({
     invoice_id: invoice.id,

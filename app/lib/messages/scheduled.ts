@@ -10,6 +10,7 @@ import { sendOutboundMessage } from '@/app/lib/messages/send';
 import { computeTaxLines } from '@/app/lib/taxes/types';
 import { loadQuoteTaxesByQuoteId } from '@/app/lib/taxes/actions';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
+import { getSiteUrl } from '@/app/lib/email/urls';
 import {
   assertCanSendMessage,
   requireFeature,
@@ -46,6 +47,7 @@ import type {
   CancelResultErr,
   ScheduleQuoteFollowUpInput,
   ScheduleOrderFollowUpInput,
+  ScheduleInvoiceFollowUpInput,
   DispatchSweepResult,
 } from './scheduled-types';
 
@@ -101,6 +103,7 @@ function applyQuietHours(date: Date): Date {
 // Same value reused for quotes and orders.
 const MAX_OPEN_PER_QUOTE = 3;
 const MAX_OPEN_PER_ORDER = MAX_OPEN_PER_QUOTE;
+const MAX_OPEN_PER_INVOICE = MAX_OPEN_PER_QUOTE;
 
 /**
  * Sentinel timestamp used to park a scheduled_messages row when its
@@ -530,6 +533,161 @@ export async function scheduleOrderFollowUp(
 }
 
 /**
+ * Persist a new TIME-BASED follow-up for an INVOICE (Phase C).
+ *
+ * Invoices are simpler than quotes/orders: there are NO event triggers.
+ * The only trigger is 'invoice_sent' — a chase anchored to the last
+ * successful invoice send (outbound_messages kind='invoice_send'),
+ * falling back to invoice.sent_at then invoice.updated_at.
+ *
+ * The chase always sets require_no_response=true. "Responded" for an
+ * invoice means the recipient acted on it: status became
+ * payment_reported / paid / disputed (or cancelled). That cancel check
+ * happens at DISPATCH time in dispatchInvoiceRow — there is no activator
+ * and no parked/sentinel row, because there is no event trigger.
+ */
+export async function scheduleInvoiceFollowUp(
+  input: ScheduleInvoiceFollowUpInput,
+): Promise<ScheduleResultOk | ScheduleResultErr> {
+  const profile = await requireCompanyContext();
+
+  // Entitlement gate (same feature flag as quote / order follow-ups).
+  try {
+    await requireFeature(profile.company_id, 'followups');
+  } catch (gateErr) {
+    if (gateErr instanceof FeatureGatedError) {
+      return {
+        ok: false,
+        error: `Automated follow-ups aren't included in your current plan. Upgrade to schedule follow-up messages.`,
+      };
+    }
+    if (gateErr instanceof BillingError) {
+      return {
+        ok: false,
+        error: 'Your subscription is not active. Reactivate to schedule follow-ups.',
+      };
+    }
+    throw gateErr;
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  // --- Validate input ----------------------------------------------
+  // Invoices are time-based only: a delay > 0 is mandatory (you can't
+  // chase a non-payment that happened zero seconds ago). Minutes are
+  // honoured for fast test cadences.
+  const waitDays = Number.isFinite(input.waitDays) ? Math.max(0, Math.floor(input.waitDays)) : 0;
+  const waitHours = Number.isFinite(input.waitHours ?? 0) ? Math.max(0, Math.floor(input.waitHours ?? 0)) : 0;
+  const waitMinutes = Number.isFinite(input.waitMinutes ?? 0) ? Math.max(0, Math.floor(input.waitMinutes ?? 0)) : 0;
+  if (waitDays === 0 && waitHours === 0 && waitMinutes === 0) {
+    return { ok: false, error: 'Pick a delay greater than zero.' };
+  }
+  if (waitDays > 365) {
+    return { ok: false, error: 'Maximum delay is 365 days.' };
+  }
+  const recipient = input.recipientEmail.trim();
+  if (!recipient || !/^.+@.+\..+$/.test(recipient)) {
+    return { ok: false, error: 'Please enter a valid recipient email.' };
+  }
+
+  // Ownership: load the invoice scoped to the caller's company.
+  const { data: invoice, error: invoiceErr } = await supabase
+    .from('invoices')
+    .select('id, customer_name, status, sent_at, updated_at')
+    .eq('id', input.invoiceId)
+    .eq('company_id', profile.company_id)
+    .maybeSingle();
+  if (invoiceErr || !invoice) {
+    return { ok: false, error: 'Invoice not found.' };
+  }
+  // A terminal invoice doesn't need chasing.
+  if (['cancelled', 'paid'].includes(invoice.status)) {
+    return { ok: false, error: 'Cannot schedule follow-ups on a paid or cancelled invoice.' };
+  }
+
+  // Template ownership.
+  const { data: template, error: templateErr } = await supabase
+    .from('email_templates')
+    .select('id, name')
+    .eq('id', input.templateId)
+    .eq('company_id', profile.company_id)
+    .maybeSingle();
+  if (templateErr || !template) {
+    return { ok: false, error: 'Email template not found.' };
+  }
+
+  // Open-rule cap per invoice.
+  const { count: openCount } = await supabase
+    .from('scheduled_messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('invoice_id', input.invoiceId)
+    .eq('company_id', profile.company_id)
+    .eq('status', 'scheduled');
+  if ((openCount ?? 0) >= MAX_OPEN_PER_INVOICE) {
+    return {
+      ok: false,
+      error: `You already have ${MAX_OPEN_PER_INVOICE} scheduled follow-ups for this invoice. Cancel one before adding another.`,
+    };
+  }
+
+  // --- Resolve the anchor timestamp --------------------------------
+  // 'invoice_sent': prefer the most recent successful invoice send,
+  // then invoice.sent_at, then updated_at.
+  const now = new Date();
+  const { data: lastSend } = await supabase
+    .from('outbound_messages')
+    .select('sent_at, created_at')
+    .eq('company_id', profile.company_id)
+    .eq('kind', 'invoice_send')
+    .in('status', ['sent', 'suppressed'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const anchorIso =
+    lastSend?.sent_at ?? lastSend?.created_at ?? invoice.sent_at ?? invoice.updated_at ?? now.toISOString();
+  const anchor = new Date(anchorIso);
+
+  const rawFire = new Date(
+    anchor.getTime() + waitDays * 24 * 60 * 60 * 1000 + waitHours * 60 * 60 * 1000 + waitMinutes * 60 * 1000,
+  );
+  const fireAt = input.respectQuietHours ? applyQuietHours(rawFire) : rawFire;
+  const minimumFire = new Date(now.getTime() + 5 * 60 * 1000);
+  const finalFire = fireAt < minimumFire ? minimumFire : fireAt;
+
+  // --- Insert -------------------------------------------------------
+  // invoice_id set; quote_id + order_id null (a row is for exactly one
+  // entity). No sentinel/parked rows — invoices have no event triggers.
+  const { data: inserted, error: insertErr } = await supabase
+    .from('scheduled_messages')
+    .insert({
+      company_id: profile.company_id,
+      quote_id: null,
+      order_id: null,
+      invoice_id: input.invoiceId,
+      template_id: input.templateId,
+      trigger_event: 'invoice_sent',
+      trigger_anchor_at: anchor.toISOString(),
+      fire_at: finalFire.toISOString(),
+      // The invoice chase always gates on "recipient hasn't acted".
+      require_no_response: true,
+      respect_quiet_hours: input.respectQuietHours,
+      recipient_email: recipient.toLowerCase(),
+      recipient_name: input.recipientName ?? invoice.customer_name ?? null,
+      status: 'scheduled',
+      created_by_user_id: profile.id,
+    })
+    .select('id, fire_at')
+    .single();
+
+  if (insertErr || !inserted) {
+    return { ok: false, error: insertErr?.message ?? 'Failed to schedule follow-up.' };
+  }
+
+  revalidatePath('/');
+  return { ok: true, id: inserted.id, fireAt: inserted.fire_at };
+}
+
+/**
  * Activator for ORDER follow-ups. Called (best-effort) by the supplier
  * response handler after stamping confirmed_at / declined_at /
  * info_requested_at.
@@ -914,6 +1072,25 @@ export async function loadScheduledForOrder(
   return (data ?? []) as ScheduledMessageRow[];
 }
 
+/**
+ * Panel-data loader: scheduled-or-recent rows for one INVOICE, newest
+ * first. Mirrors loadScheduledForQuote / loadScheduledForOrder.
+ */
+export async function loadScheduledForInvoice(
+  invoiceId: string,
+): Promise<ScheduledMessageRow[]> {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from('scheduled_messages')
+    .select('*')
+    .eq('invoice_id', invoiceId)
+    .eq('company_id', profile.company_id)
+    .order('created_at', { ascending: false })
+    .limit(20);
+  return (data ?? []) as ScheduledMessageRow[];
+}
+
 // --- Dispatcher (cron) -----------------------------------------------
 
 /**
@@ -984,8 +1161,8 @@ async function dispatchOne(
   // zero affected rows here and skip. We deliberately don't move to
   // an intermediate 'dispatching' status because a crash would leave
   // the row stuck. The actual status flip happens at the very end.
-  if (!row.quote_id && !row.order_id) {
-    await markFailed(admin, row.id, 'No quote_id or order_id on scheduled row.');
+  if (!row.quote_id && !row.order_id && !row.invoice_id) {
+    await markFailed(admin, row.id, 'No quote_id, order_id or invoice_id on scheduled row.');
     return 'failed';
   }
 
@@ -994,6 +1171,13 @@ async function dispatchOne(
   // quotes. The quote path below is left untouched.
   if (row.order_id) {
     return dispatchOrderRow(row, admin);
+  }
+
+  // INVOICE rows (Phase C) take their own dedicated path: TIME-BASED
+  // chase only, with cancel-on-recipient-action handled here at
+  // dispatch time (the authoritative cancel guard — there's no activator).
+  if (row.invoice_id) {
+    return dispatchInvoiceRow(row, admin);
   }
 
   // From here the row is a QUOTE follow-up. Narrow quote_id to string
@@ -1413,6 +1597,184 @@ async function dispatchOrderRow(
   return 'sent';
 }
 
+/**
+ * Dispatch a single INVOICE follow-up row (Phase C). TIME-BASED chase.
+ *
+ * The KEY cancel rule lives here: if the recipient has effectively
+ * responded — invoice.status is payment_reported / paid / disputed
+ * (or cancelled) — the chase is no longer needed, so we markCancelled
+ * instead of sending. Viewing ('viewed') does NOT cancel: viewing
+ * isn't paying. This dispatch-time guard is authoritative; there is
+ * no activator for invoices.
+ *
+ * Reuses the exact send plumbing from sendInvoiceMessage: kind
+ * 'invoice_send', acceptanceToken = invoice.public_token, and the
+ * "View Invoice" primaryCta pointing at /invoice/<token>. There is no
+ * relatedInvoiceId param on sendOutboundMessage — the invoice link is
+ * carried entirely via acceptanceToken + the per-kind CTA.
+ */
+async function dispatchInvoiceRow(
+  row: ScheduledMessageRow,
+  admin: ReturnType<typeof createAdminClient>,
+): Promise<'sent' | 'cancelled' | 'failed' | 'suppressed'> {
+  if (!row.invoice_id) {
+    await markFailed(admin, row.id, 'No invoice_id on scheduled invoice row.');
+    return 'failed';
+  }
+
+  // Fire-time entitlement gate (downgrade protection — mirrors quotes).
+  try {
+    await assertCanSendMessage(row.company_id, 'scheduled_dispatch');
+    await requireFeature(row.company_id, 'followups');
+  } catch (gateErr) {
+    if (gateErr instanceof BillingError) {
+      const reason =
+        gateErr instanceof FeatureGatedError
+          ? `Plan no longer includes "${gateErr.feature}". Reactivate to resume follow-ups.`
+          : 'Subscription not active.';
+      await markCancelled(admin, row.id, reason);
+      return 'cancelled';
+    }
+    await markFailed(
+      admin,
+      row.id,
+      `Entitlement check failed unexpectedly: ${(gateErr as Error)?.message ?? 'unknown'}`,
+    );
+    return 'failed';
+  }
+
+  // Reload the invoice with the shape sendInvoiceMessage uses.
+  const { data: invoice, error: invoiceErr } = await admin
+    .from('invoices')
+    .select(
+      'id, invoice_number, customer_name, currency, total, due_date, public_token, status, cq_company_name, cq_company_email, cq_company_phone, cq_company_logo_url',
+    )
+    .eq('id', row.invoice_id)
+    .eq('company_id', row.company_id)
+    .maybeSingle();
+
+  if (invoiceErr || !invoice) {
+    await markCancelled(admin, row.id, 'Invoice no longer exists.');
+    return 'cancelled';
+  }
+
+  // CANCEL-SAFETY (the authoritative cancel guard). The recipient has
+  // acted — stop the chase. 'viewed' deliberately does NOT cancel.
+  if (['payment_reported', 'paid', 'disputed', 'cancelled'].includes(invoice.status)) {
+    await markCancelled(
+      admin,
+      row.id,
+      'Invoice was paid, disputed or cancelled; payment reminder no longer needed.',
+    );
+    return 'cancelled';
+  }
+
+  // Load the template body + subject.
+  const { data: template } = await admin
+    .from('email_templates')
+    .select('id, subject, body, attachment_id')
+    .eq('id', row.template_id ?? '')
+    .eq('company_id', row.company_id)
+    .maybeSingle();
+  if (!template) {
+    await markFailed(admin, row.id, 'Email template was deleted.');
+    return 'failed';
+  }
+
+  // Company branding for merge context (mirrors sendInvoiceMessage).
+  const { data: company } = await admin
+    .from('companies')
+    .select('name, default_currency')
+    .eq('id', row.company_id)
+    .maybeSingle();
+
+  const companyName = invoice.cq_company_name || company?.name || 'QuoteCore+ user';
+  const companyEmail = invoice.cq_company_email || null;
+  const companyPhone = invoice.cq_company_phone || null;
+  const companyLogoUrl = invoice.cq_company_logo_url || null;
+  const currency = invoice.currency ?? company?.default_currency ?? 'GBP';
+
+  // Build the public invoice URL the way sendInvoiceMessage does.
+  const siteUrl = getSiteUrl();
+  const invoicePublicUrl = `${siteUrl}/invoice/${encodeURIComponent(invoice.public_token)}`;
+  const invoiceTotalString = formatCurrency(Number(invoice.total ?? 0), currency);
+  const dueDateString = invoice.due_date
+    ? new Date(invoice.due_date).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      })
+    : '';
+
+  const sendResult = await sendOutboundMessage({
+    companyId: row.company_id,
+    senderUserId: row.created_by_user_id,
+    kind: 'invoice_send',
+    templateId: template.id,
+    subject: template.subject,
+    body: template.body,
+    recipientEmail: row.recipient_email,
+    recipientName: row.recipient_name ?? invoice.customer_name ?? null,
+    mergeContext: {
+      company_name: companyName,
+      company_email: companyEmail ?? undefined,
+      company_phone: companyPhone ?? undefined,
+      today: new Date().toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }),
+      customer_name: invoice.customer_name ?? undefined,
+      invoice_number: invoice.invoice_number ?? undefined,
+      invoice_total: invoiceTotalString,
+      invoice_link: invoicePublicUrl,
+      due_date: dueDateString || undefined,
+    },
+    companyName,
+    companyLogoUrl,
+    companyEmail,
+    companyPhone,
+    // public_token drives the "View invoice" CTA (invoice_send case in send.ts).
+    acceptanceToken: invoice.public_token,
+    primaryCta: {
+      label: 'View Invoice',
+      url: invoicePublicUrl,
+    },
+    attachmentSelection: template.attachment_id
+      ? { libraryAttachmentIds: [template.attachment_id] }
+      : undefined,
+  });
+
+  if (!sendResult.ok) {
+    await markFailed(admin, row.id, sendResult.error);
+    return 'failed';
+  }
+
+  if (sendResult.status === 'suppressed') {
+    await admin
+      .from('scheduled_messages')
+      .update({
+        status: 'suppressed',
+        fired_at: new Date().toISOString(),
+        outbound_message_id: sendResult.messageId,
+      })
+      .eq('id', row.id)
+      .eq('status', 'scheduled');
+    return 'suppressed';
+  }
+
+  await admin
+    .from('scheduled_messages')
+    .update({
+      status: 'sent',
+      fired_at: new Date().toISOString(),
+      outbound_message_id: sendResult.messageId,
+    })
+    .eq('id', row.id)
+    .eq('status', 'scheduled');
+  return 'sent';
+}
+
 async function markCancelled(
   admin: ReturnType<typeof createAdminClient>,
   id: string,
@@ -1426,7 +1788,7 @@ async function markCancelled(
     .update({ status: 'cancelled', cancelled_reason: reason })
     .eq('id', id)
     .eq('status', 'scheduled')
-    .select('company_id, quote_id, order_id, recipient_email')
+    .select('company_id, quote_id, order_id, invoice_id, recipient_email')
     .maybeSingle();
   if (!updated) return;
 
@@ -1450,6 +1812,25 @@ async function markCancelled(
       order_id: updated.order_id,
       alert_type: 'followup_cancelled',
       title: `${orderRef}: scheduled follow-up cancelled`,
+      message: `${reason} The follow-up to ${updated.recipient_email} was not sent.`,
+    });
+    return;
+  }
+
+  if (updated.invoice_id) {
+    const { data: invoice } = await admin
+      .from('invoices')
+      .select('invoice_number')
+      .eq('id', updated.invoice_id)
+      .maybeSingle();
+    const invoiceRef = invoice?.invoice_number
+      ? `Invoice ${invoice.invoice_number}`
+      : 'A scheduled follow-up';
+    await admin.from('alerts').insert({
+      company_id: updated.company_id,
+      invoice_id: updated.invoice_id,
+      alert_type: 'followup_cancelled',
+      title: `${invoiceRef}: scheduled follow-up cancelled`,
       message: `${reason} The follow-up to ${updated.recipient_email} was not sent.`,
     });
     return;

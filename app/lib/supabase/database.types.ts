@@ -3217,6 +3217,7 @@ export type Database = {
           fire_at: string
           fired_at: string | null
           id: string
+          invoice_id: string | null
           order_id: string | null
           outbound_message_id: string | null
           pending_wait_days: number | null
@@ -3242,6 +3243,7 @@ export type Database = {
           fire_at: string
           fired_at?: string | null
           id?: string
+          invoice_id?: string | null
           order_id?: string | null
           outbound_message_id?: string | null
           pending_wait_days?: number | null
@@ -3267,6 +3269,7 @@ export type Database = {
           fire_at?: string
           fired_at?: string | null
           id?: string
+          invoice_id?: string | null
           order_id?: string | null
           outbound_message_id?: string | null
           pending_wait_days?: number | null
@@ -3296,6 +3299,13 @@ export type Database = {
             columns: ["created_by_user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_messages_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
           {

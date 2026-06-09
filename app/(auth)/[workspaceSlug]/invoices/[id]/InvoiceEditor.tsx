@@ -94,6 +94,8 @@ interface Props {
   collections: { id: string; name: string }[];
   componentLibrary: { id: string; name: string; collection_id: string | null }[];
   activity: { id: string; event_type: string; metadata: Record<string, unknown> | null; created_at: string }[];
+  /** Whether this company's plan includes scheduled follow-ups. */
+  canFollowups?: boolean;
 }
 
 // ── Status badge ───────────────────────────────────────────────────────────
@@ -122,6 +124,7 @@ export function InvoiceEditor({
   componentLibrary,
   activity,
   emailTemplates,
+  canFollowups = false,
 }: Props) {
   const router = useRouter();
   // When opened from the Message Center (?from=inbox) the Back arrow returns
@@ -442,6 +445,7 @@ export function InvoiceEditor({
             publicToken={initial.public_token}
             status={initial.status}
             emailTemplates={emailTemplates}
+            canFollowups={canFollowups}
             invoiceMeta={{
               customerName: initial.customer_name ?? '',
               invoiceNumber: initial.invoice_number ?? '',

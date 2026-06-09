@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { InvoiceEditor, type InvoiceRow, type InvoiceLineRow } from './InvoiceEditor';
+import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 
 interface Props {
   params: Promise<{ workspaceSlug: string; id: string }>;
@@ -100,6 +101,11 @@ export default async function InvoicePage({ params }: Props) {
     .in('kind', ['invoice_send', 'custom'])
     .order('name');
 
+  // Whether this company's plan includes scheduled follow-ups (mirrors
+  // the quote/order send surfaces).
+  const entitlements = await loadCompanyEntitlements(profile.company_id);
+  const canFollowups = entitlements.features.followups;
+
   return (
     <InvoiceEditor
       invoice={invoice as unknown as InvoiceRow}
@@ -113,6 +119,7 @@ export default async function InvoicePage({ params }: Props) {
       componentLibrary={componentLibrary ?? []}
       activity={(activity ?? []) as unknown as { id: string; event_type: string; metadata: Record<string, unknown> | null; created_at: string }[]}
       emailTemplates={(emailTemplates ?? []) as { id: string; name: string; subject: string; body: string; is_default: boolean | null }[]}
+      canFollowups={canFollowups}
     />
   );
 }

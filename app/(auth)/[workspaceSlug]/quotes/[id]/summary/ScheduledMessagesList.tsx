@@ -38,6 +38,9 @@ const TRIGGER_LABEL: Record<ScheduledTriggerEvent, string> = {
   order_sent: 'After order was sent',
   order_accepted: 'After order accepted',
   order_declined: 'After order declined',
+  // Invoice follow-up trigger (Phase C). Present here so this exhaustive
+  // map stays type-complete; this quote-scoped list won't render it.
+  invoice_sent: 'After invoice was sent',
   manual: 'Starting now',
 };
 

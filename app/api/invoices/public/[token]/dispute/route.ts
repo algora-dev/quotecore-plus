@@ -67,6 +67,23 @@ export async function POST(
     .update({ status: 'disputed', disputed_at: now })
     .eq('id', invoice.id);
 
+  // Best-effort: cancel any pending time-based invoice follow-ups now
+  // that the recipient has disputed. The dispatch-time guard in
+  // dispatchInvoiceRow is authoritative; this just makes the cancel snappy.
+  try {
+    await admin
+      .from('scheduled_messages')
+      .update({
+        status: 'cancelled',
+        cancelled_reason: 'Recipient disputed the invoice; reminder no longer needed.',
+      })
+      .eq('invoice_id', invoice.id)
+      .eq('company_id', invoice.company_id)
+      .eq('status', 'scheduled');
+  } catch (err) {
+    console.error('[dispute] cancel scheduled follow-ups failed:', err);
+  }
+
   // Log activity
   await admin.from('invoice_activity').insert({
     invoice_id: invoice.id,

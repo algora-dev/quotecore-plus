@@ -19,6 +19,12 @@ export type ScheduledTriggerEvent =
   | 'order_sent'
   | 'order_accepted'
   | 'order_declined'
+  // Invoice follow-up trigger (Phase C). Invoices are TIME-BASED ONLY:
+  // 'invoice_sent' is the chase anchor (mirrors 'quote_sent' /
+  // 'order_sent'). There are deliberately NO invoice event triggers —
+  // when the recipient acts (payment_reported / paid / disputed) the
+  // pending chase is CANCELLED at dispatch time rather than firing.
+  | 'invoice_sent'
   | 'manual';
 
 export type ScheduledStatus =
@@ -44,6 +50,22 @@ export interface ScheduleOrderFollowUpInput {
   waitHours?: number;
   /** Minute-level granularity; honoured (not floored away). */
   waitMinutes?: number;
+  requireNoResponse: boolean;
+  respectQuietHours: boolean;
+  recipientEmail: string;
+  recipientName?: string | null;
+}
+
+export interface ScheduleInvoiceFollowUpInput {
+  invoiceId: string;
+  templateId: string;
+  /** Always the time-based chase anchor for invoices. */
+  waitDays: number;
+  waitHours?: number;
+  /** Minute-level granularity; honoured (not floored away). */
+  waitMinutes?: number;
+  /** Always true for the invoice chase — it cancels once the recipient
+   *  reports payment / pays / disputes. */
   requireNoResponse: boolean;
   respectQuietHours: boolean;
   recipientEmail: string;
@@ -78,6 +100,7 @@ export interface ScheduledMessageRow {
   company_id: string;
   quote_id: string | null;
   order_id: string | null;
+  invoice_id: string | null;
   template_id: string | null;
   trigger_event: ScheduledTriggerEvent;
   trigger_anchor_at: string;
