@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { alertEnabled } from '@/app/lib/alerts/prefs';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { headers } from 'next/headers';
 
@@ -72,14 +73,17 @@ export async function POST(
     metadata: { recipient_name: recipientName, reason, disputed_at: now },
   });
 
-  // Alert account owner
-  await admin.from('alerts').insert({
-    company_id: invoice.company_id,
-    invoice_id: invoice.id,
-    alert_type: 'invoice_disputed',
-    title: 'Invoice Disputed',
-    message: `${recipientName} has disputed invoice ${invoice.invoice_number}. Reason: ${reason}`,
-  });
+  // Alert account owner. Dispute record + status update above always happen;
+  // this alert is gated by the Message Center notification matrix.
+  if (await alertEnabled(admin, invoice.company_id, 'invoice_disputed')) {
+    await admin.from('alerts').insert({
+      company_id: invoice.company_id,
+      invoice_id: invoice.id,
+      alert_type: 'invoice_disputed',
+      title: 'Invoice Disputed',
+      message: `${recipientName} has disputed invoice ${invoice.invoice_number}. Reason: ${reason}`,
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

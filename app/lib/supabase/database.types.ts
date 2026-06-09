@@ -525,6 +525,7 @@ export type Database = {
           first_payment_failure_at: string | null
           id: string
           name: string
+          notification_prefs: Json
           notify_on_recipient_view: boolean
           onboarding_completed_at: string | null
           payment_details: Json | null
@@ -564,6 +565,7 @@ export type Database = {
           first_payment_failure_at?: string | null
           id?: string
           name: string
+          notification_prefs?: Json
           notify_on_recipient_view?: boolean
           onboarding_completed_at?: string | null
           payment_details?: Json | null
@@ -603,6 +605,7 @@ export type Database = {
           first_payment_failure_at?: string | null
           id?: string
           name?: string
+          notification_prefs?: Json
           notify_on_recipient_view?: boolean
           onboarding_completed_at?: string | null
           payment_details?: Json | null

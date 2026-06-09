@@ -2,6 +2,7 @@
 
 import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { alertEnabled } from '@/app/lib/alerts/prefs';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 
 export interface SubmitOrderResponseInput {
@@ -115,13 +116,17 @@ export async function submitOrderResponse(
     ? `Order ${order.order_number}\n\n${input.body.slice(0, 280)}${input.body.length > 280 ? '\u2026' : ''}`
     : `Order ${order.order_number}`;
 
-  await supabase.from('alerts').insert({
-    company_id: order.company_id,
-    alert_type: 'order_supplier_response',
-    title: alertTitle,
-    message: alertBody,
-    order_id: order.id,
-  });
+  // Response row + lifecycle stamps above always happen; this alert is gated
+  // by the Message Center notification matrix.
+  if (await alertEnabled(supabase, order.company_id, 'order_supplier_response')) {
+    await supabase.from('alerts').insert({
+      company_id: order.company_id,
+      alert_type: 'order_supplier_response',
+      title: alertTitle,
+      message: alertBody,
+      order_id: order.id,
+    });
+  }
 
   return { ok: true };
 }

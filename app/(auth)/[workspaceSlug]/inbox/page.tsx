@@ -1,4 +1,5 @@
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import { resolvePrefs } from '@/app/lib/alerts/prefs';
 import { InboxList } from './InboxList';
 
 export const dynamic = 'force-dynamic';
@@ -28,12 +29,12 @@ export default async function InboxPage({
       .limit(1000),
     supabase
       .from('companies')
-      .select('notify_on_recipient_view')
+      .select('notification_prefs')
       .eq('id', profile.company_id)
       .maybeSingle(),
   ]);
 
-  const notifyOnRecipientView = company?.notify_on_recipient_view ?? true;
+  const notificationPrefs = resolvePrefs(company?.notification_prefs);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -46,7 +47,7 @@ export default async function InboxPage({
       <InboxList
         initialAlerts={alerts || []}
         workspaceSlug={workspaceSlug}
-        initialNotifyOnRecipientView={notifyOnRecipientView}
+        initialNotificationPrefs={notificationPrefs}
       />
     </div>
   );

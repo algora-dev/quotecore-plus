@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { alertEnabled } from '@/app/lib/alerts/prefs';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -435,14 +436,17 @@ export async function confirmPaymentReceived(invoiceId: string) {
     metadata: { confirmed_at: now },
   });
 
-  // Alert self (user receives "Payment confirmed" notification)
-  await admin.from('alerts').insert({
-    company_id: profile.company_id,
-    invoice_id: invoiceId,
-    alert_type: 'invoice_paid',
-    title: 'Payment Confirmed',
-    message: 'You confirmed payment received on this invoice.',
-  });
+  // Alert self (user receives "Payment confirmed" notification). Status update
+  // above always happens; this alert is gated by the notification matrix.
+  if (await alertEnabled(admin, profile.company_id, 'invoice_paid')) {
+    await admin.from('alerts').insert({
+      company_id: profile.company_id,
+      invoice_id: invoiceId,
+      alert_type: 'invoice_paid',
+      title: 'Payment Confirmed',
+      message: 'You confirmed payment received on this invoice.',
+    });
+  }
 
   revalidatePath(`/[workspaceSlug]/invoices/${invoiceId}`);
 }

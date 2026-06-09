@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { alertEnabled } from '@/app/lib/alerts/prefs';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { headers } from 'next/headers';
 
@@ -54,14 +55,17 @@ export async function POST(
     metadata: { customer_message: customerMessage, reported_at: now },
   });
 
-  // Alert account owner
-  await admin.from('alerts').insert({
-    company_id: invoice.company_id,
-    invoice_id: invoice.id,
-    alert_type: 'invoice_payment_reported',
-    title: 'Payment Reported',
-    message: `${invoice.customer_name} has reported payment for invoice ${invoice.invoice_number}. Please check your bank and confirm receipt.${customerMessage ? ` Note: "${customerMessage}"` : ''}`,
-  });
+  // Alert account owner. Status update + activity log above always happen;
+  // this alert is gated by the Message Center notification matrix.
+  if (await alertEnabled(admin, invoice.company_id, 'invoice_payment_reported')) {
+    await admin.from('alerts').insert({
+      company_id: invoice.company_id,
+      invoice_id: invoice.id,
+      alert_type: 'invoice_payment_reported',
+      title: 'Payment Reported',
+      message: `${invoice.customer_name} has reported payment for invoice ${invoice.invoice_number}. Please check your bank and confirm receipt.${customerMessage ? ` Note: "${customerMessage}"` : ''}`,
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

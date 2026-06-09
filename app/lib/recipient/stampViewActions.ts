@@ -1,6 +1,7 @@
 'use server';
 
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { alertEnabled } from '@/app/lib/alerts/prefs';
 
 /**
  * Recipient-view stamping (Message Center Phase 3).
@@ -13,29 +14,16 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
  *
  * Each action is idempotent: it only stamps `viewed_at` (and, for quotes,
  * advances job_status to "viewed") on the FIRST genuine open, and only emits a
- * Read alert when the company has `notify_on_recipient_view` enabled. The
- * STATUS always updates regardless of the toggle; the toggle gates only the
- * alert.
+ * Read alert when the company has that channel's Read toggle enabled in the
+ * Message Center notification matrix (`companies.notification_prefs` keys
+ * quote_viewed / order_viewed / invoice_viewed; default ON). The STATUS always
+ * updates regardless of the toggle; the toggle gates only the alert.
  *
  * Token formats: quotes/invoices use UUID; orders use a long opaque token.
  */
 
 function isValidUUID(str: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-}
-
-/** Look up whether the company wants a Read alert. Defaults to true. */
-async function companyWantsViewAlert(
-  admin: ReturnType<typeof createAdminClient>,
-  companyId: string,
-): Promise<boolean> {
-  const { data } = await admin
-    .from('companies')
-    .select('notify_on_recipient_view')
-    .eq('id', companyId)
-    .maybeSingle();
-  // Null/missing -> default on (matches the column default).
-  return data?.notify_on_recipient_view ?? true;
 }
 
 /**
@@ -71,7 +59,7 @@ export async function stampQuoteViewed(token: string): Promise<void> {
     .eq('id', quote.id)
     .is('viewed_at', null); // guard against double-stamp race
 
-  if (await companyWantsViewAlert(admin, quote.company_id)) {
+  if (await alertEnabled(admin, quote.company_id, 'quote_viewed')) {
     await admin.from('alerts').insert({
       company_id: quote.company_id,
       quote_id: quote.id,
@@ -106,7 +94,7 @@ export async function stampOrderViewed(token: string): Promise<void> {
     .eq('id', order.id)
     .is('viewed_at', null);
 
-  if (await companyWantsViewAlert(admin, order.company_id)) {
+  if (await alertEnabled(admin, order.company_id, 'order_viewed')) {
     await admin.from('alerts').insert({
       company_id: order.company_id,
       order_id: order.id,
@@ -156,7 +144,7 @@ export async function stampInvoiceViewed(token: string): Promise<void> {
     metadata: { source: 'recipient_open' },
   });
 
-  if (await companyWantsViewAlert(admin, invoice.company_id)) {
+  if (await alertEnabled(admin, invoice.company_id, 'invoice_viewed')) {
     await admin.from('alerts').insert({
       company_id: invoice.company_id,
       invoice_id: invoice.id,

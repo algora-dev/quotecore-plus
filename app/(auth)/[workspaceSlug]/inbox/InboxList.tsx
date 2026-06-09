@@ -2,7 +2,86 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { updateNotifyOnRecipientView } from './settings-actions';
+import { updateNotificationPref, updateChannelMaster } from './settings-actions';
+
+type NotificationChannelKey = 'quotes' | 'orders' | 'invoices';
+
+/**
+ * The notification matrix — the REAL alert_type taxonomy in the codebase.
+ * Orders has a SINGLE response event (order_supplier_response covers
+ * accept/decline/request-info), and Invoices has NO request-info event, so the
+ * matrix renders only these real events.
+ */
+const NOTIFICATION_MATRIX: {
+  key: NotificationChannelKey;
+  label: string;
+  events: { key: string; label: string }[];
+}[] = [
+  {
+    key: 'quotes',
+    label: 'Quotes',
+    events: [
+      { key: 'quote_accepted', label: 'Accepted' },
+      { key: 'quote_declined', label: 'Declined' },
+      { key: 'revision_requested', label: 'Request Info' },
+      { key: 'quote_viewed', label: 'Read' },
+    ],
+  },
+  {
+    key: 'orders',
+    label: 'Orders',
+    events: [
+      { key: 'order_supplier_response', label: 'Supplier Response' },
+      { key: 'order_viewed', label: 'Read' },
+    ],
+  },
+  {
+    key: 'invoices',
+    label: 'Invoices',
+    events: [
+      { key: 'invoice_payment_reported', label: 'Payment Sent' },
+      { key: 'invoice_disputed', label: 'Dispute' },
+      { key: 'invoice_paid', label: 'Paid' },
+      { key: 'invoice_viewed', label: 'Read' },
+    ],
+  },
+];
+
+/**
+ * Shared toggle switch — the exact rounded-full w-11 h-6 accent pattern used
+ * throughout the app. Reused for every matrix row so they look identical.
+ */
+function Toggle({
+  checked,
+  disabled,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  onChange: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onChange}
+      className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition ${
+        checked ? 'bg-[#FF6B35]' : 'bg-slate-300'
+      } ${disabled ? 'opacity-60' : ''}`}
+    >
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+          checked ? 'translate-x-6' : 'translate-x-1'
+        }`}
+      />
+    </button>
+  );
+}
 
 type AlertStatus = 'active' | 'todo' | 'archived';
 
@@ -22,8 +101,9 @@ interface Alert {
 interface Props {
   initialAlerts: Alert[];
   workspaceSlug: string;
-  /** Company preference: create a Read alert when a recipient opens an item. */
-  initialNotifyOnRecipientView: boolean;
+  /** Resolved in-app notification matrix: { "<alert_type>": boolean } for every
+   *  known event (default ON). Each key gates the matching owner alert. */
+  initialNotificationPrefs: Record<string, boolean>;
 }
 
 type TypeFilter = 'all' | 'quotes' | 'orders' | 'invoices' | 'messages';
@@ -57,11 +137,11 @@ const TYPE_FILTERS: { key: TypeFilter; label: string }[] = [
   { key: 'messages', label: 'Messages' },
 ];
 
-export function InboxList({ initialAlerts, workspaceSlug, initialNotifyOnRecipientView }: Props) {
+export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPrefs }: Props) {
   const router = useRouter();
   const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
   const [view, setView] = useState<'inbox' | 'settings'>('inbox');
-  const [notifyOnView, setNotifyOnView] = useState(initialNotifyOnRecipientView);
+  const [prefs, setPrefs] = useState<Record<string, boolean>>(initialNotificationPrefs);
   const [savingPref, setSavingPref] = useState(false);
   const [folder, setFolder] = useState<AlertStatus>('active');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
@@ -176,12 +256,37 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotifyOnRecipie
   const sel = Array.from(selected);
   const selInVisible = sel.filter((id) => visible.some((a) => a.id === id));
 
-  async function toggleNotifyOnView() {
-    const next = !notifyOnView;
-    setNotifyOnView(next); // optimistic
+  // Master is ON if ANY child in the channel is on. Toggling master sets all
+  // children to the target value (master OFF -> all off; master ON -> all on).
+  function channelMasterOn(channelKey: NotificationChannelKey): boolean {
+    const ch = NOTIFICATION_MATRIX.find((c) => c.key === channelKey);
+    if (!ch) return false;
+    return ch.events.some((e) => prefs[e.key] ?? true);
+  }
+
+  async function toggleEvent(eventKey: string) {
+    const next = !(prefs[eventKey] ?? true);
+    const prev = prefs;
+    setPrefs((p) => ({ ...p, [eventKey]: next })); // optimistic
     setSavingPref(true);
-    const res = await updateNotifyOnRecipientView(next).catch(() => null);
-    if (!res || !res.ok) setNotifyOnView(!next); // rollback
+    const res = await updateNotificationPref(eventKey, next).catch(() => null);
+    if (!res || !res.ok) setPrefs(prev); // rollback
+    setSavingPref(false);
+  }
+
+  async function toggleMaster(channelKey: NotificationChannelKey) {
+    const ch = NOTIFICATION_MATRIX.find((c) => c.key === channelKey);
+    if (!ch) return;
+    const next = !channelMasterOn(channelKey); // bulk-set all children
+    const prev = prefs;
+    setPrefs((p) => {
+      const copy = { ...p };
+      for (const e of ch.events) copy[e.key] = next;
+      return copy;
+    });
+    setSavingPref(true);
+    const res = await updateChannelMaster(channelKey, next).catch(() => null);
+    if (!res || !res.ok) setPrefs(prev); // rollback
     setSavingPref(false);
   }
 
@@ -210,36 +315,72 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotifyOnRecipie
       </div>
 
       {view === 'settings' ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 max-w-2xl">
-          <h2 className="text-sm font-semibold text-slate-900">Notifications</h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Control which alerts the Message Center creates.
-          </p>
-          <div className="mt-4 flex items-start justify-between gap-4 rounded-xl border border-slate-200 px-4 py-3 hover:bg-orange-50/40 hover:border-orange-200 transition">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-slate-900">Notify me when recipients open (Read)</p>
-              <p className="text-xs text-slate-500 mt-0.5">
-                When on, opening a quote, order, or invoice link by your recipient creates a Read alert.
-                The status still updates either way — this only controls the alert.
-              </p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={notifyOnView}
-              disabled={savingPref}
-              onClick={toggleNotifyOnView}
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition ${
-                notifyOnView ? 'bg-[#FF6B35]' : 'bg-slate-300'
-              } ${savingPref ? 'opacity-60' : ''}`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                  notifyOnView ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
+        <div className="space-y-4 max-w-2xl">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Notifications</h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Choose which alerts the Message Center creates. ON = notify me. Each
+              channel’s master toggle switches all of its events at once. The
+              underlying status (Read, Accepted, Paid…) always updates either way —
+              these toggles only control the in-app alert.
+            </p>
           </div>
+
+          {NOTIFICATION_MATRIX.map((channel) => {
+            const masterOn = channelMasterOn(channel.key);
+            return (
+              <div
+                key={channel.key}
+                className="rounded-xl border border-slate-200 bg-white overflow-hidden"
+              >
+                {/* Channel header row + MASTER toggle */}
+                <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-slate-100 bg-slate-50/60">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900">{channel.label}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">All {channel.label} alerts</p>
+                  </div>
+                  <Toggle
+                    checked={masterOn}
+                    disabled={savingPref}
+                    onChange={() => toggleMaster(channel.key)}
+                    label={`All ${channel.label} alerts`}
+                  />
+                </div>
+
+                {/* Per-event child rows. Greyed + disabled when master is off. */}
+                <div className={`divide-y divide-slate-100 ${masterOn ? '' : 'opacity-50'}`}>
+                  {channel.events.map((event) => {
+                    const on = prefs[event.key] ?? true;
+                    return (
+                      <div
+                        key={event.key}
+                        className="flex items-center justify-between gap-4 px-4 py-2.5 hover:bg-orange-50/40 transition"
+                      >
+                        <p className="text-sm text-slate-700">{event.label}</p>
+                        <Toggle
+                          checked={on}
+                          disabled={savingPref || !masterOn}
+                          onChange={() => toggleEvent(event.key)}
+                          label={`${channel.label} – ${event.label}`}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+
+          <p className="text-xs text-slate-400">
+            Want email copies of these alerts too? Manage that in{' '}
+            <a
+              href={`/${workspaceSlug}/settings`}
+              className="text-orange-600 hover:underline"
+            >
+              Account → Notifications
+            </a>
+            .
+          </p>
         </div>
       ) : (
     <div className="flex gap-5">

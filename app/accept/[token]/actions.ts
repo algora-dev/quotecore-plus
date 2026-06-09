@@ -1,6 +1,7 @@
 'use server';
 import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { alertEnabled } from '@/app/lib/alerts/prefs';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import {
   notifyQuoteResponse,
@@ -160,14 +161,17 @@ export async function submitRevisionRequest(
 
   // Surface as an alert in the user's dashboard, reusing the existing alerts
   // table. Alert type is new (`revision_requested`) but the existing alerts
-  // list renders any type generically.
-  await supabase.from('alerts').insert({
-    company_id: quote.company_id,
-    quote_id: quote.id,
-    alert_type: 'revision_requested',
-    title: `Re-Quote Requested - #${quote.quote_number ?? 'DRAFT'}`,
-    message: `${cleanName || quote.customer_name || 'Customer'} has requested a revision (${sourceState}). Notes: ${trimmedNotes.slice(0, 200)}${trimmedNotes.length > 200 ? '…' : ''}`,
-  });
+  // list renders any type generically. Gated by the Message Center matrix —
+  // the request record above is saved regardless; only the alert is gated.
+  if (await alertEnabled(supabase, quote.company_id, 'revision_requested')) {
+    await supabase.from('alerts').insert({
+      company_id: quote.company_id,
+      quote_id: quote.id,
+      alert_type: 'revision_requested',
+      title: `Re-Quote Requested - #${quote.quote_number ?? 'DRAFT'}`,
+      message: `${cleanName || quote.customer_name || 'Customer'} has requested a revision (${sourceState}). Notes: ${trimmedNotes.slice(0, 200)}${trimmedNotes.length > 200 ? '…' : ''}`,
+    });
+  }
 
   // Best-effort email notification (gated by user preference). Failures are
   // swallowed inside notifyRevisionRequested - the in-app alert above is the
@@ -334,14 +338,17 @@ export async function respondToQuote(token: string, action: 'accept' | 'decline'
 
   if (error) throw new Error('Failed to process response');
 
-  // Create alert (scoped to the quote's company)
-  await supabase.from('alerts').insert({
-    company_id: quote.company_id,
-    quote_id: quote.id,
-    alert_type: isAccept ? 'quote_accepted' : 'quote_declined',
-    title: `Quote #${quote.quote_number} ${isAccept ? 'Accepted' : 'Declined'}`,
-    message: `${quote.customer_name} has ${isAccept ? 'accepted' : 'declined'} Quote #${quote.quote_number}.`,
-  });
+  // Create alert (scoped to the quote's company). Status update above always
+  // happens; this alert is gated by the Message Center notification matrix.
+  if (await alertEnabled(supabase, quote.company_id, isAccept ? 'quote_accepted' : 'quote_declined')) {
+    await supabase.from('alerts').insert({
+      company_id: quote.company_id,
+      quote_id: quote.id,
+      alert_type: isAccept ? 'quote_accepted' : 'quote_declined',
+      title: `Quote #${quote.quote_number} ${isAccept ? 'Accepted' : 'Declined'}`,
+      message: `${quote.customer_name} has ${isAccept ? 'accepted' : 'declined'} Quote #${quote.quote_number}.`,
+    });
+  }
 
   // Activate any pre-staged quote_accepted / quote_declined follow-ups
   // for this quote. The accept/decline modal in the post-send prompt
