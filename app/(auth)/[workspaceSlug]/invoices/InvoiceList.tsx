@@ -633,17 +633,19 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
 
           <div className="grid gap-1">
             {filtered.map((inv) => (
-              <Link
+              <div
                 key={inv.id}
-                href={`/${workspaceSlug}/invoices/${inv.id}`}
-                className={`grid sm:grid-cols-[28px_1fr_1fr_140px_140px_120px_40px] gap-4 items-center rounded-xl border bg-white px-4 py-3 hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${selectedIds.has(inv.id) ? 'border-orange-300 bg-orange-50/30' : 'border-slate-200'}`}
+                onClick={() => router.push(`/${workspaceSlug}/invoices/${inv.id}`)}
+                title="Click to open this invoice"
+                className={`grid sm:grid-cols-[28px_1fr_1fr_140px_140px_120px_40px] gap-4 items-center rounded-xl border bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${selectedIds.has(inv.id) ? 'border-orange-300 bg-orange-50/30' : 'border-slate-200'}`}
               >
-                {/* Selection checkbox */}
+                {/* Selection checkbox — onChange + stopPropagation so it
+                    selects (not navigates), matching the Quotes/Orders rows. */}
                 <input
                   type="checkbox"
                   checked={selectedIds.has(inv.id)}
-                  readOnly
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelect(inv.id); }}
+                  onChange={() => toggleSelect(inv.id)}
+                  onClick={(e) => e.stopPropagation()}
                   title="Select for bulk download or delete"
                   className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
                 />
@@ -698,7 +700,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
                     onDeleted={handleDeleted}
                   />
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>
