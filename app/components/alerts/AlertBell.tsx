@@ -37,9 +37,11 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
   // alert without a recognised FK falls back to the full Message Center
   // (never a 404).
   function hrefFor(alert: Alert): string {
-    if (alert.quote_id) return `/${workspaceSlug}/quotes/${alert.quote_id}/summary`;
-    if (alert.invoice_id) return `/${workspaceSlug}/invoices/${alert.invoice_id}`;
-    if (alert.order_id) return `/${workspaceSlug}/material-orders/${alert.order_id}/preview`;
+    // `?from=inbox` tells the destination page to point its "Back" breadcrumb
+    // at the Message Center instead of the entity's main list page.
+    if (alert.quote_id) return `/${workspaceSlug}/quotes/${alert.quote_id}/summary?from=inbox`;
+    if (alert.invoice_id) return `/${workspaceSlug}/invoices/${alert.invoice_id}?from=inbox`;
+    if (alert.order_id) return `/${workspaceSlug}/material-orders/${alert.order_id}/preview?from=inbox`;
     return `/${workspaceSlug}/inbox`;
   }
 

@@ -1,11 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { deleteInvoice, cancelInvoice } from './actions';
+import { deleteInvoice, cancelInvoice, updateInvoiceStatus } from './actions';
 import { CreateInvoiceModal } from './CreateInvoiceModal';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 import { formatCurrency } from '@/app/lib/currency/currencies';
+import { RecipientStatusBadge, type RecipientStatus } from '@/app/components/RecipientStatusBadge';
 
 type InvoiceRow = {
   id: string;
@@ -20,10 +21,23 @@ type InvoiceRow = {
   due_date: string | null;
   sent_at: string | null;
   paid_at: string | null;
+  viewed_at: string | null;
+  disputed_at: string | null;
   created_at: string;
   updated_at: string;
   public_token: string;
 };
+
+/**
+ * Recipient-driven status for an invoice's Status column.
+ * Action Required: invoice disputed by the recipient.
+ * Read: recipient opened the public invoice link.
+ */
+function invoiceRecipientStatus(inv: InvoiceRow): RecipientStatus {
+  if (inv.status === 'disputed' || inv.disputed_at) return 'action_required';
+  if (inv.viewed_at || inv.status === 'viewed') return 'read';
+  return null;
+}
 
 interface Props {
   invoices: InvoiceRow[];
@@ -67,13 +81,94 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(diffDays / 30)} months ago`;
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.draft;
+// Owner-settable lifecycle statuses (mirrors MANUAL_INVOICE_STATUSES in
+// actions.ts). Recipient/system-driven states (viewed, payment_reported,
+// disputed) are shown as the current badge but aren't manually selectable;
+// they surface via the RecipientStatusBadge instead.
+const INVOICE_STATUS_ORDER = ['draft', 'sent', 'paid', 'cancelled'];
+
+/**
+ * Status dropdown for the invoices list — same interaction pattern as the
+ * Orders (OrderStatusDropdown) and Quotes (JobStatusDropdown) lists so all
+ * three match. Selecting a status persists via updateInvoiceStatus.
+ */
+function InvoiceStatusDropdown({ invoiceId, currentStatus }: { invoiceId: string; currentStatus: string }) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState(currentStatus);
+  const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.draft;
+  // Statuses we can't manually switch to (recipient/system-driven) but may be
+  // the current value — the dropdown then shows them as the active, read-only
+  // current state and only offers the manual options.
+  const selectable = INVOICE_STATUS_ORDER.includes(status)
+    ? INVOICE_STATUS_ORDER
+    : [status, ...INVOICE_STATUS_ORDER];
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  async function handleSelect(newStatus: string) {
+    if (newStatus === status) { setOpen(false); return; }
+    if (!INVOICE_STATUS_ORDER.includes(newStatus)) { setOpen(false); return; }
+    setSaving(true);
+    setOpen(false);
+    try {
+      await updateInvoiceStatus(invoiceId, newStatus);
+      setStatus(newStatus);
+      router.refresh();
+    } catch (err) {
+      console.error('Failed to update invoice status:', err);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-      {cfg.label}
-    </span>
+    <div className="relative" ref={ref} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        disabled={saving}
+        title="Click to change status"
+        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.border} ${saving ? 'opacity-50' : ''}`}
+      >
+        <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+        {saving ? '...' : config.label}
+        <svg className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+          {selectable.map((s) => {
+            const c = STATUS_CONFIG[s] ?? STATUS_CONFIG.draft;
+            const isActive = s === status;
+            const isManual = INVOICE_STATUS_ORDER.includes(s);
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => handleSelect(s)}
+                disabled={!isManual}
+                className={`flex w-full items-center gap-2 px-3 py-1.5 text-xs transition hover:bg-slate-50 ${isActive ? 'font-semibold' : ''} ${!isManual ? 'opacity-60 cursor-default' : ''}`}
+              >
+                <span className={`w-2 h-2 rounded-full ${c.dot}`} />
+                <span className={isActive ? c.text : 'text-slate-700'}>{c.label}</span>
+                {isActive && <svg className="w-3 h-3 ml-auto text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -340,7 +435,8 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold text-orange-600 text-sm">{inv.invoice_number}</span>
-                  <StatusBadge status={inv.status} />
+                  <InvoiceStatusDropdown invoiceId={inv.id} currentStatus={inv.status} />
+                  <RecipientStatusBadge status={invoiceRecipientStatus(inv)} />
                   {isOverdue(inv) && (
                     <span className="text-xs text-red-600 font-medium">Overdue</span>
                   )}

@@ -17,14 +17,23 @@ export default async function InboxPage({
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
-  const { data: alerts } = await supabase
-    .from('alerts')
-    .select(
-      'id, alert_type, title, message, is_read, status, created_at, quote_id, invoice_id, order_id',
-    )
-    .eq('company_id', profile.company_id)
-    .order('created_at', { ascending: false })
-    .limit(1000);
+  const [{ data: alerts }, { data: company }] = await Promise.all([
+    supabase
+      .from('alerts')
+      .select(
+        'id, alert_type, title, message, is_read, status, created_at, quote_id, invoice_id, order_id',
+      )
+      .eq('company_id', profile.company_id)
+      .order('created_at', { ascending: false })
+      .limit(1000),
+    supabase
+      .from('companies')
+      .select('notify_on_recipient_view')
+      .eq('id', profile.company_id)
+      .maybeSingle(),
+  ]);
+
+  const notifyOnRecipientView = company?.notify_on_recipient_view ?? true;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -34,7 +43,11 @@ export default async function InboxPage({
           Every alert and message from your quotes, orders and invoices in one place.
         </p>
       </div>
-      <InboxList initialAlerts={alerts || []} workspaceSlug={workspaceSlug} />
+      <InboxList
+        initialAlerts={alerts || []}
+        workspaceSlug={workspaceSlug}
+        initialNotifyOnRecipientView={notifyOnRecipientView}
+      />
     </div>
   );
 }

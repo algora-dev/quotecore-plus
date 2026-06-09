@@ -525,6 +525,7 @@ export type Database = {
           first_payment_failure_at: string | null
           id: string
           name: string
+          notify_on_recipient_view: boolean
           onboarding_completed_at: string | null
           payment_details: Json | null
           plan_code: string
@@ -563,6 +564,7 @@ export type Database = {
           first_payment_failure_at?: string | null
           id?: string
           name: string
+          notify_on_recipient_view?: boolean
           onboarding_completed_at?: string | null
           payment_details?: Json | null
           plan_code?: string
@@ -601,6 +603,7 @@ export type Database = {
           first_payment_failure_at?: string | null
           id?: string
           name?: string
+          notify_on_recipient_view?: boolean
           onboarding_completed_at?: string | null
           payment_details?: Json | null
           plan_code?: string
@@ -2060,6 +2063,7 @@ export type Database = {
           template_id: string | null
           to_supplier: string | null
           updated_at: string
+          viewed_at: string | null
         }
         Insert: {
           acceptance_token?: string | null
@@ -2097,6 +2101,7 @@ export type Database = {
           template_id?: string | null
           to_supplier?: string | null
           updated_at?: string
+          viewed_at?: string | null
         }
         Update: {
           acceptance_token?: string | null
@@ -2134,6 +2139,7 @@ export type Database = {
           template_id?: string | null
           to_supplier?: string | null
           updated_at?: string
+          viewed_at?: string | null
         }
         Relationships: [
           {
@@ -3045,6 +3051,7 @@ export type Database = {
           template_id: string | null
           trade: Database["public"]["Enums"]["trade"]
           updated_at: string
+          viewed_at: string | null
           withdrawn_at: string | null
           withdrawn_by_user_id: string | null
         }
@@ -3089,6 +3096,7 @@ export type Database = {
           template_id?: string | null
           trade?: Database["public"]["Enums"]["trade"]
           updated_at?: string
+          viewed_at?: string | null
           withdrawn_at?: string | null
           withdrawn_by_user_id?: string | null
         }
@@ -3133,6 +3141,7 @@ export type Database = {
           template_id?: string | null
           trade?: Database["public"]["Enums"]["trade"]
           updated_at?: string
+          viewed_at?: string | null
           withdrawn_at?: string | null
           withdrawn_by_user_id?: string | null
         }

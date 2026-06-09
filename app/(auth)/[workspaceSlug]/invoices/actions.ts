@@ -472,6 +472,41 @@ export async function saveInvoicePaymentDetails(
   revalidatePath(`/[workspaceSlug]/invoices/${invoiceId}`);
 }
 
+// ── Update invoice status (owner-driven, from the list Status dropdown) ─────
+
+/**
+ * Owner-settable lifecycle statuses for the Status dropdown on the invoices
+ * list. Recipient/system-driven states (viewed, payment_reported, disputed)
+ * are intentionally excluded from manual selection — they are surfaced via the
+ * RecipientStatusBadge / status flow, not set by hand here.
+ */
+const MANUAL_INVOICE_STATUSES = ['draft', 'sent', 'paid', 'cancelled'] as const;
+export type ManualInvoiceStatus = (typeof MANUAL_INVOICE_STATUSES)[number];
+
+export async function updateInvoiceStatus(invoiceId: string, status: string) {
+  if (!(MANUAL_INVOICE_STATUSES as readonly string[]).includes(status)) {
+    throw new Error('Invalid invoice status');
+  }
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+  const now = new Date().toISOString();
+
+  // Stamp the matching timestamp on transition so downstream views stay
+  // consistent with the existing send/pay flows.
+  const patch: Record<string, string> = { status, updated_at: now };
+  if (status === 'paid') patch.paid_at = now;
+  if (status === 'sent') patch.sent_at = now;
+
+  const { error } = await supabase
+    .from('invoices')
+    .update(patch as never)
+    .eq('id', invoiceId)
+    .eq('company_id', profile.company_id);
+
+  if (error) throw error;
+  revalidatePath(`/[workspaceSlug]/invoices`);
+}
+
 // ── Delete invoice (draft only) ────────────────────────────────────────────
 
 export async function deleteInvoice(invoiceId: string) {

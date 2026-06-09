@@ -5,6 +5,18 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { MaterialOrderRow } from '@/app/lib/types';
 import { deleteOrder, updateOrderStatus } from './order-list-actions';
+import { RecipientStatusBadge, type RecipientStatus } from '@/app/components/RecipientStatusBadge';
+
+/**
+ * Recipient-driven status for an order's Status column.
+ * Action Required: supplier requested changes/info on the order.
+ * Read: supplier opened the public order link.
+ */
+function orderRecipientStatus(order: MaterialOrderRow): RecipientStatus {
+  if (order.changes_requested_at || order.info_requested_at) return 'action_required';
+  if (order.viewed_at) return 'read';
+  return null;
+}
 
 interface Props {
   orders: MaterialOrderRow[];
@@ -190,8 +202,9 @@ export function OrderList({ orders, workspaceSlug }: Props) {
                 lastResponseAt={order.last_supplier_response_at}
               />
             </div>
-            <div>
+            <div className="flex items-center gap-1.5 flex-wrap">
               <OrderStatusDropdown orderId={order.id} currentStatus={order.status || 'ready'} />
+              <RecipientStatusBadge status={orderRecipientStatus(order)} />
             </div>
             <div className="text-xs text-slate-400">
               {new Date(order.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short' })}

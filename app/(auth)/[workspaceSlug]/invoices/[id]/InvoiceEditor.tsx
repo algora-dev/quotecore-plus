@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
 import { saveInvoiceLines, saveInvoiceMeta, saveInvoicePaymentDetails, cancelInvoice, confirmPaymentReceived } from '../actions';
 import { InvoicePreview } from './InvoicePreview';
@@ -123,6 +123,13 @@ export function InvoiceEditor({
   emailTemplates,
 }: Props) {
   const router = useRouter();
+  // When opened from the Message Center (?from=inbox) the Back arrow returns
+  // to the inbox instead of the invoices list.
+  const searchParams = useSearchParams();
+  const backHref =
+    searchParams.get('from') === 'inbox'
+      ? `/${workspaceSlug}/inbox`
+      : `/${workspaceSlug}/invoices`;
 
   // ── Line state ──
   const [lines, setLines] = useState<EditableLine[]>(() =>
@@ -343,7 +350,8 @@ export function InvoiceEditor({
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white sticky top-0 z-30">
         <div className="flex items-center gap-3 min-w-0">
           <Link
-            href={`/${workspaceSlug}/invoices`}
+            href={backHref}
+            title={backHref.endsWith('/inbox') ? 'Back to Message Center' : 'Back to Invoices'}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors flex-shrink-0"
           >
             <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">

@@ -9,6 +9,7 @@ import { loadQuoteTaxesByQuoteId } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
 import { AttachmentsCard } from '@/app/components/public/AttachmentsCard';
 import { displayLineText } from '@/app/lib/quotes/lineText';
+import { StampRecipientView } from '@/app/lib/recipient/StampRecipientView';
 
 /**
  * Validate token format up front so a malformed URL fails fast without
@@ -190,6 +191,8 @@ export default async function AcceptQuotePage({
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Recipient-view stamping via idempotent POST server action (not GET). */}
+      <StampRecipientView kind="quote" token={token} />
       <div className="max-w-4xl mx-auto p-8 space-y-6">
         {/*
           Quote Document - exact same format as internal Customer Quote

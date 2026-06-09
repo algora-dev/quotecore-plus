@@ -32,10 +32,16 @@ import { BUCKETS } from '@/app/lib/storage/buckets';
 
 export default async function QuoteSummaryPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ workspaceSlug: string; id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const { workspaceSlug, id } = await params;
+  const { from } = await searchParams;
+  // When opened from the Message Center, "Back" returns to the inbox.
+  const backHref = from === 'inbox' ? `/${workspaceSlug}/inbox` : `/${workspaceSlug}/quotes`;
+  const backLabel = from === 'inbox' ? 'Back to Message Center' : 'Back';
   const [quote, roofAreas, components, entries, quoteTaxes] = await Promise.all([
     loadQuote(id),
     loadQuoteRoofAreas(id),
@@ -264,9 +270,9 @@ export default async function QuoteSummaryPage({
     <div className="max-w-5xl mx-auto py-8 px-4 space-y-6">
       {/* Header */}
       <div>
-        <Link href={`/${workspaceSlug}/quotes`} className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-3">
+        <Link href={backHref} className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-3">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          Back
+          {backLabel}
         </Link>
         <div className="flex items-start justify-between">
           <div>

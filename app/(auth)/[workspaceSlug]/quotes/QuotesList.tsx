@@ -16,6 +16,7 @@ import type { JobStatus } from './actions';
 import JSZip from 'jszip';
 import { addQuoteToZip, downloadBlob, sanitizeFilename } from './lib/quote-bundle';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
+import { RecipientStatusBadge, type RecipientStatus } from '@/app/components/RecipientStatusBadge';
 
 type Quote = {
   id: string;
@@ -26,7 +27,22 @@ type Quote = {
   created_at: string;
   updated_at: string;
   job_status: string | null;
+  /** Recipient opened the public acceptance link. */
+  viewed_at: string | null;
+  /** True when the quote has at least one unresolved revision request. */
+  has_pending_revision: boolean;
 };
+
+/**
+ * Recipient-driven status for a quote's Status column.
+ * Action Required: recipient requested changes (pending revision request).
+ * Read: recipient opened the public quote link.
+ */
+function quoteRecipientStatus(q: Quote): RecipientStatus {
+  if (q.has_pending_revision) return 'action_required';
+  if (q.viewed_at) return 'read';
+  return null;
+}
 
 interface Props {
   quotes: Quote[];
@@ -661,7 +677,10 @@ export function QuotesList({
                     Draft
                   </span>
                 ) : (
-                  <JobStatusDropdown quoteId={q.id} currentStatus={q.job_status || 'unsent'} />
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <JobStatusDropdown quoteId={q.id} currentStatus={q.job_status || 'unsent'} />
+                    <RecipientStatusBadge status={quoteRecipientStatus(q)} />
+                  </div>
                 )}
               </div>
 

@@ -5,6 +5,7 @@ import { OrderResponseForm } from './OrderResponseForm';
 import { OrderBody } from './OrderBody';
 import { DownloadOrderButton } from './DownloadOrderButton';
 import { AttachmentsCard } from '@/app/components/public/AttachmentsCard';
+import { StampRecipientView } from '@/app/lib/recipient/StampRecipientView';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,6 +88,8 @@ export default async function PublicOrderPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4">
+      {/* Recipient-view stamping via idempotent POST server action (not GET). */}
+      <StampRecipientView kind="order" token={token} />
       <div className="mx-auto max-w-3xl">
         <header className="mb-6 text-center">
           <p className="text-xs uppercase tracking-wide text-slate-500">{companyName}</p>

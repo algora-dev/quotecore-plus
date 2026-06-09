@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { updateNotifyOnRecipientView } from './settings-actions';
 
 type AlertStatus = 'active' | 'todo' | 'archived';
 
@@ -21,6 +22,8 @@ interface Alert {
 interface Props {
   initialAlerts: Alert[];
   workspaceSlug: string;
+  /** Company preference: create a Read alert when a recipient opens an item. */
+  initialNotifyOnRecipientView: boolean;
 }
 
 type TypeFilter = 'all' | 'quotes' | 'orders' | 'invoices' | 'messages';
@@ -54,9 +57,12 @@ const TYPE_FILTERS: { key: TypeFilter; label: string }[] = [
   { key: 'messages', label: 'Messages' },
 ];
 
-export function InboxList({ initialAlerts, workspaceSlug }: Props) {
+export function InboxList({ initialAlerts, workspaceSlug, initialNotifyOnRecipientView }: Props) {
   const router = useRouter();
   const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
+  const [view, setView] = useState<'inbox' | 'settings'>('inbox');
+  const [notifyOnView, setNotifyOnView] = useState(initialNotifyOnRecipientView);
+  const [savingPref, setSavingPref] = useState(false);
   const [folder, setFolder] = useState<AlertStatus>('active');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [search, setSearch] = useState('');
@@ -116,9 +122,11 @@ export function InboxList({ initialAlerts, workspaceSlug }: Props) {
   }
 
   function openHref(a: Alert): string | null {
-    if (a.quote_id) return `/${workspaceSlug}/quotes/${a.quote_id}/summary`;
-    if (a.invoice_id) return `/${workspaceSlug}/invoices/${a.invoice_id}`;
-    if (a.order_id) return `/${workspaceSlug}/material-orders/${a.order_id}/preview`;
+    // `?from=inbox` tells the destination page to point its "Back" breadcrumb
+    // at the Message Center instead of the entity's main list page.
+    if (a.quote_id) return `/${workspaceSlug}/quotes/${a.quote_id}/summary?from=inbox`;
+    if (a.invoice_id) return `/${workspaceSlug}/invoices/${a.invoice_id}?from=inbox`;
+    if (a.order_id) return `/${workspaceSlug}/material-orders/${a.order_id}/preview?from=inbox`;
     return null;
   }
 
@@ -168,7 +176,72 @@ export function InboxList({ initialAlerts, workspaceSlug }: Props) {
   const sel = Array.from(selected);
   const selInVisible = sel.filter((id) => visible.some((a) => a.id === id));
 
+  async function toggleNotifyOnView() {
+    const next = !notifyOnView;
+    setNotifyOnView(next); // optimistic
+    setSavingPref(true);
+    const res = await updateNotifyOnRecipientView(next).catch(() => null);
+    if (!res || !res.ok) setNotifyOnView(!next); // rollback
+    setSavingPref(false);
+  }
+
   return (
+    <div className="space-y-4">
+      {/* Top tabs: Inbox / Settings (rounded-full pill tabs). */}
+      <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
+        <button
+          type="button"
+          onClick={() => setView('inbox')}
+          className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
+            view === 'inbox' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Inbox
+        </button>
+        <button
+          type="button"
+          onClick={() => setView('settings')}
+          className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
+            view === 'settings' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Settings
+        </button>
+      </div>
+
+      {view === 'settings' ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-5 max-w-2xl">
+          <h2 className="text-sm font-semibold text-slate-900">Notifications</h2>
+          <p className="text-xs text-slate-500 mt-1">
+            Control which alerts the Message Center creates.
+          </p>
+          <div className="mt-4 flex items-start justify-between gap-4 rounded-xl border border-slate-200 px-4 py-3 hover:bg-orange-50/40 hover:border-orange-200 transition">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-slate-900">Notify me when recipients open (Read)</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                When on, opening a quote, order, or invoice link by your recipient creates a Read alert.
+                The status still updates either way — this only controls the alert.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={notifyOnView}
+              disabled={savingPref}
+              onClick={toggleNotifyOnView}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition ${
+                notifyOnView ? 'bg-[#FF6B35]' : 'bg-slate-300'
+              } ${savingPref ? 'opacity-60' : ''}`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                  notifyOnView ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+      ) : (
     <div className="flex gap-5">
       {/* LEFT PANEL — folders */}
       <aside className="w-44 flex-shrink-0">
@@ -367,6 +440,8 @@ export function InboxList({ initialAlerts, workspaceSlug }: Props) {
           </ul>
         )}
       </div>
+    </div>
+      )}
     </div>
   );
 }

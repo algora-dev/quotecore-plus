@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import type { MaterialOrderRow, MaterialOrderLineRow, FlashingLibraryRow } from '@/app/lib/types';
 import { markOrderAsOrdered } from '../../order-list-actions';
@@ -45,6 +45,14 @@ interface Props {
  */
 export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFiles, libraryLocked, currency = 'GBP' }: Props) {
   const router = useRouter();
+  // When opened from the Message Center (?from=inbox) "Back" returns to the
+  // inbox; otherwise keep the existing history-back behaviour.
+  const searchParams = useSearchParams();
+  const fromInbox = searchParams.get('from') === 'inbox';
+  const handleBack = () => {
+    if (fromInbox) router.push(`/${workspaceSlug}/inbox`);
+    else router.back();
+  };
   const [markingOrdered, setMarkingOrdered] = useState(false);
 
   const isOrdered = order.status === 'ordered';
@@ -70,7 +78,8 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
       <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm data-exclude-pdf">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => router.back()}
+            onClick={handleBack}
+            title={fromInbox ? 'Back to Message Center' : 'Back'}
             className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { PublicInvoiceView, type Invoice, type InvoiceLine } from './PublicInvoiceView';
+import { StampRecipientView } from '@/app/lib/recipient/StampRecipientView';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,30 +58,11 @@ export default async function PublicInvoicePage({ params }: Props) {
 
   if (!invoice || invoice.status === 'cancelled') return <InvalidScreen />;
 
-  // Mark as viewed if not already
-  if (invoice.status === 'sent') {
-    await admin
-      .from('invoices')
-      .update({ status: 'viewed', viewed_at: new Date().toISOString() })
-      .eq('id', invoice.id);
-
-    // Log activity
-    await admin.from('invoice_activity').insert({
-      invoice_id: invoice.id,
-      company_id: invoice.company_id,
-      event_type: 'viewed',
-      metadata: { ip: ip ?? 'unknown' },
-    });
-
-    // Alert the account owner
-    await admin.from('alerts').insert({
-      company_id: invoice.company_id,
-      invoice_id: invoice.id,
-      alert_type: 'invoice_viewed',
-      title: 'Invoice Viewed',
-      message: `${invoice.customer_name} has opened invoice ${invoice.invoice_number}.`,
-    });
-  }
+  // NOTE: viewed-status stamping is NOT done here in the GET render. Email/link
+  // scanners issue GET requests and would falsely mark the invoice "Read".
+  // Stamping happens via <StampRecipientView> below, which fires an idempotent
+  // POST server action on genuine client mount. See MEMORY "GET-on-mutate is a
+  // class of bug".
 
   // Load lines
   const { data: lines } = await admin
@@ -90,10 +72,13 @@ export default async function PublicInvoicePage({ params }: Props) {
     .order('sort_order');
 
   return (
-    <PublicInvoiceView
-      invoice={invoice as unknown as Invoice}
-      lines={(lines ?? []) as unknown as InvoiceLine[]}
-      token={token}
-    />
+    <>
+      <StampRecipientView kind="invoice" token={token} />
+      <PublicInvoiceView
+        invoice={invoice as unknown as Invoice}
+        lines={(lines ?? []) as unknown as InvoiceLine[]}
+        token={token}
+      />
+    </>
   );
 }
