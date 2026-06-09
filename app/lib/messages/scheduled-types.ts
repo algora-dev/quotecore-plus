@@ -34,6 +34,9 @@ export interface ScheduleQuoteFollowUpInput {
   triggerEvent: ScheduledTriggerEvent;
   waitDays: number;
   waitHours?: number;
+  /** Optional minute-level granularity on top of days/hours. Unlike
+   *  days/hours this is NOT floored away to zero - minutes are honoured. */
+  waitMinutes?: number;
   requireNoResponse: boolean;
   respectQuietHours: boolean;
   recipientEmail: string;

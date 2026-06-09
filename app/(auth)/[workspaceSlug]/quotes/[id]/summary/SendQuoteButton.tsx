@@ -154,9 +154,10 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
     // triggered-only
     trigger: TriggerChoice;
     addDelay: boolean; // triggered: reveal the delay inputs
-    // shared delay (days/hours)
+    // shared delay (days/hours/minutes)
     delayDays: number;
     delayHours: number;
+    delayMinutes: number;
     templateId: string;
     // result after persisting
     result: { ok: true; fireAt: string } | { ok: false; error: string } | null;
@@ -199,6 +200,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
           addDelay: false,
           delayDays: 0,
           delayHours: 0,
+          delayMinutes: 0,
           templateId: defaultTemplateId(),
           result: null,
         },
@@ -213,6 +215,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
           addDelay: true,
           delayDays: 3,
           delayHours: 0,
+          delayMinutes: 0,
           templateId: defaultTemplateId(),
           result: null,
         },
@@ -371,12 +374,14 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
         // else fire immediately (0/0). Time-based: always a delay > 0.
         const waitDays = isTriggered ? (rule.addDelay ? rule.delayDays : 0) : rule.delayDays;
         const waitHours = isTriggered ? (rule.addDelay ? rule.delayHours : 0) : rule.delayHours;
+        const waitMinutes = isTriggered ? (rule.addDelay ? rule.delayMinutes : 0) : rule.delayMinutes;
         const result = await scheduleQuoteFollowUp({
           quoteId,
           templateId: rule.templateId,
           triggerEvent,
           waitDays,
           waitHours,
+          waitMinutes,
           // Time-based chase cancels if the customer responds; triggered
           // rules never gate on response (the event IS the response).
           requireNoResponse: !isTriggered,
@@ -1039,6 +1044,15 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                                           className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
                                         />
                                       </div>
+                                      <div className="w-24">
+                                        <label className="block text-[10px] font-medium text-slate-500 mb-0.5"># minutes</label>
+                                        <input
+                                          type="number" min={0} max={59}
+                                          value={rule.delayMinutes}
+                                          onChange={(e) => updateDraftRule(rule.id, { delayMinutes: Math.max(0, Math.min(59, Number(e.target.value) || 0)) })}
+                                          className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                                        />
+                                      </div>
                                     </div>
                                   ) : null}
                                 </div>
@@ -1061,6 +1075,15 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                                         type="number" min={0} max={23}
                                         value={rule.delayHours}
                                         onChange={(e) => updateDraftRule(rule.id, { delayHours: Math.max(0, Math.min(23, Number(e.target.value) || 0)) })}
+                                        className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                                      />
+                                    </div>
+                                    <div className="w-24">
+                                      <label className="block text-[10px] font-medium text-slate-500 mb-0.5"># minutes</label>
+                                      <input
+                                        type="number" min={0} max={59}
+                                        value={rule.delayMinutes}
+                                        onChange={(e) => updateDraftRule(rule.id, { delayMinutes: Math.max(0, Math.min(59, Number(e.target.value) || 0)) })}
                                         className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
                                       />
                                     </div>

@@ -159,16 +159,20 @@ export async function scheduleQuoteFollowUp(
   // --- Validate input ------------------------------------------------
   const waitDays = Number.isFinite(input.waitDays) ? Math.max(0, Math.floor(input.waitDays)) : 0;
   const waitHours = Number.isFinite(input.waitHours ?? 0) ? Math.max(0, Math.floor(input.waitHours ?? 0)) : 0;
+  // Minutes ARE honoured (not floored away): a user can ask for a
+  // 10-minute follow-up. Clamp to a sane integer >= 0.
+  const waitMinutes = Number.isFinite(input.waitMinutes ?? 0) ? Math.max(0, Math.floor(input.waitMinutes ?? 0)) : 0;
   // Zero-wait is allowed for event triggers (the row fires the moment
   // the customer accepts / declines via the activator's inline
   // dispatch). For chase-style triggers (quote_sent / manual) a zero
   // delay would be incoherent - you can't chase a non-response that
-  // happened zero seconds ago.
+  // happened zero seconds ago. A non-zero minutes component (e.g.
+  // 0d 0h 30m) now counts as a real delay so it's no longer rejected.
   const isEventTrigger =
     input.triggerEvent === 'quote_accepted' ||
     input.triggerEvent === 'quote_declined' ||
     input.triggerEvent === 'quote_revision_requested';
-  if (waitDays === 0 && waitHours === 0 && !isEventTrigger) {
+  if (waitDays === 0 && waitHours === 0 && waitMinutes === 0 && !isEventTrigger) {
     return { ok: false, error: 'Pick a delay greater than zero.' };
   }
   // Anti-footgun cap: 1 year. Beyond this the follow-up is almost
@@ -291,13 +295,13 @@ export async function scheduleQuoteFollowUp(
     finalFire = new Date(PENDING_EVENT_SENTINEL_ISO);
   } else {
     const rawFire = new Date(
-      anchor.getTime() + waitDays * 24 * 60 * 60 * 1000 + waitHours * 60 * 60 * 1000,
+      anchor.getTime() + waitDays * 24 * 60 * 60 * 1000 + waitHours * 60 * 60 * 1000 + waitMinutes * 60 * 1000,
     );
     // "Immediately" (zero wait) bypasses quiet hours regardless of
     // respect_quiet_hours. The user explicitly signalled this is
     // time-sensitive; quiet hours are for "fire 3 days after sent"-
     // style rules, not for event-driven immediate sends.
-    const isImmediate = waitDays === 0 && waitHours === 0;
+    const isImmediate = waitDays === 0 && waitHours === 0 && waitMinutes === 0;
     const fireAt = input.respectQuietHours && !isImmediate ? applyQuietHours(rawFire) : rawFire;
 
     // Guard: a fire time in the past usually means the user picked an
@@ -337,6 +341,7 @@ export async function scheduleQuoteFollowUp(
       // the event happens. Null on live rows.
       pending_wait_days: isPendingEvent ? waitDays : null,
       pending_wait_hours: isPendingEvent ? waitHours : null,
+      pending_wait_minutes: isPendingEvent ? waitMinutes : null,
     })
     .select('id, fire_at')
     .single();
@@ -397,7 +402,7 @@ export async function activateEventScheduledMessages(input: {
   // Activate matching-trigger pending rows.
   const { data: matchingRows } = await admin
     .from('scheduled_messages')
-    .select('id, pending_wait_days, pending_wait_hours, respect_quiet_hours')
+    .select('id, pending_wait_days, pending_wait_hours, pending_wait_minutes, respect_quiet_hours')
     .eq('quote_id', input.quoteId)
     .eq('company_id', input.companyId)
     .eq('status', 'scheduled')
@@ -416,15 +421,16 @@ export async function activateEventScheduledMessages(input: {
   for (const row of matchingRows ?? []) {
     const days = row.pending_wait_days ?? 0;
     const hours = row.pending_wait_hours ?? 0;
+    const minutes = row.pending_wait_minutes ?? 0;
     const rawFire = new Date(
-      eventDate.getTime() + days * 24 * 60 * 60 * 1000 + hours * 60 * 60 * 1000,
+      eventDate.getTime() + days * 24 * 60 * 60 * 1000 + hours * 60 * 60 * 1000 + minutes * 60 * 1000,
     );
     // "Immediately" (zero wait) bypasses quiet hours regardless of
     // respect_quiet_hours. Quiet hours apply to deliberately
     // delayed follow-ups, not to event-driven immediate sends -
     // the customer just accepted/declined seconds ago, they're
     // clearly awake.
-    const isImmediate = days === 0 && hours === 0;
+    const isImmediate = days === 0 && hours === 0 && minutes === 0;
     const adjusted = row.respect_quiet_hours && !isImmediate ? applyQuietHours(rawFire) : rawFire;
     // Two paths:
     //   - fire_at is now-or-past => dispatch inline. We set fire_at

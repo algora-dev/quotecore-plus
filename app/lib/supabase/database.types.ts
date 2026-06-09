@@ -3220,6 +3220,7 @@ export type Database = {
           outbound_message_id: string | null
           pending_wait_days: number | null
           pending_wait_hours: number | null
+          pending_wait_minutes: number | null
           quote_id: string | null
           recipient_email: string
           recipient_name: string | null
@@ -3243,6 +3244,7 @@ export type Database = {
           outbound_message_id?: string | null
           pending_wait_days?: number | null
           pending_wait_hours?: number | null
+          pending_wait_minutes?: number | null
           quote_id?: string | null
           recipient_email: string
           recipient_name?: string | null
@@ -3266,6 +3268,7 @@ export type Database = {
           outbound_message_id?: string | null
           pending_wait_days?: number | null
           pending_wait_hours?: number | null
+          pending_wait_minutes?: number | null
           quote_id?: string | null
           recipient_email?: string
           recipient_name?: string | null
