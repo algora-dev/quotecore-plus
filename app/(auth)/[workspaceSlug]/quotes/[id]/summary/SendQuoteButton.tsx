@@ -339,24 +339,11 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
     setSendStage('form');
   }
 
-  /** Gate branch B: "Add Follow-ups" - open the builder. Seed one
-   *  triggered rule so the user isn't staring at an empty modal. */
+  /** Gate branch B: "Add Follow-ups" - open the builder EMPTY. The user
+   *  explicitly adds a Triggered or Time-based rule first; we no longer
+   *  pre-seed a rule. */
   function handleOpenFollowUps() {
     setFollowUpError(null);
-    if (draftRules.length === 0 && emailTemplates.length > 0) {
-      setDraftRules([
-        {
-          id: crypto.randomUUID(),
-          kind: 'triggered',
-          trigger: 'quote_accepted',
-          addDelay: false,
-          delayDays: 0,
-          delayHours: 0,
-          templateId: defaultTemplateId(),
-          result: null,
-        },
-      ]);
-    }
     setSendStage('followups');
   }
 
@@ -948,6 +935,34 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                       </div>
                     ) : (
                       <>
+                        {/* Add buttons FIRST. User explicitly creates a rule
+                            (max 3) — nothing is pre-populated. Black/white,
+                            orange glow on hover. */}
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => addDraftRule('triggered')}
+                            disabled={draftRules.length >= 3}
+                            className="px-3 py-1.5 text-xs font-semibold rounded-full bg-black text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            + Triggered follow-up
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => addDraftRule('time_based')}
+                            disabled={draftRules.length >= 3}
+                            className="px-3 py-1.5 text-xs font-semibold rounded-full bg-black text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            + Time-based follow-up
+                          </button>
+                        </div>
+
+                        {draftRules.length === 0 ? (
+                          <p className="text-[11px] text-slate-500">
+                            Add a follow-up above to get started — choose a trigger-based rule (fires on accept / decline / dispute) or a time-based chase. You can add up to 3.
+                          </p>
+                        ) : null}
+
                         {draftRules.map((rule) => {
                           const isTriggered = rule.kind === 'triggered';
                           const isErr = rule.result && !rule.result.ok;
@@ -1076,24 +1091,6 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                           );
                         })}
 
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => addDraftRule('triggered')}
-                            disabled={draftRules.length >= 3}
-                            className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 bg-white hover:bg-orange-50/40 hover:border-orange-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                          >
-                            + Triggered follow-up
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => addDraftRule('time_based')}
-                            disabled={draftRules.length >= 3}
-                            className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 bg-white hover:bg-orange-50/40 hover:border-orange-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                          >
-                            + Time-based follow-up
-                          </button>
-                        </div>
                       </>
                     )}
 
