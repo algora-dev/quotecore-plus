@@ -60,14 +60,25 @@ function Toggle({
   onChange,
   label,
   color = 'orange',
+  size = 'md',
 }: {
   checked: boolean;
   disabled?: boolean;
   onChange: () => void;
   label: string;
   color?: 'orange' | 'blue';
+  /** `md` (default) is the full-size master toggle (w-11 h-6). `sm` is the
+   *  ~30%-smaller per-line toggle (w-8 h-[18px]) used on per-event rows. */
+  size?: 'sm' | 'md';
 }) {
   const onClass = color === 'blue' ? 'bg-blue-500' : 'bg-[#FF6B35]';
+  const isSm = size === 'sm';
+  // Track + knob sizing. `md`: w-11 h-6 track, w-4 knob, travel translate-x-6.
+  // `sm`: ~30% smaller track w-8 h-[18px], w-3.5 knob, travel translate-x-[14px].
+  const trackClass = isSm ? 'h-[18px] w-8' : 'h-6 w-11';
+  const knobSizeClass = isSm ? 'h-3.5 w-3.5' : 'h-4 w-4';
+  const knobOnClass = isSm ? 'translate-x-[14px]' : 'translate-x-6';
+  const knobOffClass = isSm ? 'translate-x-0.5' : 'translate-x-1';
   return (
     <button
       type="button"
@@ -76,13 +87,13 @@ function Toggle({
       aria-label={label}
       disabled={disabled}
       onClick={onChange}
-      className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition ${
+      className={`relative inline-flex ${trackClass} flex-shrink-0 items-center rounded-full transition ${
         checked ? onClass : 'bg-slate-300'
       } ${disabled ? 'opacity-60' : ''}`}
     >
       <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-          checked ? 'translate-x-6' : 'translate-x-1'
+        className={`inline-block ${knobSizeClass} transform rounded-full bg-white transition ${
+          checked ? knobOnClass : knobOffClass
         }`}
       />
     </button>
@@ -395,6 +406,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                         <p className="text-sm text-slate-700">{event.label}</p>
                         <div className="flex items-center gap-6">
                           <Toggle
+                            size="sm"
                             color="orange"
                             checked={appOn}
                             disabled={savingPref}
@@ -402,6 +414,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                             label={`${channel.label} – ${event.label} – in-app`}
                           />
                           <Toggle
+                            size="sm"
                             color="blue"
                             checked={emailOn}
                             disabled={savingPref}

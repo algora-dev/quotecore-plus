@@ -159,6 +159,25 @@ export async function submitRevisionRequest(
     return { success: false, error: 'Failed to save request. Please try again or email directly.' };
   }
 
+  // Activate any pre-staged quote_revision_requested follow-up for this
+  // quote and cancel the parked accepted/declined rows (mutual-cancel
+  // across all three trigger types). A revision request is a customer
+  // response just like accept/decline, so the same activator runs.
+  // Best-effort: a hiccup here must not fail the customer's request -
+  // the row above is already saved. Await (not fire-and-forget) so the
+  // Vercel serverless function doesn't terminate the in-flight Promise.
+  try {
+    const { activateEventScheduledMessages } = await import('@/app/lib/messages/scheduled');
+    await activateEventScheduledMessages({
+      quoteId: quote.id,
+      companyId: quote.company_id,
+      event: 'revision_requested',
+      eventAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error('[submitRevisionRequest] activateEventScheduledMessages failed:', err);
+  }
+
   // Surface as an alert in the user's dashboard, reusing the existing alerts
   // table. Alert type is new (`revision_requested`) but the existing alerts
   // list renders any type generically. Gated by the Message Center matrix —

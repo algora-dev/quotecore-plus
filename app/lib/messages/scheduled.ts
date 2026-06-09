@@ -39,7 +39,6 @@ import crypto from 'node:crypto';
 // Types live in a sibling non-server file so client components can
 // import them without dragging the server action runtime in.
 import type {
-  ScheduledTriggerEvent,
   ScheduledMessageRow,
   ScheduleResultOk,
   ScheduleResultErr,
@@ -357,9 +356,11 @@ export async function scheduleQuoteFollowUp(
  * pending_wait_days/hours, with quiet hours), and flips them from
  * sentinel timestamps to live ones so the dispatcher picks them up.
  *
- * Rows for the OPPOSITE trigger are auto-cancelled at the same time
- * because they can no longer fire (a customer who accepted will
- * never decline, and vice versa).
+ * Rows for the OTHER TWO triggers are auto-cancelled at the same time
+ * because they can no longer fire: the three customer outcomes
+ * (accepted / declined / revision-requested) are mutually exclusive
+ * for a single response, so once one fires the parked rules for the
+ * other two are dead weight.
  *
  * Uses the admin client so it works from a public (token-validated)
  * acceptance flow with no logged-in user context. Quote ownership is
@@ -373,12 +374,25 @@ export async function scheduleQuoteFollowUp(
 export async function activateEventScheduledMessages(input: {
   quoteId: string;
   companyId: string;
-  event: 'accepted' | 'declined';
+  event: 'accepted' | 'declined' | 'revision_requested';
   eventAt: string; // ISO
 }): Promise<{ activated: number; cancelled: number; firedImmediately: number }> {
   const admin = createAdminClient();
-  const matchingTrigger = input.event === 'accepted' ? 'quote_accepted' : 'quote_declined';
-  const oppositeTrigger = input.event === 'accepted' ? 'quote_declined' : 'quote_accepted';
+  // The three mutually-exclusive event triggers. Whichever one fires,
+  // we activate its parked rule(s) and cancel the parked rows for the
+  // other two.
+  const EVENT_TRIGGERS = [
+    'quote_accepted',
+    'quote_declined',
+    'quote_revision_requested',
+  ] as const;
+  const matchingTrigger =
+    input.event === 'accepted'
+      ? 'quote_accepted'
+      : input.event === 'declined'
+        ? 'quote_declined'
+        : 'quote_revision_requested';
+  const otherTriggers = EVENT_TRIGGERS.filter((t) => t !== matchingTrigger);
 
   // Activate matching-trigger pending rows.
   const { data: matchingRows } = await admin
@@ -435,20 +449,25 @@ export async function activateEventScheduledMessages(input: {
     }
   }
 
-  // Cancel opposite-trigger pending rows - they're now irrelevant.
+  // Cancel the OTHER TWO triggers' parked rows - they're now
+  // irrelevant. A customer who accepted will never decline or request
+  // a revision in the same response, and so on. We only touch parked
+  // (sentinel) rows so we never disturb a live/fired/cancelled row.
+  const eventLabel =
+    input.event === 'revision_requested' ? 'requested a revision on' : `${input.event}`;
   const { count: cancelledCount } = await admin
     .from('scheduled_messages')
     .update(
       {
         status: 'cancelled',
-        cancelled_reason: `Customer ${input.event} the quote; opposite follow-up no longer needed.`,
+        cancelled_reason: `Customer ${eventLabel} the quote; other trigger follow-ups no longer needed.`,
       },
       { count: 'exact' },
     )
     .eq('quote_id', input.quoteId)
     .eq('company_id', input.companyId)
     .eq('status', 'scheduled')
-    .eq('trigger_event', oppositeTrigger)
+    .in('trigger_event', otherTriggers as unknown as string[])
     .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
 
   // Dispatch due-now rows inline so the email lands within seconds

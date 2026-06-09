@@ -128,38 +128,106 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   const [sendSuccess, setSendSuccess] = useState<'sent' | 'suppressed' | null>(null);
   const [isSending, startSendTransition] = useTransition();
 
-  // Post-send "Schedule follow-up?" prompt state. After a successful
-  // send through the Messages pipeline we offer three optional
-  // follow-up rules, each toggleable and configurable independently:
+  // --- PRE-SEND follow-up decision -----------------------------------
+  // When the user hits "Send message" we no longer fire immediately.
+  // We first present a gate with two choices:
+  //   - "Send now"        -> existing send path, no follow-ups.
+  //   - "Add Follow-ups"  -> open the follow-up builder modal; on
+  //                          confirm we persist each rule via
+  //                          scheduleQuoteFollowUp THEN run the send.
   //
-  //   1. After no response - fires N days after this send.
-  //   2. After acceptance  - fires N days after the customer accepts
-  //                          (parked with sentinel timestamps until
-  //                          activated by the accept handler).
-  //   3. After decline     - fires N days after the customer declines.
-  //
-  // Each rule has its own template + delay. The prompt is hidden
-  // when all rules are scheduled or the user dismisses it.
-  type DelayUnit = 'immediately' | 'hours' | 'days';
-  type PostSendRule = {
-    enabled: boolean;
+  // `sendStage` drives which of those surfaces is showing inside the
+  // send-mode panel: 'form' = the compose form, 'gate' = the two-choice
+  // step, 'followups' = the rule builder.
+  type SendStage = 'form' | 'gate' | 'followups';
+  const [sendStage, setSendStage] = useState<SendStage>('form');
+
+  // A single follow-up rule the user is building before send. Three
+  // kinds map onto the scheduler's trigger events:
+  //   - 'triggered' with triggerEvent quote_accepted/declined/revision
+  //   - 'time_based' -> trigger_event quote_sent (chase, cancel on reply)
+  type FollowUpKind = 'triggered' | 'time_based';
+  type TriggerChoice = 'quote_accepted' | 'quote_declined' | 'quote_revision_requested';
+  type DraftRule = {
+    id: string;
+    kind: FollowUpKind;
+    // triggered-only
+    trigger: TriggerChoice;
+    addDelay: boolean; // triggered: reveal the delay inputs
+    // shared delay (days/hours)
+    delayDays: number;
+    delayHours: number;
     templateId: string;
-    delayValue: number;
-    delayUnit: DelayUnit;
-    scheduled: { ok: true; fireAt: string } | { ok: false; error: string } | null;
+    // result after persisting
+    result: { ok: true; fireAt: string } | { ok: false; error: string } | null;
   };
-  const [postSendRules, setPostSendRules] = useState<Record<'no_response' | 'accepted' | 'declined', PostSendRule>>({
-    // Event triggers default to "Immediately" because that's the
-    // headline use case Shaun called out: customer accepts → the
-    // congrats / next-steps email goes out within seconds. The user
-    // can pick hours or days if they want a deliberate gap. The
-    // no_response chase keeps the conventional 7-day default.
-    no_response: { enabled: true, templateId: '', delayValue: 7, delayUnit: 'days', scheduled: null },
-    accepted: { enabled: false, templateId: '', delayValue: 0, delayUnit: 'immediately', scheduled: null },
-    declined: { enabled: false, templateId: '', delayValue: 0, delayUnit: 'immediately', scheduled: null },
-  });
-  const [postSendScheduling, setPostSendScheduling] = useState(false);
-  const [postSendDismissed, setPostSendDismissed] = useState(false);
+  const [draftRules, setDraftRules] = useState<DraftRule[]>([]);
+  const [followUpSaving, setFollowUpSaving] = useState(false);
+  const [followUpError, setFollowUpError] = useState<string | null>(null);
+
+  function defaultTemplateId(): string {
+    const defaultTpl = emailTemplates.find((t) => t.is_default) || emailTemplates[0];
+    return defaultTpl?.id ?? selectedTemplateId ?? '';
+  }
+
+  // Triggers already claimed by an existing draft rule (one rule per
+  // trigger). Used to disable the option in the trigger picker.
+  const usedTriggers = new Set(
+    draftRules.filter((r) => r.kind === 'triggered').map((r) => r.trigger),
+  );
+
+  function addDraftRule(kind: FollowUpKind) {
+    setFollowUpError(null);
+    if (draftRules.length >= 3) {
+      setFollowUpError('You can add at most 3 follow-ups per quote.');
+      return;
+    }
+    if (kind === 'triggered') {
+      // Pick the first trigger not already used.
+      const all: TriggerChoice[] = ['quote_accepted', 'quote_declined', 'quote_revision_requested'];
+      const free = all.find((t) => !usedTriggers.has(t));
+      if (!free) {
+        setFollowUpError('All three triggers already have a follow-up.');
+        return;
+      }
+      setDraftRules((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          kind: 'triggered',
+          trigger: free,
+          addDelay: false,
+          delayDays: 0,
+          delayHours: 0,
+          templateId: defaultTemplateId(),
+          result: null,
+        },
+      ]);
+    } else {
+      setDraftRules((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          kind: 'time_based',
+          trigger: 'quote_accepted', // unused for time_based
+          addDelay: true,
+          delayDays: 3,
+          delayHours: 0,
+          templateId: defaultTemplateId(),
+          result: null,
+        },
+      ]);
+    }
+  }
+
+  function updateDraftRule(id: string, patch: Partial<DraftRule>) {
+    setDraftRules((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  }
+
+  function removeDraftRule(id: string) {
+    setFollowUpError(null);
+    setDraftRules((prev) => prev.filter((r) => r.id !== id));
+  }
 
   // Close modal when copilot transition starts
   useEffect(() => {
@@ -206,102 +274,150 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
     // freely between the two.
     await handleEmailMode();
     setMode('send');
+    setSendStage('form');
+    setDraftRules([]);
+    setFollowUpError(null);
     setSendError(null);
     setSendSuccess(null);
   }
 
-  function handleSendSubmit() {
+  /** Validate the compose form before any send / gate decision. */
+  function validateComposeForm(): boolean {
     setSendError(null);
     setSendSuccess(null);
     if (!recipientEmail.trim()) {
       setSendError('Please enter a recipient email.');
-      return;
+      return false;
     }
     if (!emailSubject.trim() || !emailBody.trim()) {
       setSendError('Subject and body cannot be empty.');
-      return;
+      return false;
     }
-    startSendTransition(async () => {
-      const result = await sendQuoteMessage({
-        quoteId,
-        templateId: selectedTemplateId || null,
-        subject: emailSubject,
-        body: emailBody,
-        recipientEmail: recipientEmail.trim(),
-        recipientName: quoteMeta.customerName,
-        attachmentSelection,
+    return true;
+  }
+
+  /**
+   * Step 1 of the pre-send flow: the user finished composing and hit
+   * the primary button. Instead of sending straight away we show the
+   * gate ("Send now" vs "Add Follow-ups").
+   */
+  function handleProceedToGate() {
+    if (!validateComposeForm()) return;
+    setSendStage('gate');
+  }
+
+  /** Run the actual quote send. Shared by both gate branches. Returns
+   *  the send result so the caller can decide what to do next. */
+  function runSend(): Promise<{ ok: boolean }> {
+    return new Promise((resolve) => {
+      startSendTransition(async () => {
+        const result = await sendQuoteMessage({
+          quoteId,
+          templateId: selectedTemplateId || null,
+          subject: emailSubject,
+          body: emailBody,
+          recipientEmail: recipientEmail.trim(),
+          recipientName: quoteMeta.customerName,
+          attachmentSelection,
+        });
+        if (result.ok) {
+          setSendSuccess(result.status);
+        } else {
+          setSendError(result.error);
+        }
+        resolve({ ok: result.ok });
       });
-      if (result.ok) {
-        setSendSuccess(result.status);
-        // Reset post-send prompt state on every new successful send so
-        // a user can do Send -> Schedule -> Send again without the
-        // prompt staying dismissed.
-        setPostSendDismissed(false);
-        // Pre-select a template for every follow-up rule: prefer the
-        // default template, otherwise the one they just used.
-        const defaultTpl = emailTemplates.find((t) => t.is_default) || emailTemplates[0];
-        const defaultTplId = defaultTpl?.id ?? selectedTemplateId ?? '';
-        setPostSendRules((prev) => ({
-          no_response: { ...prev.no_response, templateId: defaultTplId, scheduled: null },
-          accepted: { ...prev.accepted, templateId: defaultTplId, scheduled: null },
-          declined: { ...prev.declined, templateId: defaultTplId, scheduled: null },
-        }));
-      } else {
-        setSendError(result.error);
-      }
     });
   }
 
-  async function handleSchedulePostSend() {
-    const enabledRules = (Object.entries(postSendRules) as Array<[
-      'no_response' | 'accepted' | 'declined',
-      PostSendRule,
-    ]>).filter(([, rule]) => rule.enabled && !rule.scheduled?.ok && rule.templateId);
-    if (enabledRules.length === 0) return;
+  /** Gate branch A: "Send now" - no follow-ups, just send. */
+  async function handleSendNow() {
+    setSendError(null);
+    setSendSuccess(null);
+    await runSend();
+    // Stay on the form stage so the success/suppressed banner shows.
+    setSendStage('form');
+  }
 
-    setPostSendScheduling(true);
-    const triggerByKey: Record<typeof enabledRules[number][0], 'quote_sent' | 'quote_accepted' | 'quote_declined'> = {
-      no_response: 'quote_sent',
-      accepted: 'quote_accepted',
-      declined: 'quote_declined',
-    };
+  /** Gate branch B: "Add Follow-ups" - open the builder. Seed one
+   *  triggered rule so the user isn't staring at an empty modal. */
+  function handleOpenFollowUps() {
+    setFollowUpError(null);
+    if (draftRules.length === 0 && emailTemplates.length > 0) {
+      setDraftRules([
+        {
+          id: crypto.randomUUID(),
+          kind: 'triggered',
+          trigger: 'quote_accepted',
+          addDelay: false,
+          delayDays: 0,
+          delayHours: 0,
+          templateId: defaultTemplateId(),
+          result: null,
+        },
+      ]);
+    }
+    setSendStage('followups');
+  }
+
+  /**
+   * Confirm the follow-up builder: persist each draft rule via
+   * scheduleQuoteFollowUp, THEN run the normal send. Per-rule
+   * success/error is surfaced inline. We send AFTER scheduling so a
+   * scheduling failure (e.g. cap exceeded) doesn't leave a sent quote
+   * with no follow-ups silently.
+   */
+  async function handleConfirmFollowUpsAndSend() {
+    setFollowUpError(null);
+    const rules = draftRules.filter((r) => r.templateId);
+    if (rules.length === 0) {
+      setFollowUpError('Add at least one follow-up, or go back and choose “Send now”.');
+      return;
+    }
+    setFollowUpSaving(true);
     try {
-      // Schedule rules sequentially so errors are independent and the
-      // user can see which one(s) failed.
-      for (const [key, rule] of enabledRules) {
+      let anyError = false;
+      for (const rule of rules) {
+        const isTriggered = rule.kind === 'triggered';
+        const triggerEvent = isTriggered ? rule.trigger : 'quote_sent';
+        // Triggered rules: delay only when "Add time delay" ticked,
+        // else fire immediately (0/0). Time-based: always a delay > 0.
+        const waitDays = isTriggered ? (rule.addDelay ? rule.delayDays : 0) : rule.delayDays;
+        const waitHours = isTriggered ? (rule.addDelay ? rule.delayHours : 0) : rule.delayHours;
         const result = await scheduleQuoteFollowUp({
           quoteId,
           templateId: rule.templateId,
-          triggerEvent: triggerByKey[key],
-          // Translate the rule's (value, unit) pair into the
-          // scheduleQuoteFollowUp contract. "Immediately" means
-          // both numbers are zero - the activator will dispatch
-          // inline as soon as the event fires.
-          waitDays: rule.delayUnit === 'days' ? rule.delayValue : 0,
-          waitHours: rule.delayUnit === 'hours' ? rule.delayValue : 0,
-          // "no_response" implies require_no_response. The accepted /
-          // declined triggers don't gate on response because the
-          // event ITSELF is the gate - if the customer accepts, we
-          // want the thank-you to fire regardless of whether they
-          // also replied to the previous message.
-          requireNoResponse: key === 'no_response',
+          triggerEvent,
+          waitDays,
+          waitHours,
+          // Time-based chase cancels if the customer responds; triggered
+          // rules never gate on response (the event IS the response).
+          requireNoResponse: !isTriggered,
           respectQuietHours: true,
           recipientEmail: recipientEmail.trim(),
           recipientName: quoteMeta.customerName || null,
         });
-        setPostSendRules((prev) => ({
-          ...prev,
-          [key]: {
-            ...prev[key],
-            scheduled: result.ok
-              ? { ok: true as const, fireAt: result.fireAt }
-              : { ok: false as const, error: result.error },
-          },
-        }));
+        updateDraftRule(rule.id, {
+          result: result.ok
+            ? { ok: true as const, fireAt: result.fireAt }
+            : { ok: false as const, error: result.error },
+        });
+        if (!result.ok) anyError = true;
       }
-      router.refresh();
+      // Only run the send once all rules are persisted. If any rule
+      // errored we keep the modal open so the user sees which failed
+      // and can fix it; we do NOT send in that case.
+      if (anyError) {
+        setFollowUpError('Some follow-ups could not be scheduled. Fix or remove them, then try again.');
+        return;
+      }
+      const sendResult = await runSend();
+      if (sendResult.ok) {
+        router.refresh();
+        setSendStage('form');
+      }
     } finally {
-      setPostSendScheduling(false);
+      setFollowUpSaving(false);
     }
   }
 
@@ -759,231 +875,273 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                   <p className="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-lg p-2">This recipient is on your suppression list, so the message was blocked. The send is logged but no email was dispatched.</p>
                 ) : null}
 
-                {/* Post-send "Schedule follow-ups?" prompt. Shown only
-                    after a successful (not suppressed) send through the
-                    Messages pipeline. Offers three independent rules:
-                    no-response chase, after-acceptance thank-you, and
-                    after-decline revival. Each is opt-in with its own
-                    template + delay. Hidden once all enabled rules are
-                    scheduled, or the user dismisses it. */}
-                {sendSuccess === 'sent' && canFollowups && !postSendDismissed && emailTemplates.length === 0 ? (
-                  <div className="rounded-lg border border-orange-200 bg-orange-50/60 p-3">
-                    <p className="text-sm font-medium text-slate-900">Schedule follow-ups?</p>
-                    <p className="text-xs text-slate-500 mt-1">Your plan includes automated follow-ups, but you have no message templates yet.</p>
-                    <button
-                      onClick={goCreateTemplate}
-                      className="mt-2 text-xs font-medium text-orange-600 hover:text-orange-700 underline"
-                    >
-                      Create your first follow-up template
-                    </button>
-                  </div>
-                ) : sendSuccess === 'sent' && canFollowups && !postSendDismissed && emailTemplates.length > 0 ? (
-                  <div className="rounded-lg border border-orange-200 bg-orange-50/60 p-3 space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-2">
-                        <svg className="w-4 h-4 mt-0.5 text-orange-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div>
-                          <p className="text-sm font-medium text-slate-900">Schedule follow-ups?</p>
-                          <p className="text-xs text-slate-600 mt-0.5">
-                            Each rule is independent. Accept/decline rules are parked until the event happens, then fire on the delay you set.
-                          </p>
-                        </div>
-                      </div>
+                {/* PRE-SEND GATE. After the user composes and clicks the
+                    primary button we show two choices before anything is
+                    sent: send now (no follow-ups) or add follow-ups first.
+                    This replaces the old POST-send "schedule follow-up?"
+                    prompt with a pre-send decision. */}
+                {sendStage === 'gate' && sendSuccess !== 'sent' ? (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
+                    <p className="text-sm font-medium text-slate-900">Before we send — do you want follow-ups?</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <button
                         type="button"
-                        onClick={() => setPostSendDismissed(true)}
-                        className="text-slate-400 hover:text-slate-700 text-sm leading-none p-1"
-                        aria-label="Dismiss follow-up prompt"
+                        onClick={handleSendNow}
+                        disabled={isSending}
+                        title="No follow-ups needed"
+                        className="p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-orange-300 hover:bg-orange-50/40 transition text-left space-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        ✕
+                        <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M13 6l6 6-6 6" />
+                          </svg>
+                        </div>
+                        <h4 className="text-sm font-semibold text-slate-900">{isSending ? 'Sending…' : 'Send now'}</h4>
+                        <p className="text-xs text-slate-500">No follow-ups needed</p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleOpenFollowUps}
+                        disabled={isSending || !canFollowups}
+                        title={canFollowups ? 'Then send' : 'Automated follow-ups are not included in your current plan'}
+                        className="p-4 rounded-xl border-2 border-orange-300 bg-orange-50/50 hover:border-orange-400 hover:bg-orange-50 transition text-left space-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <div className="w-9 h-9 rounded-full bg-[#FF6B35] flex items-center justify-center">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <h4 className="text-sm font-semibold text-slate-900">Add Follow-ups</h4>
+                        <p className="text-xs text-slate-500">{canFollowups ? 'Then send' : 'Pro plan feature'}</p>
                       </button>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setSendStage('form')}
+                      className="text-sm text-slate-500 hover:text-slate-700"
+                    >
+                      ← Back to message
+                    </button>
+                  </div>
+                ) : null}
 
-                    {(['no_response', 'accepted', 'declined'] as const).map((key) => {
-                      const rule = postSendRules[key];
-                      const label =
-                        key === 'no_response'
-                          ? 'If no response'
-                          : key === 'accepted'
-                            ? 'After customer accepts'
-                            : 'After customer declines';
-                      const isScheduled = rule.scheduled?.ok === true;
-                      return (
-                        <div
-                          key={key}
-                          className={`rounded-lg border p-2 ${
-                            isScheduled ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-white'
-                          }`}
-                        >
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={rule.enabled || isScheduled}
-                              disabled={isScheduled}
-                              onChange={(e) =>
-                                setPostSendRules((prev) => ({
-                                  ...prev,
-                                  [key]: { ...prev[key], enabled: e.target.checked },
-                                }))
-                              }
-                              className="h-4 w-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500"
-                            />
-                            <span className="text-xs font-medium text-slate-900">{label}</span>
-                            {isScheduled ? (
-                              <span className="ml-auto text-[10px] uppercase tracking-wide text-emerald-700 font-semibold">
-                                Scheduled
-                              </span>
-                            ) : null}
-                          </label>
-                          {rule.enabled && !isScheduled ? (
-                            <div className="flex items-end gap-2 flex-wrap mt-2 pl-6">
-                              <div className="flex-1 min-w-[120px]">
+                {/* FOLLOW-UP BUILDER. Opened by "Add Follow-ups". The user
+                    can add multiple rules (cap 3). Each rule is either a
+                    triggered follow-up (accepted / declined / dispute,
+                    optional delay) or a time-based chase (delay > 0,
+                    cancels on reply). On confirm we persist each rule then
+                    run the send. */}
+                {sendStage === 'followups' && sendSuccess !== 'sent' ? (
+                  <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-slate-900">Add follow-ups</p>
+                      <span className="text-xs text-slate-500">{draftRules.length} / 3</span>
+                    </div>
+
+                    {emailTemplates.length === 0 ? (
+                      <div className="rounded-lg border border-slate-200 bg-white p-3">
+                        <p className="text-xs text-slate-500">You have no message templates yet — follow-ups need one.</p>
+                        <button onClick={goCreateTemplate} className="mt-2 text-xs font-medium text-orange-600 hover:text-orange-700 underline">
+                          Create your first follow-up template
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        {draftRules.map((rule) => {
+                          const isTriggered = rule.kind === 'triggered';
+                          const isErr = rule.result && !rule.result.ok;
+                          const isOk = rule.result?.ok === true;
+                          return (
+                            <div
+                              key={rule.id}
+                              className={`rounded-xl border p-3 space-y-2 ${
+                                isOk ? 'border-emerald-200 bg-emerald-50' : isErr ? 'border-rose-200 bg-rose-50/60' : 'border-slate-200 bg-white'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-semibold text-slate-900">
+                                  {isTriggered ? 'Triggered follow-up' : 'Time-based follow-up'}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeDraftRule(rule.id)}
+                                  className="text-slate-400 hover:text-rose-600 text-sm leading-none p-1"
+                                  aria-label="Remove follow-up"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+
+                              {isTriggered ? (
+                                <div className="space-y-2">
+                                  <div>
+                                    <label className="block text-[10px] font-medium text-slate-500 mb-0.5">Trigger event</label>
+                                    <select
+                                      value={rule.trigger}
+                                      onChange={(e) => updateDraftRule(rule.id, { trigger: e.target.value as TriggerChoice })}
+                                      className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                                    >
+                                      {(['quote_accepted', 'quote_declined', 'quote_revision_requested'] as const).map((t) => {
+                                        const tlabel =
+                                          t === 'quote_accepted' ? 'Quote accepted' : t === 'quote_declined' ? 'Quote declined' : 'Dispute / change requested';
+                                        // Disable a trigger already used by ANOTHER rule.
+                                        const usedElsewhere = draftRules.some((r) => r.id !== rule.id && r.kind === 'triggered' && r.trigger === t);
+                                        return (
+                                          <option key={t} value={t} disabled={usedElsewhere}>
+                                            {tlabel}{usedElsewhere ? ' (already added)' : ''}
+                                          </option>
+                                        );
+                                      })}
+                                    </select>
+                                  </div>
+                                  <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={rule.addDelay}
+                                      onChange={(e) => updateDraftRule(rule.id, { addDelay: e.target.checked })}
+                                      className="h-4 w-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500"
+                                    />
+                                    <span className="text-xs text-slate-700">Add time delay (otherwise fires immediately)</span>
+                                  </label>
+                                  {rule.addDelay ? (
+                                    <div className="flex items-end gap-2">
+                                      <div className="w-24">
+                                        <label className="block text-[10px] font-medium text-slate-500 mb-0.5"># days</label>
+                                        <input
+                                          type="number" min={0} max={365}
+                                          value={rule.delayDays}
+                                          onChange={(e) => updateDraftRule(rule.id, { delayDays: Math.max(0, Math.min(365, Number(e.target.value) || 0)) })}
+                                          className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                                        />
+                                      </div>
+                                      <div className="w-24">
+                                        <label className="block text-[10px] font-medium text-slate-500 mb-0.5"># hours</label>
+                                        <input
+                                          type="number" min={0} max={23}
+                                          value={rule.delayHours}
+                                          onChange={(e) => updateDraftRule(rule.id, { delayHours: Math.max(0, Math.min(23, Number(e.target.value) || 0)) })}
+                                          className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                                        />
+                                      </div>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                  <p className="text-[11px] text-slate-500">Chases the customer if they don’t respond. Auto-cancels when they reply, accept, or decline. Respects quiet hours.</p>
+                                  <div className="flex items-end gap-2">
+                                    <div className="w-24">
+                                      <label className="block text-[10px] font-medium text-slate-500 mb-0.5"># days</label>
+                                      <input
+                                        type="number" min={0} max={365}
+                                        value={rule.delayDays}
+                                        onChange={(e) => updateDraftRule(rule.id, { delayDays: Math.max(0, Math.min(365, Number(e.target.value) || 0)) })}
+                                        className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                                      />
+                                    </div>
+                                    <div className="w-24">
+                                      <label className="block text-[10px] font-medium text-slate-500 mb-0.5"># hours</label>
+                                      <input
+                                        type="number" min={0} max={23}
+                                        value={rule.delayHours}
+                                        onChange={(e) => updateDraftRule(rule.id, { delayHours: Math.max(0, Math.min(23, Number(e.target.value) || 0)) })}
+                                        className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              <div>
                                 <label className="block text-[10px] font-medium text-slate-500 mb-0.5">Template</label>
                                 <select
                                   value={rule.templateId}
-                                  onChange={(e) =>
-                                    setPostSendRules((prev) => ({
-                                      ...prev,
-                                      [key]: { ...prev[key], templateId: e.target.value },
-                                    }))
-                                  }
+                                  onChange={(e) => updateDraftRule(rule.id, { templateId: e.target.value })}
                                   className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
                                 >
                                   {emailTemplates.map((t) => (
-                                    <option key={t.id} value={t.id}>
-                                      {t.name}
-                                      {t.is_default ? ' (Default)' : ''}
-                                    </option>
+                                    <option key={t.id} value={t.id}>{t.name}{t.is_default ? ' (Default)' : ''}</option>
                                   ))}
                                 </select>
                               </div>
-                              <div className="w-32">
-                                <label className="block text-[10px] font-medium text-slate-500 mb-0.5">When</label>
-                                <select
-                                  value={rule.delayUnit}
-                                  onChange={(e) => {
-                                    const nextUnit = e.target.value as DelayUnit;
-                                    setPostSendRules((prev) => ({
-                                      ...prev,
-                                      [key]: {
-                                        ...prev[key],
-                                        delayUnit: nextUnit,
-                                        // When switching to immediately, zero out the value.
-                                        // When switching from immediately to hours/days, default to 1.
-                                        delayValue:
-                                          nextUnit === 'immediately'
-                                            ? 0
-                                            : prev[key].delayUnit === 'immediately'
-                                              ? 1
-                                              : prev[key].delayValue,
-                                      },
-                                    }));
-                                  }}
-                                  className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
-                                >
-                                  {/* Immediately is only meaningful for event triggers -
-                                      a 'no response' chase 0 seconds after sending makes no
-                                      sense and the server would reject it. */}
-                                  {key !== 'no_response' ? (
-                                    <option value="immediately">Immediately</option>
-                                  ) : null}
-                                  <option value="hours">Hours after</option>
-                                  <option value="days">Days after</option>
-                                </select>
-                              </div>
-                              {rule.delayUnit !== 'immediately' ? (
-                                <div className="w-20">
-                                  <label className="block text-[10px] font-medium text-slate-500 mb-0.5">{rule.delayUnit === 'hours' ? '# hrs' : '# days'}</label>
-                                  <input
-                                    type="number"
-                                    min={1}
-                                    max={rule.delayUnit === 'hours' ? 168 : 90}
-                                    value={rule.delayValue}
-                                    onChange={(e) =>
-                                      setPostSendRules((prev) => ({
-                                        ...prev,
-                                        [key]: {
-                                          ...prev[key],
-                                          delayValue: Math.max(
-                                            1,
-                                            Math.min(
-                                              prev[key].delayUnit === 'hours' ? 168 : 90,
-                                              Number(e.target.value) || 1,
-                                            ),
-                                          ),
-                                        },
-                                      }))
-                                    }
-                                    className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
-                                  />
-                                </div>
+
+                              {isOk ? (
+                                <p className="text-[10px] text-emerald-700">Scheduled ✓</p>
+                              ) : null}
+                              {isErr ? (
+                                <p className="text-[11px] text-rose-700">{(rule.result as { ok: false; error: string }).error}</p>
                               ) : null}
                             </div>
-                          ) : null}
-                          {isScheduled ? (
-                            <p className="text-[10px] text-emerald-700 pl-6 mt-1">
-                              {key === 'no_response' ? (
-                                <>
-                                  Will send around{' '}
-                                  {new Date((rule.scheduled as { ok: true; fireAt: string }).fireAt).toLocaleString('en-GB', {
-                                    weekday: 'short',
-                                    day: '2-digit',
-                                    month: 'short',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })}{' '}
-                                  unless the customer responds first.
-                                </>
-                              ) : (
-                                <>
-                                  Parked until the customer {key === 'accepted' ? 'accepts' : 'declines'};{' '}
-                                  {rule.delayUnit === 'immediately'
-                                    ? 'fires immediately when they do.'
-                                    : `fires ${rule.delayValue} ${rule.delayUnit === 'hours' ? (rule.delayValue === 1 ? 'hour' : 'hours') : rule.delayValue === 1 ? 'day' : 'days'} after.`}
-                                </>
-                              )}
-                            </p>
-                          ) : null}
-                          {rule.scheduled && !rule.scheduled.ok ? (
-                            <p className="text-[11px] text-rose-700 pl-6 mt-1">{rule.scheduled.error}</p>
-                          ) : null}
-                        </div>
-                      );
-                    })}
+                          );
+                        })}
 
-                    <div className="flex items-center justify-end">
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => addDraftRule('triggered')}
+                            disabled={draftRules.length >= 3}
+                            className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 bg-white hover:bg-orange-50/40 hover:border-orange-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                          >
+                            + Triggered follow-up
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => addDraftRule('time_based')}
+                            disabled={draftRules.length >= 3}
+                            className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 bg-white hover:bg-orange-50/40 hover:border-orange-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                          >
+                            + Time-based follow-up
+                          </button>
+                        </div>
+                      </>
+                    )}
+
+                    {followUpError ? (
+                      <p className="text-[11px] text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2">{followUpError}</p>
+                    ) : null}
+
+                    <div className="flex items-center justify-between pt-1">
                       <button
                         type="button"
-                        onClick={handleSchedulePostSend}
-                        disabled={
-                          postSendScheduling ||
-                          !(Object.values(postSendRules).some((r) => r.enabled && !r.scheduled?.ok && r.templateId))
-                        }
-                        className="px-3 py-1.5 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                        onClick={() => setSendStage('gate')}
+                        className="text-sm text-slate-500 hover:text-slate-700"
                       >
-                        {postSendScheduling ? 'Scheduling…' : 'Schedule selected'}
+                        ← Back
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleConfirmFollowUpsAndSend}
+                        disabled={followUpSaving || isSending || emailTemplates.length === 0 || draftRules.length === 0}
+                        className="px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                      >
+                        {followUpSaving || isSending ? 'Saving & sending…' : 'Save follow-ups & send'}
                       </button>
                     </div>
                   </div>
                 ) : null}
 
-                <div className="flex items-center justify-between pt-2">
-                  <button
-                    onClick={() => setMode('choose')}
-                    className="text-sm text-slate-500 hover:text-slate-700"
-                  >
-                    ← Back to options
-                  </button>
-                  <button
-                    onClick={handleSendSubmit}
-                    disabled={isSending || sendSuccess === 'sent' || isPlanGated}
-                    className="px-4 py-2 text-sm font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-                  >
-                    {isSending ? 'Sending…' : sendSuccess === 'sent' ? 'Sent' : 'Send message'}
-                  </button>
-                </div>
+                {/* Compose-stage footer: Back to options + the primary
+                    button that OPENS the pre-send gate (does not send
+                    directly anymore). Hidden once the gate/builder is
+                    showing or after a successful send. */}
+                {sendStage === 'form' ? (
+                  <div className="flex items-center justify-between pt-2">
+                    <button
+                      onClick={() => setMode('choose')}
+                      className="text-sm text-slate-500 hover:text-slate-700"
+                    >
+                      ← Back to options
+                    </button>
+                    <button
+                      onClick={handleProceedToGate}
+                      disabled={isSending || sendSuccess === 'sent' || isPlanGated}
+                      className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                    >
+                      {sendSuccess === 'sent' ? 'Sent' : 'Continue'}
+                    </button>
+                  </div>
+                ) : null}
               </div>
             )}
 
