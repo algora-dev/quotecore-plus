@@ -19,8 +19,8 @@ import type { Database } from '@/app/lib/supabase/database.types';
 /** The complete, real alert-type taxonomy surfaced in the Settings matrix. */
 export const NOTIFICATION_CHANNELS = {
   quotes: ['quote_accepted', 'quote_declined', 'revision_requested', 'quote_viewed'],
-  orders: ['order_supplier_response', 'order_viewed'],
-  invoices: ['invoice_payment_reported', 'invoice_disputed', 'invoice_paid', 'invoice_viewed'],
+  orders: ['order_accepted', 'order_declined', 'order_info_requested', 'order_viewed'],
+  invoices: ['invoice_payment_reported', 'invoice_disputed', 'invoice_viewed'],
 } as const;
 
 export type NotificationChannel = keyof typeof NOTIFICATION_CHANNELS;

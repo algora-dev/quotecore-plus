@@ -108,8 +108,18 @@ export async function submitOrderResponse(
   const actionLabels: Record<typeof input.action, string> = {
     accept: 'Accepted',
     decline: 'Declined',
-    request_info: 'Requested info',
+    request_info: 'Info Requested',
   };
+  // Each supplier action now maps to a DISTINCT alert_type so users can
+  // toggle them independently in the Message Center matrix. Old DB rows still
+  // carry the superseded 'order_supplier_response' type and render fine via
+  // the order_id / `startsWith('order')` routing + category logic.
+  const alertTypeByAction: Record<typeof input.action, string> = {
+    accept: 'order_accepted',
+    decline: 'order_declined',
+    request_info: 'order_info_requested',
+  };
+  const alertType = alertTypeByAction[input.action];
   const supplierLabel = order.to_supplier || 'Supplier';
   const alertTitle = `${actionLabels[input.action]} \u2013 ${supplierLabel}`;
   const alertBody = input.body
@@ -118,10 +128,10 @@ export async function submitOrderResponse(
 
   // Response row + lifecycle stamps above always happen; this alert is gated
   // by the Message Center notification matrix.
-  if (await alertEnabled(supabase, order.company_id, 'order_supplier_response')) {
+  if (await alertEnabled(supabase, order.company_id, alertType)) {
     await supabase.from('alerts').insert({
       company_id: order.company_id,
-      alert_type: 'order_supplier_response',
+      alert_type: alertType,
       title: alertTitle,
       message: alertBody,
       order_id: order.id,

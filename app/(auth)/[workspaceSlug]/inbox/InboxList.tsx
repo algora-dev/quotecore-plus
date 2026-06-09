@@ -8,9 +8,9 @@ type NotificationChannelKey = 'quotes' | 'orders' | 'invoices';
 
 /**
  * The notification matrix — the REAL alert_type taxonomy in the codebase.
- * Orders has a SINGLE response event (order_supplier_response covers
- * accept/decline/request-info), and Invoices has NO request-info event, so the
- * matrix renders only these real events.
+ * Orders splits supplier responses into distinct events (accepted / declined /
+ * info requested) plus Read, and Invoices surfaces Payment Made / Dispute
+ * Opened / Read, so the matrix renders only these real events.
  */
 const NOTIFICATION_MATRIX: {
   key: NotificationChannelKey;
@@ -31,7 +31,9 @@ const NOTIFICATION_MATRIX: {
     key: 'orders',
     label: 'Orders',
     events: [
-      { key: 'order_supplier_response', label: 'Supplier Response' },
+      { key: 'order_accepted', label: 'Accepted' },
+      { key: 'order_declined', label: 'Declined' },
+      { key: 'order_info_requested', label: 'Info Requested' },
       { key: 'order_viewed', label: 'Read' },
     ],
   },
@@ -39,9 +41,8 @@ const NOTIFICATION_MATRIX: {
     key: 'invoices',
     label: 'Invoices',
     events: [
-      { key: 'invoice_payment_reported', label: 'Payment Sent' },
-      { key: 'invoice_disputed', label: 'Dispute' },
-      { key: 'invoice_paid', label: 'Paid' },
+      { key: 'invoice_payment_reported', label: 'Payment Made' },
+      { key: 'invoice_disputed', label: 'Dispute Opened' },
       { key: 'invoice_viewed', label: 'Read' },
     ],
   },
