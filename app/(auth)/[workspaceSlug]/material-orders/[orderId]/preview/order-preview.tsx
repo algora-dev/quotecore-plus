@@ -8,6 +8,7 @@ import { markOrderAsOrdered } from '../../order-list-actions';
 import { SendOrderButton } from './SendOrderButton';
 import { OrderBody } from '@/app/orders/[token]/OrderBody';
 import type { PickerFile } from '@/app/components/attachments/AttachmentSendPicker';
+import { elementToPdf } from '@/app/lib/pdf/renderPreviewToPdf';
 
 
 interface Props {
@@ -54,8 +55,34 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
     else router.back();
   };
   const [markingOrdered, setMarkingOrdered] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const isOrdered = order.status === 'ordered';
+
+  // Owner single download: capture the SAME on-screen OrderBody the user sees
+  // (under [data-print-root]) into a PDF via the shared helper, so the
+  // download is a pixel match of this preview — identical to the bulk ZIP path
+  // (which renders the same OrderBody off-screen). The existing
+  // "Print / Save PDF" window.print() button is kept as-is for users who
+  // prefer the browser dialog.
+  async function handleDownloadPdf() {
+    setDownloadingPdf(true);
+    try {
+      const el = document.querySelector('[data-print-root]') as HTMLElement | null;
+      if (!el) {
+        alert('Could not find the order content to export. Please refresh and try again.');
+        return;
+      }
+      const pdf = await elementToPdf(el);
+      const safe = (order.order_number || 'Order').replace(/[^a-z0-9]/gi, '_');
+      pdf.save(`Order-${safe}.pdf`);
+    } catch (err) {
+      console.error('[OrderPreview] PDF download failed:', err);
+      alert(`Failed to generate PDF: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }
 
   const [showMarkModal, setShowMarkModal] = useState(false);
 
@@ -108,6 +135,13 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
           >
             Edit Order
           </Link>
+          <button
+            onClick={handleDownloadPdf}
+            disabled={downloadingPdf}
+            className="px-4 py-2 text-sm font-medium border border-slate-300 bg-white text-slate-700 rounded-full hover:bg-slate-50 transition pill-shimmer disabled:opacity-50"
+          >
+            {downloadingPdf ? 'Generating PDF...' : 'Download PDF'}
+          </button>
           <button
             onClick={() => window.print()}
             className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"

@@ -468,8 +468,9 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
           if (!data) {
             failures.push(`${label} (not found)`);
           } else {
-            addInvoiceToZip(zip, data);
-            succeeded++;
+            const fileName = await addInvoiceToZip(zip, data);
+            if (fileName) succeeded++;
+            else failures.push(`${label} (render failed)`);
           }
         } catch (err) {
           console.error('[bulkDownload] failed for', id, err);

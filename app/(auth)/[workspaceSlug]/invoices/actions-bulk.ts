@@ -48,6 +48,46 @@ export interface InvoiceBundleLine {
 }
 
 export interface InvoiceBundleData {
+  /**
+   * Everything the REAL on-screen InvoicePreview component needs to render the
+   * invoice exactly as the owner sees it in the invoice editor. The bulk ZIP
+   * builder mounts <InvoicePreview {...preview} /> off-screen and html2canvas-
+   * captures it so the downloaded PDF is a pixel match.
+   *
+   * We use the owner-side InvoicePreview (not the public PublicInvoiceView)
+   * because PublicInvoiceView embeds recipient action forms
+   * (PaymentSentForm / DisputeForm / Pay buttons); InvoicePreview is the clean,
+   * form-free visual already used as the live preview in InvoiceEditor.
+   *
+   * Shapes mirror what InvoiceEditor passes on screen:
+   *   invoice -> raw `invoices` row (InvoiceRow)
+   *   lines   -> `invoice_lines` rows mapped to EditableLine (localId = row id)
+   */
+  preview: {
+    invoice: Record<string, unknown>;
+    lines: Array<Record<string, unknown>>;
+    currency: string;
+    companyName: string;
+    companyAddress: string;
+    companyEmail: string;
+    companyPhone: string;
+    companyLogoUrl: string;
+    footerText: string;
+    notes: string;
+    terms: string;
+    invoiceDate: string;
+    dueDate: string;
+    subtotal: number;
+    taxTotal: number;
+    total: number;
+    paymentDetails: {
+      accountName?: string;
+      bankName?: string;
+      accountNumber?: string;
+      sortCode?: string;
+      paymentLink?: string;
+    };
+  };
   invoice: {
     id: string;
     invoiceNumber: string;
@@ -113,7 +153,53 @@ export async function loadInvoiceBundleData(invoiceId: string): Promise<InvoiceB
     isVisible: l.is_visible !== false,
   }));
 
+  // ---- Props for the REAL on-screen InvoicePreview component ----
+  // Mirror InvoiceEditor's mapping of saved invoice_lines -> EditableLine and
+  // its payment_details -> paymentDetails object exactly.
+  const previewLines = (lineRows ?? []).map((l: any) => ({
+    localId: l.id,
+    line_source_type: l.line_source_type,
+    source_id: l.source_id ?? null,
+    title: l.title ?? '',
+    description: l.description ?? null,
+    quantity: Number(l.quantity) || 0,
+    unit: l.unit ?? '',
+    unit_price: Number(l.unit_price) || 0,
+    line_total: Number(l.line_total) || 0,
+    show_price: l.show_price !== false,
+    show_quantity: l.show_quantity !== false,
+    show_description: l.show_description !== false,
+    include_in_total: l.include_in_total !== false,
+    is_visible: l.is_visible !== false,
+  }));
+  const pd = (invoice.payment_details ?? {}) as Record<string, string>;
+
   return {
+    preview: {
+      invoice: invoice as Record<string, unknown>,
+      lines: previewLines as Array<Record<string, unknown>>,
+      currency: invoice.currency ?? 'GBP',
+      companyName: invoice.cq_company_name ?? '',
+      companyAddress: invoice.cq_company_address ?? '',
+      companyEmail: invoice.cq_company_email ?? '',
+      companyPhone: invoice.cq_company_phone ?? '',
+      companyLogoUrl: invoice.cq_company_logo_url ?? '',
+      footerText: invoice.cq_footer_text ?? '',
+      notes: invoice.notes ?? '',
+      terms: invoice.terms ?? '',
+      invoiceDate: invoice.invoice_date,
+      dueDate: invoice.due_date ?? '',
+      subtotal: Number(invoice.subtotal) || 0,
+      taxTotal: Number(invoice.tax_total) || 0,
+      total: Number(invoice.total) || 0,
+      paymentDetails: {
+        accountName: pd.accountName ?? '',
+        bankName: pd.bankName ?? '',
+        accountNumber: pd.accountNumber ?? '',
+        sortCode: pd.sortCode ?? '',
+        paymentLink: pd.paymentLink ?? '',
+      },
+    },
     invoice: {
       id: invoice.id,
       invoiceNumber: invoice.invoice_number,

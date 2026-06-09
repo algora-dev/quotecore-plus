@@ -6,6 +6,7 @@ import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/ed
 import { saveInvoiceLines, saveInvoiceMeta, saveInvoicePaymentDetails, cancelInvoice, confirmPaymentReceived, markInvoiceSentByLink } from '../actions';
 import { InvoicePreview } from './InvoicePreview';
 import { SendInvoiceButton, type EmailTemplate } from './SendInvoiceButton';
+import { elementToPdf } from '@/app/lib/pdf/renderPreviewToPdf';
 import { AddInvoiceLineModal } from './AddInvoiceLineModal';
 import { InvoiceHeaderModal } from './InvoiceHeaderModal';
 import { formatCurrency } from '@/app/lib/currency/currencies';
@@ -186,6 +187,30 @@ export function InvoiceEditor({
   const [cancelPending, setCancelPending] = useState(false);
   const [showConfirmPaymentModal, setShowConfirmPaymentModal] = useState(false);
   const [confirmPaymentPending, setConfirmPaymentPending] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  // Owner single download: capture the SAME on-screen InvoicePreview (under
+  // [data-pdf-content]) into a PDF via the shared helper, so the download is a
+  // pixel match of this preview — identical to the bulk ZIP path (which renders
+  // the same InvoicePreview off-screen).
+  async function handleDownloadPdf() {
+    setDownloadingPdf(true);
+    try {
+      const el = document.querySelector('[data-pdf-content]') as HTMLElement | null;
+      if (!el) {
+        alert('Could not find the invoice content to export. Please refresh and try again.');
+        return;
+      }
+      const pdf = await elementToPdf(el);
+      const safe = (initial.invoice_number || 'Invoice').replace(/[^a-z0-9]/gi, '_');
+      pdf.save(`Invoice-${safe}.pdf`);
+    } catch (err) {
+      console.error('[InvoiceEditor] PDF download failed:', err);
+      alert(`Failed to generate PDF: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }
 
   const status = STATUS_LABELS[initial.status] ?? STATUS_LABELS.draft;
   const isReadOnly = ['cancelled', 'paid'].includes(initial.status);
@@ -428,6 +453,17 @@ export function InvoiceEditor({
             }}
             defaultRecipientEmail={initial.customer_email}
           />
+
+          {/* Download PDF (owner) — same on-screen InvoicePreview, captured to
+              a PDF that matches the bulk ZIP output exactly. */}
+          <button
+            type="button"
+            onClick={handleDownloadPdf}
+            disabled={downloadingPdf}
+            className="hidden sm:inline-flex items-center gap-1.5 text-xs text-slate-700 border border-slate-300 rounded-full px-3 py-1.5 hover:bg-slate-50 transition-all disabled:opacity-50"
+          >
+            {downloadingPdf ? 'Generating PDF...' : 'Download PDF'}
+          </button>
 
           {/* Cancel */}
           {!['cancelled', 'paid'].includes(initial.status) && (
@@ -865,6 +901,7 @@ export function InvoiceEditor({
 
         {/* ── Right panel: preview ── */}
         <div className="flex-1 overflow-y-auto bg-slate-100 p-4" data-copilot="invoice-preview">
+          <div data-pdf-content>
           <InvoicePreview
             invoice={initial}
             lines={lines}
@@ -890,6 +927,7 @@ export function InvoiceEditor({
               paymentLink: payPaymentLink,
             }}
           />
+          </div>
         </div>
       </div>
 

@@ -254,8 +254,9 @@ export function OrderList({ orders, workspaceSlug }: Props) {
           if (!data) {
             failures.push(`${label} (not found)`);
           } else {
-            addOrderToZip(zip, data);
-            succeeded++;
+            const fileName = await addOrderToZip(zip, data);
+            if (fileName) succeeded++;
+            else failures.push(`${label} (render failed)`);
           }
         } catch (err) {
           console.error('[bulkDownload] failed for', id, err);

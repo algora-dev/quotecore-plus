@@ -44,6 +44,24 @@ export interface OrderBundleLine {
 }
 
 export interface OrderBundleData {
+  /**
+   * Everything the REAL on-screen OrderBody component needs to render the
+   * order exactly as it appears in the order preview screen. The bulk ZIP
+   * builder mounts <OrderBody {...preview} /> off-screen and html2canvas-
+   * captures it so the downloaded PDF is a pixel match.
+   *
+   * These are the same raw shapes OrderBody receives on screen:
+   *   order     -> raw `material_orders` row (MaterialOrderRow)
+   *   lines     -> raw `material_order_lines` rows (MaterialOrderLineRow[])
+   *   flashings -> id/name/image_url for any flashing referenced by a line
+   *   currency  -> company default currency (line-by-line price rendering)
+   */
+  preview: {
+    order: Record<string, unknown>;
+    lines: Array<Record<string, unknown>>;
+    flashings: Array<{ id: string; name: string | null; image_url: string | null }>;
+    currency: string;
+  };
   order: {
     id: string;
     orderNumber: string;
@@ -92,7 +110,26 @@ export async function loadOrderBundleData(orderId: string): Promise<OrderBundleD
     .eq('order_id', orderId)
     .order('sort_order', { ascending: true });
 
-  const lines: OrderBundleLine[] = (lineRows ?? []).map((l) => ({
+  const lineRowsArr = lineRows ?? [];
+
+  // Mirror the order preview page's data load: the company default currency
+  // (for line-by-line price rendering) and the flashing library entries any
+  // component line references (for the flashing images in the captured PDF).
+  const [companyRes, flashingRes] = await Promise.all([
+    supabase.from('companies').select('default_currency').eq('id', profile.company_id).single(),
+    supabase
+      .from('flashing_library')
+      .select('id, name, image_url')
+      .eq('company_id', profile.company_id),
+  ]);
+  const previewCurrency: string = companyRes.data?.default_currency ?? 'GBP';
+  const previewFlashings = (flashingRes.data ?? []).map((f: any) => ({
+    id: f.id as string,
+    name: (f.name ?? null) as string | null,
+    image_url: (f.image_url ?? null) as string | null,
+  }));
+
+  const lines: OrderBundleLine[] = lineRowsArr.map((l) => ({
     itemName: l.item_name,
     quantity: l.quantity,
     unit: l.unit,
@@ -104,6 +141,12 @@ export async function loadOrderBundleData(orderId: string): Promise<OrderBundleD
   }));
 
   return {
+    preview: {
+      order: order as Record<string, unknown>,
+      lines: lineRowsArr as Array<Record<string, unknown>>,
+      flashings: previewFlashings,
+      currency: previewCurrency,
+    },
     order: {
       id: order.id,
       orderNumber: order.order_number,
