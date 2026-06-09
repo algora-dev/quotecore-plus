@@ -240,6 +240,9 @@ _(empty - move items here as they pass)_
 - [ ] **Send Invoice — suppression** — send to a suppressed email → shows "blocked" message, invoice status stays draft.
 - [ ] **Send Invoice — hidden on paid/cancelled** — Send Invoice button absent on paid + cancelled invoices.
 
+## Pending verification (dev - Orders/Invoices bulk multi-select, 2026-06-09)
+- [ ] **Orders & Invoices bulk multi-select** - on both the Orders and Invoices lists: header "select all visible" + per-row checkboxes select up to 25 (cap notice past 25); "Download N as ZIP" produces one ZIP of per-item PDFs; "Delete Selected" opens a ConfirmModal then deletes (orders: any; invoices: drafts only, non-drafts skipped with a count); selection clears after each action; Quotes list still works unchanged.
+
 ## Deferred / not blocking this merge (forward work)
 - Supplier (order) templates: add optional includable/excludable FOOTER (orders have no template footer yet; line-by-line footer is manual entry for now).
 - FOLLOW-UP A: richer over-storage billing-page UI (what's using space, per-file delete).

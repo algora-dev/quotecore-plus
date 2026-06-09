@@ -3,10 +3,20 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { deleteInvoice, cancelInvoice, updateInvoiceStatus } from './actions';
+import { loadInvoiceBundleData, bulkDeleteInvoices } from './actions-bulk';
+import { addInvoiceToZip, downloadBlob, sanitizeFilename } from './lib/invoice-bundle';
+import JSZip from 'jszip';
 import { CreateInvoiceModal } from './CreateInvoiceModal';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import { RecipientStatusBadge, type RecipientStatus } from '@/app/components/RecipientStatusBadge';
+
+/**
+ * Client-side cap on the multi-select. Must match `MAX_BULK_BATCH` in
+ * actions-bulk.ts. The server enforces the same cap authoritatively; this is
+ * for UX so the user can't even build a selection larger than we'll process.
+ */
+const MAX_BULK_SELECTION = 25;
 
 type InvoiceRow = {
   id: string;
@@ -327,8 +337,34 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreate, setShowCreate] = useState(false);
+  // Multi-select state for bulk download / delete (mirrors QuotesList).
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState<null | 'download' | 'delete'>(null);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number; message: string } | null>(null);
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
+  const [capNotice, setCapNotice] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleDeleted = (id: string) => setInvoices((prev) => prev.filter((inv) => inv.id !== id));
+
+  // Keep local invoices in sync if the server prop changes (e.g. router.refresh).
+  useEffect(() => setInvoices(initialInvoices), [initialInvoices]);
+
+  // Drop selections that no longer exist.
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const stillExists = new Set(invoices.map((i) => i.id));
+      const next = new Set<string>();
+      for (const id of prev) if (stillExists.has(id)) next.add(id);
+      return next;
+    });
+  }, [invoices]);
+
+  useEffect(() => {
+    if (!capNotice) return;
+    const t = setTimeout(() => setCapNotice(null), 4000);
+    return () => clearTimeout(t);
+  }, [capNotice]);
 
   const filtered = invoices.filter((inv) => {
     const matchesStatus = statusFilter === 'all' || inv.status === statusFilter;
@@ -350,6 +386,149 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
     !!inv.due_date &&
     new Date(inv.due_date) < new Date() &&
     !['paid', 'cancelled'].includes(inv.status);
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+        return next;
+      }
+      if (next.size >= MAX_BULK_SELECTION) {
+        setCapNotice(`You can select up to ${MAX_BULK_SELECTION} invoices at a time.`);
+        return prev;
+      }
+      next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAllVisible(visible: InvoiceRow[]) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      const visibleIds = visible.map((i) => i.id);
+      const allSelected = visibleIds.every((id) => next.has(id));
+      if (allSelected) {
+        for (const id of visibleIds) next.delete(id);
+        return next;
+      }
+      for (const id of visibleIds) {
+        if (next.has(id)) continue;
+        if (next.size >= MAX_BULK_SELECTION) break;
+        next.add(id);
+      }
+      const remainingVisible = visibleIds.filter((id) => !next.has(id)).length;
+      if (remainingVisible > 0) {
+        setCapNotice(
+          `Selected the first ${MAX_BULK_SELECTION} invoices. Process this batch first, then select the next ${remainingVisible}.`,
+        );
+      }
+      return next;
+    });
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
+
+  // How many selected invoices are non-draft (and will be skipped by delete).
+  const selectedNonDraftCount = invoices.filter(
+    (i) => selectedIds.has(i.id) && i.status !== 'draft',
+  ).length;
+
+  /**
+   * Bulk download: load each invoice's data on the server, build one ZIP
+   * client-side, then download. Serial + best-effort (a failure is reported,
+   * the rest continue). Cap 25.
+   */
+  async function handleBulkDownload() {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    if (ids.length > MAX_BULK_SELECTION) {
+      alert(`Too many invoices selected (${ids.length}). Maximum ${MAX_BULK_SELECTION} per batch.`);
+      return;
+    }
+
+    setBulkBusy('download');
+    setBulkProgress({ done: 0, total: ids.length, message: 'Preparing export...' });
+
+    try {
+      const zip = new JSZip();
+      let succeeded = 0;
+      const failures: string[] = [];
+
+      for (let i = 0; i < ids.length; i++) {
+        const id = ids[i];
+        const row = invoices.find((x) => x.id === id);
+        const label = row ? row.invoice_number : id;
+        setBulkProgress({ done: i, total: ids.length, message: `Bundling ${label} (${i + 1} of ${ids.length})...` });
+
+        try {
+          const data = await loadInvoiceBundleData(id);
+          if (!data) {
+            failures.push(`${label} (not found)`);
+          } else {
+            addInvoiceToZip(zip, data);
+            succeeded++;
+          }
+        } catch (err) {
+          console.error('[bulkDownload] failed for', id, err);
+          failures.push(`${label} (${err instanceof Error ? err.message : 'error'})`);
+        }
+
+        await new Promise((r) => setTimeout(r, 0));
+      }
+
+      if (succeeded === 0) {
+        alert(`No invoices could be exported.${failures.length ? '\n\nFailed:\n' + failures.join('\n') : ''}`);
+        return;
+      }
+
+      setBulkProgress({ done: ids.length, total: ids.length, message: 'Compressing ZIP...' });
+      const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+
+      let zipName: string;
+      if (succeeded === 1 && ids.length === 1) {
+        const inv = invoices.find((x) => x.id === ids[0]);
+        zipName = `Invoice-${sanitizeFilename([inv?.invoice_number ?? 'Invoice', inv?.customer_name ?? ''].filter(Boolean).join('-'))}.zip`;
+      } else {
+        const stamp = new Date().toISOString().slice(0, 10);
+        zipName = `QuoteCore-Invoices-${stamp}-${succeeded}-invoices.zip`;
+      }
+
+      downloadBlob(blob, zipName);
+
+      if (failures.length > 0) {
+        alert(`Exported ${succeeded} of ${ids.length} invoices.\n\nFailed:\n${failures.join('\n')}`);
+      }
+    } finally {
+      setBulkBusy(null);
+      setBulkProgress(null);
+    }
+  }
+
+  /** Bulk delete after explicit confirmation. Only drafts are deleted. */
+  async function handleBulkDelete() {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setBulkBusy('delete');
+    try {
+      const result = await bulkDeleteInvoices(ids);
+      // Reflect the deletion locally (only drafts were removed) and clear.
+      setInvoices((prev) => prev.filter((inv) => !(selectedIds.has(inv.id) && inv.status === 'draft')));
+      setSelectedIds(new Set());
+      setBulkDeleteConfirmOpen(false);
+      router.refresh();
+      if (result.skipped > 0) {
+        alert(`Deleted ${result.deleted} draft invoice(s). ${result.skipped} were skipped (only draft invoices can be bulk-deleted; cancel sent invoices individually).`);
+      }
+    } catch (err) {
+      console.error('[bulkDelete] failed:', err);
+      alert(`Failed to delete invoices: ${err instanceof Error ? err.message : 'unknown error'}`);
+    } finally {
+      setBulkBusy(null);
+    }
+  }
 
   return (
     <>
@@ -429,7 +608,21 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
           {/* Column headers — mirrors Quotes/Orders list header styling. Status
               sits in its own column immediately before Last Activity. The grid
               template MUST match the rows below so columns line up. */}
-          <div className="hidden sm:grid grid-cols-[1fr_1fr_140px_140px_120px_40px] gap-4 px-4 pb-2 text-xs font-medium text-slate-400 uppercase tracking-wide items-center">
+          <div className="hidden sm:grid grid-cols-[28px_1fr_1fr_140px_140px_120px_40px] gap-4 px-4 pb-2 text-xs font-medium text-slate-400 uppercase tracking-wide items-center">
+            <input
+              type="checkbox"
+              checked={filtered.length > 0 && filtered.every((i) => selectedIds.has(i.id))}
+              ref={(el) => {
+                if (!el) return;
+                const someSelected = filtered.some((i) => selectedIds.has(i.id));
+                const allSelected = filtered.every((i) => selectedIds.has(i.id));
+                el.indeterminate = someSelected && !allSelected;
+              }}
+              onChange={() => toggleSelectAllVisible(filtered)}
+              onClick={(e) => e.stopPropagation()}
+              title="Select all visible invoices"
+              className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+            />
             <span>Invoice Number</span>
             <span>Client / Job</span>
             <span className="text-right">Value</span>
@@ -443,8 +636,18 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
               <Link
                 key={inv.id}
                 href={`/${workspaceSlug}/invoices/${inv.id}`}
-                className="grid sm:grid-cols-[1fr_1fr_140px_140px_120px_40px] gap-4 items-center rounded-xl border bg-white px-4 py-3 hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group border-slate-200"
+                className={`grid sm:grid-cols-[28px_1fr_1fr_140px_140px_120px_40px] gap-4 items-center rounded-xl border bg-white px-4 py-3 hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${selectedIds.has(inv.id) ? 'border-orange-300 bg-orange-50/30' : 'border-slate-200'}`}
               >
+                {/* Selection checkbox */}
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(inv.id)}
+                  readOnly
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelect(inv.id); }}
+                  title="Select for bulk download or delete"
+                  className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                />
+
                 {/* Invoice Number */}
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -500,6 +703,84 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
           </div>
         </div>
       )}
+
+      {/* Cap notice toast (fires when the user tries to exceed MAX_BULK_SELECTION). */}
+      {capNotice && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 max-w-md rounded-lg border border-orange-200 bg-orange-50 px-4 py-2 text-sm text-orange-900 shadow-lg">
+          {capNotice}
+        </div>
+      )}
+
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-lg">
+          <span className="text-sm text-slate-700">
+            {selectedIds.size} selected
+            <span className="ml-1 text-xs text-slate-400">/ {MAX_BULK_SELECTION} max</span>
+          </span>
+          <button onClick={clearSelection} className="text-xs text-slate-500 hover:text-slate-700 underline">
+            clear
+          </button>
+          <span className="w-px h-6 bg-slate-200" />
+          <button
+            onClick={handleBulkDownload}
+            disabled={bulkBusy !== null}
+            className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+            </svg>
+            {bulkBusy === 'download' ? 'Bundling...' : `Download ${selectedIds.size} as ZIP`}
+          </button>
+          <button
+            onClick={() => setBulkDeleteConfirmOpen(true)}
+            disabled={bulkBusy !== null}
+            className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete Selected
+          </button>
+        </div>
+      )}
+
+      {/* Bulk download progress modal */}
+      {bulkProgress && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">Building Export</h3>
+            <p className="text-sm text-slate-600 mt-2">{bulkProgress.message}</p>
+            <div className="mt-4 h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+              <div
+                className="h-full bg-orange-500 transition-all"
+                style={{ width: `${Math.round((bulkProgress.done / Math.max(1, bulkProgress.total)) * 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-slate-500 mt-2 text-right">
+              {bulkProgress.done} / {bulkProgress.total}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk delete confirmation (only drafts are deletable; others skipped). */}
+      <ConfirmModal
+        open={bulkDeleteConfirmOpen}
+        title={`Delete ${selectedIds.size} selected invoice(s)?`}
+        description={
+          selectedNonDraftCount > 0
+            ? `Only draft invoices will be permanently deleted. ${selectedNonDraftCount} non-draft invoice(s) in your selection will be skipped — cancel sent invoices individually from their row menu. This cannot be undone.`
+            : 'These draft invoices will be permanently deleted. This cannot be undone. Download a copy first if you want to keep records.'
+        }
+        confirmLabel="Delete drafts"
+        cancelLabel="Keep"
+        destructive
+        pending={bulkBusy === 'delete'}
+        pendingLabel="Deleting…"
+        onCancel={() => setBulkDeleteConfirmOpen(false)}
+        onConfirm={handleBulkDelete}
+      />
 
       {showCreate && (
         <CreateInvoiceModal
