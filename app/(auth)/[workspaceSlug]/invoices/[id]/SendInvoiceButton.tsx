@@ -491,7 +491,7 @@ export function SendInvoiceButton({
                 )}
                 {emailTemplates.length === 0 && (
                   <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <p className="text-xs text-slate-500">No invoice email templates yet. A basic email has been generated.</p>
+                    <p className="text-xs text-slate-500">No message templates yet. A basic email has been generated.</p>
                   </div>
                 )}
                 <div>
@@ -570,7 +570,7 @@ export function SendInvoiceButton({
                 ) : (
                   <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                     <p className="text-xs text-slate-500">
-                      No invoice templates yet. Type a custom message below or{' '}
+                      No message templates yet. Type a custom message below or{' '}
                       <button onClick={goCreateTemplate} className="underline text-slate-700 font-medium">create a template</button>.
                     </p>
                   </div>

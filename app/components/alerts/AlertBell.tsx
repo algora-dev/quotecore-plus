@@ -75,26 +75,18 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
     setUnreadCount(initialUnreadCount);
   }, [initialAlerts, initialUnreadCount]);
 
-  async function markAsRead(alertId: string) {
-    try {
-      const res = await fetch(`/api/alerts/${alertId}/read`, { method: 'POST' });
-      if (res.ok) {
-        setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, is_read: true } : a));
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
-    } catch {}
-  }
-
-  // "Clear alerts" is the ONLY bell action. The bell is a preview surface
-  // only - the real home for alerts is the Message Center. Clearing marks the
-  // currently-visible alerts as read so the bell empties its unread state,
-  // while every row STAYS in the Message Center. Nothing is deleted here; the
-  // only way to remove an alert for good is Archive -> Delete in the MC.
+  // "Clear alerts" is the ONLY bell action. The bell is a PREVIEW surface
+  // only - the real home for alerts is the Message Center. Clearing removes
+  // the items from the BELL (via bell_cleared_at) and does NOT touch is_read
+  // or status, so the Message Center keeps its unread/orange state and folders
+  // completely intact. Nothing is ever deleted from the bell; deletion only
+  // happens via Archive -> Delete in the MC.
   async function clearAll() {
     try {
       const res = await fetch('/api/alerts/clear-all', { method: 'POST' });
       if (res.ok) {
-        setAlerts(prev => prev.map(a => ({ ...a, is_read: true })));
+        // Cleared alerts leave the bell entirely (they reappear nowhere here).
+        setAlerts([]);
         setUnreadCount(0);
       }
     } catch {}
@@ -122,7 +114,8 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
           />
         </svg>
 
-        {/* Pulsing badge */}
+        {/* Pulsing badge - counts bell items (not-yet-cleared), independent
+            of Message Center read state. */}
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
@@ -151,7 +144,9 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
                 <button
                   key={alert.id}
                   onClick={() => {
-                    if (!alert.is_read) markAsRead(alert.id);
+                    // Bell is read-only re: Message Center - clicking only
+                    // navigates; it never mutates is_read/status. (Read state
+                    // is managed in the Message Center.)
                     router.push(hrefFor(alert));
                     setOpen(false);
                   }}

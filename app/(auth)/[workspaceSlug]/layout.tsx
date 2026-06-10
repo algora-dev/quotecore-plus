@@ -41,15 +41,21 @@ export default async function WorkspaceLayout({
 
   const supabase = await createSupabaseServerClient();
 
-  // Load alerts for bell
+  // Load alerts for the bell. The bell is a PREVIEW surface only: it shows
+  // alerts that haven't been "Cleared" from the bell (bell_cleared_at IS NULL),
+  // completely independent of Message Center read/archive state. Clearing the
+  // bell never touches is_read/status, so MC keeps its own unread/orange state.
   const { data: alerts } = await supabase
     .from('alerts')
     .select('id, alert_type, title, message, is_read, created_at, quote_id, order_id, invoice_id')
     .eq('company_id', company.id)
+    .is('bell_cleared_at', null)
     .order('created_at', { ascending: false })
     .limit(20);
-  
-  const unreadCount = (alerts || []).filter(a => !a.is_read).length;
+
+  // Bell badge counts the alerts currently shown in the bell (not yet cleared),
+  // not is_read - the bell has its own lifecycle now.
+  const unreadCount = (alerts || []).length;
 
   // Per-user Chat Assistant visibility preference (default ON). When false the
   // widget renders nothing. Read directly here (not in the shared profile

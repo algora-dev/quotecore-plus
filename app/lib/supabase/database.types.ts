@@ -58,6 +58,7 @@ export type Database = {
       alerts: {
         Row: {
           alert_type: string
+          bell_cleared_at: string | null
           company_id: string
           created_at: string | null
           id: string
@@ -71,6 +72,7 @@ export type Database = {
         }
         Insert: {
           alert_type: string
+          bell_cleared_at?: string | null
           company_id: string
           created_at?: string | null
           id?: string
@@ -84,6 +86,7 @@ export type Database = {
         }
         Update: {
           alert_type?: string
+          bell_cleared_at?: string | null
           company_id?: string
           created_at?: string | null
           id?: string

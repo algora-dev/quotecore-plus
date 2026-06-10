@@ -92,13 +92,18 @@ export default async function InvoicePage({ params }: Props) {
     .order('created_at', { ascending: false })
     .limit(20);
 
-  // Load email templates for the send-invoice flow.
-  // Include both invoice_send and custom kinds so users can reuse generic templates.
+  // Load message templates for the send-invoice + follow-up flow.
+  // Message templates are SHARED across quotes / orders / invoices (the quote
+  // and order send surfaces load ALL of a company's email_templates with no
+  // kind filter). Invoice follow-ups likewise reuse any message template the
+  // user has written - they do NOT require a kind='invoice_send' template (and
+  // never an invoice_template doc, which is just header/payment details). The
+  // old `.in('kind', ['invoice_send','custom'])` filter hid the user's
+  // existing quote_send templates, producing the false "no templates" state.
   const { data: emailTemplates } = await admin
     .from('email_templates')
     .select('id, name, subject, body, is_default')
     .eq('company_id', profile.company_id)
-    .in('kind', ['invoice_send', 'custom'])
     .order('name');
 
   // Whether this company's plan includes scheduled follow-ups (mirrors
