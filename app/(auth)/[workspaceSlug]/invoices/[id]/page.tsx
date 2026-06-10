@@ -3,6 +3,7 @@ import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/sup
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { InvoiceEditor, type InvoiceRow, type InvoiceLineRow } from './InvoiceEditor';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
+import { InvoiceActivityCard } from '@/app/components/activity/InvoiceActivityCard';
 
 interface Props {
   params: Promise<{ workspaceSlug: string; id: string }>;
@@ -111,20 +112,38 @@ export default async function InvoicePage({ params }: Props) {
   const entitlements = await loadCompanyEntitlements(profile.company_id);
   const canFollowups = entitlements.features.followups;
 
+  // Activity card only makes sense once the invoice has left draft
+  // (nothing sent / no disputes / no schedules on a fresh draft).
+  const showActivity = invoice.status && invoice.status !== 'draft';
+
   return (
-    <InvoiceEditor
-      invoice={invoice as unknown as InvoiceRow}
-      savedLines={(lines ?? []) as unknown as InvoiceLineRow[]}
-      workspaceSlug={workspaceSlug}
-      defaultLogoUrl={defaultLogoUrl}
-      currency={invoice.currency ?? company?.default_currency ?? 'GBP'}
-      companyTaxes={companyTaxes ?? []}
-      catalogs={catalogs ?? []}
-      collections={collections ?? []}
-      componentLibrary={componentLibrary ?? []}
-      activity={(activity ?? []) as unknown as { id: string; event_type: string; metadata: Record<string, unknown> | null; created_at: string }[]}
-      emailTemplates={(emailTemplates ?? []) as { id: string; name: string; subject: string; body: string; is_default: boolean | null }[]}
-      canFollowups={canFollowups}
-    />
+    <>
+      <InvoiceEditor
+        invoice={invoice as unknown as InvoiceRow}
+        savedLines={(lines ?? []) as unknown as InvoiceLineRow[]}
+        workspaceSlug={workspaceSlug}
+        defaultLogoUrl={defaultLogoUrl}
+        currency={invoice.currency ?? company?.default_currency ?? 'GBP'}
+        companyTaxes={companyTaxes ?? []}
+        catalogs={catalogs ?? []}
+        collections={collections ?? []}
+        componentLibrary={componentLibrary ?? []}
+        activity={(activity ?? []) as unknown as { id: string; event_type: string; metadata: Record<string, unknown> | null; created_at: string }[]}
+        emailTemplates={(emailTemplates ?? []) as { id: string; name: string; subject: string; body: string; is_default: boolean | null }[]}
+        canFollowups={canFollowups}
+      />
+      {showActivity ? (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 -mt-2">
+          <InvoiceActivityCard
+            invoiceId={id}
+            companyId={profile.company_id}
+            customerName={invoice.customer_name ?? null}
+            customerEmail={invoice.customer_email ?? null}
+            emailTemplates={(emailTemplates ?? []).map((t) => ({ id: t.id, name: t.name, subject: t.subject }))}
+            canFollowups={canFollowups}
+          />
+        </div>
+      ) : null}
+    </>
   );
 }

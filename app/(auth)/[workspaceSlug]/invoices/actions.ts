@@ -662,3 +662,28 @@ export async function deleteInvoice(invoiceId: string) {
   if (error) throw error;
   revalidatePath(`/[workspaceSlug]/invoices`);
 }
+
+/**
+ * Mark an invoice dispute as resolved (stamps `resolved_at`). Used by
+ * the "Unresolved" tab of the invoice Activity card so the user can
+ * clear a customer-raised dispute once they've actioned it. Ownership
+ * scoped via company_id; idempotent (already-resolved rows are a
+ * no-op success).
+ */
+export async function resolveInvoiceDispute(
+  disputeId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  const { error } = await supabase
+    .from('invoice_disputes')
+    .update({ resolved_at: new Date().toISOString() })
+    .eq('id', disputeId)
+    .eq('company_id', profile.company_id)
+    .is('resolved_at', null);
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/');
+  return { ok: true };
+}

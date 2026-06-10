@@ -112,3 +112,58 @@ export async function deleteAllSentMessagesForQuote(
   revalidatePath('/');
   return { ok: true, deletedCount: data?.length ?? 0 };
 }
+
+/**
+ * Hard-delete every outbound message associated with a given material
+ * order. Mirrors `deleteAllSentMessagesForQuote` but keys on
+ * `outbound_messages.related_order_id`. Used by the order Activity card.
+ */
+export async function deleteAllSentMessagesForOrder(
+  orderId: string,
+): Promise<DeleteSentMessageResult> {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from('outbound_messages')
+    .delete()
+    .eq('related_order_id', orderId)
+    .eq('company_id', profile.company_id)
+    .select('id');
+
+  if (error) return { ok: false, error: error.message };
+
+  console.log(
+    `[messages/delete-all] user=${profile.id} company=${profile.company_id} order=${orderId} count=${data?.length ?? 0}`,
+  );
+  revalidatePath('/');
+  return { ok: true, deletedCount: data?.length ?? 0 };
+}
+
+/**
+ * Hard-delete every outbound message associated with a given invoice.
+ * Mirrors `deleteAllSentMessagesForQuote` but keys on
+ * `outbound_messages.related_invoice_id` (added 2026-06-10). Used by
+ * the invoice Activity card.
+ */
+export async function deleteAllSentMessagesForInvoice(
+  invoiceId: string,
+): Promise<DeleteSentMessageResult> {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from('outbound_messages')
+    .delete()
+    .eq('related_invoice_id', invoiceId)
+    .eq('company_id', profile.company_id)
+    .select('id');
+
+  if (error) return { ok: false, error: error.message };
+
+  console.log(
+    `[messages/delete-all] user=${profile.id} company=${profile.company_id} invoice=${invoiceId} count=${data?.length ?? 0}`,
+  );
+  revalidatePath('/');
+  return { ok: true, deletedCount: data?.length ?? 0 };
+}
