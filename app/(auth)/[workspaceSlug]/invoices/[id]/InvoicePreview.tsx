@@ -121,7 +121,7 @@ export function InvoicePreview({
               </tr>
             ) : (
               visibleLines.map((line) => (
-                <tr key={line.localId}>
+                <tr key={line.localId} data-pdf-block>
                   <td className="py-3">
                     <p className="font-medium text-slate-900">{line.title || 'Untitled'}</p>
                     {line.description && line.show_description !== false && (
@@ -144,7 +144,7 @@ export function InvoicePreview({
         </table>
 
         {/* Totals */}
-        <div className="mt-4 flex justify-end">
+        <div data-pdf-block className="mt-4 flex justify-end">
           <div className="w-64 space-y-1">
             <div className="flex justify-between text-sm text-slate-600">
               <span>Subtotal</span>

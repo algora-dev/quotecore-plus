@@ -115,6 +115,11 @@ export async function elementToPdf(element: HTMLElement): Promise<jsPDF> {
   await awaitFonts();
   await awaitImages(element);
 
+  // Capture block boundaries BEFORE html2canvas (measured against the live
+  // DOM) so the slicer can avoid cutting through line items / diagrams.
+  const blockTopsCssPx = collectBlockTops(element);
+  const sourceCssHeight = element.getBoundingClientRect().height;
+
   const canvas = await html2canvas(element, {
     scale: 2,
     useCORS: true,
@@ -125,11 +130,55 @@ export async function elementToPdf(element: HTMLElement): Promise<jsPDF> {
     onclone: (clonedDoc) => normalizeUnsupportedColors(clonedDoc),
   });
 
-  return canvasToPdf(canvas);
+  return canvasToPdf(canvas, { blockTopsCssPx, sourceCssHeight });
 }
 
-/** Slice a captured canvas into an A4 multi-page jsPDF (shared math). */
-export function canvasToPdf(canvas: HTMLCanvasElement): jsPDF {
+/**
+ * Collect page-break-safe boundaries from a captured element.
+ *
+ * Any element tagged `[data-pdf-block]` is treated as an atomic unit that must
+ * NOT be split across a page boundary (a line item, a diagram/image, a totals
+ * block, etc.). We return each block's TOP offset (in element-local CSS px,
+ * relative to `root`), which the slicer uses as candidate page-break points:
+ * it will start a new page at a block top rather than cutting through the
+ * block.
+ *
+ * Returns a sorted, de-duped list of top offsets. The list is in the SAME
+ * coordinate space as the element's rendered height; the slicer scales it to
+ * canvas px using the capture scale factor.
+ */
+export function collectBlockTops(root: HTMLElement): number[] {
+  const rootTop = root.getBoundingClientRect().top;
+  const blocks = Array.from(root.querySelectorAll<HTMLElement>('[data-pdf-block]'));
+  const tops = blocks.map((b) => b.getBoundingClientRect().top - rootTop);
+  // De-dupe + sort ascending. Drop anything < 1px (the first block at the very
+  // top is implicit).
+  const uniq = Array.from(new Set(tops.map((t) => Math.round(t)))).filter((t) => t > 1);
+  uniq.sort((a, b) => a - b);
+  return uniq;
+}
+
+/**
+ * Slice a captured canvas into an A4 multi-page jsPDF.
+ *
+ * `blockTopsCssPx` are page-break-safe boundaries in the SAME CSS-px space as
+ * the source element (see collectBlockTops). `sourceCssHeight` is the source
+ * element's rendered height in CSS px, used to map CSS px -> canvas px.
+ *
+ * Page-aware behaviour: instead of cutting at fixed printable-height intervals
+ * (which slices straight through diagrams/line items), we walk down the
+ * document and, for each page, take as many whole blocks as fit. If the next
+ * block would overflow the page bottom, we break BEFORE it so the whole block
+ * moves to the next page. A single block taller than one page is the only case
+ * we still hard-slice (unavoidable) - it starts at a page top and overflows.
+ *
+ * When `blockTopsCssPx` is empty we fall back to the legacy fixed-interval
+ * slice so callers that don't mark blocks keep working.
+ */
+export function canvasToPdf(
+  canvas: HTMLCanvasElement,
+  opts?: { blockTopsCssPx?: number[]; sourceCssHeight?: number },
+): jsPDF {
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
   const imgData = canvas.toDataURL('image/png');
@@ -139,18 +188,71 @@ export function canvasToPdf(canvas: HTMLCanvasElement): jsPDF {
   const imgWidth = printableWidth;
   const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-  let heightLeft = imgHeight;
-  let position = 0;
+  const blockTops = opts?.blockTopsCssPx ?? [];
+  const sourceCssHeight = opts?.sourceCssHeight ?? 0;
 
-  pdf.addImage(imgData, 'PNG', MARGIN_MM, MARGIN_MM + position, imgWidth, imgHeight);
-  heightLeft -= printableHeight;
-
-  while (heightLeft > 0) {
-    position = heightLeft - imgHeight;
-    pdf.addPage();
+  // No block info -> legacy fixed-interval slice (kept for safety/fallback).
+  if (blockTops.length === 0 || sourceCssHeight <= 0) {
+    let heightLeft = imgHeight;
+    let position = 0;
     pdf.addImage(imgData, 'PNG', MARGIN_MM, MARGIN_MM + position, imgWidth, imgHeight);
     heightLeft -= printableHeight;
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', MARGIN_MM, MARGIN_MM + position, imgWidth, imgHeight);
+      heightLeft -= printableHeight;
+    }
+    return pdf;
   }
+
+  // Map CSS-px breakpoints into mm of the rendered image. The image is
+  // imgHeight mm tall and represents sourceCssHeight CSS px, so:
+  const cssToMm = imgHeight / sourceCssHeight;
+  const breakMm = blockTops.map((t) => t * cssToMm).filter((mm) => mm > 0.5 && mm < imgHeight - 0.5);
+
+  // Build the list of page-start offsets (mm from the top of the full image).
+  // Greedy: from the current page start, the page can show `printableHeight`
+  // mm. The next page should start at the LAST block boundary that still fits
+  // within [pageStart, pageStart + printableHeight]. If no boundary falls in
+  // that window (a single block taller than a page), we hard-advance by a
+  // full page so we always make progress.
+  const pageStarts: number[] = [0];
+  let guard = 0;
+  while (true) {
+    if (guard++ > 1000) break; // safety: never spin forever
+    const start = pageStarts[pageStarts.length - 1];
+    const limit = start + printableHeight;
+    if (limit >= imgHeight - 0.5) break; // remainder fits on this page
+
+    // Last block boundary that fits within this page (and is past the start).
+    let nextStart = -1;
+    for (const mm of breakMm) {
+      if (mm > start + 0.5 && mm <= limit) nextStart = mm;
+    }
+    // No usable boundary in the window -> oversized block; hard-advance.
+    if (nextStart < 0) nextStart = limit;
+    if (nextStart <= start + 0.5) nextStart = limit; // guarantee progress
+    pageStarts.push(nextStart);
+  }
+
+  // Render: each page draws the full image shifted up by the page start, so
+  // only the [start, start+printableHeight] band lands inside the printable
+  // area. We CLIP to the printable rectangle so the rest of the (tall) image
+  // doesn't bleed into the top/bottom margins of adjacent pages - that keeps
+  // the page margins clean white and prevents the previous/next block from
+  // ghosting into the margin.
+  pageStarts.forEach((start, i) => {
+    if (i > 0) pdf.addPage();
+    pdf.saveGraphicsState();
+    // Clip path = the printable rectangle on this page.
+    pdf.rect(MARGIN_MM, MARGIN_MM, imgWidth, printableHeight);
+    pdf.clip();
+    // jsPDF needs the path consumed after clip(); discard with a no-op fill.
+    pdf.discardPath();
+    pdf.addImage(imgData, 'PNG', MARGIN_MM, MARGIN_MM - start, imgWidth, imgHeight);
+    pdf.restoreGraphicsState();
+  });
 
   return pdf;
 }
@@ -209,6 +311,10 @@ export async function renderReactPreviewToPdfBuffer(
     // A short settle so any state-driven layout (rare in pure previews) lands.
     await new Promise((r) => setTimeout(r, 60));
 
+    // Block boundaries measured against the freshly-painted offscreen DOM.
+    const blockTopsCssPx = collectBlockTops(inner);
+    const sourceCssHeight = inner.getBoundingClientRect().height;
+
     const canvas = await html2canvas(inner, {
       scale: 2,
       useCORS: true,
@@ -219,7 +325,7 @@ export async function renderReactPreviewToPdfBuffer(
       onclone: (clonedDoc) => normalizeUnsupportedColors(clonedDoc),
     });
 
-    const pdf = canvasToPdf(canvas);
+    const pdf = canvasToPdf(canvas, { blockTopsCssPx, sourceCssHeight });
     return pdf.output('arraybuffer');
   } finally {
     // Always unmount + detach so we don't leak roots across a 25-item batch.

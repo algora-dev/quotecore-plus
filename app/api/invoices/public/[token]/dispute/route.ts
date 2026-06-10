@@ -94,7 +94,13 @@ export async function POST(
 
   // Alert account owner. Dispute record + status update above always happen;
   // this alert is gated by the Message Center notification matrix.
-  const alertMessage = `${recipientName} has disputed invoice ${invoice.invoice_number}. Reason: ${reason}`;
+  // Include the recipient's FULL free-text message, not just the reason. The
+  // Message Center expanded view is the ONLY place the owner ever sees this
+  // detail, so dropping the comment loses it entirely (bug 2026-06-10).
+  const alertMessage =
+    `${recipientName} has disputed invoice ${invoice.invoice_number}.\n` +
+    `Reason: ${reason}` +
+    (message ? `\n\nMessage:\n${message}` : '');
   if (await alertEnabled(admin, invoice.company_id, 'invoice_disputed')) {
     await admin.from('alerts').insert({
       company_id: invoice.company_id,

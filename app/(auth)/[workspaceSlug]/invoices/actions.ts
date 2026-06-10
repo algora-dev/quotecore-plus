@@ -399,9 +399,13 @@ export async function cancelInvoice(invoiceId: string) {
   const profile = await requireCompanyContext();
   const admin = createAdminClient();
 
+  // Cancelling clears any "Action Required" (dispute) state too. The badge is
+  // derived as `status === 'disputed' || disputed_at`, so we must null
+  // disputed_at or a cancelled-but-previously-disputed invoice keeps the
+  // badge stuck (bug 2026-06-10).
   await admin
     .from('invoices')
-    .update({ status: 'cancelled', cancelled_at: new Date().toISOString() })
+    .update({ status: 'cancelled', cancelled_at: new Date().toISOString(), disputed_at: null })
     .eq('id', invoiceId)
     .eq('company_id', profile.company_id);
 

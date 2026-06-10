@@ -188,7 +188,10 @@ export async function submitRevisionRequest(
       quote_id: quote.id,
       alert_type: 'revision_requested',
       title: `Re-Quote Requested - #${quote.quote_number ?? 'DRAFT'}`,
-      message: `${cleanName || quote.customer_name || 'Customer'} has requested a revision (${sourceState}). Notes: ${trimmedNotes.slice(0, 200)}${trimmedNotes.length > 200 ? '…' : ''}`,
+      // Full notes, not a 200-char preview. The Message Center expanded view
+      // is the only place the owner reads what was actually requested, so a
+      // truncated note silently loses detail (bug 2026-06-10).
+      message: `${cleanName || quote.customer_name || 'Customer'} has requested a revision (${sourceState}).\n\nNotes:\n${trimmedNotes}`,
     });
   }
 

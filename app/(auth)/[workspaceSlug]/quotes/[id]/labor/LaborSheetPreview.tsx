@@ -68,7 +68,7 @@ export function LaborSheetDocument({ quote, components, savedLines, quoteTaxes }
         <div className="space-y-2">
           {visibleLines.length > 0 ? (
             visibleLines.map((line) => (
-              <div key={line.id} className="flex justify-between py-2 border-b border-black">
+              <div key={line.id} data-pdf-block className="flex justify-between py-2 border-b border-black">
                 <div className="flex-1">
                   <p className="text-sm text-black">
                     {displayLineText(line.custom_text, line.quantity_text, line.show_units)}
@@ -83,7 +83,7 @@ export function LaborSheetDocument({ quote, components, savedLines, quoteTaxes }
             ))
           ) : (
             components.map((comp) => (
-              <div key={comp.id} className="flex justify-between py-2 border-b border-black">
+              <div key={comp.id} data-pdf-block className="flex justify-between py-2 border-b border-black">
                 <div className="flex-1">
                   <p className="text-sm text-black">
                     {comp.name} (Labor)
@@ -99,7 +99,8 @@ export function LaborSheetDocument({ quote, components, savedLines, quoteTaxes }
       </div>
 
       {/* Totals */}
-      <div className="border-t border-black pt-6 mt-8">
+      {/* data-pdf-block: keep the totals block whole across page breaks. */}
+      <div data-pdf-block className="border-t border-black pt-6 mt-8">
         <div className="space-y-2">
           <div className="flex justify-between text-base">
             <span className="text-black">Subtotal (Labor)</span>

@@ -160,7 +160,7 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
             / price), rendered identically on the in-app preview, the public
             supplier page, and the print/PDF output. */}
         {isLineByLine ? (
-          <div data-print-card>
+          <div data-print-card data-pdf-block>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b-2 border-slate-300 text-left">
@@ -241,7 +241,7 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
           {lines.map((line, index) => {
             const flashing = line.flashing_id ? flashings.find((f) => f.id === line.flashing_id) : null;
             return (
-              <div key={line.id} data-print-card className="rounded-xl border border-slate-200 p-4 break-inside-avoid">
+              <div key={line.id} data-print-card data-pdf-block className="rounded-xl border border-slate-200 p-4 break-inside-avoid">
                 {line.show_component_name !== false ? (
                   <p className="font-semibold text-slate-900 mb-2">
                     {index + 1}. {line.item_name}

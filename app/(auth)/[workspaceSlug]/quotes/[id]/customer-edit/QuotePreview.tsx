@@ -137,7 +137,7 @@ export function QuotePreview({
                 />
               </div>
             ) : (
-              <div key={line.id} className="flex items-start justify-between py-2 border-b border-slate-100">
+              <div key={line.id} data-pdf-block className="flex items-start justify-between py-2 border-b border-slate-100">
                 <div className="flex-1">
                   <p className="text-sm text-slate-900">{displayLineText(line.text, line.quantityText, line.showUnits)}</p>
                 </div>
@@ -165,7 +165,7 @@ export function QuotePreview({
       </div>
 
       {/* Totals */}
-      <div className="space-y-2 pt-4 border-t">
+      <div data-pdf-block className="space-y-2 pt-4 border-t">
         <div className="flex justify-between text-sm">
           <span className="text-slate-600">Subtotal</span>
           <span className="font-medium text-slate-900">{formatCurrency(subtotal, currency)}</span>

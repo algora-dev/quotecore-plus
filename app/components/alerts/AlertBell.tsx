@@ -85,21 +85,16 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
     } catch {}
   }
 
-  async function markAllRead() {
-    try {
-      const res = await fetch('/api/alerts/read-all', { method: 'POST' });
-      if (res.ok) {
-        setAlerts(prev => prev.map(a => ({ ...a, is_read: true })));
-        setUnreadCount(0);
-      }
-    } catch {}
-  }
-
+  // "Clear alerts" is the ONLY bell action. The bell is a preview surface
+  // only - the real home for alerts is the Message Center. Clearing marks the
+  // currently-visible alerts as read so the bell empties its unread state,
+  // while every row STAYS in the Message Center. Nothing is deleted here; the
+  // only way to remove an alert for good is Archive -> Delete in the MC.
   async function clearAll() {
     try {
       const res = await fetch('/api/alerts/clear-all', { method: 'POST' });
       if (res.ok) {
-        setAlerts([]);
+        setAlerts(prev => prev.map(a => ({ ...a, is_read: true })));
         setUnreadCount(0);
       }
     } catch {}
@@ -145,10 +140,7 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
             <h4 className="text-sm font-semibold text-slate-900">Notifications</h4>
             <div className="flex items-center gap-3">
               {unreadCount > 0 && (
-                <button onClick={markAllRead} className="text-xs text-orange-600 hover:text-orange-800">Mark read</button>
-              )}
-              {alerts.length > 0 && (
-                <button onClick={clearAll} className="text-xs text-slate-400 hover:text-red-500">Clear all</button>
+                <button onClick={clearAll} title="Clears these from the bell only - they stay in your Message Center" className="text-xs text-orange-600 hover:text-orange-800">Clear alerts</button>
               )}
             </div>
           </div>
@@ -198,6 +190,17 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
               </div>
             )}
           </div>
+
+          {/* Footer: the bell is preview-only; everything lives in the MC. */}
+          <button
+            onClick={() => {
+              router.push(`/${workspaceSlug}/inbox`);
+              setOpen(false);
+            }}
+            className="w-full border-t border-slate-100 p-2.5 text-center text-xs font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition"
+          >
+            View all in Message Center
+          </button>
         </div>
       )}
     </div>

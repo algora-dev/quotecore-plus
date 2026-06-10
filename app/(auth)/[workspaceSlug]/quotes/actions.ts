@@ -300,6 +300,15 @@ export async function withdrawQuote(quoteId: string): Promise<void> {
 
   if (updateErr) throw new Error(`Failed to withdraw quote: ${updateErr.message}`);
 
+  // Withdrawing clears any "Action Required" state too: resolve any open
+  // revision requests so the badge (derived from unresolved
+  // quote_revision_requests) drops (bug 2026-06-10).
+  await supabase
+    .from('quote_revision_requests')
+    .update({ resolved_at: new Date().toISOString() })
+    .eq('quote_id', quoteId)
+    .is('resolved_at', null);
+
   revalidatePath('/');
 }
 

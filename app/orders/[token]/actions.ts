@@ -148,8 +148,11 @@ export async function submitOrderResponse(
   const alertType = alertTypeByAction[input.action];
   const supplierLabel = order.to_supplier || 'Supplier';
   const alertTitle = `${actionLabels[input.action]} \u2013 ${supplierLabel}`;
+  // Include the supplier's FULL message - the Message Center expanded view is
+  // the only place the owner ever reads it, so truncating loses detail the
+  // owner needs (e.g. exactly what info was requested). 2026-06-10.
   const alertBody = input.body
-    ? `Order ${order.order_number}\n\n${input.body.slice(0, 280)}${input.body.length > 280 ? '\u2026' : ''}`
+    ? `Order ${order.order_number}\n\n${input.body}`
     : `Order ${order.order_number}`;
 
   // Response row + lifecycle stamps above always happen; this alert is gated
