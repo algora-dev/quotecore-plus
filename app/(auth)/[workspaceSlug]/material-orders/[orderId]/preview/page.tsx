@@ -55,39 +55,35 @@ export default async function OrderPreviewPage(props: Props) {
     libraryFiles = (libRows ?? []).map((r) => ({ id: r.id, name: r.name, fileSize: r.file_size }));
   }
 
+  // Activity card is rendered ABOVE the order body (inside OrderPreview's
+  // grey shell) to mirror the Quotes summary layout. It carries
+  // data-exclude-pdf so it never lands on the printable order. Replaces
+  // the old standalone SupplierResponsePanel — supplier responses now
+  // live in the Activity card's Unresolved tab.
+  const activityCard = (
+    <OrderActivityCard
+      orderId={orderId}
+      companyId={companyId}
+      supplierName={orderData.order.supplier_name ?? orderData.order.to_supplier ?? null}
+      acceptedAt={(orderData.order as { confirmed_at?: string | null }).confirmed_at ?? null}
+      declinedAt={orderData.order.declined_at ?? null}
+      emailTemplates={(emailTemplates ?? []).map((t) => ({ id: t.id, name: t.name, subject: t.subject }))}
+      canFollowups={canFollowups}
+    />
+  );
+
   return (
-    <>
-      <OrderPreview
-        order={orderData.order}
-        lines={orderData.lines}
-        flashings={flashings}
-        workspaceSlug={workspaceSlug}
-        libraryFiles={libraryFiles}
-        libraryLocked={!attachmentsEnabled}
-        currency={currency}
-        emailTemplates={emailTemplates ?? []}
-        canFollowups={canFollowups}
-      />
-      {/*
-        Activity card lives OUTSIDE the A4-sized print container so it
-        never ends up on the printable order PDF; ActivityCardClient
-        carries the `data-exclude-pdf` marker for the in-app PDF flow.
-        Wrapping div restores the page's max-width + padding because
-        OrderPreview's wrapper sits inside its own min-h-screen shell.
-        Replaces the old standalone SupplierResponsePanel — its supplier
-        responses now live in the Activity card's Unresolved tab.
-      */}
-      <div className="max-w-[210mm] mx-auto px-8 pb-8 -mt-4">
-        <OrderActivityCard
-          orderId={orderId}
-          companyId={companyId}
-          supplierName={orderData.order.supplier_name ?? orderData.order.to_supplier ?? null}
-          acceptedAt={(orderData.order as { confirmed_at?: string | null }).confirmed_at ?? null}
-          declinedAt={orderData.order.declined_at ?? null}
-          emailTemplates={(emailTemplates ?? []).map((t) => ({ id: t.id, name: t.name, subject: t.subject }))}
-          canFollowups={canFollowups}
-        />
-      </div>
-    </>
+    <OrderPreview
+      order={orderData.order}
+      lines={orderData.lines}
+      flashings={flashings}
+      workspaceSlug={workspaceSlug}
+      libraryFiles={libraryFiles}
+      libraryLocked={!attachmentsEnabled}
+      currency={currency}
+      emailTemplates={emailTemplates ?? []}
+      canFollowups={canFollowups}
+      activitySlot={activityCard}
+    />
   );
 }

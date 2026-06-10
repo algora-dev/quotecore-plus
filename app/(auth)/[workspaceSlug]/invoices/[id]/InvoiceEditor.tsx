@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
@@ -97,6 +97,9 @@ interface Props {
   activity: { id: string; event_type: string; metadata: Record<string, unknown> | null; created_at: string }[];
   /** Whether this company's plan includes scheduled follow-ups. */
   canFollowups?: boolean;
+  /** Activity card (server-rendered) shown above the invoice document in
+   *  the right preview pane to mirror the Quotes summary layout. */
+  activitySlot?: ReactNode;
 }
 
 // ── Status badge ───────────────────────────────────────────────────────────
@@ -126,6 +129,7 @@ export function InvoiceEditor({
   activity,
   emailTemplates,
   canFollowups = false,
+  activitySlot,
 }: Props) {
   const router = useRouter();
   // When opened from the Message Center (?from=inbox) the Back arrow returns
@@ -918,6 +922,9 @@ export function InvoiceEditor({
 
         {/* ── Right panel: preview ── */}
         <div className="flex-1 overflow-y-auto bg-slate-100 p-4" data-copilot="invoice-preview">
+          {activitySlot ? (
+            <div className="max-w-3xl mx-auto mb-4 data-exclude-pdf">{activitySlot}</div>
+          ) : null}
           <div data-pdf-content>
           <InvoicePreview
             invoice={initial}

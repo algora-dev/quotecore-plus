@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import type { MaterialOrderRow, MaterialOrderLineRow, FlashingLibraryRow } from '@/app/lib/types';
@@ -27,6 +27,10 @@ interface Props {
   emailTemplates?: OrderEmailTemplate[];
   /** Whether this company's plan includes scheduled follow-up messages. */
   canFollowups?: boolean;
+  /** Activity card (server-rendered) shown ABOVE the order body, inside
+   *  the grey shell — mirrors the Quotes summary layout where Activity
+   *  sits above the document. */
+  activitySlot?: ReactNode;
 }
 
 export interface OrderEmailTemplate {
@@ -58,7 +62,7 @@ export interface OrderEmailTemplate {
  * The header bar (Back / Mark / Edit / Print / Send) carries
  * `data-exclude-pdf` so OrderBody's print stylesheet hides it.
  */
-export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFiles, libraryLocked, currency = 'GBP', emailTemplates = [], canFollowups = false }: Props) {
+export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFiles, libraryLocked, currency = 'GBP', emailTemplates = [], canFollowups = false, activitySlot }: Props) {
   const router = useRouter();
   // When opened from the Message Center (?from=inbox) "Back" returns to the
   // inbox; otherwise keep the existing history-back behaviour.
@@ -184,6 +188,10 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
       </div>
 
       {/* Body \u2014 same renderer as the public order page. */}
+      {activitySlot ? (
+        <div className="max-w-[210mm] mx-auto px-6 sm:px-8 pt-6">{activitySlot}</div>
+      ) : null}
+
       <div className="max-w-[210mm] mx-auto px-6 sm:px-8 py-6">
         <OrderBody order={order} lines={lines} flashings={flashings} currency={currency} />
       </div>
