@@ -73,8 +73,14 @@ export function SendInvoiceButton({
   // = the rule builder.
   type SendStage = 'form' | 'gate' | 'followups';
   const [sendStage, setSendStage] = useState<SendStage>('form');
+  // Invoice follow-ups support a time-based chase ('invoice_sent') and an
+  // "On Read" event trigger ('invoice_viewed') that parks until the recipient
+  // opens the invoice, then fires after the delay, cancelled if they pay /
+  // report payment / dispute first.
+  type InvoiceTrigger = 'invoice_sent' | 'invoice_viewed';
   type DraftRule = {
     id: string;
+    trigger: InvoiceTrigger;
     delayDays: number;
     delayHours: number;
     delayMinutes: number;
@@ -270,6 +276,7 @@ export function SendInvoiceButton({
       ...prev,
       {
         id: crypto.randomUUID(),
+        trigger: 'invoice_sent',
         delayDays: 3,
         delayHours: 0,
         delayMinutes: 0,
@@ -303,6 +310,7 @@ export function SendInvoiceButton({
         const result = await scheduleInvoiceFollowUp({
           invoiceId,
           templateId: rule.templateId,
+          triggerEvent: rule.trigger,
           waitDays: rule.delayDays,
           waitHours: rule.delayHours,
           waitMinutes: rule.delayMinutes,
@@ -712,7 +720,14 @@ export function SendInvoiceButton({
                               }`}
                             >
                               <div className="flex items-center justify-between gap-2">
-                                <span className="text-xs font-semibold text-slate-900">Time-based follow-up</span>
+                                <select
+                                  value={rule.trigger}
+                                  onChange={(e) => updateDraftRule(rule.id, { trigger: e.target.value as InvoiceTrigger })}
+                                  className="text-xs font-semibold text-slate-900 border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                                >
+                                  <option value="invoice_sent">Time-based follow-up</option>
+                                  <option value="invoice_viewed">On read (opened, no response)</option>
+                                </select>
                                 <button
                                   type="button"
                                   onClick={() => removeDraftRule(rule.id)}
@@ -724,7 +739,11 @@ export function SendInvoiceButton({
                               </div>
 
                               <div className="space-y-2">
-                                <p className="text-[11px] text-slate-500">Chases the customer if the invoice isn’t marked paid. Auto-cancels when they report payment, pay, or dispute. Respects quiet hours.</p>
+                                <p className="text-[11px] text-slate-500">
+                                  {rule.trigger === 'invoice_viewed'
+                                    ? 'Starts counting only once the customer OPENS the invoice, then sends after the delay. Auto-cancels if they report payment, pay, or dispute first. Respects quiet hours.'
+                                    : 'Chases the customer if the invoice isn’t marked paid. Auto-cancels when they report payment, pay, or dispute. Respects quiet hours.'}
+                                </p>
                                 <div className="flex items-end gap-2">
                                   <div className="w-24">
                                     <label className="block text-[10px] font-medium text-slate-500 mb-0.5"># days</label>

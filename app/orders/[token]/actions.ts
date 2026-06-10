@@ -122,6 +122,15 @@ export async function submitOrderResponse(
       event: followupEvent,
       eventAt: now,
     });
+    // Any supplier action (accept / decline / request info) supersedes the
+    // "On Read" nudge -> cancel any pending order_viewed follow-up.
+    const { cancelViewedScheduledMessages } = await import('@/app/lib/messages/scheduled');
+    await cancelViewedScheduledMessages({
+      entity: 'order',
+      entityId: order.id,
+      companyId: order.company_id,
+      reason: `Supplier responded (${followupEvent}); On-Read follow-up no longer needed.`,
+    });
   } catch (err) {
     console.error('[submitOrderResponse] follow-up activation failed:', err);
   }

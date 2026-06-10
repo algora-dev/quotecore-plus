@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { alertEnabled, emailAlertEnabled } from '@/app/lib/alerts/prefs';
+import { activateViewedScheduledMessages } from '@/app/lib/messages/scheduled';
 import { notifyGenericAlert } from '@/app/lib/email/notify';
 import { quoteSummaryUrl, orderPreviewUrl, invoiceDetailUrl } from '@/app/lib/email/urls';
 
@@ -61,6 +62,19 @@ export async function stampQuoteViewed(token: string): Promise<void> {
     .eq('id', quote.id)
     .is('viewed_at', null); // guard against double-stamp race
 
+  // Activate any parked "On Read" (quote_viewed) follow-ups now that the quote
+  // has genuinely been opened. Best-effort; must not block view stamping.
+  try {
+    await activateViewedScheduledMessages({
+      entity: 'quote',
+      entityId: quote.id,
+      companyId: quote.company_id,
+      viewedAt: now,
+    });
+  } catch (err) {
+    console.error('[stampQuoteViewed] activate On-Read follow-ups failed:', err);
+  }
+
   const qTitle = `Quote #${quote.quote_number ?? 'DRAFT'} opened`;
   const qBody = `${quote.customer_name ?? 'The recipient'} has opened Quote #${quote.quote_number ?? 'DRAFT'}.`;
   if (await alertEnabled(admin, quote.company_id, 'quote_viewed')) {
@@ -110,6 +124,17 @@ export async function stampOrderViewed(token: string): Promise<void> {
     .update({ viewed_at: now })
     .eq('id', order.id)
     .is('viewed_at', null);
+
+  try {
+    await activateViewedScheduledMessages({
+      entity: 'order',
+      entityId: order.id,
+      companyId: order.company_id,
+      viewedAt: now,
+    });
+  } catch (err) {
+    console.error('[stampOrderViewed] activate On-Read follow-ups failed:', err);
+  }
 
   const oTitle = `Order ${order.order_number} opened`;
   const oBody = `${order.to_supplier || 'The supplier'} has opened order ${order.order_number}.`;
@@ -175,6 +200,17 @@ export async function stampInvoiceViewed(token: string): Promise<void> {
     event_type: 'viewed',
     metadata: { source: 'recipient_open' },
   });
+
+  try {
+    await activateViewedScheduledMessages({
+      entity: 'invoice',
+      entityId: invoice.id,
+      companyId: invoice.company_id,
+      viewedAt: now,
+    });
+  } catch (err) {
+    console.error('[stampInvoiceViewed] activate On-Read follow-ups failed:', err);
+  }
 
   const iBody = `${invoice.customer_name} has opened invoice ${invoice.invoice_number}.`;
   if (await alertEnabled(admin, invoice.company_id, 'invoice_viewed')) {

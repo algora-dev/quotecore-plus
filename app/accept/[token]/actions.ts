@@ -167,12 +167,19 @@ export async function submitRevisionRequest(
   // the row above is already saved. Await (not fire-and-forget) so the
   // Vercel serverless function doesn't terminate the in-flight Promise.
   try {
-    const { activateEventScheduledMessages } = await import('@/app/lib/messages/scheduled');
+    const { activateEventScheduledMessages, cancelViewedScheduledMessages } = await import('@/app/lib/messages/scheduled');
     await activateEventScheduledMessages({
       quoteId: quote.id,
       companyId: quote.company_id,
       event: 'revision_requested',
       eventAt: new Date().toISOString(),
+    });
+    // Recipient acted -> cancel any pending "On Read" follow-up.
+    await cancelViewedScheduledMessages({
+      entity: 'quote',
+      entityId: quote.id,
+      companyId: quote.company_id,
+      reason: 'Customer requested a revision; On-Read follow-up no longer needed.',
     });
   } catch (err) {
     console.error('[submitRevisionRequest] activateEventScheduledMessages failed:', err);
@@ -381,12 +388,19 @@ export async function respondToQuote(token: string, action: 'accept' | 'decline'
   // response if activation has trouble. Same await-not-fire-and-forget
   // discipline as notifyQuoteResponse below.
   try {
-    const { activateEventScheduledMessages } = await import('@/app/lib/messages/scheduled');
+    const { activateEventScheduledMessages, cancelViewedScheduledMessages } = await import('@/app/lib/messages/scheduled');
     await activateEventScheduledMessages({
       quoteId: quote.id,
       companyId: quote.company_id,
       event: isAccept ? 'accepted' : 'declined',
       eventAt: now,
+    });
+    // Recipient acted -> cancel any pending "On Read" follow-up.
+    await cancelViewedScheduledMessages({
+      entity: 'quote',
+      entityId: quote.id,
+      companyId: quote.company_id,
+      reason: `Customer ${isAccept ? 'accepted' : 'declined'} the quote; On-Read follow-up no longer needed.`,
     });
   } catch (err) {
     console.error('[respondToQuote] activateEventScheduledMessages failed:', err);

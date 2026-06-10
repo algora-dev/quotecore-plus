@@ -147,7 +147,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   //   - 'triggered' with triggerEvent quote_accepted/declined/revision
   //   - 'time_based' -> trigger_event quote_sent (chase, cancel on reply)
   type FollowUpKind = 'triggered' | 'time_based';
-  type TriggerChoice = 'quote_accepted' | 'quote_declined' | 'quote_revision_requested';
+  type TriggerChoice = 'quote_accepted' | 'quote_declined' | 'quote_revision_requested' | 'quote_viewed';
   type DraftRule = {
     id: string;
     kind: FollowUpKind;
@@ -185,7 +185,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
     }
     if (kind === 'triggered') {
       // Pick the first trigger not already used.
-      const all: TriggerChoice[] = ['quote_accepted', 'quote_declined', 'quote_revision_requested'];
+      const all: TriggerChoice[] = ['quote_accepted', 'quote_declined', 'quote_revision_requested', 'quote_viewed'];
       const free = all.find((t) => !usedTriggers.has(t));
       if (!free) {
         setFollowUpError('All three triggers already have a follow-up.');
@@ -1002,9 +1002,9 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                                       onChange={(e) => updateDraftRule(rule.id, { trigger: e.target.value as TriggerChoice })}
                                       className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
                                     >
-                                      {(['quote_accepted', 'quote_declined', 'quote_revision_requested'] as const).map((t) => {
+                                      {(['quote_accepted', 'quote_declined', 'quote_revision_requested', 'quote_viewed'] as const).map((t) => {
                                         const tlabel =
-                                          t === 'quote_accepted' ? 'Quote accepted' : t === 'quote_declined' ? 'Quote declined' : 'Dispute / change requested';
+                                          t === 'quote_accepted' ? 'Quote accepted' : t === 'quote_declined' ? 'Quote declined' : t === 'quote_revision_requested' ? 'Dispute / change requested' : 'On read (opened, no response)';
                                         // Disable a trigger already used by ANOTHER rule.
                                         const usedElsewhere = draftRules.some((r) => r.id !== rule.id && r.kind === 'triggered' && r.trigger === t);
                                         return (

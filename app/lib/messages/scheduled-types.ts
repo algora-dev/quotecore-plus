@@ -11,6 +11,12 @@ export type ScheduledTriggerEvent =
   | 'quote_accepted'
   | 'quote_declined'
   | 'quote_revision_requested'
+  // "On Read" triggers: countdown anchored to the recipient OPENING the item
+  // (viewed_at). Parked until viewed, fires after the wait, cancelled if the
+  // recipient takes any action first. One per entity family.
+  | 'quote_viewed'
+  | 'order_viewed'
+  | 'invoice_viewed'
   // Order follow-up triggers (Phase B). 'order_sent' is the time-based
   // chase anchor (mirrors 'quote_sent'); 'order_accepted' / 'order_declined'
   // are event triggers. Note: there is deliberately NO 'order_info_requested'
@@ -59,6 +65,10 @@ export interface ScheduleOrderFollowUpInput {
 export interface ScheduleInvoiceFollowUpInput {
   invoiceId: string;
   templateId: string;
+  /** Defaults to 'invoice_sent' (time-based chase). 'invoice_viewed' is the
+   *  "On Read" event trigger - parked until the recipient opens the invoice,
+   *  then fires after the wait, cancelled if they act first. */
+  triggerEvent?: ScheduledTriggerEvent;
   /** Always the time-based chase anchor for invoices. */
   waitDays: number;
   waitHours?: number;

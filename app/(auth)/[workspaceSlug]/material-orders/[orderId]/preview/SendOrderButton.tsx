@@ -108,10 +108,12 @@ export function SendOrderButton({
   type SendStage = 'form' | 'gate' | 'followups';
   const [sendStage, setSendStage] = useState<SendStage>('form');
 
-  // Order follow-up rules. Triggered options are ONLY order_accepted /
-  // order_declined (no info-requested). Time-based maps to 'order_sent'.
+  // Order follow-up rules. Triggered options are order_accepted /
+  // order_declined / order_viewed ("On Read"). Time-based maps to 'order_sent'.
+  // order_viewed parks until the supplier opens the order, then fires after
+  // the configured delay, and is cancelled if they accept/decline/request info.
   type FollowUpKind = 'triggered' | 'time_based';
-  type TriggerChoice = 'order_accepted' | 'order_declined';
+  type TriggerChoice = 'order_accepted' | 'order_declined' | 'order_viewed';
   type DraftRule = {
     id: string;
     kind: FollowUpKind;
@@ -139,7 +141,7 @@ export function SendOrderButton({
       return;
     }
     if (kind === 'triggered') {
-      const all: TriggerChoice[] = ['order_accepted', 'order_declined'];
+      const all: TriggerChoice[] = ['order_accepted', 'order_declined', 'order_viewed'];
       const used = new Set(draftRules.filter((r) => r.kind === 'triggered').map((r) => r.trigger));
       const free = all.find((t) => !used.has(t));
       if (!free) {
@@ -714,8 +716,8 @@ export function SendOrderButton({
                                       onChange={(e) => updateDraftRule(rule.id, { trigger: e.target.value as TriggerChoice })}
                                       className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white"
                                     >
-                                      {(['order_accepted', 'order_declined'] as const).map((t) => {
-                                        const tlabel = t === 'order_accepted' ? 'Order accepted' : 'Order declined';
+                                      {(['order_accepted', 'order_declined', 'order_viewed'] as const).map((t) => {
+                                        const tlabel = t === 'order_accepted' ? 'Order accepted' : t === 'order_declined' ? 'Order declined' : 'On read (opened, no response)';
                                         const usedElsewhere = draftRules.some((r) => r.id !== rule.id && r.kind === 'triggered' && r.trigger === t);
                                         return (
                                           <option key={t} value={t} disabled={usedElsewhere}>

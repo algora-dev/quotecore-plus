@@ -178,7 +178,8 @@ export async function scheduleQuoteFollowUp(
   const isEventTrigger =
     input.triggerEvent === 'quote_accepted' ||
     input.triggerEvent === 'quote_declined' ||
-    input.triggerEvent === 'quote_revision_requested';
+    input.triggerEvent === 'quote_revision_requested' ||
+    input.triggerEvent === 'quote_viewed';
   if (waitDays === 0 && waitHours === 0 && waitMinutes === 0 && !isEventTrigger) {
     return { ok: false, error: 'Pick a delay greater than zero.' };
   }
@@ -195,7 +196,7 @@ export async function scheduleQuoteFollowUp(
   // Ownership: load the quote scoped to the caller's company.
   const { data: quote, error: quoteErr } = await supabase
     .from('quotes')
-    .select('id, customer_name, accepted_at, declined_at, withdrawn_at, updated_at')
+    .select('id, customer_name, accepted_at, declined_at, withdrawn_at, updated_at, viewed_at')
     .eq('id', input.quoteId)
     .eq('company_id', profile.company_id)
     .maybeSingle();
@@ -286,6 +287,16 @@ export async function scheduleQuoteFollowUp(
       anchor = new Date(lastReq.created_at);
       break;
     }
+    case 'quote_viewed':
+      // "On Read": anchor on viewed_at if the recipient has already opened
+      // the quote; otherwise park on the sentinel until stampQuoteViewed
+      // activates it. Cancelled if the recipient acts before it fires.
+      if (!quote.viewed_at) {
+        anchor = new Date(PENDING_EVENT_SENTINEL_ISO);
+      } else {
+        anchor = new Date(quote.viewed_at);
+      }
+      break;
     case 'manual':
     default:
       anchor = now;
@@ -335,7 +346,8 @@ export async function scheduleQuoteFollowUp(
       require_no_response:
         input.triggerEvent === 'quote_accepted' ||
         input.triggerEvent === 'quote_declined' ||
-        input.triggerEvent === 'quote_revision_requested'
+        input.triggerEvent === 'quote_revision_requested' ||
+        input.triggerEvent === 'quote_viewed'
           ? false
           : input.requireNoResponse,
       respect_quiet_hours: input.respectQuietHours,
@@ -405,7 +417,9 @@ export async function scheduleOrderFollowUp(
   const waitHours = Number.isFinite(input.waitHours ?? 0) ? Math.max(0, Math.floor(input.waitHours ?? 0)) : 0;
   const waitMinutes = Number.isFinite(input.waitMinutes ?? 0) ? Math.max(0, Math.floor(input.waitMinutes ?? 0)) : 0;
   const isEventTrigger =
-    input.triggerEvent === 'order_accepted' || input.triggerEvent === 'order_declined';
+    input.triggerEvent === 'order_accepted' ||
+    input.triggerEvent === 'order_declined' ||
+    input.triggerEvent === 'order_viewed';
   if (waitDays === 0 && waitHours === 0 && waitMinutes === 0 && !isEventTrigger) {
     return { ok: false, error: 'Pick a delay greater than zero.' };
   }
@@ -420,7 +434,7 @@ export async function scheduleOrderFollowUp(
   // Ownership: load the order scoped to the caller's company.
   const { data: order, error: orderErr } = await supabase
     .from('material_orders')
-    .select('id, to_supplier, status, confirmed_at, declined_at, info_requested_at, updated_at')
+    .select('id, to_supplier, status, confirmed_at, declined_at, info_requested_at, updated_at, viewed_at')
     .eq('id', input.orderId)
     .eq('company_id', profile.company_id)
     .maybeSingle();
@@ -481,6 +495,11 @@ export async function scheduleOrderFollowUp(
       break;
     case 'order_declined':
       anchor = order.declined_at ? new Date(order.declined_at) : new Date(PENDING_EVENT_SENTINEL_ISO);
+      break;
+    case 'order_viewed':
+      // "On Read": anchor on viewed_at if already opened; else park on the
+      // sentinel until stampOrderViewed activates it.
+      anchor = order.viewed_at ? new Date(order.viewed_at) : new Date(PENDING_EVENT_SENTINEL_ISO);
       break;
     default:
       return { ok: false, error: 'Unsupported order follow-up trigger.' };
@@ -576,10 +595,14 @@ export async function scheduleInvoiceFollowUp(
   // Invoices are time-based only: a delay > 0 is mandatory (you can't
   // chase a non-payment that happened zero seconds ago). Minutes are
   // honoured for fast test cadences.
+  const triggerEvent = input.triggerEvent ?? 'invoice_sent';
+  const isViewedTrigger = triggerEvent === 'invoice_viewed';
   const waitDays = Number.isFinite(input.waitDays) ? Math.max(0, Math.floor(input.waitDays)) : 0;
   const waitHours = Number.isFinite(input.waitHours ?? 0) ? Math.max(0, Math.floor(input.waitHours ?? 0)) : 0;
   const waitMinutes = Number.isFinite(input.waitMinutes ?? 0) ? Math.max(0, Math.floor(input.waitMinutes ?? 0)) : 0;
-  if (waitDays === 0 && waitHours === 0 && waitMinutes === 0) {
+  // The 'On Read' event trigger may legitimately fire the moment it activates
+  // (zero wait); the time-based chase still requires a positive delay.
+  if (waitDays === 0 && waitHours === 0 && waitMinutes === 0 && !isViewedTrigger) {
     return { ok: false, error: 'Pick a delay greater than zero.' };
   }
   if (waitDays > 365) {
@@ -593,7 +616,7 @@ export async function scheduleInvoiceFollowUp(
   // Ownership: load the invoice scoped to the caller's company.
   const { data: invoice, error: invoiceErr } = await supabase
     .from('invoices')
-    .select('id, customer_name, status, sent_at, updated_at')
+    .select('id, customer_name, status, sent_at, updated_at, viewed_at')
     .eq('id', input.invoiceId)
     .eq('company_id', profile.company_id)
     .maybeSingle();
@@ -631,28 +654,43 @@ export async function scheduleInvoiceFollowUp(
   }
 
   // --- Resolve the anchor timestamp --------------------------------
-  // 'invoice_sent': prefer the most recent successful invoice send,
-  // then invoice.sent_at, then updated_at.
   const now = new Date();
-  const { data: lastSend } = await supabase
-    .from('outbound_messages')
-    .select('sent_at, created_at')
-    .eq('company_id', profile.company_id)
-    .eq('kind', 'invoice_send')
-    .in('status', ['sent', 'suppressed'])
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  const anchorIso =
-    lastSend?.sent_at ?? lastSend?.created_at ?? invoice.sent_at ?? invoice.updated_at ?? now.toISOString();
-  const anchor = new Date(anchorIso);
+  let anchor: Date;
+  if (isViewedTrigger) {
+    // 'invoice_viewed' ("On Read"): anchor on viewed_at if the recipient has
+    // already opened it; otherwise park on the sentinel until
+    // stampInvoiceViewed activates it. Cancelled if they act first.
+    anchor = invoice.viewed_at ? new Date(invoice.viewed_at) : new Date(PENDING_EVENT_SENTINEL_ISO);
+  } else {
+    // 'invoice_sent': prefer the most recent successful invoice send,
+    // then invoice.sent_at, then updated_at.
+    const { data: lastSend } = await supabase
+      .from('outbound_messages')
+      .select('sent_at, created_at')
+      .eq('company_id', profile.company_id)
+      .eq('kind', 'invoice_send')
+      .in('status', ['sent', 'suppressed'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const anchorIso =
+      lastSend?.sent_at ?? lastSend?.created_at ?? invoice.sent_at ?? invoice.updated_at ?? now.toISOString();
+    anchor = new Date(anchorIso);
+  }
 
-  const rawFire = new Date(
-    anchor.getTime() + waitDays * 24 * 60 * 60 * 1000 + waitHours * 60 * 60 * 1000 + waitMinutes * 60 * 1000,
-  );
-  const fireAt = input.respectQuietHours ? applyQuietHours(rawFire) : rawFire;
-  const minimumFire = new Date(now.getTime() + 5 * 60 * 1000);
-  const finalFire = fireAt < minimumFire ? minimumFire : fireAt;
+  const isPendingEvent = anchor.getTime() === new Date(PENDING_EVENT_SENTINEL_ISO).getTime();
+  let finalFire: Date;
+  if (isPendingEvent) {
+    finalFire = new Date(PENDING_EVENT_SENTINEL_ISO);
+  } else {
+    const rawFire = new Date(
+      anchor.getTime() + waitDays * 24 * 60 * 60 * 1000 + waitHours * 60 * 60 * 1000 + waitMinutes * 60 * 1000,
+    );
+    const isImmediate = waitDays === 0 && waitHours === 0 && waitMinutes === 0;
+    const fireAt = input.respectQuietHours && !isImmediate ? applyQuietHours(rawFire) : rawFire;
+    const minimumFire = new Date(now.getTime() + 5 * 60 * 1000);
+    finalFire = fireAt < minimumFire ? minimumFire : fireAt;
+  }
 
   // --- Insert -------------------------------------------------------
   // invoice_id set; quote_id + order_id null (a row is for exactly one
@@ -665,16 +703,23 @@ export async function scheduleInvoiceFollowUp(
       order_id: null,
       invoice_id: input.invoiceId,
       template_id: input.templateId,
-      trigger_event: 'invoice_sent',
+      trigger_event: triggerEvent,
       trigger_anchor_at: anchor.toISOString(),
       fire_at: finalFire.toISOString(),
-      // The invoice chase always gates on "recipient hasn't acted".
-      require_no_response: true,
+      // Time-based chase gates on "recipient hasn't acted"; the 'On Read'
+      // event trigger does not (it's cancelled by actions via the dispatch
+      // cancel check + the action handlers, not by a no-response gate).
+      require_no_response: !isViewedTrigger,
       respect_quiet_hours: input.respectQuietHours,
       recipient_email: recipient.toLowerCase(),
       recipient_name: input.recipientName ?? invoice.customer_name ?? null,
       status: 'scheduled',
       created_by_user_id: profile.id,
+      // Parked 'On Read' rows store the intended wait so the activator can
+      // compute the real fire_at when the invoice is opened.
+      pending_wait_days: isPendingEvent ? waitDays : null,
+      pending_wait_hours: isPendingEvent ? waitHours : null,
+      pending_wait_minutes: isPendingEvent ? waitMinutes : null,
     })
     .select('id, fire_at')
     .single();
@@ -805,6 +850,136 @@ export async function activateOrderScheduledMessages(input: {
   }
 
   return { activated, cancelled: cancelledCount ?? 0, firedImmediately };
+}
+
+/**
+ * Activator for the "On Read" trigger family (quote_viewed / order_viewed /
+ * invoice_viewed). Called best-effort from the recipient-view stamping flow
+ * (stampQuoteViewed / stampOrderViewed / stampInvoiceViewed) the moment the
+ * recipient first opens the item.
+ *
+ * Finds the parked (sentinel) *_viewed rows for this entity, computes their
+ * real fire_at from the stored pending waits + the view timestamp, flips them
+ * live, and inline-dispatches any that are already due (zero wait => fires
+ * within seconds of the open). Any later recipient ACTION cancels these via
+ * the existing per-action cancel paths (see cancelViewedScheduledMessages).
+ *
+ * Generic over entity via the FK column. Admin client (runs from the public
+ * token flow). Best-effort: never throws — a hiccup here must not break the
+ * recipient's view stamping.
+ */
+export async function activateViewedScheduledMessages(input: {
+  entity: 'quote' | 'order' | 'invoice';
+  entityId: string;
+  companyId: string;
+  viewedAt: string; // ISO
+}): Promise<{ activated: number; firedImmediately: number }> {
+  const admin = createAdminClient();
+  const fkColumn =
+    input.entity === 'quote' ? 'quote_id' : input.entity === 'order' ? 'order_id' : 'invoice_id';
+  const trigger =
+    input.entity === 'quote'
+      ? 'quote_viewed'
+      : input.entity === 'order'
+        ? 'order_viewed'
+        : 'invoice_viewed';
+
+  const { data: parkedRows } = await admin
+    .from('scheduled_messages')
+    .select('id, pending_wait_days, pending_wait_hours, pending_wait_minutes, respect_quiet_hours')
+    .eq(fkColumn, input.entityId)
+    .eq('company_id', input.companyId)
+    .eq('status', 'scheduled')
+    .eq('trigger_event', trigger)
+    .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
+
+  let activated = 0;
+  const dueNowRowIds: string[] = [];
+  const viewedDate = new Date(input.viewedAt);
+  const now = new Date();
+  for (const row of parkedRows ?? []) {
+    const days = row.pending_wait_days ?? 0;
+    const hours = row.pending_wait_hours ?? 0;
+    const minutes = row.pending_wait_minutes ?? 0;
+    const rawFire = new Date(
+      viewedDate.getTime() + days * 24 * 60 * 60 * 1000 + hours * 60 * 60 * 1000 + minutes * 60 * 1000,
+    );
+    const isImmediate = days === 0 && hours === 0 && minutes === 0;
+    const adjusted = row.respect_quiet_hours && !isImmediate ? applyQuietHours(rawFire) : rawFire;
+    const isDueNow = adjusted.getTime() <= now.getTime();
+    const finalFire = isDueNow ? now : adjusted;
+    const { error: updateErr } = await admin
+      .from('scheduled_messages')
+      .update({ trigger_anchor_at: input.viewedAt, fire_at: finalFire.toISOString() })
+      .eq('id', row.id)
+      .eq('status', 'scheduled')
+      .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
+    if (!updateErr) {
+      activated += 1;
+      if (isDueNow) dueNowRowIds.push(row.id);
+    }
+  }
+
+  let firedImmediately = 0;
+  for (const rowId of dueNowRowIds) {
+    try {
+      const { data: freshRow } = await admin
+        .from('scheduled_messages')
+        .select('*')
+        .eq('id', rowId)
+        .maybeSingle();
+      if (!freshRow || freshRow.status !== 'scheduled') continue;
+      const outcome = await dispatchOne(freshRow as ScheduledMessageRow, admin);
+      if (outcome === 'sent' || outcome === 'suppressed') firedImmediately += 1;
+    } catch (err) {
+      console.error('[activateViewedScheduledMessages] inline dispatch failed:', err);
+    }
+  }
+
+  return { activated, firedImmediately };
+}
+
+/**
+ * Cancel parked OR live "On Read" follow-ups for an entity. Called when the
+ * recipient takes ANY action (accept / decline / request info / request
+ * changes / dispute) — an action supersedes the "they went quiet after
+ * reading" nudge, so the On-Read follow-up is no longer wanted.
+ *
+ * Cancels both parked (sentinel) and already-activated (live) *_viewed rows
+ * that haven't fired yet. Admin client; best-effort.
+ */
+export async function cancelViewedScheduledMessages(input: {
+  entity: 'quote' | 'order' | 'invoice';
+  entityId: string;
+  companyId: string;
+  reason?: string;
+}): Promise<{ cancelled: number }> {
+  const admin = createAdminClient();
+  const fkColumn =
+    input.entity === 'quote' ? 'quote_id' : input.entity === 'order' ? 'order_id' : 'invoice_id';
+  const trigger =
+    input.entity === 'quote'
+      ? 'quote_viewed'
+      : input.entity === 'order'
+        ? 'order_viewed'
+        : 'invoice_viewed';
+
+  const { count } = await admin
+    .from('scheduled_messages')
+    .update(
+      {
+        status: 'cancelled',
+        cancelled_reason:
+          input.reason ?? 'Recipient took action; On-Read follow-up no longer needed.',
+      },
+      { count: 'exact' },
+    )
+    .eq(fkColumn, input.entityId)
+    .eq('company_id', input.companyId)
+    .eq('status', 'scheduled')
+    .eq('trigger_event', trigger);
+
+  return { cancelled: count ?? 0 };
 }
 
 /**
