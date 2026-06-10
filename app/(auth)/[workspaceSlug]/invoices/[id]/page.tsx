@@ -123,7 +123,7 @@ export default async function InvoicePage({ params }: Props) {
       companyId={profile.company_id}
       customerName={invoice.customer_name ?? null}
       customerEmail={invoice.customer_email ?? null}
-      emailTemplates={(emailTemplates ?? []).map((t) => ({ id: t.id, name: t.name, subject: t.subject }))}
+      emailTemplates={(emailTemplates ?? []).map((t) => ({ id: t.id, name: t.name, subject: t.subject, is_default: t.is_default }))}
       canFollowups={canFollowups}
     />
   ) : null;

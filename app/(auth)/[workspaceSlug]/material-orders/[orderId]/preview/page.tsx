@@ -67,7 +67,7 @@ export default async function OrderPreviewPage(props: Props) {
       supplierName={orderData.order.supplier_name ?? orderData.order.to_supplier ?? null}
       acceptedAt={(orderData.order as { confirmed_at?: string | null }).confirmed_at ?? null}
       declinedAt={orderData.order.declined_at ?? null}
-      emailTemplates={(emailTemplates ?? []).map((t) => ({ id: t.id, name: t.name, subject: t.subject }))}
+      emailTemplates={(emailTemplates ?? []).map((t) => ({ id: t.id, name: t.name, subject: t.subject, is_default: t.is_default }))}
       canFollowups={canFollowups}
     />
   );

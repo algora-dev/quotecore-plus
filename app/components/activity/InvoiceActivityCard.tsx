@@ -13,7 +13,7 @@ import {
   type MessageReplyAction,
 } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/summary/SentMessageRow';
 import { InvoiceDisputesPanel, type InvoiceDispute } from './InvoiceDisputesPanel';
-import { EntityScheduleFollowUpButton } from './EntityScheduleFollowUpButton';
+import { FollowUpBuilderButton } from './FollowUpBuilderButton';
 import { EntityDeleteAllMessagesButton } from './EntityDeleteAllMessagesButton';
 
 /**
@@ -29,7 +29,7 @@ interface Props {
   companyId: string;
   customerName: string | null;
   customerEmail: string | null;
-  emailTemplates: { id: string; name: string; subject: string }[];
+  emailTemplates: { id: string; name: string; subject: string; is_default?: boolean | null }[];
   canFollowups: boolean;
 }
 
@@ -170,14 +170,12 @@ export async function InvoiceActivityCard({
 
   const scheduleCta =
     canFollowups && emailTemplates.length > 0 ? (
-      <EntityScheduleFollowUpButton
+      <FollowUpBuilderButton
         kind="invoice"
         entityId={invoiceId}
-        flags={{}}
+        emailTemplates={emailTemplates}
         defaultRecipientEmail={defaultRecipientEmail}
         defaultRecipientName={defaultRecipientName}
-        emailTemplates={emailTemplates}
-        hasPriorSend={sentCount > 0}
       />
     ) : null;
 

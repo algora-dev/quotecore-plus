@@ -13,7 +13,7 @@ import {
   type MessageReplyAction,
 } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/summary/SentMessageRow';
 import { OrderResponsesPanel } from './OrderResponsesPanel';
-import { EntityScheduleFollowUpButton } from './EntityScheduleFollowUpButton';
+import { FollowUpBuilderButton } from './FollowUpBuilderButton';
 import { EntityDeleteAllMessagesButton } from './EntityDeleteAllMessagesButton';
 
 /**
@@ -36,7 +36,7 @@ interface Props {
   /** Lifecycle stamps for trigger labelling. */
   acceptedAt: string | null;
   declinedAt: string | null;
-  emailTemplates: { id: string; name: string; subject: string }[];
+  emailTemplates: { id: string; name: string; subject: string; is_default?: boolean | null }[];
   canFollowups: boolean;
 }
 
@@ -188,16 +188,20 @@ export async function OrderActivityCard({
   const scheduledCount = scheduledRows.filter((r) => r.status === 'scheduled').length;
   const sentCount = messages.length;
 
+  // acceptedAt / declinedAt no longer needed for the builder (the shared
+  // builder parks pre-event triggers itself) but kept on Props for the
+  // caller; reference to keep them "used".
+  void acceptedAt;
+  void declinedAt;
+
   const scheduleCta =
     canFollowups && emailTemplates.length > 0 ? (
-      <EntityScheduleFollowUpButton
+      <FollowUpBuilderButton
         kind="order"
         entityId={orderId}
-        flags={{ accepted_at: acceptedAt, declined_at: declinedAt }}
+        emailTemplates={emailTemplates}
         defaultRecipientEmail={defaultRecipientEmail}
         defaultRecipientName={defaultRecipientName}
-        emailTemplates={emailTemplates}
-        hasPriorSend={sentCount > 0}
       />
     ) : null;
 
