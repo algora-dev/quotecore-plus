@@ -38,9 +38,14 @@ type Quote = {
  * Action Required: recipient requested changes (pending revision request).
  * Read: recipient opened the public quote link.
  */
+// "Read" is TRANSIENT: only shown while the quote is still in its as-sent
+// baseline job_status ('unsent' / 'sent'). Once the owner moves it forward
+// (accepted / declined / deposit_paid / …) — manually or via any auto update
+// — "Read" disappears (2026-06-10).
+const QUOTE_SENT_BASELINE = new Set(['unsent', 'sent']);
 function quoteRecipientStatus(q: Quote): RecipientStatus {
   if (q.has_pending_revision) return 'action_required';
-  if (q.viewed_at) return 'read';
+  if (q.viewed_at && QUOTE_SENT_BASELINE.has(q.job_status ?? 'unsent')) return 'read';
   return null;
 }
 

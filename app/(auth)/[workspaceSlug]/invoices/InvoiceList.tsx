@@ -43,9 +43,13 @@ type InvoiceRow = {
  * Action Required: invoice disputed by the recipient.
  * Read: recipient opened the public invoice link.
  */
+// "Read" is TRANSIENT: only shown while the invoice is still in its as-sent
+// baseline ('sent' / 'viewed'). Once it moves to paid / cancelled / draft (or
+// any other status change, manual or auto) "Read" disappears (2026-06-10).
+const INVOICE_SENT_BASELINE = new Set(['sent', 'viewed']);
 function invoiceRecipientStatus(inv: InvoiceRow): RecipientStatus {
   if (inv.status === 'disputed' || inv.disputed_at) return 'action_required';
-  if (inv.viewed_at || inv.status === 'viewed') return 'read';
+  if ((inv.viewed_at || inv.status === 'viewed') && INVOICE_SENT_BASELINE.has(inv.status)) return 'read';
   return null;
 }
 

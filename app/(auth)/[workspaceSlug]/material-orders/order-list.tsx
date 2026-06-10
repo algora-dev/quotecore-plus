@@ -21,10 +21,17 @@ const MAX_BULK_SELECTION = 25;
  * Recipient-driven status for an order's Status column.
  * Action Required: supplier requested changes/info on the order.
  * Read: supplier opened the public order link.
+ *
+ * "Read" is TRANSIENT: it only shows while the order is still in its as-sent
+ * baseline status ('ready' / "Not Ordered"). The moment the owner moves the
+ * status forward (Ordered/Delivered/Paid/Pickup/Waiting) — manually or via any
+ * auto update — "Read" disappears, since the owner has clearly moved on past
+ * the "they opened it" signal (2026-06-10).
  */
+const ORDER_SENT_BASELINE = new Set(['ready']);
 function orderRecipientStatus(order: MaterialOrderRow): RecipientStatus {
   if (order.changes_requested_at || order.info_requested_at) return 'action_required';
-  if (order.viewed_at) return 'read';
+  if (order.viewed_at && ORDER_SENT_BASELINE.has(order.status)) return 'read';
   return null;
 }
 
