@@ -2343,6 +2343,7 @@ export type Database = {
           opened_at: string | null
           recipient_email: string
           recipient_name: string | null
+          related_invoice_id: string | null
           related_order_id: string | null
           related_quote_id: string | null
           replied_at: string | null
@@ -2363,6 +2364,7 @@ export type Database = {
           opened_at?: string | null
           recipient_email: string
           recipient_name?: string | null
+          related_invoice_id?: string | null
           related_order_id?: string | null
           related_quote_id?: string | null
           replied_at?: string | null
@@ -2383,6 +2385,7 @@ export type Database = {
           opened_at?: string | null
           recipient_email?: string
           recipient_name?: string | null
+          related_invoice_id?: string | null
           related_order_id?: string | null
           related_quote_id?: string | null
           replied_at?: string | null
@@ -2400,6 +2403,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_related_invoice_id_fkey"
+            columns: ["related_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
           {
