@@ -111,6 +111,10 @@ _(empty - move items here as they pass)_
 
 ---
 
+## Pending verification (dev - #4 Activity card for orders & invoices, 2026-06-10, commit ba68dfe)
+  - [ ] **#4 Order Activity card**: open a SENT order preview -> Activity card shows below the order (Unresolved / Scheduled / Sent tabs). Sent tab lists outbound order messages + any supplier replies; Scheduled tab lists parked order follow-ups; Unresolved tab shows open supplier responses (questions / change requests / declines / info requests) and is empty/clean for a plain-confirmed order. "Schedule follow-up" modal creates an order follow-up; "Delete all" clears the order's sent messages. (Replaces the old standalone Supplier responses panel.)
+  - [ ] **#4 Invoice Activity card**: open a SENT (non-draft) invoice -> Activity card shows below the editor. Sent/Scheduled tabs as above keyed to the invoice; Unresolved tab lists open invoice disputes with a working **Mark resolved** (optimistic, moves to the resolved drawer). Schedule-follow-up + Delete-all work. Draft invoices show NO card.
+
 ## Pending verification (dev - transient Read + Reset + On-Read trigger, 2026-06-10, commits 528b3a6..44d72cb)
   - [ ] **#1 Transient Read**: open a sent quote/order/invoice as the recipient so it shows "Read", then change the owner status (e.g. order Not Ordered -> Ordered; invoice -> Paid; quote -> Accepted). "Read" badge must DISAPPEAR on any status change (manual or auto), leaving just the owner's status. Action Required still wins when an action stamp exists.
   - [ ] **#2 Reset (orders + invoices)**: on a SENT order preview and a SENT invoice editor, click **Reset** -> confirm modal with the caution tooltip. After reset: the OLD public link is dead (404/expired), status is back to baseline (order Not Ordered / invoice Unsent-draft), all read/response/dispute stamps cleared, any pending follow-ups cancelled. Re-sending mints a NEW URL. Quote Withdraw/Reopen still works as before.
