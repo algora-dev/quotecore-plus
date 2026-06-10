@@ -3,7 +3,8 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
-import { saveInvoiceLines, saveInvoiceMeta, saveInvoicePaymentDetails, cancelInvoice, confirmPaymentReceived, markInvoiceSentByLink } from '../actions';
+import { saveInvoiceLines, saveInvoiceMeta, saveInvoicePaymentDetails, cancelInvoice, confirmPaymentReceived, markInvoiceSentByLink, resetInvoice } from '../actions';
+import { ResetButton } from '@/app/components/ResetButton';
 import { InvoicePreview } from './InvoicePreview';
 import { SendInvoiceButton, type EmailTemplate } from './SendInvoiceButton';
 import { elementToPdf } from '@/app/lib/pdf/renderPreviewToPdf';
@@ -468,6 +469,18 @@ export function InvoiceEditor({
           >
             {downloadingPdf ? 'Generating PDF...' : 'Download PDF'}
           </button>
+
+          {/* Reset: void the public link + roll back to draft so the user can
+              re-send a fresh invoice with a new URL. Only meaningful once the
+              invoice has actually been sent (past 'draft'). */}
+          {initial.status !== 'draft' && (
+            <ResetButton
+              action={resetInvoice}
+              id={initial.id}
+              entityLabel="Invoice"
+              className="hidden sm:inline-flex items-center gap-1.5 text-xs text-amber-700 border border-amber-300 rounded-full px-3 py-1.5 hover:bg-amber-50 transition-all"
+            />
+          )}
 
           {/* Cancel */}
           {!['cancelled', 'paid'].includes(initial.status) && (

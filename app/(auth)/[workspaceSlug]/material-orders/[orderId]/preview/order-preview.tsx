@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import type { MaterialOrderRow, MaterialOrderLineRow, FlashingLibraryRow } from '@/app/lib/types';
-import { markOrderAsOrdered } from '../../order-list-actions';
+import { markOrderAsOrdered, resetOrder } from '../../order-list-actions';
 import { SendOrderButton } from './SendOrderButton';
+import { ResetButton } from '@/app/components/ResetButton';
 import { OrderBody } from '@/app/orders/[token]/OrderBody';
 import type { PickerFile } from '@/app/components/attachments/AttachmentSendPicker';
 import { elementToPdf } from '@/app/lib/pdf/renderPreviewToPdf';
@@ -148,6 +149,12 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
           >
             Edit Order
           </Link>
+          {/* Reset: void link + roll back to pre-send so the user can re-send
+              a fresh order with a new URL. Only meaningful once the order has
+              actually been sent (has a live token). */}
+          {order.acceptance_token ? (
+            <ResetButton action={resetOrder} id={order.id} entityLabel="Order" />
+          ) : null}
           <button
             onClick={handleDownloadPdf}
             disabled={downloadingPdf}

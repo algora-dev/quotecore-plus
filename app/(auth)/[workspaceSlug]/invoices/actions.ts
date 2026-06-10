@@ -420,6 +420,78 @@ export async function cancelInvoice(invoiceId: string) {
   revalidatePath(`/[workspaceSlug]/invoices/${invoiceId}`);
 }
 
+// ── Reset invoice ("start fresh") ──────────────────────────────────────────
+
+/**
+ * Reset an invoice back to its pre-send state.
+ *
+ * Mirrors the quote Withdraw/Reopen + order reset flow: rotates the
+ * public_token to a brand-new UUID (so the OLD invoice URL stops resolving and
+ * a re-send issues a fresh link), clears every recipient/lifecycle stamp
+ * (viewed / disputed / payment-reported / paid / sent / cancelled), rolls
+ * status back to 'draft', and cancels any still-pending follow-ups.
+ *
+ * public_token is NOT NULL (DB default gen_random_uuid()), so we rotate it
+ * rather than null it. Returns the cancelled-follow-up count for the confirm UI.
+ */
+export async function resetInvoice(
+  invoiceId: string,
+): Promise<{ ok: true; cancelledFollowUps: number } | { ok: false; error: string }> {
+  const profile = await requireCompanyContext();
+  const admin = createAdminClient();
+
+  const { data: invoice, error: loadErr } = await admin
+    .from('invoices')
+    .select('id, company_id, invoice_number')
+    .eq('id', invoiceId)
+    .eq('company_id', profile.company_id)
+    .single();
+
+  if (loadErr || !invoice) return { ok: false, error: 'Invoice not found.' };
+
+  const { error: updateErr } = await admin
+    .from('invoices')
+    .update({
+      public_token: crypto.randomUUID(),
+      viewed_at: null,
+      disputed_at: null,
+      payment_reported_at: null,
+      paid_at: null,
+      sent_at: null,
+      cancelled_at: null,
+      status: 'draft',
+    } as Record<string, unknown>)
+    .eq('id', invoiceId)
+    .eq('company_id', profile.company_id);
+
+  if (updateErr) return { ok: false, error: `Failed to reset invoice: ${updateErr.message}` };
+
+  const { count: cancelledFollowUps } = await admin
+    .from('scheduled_messages')
+    .update(
+      { status: 'cancelled', cancelled_reason: 'Invoice was reset.' } as Record<string, unknown>,
+      { count: 'exact' },
+    )
+    .eq('invoice_id', invoiceId)
+    .eq('company_id', profile.company_id)
+    .eq('status', 'scheduled');
+
+  try {
+    await admin.from('invoice_activity').insert({
+      invoice_id: invoiceId,
+      company_id: profile.company_id,
+      event_type: 'reset',
+      metadata: {},
+    });
+  } catch {
+    /* ignore audit failure */
+  }
+
+  revalidatePath(`/[workspaceSlug]/invoices`);
+  revalidatePath(`/[workspaceSlug]/invoices/${invoiceId}`);
+  return { ok: true, cancelledFollowUps: cancelledFollowUps ?? 0 };
+}
+
 // ── Confirm payment received (user-side) ──────────────────────────────────
 
 export async function confirmPaymentReceived(invoiceId: string) {
