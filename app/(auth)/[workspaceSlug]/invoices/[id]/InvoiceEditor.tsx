@@ -512,13 +512,16 @@ export function InvoiceEditor({
         </div>
       </div>
 
-      {/* Activity card sits completely above the editor body, spanning the
-          full content width — mirroring the Quotes summary and Orders
-          preview layout. It must NOT live inside the right preview pane
-          (which trapped it at the preview's width and made it read as part
-          of the preview). data-exclude-pdf keeps it off the printable doc. */}
+      {/* Activity card sits completely above the editor body. The invoice
+          editor body is a FULL-BLEED two-pane split (left Line Items panel
+          + right preview, no centered max-width), unlike the Quotes summary
+          which is a centered document column. So the card is full-bleed too,
+          aligned to the same left/right edge (px-4) as the header bar above
+          and the body below — NOT centered at max-w-5xl, which made it float
+          narrow in the middle while the body spanned the full width.
+          data-exclude-pdf keeps it off the printable doc. */}
       {activitySlot ? (
-        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 pt-6 data-exclude-pdf">{activitySlot}</div>
+        <div className="w-full px-4 py-4 bg-slate-100 data-exclude-pdf">{activitySlot}</div>
       ) : null}
 
       {/* Editor body */}
