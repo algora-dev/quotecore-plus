@@ -8,6 +8,15 @@
 
 ---
 
+# ⚠️ PRE-GO-LIVE / PROD PROMOTION TASKS (do at `development -> main` merge)
+
+> Infra steps that MUST happen when promoting dev to production. Not feature tests - hard release gates.
+
+- [ ] **pg_cron dispatch job points at PROD** (added 2026-06-11, commit 2802e6e): the scheduled-follow-up dispatcher now runs via Supabase pg_cron (`cron.job` name `dispatch-scheduled-messages`, every 1 min) calling `/api/cron/dispatch-scheduled-messages`. It currently targets the **DEV** URL `https://quotecore-plus-dev.vercel.app` with the **DEV** `CRON_SECRET`. At go-live: re-run an updated copy of migration `20260611150000_pg_cron_dispatch_scheduled_messages.sql` pointing `net.http_get` at the **production** URL and the **production** `CRON_SECRET` bearer. The migration is idempotent (unschedules the old job first). Verify after: `select status_code from net._http_response order by created desc limit 1` returns 200. NOTE: one Supabase DB serves dev+main, so there is only ONE cron job - repointing it to prod means dev stops being swept unless you add a second job. Decide whether dev needs its own job post-merge.
+- [ ] **vercel.json**: confirm the old `*/30 dispatch-scheduled-messages` cron stays REMOVED on main (replaced by pg_cron). Daily maintenance crons (prune-rate-limits, sweep-orphan-objects, expire-trials, process-billing-lifecycle) remain.
+
+---
+
 # PRE-MERGE RELEASE PASS - `development → main` (66 commits, baseline `8fac898` 2026-05-25)
 
 > This merge ships the entire dev backlog to production. Verify the major features below on dev before sign-off. Gerald cleared the code; remaining risk is **behavioural/product-level**.
