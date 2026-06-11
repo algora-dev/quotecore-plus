@@ -119,8 +119,12 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
 
   return (
     <div className="min-h-screen bg-slate-100">
-      {/* Top Bar */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm data-exclude-pdf">
+      {/* Top Bar — rounded floating card on the page's grey background,
+          matching the Quotes summary style and the activity card chrome
+          below it. Non-sticky (scrolls with the page like Quotes). app
+          chrome only: data-exclude-pdf keeps it off the printed order. */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 data-exclude-pdf">
+      <div className="bg-white border border-slate-200 rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-4">
           <button
             onClick={handleBack}
@@ -185,6 +189,7 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
             canFollowups={canFollowups}
           />
         </div>
+      </div>
       </div>
 
       {/* Activity card sits completely above the body, at the same

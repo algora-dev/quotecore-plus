@@ -392,8 +392,12 @@ export function InvoiceEditor({
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white sticky top-0 z-30">
+      {/* Top bar — rounded floating card on a continuous grey band, matching
+          the Quotes summary style. The band (bg-slate-100) also backs the
+          activity card below so header + activity read as one grey section
+          above the editor's two-pane body — no second-box look. Non-sticky. */}
+      <div className="bg-slate-100 px-4 pt-4">
+      <div className="flex items-center justify-between px-4 py-3 border border-slate-200 rounded-2xl bg-white shadow-sm">
         <div className="flex items-center gap-3 min-w-0">
           <Link
             href={backHref}
@@ -512,17 +516,15 @@ export function InvoiceEditor({
         </div>
       </div>
 
-      {/* Activity card sits completely above the editor body. The invoice
-          editor body is a FULL-BLEED two-pane split (left Line Items panel
-          + right preview, no centered max-width), unlike the Quotes summary
-          which is a centered document column. So the card is full-bleed too,
-          aligned to the same left/right edge (px-4) as the header bar above
-          and the body below — NOT centered at max-w-5xl, which made it float
-          narrow in the middle while the body spanned the full width.
-          data-exclude-pdf keeps it off the printable doc. */}
+      {/* Activity card — inside the same grey band as the header card, so
+          header + activity read as one continuous grey section above the
+          editor's full-bleed two-pane body. Full width, padded to align
+          with the header card. data-exclude-pdf keeps it off the printed doc. */}
       {activitySlot ? (
-        <div className="w-full px-4 py-4 bg-slate-100 data-exclude-pdf">{activitySlot}</div>
+        <div className="px-4 pt-4 data-exclude-pdf">{activitySlot}</div>
       ) : null}
+      </div>
+      <div className="h-4 bg-slate-100" />
 
       {/* Editor body */}
       <div className="flex flex-1 overflow-hidden relative">
