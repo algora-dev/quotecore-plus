@@ -791,6 +791,7 @@ export async function activateOrderScheduledMessages(input: {
 
   let activated = 0;
   const dueNowRowIds: string[] = [];
+  const activatedRowIds: string[] = [];
   const eventDate = new Date(input.eventAt);
   const now = new Date();
   for (const row of matchingRows ?? []) {
@@ -812,25 +813,35 @@ export async function activateOrderScheduledMessages(input: {
       .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
     if (!updateErr) {
       activated += 1;
+      activatedRowIds.push(row.id);
       if (isDueNow) dueNowRowIds.push(row.id);
     }
   }
 
-  // Cancel the OTHER event trigger's parked rows — mutually exclusive.
-  const { count: cancelledCount } = await admin
+  // ONE TRIGGER FIRES => CANCEL EVERY OTHER WAITING FOLLOW-UP for this order.
+  // The supplier has responded (accepted/declined), so all other still-
+  // scheduled rules are moot: the opposite event trigger (parked), the
+  // time-based chase (order_sent, live fire_at), any parked order_viewed
+  // "on read" rule, etc. We cancel every 'scheduled' row for this order
+  // EXCEPT the ones we just activated above. This makes the UI reflect the
+  // cancellation instantly instead of waiting for each row's own fire time.
+  let cancelQuery = admin
     .from('scheduled_messages')
     .update(
       {
         status: 'cancelled',
-        cancelled_reason: `Supplier ${input.event} the order; other trigger follow-ups no longer needed.`,
+        cancelled_reason: `Supplier ${input.event} the order; remaining follow-ups cancelled.`,
       },
       { count: 'exact' },
     )
     .eq('order_id', input.orderId)
     .eq('company_id', input.companyId)
-    .eq('status', 'scheduled')
-    .eq('trigger_event', otherTrigger)
-    .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
+    .eq('status', 'scheduled');
+  if (activatedRowIds.length > 0) {
+    cancelQuery = cancelQuery.not('id', 'in', `(${activatedRowIds.join(',')})`);
+  }
+  const { count: cancelledCount } = await cancelQuery;
+  void otherTrigger; // catch-all cancel above supersedes the old opposite-only cancel
 
   // Inline-dispatch due-now rows so the follow-up lands within seconds.
   let firedImmediately = 0;
@@ -1044,6 +1055,7 @@ export async function activateEventScheduledMessages(input: {
   // customer declines' follow-up actually fires when the customer
   // declines, not whenever the cron next happens to run.
   const dueNowRowIds: string[] = [];
+  const activatedRowIds: string[] = [];
   const eventDate = new Date(input.eventAt);
   const now = new Date();
   for (const row of matchingRows ?? []) {
@@ -1079,30 +1091,36 @@ export async function activateEventScheduledMessages(input: {
       .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
     if (!updateErr) {
       activated += 1;
+      activatedRowIds.push(row.id);
       if (isDueNow) dueNowRowIds.push(row.id);
     }
   }
 
-  // Cancel the OTHER TWO triggers' parked rows - they're now
-  // irrelevant. A customer who accepted will never decline or request
-  // a revision in the same response, and so on. We only touch parked
-  // (sentinel) rows so we never disturb a live/fired/cancelled row.
+  // ONE TRIGGER FIRES => CANCEL EVERY OTHER WAITING FOLLOW-UP for this quote.
+  // The customer has responded (accepted/declined/revision), so all other
+  // still-scheduled rules are moot: the other two event triggers (parked),
+  // the time-based chase (quote_sent, live fire_at), and any parked
+  // quote_viewed "on read" rule. We cancel every 'scheduled' row for this
+  // quote EXCEPT the ones we just activated, so the UI reflects it instantly.
   const eventLabel =
     input.event === 'revision_requested' ? 'requested a revision on' : `${input.event}`;
-  const { count: cancelledCount } = await admin
+  let cancelQuery = admin
     .from('scheduled_messages')
     .update(
       {
         status: 'cancelled',
-        cancelled_reason: `Customer ${eventLabel} the quote; other trigger follow-ups no longer needed.`,
+        cancelled_reason: `Customer ${eventLabel} the quote; remaining follow-ups cancelled.`,
       },
       { count: 'exact' },
     )
     .eq('quote_id', input.quoteId)
     .eq('company_id', input.companyId)
-    .eq('status', 'scheduled')
-    .in('trigger_event', otherTriggers as unknown as string[])
-    .eq('fire_at', PENDING_EVENT_SENTINEL_ISO);
+    .eq('status', 'scheduled');
+  if (activatedRowIds.length > 0) {
+    cancelQuery = cancelQuery.not('id', 'in', `(${activatedRowIds.join(',')})`);
+  }
+  const { count: cancelledCount } = await cancelQuery;
+  void otherTriggers; // catch-all cancel above supersedes the old other-triggers-only cancel
 
   // Dispatch due-now rows inline so the email lands within seconds
   // of the customer's accept/decline action. Each dispatchOne call
