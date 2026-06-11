@@ -8,13 +8,13 @@ Quote accept/decline/change alerts,Yes (bell+email),Yes (bell+email only),Yes,Ye
 Message Center,Yes,No,Yes,Yes
 Orders per month,5,No,5,20
 Invoices per month,5,No,5,20
-Drawings / Images (canvas),10,No,No,20
+Drawings / Images (canvas) [per account total],10,No,No,20
 Digital Measuring / Takeoff (canvas),Yes,No,No,Yes
 Flashings,5,No,No,10
 Catalogs,2,No,No,3
 Attachments,3,No,No,10
 Follow-up system,Yes,No,No,Yes
 Activity system,Yes,No,No,Yes
-AI chat tokens per month,400000,150000,750000,1500000
+AI chat tokens per month,1000000,600000,1500000,3000000
 Storage,100 MB,50 MB,500 MB,3 GB
 Seats,1,1,1,1

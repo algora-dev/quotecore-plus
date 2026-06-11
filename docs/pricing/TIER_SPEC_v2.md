@@ -35,14 +35,14 @@ Legend: ✅ included · ❌ not available · number = monthly cap or hard cap.
 | **Message Center** (`/inbox`) | ✅ | ❌ | ✅ | ✅ |
 | **Orders** (per month) | 5 | ❌ | 5 | 20 |
 | **Invoices** (per month) | 5 | ❌ | 5 | 20 |
-| **Drawings / Images** (canvas tool) | 10 | ❌ | ❌ | 20 |
+| **Drawings / Images** (canvas tool) — *cap = per account total* | 10 | ❌ | ❌ | 20 |
 | **Digital Measuring / Takeoff** (canvas tool) | ✅ | ❌ | ❌ | ✅ |
 | **Flashings** | 5 | ❌ | ❌ | 10 |
 | **Catalogs** | 2 | ❌ | ❌ | 3 |
 | **Attachments** | 3 | ❌ | ❌ | 10 |
 | **Follow-up system** | ✅ | ❌ | ❌ | ✅ |
 | **Activity system** | ✅ | ❌ | ❌ | ✅ |
-| **AI chat tokens** (per month) | 400k | 150k | 750k | 1.5M |
+| **AI chat tokens** (per month) | 1M | 600k | 1.5M | 3M |
 | **Storage** | 100 MB | 50 MB | 500 MB | 3 GB |
 | **Seats** | 1 | 1 | 1 | 1 |
 
@@ -50,7 +50,7 @@ Legend: ✅ included · ❌ not available · number = monthly cap or hard cap.
 - **Free "Drawings/Images" and "Digital Measuring" are BOTH off.** Confirmed they are two separate canvas tools, both **Pro-only** (Starter does NOT get either).
 - **`digital_takeoff` (existing column) = Digital Measuring.** No column split needed — it's already one tool. "Drawings/Images" is a **separate, currently-ungated tool** → needs a new gate.
 - **Free sends quotes by URL link only** and still gets accept/decline/change alerts to **bell + email** (no Message Center, no QCP email send).
-- **AI tokens:** anchored on real data — collective spend to date ≈ **$0.25**. Free's 150k/mo ≈ "a little less than all usage so far"; Trial ~2.7×, Starter ~5×, Pro ~10× current. All tunable via the per-plan column; see §4.
+- **AI tokens:** anchored on REAL usage — **773,879 tokens** used to date (1 company, 1 user, Jun 2026) ≈ **$0.25**. Free **600k/mo** ≈ "a little less than all usage so far" (your words); Trial 1M (~1.3×); Starter 1.5M (~2×); Pro 3M (~4×). At scale these are <$1/user/mo in AI cost even at Pro — safe against the $39 price. All tunable via the per-plan `monthly_ai_tokens` column.
 
 ---
 
@@ -101,8 +101,9 @@ Pulled from `subscription_plans` on 2026-06-11.
 ---
 
 ## 5. Open confirmations before build
-1. **AI token caps** (§2) — approve 150k / 400k / 750k / 1.5M, or adjust? (All tunable.)
-2. **Storage** — 50 / 100 / 500 MB / 3 GB ok?
-3. **Free Message Center = OFF** — confirmed? (Free still gets bell+email alerts, just not the inbox UI.)
-4. **Drawings/Images cap of 20 on Pro** — is that 20 drawings total, or per month? (Matrix assumes a sensible cap; confirm unit.)
-5. **Growth deactivation** — any existing test subscribers on `growth` to migrate, or safe to just deactivate?
+All resolved with Shaun 2026-06-11:
+1. **AI token caps** — re-anchored on real 774k usage: Free 600k / Trial 1M / Starter 1.5M / Pro 3M. ✅
+2. **Storage** — 50 / 100 / 500 MB / 3 GB. ✅
+3. **Free Message Center = OFF** (bell+email alerts only). ✅
+4. **Drawings/Images cap = PER ACCOUNT total** (not per month). ✅
+5. **Growth** — no real subscribers; just flip `active=false`. ✅
