@@ -187,12 +187,19 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
         </div>
       </div>
 
-      {/* Body \u2014 same renderer as the public order page. */}
+      {/* Activity card sits completely above the body, at the same
+          content width as the Quotes summary page (max-w-5xl). It's app
+          chrome, not part of the printed document, so it does NOT inherit
+          the A4 (210mm) paper constraint the order body uses. */}
       {activitySlot ? (
-        <div className="max-w-[210mm] mx-auto px-6 sm:px-8 pt-6">{activitySlot}</div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6">{activitySlot}</div>
       ) : null}
 
-      <div className="max-w-[210mm] mx-auto px-6 sm:px-8 py-6">
+      {/* Body \u2014 same renderer as the public order page. Matched to the
+          Quotes content width (max-w-5xl). OrderBody handles its own A4
+          print sizing via [data-print-root] @page rules, so widening this
+          screen wrapper does not affect the generated PDF. */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         <OrderBody order={order} lines={lines} flashings={flashings} currency={currency} />
       </div>
 

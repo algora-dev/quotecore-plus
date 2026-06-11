@@ -512,6 +512,15 @@ export function InvoiceEditor({
         </div>
       </div>
 
+      {/* Activity card sits completely above the editor body, spanning the
+          full content width — mirroring the Quotes summary and Orders
+          preview layout. It must NOT live inside the right preview pane
+          (which trapped it at the preview's width and made it read as part
+          of the preview). data-exclude-pdf keeps it off the printable doc. */}
+      {activitySlot ? (
+        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 pt-6 data-exclude-pdf">{activitySlot}</div>
+      ) : null}
+
       {/* Editor body */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* ── Left panel ── */}
@@ -922,9 +931,6 @@ export function InvoiceEditor({
 
         {/* ── Right panel: preview ── */}
         <div className="flex-1 overflow-y-auto bg-slate-100 p-4" data-copilot="invoice-preview">
-          {activitySlot ? (
-            <div className="max-w-3xl mx-auto mb-4 data-exclude-pdf">{activitySlot}</div>
-          ) : null}
           <div data-pdf-content>
           <InvoicePreview
             invoice={initial}
