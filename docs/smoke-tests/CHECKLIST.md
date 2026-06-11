@@ -115,6 +115,16 @@ _Re-architected 2026-06-03 eve, dev 3cfbd60. Legacy Copilot fully removed; assis
 
 ---
 
+## Pending verification (dev - Pricing Tier v2 gating, 2026-06-11, commit `52312e1`)
+- [ ] **Plan ladder** - billing page shows Free Trial / Free / Starter $19 / Pro $39; growth GONE; pro_plus/premium still present as higher/coming-soon.
+- [ ] **Free tier** (`free` plan): 5 quotes/mo cap bites; URL-link send works; QCP email send BLOCKED; `/inbox` shows upgrade splash (not the inbox); Orders/Invoices/Drawings/Catalogs/Attachments/Follow-ups/Activity all locked; bell+email alerts still arrive.
+- [ ] **Starter** ($19): Orders create works + caps at 5/mo (P0016 upgrade error on 6th); Invoices create works + caps at 5/mo (P0015 on 6th); Message Center opens; QCP email send works; Flashings/Drawings + Digital Measuring + Catalogs + Attachments + Follow-ups + Activity LOCKED; components cap 20.
+- [ ] **Pro** ($39): everything unlocked; Invoices cap 20/mo; Orders cap 20/mo; Drawings/Flashings cap 20 (per-account); components 30; catalogs 3; attachments 10.
+- [ ] **Drawings = Flashings** (one tool): Resource Library "Drawings & Images" card -> /flashings; trade label flips roofing<->generic; single cap enforced.
+- [ ] **AI tokens per-plan**: assistant refuses once monthly_ai_tokens for the effective plan is hit (Free 600k / Trial 1M / Starter 1.5M / Pro 3M); premium = unlimited.
+- [ ] **Edit-not-blocked**: editing an EXISTING order/invoice while AT the monthly cap still works (gate only fires on create).
+> Migration `20260611160000_pricing_tier_v2` already APPLIED to the shared dev+prod DB (plan rows + functions live). App gates shipped on dev. `next build` passed. UI polish (BillingPanel new-tier cards/labels) NOT yet done - billing page may still show old copy until that lands.
+
 ## Passed (recent)
 _(empty - move items here as they pass)_
 
