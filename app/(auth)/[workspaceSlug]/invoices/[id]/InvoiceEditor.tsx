@@ -396,7 +396,7 @@ export function InvoiceEditor({
           the Quotes summary style. The band (bg-slate-100) also backs the
           activity card below so header + activity read as one grey section
           above the editor's two-pane body — no second-box look. Non-sticky. */}
-      <div className="bg-slate-100 px-4 pt-4">
+      <div className="bg-slate-50 px-4 pt-4">
       <div className="flex items-center justify-between px-4 py-3 border border-slate-200 rounded-2xl bg-white shadow-sm">
         <div className="flex items-center gap-3 min-w-0">
           <Link
@@ -521,18 +521,20 @@ export function InvoiceEditor({
           editor's full-bleed two-pane body. Full width, padded to align
           with the header card. data-exclude-pdf keeps it off the printed doc. */}
       {activitySlot ? (
-        <div className="px-4 pt-4 data-exclude-pdf">{activitySlot}</div>
+        <div className="pt-4 data-exclude-pdf">{activitySlot}</div>
       ) : null}
       </div>
-      <div className="h-4 bg-slate-100" />
+      <div className="h-4 bg-slate-50" />
 
-      {/* Editor body */}
-      <div className="flex flex-1 overflow-hidden relative">
+      {/* Editor body — panes float as rounded cards on the slate-50 app
+          background, with a gap between them (matches the rounded card
+          language of the header/activity section above). */}
+      <div className="flex flex-1 overflow-hidden relative bg-slate-50 px-4 pb-4 gap-4">
         {/* ── Left panel ── */}
         {!panelCollapsed && (
-          <div className="w-full md:w-[480px] md:min-w-[400px] flex-shrink-0 border-r border-slate-200 bg-white flex flex-col overflow-y-auto">
+          <div className="w-full md:w-[480px] md:min-w-[400px] flex-shrink-0 border border-slate-200 rounded-2xl bg-white flex flex-col overflow-y-auto shadow-sm">
             {/* Panel tabs */}
-            <div className="flex border-b border-slate-200 sticky top-0 bg-white z-10">
+            <div className="flex border-b border-slate-200 sticky top-0 bg-white z-10 rounded-t-2xl">
               {(['lines', 'details', 'activity'] as const).map((tab) => (
                 <button
                   key={tab}
@@ -935,7 +937,7 @@ export function InvoiceEditor({
         )}
 
         {/* ── Right panel: preview ── */}
-        <div className="flex-1 overflow-y-auto bg-slate-100 p-4" data-copilot="invoice-preview">
+        <div className="flex-1 overflow-y-auto bg-slate-50 rounded-2xl p-4" data-copilot="invoice-preview">
           <div data-pdf-content>
           <InvoicePreview
             invoice={initial}

@@ -118,12 +118,12 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
   }
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-50">
       {/* Top Bar — rounded floating card on the page's grey background,
           matching the Quotes summary style and the activity card chrome
           below it. Non-sticky (scrolls with the page like Quotes). app
           chrome only: data-exclude-pdf keeps it off the printed order. */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 data-exclude-pdf">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 data-exclude-pdf">
       <div className="bg-white border border-slate-200 rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-4">
           <button
@@ -197,14 +197,14 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
           chrome, not part of the printed document, so it does NOT inherit
           the A4 (210mm) paper constraint the order body uses. */}
       {activitySlot ? (
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6">{activitySlot}</div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">{activitySlot}</div>
       ) : null}
 
       {/* Body \u2014 same renderer as the public order page. Matched to the
           Quotes content width (max-w-5xl). OrderBody handles its own A4
           print sizing via [data-print-root] @page rules, so widening this
           screen wrapper does not affect the generated PDF. */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         <OrderBody order={order} lines={lines} flashings={flashings} currency={currency} />
       </div>
 
