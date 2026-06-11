@@ -43,6 +43,8 @@ export interface BillingPlanInfo {
   componentLimit: number | null;
   flashingLimit: number | null;
   monthlyMaterialOrderLimit: number | null;
+  monthlyInvoiceLimit: number | null;
+  monthlyAiTokens: number | null;
   includedSeats: number;
   features: {
     digital_takeoff: boolean;
@@ -51,6 +53,8 @@ export interface BillingPlanInfo {
     followups: boolean;
     email_send: boolean;
     activity_card: boolean;
+    invoices: boolean;
+    message_center: boolean;
   };
   tagline: string | null;
   featureBlurbs: string[];
@@ -767,15 +771,29 @@ export function BillingPanel(props: BillingPanelProps) {
                 <dd className="font-semibold text-slate-900">{formatCap(viewPlan.componentLimit)}</dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-500">Flashings</dt>
+                <dt className="text-xs text-slate-500">Drawings &amp; Images</dt>
                 <dd className={`font-semibold ${viewPlan.features.flashings ? 'text-slate-900' : 'text-slate-400 italic'}`}>
                   {viewPlan.features.flashings ? formatCap(viewPlan.flashingLimit) : 'Not included'}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-500">Material orders / mo</dt>
+                <dt className="text-xs text-slate-500">Orders / mo</dt>
                 <dd className={`font-semibold ${viewPlan.features.material_orders ? 'text-slate-900' : 'text-slate-400 italic'}`}>
                   {viewPlan.features.material_orders ? formatCap(viewPlan.monthlyMaterialOrderLimit) : 'Not included'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-slate-500">Invoices / mo</dt>
+                <dd className={`font-semibold ${viewPlan.features.invoices ? 'text-slate-900' : 'text-slate-400 italic'}`}>
+                  {viewPlan.features.invoices ? formatCap(viewPlan.monthlyInvoiceLimit) : 'Not included'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-slate-500">AI assistant / mo</dt>
+                <dd className="font-semibold text-slate-900">
+                  {viewPlan.monthlyAiTokens === null
+                    ? 'Unlimited'
+                    : `${(viewPlan.monthlyAiTokens / 1_000_000).toLocaleString(undefined, { maximumFractionDigits: 1 })}M tokens`}
                 </dd>
               </div>
               <div>
@@ -786,12 +804,14 @@ export function BillingPanel(props: BillingPanelProps) {
 
             {/* Feature flags */}
             <ul className="mt-4 space-y-1.5 text-sm border-t border-slate-200 pt-4">
-              <FeatureRow label="Digital takeoff" included={viewPlan.features.digital_takeoff} />
-              <FeatureRow label="Flashing drawings" included={viewPlan.features.flashings} />
-              <FeatureRow label="Material orders" included={viewPlan.features.material_orders} />
+              <FeatureRow label="Digital measuring" included={viewPlan.features.digital_takeoff} />
+              <FeatureRow label="Drawings & Images" included={viewPlan.features.flashings} />
+              <FeatureRow label="Orders" included={viewPlan.features.material_orders} />
+              <FeatureRow label="Invoices" included={viewPlan.features.invoices} />
+              <FeatureRow label="Message Center" included={viewPlan.features.message_center} />
               <FeatureRow label="Automated follow-ups" included={viewPlan.features.followups} />
-              <FeatureRow label="Send emails from QuoteCore+" included={viewPlan.features.email_send} />
-              <FeatureRow label="Activity card on quotes" included={viewPlan.features.activity_card} />
+              <FeatureRow label="Send quotes by email" included={viewPlan.features.email_send} />
+              <FeatureRow label="Activity card" included={viewPlan.features.activity_card} />
             </ul>
 
             {/* Marketing blurbs */}
@@ -816,38 +836,62 @@ export function BillingPanel(props: BillingPanelProps) {
               >
                 Close
               </button>
-              <button
-                type="button"
-                onClick={() => onChoose(viewPlan)}
-                disabled={
-                  viewPlan.comingSoon
-                  || viewPlan.code === props.purchasedPlanCode
-                  || pending
-                  || (viewPlan.isTrial
-                    ? props.hasStripeCustomer
-                    : !viewPlan.hasStripePrice || props.hasActiveSubscription)
-                }
-                title={
-                  viewPlan.isTrial && props.hasStripeCustomer
-                    ? 'The free trial is only available to new accounts.'
-                    : !viewPlan.isTrial && props.hasActiveSubscription
-                    ? 'Use "Manage subscription" to switch plans.'
-                    : undefined
-                }
-                className={`px-4 py-2 text-sm font-medium rounded-full disabled:opacity-50 disabled:cursor-not-allowed text-white ${
-                  viewPlan.isTrial ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-600 hover:bg-orange-700'
-                }`}
-              >
-                {viewPlan.comingSoon
-                  ? 'Coming soon'
-                  : viewPlan.code === props.purchasedPlanCode
-                  ? 'Current plan'
-                  : viewPlan.isTrial
-                  ? props.hasStripeCustomer ? 'Trial unavailable' : 'Start trial'
-                  : props.hasActiveSubscription
-                  ? 'Manage to switch'
-                  : 'Purchase'}
-              </button>
+              {(() => {
+                // Mirror the plan-card button logic so the View modal can
+                // ALSO upgrade/downgrade. Active subscribers go through the
+                // in-app change flow (subscriptions.update via the confirm
+                // modal); fresh subscribers go through Checkout (onChoose).
+                const vBlockedByActiveSub = !viewPlan.isTrial && props.hasActiveSubscription;
+                const vIsCurrent = viewPlan.code === props.purchasedPlanCode;
+                const vCanAct =
+                  !viewPlan.comingSoon
+                  && !vIsCurrent
+                  && !pending
+                  && (viewPlan.isTrial
+                    ? !props.hasStripeCustomer
+                    : viewPlan.hasStripePrice);
+                const vIsUpgrade =
+                  currentSortOrder != null ? viewPlan.sortOrder > currentSortOrder : true;
+                return (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (vBlockedByActiveSub) {
+                        // In-app tier change: hand off to the confirm modal.
+                        setViewPlan(null);
+                        setChangeTarget(viewPlan);
+                        return;
+                      }
+                      onChoose(viewPlan);
+                    }}
+                    disabled={!vCanAct && !vBlockedByActiveSub}
+                    title={
+                      viewPlan.isTrial && props.hasStripeCustomer
+                        ? 'The free trial is only available to new accounts.'
+                        : viewPlan.comingSoon
+                        ? 'This tier is not available yet.'
+                        : vIsCurrent
+                        ? 'You are already on this plan.'
+                        : !viewPlan.hasStripePrice && !viewPlan.isTrial
+                        ? 'This plan is not yet configured in Stripe for this environment.'
+                        : undefined
+                    }
+                    className={`px-4 py-2 text-sm font-medium rounded-full disabled:opacity-50 disabled:cursor-not-allowed text-white ${
+                      viewPlan.isTrial ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-600 hover:bg-orange-700'
+                    }`}
+                  >
+                    {viewPlan.comingSoon
+                      ? 'Coming soon'
+                      : vIsCurrent
+                      ? 'Current plan'
+                      : viewPlan.isTrial
+                      ? props.hasStripeCustomer ? 'Trial unavailable' : 'Start trial'
+                      : vBlockedByActiveSub
+                      ? (vIsUpgrade ? `Upgrade to ${viewPlan.displayName}` : `Switch to ${viewPlan.displayName}`)
+                      : 'Purchase'}
+                  </button>
+                );
+              })()}
             </div>
           </div>
         </div>
