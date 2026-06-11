@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { alertEnabled } from '@/app/lib/alerts/prefs';
+import { requireInvoiceSlot } from '@/app/lib/billing/entitlements';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -45,6 +46,9 @@ export async function createBlankInvoice(opts: {
   templateId?: string;
 }): Promise<string> {
   const profile = await requireCompanyContext();
+  // Gate: feature + monthly invoice cap (P0012 / P0015). Throws a typed
+  // billing error the UI can pattern-match to an upgrade prompt.
+  await requireInvoiceSlot(profile.company_id);
   const admin = createAdminClient();
 
   // Generate invoice number atomically
@@ -130,6 +134,8 @@ export async function createBlankInvoice(opts: {
 
 export async function createInvoiceFromQuote(quoteId: string, templateId?: string): Promise<string> {
   const profile = await requireCompanyContext();
+  // Gate: feature + monthly invoice cap (P0012 / P0015).
+  await requireInvoiceSlot(profile.company_id);
   const admin = createAdminClient();
 
   // Load source quote (must belong to this company)

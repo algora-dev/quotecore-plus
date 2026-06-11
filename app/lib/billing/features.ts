@@ -16,6 +16,8 @@ export const FEATURES = [
   'activity_card',
   'catalogs',
   'attachment_library',
+  'invoices',
+  'message_center',
 ] as const;
 
 export type Feature = (typeof FEATURES)[number];
@@ -34,6 +36,8 @@ export const FEATURE_LABELS: Record<Feature, string> = {
   activity_card: 'Activity card on quotes',
   catalogs: 'Catalog library',
   attachment_library: 'Attachment library',
+  invoices: 'Invoices',
+  message_center: 'Message Center',
 };
 
 /**
@@ -59,6 +63,9 @@ export const FEATURE_MIN_PLAN: Record<Feature, string> = {
   activity_card: 'growth',
   catalogs: 'pro',
   attachment_library: 'pro',
+  // Invoices + Message Center unlock at Starter (the entry paid tier).
+  invoices: 'starter',
+  message_center: 'starter',
 };
 
 /**

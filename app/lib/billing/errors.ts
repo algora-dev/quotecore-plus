@@ -207,6 +207,46 @@ export class AttachmentLimitReachedError extends BillingError {
 }
 
 /**
+ * Thrown when the company has hit its monthly invoice cap.
+ * Raised by `require_invoice_slot` (Postgres P0015).
+ */
+export class InvoiceLimitReachedError extends BillingError {
+  readonly used: number;
+  readonly limit: number;
+  readonly planCode: string;
+
+  constructor(args: { used: number; limit: number; planCode: string }) {
+    super(
+      'invoice_limit_reached',
+      `Monthly invoice limit reached for plan "${args.planCode}": ${args.used} of ${args.limit} invoices created this month.`,
+    );
+    this.used = args.used;
+    this.limit = args.limit;
+    this.planCode = args.planCode;
+  }
+}
+
+/**
+ * Thrown when the company has hit its monthly material-order cap.
+ * Raised by `require_order_slot` (Postgres P0016).
+ */
+export class OrderLimitReachedError extends BillingError {
+  readonly used: number;
+  readonly limit: number;
+  readonly planCode: string;
+
+  constructor(args: { used: number; limit: number; planCode: string }) {
+    super(
+      'order_limit_reached',
+      `Monthly material-order limit reached for plan "${args.planCode}": ${args.used} of ${args.limit} orders created this month.`,
+    );
+    this.used = args.used;
+    this.limit = args.limit;
+    this.planCode = args.planCode;
+  }
+}
+
+/**
  * Defensive helper: narrow an unknown error to one of our billing errors.
  * Useful inside server-action catch blocks for type-safe pattern matching.
  */

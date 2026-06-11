@@ -1,6 +1,7 @@
 'use server';
 
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import { requireOrderSlot } from '@/app/lib/billing/entitlements';
 import { revalidatePath } from 'next/cache';
 import type { LineByLineData } from '../lineByLine';
 import type { Json } from '@/app/lib/supabase/database.types';
@@ -116,6 +117,9 @@ export async function saveDraftOrder(input: SaveOrderInput) {
         .eq('order_id', input.orderId);
       
     } else {
+      // Gate ONLY on creation (not edits): feature + monthly order cap
+      // (P0012 / P0016). Throws a typed billing error for the UI.
+      await requireOrderSlot(profile.company_id);
       // CREATE new order - generate a proper, COLLISION-SAFE order number.
       //
       // Order-from-quote derives ON-<quoteNumber> from the reference, which is

@@ -38,6 +38,8 @@ import {
   ComponentLimitReachedError,
   FeatureGatedError,
   FlashingLimitReachedError,
+  InvoiceLimitReachedError,
+  OrderLimitReachedError,
   StorageQuotaExceededError,
   SubscriptionInactiveError,
 } from './errors';
@@ -120,6 +122,23 @@ export interface CompanyEntitlements {
    */
   attachmentLimit: number | null;
   attachmentCount: number;
+  /**
+   * Per-calendar-month invoice cap. NULL = unlimited. invoiceCount is the
+   * number created so far this UTC month (cancelled excluded).
+   */
+  invoiceLimit: number | null;
+  invoiceCount: number;
+  /**
+   * Per-calendar-month material-order cap. NULL = unlimited. orderCount is
+   * the number created so far this UTC month.
+   */
+  orderLimit: number | null;
+  orderCount: number;
+  /**
+   * Per-calendar-month AI assistant token budget. NULL = unlimited. Read by
+   * costGuard per effective plan.
+   */
+  monthlyAiTokens: number | null;
   storageLimitBytes: number;
   storageUsedBytes: number;
   storageTopupBytes: number;
@@ -175,6 +194,9 @@ interface PlanRowRaw {
   flashing_limit: number | null;
   catalog_limit: number | null;
   attachment_limit: number | null;
+  monthly_invoice_limit: number | null;
+  monthly_material_order_limit: number | null;
+  monthly_ai_tokens: number | null;
   feat_digital_takeoff: boolean;
   feat_flashings: boolean;
   feat_material_orders: boolean;
@@ -183,6 +205,8 @@ interface PlanRowRaw {
   feat_activity_card: boolean;
   feat_catalogs: boolean;
   feat_attachment_library: boolean;
+  feat_invoices: boolean;
+  feat_message_center: boolean;
 }
 
 /**
@@ -218,6 +242,8 @@ export const loadCompanyEntitlements = cache(
       flashCountResult,
       catalogCountResult,
       attachmentCountResult,
+      invoiceCountResult,
+      orderCountResult,
       usageResult,
     ] = await Promise.all([
       admin
@@ -236,6 +262,10 @@ export const loadCompanyEntitlements = cache(
       (admin as any).rpc('company_catalog_count', { p_company_id: companyId }),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (admin as any).rpc('company_attachment_count', { p_company_id: companyId }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (admin as any).rpc('company_invoice_count', { p_company_id: companyId }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (admin as any).rpc('company_order_count', { p_company_id: companyId }),
       admin
         .from('company_quote_usage')
         .select('quotes_created')
@@ -261,7 +291,7 @@ export const loadCompanyEntitlements = cache(
     const { data: planRowData, error: planErr } = await (admin as any)
       .from('subscription_plans')
       .select(
-        'code, monthly_quote_limit, storage_limit_bytes, included_seats, component_limit, flashing_limit, catalog_limit, attachment_limit, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card, feat_catalogs, feat_attachment_library',
+        'code, monthly_quote_limit, storage_limit_bytes, included_seats, component_limit, flashing_limit, catalog_limit, attachment_limit, monthly_invoice_limit, monthly_material_order_limit, monthly_ai_tokens, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card, feat_catalogs, feat_attachment_library, feat_invoices, feat_message_center',
       )
       .eq('code', effectivePlanCode)
       .limit(1)
@@ -294,6 +324,11 @@ export const loadCompanyEntitlements = cache(
       catalogCount:   (catalogCountResult.data as number | null) ?? 0,
       attachmentLimit: plan.attachment_limit,
       attachmentCount: (attachmentCountResult.data as number | null) ?? 0,
+      invoiceLimit: plan.monthly_invoice_limit,
+      invoiceCount: (invoiceCountResult.data as number | null) ?? 0,
+      orderLimit: plan.monthly_material_order_limit,
+      orderCount: (orderCountResult.data as number | null) ?? 0,
+      monthlyAiTokens: plan.monthly_ai_tokens,
       storageLimitBytes: plan.storage_limit_bytes + company.storage_topup_bytes,
       storageUsedBytes: company.storage_used_bytes,
       storageTopupBytes: company.storage_topup_bytes,
@@ -309,6 +344,8 @@ export const loadCompanyEntitlements = cache(
         activity_card: plan.feat_activity_card,
         catalogs: plan.feat_catalogs,
         attachment_library: plan.feat_attachment_library,
+        invoices: plan.feat_invoices,
+        message_center: plan.feat_message_center,
       },
       trialEndsAt: company.trial_ends_at,
       currentPeriodEnd: company.current_period_end,
@@ -443,6 +480,11 @@ export async function entitlementsForClient(
   flashingCount: number;
   catalogLimit: number | null;
   catalogCount: number;
+  invoiceLimit: number | null;
+  invoiceCount: number;
+  orderLimit: number | null;
+  orderCount: number;
+  monthlyAiTokens: number | null;
   storageUsedBytes: number;
   storageLimitBytes: number;
   isOverStorage: boolean;
@@ -465,6 +507,11 @@ export async function entitlementsForClient(
     flashingCount: ent.flashingCount,
     catalogLimit: ent.catalogLimit,
     catalogCount: ent.catalogCount,
+    invoiceLimit: ent.invoiceLimit,
+    invoiceCount: ent.invoiceCount,
+    orderLimit: ent.orderLimit,
+    orderCount: ent.orderCount,
+    monthlyAiTokens: ent.monthlyAiTokens,
     storageUsedBytes: ent.storageUsedBytes,
     storageLimitBytes: ent.storageLimitBytes,
     isOverStorage: ent.isOverStorage,
@@ -610,6 +657,76 @@ export async function requireFlashingSlot(companyId: string): Promise<void> {
   throw new Error(`require_flashing_slot failed: ${error.message}`);
 }
 
+/**
+ * Acquire one invoice slot for the current calendar month. Wraps
+ * `require_invoice_slot`. Throws FeatureGatedError if the plan doesn't
+ * include invoices at all (P0012), or InvoiceLimitReachedError on the
+ * monthly cap (P0015). Call immediately before the invoice INSERT.
+ */
+export async function requireInvoiceSlot(companyId: string): Promise<void> {
+  const admin = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (admin as any).rpc('require_invoice_slot', { p_company_id: companyId });
+  if (!error) return;
+  const code = (error as { code?: string }).code;
+  if (code === 'P0001') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new SubscriptionInactiveError(ent.subscriptionStatus);
+  }
+  if (code === 'P0015') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new InvoiceLimitReachedError({
+      used:     ent.invoiceCount,
+      limit:    ent.invoiceLimit ?? 0,
+      planCode: ent.effectivePlanCode,
+    });
+  }
+  if (code === 'P0012') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new FeatureGatedError({
+      feature: 'invoices',
+      currentPlan: ent.effectivePlanCode,
+      requiredPlan: FEATURE_MIN_PLAN.invoices,
+    });
+  }
+  throw new Error(`require_invoice_slot failed: ${error.message}`);
+}
+
+/**
+ * Acquire one material-order slot for the current calendar month. Wraps
+ * `require_order_slot`. Throws FeatureGatedError if the plan doesn't
+ * include material orders (P0012), or OrderLimitReachedError on the
+ * monthly cap (P0016). Call immediately before the material_orders INSERT.
+ */
+export async function requireOrderSlot(companyId: string): Promise<void> {
+  const admin = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (admin as any).rpc('require_order_slot', { p_company_id: companyId });
+  if (!error) return;
+  const code = (error as { code?: string }).code;
+  if (code === 'P0001') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new SubscriptionInactiveError(ent.subscriptionStatus);
+  }
+  if (code === 'P0016') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new OrderLimitReachedError({
+      used:     ent.orderCount,
+      limit:    ent.orderLimit ?? 0,
+      planCode: ent.effectivePlanCode,
+    });
+  }
+  if (code === 'P0012') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new FeatureGatedError({
+      feature: 'material_orders',
+      currentPlan: ent.effectivePlanCode,
+      requiredPlan: FEATURE_MIN_PLAN.material_orders,
+    });
+  }
+  throw new Error(`require_order_slot failed: ${error.message}`);
+}
+
 // Re-export the surface the rest of the app should import from one path.
 // Resist the urge to deep-link into errors.ts / features.ts from random
 // callsites; centralise here so we can refactor the internals later.
@@ -624,6 +741,8 @@ export {
   FlashingLimitReachedError,
   CatalogLimitReachedError,
   AttachmentLimitReachedError,
+  InvoiceLimitReachedError,
+  OrderLimitReachedError,
   StorageQuotaExceededError,
   isBillingError,
 } from './errors';

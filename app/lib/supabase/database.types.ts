@@ -3434,10 +3434,14 @@ export type Database = {
           feat_email_send: boolean
           feat_flashings: boolean
           feat_followups: boolean
+          feat_invoices: boolean
           feat_material_orders: boolean
+          feat_message_center: boolean
           feature_blurbs: string[]
           flashing_limit: number | null
           included_seats: number
+          monthly_ai_tokens: number | null
+          monthly_invoice_limit: number | null
           monthly_material_order_limit: number | null
           monthly_quote_limit: number
           price_cents_monthly: number
@@ -3466,10 +3470,14 @@ export type Database = {
           feat_email_send?: boolean
           feat_flashings?: boolean
           feat_followups?: boolean
+          feat_invoices?: boolean
           feat_material_orders?: boolean
+          feat_message_center?: boolean
           feature_blurbs?: string[]
           flashing_limit?: number | null
           included_seats?: number
+          monthly_ai_tokens?: number | null
+          monthly_invoice_limit?: number | null
           monthly_material_order_limit?: number | null
           monthly_quote_limit: number
           price_cents_monthly: number
@@ -3498,10 +3506,14 @@ export type Database = {
           feat_email_send?: boolean
           feat_flashings?: boolean
           feat_followups?: boolean
+          feat_invoices?: boolean
           feat_material_orders?: boolean
+          feat_message_center?: boolean
           feature_blurbs?: string[]
           flashing_limit?: number | null
           included_seats?: number
+          monthly_ai_tokens?: number | null
+          monthly_invoice_limit?: number | null
           monthly_material_order_limit?: number | null
           monthly_quote_limit?: number
           price_cents_monthly?: number
@@ -4099,6 +4111,8 @@ export type Database = {
         Args: { p_company_id: string; p_feature: string }
         Returns: boolean
       }
+      company_invoice_count: { Args: { p_company_id: string }; Returns: number }
+      company_order_count: { Args: { p_company_id: string }; Returns: number }
       consume_rate_limit: {
         Args: { p_key: string; p_max: number; p_window_ms: number }
         Returns: boolean
@@ -4168,6 +4182,11 @@ export type Database = {
         Args: { p_company_id: string }
         Returns: undefined
       }
+      require_invoice_slot: {
+        Args: { p_company_id: string }
+        Returns: undefined
+      }
+      require_order_slot: { Args: { p_company_id: string }; Returns: undefined }
       save_takeoff_atomic: {
         Args: { p_payload: Json; p_quote_id: string }
         Returns: undefined

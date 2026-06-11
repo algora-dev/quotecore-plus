@@ -73,11 +73,49 @@ export async function checkCostBudget(
   if (usage.dailyCompanyTokens >= COST_LIMITS.dailyTokensPerCompany) {
     return { allowed: false, exceeded: 'dailyCompany' };
   }
-  if (usage.monthlyCompanyTokens >= COST_LIMITS.monthlyTokensPerCompany) {
+
+  // Per-plan monthly token budget (Pricing Tier v2). Reads the effective
+  // plan's `monthly_ai_tokens`. NULL = unlimited (premium); a missing
+  // lookup falls back to the flat COST_LIMITS ceiling so a DB blip never
+  // grants unlimited spend. Free 600k / Trial 1M / Starter 1.5M / Pro 3M.
+  const monthlyCap = await resolveMonthlyTokenCap(input.companyId);
+  if (monthlyCap !== null && usage.monthlyCompanyTokens >= monthlyCap) {
     return { allowed: false, exceeded: 'monthlyCompany' };
   }
 
   return { allowed: true };
+}
+
+/**
+ * Resolve the company's effective per-plan monthly AI-token cap.
+ *   - Returns the plan's `monthly_ai_tokens` when set.
+ *   - Returns `null` (= unlimited) when the plan column is NULL (premium).
+ *   - Falls back to the flat `COST_LIMITS.monthlyTokensPerCompany` when the
+ *     lookup is unavailable, so we never accidentally grant unlimited spend.
+ */
+async function resolveMonthlyTokenCap(companyId: string): Promise<number | null> {
+  const supabase = getClient();
+  if (!supabase) return COST_LIMITS.monthlyTokensPerCompany;
+  try {
+    const { data: code, error: codeErr } = await supabase.rpc(
+      'company_effective_plan_code',
+      { p_company_id: companyId },
+    );
+    if (codeErr || !code) return COST_LIMITS.monthlyTokensPerCompany;
+
+    const { data: plan, error: planErr } = await supabase
+      .from('subscription_plans')
+      .select('monthly_ai_tokens')
+      .eq('code', code as string)
+      .maybeSingle();
+    if (planErr || !plan) return COST_LIMITS.monthlyTokensPerCompany;
+
+    // Column NULL => unlimited.
+    const cap = (plan as { monthly_ai_tokens: number | null }).monthly_ai_tokens;
+    return cap === null ? null : cap;
+  } catch {
+    return COST_LIMITS.monthlyTokensPerCompany;
+  }
 }
 
 interface UsageSnapshot {
