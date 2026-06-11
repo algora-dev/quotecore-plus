@@ -114,6 +114,12 @@ export function FollowUpBuilder({
   const [draftRules, setDraftRules] = useState<DraftRule[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Editable recipient: prefilled from the item's associated contact email
+  // (prior send history, else the entity's stored supplier/customer email).
+  // The user can override it, or type one in when none is on file — so a
+  // missing email is no longer a dead-end. Mirrors the send-time builder,
+  // which already lets the user edit the recipient before sending.
+  const [recipientEmail, setRecipientEmail] = useState(defaultRecipientEmail ?? '');
 
   function defaultTemplateId(): string {
     const def = emailTemplates.find((t) => t.is_default) || emailTemplates[0];
@@ -192,7 +198,7 @@ export function FollowUpBuilder({
       // Time-based chase cancels on response; triggered rules don't.
       requireNoResponse: !isTriggered,
       respectQuietHours: true,
-      recipientEmail: defaultRecipientEmail ?? '',
+      recipientEmail: recipientEmail.trim(),
       recipientName: defaultRecipientName ?? null,
     };
     if (kind === 'quote') return scheduleQuoteFollowUp({ quoteId: entityId, ...common });
@@ -206,8 +212,9 @@ export function FollowUpBuilder({
       setError('Add at least one follow-up with a template.');
       return;
     }
-    if (!defaultRecipientEmail) {
-      setError('No recipient email on file for this item — send it once first, or it has no contact email.');
+    const email = recipientEmail.trim();
+    if (!email || !/^.+@.+\..+$/.test(email)) {
+      setError('Enter a valid recipient email for these follow-ups.');
       return;
     }
     setSaving(true);
@@ -251,6 +258,28 @@ export function FollowUpBuilder({
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-slate-900">Add follow-ups</p>
         <span className="text-xs text-slate-500">{draftRules.length} / 3</span>
+      </div>
+
+      {/* Recipient email — editable, prefilled from the item's contact email.
+          Lets the user confirm/override the address, or supply one when none
+          is on file (e.g. an order/quote/invoice sent without a stored email). */}
+      <div className="space-y-1">
+        <label htmlFor="followup-recipient" className="block text-xs font-medium text-slate-600">
+          Send follow-ups to
+        </label>
+        <input
+          id="followup-recipient"
+          type="email"
+          value={recipientEmail}
+          onChange={(e) => setRecipientEmail(e.target.value)}
+          placeholder="name@example.com"
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
+        />
+        {!defaultRecipientEmail && (
+          <p className="text-xs text-slate-400">
+            No email was on file for this item — enter the recipient address above.
+          </p>
+        )}
       </div>
 
       {/* Add buttons */}
