@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * useAssistantChat — SSE chat consumer (Phase 2)
+ * useAssistantChat - SSE chat consumer (Phase 2)
  * ===============================================
  * Drives a conversation against POST /api/assistant/chat. Parses the SSE event
  * stream, accumulates streaming tokens into the in-flight assistant message,
@@ -39,7 +39,7 @@ export type ChatStatus = 'idle' | 'streaming' | 'error';
 interface SendOptions {
   hints: Omit<AssistantClientHints, 'assistantProtocolVersion'>;
   mode: AssistantMode;
-  /** Client Highlights preference (default ON) — pure phrasing hint. */
+  /** Client Highlights preference (default ON) - pure phrasing hint. */
   highlightsOn?: boolean;
 }
 

@@ -1,8 +1,8 @@
-# `app/lib/assistant` — AI Assistant service layer
+# `app/lib/assistant` - AI Assistant service layer
 
 Canonical plan: `docs/ChatAssistant/AI-ASSISTANT-MVP-PLAN.md` (Gerald-reviewed).
 
-## Phase 0A — Protocol + security envelope (SHIPPED)
+## Phase 0A - Protocol + security envelope (SHIPPED)
 
 Pure scaffolding. No LLM calls, no chat endpoint, no UI. No `OPENAI_API_KEY`
 needed. Everything is gated off by default (`AI_ASSISTANT_V1_ENABLED=false`).
@@ -11,18 +11,18 @@ needed. Everything is gated off by default (`AI_ASSISTANT_V1_ENABLED=false`).
 |------|---------|
 | `protocol.ts` | Canonical **semantic** wire contract (no selectors/URLs). `AssistantClientHints` (untrusted), chat request/stream events, `HighlightCommand`, protocol version + `ClientCapability`. Safe to import anywhere (no React/DOM). |
 | `config.ts` | Env-driven guardrail config: feature flag, request-size limits, model/token limits, rate-limit buckets, **cost ceilings**, **retention** policy, model selection. Conservative defaults so we're protected even unset. |
-| `rateLimit.ts` | `checkAssistantRateLimits()` — wraps the shared `checkRateLimit`, **always fail-closed**, checks per-user + per-company + per-IP. |
-| `costGuard.ts` | `checkCostBudget()` / `recordTokenUsage()` — token-budget contract. **Fails closed** until the `assistant_token_usage` store lands (Phase 0B). |
+| `rateLimit.ts` | `checkAssistantRateLimits()` - wraps the shared `checkRateLimit`, **always fail-closed**, checks per-user + per-company + per-IP. |
+| `costGuard.ts` | `checkCostBudget()` / `recordTokenUsage()` - token-budget contract. **Fails closed** until the `assistant_token_usage` store lands (Phase 0B). |
 | `contextResolver.ts` | **H-01 fix.** `resolveServerContext(hints)` → trusted context. userId/companyId/tier/permissions come from the **session**, never the body. Entity refs are **server-verified** (deny-by-default; `quote` confirmed, others TODO Phase 3). |
 | `toolRegistry.ts` | **M-06 fix.** The 6 read-only V1 tool definitions (handlers wired Phase 1/3/4). Future tools listed but **NOT registered**. `assertRegistryReadOnly()` invariant. |
 
 ### Decisions / guardrails locked here
 - **Server is source of truth for tenancy + permissions.** Client sends hints only.
-- **Semantic protocol** (`screenKey/elementId/actionId`) — web maps `elementId → data-assistant-id`, mobile maps to native refs. No selector crosses the wire.
+- **Semantic protocol** (`screenKey/elementId/actionId`) - web maps `elementId → data-assistant-id`, mobile maps to native refs. No selector crosses the wire.
 - **All chat guardrails are acceptance criteria, not later hardening** (rate limit fail-closed, cost caps, size/timeouts, retention).
 - **Read-only V1**: every live tool `requiresWrite: false`; future tools cannot leak into the live set (`assertRegistryReadOnly`).
 
-## Phase 0B — Knowledge + registry + flow pipeline (SHIPPED)
+## Phase 0B - Knowledge + registry + flow pipeline (SHIPPED)
 
 | Artifact | Purpose |
 |----------|---------|
@@ -31,23 +31,23 @@ needed. Everything is gated off by default (`AI_ASSISTANT_V1_ENABLED=false`).
 | `costGuard.ts` (updated) | Now wired to the live `assistant_token_usage` table (queryUsage/recordTokenUsage). |
 | `scripts/seed-ui-registry.mjs` | Inventories `data-copilot` anchors → `uiRegistry.generated.ts` (91 static ids) + flags 4 dynamic anchors for hand-registration. |
 | `uiRegistry.ts` | Curated registry over the seed: semantic-only entries (no selector), `webSelectorFor`, `canHighlight` allowlist. |
-| `scripts/build-workflows.mjs` + `content/workflows/*.flow.md` | `.flow.md` compiler — strict `ui:`(registry) + `until:`(validator grammar) validation, fails loud. `create-component.flow.md` converted → `workflows.generated.json`. |
+| `scripts/build-workflows.mjs` + `content/workflows/*.flow.md` | `.flow.md` compiler - strict `ui:`(registry) + `until:`(validator grammar) validation, fails loud. `create-component.flow.md` converted → `workflows.generated.json`. |
 
-**Retrieval eval:** 82% strict top-5 substring hit-rate; effective ~95% (the 3 'misses' returned the correct doc under a different slug). Known content gap: **no catalog doc exists yet** (recent feature) — write docs then re-run `embed-docs`.
+**Retrieval eval:** 82% strict top-5 substring hit-rate; effective ~95% (the 3 'misses' returned the correct doc under a different slug). Known content gap: **no catalog doc exists yet** (recent feature) - write docs then re-run `embed-docs`.
 
-## Phase 1 — Chat endpoint + orchestrator + search_help_docs (SHIPPED)
+## Phase 1 - Chat endpoint + orchestrator + search_help_docs (SHIPPED)
 
 | File | Purpose |
 |------|---------|
-| `knowledge.ts` | `searchHelpDocs()` — embed query → `match_doc_chunks` RPC (service client) → bounded snippets. Backs the `search_help_docs` tool. |
+| `knowledge.ts` | `searchHelpDocs()` - embed query → `match_doc_chunks` RPC (service client) → bounded snippets. Backs the `search_help_docs` tool. |
 | `llmClient.ts` | OpenAI SDK wrapper (`openai ^6.41`). `getEmbedding()` + `runChatStep()` (streaming Chat Completions tool-calling, usage out). Model-swappable via `MODEL_CONFIG`. |
 | `sessions.ts` | `ensureSession` (ownership-verified), `persistMessage` (scrubs URLs/token blobs), `recordEvent` (metadata-only audit). |
-| `orchestrator.ts` | `runAssistantTurn()` — system prompt (read-only, app-is-truth, respond/guide modes) + tool loop (Phase 1: `search_help_docs` only) + depth/token guards. |
+| `orchestrator.ts` | `runAssistantTurn()` - system prompt (read-only, app-is-truth, respond/guide modes) + tool loop (Phase 1: `search_help_docs` only) + depth/token guards. |
 | `app/api/assistant/chat/route.ts` | `POST` SSE endpoint. Gates IN ORDER: flag → parse → protocol/shape → **auth+trusted context** → **rate limit (fail-closed)** → **cost budget (fail-closed)** → stream turn → persist + record usage + audit. Abort cleanup on client disconnect. |
 
-**Smoke (2026-06-03):** retrieval path verified end-to-end (waste question → `concepts/waste-and-pitch` sim 0.63, bounded snippets); token-usage table reachable; tsc 0 errors; eslint clean. Endpoint is **flag-gated OFF** (`AI_ASSISTANT_V1_ENABLED` unset) — no production surface until Phase 2 wires the widget + we enable on dev.
+**Smoke (2026-06-03):** retrieval path verified end-to-end (waste question → `concepts/waste-and-pitch` sim 0.63, bounded snippets); token-usage table reachable; tsc 0 errors; eslint clean. Endpoint is **flag-gated OFF** (`AI_ASSISTANT_V1_ENABLED` unset) - no production surface until Phase 2 wires the widget + we enable on dev.
 
-## Phase 2 — Floating widget, first client (SHIPPED)
+## Phase 2 - Floating widget, first client (SHIPPED)
 
 | File (`app/components/assistant/`) | Purpose |
 |------|---------|
@@ -74,17 +74,17 @@ Option A (Shaun): reuse the authored Copilot guides as workflow content rather t
 **Verified:** `next build` exit 0 with all wiring. **Source-of-truth decision (locked):** Copilot guides are the workflow content for V1; `.flow.md` compiler remains the future authoring path. `workflowService` is DOM-free so the same content serves web/mobile/voice.
 
 ## Phase 4 - Visual highlight (SHIPPED 2026-06-03)
-`request_ui_highlight` is now LIVE — the assistant can point the user at the exact on-screen control.
+`request_ui_highlight` is now LIVE - the assistant can point the user at the exact on-screen control.
 
 | File | Role |
 |------|------|
-| `orchestrator.ts` | `request_ui_highlight` added to live tools + dispatch handler. **Two-layer validation:** (1) elementId must be in the UI registry (`isRegisteredElement`); (2) elementId must be in the server-trusted `ctx.visibleElementIds` — can't highlight off-screen/wrong-page controls (returns `highlighted:false` → model describes location instead). Validated commands emit via `onHighlight`. Prompt tells guide mode to highlight the current step's control. |
+| `orchestrator.ts` | `request_ui_highlight` added to live tools + dispatch handler. **Two-layer validation:** (1) elementId must be in the UI registry (`isRegisteredElement`); (2) elementId must be in the server-trusted `ctx.visibleElementIds` - can't highlight off-screen/wrong-page controls (returns `highlighted:false` → model describes location instead). Validated commands emit via `onHighlight`. Prompt tells guide mode to highlight the current step's control. |
 | `route.ts` | Streams `{type:'highlight', command}` SSE from the `onHighlight` callback. |
 | `useAssistantChat.ts` | Consumes `highlight` SSE → exposes `highlight: ActiveHighlight` (stamped with a unique `key` so re-highlighting the same id re-fires). Cleared on reset. |
 | `useAssistantHighlight.ts` (NEW) | Web executor. Maps elementId→`[data-assistant-id="X"]` (legacy `[data-copilot]` fallback), scrolls into view, applies treatment (glow/pulse/spotlight/arrow) via an injected `<style>` (no new dep), auto-clears after 6s or on next highlight. Returns the target rect for the arrow pointer. Fails safe if the element isn't in the DOM. |
 | `AssistantWidget.tsx` | Runs the executor; renders a bouncing arrow pointer for the `arrow` treatment. |
 
-**Treatments:** `glow` (default), `pulse`, `spotlight` (dims the rest of the page), `arrow` (pointer). **Verified:** `next build` exit 0. Semantic protocol preserved — NO selectors on the wire; the web client owns the elementId→selector mapping.
+**Treatments:** `glow` (default), `pulse`, `spotlight` (dims the rest of the page), `arrow` (pointer). **Verified:** `next build` exit 0. Semantic protocol preserved - NO selectors on the wire; the web client owns the elementId→selector mapping.
 
 ### Not yet built (next phases)
 - **5:** retire legacy Copilot UI once Guide-me + highlight reach parity.

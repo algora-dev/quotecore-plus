@@ -24,7 +24,7 @@ interface Props {
   invoiceId: string;
   workspaceSlug: string;
   publicToken: string;
-  /** Invoice status — button hidden when cancelled/paid */
+  /** Invoice status - button hidden when cancelled/paid */
   status: string;
   emailTemplates: EmailTemplate[];
   invoiceMeta: InvoiceMeta;
@@ -630,7 +630,7 @@ export function SendInvoiceButton({
                 {/* PRE-SEND GATE: Send now vs Add Follow-ups (invoices = time-based only). */}
                 {sendStage === 'gate' && sendSuccess !== 'sent' && (
                   <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
-                    <p className="text-sm font-medium text-slate-900">Before we send — do you want payment reminders?</p>
+                    <p className="text-sm font-medium text-slate-900">Before we send - do you want payment reminders?</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <button
                         type="button"
@@ -685,7 +685,7 @@ export function SendInvoiceButton({
 
                     {emailTemplates.length === 0 ? (
                       <div className="rounded-lg border border-slate-200 bg-white p-3">
-                        <p className="text-xs text-slate-500">You have no message templates yet — follow-ups need one.</p>
+                        <p className="text-xs text-slate-500">You have no message templates yet - follow-ups need one.</p>
                         <button onClick={goCreateTemplate} className="mt-2 text-xs font-medium text-orange-600 hover:text-orange-700 underline">
                           Create your first reminder template
                         </button>
@@ -705,7 +705,7 @@ export function SendInvoiceButton({
 
                         {draftRules.length === 0 ? (
                           <p className="text-[11px] text-slate-500">
-                            Add a reminder above — it chases the customer if the invoice isn’t marked paid. You can add up to 3.
+                            Add a reminder above - it chases the customer if the invoice isn’t marked paid. You can add up to 3.
                           </p>
                         ) : null}
 

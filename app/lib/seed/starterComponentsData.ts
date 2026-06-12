@@ -4,7 +4,7 @@
  *
  * To update: edit the libraries in the secarter23@gmail.com account,
  * then ask Gavin to re-fetch from DB and regenerate this file.
- * Updates only affect NEW signups — existing companies are never touched.
+ * Updates only affect NEW signups - existing companies are never touched.
  */
 
 export interface StarterComponent {

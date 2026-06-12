@@ -1,12 +1,12 @@
 /**
- * AI Assistant — Knowledge Service (Phase 1)
+ * AI Assistant - Knowledge Service (Phase 1)
  * ===========================================
  * Semantic retrieval over the doc_chunks index. This is the data source behind
  * the `search_help_docs` tool.
  *
  * Path: embed the query (OpenAI) -> call the SECURITY DEFINER `match_doc_chunks`
  * RPC via the SERVICE client (doc_chunks + RPC are REVOKEd from client roles,
- * so only a service-role caller reaches them). Returns bounded snippets only —
+ * so only a service-role caller reaches them). Returns bounded snippets only -
  * never the full raw doc set.
  */
 

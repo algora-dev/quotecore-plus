@@ -24,8 +24,8 @@ const MAX_BULK_SELECTION = 25;
  *
  * "Read" is TRANSIENT: it only shows while the order is still in its as-sent
  * baseline status ('ready' / "Not Ordered"). The moment the owner moves the
- * status forward (Ordered/Delivered/Paid/Pickup/Waiting) — manually or via any
- * auto update — "Read" disappears, since the owner has clearly moved on past
+ * status forward (Ordered/Delivered/Paid/Pickup/Waiting) - manually or via any
+ * auto update - "Read" disappears, since the owner has clearly moved on past
  * the "they opened it" signal (2026-06-10).
  */
 const ORDER_SENT_BASELINE = new Set(['ready']);

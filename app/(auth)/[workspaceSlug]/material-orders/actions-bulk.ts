@@ -181,7 +181,7 @@ export async function loadOrderBundleData(orderId: string): Promise<OrderBundleD
  * Mirrors the single-order delete (deleteOrder in order-list-actions.ts):
  * line items are removed first (FK), then the order rows. Orders have no
  * delete-vs-status rule (any order can be deleted), so there is no per-status
- * skipping here — only ownership filtering.
+ * skipping here - only ownership filtering.
  */
 export async function bulkDeleteOrders(ids: string[]): Promise<{ deleted: number; skipped: number }> {
   const profile = await requireCompanyContext();

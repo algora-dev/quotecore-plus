@@ -4,7 +4,7 @@
 //
 // Goal: let every editor (line-by-line order, components/column order, customer
 // quote, labor sheet) collapse its LEFT control panel to declutter the view and
-// let the preview expand into the freed space — fully reversible, smooth, and
+// let the preview expand into the freed space - fully reversible, smooth, and
 // WITHOUT touching any data / save / autosave / hydration logic.
 //
 // CRITICAL DESIGN CHOICE: collapse, do NOT unmount.
@@ -126,7 +126,7 @@ export function ExpandTab({ collapsed, onToggle, label = 'Show panel', className
   if (!collapsed) return null;
   return (
     // Top-aligned (self-start) and compact (fixed py height) so the tab sits
-    // next to the TOP of the preview — not stretched down the full column. The
+    // next to the TOP of the preview - not stretched down the full column. The
     // sticky offset keeps it in view if the preview is tall and the user
     // scrolls. flex-shrink-0 so it never gets squeezed by the flex row.
     <button

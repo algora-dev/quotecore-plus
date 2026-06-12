@@ -5,7 +5,7 @@
 // keeps the focused order editor fully decoupled from the quote/component
 // schema. The shape mirrors the relevant subset of the CustomerQuoteEditor
 // line (text / qty / price / visibility) so the visual output matches what
-// users already know from quotes — without inheriting its quote/tax/branding
+// users already know from quotes - without inheriting its quote/tax/branding
 // coupling.
 
 export interface LineByLineItem {
@@ -60,8 +60,8 @@ export interface LineByLineData {
   taxes: LineByLineTax[];
   /**
    * Master "hide all prices" override. When true, NO pricing renders on ANY
-   * surface (in-app preview, public supplier page, print/PDF) — no per-line
-   * price, no subtotal, no tax lines, no total — regardless of each line's own
+   * surface (in-app preview, public supplier page, print/PDF) - no per-line
+   * price, no subtotal, no tax lines, no total - regardless of each line's own
    * showPrice flag. Default false (honour per-line showPrice). Persisted so the
    * saved/sent order matches what the user chose in the editor.
    */
@@ -115,7 +115,7 @@ export function lineByLineTotal(lines: LineByLineItem[]): number {
 /** Combined display text for a line (primary + optional secondary). */
 export function lineDisplayText(line: LineByLineItem): string {
   if (line.quantityText && line.quantityText.trim() !== '') {
-    return `${line.text} — ${line.quantityText}`;
+    return `${line.text} - ${line.quantityText}`;
   }
   return line.text;
 }

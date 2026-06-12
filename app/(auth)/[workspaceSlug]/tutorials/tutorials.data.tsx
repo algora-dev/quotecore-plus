@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 /**
- * Tutorials data — the 13 onboarding cards.
+ * Tutorials data - the 13 onboarding cards.
  *
  * Each tutorial renders as a card on /tutorials. Clicking opens TutorialModal,
  * which pages through `pages[]` and shows two CTAs:
@@ -17,7 +17,7 @@ import type { ReactNode } from 'react';
 export interface TutorialPage {
   /** Shown only when pages.length > 1. */
   heading?: string;
-  /** Short paragraphs / bullet lines — scannable, not prose walls. */
+  /** Short paragraphs / bullet lines - scannable, not prose walls. */
   body: string[];
 }
 
@@ -47,7 +47,7 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: 'quotes',
     title: 'Quotes',
-    tagline: 'Three ways to build a quote — pick what suits the job.',
+    tagline: 'Three ways to build a quote - pick what suits the job.',
     icon: icon('M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'),
     ctaLabel: 'Go to Quotes',
     ctaHref: (b) => `${b}/quotes`,
@@ -63,30 +63,30 @@ export const TUTORIALS: Tutorial[] = [
       {
         heading: 'Manual Mode',
         body: [
-          'Type lines in yourself (description, qty, price).',
-          'Best when you already know your numbers or want a fully custom quote.',
-          'You can add components or catalog items as lines too.',
+          'Use saved components to quickly add lines to your quote that require pricing from measurements, items, or areas - including complex calculations for labour, materials, pitch, area squared, length x height, volume, and more.',
+          'You can also add custom lines or catalog lines later in the customer quote editor section.',
+          'Must have components saved - see the Components tutorial.',
         ],
       },
       {
         heading: 'Digital Mode',
         body: [
-          'Measure the job on-screen (digital takeoff), attach your saved components, and let QuoteCore+ price it from your rates.',
-          'Best for measured work where area or length drives the price.',
+          'Measure everything in-app, on-screen, upload a plan, select the components to measure/add, and QuoteCore+ pre-populates your quote with all the info. (Digital mode also requires saved components.)',
+          'Best used with aerial images, or digital plans you would normally print off and manually measure.',
         ],
       },
       {
         heading: 'Blank Quote Mode',
         body: [
-          'Start from an empty quote and add lines freely — no measuring, no template.',
-          'Fastest for a quick one-off.',
+          'Start from an empty quote, add custom typed lines, or add lines from catalog/components freely - the simplest way to start quoting.',
+          'Blank quotes suit users not needing complex measuring or components. You can write each line, or populate a line from an uploaded catalog/saved component by searching it.',
         ],
       },
       {
         heading: 'Then what',
         body: [
-          'Save it, preview it, and send by link or email.',
-          'See the "Sending" tutorial for how delivery and tracking work.',
+          'Save, preview, edit, then send to your customer by link or email.',
+          'See the "Sending" tutorial for how delivery and tracking work, and the "Components" or "Catalog" tutorials to learn how and why each of these powerful tools can help you create quotes faster and more accurately.',
         ],
       },
     ],
@@ -112,15 +112,16 @@ export const TUTORIALS: Tutorial[] = [
       {
         heading: 'Two ways to send',
         body: [
-          'Send from QuoteCore+ — we email it for you with a tracked link (shows Read / opened).',
-          'Copy URL link — paste it anywhere (WhatsApp, your own email). Both open the live customer/supplier page.',
+          'Send from QuoteCore+ - sent via the app to your chosen recipient email with a tracked link (tracks and alerts you for read / accepted / declined / disputed / info requests, and more).',
+          'Copy URL link - paste it anywhere (WhatsApp, your own email client). Both open the same live customer/supplier page; they just get sent differently.',
         ],
       },
       {
         heading: 'Follow-ups at send time',
         body: [
-          'When sending, you can attach automatic follow-ups (chase if no reply, or trigger on accept/decline).',
-          'See the "Auto Follow-up" tutorial.',
+          'When sending, you can attach automatic follow-up template messages (chase if no reply, or triggers on accept/decline).',
+          'You can customise what type of message gets sent by creating a message template for each type of follow-up.',
+          'See the "Auto Follow-up" and "Templates" tutorials.',
         ],
       },
       {
@@ -146,8 +147,8 @@ export const TUTORIALS: Tutorial[] = [
       {
         heading: 'What & why',
         body: [
-          'A component is a saved item with your material + labour rates, waste %, and how it\u2019s measured (per m\u00B2, per metre, each…).',
-          'Build them once, reuse on every quote — consistent pricing, no re-typing.',
+          'A component is a saved item with your material + labour rates, waste %, and how it’s measured (per m², per metre, each…).',
+          'Build them once, reuse on every quote - consistent pricing, no re-typing.',
         ],
       },
       {
@@ -161,8 +162,8 @@ export const TUTORIALS: Tutorial[] = [
       {
         heading: 'When',
         body: [
-          'Set up your common components first (the app seeds starter ones for your trade).',
-          'Edit rates any time — new quotes use the latest.',
+          'Set up your common components first (the app seeds starter components so you can see and edit working examples).',
+          'Edit components any time - new quotes use the latest.',
         ],
       },
     ],
@@ -181,8 +182,17 @@ export const TUTORIALS: Tutorial[] = [
       {
         heading: 'What',
         body: [
-          'Upload a supplier price list (CSV) and QuoteCore+ makes it searchable.',
-          'No more digging through PDFs for a price.',
+          'Upload a CSV file containing columns and rows of information you want to display in a quote/order/invoice.',
+          'You can create multiple maps for each CSV, then search and auto-fill lines on selection to ensure accurate, up-to-date info and pricing - saving you time typing out each line from another source.',
+          'No more digging through PDFs for price, description, or item codes - store it all here!',
+        ],
+      },
+      {
+        heading: 'Why',
+        body: [
+          'Catalogs help you save time writing or copying lines into quotes/orders/invoices.',
+          'You can use anything from existing supplier CSVs to fully custom CSV files that hold all your quoting items - labour, materials, descriptions, pricing, and more.',
+          'This system is extremely modular and flexible, letting you quote/order/invoice anything at all accurately and quickly while never having to leave or look away from the QuoteCore+ app.',
         ],
       },
       {
@@ -194,8 +204,16 @@ export const TUTORIALS: Tutorial[] = [
       {
         heading: 'Using it',
         body: [
-          'In a quote or order: Add line → Search catalog → type → pick the item → it drops in with description + price.',
-          'Pro plan: up to 3 catalogs.',
+          'In a quote, invoice, or order: Add line → Search catalog → type → pick the item → it drops in with description + price.',
+          'You can edit this completely after selection.',
+        ],
+      },
+      {
+        heading: 'Maps',
+        body: [
+          'You can add multiple column maps for each catalog to search/pull from. This lets you keep 1 or 2 master catalogs that hold all the data you need, while pulling different info for each use.',
+          'Maps let you pull information that suits a quote, an order, or an invoice without needing to customise your CSV and upload three different files.',
+          'Simply name the map, then select that map when searching to add line items.',
         ],
       },
     ],
@@ -205,25 +223,26 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: 'templates',
     title: 'Templates',
-    tagline: 'Save once, reuse everywhere — quotes, messages, and headers.',
+    tagline: 'Save once, reuse everywhere - quotes, messages, and headers.',
     icon: icon('M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z'),
     ctaLabel: 'Go to Resources',
     ctaHref: (b) => `${b}/resources`,
     workflowId: null,
     pages: [
       {
-        heading: 'What templates exist',
+        heading: 'What type of templates can I make',
         body: [
-          'Quote templates — reusable quote layouts.',
-          'Message templates — pre-written send emails with auto-filling placeholders.',
-          'Header templates — for quotes, orders, and invoices (your branding / letterhead).',
+          'Quote templates - a reusable fast-start quote with specific components/extras.',
+          'Message templates - pre-written send emails with auto-filling placeholders.',
+          'Header templates - for quotes, orders, and invoices (your company / branding / letterhead).',
+          'Payment templates - for invoices.',
         ],
       },
       {
         heading: 'Why',
         body: [
-          'Stop re-typing the same intro email or rebuilding the same quote shape.',
-          'Placeholders like the customer name or quote total fill themselves in.',
+          'Save time re-typing the same intro email, rebuilding the same quote shape, or adding custom quote/order/invoice header info.',
+          'Placeholders like the customer name, email body, company details, and payment info fill themselves in.',
         ],
       },
       {
@@ -248,7 +267,7 @@ export const TUTORIALS: Tutorial[] = [
     pages: [
       {
         body: [
-          'Use the drawing tool to sketch a detail or upload an image, then attach it to a component, quote, or order so your customer or supplier sees exactly what you mean.',
+          'Use the drawing tool to sketch a detail or upload an image, then attach it to a component or order so your customer or supplier sees exactly what you need them to see. Great for flashings or drawings with specific measurements/angles/shapes.',
           'This is the same tool whether your trade calls it "Drawings & Images" or, for roofing, "Flashings".',
           'Find it in Resources → Drawings & Images.',
         ],
@@ -269,20 +288,21 @@ export const TUTORIALS: Tutorial[] = [
       {
         heading: 'What',
         body: [
-          'A library of files (PDFs, brochures, certs, terms) you upload once and attach to any quote or order — no re-uploading per job.',
+          'A library of files (PDFs, brochures, certs, terms) you upload once and attach to any quote or order - no re-uploading per job.',
         ],
       },
       {
         heading: 'How',
         body: [
           'Resources → Attachments → upload.',
-          'When sending a quote or order, open the attachment picker and tick the files to include — they go as a download link on the customer page (not a heavy email attachment).',
+          'When sending a quote or order, open the attachment picker and tick the files to include - they go as a download link on the customer page (not a heavy email attachment).',
         ],
       },
       {
         heading: 'Tip',
         body: [
           'Set a default attachment on a message template so it auto-attaches every time you use that template.',
+          'You can only select from uploaded attachments to "Add an attachment", or use existing files from a quote - like a plan, measurements, or digital takeoff.',
         ],
       },
     ],
@@ -292,7 +312,7 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: 'orders',
     title: 'Orders',
-    tagline: 'Turn a quote into a supplier order — or build one from scratch.',
+    tagline: 'Turn a quote into a supplier order - or build one from scratch.',
     icon: icon('M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'),
     ctaLabel: 'Go to Orders',
     ctaHref: (b) => `${b}/material-orders`,
@@ -309,14 +329,15 @@ export const TUTORIALS: Tutorial[] = [
         heading: 'From a quote',
         body: [
           'Open Orders → Order from Quote → pick the quote → it pre-fills the priced lines.',
-          'Add your supplier header and send.',
+          'Add your supplier header and send. You can edit each line, as well as the layout style depending on what you are ordering.',
+          'There are 3 layout options: line-by-line, single column, and double column. The column layouts let you add components with images/drawings - great for roofing/construction orders, or whenever you need an image to show exactly what to order.',
         ],
       },
       {
-        heading: 'Line-by-line',
+        heading: 'Custom Order',
         body: [
           'Build a custom order: add lines (custom, component, or catalog), set what shows, optional taxes/footer, then send.',
-          'You can hide prices if the supplier shouldn\u2019t see your figures.',
+          'You can hide/show every line and its description or price if the supplier shouldn’t see certain figures. Everything can be edited completely.',
         ],
       },
     ],
@@ -343,6 +364,7 @@ export const TUTORIALS: Tutorial[] = [
         heading: 'How',
         body: [
           'Invoices → New Invoice → blank or from a quote → add/adjust lines, set dates and payment details → save → send.',
+          'You can create a payment details template to offer multiple payment instruction options, and to save time adding it per invoice. See "Templates" on the Resources page.',
         ],
       },
       {
@@ -359,7 +381,7 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: 'message-center',
     title: 'Message Center / Alerts',
-    tagline: 'Every reply, open, and action — in one inbox.',
+    tagline: 'Every reply, open, and action - in one inbox.',
     icon: icon('M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'),
     ctaLabel: 'Go to Message Center',
     ctaHref: (b) => `${b}/inbox`,
@@ -373,6 +395,14 @@ export const TUTORIALS: Tutorial[] = [
         ],
       },
       {
+        heading: 'Why',
+        body: [
+          'The Message Center gives you a central database for all alerts and messages.',
+          'You can action items, look deeper into messages, disputes, follow-ups, and recipient actions like read / accepted / declined.',
+          'You can also create "To Do" lists, mark items as done, archive them, and keep order of everything in one place.',
+        ],
+      },
+      {
         heading: 'Folders & actions',
         body: [
           'Filter by Quotes / Orders / Invoices, search, expand a row for the full message, mark Done, archive or delete.',
@@ -382,7 +412,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         heading: 'Settings',
         body: [
-          'The Settings tab controls which events notify you and whether you also get an email — per event, per channel.',
+          'The Settings tab controls which events notify you and whether you also get an email - per event, per channel.',
         ],
       },
     ],
@@ -392,7 +422,7 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: 'follow-ups',
     title: 'Auto Follow-up Messages',
-    tagline: 'Chase quotes and reminders automatically — set and forget.',
+    tagline: 'Chase quotes and reminders automatically - set and forget.',
     icon: icon('M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'),
     ctaLabel: 'Go to Message Center',
     ctaHref: (b) => `${b}/inbox`,
@@ -401,23 +431,30 @@ export const TUTORIALS: Tutorial[] = [
       {
         heading: 'What & why',
         body: [
-          'Follow-ups send themselves so deals don\u2019t go cold.',
+          'Follow-ups send themselves so deals don’t go cold.',
           'Set them when you send a quote, order, or invoice.',
         ],
       },
       {
         heading: 'Two kinds',
         body: [
-          'Triggered — fire on an event (customer accepts/declines), optionally after a delay.',
-          'Time-based — chase after X days/hours/minutes if there\u2019s no reply; cancels automatically once they respond.',
+          'Triggered - fire on an event (customer accepts/declines), optionally after a delay.',
+          'Time-based - chase after X days/hours/minutes if there’s no reply; cancels automatically once they respond.',
         ],
       },
       {
         heading: 'Rules',
         body: [
-          'Up to 3 per document; one per trigger.',
-          'If one trigger fires (e.g. accepted), the opposing parked follow-ups cancel themselves.',
-          'Quotes support both kinds; invoices are time-based reminders.',
+          'Up to 3 follow-ups per quote/order/invoice.',
+          'If one follow-up triggers (e.g. accepted / declined / time-based), any other parked follow-ups cancel themselves.',
+          'Quotes/orders support both kinds; invoices are time-based reminders only.',
+        ],
+      },
+      {
+        heading: 'How to create follow-ups',
+        body: [
+          'You can create follow-ups once you have saved/finished a quote/order/invoice. Click "Send", add a recipient and all the sending information, then you will be asked if you want to send as-is, or add follow-ups. Click "Add follow-up" and complete the flow from there.',
+          'The second place is after you have already sent a quote/order/invoice: go to its page, find "Schedule Follow-up" near the top, click it, and follow the flow.',
         ],
       },
     ],
@@ -427,7 +464,7 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: 'download-delete',
     title: 'Downloading & Deleting Files',
-    tagline: 'Get PDFs out, and remove what you don\u2019t need.',
+    tagline: 'Get PDFs out, and remove what you don’t need.',
     icon: icon('M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4'),
     ctaLabel: 'Go to Quotes',
     ctaHref: (b) => `${b}/quotes`,
@@ -436,8 +473,9 @@ export const TUTORIALS: Tutorial[] = [
       {
         body: [
           'Every quote, order, and invoice can be downloaded as a PDF that matches the on-screen preview exactly (logo, lines, totals). Use the Download icon on the item, or multi-select on a list and "Download as ZIP".',
-          'Deleting: use the row menu — drafts delete outright; sent items can be cancelled/withdrawn (the public link stops working).',
+          'Deleting: use the row menu - drafts delete outright; sent items can be cancelled/withdrawn (the public link stops working).',
           'Deleting frees storage.',
+          'We suggest saving all quotes/orders/invoices monthly to your desired hard drive or PC as a backup. You can bulk download/delete easily from each of the Quotes/Orders/Invoices pages.',
         ],
       },
     ],
@@ -451,13 +489,14 @@ export const TUTORIALS: Tutorial[] = [
     icon: icon('M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'),
     ctaLabel: 'Open Q',
     ctaHref: (b) => `${b}`,
-    // This card IS the Q intro — Q-walkthrough button hidden (handled in modal).
+    // This card IS the Q intro - Q-walkthrough button hidden (handled in modal).
     workflowId: null,
     pages: [
       {
         heading: 'Meet Q',
         body: [
-          'Q is the in-app assistant. Ask "how do I…?" and Q answers from the docs, or offers to walk you through it — highlighting each button as you go (that\u2019s "Guide Me").',
+          'Q is your personal in-app assistant. Ask "how do I…?" or "show me how to…?" and Q answers from the docs, or offers to walk you through it - highlighting each button as you go (that’s "Guide Me").',
+          'For Guide Me, simply select the tab in the chat box when opened. You can turn highlights on/off from there. Q will walk you through each step - sometimes the step auto-updates, sometimes you click "Next" in the chat box.',
         ],
       },
       {
@@ -470,7 +509,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         heading: 'How to use Guide Me',
         body: [
-          'Ask Q, pick "walk me through", and follow the glowing highlights — Next / Back / Finish at your pace.',
+          'Ask Q, pick "walk me through", and follow the glowing highlights - Next / Back / Finish at your pace.',
           'Toggle highlights off if you just want the instructions.',
         ],
       },

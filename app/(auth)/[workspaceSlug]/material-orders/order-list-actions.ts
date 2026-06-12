@@ -64,7 +64,7 @@ export async function updateOrderStatus(orderId: string, status: string) {
  * status back to the 'ready' baseline, and cancels any still-pending scheduled
  * follow-ups so a stale chase can't fire against the reset order.
  *
- * Use case: remedy a change/info request or just re-issue — then re-send a
+ * Use case: remedy a change/info request or just re-issue - then re-send a
  * fresh order with a new URL. Returns the count of cancelled follow-ups so the
  * confirm UI can report exactly what happened.
  */

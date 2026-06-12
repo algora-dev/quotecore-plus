@@ -4,7 +4,7 @@
  * Lets any client surface (the Tutorials page, a help link, a button) start an
  * existing Q guide WITHOUT an LLM round-trip. We dispatch a window CustomEvent;
  * AssistantWidget listens, opens the assistant panel, and calls
- * engine.startWorkflow(workflowId, location.pathname) — reusing all existing
+ * engine.startWorkflow(workflowId, location.pathname) - reusing all existing
  * step / highlight / nav-hop logic. Zero tokens, instant, deterministic.
  *
  * Pair with an optional router.push to the workflow's start URL so the user is

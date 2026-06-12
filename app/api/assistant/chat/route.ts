@@ -1,15 +1,15 @@
 /**
- * POST /api/assistant/chat  — AI Assistant chat endpoint (Phase 1)
+ * POST /api/assistant/chat  - AI Assistant chat endpoint (Phase 1)
  * ================================================================
  * Streams an assistant turn over SSE. This is the API every client (web widget
  * today, mobile/voice later) calls.
  *
  * Acceptance gates enforced here, IN ORDER (Gerald H-01/H-02):
  *   1. Feature flag.
- *   2. Auth required (session-derived identity) — no anonymous access.
+ *   2. Auth required (session-derived identity) - no anonymous access.
  *   3. Protocol version + request shape validation.
- *   4. Rate limit — FAIL CLOSED (per-user/company/IP).
- *   5. Cost budget — FAIL CLOSED when accounting unavailable.
+ *   4. Rate limit - FAIL CLOSED (per-user/company/IP).
+ *   5. Cost budget - FAIL CLOSED when accounting unavailable.
  *   6. Trusted context resolution (client hints validated, never trusted).
  *   7. SSE stream of the orchestrated turn, with abort cleanup.
  *   8. Persist messages + record token usage + audit event.
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     return errorResponse('internal_error', 'Context resolution failed.', 500);
   }
 
-  // 4. Rate limit — fail closed.
+  // 4. Rate limit - fail closed.
   const ip = getClientIP(req.headers);
   const rl = await checkAssistantRateLimits({
     userId: context.userId,
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
     return errorResponse('rate_limited', `Rate limited (${rl.deniedBy}).`, 429);
   }
 
-  // 5. Cost budget — fail closed.
+  // 5. Cost budget - fail closed.
   const budget = await checkCostBudget({
     userId: context.userId,
     companyId: context.companyId,

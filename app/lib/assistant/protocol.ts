@@ -1,5 +1,5 @@
 /**
- * AI Assistant — Protocol Layer (Phase 0A)
+ * AI Assistant - Protocol Layer (Phase 0A)
  * =========================================
  *
  * The CANONICAL, SEMANTIC contract shared by every assistant client (web
@@ -103,7 +103,7 @@ export interface EntityRef {
  * (e.g. to judge whether a guide step's doneSignal was met). LOWER TRUST than
  * server-verified `visibleElementIds`: these are observation only and MUST NOT
  * drive any tenancy/permission decision. Mirrors `ObservedAction` from the
- * client `useBrowserFacts` hook (kept selector-free — `elementId` is a semantic
+ * client `useBrowserFacts` hook (kept selector-free - `elementId` is a semantic
  * registry id, never a DOM selector).
  */
 export interface RecentActionHint {
@@ -122,7 +122,7 @@ export interface RecentActionHint {
 /**
  * Everything the client is allowed to tell the server about where the user
  * is. Treated as HINTS ONLY. The server never reads tenancy or permissions
- * from here. Deliberately contains NO userId / companyId / permissions —
+ * from here. Deliberately contains NO userId / companyId / permissions -
  * those are session-derived server-side.
  */
 export interface AssistantClientHints {
@@ -185,7 +185,7 @@ export interface AssistantChatRequest {
 // ---------------------------------------------------------------------------
 
 /**
- * Highlight command — SEMANTIC. Carries an `elementId`, never a selector.
+ * Highlight command - SEMANTIC. Carries an `elementId`, never a selector.
  * Each client renders it natively (web: outline/glow/spotlight on the mapped
  * `data-assistant-id`; mobile: native highlight).
  */
@@ -199,7 +199,7 @@ export interface HighlightCommand {
 }
 
 /**
- * Guide-start command — tells the CLIENT step-engine to take over stepping for
+ * Guide-start command - tells the CLIENT step-engine to take over stepping for
  * a workflow the model just confirmed in Guide-me. Carries the semantic
  * workflowId (the client fetches the selector-free steps from
  * /api/assistant/workflow) and the workflow's startPage. SEMANTIC, never a

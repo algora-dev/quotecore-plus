@@ -836,7 +836,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                       </svg>
                       <p className="text-xs text-amber-800">
-                        <strong>Spam risk:</strong> This message contains {urlCountInBody} links. Emails with multiple URLs are more likely to land in spam or junk. Remove any extra links — the quote button is included automatically.
+                        <strong>Spam risk:</strong> This message contains {urlCountInBody} links. Emails with multiple URLs are more likely to land in spam or junk. Remove any extra links - the quote button is included automatically.
                       </p>
                     </div>
                   ) : (
@@ -874,7 +874,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                     prompt with a pre-send decision. */}
                 {sendStage === 'gate' && sendSuccess !== 'sent' ? (
                   <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
-                    <p className="text-sm font-medium text-slate-900">Before we send — do you want follow-ups?</p>
+                    <p className="text-sm font-medium text-slate-900">Before we send - do you want follow-ups?</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <button
                         type="button"
@@ -933,7 +933,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
 
                     {emailTemplates.length === 0 ? (
                       <div className="rounded-lg border border-slate-200 bg-white p-3">
-                        <p className="text-xs text-slate-500">You have no message templates yet — follow-ups need one.</p>
+                        <p className="text-xs text-slate-500">You have no message templates yet - follow-ups need one.</p>
                         <button onClick={goCreateTemplate} className="mt-2 text-xs font-medium text-orange-600 hover:text-orange-700 underline">
                           Create your first follow-up template
                         </button>
@@ -941,7 +941,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                     ) : (
                       <>
                         {/* Add buttons FIRST. User explicitly creates a rule
-                            (max 3) — nothing is pre-populated. Black/white,
+                            (max 3) - nothing is pre-populated. Black/white,
                             orange glow on hover. */}
                         <div className="flex flex-wrap gap-2">
                           <button
@@ -964,7 +964,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
 
                         {draftRules.length === 0 ? (
                           <p className="text-[11px] text-slate-500">
-                            Add a follow-up above to get started — choose a trigger-based rule (fires on accept / decline / dispute) or a time-based chase. You can add up to 3.
+                            Add a follow-up above to get started - choose a trigger-based rule (fires on accept / decline / dispute) or a time-based chase. You can add up to 3.
                           </p>
                         ) : null}
 

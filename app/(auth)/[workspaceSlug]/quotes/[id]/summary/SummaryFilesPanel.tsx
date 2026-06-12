@@ -21,7 +21,7 @@ interface Props {
   quoteId: string;
   companyId: string;
   files: FileEntry[];
-  /** When true the company is over storage — block file uploads. */
+  /** When true the company is over storage - block file uploads. */
   isOverStorage?: boolean;
 }
 

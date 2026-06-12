@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * useAssistantHints — assemble the client hint envelope (Phase 2)
+ * useAssistantHints - assemble the client hint envelope (Phase 2)
  * ================================================================
  * Builds the UNTRUSTED hint envelope the widget sends with each turn:
  *   - screenKey: a semantic key derived from the current route (NOT the raw
@@ -10,7 +10,7 @@
  *     `data-assistant-id`, with a legacy `data-copilot` fallback during the
  *     migration window).
  *
- * Tenancy/permissions are deliberately ABSENT — the server derives those from
+ * Tenancy/permissions are deliberately ABSENT - the server derives those from
  * the session. This hook only reports observable, low-trust UI state.
  */
 
@@ -44,7 +44,7 @@ const IN_APP_TOP = new Set([
 export function pathnameToScreenKey(pathname: string | null): string {
   if (!pathname) return 'unknown';
   const parts = pathname.replace(/^\//, '').split('/');
-  // Drop the workspace slug (first segment) for in-app routes — BUT only when
+  // Drop the workspace slug (first segment) for in-app routes - BUT only when
   // the first segment is actually a slug. If it's already a known in-app top
   // route (a slug-less authored startPage like "/invoices"), keep it.
   const PUBLIC_TOP = new Set(['docs', 'login', 'signup', 'account', 'onboarding']);

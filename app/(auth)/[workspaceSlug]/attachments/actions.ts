@@ -38,7 +38,7 @@ export type AttachmentActionResult<T = void> =
   | { ok: false; code: string; message: string };
 
 // ---------------------------------------------------------------------------
-// loadAttachments — list company attachments (active first, then archived)
+// loadAttachments - list company attachments (active first, then archived)
 // ---------------------------------------------------------------------------
 
 export async function loadAttachments(): Promise<AttachmentRow[]> {
@@ -57,7 +57,7 @@ export async function loadAttachments(): Promise<AttachmentRow[]> {
 }
 
 // ---------------------------------------------------------------------------
-// createAttachment — record a freshly-uploaded library file
+// createAttachment - record a freshly-uploaded library file
 // ---------------------------------------------------------------------------
 // The file must already be in the QUOTE-DOCUMENTS bucket under
 // {companyId}/library/ via the signed-upload flow (scope: 'library'). This
@@ -134,7 +134,7 @@ export async function createAttachment(args: {
     if (error) throw new Error(error.message);
 
     const attachmentId = (data as { id: string }).id;
-    cleanupPath = null; // success — keep the object
+    cleanupPath = null; // success - keep the object
     revalidatePath(`/[workspaceSlug]/attachments`, 'page');
     return { ok: true, data: { attachmentId } };
   } catch (err) {
@@ -161,7 +161,7 @@ export async function createAttachment(args: {
 }
 
 // ---------------------------------------------------------------------------
-// cleanupOrphan — best-effort delete of a just-uploaded library object whose
+// cleanupOrphan - best-effort delete of a just-uploaded library object whose
 // metadata row failed to create. Caller passes only a company-verified path
 // (checked against the {companyId}/library/ prefix) so this can never remove
 // an object outside the caller's folder. The storage.objects DELETE trigger
@@ -258,7 +258,7 @@ export async function unarchiveAttachment(attachmentId: string): Promise<Attachm
 }
 
 // ---------------------------------------------------------------------------
-// deleteAttachment — hard removal; deletes storage object + frees slot/storage
+// deleteAttachment - hard removal; deletes storage object + frees slot/storage
 // ---------------------------------------------------------------------------
 // Removing the storage object fires the storage.objects DELETE trigger, which
 // decrements storage_used_bytes automatically. We delete the metadata row
@@ -324,7 +324,7 @@ export async function deleteAttachment(attachmentId: string): Promise<Attachment
 }
 
 // ---------------------------------------------------------------------------
-// loadAttachmentEntitlements — for page SSR (gating banner + cap display)
+// loadAttachmentEntitlements - for page SSR (gating banner + cap display)
 // ---------------------------------------------------------------------------
 
 export async function loadAttachmentEntitlements() {
@@ -341,7 +341,7 @@ export async function loadAttachmentEntitlements() {
 }
 
 // ---------------------------------------------------------------------------
-// loadAttachmentsForPicker — active attachments only, minimal shape
+// loadAttachmentsForPicker - active attachments only, minimal shape
 // ---------------------------------------------------------------------------
 // Used by the "Add extra file" picker at quote-send time. Archived files are
 // excluded. Returns enough to display + later attach (storage_path + file_name).

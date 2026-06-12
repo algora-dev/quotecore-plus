@@ -26,7 +26,7 @@ interface Props {
   onSubmit: (data: TemplateFormData) => Promise<void>;
   onCancel: () => void;
   saving: boolean;
-  /** When true the company is over storage — block logo upload. */
+  /** When true the company is over storage - block logo upload. */
   isOverStorage?: boolean;
 }
 

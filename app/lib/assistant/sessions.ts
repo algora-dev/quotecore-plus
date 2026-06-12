@@ -1,5 +1,5 @@
 /**
- * AI Assistant — Session & Message Persistence (Phase 1)
+ * AI Assistant - Session & Message Persistence (Phase 1)
  * =======================================================
  * Create/append assistant_sessions + assistant_messages via the service
  * client. Tenancy is passed in (already session-derived by the route); this
@@ -102,7 +102,7 @@ export async function persistMessage(input: PersistMessageInput): Promise<void> 
   }
 }
 
-/** Append an audit event (metadata only — no raw prompt/chunk content). */
+/** Append an audit event (metadata only - no raw prompt/chunk content). */
 export async function recordEvent(input: {
   sessionId?: string;
   userId: string;

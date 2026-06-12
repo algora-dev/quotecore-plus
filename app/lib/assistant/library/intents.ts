@@ -1,5 +1,5 @@
 /**
- * AI Assistant — Authored Workflow Intents (Stage 2)
+ * AI Assistant - Authored Workflow Intents (Stage 2)
  * ===================================================
  * The ONLY net-new authored data in the workflow library. A map of
  * workflow id → natural-language phrasings a user might type that should map
@@ -11,7 +11,7 @@
  * job", "send it to my customer", "order materials"). 3-6 per workflow.
  *
  * NOTE on the cross-page example (Shaun): the quote-builder workflow includes
- * "add a component to a quote" / "add a component to this quote" — a user on
+ * "add a component to a quote" / "add a component to this quote" - a user on
  * the Components page who says "add a component" often means adding one to a
  * QUOTE (quote-builder), not creating a library component (`components`). Both
  * surface as candidates; the chatbot disambiguates using browser facts.

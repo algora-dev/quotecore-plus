@@ -12,7 +12,7 @@ interface Props {
   action: (id: string) => Promise<ResetResult>;
   /** The entity id to reset. */
   id: string;
-  /** "Order" | "Invoice" | "Quote" — used in copy. */
+  /** "Order" | "Invoice" | "Quote" - used in copy. */
   entityLabel: 'Order' | 'Invoice' | 'Quote';
   /** Where to send the user after a successful reset (defaults to refresh). */
   redirectTo?: string;
@@ -29,7 +29,7 @@ interface Props {
  * stamps are wiped), it always goes through a confirm modal.
  *
  * Tooltip copy (Shaun, locked 2026-06-10):
- *   "Reset if you want to start fresh and send a new <Entity> — Caution, all
+ *   "Reset if you want to start fresh and send a new <Entity> - Caution, all
  *    previous data and links will be void if you reset"
  */
 export function ResetButton({ action, id, entityLabel, redirectTo, className }: Props) {

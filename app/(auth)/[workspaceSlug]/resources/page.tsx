@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 /**
- * Resource Library hub — a cards landing page (styled like the dashboard).
+ * Resource Library hub - a cards landing page (styled like the dashboard).
  * Each card links to its own sub-route so URLs are clean and the AI assistant
  * can tell exactly which section the user is on.
  *
@@ -150,7 +150,7 @@ export default async function ResourcesHubPage({
         <Link
           href={`${base}/tutorials`}
           data-copilot="resources-tutorials-link"
-          className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(0,0,0,0.25)]"
+          className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />

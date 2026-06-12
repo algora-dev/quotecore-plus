@@ -32,7 +32,7 @@ export default async function InvoicePage({ params }: Props) {
     .eq('invoice_id', id)
     .order('sort_order');
 
-  // Load company defaults (currency only — no default_logo_url column)
+  // Load company defaults (currency only - no default_logo_url column)
   const { data: company } = await admin
     .from('companies')
     .select('name, default_currency')

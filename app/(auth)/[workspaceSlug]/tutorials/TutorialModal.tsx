@@ -15,7 +15,7 @@ interface Props {
 }
 
 /**
- * Tutorial modal — pages through a tutorial's content and offers two CTAs:
+ * Tutorial modal - pages through a tutorial's content and offers two CTAs:
  *   - "Go to <feature>"        (accent) → router.push(ctaHref)
  *   - "Walk me through with Q" (black)  → navigate to start URL + launch guide
  *
@@ -74,9 +74,6 @@ export function TutorialModal({ tutorial, base, assistantEnabled, onClose }: Pro
       role="dialog"
       aria-modal="true"
       aria-labelledby="tutorial-modal-title"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
     >
       <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl">
         {/* Header */}
@@ -160,7 +157,7 @@ export function TutorialModal({ tutorial, base, assistantEnabled, onClose }: Pro
           </div>
         ) : null}
 
-        {/* CTAs — always visible so the user can bail to the feature any time. */}
+        {/* CTAs - always visible so the user can bail to the feature any time. */}
         <div className="flex flex-col-reverse gap-2 border-t border-slate-100 px-6 py-4 sm:flex-row sm:justify-end">
           <button
             type="button"

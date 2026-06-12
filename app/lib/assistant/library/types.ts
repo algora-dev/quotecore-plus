@@ -1,10 +1,10 @@
 /**
- * AI Assistant — Workflow Library Types (Stage 2)
+ * AI Assistant - Workflow Library Types (Stage 2)
  * ================================================
  * The SEMANTIC, selector-free shapes the chatbot (Stage 3) will query when it
  * needs to know "what workflow does the user want, what are its steps, and how
  * do I know a step is done". Derived at module load FROM the authored Copilot
- * guides (see workflowLibrary.ts) — these types describe the derived view, not
+ * guides (see workflowLibrary.ts) - these types describe the derived view, not
  * the raw guide content.
  *
  * Hard rules (mirror protocol.ts ARCH LOCK):
@@ -27,7 +27,7 @@ export type LibraryTrade = 'roofing' | 'generic';
  *                       (e.g. a modal field shows up after a button click).
  *   - clicked         : the step's own element was clicked (no follow-on
  *                       element to watch for).
- *   - manual          : no auto-detectable signal — user-driven or pure
+ *   - manual          : no auto-detectable signal - user-driven or pure
  *                       navigation; the chatbot must rely on browser facts /
  *                       the user's word.
  *
@@ -74,7 +74,7 @@ export interface LibraryWorkflow {
   trade: LibraryTrade;
   /**
    * Natural-language phrasings a user might say that map to this workflow.
-   * Authored data (see intents.ts) — NOT derived from code logic. Used by the
+   * Authored data (see intents.ts) - NOT derived from code logic. Used by the
    * keyword candidate-finder; the chatbot refines from there.
    */
   intents: string[];

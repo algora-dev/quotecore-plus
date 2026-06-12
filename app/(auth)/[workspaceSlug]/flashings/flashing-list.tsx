@@ -23,7 +23,7 @@ interface Props {
   featureLabel?: string;
   /** Trade-aware singular label: 'Flashing' / 'Drawing/Image'. */
   featureLabelSingular?: string;
-  /** When true the company is over storage — block image uploads. */
+  /** When true the company is over storage - block image uploads. */
   isOverStorage?: boolean;
 }
 

@@ -75,7 +75,7 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
       .select(
         'id, company_id, measurement_system, material_margin_enabled, material_margin_percent, labor_margin_enabled, labor_margin_percent, cq_footer_text',
       )
-      // (quote taxes intentionally NOT loaded — orders default to no tax)
+      // (quote taxes intentionally NOT loaded - orders default to no tax)
       .eq('id', quoteId)
       .eq('company_id', profile.company_id)
       .single();
@@ -117,7 +117,7 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
     let lines: LineByLineItem[] = [];
 
     if (saved.length > 0) {
-      // Saved lines win — mirror CustomerQuoteEditor's loadedLines mapping.
+      // Saved lines win - mirror CustomerQuoteEditor's loadedLines mapping.
       lines = saved
         .map((s: any, idx: number): LineByLineItem | null => {
           if (s.line_type === 'component') {
@@ -137,7 +137,7 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
               sortOrder: typeof s.sort_order === 'number' ? s.sort_order : idx,
             };
           }
-          // Custom line — use the saved data verbatim.
+          // Custom line - use the saved data verbatim.
           return {
             id: `q-${s.id}`,
             text: s.custom_text || '',
@@ -151,7 +151,7 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
         })
         .filter((x): x is LineByLineItem => x !== null);
     } else {
-      // No saved lines — initialise from customer-visible components (margins on).
+      // No saved lines - initialise from customer-visible components (margins on).
       lines = comps
         .filter((c: any) => c.is_customer_visible)
         .map((c: any, idx: number): LineByLineItem => ({
@@ -176,7 +176,7 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
     // Taxes: orders default to NO tax (same as the custom blank line-by-line
     // path). The user opts in via the editor's tax controls. We deliberately do
     // NOT carry the quote's taxes across, even though the priced lines come from
-    // the quote — Shaun: order-from-quote must start tax-free by default.
+    // the quote - Shaun: order-from-quote must start tax-free by default.
     return {
       lines,
       footer: quote.cq_footer_text || '',

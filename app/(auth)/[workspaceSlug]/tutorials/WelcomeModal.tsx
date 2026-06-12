@@ -14,7 +14,7 @@ interface Props {
 /**
  * First-login Welcome modal. Renders once for brand-new users on the dashboard
  * (gated server-side by `users.tutorials_seen_at IS NULL`). Points them at the
- * Tutorials hub, the help docs, and Q — and suggests starting with Tutorials.
+ * Tutorials hub, the help docs, and Q - and suggests starting with Tutorials.
  *
  * Dismissing (any path) stamps `tutorials_seen_at` so it never shows again.
  */
@@ -43,9 +43,6 @@ export function WelcomeModal({ base, firstName }: Props) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="welcome-modal-title"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) dismiss();
-      }}
     >
       <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
         {/* Header */}
@@ -82,21 +79,21 @@ export function WelcomeModal({ base, firstName }: Props) {
             <li className="flex gap-2">
               <span className="font-semibold text-[#FF6B35]">1.</span>
               <span>
-                <span className="font-semibold">Tutorials</span> — quick cards explaining every feature. The fastest way to
+                <span className="font-semibold">Tutorials</span> - quick cards explaining every feature. The fastest way to
                 understand the whole app. <span className="text-slate-500">Start here.</span>
               </span>
             </li>
             <li className="flex gap-2">
               <span className="font-semibold text-[#FF6B35]">2.</span>
               <span>
-                <span className="font-semibold">Help docs</span> — the <span className="font-mono text-xs">?</span> icon
+                <span className="font-semibold">Help docs</span> - the <span className="font-mono text-xs">?</span> icon
                 (top right) opens searchable help for whatever screen you&apos;re on.
               </span>
             </li>
             <li className="flex gap-2">
               <span className="font-semibold text-[#FF6B35]">3.</span>
               <span>
-                <span className="font-semibold">Q</span> — your in-app assistant. Ask &quot;how do I…?&quot; and Q answers
+                <span className="font-semibold">Q</span> - your in-app assistant. Ask &quot;how do I…?&quot; and Q answers
                 or walks you through it step by step.
               </span>
             </li>

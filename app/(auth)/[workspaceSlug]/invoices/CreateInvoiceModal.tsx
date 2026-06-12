@@ -164,7 +164,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
                   </div>
                   <div>
                     <p className="font-semibold text-slate-900 text-sm">Blank Invoice</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Start from scratch — choose a template then build line items manually.</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Start from scratch - choose a template then build line items manually.</p>
                   </div>
                 </div>
               </button>
@@ -193,7 +193,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
                   </div>
                   <div>
                     <p className="font-semibold text-slate-700 text-sm">From a Job</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Coming soon — available once Jobs are live.</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Coming soon - available once Jobs are live.</p>
                   </div>
                 </div>
               </div>
@@ -298,7 +298,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
                   <button type="button" data-copilot="invoice-template-none" data-assistant-id="invoice-template-none" onClick={() => setSelectedTemplateId(null)}
                     className={`block w-full text-left p-3.5 rounded-xl border-2 transition-all ${selectedTemplateId === null ? 'border-[#FF6B35] bg-orange-50/40' : 'border-slate-200 hover:border-slate-300'}`}>
                     <p className="font-medium text-slate-900 text-sm">No template</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Skip — I&apos;ll fill in the details manually.</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Skip - I&apos;ll fill in the details manually.</p>
                   </button>
                   {templates.map((t) => (
                     <button key={t.id} type="button" onClick={() => setSelectedTemplateId(t.id)}

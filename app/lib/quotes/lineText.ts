@@ -13,7 +13,7 @@
  *     auto-generated component lines render exactly as before.
  *
  * The joined display uses the same em-dash separator the catalog composer
- * uses, so a line shows e.g. "Ridge cap — 12 lm" with units on, "Ridge cap"
+ * uses, so a line shows e.g. "Ridge cap - 12 lm" with units on, "Ridge cap"
  * with units off.
  */
 /**
@@ -57,7 +57,7 @@ export function displayLineText(
   // Catalog line: explicit description + quantity, no splitting.
   if (quantityText != null && quantityText !== '') {
     if (showUnits) {
-      return `${desc} — ${quantityText}`;
+      return `${desc} - ${quantityText}`;
     }
     return desc;
   }

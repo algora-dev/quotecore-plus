@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 interface Props {
   initialText: string;
-  /** Quantity portion (e.g. "12 lm"), separate from the description. Optional —
+  /** Quantity portion (e.g. "12 lm"), separate from the description. Optional -
    *  empty/blank means no quantity, which removes the description–quantity dash
    *  in the preview entirely. */
   initialQuantity?: string | null;
@@ -68,7 +68,7 @@ export function LineEditForm({
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
           className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
-          placeholder="e.g. 12 lm — leave blank for none"
+          placeholder="e.g. 12 lm - leave blank for none"
         />
       </div>
 

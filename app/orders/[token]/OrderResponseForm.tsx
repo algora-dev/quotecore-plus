@@ -125,7 +125,7 @@ export function OrderResponseForm({
 
         {infoSent ? (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-            Your request was sent — we&apos;ve let the sender know.
+            Your request was sent - we&apos;ve let the sender know.
           </div>
         ) : null}
 

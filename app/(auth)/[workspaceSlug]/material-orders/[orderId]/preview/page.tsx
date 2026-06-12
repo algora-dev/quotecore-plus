@@ -58,7 +58,7 @@ export default async function OrderPreviewPage(props: Props) {
   // Activity card is rendered ABOVE the order body (inside OrderPreview's
   // grey shell) to mirror the Quotes summary layout. It carries
   // data-exclude-pdf so it never lands on the printable order. Replaces
-  // the old standalone SupplierResponsePanel — supplier responses now
+  // the old standalone SupplierResponsePanel - supplier responses now
   // live in the Activity card's Unresolved tab.
   const activityCard = (
     <OrderActivityCard

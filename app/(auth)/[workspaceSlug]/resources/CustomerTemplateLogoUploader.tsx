@@ -8,7 +8,7 @@ interface Props {
   templateId: string;
   currentLogoUrl: string | null;
   onUploadComplete: (url: string) => void;
-  /** When true the company is over storage — block logo upload. */
+  /** When true the company is over storage - block logo upload. */
   isOverStorage?: boolean;
 }
 

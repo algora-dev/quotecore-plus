@@ -114,7 +114,7 @@ export default async function WorkspaceLayout({
 
             <main className="mx-auto w-full max-w-6xl px-6 py-10">{children}</main>
             {/*
-              AI Assistant widget. Self-gates on NEXT_PUBLIC_AI_ASSISTANT_V1 —
+              AI Assistant widget. Self-gates on NEXT_PUBLIC_AI_ASSISTANT_V1 -
               renders nothing when the flag is off. This is now the SOLE
               in-app help surface (legacy Copilot removed); the Help Drawer
               remains as a deterministic docs fallback.

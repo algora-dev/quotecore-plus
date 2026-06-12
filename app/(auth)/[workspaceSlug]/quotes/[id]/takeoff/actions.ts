@@ -123,7 +123,7 @@ export async function saveTakeoffMeasurements(
       .map(componentId => {
         const libComp = libById.get(componentId);
         if (!libComp) return null;
-        // Current-page measurements only — no H-01 aggregation.
+        // Current-page measurements only - no H-01 aggregation.
         const componentMeasurements = allMeasurementsForComponents.filter(m => m.componentId === componentId);
         const pitchType = libComp.default_pitch_type || 'none';
         // Cast: database.types.ts is stale; fixed_per_segment is a valid DB value.
@@ -294,7 +294,7 @@ export async function saveTakeoffMeasurements(
   // We use the admin client for this since saveFileMetadata uses RLS-authed
   // client and company_id is available from the earlier ownership check.
   // P1-1b: create quote_files records so all canvas snapshots appear in
-  // Files & Documents. Non-fatal — a failed record doesn't affect the save.
+  // Files & Documents. Non-fatal - a failed record doesn't affect the save.
   if (canvasImagePath || linesImagePath) {
     const admin = createAdminClient();
     const pageLabel = currentPageId ? ` - Page ${currentPageId.slice(0, 6)}` : '';
@@ -685,7 +685,7 @@ export async function createTakeoffPageForArea(
         page_order: (existingCount ?? 0) + 1,
         page_name: areaName,
         image_storage_path: imagePath ?? null,
-        // P1-1b: quote_roof_area_id is new — cast until database.types.ts regen.
+        // P1-1b: quote_roof_area_id is new - cast until database.types.ts regen.
         quote_roof_area_id: roofArea.id,
       } as any)
       .select('id')

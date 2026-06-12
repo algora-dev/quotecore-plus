@@ -8,7 +8,7 @@ import { TemplateForm } from './template-form';
 interface Props {
   initialTemplates: MaterialOrderTemplateRow[];
   onClose: () => void;
-  /** When true the company is over storage — block logo upload. */
+  /** When true the company is over storage - block logo upload. */
   isOverStorage?: boolean;
 }
 

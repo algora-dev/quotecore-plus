@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * assistantPersistence — survive navigation/remount.
+ * assistantPersistence - survive navigation/remount.
  * ===================================================
  * The assistant widget lives in the authed layout, but clicking a highlighted
  * nav link (e.g. Resources) triggers a route change that can remount the widget
@@ -31,7 +31,7 @@ function write(key: string, value: unknown): void {
   try {
     window.sessionStorage.setItem(key, JSON.stringify(value));
   } catch {
-    /* quota / disabled — ignore */
+    /* quota / disabled - ignore */
   }
 }
 

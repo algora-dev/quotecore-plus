@@ -1,5 +1,5 @@
 /**
- * GET /api/assistant/workflow  — Selector-free workflow step list (Stage 4)
+ * GET /api/assistant/workflow  - Selector-free workflow step list (Stage 4)
  * =========================================================================
  * READ-ONLY. Returns the full, selector-free step list for one workflow so the
  * CLIENT step-engine (useGuideEngine) can drive stepping deterministically
@@ -9,7 +9,7 @@
  * Auth + tenancy are resolved exactly like the chat route: identity/company/
  * trade come from the authenticated session (never the query string). The trade
  * decides which guide set (roofing | generic) the workflow is read from, so the
- * client gets the steps that match the user's company — same resolution path as
+ * client gets the steps that match the user's company - same resolution path as
  * the chat orchestrator (resolveServerContext).
  *
  * Query: ?id=<workflowId>
@@ -43,7 +43,7 @@ function json(body: unknown, status = 200) {
 }
 
 export async function GET(req: NextRequest) {
-  // Feature flag — same gate as the chat route.
+  // Feature flag - same gate as the chat route.
   if (!ASSISTANT_ENABLED) {
     return json({ error: 'invalid_request', message: 'Assistant is not enabled.' }, 404);
   }
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     return json({ error: 'invalid_request', message: 'Query param "id" is required.' }, 400);
   }
 
-  // Resolve trusted context from the SESSION (identity/company/trade) — the
+  // Resolve trusted context from the SESSION (identity/company/trade) - the
   // query string can only carry the workflow id, never tenancy. We supply a
   // minimal, valid hints envelope; resolveServerContext reads identity + trade
   // from the session, not from these hints.
@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
     return json({ workflow: null });
   }
 
-  // Selector-free projection — exactly the fields the client step-engine needs.
+  // Selector-free projection - exactly the fields the client step-engine needs.
   return json({
     workflow: {
       id: wf.id,

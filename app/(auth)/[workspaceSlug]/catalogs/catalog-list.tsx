@@ -16,7 +16,7 @@ interface Props {
   catalogCount: number;
   effectivePlanCode: string;
   subscriptionActive: boolean;
-  /** When true the company is over storage — block CSV uploads. */
+  /** When true the company is over storage - block CSV uploads. */
   isOverStorage?: boolean;
 }
 

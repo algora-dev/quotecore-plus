@@ -5,8 +5,8 @@ import { FollowUpBuilder } from './FollowUpBuilder';
 
 /**
  * "Schedule follow-up" pill for the order / invoice Activity card header.
- * Opens a modal hosting the SHARED FollowUpBuilder — the same rule-builder
- * UI the user met at send time — so scheduling from the Activity area
+ * Opens a modal hosting the SHARED FollowUpBuilder - the same rule-builder
+ * UI the user met at send time - so scheduling from the Activity area
  * feels familiar/identical. Replaces the earlier one-rule-at-a-time
  * EntityScheduleFollowUpButton.
  */

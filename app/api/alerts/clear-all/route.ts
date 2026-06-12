@@ -7,7 +7,7 @@ import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/sup
  * "Clear alerts" from the notification bell. The bell is a PREVIEW surface
  * only; the real home for alerts is the Message Center. Clearing the bell sets
  * `bell_cleared_at` on the alerts currently shown in the bell so they drop out
- * of the bell — and DELIBERATELY does NOT touch `is_read` or `status`. The
+ * of the bell - and DELIBERATELY does NOT touch `is_read` or `status`. The
  * Message Center keeps its own read/unread (orange) styling and folders
  * exactly as they were. The only way to permanently remove an alert is
  * Archive -> Delete in the Message Center.

@@ -199,7 +199,7 @@ export function InvoiceEditor({
 
   // Owner single download: capture the SAME on-screen InvoicePreview (under
   // [data-pdf-content]) into a PDF via the shared helper, so the download is a
-  // pixel match of this preview — identical to the bulk ZIP path (which renders
+  // pixel match of this preview - identical to the bulk ZIP path (which renders
   // the same InvoicePreview off-screen).
   async function handleDownloadPdf() {
     setDownloadingPdf(true);
@@ -289,7 +289,7 @@ export function InvoiceEditor({
     }
   }
 
-  // ── Core save (no redirect) — used by auto-save and the Save button ──
+  // ── Core save (no redirect) - used by auto-save and the Save button ──
   async function persistChanges() {
     await saveInvoiceLines(
       initial.id,
@@ -327,7 +327,7 @@ export function InvoiceEditor({
     setLastSaved(new Date());
   }
 
-  // ── Manual Save button — saves then returns to invoices list ──
+  // ── Manual Save button - saves then returns to invoices list ──
   async function handleSave() {
     setSaving(true);
     try {
@@ -392,10 +392,10 @@ export function InvoiceEditor({
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Top bar — rounded floating card on a continuous grey band, matching
+      {/* Top bar - rounded floating card on a continuous grey band, matching
           the Quotes summary style. The band (bg-slate-100) also backs the
           activity card below so header + activity read as one grey section
-          above the editor's two-pane body — no second-box look. Non-sticky. */}
+          above the editor's two-pane body - no second-box look. Non-sticky. */}
       <div className="bg-slate-50 px-4 pt-4">
       <div className="flex items-center justify-between px-4 py-3 border border-slate-200 rounded-2xl bg-white shadow-sm">
         <div className="flex items-center gap-3 min-w-0">
@@ -426,7 +426,7 @@ export function InvoiceEditor({
             <span className="text-xs text-slate-400">Saved</span>
           )}
 
-          {/* Public link — sharing it flips a draft to Sent (no email). */}
+          {/* Public link - sharing it flips a draft to Sent (no email). */}
           <button
             type="button"
             onClick={openCustomerView}
@@ -467,7 +467,7 @@ export function InvoiceEditor({
             defaultRecipientEmail={initial.customer_email}
           />
 
-          {/* Download PDF (owner) — same on-screen InvoicePreview, captured to
+          {/* Download PDF (owner) - same on-screen InvoicePreview, captured to
               a PDF that matches the bulk ZIP output exactly. */}
           <button
             type="button"
@@ -516,7 +516,7 @@ export function InvoiceEditor({
         </div>
       </div>
 
-      {/* Activity card — inside the same grey band as the header card, so
+      {/* Activity card - inside the same grey band as the header card, so
           header + activity read as one continuous grey section above the
           editor's full-bleed two-pane body. Full width, padded to align
           with the header card. data-exclude-pdf keeps it off the printed doc. */}
@@ -526,7 +526,7 @@ export function InvoiceEditor({
       </div>
       <div className="h-4 bg-slate-50" />
 
-      {/* Editor body — panes float as rounded cards on the slate-50 app
+      {/* Editor body - panes float as rounded cards on the slate-50 app
           background, with a gap between them (matches the rounded card
           language of the header/activity section above). */}
       <div className="flex flex-1 overflow-hidden relative bg-slate-50 px-4 pb-4 gap-4">
@@ -660,7 +660,7 @@ export function InvoiceEditor({
                                 )}
                               </div>
                             </div>
-                            {/* ── Show/hide toggles — checkbox pattern matching CustomerQuoteEditor ── */}
+                            {/* ── Show/hide toggles - checkbox pattern matching CustomerQuoteEditor ── */}
                             {!isReadOnly && (
                               <div className="flex items-center gap-4 mt-2 pt-2 border-t border-slate-100">
                                 <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
@@ -848,7 +848,7 @@ export function InvoiceEditor({
                   </div>
                 </div>
 
-                {/* Payment Details — editable per-invoice */}
+                {/* Payment Details - editable per-invoice */}
                 <div data-copilot="invoice-payment-details">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment Details</p>

@@ -563,7 +563,7 @@ export async function saveInvoicePaymentDetails(
 /**
  * Owner-settable lifecycle statuses for the Status dropdown on the invoices
  * list. Recipient/system-driven states (viewed, payment_reported, disputed)
- * are intentionally excluded from manual selection — they are surfaced via the
+ * are intentionally excluded from manual selection - they are surfaced via the
  * RecipientStatusBadge / status flow, not set by hand here.
  */
 const MANUAL_INVOICE_STATUSES = ['draft', 'sent', 'paid', 'cancelled'] as const;

@@ -33,7 +33,7 @@ const emptyMapping = (): Record<string, string | null> => ({
 });
 
 /** A stored header that is just a synthesised "Column A/B/C" label has no real
- *  title to display — we show only the positional letter for those. */
+ *  title to display - we show only the positional letter for those. */
 function realTitle(header: string, idx: number): string | null {
   const synthesised = header === `Column ${columnLetter(idx)}` || /^Column [A-Z]+$/.test(header);
   return synthesised ? null : header;
@@ -203,11 +203,11 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
             onChange={(e) => onChange({ ...value, [field.key]: e.target.value || null })}
             className={inputCls + ' bg-white'}
           >
-            <option value="">— Skip —</option>
+            <option value="">- Skip -</option>
             {headers.map((h, idx) => {
               const title = realTitle(h, idx);
               return (
-                <option key={h} value={h}>{`Col ${columnLetter(idx)}`}{title ? ` — ${title}` : ''}</option>
+                <option key={h} value={h}>{`Col ${columnLetter(idx)}`}{title ? ` - ${title}` : ''}</option>
               );
             })}
           </select>

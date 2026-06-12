@@ -805,7 +805,7 @@ export function ComponentList({
                 </option>
               ))}
             </select>
-            {/* Set as default button — only shown when a specific library is selected */}
+            {/* Set as default button - only shown when a specific library is selected */}
             {activeLibraryId && (
               <button
                 type="button"
@@ -1464,7 +1464,7 @@ function TypeSpecificFields(props: {
           <p className="text-xs text-slate-400 mt-1">Area = measured length x height.</p>
         </div>
       )}
-      {/* volume_3d has NO preset depth — depth is entered per measurement in the quote builder / takeoff */}
+      {/* volume_3d has NO preset depth - depth is entered per measurement in the quote builder / takeoff */}
       {measurementType === 'volume' && (
         <div>
           <label className="block text-xs text-slate-500 mb-1">Component depth (mm)</label>

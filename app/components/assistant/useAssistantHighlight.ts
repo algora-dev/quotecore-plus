@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * useAssistantHighlight — web executor for highlight commands (Phase 4)
+ * useAssistantHighlight - web executor for highlight commands (Phase 4)
  * ======================================================================
  * Takes a server-issued, server-VALIDATED HighlightCommand (semantic elementId,
  * never a selector) and renders it on the page:
@@ -17,7 +17,7 @@
  *
  * Security note: this executor TRUSTS the server's validation (the element was
  * checked against the registry + the visible-element set server-side). It still
- * fails safe — if the element isn't in the DOM, it simply does nothing.
+ * fails safe - if the element isn't in the DOM, it simply does nothing.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -28,7 +28,7 @@ const STYLE_ID = 'assistant-highlight-styles';
 const HIGHLIGHT_MS = 4000;
 /** Persistent (guided-step) highlight max lifetime before it self-clears, if
  *  the user hasn't clicked anything yet. "Until next click OR this, whichever
- *  comes first" — so the spotlight doesn't linger forever on an idle screen. */
+ *  comes first" - so the spotlight doesn't linger forever on an idle screen. */
 const PERSISTENT_MAX_MS = 4000;
 
 /** Rect of the highlighted element (for arrow rendering), in viewport coords. */
@@ -47,7 +47,7 @@ export interface HighlightRect {
  * lived on the real element (outline + box-shadow) and we forced
  * `position: relative; z-index: 50` on it, which lifted nav buttons over their
  * neighbours and pushed the clickable outline-offset ring into the hit-test
- * path — making the control hard to click "through". Now the element itself is
+ * path - making the control hard to click "through". Now the element itself is
  * never restyled in a way that affects hit-testing; only a non-interactive
  * overlay ring is painted on top. The element stays 100% clickable.
  *
@@ -76,9 +76,9 @@ const CSS = `
   70%  { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
   100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
 }
-/* Base class — no layout changes, no z-index, no overlays. */
+/* Base class - no layout changes, no z-index, no overlays. */
 .assistant-hl {}
-/* Clip variant: element has overflow:hidden — render ring inside. */
+/* Clip variant: element has overflow:hidden - render ring inside. */
 .assistant-hl-clip {}
 /* ── Treatments ────────────────────────────────────────────────────────── */
 .assistant-hl-glow {
@@ -152,7 +152,7 @@ export function useAssistantHighlight(
   enabled: boolean = true,
   /**
    * Persistent mode (Guide-me follow-along). When true, the highlight does NOT
-   * auto-clear after HIGHLIGHT_MS — it stays on the element until the highlight
+   * auto-clear after HIGHLIGHT_MS - it stays on the element until the highlight
    * changes or is removed (i.e. until Copilot advances to the next step). The
    * server-SSE highlight path keeps the default time-boxed behaviour.
    */
@@ -170,7 +170,7 @@ export function useAssistantHighlight(
       setRect(null);
       return;
     }
-    // Already dismissed by a click for THIS exact highlight — don't re-apply.
+    // Already dismissed by a click for THIS exact highlight - don't re-apply.
     if (highlight.key && dismissedKeyRef.current === highlight.key) {
       setRect(null);
       return;
@@ -196,7 +196,7 @@ export function useAssistantHighlight(
       );
       if (clips) el.classList.add('assistant-hl-clip');
     } catch {
-      /* getComputedStyle can throw on detached nodes — ignore. */
+      /* getComputedStyle can throw on detached nodes - ignore. */
     }
     // Only scroll if the control is actually off-screen. A smooth scroll while
     // the user is reaching for an already-visible control (e.g. a top-nav
@@ -231,14 +231,14 @@ export function useAssistantHighlight(
     };
 
     // RELEASE ON ANY CLICK (both modes). The highlight clears the instant the
-    // user clicks ANYWHERE — including the highlighted control itself. This
+    // user clicks ANYWHERE - including the highlighted control itself. This
     // kills the "sticky glow" UX glitches: the visual is a momentary pointer,
     // not a persistent overlay that fights the user's focus. If the user forgets
     // what was highlighted, Back→Next re-fires it. Facts auto-advance / the Next
     // button drive the NEXT highlight when appropriate.
     // Deferred by 0ms so the click that TRIGGERED this highlight (e.g. the Next
     // button, or the action that advanced the step) doesn't immediately clear
-    // it — we clear on the user's NEXT click.
+    // it - we clear on the user's NEXT click.
     const onDocClick = () => {
       // Mark THIS highlight key dismissed so the effect won't re-apply it on a
       // subsequent re-render while the engine is still on the same step.
@@ -247,7 +247,7 @@ export function useAssistantHighlight(
       // BEFORE the clicked control's own (React) handler. Calling
       // clearHighlight() synchronously here does a setState mid-dispatch, which
       // could re-render/teardown the element's stacking context before the
-      // click reaches it — the cause of "I have to click nav twice". Deferring
+      // click reaches it - the cause of "I have to click nav twice". Deferring
       // to the next frame lets the original click complete its real action
       // (navigation / button press) first, THEN we drop the ring.
       requestAnimationFrame(() => clearHighlight());
@@ -272,7 +272,7 @@ export function useAssistantHighlight(
     });
     };
 
-    // The target may not be in the DOM the instant the step becomes current —
+    // The target may not be in the DOM the instant the step becomes current -
     // e.g. a layout-picker MODAL (order-layout-line-by-line) mounts a beat
     // AFTER the click that opened it. Resolving once and bailing left those
     // controls un-highlighted ("Q says it highlighted Line by Line but it
@@ -296,7 +296,7 @@ export function useAssistantHighlight(
         } else if (attempts >= MAX_ATTEMPTS) {
           if (retryTimer !== null) window.clearInterval(retryTimer);
           retryTimer = null;
-          setRect(null); // element never appeared — fail safe
+          setRect(null); // element never appeared - fail safe
         }
       }, 50);
     }

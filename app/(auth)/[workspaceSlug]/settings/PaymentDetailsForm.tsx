@@ -36,7 +36,7 @@ export function PaymentDetailsForm({ current }: Props) {
       {hasDetails && (
         <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
           <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-3">
-            Preview — how this appears on invoices
+            Preview - how this appears on invoices
           </p>
           <div className="space-y-1.5 text-sm">
             {accountName && (
@@ -138,7 +138,7 @@ export function PaymentDetailsForm({ current }: Props) {
           placeholder="e.g. https://pay.stripe.com/… or PayPal.me/…"
           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
         />
-        <p className="text-xs text-slate-400 mt-1">Stripe, PayPal, GoCardless or any direct pay link — shown as a clickable button on invoices</p>
+        <p className="text-xs text-slate-400 mt-1">Stripe, PayPal, GoCardless or any direct pay link - shown as a clickable button on invoices</p>
       </div>
 
       {message && (

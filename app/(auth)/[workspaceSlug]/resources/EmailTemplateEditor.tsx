@@ -114,7 +114,7 @@ export function EmailTemplateEditor({
   );
   const [body, setBody] = useState(template?.body || DEFAULT_BODY_BY_KIND.quote_send);
   const [isDefault, setIsDefault] = useState(template?.is_default || false);
-  // Baked default attachment (company_attachments id) — Phase 4. The send-time
+  // Baked default attachment (company_attachments id) - Phase 4. The send-time
   // resolver re-verifies ownership; here we only offer this company's files.
   const [attachmentId, setAttachmentId] = useState<string | null>(
     template?.attachment_id ?? null,

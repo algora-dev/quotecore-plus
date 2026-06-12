@@ -4,7 +4,7 @@ import { createSupabaseServerClient } from '@/app/lib/supabase/server';
  * "Unresolved" tab body for the order Activity card.
  *
  * Orders don't carry a per-response `resolved_at` flag (unlike quote
- * revision requests or invoice disputes) — the order's lifecycle is
+ * revision requests or invoice disputes) - the order's lifecycle is
  * tracked by status stamps on the order row itself
  * (accepted/declined/info_requested). So this panel surfaces the
  * supplier responses that represent an *open question or objection*
@@ -12,7 +12,7 @@ import { createSupabaseServerClient } from '@/app/lib/supabase/server';
  * newest first. It's read-only: the user actions the order via the
  * order status itself (Reset / re-send), not per-response.
  *
- * Confirmations are intentionally excluded here — they live in the
+ * Confirmations are intentionally excluded here - they live in the
  * "Sent / activity" history, not the attention list.
  */
 
@@ -38,7 +38,7 @@ const ACTION_TONE: Record<string, string> = {
   other: 'bg-slate-50 text-slate-700 border-slate-200',
 };
 
-// Responses we consider "needs attention" — i.e. not a clean confirm.
+// Responses we consider "needs attention" - i.e. not a clean confirm.
 const UNRESOLVED_ACTIONS = new Set([
   'request_changes',
   'question',

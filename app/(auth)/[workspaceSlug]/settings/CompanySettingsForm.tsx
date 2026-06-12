@@ -22,7 +22,7 @@ interface Props {
   currentTaxes: EditableTax[];
   /** Phase 8 (Generic Trades): only rendered when the client flag is on. */
   currentDefaultTrade?: string | null;
-  /** When true the company is over storage — block logo uploads. */
+  /** When true the company is over storage - block logo uploads. */
   isOverStorage?: boolean;
 }
 
@@ -306,7 +306,7 @@ export function CompanySettingsForm({
         </div>
       )}
 
-      {/* Templates shortcut — quick access from the trade section */}
+      {/* Templates shortcut - quick access from the trade section */}
       <div className="py-4 border-t border-slate-100">
         <p className="text-sm font-semibold text-slate-900">Resource Library</p>
         <p className="text-xs text-slate-500 mt-0.5">Manage all your quote templates, message templates, customer quote templates, order templates, catalog files, and upload library.</p>

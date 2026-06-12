@@ -28,7 +28,7 @@ interface Props {
   /** Whether this company's plan includes scheduled follow-up messages. */
   canFollowups?: boolean;
   /** Activity card (server-rendered) shown ABOVE the order body, inside
-   *  the grey shell — mirrors the Quotes summary layout where Activity
+   *  the grey shell - mirrors the Quotes summary layout where Activity
    *  sits above the document. */
   activitySlot?: ReactNode;
 }
@@ -79,7 +79,7 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
 
   // Owner single download: capture the SAME on-screen OrderBody the user sees
   // (under [data-print-root]) into a PDF via the shared helper, so the
-  // download is a pixel match of this preview — identical to the bulk ZIP path
+  // download is a pixel match of this preview - identical to the bulk ZIP path
   // (which renders the same OrderBody off-screen). The existing
   // "Print / Save PDF" window.print() button is kept as-is for users who
   // prefer the browser dialog.
@@ -119,7 +119,7 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Top Bar — rounded floating card on the page's grey background,
+      {/* Top Bar - rounded floating card on the page's grey background,
           matching the Quotes summary style and the activity card chrome
           below it. Non-sticky (scrolls with the page like Quotes). app
           chrome only: data-exclude-pdf keeps it off the printed order. */}

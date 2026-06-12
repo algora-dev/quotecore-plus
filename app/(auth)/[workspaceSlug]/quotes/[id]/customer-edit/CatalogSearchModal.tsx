@@ -17,9 +17,9 @@ interface SearchHit {
 }
 
 interface ColumnMapping {
-  description: string | null; // "Item / Description"  — primary text
-  quantity: string | null;    // "Description / Quantity" — secondary text
-  price: string | null;       // "Price" — amount
+  description: string | null; // "Item / Description"  - primary text
+  quantity: string | null;    // "Description / Quantity" - secondary text
+  price: string | null;       // "Price" - amount
 }
 
 interface Props {
@@ -175,7 +175,7 @@ export function CatalogSearchModal({ workspaceSlug, onAdd, onClose }: Props) {
     // into the line's Description so all the row's text is always visible; the
     // price column goes into the line's Price. We pass the combined text as the
     // description and null quantity so nothing is hidden by the Units toggle.
-    const combined = quantity ? `${description} — ${quantity}` : description;
+    const combined = quantity ? `${description} - ${quantity}` : description;
     onAdd(combined, amount, hasPrice && amount > 0, null);
     onClose();
   }
@@ -362,7 +362,7 @@ export function CatalogSearchModal({ workspaceSlug, onAdd, onClose }: Props) {
                   })}
                   {results.length === 50 && (
                     <p className="text-xs text-slate-400 text-center py-2">
-                      Showing top 50 results — narrow your search for more.
+                      Showing top 50 results - narrow your search for more.
                     </p>
                   )}
                 </div>

@@ -15,7 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCompanyContext } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
-// search_catalog_rows not in generated types yet — pending migration apply.
+// search_catalog_rows not in generated types yet - pending migration apply.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyClient = any;
 

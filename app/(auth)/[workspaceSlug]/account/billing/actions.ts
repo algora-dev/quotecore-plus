@@ -398,7 +398,7 @@ export async function createCustomerPortalSession(): Promise<BillingActionResult
       if (!repair.ok) {
         return { ok: false, code: 'stripe_error', message: repair.message };
       }
-      // Repair succeeded — re-fetch the updated customer ID and retry once
+      // Repair succeeded - re-fetch the updated customer ID and retry once
       const { data: fixed } = await (await import('@/app/lib/supabase/admin')).createAdminClient()
         .from('companies')
         .select('stripe_customer_id')

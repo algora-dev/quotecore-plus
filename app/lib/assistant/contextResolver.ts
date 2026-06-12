@@ -1,5 +1,5 @@
 /**
- * AI Assistant — Server Context Resolver (Phase 0A)
+ * AI Assistant - Server Context Resolver (Phase 0A)
  * ==================================================
  *
  * Turns an UNTRUSTED client hint envelope into a TRUSTED server context
@@ -50,7 +50,7 @@ export interface VerifiedEntity extends EntityRef {
 }
 
 export interface AssistantServerContext {
-  /** From session — never the request body. */
+  /** From session - never the request body. */
   userId: string;
   companyId: string;
   /** Company default trade ('roofing' | other), server-resolved. Drives which
@@ -104,7 +104,7 @@ type EntityVerifier = (
 const ENTITY_VERIFIERS: Record<string, EntityVerifier> = {
   // Phase 0A ships the verification FRAMEWORK plus the one entity type whose
   // tenancy is confirmed against the live schema. Additional verifiers are
-  // added in Phase 3 when tools actually consume entity refs — each must be a
+  // added in Phase 3 when tools actually consume entity refs - each must be a
   // tenant-scoped lookup verified against database.types, NOT guessed.
   //
   // CONFIRMED: `quotes` is directly tenant-scoped via company_id; display name
@@ -121,7 +121,7 @@ const ENTITY_VERIFIERS: Record<string, EntityVerifier> = {
     return { name: row.job_name || row.quote_number || 'Quote' };
   },
   // TODO(Phase 3): `component` verifier. `components` is NOT a directly
-  // queryable public table in the typed client and has no direct company_id —
+  // queryable public table in the typed client and has no direct company_id -
   // it's tenant-scoped via its parent quote. Wire this through the correct
   // table/relationship once we confirm the access path against the live
   // schema (do not guess). Until then, component refs are dropped
@@ -235,7 +235,7 @@ export async function resolveServerContext(
   }
 
   // Company default trade (server-resolved, drives Guide-me's guide set).
-  // Fail-soft to roofing — a missing/erroring lookup must not break the turn.
+  // Fail-soft to roofing - a missing/erroring lookup must not break the turn.
   let trade = 'roofing';
   try {
     const admin = getAdmin();

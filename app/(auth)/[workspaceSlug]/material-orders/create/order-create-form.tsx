@@ -57,7 +57,7 @@ interface OrderCreateFormProps {
   workspaceSlug?: string;
   quoteData?: QuoteData | null;
   existingOrder?: ExistingOrderData | null;
-  /** When true the company is over storage — block logo upload. */
+  /** When true the company is over storage - block logo upload. */
   isOverStorage?: boolean;
   /** Layout family chosen up front (orders hub picker) and locked for this
    *  order. 'line_by_line' = customer-quote-style editor; 'components' (default)
@@ -144,7 +144,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   };
   const [headerExpanded, setHeaderExpanded] = useState(true);
   // Declutter: collapse the components control sidebar so the order-form
-  // preview fills the space. Pure layout state — sidebar stays mounted.
+  // preview fills the space. Pure layout state - sidebar stays mounted.
   const [componentsPanelCollapsed, setComponentsPanelCollapsed] = useState(false);
   const [saving, setSaving] = useState(false);
   
@@ -829,7 +829,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
       <div className="flex-1 flex overflow-hidden">
         {/* LEFT SIDEBAR - Order Components Control Panel (collapsible). Width
             animates to 0 on collapse; the flex-1 order-form pane auto-fills.
-            Sidebar stays mounted (no state loss) — only its width/opacity
+            Sidebar stays mounted (no state loss) - only its width/opacity
             transition. */}
         <div
           className={`bg-white border-r border-slate-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${
@@ -1019,7 +1019,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           </div>
         </div>
 
-        {/* Expand tab — only visible when the sidebar is collapsed. Lives
+        {/* Expand tab - only visible when the sidebar is collapsed. Lives
             between the sidebar and the form pane so it is never clipped.
             items-start keeps it pinned to the TOP of the column. */}
         <div className="flex items-start px-1 py-2">
@@ -1537,7 +1537,7 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
               value={componentName}
               onChange={(e) => setComponentName(e.target.value)}
               required
-              placeholder="e.g., Ridge Flashing, Valley Gutter — or pick/search above"
+              placeholder="e.g., Ridge Flashing, Valley Gutter - or pick/search above"
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
             <p className="mt-1 text-xs text-slate-400">Pick from your library or search a catalog above, or type a custom item here.</p>
@@ -1847,7 +1847,7 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
         </div>
       </div>
 
-      {/* Catalog search — reuses the same modal as the blank-quote builder.
+      {/* Catalog search - reuses the same modal as the blank-quote builder.
           On pick it fills the Component Name (and appends the quantity text if
           the catalog has one). It does not touch price; order lines price
           separately. */}
@@ -1855,7 +1855,7 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
         <CatalogSearchModal
           workspaceSlug={workspaceSlug}
           onAdd={(text, _amount, _showPrice, quantity) => {
-            const composed = quantity ? `${text} — ${quantity}` : text;
+            const composed = quantity ? `${text} - ${quantity}` : text;
             setComponentName(composed);
             setShowCatalogSearch(false);
           }}

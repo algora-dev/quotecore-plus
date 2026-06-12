@@ -40,7 +40,7 @@ const OPTIONS: {
   {
     key: 'line_by_line',
     title: 'Line by Line',
-    blurb: 'A clean text list — item, description, qty and price. Show, hide and edit each line like a customer quote.',
+    blurb: 'A clean text list - item, description, qty and price. Show, hide and edit each line like a customer quote.',
     img: '/order-layout-line-by-line.png',
   },
   {

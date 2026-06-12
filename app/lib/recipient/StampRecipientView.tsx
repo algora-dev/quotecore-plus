@@ -9,7 +9,7 @@ type Kind = 'quote' | 'order' | 'invoice';
  *
  * Renders nothing. Lives on the PUBLIC token pages so the "Read" status is
  * stamped by a genuine human page open (a POST/server action), NOT by the
- * page's GET render — which email/link scanners trigger and would falsely
+ * page's GET render - which email/link scanners trigger and would falsely
  * mark items read (MEMORY: "GET-on-mutate is a class of bug").
  *
  * The server actions themselves are idempotent, so a double-invoke (e.g.

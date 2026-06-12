@@ -19,7 +19,7 @@ export default async function FlashingsPage(props: Props) {
   const ent = await loadCompanyEntitlements(company.id);
 
   // Trade-aware label: 'Flashings' for roofing, 'Drawings & Images' for all
-  // other trades. Display copy only — internal identifiers unchanged.
+  // other trades. Display copy only - internal identifiers unchanged.
   const trade = (company as { default_trade?: string }).default_trade;
   const labels = getTradeLabels(trade);
   const featureLabel = labels.featureLabel;

@@ -34,7 +34,7 @@ interface Props {
   defaultTrade?: string;
   /** Phase 8 (Generic Trades): collections the user can pick from. */
   componentCollections?: Array<{ id: string; name: string; is_bootstrap: boolean }>;
-  /** When true the company is over storage — block plan file upload. */
+  /** When true the company is over storage - block plan file upload. */
   isOverStorage?: boolean;
 }
 

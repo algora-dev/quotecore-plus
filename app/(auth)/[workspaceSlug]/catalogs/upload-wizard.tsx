@@ -31,7 +31,7 @@ interface UploadWizardProps {
   workspaceSlug: string;
   onComplete: (catalog: Partial<CatalogRow>) => void;
   onClose: () => void;
-  /** When true the company is over storage — block CSV uploads. */
+  /** When true the company is over storage - block CSV uploads. */
   isOverStorage?: boolean;
 }
 
@@ -140,12 +140,12 @@ async function parseCsvFile(file: File): Promise<ParsedCsv> {
         }
 
         if (dataRows.length > MAX_ROWS) {
-          warnings.push(`File has ${dataRows.length.toLocaleString()} data rows — only the first ${MAX_ROWS.toLocaleString()} will be imported.`);
+          warnings.push(`File has ${dataRows.length.toLocaleString()} data rows - only the first ${MAX_ROWS.toLocaleString()} will be imported.`);
           dataRows = dataRows.slice(0, MAX_ROWS);
         }
 
         if (results.errors.length > 0) {
-          warnings.push(`${results.errors.length} parsing issue(s) detected — affected rows may be skipped.`);
+          warnings.push(`${results.errors.length} parsing issue(s) detected - affected rows may be skipped.`);
         }
 
         // Convert to row objects keyed by header
@@ -317,7 +317,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
 
   const TOTAL_STEPS = 4;
 
-  // Which mapping slot (if any) a header is assigned to — drives the column
+  // Which mapping slot (if any) a header is assigned to - drives the column
   // highlight in the combined preview/map step.
   const slotForHeader = (h: string): { label: string; color: string } | null => {
     if (columnMapping.description === h) return { label: 'Item / Description', color: 'bg-orange-100 text-orange-700 border-orange-300' };
@@ -393,7 +393,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                 <p className="font-medium text-slate-500">Tips for best results:</p>
                 <ul className="list-disc list-inside space-y-0.5 ml-1">
                   <li>Clear column headers help (e.g. Description, Price, Pack Size)</li>
-                  <li>No headers? No problem — we&apos;ll label columns A, B, C…</li>
+                  <li>No headers? No problem - we&apos;ll label columns A, B, C…</li>
                   <li>One item per row</li>
                   <li>Max 35,000 rows per catalog</li>
                 </ul>
@@ -476,13 +476,13 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                 </div>
               </div>
               {parsed.synthesised && (
-                <p className="mt-2 text-xs text-slate-400">No headers detected — columns labelled A, B, C…</p>
+                <p className="mt-2 text-xs text-slate-400">No headers detected - columns labelled A, B, C…</p>
               )}
 
               {/* Mapping */}
               <div data-copilot="catalog-wizard-map" className="mt-5 border-t border-slate-100 pt-4">
                 <p className="text-xs text-slate-500 mb-3">
-                  Choose which columns map to each field. All optional — unmapped fields are skipped. Item and Description combine into the quote line text.
+                  Choose which columns map to each field. All optional - unmapped fields are skipped. Item and Description combine into the quote line text.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {MAPPING_FIELDS.map((field) => (
@@ -493,9 +493,9 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                         onChange={(e) => setColumnMapping((m) => ({ ...m, [field.key]: e.target.value || null }))}
                         className={inputCls + ' bg-white'}
                       >
-                        <option value="">— Skip —</option>
+                        <option value="">- Skip -</option>
                         {parsed.headers.map((h, idx) => (
-                          <option key={h} value={h}>{`Col ${columnLetter(idx)}`}{parsed.titles[idx] ? ` — ${parsed.titles[idx]}` : ''}</option>
+                          <option key={h} value={h}>{`Col ${columnLetter(idx)}`}{parsed.titles[idx] ? ` - ${parsed.titles[idx]}` : ''}</option>
                         ))}
                       </select>
                     </div>
@@ -503,12 +503,12 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                 </div>
                 {columnMapping.price && (
                   <p className="mt-2 text-xs text-slate-500">
-                    Price preview: {parsed.rows[0]?.[columnMapping.price] ?? '—'} → {parsePrice(parsed.rows[0]?.[columnMapping.price] ?? '').toFixed(2)}
+                    Price preview: {parsed.rows[0]?.[columnMapping.price] ?? '-'} → {parsePrice(parsed.rows[0]?.[columnMapping.price] ?? '').toFixed(2)}
                   </p>
                 )}
                 <div className="mt-3 rounded-lg bg-blue-50 border border-blue-100 px-3 py-2">
                   <p className="text-xs text-blue-700">
-                    💡 You can create <strong>additional maps</strong> for this catalog once it&rsquo;s saved — go to the
+                    💡 You can create <strong>additional maps</strong> for this catalog once it&rsquo;s saved - go to the
                     Catalogs page, edit the catalog, and open the &ldquo;Maps&rdquo; tab. Extra maps reuse this same file
                     (no re-upload, no extra storage).
                   </p>

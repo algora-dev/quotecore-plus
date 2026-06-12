@@ -9,7 +9,7 @@ interface Props {
   companyId: string;
   onClose: () => void;
   onSaved: () => void;
-  /** When true the company is over storage — block logo upload. */
+  /** When true the company is over storage - block logo upload. */
   isOverStorage?: boolean;
 }
 

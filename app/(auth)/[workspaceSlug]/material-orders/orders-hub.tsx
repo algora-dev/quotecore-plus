@@ -75,7 +75,7 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
           </div>
         </button>
 
-        {/* Order Templates — managed in Resource Library */}
+        {/* Order Templates - managed in Resource Library */}
         <button
           onClick={() => router.push(`/${workspaceSlug}/resources?tab=order`)}
           className="block w-full p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group text-left"

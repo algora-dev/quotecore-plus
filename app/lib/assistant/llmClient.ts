@@ -1,5 +1,5 @@
 /**
- * AI Assistant — LLM Client (Phase 1)
+ * AI Assistant - LLM Client (Phase 1)
  * ====================================
  * Thin, swappable wrapper around the OpenAI SDK. Everything model-specific
  * lives here so the orchestrator never imports the SDK directly and the model
@@ -88,7 +88,7 @@ export interface ChatTurnResult {
 /**
  * Convert our internal LlmMessage shape into the OpenAI Chat Completions wire
  * format. Critically, assistant `tool_calls` must be nested under
- * `{ id, type:'function', function:{ name, arguments } }` — passing our flat
+ * `{ id, type:'function', function:{ name, arguments } }` - passing our flat
  * `{ id, name, arguments }` shape straight through (the old `as never`) made
  * OpenAI reject any follow-up request after a tool call with a 400, which the
  * route surfaced as the generic "Assistant error."

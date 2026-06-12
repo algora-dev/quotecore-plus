@@ -132,7 +132,7 @@ export interface QuoteBundleData {
    *   customer_name, job_name, created_at directly).
    * - `lines` are the customer-visible lines in the QuotePreview line shape
    *   (text / quantityText / amount / showPrice / showUnits), already filtered
-   *   to is_visible and ordered by sort_order — i.e. exactly what the customer
+   *   to is_visible and ordered by sort_order - i.e. exactly what the customer
    *   sees.
    * - `taxLines` are in the TaxLine shape QuotePreview expects (id/name/
    *   rate_percent/amount), and subtotal/total mirror the on-screen totals.
@@ -405,7 +405,7 @@ export async function loadQuoteBundleData(quoteId: string): Promise<QuoteBundleD
   //   total        = subtotal + taxTotal
   // The customer quote is built from `customer_quote_lines` (custom_text /
   // quantity_text / custom_amount), which is the persisted, customer-facing
-  // view — identical to the data the editor saved from the on-screen preview.
+  // view - identical to the data the editor saved from the on-screen preview.
   const previewLines = customerLines
     .filter((l: any) => l.is_visible !== false)
     .map((l: any) => ({
@@ -503,7 +503,7 @@ export async function loadQuoteBundleData(quoteId: string): Promise<QuoteBundleD
     },
     files: filesWithUrls,
     preview: {
-      // Raw `quotes` row — QuotePreview reads quote_number / customer_name /
+      // Raw `quotes` row - QuotePreview reads quote_number / customer_name /
       // job_name / created_at directly off this.
       quote: quote as Record<string, unknown>,
       lines: previewLines,

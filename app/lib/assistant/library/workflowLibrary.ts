@@ -1,8 +1,8 @@
 /**
- * AI Assistant — Workflow Library (Stage 2, Deliverable A)
+ * AI Assistant - Workflow Library (Stage 2, Deliverable A)
  * ========================================================
  * A typed, in-memory, server-safe library of workflows the chatbot (Stage 3)
- * can query. It is DERIVED AT MODULE LOAD from the authored Copilot guides —
+ * can query. It is DERIVED AT MODULE LOAD from the authored Copilot guides -
  * we never copy-paste guide content. The only net-new authored data is the
  * per-workflow `intents[]` (see intents.ts).
  *
@@ -162,7 +162,7 @@ export function listWorkflowSummaries(trade: string): LibraryWorkflowSummary[] {
 }
 
 // ---------------------------------------------------------------------------
-// Intent candidate-finder (keyword scoring — NO LLM, NO new dep)
+// Intent candidate-finder (keyword scoring - NO LLM, NO new dep)
 // ---------------------------------------------------------------------------
 
 export interface WorkflowMatch {
@@ -189,7 +189,7 @@ function tokenize(text: string): string[] {
 /**
  * Find candidate workflows for a natural-language query via case-insensitive
  * keyword/substring scoring over intents + name + summary. This is a
- * CANDIDATE-FINDER the chatbot refines — not a final classifier.
+ * CANDIDATE-FINDER the chatbot refines - not a final classifier.
  *
  * Scoring (cheap, explainable):
  *   - +5  : an intent string is a substring of the query (or vice-versa)

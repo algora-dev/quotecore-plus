@@ -1,5 +1,5 @@
 /**
- * AI Assistant — Cost / Token-Budget Guard (Phase 0A interface)
+ * AI Assistant - Cost / Token-Budget Guard (Phase 0A interface)
  * ==============================================================
  *
  * Enforces per-user and per-company token ceilings (config.ts COST_LIMITS) so
@@ -9,7 +9,7 @@
  * The persistent token-accounting store is the `assistant_token_usage` table
  * (Phase 0B migration `20260603100000`). It is service-role only. This module
  * reads/writes it via a service client. If accounting is structurally
- * unavailable (e.g. missing service env) we fail CLOSED — refuse rather than
+ * unavailable (e.g. missing service env) we fail CLOSED - refuse rather than
  * spend blind. When the assistant flag is OFF, the endpoint never reaches here.
  */
 

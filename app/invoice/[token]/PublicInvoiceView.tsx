@@ -63,7 +63,7 @@ function formatCurrency(amount: number, currency: string) {
 }
 
 function formatDate(dateStr: string | null) {
-  if (!dateStr) return '—';
+  if (!dateStr) return '-';
   return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
 }
 
@@ -129,7 +129,7 @@ function PaymentSentForm({ invoiceId, token }: { invoiceId: string; token: strin
     return (
       <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-5 text-center">
         <p className="text-emerald-700 font-semibold">✓ Payment reported</p>
-        <p className="text-sm text-emerald-600 mt-1">Thank you — the sender will confirm receipt.</p>
+        <p className="text-sm text-emerald-600 mt-1">Thank you - the sender will confirm receipt.</p>
       </div>
     );
   }
@@ -282,7 +282,7 @@ export function PublicInvoiceView({ invoice, lines, token }: Props) {
         )}
         {isPaymentReported && (
           <div className="rounded-xl bg-amber-50 border border-amber-200 px-5 py-3 text-center">
-            <p className="text-amber-700 font-semibold">Payment reported — awaiting confirmation by sender</p>
+            <p className="text-amber-700 font-semibold">Payment reported - awaiting confirmation by sender</p>
           </div>
         )}
         {isDisputed && (
@@ -355,13 +355,13 @@ export function PublicInvoiceView({ invoice, lines, token }: Props) {
                       )}
                     </td>
                     <td className="py-3 text-right text-slate-700">
-                      {line.show_quantity ? `${line.quantity} ${line.unit}` : '—'}
+                      {line.show_quantity ? `${line.quantity} ${line.unit}` : '-'}
                     </td>
                     <td className="py-3 text-right text-slate-700 hidden sm:table-cell">
-                      {line.show_price ? formatCurrency(line.unit_price, invoice.currency) : '—'}
+                      {line.show_price ? formatCurrency(line.unit_price, invoice.currency) : '-'}
                     </td>
                     <td className="py-3 text-right font-medium text-slate-900">
-                      {line.show_price ? formatCurrency(line.line_total, invoice.currency) : '—'}
+                      {line.show_price ? formatCurrency(line.line_total, invoice.currency) : '-'}
                     </td>
                   </tr>
                 ))}
@@ -405,7 +405,7 @@ export function PublicInvoiceView({ invoice, lines, token }: Props) {
               </div>
             </div>
 
-            {/* Bank details — individual copy rows */}
+            {/* Bank details - individual copy rows */}
             {(invoice.payment_details?.accountName || invoice.payment_details?.accountNumber) && (
               <div className="space-y-2 mb-3 pb-3 border-b border-orange-200">
                 {invoice.payment_details?.accountName && (

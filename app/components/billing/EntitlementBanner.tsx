@@ -53,7 +53,7 @@ function pickVariant(ent: CompanyEntitlements): Variant | null {
   const billingHref = 'View billing';
 
   // Storage-over-limit is independent of subscription status: a healthy,
-  // active plan can still be "red" on storage. Surface it first — file
+  // active plan can still be "red" on storage. Surface it first - file
   // uploads are blocked until they free space or upgrade. (Non-file actions
   // keep working.)
   if (ent.isOverStorage) {

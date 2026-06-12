@@ -8,7 +8,7 @@ interface Props {
 
 /**
  * Envelope icon in the top nav that opens the Message Center (/inbox).
- * Deliberately does NOT show an unread count — that's the bell's job (quick
+ * Deliberately does NOT show an unread count - that's the bell's job (quick
  * recent alerts). Clean black envelope by default; on hover it goes orange
  * with a glow + slight enlarge (matches the bell's hover treatment).
  * Heroicons outline envelope, 24x24.

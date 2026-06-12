@@ -187,7 +187,7 @@ export async function submitRevisionRequest(
 
   // Surface as an alert in the user's dashboard, reusing the existing alerts
   // table. Alert type is new (`revision_requested`) but the existing alerts
-  // list renders any type generically. Gated by the Message Center matrix —
+  // list renders any type generically. Gated by the Message Center matrix -
   // the request record above is saved regardless; only the alert is gated.
   if (await alertEnabled(supabase, quote.company_id, 'revision_requested')) {
     await supabase.from('alerts').insert({

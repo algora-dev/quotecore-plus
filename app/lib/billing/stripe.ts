@@ -163,7 +163,7 @@ export async function resolveStripePriceForPlan(
  * by subscription_plans.price_cents_monthly_original in the UI; it never
  * touches Stripe. To change a price, change the Stripe Price AND
  * price_cents_monthly together so they always match. See MEMORY.md
- * "PRICING — how to change a price".
+ * "PRICING - how to change a price".
  *
  * Returns null when the plan isn't active or has no Stripe price wired
  * up in the current mode (live vs test).
@@ -323,9 +323,9 @@ export async function repairStripeCustomerIfStale(
     }
   }
 
-  // Step 2: repair failed or no subscription_id — check if safe to null
+  // Step 2: repair failed or no subscription_id - check if safe to null
   if (!isTerminal) {
-    // Active billing — do not null. Caller must surface support message.
+    // Active billing - do not null. Caller must surface support message.
     console.error(
       `[stripe] repairStripeCustomerIfStale: cannot repair and subscription is active for company ${companyId}. Manual intervention required.`,
       { stripe_customer_id: company.stripe_customer_id, subscription_status: company.subscription_status },
@@ -338,7 +338,7 @@ export async function repairStripeCustomerIfStale(
     };
   }
 
-  // Step 3: terminal status + no valid subscription — safe to null
+  // Step 3: terminal status + no valid subscription - safe to null
   await admin
     .from('companies')
     .update({ stripe_customer_id: null, stripe_mode: currentMode })

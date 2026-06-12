@@ -56,7 +56,7 @@ interface Props {
   takeoffData?: any[];
   externalPhase?: Phase; // NEW: For URL-based navigation (v2)
   onPhaseChange?: (phase: Phase) => void; // NEW: Callback when phase changes
-  /** When true the company is over storage — block file uploads. */
+  /** When true the company is over storage - block file uploads. */
   isOverStorage?: boolean;
 }
 

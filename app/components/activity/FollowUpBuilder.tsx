@@ -19,7 +19,7 @@ import type { ScheduledTriggerEvent } from '@/app/lib/messages/scheduled-types';
  * "Triggered follow-up" (fires on an event, optional delay) or a
  * "Time-based follow-up" (a chase that fires after a delay and cancels
  * on response). Same rule-card layout, same add-buttons, same delay
- * inputs, same "Scheduled ✓" feedback — so a user who has sent before
+ * inputs, same "Scheduled ✓" feedback - so a user who has sent before
  * recognises this instantly.
  *
  * Difference from the send-time builder: this one does NOT run a send
@@ -116,7 +116,7 @@ export function FollowUpBuilder({
   const [error, setError] = useState<string | null>(null);
   // Editable recipient: prefilled from the item's associated contact email
   // (prior send history, else the entity's stored supplier/customer email).
-  // The user can override it, or type one in when none is on file — so a
+  // The user can override it, or type one in when none is on file - so a
   // missing email is no longer a dead-end. Mirrors the send-time builder,
   // which already lets the user edit the recipient before sending.
   const [recipientEmail, setRecipientEmail] = useState(defaultRecipientEmail ?? '');
@@ -247,7 +247,7 @@ export function FollowUpBuilder({
     return (
       <div className="rounded-lg border border-slate-200 bg-white p-3">
         <p className="text-xs text-slate-500">
-          You have no message templates yet — follow-ups need one. Create one in Resources → Templates first.
+          You have no message templates yet - follow-ups need one. Create one in Resources → Templates first.
         </p>
       </div>
     );
@@ -260,7 +260,7 @@ export function FollowUpBuilder({
         <span className="text-xs text-slate-500">{draftRules.length} / 3</span>
       </div>
 
-      {/* Recipient email — editable, prefilled from the item's contact email.
+      {/* Recipient email - editable, prefilled from the item's contact email.
           Lets the user confirm/override the address, or supply one when none
           is on file (e.g. an order/quote/invoice sent without a stored email). */}
       <div className="space-y-1">
@@ -277,7 +277,7 @@ export function FollowUpBuilder({
         />
         {!defaultRecipientEmail && (
           <p className="text-xs text-slate-400">
-            No email was on file for this item — enter the recipient address above.
+            No email was on file for this item - enter the recipient address above.
           </p>
         )}
       </div>
@@ -304,7 +304,7 @@ export function FollowUpBuilder({
 
       {draftRules.length === 0 ? (
         <p className="text-[11px] text-slate-500">
-          Add a follow-up above to get started — choose a trigger-based rule (fires on an event) or a time-based chase. You can add up to 3.
+          Add a follow-up above to get started - choose a trigger-based rule (fires on an event) or a time-based chase. You can add up to 3.
         </p>
       ) : null}
 

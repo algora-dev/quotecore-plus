@@ -1,7 +1,7 @@
 /**
  * P1-2: Central canonical mapping from measurement_type string to the
  * canvas tool that handles it. Use this everywhere instead of inline
- * switch/if chains — keeps tool-selection logic in one place.
+ * switch/if chains - keeps tool-selection logic in one place.
  */
 
 export type CanvasTool = 'area' | 'line' | 'multi_line' | 'point' | null;

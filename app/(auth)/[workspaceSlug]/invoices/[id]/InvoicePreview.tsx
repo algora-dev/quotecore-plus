@@ -29,7 +29,7 @@ interface Props {
 }
 
 function formatDate(dateStr: string) {
-  if (!dateStr) return '—';
+  if (!dateStr) return '-';
   try {
     return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
   } catch {
@@ -83,7 +83,7 @@ export function InvoicePreview({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 border-b border-slate-200">
         {[
           { label: 'Invoice Date', value: formatDate(invoiceDate) },
-          { label: 'Due Date', value: dueDate ? formatDate(dueDate) : '—' },
+          { label: 'Due Date', value: dueDate ? formatDate(dueDate) : '-' },
           { label: 'Invoice No.', value: invoice.invoice_number },
           { label: 'Payment Ref.', value: invoice.payment_reference },
         ].map((item, i) => (
@@ -129,13 +129,13 @@ export function InvoicePreview({
                     )}
                   </td>
                   <td className="py-3 text-right text-slate-700">
-                    {line.show_quantity !== false ? `${line.quantity} ${line.unit}` : '—'}
+                    {line.show_quantity !== false ? `${line.quantity} ${line.unit}` : '-'}
                   </td>
                   <td className="py-3 text-right text-slate-700">
-                    {line.show_price ? formatCurrency(line.unit_price, currency) : '—'}
+                    {line.show_price ? formatCurrency(line.unit_price, currency) : '-'}
                   </td>
                   <td className="py-3 text-right font-medium text-slate-900">
-                    {line.show_price ? formatCurrency(line.line_total, currency) : '—'}
+                    {line.show_price ? formatCurrency(line.line_total, currency) : '-'}
                   </td>
                 </tr>
               ))

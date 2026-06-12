@@ -1,0 +1,137 @@
+Tutorial notes:
+
+- First issue, the modal system has that same issue we found where clicking outside the modal anywhere closes the modal. Only the "x" in the top right of the modal should close it.
+- Highlight blocking the main nav buttons, Quotes, Orders, Invoices, Resources
+- For "Tutorials" buttons on Resources page and in Account settings add on hover orange glow behind. (Same as existing app style/design)
+- Long "—" dash is everywhere, please stop using it, replace with the shorter "-" dash (This is for everywhere in the app)
+
+
+Lets add 1 pop up modal for the first time the user actually lands on "Tutorials" page. The modal can say something like "Here you can quickly learn about every feature in the app, you may only need 1-2 features, but we have something to cover everything, and this is the fastest place to learn how you can be faster, more efficient, and save time and money using all the features. We suggest you start by learning about Quotes and Components, then Orders and Invoices, but you can choose anything that you like. For more in dept answers, Q is your personal assistant, use him! He's great" - Or something to this effect that is shorter/more effective.
+
+Quotes:
+
+- Manual mode
+	- Change txt to: Use saved components to quickly add lines to your quote that require pricing from measurements, items, or areas including complex calculations for labor, materials, pitch, area squared, length x height, volume etc. You can also add custom lines or catalog lines later in the customer quote editor section. Must have components saved - See components tutorial.
+
+Best when you already know your numbers or want a fully custom quote.
+
+You can add components or catalog items as lines too.
+- Digital Mode
+	- Needs to say "Measure everything in-app, on-screen, upload a plan, select the components to measure/add, and QuoteCore+ pre-populates your quote with all the info. (Digital mode also requires saved components)
+
+Best used with aerial images, or digital plans you would normally print off and manually measure."
+- Blank Quote
+	- Change text to "Start from an empty quote, add custom typed lines, or add lines from catalog/components freely — simplest way to start quoting.
+
+Blank quotes suit users not needing complex measuring or components, you can write each line, or populate a line from an uploaded catalog/save component by searching it"
+
+- Then What
+	- Change test to "Save, preview, edit, then send to your customer by link or email.
+
+See the "Sending" tutorial for how delivery and tracking work, "Components" or "Catalog" tutorials to learn how and why each of these powerful tools can help you create quotes faster and more accurately.
+
+Components:
+
+-When
+	- Change text to "Set up your common components first (the app seeds starter components so you can see and edit working examples).
+
+Edit edit components any time"
+
+Sending Quotes, Orders, Invoices:
+
+- Two ways to send
+	- Change text to "Send from QuoteCore+ — Sent via the app to your chosen recipient email with a tracked link (Tracks and alerts you for "read/accepted/declined/disputed/info requests" etc)
+
+Copy URL link — paste it anywhere (WhatsApp, your own email client). Both open the same live customer/supplier page. They just get sent differently"
+
+- Follow-ups at send time
+	- Change text to "When sending, you can attach automatic follow-up template messages (chase if no reply, or triggers on accept/decline). You can customise what type of message gets sent by creating a message template for each type of follow up.
+
+See the "Auto Follow-up" and "Templates" tutorials.
+
+Auto Follow-up Messages:
+
+- Rules
+	- Change text to "Up to 3 follows ups per quote/order/invoice.
+
+If one follow up triggers (e.g. accepted/declined/time based), any other parked follow-ups cancel themselves.
+
+Quotes/Orders support both kinds; invoices are time-based only reminders."
+
+- (Add this extra page) How to create follow ups
+	- Text: "You can create follow ups once you have saved/finished a Quote/Order/Invoice, you simple click "Send", you will add a recipient and all sending information then be asked if you want to send as is, or add "Follow-ups" click add follow up and complete the flow from there. The second place is after you have already sent a quote/order/invoice, go to its page, then you see near the top of the page "Schedule Follow-up", click this, follow the flow."
+
+Catalogs:
+
+- What
+	- Change text to "Upload a CSV file containing columns and rows of information you want to display in a quote/order/invoice. You can create multiple maps for each CSV, you can then search and auto fill lines on selection to ensure accurate up to date info and pricing, as well as saving you time typing out each line from another source.
+
+No more digging through PDFs for price, description, item codes - Store it all here!"
+
+- Why? (New page after "What")
+	- Catalogs can help you save time writing or copying lines into quotes/orders/invoices. You can use anything from existing CSVs from suppliers, to fully custom made CSV files that hold all your quoting items from labor, materials, descriptions, pricing and more. This system is extremely modular and flexible allowing you to quote/order/invoice anything at all accurately and quickly while never having to leave or look away from the QuoteCore+ app
+
+- Using it
+	- Change text to " In a quote, invoice, or order: Add line → Search catalog → type → pick the item → it drops in with description + price. You can edit this completely after selection."
+
+- Maps (New page)
+	- You can add multiple column maps for each Catalog that you can search/pull from ie; this allows you to have 1 or 2 master Catalogs that give you all the data you need for quoting/ordering/invoicing but you might want to pull different info for each of those. Maps allow you to pull information that suits a quote, an order, or an invoice without needing to customise your CSV and upload 3 different CSVs.
+You simply name the map, and then you can select that map when searching to line items.
+
+Templates:
+
+- What templates exist: Change to "What type of templates can I make"
+	- Change text to: "Quote templates — reusable fast start quote with specific components/extras.
+
+Message templates — pre-written send emails with auto-filling placeholders.
+
+Header templates — for quotes, orders, and invoices (your company / branding / letterhead)."
+
+Payment templates - For invoices
+
+- Why
+	- Change text to: "Save time re-typing the same intro email or rebuilding the same quote shape, or adding custom quote/order/invoice header info.
+
+Placeholders like the customer name, email body, company details, payment info fill themselves in."
+
+Drawings & Images:
+- Drawings & Images
+	- Change text to: "Use the drawing tool to sketch a detail or upload an image, then attach it to a component, or order so your customer or supplier sees exactly what you need them to see. Great for flashings or drawings with specific measurements/angles/shapes.
+
+This is the same tool whether your trade calls it "Drawings & Images" or, for roofing, "Flashings".
+
+Find it in Resources → Drawings & Images."
+
+Attachments:
+- Tip
+	- Change text to: "Set a default attachment on a message template so it auto-attaches every time you use that template. You can only select from uploaded attachments to "Add an attachment" or use existing files from a quote, like plan, measurements, digital take off etc."
+
+Orders:
+- From a Quote
+	- Change text to: "Open Orders → Order from Quote → pick the quote → it pre-fills the priced lines.
+
+Add your supplier header and send. You can edit each line, as well as the layout style depending on what you are ordering, there are 3 different layout options for orders. (Line by line, single column, and double column - these both allow to add components that have images/drawings. Great for roofing/construction orders, or when you require an image to show exactly what you need to order."
+
+- Line By Line: Change to "Custom Order"
+	- Change text to: "Build a custom order: add lines (custom, component, or catalog), set what shows, optional taxes/footer, then send.
+
+You can hide/show every line and its description or price if the supplier shouldn’t see certain figures. Everything can be edited completely.
+
+Invoices:
+- How
+	- change text to: " Invoices → New Invoice → blank or from a quote → add/adjust lines, set dates and payment details → save → send.
+
+You can create a payment details template to offer multiple payment instruction options, and to save time adding it per invoice. See the Resources pay "Templates"."
+
+Message Center / Alerts:
+- Why (New page after "What")
+	- "Message center gives you a central database for all alerts and messages, you can action certain items, look deeper into messages, disputes, follow ups, recipient actions like read, accepted, declined etc as well as create "To Do" lists, mark items as done, archive them, and keep order of everything in one place.
+
+Downloading & Deleting Files:
+- Add text "We suggest saving all quotes/orders/invoices monthly to your desired hard drive or PC as a backup, you can bulk download/delete easily from each quotes/orders/invoices pages"
+
+Q & Docs / Help:
+- Meet Q
+	- change text to: "Q is your personal in-app assistant. Ask "how do I…?" or "show me how to...?" and Q answers from the docs, or offers to walk you through it — highlighting each button as you go (that’s "Guide Me").
+
+For Guide Me, simply select the tab in the chat box when opened, you can then turn highlights on/off from there, Q will walk you through each step, sometimes the step will auto update, sometimes you will need to manually click "Next" in the chat box."

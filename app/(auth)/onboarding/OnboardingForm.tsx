@@ -34,7 +34,7 @@ export function OnboardingForm({
   const router = useRouter();
 
   // Final onboarding step: save preferences, then drop the user into the app.
-  // Q (the assistant / guide-me system) stays ON by default — the welcome
+  // Q (the assistant / guide-me system) stays ON by default - the welcome
   // copy promotes it, and it's the user's primary way to get help.
   function finishOnboarding() {
     const slug = companySlug;
@@ -83,7 +83,7 @@ export function OnboardingForm({
           </div>
           <h2 className="text-xl font-semibold text-slate-900">Welcome to QuoteCore+</h2>
           <p className="text-sm text-slate-600 max-w-md mx-auto">
-            To get started, use <span className="font-semibold text-slate-900">“Q”</span> — your
+            To get started, use <span className="font-semibold text-slate-900">“Q”</span> - your
             assistant for any help, guide-me assistance, or general questions to get you up and
             running easily.
           </p>

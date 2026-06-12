@@ -102,7 +102,7 @@ function timeAgo(dateStr: string): string {
 const INVOICE_STATUS_ORDER = ['draft', 'sent', 'paid', 'cancelled'];
 
 /**
- * Status dropdown for the invoices list — same interaction pattern as the
+ * Status dropdown for the invoices list - same interaction pattern as the
  * Orders (OrderStatusDropdown) and Quotes (JobStatusDropdown) lists so all
  * three match. Selecting a status persists via updateInvoiceStatus.
  */
@@ -115,7 +115,7 @@ function InvoiceStatusDropdown({ invoiceId, currentStatus }: { invoiceId: string
 
   const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.draft;
   // Statuses we can't manually switch to (recipient/system-driven) but may be
-  // the current value — the dropdown then shows them as the active, read-only
+  // the current value - the dropdown then shows them as the active, read-only
   // current state and only offers the manual options.
   const selectable = INVOICE_STATUS_ORDER.includes(status)
     ? INVOICE_STATUS_ORDER
@@ -610,7 +610,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
         </div>
       ) : (
         <div>
-          {/* Column headers — mirrors Quotes/Orders list header styling. Status
+          {/* Column headers - mirrors Quotes/Orders list header styling. Status
               sits in its own column immediately before Last Activity. The grid
               template MUST match the rows below so columns line up. */}
           <div className="hidden sm:grid grid-cols-[28px_1fr_1fr_140px_140px_120px_40px] gap-4 px-4 pb-2 text-xs font-medium text-slate-400 uppercase tracking-wide items-center">
@@ -644,7 +644,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
                 title="Click to open this invoice"
                 className={`grid sm:grid-cols-[28px_1fr_1fr_140px_140px_120px_40px] gap-4 items-center rounded-xl border bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${selectedIds.has(inv.id) ? 'border-orange-300 bg-orange-50/30' : 'border-slate-200'}`}
               >
-                {/* Selection checkbox — onChange + stopPropagation so it
+                {/* Selection checkbox - onChange + stopPropagation so it
                     selects (not navigates), matching the Quotes/Orders rows. */}
                 <input
                   type="checkbox"
@@ -664,7 +664,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
                     )}
                   </div>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    {inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString('en-GB') : '—'}
+                    {inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString('en-GB') : '-'}
                   </p>
                 </div>
 
@@ -681,7 +681,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
                   </p>
                 </div>
 
-                {/* Status — owner dropdown + recipient badge, beside Last Activity */}
+                {/* Status - owner dropdown + recipient badge, beside Last Activity */}
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <InvoiceStatusDropdown invoiceId={inv.id} currentStatus={inv.status} />
                   <RecipientStatusBadge status={invoiceRecipientStatus(inv)} />
@@ -777,7 +777,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
         title={`Delete ${selectedIds.size} selected invoice(s)?`}
         description={
           selectedNonDraftCount > 0
-            ? `Only draft invoices will be permanently deleted. ${selectedNonDraftCount} non-draft invoice(s) in your selection will be skipped — cancel sent invoices individually from their row menu. This cannot be undone.`
+            ? `Only draft invoices will be permanently deleted. ${selectedNonDraftCount} non-draft invoice(s) in your selection will be skipped - cancel sent invoices individually from their row menu. This cannot be undone.`
             : 'These draft invoices will be permanently deleted. This cannot be undone. Download a copy first if you want to keep records.'
         }
         confirmLabel="Delete drafts"

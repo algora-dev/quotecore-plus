@@ -1,11 +1,11 @@
 /**
- * AI Assistant — Tool Registry Scaffolding (Phase 0A)
+ * AI Assistant - Tool Registry Scaffolding (Phase 0A)
  * ====================================================
  *
  * The STABLE tool contract the orchestrator exposes to the model (plan §3.1).
  * Phase 0A defines the registry SHAPE, the V1 tool ids, their JSON-schema
  * parameter definitions, and per-tool permission scopes. Handlers are wired in
- * Phases 1/3/4 — this file intentionally contains NO handler logic and makes
+ * Phases 1/3/4 - this file intentionally contains NO handler logic and makes
  * no network/DB calls.
  *
  * Two hard rules (Gerald review M-06 + plan §8 security model):
@@ -98,7 +98,7 @@ export interface ToolDefinition {
 }
 
 // ---------------------------------------------------------------------------
-// V1 registry (definitions only — handlers wired later)
+// V1 registry (definitions only - handlers wired later)
 // ---------------------------------------------------------------------------
 
 export const V1_TOOLS: Record<V1ToolId, ToolDefinition> = {
@@ -178,7 +178,7 @@ export const V1_TOOLS: Record<V1ToolId, ToolDefinition> = {
   get_workflow_step: {
     id: 'get_workflow_step',
     description:
-      'Return a single step (by 0-based index) of a workflow plus the following step. YOU track which stepIndex the user is on and pass it here — progression is driven by you reading live browser facts (visibleElementIds + recentActions vs the step doneSignal), not by any stored progress. Returns the step title/instruction/elementId/page/doneSignal and the next step.',
+      'Return a single step (by 0-based index) of a workflow plus the following step. YOU track which stepIndex the user is on and pass it here - progression is driven by you reading live browser facts (visibleElementIds + recentActions vs the step doneSignal), not by any stored progress. Returns the step title/instruction/elementId/page/doneSignal and the next step.',
     requiresWrite: false,
     parameters: {
       type: 'object',
@@ -242,7 +242,7 @@ export const V1_TOOLS: Record<V1ToolId, ToolDefinition> = {
   begin_guide: {
     id: 'begin_guide',
     description:
-      'Hand the CONFIRMED workflow to the client step-engine so the user gets an instant "Next step →" button and follow-along highlighting WITHOUT another model turn per step. READ-ONLY: this only signals the client to start stepping the workflow you just confirmed — it changes no data. Call it exactly ONCE, right after the user confirms which workflow to be guided through, passing that workflowId. After calling it, present the FIRST step in chat as normal; the client drives subsequent steps. You can still answer questions mid-flow.',
+      'Hand the CONFIRMED workflow to the client step-engine so the user gets an instant "Next step →" button and follow-along highlighting WITHOUT another model turn per step. READ-ONLY: this only signals the client to start stepping the workflow you just confirmed - it changes no data. Call it exactly ONCE, right after the user confirms which workflow to be guided through, passing that workflowId. After calling it, present the FIRST step in chat as normal; the client drives subsequent steps. You can still answer questions mid-flow.',
     requiresWrite: false,
     parameters: {
       type: 'object',

@@ -13,7 +13,7 @@ import { UploadAttachmentModal } from './upload-attachment-modal';
 
 interface Props {
   attachments: AttachmentRow[];
-  /** When true the company is over storage — block new uploads. */
+  /** When true the company is over storage - block new uploads. */
   isOverStorage?: boolean;
 }
 

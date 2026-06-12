@@ -35,7 +35,7 @@ export interface TradeLabels {
    * "Flashings"; every other trade calls them "Drawings & Images". Used for
    * the entry button, the library page heading, list copy, and the canvas.
    * Internal identifiers (table `flashing_library`, `flashing_ids`, routes,
-   * data-copilot keys, file names) are NOT affected — display copy only.
+   * data-copilot keys, file names) are NOT affected - display copy only.
    */
   featureLabel: string;
   /** Singular form: "Flashing" / "Drawing/Image". */

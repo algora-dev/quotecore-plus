@@ -92,7 +92,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [showEditHeader, setShowEditHeader] = useState(false);
   const [showEditFooter, setShowEditFooter] = useState(false);
   // Declutter: collapse the left controls so the preview fills the space.
-  // Pure layout state — the panel stays mounted (no edit/autosave disruption).
+  // Pure layout state - the panel stays mounted (no edit/autosave disruption).
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   
@@ -527,7 +527,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             space. Visually identical to the old 50/50 grid when expanded
             (left keeps a 1fr-equivalent basis). */}
         <div className="flex flex-col lg:flex-row gap-6 items-start">
-          {/* Left Panel: Component Selection — collapsible to declutter. Fixed
+          {/* Left Panel: Component Selection - collapsible to declutter. Fixed
               basis (not 1fr) so the PREVIEW is the dominant section, matching
               the order editors; on collapse the preview goes full width. */}
           <CollapsiblePanel collapsed={panelCollapsed} widthClass="lg:w-[420px] lg:flex-shrink-0">
@@ -888,7 +888,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
 
           </CollapsiblePanel>
 
-          {/* Expand tab — only visible when collapsed; on the preview side so
+          {/* Expand tab - only visible when collapsed; on the preview side so
               it is never clipped by the collapsing panel's overflow. */}
           <ExpandTab
             collapsed={panelCollapsed}
@@ -896,7 +896,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             label="Components"
           />
 
-          {/* Right Panel: Live Preview — expands to fill when left collapses. */}
+          {/* Right Panel: Live Preview - expands to fill when left collapses. */}
           <div
             className="bg-white rounded-xl border border-slate-200 p-6 space-y-4 w-full lg:flex-1 lg:min-w-0"
             data-copilot="cl-right-panel"

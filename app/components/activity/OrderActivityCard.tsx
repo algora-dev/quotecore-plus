@@ -21,7 +21,7 @@ import { EntityDeleteAllMessagesButton } from './EntityDeleteAllMessagesButton';
  * ActivityCard (3 tabs: Unresolved / Scheduled / Sent) but specific to
  * orders:
  *   - Unresolved = open supplier responses (questions / change requests /
- *     declines / info requests). Read-only — orders are actioned via the
+ *     declines / info requests). Read-only - orders are actioned via the
  *     order status, not a per-response resolve flag.
  *   - Scheduled  = scheduled_messages keyed on order_id.
  *   - Sent       = outbound_messages keyed on related_order_id.

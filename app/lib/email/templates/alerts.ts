@@ -14,7 +14,7 @@ export type GenericAlertEmailInput = {
   title: string;
   /** One or two sentences of plain-text body. */
   body: string;
-  /** Optional CTA button — omitted when there's nowhere useful to send them. */
+  /** Optional CTA button - omitted when there's nowhere useful to send them. */
   ctaUrl?: string | null;
   ctaLabel?: string;
 };

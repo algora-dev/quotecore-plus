@@ -1,5 +1,5 @@
 /**
- * AI Assistant — UI Element Registry (Phase 0B)
+ * AI Assistant - UI Element Registry (Phase 0B)
  * ==============================================
  *
  * Single source of truth mapping semantic `elementId`s to human metadata.
@@ -7,7 +7,7 @@
  * `visibleElements`, flow authoring (§6a) and future voice/mobile.
  *
  * CANONICAL CONTRACT (Gerald M-01):
- *  - The registry stores SEMANTIC metadata only — NO CSS selector lives in the
+ *  - The registry stores SEMANTIC metadata only - NO CSS selector lives in the
  *    canonical entry. Clients resolve `elementId` to their own ref:
  *      web    -> `[data-assistant-id="<id>"]`  (via {@link webSelectorFor})
  *      mobile -> native / accessibility ref     (client-side)
@@ -153,7 +153,7 @@ const CURATED: Record<
     label: 'First component',
     role: 'button',
     description:
-      'In the Quote Builder, the first added component row — used to demonstrate expanding/editing a component on the quote.',
+      'In the Quote Builder, the first added component row - used to demonstrate expanding/editing a component on the quote.',
   },
   'nav-account': {
     label: 'Account',
@@ -196,7 +196,7 @@ const CURATED: Record<
     label: 'Blank Invoice',
     role: 'button',
     description:
-      'The "Blank Invoice" option in the Create Invoice pop-up. Starts a new invoice from scratch — you enter the customer name (and optional email), then pick a template.',
+      'The "Blank Invoice" option in the Create Invoice pop-up. Starts a new invoice from scratch - you enter the customer name (and optional email), then pick a template.',
   },
   'invoice-method-from-quote': {
     label: 'From a Quote',
@@ -214,7 +214,7 @@ const CURATED: Record<
     label: 'No template',
     role: 'button',
     description:
-      'The "No template" option in the Create Invoice template picker. Skips applying a saved invoice template — you fill business and payment details manually in the editor.',
+      'The "No template" option in the Create Invoice template picker. Skips applying a saved invoice template - you fill business and payment details manually in the editor.',
   },
   'invoice-create-confirm': {
     label: 'Create Invoice',

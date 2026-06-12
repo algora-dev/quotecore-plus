@@ -97,7 +97,7 @@ export default async function WorkspaceHome({
 
   return (
     <section className="space-y-6">
-      {/* First-login Tutorials welcome — renders once per new user. */}
+      {/* First-login Tutorials welcome - renders once per new user. */}
       {showWelcome ? <WelcomeModal base={`/${workspaceSlug}`} firstName={firstName} /> : null}
 
       {/* Header */}

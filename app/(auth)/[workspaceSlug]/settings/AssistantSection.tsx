@@ -9,7 +9,7 @@ type Props = {
 
 /**
  * Toggle for showing/hiding the Q chat assistant (launcher + panel) for this
- * user. Mirrors the old Copilot on/off control. Purely a UX preference — the
+ * user. Mirrors the old Copilot on/off control. Purely a UX preference - the
  * feature flag and API guards remain authoritative server-side.
  */
 export function AssistantSection({ initialEnabled }: Props) {

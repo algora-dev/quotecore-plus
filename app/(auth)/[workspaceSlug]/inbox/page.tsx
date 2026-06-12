@@ -8,7 +8,7 @@ import { InboxList } from './InboxList';
 export const dynamic = 'force-dynamic';
 
 /**
- * Message Center (v2) — an inbox of every alert/message across quotes,
+ * Message Center (v2) - an inbox of every alert/message across quotes,
  * orders and invoices, organised into folders (Active / To-Do / Archived).
  * The bell dropdown shows only recent items; this is the full inbox.
  */

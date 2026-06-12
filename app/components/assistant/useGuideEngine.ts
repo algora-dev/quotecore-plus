@@ -1,11 +1,11 @@
 'use client';
 
 /**
- * useGuideEngine — CLIENT-DRIVEN guided-step engine (Stage 4, Fix 1)
+ * useGuideEngine - CLIENT-DRIVEN guided-step engine (Stage 4, Fix 1)
  * ===================================================================
  * Decouples ADVANCING through a guided workflow from the LLM. Once a workflow
  * is confirmed, the CLIENT holds the full step list and drives stepping itself
- * — instant, deterministic, zero LLM tokens. The model is only used when the
+ * - instant, deterministic, zero LLM tokens. The model is only used when the
  * user actually chats (questions / stuck).
  *
  * Flow:
@@ -14,7 +14,7 @@
  *   2. The widget calls startWorkflow(workflowId): we GET the selector-free
  *      step list from /api/assistant/workflow and set currentIndex = 0.
  *   3. The widget shows a "Next step →" button. next() advances currentIndex
- *      synchronously — the steps are already in memory, so the click is INSTANT
+ *      synchronously - the steps are already in memory, so the click is INSTANT
  *      (no fetch/LLM). currentIndex+1 is always "preloaded" by virtue of being
  *      in the same in-memory array.
  *   4. The widget drives the highlight + step message from `current` directly
@@ -63,7 +63,7 @@ function navHopsForScreenKey(screenKey: string): NavHop[] {
     case 'quotes':
     case 'quote.new':
     // The customer-quote editor (catalog-add-to-quote start page) is reached
-    // via the Quotes hub — same first hop. No registered quotes-hub arrival
+    // via the Quotes hub - same first hop. No registered quotes-hub arrival
     // anchor exists, so this hop is manual (click Quotes → Next); the important
     // fix is that a highlighted nav hop now EXISTS for this start page at all.
     case 'quote.customer':
@@ -107,7 +107,7 @@ function navHopsForScreenKey(screenKey: string): NavHop[] {
 
 /**
  * Build the synthetic "navigate to the start page" steps when the user isn't
- * there yet — ONE step per hop (e.g. Resources -> Catalogs card = two steps).
+ * there yet - ONE step per hop (e.g. Resources -> Catalogs card = two steps).
  * Each hop auto-advances when its destination element appears (so clicking the
  * highlighted control moves the guide on), falling back to manual Next.
  * Returns [] when no navigation is needed (already on the right page / unknown).
@@ -176,7 +176,7 @@ export interface GuideEngine {
    *  user's current pathname so the engine can prepend a "get to the start
    *  page" step when they're not already there. */
   startWorkflow: (workflowId: string, currentPathname?: string | null) => Promise<void>;
-  /** Advance to the next step (instant — steps already in memory). */
+  /** Advance to the next step (instant - steps already in memory). */
   next: () => void;
   /** Go back one step (instant). No-op at the first step. */
   back: () => void;
@@ -248,7 +248,7 @@ export function useGuideEngine(): GuideEngine {
 
   const next = useCallback(() => {
     setCurrentIndex((prev) => {
-      // No-op at the last step — stay ACTIVE on it so the guide bar (and its
+      // No-op at the last step - stay ACTIVE on it so the guide bar (and its
       // "Finish" button) remains visible. Completion is now an explicit user
       // action (the Finish button -> reset), not an implicit jump on next().
       if (prev + 1 >= steps.length) {

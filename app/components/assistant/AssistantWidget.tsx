@@ -1,9 +1,9 @@
 'use client';
 
 /**
- * AssistantWidget — floating chat widget
+ * AssistantWidget - floating chat widget
  * =======================================
- * The in-app help surface (legacy Copilot removed — this is now the SOLE
+ * The in-app help surface (legacy Copilot removed - this is now the SOLE
  * guided-help surface). Floating, draggable, collapsible to a small message
  * emblem that reopens the conversation at its last point. Streams responses
  * over SSE via useAssistantChat.
@@ -31,8 +31,8 @@ import { loadGuide } from './assistantPersistence';
 /**
  * Render inline markdown emphasis (**bold**, _italic_ / *italic*) to React
  * nodes so guide-step + assistant text shows formatted instead of leaking the
- * raw markers (e.g. "_Order items_"). Deliberately tiny — emphasis only, no
- * links/headings/code — so there is NO new dependency and no block parsing.
+ * raw markers (e.g. "_Order items_"). Deliberately tiny - emphasis only, no
+ * links/headings/code - so there is NO new dependency and no block parsing.
  * Newlines are preserved by the bubble's `whitespace-pre-wrap`.
  */
 function renderInlineMarkdown(text: string): ReactNode[] {
@@ -92,8 +92,8 @@ function stepMessageText(step: GuideStep, highlightsOn: boolean): string {
  *  - If exactly one step's element is visible, that's the answer (high
  *    confidence).
  *  - If several are visible (elements repeat across steps), pick the EARLIEST
- *    visible step at/after 0 that the user hasn't clearly completed — i.e. the
- *    first actionable on-screen step — but only return it when it's unambiguous
+ *    visible step at/after 0 that the user hasn't clearly completed - i.e. the
+ *    first actionable on-screen step - but only return it when it's unambiguous
  *    enough; otherwise return null and let the chatbot ask.
  */
 function inferCurrentStepIndex(
@@ -106,10 +106,10 @@ function inferCurrentStepIndex(
       visibleStepIdxs.push(i);
     }
   });
-  if (visibleStepIdxs.length === 0) return null; // nothing on screen — ask
+  if (visibleStepIdxs.length === 0) return null; // nothing on screen - ask
   if (visibleStepIdxs.length === 1) return visibleStepIdxs[0]; // confident
   // Multiple on-screen candidates: only commit if they're CONTIGUOUS (a normal
-  // single-screen run of steps) — then the earliest is the right place to be.
+  // single-screen run of steps) - then the earliest is the right place to be.
   const first = visibleStepIdxs[0];
   const contiguous = visibleStepIdxs.every((v, k) => v === first + k);
   return contiguous ? first : null; // non-contiguous = genuinely ambiguous
@@ -118,7 +118,7 @@ function inferCurrentStepIndex(
 /** Does a recent action / visible-element set satisfy this step's doneSignal? */
 /**
  * Baseline captured the moment a step becomes current. Auto-advance must only
- * fire on a signal that is NEW relative to this baseline — otherwise a step
+ * fire on a signal that is NEW relative to this baseline - otherwise a step
  * whose done-element is ALREADY on screen (very common) would advance instantly,
  * cascading through every step and fast-forwarding the whole guide to Finish.
  */
@@ -142,7 +142,7 @@ function isStepDone(
   const freshActions = baseline ? recentActions.slice(baseline.actionsAtStart) : recentActions;
   switch (sig.kind) {
     case 'manual':
-      return false; // never auto-advance — rely on the Next button
+      return false; // never auto-advance - rely on the Next button
     case 'clicked': {
       const target = sig.elementId ?? step.elementId;
       return !!target && freshActions.some((a) => a.elementId === target && a.kind === 'click');
@@ -213,7 +213,7 @@ export function AssistantWidget(_props: Props) {
 
   // CLIENT step-engine (Stage 4, Fix 1): once the model confirms a workflow and
   // emits guide_start, the engine holds the full step list and drives stepping
-  // locally — instant, deterministic, zero LLM tokens per step.
+  // locally - instant, deterministic, zero LLM tokens per step.
   const engine = useGuideEngine();
 
   // The highlight to render: the engine's current-step highlight takes priority
@@ -234,7 +234,7 @@ export function AssistantWidget(_props: Props) {
         setHighlightsOn(false);
       }
     } catch {
-      /* localStorage unavailable — keep default */
+      /* localStorage unavailable - keep default */
     }
   }, []);
 
@@ -260,7 +260,7 @@ export function AssistantWidget(_props: Props) {
   // the collapse control isn't swallowed by an accidental micro-drag.
   const onPointerDownHeader = useCallback((e: React.PointerEvent) => {
     // Don't start a drag (and don't capture the pointer) when the press lands
-    // on an interactive control in the header — otherwise setPointerCapture
+    // on an interactive control in the header - otherwise setPointerCapture
     // swallows the control's click (this is what made the "hide" button dead).
     if ((e.target as HTMLElement).closest('button, a, input, [role="switch"]')) {
       return;
@@ -312,7 +312,7 @@ export function AssistantWidget(_props: Props) {
   // --- Client step-engine wiring (Fix 1c/1d/1e) ---------------------------
 
   // When the model confirms a workflow (begin_guide → guide_start SSE), start
-  // the client engine. The chat coexists — chatting never resets the engine.
+  // the client engine. The chat coexists - chatting never resets the engine.
   useEffect(() => {
     if (!guideStart) return;
     // Pass the live pathname so the engine can prepend a "get to the start
@@ -328,7 +328,7 @@ export function AssistantWidget(_props: Props) {
 
   // External launch bridge (Option A): any client surface (Tutorials page, help
   // links) can fire a `qcp:start-guide` CustomEvent to begin a known workflow
-  // programmatically — no LLM round-trip. We open the panel and hand the live
+  // programmatically - no LLM round-trip. We open the panel and hand the live
   // pathname to the engine so it can prepend a "get to the start page" hop.
   useEffect(() => {
     if (!userEnabled) return;
@@ -352,7 +352,7 @@ export function AssistantWidget(_props: Props) {
   // engine's currentIndex so we post exactly one bubble per step (incl. step 0
   // when a workflow starts). The highlight fires via activeHighlight above.
   // Seed from a rehydrated guide (after a nav remount) so we DON'T re-post the
-  // restored current step — its bubble is already in the rehydrated thread.
+  // restored current step - its bubble is already in the rehydrated thread.
   const lastPostedStepRef = useRef<string | null>(
     engine.isActive && engine.workflowId
       ? `${engine.workflowId}:${engine.currentIndex}`
@@ -404,7 +404,7 @@ export function AssistantWidget(_props: Props) {
   // post a warm sign-off. Called from the "Finish" button on the last step.
   const handleFinishGuide = useCallback(() => {
     pushAssistantMessage(
-      "Looks like you've finished — hope that was helpful. If you need a hand with anything else, just say the word and I'll walk you through it."
+      "Looks like you've finished - hope that was helpful. If you need a hand with anything else, just say the word and I'll walk you through it."
     );
     engine.reset();
   }, [engine, pushAssistantMessage]);
@@ -419,10 +419,10 @@ export function AssistantWidget(_props: Props) {
     if (inferred !== null) {
       engine.goToIndex(inferred);
     } else {
-      // Can't tell from the screen — hand to the chatbot to ask the user.
+      // Can't tell from the screen - hand to the chatbot to ask the user.
       const facts = getFacts();
       void send(
-        "I've lost my place in the walkthrough — I'm not sure which step I'm actually on. Ask me what I've done so far and help me get back on the right step.",
+        "I've lost my place in the walkthrough - I'm not sure which step I'm actually on. Ask me what I've done so far and help me get back on the right step.",
         {
           hints: { ...buildHints(), recentActions: facts.recentActions },
           mode,
@@ -559,8 +559,8 @@ export function AssistantWidget(_props: Props) {
                 aria-checked={highlightsOn}
                 title={
                   highlightsOn
-                    ? 'Highlights on — the assistant points to the next control'
-                    : 'Highlights off — the assistant only describes where to go'
+                    ? 'Highlights on - the assistant points to the next control'
+                    : 'Highlights off - the assistant only describes where to go'
                 }
                 className="ml-auto inline-flex items-center gap-2 text-xs font-medium text-slate-600"
               >
@@ -602,7 +602,7 @@ export function AssistantWidget(_props: Props) {
                 />
                 <p className="text-sm font-semibold text-slate-700">Hey, I&rsquo;m Q.</p>
                 <p className="mt-1 text-sm leading-relaxed text-slate-400">
-                  Ask me anything about QuoteCore+ — building a quote, what a
+                  Ask me anything about QuoteCore+ - building a quote, what a
                   field does, or where to find something. I&rsquo;ll keep it short.
                 </p>
               </div>
@@ -643,7 +643,7 @@ export function AssistantWidget(_props: Props) {
           </div>
 
           {/* Guided-workflow control bar (Fix 1c). Shown only while the client
-              step-engine is driving a workflow. "Next step →" is INSTANT — the
+              step-engine is driving a workflow. "Next step →" is INSTANT - the
               steps are already in memory (preloaded), so the click advances
               with no fetch/LLM round-trip. Facts auto-advance can move ahead of
               the button; this is the reliable fallback. */}

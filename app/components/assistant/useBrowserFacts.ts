@@ -1,17 +1,17 @@
 'use client';
 
 /**
- * useBrowserFacts — passive browser-facts reporter (Stage 2, Deliverable B)
+ * useBrowserFacts - passive browser-facts reporter (Stage 2, Deliverable B)
  * ==========================================================================
  * OBSERVATION ONLY. This hook watches the page and, on demand, reports FACTS
  * about what the user is looking at and what they recently did on registry
  * elements. It makes NO decisions: no step advancement, no highlighting, no
- * "next step" — the chatbot (Stage 3) decides everything from these facts.
+ * "next step" - the chatbot (Stage 3) decides everything from these facts.
  *
  * Design constraints (Stage 2 brief):
  *   - Cheap & safe: passive, capture-phase document listeners; a bounded,
  *     ref-backed rolling buffer (no React state thrash). Only a getter is
- *     exposed — reading facts never triggers a re-render.
+ *     exposed - reading facts never triggers a re-render.
  *   - SSR-safe: every `document` access is guarded.
  *   - Shares logic with useAssistantHints (screenKey + element scan) instead
  *     of forking it.
@@ -55,7 +55,7 @@ export interface BrowserFacts {
 /**
  * Resolve an event target up to the nearest registry-tagged ancestor and
  * return its semantic elementId, or null. Prefers `data-assistant-id`, falls
- * back to legacy `data-copilot` (migration window — same as the hint scan).
+ * back to legacy `data-copilot` (migration window - same as the hint scan).
  */
 function elementIdForEventTarget(target: EventTarget | null): string | null {
   if (!(target instanceof Element)) return null;
@@ -85,7 +85,7 @@ export function useBrowserFacts() {
       if (!elementId) return;
       const buf = recentRef.current;
       buf.push({ elementId, kind, at: Date.now() });
-      // Bound the buffer (drop oldest) — cheap, no allocations beyond splice.
+      // Bound the buffer (drop oldest) - cheap, no allocations beyond splice.
       if (buf.length > MAX_RECENT_ACTIONS) {
         buf.splice(0, buf.length - MAX_RECENT_ACTIONS);
       }

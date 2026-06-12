@@ -3,7 +3,7 @@ import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabas
 import { TutorialsClient } from './TutorialsClient';
 
 /**
- * /[workspaceSlug]/tutorials — the onboarding hub.
+ * /[workspaceSlug]/tutorials - the onboarding hub.
  *
  * Server shell resolves the workspace base + the per-user assistant pref
  * (which gates the "Walk me through with Q" CTA), then hands off to the client

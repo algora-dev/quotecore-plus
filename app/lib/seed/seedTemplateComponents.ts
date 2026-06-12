@@ -2,7 +2,7 @@
  * Seed a freshly-created company with its starter components.
  *
  * TRADE-AWARE (2026-06-08): we seed ONLY the components for the company's
- * selected default trade — Roofing (8) or Generic (9) — into the company's
+ * selected default trade - Roofing (8) or Generic (9) - into the company's
  * default collection, not both. This matches user expectation ("components
  * based on the trade I picked") and keeps the count under the Starter/trial
  * component cap (10).
@@ -11,7 +11,7 @@
  * `seed_starter_components`, which sets a transaction-local flag so the per-row
  * tier-cap trigger (require_component_slot) is skipped for the system seed.
  * Previously a direct bulk insert tripped the cap and rolled back the WHOLE
- * batch, leaving new companies with ZERO components — the "no test components
+ * batch, leaving new companies with ZERO components - the "no test components
  * on signup" bug. Normal user inserts are still capped as before.
  *
  * Sourced from static data in starterComponentsData.ts. To update the seed

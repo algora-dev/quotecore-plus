@@ -8,7 +8,7 @@ import type { EventPref, PrefSurface } from '@/app/lib/alerts/prefs';
 type NotificationChannelKey = 'quotes' | 'orders' | 'invoices';
 
 /**
- * The notification matrix — the REAL alert_type taxonomy in the codebase.
+ * The notification matrix - the REAL alert_type taxonomy in the codebase.
  * Orders splits supplier responses into distinct events (accepted / declined /
  * info requested) plus Read, and Invoices surfaces Payment Made / Dispute
  * Opened / Read, so the matrix renders only these real events.
@@ -50,7 +50,7 @@ const NOTIFICATION_MATRIX: {
 ];
 
 /**
- * Shared toggle switch — the exact rounded-full w-11 h-6 accent pattern used
+ * Shared toggle switch - the exact rounded-full w-11 h-6 accent pattern used
  * throughout the app. `color` selects the ON tint: orange for the in-app
  * surface, blue for the email surface. Reused for every matrix row + master.
  */
@@ -350,7 +350,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
               controls the Message Center alert; the{' '}
               <span className="font-medium text-blue-500">Email</span> column
               controls whether your team is emailed too. The underlying status
-              (Read, Accepted, Disputed…) always updates either way — these
+              (Read, Accepted, Disputed…) always updates either way - these
               toggles only control notifications.
             </p>
           </div>
@@ -432,10 +432,10 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
         </div>
       ) : (
     <div className="flex gap-5">
-      {/* LEFT PANEL — folders */}
+      {/* LEFT PANEL - folders */}
       <aside className="w-44 flex-shrink-0">
         {/* The guide highlight targets this <nav> (only the 3 folder buttons),
-            not the <aside> — the aside stretches to the full list height. */}
+            not the <aside> - the aside stretches to the full list height. */}
         <nav className="space-y-1 self-start" data-assistant-id="inbox-folders" data-copilot="inbox-folders">
           {FOLDERS.map((f) => (
             <button
@@ -466,7 +466,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
         </nav>
       </aside>
 
-      {/* RIGHT — search/filter bar + list */}
+      {/* RIGHT - search/filter bar + list */}
       <div className="flex-1 min-w-0 space-y-3">
         {/* Search + type filters (these are filters, not navigation) */}
         <div className="flex items-center gap-2 flex-wrap" data-assistant-id="inbox-search" data-copilot="inbox-search">
@@ -498,7 +498,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
           ))}
         </div>
 
-        {/* Bulk action toolbar — appears when rows are selected */}
+        {/* Bulk action toolbar - appears when rows are selected */}
         {selInVisible.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap rounded-xl border border-orange-200 bg-orange-50/60 px-3 py-2 text-xs" data-assistant-id="inbox-bulk-bar">
             <span className="font-medium text-slate-700">{selInVisible.length} selected</span>
@@ -548,7 +548,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                       : 'border-orange-300 bg-orange-50/40'
                   }`}
                 >
-                  {/* Collapsed row — single line. Clicking the body expands
+                  {/* Collapsed row - single line. Clicking the body expands
                       in place; we no longer navigate on row click, so a
                       missing/broken link can never 404. */}
                   <div className="flex items-center gap-3 px-3 py-2.5">
@@ -581,7 +581,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                     </button>
                   </div>
 
-                  {/* Expanded view — full message + contextual actions.
+                  {/* Expanded view - full message + contextual actions.
                       Open only renders when openHref resolves (has FK). */}
                   {isOpen && (
                     <div className="border-t border-slate-100 px-3 py-3 pl-10">

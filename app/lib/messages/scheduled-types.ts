@@ -20,14 +20,14 @@ export type ScheduledTriggerEvent =
   // Order follow-up triggers (Phase B). 'order_sent' is the time-based
   // chase anchor (mirrors 'quote_sent'); 'order_accepted' / 'order_declined'
   // are event triggers. Note: there is deliberately NO 'order_info_requested'
-  // trigger — a supplier requesting info CANCELS all parked order follow-ups
+  // trigger - a supplier requesting info CANCELS all parked order follow-ups
   // rather than firing one.
   | 'order_sent'
   | 'order_accepted'
   | 'order_declined'
   // Invoice follow-up trigger (Phase C). Invoices are TIME-BASED ONLY:
   // 'invoice_sent' is the chase anchor (mirrors 'quote_sent' /
-  // 'order_sent'). There are deliberately NO invoice event triggers —
+  // 'order_sent'). There are deliberately NO invoice event triggers -
   // when the recipient acts (payment_reported / paid / disputed) the
   // pending chase is CANCELLED at dispatch time rather than firing.
   | 'invoice_sent'
@@ -74,7 +74,7 @@ export interface ScheduleInvoiceFollowUpInput {
   waitHours?: number;
   /** Minute-level granularity; honoured (not floored away). */
   waitMinutes?: number;
-  /** Always true for the invoice chase — it cancels once the recipient
+  /** Always true for the invoice chase - it cancels once the recipient
    *  reports payment / pays / disputes. */
   requireNoResponse: boolean;
   respectQuietHours: boolean;

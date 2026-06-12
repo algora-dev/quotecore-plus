@@ -100,7 +100,7 @@ export function FlashingCanvas({
   lengthUnit?: 'mm' | 'in';
   /**
    * Trade-aware singular label ('Flashing' / 'Drawing/Image'). Display copy
-   * only — internal identifiers, routes and file names are unchanged.
+   * only - internal identifiers, routes and file names are unchanged.
    */
   featureLabelSingular?: string;
 }) {

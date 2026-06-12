@@ -128,7 +128,7 @@ export async function notifyRevisionRequested(input: {
 }
 
 /**
- * Generic alert email — the reusable path for order / invoice / read-receipt
+ * Generic alert email - the reusable path for order / invoice / read-receipt
  * events that don't warrant a bespoke template. Sends one branded email to
  * every company alert recipient. Best-effort: swallows all errors so it can
  * never block the status update / response that triggered it.

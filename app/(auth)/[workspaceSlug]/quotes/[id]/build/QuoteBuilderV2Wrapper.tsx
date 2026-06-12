@@ -67,7 +67,7 @@ export function QuoteBuilderV2Wrapper(props: Props) {
   // Handle phase changes from QuoteBuilder.
   // We update the URL via window.history.replaceState instead of router.push/replace.
   // router.push triggers a full Next.js navigation which re-runs the build page's
-  // server component (re-fetching all quote data) — causing the visible blink and
+  // server component (re-fetching all quote data) - causing the visible blink and
   // 1-2s delay on every tab click. history.replaceState updates the URL for
   // bookmarking/refresh without any server round-trip; all quote data is already
   // loaded in client state.

@@ -4,7 +4,7 @@
 //
 // A focused, order-only editor that produces the SAME line shape
 // (LineByLineItem) the OrderBody render surfaces consume. It deliberately does
-// NOT reuse the CustomerQuoteEditor in place — that one is tightly coupled to
+// NOT reuse the CustomerQuoteEditor in place - that one is tightly coupled to
 // the quote schema (roof areas / components / margins / quote taxes / quote
 // branding autosave) and is shared by the live customer-quote + labor-sheet
 // flows, so reusing it for orders (which may have no quote at all) risks
@@ -101,13 +101,13 @@ export function OrderLineByLineEditor({
   const [removeLineId, setRemoveLineId] = useState<string | null>(null);
   // Master "hide all prices" override for long order forms. When true, the
   // PREVIEW shows NO pricing at all (no per-line price, no subtotal, no tax
-  // lines, no total) — it overrides each line's own showPrice. When false, the
+  // lines, no total) - it overrides each line's own showPrice. When false, the
   // preview honours each line's individual showPrice toggle as before. This is
   // preview-only convenience state; it does not mutate the lines themselves.
   // Persisted to the envelope so the saved/sent order matches the editor.
   const [hideAllPrices, setHideAllPrices] = useState(initialHideAllPrices);
   // Declutter: collapse the left controls so the preview fills the space.
-  // Pure layout state — panel stays mounted (no edit loss).
+  // Pure layout state - panel stays mounted (no edit loss).
   const [panelCollapsed, setPanelCollapsed] = useState(false);
 
   const commit = useCallback(
@@ -208,7 +208,7 @@ export function OrderLineByLineEditor({
     // (min-w-0 so the preview table can shrink/grow without overflow). The
     // gap between the two columns is preserved.
     <div className="flex flex-col lg:flex-row gap-6 items-start">
-      {/* LEFT: line controls + footer + taxes — collapsible to declutter; on
+      {/* LEFT: line controls + footer + taxes - collapsible to declutter; on
           collapse the preview (flex-1) auto-fills the freed space. */}
       <CollapsiblePanel collapsed={panelCollapsed} widthClass="lg:w-[400px] lg:flex-shrink-0">
       <div className="w-full lg:w-[400px] space-y-4" data-assistant-id="order-lbl-controls" data-copilot="order-lbl-controls">
@@ -242,7 +242,7 @@ export function OrderLineByLineEditor({
           {/* Existing lines with controls */}
           <div className="space-y-2">
             {lines.length === 0 ? (
-              <p className="text-sm text-slate-400 italic px-1">No lines yet — add your first below.</p>
+              <p className="text-sm text-slate-400 italic px-1">No lines yet - add your first below.</p>
             ) : (
               lines.map((line, index) => (
                 <div
@@ -464,7 +464,7 @@ export function OrderLineByLineEditor({
       </div>
       </CollapsiblePanel>
 
-      {/* Expand tab — only visible when collapsed; sits on the preview side so
+      {/* Expand tab - only visible when collapsed; sits on the preview side so
           it is never clipped by the collapsing panel's overflow. */}
       <ExpandTab
         collapsed={panelCollapsed}
@@ -472,7 +472,7 @@ export function OrderLineByLineEditor({
         label="Order items"
       />
 
-      {/* RIGHT: live preview (mirrors OrderBody line-by-line table) — expands
+      {/* RIGHT: live preview (mirrors OrderBody line-by-line table) - expands
           to fill the remaining body width up to the header's right frame edge. */}
       <div className="w-full lg:flex-1 lg:min-w-0 lg:sticky lg:top-4 h-fit">
         <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">

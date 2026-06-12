@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/app/lib/supabase/database.types';
 
 /**
- * Message Center — notification preferences (the Settings matrix).
+ * Message Center - notification preferences (the Settings matrix).
  *
  * `companies.notification_prefs` is a JSONB map keyed by `alert_type`. Each
  * value records BOTH delivery surfaces for that event:
@@ -11,7 +11,7 @@ import type { Database } from '@/app/lib/supabase/database.types';
  * - `app`   = create the in-app Message Center alert (gates alert insertion).
  * - `email` = also send a notification email to the company alert recipients.
  *
- * A MISSING key — or a missing sub-field — falls back to defaults:
+ * A MISSING key - or a missing sub-field - falls back to defaults:
  *   - app   defaults ON for every event.
  *   - email defaults ON only for the high-signal events in EMAIL_DEFAULTS,
  *     and OFF for everything else.
@@ -45,7 +45,7 @@ export type EventPref = { app: boolean; email: boolean };
 export const ALL_NOTIFICATION_KEYS: string[] = Object.values(NOTIFICATION_CHANNELS).flat();
 
 /**
- * EMAIL default-ON set — only the high-signal events email by default.
+ * EMAIL default-ON set - only the high-signal events email by default.
  * Everything else (declines, "viewed/read" events, payment-reported) defaults
  * OFF for email to keep inbox volume sane. In-app always defaults ON.
  */
@@ -78,7 +78,7 @@ function asPrefMap(raw: unknown): Record<string, Partial<EventPref>> {
   for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
     if (typeof v === 'boolean') {
       // Legacy shape: bare boolean was the in-app pref. Email picks up its
-      // default (we don't know the old email intent — there wasn't one).
+      // default (we don't know the old email intent - there wasn't one).
       out[k] = { app: v };
     } else if (v && typeof v === 'object') {
       const obj = v as Record<string, unknown>;

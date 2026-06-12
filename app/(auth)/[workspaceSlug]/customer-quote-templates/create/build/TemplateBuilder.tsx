@@ -12,7 +12,7 @@ interface Props {
   templateName: string;
   useStarter: boolean;
   starterTemplate: CustomerQuoteTemplateRow | null;
-  /** When true the company is over storage — block logo upload. */
+  /** When true the company is over storage - block logo upload. */
   isOverStorage?: boolean;
 }
 

@@ -11,7 +11,7 @@ import {
 } from '@/app/lib/alerts/prefs';
 
 /**
- * Message Center settings (company-level) — the notification matrix.
+ * Message Center settings (company-level) - the notification matrix.
  *
  * `companies.notification_prefs` is a JSONB map
  * `{ "<alert_type>": { "app": boolean, "email": boolean } }`; a MISSING key (or
@@ -20,7 +20,7 @@ import {
  * gates whether a notification email is also sent. Recipient-facing status
  * updates, activity logs and lifecycle stamps are unaffected by either.
  *
- * This is now the SINGLE place email alerts are configured — the old
+ * This is now the SINGLE place email alerts are configured - the old
  * Account → Notifications per-user master has been removed.
  */
 

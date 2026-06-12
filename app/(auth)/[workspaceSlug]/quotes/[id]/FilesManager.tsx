@@ -35,9 +35,9 @@ interface Props {
   hasExistingTakeoff?: boolean;
   /** Signed URL for the lines-only canvas snapshot (if the takeoff was ever saved). */
   linesImageUrl?: string | null;
-  /** Raw storage path for the current plan file — used when cloning page-1 for a new area. */
+  /** Raw storage path for the current plan file - used when cloning page-1 for a new area. */
   planStoragePath?: string | null;
-  /** When true the company is over storage — block file uploads. */
+  /** When true the company is over storage - block file uploads. */
   isOverStorage?: boolean;
 }
 
@@ -194,11 +194,11 @@ export function FilesManager({
 
   function handleTakeoffClick() {
     if (!hasExistingTakeoff) {
-      // First time — go straight in, no modal needed.
+      // First time - go straight in, no modal needed.
       router.push(`/${workspaceSlug}/quotes/${quoteId}/takeoff`);
       return;
     }
-    // Re-entry — show the 3-option modal.
+    // Re-entry - show the 3-option modal.
     setTakeoffOption('continue');
     setPlanMode('clean');
     setAreaName('');
@@ -531,7 +531,7 @@ export function FilesManager({
               </p>
             </button>
 
-            {/* Option A sub-toggle — plan mode */}
+            {/* Option A sub-toggle - plan mode */}
             {takeoffOption === 'continue' && linesImageUrl && (
               <div className="ml-4 mb-3 space-y-2">
                 <label className="flex items-center gap-3 cursor-pointer group">

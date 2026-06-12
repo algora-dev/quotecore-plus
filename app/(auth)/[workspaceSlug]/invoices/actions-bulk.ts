@@ -11,7 +11,7 @@
  *   - bulkDeleteInvoices(ids[]): deletes multiple invoices in one round-trip,
  *     respecting the SAME status rule the single deleteInvoice() in actions.ts
  *     enforces: only 'draft' invoices may be deleted. Non-draft invoices are
- *     SKIPPED (not cancelled) — cancelling is a deliberate, per-invoice action
+ *     SKIPPED (not cancelled) - cancelling is a deliberate, per-invoice action
  *     left to the row menu's Cancel Invoice option, so a bulk "delete" never
  *     silently changes the lifecycle of sent/paid invoices. The skipped count
  *     is surfaced to the UI.
@@ -233,7 +233,7 @@ export async function loadInvoiceBundleData(invoiceId: string): Promise<InvoiceB
  * Delete multiple invoices in one call. Mirrors the single deleteInvoice()
  * status rule: ONLY 'draft' invoices are deleted. Non-draft invoices in the
  * selection are skipped (and reported via the `skipped` count) rather than
- * cancelled — bulk delete must never silently change a sent/paid invoice's
+ * cancelled - bulk delete must never silently change a sent/paid invoice's
  * lifecycle. Each id is verified against the caller's company_id; cross-company
  * / unknown ids are also skipped.
  *

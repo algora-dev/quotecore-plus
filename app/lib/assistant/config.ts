@@ -1,5 +1,5 @@
 /**
- * AI Assistant — Security & Limits Config (Phase 0A)
+ * AI Assistant - Security & Limits Config (Phase 0A)
  * ===================================================
  *
  * Central, env-driven configuration for every guardrail that MUST be in place
@@ -75,7 +75,7 @@ export const MODEL_LIMITS = {
 } as const;
 
 // ---------------------------------------------------------------------------
-// Rate limits (consumed via assistantRateLimit.ts — ALWAYS fail-closed)
+// Rate limits (consumed via assistantRateLimit.ts - ALWAYS fail-closed)
 // ---------------------------------------------------------------------------
 
 export interface RateBucketConfig {
@@ -99,7 +99,7 @@ export const RATE_LIMITS: Record<'perUser' | 'perCompany' | 'perIp', RateBucketC
 };
 
 // ---------------------------------------------------------------------------
-// Cost ceilings (token-budget guard — see costGuard.ts)
+// Cost ceilings (token-budget guard - see costGuard.ts)
 // ---------------------------------------------------------------------------
 
 export const COST_LIMITS = {
@@ -112,7 +112,7 @@ export const COST_LIMITS = {
 } as const;
 
 // ---------------------------------------------------------------------------
-// Chat retention (Gerald M-04 — lands WITH chat persistence, not later)
+// Chat retention (Gerald M-04 - lands WITH chat persistence, not later)
 // ---------------------------------------------------------------------------
 
 export const RETENTION = {
@@ -130,7 +130,7 @@ export const RETENTION = {
 } as const;
 
 // ---------------------------------------------------------------------------
-// Model selection (swappable behind llmClient — wired in Phase 1)
+// Model selection (swappable behind llmClient - wired in Phase 1)
 // ---------------------------------------------------------------------------
 
 export const MODEL_CONFIG = {

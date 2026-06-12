@@ -143,7 +143,7 @@ export async function saveDraftOrder(input: SaveOrderInput) {
         // from "the most recently created order". Quote-linked orders
         // (ON-<quoteNumber>) share this same ON- namespace, so keying off the
         // last-created row could land on a quote number (e.g. ON-1015) and
-        // compute ON-1016 — which sits BELOW the true custom sequence
+        // compute ON-1016 - which sits BELOW the true custom sequence
         // (ON-001024 already existed) and collides, forcing a spurious "-2"
         // suffix. Taking the max+1 makes the counter monotonic and collision-
         // free regardless of creation order or quote-number magnitudes.

@@ -9,7 +9,7 @@ interface Props {
   currentFileUrl?: string | null;
   label?: string;
   description?: string;
-  /** When true the company is over its storage limit — file uploads are
+  /** When true the company is over its storage limit - file uploads are
    *  blocked. Clicks/drops will open StorageBlockedModal instead of the
    *  file dialog. Non-file actions are not affected. */
   isOverStorage?: boolean;

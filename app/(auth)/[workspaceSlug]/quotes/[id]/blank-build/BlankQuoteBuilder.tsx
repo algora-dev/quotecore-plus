@@ -727,7 +727,7 @@ export function BlankQuoteBuilder({
         />
       )}
 
-      {/* Catalog Search Modal — same component the customer editor uses */}
+      {/* Catalog Search Modal - same component the customer editor uses */}
       {showCatalogSearch && (
         <CatalogSearchModal
           workspaceSlug={workspaceSlug}

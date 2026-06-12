@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 
 /**
- * Redirect shim — preserves old /[slug]/templates* bookmarks and deep-links.
+ * Redirect shim - preserves old /[slug]/templates* bookmarks and deep-links.
  * Redirects to the equivalent /[slug]/resources path with the same
  * sub-path segments and query string intact.
  */

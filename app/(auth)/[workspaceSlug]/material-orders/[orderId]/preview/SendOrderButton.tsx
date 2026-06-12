@@ -594,7 +594,7 @@ export function SendOrderButton({
                 {/* PRE-SEND GATE: Send now vs Add Follow-ups. */}
                 {sendStage === 'gate' && success !== 'sent' ? (
                   <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
-                    <p className="text-sm font-medium text-slate-900">Before we send — do you want follow-ups?</p>
+                    <p className="text-sm font-medium text-slate-900">Before we send - do you want follow-ups?</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <button
                         type="button"
@@ -639,7 +639,7 @@ export function SendOrderButton({
                 ) : null}
 
                 {/* FOLLOW-UP BUILDER. Order triggers: accepted / declined only
-                    (no info-requested — that cancels follow-ups). Time-based
+                    (no info-requested - that cancels follow-ups). Time-based
                     chase maps to order_sent. */}
                 {sendStage === 'followups' && success !== 'sent' ? (
                   <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 space-y-3">
@@ -650,7 +650,7 @@ export function SendOrderButton({
 
                     {templates.length === 0 ? (
                       <div className="rounded-lg border border-slate-200 bg-white p-3">
-                        <p className="text-xs text-slate-500">You have no message templates yet — follow-ups need one.</p>
+                        <p className="text-xs text-slate-500">You have no message templates yet - follow-ups need one.</p>
                         <button onClick={goCreateTemplate} className="mt-2 text-xs font-medium text-orange-600 hover:text-orange-700 underline">
                           Create your first follow-up template
                         </button>
@@ -678,7 +678,7 @@ export function SendOrderButton({
 
                         {draftRules.length === 0 ? (
                           <p className="text-[11px] text-slate-500">
-                            Add a follow-up above — choose a trigger-based rule (fires when the supplier accepts or declines) or a time-based chase. You can add up to 3.
+                            Add a follow-up above - choose a trigger-based rule (fires when the supplier accepts or declines) or a time-based chase. You can add up to 3.
                           </p>
                         ) : null}
 

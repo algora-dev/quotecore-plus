@@ -43,7 +43,7 @@ export type CatalogActionResult<T = void> =
   | { ok: false; code: string; message: string };
 
 // ---------------------------------------------------------------------------
-// loadCatalogs — list company catalogs (most recently updated first)
+// loadCatalogs - list company catalogs (most recently updated first)
 // ---------------------------------------------------------------------------
 
 export async function loadCatalogs(): Promise<CatalogRow[]> {
@@ -62,7 +62,7 @@ export async function loadCatalogs(): Promise<CatalogRow[]> {
 }
 
 // ---------------------------------------------------------------------------
-// createCatalogMeta — insert a catalog header row (status = importing)
+// createCatalogMeta - insert a catalog header row (status = importing)
 // ---------------------------------------------------------------------------
 
 export async function createCatalogMeta(args: {
@@ -152,14 +152,14 @@ export async function createCatalogMeta(args: {
 }
 
 // ---------------------------------------------------------------------------
-// (finalizeCatalog REMOVED — Gerald M-01-R.) There must be exactly ONE path
+// (finalizeCatalog REMOVED - Gerald M-01-R.) There must be exactly ONE path
 // to status='ready': the import_catalog_rows_atomic RPC on the final batch,
 // which also charges storage. A second app-layer flip-to-ready could mark an
 // uncharged catalog searchable. Do not reintroduce.
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// markCatalogError — flip status to error on import failure (best-effort)
+// markCatalogError - flip status to error on import failure (best-effort)
 // ---------------------------------------------------------------------------
 
 export async function markCatalogError(catalogId: string): Promise<void> {
@@ -206,7 +206,7 @@ export async function renameCatalog(
 }
 
 // ---------------------------------------------------------------------------
-// updateCatalogMapping — remap columns without re-upload
+// updateCatalogMapping - remap columns without re-upload
 // ---------------------------------------------------------------------------
 
 export async function updateCatalogMapping(
@@ -272,7 +272,7 @@ export async function archiveCatalog(catalogId: string): Promise<CatalogActionRe
 }
 
 // ---------------------------------------------------------------------------
-// unarchiveCatalog — reinstate; re-checks slot allowance
+// unarchiveCatalog - reinstate; re-checks slot allowance
 // ---------------------------------------------------------------------------
 
 export async function unarchiveCatalog(catalogId: string): Promise<CatalogActionResult> {
@@ -305,7 +305,7 @@ export async function unarchiveCatalog(catalogId: string): Promise<CatalogAction
 }
 
 // ---------------------------------------------------------------------------
-// deleteCatalog — hard removal; frees slot + storage
+// deleteCatalog - hard removal; frees slot + storage
 // ---------------------------------------------------------------------------
 
 export async function deleteCatalog(catalogId: string): Promise<CatalogActionResult> {
@@ -316,7 +316,7 @@ export async function deleteCatalog(catalogId: string): Promise<CatalogActionRes
     // Fetch data_bytes before delete to reverse the storage charge. Under
     // the atomic-import model storage is charged per-batch as rows land
     // (import_catalog_rows_atomic), so ANY catalog with rows has been
-    // charged — regardless of status (importing/error/ready/archived).
+    // charged - regardless of status (importing/error/ready/archived).
     // data_bytes is the authoritative charged total; reverse exactly it.
     const { data: catalogData, error: fetchErr } = await admin
       .from('catalogs')
@@ -354,7 +354,7 @@ export async function deleteCatalog(catalogId: string): Promise<CatalogActionRes
 }
 
 // ---------------------------------------------------------------------------
-// loadCatalogEntitlements — for page SSR
+// loadCatalogEntitlements - for page SSR
 // ---------------------------------------------------------------------------
 
 export async function loadCatalogEntitlements() {
@@ -371,7 +371,7 @@ export async function loadCatalogEntitlements() {
 }
 
 // ---------------------------------------------------------------------------
-// loadCatalogsForSearch — minimal list for the quote-line search modal
+// loadCatalogsForSearch - minimal list for the quote-line search modal
 // ---------------------------------------------------------------------------
 
 export interface CatalogSearchMeta {

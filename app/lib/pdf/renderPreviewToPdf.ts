@@ -13,13 +13,13 @@
  * ── Why this is "per-segment", not "one giant canvas" ──────────────────────
  * The browser's native print path (window.print() + an `@media print`
  * stylesheet with `page-break-inside: avoid`) produces perfect output because
- * the print engine paginates element-by-element. html2canvas does NOT — it
+ * the print engine paginates element-by-element. html2canvas does NOT - it
  * flattens the whole document to one tall bitmap, leaving pagination to us. An
  * earlier version sliced that single bitmap at computed offsets; that math is
  * fragile and produced split/ghosted blocks.
  *
- * This version instead captures each ATOMIC block (`[data-pdf-block]`) — and
- * the chrome around them (headers/footers) — as its OWN image, then places
+ * This version instead captures each ATOMIC block (`[data-pdf-block]`) - and
+ * the chrome around them (headers/footers) - as its OWN image, then places
  * those images into the PDF with simple, robust pagination: if the next block
  * doesn't fit in the remaining space on the current page, it starts a new
  * page. This mirrors `page-break-inside: avoid` exactly. There is no shared
@@ -27,7 +27,7 @@
  * gone.
  *
  * A block taller than a full printable page is the only thing that still gets
- * sliced across pages (unavoidable — it cannot fit whole anywhere).
+ * sliced across pages (unavoidable - it cannot fit whole anywhere).
  *
  * Gotchas centralised here (all learned from the working DownloadPDFButton):
  *   (a) Tailwind 4 emits oklch()/lab()/lch() colours that html2canvas (1.4.1)
@@ -121,18 +121,18 @@ async function awaitFonts(): Promise<void> {
  * `page-break-inside: avoid` box). The rule:
  *   - An element marked `[data-pdf-block]` is always its own segment.
  *   - Any other element is a segment IF it contains no `[data-pdf-block]`
- *     descendants (it's "chrome" — a header, notes box, footer, etc.).
+ *     descendants (it's "chrome" - a header, notes box, footer, etc.).
  *   - An element that DOES contain blocks is not itself a segment; we descend
  *     into its children so each block becomes a segment and the non-block bits
  *     around it become their own chrome segments.
  *
  * This yields, e.g. for an order: [[header], [header-notes?], [card1],
- * [card2], …, [totals?]] — exactly the boxes the print stylesheet keeps
+ * [card2], …, [totals?]] - exactly the boxes the print stylesheet keeps
  * together. Each entry is a ROW: usually one element, but a multi-column
  * layout (2-up order cards) yields rows of 2+ elements placed side by side so
  * the columns are preserved instead of collapsing into a single stack.
  *
- * If the document marks NO blocks at all, we return [[root]] — callers then
+ * If the document marks NO blocks at all, we return [[root]] - callers then
  * fall back to whole-image (single-segment) capture.
  */
 function collectSegments(root: HTMLElement): HTMLElement[][] {
@@ -148,7 +148,7 @@ function collectSegments(root: HTMLElement): HTMLElement[][] {
     }
     const containsBlock = !!el.querySelector('[data-pdf-block]');
     if (!containsBlock) {
-      // Pure chrome — capture whole. Skip empties.
+      // Pure chrome - capture whole. Skip empties.
       if (el.getBoundingClientRect().height > 0.5) rows.push([el]);
       return;
     }

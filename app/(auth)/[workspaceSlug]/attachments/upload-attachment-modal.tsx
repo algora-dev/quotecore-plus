@@ -9,7 +9,7 @@ import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModa
 interface Props {
   onClose: () => void;
   onSaved: () => void;
-  /** When true the company is over storage — block file uploads. */
+  /** When true the company is over storage - block file uploads. */
   isOverStorage?: boolean;
 }
 

@@ -1,5 +1,5 @@
 /**
- * AI Assistant — Rate Limiting (Phase 0A)
+ * AI Assistant - Rate Limiting (Phase 0A)
  * ========================================
  *
  * Thin, assistant-specific wrapper over the shared `checkRateLimit` helper.

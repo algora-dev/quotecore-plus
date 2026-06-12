@@ -377,7 +377,7 @@ export async function scheduleQuoteFollowUp(
  * Persist a new scheduled follow-up for a material ORDER.
  *
  * Mirrors scheduleQuoteFollowUp. A scheduled_messages row is for EITHER
- * a quote OR an order — here order_id is set and quote_id stays null.
+ * a quote OR an order - here order_id is set and quote_id stays null.
  *
  * Order triggers:
  *   - order_sent: time-based chase. Anchored to the last successful
@@ -529,7 +529,7 @@ export async function scheduleOrderFollowUp(
       trigger_event: input.triggerEvent,
       trigger_anchor_at: anchor.toISOString(),
       fire_at: finalFire.toISOString(),
-      // Event triggers never gate on "no response" — the event IS the response.
+      // Event triggers never gate on "no response" - the event IS the response.
       require_no_response: isEventTrigger ? false : input.requireNoResponse,
       respect_quiet_hours: input.respectQuietHours,
       recipient_email: recipient.toLowerCase(),
@@ -555,14 +555,14 @@ export async function scheduleOrderFollowUp(
  * Persist a new TIME-BASED follow-up for an INVOICE (Phase C).
  *
  * Invoices are simpler than quotes/orders: there are NO event triggers.
- * The only trigger is 'invoice_sent' — a chase anchored to the last
+ * The only trigger is 'invoice_sent' - a chase anchored to the last
  * successful invoice send (outbound_messages kind='invoice_send'),
  * falling back to invoice.sent_at then invoice.updated_at.
  *
  * The chase always sets require_no_response=true. "Responded" for an
  * invoice means the recipient acted on it: status became
  * payment_reported / paid / disputed (or cancelled). That cancel check
- * happens at DISPATCH time in dispatchInvoiceRow — there is no activator
+ * happens at DISPATCH time in dispatchInvoiceRow - there is no activator
  * and no parked/sentinel row, because there is no event trigger.
  */
 export async function scheduleInvoiceFollowUp(
@@ -694,7 +694,7 @@ export async function scheduleInvoiceFollowUp(
 
   // --- Insert -------------------------------------------------------
   // invoice_id set; quote_id + order_id null (a row is for exactly one
-  // entity). No sentinel/parked rows — invoices have no event triggers.
+  // entity). No sentinel/parked rows - invoices have no event triggers.
   const { data: inserted, error: insertErr } = await supabase
     .from('scheduled_messages')
     .insert({
@@ -743,7 +743,7 @@ export async function scheduleInvoiceFollowUp(
  *     trigger's parked rows (accepted <-> declined are mutually
  *     exclusive once the supplier responds).
  *   - 'info_requested': cancel ALL parked order trigger rows (both
- *     accepted AND declined) for the order. Nothing is activated — an
+ *     accepted AND declined) for the order. Nothing is activated - an
  *     info request is not a follow-up trigger, it's a stop signal.
  *
  * Admin client because it runs from the public token flow.
@@ -876,7 +876,7 @@ export async function activateOrderScheduledMessages(input: {
  * the existing per-action cancel paths (see cancelViewedScheduledMessages).
  *
  * Generic over entity via the FK column. Admin client (runs from the public
- * token flow). Best-effort: never throws — a hiccup here must not break the
+ * token flow). Best-effort: never throws - a hiccup here must not break the
  * recipient's view stamping.
  */
 export async function activateViewedScheduledMessages(input: {
@@ -953,7 +953,7 @@ export async function activateViewedScheduledMessages(input: {
 /**
  * Cancel parked OR live "On Read" follow-ups for an entity. Called when the
  * recipient takes ANY action (accept / decline / request info / request
- * changes / dispute) — an action supersedes the "they went quiet after
+ * changes / dispute) - an action supersedes the "they went quiet after
  * reading" nudge, so the On-Read follow-up is no longer wanted.
  *
  * Cancels both parked (sentinel) and already-activated (live) *_viewed rows
@@ -1368,7 +1368,7 @@ async function dispatchOne(
 
   // INVOICE rows (Phase C) take their own dedicated path: TIME-BASED
   // chase only, with cancel-on-recipient-action handled here at
-  // dispatch time (the authoritative cancel guard — there's no activator).
+  // dispatch time (the authoritative cancel guard - there's no activator).
   if (row.invoice_id) {
     return dispatchInvoiceRow(row, admin);
   }
@@ -1663,7 +1663,7 @@ async function dispatchOrderRow(
   // Cancel-on-response only applies to the time-based chase
   // (order_sent). Event triggers (order_accepted / order_declined) are
   // fired BY the response, so they must never self-cancel on it. An
-  // info request cancels chases too (the supplier engaged — stop nagging).
+  // info request cancels chases too (the supplier engaged - stop nagging).
   const isEventTriggered =
     row.trigger_event === 'order_accepted' || row.trigger_event === 'order_declined';
   if (row.require_no_response && !isEventTriggered) {
@@ -1794,8 +1794,8 @@ async function dispatchOrderRow(
  * Dispatch a single INVOICE follow-up row (Phase C). TIME-BASED chase.
  *
  * The KEY cancel rule lives here: if the recipient has effectively
- * responded — invoice.status is payment_reported / paid / disputed
- * (or cancelled) — the chase is no longer needed, so we markCancelled
+ * responded - invoice.status is payment_reported / paid / disputed
+ * (or cancelled) - the chase is no longer needed, so we markCancelled
  * instead of sending. Viewing ('viewed') does NOT cancel: viewing
  * isn't paying. This dispatch-time guard is authoritative; there is
  * no activator for invoices.
@@ -1803,7 +1803,7 @@ async function dispatchOrderRow(
  * Reuses the exact send plumbing from sendInvoiceMessage: kind
  * 'invoice_send', acceptanceToken = invoice.public_token, and the
  * "View Invoice" primaryCta pointing at /invoice/<token>. There is no
- * relatedInvoiceId param on sendOutboundMessage — the invoice link is
+ * relatedInvoiceId param on sendOutboundMessage - the invoice link is
  * carried entirely via acceptanceToken + the per-kind CTA.
  */
 async function dispatchInvoiceRow(
@@ -1815,7 +1815,7 @@ async function dispatchInvoiceRow(
     return 'failed';
   }
 
-  // Fire-time entitlement gate (downgrade protection — mirrors quotes).
+  // Fire-time entitlement gate (downgrade protection - mirrors quotes).
   try {
     await assertCanSendMessage(row.company_id, 'scheduled_dispatch');
     await requireFeature(row.company_id, 'followups');
@@ -1852,7 +1852,7 @@ async function dispatchInvoiceRow(
   }
 
   // CANCEL-SAFETY (the authoritative cancel guard). The recipient has
-  // acted — stop the chase. 'viewed' deliberately does NOT cancel.
+  // acted - stop the chase. 'viewed' deliberately does NOT cancel.
   if (['payment_reported', 'paid', 'disputed', 'cancelled'].includes(invoice.status)) {
     await markCancelled(
       admin,

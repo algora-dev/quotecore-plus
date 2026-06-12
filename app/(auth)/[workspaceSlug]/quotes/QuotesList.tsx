@@ -40,8 +40,8 @@ type Quote = {
  */
 // "Read" is TRANSIENT: only shown while the quote is still in its as-sent
 // baseline job_status ('unsent' / 'sent'). Once the owner moves it forward
-// (accepted / declined / deposit_paid / …) — manually or via any auto update
-// — "Read" disappears (2026-06-10).
+// (accepted / declined / deposit_paid / …) - manually or via any auto update
+// - "Read" disappears (2026-06-10).
 const QUOTE_SENT_BASELINE = new Set(['unsent', 'sent']);
 function quoteRecipientStatus(q: Quote): RecipientStatus {
   if (q.has_pending_revision) return 'action_required';

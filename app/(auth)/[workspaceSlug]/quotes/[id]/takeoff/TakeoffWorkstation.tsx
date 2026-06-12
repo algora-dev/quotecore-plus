@@ -99,7 +99,7 @@ interface Props {
   /** P1-1b mode=new-page: pre-created quote_roof_areas ID. Passed as target_roof_area_id
    *  to save_takeoff_atomic so components route to the correct area. */
   initialRoofAreaId?: string;
-  /** When true the company is over storage — block plan-image uploads. */
+  /** When true the company is over storage - block plan-image uploads. */
   isOverStorage?: boolean;
 }
 
@@ -238,12 +238,12 @@ export function TakeoffWorkstation({
   const [showPitchOnlyPrompt, setShowPitchOnlyPrompt] = useState(false);
   const [pitchOnlyInput, setPitchOnlyInput] = useState('');
 
-  // Volume (L × W × D) — depth prompt state.
+  // Volume (L × W × D) - depth prompt state.
   // Fires after the area polygon is closed for a volume_3d component.
   const [showVolumeDepthPrompt, setShowVolumeDepthPrompt] = useState(false);
   const [volumeDepthInput, setVolumeDepthInput] = useState('');
 
-  // Freestyle height prompt — fires after a line/polyline is drawn for a
+  // Freestyle height prompt - fires after a line/polyline is drawn for a
   // length_x_height_freestyle / multi_lineal_lxh_freestyle component.
   const [showFreestyleHeightPrompt, setShowFreestyleHeightPrompt] = useState(false);
   const [freestyleHeightInput, setFreestyleHeightInput] = useState('');
@@ -327,7 +327,7 @@ export function TakeoffWorkstation({
   // initializeTakeoffPage is idempotent so repeated mounts are safe.
   // P1-1b: skipped when initialPageId is provided (new-area flow already created the page).
   useEffect(() => {
-    if (initialPageId) return; // page already exists — skip
+    if (initialPageId) return; // page already exists - skip
     let cancelled = false;
     async function ensurePage1() {
       try {
@@ -413,9 +413,9 @@ export function TakeoffWorkstation({
   // tradeConfig properties in new code.
   const quoteIsGeneric = !tradeConfig.pitchRequired;
   useEffect(() => {
-    // P1-1b: suppress in mode=add — user is continuing on an existing area, not creating a new one.
+    // P1-1b: suppress in mode=add - user is continuing on an existing area, not creating a new one.
     if (takeoffMode === 'add') return;
-    // P1-3: suppress in isExistingAreaMode — the user chose "add to existing area" via
+    // P1-3: suppress in isExistingAreaMode - the user chose "add to existing area" via
     // Save & Upload another plan. The "draw an area boundary" prompt is irrelevant here;
     // showing it caused users to think they needed to draw a boundary and then go directly
     // to component area drawing, which broke the polygon-close routing (deselection gotcha).
@@ -707,7 +707,7 @@ export function TakeoffWorkstation({
     const compForType = components.find(c => c.id === compId);
     const compMeasType = (compForType?.measurement_type ?? compForType?.default_measurement_type) as string;
 
-    // Freestyle: intercept multi_lineal_lxh_freestyle — show height prompt instead of committing.
+    // Freestyle: intercept multi_lineal_lxh_freestyle - show height prompt instead of committing.
     if (compMeasType === 'multi_lineal_lxh_freestyle') {
       const canvasObjs = [...multiLinealSegmentObjects];
       setPendingFreestyleLength(totalLength);
@@ -950,7 +950,7 @@ export function TakeoffWorkstation({
       // Add component measurements.
       // IMPORTANT: only include measurements that belong to the current page.
       // Hydrated measurements from OTHER pages (fromPageId != currentPage) must
-      // be excluded here — they are already in the DB under their correct pages.
+      // be excluded here - they are already in the DB under their correct pages.
       // Including them causes H-01 to double-count: H-01 fetches the same data
       // from the DB AND we include it again in allMeasurements, resulting in
       // duplicate quote_component_entries (the P1-3 regression Shaun saw).
@@ -959,7 +959,7 @@ export function TakeoffWorkstation({
           // fromPageId is set for hydrated measurements. Exclude any that belong
           // to a different page so we don't re-save them as this page's data.
           if (m.fromPageId && currentPageDbIdEarly && m.fromPageId !== currentPageDbIdEarly) {
-            return; // skip — belongs to a different page, already in DB
+            return; // skip - belongs to a different page, already in DB
           }
           allMeasurements.push({
             componentId: comp.componentId,
@@ -990,7 +990,7 @@ export function TakeoffWorkstation({
       }
       
       // After filtering, if there's nothing to save for the current page,
-      // treat this as a SAFE SKIP — not a full save. This happens in mode=add
+      // treat this as a SAFE SKIP - not a full save. This happens in mode=add
       // when the user hasn't drawn anything new in the current session; all
       // componentMeasurements are hydrated from other pages and excluded above.
       //
@@ -1001,11 +1001,11 @@ export function TakeoffWorkstation({
       //  – This branch must NEVER be used when there are local unsaved changes
       //    (those would have a null/undefined fromPageId and would NOT be filtered).
       if (allMeasurements.length === 0) {
-        console.log('[SaveTakeoff] Safe skip — no new measurements for current page. Not a full save.');
+        console.log('[SaveTakeoff] Safe skip - no new measurements for current page. Not a full save.');
         // navigateAfter=false means this was called from persistTakeoffData()
-        // before an upload — fine to skip silently.
+        // before an upload - fine to skip silently.
         // navigateAfter=true means the user clicked "Save & Continue" with no
-        // new data drawn — also fine to navigate, but we do NOT mark dirty=false.
+        // new data drawn - also fine to navigate, but we do NOT mark dirty=false.
         if (navigateAfter) {
           router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
         }
@@ -1136,7 +1136,7 @@ export function TakeoffWorkstation({
       );
 
       if (!saveResult.success) {
-        // Surface the actual error message — not hidden by Next.js production mode
+        // Surface the actual error message - not hidden by Next.js production mode
         // since we return errors rather than throwing.
         const msg = saveResult.error;
         if (msg.includes('STALE_TAKEOFF_VERSION')) {
@@ -1175,7 +1175,7 @@ export function TakeoffWorkstation({
     }
   };
 
-  // P1-3: "Save & Upload another plan" — open the chooser modal.
+  // P1-3: "Save & Upload another plan" - open the chooser modal.
   // Pre-selects "existing" + pre-fills area name with the first roof area's
   // label so the user can confirm-and-go without retyping when adding to it.
   const openSaveAndUploadAnotherPlan = () => {
@@ -1605,15 +1605,15 @@ export function TakeoffWorkstation({
             // Close polygon
             console.log('[Area] Closing polygon with', currentPoints.length, 'points');
             setPendingAreaPoints(currentPoints);
-            // Use refs for current state — canvas handlers are stale closures
+            // Use refs for current state - canvas handlers are stale closures
             // and won't see state updated after the handler was set up.
-            // Read current values via refs — canvas handlers capture stale closures.
+            // Read current values via refs - canvas handlers capture stale closures.
             const currentRoofAreas = roofAreasRef.current;
             // IMPORTANT: read from activeAreaComponentIdRef, NOT selectedComponentIdRef.
             // Fabric.js fires canvas deselection events on the same click that closes the
             // polygon, clearing selectedComponentIdRef.current before we read it here.
             // activeAreaComponentIdRef is set when area mode is activated for a component
-            // and is only cleared when area mode is explicitly turned off — it is immune
+            // and is only cleared when area mode is explicitly turned off - it is immune
             // to Fabric deselection side-effects.
             const currentSelectedId = activeAreaComponentIdRef.current ?? selectedComponentIdRef.current;
             // Capture the component ID NOW before any canvas deselection fires.
@@ -1640,12 +1640,12 @@ export function TakeoffWorkstation({
             //   boundaries should be created client-side).
             // P1-3 existing-area + component IS selected → normal area modal.
             if (takeoffMode === 'new-page' && currentRoofAreas.length === 0 && !currentSelectedId) {
-              // Boundary drawing for a new page — show pitch-only prompt.
+              // Boundary drawing for a new page - show pitch-only prompt.
               setPendingComponentId(null);
               setPitchOnlyInput('');
               setShowPitchOnlyPrompt(true);
             } else if (isExistingAreaModeRef.current && !currentSelectedId) {
-              // Existing-area mode but no component selected — can't create a new boundary.
+              // Existing-area mode but no component selected - can't create a new boundary.
               setPendingAreaPoints([]);
               setAreaPoints([]);
               setPendingComponentId(null);
@@ -2002,7 +2002,7 @@ export function TakeoffWorkstation({
         ← Back to quote
       </Link>
       <div className="flex-1 flex flex-col bg-white rounded-xl shadow-lg overflow-hidden">
-        {/* Header: title + action buttons only — no nav links */}
+        {/* Header: title + action buttons only - no nav links */}
         <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <h1 className="text-xl font-semibold">{quote.customer_name} - Digital Takeoff</h1>
         <div className="flex items-center gap-2">
@@ -2041,7 +2041,7 @@ export function TakeoffWorkstation({
           } else if (selCompType === 'volume_3d') {
             guidance = 'Draw the footprint (L × W). Close the shape on the first point, then enter the depth in the prompt.';
           } else {
-            guidance = 'Click to place points — at least 4. Click the first point again to close the shape.';
+            guidance = 'Click to place points - at least 4. Click the first point again to close the shape.';
           }
         } else if (lineMode) {
           guidance = 'Click two points to measure a length - confirm. Add multiple lines for the same component.';
@@ -2079,7 +2079,7 @@ export function TakeoffWorkstation({
 
       {/* P1-3: Save & Upload another plan modal.
           Mirrors FilesManager Options B (existing area) and C (new area)
-          but stays inside the workstation — saves current measurements,
+          but stays inside the workstation - saves current measurements,
           uploads the new plan, then reloads to mode=new-page with the new page.*/}
       {showUploadAnotherModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
@@ -2804,7 +2804,7 @@ export function TakeoffWorkstation({
         />
       )}
 
-      {/* Area Instructions (after first calibration) — always optional, all trades, all modes */}
+      {/* Area Instructions (after first calibration) - always optional, all trades, all modes */}
       {showRoofAreaInstructions && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 max-w-sm border border-gray-200 shadow-xl">
@@ -2882,7 +2882,7 @@ export function TakeoffWorkstation({
         </div>
       )}
 
-      {/* Volume (L × W × D) depth prompt — fires after area polygon is closed for a volume_3d component */}
+      {/* Volume (L × W × D) depth prompt - fires after area polygon is closed for a volume_3d component */}
       {showVolumeDepthPrompt && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-80 border border-gray-200 shadow-xl">
@@ -2975,7 +2975,7 @@ export function TakeoffWorkstation({
                 max="90"
                 value={pitchOnlyInput}
                 onChange={(e) => setPitchOnlyInput(e.target.value)}
-                placeholder={tradeConfig.pitchRequired ? 'e.g. 25' : 'e.g. 10 — or leave blank for flat'}
+                placeholder={tradeConfig.pitchRequired ? 'e.g. 25' : 'e.g. 10 - or leave blank for flat'}
                 autoFocus
                 className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded text-sm"
               />
@@ -3087,7 +3087,7 @@ export function TakeoffWorkstation({
           onConfirm={() => {
             if (!selectedComponentId) return;
 
-            // Freestyle intercept: length_x_height_freestyle — show height prompt.
+            // Freestyle intercept: length_x_height_freestyle - show height prompt.
             const selectedComp = components.find(c => c.id === selectedComponentId);
             if ((selectedComp?.measurement_type as string) === 'length_x_height_freestyle') {
               const objects = fabricRef.current?.getObjects() || [];
@@ -3160,7 +3160,7 @@ export function TakeoffWorkstation({
         />
       )}
 
-      {/* Freestyle height prompt — fires after line/polyline for length_x_height_freestyle / multi_lineal_lxh_freestyle */}
+      {/* Freestyle height prompt - fires after line/polyline for length_x_height_freestyle / multi_lineal_lxh_freestyle */}
       {showFreestyleHeightPrompt && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-80 border border-gray-200 shadow-xl">
@@ -3272,7 +3272,7 @@ function AreaNameModal({
   const [name, setName] = useState(initialName);
   const [pitch, setPitch] = useState('');
 
-  // P1-1b: when initialName is pre-filled (new-page mode), name is locked —
+  // P1-1b: when initialName is pre-filled (new-page mode), name is locked -
   // only pitch is needed from the user.
   const nameIsLocked = initialName !== '';
 
@@ -3340,7 +3340,7 @@ function AreaNameModal({
                 <>
                   <div>
                     <label className="block text-sm mb-2">
-                      Roof Pitch (degrees){nameIsLocked ? ' — optional, enter 0 if flat' : <span className="text-red-400"> *</span>}
+                      Roof Pitch (degrees){nameIsLocked ? ' - optional, enter 0 if flat' : <span className="text-red-400"> *</span>}
                     </label>
                     <input
                       type="number"
