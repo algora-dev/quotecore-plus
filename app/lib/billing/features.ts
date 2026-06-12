@@ -29,7 +29,7 @@ export type Feature = (typeof FEATURES)[number];
  */
 export const FEATURE_LABELS: Record<Feature, string> = {
   digital_takeoff: 'Digital takeoff',
-  flashings: 'Flashing drawings & library',
+  flashings: 'Image drawings & library',
   material_orders: 'Material orders',
   followups: 'Automated follow-ups',
   email_send: 'Send emails from QuoteCore+',

@@ -14,7 +14,7 @@ export default function Home() {
           className="h-16 w-auto"
         />
         <p className="text-lg text-slate-600 max-w-xl">
-          The start to finish measure, quote, and job management app built for roofers and all contractors!
+          Measure, quote, order, track, invoice, store, all in 1 place
         </p>
         <div className="flex gap-3">
           <Link

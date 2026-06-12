@@ -288,7 +288,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         heading: 'What',
         body: [
-          'A library of files (PDFs, brochures, certs, terms) you upload once and attach to any quote or order - no re-uploading per job.',
+          'A library of files (PDFs, images, forms, certs, terms & conditions) you upload once and attach to any quote or order - no re-uploading per job.',
         ],
       },
       {

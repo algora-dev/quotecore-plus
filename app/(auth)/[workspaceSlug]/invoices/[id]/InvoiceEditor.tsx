@@ -447,26 +447,6 @@ export function InvoiceEditor({
             </button>
           )}
 
-          {/* Send Invoice */}
-          <SendInvoiceButton
-            invoiceId={initial.id}
-            workspaceSlug={workspaceSlug}
-            publicToken={initial.public_token}
-            status={initial.status}
-            emailTemplates={emailTemplates}
-            canFollowups={canFollowups}
-            invoiceMeta={{
-              customerName: initial.customer_name ?? '',
-              invoiceNumber: initial.invoice_number ?? '',
-              invoiceTotal: formatCurrency(Number(initial.total ?? 0), currency),
-              companyName: initial.cq_company_name ?? null,
-              dueDate: initial.due_date
-                ? new Date(initial.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-                : null,
-            }}
-            defaultRecipientEmail={initial.customer_email}
-          />
-
           {/* Download PDF (owner) - same on-screen InvoicePreview, captured to
               a PDF that matches the bulk ZIP output exactly. */}
           <button
@@ -513,6 +493,27 @@ export function InvoiceEditor({
               {saving ? 'Saving…' : 'Save'}
             </button>
           )}
+
+          {/* Send Invoice - pinned far right (primary action), matching the
+              Quotes/Orders editors where Send is the right-most action. */}
+          <SendInvoiceButton
+            invoiceId={initial.id}
+            workspaceSlug={workspaceSlug}
+            publicToken={initial.public_token}
+            status={initial.status}
+            emailTemplates={emailTemplates}
+            canFollowups={canFollowups}
+            invoiceMeta={{
+              customerName: initial.customer_name ?? '',
+              invoiceNumber: initial.invoice_number ?? '',
+              invoiceTotal: formatCurrency(Number(initial.total ?? 0), currency),
+              companyName: initial.cq_company_name ?? null,
+              dueDate: initial.due_date
+                ? new Date(initial.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                : null,
+            }}
+            defaultRecipientEmail={initial.customer_email}
+          />
         </div>
       </div>
 

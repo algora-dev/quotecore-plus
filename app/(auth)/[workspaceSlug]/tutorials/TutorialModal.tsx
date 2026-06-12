@@ -48,17 +48,21 @@ export function TutorialModal({ tutorial, base, assistantEnabled, onClose }: Pro
     router.push(tutorial.ctaHref(base));
   }, [tutorial, base, router, onClose]);
 
-  // "Walk me through with Q": navigate to the feature's start page first, then
-  // fire the guide-launch event. The assistant picks it up, opens, and the
-  // engine prepends any "get to the start page" hops as needed.
+  // "Walk me through with Q": start the guide from right here, WITHOUT
+  // pre-navigating. The guide engine's own nav-hop logic highlights the correct
+  // top-nav button and walks the user to the start page - identical to the
+  // normal "ask Q" Guide-Me flow (which works with a single click). Previously
+  // we router.push()'d to the page first, but applying the nav highlight mid-
+  // navigation swallowed the user's first nav click (the "nav 100% blocked"
+  // bug). Letting the engine drive the navigation is the reliable path.
   const walkThrough = useCallback(() => {
     if (!tutorial || !tutorial.workflowId) return;
     const workflowId = tutorial.workflowId;
     onClose();
-    router.push(tutorial.ctaHref(base));
-    // Defer slightly so the route change settles before the guide starts.
-    setTimeout(() => startGuide(workflowId), 120);
-  }, [tutorial, base, router, onClose]);
+    // Small defer so the modal has unmounted (and its overlay/focus trap is
+    // gone) before the assistant opens and the first highlight paints.
+    setTimeout(() => startGuide(workflowId), 80);
+  }, [tutorial, onClose]);
 
   if (!tutorial) return null;
 

@@ -133,19 +133,16 @@ function TutorialsIntroModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="space-y-3 px-6 py-5 text-sm leading-relaxed text-slate-700">
+          <p className="font-semibold text-slate-900">Learn every feature of the app in one place.</p>
           <p>
-            Here you can quickly learn about every feature in the app. You might only need one or two,
-            but there&apos;s something to cover everything - and it&apos;s the fastest way to learn how to
-            work faster, stay efficient, and save time and money.
+            Start with <span className="font-semibold">Quotes</span> and{' '}
+            <span className="font-semibold">Components</span>, then move on to{' '}
+            <span className="font-semibold">Orders</span> and <span className="font-semibold">Invoices</span>, or
+            explore at your own pace.
           </p>
           <p>
-            We suggest starting with <span className="font-semibold">Quotes</span> and{' '}
-            <span className="font-semibold">Components</span>, then{' '}
-            <span className="font-semibold">Orders</span> and <span className="font-semibold">Invoices</span>{' '}
-            - but feel free to explore anything you like.
-          </p>
-          <p>
-            For deeper answers, <span className="font-semibold">Q</span> is your personal assistant - use him, he&apos;s great!
+            Need help? <span className="font-semibold">&quot;Q&quot;</span> is your personal assistant and can answer
+            questions anytime.
           </p>
         </div>
 

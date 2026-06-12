@@ -1,5 +1,13 @@
 Tutorial notes:
 
+Main welcome to tutorials txt:
+
+Here you can quickly learn about every feature in the app. You might only need one or two, but there's something to cover everything - and it's the fastest way to learn how to work faster, stay efficient, and save time and money.
+
+We suggest starting with Quotes and Components, then Orders and Invoices - but feel free to explore anything you like.
+
+For deeper answers, Qis your personal assistant - use him, he's great!
+
 - First issue, the modal system has that same issue we found where clicking outside the modal anywhere closes the modal. Only the "x" in the top right of the modal should close it.
 - Highlight blocking the main nav buttons, Quotes, Orders, Invoices, Resources
 - For "Tutorials" buttons on Resources page and in Account settings add on hover orange glow behind. (Same as existing app style/design)
