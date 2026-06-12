@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useHelpDrawer } from '@/app/components/docs/HelpDrawerContext';
 import { createSupportTicket, type TicketCategory, type TicketSummary } from './actions';
 
 /**
@@ -96,6 +99,10 @@ export function SupportSection({ initialTickets }: SupportSectionProps) {
     });
   }
 
+  const pathname = usePathname();
+  const workspaceSlug = pathname.split('/').filter(Boolean)[0] ?? '';
+  const { openDrawer } = useHelpDrawer();
+
   return (
     <section className="space-y-6">
       <div>
@@ -103,6 +110,35 @@ export function SupportSection({ initialTickets }: SupportSectionProps) {
         <p className="text-sm text-slate-500 mt-1">
           Can&apos;t find what you need in the help docs? Send us a ticket and we&apos;ll get back to you by email.
         </p>
+      </div>
+
+      {/* Help & learning — self-serve before a ticket. */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-3">
+        <h3 className="text-base font-semibold text-slate-900">Help &amp; learning</h3>
+        <p className="text-sm text-slate-500">
+          New to QuoteCore+ or stuck on a feature? These are the fastest ways to get going.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/${workspaceSlug}/tutorials`}
+            className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(0,0,0,0.25)]"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            Tutorials
+          </Link>
+          <button
+            type="button"
+            onClick={openDrawer}
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:border-slate-400"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+            </svg>
+            Open help docs
+          </button>
+        </div>
       </div>
 
       {/* New ticket form */}

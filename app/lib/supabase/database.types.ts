@@ -328,6 +328,39 @@ export type Database = {
           },
         ]
       }
+      audit_submissions: {
+        Row: {
+          answers: Json
+          created_at: string | null
+          email: string
+          id: string
+          insights_generated_at: string | null
+          paid: boolean | null
+          paid_insights: Json | null
+          stripe_session_id: string | null
+        }
+        Insert: {
+          answers: Json
+          created_at?: string | null
+          email: string
+          id?: string
+          insights_generated_at?: string | null
+          paid?: boolean | null
+          paid_insights?: Json | null
+          stripe_session_id?: string | null
+        }
+        Update: {
+          answers?: Json
+          created_at?: string | null
+          email?: string
+          id?: string
+          insights_generated_at?: string | null
+          paid?: boolean | null
+          paid_insights?: Json | null
+          stripe_session_id?: string | null
+        }
+        Relationships: []
+      }
       bulk_operations_log: {
         Row: {
           actual_count: number
@@ -3944,6 +3977,7 @@ export type Database = {
           last_email_change_at: string | null
           mfa_required: boolean
           role: string
+          tutorials_seen_at: string | null
           updated_at: string
         }
         Insert: {
@@ -3958,6 +3992,7 @@ export type Database = {
           last_email_change_at?: string | null
           mfa_required?: boolean
           role?: string
+          tutorials_seen_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -3972,6 +4007,7 @@ export type Database = {
           last_email_change_at?: string | null
           mfa_required?: boolean
           role?: string
+          tutorials_seen_at?: string | null
           updated_at?: string
         }
         Relationships: [

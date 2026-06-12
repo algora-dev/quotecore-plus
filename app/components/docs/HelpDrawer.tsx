@@ -10,6 +10,12 @@ import {
   HELP_DRAWER_MIN_WIDTH_VW,
 } from './HelpDrawerContext';
 
+/** First path segment is the workspace slug, e.g. /acme/quotes -> "acme". */
+function workspaceSlugFromPath(pathname: string): string {
+  const seg = pathname.split('/').filter(Boolean)[0];
+  return seg ?? '';
+}
+
 interface DrawerTreePage { slug: string; title: string; status: 'published' | 'coming-soon' }
 interface DrawerTreeSection { id: string; title: string; pages: DrawerTreePage[] }
 interface DrawerSearchEntry { slug: string; title: string; description: string; section: string }
@@ -341,6 +347,21 @@ export function HelpDrawerPanel() {
               </div>
             ) : null}
           </div>
+
+          {/* Tutorials entry — prominent button under Search, above the doc tree.
+              Takes the user to the /tutorials onboarding hub and closes the drawer. */}
+          <Link
+            href={`/${workspaceSlugFromPath(pathname)}/tutorials`}
+            onClick={closeDrawer}
+            data-assistant-id="help-drawer-tutorials"
+            className="mb-4 flex items-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2.5 text-sm font-semibold text-orange-800 hover:bg-orange-100 hover:border-orange-300 hover:shadow-[0_0_8px_rgba(255,107,53,0.12)] transition-all"
+          >
+            <svg className="h-5 w-5 flex-shrink-0 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            <span>Tutorials — new here? Start here</span>
+          </Link>
+
           <DrawerNav
             tree={tree}
             treeError={treeError}

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
+import { WelcomeModal } from './tutorials/WelcomeModal';
 
 export default async function WorkspaceHome({
   params,
@@ -19,14 +20,16 @@ export default async function WorkspaceHome({
     .eq('company_id', company.id)
     .eq('is_read', false);
 
-  // Load user name
+  // Load user name + first-login Tutorials flag (gates the Welcome modal).
   const { data: user } = await supabase
     .from('users')
-    .select('full_name')
+    .select('full_name, tutorials_seen_at')
     .eq('id', profile.id)
     .single();
 
   const firstName = user?.full_name?.split(' ')[0] || 'there';
+  // Brand-new users (never dismissed) see the one-time Welcome modal.
+  const showWelcome = !user?.tutorials_seen_at;
 
   const actions = [
     {
@@ -94,6 +97,9 @@ export default async function WorkspaceHome({
 
   return (
     <section className="space-y-6">
+      {/* First-login Tutorials welcome — renders once per new user. */}
+      {showWelcome ? <WelcomeModal base={`/${workspaceSlug}`} firstName={firstName} /> : null}
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Welcome back, {firstName}</h1>

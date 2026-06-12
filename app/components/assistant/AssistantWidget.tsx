@@ -25,6 +25,7 @@ import { useAssistantHints } from './useAssistantHints';
 import { useAssistantHighlight } from './useAssistantHighlight';
 import { useBrowserFacts } from './useBrowserFacts';
 import { useGuideEngine, type GuideStep } from './useGuideEngine';
+import { START_GUIDE_EVENT, type StartGuideDetail } from './startGuide';
 import { loadGuide } from './assistantPersistence';
 
 /**
@@ -324,6 +325,28 @@ export function AssistantWidget(_props: Props) {
     // engine.startWorkflow is stable (useCallback); guideStart is the trigger.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [guideStart]);
+
+  // External launch bridge (Option A): any client surface (Tutorials page, help
+  // links) can fire a `qcp:start-guide` CustomEvent to begin a known workflow
+  // programmatically — no LLM round-trip. We open the panel and hand the live
+  // pathname to the engine so it can prepend a "get to the start page" hop.
+  useEffect(() => {
+    if (!userEnabled) return;
+    const onStartGuide = (e: Event) => {
+      const workflowId = (e as CustomEvent<StartGuideDetail>).detail?.workflowId;
+      if (!workflowId) return;
+      setOpen(true);
+      void engine.startWorkflow(
+        workflowId,
+        typeof window !== 'undefined' ? window.location.pathname : null
+      );
+    };
+    window.addEventListener(START_GUIDE_EVENT, onStartGuide as EventListener);
+    return () =>
+      window.removeEventListener(START_GUIDE_EVENT, onStartGuide as EventListener);
+    // engine.startWorkflow is stable (useCallback).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userEnabled]);
 
   // Render each new current step as an assistant-style message. Keyed on the
   // engine's currentIndex so we post exactly one bubble per step (incl. step 0

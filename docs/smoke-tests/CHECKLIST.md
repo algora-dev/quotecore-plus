@@ -115,6 +115,15 @@ _Re-architected 2026-06-03 eve, dev 3cfbd60. Legacy Copilot fully removed; assis
 
 ---
 
+## Pending verification (dev - Tutorials page + Welcome modal, 2026-06-12)
+- [ ] **/tutorials hub** - new route renders 13 cards in Resource-Library style; each card opens a modal (not a link); multi-page cards show pager dots + Back/Next; single-page cards (Drawings, Downloading, Q&Docs) have no pager.
+- [ ] **"Go to feature" CTA** - accent button navigates to the right page per card (Quotes/Components/Catalogs/Attachments/Drawings=/flashings/Orders=/material-orders/Invoices/Inbox/Resources).
+- [ ] **"Walk me through with Q" CTA** - shows only when a guide exists (hidden on Templates, Follow-ups, Downloading, Q&Docs); clicking navigates to the start page AND launches the correct Q guide (no LLM round-trip). Test at least Quotes(create-quote), Components, Drawings(flashing-draw), Invoices(create-invoice), Message Center(message-center).
+- [ ] **Q button hidden when assistant OFF** - if user has assistant disabled, no Q button on any card.
+- [ ] **Entry points** - (a) Help/Docs slider shows "Tutorials" button under Search, above the doc tree -> /tutorials + closes drawer; (b) Resources page top-right "Tutorials" button; (c) Account -> Support "Help & learning" card has Tutorials link + "Open help docs" button (opens the drawer).
+- [ ] **Welcome modal (first login)** - a brand-new user (users.tutorials_seen_at NULL) sees the Welcome modal once on the dashboard; "Start with Tutorials" -> /tutorials + stamps seen; "Maybe later"/X/overlay all dismiss + stamp; does NOT reappear on reload.
+> Migration `20260612180000_users_tutorials_seen_at` APPLIED to shared dev+prod DB; types regenerated. `next build` passed. Q-launch uses new `qcp:start-guide` CustomEvent bridge in AssistantWidget (Option A). Card->guide mapping richer than original plan: Drawings/Invoices/Message Center now HAVE guides.
+
 ## Pending verification (dev - Pricing Tier v2 gating, 2026-06-11, commit `52312e1`)
 - [ ] **Plan ladder** - billing page shows Free Trial / Free / Starter $19 / Pro $39; growth GONE; pro_plus/premium still present as higher/coming-soon.
 - [ ] **Free tier** (`free` plan): 5 quotes/mo cap bites; URL-link send works; QCP email send BLOCKED; `/inbox` shows upgrade splash (not the inbox); Orders/Invoices/Drawings/Catalogs/Attachments/Follow-ups/Activity all locked; bell+email alerts still arrive.
