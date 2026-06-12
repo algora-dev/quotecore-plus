@@ -16,7 +16,7 @@ import { normalizeMeasurementSystem } from '@/app/lib/types';
 // new-quote form via QuoteDetailsForm.
 import { CurrencySelector } from './CurrencySelector';
 import { DownloadSummaryPDFButton } from './DownloadSummaryPDFButton';
-import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 import { SendQuoteButton } from './SendQuoteButton';
 import { WithdrawQuoteButton } from './WithdrawQuoteButton';
@@ -58,7 +58,16 @@ export default async function QuoteSummaryPage({
   const activityCardEnabled = entitlements.features.activity_card;
   
   const supabase = await createSupabaseServerClient();
-  
+
+  // One-time "test it on yourself first" send tip: has THIS user seen it?
+  const _profile = await getCurrentProfile();
+  const { data: _stt } = await supabase
+    .from('users')
+    .select('send_test_tip_seen_at')
+    .eq('id', _profile.id)
+    .maybeSingle();
+  const sendTestTipSeen = !!(_stt as { send_test_tip_seen_at?: string | null } | null)?.send_test_tip_seen_at;
+
   // Load ALL customer quote lines (for overrides + custom lines)
   const { data: allCustomerLines } = await supabase
     .from('customer_quote_lines')
@@ -371,6 +380,8 @@ export default async function QuoteSummaryPage({
               hasCustomerQuote={hasCustomerQuote}
               emailTemplates={emailTemplates || []}
               canFollowups={entitlements.features.followups}
+              canEmail={entitlements.features.email_send}
+              sendTestTipSeen={sendTestTipSeen}
               libraryFiles={libraryPickerFiles}
               libraryLocked={!attachmentsEnabled}
               quoteFiles={(filesData || []).map((f) => ({

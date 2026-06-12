@@ -111,6 +111,15 @@ export default async function InvoicePage({ params }: Props) {
   // the quote/order send surfaces).
   const entitlements = await loadCompanyEntitlements(profile.company_id);
   const canFollowups = entitlements.features.followups;
+  const canEmail = entitlements.features.email_send;
+
+  // One-time "test it on yourself first" send tip: has THIS user seen it?
+  const { data: _stt } = await supabase
+    .from('users')
+    .select('send_test_tip_seen_at')
+    .eq('id', profile.id)
+    .maybeSingle();
+  const sendTestTipSeen = !!(_stt as { send_test_tip_seen_at?: string | null } | null)?.send_test_tip_seen_at;
 
   // Activity card only makes sense once the invoice has left draft
   // (nothing sent / no disputes / no schedules on a fresh draft). It
@@ -142,6 +151,8 @@ export default async function InvoicePage({ params }: Props) {
       activity={(activity ?? []) as unknown as { id: string; event_type: string; metadata: Record<string, unknown> | null; created_at: string }[]}
       emailTemplates={(emailTemplates ?? []) as { id: string; name: string; subject: string; body: string; is_default: boolean | null }[]}
       canFollowups={canFollowups}
+      canEmail={canEmail}
+      sendTestTipSeen={sendTestTipSeen}
       activitySlot={activityCard}
     />
   );

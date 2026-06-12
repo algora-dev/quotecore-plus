@@ -13,6 +13,8 @@ import {
   type PickerFile,
   type AttachmentSelection,
 } from '@/app/components/attachments/AttachmentSendPicker';
+import { useSendTestTip } from '@/app/components/send/sendTestTip';
+import { SendTestTipModal } from '@/app/components/send/SendTestTipModal';
 
 interface Props {
   orderId: string;
@@ -34,6 +36,10 @@ interface Props {
   emailTemplates?: MessageTemplate[];
   /** Whether this company's plan includes scheduled follow-ups. */
   canFollowups?: boolean;
+  /** Whether this company can send via QCP email (drives the test-tip copy). */
+  canEmail?: boolean;
+  /** Whether THIS user has already seen the one-time "test it first" send tip. */
+  sendTestTipSeen?: boolean;
 }
 
 interface MessageTemplate {
@@ -74,8 +80,12 @@ export function SendOrderButton({
   libraryLocked,
   emailTemplates = [],
   canFollowups = false,
+  canEmail = false,
+  sendTestTipSeen = false,
 }: Props) {
   const router = useRouter();
+  const testTip = useSendTestTip(sendTestTipSeen);
+  const [showTestTip, setShowTestTip] = useState(false);
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>('choose');
 
@@ -408,24 +418,41 @@ export function SendOrderButton({
 
   const orderUrl = token ? `${typeof window !== 'undefined' ? window.location.origin : ''}/orders/${token}` : null;
 
+  function openSendModal() {
+    setOpen(true);
+    setMode('choose');
+    setError(null);
+    setSuccess(null);
+    setCopied(false);
+    setSendStage('form');
+    setDraftRules([]);
+    setFollowUpError(null);
+  }
+
   return (
     <>
       <button
         type="button"
         onClick={() => {
-          setOpen(true);
-          setMode('choose');
-          setError(null);
-          setSuccess(null);
-          setCopied(false);
-          setSendStage('form');
-          setDraftRules([]);
-          setFollowUpError(null);
+          if (testTip.shouldShow) {
+            setShowTestTip(true);
+            return;
+          }
+          openSendModal();
         }}
         className="px-4 py-2 text-sm font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
       >
         Send Order
       </button>
+
+      {showTestTip && (
+        <SendTestTipModal
+          docType="order"
+          canEmail={canEmail}
+          onContinue={() => { testTip.markSeen(); setShowTestTip(false); openSendModal(); }}
+          onClose={() => { testTip.markSeen(); setShowTestTip(false); }}
+        />
+      )}
 
       {open ? (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 data-exclude-pdf">

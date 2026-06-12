@@ -9,6 +9,8 @@ import {
   type PickerFile,
   type AttachmentSelection,
 } from '@/app/components/attachments/AttachmentSendPicker';
+import { useSendTestTip } from '@/app/components/send/sendTestTip';
+import { SendTestTipModal } from '@/app/components/send/SendTestTipModal';
 
 /**
  * Subset of the email_templates row used by SendQuoteButton. Nullability
@@ -34,6 +36,10 @@ interface Props {
   /** Whether this company's plan includes scheduled follow-up messages.
    *  Pro+ only. When false the post-send follow-up prompt is hidden. */
   canFollowups: boolean;
+  /** Whether this company can send via QCP email (drives the test-tip copy). */
+  canEmail: boolean;
+  /** Whether THIS user has already seen the one-time "test it first" send tip. */
+  sendTestTipSeen: boolean;
   /** Company attachment-library files (IDs only). Empty when not entitled. */
   libraryFiles: PickerFile[];
   /** This quote's own files (all tiers). */
@@ -67,8 +73,12 @@ function replacePlaceholders(text: string, data: Record<string, string>): string
     .replace(/\{\{quote_date\}\}/g, sanitize(data.quote_date || ''));
 }
 
-export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCustomerQuote, emailTemplates, canFollowups, libraryFiles, quoteFiles, libraryLocked, quoteMeta }: Props) {
+export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCustomerQuote, emailTemplates, canFollowups, canEmail, sendTestTipSeen, libraryFiles, quoteFiles, libraryLocked, quoteMeta }: Props) {
   const router = useRouter();
+  const testTip = useSendTestTip(sendTestTipSeen);
+  // When the one-time tip needs showing, the first "Send Quote" click opens the
+  // tip instead of the send modal; "Got it" marks it seen and proceeds.
+  const [showTestTip, setShowTestTip] = useState(false);
 
   /**
    * Open the Templates page on the Message tab so the user can build
@@ -260,11 +270,30 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
     }
   }
 
-  async function handleOpen() {
+  function openSendModal() {
     setOpen(true);
     setMode('choose');
     setCopied(false);
     setEmailCopied(false);
+  }
+
+  async function handleOpen() {
+    if (testTip.shouldShow) {
+      setShowTestTip(true);
+      return;
+    }
+    openSendModal();
+  }
+
+  function handleTestTipContinue() {
+    testTip.markSeen();
+    setShowTestTip(false);
+    openSendModal();
+  }
+
+  function handleTestTipClose() {
+    testTip.markSeen();
+    setShowTestTip(false);
   }
 
   async function handleUrlMode() {
@@ -520,6 +549,15 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
       >
         Send Quote
       </button>
+
+      {showTestTip && (
+        <SendTestTipModal
+          docType="quote"
+          canEmail={canEmail}
+          onContinue={handleTestTipContinue}
+          onClose={handleTestTipClose}
+        />
+      )}
 
       {open && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

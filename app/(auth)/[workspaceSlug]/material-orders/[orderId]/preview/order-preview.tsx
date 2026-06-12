@@ -27,6 +27,10 @@ interface Props {
   emailTemplates?: OrderEmailTemplate[];
   /** Whether this company's plan includes scheduled follow-up messages. */
   canFollowups?: boolean;
+  /** Whether this company can send via QCP email (drives the test-tip copy). */
+  canEmail?: boolean;
+  /** Whether THIS user has already seen the one-time "test it first" send tip. */
+  sendTestTipSeen?: boolean;
   /** Activity card (server-rendered) shown ABOVE the order body, inside
    *  the grey shell - mirrors the Quotes summary layout where Activity
    *  sits above the document. */
@@ -62,7 +66,7 @@ export interface OrderEmailTemplate {
  * The header bar (Back / Mark / Edit / Print / Send) carries
  * `data-exclude-pdf` so OrderBody's print stylesheet hides it.
  */
-export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFiles, libraryLocked, currency = 'GBP', emailTemplates = [], canFollowups = false, activitySlot }: Props) {
+export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFiles, libraryLocked, currency = 'GBP', emailTemplates = [], canFollowups = false, canEmail = false, sendTestTipSeen = false, activitySlot }: Props) {
   const router = useRouter();
   // When opened from the Message Center (?from=inbox) "Back" returns to the
   // inbox; otherwise keep the existing history-back behaviour.
@@ -187,6 +191,8 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
             libraryLocked={libraryLocked}
             emailTemplates={emailTemplates}
             canFollowups={canFollowups}
+            canEmail={canEmail}
+            sendTestTipSeen={sendTestTipSeen}
           />
         </div>
       </div>

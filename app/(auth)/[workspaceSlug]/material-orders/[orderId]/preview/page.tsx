@@ -4,6 +4,7 @@ import { OrderPreview } from './order-preview';
 import { OrderActivityCard } from '@/app/components/activity/OrderActivityCard';
 import { notFound } from 'next/navigation';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 
 interface Props {
@@ -34,6 +35,16 @@ export default async function OrderPreviewPage(props: Props) {
   const currency = companyRow?.default_currency ?? 'GBP';
   const attachmentsEnabled = entitlements.features.attachment_library;
   const canFollowups = entitlements.features.followups;
+  const canEmail = entitlements.features.email_send;
+
+  // One-time "test it on yourself first" send tip: has THIS user seen it?
+  const _profile = await getCurrentProfile();
+  const { data: _stt } = await (await createSupabaseServerClient())
+    .from('users')
+    .select('send_test_tip_seen_at')
+    .eq('id', _profile.id)
+    .maybeSingle();
+  const sendTestTipSeen = !!(_stt as { send_test_tip_seen_at?: string | null } | null)?.send_test_tip_seen_at;
 
   // Email templates for the order send modal + follow-up builder. Mirrors
   // the quote summary page; attachment_id baked default included.
@@ -83,6 +94,8 @@ export default async function OrderPreviewPage(props: Props) {
       currency={currency}
       emailTemplates={emailTemplates ?? []}
       canFollowups={canFollowups}
+      canEmail={canEmail}
+      sendTestTipSeen={sendTestTipSeen}
       activitySlot={activityCard}
     />
   );

@@ -97,6 +97,10 @@ interface Props {
   activity: { id: string; event_type: string; metadata: Record<string, unknown> | null; created_at: string }[];
   /** Whether this company's plan includes scheduled follow-ups. */
   canFollowups?: boolean;
+  /** Whether this company can send via QCP email (drives the test-tip copy). */
+  canEmail?: boolean;
+  /** Whether THIS user has already seen the one-time "test it first" send tip. */
+  sendTestTipSeen?: boolean;
   /** Activity card (server-rendered) shown above the invoice document in
    *  the right preview pane to mirror the Quotes summary layout. */
   activitySlot?: ReactNode;
@@ -129,6 +133,8 @@ export function InvoiceEditor({
   activity,
   emailTemplates,
   canFollowups = false,
+  canEmail = false,
+  sendTestTipSeen = false,
   activitySlot,
 }: Props) {
   const router = useRouter();
@@ -503,6 +509,8 @@ export function InvoiceEditor({
             status={initial.status}
             emailTemplates={emailTemplates}
             canFollowups={canFollowups}
+            canEmail={canEmail}
+            sendTestTipSeen={sendTestTipSeen}
             invoiceMeta={{
               customerName: initial.customer_name ?? '',
               invoiceNumber: initial.invoice_number ?? '',

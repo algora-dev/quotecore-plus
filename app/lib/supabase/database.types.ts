@@ -3977,6 +3977,7 @@ export type Database = {
           last_email_change_at: string | null
           mfa_required: boolean
           role: string
+          send_test_tip_seen_at: string | null
           tutorials_seen_at: string | null
           updated_at: string
         }
@@ -3992,6 +3993,7 @@ export type Database = {
           last_email_change_at?: string | null
           mfa_required?: boolean
           role?: string
+          send_test_tip_seen_at?: string | null
           tutorials_seen_at?: string | null
           updated_at?: string
         }
@@ -4007,6 +4009,7 @@ export type Database = {
           last_email_change_at?: string | null
           mfa_required?: boolean
           role?: string
+          send_test_tip_seen_at?: string | null
           tutorials_seen_at?: string | null
           updated_at?: string
         }

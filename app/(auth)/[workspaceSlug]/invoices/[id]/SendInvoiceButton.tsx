@@ -3,6 +3,8 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { sendInvoiceMessage } from './send-invoice-actions';
 import { scheduleInvoiceFollowUp } from '@/app/lib/messages/scheduled';
+import { useSendTestTip } from '@/app/components/send/sendTestTip';
+import { SendTestTipModal } from '@/app/components/send/SendTestTipModal';
 
 export interface EmailTemplate {
   id: string;
@@ -32,6 +34,10 @@ interface Props {
   defaultRecipientEmail?: string | null;
   /** Whether this company's plan includes scheduled follow-ups. */
   canFollowups?: boolean;
+  /** Whether this company can send via QCP email (drives the test-tip copy). */
+  canEmail?: boolean;
+  /** Whether THIS user has already seen the one-time "test it first" send tip. */
+  sendTestTipSeen?: boolean;
 }
 
 function sanitize(str: string): string {
@@ -62,8 +68,12 @@ export function SendInvoiceButton({
   invoiceMeta,
   defaultRecipientEmail,
   canFollowups = false,
+  canEmail = false,
+  sendTestTipSeen = false,
 }: Props) {
   const router = useRouter();
+  const testTip = useSendTestTip(sendTestTipSeen);
+  const [showTestTip, setShowTestTip] = useState(false);
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'choose' | 'url' | 'email' | 'send'>('choose');
   const [copied, setCopied] = useState(false);
@@ -162,7 +172,7 @@ export function SendInvoiceButton({
     prefillFromTemplate(emailTemplates.find((t) => t.id === templateId));
   }
 
-  function handleOpen() {
+  function openSendModal() {
     setOpen(true);
     setMode('choose');
     setCopied(false);
@@ -172,6 +182,14 @@ export function SendInvoiceButton({
     setSendStage('form');
     setDraftRules([]);
     setFollowUpError(null);
+  }
+
+  function handleOpen() {
+    if (testTip.shouldShow) {
+      setShowTestTip(true);
+      return;
+    }
+    openSendModal();
   }
 
   async function handleCopyUrl() {
@@ -363,6 +381,15 @@ export function SendInvoiceButton({
         </svg>
         Send Invoice
       </button>
+
+      {showTestTip && (
+        <SendTestTipModal
+          docType="invoice"
+          canEmail={canEmail}
+          onContinue={() => { testTip.markSeen(); setShowTestTip(false); openSendModal(); }}
+          onClose={() => { testTip.markSeen(); setShowTestTip(false); }}
+        />
+      )}
 
       {open && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
