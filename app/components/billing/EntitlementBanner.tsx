@@ -136,17 +136,12 @@ function pickVariant(ent: CompanyEntitlements): Variant | null {
       const now = Date.now();
       const diffMs = ends - now;
 
-      // Expired (post-cron will flip to canceled, but until then we MUST
-      // surface the hard expired state - mutations are already blocked by
-      // company_effective_plan_active() returning false).
+      // Expired: the account now rolls into the active FREE tier (no longer a
+      // hard read-only lock). The friendly, dismissible "you're on Free now"
+      // notice is handled by TrialRolledToFreeBanner, so this persistent banner
+      // stays silent for the expired-trial case to avoid a duplicate/red scare.
       if (diffMs <= 0) {
-        return {
-          tone: 'red',
-          title: 'Your trial has expired.',
-          description:
-            'Choose a plan now to keep your data and continue using QuoteCore+.',
-          ctaLabel: 'Choose a plan',
-        };
+        return null;
       }
 
       const hoursLeft = diffMs / (60 * 60 * 1000);
