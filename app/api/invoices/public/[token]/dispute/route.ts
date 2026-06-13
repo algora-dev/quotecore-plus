@@ -51,7 +51,23 @@ export async function POST(
 
   const now = new Date().toISOString();
 
-  // Store dispute record
+  // M-01: race-guarded transition FIRST. Put the lifecycle predicate on the
+  // update so a dispute POST racing the owner's "confirm paid" can't overwrite
+  // a just-paid/cancelled invoice to disputed. If it affects 0 rows the
+  // invoice already terminalised -> 409, and we do NOT store the dispute
+  // record / activity / alert (which is why this now runs before the insert).
+  const { data: updated } = await admin
+    .from('invoices')
+    .update({ status: 'disputed', disputed_at: now })
+    .eq('id', invoice.id)
+    .not('status', 'in', '("paid","cancelled")')
+    .select('id');
+
+  if (!updated || updated.length === 0) {
+    return NextResponse.json({ error: 'Cannot dispute this invoice' }, { status: 409 });
+  }
+
+  // Store dispute record (only after the status transition succeeded).
   await admin.from('invoice_disputes').insert({
     invoice_id: invoice.id,
     company_id: invoice.company_id,
@@ -60,12 +76,6 @@ export async function POST(
     reason,
     message,
   });
-
-  // Update invoice status
-  await admin
-    .from('invoices')
-    .update({ status: 'disputed', disputed_at: now })
-    .eq('id', invoice.id);
 
   // Best-effort: cancel any pending time-based invoice follow-ups now
   // that the recipient has disputed. The dispatch-time guard in

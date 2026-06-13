@@ -20,6 +20,7 @@ import { getClientIP } from '@/app/lib/security/rateLimit';
 import {
   ASSISTANT_ENABLED,
   REQUEST_LIMITS,
+  MODEL_LIMITS,
 } from '@/app/lib/assistant/config';
 import {
   isProtocolVersionSupported,
@@ -86,6 +87,30 @@ export async function POST(req: NextRequest) {
   if (body.messages.length > REQUEST_LIMITS.maxHistoryMessages) {
     body.messages = body.messages.slice(-REQUEST_LIMITS.maxHistoryMessages);
   }
+  // M-03: strict per-message schema validation at the boundary. Direct API
+  // callers could otherwise smuggle non-client roles (system/tool), non-string
+  // content, or oversized history (the maxTotalInputChars cap existed but was
+  // never enforced), weakening prompt-safety + cost assumptions.
+  let totalInputChars = 0;
+  for (const m of body.messages) {
+    if (!m || (m.role !== 'user' && m.role !== 'assistant')) {
+      return errorResponse(
+        'invalid_request',
+        'Each message role must be "user" or "assistant".',
+        400,
+      );
+    }
+    if (typeof m.content !== 'string') {
+      return errorResponse('invalid_request', 'Message content must be a string.', 400);
+    }
+    if (m.content.length > REQUEST_LIMITS.maxUserMessageChars) {
+      return errorResponse('invalid_request', 'A message exceeds the per-message limit.', 413);
+    }
+    totalInputChars += m.content.length;
+  }
+  if (totalInputChars > REQUEST_LIMITS.maxTotalInputChars) {
+    return errorResponse('invalid_request', 'Total input is too large.', 413);
+  }
   const lastUser = [...body.messages].reverse().find((m) => m.role === 'user');
   if (!lastUser || !lastUser.content?.trim()) {
     return errorResponse('invalid_request', 'A user message is required.', 400);
@@ -144,6 +169,15 @@ export async function POST(req: NextRequest) {
   const ac = new AbortController();
   // Abort the model call if the client disconnects.
   req.signal.addEventListener('abort', () => ac.abort());
+  // M-05: enforce a server-side wall-clock turn timeout. Without this a stalled
+  // model/upstream call holds the SSE request open indefinitely (the config
+  // existed but was never wired). Cleared on completion below; aborting here
+  // makes the turn surface the same 'timeout' error path as a client abort.
+  let timedOut = false;
+  const turnTimer = setTimeout(() => {
+    timedOut = true;
+    ac.abort();
+  }, MODEL_LIMITS.turnTimeoutMs);
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -212,13 +246,20 @@ export async function POST(req: NextRequest) {
         send({
           type: 'error',
           code: aborted ? 'timeout' : 'upstream_error',
-          message: aborted ? 'Cancelled.' : 'Assistant error.',
+          message: timedOut
+            ? 'Assistant timed out.'
+            : aborted
+              ? 'Cancelled.'
+              : 'Assistant error.',
         });
         controller.close();
         if (!aborted) console.error('[assistant.chat] turn error:', err);
+      } finally {
+        clearTimeout(turnTimer);
       }
     },
     cancel() {
+      clearTimeout(turnTimer);
       ac.abort();
     },
   });

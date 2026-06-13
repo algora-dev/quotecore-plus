@@ -1366,6 +1366,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "invoice_activity_invoice_company_fk"
+            columns: ["invoice_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
             foreignKeyName: "invoice_activity_invoice_id_fkey"
             columns: ["invoice_id"]
             isOneToOne: false
@@ -1415,6 +1422,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_disputes_invoice_company_fk"
+            columns: ["invoice_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id", "company_id"]
           },
           {
             foreignKeyName: "invoice_disputes_invoice_id_fkey"
@@ -1496,6 +1510,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_lines_invoice_company_fk"
+            columns: ["invoice_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id", "company_id"]
           },
           {
             foreignKeyName: "invoice_lines_invoice_id_fkey"
@@ -4227,6 +4248,16 @@ export type Database = {
           over_quota: boolean
           row_count: number
         }[]
+      }
+      increment_assistant_token_usage: {
+        Args: {
+          p_company_id: string
+          p_month_key: string
+          p_tokens: number
+          p_usage_date: string
+          p_user_id: string
+        }
+        Returns: undefined
       }
       is_measurement_type_allowed_for_trade: {
         Args: { p_mtype: string; p_trade: string }

@@ -72,6 +72,10 @@ async function clearActionRequiredForArchivedAlerts(
       .from('quote_revision_requests')
       .update({ resolved_at: new Date().toISOString() })
       .in('quote_id', Array.from(quoteIds))
+      // L-01: explicit company filter for consistency with the order/invoice
+      // side-effects below (defence-in-depth on top of the company-prefiltered
+      // alert ids + RLS).
+      .eq('company_id', companyId)
       .is('resolved_at', null);
   }
 

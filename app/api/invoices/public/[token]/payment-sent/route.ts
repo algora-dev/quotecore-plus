@@ -43,11 +43,21 @@ export async function POST(
   const body = await req.json().catch(() => ({}));
   const customerMessage = typeof body?.message === 'string' ? body.message.slice(0, 500) : '';
 
-  // Update invoice status
-  await admin
+  // M-01: race-guarded transition. Put the lifecycle predicate ON the update
+  // so a customer POST that races the owner's "confirm paid" can't downgrade a
+  // just-paid invoice back to payment_reported. If the row already moved on
+  // (paid/cancelled/disputed), this affects 0 rows -> 409, and we skip the
+  // activity log + alert below.
+  const { data: updated } = await admin
     .from('invoices')
     .update({ status: 'payment_reported', payment_reported_at: now })
-    .eq('id', invoice.id);
+    .eq('id', invoice.id)
+    .in('status', ['sent', 'viewed'])
+    .select('id');
+
+  if (!updated || updated.length === 0) {
+    return NextResponse.json({ error: 'Invalid status for this action' }, { status: 409 });
+  }
 
   // Best-effort: cancel any pending time-based invoice follow-ups now
   // that the recipient has reported payment. The dispatch-time guard in

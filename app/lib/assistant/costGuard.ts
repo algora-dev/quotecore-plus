@@ -183,30 +183,19 @@ export async function recordTokenUsage(
   const month = monthKey();
 
   try {
-    const { data: existing } = await supabase
-      .from('assistant_token_usage')
-      .select('id, total_tokens')
-      .eq('company_id', input.companyId)
-      .eq('user_id', input.userId)
-      .eq('usage_date', today)
-      .maybeSingle();
-
-    if (existing) {
-      await supabase
-        .from('assistant_token_usage')
-        .update({
-          total_tokens: Number(existing.total_tokens ?? 0) + input.totalTokens,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existing.id);
-    } else {
-      await supabase.from('assistant_token_usage').insert({
-        company_id: input.companyId,
-        user_id: input.userId,
-        usage_date: today,
-        month_key: month,
-        total_tokens: input.totalTokens,
-      });
+    // M-04: atomic increment via RPC. Replaces the previous
+    // select-then-update which could lose increments under concurrent turns
+    // for the same (company,user,day) and undercount spend against the budget.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).rpc('increment_assistant_token_usage', {
+      p_company_id: input.companyId,
+      p_user_id: input.userId,
+      p_usage_date: today,
+      p_month_key: month,
+      p_tokens: input.totalTokens,
+    });
+    if (error) {
+      console.warn('[assistant.costGuard] recordTokenUsage failed:', error.message);
     }
   } catch (err) {
     console.warn('[assistant.costGuard] recordTokenUsage failed:', err);
