@@ -42,17 +42,28 @@ export async function ensureSession(input: EnsureSessionInput): Promise<string> 
   if (input.sessionId) {
     const { data } = await supabase
       .from('assistant_sessions')
-      .select('id, user_id')
+      .select('id, user_id, company_id')
       .eq('id', input.sessionId)
       .maybeSingle();
-    if (data && data.user_id === input.userId) {
+    // H-05: require BOTH user_id AND company_id to match. The browser stores a
+    // single session id; a user in multiple workspaces would otherwise reuse
+    // Company A's session while operating in Company B, bleeding A's chat
+    // history/context into B (and tagging new B turns with A's company_id).
+    // Checking company_id here is the authoritative guard - even if the client
+    // sends a stale cross-workspace id, we refuse to reuse it and mint a fresh
+    // session scoped to the current company.
+    if (
+      data &&
+      data.user_id === input.userId &&
+      data.company_id === input.companyId
+    ) {
       await supabase
         .from('assistant_sessions')
         .update({ last_active_at: new Date().toISOString() })
         .eq('id', input.sessionId);
       return input.sessionId;
     }
-    // Supplied id not found or not owned -> fall through and create a fresh one.
+    // Not found / not owned / different company -> fall through, create fresh.
   }
 
   const retentionUntil = new Date(
