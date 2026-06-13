@@ -664,11 +664,15 @@ export async function scheduleInvoiceFollowUp(
   } else {
     // 'invoice_sent': prefer the most recent successful invoice send,
     // then invoice.sent_at, then updated_at.
+    // M-NEW-01: scope to THIS invoice, not the company's latest invoice send.
+    // Without this, invoice A's follow-up anchored on invoice B's send time.
+    // Mirrors the quote (related_quote_id) and order (related_order_id) paths.
     const { data: lastSend } = await supabase
       .from('outbound_messages')
       .select('sent_at, created_at')
       .eq('company_id', profile.company_id)
       .eq('kind', 'invoice_send')
+      .eq('related_invoice_id', input.invoiceId)
       .in('status', ['sent', 'suppressed'])
       .order('created_at', { ascending: false })
       .limit(1)

@@ -88,11 +88,14 @@ export default async function InvoicePage({ params }: Props) {
     .eq('company_id', profile.company_id)
     .order('name');
 
-  // Load invoice activity
+  // Load invoice activity. H-04 defence-in-depth: scope by company_id too
+  // (service-role/admin read bypasses RLS). Matches the lines + disputes
+  // reads on this page and the public invoice page.
   const { data: activity } = await admin
     .from('invoice_activity')
     .select('id, event_type, metadata, created_at')
     .eq('invoice_id', id)
+    .eq('company_id', invoice.company_id)
     .order('created_at', { ascending: false })
     .limit(20);
 
