@@ -1,5 +1,7 @@
 ﻿'use client';
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { updateCompanySettings } from './actions';
 import { saveCompanyTaxes } from '@/app/lib/taxes/actions';
 import { CURRENCY_GROUPS } from '@/app/lib/currency/currencies';
@@ -20,6 +22,8 @@ interface Props {
   currentTaxes: EditableTax[];
   /** Phase 8 (Generic Trades): only rendered when the client flag is on. */
   currentDefaultTrade?: string | null;
+  /** When true the company is over storage - block logo uploads. */
+  isOverStorage?: boolean;
 }
 
 export function CompanySettingsForm({
@@ -35,7 +39,11 @@ export function CompanySettingsForm({
   currentLogoUrl,
   currentTaxes,
   currentDefaultTrade,
+  isOverStorage,
 }: Props) {
+  const params = useParams<{ workspaceSlug: string }>();
+  const workspaceSlug = params?.workspaceSlug ?? '';
+
   const genericTradesEnabled =
     (process.env.NEXT_PUBLIC_GENERIC_TRADES_V1 ?? '').toLowerCase() === 'true';
   type TradeOption = 'roofing' | 'cladding' | 'generic' | 'electrical' | 'plumbing' | 'landscaping' | 'flooring' | 'tiling' | 'foundations' | 'insulation' | 'painting' | 'fencing' | 'concrete' | 'construction';
@@ -179,7 +187,7 @@ export function CompanySettingsForm({
           </div>
 
           {/* Company Logo */}
-          <LogoUploader companyId={companyId} currentLogoUrl={currentLogoUrl} />
+          <LogoUploader companyId={companyId} currentLogoUrl={currentLogoUrl} isOverStorage={isOverStorage} />
         </div>
       </div>
 
@@ -297,6 +305,18 @@ export function CompanySettingsForm({
           </select>
         </div>
       )}
+
+      {/* Templates shortcut - quick access from the trade section */}
+      <div className="py-4 border-t border-slate-100">
+        <p className="text-sm font-semibold text-slate-900">Resource Library</p>
+        <p className="text-xs text-slate-500 mt-0.5">Manage all your quote templates, message templates, customer quote templates, order templates, catalog files, and upload library.</p>
+        <Link
+          href={`/${workspaceSlug}/resources`}
+          className="inline-block mt-3 px-4 py-2 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] whitespace-nowrap"
+        >
+          Resource Library
+        </Link>
+      </div>
 
       {/* Profit Margins */}
       <div className="border-t border-gray-200 pt-8">

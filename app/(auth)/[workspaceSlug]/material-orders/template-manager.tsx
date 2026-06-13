@@ -3,13 +3,16 @@
 import { useState } from 'react';
 import type { MaterialOrderTemplateRow, MaterialOrderTemplateInsert } from '@/app/lib/types';
 import { createOrderTemplate, updateOrderTemplate, deleteOrderTemplate } from './template-actions';
+import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 
 interface Props {
   initialTemplates: MaterialOrderTemplateRow[];
   onClose: () => void;
+  /** When true the company is over storage - block logo upload. */
+  isOverStorage?: boolean;
 }
 
-export function TemplateManager({ initialTemplates, onClose }: Props) {
+export function TemplateManager({ initialTemplates, onClose, isOverStorage }: Props) {
   const [templates, setTemplates] = useState(initialTemplates);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -17,6 +20,7 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [formLogoUrl, setFormLogoUrl] = useState('');
+  const [storageBlocked, setStorageBlocked] = useState(false);
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -98,6 +102,7 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
   }
   
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (isOverStorage) { setStorageBlocked(true); return; }
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -135,6 +140,8 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
   }
 
   return (
+    <>
+    <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
     <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
@@ -517,5 +524,6 @@ export function TemplateManager({ initialTemplates, onClose }: Props) {
         );
       })()}
     </div>
+    </>
   );
 }

@@ -8,9 +8,9 @@ import { CompanySettingsForm } from '@/app/(auth)/[workspaceSlug]/settings/Compa
 import { PasswordSection } from '@/app/(auth)/[workspaceSlug]/settings/PasswordSection';
 import { MfaSection, RecoveryCodesPanel } from '@/app/(auth)/[workspaceSlug]/settings/MfaSection';
 import { SecurityQuestionsSection } from '@/app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection';
-import { NotificationsSection } from '@/app/(auth)/[workspaceSlug]/settings/NotificationsSection';
-import { CopilotSettings } from '@/app/(auth)/[workspaceSlug]/settings/CopilotSettings';
+import { AssistantSection } from '@/app/(auth)/[workspaceSlug]/settings/AssistantSection';
 import { SupportSection } from './support/SupportSection';
+
 
 import { loadCompanyTaxes } from '@/app/lib/taxes/actions';
 import { listMfaFactors, getMfaRequired } from '@/app/(auth)/[workspaceSlug]/settings/mfa-actions';
@@ -57,7 +57,7 @@ export default async function AccountPage() {
   ] = await Promise.all([
     supabase
       .from('users')
-      .select('full_name, email, email_notifications_enabled')
+      .select('full_name, email, email_notifications_enabled, assistant_enabled')
       .eq('id', profile.id)
       .single(),
     supabase.auth.getUser(),
@@ -83,7 +83,7 @@ export default async function AccountPage() {
     loadCompanyEntitlements(profile.company_id),
     createAdminClient()
       .from('subscription_plans')
-      .select('code, display_name, price_cents_monthly, price_cents_monthly_original, monthly_quote_limit, storage_limit_bytes, component_limit, flashing_limit, monthly_material_order_limit, included_seats, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card, tagline, feature_blurbs, coming_soon, stripe_price_id_live, stripe_price_id_test, sort_order, active')
+      .select('code, display_name, price_cents_monthly, price_cents_monthly_original, monthly_quote_limit, storage_limit_bytes, component_limit, flashing_limit, monthly_material_order_limit, monthly_invoice_limit, monthly_ai_tokens, included_seats, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card, feat_invoices, feat_message_center, tagline, feature_blurbs, coming_soon, stripe_price_id_live, stripe_price_id_test, sort_order, active')
       .eq('active', true)
       .order('sort_order', { ascending: true }),
   ]);
@@ -138,6 +138,7 @@ export default async function AccountPage() {
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6" data-copilot="account-company">
           <CompanySettingsForm
             companyId={company.id}
+            isOverStorage={entitlements.isOverStorage}
             userId={profile.id}
             currentCompanyName={company.name}
             currentUserName={user?.full_name || ''}
@@ -192,24 +193,17 @@ export default async function AccountPage() {
     notifications: (
       <section className="space-y-6">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900">Notifications</h2>
-          <p className="text-sm text-slate-500 mt-1">Decide which app alerts also reach your inbox, and how Copilot guides you.</p>
+          <h2 className="text-xl font-semibold text-slate-900">Q Assistant</h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Turn the in-app Q assistant on or off. (Email + in-app alerts are
+            configured per event in the Message Center - open the inbox and
+            choose the Settings tab to manage those.)
+          </p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4" data-copilot="account-notifications">
-          <div>
-            <h3 className="text-base font-semibold text-slate-900">Email alerts</h3>
-          </div>
-          <NotificationsSection
-            initialEnabled={user?.email_notifications_enabled ?? true}
-            userEmail={userEmail}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <AssistantSection
+            initialEnabled={(user as { assistant_enabled?: boolean } | null)?.assistant_enabled ?? true}
           />
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4" data-copilot="account-copilot">
-          <div>
-            <h3 className="text-base font-semibold text-slate-900">Copilot</h3>
-            <p className="text-sm text-slate-500 mt-1">Interactive tutorials that guide you through each feature.</p>
-          </div>
-          <CopilotSettings />
         </div>
       </section>
     ),
@@ -227,6 +221,8 @@ export default async function AccountPage() {
         component_limit: number | null;
         flashing_limit: number | null;
         monthly_material_order_limit: number | null;
+        monthly_invoice_limit: number | null;
+        monthly_ai_tokens: number | null;
         included_seats: number;
         feat_digital_takeoff: boolean;
         feat_flashings: boolean;
@@ -234,6 +230,8 @@ export default async function AccountPage() {
         feat_followups: boolean;
         feat_email_send: boolean;
         feat_activity_card: boolean;
+        feat_invoices: boolean;
+        feat_message_center: boolean;
         tagline: string | null;
         feature_blurbs: string[] | null;
         coming_soon: boolean;
@@ -244,12 +242,16 @@ export default async function AccountPage() {
       // Tier-gating v3: render every active plan as a card. Trial is
       // always selectable (non-Stripe path); coming-soon tiers render
       // greyed-out and never invoke Stripe.
-      const VISIBLE = new Set(['trial', 'starter', 'growth', 'pro', 'pro_plus', 'premium']);
+      // Pricing Tier v2 ladder: Free Trial / Free / Starter / Pro (+ higher
+      // pro_plus and coming-soon premium). `growth` is deactivated and
+      // intentionally excluded.
+      const VISIBLE = new Set(['trial', 'free', 'starter', 'pro', 'pro_plus', 'premium']);
       const plans: BillingPlanInfo[] = allPlans
         .filter((p) => VISIBLE.has(p.code))
         .map((p) => ({
           code: p.code,
           displayName: p.display_name,
+          sortOrder: p.sort_order,
           priceCentsMonthly: p.price_cents_monthly,
           priceCentsMonthlyOriginal: p.price_cents_monthly_original,
           monthlyQuoteLimit: p.monthly_quote_limit,
@@ -257,6 +259,8 @@ export default async function AccountPage() {
           componentLimit: p.component_limit,
           flashingLimit: p.flashing_limit,
           monthlyMaterialOrderLimit: p.monthly_material_order_limit,
+          monthlyInvoiceLimit: p.monthly_invoice_limit,
+          monthlyAiTokens: p.monthly_ai_tokens,
           includedSeats: p.included_seats,
           features: {
             digital_takeoff: p.feat_digital_takeoff,
@@ -265,6 +269,8 @@ export default async function AccountPage() {
             followups: p.feat_followups,
             email_send: p.feat_email_send,
             activity_card: p.feat_activity_card,
+            invoices: p.feat_invoices,
+            message_center: p.feat_message_center,
           },
           tagline: p.tagline,
           featureBlurbs: p.feature_blurbs ?? [],

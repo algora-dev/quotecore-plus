@@ -5,6 +5,7 @@ import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow } from '@/app/lib/ty
 import type { QuoteTaxRow } from '@/app/lib/taxes/types';
 import { computeTaxLines } from '@/app/lib/taxes/types';
 import { formatCurrency } from '@/app/lib/currency/currencies';
+import { displayLineText } from '@/app/lib/quotes/lineText';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -17,28 +18,119 @@ interface Props {
   quoteTaxes: QuoteTaxRow[];
 }
 
-export function LaborSheetPreview({ quote, roofAreas: _roofAreas, components, savedLines, workspaceSlug, quoteTaxes }: Props) {
-  const currency = quote.currency || 'NZD';
-  const [isGenerating, setIsGenerating] = useState(false);
-  
-  // Display: only visible lines
-  const visibleLines = savedLines.filter(l => l.is_visible);
-  
-  // Group components by roof area (for fallback display)
-  const _componentsByArea = components.reduce((acc, comp) => {
-    const areaId = comp.quote_roof_area_id || 'extras';
-    if (!acc[areaId]) acc[areaId] = [];
-    acc[areaId].push(comp);
-    return acc;
-  }, {} as Record<string, QuoteComponentRow[]>);
+interface LaborSheetDocumentProps {
+  quote: QuoteRow;
+  components: QuoteComponentRow[];
+  savedLines: any[];
+  quoteTaxes: QuoteTaxRow[];
+}
 
-  // Total: ALL lines where "Add $" is checked (regardless of visibility)
+/**
+ * The pure, chrome-free labour-sheet DOCUMENT (the thing inside
+ * [data-pdf-content]). Single source of truth for what the labour sheet looks
+ * like: the on-screen LaborSheetPreview renders it under [data-pdf-content],
+ * and the bulk ZIP builder mounts it off-screen and captures it so the
+ * downloaded PDF is a pixel match of the on-screen labour sheet. No back
+ * link / download button / page shell lives in here.
+ */
+export function LaborSheetDocument({ quote, components, savedLines, quoteTaxes }: LaborSheetDocumentProps) {
+  const currency = quote.currency || 'NZD';
+  const visibleLines = savedLines.filter((l) => l.is_visible);
   const subtotal = savedLines.length > 0
-    ? savedLines.filter(l => l.include_in_total).reduce((sum, l) => sum + (l.custom_amount || 0), 0)
+    ? savedLines.filter((l) => l.include_in_total).reduce((sum, l) => sum + (l.custom_amount || 0), 0)
     : components.reduce((sum, c) => sum + (c.labour_cost || 0), 0);
   const { lines: taxLines, total: taxTotal } = computeTaxLines(quoteTaxes, subtotal, 'labor');
   const total = subtotal + taxTotal;
-  
+
+  return (
+    <div className="bg-white rounded-xl border border-black p-12">
+      {/* Title */}
+      <div className="border-b-2 border-black pb-6 mb-8">
+        <h1 className="text-3xl font-bold text-black mb-4">LABOR SHEET</h1>
+        <p className="text-lg text-black mb-2">
+          Quote #{quote.quote_number || 'DRAFT'}
+        </p>
+        <p className="text-base text-black mb-2">
+          <span className="font-semibold">Client:</span> {quote.customer_name}
+        </p>
+        {quote.job_name && (
+          <p className="text-base text-black">
+            <span className="font-semibold">Job:</span> {quote.job_name}
+          </p>
+        )}
+      </div>
+
+      {/* Line Items */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold text-black mb-3 border-b border-black pb-2">
+          Labor Items
+        </h2>
+        <div className="space-y-2">
+          {visibleLines.length > 0 ? (
+            visibleLines.map((line) => (
+              <div key={line.id} data-pdf-block className="flex justify-between py-2 border-b border-black">
+                <div className="flex-1">
+                  <p className="text-sm text-black">
+                    {displayLineText(line.custom_text, line.quantity_text, line.show_units)}
+                  </p>
+                </div>
+                {line.show_price && (
+                  <p className="text-sm font-medium text-black">
+                    {formatCurrency(line.custom_amount || 0, currency)}
+                  </p>
+                )}
+              </div>
+            ))
+          ) : (
+            components.map((comp) => (
+              <div key={comp.id} data-pdf-block className="flex justify-between py-2 border-b border-black">
+                <div className="flex-1">
+                  <p className="text-sm text-black">
+                    {comp.name} (Labor)
+                  </p>
+                </div>
+                <p className="text-sm font-medium text-black">
+                  {formatCurrency(comp.labour_cost || 0, currency)}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Totals */}
+      {/* data-pdf-block: keep the totals block whole across page breaks. */}
+      <div data-pdf-block className="border-t border-black pt-6 mt-8">
+        <div className="space-y-2">
+          <div className="flex justify-between text-base">
+            <span className="text-black">Subtotal (Labor)</span>
+            <span className="font-medium text-black">{formatCurrency(subtotal, currency)}</span>
+          </div>
+          {taxLines.map((tl) => (
+            <div key={tl.id} className="flex justify-between text-base">
+              <span className="text-black">{tl.name} ({tl.rate_percent}%)</span>
+              <span className="font-medium text-black">{formatCurrency(tl.amount, currency)}</span>
+            </div>
+          ))}
+          {taxLines.length > 1 && (
+            <div className="flex justify-between text-base border-t border-black pt-2">
+              <span className="text-black">Tax total</span>
+              <span className="font-medium text-black">{formatCurrency(taxTotal, currency)}</span>
+            </div>
+          )}
+          <div className="flex justify-between text-xl font-bold border-t border-black pt-3 mt-3">
+            <span className="text-black">Total</span>
+            <span className="text-black">{formatCurrency(total, currency)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function LaborSheetPreview({ quote, roofAreas: _roofAreas, components, savedLines, workspaceSlug, quoteTaxes }: Props) {
+  const [isGenerating, setIsGenerating] = useState(false);
+
   const handleDownloadPDF = async () => {
     setIsGenerating(true);
     try {
@@ -149,87 +241,13 @@ export function LaborSheetPreview({ quote, roofAreas: _roofAreas, components, sa
         </div>
 
         {/* Document */}
-        <div data-pdf-content className="bg-white rounded-xl border border-black p-12">
-          {/* Title */}
-          <div className="border-b-2 border-black pb-6 mb-8">
-            <h1 className="text-3xl font-bold text-black mb-4">LABOR SHEET</h1>
-            <p className="text-lg text-black mb-2">
-              Quote #{quote.quote_number || 'DRAFT'}
-            </p>
-            <p className="text-base text-black mb-2">
-              <span className="font-semibold">Client:</span> {quote.customer_name}
-            </p>
-            {quote.job_name && (
-              <p className="text-base text-black">
-                <span className="font-semibold">Job:</span> {quote.job_name}
-              </p>
-            )}
-          </div>
-
-          {/* Line Items */}
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold text-black mb-3 border-b border-black pb-2">
-              Labor Items
-            </h2>
-            <div className="space-y-2">
-              {visibleLines.length > 0 ? (
-                visibleLines.map(line => (
-                  <div key={line.id} className="flex justify-between py-2 border-b border-black">
-                    <div className="flex-1">
-                      <p className="text-sm text-black">
-                        {line.show_units ? line.custom_text : line.custom_text.split('-')[0].trim()}
-                      </p>
-                    </div>
-                    {line.show_price && (
-                      <p className="text-sm font-medium text-black">
-                        {formatCurrency(line.custom_amount || 0, currency)}
-                      </p>
-                    )}
-                  </div>
-                ))
-              ) : (
-                // Fallback to components if no saved lines
-                components.map(comp => (
-                  <div key={comp.id} className="flex justify-between py-2 border-b border-black">
-                    <div className="flex-1">
-                      <p className="text-sm text-black">
-                        {comp.name} (Labor)
-                      </p>
-                    </div>
-                    <p className="text-sm font-medium text-black">
-                      {formatCurrency(comp.labour_cost || 0, currency)}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Totals */}
-          <div className="border-t border-black pt-6 mt-8">
-            <div className="space-y-2">
-              <div className="flex justify-between text-base">
-                <span className="text-black">Subtotal (Labor)</span>
-                <span className="font-medium text-black">{formatCurrency(subtotal, currency)}</span>
-              </div>
-              {taxLines.map((tl) => (
-                <div key={tl.id} className="flex justify-between text-base">
-                  <span className="text-black">{tl.name} ({tl.rate_percent}%)</span>
-                  <span className="font-medium text-black">{formatCurrency(tl.amount, currency)}</span>
-                </div>
-              ))}
-              {taxLines.length > 1 && (
-                <div className="flex justify-between text-base border-t border-black pt-2">
-                  <span className="text-black">Tax total</span>
-                  <span className="font-medium text-black">{formatCurrency(taxTotal, currency)}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-xl font-bold border-t border-black pt-3 mt-3">
-                <span className="text-black">Total</span>
-                <span className="text-black">{formatCurrency(total, currency)}</span>
-              </div>
-            </div>
-          </div>
+        <div data-pdf-content>
+          <LaborSheetDocument
+            quote={quote}
+            components={components}
+            savedLines={savedLines}
+            quoteTaxes={quoteTaxes}
+          />
         </div>
 
       </div>

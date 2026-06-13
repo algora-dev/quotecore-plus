@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 
 interface TemplateFormData {
   name: string;
@@ -25,9 +26,11 @@ interface Props {
   onSubmit: (data: TemplateFormData) => Promise<void>;
   onCancel: () => void;
   saving: boolean;
+  /** When true the company is over storage - block logo upload. */
+  isOverStorage?: boolean;
 }
 
-export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving }: Props) {
+export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, isOverStorage }: Props) {
   // Template meta
   const [name, setName] = useState(initialData?.name || '');
   const [description, setDescription] = useState(initialData?.description || '');
@@ -44,6 +47,7 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving }: 
   // RIGHT SIDE
   const [logoUrl, setLogoUrl] = useState(initialData?.logoUrl || '');
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [storageBlocked, setStorageBlocked] = useState(false);
   const [fromCompany, setFromCompany] = useState(initialData?.fromCompany || '');
   const [contactPerson, setContactPerson] = useState(initialData?.contactPerson || '');
   const [contactDetails, setContactDetails] = useState(initialData?.contactDetails || '');
@@ -61,6 +65,7 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving }: 
   }
   
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (isOverStorage) { setStorageBlocked(true); return; }
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -122,6 +127,8 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving }: 
   }
   
   return (
+    <>
+    <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Template Name & Description */}
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
@@ -375,5 +382,6 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving }: 
         </button>
       </div>
     </form>
+    </>
   );
 }

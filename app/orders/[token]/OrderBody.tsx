@@ -2,11 +2,24 @@
 
 import type { MaterialOrderRow, MaterialOrderLineRow, FlashingLibraryRow } from '@/app/lib/types';
 import { useRef } from 'react';
+import { formatCurrency } from '@/app/lib/currency/currencies';
+import {
+  parseLineByLineData,
+  parseLineByLineFooter,
+  parseLineByLineTaxes,
+  parseLineByLineHideAllPrices,
+  lineByLineTotal,
+  lineDisplayText,
+  computeLineByLineTaxes,
+  type LineByLineItem,
+} from '@/app/(auth)/[workspaceSlug]/material-orders/lineByLine';
 
 interface Props {
   order: MaterialOrderRow;
   lines: MaterialOrderLineRow[];
   flashings: Pick<FlashingLibraryRow, 'id' | 'name' | 'image_url'>[];
+  /** Currency code for line-by-line price rendering (defaults to GBP). */
+  currency?: string;
 }
 
 interface LengthEntry {
@@ -25,8 +38,24 @@ interface LengthEntry {
  * `[data-print-root]`. This is the same approach the in-app preview
  * uses and avoids server-side PDF generation in this batch.
  */
-export function OrderBody({ order, lines, flashings }: Props) {
+export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) {
   const printRootRef = useRef<HTMLDivElement | null>(null);
+
+  // Line-by-line orders store their priced item list in a single JSON column
+  // (`material_orders.line_by_line_data`) rather than in `material_order_lines`.
+  const isLineByLine = order.layout_mode === 'line_by_line';
+  const lblLines: LineByLineItem[] = isLineByLine
+    ? parseLineByLineData(order.line_by_line_data).filter((l) => l.isVisible)
+    : [];
+  const lblSubtotal = isLineByLine ? lineByLineTotal(parseLineByLineData(order.line_by_line_data)) : 0;
+  const lblFooter = isLineByLine ? parseLineByLineFooter(order.line_by_line_data) : '';
+  const lblTaxes = isLineByLine ? parseLineByLineTaxes(order.line_by_line_data) : [];
+  // Master hide-all-prices override (persisted from the editor). When true, NO
+  // pricing renders anywhere on this surface, overriding each line's showPrice.
+  const lblHideAllPrices = isLineByLine ? parseLineByLineHideAllPrices(order.line_by_line_data) : false;
+  const { taxLines: lblTaxLines, taxTotal: lblTaxTotal } = computeLineByLineTaxes(lblSubtotal, lblTaxes);
+  const lblTotal = lblSubtotal + lblTaxTotal;
+  const lblHasPrices = !lblHideAllPrices && (lblLines.some((l) => l.showPrice) || lblTaxLines.length > 0);
 
   return (
     <>
@@ -127,12 +156,80 @@ export function OrderBody({ order, lines, flashings }: Props) {
           </div>
         ) : null}
 
-        {/* Line items.
+        {/* LINE-BY-LINE layout: a priced item list (item / description / qty
+            / price), rendered identically on the in-app preview, the public
+            supplier page, and the print/PDF output. */}
+        {isLineByLine ? (
+          <div data-print-card data-pdf-block>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b-2 border-slate-300 text-left">
+                  <th className="py-2 pr-3 font-semibold text-slate-600">Item / Description</th>
+                  <th className="py-2 pl-3 text-right font-semibold text-slate-600 whitespace-nowrap">
+                    {lblHideAllPrices ? '' : 'Price'}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {lblLines.length === 0 ? (
+                  <tr>
+                    <td colSpan={2} className="py-4 text-center text-slate-400 italic">No items on this order.</td>
+                  </tr>
+                ) : (
+                  lblLines.map((line) => (
+                    <tr key={line.id} className="border-b border-slate-100 align-top break-inside-avoid">
+                      <td className="py-2 pr-3 text-slate-800 whitespace-pre-line">{lineDisplayText(line)}</td>
+                      <td className="py-2 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
+                        {!lblHideAllPrices && line.showPrice ? formatCurrency(line.amount, currency) : ''}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+              {lblHasPrices ? (
+                <tfoot>
+                  {lblTaxLines.length > 0 ? (
+                    <>
+                      <tr className="border-t border-slate-200">
+                        <td className="py-1.5 pr-3 text-right text-slate-600">Subtotal</td>
+                        <td className="py-1.5 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
+                          {formatCurrency(lblSubtotal, currency)}
+                        </td>
+                      </tr>
+                      {lblTaxLines.map((tl) => (
+                        <tr key={tl.id}>
+                          <td className="py-1.5 pr-3 text-right text-slate-600">
+                            {tl.name} ({tl.ratePercent}%)
+                          </td>
+                          <td className="py-1.5 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
+                            {formatCurrency(tl.amount, currency)}
+                          </td>
+                        </tr>
+                      ))}
+                    </>
+                  ) : null}
+                  <tr className="border-t-2 border-slate-300">
+                    <td className="py-2 pr-3 text-right font-semibold text-slate-700">Total</td>
+                    <td className="py-2 pl-3 text-right font-bold text-slate-900 whitespace-nowrap tabular-nums">
+                      {formatCurrency(lblTotal, currency)}
+                    </td>
+                  </tr>
+                </tfoot>
+              ) : null}
+            </table>
+            {lblFooter.trim() ? (
+              <div className="mt-4 pt-3 border-t border-slate-200">
+                <p className="text-sm text-slate-600 italic whitespace-pre-line">{lblFooter}</p>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+        /* COMPONENTS layout.
             The order's saved `layout_mode` controls single- vs two-column
             grid here. The print stylesheet inherits the same grid (we
             don't override grid-template-columns in @media print) so the
             printed/PDF output matches what the user sees and what they
-            chose when saving. */}
+            chose when saving. */
         <div
           data-layout-mode={order.layout_mode === 'double' ? 'double' : 'single'}
           className={
@@ -144,7 +241,7 @@ export function OrderBody({ order, lines, flashings }: Props) {
           {lines.map((line, index) => {
             const flashing = line.flashing_id ? flashings.find((f) => f.id === line.flashing_id) : null;
             return (
-              <div key={line.id} data-print-card className="rounded-xl border border-slate-200 p-4 break-inside-avoid">
+              <div key={line.id} data-print-card data-pdf-block className="rounded-xl border border-slate-200 p-4 break-inside-avoid">
                 {line.show_component_name !== false ? (
                   <p className="font-semibold text-slate-900 mb-2">
                     {index + 1}. {line.item_name}
@@ -188,6 +285,7 @@ export function OrderBody({ order, lines, flashings }: Props) {
             );
           })}
         </div>
+        )}
       </div>
 
       {/* Download button is now rendered by OrderResponseForm so it

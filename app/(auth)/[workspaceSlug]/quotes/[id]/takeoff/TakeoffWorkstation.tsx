@@ -5,10 +5,17 @@ import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { saveTakeoffMeasurements, createTakeoffPage, initializeTakeoffPage, finalizeTakeoffPageImage } from './actions';
+import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId } from './actions';
+import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
+import type { TakeoffHydrationData } from './actions';
 import { uploadCanvasImage } from './uploadCanvasImage';
 import { AlertModal } from '@/app/components/AlertModal';
+import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 import { getTradeLabels } from '@/app/lib/trades/labels';
+import { createClient as createSupabaseBrowserClient } from '@/app/lib/supabase/client';
+import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-actions';
+import { mintQuoteDocumentUploadUrl } from '@/app/lib/files/signed-upload';
+import { convertLinearToMetric, convertAreaFt2ToMetric } from '@/app/lib/measurements/conversions';
 
 // Extend Fabric.js Canvas type with custom properties
 declare module 'fabric' {
@@ -23,9 +30,19 @@ interface Component {
   id: string;
   name: string;
   measurement_type?: string; // matches ComponentLibraryRow field name
+  /** Named library (component_collections.id) this component belongs to. Null = unfiled. */
+  collection_id?: string | null;
   /** @deprecated alias kept for any callers that used the old name */
   default_measurement_type?: string;
 }
+
+interface ComponentCollection {
+  id: string;
+  name: string;
+}
+
+/** Sentinel for the "All components" option in the library selector. */
+const ALL_LIBRARIES = '__all__';
 
 interface ComponentColor {
   componentId: string;
@@ -45,11 +62,15 @@ interface RoofArea {
 
 interface ComponentMeasurement {
   id: string;
-  type: 'line' | 'area' | 'point' | 'multi_lineal' | 'multi_lineal_lxh';
+  type: 'line' | 'area' | 'point' | 'multi_lineal' | 'multi_lineal_lxh' | 'volume_3d' | 'length_x_height_freestyle' | 'multi_lineal_lxh_freestyle';
   value: number; // length (ft/m) or area (sq ft/m)
   points?: { x: number; y: number }[];
   visible: boolean;
   canvasObjects?: any[]; // fabric.js objects
+  /** The DB page_id this measurement came from. Set during hydration so that
+   *  cross-page saves don't re-save other pages' measurements under the wrong
+   *  page. Undefined for newly drawn measurements (they get the current page). */
+  fromPageId?: string | null;
 }
 
 interface ComponentWithMeasurements {
@@ -63,6 +84,23 @@ interface Props {
   quote: QuoteRow;
   planUrl: string;
   components: Component[];
+  /** Named component libraries for the add-component selector (with an "All" option). */
+  collections?: ComponentCollection[];
+  /** P1-1a C-01: Hydrated state from DB, loaded server-side. Null = fresh takeoff. */
+  hydrationData: TakeoffHydrationData | null;
+  /** P1-1b: re-entry mode. 'add' = continue on page-1; 'new-page' = fresh area. */
+  takeoffMode?: 'add' | 'new-page';
+  /** P1-1b: pre-created page ID for new-area entries. Skips initializeTakeoffPage. */
+  initialPageId?: string;
+  /** P1-1b: human-readable label for the new page. */
+  initialPageName?: string;
+  /** P1-1b mode=add: existing roof areas loaded from DB, shown read-only in the panel. */
+  existingRoofAreas?: { id: string; label: string }[];
+  /** P1-1b mode=new-page: pre-created quote_roof_areas ID. Passed as target_roof_area_id
+   *  to save_takeoff_atomic so components route to the correct area. */
+  initialRoofAreaId?: string;
+  /** When true the company is over storage - block plan-image uploads. */
+  isOverStorage?: boolean;
 }
 
 const CANVAS_WIDTH = 800;
@@ -97,7 +135,20 @@ interface Calibration {
   scale: number;
 }
 
-export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }: Props) {
+export function TakeoffWorkstation({
+  workspaceSlug,
+  quote,
+  planUrl,
+  components,
+  collections = [],
+  hydrationData,
+  takeoffMode,
+  initialPageId,
+  initialPageName,
+  existingRoofAreas = [],
+  initialRoofAreaId,
+  isOverStorage,
+}: Props) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<Canvas | null>(null);
@@ -116,28 +167,101 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const [showRoofAreaInstructions, setShowRoofAreaInstructions] = useState(false);
 
   // Phase 7: multi-page takeoff state.
-  const [pages, setPages] = useState<Array<{ id?: string; url: string; name: string; order: number }>>([
-    { url: planUrl, name: 'Page 1', order: 1 },
-  ]);
+  // P1-1b: when initialPageId is provided (new-area mode), seed pages with that page
+  // instead of page-1; the initializeTakeoffPage effect is skipped.
+  const [pages, setPages] = useState<Array<{ id?: string; url: string; name: string; order: number }>>(
+    initialPageId
+      ? [{ id: initialPageId, url: planUrl, name: initialPageName || 'New Area', order: 1 }]
+      : [{ url: planUrl, name: 'Plan 1', order: 1 }]
+  );
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  // P1-3: tracks the quote_roof_areas DB ID to route component measurements
+  // to on the NEXT save. For initial mode=new-page load this is initialRoofAreaId;
+  // updated client-side whenever the user switches to a new uploaded plan page.
+  const [activeSaveRoofAreaId, setActiveSaveRoofAreaId] = useState<string | null>(
+    initialRoofAreaId ?? null,
+  );
+
+  // P1-3: when true the user is adding measurements to an EXISTING area.
+  // Suppresses the area name modal (pitch-only instead) and skips writing
+  // new area rows to the DB on save. Trade-agnostic.
+  const [isExistingAreaMode, setIsExistingAreaMode] = useState(false);
+  const [existingAreaLabel, setExistingAreaLabel] = useState<string>('');
+
+  // P1-3 (multi-page Save & Upload another plan): modal state.
+  // - target = 'existing' attaches the new page to the FIRST existing roof area
+  //   (mirrors FilesManager Option B: new page, same area target).
+  // - target = 'new' creates a new roof area + new page with the uploaded plan
+  //   (mirrors FilesManager Option C: new area, new plan).
   const [showUploadAnotherModal, setShowUploadAnotherModal] = useState(false);
-  const [uploadAnotherPageName, setUploadAnotherPageName] = useState('');
+  const [uploadAnotherTarget, setUploadAnotherTarget] = useState<'existing' | 'new'>('existing');
+  const [uploadAnotherAreaName, setUploadAnotherAreaName] = useState('');
+  const [uploadAnotherFile, setUploadAnotherFile] = useState<File | null>(null);
+  const [uploadAnotherError, setUploadAnotherError] = useState<string | null>(null);
+  const [storageBlocked, setStorageBlocked] = useState(false);
   const [isUploadingPage, setIsUploadingPage] = useState(false);
   // H-03: track unsaved changes so we can warn before switching pages.
   const [isDirty, setIsDirty] = useState(false);
+
+  // P1-1a: session version for optimistic concurrency guard.
+  const [sessionVersion, setSessionVersion] = useState<number | null>(
+    hydrationData?.sessionVersion ?? null,
+  );
+  // Guard so the one-shot hydration effect only fires on first mount.
+  const hydrationAppliedRef = useRef<boolean>(false);
 
   // Component colors (auto-assign on mount)
   const [componentColors, setComponentColors] = useState<ComponentColor[]>([]);
   const [activeComponentIds, setActiveComponentIds] = useState<string[]>([]);
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
-  
+
+  // Component-library filter for the Available list. Defaults to the quote's
+  // pinned library if it still exists, otherwise "All components". "All" shows
+  // every company component regardless of which named library it belongs to.
+  const [selectedLibraryId, setSelectedLibraryId] = useState<string>(() => {
+    const pinned = (quote as { component_collection_id?: string | null }).component_collection_id ?? null;
+    if (pinned && collections.some((c) => c.id === pinned)) return pinned;
+    return ALL_LIBRARIES;
+  });
+
   // Roof Areas
   const [roofAreas, setRoofAreas] = useState<RoofArea[]>([]);
+  // Keep roofAreasRef in sync for canvas event handlers (stale closures).
+  const roofAreasRef = useRef<RoofArea[]>([]);
+  roofAreasRef.current = roofAreas;
   const [areaMode, setAreaMode] = useState(false);
   const [areaPoints, setAreaPoints] = useState<{ x: number; y: number }[]>([]);
   const [_tempAreaPolygon, _setTempAreaPolygon] = useState<any>(null);
   const [showAreaNamePrompt, setShowAreaNamePrompt] = useState(false);
+  // P1-1b new-page mode: pitch-only prompt after drawing the first area boundary.
+  // Bypasses AreaNameModal entirely so the name never has to be re-typed.
+  const [showPitchOnlyPrompt, setShowPitchOnlyPrompt] = useState(false);
+  const [pitchOnlyInput, setPitchOnlyInput] = useState('');
+
+  // Volume (L × W × D) - depth prompt state.
+  // Fires after the area polygon is closed for a volume_3d component.
+  const [showVolumeDepthPrompt, setShowVolumeDepthPrompt] = useState(false);
+  const [volumeDepthInput, setVolumeDepthInput] = useState('');
+
+  // Freestyle height prompt - fires after a line/polyline is drawn for a
+  // length_x_height_freestyle / multi_lineal_lxh_freestyle component.
+  const [showFreestyleHeightPrompt, setShowFreestyleHeightPrompt] = useState(false);
+  const [freestyleHeightInput, setFreestyleHeightInput] = useState('');
+  const [pendingFreestyleLength, setPendingFreestyleLength] = useState<number>(0);
+  const [pendingFreestyleComponentId, setPendingFreestyleComponentId] = useState<string | null>(null);
+  const [pendingFreestylePoints, setPendingFreestylePoints] = useState<{x:number;y:number}[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [pendingFreestyleCanvasObjects, setPendingFreestyleCanvasObjects] = useState<any[]>([]);
+  const [pendingFreestyleIsMultiLineal, setPendingFreestyleIsMultiLineal] = useState(false);
+  const [pendingVolumeComponentId, setPendingVolumeComponentId] = useState<string | null>(null);
+  const [pendingVolumeCalibratedArea, setPendingVolumeCalibratedArea] = useState<number>(0);
+  const [pendingVolumePoints, setPendingVolumePoints] = useState<{x:number;y:number}[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [pendingVolumePolygon, setPendingVolumePolygon] = useState<any | null>(null);
   const [pendingAreaPoints, setPendingAreaPoints] = useState<{ x: number; y: number }[]>([]);
+  // Captures selectedComponentId at polygon-close time so it survives any
+  // canvas deselection that fires before the modal renders.
+  const [pendingComponentId, setPendingComponentId] = useState<string | null>(null);
   
   // Component measurements
   const [componentMeasurements, setComponentMeasurements] = useState<ComponentWithMeasurements[]>([]);
@@ -201,7 +325,9 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
 
   // M-04 (Gerald round-5): ensure page-1 has a real DB row on mount.
   // initializeTakeoffPage is idempotent so repeated mounts are safe.
+  // P1-1b: skipped when initialPageId is provided (new-area flow already created the page).
   useEffect(() => {
+    if (initialPageId) return; // page already exists - skip
     let cancelled = false;
     async function ensurePage1() {
       try {
@@ -223,7 +349,60 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     ensurePage1();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quote.id]);
+  }, [quote.id, initialPageId]);
+
+  // P1-1a C-01: One-shot hydration from server-loaded DB state.
+  // Restores componentMeasurements panel data + pages list from the last saved session.
+  // Canvas shapes are NOT reconstructed here (P1-1b); values show in the panel.
+  useEffect(() => {
+    if (hydrationAppliedRef.current) return;
+    if (!hydrationData || hydrationData.measurements.length === 0) return;
+    hydrationAppliedRef.current = true;
+
+    // Restore pages list from DB (preserves IDs needed for scoped save).
+    if (hydrationData.pages.length > 0) {
+      setPages(
+        hydrationData.pages.map(p => ({
+          id: p.id,
+          url: p.imageUrl ?? planUrl, // fall back to route-level planUrl if signed URL failed
+          name: p.pageName ?? `Page ${p.pageOrder}`,
+          order: p.pageOrder,
+        }))
+      );
+    }
+
+    // Group measurements by component and restore componentMeasurements state.
+    const grouped = new Map<string, ComponentWithMeasurements>();
+    hydrationData.measurements
+      .filter(m => m.componentId !== null)
+      .forEach(m => {
+        const cid = m.componentId!;
+        if (!grouped.has(cid)) {
+          grouped.set(cid, { componentId: cid, measurements: [], expanded: false });
+        }
+        grouped.get(cid)!.measurements.push({
+          id: m.id,
+          type: m.type as ComponentMeasurement['type'],
+          value: m.value,
+          points: m.points ?? undefined,
+          visible: m.visible,
+          // fromPageId: records which DB page this measurement belongs to.
+          // handleSaveTakeoffCore uses this to exclude other pages' measurements
+          // from a current-page save, preventing H-01 double-counting when
+          // persistTakeoffData() is called from a mode=add session.
+          fromPageId: m.pageId ?? null,
+          // canvasObjects intentionally empty: canvas shapes not yet reconstructed (P1-1b).
+        });
+      });
+
+    if (grouped.size > 0) {
+      setComponentMeasurements(Array.from(grouped.values()));
+      setActiveComponentIds(Array.from(grouped.keys()));
+      console.info('[Hydration] Restored', grouped.size, 'components from DB');
+    }
+  // Intentionally only runs once on mount.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Trade-aware labels + config. Single source of truth for all copy that
   // varies by trade (roofing / cladding / generic). Replaces the old
@@ -234,6 +413,13 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   // tradeConfig properties in new code.
   const quoteIsGeneric = !tradeConfig.pitchRequired;
   useEffect(() => {
+    // P1-1b: suppress in mode=add - user is continuing on an existing area, not creating a new one.
+    if (takeoffMode === 'add') return;
+    // P1-3: suppress in isExistingAreaMode - the user chose "add to existing area" via
+    // Save & Upload another plan. The "draw an area boundary" prompt is irrelevant here;
+    // showing it caused users to think they needed to draw a boundary and then go directly
+    // to component area drawing, which broke the polygon-close routing (deselection gotcha).
+    if (isExistingAreaMode) return;
     if (calibrationConfirmed && calibrations.length > 0 && roofAreas.length === 0) {
       // Delay slightly to show after calibration flash
       const timer = setTimeout(() => {
@@ -241,7 +427,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [calibrationConfirmed, calibrations.length, roofAreas.length]);
+  }, [calibrationConfirmed, calibrations.length, roofAreas.length, takeoffMode, isExistingAreaMode]);
   
   const handleDeleteArea = (areaId: string) => {
     const area = roofAreas.find(a => a.id === areaId);
@@ -254,9 +440,15 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   
   const handleSaveArea = (name: string, pitch?: number) => {
     const calculatedArea = calculatePolygonArea(pendingAreaPoints);
-    
-    // If pitch is provided, this is a roof area
-    if (pitch !== undefined) {
+
+    // Route by pendingComponentId first (captured at polygon-close time).
+    // This is immune to selectedComponentId being cleared by canvas deselection.
+    const capturedComponentId = pendingComponentId; // save before consuming
+    const isComponentArea = !!capturedComponentId;
+    setPendingComponentId(null); // consume it
+
+    // Roof area: explicit pitch OR no component attached
+    if (!isComponentArea && pitch !== undefined) {
       // Create polygon on canvas
       const polygon = new Polygon(pendingAreaPoints, {
         fill: 'rgba(59, 130, 246, 0.2)',
@@ -289,10 +481,12 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       setAreaPoints([]);
       setAreaMode(false);
     } else {
-      // Component area (after roof area exists)
-      if (!selectedComponentId) return;
-      
-      const componentColor = componentColors.find(c => c.componentId === selectedComponentId)?.color || '#3b82f6';
+      // Component area: use the ID captured at polygon-close time (immune to Fabric
+      // deselection). capturedComponentId was read before setPendingComponentId(null).
+      const componentId = capturedComponentId || selectedComponentId;
+      if (!componentId) return;
+
+      const componentColor = componentColors.find(c => c.componentId === componentId)?.color || '#3b82f6';
       
       const polygon = new Polygon(pendingAreaPoints, {
         fill: `${componentColor}33`,
@@ -312,23 +506,26 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         canvasObjects: [polygon],
       };
       
-      const compData = componentMeasurements.find(c => c.componentId === selectedComponentId);
+      const compData = componentMeasurements.find(c => c.componentId === componentId);
       if (compData) {
         setComponentMeasurements(componentMeasurements.map(c =>
-          c.componentId === selectedComponentId
+          c.componentId === componentId
             ? { ...c, measurements: [...c.measurements, newMeasurement] }
             : c
         ));
       } else {
         setComponentMeasurements([
           ...componentMeasurements,
-          { componentId: selectedComponentId, measurements: [newMeasurement], expanded: true }
+          { componentId, measurements: [newMeasurement], expanded: true }
         ]);
       }
       
       setShowAreaNamePrompt(false);
       setPendingAreaPoints([]);
       setAreaPoints([]);
+      // Deactivate area mode after saving a component area so the canvas
+      // cursor returns to default and the user doesn't accidentally keep drawing.
+      setAreaMode(false);
     }
   };
   
@@ -347,6 +544,39 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     }));
   };
   
+  // P1-2: Central tool-switching helper. Uses the canonical toolForMeasurementType
+  // helper so both handleAddComponent and active-component panel clicks stay in sync.
+  // M-01 (Gerald audit 2026-05-29): accepts an optional componentId and sets
+  // activeAreaComponentIdRef SYNCHRONOUSLY when switching to the area tool.
+  // Relying solely on the post-render useEffect left a narrow window where a
+  // canvas event could fire before the ref was updated.
+  const applyToolForType = (measurementType: string, forComponentId?: string) => {
+    setLineMode(false);
+    setAreaMode(false);
+    setPointMode(false);
+    setMultiLinealMode(false);
+    setMultiLinealPoints([]);
+    setMultiLinealSegmentObjects([]);
+    const tool = toolForMeasurementType(measurementType);
+    if (tool === 'line') {
+      setLineMode(true);
+      activeAreaComponentIdRef.current = null; // clear area ref when switching away
+    } else if (tool === 'multi_line') {
+      setMultiLinealMode(true);
+      activeAreaComponentIdRef.current = null;
+    } else if (tool === 'area') {
+      setAreaMode(true);
+      // Synchronously capture which component this area tool is for.
+      if (forComponentId) activeAreaComponentIdRef.current = forComponentId;
+    } else if (tool === 'point') {
+      setPointMode(true);
+      activeAreaComponentIdRef.current = null;
+    } else {
+      // null → manual entry only; no tool active.
+      activeAreaComponentIdRef.current = null;
+    }
+  };
+
   const handleAddComponent = (componentId: string) => {
     // Add to active list
     setActiveComponentIds([...activeComponentIds, componentId]);
@@ -354,29 +584,12 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     // Auto-select the newly added component
     setSelectedComponentId(componentId);
     
-    // Auto-select tool based on component's default measurement type
+    // P1-2: Auto-select tool via central helper, passing componentId so the
+    // area ref is set synchronously when the tool is 'area'.
     const component = components.find(c => c.id === componentId);
-    if (component && (component.measurement_type || component.default_measurement_type)) {
-      const measurementType = (component.measurement_type ?? component.default_measurement_type ?? '').toLowerCase();
-      
-      // Reset all tools first
-      setLineMode(false);
-      setAreaMode(false);
-      setPointMode(false);
-      setMultiLinealMode(false);
-      setMultiLinealPoints([]);
-      setMultiLinealSegmentObjects([]);
-      
-      // Activate appropriate tool
-      if (measurementType === 'lineal' || measurementType === 'linear') {
-        setLineMode(true);
-      } else if (measurementType === 'multi_lineal' || measurementType === 'multi_lineal_lxh') {
-        setMultiLinealMode(true);
-      } else if (measurementType === 'area' || measurementType === 'length_x_height' || measurementType === 'irregular_area') {
-        setAreaMode(true);
-      } else if (measurementType === 'quantity' || measurementType === 'fixed' || measurementType === 'count' || measurementType === 'hours_days') {
-        setPointMode(true);
-      }
+    if (component) {
+      const mt = (component.measurement_type ?? component.default_measurement_type ?? '').toLowerCase();
+      applyToolForType(mt, componentId);
     }
   };
   
@@ -492,8 +705,25 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     // Use the component's actual measurement_type so multi_lineal_lxh
     // is stored correctly and the save layer applies height conversion.
     const compForType = components.find(c => c.id === compId);
+    const compMeasType = (compForType?.measurement_type ?? compForType?.default_measurement_type) as string;
+
+    // Freestyle: intercept multi_lineal_lxh_freestyle - show height prompt instead of committing.
+    if (compMeasType === 'multi_lineal_lxh_freestyle') {
+      const canvasObjs = [...multiLinealSegmentObjects];
+      setPendingFreestyleLength(totalLength);
+      setPendingFreestyleComponentId(compId);
+      setPendingFreestylePoints([...currentPoints]);
+      setPendingFreestyleCanvasObjects(canvasObjs);
+      setPendingFreestyleIsMultiLineal(true);
+      setFreestyleHeightInput('');
+      setShowFreestyleHeightPrompt(true);
+      setMultiLinealPoints([]);
+      setMultiLinealSegmentObjects([]);
+      return;
+    }
+
     const resolvedType: 'multi_lineal' | 'multi_lineal_lxh' =
-      ((compForType?.measurement_type ?? compForType?.default_measurement_type) as string) === 'multi_lineal_lxh'
+      compMeasType === 'multi_lineal_lxh'
         ? 'multi_lineal_lxh'
         : 'multi_lineal';
 
@@ -571,41 +801,140 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       canvas.renderAll();
     };
     imgElement.src = imageUrl;
-    // Also reset calibration + measurements for the fresh page.
+    // Reset ALL tool modes + calibration + measurements for the fresh page.
+    // CRITICAL: mode resets must come first. Without them the canvas click
+    // handler routes to the wrong tool after the page switch (e.g. areaMode)
+    // so calibration points are silently dropped, leaving the user stuck.
+    setAreaMode(false);
+    setLineMode(false);
+    setPointMode(false);
+    setMultiLinealMode(false);
+    setCalibrationMode(false);
+    setCalibrationPoints([]);
+    setShowCalibrationModal(false);
+    setShowCalibrationHelp(true);
+    setShowConfirmedFlash(false);
     setCalibrations([]);
     setCalibrationConfirmed(false);
-    setComponentMeasurements([]);
-    setRoofAreas([]);
     setAreaPoints([]);
     setLinePoints([]);
     setMultiLinealPoints([]);
     setMultiLinealSegmentObjects([]);
+    setComponentMeasurements([]);
+    setRoofAreas([]);
+    setSelectedComponentId(null);
+    // P1-3: reset existing-area mode so a fresh plan doesn't inherit the constraint.
+    setIsExistingAreaMode(false);
+    setExistingAreaLabel('');
+    setIsDirty(false);
   };
 
-  // Switch the canvas to a different page by index.
-  // H-03: warn before discarding unsaved work.
-  const switchToPage = (idx: number) => {
-    if (idx === currentPageIndex) return;
-    const page = pages[idx];
-    if (!page) return;
-    if (isDirty) {
-      const confirmed = window.confirm(
-        'You have unsaved measurements on this page. Switch anyway? Unsaved work will be lost.'
-      );
-      if (!confirmed) return;
+  // switchToPage removed (Issue 1): plan tabs are now a read-only visual
+  // indicator. Tabs were non-functional (no canvas re-hydration on switch)
+  // and the window.confirm was replaced with a Plan X of Y display.
+
+  /** Confirm handler for the volume_3d depth prompt. */
+  const handleConfirmVolumeDepth = () => {
+    const depth = parseFloat(volumeDepthInput);
+    if (!depth || depth <= 0 || !pendingVolumeComponentId) return;
+    const unit = calibrations[0]?.unit ?? 'meters';
+    const areaM2 = unit === 'feet'
+      ? convertAreaFt2ToMetric(pendingVolumeCalibratedArea)
+      : pendingVolumeCalibratedArea;
+    const depthM = unit === 'feet' ? convertLinearToMetric(depth) : depth;
+    const volumeM3 = areaM2 * depthM;
+    const componentId = pendingVolumeComponentId;
+    const newMeasurement: ComponentMeasurement = {
+      id: `meas-${Date.now()}`,
+      type: 'volume_3d',
+      value: volumeM3,
+      points: pendingVolumePoints,
+      visible: true,
+      canvasObjects: pendingVolumePolygon ? [pendingVolumePolygon] : [],
+    };
+    // Solid polygon (remove dash preview)
+    if (pendingVolumePolygon) {
+      pendingVolumePolygon.set({ strokeDashArray: null });
+      fabricRef.current?.renderAll();
     }
-    setCurrentPageIndex(idx);
-    loadPageImage(page.url);
+    const compData = componentMeasurements.find(c => c.componentId === componentId);
+    if (compData) {
+      setComponentMeasurements(componentMeasurements.map(c =>
+        c.componentId === componentId
+          ? { ...c, measurements: [...c.measurements, newMeasurement] }
+          : c
+      ));
+    } else {
+      setComponentMeasurements([
+        ...componentMeasurements,
+        { componentId, measurements: [newMeasurement], expanded: true },
+      ]);
+    }
+    setShowVolumeDepthPrompt(false);
+    setPendingVolumePolygon(null);
+    setPendingVolumeComponentId(null);
+    setVolumeDepthInput('');
+    setAreaMode(false);
+    setIsDirty(true);
+  };
+
+  /** Confirm handler for the freestyle height prompt (length_x_height_freestyle / multi_lineal_lxh_freestyle). */
+  const handleConfirmFreestyleHeight = () => {
+    const height = parseFloat(freestyleHeightInput);
+    if (!height || height <= 0 || !pendingFreestyleComponentId) return;
+    const unit = calibrations[0]?.unit ?? 'meters';
+    const lengthM = unit === 'feet' ? convertLinearToMetric(pendingFreestyleLength) : pendingFreestyleLength;
+    const heightM = unit === 'feet' ? convertLinearToMetric(height) : height;
+    const areaM2 = lengthM * heightM;
+    const measType = pendingFreestyleIsMultiLineal ? 'multi_lineal_lxh_freestyle' : 'length_x_height_freestyle';
+    const componentId = pendingFreestyleComponentId;
+    const newMeasurement: ComponentMeasurement = {
+      id: `fs-${Date.now()}`,
+      type: measType as ComponentMeasurement['type'],
+      value: areaM2,
+      points: pendingFreestylePoints,
+      visible: true,
+      canvasObjects: pendingFreestyleCanvasObjects,
+    };
+    setComponentMeasurements(prev => {
+      const exists = prev.some(c => c.componentId === componentId);
+      if (exists) {
+        return prev.map(c =>
+          c.componentId === componentId
+            ? { ...c, measurements: [...c.measurements, newMeasurement] }
+            : c
+        );
+      }
+      return [...prev, { componentId, measurements: [newMeasurement], expanded: true }];
+    });
+    setShowFreestyleHeightPrompt(false);
+    setFreestyleHeightInput('');
+    setPendingFreestyleComponentId(null);
+    setPendingFreestylePoints([]);
+    setPendingFreestyleCanvasObjects([]);
+    setIsDirty(true);
+  };
+
+  // P1-3: persist current measurements + canvas snapshots without navigating.
+  // Returns true on success so the multi-page "Save & Upload another plan"
+  // flow can chain the next step. The existing handleSaveTakeoff wraps this
+  // and navigates to the Quote Builder on success.
+  const persistTakeoffData = async (): Promise<boolean> => {
+    return await handleSaveTakeoffCore(false);
   };
 
   const handleSaveTakeoff = async () => {
+    await handleSaveTakeoffCore(true);
+  };
+
+  const handleSaveTakeoffCore = async (navigateAfter: boolean): Promise<boolean> => {
     console.log('[SaveTakeoff] Starting save for quote:', quote.id);
     console.log('[SaveTakeoff] Component measurements:', componentMeasurements.length);
     console.log('[SaveTakeoff] Roof areas:', roofAreas.length);
     
     if (componentMeasurements.length === 0 && roofAreas.length === 0) {
       showAlert('No measurements to save', 'Please add some measurements first.', 'info');
-      return;
+      return false;
     }
     
     setIsSaving(true);
@@ -614,9 +943,24 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       // Flatten component measurements
       const allMeasurements: any[] = [];
       
-      // Add component measurements
+      // Determine the current page's DB id before the measurement loop so
+      // we can scope the save correctly.
+      const currentPageDbIdEarly = pages[currentPageIndex]?.id ?? null;
+
+      // Add component measurements.
+      // IMPORTANT: only include measurements that belong to the current page.
+      // Hydrated measurements from OTHER pages (fromPageId != currentPage) must
+      // be excluded here - they are already in the DB under their correct pages.
+      // Including them causes H-01 to double-count: H-01 fetches the same data
+      // from the DB AND we include it again in allMeasurements, resulting in
+      // duplicate quote_component_entries (the P1-3 regression Shaun saw).
       componentMeasurements.forEach(comp => {
         comp.measurements.forEach(m => {
+          // fromPageId is set for hydrated measurements. Exclude any that belong
+          // to a different page so we don't re-save them as this page's data.
+          if (m.fromPageId && currentPageDbIdEarly && m.fromPageId !== currentPageDbIdEarly) {
+            return; // skip - belongs to a different page, already in DB
+          }
           allMeasurements.push({
             componentId: comp.componentId,
             type: m.type,
@@ -627,19 +971,47 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         });
       });
       
-      // Add roof areas as measurements (with null componentId for informational areas)
-      roofAreas.forEach(area => {
-        allMeasurements.push({
-          componentId: null,
-          type: 'area' as const,
-          value: area.area,
-          pitch: area.pitch, // Include pitch for roof areas
-          name: area.name, // Include user's name for roof area
-          points: area.points,
-          visible: area.visible,
+      // Add area measurements.
+      // In existing-area mode: skip writing area rows so Plan 1's area survives in DB.
+      // Component measurements route to the original area via activeSaveRoofAreaId.
+      // Trade-agnostic: applies to roofing and generic trades.
+      if (!isExistingAreaMode) {
+        roofAreas.forEach(area => {
+          allMeasurements.push({
+            componentId: null,
+            type: 'area' as const,
+            value: area.area,
+            pitch: area.pitch,
+            name: area.name,
+            points: area.points,
+            visible: area.visible,
+          });
         });
-      });
+      }
       
+      // After filtering, if there's nothing to save for the current page,
+      // treat this as a SAFE SKIP - not a full save. This happens in mode=add
+      // when the user hasn't drawn anything new in the current session; all
+      // componentMeasurements are hydrated from other pages and excluded above.
+      //
+      // Contract (M-02 Gerald audit 2026-05-29):
+      //  – We do NOT advance the session version (no RPC call).
+      //  – We do NOT clear isDirty (no data was actually committed here).
+      //  – We only navigate if the caller explicitly requests it.
+      //  – This branch must NEVER be used when there are local unsaved changes
+      //    (those would have a null/undefined fromPageId and would NOT be filtered).
+      if (allMeasurements.length === 0) {
+        console.log('[SaveTakeoff] Safe skip - no new measurements for current page. Not a full save.');
+        // navigateAfter=false means this was called from persistTakeoffData()
+        // before an upload - fine to skip silently.
+        // navigateAfter=true means the user clicked "Save & Continue" with no
+        // new data drawn - also fine to navigate, but we do NOT mark dirty=false.
+        if (navigateAfter) {
+          router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
+        }
+        return true;
+      }
+
       console.log('[SaveTakeoff] Saving', allMeasurements.length, 'measurements to quote:', quote.id);
       
       // Export canvas as PNG (2 images: full canvas + lines-only).
@@ -749,32 +1121,176 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       if (currentPageDbId) {
         allMeasurements.forEach(m => { m.pageId = currentPageDbId; });
       }
-      await saveTakeoffMeasurements(
+      const saveResult = await saveTakeoffMeasurements(
         quote.id,
         allMeasurements,
         calibrations[0]?.unit || 'feet',
         canvasImagePath,
         linesImagePath,
         currentPageDbId,
+        sessionVersion, // P1-1a: optimistic version guard
+        // P1-3: activeSaveRoofAreaId tracks the target area for the current
+        // page. Starts as initialRoofAreaId (for mode=new-page entries) and
+        // is updated client-side when the user uploads another plan.
+        activeSaveRoofAreaId,
       );
-      
+
+      if (!saveResult.success) {
+        // Surface the actual error message - not hidden by Next.js production mode
+        // since we return errors rather than throwing.
+        const msg = saveResult.error;
+        if (msg.includes('STALE_TAKEOFF_VERSION')) {
+          showAlert(
+            'Takeoff edited in another tab',
+            'Your takeoff was saved from another browser tab. Reload this page to see the latest version, then continue measuring.',
+            'error',
+          );
+        } else {
+          showAlert('Failed to save measurements', msg, 'error');
+        }
+        return false;
+      }
+
+      // P1-1a: increment local version to match what the RPC wrote.
+      setSessionVersion(prev => (prev != null ? prev + 1 : 1));
       setIsDirty(false);
-      console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
       
-      // Navigate to Quote Builder v2 (digital takeoff mode)
-      router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
+      // P1-3: only navigate to Quote Builder when the user clicked the
+      // primary "Save & Continue to Components" CTA. The multi-page upload
+      // flow stays inside the workstation and reloads to the new page.
+      if (navigateAfter) {
+        console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
+        router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
+      } else {
+        console.log('[SaveTakeoff] Save complete (no navigation).');
+      }
+      return true;
     } catch (error) {
-      console.error('[SaveTakeoff] Error:', error);
-      // Surface the real error message so we can diagnose Imperial save bugs
-      // and any future RPC issues. The native alert() that used to live here
-      // hid the underlying cause behind a generic message.
+      console.error('[SaveTakeoff] Unexpected error:', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       showAlert('Failed to save measurements', message, 'error');
+      return false;
     } finally {
       setIsSaving(false);
     }
   };
-  
+
+  // P1-3: "Save & Upload another plan" - open the chooser modal.
+  // Pre-selects "existing" + pre-fills area name with the first roof area's
+  // label so the user can confirm-and-go without retyping when adding to it.
+  const openSaveAndUploadAnotherPlan = () => {
+    if (isOverStorage) { setStorageBlocked(true); return; }
+    setUploadAnotherTarget('existing');
+    setUploadAnotherAreaName('');
+    setUploadAnotherFile(null);
+    setUploadAnotherError(null);
+    setShowUploadAnotherModal(true);
+  };
+
+  // P1-3: confirm flow for Save & Upload another plan.
+  // Fully client-side: saves measurements, uploads image, switches canvas in-place.
+  // No router.push avoids the bug where the original plan + measurements reappeared.
+  const handleConfirmSaveAndUploadAnother = async () => {
+    setUploadAnotherError(null);
+    if (!uploadAnotherFile) { setUploadAnotherError('Please choose a plan image to upload.'); return; }
+    if (uploadAnotherTarget === 'new' && !uploadAnotherAreaName.trim()) {
+      setUploadAnotherError('Please enter a name for the new area.'); return;
+    }
+    setIsUploadingPage(true);
+    try {
+      // 1. Persist current measurements without navigating away.
+      if (componentMeasurements.length > 0 || roofAreas.length > 0) {
+        const saved = await persistTakeoffData();
+        if (!saved) return;
+      }
+      const companyId = quote.company_id;
+      // 2. Storage quota check.
+      const hasQuota = await checkStorageQuota(companyId, uploadAnotherFile.size);
+      if (!hasQuota) { setUploadAnotherError('Storage quota exceeded. Please upgrade your plan.'); return; }
+      // 3. Mint signed upload URL and upload new plan file.
+      const mint = await mintQuoteDocumentUploadUrl({
+        scope: { kind: 'quote', quoteId: quote.id },
+        filename: uploadAnotherFile.name,
+        contentType: uploadAnotherFile.type || 'application/octet-stream',
+        claimedSize: uploadAnotherFile.size,
+      });
+      if (!mint.ok) { setUploadAnotherError(mint.message || 'Failed to prepare upload.'); return; }
+      const supabase = createSupabaseBrowserClient();
+      const { error: uploadStorageError } = await supabase.storage
+        .from(mint.bucket)
+        .uploadToSignedUrl(mint.storagePath, mint.token, uploadAnotherFile, {
+          contentType: uploadAnotherFile.type || undefined,
+        });
+      if (uploadStorageError) { setUploadAnotherError(uploadStorageError.message); return; }
+      // 4. Register in quote_files so it appears in Files & Documents.
+      await saveFileMetadata({
+        companyId, quoteId: quote.id, fileType: 'plan',
+        fileName: uploadAnotherFile.name, fileSize: uploadAnotherFile.size,
+        mimeType: uploadAnotherFile.type || 'image/png', storagePath: mint.storagePath,
+      });
+      // 5. Create takeoff page row and resolve target area ID.
+      let newPageId: string;
+      let newRoofAreaId: string | null = null;
+      let newPageName: string;
+      let resolvedFirstArea: { id: string; label: string } | null = null;
+      if (uploadAnotherTarget === 'new') {
+        const areaName = uploadAnotherAreaName.trim();
+        const result = await createTakeoffPageForArea(quote.id, areaName, mint.storagePath);
+        if (!result.ok || !result.pageId) { setUploadAnotherError(result.error || 'Failed to create page.'); return; }
+        newPageId = result.pageId; newRoofAreaId = result.roofAreaId ?? null; newPageName = areaName;
+      } else {
+        // Existing area: create only the page row - reuse the current working area.
+        const pageName = `Plan ${pages.length + 1}`;
+        const pageResult = await createTakeoffPage(quote.id, pageName);
+        if (!pageResult.ok || !pageResult.pageId) { setUploadAnotherError(pageResult.error || 'Failed to create page.'); return; }
+        newPageId = pageResult.pageId; newPageName = pageName;
+        // Issue 3 fix: use activeSaveRoofAreaId if already set (e.g. mode=new-page
+        // for a non-first area). getFirstRoofAreaId always returns the lowest
+        // sort_order area which is wrong when the current session targets a later area.
+        if (activeSaveRoofAreaId) {
+          newRoofAreaId = activeSaveRoofAreaId;
+          resolvedFirstArea = { id: activeSaveRoofAreaId, label: existingAreaLabel || initialPageName || 'Current Area' };
+        } else {
+          resolvedFirstArea = await getFirstRoofAreaId(quote.id);
+          newRoofAreaId = resolvedFirstArea?.id ?? null;
+        }
+      }
+      // 6. Persist image path on the new page row.
+      await finalizeTakeoffPageImage(newPageId, mint.storagePath);
+      // 7. Switch canvas client-side: loadPageImage clears ALL canvas state.
+      // createObjectURL is immediate and doesn't require re-signing.
+      const objectUrl = URL.createObjectURL(uploadAnotherFile);
+      const newPage = { id: newPageId, url: objectUrl, name: newPageName, order: pages.length + 1 };
+      const updatedPages = [...pages, newPage];
+      setPages(updatedPages);
+      setCurrentPageIndex(updatedPages.length - 1);
+      loadPageImage(objectUrl);
+      // 8. Update save routing target, existing-area mode flag, and version.
+      setActiveSaveRoofAreaId(newRoofAreaId);
+      // P1-3: existing-area mode blocks the area name modal and skips area rows
+      // in the save payload. Works for roofing and generic trades.
+      if (uploadAnotherTarget === 'existing') {
+        setIsExistingAreaMode(true);
+        setExistingAreaLabel(resolvedFirstArea?.label ?? 'Existing Area');
+      } else {
+        setIsExistingAreaMode(false);
+        setExistingAreaLabel('');
+      }
+      setSessionVersion(null);
+      // Close modal and reset upload state.
+      setShowUploadAnotherModal(false);
+      setUploadAnotherFile(null);
+      setUploadAnotherAreaName('');
+      setUploadAnotherError(null);
+      setIsDirty(false);
+    } catch (err) {
+      console.error('[SaveAndUploadAnother] Failed:', err);
+      setUploadAnotherError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setIsUploadingPage(false);
+    }
+  };
+
   // Calculate area using Shoelace formula
   const calculatePolygonArea = (points: { x: number; y: number }[]) => {
     let sum = 0;
@@ -807,6 +1323,11 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   const multiLinealPointsRef = useRef(multiLinealPoints);
   const selectedComponentIdRef = useRef(selectedComponentId);
   const componentColorsRef = useRef(componentColors);
+  const isExistingAreaModeRef = useRef(isExistingAreaMode);
+  // Captures the component ID at the moment area mode is activated for a component.
+  // Unlike selectedComponentIdRef, this is NOT cleared by Fabric canvas deselection
+  // events that fire on the same click that closes the polygon.
+  const activeAreaComponentIdRef = useRef<string | null>(null);
   
   useEffect(() => {
     calibrationModeRef.current = calibrationMode;
@@ -821,7 +1342,17 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
     multiLinealPointsRef.current = multiLinealPoints;
     selectedComponentIdRef.current = selectedComponentId;
     componentColorsRef.current = componentColors;
-  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints, selectedComponentId, componentColors]);
+    isExistingAreaModeRef.current = isExistingAreaMode;
+    // Fallback: sync activeAreaComponentIdRef from state after render.
+    // applyToolForType sets this synchronously (M-01 Gerald audit 2026-05-29),
+    // but this effect serves as a safety net and handles the clear-on-mode-off case.
+    if (!areaMode) {
+      activeAreaComponentIdRef.current = null;
+    } else if (areaMode && selectedComponentId && !activeAreaComponentIdRef.current) {
+      // Only set if not already set synchronously (avoid overwriting with stale state).
+      activeAreaComponentIdRef.current = selectedComponentId;
+    }
+  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints, selectedComponentId, componentColors, isExistingAreaMode]);
 
   // Stable ref for the signed plan URL. The signed URL is regenerated on
   // every server render (it embeds a fresh JWT), so reading it directly
@@ -1071,11 +1602,86 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           );
           
           if (distance < 15) {
-            // Close polygon - prompt for name
+            // Close polygon
             console.log('[Area] Closing polygon with', currentPoints.length, 'points');
             setPendingAreaPoints(currentPoints);
-            setShowAreaNamePrompt(true);
-            return;
+            // Use refs for current state - canvas handlers are stale closures
+            // and won't see state updated after the handler was set up.
+            // Read current values via refs - canvas handlers capture stale closures.
+            const currentRoofAreas = roofAreasRef.current;
+            // IMPORTANT: read from activeAreaComponentIdRef, NOT selectedComponentIdRef.
+            // Fabric.js fires canvas deselection events on the same click that closes the
+            // polygon, clearing selectedComponentIdRef.current before we read it here.
+            // activeAreaComponentIdRef is set when area mode is activated for a component
+            // and is only cleared when area mode is explicitly turned off - it is immune
+            // to Fabric deselection side-effects.
+            const currentSelectedId = activeAreaComponentIdRef.current ?? selectedComponentIdRef.current;
+            // Capture the component ID NOW before any canvas deselection fires.
+            // Without this, selectedComponentId may be null by the time the
+            // modal renders, causing the area to be treated as a roof area.
+            setPendingComponentId(currentSelectedId);
+            // Guard: if a roof area already exists and no component is selected,
+            // the user is drawing a second boundary without attaching it to a
+            // component. Warn and cancel the polygon.
+            if (currentRoofAreas.length > 0 && !currentSelectedId) {
+              setPendingAreaPoints([]);
+              setAreaPoints([]);
+              setPendingComponentId(null);
+              showAlert(
+                'Select a component first',
+                'To measure an area for a component, select it from the panel on the left before drawing.',
+                'info'
+              );
+              return;
+            }
+            // P1-1b: new-page first area → pitch-only (clear component; this is the boundary).
+            // P1-3 existing-area + NO component selected → warn instead of silently
+            //   creating a spurious roof-area boundary (isExistingAreaMode means no new
+            //   boundaries should be created client-side).
+            // P1-3 existing-area + component IS selected → normal area modal.
+            if (takeoffMode === 'new-page' && currentRoofAreas.length === 0 && !currentSelectedId) {
+              // Boundary drawing for a new page - show pitch-only prompt.
+              setPendingComponentId(null);
+              setPitchOnlyInput('');
+              setShowPitchOnlyPrompt(true);
+            } else if (isExistingAreaModeRef.current && !currentSelectedId) {
+              // Existing-area mode but no component selected - can't create a new boundary.
+              setPendingAreaPoints([]);
+              setAreaPoints([]);
+              setPendingComponentId(null);
+              showAlert(
+                'Select a component first',
+                'You are adding measurements to an existing area. Select a component from the panel before drawing.',
+                'info'
+              );
+              return;
+            } else {
+              // volume_3d: skip area name modal, go straight to depth prompt.
+              const compForArea = components.find(c => c.id === currentSelectedId);
+              if ((compForArea?.measurement_type as string) === 'volume_3d') {
+                const areaCalibrated = calculatePolygonArea(currentPoints);
+                setPendingVolumeCalibratedArea(areaCalibrated);
+                setPendingVolumeComponentId(currentSelectedId);
+                setPendingVolumePoints([...currentPoints]);
+                // Draw a dashed preview polygon so the user sees the shape.
+                const compColor = componentColors.find(c => c.componentId === currentSelectedId)?.color || '#3b82f6';
+                const previewPoly = new Polygon(currentPoints, {
+                  fill: `${compColor}22`,
+                  stroke: compColor,
+                  strokeWidth: 1.5,
+                  strokeDashArray: [5, 4],
+                  selectable: false,
+                  evented: false,
+                });
+                fabricRef.current?.add(previewPoly);
+                fabricRef.current?.renderAll();
+                setPendingVolumePolygon(previewPoly);
+                setVolumeDepthInput('');
+                setShowVolumeDepthPrompt(true);
+              } else {
+                setShowAreaNamePrompt(true);
+              }
+            }
           }
         }
         
@@ -1385,28 +1991,29 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
   };
 
   return (
+    <>
+    <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
     <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col p-4">
+      {/* Back link sits above the canvas card so it never crowds the header */}
+      <Link
+        href={`/${workspaceSlug}/quotes/${quote.id}`}
+        className="mb-2 text-sm text-slate-500 hover:text-slate-800 self-start"
+      >
+        ← Back to quote
+      </Link>
       <div className="flex-1 flex flex-col bg-white rounded-xl shadow-lg overflow-hidden">
-        {/* Header */}
+        {/* Header: title + action buttons only - no nav links */}
         <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link
-            href={`/${workspaceSlug}/quotes/${quote.id}`}
-            className="text-blue-400 hover:text-blue-300"
-          >
-            ← Back
-          </Link>
           <h1 className="text-xl font-semibold">{quote.customer_name} - Digital Takeoff</h1>
-        </div>
         <div className="flex items-center gap-2">
-          {/* Phase 7: Upload another image (multi-page takeoff) */}
+          {/* P1-3: Save current takeoff + upload another plan image. */}
           <button
-            onClick={() => setShowUploadAnotherModal(true)}
-            disabled={isSaving}
+            onClick={openSaveAndUploadAnotherPlan}
+            disabled={isSaving || isUploadingPage}
             className="px-3 py-2 bg-black hover:bg-slate-900 text-white rounded-full text-sm disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(249,115,22,0.45)]"
-            title="Add another plan image to measure from"
+            title="Save current measurements, then upload a new plan to keep measuring"
           >
-            + Upload another image
+            Save & Upload another plan
           </button>
           <button
             onClick={handleSaveTakeoff}
@@ -1420,98 +2027,192 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         </div>
       </div>
 
-      {/* Phase 7: Page tabs - show when more than 1 page exists */}
-      {pages.length > 1 && (
-        <div className="flex gap-1 px-4 py-2 bg-slate-800 border-b border-slate-700">
-          {pages.map((page, idx) => (
-            <button
-              key={idx}
-              onClick={() => switchToPage(idx)}
-              className={`px-3 py-1 rounded-full text-sm transition-all ${
-                idx === currentPageIndex
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-              }`}
-            >
-              {page.name}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Plan indicator + dynamic tool guidance bar */}
+      {(() => {
+        const selCompType = selectedComponentId
+          ? (components.find(c => c.id === selectedComponentId)?.measurement_type as string ?? null)
+          : null;
+        let guidance: string | null = null;
+        if (calibrationMode) {
+          guidance = 'Click two points that represent a known distance, then enter that distance.';
+        } else if (areaMode) {
+          if (!selectedComponentId) {
+            guidance = 'Select a component first, then draw its area on the plan.';
+          } else if (selCompType === 'volume_3d') {
+            guidance = 'Draw the footprint (L × W). Close the shape on the first point, then enter the depth in the prompt.';
+          } else {
+            guidance = 'Click to place points - at least 4. Click the first point again to close the shape.';
+          }
+        } else if (lineMode) {
+          guidance = 'Click two points to measure a length - confirm. Add multiple lines for the same component.';
+        } else if (multiLinealMode) {
+          guidance = 'Click to trace a path with multiple segments. Double-click or press Finish to complete.';
+        } else if (pointMode) {
+          guidance = 'Click on the plan to count this item. Each click adds one.';
+        }
+        if (!guidance && pages.length <= 1) return null;
+        return (
+          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
+            {pages.length > 1 && (
+              <>
+                <span className="text-xs text-slate-500">Plan</span>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-500 text-white">
+                  {currentPageIndex + 1} of {pages.length}
+                </span>
+                <span className="text-xs text-slate-400 mr-1">{pages[currentPageIndex]?.name}</span>
+                {guidance && <span className="text-xs text-slate-300">·</span>}
+              </>
+            )}
+            {guidance && (
+              <span className="text-xs text-slate-500 italic flex items-center gap-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-orange-400">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="16" x2="12" y2="12"/>
+                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+                {guidance}
+              </span>
+            )}
+          </div>
+        );
+      })()}
 
-      {/* Phase 7: Upload another image modal */}
+      {/* P1-3: Save & Upload another plan modal.
+          Mirrors FilesManager Options B (existing area) and C (new area)
+          but stays inside the workstation - saves current measurements,
+          uploads the new plan, then reloads to mode=new-page with the new page.*/}
       {showUploadAnotherModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 space-y-4">
-            <h3 className="font-semibold text-lg">Upload another image</h3>
-            <p className="text-sm text-slate-600">
-              Upload another plan image to measure from. Save your current page before switching - unsaved measurements will be lost on page change.
-            </p>
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Page name (optional)</label>
-              <input
-                type="text"
-                value={uploadAnotherPageName}
-                onChange={e => setUploadAnotherPageName(e.target.value)}
-                placeholder={`Page ${pages.length + 1}`}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Select image file</label>
-              <input
-                type="file"
-                accept="image/*,.pdf"
-                className="w-full text-sm"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  setIsUploadingPage(true);
-                  try {
-                    const pageName = uploadAnotherPageName.trim() || `Page ${pages.length + 1}`;
-                    // Create the page DB row first.
-                    const pageResult = await createTakeoffPage(quote.id, pageName);
-                    if (!pageResult.ok || !pageResult.pageId) throw new Error(pageResult.error);
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-1">Save & upload another plan</h2>
+              <p className="text-sm text-slate-500 mb-5">
+                We’ll save your current measurements first, then load the new plan so you can keep measuring.
+              </p>
 
-                    // H-02: convert file to data URL and upload to storage.
-                    const dataUrl = await new Promise<string>((resolve, reject) => {
-                      const reader = new FileReader();
-                      reader.onload = () => resolve(reader.result as string);
-                      reader.onerror = reject;
-                      reader.readAsDataURL(file);
-                    });
-                    const storagePath = await uploadCanvasImage(quote.id, dataUrl, `page-${pageResult.pageId}`);
-                    // Persist the storage path on the page row.
-                    await finalizeTakeoffPageImage(pageResult.pageId, storagePath);
-
-                    // Use an object URL for the canvas display (faster than re-signing).
-                    const objectUrl = URL.createObjectURL(file);
-                    const newPage = { id: pageResult.pageId, url: objectUrl, name: pageName, order: pages.length + 1 };
-                    const newPages = [...pages, newPage];
-                    setPages(newPages);
-                    setCurrentPageIndex(newPages.length - 1);
-                    loadPageImage(objectUrl);
-                    setShowUploadAnotherModal(false);
-                    setUploadAnotherPageName('');
-                    setIsDirty(false);
-                  } catch (err) {
-                    alert(err instanceof Error ? err.message : 'Upload failed');
-                  } finally {
-                    setIsUploadingPage(false);
-                  }
-                }}
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => { setShowUploadAnotherModal(false); setUploadAnotherPageName(''); }}
-                className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full text-sm"
-                disabled={isUploadingPage}
+              {/* Option 1: attach to original area(s) */}
+              <label
+                className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors cursor-pointer block ${
+                  uploadAnotherTarget === 'existing'
+                    ? 'border-orange-500 bg-orange-50'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
               >
-                Cancel
-              </button>
+                <div className="flex items-start gap-3">
+                  <input
+                    type="radio"
+                    name="uploadAnotherTarget"
+                    checked={uploadAnotherTarget === 'existing'}
+                    onChange={() => setUploadAnotherTarget('existing')}
+                    className="mt-0.5 w-4 h-4 accent-orange-500"
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Add takeoff data to original area</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      New measurements from this plan flow into the first roof area on this quote.
+                    </p>
+                  </div>
+                </div>
+              </label>
+
+              {/* Option 2: new area */}
+              <label
+                className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors cursor-pointer block ${
+                  uploadAnotherTarget === 'new'
+                    ? 'border-orange-500 bg-orange-50'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <input
+                    type="radio"
+                    name="uploadAnotherTarget"
+                    checked={uploadAnotherTarget === 'new'}
+                    onChange={() => setUploadAnotherTarget('new')}
+                    className="mt-0.5 w-4 h-4 accent-orange-500"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-900">Create new area for this upload</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Adds a separate roof area for everything you measure on this plan.
+                    </p>
+                  </div>
+                </div>
+              </label>
+
+              {uploadAnotherTarget === 'new' && (
+                <div className="ml-4 mb-3">
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Area name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Garage Roof"
+                    value={uploadAnotherAreaName}
+                    onChange={e => setUploadAnotherAreaName(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+              )}
+
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-slate-700 mb-1">Plan / image</label>
+                {uploadAnotherFile ? (
+                  <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200">
+                    <span className="text-xs text-slate-700 flex-1 truncate">{uploadAnotherFile.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setUploadAnotherFile(null)}
+                      className="text-xs text-red-500 hover:text-red-700 flex-shrink-0"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 w-full px-3 py-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-orange-400 transition-colors">
+                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-xs text-slate-500">Choose plan (PDF or image, max 10 MB)</span>
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      className="hidden"
+                      onChange={e => {
+                        const f = e.target.files?.[0] || null;
+                        if (f && f.size > 10485760) {
+                          setUploadAnotherError('File exceeds 10 MB limit.');
+                          return;
+                        }
+                        setUploadAnotherFile(f);
+                        setUploadAnotherError(null);
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+
+              {uploadAnotherError && (
+                <p className="text-xs text-red-600 mb-3">{uploadAnotherError}</p>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowUploadAnotherModal(false)}
+                  disabled={isUploadingPage}
+                  className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmSaveAndUploadAnother}
+                  disabled={isUploadingPage}
+                  className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors disabled:opacity-50"
+                >
+                  {isUploadingPage ? 'Saving…' : 'Save & start new takeoff'}
+                </button>
+              </div>
             </div>
-            {isUploadingPage && <p className="text-xs text-center text-slate-500">Creating page...</p>}
           </div>
         </div>
       )}
@@ -1579,7 +2280,22 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
 
           <div className="border-t border-gray-200 pt-4">
             <h2 className="text-sm font-semibold mb-3 text-gray-600">{quoteIsGeneric ? 'Areas' : 'Roof Areas'}</h2>
-            {roofAreas.length === 0 ? (
+            {roofAreas.length === 0 && takeoffMode === 'add' && existingRoofAreas.length > 0 ? (
+              // P1-1b mode=add: show existing areas read-only (canvas not reconstructed).
+              <div className="space-y-2">
+                {existingRoofAreas.map(area => (
+                  <div
+                    key={area.id}
+                    className="p-2 rounded-lg bg-blue-50 border border-blue-300 flex items-center gap-2"
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{area.label}</div>
+                      <div className="text-xs text-slate-500">Existing area</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : roofAreas.length === 0 ? (
               <div className="text-sm text-gray-500">
                 {calibrationConfirmed ? 'Click "Area" to draw' : 'Calibrate first'}
               </div>
@@ -1667,7 +2383,13 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                           <div key={comp.id}>
                             {/* Component header */}
                             <div
-                              onClick={() => setSelectedComponentId(comp.id)}
+                              onClick={() => {
+                                setSelectedComponentId(comp.id);
+                                // P1-2: auto-switch tool when clicking an active component.
+                                // Pass comp.id so activeAreaComponentIdRef is set synchronously.
+                                const mt = (comp.measurement_type ?? comp.default_measurement_type ?? '').toLowerCase();
+                                applyToolForType(mt, comp.id);
+                              }}
                               className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-all ${
                                 isSelected 
                                   ? 'bg-orange-100 ring-1 ring-orange-500' 
@@ -1773,9 +2495,47 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                     Hover state: solid orange circle, white plus, no row background. */}
                 <div>
                   <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Available</h3>
-                  <div className="space-y-1">
-                    {displayComponents
+
+                  {/* Library selector: pick a named component library, or "All"
+                      to show every company component regardless of library.
+                      Mirrors the customer-quote-editor catalog picker. */}
+                  {collections.length > 0 && (
+                    <div className="mb-2">
+                      <label className="block text-[11px] font-medium text-gray-500 mb-1">Library</label>
+                      <select
+                        value={selectedLibraryId}
+                        onChange={(e) => setSelectedLibraryId(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
+                        aria-label="Filter components by library"
+                      >
+                        <option value={ALL_LIBRARIES}>All components</option>
+                        {collections.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {(() => {
+                    const available = displayComponents
                       .filter(comp => !activeComponentIds.includes(comp.id))
+                      .filter(comp =>
+                        selectedLibraryId === ALL_LIBRARIES
+                          ? true
+                          : (comp.collection_id ?? null) === selectedLibraryId,
+                      );
+                    if (available.length === 0) {
+                      return (
+                        <p className="text-xs text-gray-400 py-2">
+                          {selectedLibraryId === ALL_LIBRARIES
+                            ? 'All components are already active.'
+                            : 'No components in this library.'}
+                        </p>
+                      );
+                    }
+                    return (
+                  <div className="space-y-1">
+                    {available
                       .map((comp) => (
                           <button
                             key={comp.id}
@@ -1784,7 +2544,14 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                             className="w-full flex items-center gap-2 p-1.5 rounded transition group text-left cursor-pointer"
                             aria-label={`Add ${comp.name}`}
                           >
-                            <div className="flex-1 text-sm text-slate-700 group-hover:text-slate-900">{comp.name}</div>
+                            <div className="flex-1 min-w-0 text-sm text-slate-700 group-hover:text-slate-900">
+                              <span className="truncate">{comp.name}</span>
+                              {selectedLibraryId === ALL_LIBRARIES && comp.collection_id && (
+                                <span className="ml-1 text-xs text-slate-400">
+                                  · {collections.find(c => c.id === comp.collection_id)?.name ?? ''}
+                                </span>
+                              )}
+                            </div>
                             <span
                               className="w-7 h-7 flex items-center justify-center rounded-full text-base font-bold transition-all flex-shrink-0 border-2 border-orange-500 text-orange-500 group-hover:bg-orange-500 group-hover:text-white"
                               aria-hidden="true"
@@ -1794,6 +2561,8 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
                           </button>
                       ))}
                   </div>
+                    );
+                  })()}
                 </div>
               </div>
               )}
@@ -2035,77 +2804,48 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         />
       )}
 
-      {/* Area Instructions (after first calibration) - trade-aware via tradeConfig */}
+      {/* Area Instructions (after first calibration) - always optional, all trades, all modes */}
       {showRoofAreaInstructions && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4">Calibration Complete!</h2>
-            {tradeConfig.areaIsOptional ? (
-              // Optional-area trades (cladding, generic) - let the user choose
-              <>
-                <h3 className="text-lg font-semibold mb-3 text-gray-700">{tradeConfig.needAreaPrompt}</h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  {tradeConfig.firstAreaInstructionsBody}
-                </p>
-                {tradeConfig.toolGuidanceNote && (
-                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
-                    {tradeConfig.toolGuidanceNote}
-                  </div>
-                )}
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setShowRoofAreaInstructions(false);
-                      setAreaMode(true);
-                      setLineMode(false);
-                      setPointMode(false);
-                    }}
-                    className="flex-1 px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium text-sm transition-all"
-                  >
-                    {tradeConfig.optionalAreaConfirmCta}
-                  </button>
-                  <button
-                    onClick={() => setShowRoofAreaInstructions(false)}
-                    className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full font-medium text-sm transition-all"
-                  >
-                    {tradeConfig.skipAreaCta}
-                  </button>
-                </div>
-              </>
+          <div className="bg-white rounded-2xl p-6 max-w-sm border border-gray-200 shadow-xl">
+            <h2 className="text-lg font-semibold mb-1">Calibration complete</h2>
+            {takeoffMode === 'new-page' && initialPageName ? (
+              <p className="text-sm text-slate-500 mb-4">
+                You can draw and measure the area boundary for &ldquo;{initialPageName}&rdquo;, or skip
+                and go straight to adding components. You can always add dimensions manually
+                in the area step of the quote builder.
+              </p>
             ) : (
-              // Mandatory-area trades (roofing) - pitch required
-              <>
-                <h3 className="text-lg font-semibold mb-3 text-gray-700">{tradeConfig.firstAreaInstructionsTitle}</h3>
-                <div className="space-y-3 text-sm">
-                  <p className="text-gray-900">
-                    Before measuring components, you must define at least one <span className="font-bold">roof area with a pitch angle</span>.
-                  </p>
-                  <div className="bg-gray-50/50 border border-gray-200 rounded p-3 space-y-2">
-                    <p className="font-semibold text-blue-400">How to create a roof area:</p>
-                    <ol className="list-decimal list-inside space-y-1.5 text-gray-900 ml-2">
-                      <li>Click the <span className="font-bold text-blue-400">&quot;Area&quot;</span> button in the toolbar above</li>
-                      <li>Click to place <span className="font-bold">at least 4 points</span> around the roof outline</li>
-                      <li>Close the shape by clicking <span className="font-bold">near your starting point</span></li>
-                      <li>Enter a <span className="font-bold">name</span> and <span className="font-bold text-orange-400">pitch angle</span> (in degrees)</li>
-                    </ol>
-                  </div>
-                  <p className="text-gray-600 text-xs mt-3">
-                    The pitch angle is essential for accurate material calculations and component measurements.
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowRoofAreaInstructions(false);
-                    setAreaMode(true);
-                    setLineMode(false);
-                    setPointMode(false);
-                  }}
-                  className="mt-6 w-full px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-                >
-                  {tradeConfig.firstAreaConfirmCta}
-                </button>
-              </>
+              <p className="text-sm text-slate-500 mb-4">
+                You can draw and measure an area now, or skip and go straight to adding
+                components. You can always add area dimensions manually in the quote builder.
+              </p>
             )}
+            {tradeConfig.toolGuidanceNote && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
+                {tradeConfig.toolGuidanceNote}
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowRoofAreaInstructions(false);
+                  setAreaMode(true);
+                  setLineMode(false);
+                  setPointMode(false);
+                  setMultiLinealMode(false);
+                }}
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
+              >
+                Draw Area
+              </button>
+              <button
+                onClick={() => setShowRoofAreaInstructions(false)}
+                className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+              >
+                Skip
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -2142,13 +2882,138 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         </div>
       )}
 
+      {/* Volume (L × W × D) depth prompt - fires after area polygon is closed for a volume_3d component */}
+      {showVolumeDepthPrompt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-80 border border-gray-200 shadow-xl">
+            <h2 className="text-lg font-semibold mb-1">Enter Depth</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Footprint drawn. Now enter the depth to calculate volume ({calibrations[0]?.unit === 'feet' ? 'ft' : 'm'}).
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Depth ({calibrations[0]?.unit === 'feet' ? 'ft' : 'm'})
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.001"
+                value={volumeDepthInput}
+                onChange={e => setVolumeDepthInput(e.target.value)}
+                placeholder={calibrations[0]?.unit === 'feet' ? 'e.g. 1.0' : 'e.g. 0.3'}
+                autoFocus
+                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded text-sm"
+              />
+              {volumeDepthInput && parseFloat(volumeDepthInput) > 0 && (
+                <p className="text-xs text-slate-400 mt-1">
+                  Volume ≈ {(
+                    (calibrations[0]?.unit === 'feet'
+                      ? convertAreaFt2ToMetric(pendingVolumeCalibratedArea)
+                      : pendingVolumeCalibratedArea) *
+                    (calibrations[0]?.unit === 'feet'
+                      ? convertLinearToMetric(parseFloat(volumeDepthInput))
+                      : parseFloat(volumeDepthInput))
+                  ).toFixed(3)} m³
+                </p>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleConfirmVolumeDepth}
+                disabled={!volumeDepthInput || parseFloat(volumeDepthInput) <= 0}
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 disabled:opacity-40 transition-colors"
+              >
+                {volumeDepthInput && parseFloat(volumeDepthInput) > 0
+                  ? `Confirm ${parseFloat(volumeDepthInput).toFixed(2)} ${calibrations[0]?.unit === 'feet' ? 'ft' : 'm'} depth`
+                  : 'Enter a depth'}
+              </button>
+              <button
+                onClick={() => {
+                  // Remove preview polygon from canvas
+                  if (pendingVolumePolygon) {
+                    fabricRef.current?.remove(pendingVolumePolygon);
+                    fabricRef.current?.renderAll();
+                  }
+                  setShowVolumeDepthPrompt(false);
+                  setPendingVolumePolygon(null);
+                  setPendingVolumeComponentId(null);
+                  setPendingVolumePoints([]);
+                  setPendingAreaPoints([]);
+                  setAreaPoints([]);
+                  setVolumeDepthInput('');
+                }}
+                className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* P1-1b pitch-only prompt for new-page mode (first area boundary drawn) */}
+      {showPitchOnlyPrompt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-80 border border-gray-200 shadow-xl">
+            <h2 className="text-lg font-semibold mb-1">
+              {isExistingAreaMode ? `Adding to: ${existingAreaLabel}` : `"${initialPageName || 'New Area'}"`}
+            </h2>
+            <p className="text-sm text-slate-500 mb-4">
+              {tradeConfig.pitchRequired
+                ? 'Enter the roof pitch for this area, or skip to use 0°.'
+                : 'Enter the slope or angle if applicable, or skip.'}
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                {tradeConfig.pitchRequired ? 'Pitch (degrees)' : 'Slope / angle (degrees)'}
+                {!tradeConfig.pitchRequired && <span className="text-slate-400 font-normal ml-1">(optional)</span>}
+              </label>
+              <input
+                type="number"
+                step="0.5"
+                min="0"
+                max="90"
+                value={pitchOnlyInput}
+                onChange={(e) => setPitchOnlyInput(e.target.value)}
+                placeholder={tradeConfig.pitchRequired ? 'e.g. 25' : 'e.g. 10 - or leave blank for flat'}
+                autoFocus
+                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded text-sm"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowPitchOnlyPrompt(false);
+                  const pitch = pitchOnlyInput.trim() ? Number(pitchOnlyInput) : 0;
+                  handleSaveArea(isExistingAreaMode ? existingAreaLabel : (initialPageName || 'New Area'), pitch);
+                }}
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
+              >
+                {pitchOnlyInput.trim() ? `Save at ${pitchOnlyInput}°` : 'Save (0° flat)'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowPitchOnlyPrompt(false);
+                  setPendingAreaPoints([]);
+                  setAreaPoints([]);
+                }}
+                className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Area Name Prompt */}
       {showAreaNamePrompt && (
         <AreaNameModal
           isRoofing={tradeConfig.pitchRequired}
           modalTitle={tradeConfig.createAreaModalTitle}
           namePlaceholder={tradeConfig.areaNamePlaceholder}
-          componentName={roofAreas.length === 0 ? null : (selectedComponentId ? displayComponents.find(c => c.id === selectedComponentId)?.name ?? null : null)}
+          componentName={pendingComponentId ? (displayComponents.find(c => c.id === pendingComponentId)?.name ?? null) : null}
+          initialName={takeoffMode === 'new-page' ? (initialPageName ?? '') : ''}
           calculatedArea={pendingAreaPoints.length > 0 ? calculatePolygonArea(pendingAreaPoints) : 0}
           unit={calibrations[0]?.unit || 'feet'}
           onSave={handleSaveArea}
@@ -2221,6 +3086,24 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
           unit={calibrations[0]?.unit || 'feet'}
           onConfirm={() => {
             if (!selectedComponentId) return;
+
+            // Freestyle intercept: length_x_height_freestyle - show height prompt.
+            const selectedComp = components.find(c => c.id === selectedComponentId);
+            if ((selectedComp?.measurement_type as string) === 'length_x_height_freestyle') {
+              const objects = fabricRef.current?.getObjects() || [];
+              const canvasObjs = objects.slice(-3);
+              setPendingFreestyleLength(pendingLineMeasurement.length);
+              setPendingFreestyleComponentId(selectedComponentId);
+              setPendingFreestylePoints(pendingLineMeasurement.points);
+              setPendingFreestyleCanvasObjects(canvasObjs);
+              setPendingFreestyleIsMultiLineal(false);
+              setFreestyleHeightInput('');
+              setShowLineMeasurementPrompt(false);
+              setPendingLineMeasurement(null);
+              setLinePoints([]);
+              setShowFreestyleHeightPrompt(true);
+              return;
+            }
             
             // Collect canvas objects (line + markers) - last 3 objects added
             const objects = fabricRef.current?.getObjects() || [];
@@ -2277,6 +3160,77 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
         />
       )}
 
+      {/* Freestyle height prompt - fires after line/polyline for length_x_height_freestyle / multi_lineal_lxh_freestyle */}
+      {showFreestyleHeightPrompt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-80 border border-gray-200 shadow-xl">
+            <h2 className="text-lg font-semibold mb-1">Enter Height</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Length measured:{' '}
+              {(calibrations[0]?.unit === 'feet'
+                ? convertLinearToMetric(pendingFreestyleLength)
+                : pendingFreestyleLength).toFixed(2)} m.
+              Now enter the height to calculate area.
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Height ({calibrations[0]?.unit === 'feet' ? 'ft' : 'm'})
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.001"
+                value={freestyleHeightInput}
+                onChange={e => setFreestyleHeightInput(e.target.value)}
+                placeholder={calibrations[0]?.unit === 'feet' ? 'e.g. 8.0' : 'e.g. 2.4'}
+                autoFocus
+                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded text-sm"
+              />
+              {freestyleHeightInput && parseFloat(freestyleHeightInput) > 0 && (
+                <p className="text-xs text-slate-400 mt-1">
+                  Area ≈ {(
+                    (calibrations[0]?.unit === 'feet'
+                      ? convertLinearToMetric(pendingFreestyleLength)
+                      : pendingFreestyleLength) *
+                    (calibrations[0]?.unit === 'feet'
+                      ? convertLinearToMetric(parseFloat(freestyleHeightInput))
+                      : parseFloat(freestyleHeightInput))
+                  ).toFixed(2)} m²
+                </p>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleConfirmFreestyleHeight}
+                disabled={!freestyleHeightInput || parseFloat(freestyleHeightInput) <= 0}
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 disabled:opacity-40 transition-colors"
+              >
+                {freestyleHeightInput && parseFloat(freestyleHeightInput) > 0
+                  ? `Confirm ${parseFloat(freestyleHeightInput).toFixed(2)} ${calibrations[0]?.unit === 'feet' ? 'ft' : 'm'} height`
+                  : 'Enter a height'}
+              </button>
+              <button
+                onClick={() => {
+                  if (fabricRef.current) {
+                    pendingFreestyleCanvasObjects.forEach(obj => fabricRef.current!.remove(obj));
+                    fabricRef.current.renderAll();
+                  }
+                  setShowFreestyleHeightPrompt(false);
+                  setFreestyleHeightInput('');
+                  setPendingFreestyleComponentId(null);
+                  setPendingFreestylePoints([]);
+                  setPendingFreestyleCanvasObjects([]);
+                  setLinePoints([]);
+                }}
+                className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* App-style alert replaces native alert() across this workstation. */}
       <AlertModal
         open={alertState.open}
@@ -2287,6 +3241,7 @@ export function TakeoffWorkstation({ workspaceSlug, quote, planUrl, components }
       />
       </div>
     </div>
+    </>
   );
 }
 
@@ -2301,6 +3256,7 @@ function AreaNameModal({
   unit,
   onSave,
   onCancel,
+  initialName = '',
 }: {
   isRoofing: boolean;
   modalTitle?: string;
@@ -2310,9 +3266,15 @@ function AreaNameModal({
   unit: string;
   onSave: (name: string, pitch?: number) => void;
   onCancel: () => void;
+  /** Pre-fill the area name (used in new-page mode where the user already named the area). */
+  initialName?: string;
 }) {
-  const [name, setName] = useState('');
+  const [name, setName] = useState(initialName);
   const [pitch, setPitch] = useState('');
+
+  // P1-1b: when initialName is pre-filled (new-page mode), name is locked -
+  // only pitch is needed from the user.
+  const nameIsLocked = initialName !== '';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -2320,14 +3282,16 @@ function AreaNameModal({
       // Component area - no pitch needed
       onSave('');
     } else if (isRoofing) {
-      // Roof area - require name and pitch
-      if (name.trim() && pitch.trim()) {
-        onSave(name.trim(), Number(pitch));
+      // Roof area - require pitch; name comes from pre-fill or input
+      const effectiveName = nameIsLocked ? initialName : name.trim();
+      if (effectiveName && (pitch.trim() || nameIsLocked)) {
+        onSave(effectiveName, pitch.trim() ? Number(pitch) : 0);
       }
     } else {
       // Generic area - name only, pitch=0 (flat)
-      if (name.trim()) {
-        onSave(name.trim(), 0);
+      const effectiveName = nameIsLocked ? initialName : name.trim();
+      if (effectiveName) {
+        onSave(effectiveName, 0);
       }
     }
   };
@@ -2352,22 +3316,32 @@ function AreaNameModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           {!componentName && (
             <>
-              <div>
-                <label className="block text-sm mb-2">Area Name <span className="text-red-400">*</span></label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded"
-                  placeholder={namePlaceholder ?? (isRoofing ? 'e.g. Main Roof' : 'e.g. North Wall')}
-                  autoFocus
-                  required
-                />
-              </div>
+              {nameIsLocked ? (
+                // P1-1b new-page mode: name already set, show read-only.
+                <div>
+                  <label className="block text-sm mb-1 text-gray-500">Area</label>
+                  <p className="px-3 py-2 bg-slate-50 border border-slate-200 rounded text-sm font-medium text-slate-800">{initialName}</p>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm mb-2">Area Name <span className="text-red-400">*</span></label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded"
+                    placeholder={namePlaceholder ?? (isRoofing ? 'e.g. Main Roof' : 'e.g. North Wall')}
+                    autoFocus
+                    required
+                  />
+                </div>
+              )}
               {isRoofing && (
                 <>
                   <div>
-                    <label className="block text-sm mb-2">Roof Pitch (degrees) <span className="text-red-400">*</span></label>
+                    <label className="block text-sm mb-2">
+                      Roof Pitch (degrees){nameIsLocked ? ' - optional, enter 0 if flat' : <span className="text-red-400"> *</span>}
+                    </label>
                     <input
                       type="number"
                       step="0.5"
@@ -2376,8 +3350,9 @@ function AreaNameModal({
                       value={pitch}
                       onChange={(e) => setPitch(e.target.value)}
                       className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded"
-                      placeholder="e.g. 30"
-                      required
+                      placeholder={nameIsLocked ? 'e.g. 25 (or 0 for flat)' : 'e.g. 30'}
+                      required={!nameIsLocked}
+                      autoFocus={nameIsLocked}
                     />
                     <p className="text-xs text-gray-600 mt-1">
                       Used to calculate component lengths (rafters, hips, valleys)
@@ -2413,7 +3388,7 @@ function AreaNameModal({
             <button
               type="submit"
               className="px-4 py-2 bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-              disabled={!componentName && (!name.trim() || (isRoofing && !pitch.trim()))}
+              disabled={!componentName && !nameIsLocked && (!name.trim() || (isRoofing && !pitch.trim()))}
             >
               {componentName ? 'Add to Component' : isRoofing ? 'Create Roof Area' : 'Create Area'}
             </button>

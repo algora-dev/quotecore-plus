@@ -35,22 +35,37 @@ export interface EntitlementBannerProps {
   workspaceSlug: string;
 }
 
-function daysUntil(iso: string | null): number | null {
-  if (!iso) return null;
-  const ms = new Date(iso).getTime() - Date.now();
-  if (!Number.isFinite(ms)) return null;
-  return Math.ceil(ms / (24 * 60 * 60 * 1000));
-}
-
 interface Variant {
   tone: 'amber' | 'red' | 'slate' | 'purple';
   title: string;
   description: string;
   ctaLabel: string;
+  /**
+   * When true, the CTA renders in the app's standard button style
+   * (black pill, text-sm font-medium) instead of the tone-coloured banner
+   * button. Used for the storage-over-limit variant so its CTA matches
+   * every other button in the app.
+   */
+  standardCta?: boolean;
 }
 
 function pickVariant(ent: CompanyEntitlements): Variant | null {
   const billingHref = 'View billing';
+
+  // Storage-over-limit is independent of subscription status: a healthy,
+  // active plan can still be "red" on storage. Surface it first - file
+  // uploads are blocked until they free space or upgrade. (Non-file actions
+  // keep working.)
+  if (ent.isOverStorage) {
+    return {
+      tone: 'red',
+      title: 'Storage limit reached.',
+      description:
+        'You’re over your storage limit, so new file uploads are paused. Delete files or quotes to free up space, or upgrade your plan to continue uploading.',
+      ctaLabel: 'Manage storage',
+      standardCta: true,
+    };
+  }
 
   switch (ent.subscriptionStatus) {
     case 'past_due': {
@@ -121,17 +136,12 @@ function pickVariant(ent: CompanyEntitlements): Variant | null {
       const now = Date.now();
       const diffMs = ends - now;
 
-      // Expired (post-cron will flip to canceled, but until then we MUST
-      // surface the hard expired state - mutations are already blocked by
-      // company_effective_plan_active() returning false).
+      // Expired: the account now rolls into the active FREE tier (no longer a
+      // hard read-only lock). The friendly, dismissible "you're on Free now"
+      // notice is handled by TrialRolledToFreeBanner, so this persistent banner
+      // stays silent for the expired-trial case to avoid a duplicate/red scare.
       if (diffMs <= 0) {
-        return {
-          tone: 'red',
-          title: 'Your trial has expired.',
-          description:
-            'Choose a plan now to keep your data and continue using QuoteCore+.',
-          ctaLabel: 'Choose a plan',
-        };
+        return null;
       }
 
       const hoursLeft = diffMs / (60 * 60 * 1000);
@@ -193,7 +203,11 @@ export function EntitlementBanner({ entitlements, workspaceSlug }: EntitlementBa
         <Link
           href={`/${workspaceSlug}/account?tab=billing`}
           prefetch={false}
-          className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-semibold ${CTA_TONE_CLASSES[variant.tone]}`}
+          className={
+            variant.standardCta
+              ? 'inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium text-white bg-black hover:bg-slate-800 transition-all'
+              : `inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold ${CTA_TONE_CLASSES[variant.tone]}`
+          }
         >
           {variant.ctaLabel}
         </Link>

@@ -85,8 +85,8 @@ export function getUnitLabel(
     return norm === 'metric' ? 'm' : 'ft';
   }
 
-  // Volume
-  if (measurementType === 'volume') {
+  // Volume (Preset Depth) and Volume (L × W × D)
+  if (measurementType === 'volume' || measurementType === 'volume_3d') {
     return norm === 'metric' ? 'm³' : 'ft³';
   }
 

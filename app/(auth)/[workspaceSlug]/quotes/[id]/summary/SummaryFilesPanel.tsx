@@ -21,6 +21,8 @@ interface Props {
   quoteId: string;
   companyId: string;
   files: FileEntry[];
+  /** When true the company is over storage - block file uploads. */
+  isOverStorage?: boolean;
 }
 
 /**
@@ -32,7 +34,7 @@ interface Props {
  * single-slot Roof Plan is owned by the takeoff flow and shouldn't be replaced
  * from here.
  */
-export function SummaryFilesPanel({ quoteId, companyId, files }: Props) {
+export function SummaryFilesPanel({ quoteId, companyId, files, isOverStorage }: Props) {
   const router = useRouter();
   const [uploaderOpen, setUploaderOpen] = useState(false);
 
@@ -114,6 +116,7 @@ export function SummaryFilesPanel({ quoteId, companyId, files }: Props) {
             currentFileUrl={null}
             label="Upload Supporting File"
             description="PDF or image (max 10 MB) - added as a supporting file on this quote"
+            isOverStorage={isOverStorage}
           />
         </div>
       )}

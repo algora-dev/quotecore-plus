@@ -27,6 +27,7 @@ export default function robots(): MetadataRoute.Robots {
           '/*/quotes',
           '/*/customers',
           '/*/settings',
+          '/*/resources',
           '/*/templates',
           '/*/material-orders',
           '/*/jobs',

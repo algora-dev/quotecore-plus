@@ -34,6 +34,8 @@ interface Props {
   defaultTrade?: string;
   /** Phase 8 (Generic Trades): collections the user can pick from. */
   componentCollections?: Array<{ id: string; name: string; is_bootstrap: boolean }>;
+  /** When true the company is over storage - block plan file upload. */
+  isOverStorage?: boolean;
 }
 
 const MEASUREMENT_OPTIONS: Array<{ value: MeasurementChoice; title: string; subtitle: string }> = [
@@ -54,6 +56,7 @@ export function QuoteDetailsForm({
   effectivePlanCode,
   defaultTrade = 'roofing',
   componentCollections = [],
+  isOverStorage,
 }: Props) {
   // Phase 8 (Generic Trades): trade + collection pickers.
   // Only rendered when NEXT_PUBLIC_GENERIC_TRADES_V1 is on.
@@ -606,6 +609,7 @@ export function QuoteDetailsForm({
               currentFileUrl={null}
               label="Upload Plans / Images"
               description="PDF or image (max 10 MB)"
+              isOverStorage={isOverStorage}
             />
           )}
         </div>

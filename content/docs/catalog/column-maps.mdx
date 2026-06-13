@@ -1,0 +1,42 @@
+---
+title: Column maps
+description: Add multiple named column mappings to one catalog — no re-upload needed.
+order: 3
+status: published
+updated: 2026-06-05
+---
+
+# Column maps
+
+A column map tells the app which columns in your CSV file correspond to the item description, quantity text, and price that will show on your quote/order. Every catalog has at least one map (the default). You can add more named maps over the same file without re-uploading it or using extra storage.
+
+## Why you'd use multiple maps
+
+Your supplier might use the same price list file but you want to search it two ways — for example, one map that pulls in retail prices and one for trade prices from different columns. Create a separate map for each. Or perhaps you pull information from certain columns for quoting, and other columns, like product code/key for ordering as an example.
+
+## Where to find it
+
+Click a catalog row in **Resource Library > Catalogs** to open the edit modal, then open the **Maps** tab.
+
+## What you'll see
+
+A list of all maps for that catalog. The **default** map is the one created when you uploaded the file. It cannot be deleted (but it can be renamed and remapped).
+
+Each row shows the map name and two action buttons: **Edit** and **Delete** (non-default maps only).
+
+## Adding a map
+
+1. Click **+ Add extra map for this catalog**.
+2. Give the map a name (e.g. "Trade prices").
+3. Use the column-mapping dropdowns to assign your columns to Item / Description, Description / Quantity, and Price.
+4. A file preview shows the first few rows so you can check you've picked the right columns.
+5. Click **Save**.
+
+## How maps appear in search
+
+When you open the catalog search in a quote or order, a **Catalog** dropdown appears if you have more than one catalog or map. Each named map shows up as a separate option. Selecting a map applies its column interpretation to search results.
+
+## Related
+
+- [Uploading a catalog](/docs/catalog/uploading-a-catalog)
+- [Using catalog items in quotes](/docs/catalog/using-catalog-items)

@@ -50,6 +50,20 @@ export default async function QuoteBuilderV2Page({
     ? await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, planFile.storage_path)
     : null;
 
+  // P1-1b: Check if this quote has existing takeoff measurements.
+  const { count: takeoffMeasurementCount } = await supabase
+    .from('quote_takeoff_measurements')
+    .select('id', { count: 'exact', head: true })
+    .eq('quote_id', id);
+  const hasExistingTakeoff = (takeoffMeasurementCount ?? 0) > 0;
+
+  // P1-1b: Sign the full canvas image (plan + coloured measurements) if it exists.
+  // takeoff_canvas_path holds the composite image; takeoff_lines_path is lines-only.
+  const canvasPath = (quote as unknown as { takeoff_canvas_path?: string | null }).takeoff_canvas_path;
+  const linesImageUrl = canvasPath
+    ? await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, canvasPath)
+    : null;
+
   const { data: supportingFilesData } = await supabase
     .from('quote_files')
     .select('id, storage_path, file_name, file_size, uploaded_at')
@@ -90,6 +104,9 @@ export default async function QuoteBuilderV2Page({
       planUrl={planUrl}
       planName={planFile?.file_name || null}
       supportingFiles={supportingFiles}
+      hasExistingTakeoff={hasExistingTakeoff}
+      linesImageUrl={linesImageUrl}
+      planStoragePath={planFile?.storage_path || null}
       initialStep={step}
     />
   );

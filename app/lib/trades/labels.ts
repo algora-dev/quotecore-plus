@@ -29,6 +29,18 @@ export interface TradeLabels {
   /** Display name in dropdowns / headings. */
   tradeLabel: string;
 
+  // ── Flashings / Drawings feature ────────────────────────────────────────
+  /**
+   * Plural label for the drawing-library feature. Roofing calls these
+   * "Flashings"; every other trade calls them "Drawings & Images". Used for
+   * the entry button, the library page heading, list copy, and the canvas.
+   * Internal identifiers (table `flashing_library`, `flashing_ids`, routes,
+   * data-copilot keys, file names) are NOT affected - display copy only.
+   */
+  featureLabel: string;
+  /** Singular form: "Flashing" / "Drawing/Image". */
+  featureLabelSingular: string;
+
   // ── Area labels ───────────────────────────────────────────────────────────
   /** Plural noun: "Roof Areas" / "Wall Areas" / "Areas" */
   areaPluralLabel: string;
@@ -127,6 +139,8 @@ export interface TradeLabels {
 export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
   plumbing: {
     tradeLabel: 'Plumbing',
+    featureLabel: 'Drawings & Images',
+    featureLabelSingular: 'Drawing/Image',
 
     areaPluralLabel: 'Areas',
     areaSingularLabel: 'Area',
@@ -170,6 +184,8 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
 
   electrical: {
     tradeLabel: 'Electrical',
+    featureLabel: 'Drawings & Images',
+    featureLabelSingular: 'Drawing/Image',
 
     areaPluralLabel: 'Areas',
     areaSingularLabel: 'Area',
@@ -217,6 +233,8 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
 
   roofing: {
     tradeLabel: 'Roofing',
+    featureLabel: 'Flashings',
+    featureLabelSingular: 'Flashing',
 
     areaPluralLabel: 'Roof Areas',
     areaSingularLabel: 'Roof Area',
@@ -251,6 +269,8 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
 
   cladding: {
     tradeLabel: 'Cladding',
+    featureLabel: 'Drawings & Images',
+    featureLabelSingular: 'Drawing/Image',
 
     areaPluralLabel: 'Wall Areas',
     areaSingularLabel: 'Wall Area',
@@ -291,6 +311,8 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
 
   generic: {
     tradeLabel: 'Generic',
+    featureLabel: 'Drawings & Images',
+    featureLabelSingular: 'Drawing/Image',
 
     areaPluralLabel: 'Areas',
     areaSingularLabel: 'Area',
@@ -325,6 +347,8 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
 
   landscaping: {
     tradeLabel: 'Landscaping',
+    featureLabel: 'Drawings & Images',
+    featureLabelSingular: 'Drawing/Image',
 
     areaPluralLabel: 'Areas',
     areaSingularLabel: 'Area',
@@ -375,6 +399,8 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
 
   flooring: {
     tradeLabel: 'Flooring',
+    featureLabel: 'Drawings & Images',
+    featureLabelSingular: 'Drawing/Image',
 
     areaPluralLabel: 'Areas',
     areaSingularLabel: 'Area',
@@ -419,6 +445,8 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
 
   tiling: {
     tradeLabel: 'Tiling',
+    featureLabel: 'Drawings & Images',
+    featureLabelSingular: 'Drawing/Image',
 
     areaPluralLabel: 'Areas',
     areaSingularLabel: 'Area',
@@ -466,6 +494,8 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
 
   foundations: {
     tradeLabel: 'Foundations',
+    featureLabel: 'Drawings & Images',
+    featureLabelSingular: 'Drawing/Image',
 
     areaPluralLabel: 'Areas',
     areaSingularLabel: 'Area',
@@ -510,6 +540,8 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
 
   insulation: {
     tradeLabel: 'Insulation',
+    featureLabel: 'Drawings & Images',
+    featureLabelSingular: 'Drawing/Image',
 
     areaPluralLabel: 'Areas',
     areaSingularLabel: 'Area',
@@ -561,6 +593,8 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
 
   painting: {
     tradeLabel: 'Painting',
+    featureLabel: 'Drawings & Images',
+    featureLabelSingular: 'Drawing/Image',
 
     areaPluralLabel: 'Areas',
     areaSingularLabel: 'Area',
@@ -608,6 +642,8 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
 
   fencing: {
     tradeLabel: 'Fencing',
+    featureLabel: 'Drawings & Images',
+    featureLabelSingular: 'Drawing/Image',
 
     areaPluralLabel: 'Areas',
     areaSingularLabel: 'Area',
@@ -653,6 +689,8 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
 
   concrete: {
     tradeLabel: 'Concrete',
+    featureLabel: 'Drawings & Images',
+    featureLabelSingular: 'Drawing/Image',
 
     areaPluralLabel: 'Areas',
     areaSingularLabel: 'Area',
@@ -703,6 +741,8 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
 
   construction: {
     tradeLabel: 'Construction',
+    featureLabel: 'Drawings & Images',
+    featureLabelSingular: 'Drawing/Image',
 
     areaPluralLabel: 'Areas',
     areaSingularLabel: 'Area',

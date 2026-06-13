@@ -1,0 +1,52 @@
+---
+title: Sending an invoice
+description: Three ways to get your invoice in front of your customer.
+order: 3
+status: published
+updated: 2026-06-07
+---
+
+# Sending an invoice
+
+Once your invoice is ready, click **Send Invoice** in the top bar of the editor. Choose how you want to deliver it.
+
+## Option 1 — Send from QuoteCore+
+
+QuoteCore+ emails the customer directly using your company branding.
+
+1. Enter the customer's email (pre-filled if you added one when creating the invoice).
+2. Choose a message template (optional) or write a custom subject and body.
+3. Click **Send Invoice**.
+
+On a successful send:
+- The invoice status changes from **Draft** to **Sent**.
+- The customer receives a branded email with a **View Invoice** button.
+- You get an in-app activity log entry.
+- When the customer opens the link, the status changes to **Viewed** and you get an alert.
+
+> **Plan note:** Sending directly from QuoteCore+ requires a plan that includes email sending. If your plan doesn't include it, use one of the other options below.
+
+### Message templates
+
+Go to **Resources → Message Templates** and create a template with kind **Invoice Send**. Available placeholders:
+
+- `{{customer_name}}` — customer's name
+- `{{invoice_number}}` — invoice number (e.g. INV-2026-000001)
+- `{{invoice_total}}` — formatted total amount
+- `{{invoice_link}}` — public invoice URL
+- `{{due_date}}` — due date (if set)
+- `{{company_name}}`, `{{company_email}}`, `{{company_phone}}`
+
+## Option 2 — Copy URL link
+
+Copies the public invoice URL to your clipboard. Paste it into any message, email, WhatsApp, or SMS.
+
+The link is permanent and doesn't expire. Anyone with the link can view the invoice, so only share it with the intended customer.
+
+## Option 3 — Generate email
+
+QuoteCore+ builds a ready-to-paste email (subject + body) using your template or a default message. Click **Copy Email** and paste it into your own email client.
+
+## After sending
+
+The invoice page shows an **Activity** tab. Every open, send, payment report, and dispute is logged there with a timestamp.

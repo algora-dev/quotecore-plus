@@ -98,7 +98,7 @@ export async function ActivityCard({
       .order('created_at', { ascending: false }),
     supabase
       .from('quotes')
-      .select('accepted_at, declined_at')
+      .select('accepted_at, declined_at, customer_email')
       .eq('id', quoteId)
       .eq('company_id', companyId)
       .maybeSingle(),
@@ -212,12 +212,16 @@ export async function ActivityCard({
     failedError: row.failed_error,
   }));
 
-  // Schedule modal defaults: prefer the most recent successful send.
-  let defaultRecipientEmail: string | null = null;
+  // Schedule modal defaults: prefer the most recent successful send, then
+  // fall back to the quote's own customer email so the builder is prefilled
+  // even before the first send. The builder lets the user edit it either way.
+  const quoteCustomerEmail =
+    (quoteForScheduleResult.data as { customer_email?: string | null } | null)?.customer_email ?? null;
+  let defaultRecipientEmail: string | null = quoteCustomerEmail;
   let defaultRecipientName: string | null = customerName ?? null;
   if (messages.length > 0) {
     const lastSuccessful = messages.find((m) => m.status === 'sent') ?? messages[0];
-    defaultRecipientEmail = lastSuccessful.recipient_email;
+    defaultRecipientEmail = lastSuccessful.recipient_email ?? defaultRecipientEmail;
     defaultRecipientName = lastSuccessful.recipient_name ?? defaultRecipientName;
   }
 

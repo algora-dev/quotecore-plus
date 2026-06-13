@@ -36,7 +36,7 @@ export async function updateCompanyLanguage(language: string) {
   }
 
   revalidatePath(`/${company.slug}`);
-  revalidatePath(`/${company.slug}/templates`);
+  revalidatePath(`/${company.slug}/resources`);
   revalidatePath(`/${company.slug}/quotes`);
   revalidatePath('/', 'layout');
 

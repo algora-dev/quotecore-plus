@@ -16,7 +16,7 @@ import { normalizeMeasurementSystem } from '@/app/lib/types';
 // new-quote form via QuoteDetailsForm.
 import { CurrencySelector } from './CurrencySelector';
 import { DownloadSummaryPDFButton } from './DownloadSummaryPDFButton';
-import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 import { SendQuoteButton } from './SendQuoteButton';
 import { WithdrawQuoteButton } from './WithdrawQuoteButton';
@@ -32,10 +32,16 @@ import { BUCKETS } from '@/app/lib/storage/buckets';
 
 export default async function QuoteSummaryPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ workspaceSlug: string; id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const { workspaceSlug, id } = await params;
+  const { from } = await searchParams;
+  // When opened from the Message Center, "Back" returns to the inbox.
+  const backHref = from === 'inbox' ? `/${workspaceSlug}/inbox` : `/${workspaceSlug}/quotes`;
+  const backLabel = from === 'inbox' ? 'Back to Message Center' : 'Back';
   const [quote, roofAreas, components, entries, quoteTaxes] = await Promise.all([
     loadQuote(id),
     loadQuoteRoofAreas(id),
@@ -52,7 +58,16 @@ export default async function QuoteSummaryPage({
   const activityCardEnabled = entitlements.features.activity_card;
   
   const supabase = await createSupabaseServerClient();
-  
+
+  // One-time "test it on yourself first" send tip: has THIS user seen it?
+  const _profile = await getCurrentProfile();
+  const { data: _stt } = await supabase
+    .from('users')
+    .select('send_test_tip_seen_at')
+    .eq('id', _profile.id)
+    .maybeSingle();
+  const sendTestTipSeen = !!(_stt as { send_test_tip_seen_at?: string | null } | null)?.send_test_tip_seen_at;
+
   // Load ALL customer quote lines (for overrides + custom lines)
   const { data: allCustomerLines } = await supabase
     .from('customer_quote_lines')
@@ -77,12 +92,32 @@ export default async function QuoteSummaryPage({
   
   const hasLaborSheet = (laborSheetLines || []).length > 0;
 
-  // Load email templates for Send Quote modal
+  // Load email templates for Send Quote modal. attachment_id (Phase 4 baked
+  // default) is included so the send picker can pre-check the template's file.
   const { data: emailTemplates } = await supabase
     .from('email_templates')
-    .select('id, name, subject, body, is_default')
+    .select('id, name, subject, body, is_default, attachment_id')
     .eq('company_id', quote.company_id)
     .order('created_at', { ascending: false });
+
+  // Attachment library for the send picker (Pro+ gated). IDS + name + size
+  // only - never storage_path on client props (Gerald H-03 #5). When the
+  // company isn't entitled we pass an empty list and lock the source.
+  const attachmentsEnabled = entitlements.features.attachment_library;
+  let libraryPickerFiles: Array<{ id: string; name: string; fileSize: number }> = [];
+  if (attachmentsEnabled) {
+    const { data: libRows } = await supabase
+      .from('company_attachments')
+      .select('id, name, file_size')
+      .eq('company_id', quote.company_id)
+      .is('archived_at', null)
+      .order('name', { ascending: true });
+    libraryPickerFiles = (libRows ?? []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      fileSize: r.file_size,
+    }));
+  }
   
   // Build component override map (componentId -> custom_amount)
   const componentOverrides = new Map<string, number>();
@@ -127,20 +162,20 @@ export default async function QuoteSummaryPage({
   
   const _planFile = filesData?.find(f => f.file_type === 'plan');
   const _supportingFiles = filesData?.filter(f => f.file_type === 'supporting') || [];
-  
-  // QUOTE-DOCUMENTS is private; batch-sign every file's storage path so we
-  // hit the storage API once instead of N times.
-  // Takeoff canvas snapshots: prefer the stable storage path columns and sign
-  // on render. The legacy *_url columns are kept as a transition fallback for
-  // ancient quotes whose path column is still null after the backfill
-  // (Gerald audit pass 2 fix).
+
+  // P1-1b: new saves create quote_files records for each canvas snapshot so all
+  // takeoff images appear here. For older quotes that pre-date this change,
+  // fall back to quotes.takeoff_canvas_path (added manually below).
+  const hasCanvasFileRecords = (filesData || []).some(f => f.file_type === 'takeoff_canvas');
+  const hasLinesFileRecords  = (filesData || []).some(f => f.file_type === 'takeoff_lines');
+
   const canvasPath = quote.takeoff_canvas_path ?? null;
-  const linesPath = quote.takeoff_lines_path ?? null;
+  const linesPath  = quote.takeoff_lines_path  ?? null;
 
   const allPathsToSign = [
     ...(filesData || []).map((f) => f.storage_path),
-    ...(canvasPath ? [canvasPath] : []),
-    ...(linesPath ? [linesPath] : []),
+    ...(!hasCanvasFileRecords && canvasPath ? [canvasPath] : []),
+    ...(!hasLinesFileRecords  && linesPath  ? [linesPath]  : []),
   ];
   const signed = allPathsToSign.length > 0
     ? await getSignedUrls(BUCKETS.QUOTE_DOCUMENTS, allPathsToSign)
@@ -151,36 +186,39 @@ export default async function QuoteSummaryPage({
     url: signedByPath.get(file.storage_path) ?? '',
   }));
 
-  // Add canvas image if it exists
-  const canvasUrl = canvasPath
-    ? signedByPath.get(canvasPath) ?? ''
-    : (quote.takeoff_canvas_url ?? '');
-  if (canvasUrl) {
-    allFiles.push({
-      id: 'canvas-image',
-      file_type: 'canvas' as any,
-      file_name: 'Digital Takeoff Canvas',
-      file_size: 0,
-      storage_path: canvasPath ?? '',
-      uploaded_at: quote.updated_at,
-      url: canvasUrl,
-    });
+  // Backward-compat: add canvas images from quote columns only when no
+  // quote_files records exist yet (old quotes pre-dating P1-1b).
+  if (!hasCanvasFileRecords) {
+    const canvasUrl = canvasPath
+      ? signedByPath.get(canvasPath) ?? ''
+      : (quote.takeoff_canvas_url ?? '');
+    if (canvasUrl) {
+      allFiles.push({
+        id: 'canvas-image',
+        file_type: 'takeoff_canvas' as any,
+        file_name: 'Digital Takeoff Canvas',
+        file_size: 0,
+        storage_path: canvasPath ?? '',
+        uploaded_at: quote.updated_at,
+        url: canvasUrl,
+      });
+    }
   }
-
-  // Add lines-only canvas image if it exists
-  const linesUrl = linesPath
-    ? signedByPath.get(linesPath) ?? ''
-    : (quote.takeoff_lines_url ?? '');
-  if (linesUrl) {
-    allFiles.push({
-      id: 'canvas-lines',
-      file_type: 'canvas' as any,
-      file_name: 'Takeoff Lines Only (Print Ready)',
-      file_size: 0,
-      storage_path: linesPath ?? '',
-      uploaded_at: quote.updated_at,
-      url: linesUrl,
-    });
+  if (!hasLinesFileRecords) {
+    const linesUrl = linesPath
+      ? signedByPath.get(linesPath) ?? ''
+      : (quote.takeoff_lines_url ?? '');
+    if (linesUrl) {
+      allFiles.push({
+        id: 'canvas-lines',
+        file_type: 'takeoff_lines' as any,
+        file_name: 'Takeoff Lines Only (Print Ready)',
+        file_size: 0,
+        storage_path: linesPath ?? '',
+        uploaded_at: quote.updated_at,
+        url: linesUrl,
+      });
+    }
   }
 
 
@@ -241,9 +279,9 @@ export default async function QuoteSummaryPage({
     <div className="max-w-5xl mx-auto py-8 px-4 space-y-6">
       {/* Header */}
       <div>
-        <Link href={`/${workspaceSlug}/quotes`} className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-3">
+        <Link href={backHref} className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-3">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          Back
+          {backLabel}
         </Link>
         <div className="flex items-start justify-between">
           <div>
@@ -341,6 +379,16 @@ export default async function QuoteSummaryPage({
               existingToken={quote.acceptance_token && !quote.withdrawn_at ? quote.acceptance_token : null}
               hasCustomerQuote={hasCustomerQuote}
               emailTemplates={emailTemplates || []}
+              canFollowups={entitlements.features.followups}
+              canEmail={entitlements.features.email_send}
+              sendTestTipSeen={sendTestTipSeen}
+              libraryFiles={libraryPickerFiles}
+              libraryLocked={!attachmentsEnabled}
+              quoteFiles={(filesData || []).map((f) => ({
+                id: f.id,
+                name: f.file_name,
+                fileSize: f.file_size,
+              }))}
               quoteMeta={{
                 customerName: quote.customer_name,
                 quoteNumber: quote.quote_number,
@@ -481,6 +529,7 @@ export default async function QuoteSummaryPage({
         <SummaryFilesPanel
           quoteId={id}
           companyId={quote.company_id}
+          isOverStorage={entitlements.isOverStorage}
           files={allFiles.map((f) => ({
             id: f.id,
             file_name: f.file_name,

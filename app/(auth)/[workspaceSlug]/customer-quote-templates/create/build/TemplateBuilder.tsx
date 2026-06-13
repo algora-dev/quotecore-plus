@@ -5,17 +5,21 @@ import { useRouter } from 'next/navigation';
 import type { CustomerQuoteTemplateRow } from '@/app/lib/types';
 import { createCustomerQuoteTemplate } from './actions';
 import { createClient } from '@/app/lib/supabase/client';
+import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 
 interface Props {
   workspaceSlug: string;
   templateName: string;
   useStarter: boolean;
   starterTemplate: CustomerQuoteTemplateRow | null;
+  /** When true the company is over storage - block logo upload. */
+  isOverStorage?: boolean;
 }
 
-export function TemplateBuilder({ workspaceSlug, templateName, useStarter, starterTemplate }: Props) {
+export function TemplateBuilder({ workspaceSlug, templateName, useStarter, starterTemplate, isOverStorage }: Props) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [storageBlocked, setStorageBlocked] = useState(false);
 
   // Company details (pre-filled from starter if applicable)
   const [companyName, setCompanyName] = useState(
@@ -39,6 +43,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
   const [uploading, setUploading] = useState(false);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isOverStorage) { setStorageBlocked(true); return; }
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -108,6 +113,8 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
   };
 
   return (
+    <>
+    <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-5xl mx-auto p-6 space-y-6">
         {/* Header */}
@@ -339,5 +346,6 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
         </div>
       </div>
     </div>
+    </>
   );
 }

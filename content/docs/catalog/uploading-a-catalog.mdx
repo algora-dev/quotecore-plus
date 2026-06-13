@@ -1,0 +1,73 @@
+---
+title: Uploading a catalog
+description: Import a CSV price list into the Catalog Library in four steps.
+order: 2
+status: published
+updated: 2026-06-05
+---
+
+# Uploading a catalog
+
+Go to **Resource Library > Catalogs**, then click **Upload catalog**. A four-step wizard opens.
+
+## Step 1 — Choose a CSV file
+
+Drop your file onto the upload area, or click it to browse. Only CSV files are accepted.
+
+- Maximum **35,000 data rows** per catalog. If your file has more, only the first 35,000 are imported and a warning appears.
+- The wizard detects whether row 1 is a header row automatically. If your file has no headers, columns are labelled A, B, C and so on.
+
+**Tips for clean imports:**
+
+- Give columns clear names if possible (e.g. Description, Price, Pack Size).
+- One item per row.
+- Currency symbols (£, $, €) in price columns are stripped automatically — no need to clean them out first.
+
+## Step 2 — Name your catalog
+
+The wizard pre-fills the catalog name from your filename. Edit it to anything that helps you find it later, for example "Supplier Name — 2026".
+
+The screen also shows a summary: row count, column count, and the original filename. If the wizard spotted any issues (e.g. too many rows), a warning box appears here.
+
+## Step 3 — Preview and map columns
+
+You'll see a preview of the first five rows of your file, with your columns laid out.
+
+Map your columns to three optional fields:
+
+| Field | What it does |
+|-------|-------------|
+| **Item / Description** | The primary line text added to the quote. |
+| **Description / Quantity** | Secondary text appended after the primary (e.g. pack size). |
+| **Price** | The amount inserted on the quote line. |
+
+The wizard tries to auto-detect the right columns from your header names. Check the preview — highlighted columns show which mapping has been applied.
+
+All three mappings are optional. Columns you leave unmapped are still stored; you can remap them later without re-uploading.
+
+> **Tip:** You can add extra column maps over this same file after saving — no re-upload needed. See [Column maps](/docs/catalog/column-maps).
+
+## Step 4 — Save
+
+Review the summary (name, row count, and how each field is mapped) then click **Save catalog**. A progress bar tracks the import. Large catalogs may take a few seconds.
+
+When the import finishes the catalog appears in the list with a **Ready** status.
+
+## Editing a catalog after import
+
+Click any catalog row to open the edit modal. Three tabs are available:
+
+- **Rename** — change the catalog name.
+- **Column mapping** — update which columns map to each field without re-uploading.
+- **Maps** — manage multiple named column maps over the same file. See [Column maps](/docs/catalog/column-maps).
+
+## Archiving and deleting
+
+- **Archive** — hides the catalog from the active list and from search. The data is kept and storage still counts toward your plan. You can reinstate it at any time.
+- **Delete** — permanently removes the catalog and all its rows. This frees storage. Cannot be undone.
+
+## Related
+
+- [Column maps](/docs/catalog/column-maps)
+- [Using catalog items in quotes](/docs/catalog/using-catalog-items)
+- [Catalog Library overview](/docs/catalog/overview)

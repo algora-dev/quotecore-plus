@@ -300,6 +300,15 @@ export async function withdrawQuote(quoteId: string): Promise<void> {
 
   if (updateErr) throw new Error(`Failed to withdraw quote: ${updateErr.message}`);
 
+  // Withdrawing clears any "Action Required" state too: resolve any open
+  // revision requests so the badge (derived from unresolved
+  // quote_revision_requests) drops (bug 2026-06-10).
+  await supabase
+    .from('quote_revision_requests')
+    .update({ resolved_at: new Date().toISOString() })
+    .eq('quote_id', quoteId)
+    .is('resolved_at', null);
+
   revalidatePath('/');
 }
 
@@ -1578,6 +1587,7 @@ export async function saveCustomerQuoteLines(
     lineType: 'component' | 'custom';
     componentId?: string;
     text: string;
+    quantityText?: string | null;
     amount: number;
     showPrice: boolean;
     showUnits: boolean;
@@ -1615,6 +1625,7 @@ export async function saveCustomerQuoteLines(
       line_type: line.lineType,
       quote_component_id: line.componentId || null,
       custom_text: line.text,
+      quantity_text: line.quantityText ?? null,
       custom_amount: line.amount,
       show_price: line.showPrice,
       show_units: line.showUnits,

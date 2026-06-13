@@ -8,6 +8,17 @@
 
 import { renderEmailLayout, ctaBlock, para, paraHtml, note } from '../baseLayout';
 
+export type GenericAlertEmailInput = {
+  recipientName?: string | null;
+  /** The alert headline shown as the email H1 (e.g. "Invoice disputed"). */
+  title: string;
+  /** One or two sentences of plain-text body. */
+  body: string;
+  /** Optional CTA button - omitted when there's nowhere useful to send them. */
+  ctaUrl?: string | null;
+  ctaLabel?: string;
+};
+
 export type QuoteResponseEmailInput = {
   recipientName?: string | null;
   customerName: string | null;
@@ -26,6 +37,29 @@ export type RevisionRequestEmailInput = {
 
 const greet = (name?: string | null) => (name ? `Hi ${name},` : 'Hi,');
 const labelQuote = (n: string | null) => (n ? `#${n}` : 'a quote');
+
+/* ---- Generic alert (orders, invoices, read-receipts) ----
+   One reusable branded email so every new blue-toggle event gets a tidy
+   notification without a bespoke template. Reuses the shared layout. */
+
+export function genericAlertEmail(input: GenericAlertEmailInput) {
+  const { recipientName, title, body, ctaUrl, ctaLabel } = input;
+  const inner =
+    para(greet(recipientName)) +
+    paraHtml(`<strong>${title}</strong>`) +
+    para(body) +
+    (ctaUrl ? ctaBlock(ctaLabel || 'Open in QuoteCore+', ctaUrl) : '') +
+    note("You're receiving this because email alerts for this event are on. Manage them in your Message Center settings.");
+  return {
+    subject: title,
+    html: renderEmailLayout({
+      heading: title,
+      innerHtml: inner,
+      preheader: body.slice(0, 100),
+    }),
+    text: `${title}\n\n${body}${ctaUrl ? `\n\nOpen: ${ctaUrl}` : ''}`,
+  };
+}
 
 /* ---- Quote accepted ---- */
 

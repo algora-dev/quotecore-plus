@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { QuoteBuilder } from '../quote-builder';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow } from '@/app/lib/types';
 
@@ -25,6 +25,9 @@ interface Props {
   planUrl: string | null;
   planName: string | null;
   supportingFiles: SupportingFile[];
+  hasExistingTakeoff?: boolean;
+  linesImageUrl?: string | null;
+  planStoragePath?: string | null;
   initialStep: string;
 }
 
@@ -45,7 +48,6 @@ const phaseToStep: Record<Phase, string> = {
 };
 
 export function QuoteBuilderV2Wrapper(props: Props) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [phase, setPhase] = useState<Phase>(stepToPhase[props.initialStep] || 'areas');
 
@@ -62,11 +64,19 @@ export function QuoteBuilderV2Wrapper(props: Props) {
     }
   }, [searchParams, phase]);
 
-  // Handle phase changes from QuoteBuilder
+  // Handle phase changes from QuoteBuilder.
+  // We update the URL via window.history.replaceState instead of router.push/replace.
+  // router.push triggers a full Next.js navigation which re-runs the build page's
+  // server component (re-fetching all quote data) - causing the visible blink and
+  // 1-2s delay on every tab click. history.replaceState updates the URL for
+  // bookmarking/refresh without any server round-trip; all quote data is already
+  // loaded in client state.
   const handlePhaseChange = (newPhase: Phase) => {
-    const step = phaseToStep[newPhase];
-    router.push(`/${props.workspaceSlug}/quotes/${props.quote.id}/build?step=${step}`);
     setPhase(newPhase);
+    const step = phaseToStep[newPhase];
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', `?step=${step}`);
+    }
   };
 
   const { initialStep, ...builderProps } = props;

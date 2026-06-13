@@ -97,6 +97,7 @@ import {
   requireStripe,
   resolvePlanCodeForStripePrice,
   stripeStatusToInternal,
+  getStripeMode,
 } from '@/app/lib/billing/stripe';
 
 export const runtime = 'nodejs';
@@ -308,6 +309,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
     .update({
       stripe_customer_id: customerId,
       stripe_subscription_id: subscriptionId,
+      stripe_mode: getStripeMode(),
     })
     .eq('id', companyId);
 
@@ -369,7 +371,7 @@ async function handleSubscriptionEvent(
         // Backfill customer_id + subscription_id now so subsequent events resolve correctly.
         const { error: backfillErr } = await admin
           .from('companies')
-          .update({ stripe_customer_id: customerId, stripe_subscription_id: sub.id })
+          .update({ stripe_customer_id: customerId, stripe_subscription_id: sub.id, stripe_mode: getStripeMode() })
           .eq('id', metaCompanyId);
         if (backfillErr) throw retryable(`companies backfill customer_id: ${backfillErr.message}`);
         company = companyByMeta;

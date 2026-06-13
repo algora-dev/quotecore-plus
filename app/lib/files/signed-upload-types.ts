@@ -23,7 +23,8 @@ export interface MintUploadInput {
    */
   scope:
     | { kind: 'pending' }
-    | { kind: 'quote'; quoteId: string };
+    | { kind: 'quote'; quoteId: string }
+    | { kind: 'library' };
   /** Original filename. Used only to derive an extension; not trusted otherwise. */
   filename: string;
   /** Browser-claimed content type. Validated against an allowlist. */
@@ -52,6 +53,8 @@ export type MintUploadResult =
         | 'too_large'
         | 'storage_quota_exceeded'
         | 'subscription_inactive'
+        | 'feature_gated'
+        | 'attachment_limit_reached'
         | 'mint_failed';
       message: string;
     };

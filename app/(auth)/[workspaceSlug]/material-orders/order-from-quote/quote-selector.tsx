@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 /**
  * Subset of the `quotes` row this picker needs. Shape matches the DB:
@@ -53,6 +53,12 @@ function timeAgo(dateStr: string): string {
 }
 
 export function QuoteSelector({ quotes, workspaceSlug }: Props) {
+  const searchParams = useSearchParams();
+  // Layout (+ column for components) chosen up front on the orders hub; carried
+  // through to the editor.
+  const layout = searchParams.get('layout') === 'line_by_line' ? 'line_by_line' : 'components';
+  const columnRaw = searchParams.get('column');
+  const columnParam = columnRaw === 'single' || columnRaw === 'double' ? `&column=${columnRaw}` : '';
   const router = useRouter();
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -92,7 +98,7 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
 
   function handleConfirm() {
     if (!selectedQuote) return;
-    router.push(`/${workspaceSlug}/material-orders/create?quoteId=${selectedQuote.id}`);
+    router.push(`/${workspaceSlug}/material-orders/create?quoteId=${selectedQuote.id}&layout=${layout}${columnParam}`);
   }
 
   return (
@@ -159,7 +165,7 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
 
       {/* Rows */}
       {filtered.length > 0 ? (
-        <div className="grid gap-1">
+        <div data-copilot="order-from-quote-list" className="grid gap-1">
           {filtered.map((quote) => {
             const jobStatus = quote.job_status || 'unsent';
             const config = JOB_STATUS_CONFIG[jobStatus] || JOB_STATUS_CONFIG.unsent;
@@ -223,6 +229,7 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
                 Cancel
               </button>
               <button
+                data-copilot="order-from-quote-confirm"
                 onClick={handleConfirm}
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               >

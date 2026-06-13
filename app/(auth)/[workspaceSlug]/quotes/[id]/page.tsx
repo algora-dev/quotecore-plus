@@ -6,6 +6,7 @@ import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { getSignedUrl, getSignedUrls } from '@/app/lib/storage/helpers';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import { loadTakeoffMeasurements } from './takeoff/actions';
+import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 
 export default async function QuoteBuilderPage({
   params,
@@ -29,13 +30,14 @@ export default async function QuoteBuilderPage({
     redirect(`/${workspaceSlug}/quotes/${id}/blank-build`);
   }
   // Load remaining data for v1 (manual mode)
-  const [roofAreas, roofAreaEntries, components, libraryComponents, entries, takeoffData] = await Promise.all([
+  const [roofAreas, roofAreaEntries, components, libraryComponents, entries, takeoffData, ent] = await Promise.all([
     loadQuoteRoofAreas(id),
     loadAllRoofAreaEntriesForQuote(id),
     loadQuoteComponents(id),
     loadComponentLibrary((quote as { component_collection_id?: string | null }).component_collection_id),
     loadAllEntriesForQuote(id),
     loadTakeoffMeasurements(id),
+    loadCompanyEntitlements(quote.company_id),
   ]);
   
   console.log('[QuoteBuilderPage] Loaded components:', components.length, components.map(c => c.name));
@@ -104,6 +106,7 @@ export default async function QuoteBuilderPage({
       planName={planName}
       supportingFiles={supportingFiles}
       takeoffData={takeoffData}
+      isOverStorage={ent.isOverStorage}
     />
   );
 }

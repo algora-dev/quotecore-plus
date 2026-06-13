@@ -1,0 +1,62 @@
+---
+title: Invoice editor
+description: Add lines, control visibility, and configure payment instructions.
+order: 2
+status: published
+updated: 2026-06-07
+---
+
+# Invoice editor
+
+The invoice editor has a **left panel** for editing and a **live preview** on the right that shows exactly what your customer will see.
+
+## Line items
+
+Each line has a title, description, quantity, unit, and unit price. The line total is calculated automatically (qty × unit price).
+
+### Adding lines
+
+Click **Add Line Item** at the bottom of the Lines panel. Choose from:
+- **Custom** — enter a title and price manually.
+- **Catalog** — search your catalog library and import a row with a single click.
+- **Component** — add from your component library.
+
+### Editing lines
+
+Click the **pencil icon** on any line to edit its title, description, quantity, unit, or unit price inline.
+
+### Reordering lines
+
+Use the **↑ / ↓ arrows** to move lines up or down.
+
+## Show / hide toggles
+
+Every line has four checkboxes that control what the customer sees:
+
+| Toggle | What it does |
+|---|---|
+| **Show** | Displays or hides the entire line on the customer invoice |
+| **Price** | Shows or hides the unit price and line total for that line |
+| **Qty** | Shows or hides the quantity and unit |
+| **Add $** | Includes or excludes the line from the invoice total |
+
+> **Tip:** _Show_ and _Add $_ are independent. You can hide a line visually while still including it in the total — for example, a contingency fee that's built into the total but not itemised.
+
+When **Show** is unchecked, the Price, Qty, and Add $ toggles are disabled (they have no effect on a hidden line).
+
+## Details tab
+
+- **Invoice Date** and **Due Date** — shown on the customer invoice.
+- **Notes** — free text below the line items.
+- **Terms** — payment terms, displayed below notes.
+- **Business Details** — click Edit to update your company name, address, email, phone, logo, and footer for this invoice.
+- **References** — invoice number and payment reference (read-only).
+- **Payment Details** — bank account details shown in the Payment Instructions box on the customer invoice. Changes here only affect this invoice; to update defaults for future invoices, update your [invoice template](/docs/invoices/invoice-templates).
+
+## Auto-save
+
+The editor saves automatically after 2 seconds of inactivity. The **Save** button at the top right saves immediately without navigating away.
+
+## Collapse panel
+
+Click **«** in the panel header to collapse the left panel and get a full-width preview of the invoice.

@@ -11,7 +11,7 @@ export function EditFooterModal({ footerText, onSave, onCancel }: Props) {
   const [text, setText] = useState(footerText);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onCancel}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl p-6 w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-xl font-semibold text-slate-900 mb-4">Edit Footer / Terms & Conditions</h2>
 

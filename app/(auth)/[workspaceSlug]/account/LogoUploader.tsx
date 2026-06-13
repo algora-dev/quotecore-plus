@@ -8,9 +8,10 @@ import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-act
 interface Props {
   companyId: string;
   currentLogoUrl: string | null;
+  isOverStorage?: boolean;
 }
 
-export function LogoUploader({ companyId, currentLogoUrl }: Props) {
+export function LogoUploader({ companyId, currentLogoUrl, isOverStorage }: Props) {
   const [logoUrl, setLogoUrl] = useState(currentLogoUrl);
   const router = useRouter();
 
@@ -69,6 +70,7 @@ export function LogoUploader({ companyId, currentLogoUrl }: Props) {
         currentFileUrl={logoUrl}
         label="Upload Logo"
         description="PNG, JPG or WebP (max 2 MB)"
+        isOverStorage={isOverStorage}
       />
     </div>
   );

@@ -51,13 +51,17 @@ const SECTION_ORDER: string[] = [
   // to the end so it acts as 'look up when stuck' reference rather than
   // 'read first' theory; Shaun spec, 2026-05-11.
   'components',
+  'catalog',
+  'attachments',
   'templates',
   'building-a-quote',
   'customer-facing',
+  'follow-ups',
   'labor-and-installers',
   'flashings',
   'material-orders',
   'files-and-quotes',
+  'invoices',
   'account',
   'help',
   'concepts',
@@ -67,13 +71,17 @@ const SECTION_TITLES: Record<string, string> = {
   'getting-started': 'Getting started',
   'concepts': 'Concepts',
   'components': 'Components',
+  'catalog': 'Catalog Library',
+  'attachments': 'Attachments',
   'templates': 'Templates',
   'building-a-quote': 'Building a quote',
   'customer-facing': 'Customer-facing',
+  'follow-ups': 'Follow-ups',
   'labor-and-installers': 'Labor & installers',
   'flashings': 'Flashings',
   'material-orders': 'Material orders',
   'files-and-quotes': 'Files & quotes',
+  'invoices': 'Invoices',
   'account': 'Account',
   'help': 'Help',
 };
@@ -109,6 +117,10 @@ function walk(dir: string): string[] {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
+      // Skip private/source folders (e.g. _trade-overlays). The underscore
+      // prefix marks per-trade content variants that are served behind the
+      // scenes by trade, NOT flattened into the public docs sidebar.
+      if (entry.name.startsWith('_')) continue;
       out.push(...walk(full));
     } else if (entry.isFile() && entry.name.endsWith('.mdx')) {
       out.push(full);

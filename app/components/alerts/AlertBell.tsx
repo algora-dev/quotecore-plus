@@ -15,6 +15,8 @@ interface Alert {
   is_read: boolean | null;
   created_at: string | null;
   quote_id: string | null;
+  order_id: string | null;
+  invoice_id: string | null;
 }
 
 interface Props {
@@ -29,6 +31,19 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  // Resolve an alert to its source item. Mirrors the inbox's openHref so
+  // order/invoice alerts route correctly instead of dead-clicking. Any
+  // alert without a recognised FK falls back to the full Message Center
+  // (never a 404).
+  function hrefFor(alert: Alert): string {
+    // `?from=inbox` tells the destination page to point its "Back" breadcrumb
+    // at the Message Center instead of the entity's main list page.
+    if (alert.quote_id) return `/${workspaceSlug}/quotes/${alert.quote_id}/summary?from=inbox`;
+    if (alert.invoice_id) return `/${workspaceSlug}/invoices/${alert.invoice_id}?from=inbox`;
+    if (alert.order_id) return `/${workspaceSlug}/material-orders/${alert.order_id}/preview?from=inbox`;
+    return `/${workspaceSlug}/inbox`;
+  }
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -60,30 +75,17 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
     setUnreadCount(initialUnreadCount);
   }, [initialAlerts, initialUnreadCount]);
 
-  async function markAsRead(alertId: string) {
-    try {
-      const res = await fetch(`/api/alerts/${alertId}/read`, { method: 'POST' });
-      if (res.ok) {
-        setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, is_read: true } : a));
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
-    } catch {}
-  }
-
-  async function markAllRead() {
-    try {
-      const res = await fetch('/api/alerts/read-all', { method: 'POST' });
-      if (res.ok) {
-        setAlerts(prev => prev.map(a => ({ ...a, is_read: true })));
-        setUnreadCount(0);
-      }
-    } catch {}
-  }
-
+  // "Clear alerts" is the ONLY bell action. The bell is a PREVIEW surface
+  // only - the real home for alerts is the Message Center. Clearing removes
+  // the items from the BELL (via bell_cleared_at) and does NOT touch is_read
+  // or status, so the Message Center keeps its unread/orange state and folders
+  // completely intact. Nothing is ever deleted from the bell; deletion only
+  // happens via Archive -> Delete in the MC.
   async function clearAll() {
     try {
       const res = await fetch('/api/alerts/clear-all', { method: 'POST' });
       if (res.ok) {
+        // Cleared alerts leave the bell entirely (they reappear nowhere here).
         setAlerts([]);
         setUnreadCount(0);
       }
@@ -94,6 +96,7 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
+        data-assistant-id="nav-alerts"
         className="relative p-2 rounded-full hover:bg-slate-100 transition"
       >
         {/* Bell icon */}
@@ -111,7 +114,8 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
           />
         </svg>
 
-        {/* Pulsing badge */}
+        {/* Pulsing badge - counts bell items (not-yet-cleared), independent
+            of Message Center read state. */}
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
@@ -129,10 +133,7 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
             <h4 className="text-sm font-semibold text-slate-900">Notifications</h4>
             <div className="flex items-center gap-3">
               {unreadCount > 0 && (
-                <button onClick={markAllRead} className="text-xs text-orange-600 hover:text-orange-800">Mark read</button>
-              )}
-              {alerts.length > 0 && (
-                <button onClick={clearAll} className="text-xs text-slate-400 hover:text-red-500">Clear all</button>
+                <button onClick={clearAll} title="Clears these from the bell only - they stay in your Message Center" className="text-xs text-orange-600 hover:text-orange-800">Clear alerts</button>
               )}
             </div>
           </div>
@@ -143,11 +144,11 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
                 <button
                   key={alert.id}
                   onClick={() => {
-                    if (!alert.is_read) markAsRead(alert.id);
-                    if (alert.quote_id) {
-                      router.push(`/${workspaceSlug}/quotes/${alert.quote_id}/summary`);
-                      setOpen(false);
-                    }
+                    // Bell is read-only re: Message Center - clicking only
+                    // navigates; it never mutates is_read/status. (Read state
+                    // is managed in the Message Center.)
+                    router.push(hrefFor(alert));
+                    setOpen(false);
                   }}
                   className={`w-full text-left p-3 border-b border-slate-50 hover:bg-slate-50 transition ${
                     !alert.is_read ? 'bg-orange-50/50' : ''
@@ -184,6 +185,17 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
               </div>
             )}
           </div>
+
+          {/* Footer: the bell is preview-only; everything lives in the MC. */}
+          <button
+            onClick={() => {
+              router.push(`/${workspaceSlug}/inbox`);
+              setOpen(false);
+            }}
+            className="w-full border-t border-slate-100 p-2.5 text-center text-xs font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition"
+          >
+            View all in Message Center
+          </button>
         </div>
       )}
     </div>

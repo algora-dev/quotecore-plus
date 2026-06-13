@@ -60,6 +60,16 @@ export const ORDER_VARS = [
   'order_link',
 ] as const;
 
+/** Invoice-context variables (invoice_send). */
+export const INVOICE_VARS = [
+  ...BASE_VARS,
+  'customer_name',
+  'invoice_number',
+  'invoice_total',
+  'invoice_link',
+  'due_date',
+] as const;
+
 /**
  * `reply_link` stays in the type so `send.ts` can still substitute it
  * at render time (for backwards compat with any template that already
@@ -69,7 +79,12 @@ export type MergeVarKey =
   | typeof BASE_VARS[number]
   | typeof QUOTE_VARS[number]
   | typeof ORDER_VARS[number]
-  | 'reply_link';
+  | typeof INVOICE_VARS[number]
+  | 'reply_link'
+  // Hosted-attachment link injected by send.ts when a send carries
+  // attachments (Option B). Points at the accept/order page for
+  // quote/order sends, or the standalone /file/<token> page otherwise.
+  | 'attachment_link';
 
 export type MergeVarContext = Partial<Record<MergeVarKey, string | number | null | undefined>>;
 
@@ -94,11 +109,13 @@ export function renderMergeVars(template: string, context: MergeVarContext): str
  * uses this to show the right list of insertable variables).
  */
 export function variablesForKind(
-  kind: 'quote_send' | 'order_send' | 'followup' | 'decline_response' | 'custom',
+  kind: 'quote_send' | 'order_send' | 'invoice_send' | 'followup' | 'decline_response' | 'custom',
 ): readonly MergeVarKey[] {
   switch (kind) {
     case 'order_send':
       return ORDER_VARS;
+    case 'invoice_send':
+      return INVOICE_VARS;
     case 'quote_send':
     case 'followup':
     case 'decline_response':
@@ -133,4 +150,9 @@ export const VAR_LABELS: Record<MergeVarKey, string> = {
   order_supplier: 'Order supplier',
   order_total_items: 'Order item count',
   order_link: 'Supplier order link',
+  attachment_link: 'Attachment link',
+  invoice_number: 'Invoice number',
+  invoice_total: 'Invoice total',
+  invoice_link: 'Invoice public link',
+  due_date: 'Due date',
 };

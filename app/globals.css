@@ -110,6 +110,35 @@ a,
  *     delay that was actually caused by an opacity fade + off-screen start; both
  *     fixed, so the snappier speed reads better).
  */
+/* Assistant launcher: subtle floating pulse in the brand orange. Kept gentle
+   so it reads as "alive / here if you need me", not attention-grabbing. The
+   resting shadow gives the float; the pulse rides on top of it. */
+@keyframes assistant-launcher-pulse {
+  0%, 100% {
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.28),
+                0 0 0 0 rgba(255, 107, 53, 0.0);
+  }
+  50% {
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.28),
+                0 0 14px 3px rgba(255, 107, 53, 0.32);
+  }
+}
+.assistant-launcher {
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.28);
+  animation: assistant-launcher-pulse 3.2s ease-in-out infinite;
+  /* Smooth, quick scale on hover (the pulse keyframe only animates box-shadow,
+     so transform is free to transition independently). */
+  transition: transform 0.15s ease-out;
+}
+.assistant-launcher:hover {
+  /* Match the app's black-button orange glow on hover (stronger than the
+     resting pulse), lift the float, and enlarge slightly + quickly. */
+  animation-play-state: paused;
+  transform: scale(1.12);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.32),
+              0 0 16px 4px rgba(255, 107, 53, 0.55);
+}
+
 @keyframes shimmer {
   0% {
     /* Sheen starts at the left edge of the button (already partly visible),
@@ -428,3 +457,27 @@ a,
 .docs-prose--compact h2 { font-size: 1.15rem; line-height: 1.5rem; margin-top: 1.5rem; padding-top: 0.5rem; }
 .docs-prose--compact h3 { font-size: 1rem; line-height: 1.4rem; margin-top: 1rem; }
 .docs-prose--compact p { margin: 0.6rem 0; }
+
+/* Assistant typing indicator (Stage 4, Fix 4) - three animated dots shown
+   while an assistant message is streaming with no content yet. Pure CSS, no
+   dependency. */
+.assistant-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+}
+.assistant-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0.4;
+  animation: assistant-typing-bounce 1.2s infinite ease-in-out both;
+}
+.assistant-typing span:nth-child(2) { animation-delay: 0.15s; }
+.assistant-typing span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes assistant-typing-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-4px); opacity: 1; }
+}

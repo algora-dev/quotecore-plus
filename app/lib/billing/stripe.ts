@@ -154,29 +154,28 @@ export async function resolveStripePriceForPlan(
 }
 
 /**
- * Companion resolver that returns BOTH the Stripe Price ID and the
- * optional launch-discount Coupon ID for a plan. Used by
- * createCheckoutSession so the Stripe Checkout page can show:
+ * Resolver that returns the Stripe Price ID for a plan in the current
+ * Stripe mode (live vs test).
  *
- *   Subtotal:  $60.00
- *   Discount: -$31.00  (Growth Launch Discount)
- *   Total:    $29.00 / mo
+ * PRICING MODEL (locked 2026-06-08): the Stripe Price IS the price we
+ * charge. There is NO launch coupon and NO MSRP-on-Stripe + discount
+ * scheme. The "good deal" anchor is a DISPLAY-ONLY strikethrough driven
+ * by subscription_plans.price_cents_monthly_original in the UI; it never
+ * touches Stripe. To change a price, change the Stripe Price AND
+ * price_cents_monthly together so they always match. See MEMORY.md
+ * "PRICING - how to change a price".
  *
  * Returns null when the plan isn't active or has no Stripe price wired
  * up in the current mode (live vs test).
- *
- * Note: stripe_launch_coupon_id is environment-agnostic in our DB. Stripe
- * coupon ids live in both test and live mode under the same string id, so
- * we don't need a separate live/test column for the coupon.
  */
 export async function resolveStripeCheckoutForPlan(
   planCode: string,
-): Promise<{ priceId: string; couponId: string | null } | null> {
+): Promise<{ priceId: string } | null> {
   if (!planCode) throw new Error('resolveStripeCheckoutForPlan: planCode is required');
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('subscription_plans')
-    .select('stripe_price_id_live, stripe_price_id_test, stripe_launch_coupon_id, active')
+    .select('stripe_price_id_live, stripe_price_id_test, active')
     .eq('code', planCode)
     .limit(1)
     .maybeSingle();
@@ -185,7 +184,7 @@ export async function resolveStripeCheckoutForPlan(
   if (!data.active) return null;
   const priceId = getStripeMode() === 'live' ? data.stripe_price_id_live : data.stripe_price_id_test;
   if (!priceId) return null;
-  return { priceId, couponId: data.stripe_launch_coupon_id ?? null };
+  return { priceId };
 }
 
 /**
@@ -236,4 +235,118 @@ export function stripeStatusToInternal(
       console.warn('[stripe] unknown subscription status mapped to past_due:', stripeStatus);
       return 'past_due';
   }
+}
+
+// ---------------------------------------------------------------------------
+// Stripe customer repair helper (P0-1, 2026-05-26)
+// ---------------------------------------------------------------------------
+// Handles the case where companies.stripe_customer_id points to a customer
+// that doesn't exist in the current Stripe mode (e.g. a test-mode customer
+// referenced by a live-mode key). Conservative: repair from subscription
+// first; only null the ID when the billing lifecycle is terminal.
+// ---------------------------------------------------------------------------
+
+export type RepairStripeCustomerResult =
+  | { ok: true; repaired: boolean }
+  | { ok: false; code: 'repair_failed' | 'no_stripe_key'; message: string };
+
+/**
+ * Called when a Stripe portal or checkout API returns a "No such customer"
+ * or mode-mismatch error. Attempts to repair `companies.stripe_customer_id`
+ * using the stored `stripe_subscription_id`.
+ *
+ * Safety rules:
+ *   1. If stripe_subscription_id exists → retrieve subscription in current
+ *      mode; if valid, overwrite stripe_customer_id from subscription.customer.
+ *   2. If local subscription_status is active/past_due/trialing AND repair
+ *      fails → do NOT null the ID. Return repair_failed so the caller can
+ *      surface a "contact support" message.
+ *   3. Only if subscription_status is terminal (cancelled/suspended) AND no
+ *      valid subscription found → null stripe_customer_id so the next
+ *      checkout creates a fresh customer.
+ *
+ * Also stamps companies.stripe_mode with the current mode on every repair.
+ */
+export async function repairStripeCustomerIfStale(
+  companyId: string,
+): Promise<RepairStripeCustomerResult> {
+  const stripe = getStripeOrNull();
+  if (!stripe) {
+    return { ok: false, code: 'no_stripe_key', message: 'Stripe is not configured.' };
+  }
+
+  const admin = createAdminClient();
+  const { data: company } = await admin
+    .from('companies')
+    .select('id, stripe_customer_id, stripe_subscription_id, subscription_status')
+    .eq('id', companyId)
+    .maybeSingle();
+
+  if (!company) {
+    return { ok: false, code: 'repair_failed', message: 'Company not found.' };
+  }
+
+  const currentMode = getStripeMode();
+  const terminalStatuses = ['canceled', 'cancelled', 'suspended'];
+  const isTerminal =
+    !company.subscription_status ||
+    terminalStatuses.includes(company.subscription_status);
+
+  // Step 1: attempt repair from subscription
+  if (company.stripe_subscription_id) {
+    try {
+      const sub = await stripe.subscriptions.retrieve(
+        company.stripe_subscription_id,
+      );
+      const repairedCustomerId =
+        typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
+
+      await admin
+        .from('companies')
+        .update({
+          stripe_customer_id: repairedCustomerId,
+          stripe_mode: currentMode,
+        })
+        .eq('id', companyId);
+
+      console.info(
+        `[stripe] repairStripeCustomerIfStale: repaired customer for company ${companyId}`,
+        { old: company.stripe_customer_id, new: repairedCustomerId, mode: currentMode },
+      );
+      return { ok: true, repaired: true };
+    } catch (err) {
+      console.error(
+        `[stripe] repairStripeCustomerIfStale: subscription retrieve failed for company ${companyId}:`,
+        err,
+      );
+      // Fall through to step 2
+    }
+  }
+
+  // Step 2: repair failed or no subscription_id - check if safe to null
+  if (!isTerminal) {
+    // Active billing - do not null. Caller must surface support message.
+    console.error(
+      `[stripe] repairStripeCustomerIfStale: cannot repair and subscription is active for company ${companyId}. Manual intervention required.`,
+      { stripe_customer_id: company.stripe_customer_id, subscription_status: company.subscription_status },
+    );
+    return {
+      ok: false,
+      code: 'repair_failed',
+      message:
+        'We could not automatically repair your billing record. Please contact support and we will fix it within 1 business day.',
+    };
+  }
+
+  // Step 3: terminal status + no valid subscription - safe to null
+  await admin
+    .from('companies')
+    .update({ stripe_customer_id: null, stripe_mode: currentMode })
+    .eq('id', companyId);
+
+  console.info(
+    `[stripe] repairStripeCustomerIfStale: nulled stale customer for terminal company ${companyId}`,
+    { old: company.stripe_customer_id, mode: currentMode },
+  );
+  return { ok: true, repaired: true };
 }

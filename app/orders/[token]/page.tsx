@@ -4,6 +4,8 @@ import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { OrderResponseForm } from './OrderResponseForm';
 import { OrderBody } from './OrderBody';
 import { DownloadOrderButton } from './DownloadOrderButton';
+import { AttachmentsCard } from '@/app/components/public/AttachmentsCard';
+import { StampRecipientView } from '@/app/lib/recipient/StampRecipientView';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,7 +60,7 @@ export default async function PublicOrderPage({ params }: Props) {
       .eq('order_id', order.id)
       .order('sort_order'),
     supabase.from('flashing_library').select('id, name, image_url').eq('company_id', order.company_id),
-    supabase.from('companies').select('name').eq('id', order.company_id).maybeSingle(),
+    supabase.from('companies').select('name, default_currency').eq('id', order.company_id).maybeSingle(),
   ]);
 
   // Latest response (if any) drives the inline status banner.
@@ -72,13 +74,27 @@ export default async function PublicOrderPage({ params }: Props) {
 
   const companyName = order.from_company || company?.name || 'Sender';
 
+  // Hosted attachments for this order (Option B, library files only). Token
+  // already validated above; the gated download route re-validates it.
+  const { data: attachmentRows } = await supabase
+    .from('message_attachments')
+    .select('id, display_name')
+    .eq('order_id', order.id)
+    .order('created_at', { ascending: true });
+  const attachments = (attachmentRows ?? []).map((r) => ({
+    id: r.id,
+    displayName: r.display_name,
+  }));
+
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4">
+      {/* Recipient-view stamping via idempotent POST server action (not GET). */}
+      <StampRecipientView kind="order" token={token} />
       <div className="mx-auto max-w-3xl">
         <header className="mb-6 text-center">
           <p className="text-xs uppercase tracking-wide text-slate-500">{companyName}</p>
           <h1 className="mt-2 text-2xl font-semibold text-slate-900">
-            Material order {order.order_number}
+            Order {order.order_number}
           </h1>
           {order.reference ? (
             <p className="mt-1 text-sm text-slate-500">Ref: {order.reference}</p>
@@ -93,13 +109,27 @@ export default async function PublicOrderPage({ params }: Props) {
           order={order}
           lines={lines ?? []}
           flashings={flashings ?? []}
+          currency={company?.default_currency ?? 'GBP'}
         />
 
         <OrderResponseForm
           token={token}
           alreadyResponded={!!latestResponse}
+          initialDecision={
+            order.confirmed_at
+              ? { status: 'accepted', decidedAt: order.confirmed_at }
+              : order.declined_at
+                ? { status: 'declined', decidedAt: order.declined_at }
+                : null
+          }
           downloadAction={<DownloadOrderButton />}
         />
+
+        {attachments.length > 0 ? (
+          <div className="mt-6">
+            <AttachmentsCard token={token} files={attachments} />
+          </div>
+        ) : null}
 
         <footer className="mt-10 text-center text-xs text-slate-400">
           Sent via QuoteCore<span className="text-orange-500">+</span>
@@ -111,13 +141,18 @@ export default async function PublicOrderPage({ params }: Props) {
 
 function ResponseBanner({ action, createdAt }: { action: string; createdAt: string }) {
   const labels: Record<string, string> = {
-    confirm: 'You confirmed this order',
+    confirm: 'You accepted this order',
+    decline: 'You declined this order',
+    request_info: 'You requested more information on this order',
+    // legacy values (historical rows):
     request_changes: 'You requested changes on this order',
     question: 'You sent a question about this order',
     other: 'You responded to this order',
   };
   const tones: Record<string, string> = {
     confirm: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+    decline: 'border-rose-200 bg-rose-50 text-rose-900',
+    request_info: 'border-slate-200 bg-slate-50 text-slate-800',
     request_changes: 'border-amber-200 bg-amber-50 text-amber-900',
     question: 'border-blue-200 bg-blue-50 text-blue-900',
     other: 'border-slate-200 bg-slate-50 text-slate-800',

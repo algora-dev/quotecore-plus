@@ -35,6 +35,7 @@ export type MeasurementType =
   | 'multi_lineal_lxh'
   | 'length_x_height'
   | 'volume'
+  | 'volume_3d'
   | 'irregular_area'
   | 'curved_line'
   | 'hours_days'
@@ -43,7 +44,9 @@ export type MeasurementType =
   // Pre-Phase-2 legacy values still live in the live enum and must keep
   // working (patch_006/008 history). New code should not introduce these.
   | 'linear'
-  | 'quantity';
+  | 'quantity'
+  | 'length_x_height_freestyle'
+  | 'multi_lineal_lxh_freestyle';
 
 export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet<MeasurementType>>> = {
   // Roofing v1: the four shipped types + the legacy aliases.
@@ -60,6 +63,8 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'area',
     'multi_lineal_lxh',   // primary: wall length × height from plan view
     'length_x_height',    // single-segment wall height × length
+    'multi_lineal_lxh_freestyle',
+    'length_x_height_freestyle',
     'irregular_area',     // odd-shaped wall sections
     'lineal',
     'linear',
@@ -75,8 +80,11 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'linear',
     'multi_lineal',
     'multi_lineal_lxh',
+    'multi_lineal_lxh_freestyle',
     'length_x_height',
+    'length_x_height_freestyle',
     'volume',
+    'volume_3d',
     'irregular_area',
     'curved_line',
     'hours_days',
@@ -96,6 +104,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'curved_line',  // curved pipe paths / bends
     'area',         // waterproofing, floor area
     'volume',       // tanks, concrete, excavation
+    'volume_3d',    // true 3D: user enters L × W × D per measurement
     'count',
     'quantity',     // legacy alias
     'fixed',
@@ -129,8 +138,11 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'linear',
     'multi_lineal',
     'multi_lineal_lxh',
+    'multi_lineal_lxh_freestyle',
     'length_x_height',
+    'length_x_height_freestyle',
     'volume',          // bulk materials: soil, mulch, aggregate, concrete
+    'volume_3d',       // true 3D volume for excavation, soil, etc.
     'curved_line',     // garden edging, curved paths
     'count',
     'quantity',
@@ -147,6 +159,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'multi_lineal',
     'curved_line',
     'volume',          // screed, self-levelling compound
+    'volume_3d',       // true 3D: L × W × D
     'count',
     'quantity',
     'fixed',
@@ -158,7 +171,9 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'area',
     'irregular_area',
     'multi_lineal_lxh',   // wall tiling from plan view
+    'multi_lineal_lxh_freestyle',
     'length_x_height',    // single wall: shower, splashback
+    'length_x_height_freestyle',
     'lineal',             // trims, edges
     'linear',
     'multi_lineal',
@@ -178,6 +193,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'multi_lineal',
     'curved_line',
     'volume',          // concrete pour, excavation
+    'volume_3d',       // true 3D volume
     'count',
     'quantity',
     'fixed',
@@ -190,7 +206,9 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'area',
     'irregular_area',
     'multi_lineal_lxh',
+    'multi_lineal_lxh_freestyle',
     'length_x_height',
+    'length_x_height_freestyle',
     'lineal',          // edge seal, tape, perimeter trim
     'linear',
     'multi_lineal',
@@ -205,7 +223,9 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'area',
     'irregular_area',
     'multi_lineal_lxh',
+    'multi_lineal_lxh_freestyle',
     'length_x_height',
+    'length_x_height_freestyle',
     'lineal',          // skirtings, architraves, trim
     'linear',
     'multi_lineal',
@@ -222,7 +242,9 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'linear',
     'multi_lineal',
     'multi_lineal_lxh',   // panel area when measured from plan
+    'multi_lineal_lxh_freestyle',
     'length_x_height',
+    'length_x_height_freestyle',
     'area',               // paved areas, gates
     'irregular_area',
     'curved_line',        // curved fence lines
@@ -242,6 +264,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'multi_lineal',
     'curved_line',
     'volume',          // slabs, pours
+    'volume_3d',       // true 3D volume
     'count',
     'quantity',
     'fixed',
@@ -256,8 +279,11 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'linear',
     'multi_lineal',
     'multi_lineal_lxh',
+    'multi_lineal_lxh_freestyle',
     'length_x_height',
+    'length_x_height_freestyle',
     'volume',
+    'volume_3d',
     'irregular_area',
     'curved_line',
     'hours_days',

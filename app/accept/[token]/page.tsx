@@ -7,6 +7,9 @@ import { DownloadQuoteButton } from './DownloadQuoteButton';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { loadQuoteTaxesByQuoteId } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
+import { AttachmentsCard } from '@/app/components/public/AttachmentsCard';
+import { displayLineText } from '@/app/lib/quotes/lineText';
+import { StampRecipientView } from '@/app/lib/recipient/StampRecipientView';
 
 /**
  * Validate token format up front so a malformed URL fails fast without
@@ -119,43 +122,18 @@ export default async function AcceptQuotePage({
     );
   }
 
-  // Check if already responded - same idea, surface the re-quote CTA so
-  // the customer can re-engage if circumstances change.
-  if (quote.accepted_at || quote.declined_at) {
-    const wasAccepted = !!quote.accepted_at;
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
-        <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-lg">
-          <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${wasAccepted ? 'bg-emerald-100' : 'bg-red-100'}`}>
-            {wasAccepted ? (
-              <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            ) : (
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            )}
-          </div>
-          <h1 className="text-xl font-semibold text-slate-900 mb-2 text-center">
-            Quote Already {wasAccepted ? 'Accepted' : 'Declined'}
-          </h1>
-          <p className="text-sm text-slate-500 text-center mb-6">
-            This quote was {wasAccepted ? 'accepted' : 'declined'} on{' '}
-            {new Date(wasAccepted ? quote.accepted_at! : quote.declined_at!).toLocaleDateString('en-NZ', {
-              day: '2-digit', month: 'short', year: 'numeric',
-            })}.
-          </p>
-          <RequestRequoteButton
-            token={token}
-            variant="responded"
-            defaultCustomerName={quote.customer_name ?? null}
-            defaultCustomerEmail={quote.customer_email ?? null}
-          />
-        </div>
-      </div>
-    );
-  }
+  // NOTE (fix #4): we intentionally NO LONGER short-circuit when the quote has
+  // been accepted/declined. The full document, attachments, and action bar are
+  // always rendered; the action bar shows a status banner + disabled
+  // Accept/Decline while Request Changes stays live. This keeps the token URL
+  // a durable surface so follow-up / auto-fire messages that link to the SAME
+  // URL (and carry their own attachments) remain reachable after a decision.
+  const decision: { status: 'accepted' | 'declined'; decidedAt: string } | null =
+    quote.accepted_at
+      ? { status: 'accepted', decidedAt: quote.accepted_at }
+      : quote.declined_at
+        ? { status: 'declined', decidedAt: quote.declined_at }
+        : null;
 
   // Load company info for currency
   const { data: company } = await supabase
@@ -198,8 +176,23 @@ export default async function AcceptQuotePage({
   }
   const total = subtotal + taxTotal;
 
+  // Hosted attachments for this quote (Option B). Token validation above has
+  // already proved access. Per-file Download hits the gated route, which
+  // re-validates this same token before minting any signed URL.
+  const { data: attachmentRows } = await supabase
+    .from('message_attachments')
+    .select('id, display_name')
+    .eq('quote_id', quote.id)
+    .order('created_at', { ascending: true });
+  const attachments = (attachmentRows ?? []).map((r) => ({
+    id: r.id,
+    displayName: r.display_name,
+  }));
+
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Recipient-view stamping via idempotent POST server action (not GET). */}
+      <StampRecipientView kind="quote" token={token} />
       <div className="max-w-4xl mx-auto p-8 space-y-6">
         {/*
           Quote Document - exact same format as internal Customer Quote
@@ -280,9 +273,7 @@ export default async function AcceptQuotePage({
                 >
                   <div className="flex-1">
                     <p className="text-black">
-                      {line.show_units
-                        ? line.custom_text
-                        : line.custom_text.split('-')[0].trim()}
+                      {displayLineText(line.custom_text, line.quantity_text, line.show_units)}
                     </p>
                   </div>
                   {line.show_price && (
@@ -341,6 +332,7 @@ export default async function AcceptQuotePage({
             also stays visible after the user accepts or declines. */}
         <AcceptDeclineButtons
           token={token}
+          initialDecision={decision}
           middleAction={
             <RequestRequoteButton
               token={token}
@@ -351,6 +343,8 @@ export default async function AcceptQuotePage({
           }
           secondaryAction={<DownloadQuoteButton printTargetId="public-quote-document" />}
         />
+
+        <AttachmentsCard token={token} files={attachments} />
       </div>
     </div>
   );

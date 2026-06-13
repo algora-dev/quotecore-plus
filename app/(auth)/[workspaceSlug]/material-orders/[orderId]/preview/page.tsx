@@ -1,8 +1,11 @@
 import { loadOrderForEdit } from '../../create/order-loader';
 import { loadFlashingLibrary } from '../../../flashings/actions';
 import { OrderPreview } from './order-preview';
-import { SupplierResponsePanel } from './SupplierResponsePanel';
+import { OrderActivityCard } from '@/app/components/activity/OrderActivityCard';
 import { notFound } from 'next/navigation';
+import { createAdminClient } from '@/app/lib/supabase/admin';
+import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
+import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 
 interface Props {
   params: Promise<{ workspaceSlug: string; orderId: string }>;
@@ -20,24 +23,80 @@ export default async function OrderPreviewPage(props: Props) {
     notFound();
   }
 
+  // Attachment library for the send picker (orders attach library files only,
+  // Pro+ gated). IDS + name + size only - never storage_path on client props.
+  const companyId = orderData.order.company_id;
+  const entitlements = await loadCompanyEntitlements(companyId);
+  const { data: companyRow } = await createAdminClient()
+    .from('companies')
+    .select('default_currency')
+    .eq('id', companyId)
+    .maybeSingle();
+  const currency = companyRow?.default_currency ?? 'GBP';
+  const attachmentsEnabled = entitlements.features.attachment_library;
+  const canFollowups = entitlements.features.followups;
+  const canEmail = entitlements.features.email_send;
+
+  // One-time "test it on yourself first" send tip: has THIS user seen it?
+  const _profile = await getCurrentProfile();
+  const { data: _stt } = await (await createSupabaseServerClient())
+    .from('users')
+    .select('send_test_tip_seen_at')
+    .eq('id', _profile.id)
+    .maybeSingle();
+  const sendTestTipSeen = !!(_stt as { send_test_tip_seen_at?: string | null } | null)?.send_test_tip_seen_at;
+
+  // Email templates for the order send modal + follow-up builder. Mirrors
+  // the quote summary page; attachment_id baked default included.
+  const { data: emailTemplates } = await createAdminClient()
+    .from('email_templates')
+    .select('id, name, subject, body, is_default, attachment_id')
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false });
+
+  let libraryFiles: Array<{ id: string; name: string; fileSize: number }> = [];
+  if (attachmentsEnabled) {
+    const admin = createAdminClient();
+    const { data: libRows } = await admin
+      .from('company_attachments')
+      .select('id, name, file_size')
+      .eq('company_id', companyId)
+      .is('archived_at', null)
+      .order('name', { ascending: true });
+    libraryFiles = (libRows ?? []).map((r) => ({ id: r.id, name: r.name, fileSize: r.file_size }));
+  }
+
+  // Activity card is rendered ABOVE the order body (inside OrderPreview's
+  // grey shell) to mirror the Quotes summary layout. It carries
+  // data-exclude-pdf so it never lands on the printable order. Replaces
+  // the old standalone SupplierResponsePanel - supplier responses now
+  // live in the Activity card's Unresolved tab.
+  const activityCard = (
+    <OrderActivityCard
+      orderId={orderId}
+      companyId={companyId}
+      supplierName={orderData.order.supplier_name ?? orderData.order.to_supplier ?? null}
+      acceptedAt={(orderData.order as { confirmed_at?: string | null }).confirmed_at ?? null}
+      declinedAt={orderData.order.declined_at ?? null}
+      emailTemplates={(emailTemplates ?? []).map((t) => ({ id: t.id, name: t.name, subject: t.subject, is_default: t.is_default }))}
+      canFollowups={canFollowups}
+    />
+  );
+
   return (
-    <>
-      <OrderPreview
-        order={orderData.order}
-        lines={orderData.lines}
-        flashings={flashings}
-        workspaceSlug={workspaceSlug}
-      />
-      {/*
-        Supplier responses live OUTSIDE the A4-sized print container so
-        they never end up on the printable order PDF; the panel itself
-        carries the `data-exclude-pdf` marker for the in-app PDF flow.
-        Wrapping div restores the page's max-width + padding because
-        OrderPreview's wrapper sits inside its own min-h-screen shell.
-      */}
-      <div className="max-w-[210mm] mx-auto px-8 pb-8 -mt-4">
-        <SupplierResponsePanel orderId={orderId} />
-      </div>
-    </>
+    <OrderPreview
+      order={orderData.order}
+      lines={orderData.lines}
+      flashings={flashings}
+      workspaceSlug={workspaceSlug}
+      libraryFiles={libraryFiles}
+      libraryLocked={!attachmentsEnabled}
+      currency={currency}
+      emailTemplates={emailTemplates ?? []}
+      canFollowups={canFollowups}
+      canEmail={canEmail}
+      sendTestTipSeen={sendTestTipSeen}
+      activitySlot={activityCard}
+    />
   );
 }

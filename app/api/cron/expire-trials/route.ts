@@ -65,9 +65,13 @@ export async function GET(request: Request) {
 
   let updated = 0;
   for (const row of rows) {
+    // Roll an unconverted trial DIRECTLY INTO the FREE tier (active), not a
+    // canceled read-only shell. The effective-plan SQL functions already
+    // resolve expired trials to 'free' the moment trial_ends_at passes; here we
+    // also persist that on the stored row so billing UI + future logic agree.
     const { error: updErr } = await admin
       .from('companies')
-      .update({ subscription_status: 'canceled' })
+      .update({ subscription_status: 'active', plan_code: 'free' })
       .eq('id', row.id)
       .eq('subscription_status', 'trialing'); // optimistic concurrency
     if (updErr) {
@@ -79,10 +83,10 @@ export async function GET(request: Request) {
       company_id: row.id,
       event_type: 'downgraded',
       from_plan_code: row.plan_code,
-      to_plan_code: row.plan_code,
+      to_plan_code: 'free',
       from_status: 'trialing',
-      to_status: 'canceled',
-      notes: `Trial expired without conversion at ${row.trial_ends_at}`,
+      to_status: 'active',
+      notes: `Trial expired without conversion at ${row.trial_ends_at}; rolled into Free tier`,
     });
   }
 

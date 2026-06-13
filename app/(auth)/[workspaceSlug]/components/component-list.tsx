@@ -42,13 +42,17 @@ function buildMeasurementLabels(system: MeasurementSystem): Record<MeasurementTy
     // Phase 2 (Generic Trades) additions. Visible in the dropdown only when
     // NEXT_PUBLIC_GENERIC_TRADES_V1 is on; otherwise filtered out below.
     length_x_height: `Length × Height (${areaUnit})`,
-    volume: `Volume (${volumeUnit})`,
+    volume: `Volume - Preset Depth (${volumeUnit})`,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    volume_3d: `Volume (${volumeUnit})`,
     hours_days: 'Hours / Days',
     count: 'Count (each)',
     curved_line: `Curved Line (${linealUnit})`,
     irregular_area: `Irregular Area (${areaUnit})`,
     multi_lineal: `Multi-Line Total (${linealUnit})`,
     multi_lineal_lxh: `Multi-Line Height x Length (${areaUnit})`,
+    length_x_height_freestyle: `Length × Height - Freestyle (${areaUnit})`,
+    multi_lineal_lxh_freestyle: `Multi-Line Height × Length - Freestyle (${areaUnit})`,
   };
 }
 
@@ -64,7 +68,7 @@ const PRICING_STRATEGY_LABELS: Record<PricingStrategy, string> = {
   per_unit: 'Per unit (default)',
   per_pack_length: 'Per pack - by length (e.g. 20m cable rolls)',
   per_pack_area: 'Per pack - by area (e.g. 50m² underlay rolls)',
-  per_pack_coverage: 'Per pack - by coverage (e.g. 20L paint covers 50m²)',
+  per_pack_coverage: 'Per Coverage Area (e.g. 20L paint coverage)',
   per_pack_volume: 'Per pack - by volume (e.g. 5m³ concrete units)',
 };
 
@@ -82,10 +86,10 @@ function allowedStrategiesFor(mt: MeasurementType): PricingStrategy[] {
   if (['lineal', 'linear', 'multi_lineal', 'curved_line'].includes(mt)) {
     base.push('per_pack_length');
   }
-  if (['area', 'length_x_height', 'irregular_area', 'multi_lineal_lxh'].includes(mt)) {
+  if (['area', 'length_x_height', 'length_x_height_freestyle', 'irregular_area', 'multi_lineal_lxh', 'multi_lineal_lxh_freestyle'].includes(mt)) {
     base.push('per_pack_area', 'per_pack_coverage');
   }
-  if (mt === 'volume') {
+  if (mt === 'volume' || mt === 'volume_3d') {
     base.push('per_pack_volume');
   }
   return base;
@@ -155,6 +159,9 @@ export function ComponentList({
   const pitchRafterLabel = _tradeLabels.pitchRafterLabel ?? 'Rafter Pitch';
   // Material orders image label - flashings terminology only applies to roofing.
   const isRoofingTrade = companyDefaultTrade === 'roofing';
+  // Drawing-library feature label: 'Flashings' for roofing, 'Drawings & Images' for all others.
+  const featureLabel = _tradeLabels.featureLabel ?? 'Flashings';
+  const featureLabelSingular = _tradeLabels.featureLabelSingular ?? 'Flashing';
   const imageAssignLabel = isRoofingTrade ? 'Assign Flashings (Optional)' : 'Assign Image (Optional)';
   const imageSelectPlaceholder = isRoofingTrade ? 'Select a flashing...' : 'Select an image...';
   const imageHelperText = isRoofingTrade ? 'Add flashing drawings to use in material order forms' : 'Add images/drawings to use in material order forms';
@@ -208,7 +215,20 @@ export function ComponentList({
   const [createLibraryError, setCreateLibraryError] = useState('');
 
   // Active library filter: '' = All Libraries, otherwise a collection id.
-  const [activeLibraryId, setActiveLibraryId] = useState<string>('');
+  // Initialise from localStorage so the user's last-set default is applied on landing.
+  const LOCAL_KEY = `qc-default-lib-${workspaceSlug}`;
+  const [activeLibraryId, setActiveLibraryId] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    const saved = localStorage.getItem(LOCAL_KEY);
+    // Validate saved id still exists in collections list before applying.
+    if (saved && componentCollections.some(c => c.id === saved)) return saved;
+    return '';
+  });
+  const [defaultLibraryFlash, setDefaultLibraryFlash] = useState<string | null>(null);
+  const [savedDefaultLibId, setSavedDefaultLibId] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem(LOCAL_KEY) ?? '';
+  });
   // Inline rename state
   const [renamingLibraryId, setRenamingLibraryId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -234,6 +254,7 @@ export function ComponentList({
   const [formPackPrice, setFormPackPrice] = useState<string>('');
   const [formPackSize, setFormPackSize] = useState<string>('');
   const [formPackCoverageM2, setFormPackCoverageM2] = useState<string>('');
+  const [formNotes, setFormNotes] = useState<string>('');
 
   // If user picks a strategy that isn't allowed for the chosen measurement
   // type, snap back to per_unit. Keeps the dropdown honest under rapid
@@ -295,6 +316,7 @@ export function ComponentList({
     setFormPackPrice(c.pack_price != null ? String(c.pack_price) : '');
     setFormPackSize(c.pack_size != null ? String(c.pack_size) : '');
     setFormPackCoverageM2(c.pack_coverage_m2 != null ? String(c.pack_coverage_m2) : '');
+    setFormNotes((c.notes as string | null) ?? '');
     // Seed collection dropdown with the component's existing collection, or bootstrap fallback.
     const existingCollectionId = (c.collection_id as string | null) ?? '';
     setSelectedCollectionId(
@@ -311,6 +333,7 @@ export function ComponentList({
     setFormPitchEnabled(false);
     setAssignedFlashings([]);
     setSelectedFlashingId('');
+    setFormNotes('');
   }
 
   function addFlashing() {
@@ -361,6 +384,16 @@ export function ComponentList({
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
+
+    // Validate per_pack_coverage requires all three pack fields.
+    if (formPricingStrategy === 'per_pack_coverage') {
+      if (!formPackPrice || !formPackSize || !formPackCoverageM2) {
+        alert('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
+        setSaving(false);
+        return;
+      }
+    }
+
     const fd = new FormData(e.currentTarget);
 
     const wasteType = fd.get('default_waste_type') as WasteType;
@@ -419,8 +452,9 @@ export function ComponentList({
               ? Number(formPackCoverageM2)
               : null,
           collection_id: selectedCollectionId || null,
+          notes: formNotes.trim() || null,
         } as unknown as ComponentLibraryInsert)
-      : { ...input, collection_id: selectedCollectionId || null };
+      : { ...input, collection_id: selectedCollectionId || null, notes: formNotes.trim() || null } as unknown as ComponentLibraryInsert;
 
     try {
       const result = await createComponent(inputWithGenericTrades);
@@ -449,6 +483,7 @@ export function ComponentList({
       setFormPackPrice('');
       setFormPackSize('');
       setFormPackCoverageM2('');
+      setFormNotes('');
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to create component');
     } finally {
@@ -459,6 +494,16 @@ export function ComponentList({
   async function handleUpdate(e: React.FormEvent<HTMLFormElement>, id: string) {
     e.preventDefault();
     setSaving(true);
+
+    // Validate per_pack_coverage requires all three pack fields.
+    if (formPricingStrategy === 'per_pack_coverage') {
+      if (!formPackPrice || !formPackSize || !formPackCoverageM2) {
+        alert('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
+        setSaving(false);
+        return;
+      }
+    }
+
     const fd = new FormData(e.currentTarget);
 
     const wasteType = fd.get('default_waste_type') as WasteType;
@@ -509,8 +554,9 @@ export function ComponentList({
               ? Number(formPackCoverageM2)
               : null,
           collection_id: selectedCollectionId || null,
+          notes: formNotes.trim() || null,
         } as unknown as Partial<ComponentLibraryInsert>)
-      : { ...input, collection_id: selectedCollectionId || null };
+      : { ...input, collection_id: selectedCollectionId || null, notes: formNotes.trim() || null };
 
     try {
       const updated = await updateComponent(id, inputWithGenericTrades);
@@ -702,19 +748,19 @@ export function ComponentList({
               href={`/${workspaceSlug}/flashings`}
               className="inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
-              Flashings
+              {featureLabel}
             </Link>
           ) : (
             <button
               type="button"
               onClick={() => setFlashingsUpgradeOpen(true)}
-              title="Flashings requires a higher plan"
+              title={`${featureLabel} requires a higher plan`}
               className="inline-flex items-center rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-500 cursor-pointer hover:bg-slate-300"
             >
               <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              Flashings
+              {featureLabel}
             </button>
           )}
         </div>
@@ -746,18 +792,55 @@ export function ComponentList({
       {/* Library filter + Search row */}
       <div className="flex items-center gap-3 flex-wrap">
         {collections.length > 0 && (
-          <select
-            value={activeLibraryId}
-            onChange={e => setActiveLibraryId(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
-          >
-            <option value="">All Libraries</option>
-            {collections.map(col => (
-              <option key={col.id} value={col.id}>
-                {col.name}{col.is_bootstrap ? ' (default)' : ''}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2">
+            <select
+              value={activeLibraryId}
+              onChange={e => setActiveLibraryId(e.target.value)}
+              className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
+            >
+              <option value="">All Libraries</option>
+              {collections.map(col => (
+                <option key={col.id} value={col.id}>
+                  {col.name}{col.is_bootstrap ? ' (bootstrap)' : ''}
+                </option>
+              ))}
+            </select>
+            {/* Set as default button - only shown when a specific library is selected */}
+            {activeLibraryId && (
+              <button
+                type="button"
+                title={savedDefaultLibId === activeLibraryId ? 'This is your default library' : 'Set as default library'}
+                onClick={() => {
+                  const isAlreadyDefault = savedDefaultLibId === activeLibraryId;
+                  if (isAlreadyDefault) {
+                    // Clear the default
+                    localStorage.removeItem(LOCAL_KEY);
+                    setSavedDefaultLibId('');
+                    setDefaultLibraryFlash('Default cleared');
+                  } else {
+                    localStorage.setItem(LOCAL_KEY, activeLibraryId);
+                    setSavedDefaultLibId(activeLibraryId);
+                    const name = collections.find(c => c.id === activeLibraryId)?.name ?? 'Library';
+                    setDefaultLibraryFlash(`"${name}" set as default`);
+                  }
+                  setTimeout(() => setDefaultLibraryFlash(null), 2000);
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-full border transition-all ${
+                  savedDefaultLibId === activeLibraryId
+                    ? 'bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100'
+                    : 'bg-white border-slate-300 text-slate-500 hover:border-orange-300 hover:text-orange-500'
+                }`}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill={savedDefaultLibId === activeLibraryId ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+                {savedDefaultLibId === activeLibraryId ? 'Default' : 'Set as default'}
+              </button>
+            )}
+            {defaultLibraryFlash && (
+              <span className="text-xs text-orange-500 font-medium animate-pulse">{defaultLibraryFlash}</span>
+            )}
+          </div>
         )}
         <div className="relative flex-1 max-w-sm">
           <input
@@ -811,7 +894,7 @@ export function ComponentList({
                     // generic-trades flag is off; show every type when on.
                     // The legacy `linear` alias stays hidden in both modes
                     // because new rows must always use `lineal`.
-                    .filter(([k]) => k !== 'linear')
+                    .filter(([k]) => k !== 'linear' && k !== 'count' && k !== 'curved_line' && k !== 'irregular_area')
                     .filter(([k]) => genericTradesEnabled || ROOFING_DEFAULT_TYPES.has(k))
                     .map(([k, v]) => (
                       <option key={k} value={k}>{v}</option>
@@ -863,7 +946,7 @@ export function ComponentList({
                   </div>
                   {formPricingStrategy === 'per_pack_coverage' && (
                     <div className="col-span-2">
-                      <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m\u00b2)</label>
+                      <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
                       <input type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                     </div>
                   )}
@@ -973,6 +1056,23 @@ export function ComponentList({
                 <p className="text-xs text-slate-400 mt-1">{imageHelperText}</p>
               </div>
             </div>
+            {/* Notes */}
+            <div className="border-t border-slate-200 pt-3 mt-3">
+              <label className="block text-xs text-slate-500 mb-1">Notes <span className="text-slate-400 font-normal">(optional)</span></label>
+              <p className="text-xs text-slate-400 mb-1">Explainers or usage tips visible when this component is expanded.</p>
+              <textarea
+                value={formNotes}
+                onChange={e => setFormNotes(e.target.value)}
+                placeholder="e.g. Use for main field area. Check manufacturer spec for coverage rate."
+                rows={3}
+                maxLength={500}
+                className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-orange-400"
+              />
+              {formNotes.length > 0 && (
+                <p className="text-xs text-slate-400 text-right mt-0.5">{formNotes.length}/500</p>
+              )}
+            </div>
+
             {collections.length > 0 && (
               <div className="border-t border-slate-200 pt-3 mt-3">
                 <label className="block text-xs text-slate-500 mb-1">Save to Library</label>
@@ -1030,7 +1130,7 @@ export function ComponentList({
                         className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
                       >
                         {(Object.entries(MEASUREMENT_LABELS) as Array<[MeasurementType, string]>)
-                          .filter(([k]) => k !== 'linear')
+                          .filter(([k]) => k !== 'linear' && k !== 'count' && k !== 'curved_line' && k !== 'irregular_area')
                           .filter(([k]) => genericTradesEnabled || ROOFING_DEFAULT_TYPES.has(k))
                           .map(([k, v]) => (
                             <option key={k} value={k}>{v}</option>
@@ -1078,7 +1178,7 @@ export function ComponentList({
                         </div>
                         {formPricingStrategy === 'per_pack_coverage' && (
                           <div className="col-span-2">
-                            <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m\u00b2)</label>
+                            <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
                             <input type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                           </div>
                         )}
@@ -1194,6 +1294,23 @@ export function ComponentList({
                       <p className="text-xs text-slate-400 mt-1">{imageHelperText}</p>
                     </div>
                   </div>
+                  {/* Notes */}
+                  <div className="border-t border-slate-200 pt-3 mt-3">
+                    <label className="block text-xs text-slate-500 mb-1">Notes <span className="text-slate-400 font-normal">(optional)</span></label>
+                    <p className="text-xs text-slate-400 mb-1">Explainers or usage tips visible when this component is expanded.</p>
+                    <textarea
+                      value={formNotes}
+                      onChange={e => setFormNotes(e.target.value)}
+                      placeholder="e.g. Use for main field area. Check manufacturer spec for coverage rate."
+                      rows={3}
+                      maxLength={500}
+                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-orange-400"
+                    />
+                    {formNotes.length > 0 && (
+                      <p className="text-xs text-slate-400 text-right mt-0.5">{formNotes.length}/500</p>
+                    )}
+                  </div>
+
                   {collections.length > 0 && (
                     <div className="border-t border-slate-200 pt-3 mt-3">
                       <label className="block text-xs text-slate-500 mb-1">Save to Library</label>
@@ -1250,6 +1367,11 @@ export function ComponentList({
                     )}
                     {comp.default_pitch_type !== 'none' && <> · {PITCH_LABELS[comp.default_pitch_type]}</>}
                   </p>
+                  {(comp as unknown as { notes?: string | null }).notes && (
+                    <p className="text-xs text-slate-400 italic mt-1 line-clamp-1">
+                      {(comp as unknown as { notes?: string | null }).notes}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); startEdit(comp); }}
@@ -1300,8 +1422,8 @@ export function ComponentList({
       <UpgradeModal
         open={flashingsUpgradeOpen}
         onClose={() => setFlashingsUpgradeOpen(false)}
-        title="Flashing drawings require a higher plan"
-        description="Upgrade your account to access the flashings drawing tool and reusable flashing library."
+        title={`${featureLabelSingular} drawings require a higher plan`}
+        description={`Upgrade your account to access the ${featureLabel.toLowerCase()} drawing tool and reusable library.`}
         recommendedPlan="pro"
       />
       <UpgradeModal
@@ -1332,7 +1454,7 @@ function TypeSpecificFields(props: {
   setHoursUnit: (v: 'hr' | 'day') => void;
 }) {
   const { measurementType, heightMm, setHeightMm, depthMm, setDepthMm, hoursUnit, setHoursUnit } = props;
-  if (!['length_x_height', 'multi_lineal_lxh', 'volume', 'hours_days'].includes(measurementType)) return null;
+  if (!['length_x_height', 'multi_lineal_lxh', 'volume', 'volume_3d', 'hours_days'].includes(measurementType)) return null;
   return (
     <div className="space-y-3 mt-1">
       {(measurementType === 'length_x_height' || measurementType === 'multi_lineal_lxh') && (
@@ -1342,6 +1464,7 @@ function TypeSpecificFields(props: {
           <p className="text-xs text-slate-400 mt-1">Area = measured length x height.</p>
         </div>
       )}
+      {/* volume_3d has NO preset depth - depth is entered per measurement in the quote builder / takeoff */}
       {measurementType === 'volume' && (
         <div>
           <label className="block text-xs text-slate-500 mb-1">Component depth (mm)</label>

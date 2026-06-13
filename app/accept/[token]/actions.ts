@@ -1,6 +1,7 @@
 'use server';
 import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { alertEnabled, emailAlertEnabled } from '@/app/lib/alerts/prefs';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import {
   notifyQuoteResponse,
@@ -158,31 +159,65 @@ export async function submitRevisionRequest(
     return { success: false, error: 'Failed to save request. Please try again or email directly.' };
   }
 
+  // Activate any pre-staged quote_revision_requested follow-up for this
+  // quote and cancel the parked accepted/declined rows (mutual-cancel
+  // across all three trigger types). A revision request is a customer
+  // response just like accept/decline, so the same activator runs.
+  // Best-effort: a hiccup here must not fail the customer's request -
+  // the row above is already saved. Await (not fire-and-forget) so the
+  // Vercel serverless function doesn't terminate the in-flight Promise.
+  try {
+    const { activateEventScheduledMessages, cancelViewedScheduledMessages } = await import('@/app/lib/messages/scheduled');
+    await activateEventScheduledMessages({
+      quoteId: quote.id,
+      companyId: quote.company_id,
+      event: 'revision_requested',
+      eventAt: new Date().toISOString(),
+    });
+    // Recipient acted -> cancel any pending "On Read" follow-up.
+    await cancelViewedScheduledMessages({
+      entity: 'quote',
+      entityId: quote.id,
+      companyId: quote.company_id,
+      reason: 'Customer requested a revision; On-Read follow-up no longer needed.',
+    });
+  } catch (err) {
+    console.error('[submitRevisionRequest] activateEventScheduledMessages failed:', err);
+  }
+
   // Surface as an alert in the user's dashboard, reusing the existing alerts
   // table. Alert type is new (`revision_requested`) but the existing alerts
-  // list renders any type generically.
-  await supabase.from('alerts').insert({
-    company_id: quote.company_id,
-    quote_id: quote.id,
-    alert_type: 'revision_requested',
-    title: `Re-Quote Requested - #${quote.quote_number ?? 'DRAFT'}`,
-    message: `${cleanName || quote.customer_name || 'Customer'} has requested a revision (${sourceState}). Notes: ${trimmedNotes.slice(0, 200)}${trimmedNotes.length > 200 ? '…' : ''}`,
-  });
+  // list renders any type generically. Gated by the Message Center matrix -
+  // the request record above is saved regardless; only the alert is gated.
+  if (await alertEnabled(supabase, quote.company_id, 'revision_requested')) {
+    await supabase.from('alerts').insert({
+      company_id: quote.company_id,
+      quote_id: quote.id,
+      alert_type: 'revision_requested',
+      title: `Re-Quote Requested - #${quote.quote_number ?? 'DRAFT'}`,
+      // Full notes, not a 200-char preview. The Message Center expanded view
+      // is the only place the owner reads what was actually requested, so a
+      // truncated note silently loses detail (bug 2026-06-10).
+      message: `${cleanName || quote.customer_name || 'Customer'} has requested a revision (${sourceState}).\n\nNotes:\n${trimmedNotes}`,
+    });
+  }
 
   // Best-effort email notification (gated by user preference). Failures are
   // swallowed inside notifyRevisionRequested - the in-app alert above is the
   // source of truth. We MUST await here, not fire-and-forget: Vercel
   // serverless functions terminate the moment the handler returns, killing
   // any in-flight Promise.
-  await notifyRevisionRequested({
-    companyId: quote.company_id,
-    quoteId: quote.id,
-    quoteNumber: quote.quote_number ?? null,
-    creatorUserId: (quote as { created_by_user_id?: string | null }).created_by_user_id ?? null,
-    customerNameForEmail: cleanName || quote.customer_name || null,
-    notes: trimmedNotes,
-    sourceState,
-  });
+  if (await emailAlertEnabled(supabase, quote.company_id, 'revision_requested')) {
+    await notifyRevisionRequested({
+      companyId: quote.company_id,
+      quoteId: quote.id,
+      quoteNumber: quote.quote_number ?? null,
+      creatorUserId: (quote as { created_by_user_id?: string | null }).created_by_user_id ?? null,
+      customerNameForEmail: cleanName || quote.customer_name || null,
+      notes: trimmedNotes,
+      sourceState,
+    });
+  }
 
   return { success: true };
 }
@@ -334,14 +369,17 @@ export async function respondToQuote(token: string, action: 'accept' | 'decline'
 
   if (error) throw new Error('Failed to process response');
 
-  // Create alert (scoped to the quote's company)
-  await supabase.from('alerts').insert({
-    company_id: quote.company_id,
-    quote_id: quote.id,
-    alert_type: isAccept ? 'quote_accepted' : 'quote_declined',
-    title: `Quote #${quote.quote_number} ${isAccept ? 'Accepted' : 'Declined'}`,
-    message: `${quote.customer_name} has ${isAccept ? 'accepted' : 'declined'} Quote #${quote.quote_number}.`,
-  });
+  // Create alert (scoped to the quote's company). Status update above always
+  // happens; this alert is gated by the Message Center notification matrix.
+  if (await alertEnabled(supabase, quote.company_id, isAccept ? 'quote_accepted' : 'quote_declined')) {
+    await supabase.from('alerts').insert({
+      company_id: quote.company_id,
+      quote_id: quote.id,
+      alert_type: isAccept ? 'quote_accepted' : 'quote_declined',
+      title: `Quote #${quote.quote_number} ${isAccept ? 'Accepted' : 'Declined'}`,
+      message: `${quote.customer_name} has ${isAccept ? 'accepted' : 'declined'} Quote #${quote.quote_number}.`,
+    });
+  }
 
   // Activate any pre-staged quote_accepted / quote_declined follow-ups
   // for this quote. The accept/decline modal in the post-send prompt
@@ -350,12 +388,19 @@ export async function respondToQuote(token: string, action: 'accept' | 'decline'
   // response if activation has trouble. Same await-not-fire-and-forget
   // discipline as notifyQuoteResponse below.
   try {
-    const { activateEventScheduledMessages } = await import('@/app/lib/messages/scheduled');
+    const { activateEventScheduledMessages, cancelViewedScheduledMessages } = await import('@/app/lib/messages/scheduled');
     await activateEventScheduledMessages({
       quoteId: quote.id,
       companyId: quote.company_id,
       event: isAccept ? 'accepted' : 'declined',
       eventAt: now,
+    });
+    // Recipient acted -> cancel any pending "On Read" follow-up.
+    await cancelViewedScheduledMessages({
+      entity: 'quote',
+      entityId: quote.id,
+      companyId: quote.company_id,
+      reason: `Customer ${isAccept ? 'accepted' : 'declined'} the quote; On-Read follow-up no longer needed.`,
     });
   } catch (err) {
     console.error('[respondToQuote] activateEventScheduledMessages failed:', err);
@@ -366,11 +411,13 @@ export async function respondToQuote(token: string, action: 'accept' | 'decline'
   // functions terminate the moment the handler returns, killing any
   // in-flight Promise. (That bug caused decline emails to silently drop
   // because the client state-change resolved faster than Resend.)
-  await notifyQuoteResponse({
-    companyId: quote.company_id,
-    quoteId: quote.id,
-    quoteNumber: quote.quote_number ?? null,
-    customerName: quote.customer_name ?? null,
-    isAccept,
-  });
+  if (await emailAlertEnabled(supabase, quote.company_id, isAccept ? 'quote_accepted' : 'quote_declined')) {
+    await notifyQuoteResponse({
+      companyId: quote.company_id,
+      quoteId: quote.id,
+      quoteNumber: quote.quote_number ?? null,
+      customerName: quote.customer_name ?? null,
+      isAccept,
+    });
+  }
 }

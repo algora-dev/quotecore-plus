@@ -88,6 +88,7 @@ interface _CanvasState {
 export function FlashingCanvas({
   workspaceSlug,
   lengthUnit = 'mm',
+  featureLabelSingular = 'Flashing',
 }: {
   workspaceSlug: string;
   /**
@@ -97,7 +98,13 @@ export function FlashingCanvas({
    * updated yet still renders sensibly.
    */
   lengthUnit?: 'mm' | 'in';
+  /**
+   * Trade-aware singular label ('Flashing' / 'Drawing/Image'). Display copy
+   * only - internal identifiers, routes and file names are unchanged.
+   */
+  featureLabelSingular?: string;
 }) {
+  const featureSingularLower = featureLabelSingular.toLowerCase();
   const router = useRouter();
   const searchParams = useSearchParams();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -754,7 +761,7 @@ export function FlashingCanvas({
           if (fabricRef.current.getObjects().length === 0) {
             console.error('[FlashingCanvas] CRITICAL: No objects loaded!');
             console.error('[FlashingCanvas] This indicates a fabric.js deserialization failure');
-            alert('⚠️ Cannot load this drawing for editing.\n\nThis may be due to incompatible canvas format.\n\nPlease create a new flashing from scratch.');
+            alert('⚠️ Cannot load this drawing for editing.\n\nThis may be due to incompatible canvas format.\n\nPlease create a new ' + featureSingularLower + ' from scratch.');
           } else {
             console.log('[FlashingCanvas] Successfully loaded', fabricRef.current.getObjects().length, 'objects');
           }
@@ -1547,7 +1554,7 @@ export function FlashingCanvas({
   const handleSave = async () => {
     if (!fabricRef.current) return;
     if (!name.trim()) {
-      alert('Please enter a name for this flashing');
+      alert(`Please enter a name for this ${featureSingularLower}`);
       return;
     }
 
@@ -1645,7 +1652,7 @@ export function FlashingCanvas({
       {loading && (
         <div className="fixed inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="text-center">
-            <div className="text-lg font-semibold text-slate-900">Loading flashing...</div>
+            <div className="text-lg font-semibold text-slate-900">Loading {featureSingularLower}...</div>
             <div className="text-sm text-slate-600 mt-2">Please wait</div>
           </div>
         </div>
@@ -1659,7 +1666,7 @@ export function FlashingCanvas({
           Back
         </button>
         <h1 className="text-2xl font-semibold text-slate-900">
-          {editMode ? 'Edit Flashing' : 'Draw Flashing'}
+          {editMode ? `Edit ${featureLabelSingular}` : `Draw ${featureLabelSingular}`}
         </h1>
         <p className="text-sm text-slate-500 mt-1">
           Draw to scale: 2 pixels = 1mm (max {currentSize.maxMm})
@@ -1851,7 +1858,7 @@ export function FlashingCanvas({
             data-copilot="flashing-save"
             className="px-4 py-2 text-sm font-medium rounded-lg bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
           >
-            {saving ? 'Saving...' : 'Save Flashing'}
+            {saving ? 'Saving...' : `Save ${featureLabelSingular}`}
           </button>
         </div>
       </div>

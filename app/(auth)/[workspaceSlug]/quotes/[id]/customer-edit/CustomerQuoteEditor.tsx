@@ -4,11 +4,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
 import { QuotePreview } from './QuotePreview';
-import { AddCustomLineModal } from './AddCustomLineModal';
+import { AddLineModal } from './AddLineModal';
 import { EditHeaderModal } from './EditHeaderModal';
 import { EditFooterModal } from './EditFooterModal';
+import { ConfirmModal } from '@/app/components/ConfirmModal';
 import { saveCustomerQuoteLines, saveCustomerQuoteBranding } from '../../actions';
 import { formatCurrency } from '@/app/lib/currency/currencies';
+import { displayLineText } from '@/app/lib/quotes/lineText';
+import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
 import {
   convertLinear,
   convertArea,
@@ -35,6 +38,10 @@ interface Props {
   previewTitle?: string; // Custom preview title (default: "Customer Quote Preview")
   includeMargins?: boolean; // Whether to include margins in line amounts (default: true)
   customSaveAction?: (quoteId: string, lines: any[]) => Promise<void>; // Custom save function (for labor sheet)
+  /** Named component libraries (collections) for the "Add a component" picker. */
+  collections?: { id: string; name: string }[];
+  /** Full company component library for the "Add a component" picker. */
+  componentLibrary?: { id: string; name: string; collection_id: string | null }[];
   initialTaxes: QuoteTaxRow[];
   /** Active company-level tax library, shown as a quick “add from defaults” picker. */
   companyTaxes: { id: string; name: string; rate_percent: number }[];
@@ -48,6 +55,12 @@ interface QuoteLine {
   componentId?: string;
   roofAreaId?: string;
   text: string;
+  /**
+   * Toggle-able quantity portion for catalog lines (fix #5). When set, `text`
+   * is the description and this is hidden by the Units toggle without string
+   * splitting. Null for component + legacy lines (hyphen-strip fallback).
+   */
+  quantityText?: string | null;
   amount: number;
   showPrice: boolean;
   showUnits: boolean;
@@ -56,7 +69,7 @@ interface QuoteLine {
   sortOrder: number;
 }
 
-export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave: _disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true, customSaveAction, initialTaxes, companyTaxes, taxAudience = 'quote' }: Props) {
+export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave: _disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true, customSaveAction, initialTaxes, companyTaxes, taxAudience = 'quote', collections = [], componentLibrary = [] }: Props) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [taxes, setTaxes] = useState<EditableTax[]>(
@@ -74,9 +87,13 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [showAddCustomLine, setShowAddCustomLine] = useState(false);
+  // Unified "Add new line" modal (Custom line / Add a component / Search catalog).
+  const [showAddLine, setShowAddLine] = useState(false);
   const [showEditHeader, setShowEditHeader] = useState(false);
   const [showEditFooter, setShowEditFooter] = useState(false);
+  // Declutter: collapse the left controls so the preview fills the space.
+  // Pure layout state - the panel stays mounted (no edit/autosave disruption).
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   
   // Branding state - use uploaded logo if quote doesn't have one yet
@@ -149,6 +166,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             componentId: undefined,
             roofAreaId: undefined,
             text: saved.custom_text || '',
+            quantityText: (saved as { quantity_text?: string | null }).quantity_text ?? null,
             amount: saved.custom_amount || 0,
             showPrice: saved.show_price ?? true,
             showUnits: saved.show_units ?? true,
@@ -225,6 +243,13 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     return `${component.name} - ${displayQty.toFixed(1)} ${unit}`;
   }
 
+  // Editor list always shows the COMPLETE line (description + quantity); the
+  // Units toggle only affects the preview / PDF / public output, so we render
+  // with showUnits=true here regardless of the line's toggle state.
+  function lineDisplay(line: QuoteLine): string {
+    return displayLineText(line.text, line.quantityText, true);
+  }
+
   function toggleVisibility(lineId: string) {
     setLines(prev => prev.map(l => 
       l.id === lineId ? { ...l, isVisible: !l.isVisible } : l
@@ -275,11 +300,26 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     setIsDirty(true);
   }
 
-  function addCustomLine(text: string, amount: number, showPrice: boolean) {
+  // Fully REMOVE a line from the quote (distinct from "hide", which only flips
+  // isVisible). Asks for confirmation via ConfirmModal since it's destructive.
+  const [removeLineId, setRemoveLineId] = useState<string | null>(null);
+  function removeLine(lineId: string) {
+    setLines(prev => prev.filter(l => l.id !== lineId).map((l, i) => ({ ...l, sortOrder: i })));
+    if (editingLineId === lineId) setEditingLineId(null);
+    setIsDirty(true);
+  }
+
+  function addCustomLine(
+    text: string,
+    amount: number,
+    showPrice: boolean,
+    quantityText: string | null = null,
+  ) {
     const newLine: QuoteLine = {
       id: `custom-${Date.now()}`,
       type: 'custom',
       text,
+      quantityText,
       amount,
       showPrice,
       showUnits: true,
@@ -291,9 +331,37 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     setIsDirty(true);
   }
 
-  function updateLine(lineId: string, text: string, amount: number, showPrice: boolean) {
-    setLines(prev => prev.map(l => 
-      l.id === lineId ? { ...l, text, amount, showPrice } : l
+  /**
+   * Add a line seeded from a component library entry. Per spec: the component
+   * NAME is pre-filled; quantity and price stay blank so the user fills them
+   * via the right-side pencil (LineEditForm). Stored as a custom line.
+   */
+  function addComponentLine(name: string) {
+    const newLine: QuoteLine = {
+      id: `custom-${Date.now()}`,
+      type: 'custom',
+      text: name,
+      quantityText: null,
+      amount: 0,
+      showPrice: true,
+      showUnits: true,
+      isVisible: true,
+      includeInTotal: true,
+      sortOrder: lines.length,
+    };
+    setLines(prev => [...prev, newLine]);
+    setIsDirty(true);
+  }
+
+  function updateLine(
+    lineId: string,
+    text: string,
+    quantityText: string | null,
+    amount: number,
+    showPrice: boolean,
+  ) {
+    setLines(prev => prev.map(l =>
+      l.id === lineId ? { ...l, text, quantityText, amount, showPrice } : l
     ));
     setEditingLineId(null);
     setIsDirty(true);
@@ -322,6 +390,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         lineType: line.type,
         componentId: line.componentId,
         text: line.text,
+        quantityText: line.quantityText ?? null,
         amount: line.amount,
         showPrice: line.showPrice,
         showUnits: line.showUnits,
@@ -453,11 +522,24 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           </div>
         </div>
 
-        {/* Two-panel layout */}
-        <div className="grid grid-cols-2 gap-6">
-          {/* Left Panel: Component Selection */}
+        {/* Two-panel layout. Flex row (was a 2-col grid) so the left controls
+            can collapse and the preview (flex-1) smoothly fills the freed
+            space. Visually identical to the old 50/50 grid when expanded
+            (left keeps a 1fr-equivalent basis). */}
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+          {/* Left Panel: Component Selection - collapsible to declutter. Fixed
+              basis (not 1fr) so the PREVIEW is the dominant section, matching
+              the order editors; on collapse the preview goes full width. */}
+          <CollapsiblePanel collapsed={panelCollapsed} widthClass="lg:w-[420px] lg:flex-shrink-0">
           <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4" data-copilot="cl-left-panel">
-            <h2 className="text-lg font-semibold text-slate-900">Components & Items</h2>
+            <div className="flex items-center gap-2">
+              <CollapseButton
+                collapsed={panelCollapsed}
+                onToggle={() => setPanelCollapsed(true)}
+                label="Collapse panel"
+              />
+              <h2 className="text-lg font-semibold text-slate-900">Components & Items</h2>
+            </div>
             <p className="text-xs text-slate-400">
               Easily click/unclick what you want to see or hide from your quote below
             </p>
@@ -481,7 +563,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                           <div className="flex-1">
                             <div className="flex items-baseline justify-between gap-2">
                               <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
-                                {line.text}
+                                {lineDisplay(line)}
                               </p>
                               <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
                                 {formatCurrency(line.amount, currency)}
@@ -529,7 +611,16 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                               </label>
                             </div>
                           </div>
-                          <div className="flex flex-col gap-0.5">
+                          <div className="flex flex-col items-center gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => setRemoveLineId(line.id)}
+                              title="Remove this line"
+                              aria-label="Remove line"
+                              className="p-0.5 text-red-400 hover:text-red-600"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
                             <button
                               onClick={() => moveUp(line.id)}
                               className="p-0.5 text-slate-400 hover:text-slate-600 disabled:opacity-30"
@@ -567,7 +658,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                         <div className="flex-1">
                           <div className="flex items-baseline justify-between gap-2">
                             <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
-                              {line.text}
+                              {lineDisplay(line)}
                             </p>
                             <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
                               {formatCurrency(line.amount, currency)}
@@ -615,7 +706,16 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                             </label>
                           </div>
                         </div>
-                        <div className="flex flex-col gap-0.5">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => setRemoveLineId(line.id)}
+                            title="Remove this line"
+                            aria-label="Remove line"
+                            className="p-0.5 text-red-400 hover:text-red-600"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
                           <button
                             onClick={() => moveUp(line.id)}
                             className="p-0.5 text-slate-400 hover:text-slate-600 disabled:opacity-30"
@@ -638,12 +738,15 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               )}
             </div>
 
-            <button 
-              onClick={() => setShowAddCustomLine(true)}
-              className="w-full py-2 text-sm font-medium text-orange-600 border border-orange-200 rounded-full hover:bg-orange-50 hover:border-orange-300 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]"
-            >
-              + Add Custom Line
-            </button>
+            <div className="flex gap-2">
+              <button
+                data-copilot="cl-add-line-btn"
+                onClick={() => setShowAddLine(true)}
+                className="flex-1 py-2 text-sm font-medium text-orange-600 border border-orange-200 rounded-full hover:bg-orange-50 hover:border-orange-300 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]"
+              >
+                + Add New Line
+              </button>
+            </div>
 
             {/* Taxes */}
             <div className="pt-4 border-t space-y-3">
@@ -783,8 +886,21 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             </div>
           </div>
 
-          {/* Right Panel: Live Preview */}
-          <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4" data-copilot="cl-right-panel">
+          </CollapsiblePanel>
+
+          {/* Expand tab - only visible when collapsed; on the preview side so
+              it is never clipped by the collapsing panel's overflow. */}
+          <ExpandTab
+            collapsed={panelCollapsed}
+            onToggle={() => setPanelCollapsed(false)}
+            label="Components"
+          />
+
+          {/* Right Panel: Live Preview - expands to fill when left collapses. */}
+          <div
+            className="bg-white rounded-xl border border-slate-200 p-6 space-y-4 w-full lg:flex-1 lg:min-w-0"
+            data-copilot="cl-right-panel"
+          >
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">{previewTitle}</h2>
               <button
@@ -899,13 +1015,30 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         />
       )}
 
-      {/* Add Custom Line Modal */}
-      {showAddCustomLine && (
-        <AddCustomLineModal
-          onAdd={addCustomLine}
-          onClose={() => setShowAddCustomLine(false)}
+      {/* Unified Add New Line modal: Custom line / Add a component / Search catalog */}
+      {showAddLine && (
+        <AddLineModal
+          workspaceSlug={workspaceSlug}
+          collections={collections}
+          componentLibrary={componentLibrary}
+          onAddCustom={addCustomLine}
+          onAddComponent={addComponentLine}
+          onClose={() => setShowAddLine(false)}
         />
       )}
+
+      {/* Remove-line confirmation (destructive: fully deletes the line). */}
+      <ConfirmModal
+        open={removeLineId !== null}
+        title="Remove this line?"
+        description="This removes the line from the quote entirely. To keep it but hide it from the customer, use the Show toggle instead."
+        confirmLabel="Remove"
+        onCancel={() => setRemoveLineId(null)}
+        onConfirm={() => {
+          if (removeLineId) removeLine(removeLineId);
+          setRemoveLineId(null);
+        }}
+      />
     </div>
   );
 }

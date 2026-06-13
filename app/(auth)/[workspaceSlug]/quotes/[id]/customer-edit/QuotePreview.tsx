@@ -2,10 +2,13 @@
 import type { TaxLine } from '@/app/lib/taxes/types';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import { LineEditForm } from './LineEditForm';
+import { displayLineText, splitLineParts } from '@/app/lib/quotes/lineText';
 
 interface QuoteLine {
   id: string;
   text: string;
+  /** Toggle-able quantity portion for catalog lines (fix #5). */
+  quantityText?: string | null;
   amount: number;
   showPrice: boolean;
   showUnits: boolean;
@@ -28,7 +31,7 @@ interface Props {
   footerText: string;
   editingLineId?: string | null;
   onEditLine?: (lineId: string) => void;
-  onSaveLine?: (lineId: string, text: string, amount: number, showPrice: boolean) => void;
+  onSaveLine?: (lineId: string, text: string, quantity: string | null, amount: number, showPrice: boolean) => void;
   onCancelEdit?: () => void;
   onEditHeader?: () => void;
   onEditFooter?: () => void;
@@ -58,12 +61,9 @@ export function QuotePreview({
   showEditButtons = true,
   currency,
 }: Props) {
-  // Helper to remove units from text (everything after "-")
-  function removeUnits(text: string): string {
-    const dashIndex = text.indexOf('-');
-    if (dashIndex === -1) return text;
-    return text.substring(0, dashIndex).trim();
-  }
+  // Render a line's text honouring the Units toggle. Catalog lines hide the
+  // separate quantity_text; legacy/component lines fall back to hyphen-strip.
+  // (fix #5 - logic centralised in displayLineText.)
 
   return (
     <div className="space-y-6">
@@ -128,17 +128,18 @@ export function QuotePreview({
             editingLineId === line.id && onSaveLine && onCancelEdit ? (
               <div key={line.id} className="py-2">
                 <LineEditForm
-                  initialText={line.text}
+                  initialText={splitLineParts(line.text, line.quantityText).description}
+                  initialQuantity={splitLineParts(line.text, line.quantityText).quantity}
                   initialAmount={line.amount}
                   initialShowPrice={line.showPrice}
-                  onSave={(text, amount, showPrice) => onSaveLine(line.id, text, amount, showPrice)}
+                  onSave={(text, quantity, amount, showPrice) => onSaveLine(line.id, text, quantity, amount, showPrice)}
                   onCancel={onCancelEdit}
                 />
               </div>
             ) : (
-              <div key={line.id} className="flex items-start justify-between py-2 border-b border-slate-100">
+              <div key={line.id} data-pdf-block className="flex items-start justify-between py-2 border-b border-slate-100">
                 <div className="flex-1">
-                  <p className="text-sm text-slate-900">{line.showUnits ? line.text : removeUnits(line.text)}</p>
+                  <p className="text-sm text-slate-900">{displayLineText(line.text, line.quantityText, line.showUnits)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   {line.showPrice && (
@@ -164,7 +165,7 @@ export function QuotePreview({
       </div>
 
       {/* Totals */}
-      <div className="space-y-2 pt-4 border-t">
+      <div data-pdf-block className="space-y-2 pt-4 border-t">
         <div className="flex justify-between text-sm">
           <span className="text-slate-600">Subtotal</span>
           <span className="font-medium text-slate-900">{formatCurrency(subtotal, currency)}</span>

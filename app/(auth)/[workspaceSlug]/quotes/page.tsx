@@ -16,7 +16,7 @@ export default async function QuotesPage({
   const [quotesRes, entitlements, usageRow] = await Promise.all([
     supabase
       .from('quotes')
-      .select('id, customer_name, job_name, status, quote_number, created_at, updated_at, job_status')
+      .select('id, customer_name, job_name, status, quote_number, created_at, updated_at, job_status, viewed_at')
       .eq('company_id', profile.company_id)
       .order('created_at', { ascending: false }),
     loadCompanyEntitlements(profile.company_id),
@@ -38,7 +38,24 @@ export default async function QuotesPage({
     })(),
   ]);
 
-  const quotes = quotesRes.data ?? [];
+  const rawQuotes = quotesRes.data ?? [];
+
+  // Quotes with at least one UNRESOLVED revision request -> "Action Required"
+  // in the Status column. One lightweight query, merged in below.
+  const { data: pendingRevisionRows } = await supabase
+    .from('quote_revision_requests')
+    .select('quote_id')
+    .eq('company_id', profile.company_id)
+    .is('resolved_at', null);
+  const pendingRevisionQuoteIds = new Set(
+    (pendingRevisionRows ?? []).map((r) => r.quote_id).filter((x): x is string => !!x),
+  );
+
+  const quotes = rawQuotes.map((q) => ({
+    ...q,
+    has_pending_revision: pendingRevisionQuoteIds.has(q.id),
+  }));
+
   const used = usageRow?.quotes_created ?? 0;
   const limit = entitlements.monthlyQuoteLimit;
   // Show the counter for any plan with a finite limit and where the user can

@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { elementToPdf } from '@/app/lib/pdf/renderPreviewToPdf';
 
 interface Props {
   quoteNumber: string | number | null;
@@ -15,92 +14,24 @@ export function DownloadPDFButton({ quoteNumber, customerName }: Props) {
   const handleDownload = async () => {
     setIsGenerating(true);
     try {
-      // Find the quote document container
-      const element = document.querySelector('[data-pdf-content]') as HTMLElement;
+      // Capture the SAME on-screen customer-quote preview the customer sees.
+      const element = document.querySelector('[data-pdf-content]') as HTMLElement | null;
       if (!element) {
         console.error('[PDF] Could not find element with data-pdf-content attribute');
         alert('Could not find quote content to export. Please refresh and try again.');
-        setIsGenerating(false);
         return;
       }
 
-      console.log('[PDF] Found element, generating PDF...');
+      // Shared helper: oklch/lab color fix, font + image readiness, multi-page
+      // A4 slicing. Single download == bulk == on-screen preview.
+      const pdf = await elementToPdf(element);
 
-      try {
-        // Convert HTML to canvas with onclone to fix lab() colors only
-        const canvas = await html2canvas(element, {
-          scale: 1,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-          allowTaint: true,
-          foreignObjectRendering: false,
-          onclone: (clonedDoc) => {
-            // Only fix lab/lch colors, don't force all backgrounds
-            const allElements = clonedDoc.querySelectorAll('*');
-            allElements.forEach((el: any) => {
-              const computed = window.getComputedStyle(el);
-              if (computed.color && (computed.color.includes('lab') || computed.color.includes('lch'))) {
-                el.style.color = 'rgb(0, 0, 0)';
-              }
-              if (computed.borderColor && (computed.borderColor.includes('lab') || computed.borderColor.includes('lch'))) {
-                el.style.borderColor = 'rgb(0, 0, 0)';
-              }
-            });
-          },
-        });
-
-        console.log('[PDF] Canvas generated, creating PDF...');
-
-        // Create PDF with proper margins
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: 'a4',
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        
-        // Add margins (15mm on all sides)
-        const margin = 15;
-        const pageWidth = 210;
-        const pageHeight = 297;
-        const printableWidth = pageWidth - (margin * 2);
-        const printableHeight = pageHeight - (margin * 2);
-        
-        // Calculate scaled dimensions
-        const imgWidth = printableWidth;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        
-        // Handle multi-page content
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'PNG', margin, margin + position, imgWidth, imgHeight);
-        heightLeft -= printableHeight;
-
-        while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', margin, margin + position, imgWidth, imgHeight);
-          heightLeft -= printableHeight;
-        }
-
-        // Generate filename
-        const filename = `Quote-${quoteNumber || 'DRAFT'}-${customerName.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-        
-        // Download
-        console.log('[PDF] Downloading:', filename);
-        pdf.save(filename);
-      } catch (error) {
-        console.error('[PDF] Generation failed:', error);
-        alert(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      } finally {
-        setIsGenerating(false);
-      }
+      const filename = `Quote-${quoteNumber || 'DRAFT'}-${customerName.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+      pdf.save(filename);
     } catch (error) {
-      console.error('[PDF] Setup failed:', error);
-      alert('Failed to prepare PDF. Please try again.');
+      console.error('[PDF] Generation failed:', error);
+      alert(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
       setIsGenerating(false);
     }
   };

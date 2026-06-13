@@ -122,6 +122,55 @@ export interface QuoteBundleData {
     taxLines: Array<{ name: string; amount: number; ratePercent: number }>;
   };
   files: QuoteBundleFile[];
+  /**
+   * Everything the REAL on-screen QuotePreview component needs to render the
+   * customer quote exactly as it appears in the customer-edit screen. The bulk
+   * ZIP builder mounts <QuotePreview {...preview} /> off-screen and captures it
+   * via html2canvas so the downloaded PDF is a pixel match of the preview.
+   *
+   * - `quote` is the raw `quotes` row (QuotePreview reads quote_number,
+   *   customer_name, job_name, created_at directly).
+   * - `lines` are the customer-visible lines in the QuotePreview line shape
+   *   (text / quantityText / amount / showPrice / showUnits), already filtered
+   *   to is_visible and ordered by sort_order - i.e. exactly what the customer
+   *   sees.
+   * - `taxLines` are in the TaxLine shape QuotePreview expects (id/name/
+   *   rate_percent/amount), and subtotal/total mirror the on-screen totals.
+   */
+  preview: {
+    quote: Record<string, unknown>;
+    lines: Array<{
+      id: string;
+      text: string;
+      quantityText: string | null;
+      amount: number;
+      showPrice: boolean;
+      showUnits: boolean;
+    }>;
+    subtotal: number;
+    taxLines: Array<{ id: string; name: string; rate_percent: number; amount: number }>;
+    taxTotal: number;
+    total: number;
+    companyName: string;
+    companyAddress: string;
+    companyPhone: string;
+    companyEmail: string;
+    companyLogoUrl: string;
+    footerText: string;
+    currency: string;
+    /**
+     * Raw rows the on-screen LaborSheetDocument needs. Present only when the
+     * quote has visible labour-sheet lines (mirrors the old bundle, which only
+     * produced a labour sheet PDF when labourLines had visible entries). The
+     * bulk builder renders <LaborSheetDocument {...labor} /> off-screen.
+     */
+    labor: {
+      quote: Record<string, unknown>;
+      components: Array<Record<string, unknown>>;
+      savedLines: Array<Record<string, unknown>>;
+      quoteTaxes: Array<Record<string, unknown>>;
+    } | null;
+  };
 }
 
 /**
@@ -348,6 +397,35 @@ export async function loadQuoteBundleData(quoteId: string): Promise<QuoteBundleD
 
   const effectiveCurrency = getEffectiveCurrency(quote.currency, companyDefaultCurrency);
 
+  // ---- Build the props the REAL on-screen QuotePreview component renders ----
+  // Mirror CustomerQuoteEditor exactly:
+  //   visibleLines = lines.filter(isVisible)            (what the customer sees)
+  //   subtotal     = sum of lines with include_in_total ("Add $" checked)
+  //   taxLines     = computeTaxLines(quote_taxes, subtotal, 'quote')
+  //   total        = subtotal + taxTotal
+  // The customer quote is built from `customer_quote_lines` (custom_text /
+  // quantity_text / custom_amount), which is the persisted, customer-facing
+  // view - identical to the data the editor saved from the on-screen preview.
+  const previewLines = customerLines
+    .filter((l: any) => l.is_visible !== false)
+    .map((l: any) => ({
+      id: l.id as string,
+      text: (l.custom_text ?? '') as string,
+      quantityText: (l.quantity_text ?? null) as string | null,
+      amount: Number(l.custom_amount) || 0,
+      showPrice: !!l.show_price,
+      showUnits: !!l.show_units,
+    }));
+  const previewSubtotal = customerLines
+    .filter((l: any) => l.is_visible !== false && l.include_in_total !== false)
+    .reduce((sum: number, l: any) => sum + (Number(l.custom_amount) || 0), 0);
+  const { lines: previewTaxLines, total: previewTaxTotal } = computeTaxLines(
+    quoteTaxes as any,
+    previewSubtotal,
+    'quote',
+  );
+  const previewTotal = previewSubtotal + previewTaxTotal;
+
   return {
     quote: {
       id: quote.id,
@@ -424,6 +502,39 @@ export async function loadQuoteBundleData(quoteId: string): Promise<QuoteBundleD
       })),
     },
     files: filesWithUrls,
+    preview: {
+      // Raw `quotes` row - QuotePreview reads quote_number / customer_name /
+      // job_name / created_at directly off this.
+      quote: quote as Record<string, unknown>,
+      lines: previewLines,
+      subtotal: previewSubtotal,
+      taxLines: previewTaxLines.map((t: any) => ({
+        id: t.id,
+        name: t.name,
+        rate_percent: t.rate_percent,
+        amount: t.amount,
+      })),
+      taxTotal: previewTaxTotal,
+      total: previewTotal,
+      companyName: quote.cq_company_name ?? '',
+      companyAddress: quote.cq_company_address ?? '',
+      companyPhone: quote.cq_company_phone ?? '',
+      companyEmail: quote.cq_company_email ?? '',
+      companyLogoUrl: quote.cq_company_logo_url ?? '',
+      footerText: quote.cq_footer_text ?? '',
+      currency: effectiveCurrency,
+      // Only carry labour data when there's a visible labour sheet to render,
+      // matching the old bundle's "only emit 03-Labour-Sheet.pdf if visible
+      // lines exist" behaviour.
+      labor: labourLines.some((l: any) => l.is_visible !== false)
+        ? {
+            quote: quote as Record<string, unknown>,
+            components: components as Array<Record<string, unknown>>,
+            savedLines: labourLines as Array<Record<string, unknown>>,
+            quoteTaxes: quoteTaxes as Array<Record<string, unknown>>,
+          }
+        : null,
+    },
   };
 }
 

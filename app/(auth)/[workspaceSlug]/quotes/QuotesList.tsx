@@ -16,6 +16,7 @@ import type { JobStatus } from './actions';
 import JSZip from 'jszip';
 import { addQuoteToZip, downloadBlob, sanitizeFilename } from './lib/quote-bundle';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
+import { RecipientStatusBadge, type RecipientStatus } from '@/app/components/RecipientStatusBadge';
 
 type Quote = {
   id: string;
@@ -26,7 +27,27 @@ type Quote = {
   created_at: string;
   updated_at: string;
   job_status: string | null;
+  /** Recipient opened the public acceptance link. */
+  viewed_at: string | null;
+  /** True when the quote has at least one unresolved revision request. */
+  has_pending_revision: boolean;
 };
+
+/**
+ * Recipient-driven status for a quote's Status column.
+ * Action Required: recipient requested changes (pending revision request).
+ * Read: recipient opened the public quote link.
+ */
+// "Read" is TRANSIENT: only shown while the quote is still in its as-sent
+// baseline job_status ('unsent' / 'sent'). Once the owner moves it forward
+// (accepted / declined / deposit_paid / …) - manually or via any auto update
+// - "Read" disappears (2026-06-10).
+const QUOTE_SENT_BASELINE = new Set(['unsent', 'sent']);
+function quoteRecipientStatus(q: Quote): RecipientStatus {
+  if (q.has_pending_revision) return 'action_required';
+  if (q.viewed_at && QUOTE_SENT_BASELINE.has(q.job_status ?? 'unsent')) return 'read';
+  return null;
+}
 
 interface Props {
   quotes: Quote[];
@@ -532,10 +553,10 @@ export function QuotesList({
             </Link>
           )}
           <Link
-            href={`/${workspaceSlug}/templates`}
+            href={`/${workspaceSlug}/resources`}
             className="inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
-            Templates
+            Resource Library
           </Link>
         </div>
       </div>
@@ -661,7 +682,10 @@ export function QuotesList({
                     Draft
                   </span>
                 ) : (
-                  <JobStatusDropdown quoteId={q.id} currentStatus={q.job_status || 'unsent'} />
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <JobStatusDropdown quoteId={q.id} currentStatus={q.job_status || 'unsent'} />
+                    <RecipientStatusBadge status={quoteRecipientStatus(q)} />
+                  </div>
                 )}
               </div>
 

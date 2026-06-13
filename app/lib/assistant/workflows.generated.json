@@ -1,0 +1,63 @@
+{
+  "generatedAt": "2026-06-03T07:07:42.702Z",
+  "workflows": [
+    {
+      "workflowId": "create-component",
+      "screenKey": "components",
+      "trade": "any",
+      "title": "Create a component",
+      "description": "Walks a user through creating their first reusable component.",
+      "steps": [
+        {
+          "id": "create-component-1",
+          "title": "Open the Components page",
+          "elementId": "nav-components",
+          "until": "route:components",
+          "say": "This is where you manage every reusable component used in your quotes."
+        },
+        {
+          "id": "create-component-2",
+          "title": "Start a new component",
+          "elementId": "add-component",
+          "until": "exists:component-name",
+          "say": "Click \"+ Add Component\" to begin. Components are the building blocks of every quote."
+        },
+        {
+          "id": "create-component-3",
+          "title": "Name the component",
+          "elementId": "component-name",
+          "until": "input_non_empty:component-name",
+          "say": "Give it a recognisable name, e.g. \"Roofing Iron\" or \"Building Paper\"."
+        },
+        {
+          "id": "create-component-4",
+          "title": "Choose the component type",
+          "elementId": "component-type",
+          "until": "exists:component-measurement",
+          "say": "Pick \"Main Component\" for core materials, or \"Extra\" for one-off items."
+        },
+        {
+          "id": "create-component-5",
+          "title": "Choose the measurement type",
+          "elementId": "component-measurement",
+          "until": "selected:component-measurement",
+          "say": "How is it measured — area, lineal, quantity, or fixed?"
+        },
+        {
+          "id": "create-component-6",
+          "title": "Set the material rate",
+          "elementId": "component-rates",
+          "until": "input_non_empty:component-rates",
+          "say": "Enter the price per unit so quotes auto-calculate material totals."
+        },
+        {
+          "id": "create-component-7",
+          "title": "Save the component",
+          "elementId": "component-save",
+          "until": "clicked:component-save",
+          "say": "Save it to your library. You can edit it any time."
+        }
+      ]
+    }
+  ]
+}

@@ -27,6 +27,7 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
   const [currency, setCurrency] = useState('NZD');
   const [language, _setLanguage] = useState('en');
   const [measurement, setMeasurement] = useState<'metric' | 'imperial_ft' | 'imperial_rs'>('metric');
+  const [defaultTrade, setDefaultTrade] = useState('roofing');
 
   function handleNext() {
     if (!companyName.trim() || !fullName.trim()) {
@@ -47,6 +48,7 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
     formData.set('currency', currency);
     formData.set('language', language);
     formData.set('measurement', measurement);
+    formData.set('defaultTrade', defaultTrade);
     formData.set('skipRedirect', 'true');
 
     startTransition(async () => {
@@ -190,6 +192,43 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
                 >
                   <div className="font-medium text-sm">{opt.title}</div>
                   <div className="text-xs text-slate-500 mt-0.5">{opt.subtitle}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Default Trade */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-900 mb-1">Default Trade</label>
+            <p className="text-xs text-slate-500 mb-3">Sets measurement types and tools. You can change this per quote later.</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: 'roofing', label: 'Roofing' },
+                { value: 'cladding', label: 'Cladding' },
+                { value: 'electrical', label: 'Electrical' },
+                { value: 'plumbing', label: 'Plumbing' },
+                { value: 'landscaping', label: 'Landscaping' },
+                { value: 'concrete', label: 'Concrete' },
+                { value: 'flooring', label: 'Flooring' },
+                { value: 'tiling', label: 'Tiling' },
+                { value: 'painting', label: 'Painting' },
+                { value: 'fencing', label: 'Fencing' },
+                { value: 'insulation', label: 'Insulation' },
+                { value: 'construction', label: 'Construction' },
+                { value: 'foundations', label: 'Foundations' },
+                { value: 'generic', label: 'Other / Generic' },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setDefaultTrade(opt.value)}
+                  className={`px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition text-left ${
+                    defaultTrade === opt.value
+                      ? 'border-orange-500 bg-orange-50 text-orange-900'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  {opt.label}
                 </button>
               ))}
             </div>

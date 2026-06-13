@@ -10,6 +10,7 @@ interface OnboardingData {
   currency: string;
   language: string;
   measurement: 'metric' | 'imperial_ft' | 'imperial_rs';
+  defaultTrade?: string;
 }
 
 export async function completeOnboarding(companyId: string, data: OnboardingData) {
@@ -37,12 +38,46 @@ export async function completeOnboarding(companyId: string, data: OnboardingData
       default_language: data.language,
       default_measurement_system: data.measurement,
       onboarding_completed_at: new Date().toISOString(),
+      ...(data.defaultTrade ? { default_trade: data.defaultTrade as any } : {}),
     })
     .eq('id', companyId);
 
   if (error) {
     console.error('[completeOnboarding] Database error:', error);
     throw new Error(error.message);
+  }
+
+  // Seed the starter components for the SELECTED trade now that the trade is
+  // known (the standard email signup flow doesn't know the trade at
+  // company-creation time, so seeding was deferred to here). Idempotent: only
+  // seed if the company has no components yet, so re-running onboarding can't
+  // double-seed. Non-fatal: onboarding must still succeed if seeding fails.
+  try {
+    const admin = createAdminClient();
+    const { count } = await admin
+      .from('component_library')
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', companyId);
+    if (!count || count === 0) {
+      const bootstrapCollectionId = await ensureCompanyHasCollection(companyId, admin).catch(
+        (err) => {
+          console.error('[completeOnboarding] ensureCompanyHasCollection failed:', err);
+          return null;
+        },
+      );
+      const result = await seedTemplateComponents(
+        admin,
+        companyId,
+        data.defaultTrade ?? 'roofing',
+        bootstrapCollectionId,
+      );
+      console.log(
+        `[completeOnboarding] seeded ${result.seeded} components (trade=${data.defaultTrade ?? 'roofing'})`,
+        result.error ? `error=${result.error}` : '',
+      );
+    }
+  } catch (err) {
+    console.error('[completeOnboarding] seeding threw (non-fatal):', err);
   }
 
   console.log('[completeOnboarding] Success! Onboarding completed.');
@@ -64,6 +99,7 @@ export async function completeGoogleOnboarding(formData: FormData) {
     rawMeasurement === 'metric' || rawMeasurement === 'imperial_ft' || rawMeasurement === 'imperial_rs'
       ? rawMeasurement
       : 'imperial_rs';
+  const defaultTrade = String(formData.get('defaultTrade') || 'roofing').trim();
 
   if (!companyName || !fullName) {
     throw new Error('Company name and your name are required.');
@@ -90,6 +126,7 @@ export async function completeGoogleOnboarding(formData: FormData) {
       default_currency: currency,
       default_language: language,
       default_measurement_system: measurement,
+      default_trade: defaultTrade as any,
       default_tax_rate: 15.0,
       onboarding_completed_at: new Date().toISOString(),
     })
@@ -139,7 +176,7 @@ export async function completeGoogleOnboarding(formData: FormData) {
 
   // Seed canonical starter components into the new company. Non-fatal:
   // onboarding must still succeed if this fails.
-  await seedTemplateComponents(supabaseAdmin, company.id, bootstrapCollectionId);
+  await seedTemplateComponents(supabaseAdmin, company.id, defaultTrade, bootstrapCollectionId);
 
   // Skip redirect if requested (copilot intro step handles navigation)
   const skipRedirect = formData.get('skipRedirect') === 'true';

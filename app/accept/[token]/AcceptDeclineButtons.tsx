@@ -12,18 +12,50 @@ interface AcceptDeclineProps {
    * declined so they can still e.g. download a copy of the quote.
    */
   secondaryAction?: React.ReactNode;
+  /**
+   * Server-truth decision state (fix #4). When the quote was already
+   * accepted/declined, the page renders the full document + this control
+   * with Accept/Decline DISABLED and a status banner, while Request Changes
+   * (middleAction) stays live. Driven by the server-fetched timestamps, not
+   * just client state, so a refresh after deciding still shows the banner.
+   */
+  initialDecision?: {
+    status: 'accepted' | 'declined';
+    decidedAt: string;
+  } | null;
 }
 
-export function AcceptDeclineButtons({ token, middleAction, secondaryAction }: AcceptDeclineProps) {
-  const [status, setStatus] = useState<'pending' | 'accepted' | 'declined'>('pending');
+function formatDecisionDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-NZ', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+export function AcceptDeclineButtons({
+  token,
+  middleAction,
+  secondaryAction,
+  initialDecision = null,
+}: AcceptDeclineProps) {
+  const [status, setStatus] = useState<'pending' | 'accepted' | 'declined'>(
+    initialDecision ? initialDecision.status : 'pending',
+  );
+  const [decidedAt, setDecidedAt] = useState<string | null>(
+    initialDecision ? initialDecision.decidedAt : null,
+  );
   const [loading, setLoading] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'accept' | 'decline' | null>(null);
+
+  const decided = status !== 'pending';
 
   async function handleRespond(action: 'accept' | 'decline') {
     setLoading(true);
     try {
       await respondToQuote(token, action);
       setStatus(action === 'accept' ? 'accepted' : 'declined');
+      setDecidedAt(new Date().toISOString());
     } catch (err) {
       console.error('Failed to respond to quote:', err);
       alert('Something went wrong. Please try again.');
@@ -33,59 +65,53 @@ export function AcceptDeclineButtons({ token, middleAction, secondaryAction }: A
     }
   }
 
-  if (status === 'accepted') {
-    return (
-      <>
-        <div className="bg-emerald-50 rounded-xl p-6 border border-emerald-200 text-center">
-          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-emerald-100 flex items-center justify-center">
-            <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-emerald-800">Quote Accepted</h3>
-          <p className="text-sm text-emerald-600 mt-1">Thank you! The company has been notified.</p>
-        </div>
-        {secondaryAction ? <div className="flex justify-center mt-4">{secondaryAction}</div> : null}
-      </>
-    );
-  }
-
-  if (status === 'declined') {
-    return (
-      <>
-        <div className="bg-red-50 rounded-xl p-6 border border-red-200 text-center">
-          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-red-100 flex items-center justify-center">
-            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-red-800">Quote Declined</h3>
-          <p className="text-sm text-red-600 mt-1">The company has been notified of your decision.</p>
-        </div>
-        {secondaryAction ? <div className="flex justify-center mt-4">{secondaryAction}</div> : null}
-      </>
-    );
-  }
-
   return (
     <>
+      {/* Status banner (fix #4): explains why Accept/Decline are disabled. */}
+      {decided ? (
+        <div
+          className={`rounded-xl p-4 border text-center ${
+            status === 'accepted'
+              ? 'bg-emerald-50 border-emerald-200'
+              : 'bg-red-50 border-red-200'
+          }`}
+        >
+          <p
+            className={`text-sm font-semibold ${
+              status === 'accepted' ? 'text-emerald-800' : 'text-red-800'
+            }`}
+          >
+            You {status} this quote{decidedAt ? ` on ${formatDecisionDate(decidedAt)}` : ''}.
+          </p>
+          <p
+            className={`text-xs mt-1 ${
+              status === 'accepted' ? 'text-emerald-600' : 'text-red-600'
+            }`}
+          >
+            The company has been notified. You can still request changes below.
+          </p>
+        </div>
+      ) : null}
+
       <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 text-center space-y-4">
-        <p className="text-sm text-slate-600">
-          Please accept or decline this quote using the buttons below.
-        </p>
+        {!decided ? (
+          <p className="text-sm text-slate-600">
+            Please accept or decline this quote using the buttons below.
+          </p>
+        ) : null}
         <div className="flex gap-3 justify-center flex-wrap">
           <button
             onClick={() => setConfirmAction('accept')}
-            disabled={loading}
-            className="px-6 py-2.5 text-sm font-semibold rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-all hover:shadow-[0_0_12px_rgba(16,185,129,0.4)] disabled:opacity-50"
+            disabled={loading || decided}
+            className="px-6 py-2.5 text-sm font-semibold rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-all hover:shadow-[0_0_12px_rgba(16,185,129,0.4)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
           >
             Accept Quote
           </button>
           {middleAction}
           <button
             onClick={() => setConfirmAction('decline')}
-            disabled={loading}
-            className="px-6 py-2.5 text-sm font-semibold rounded-full bg-white text-red-600 border border-red-300 hover:bg-red-50 transition-all disabled:opacity-50"
+            disabled={loading || decided}
+            className="px-6 py-2.5 text-sm font-semibold rounded-full bg-white text-red-600 border border-red-300 hover:bg-red-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Decline Quote
           </button>

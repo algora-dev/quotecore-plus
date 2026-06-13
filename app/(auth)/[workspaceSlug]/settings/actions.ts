@@ -72,20 +72,26 @@ export async function updateCompanySettings(
 }
 
 /**
- * Update the per-user toggle for receiving in-app alerts via email.
- * Security emails are not affected by this flag and always send.
+ * NOTE: the old per-user `updateEmailNotificationsEnabled` master was removed
+ * in favour of per-event email toggles in the Message Center (see
+ * inbox/settings-actions.ts). The `users.email_notifications_enabled` column
+ * is retained in the DB for back-compat but is no longer written or read.
  */
-export async function updateEmailNotificationsEnabled(enabled: boolean): Promise<void> {
+
+/** Toggle the per-user Chat Assistant (Q) visibility. */
+export async function updateAssistantEnabled(enabled: boolean): Promise<void> {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
   const { error } = await supabase
     .from('users')
-    .update({ email_notifications_enabled: enabled })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .update({ assistant_enabled: enabled } as any)
     .eq('id', profile.id);
 
   if (error) {
-    console.error('[Settings] updateEmailNotificationsEnabled failed:', error);
-    throw new Error('Failed to update notification preference');
+    console.error('[Settings] updateAssistantEnabled failed:', error);
+    throw new Error('Failed to update Chat Assistant preference');
   }
+  revalidatePath('/[workspaceSlug]', 'layout');
 }

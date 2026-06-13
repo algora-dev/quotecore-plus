@@ -1,13 +1,16 @@
 /**
  * Recipient resolution for company-scoped alert emails.
  *
- * For an in-app alert that targets a company (quote accepted/declined, revision
- * requested), we email every user who:
- *   - belongs to that company
- *   - has email_notifications_enabled = TRUE
+ * For an in-app alert that targets a company (quote/order/invoice events), we
+ * email every user who belongs to that company and has an email address.
+ *
+ * Email gating is now PER-EVENT at the COMPANY level via the Message Center
+ * matrix (`emailAlertEnabled`), checked at each call site. The old per-user
+ * `users.email_notifications_enabled` master has been removed, so this helper
+ * NO LONGER filters on it (the column stays in the DB for back-compat).
  *
  * For security emails we never use this helper - those go to the single user
- * the event is about, regardless of the toggle.
+ * the event is about, regardless of any toggle.
  */
 
 import 'server-only';
@@ -20,8 +23,9 @@ export type AlertRecipient = {
 };
 
 /**
- * Returns the company-scoped users who should receive an in-app alert email.
- * Respects the per-user email_notifications_enabled toggle.
+ * Returns the company-scoped users who should receive an alert email.
+ * Every company user with an email is included; per-event gating happens at
+ * the call site via `emailAlertEnabled`.
  *
  * If `preferUserId` is supplied, that user is moved to the front of the list
  * (used to keep the quote creator in slot 0 for nicer "Hi {name}" greetings
@@ -34,16 +38,15 @@ export async function getCompanyAlertRecipients(
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from('users')
-    .select('id, email, full_name, email_notifications_enabled')
-    .eq('company_id', companyId)
-    .eq('email_notifications_enabled', true);
+    .select('id, email, full_name')
+    .eq('company_id', companyId);
 
   if (error) {
     console.error('[email] getCompanyAlertRecipients failed:', error);
     return [];
   }
   const list: AlertRecipient[] = (data ?? [])
-    .filter((u): u is { id: string; email: string; full_name: string | null; email_notifications_enabled: boolean } =>
+    .filter((u): u is { id: string; email: string; full_name: string | null } =>
       Boolean(u && u.email)
     )
     .map((u) => ({ id: u.id, email: u.email, fullName: u.full_name ?? null }));

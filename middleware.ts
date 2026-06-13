@@ -19,6 +19,10 @@ const PUBLIC_PATHS = [
                    //  HMAC-signed token in the URL is the access gate.
   '/orders',       // Public supplier order pages. Random UUID token in
                    //  the URL is the access gate.
+  '/invoice',      // Public customer invoice pages. Random UUID public_token
+                   //  in the URL is the access gate.
+  '/file',         // Hosted attachment downloads (token-gated). Already
+                   //  HMAC-verified at the route level.
 ];
 
 // Paths reachable when the user has an AAL1 session but still needs to clear 2FA.

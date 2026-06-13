@@ -5,6 +5,7 @@ import { BackButton } from '@/app/components/BackButton';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { FEATURE_MIN_PLAN } from '@/app/lib/billing/features';
+import { getTradeLabels } from '@/app/lib/trades/labels';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,14 @@ export default async function FlashingsPage(props: Props) {
   const { company } = await loadCompanyContext();
   const ent = await loadCompanyEntitlements(company.id);
 
+  // Trade-aware label: 'Flashings' for roofing, 'Drawings & Images' for all
+  // other trades. Display copy only - internal identifiers unchanged.
+  const trade = (company as { default_trade?: string }).default_trade;
+  const labels = getTradeLabels(trade);
+  const featureLabel = labels.featureLabel;
+  const featureLabelSingular = labels.featureLabelSingular;
+  const isRoofing = trade === 'roofing' || trade == null;
+
   // Hard feature gate. Flashings is plan-gated, not just usage-gated, so we
   // refuse to render the library at all if the company's effective plan
   // doesn't include it. We render an upgrade splash here rather than
@@ -28,7 +37,7 @@ export default async function FlashingsPage(props: Props) {
       <section className="space-y-5">
         <BackButton />
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Flashings</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">{featureLabel}</h1>
           <p className="text-sm text-slate-500 mt-1">Available on the Professional plan and above.</p>
         </div>
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
@@ -39,9 +48,9 @@ export default async function FlashingsPage(props: Props) {
               </svg>
             </div>
             <div className="min-w-0">
-              <h2 className="text-lg font-semibold text-slate-900">Flashings need a higher plan</h2>
+              <h2 className="text-lg font-semibold text-slate-900">{featureLabel} need a higher plan</h2>
               <p className="text-sm text-slate-600 mt-2">
-                The flashings drawing tool and reusable library are available on the {requiredPlan} plan or above. Upgrade your account to start building a flashings library and attach them to material orders.
+                The {featureLabel.toLowerCase()} drawing tool and reusable library are available on the {requiredPlan} plan or above. Upgrade your account to start building a {featureLabel.toLowerCase()} library and attach them to material orders.
               </p>
               <div className="mt-4">
                 <Link
@@ -64,8 +73,8 @@ export default async function FlashingsPage(props: Props) {
     <section className="space-y-5">
       <BackButton />
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Flashings</h1>
-        <p className="text-sm text-slate-500 mt-1">Manage flashing designs for material orders.</p>
+        <h1 className="text-2xl font-semibold text-slate-900">{featureLabel}</h1>
+        <p className="text-sm text-slate-500 mt-1">Manage {featureLabelSingular.toLowerCase()} designs for material orders.</p>
       </div>
       <FlashingList
         initialFlashings={flashings}
@@ -73,6 +82,10 @@ export default async function FlashingsPage(props: Props) {
         flashingLimit={ent.flashingLimit}
         flashingCount={ent.flashingCount}
         effectivePlanCode={ent.effectivePlanCode}
+        isRoofing={isRoofing}
+        featureLabel={featureLabel}
+        featureLabelSingular={featureLabelSingular}
+        isOverStorage={ent.isOverStorage}
       />
     </section>
   );

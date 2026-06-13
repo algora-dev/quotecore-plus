@@ -6,10 +6,6 @@
       "schedule": "17 4 * * *"
     },
     {
-      "path": "/api/cron/dispatch-scheduled-messages",
-      "schedule": "*/30 * * * *"
-    },
-    {
       "path": "/api/cron/sweep-orphan-objects",
       "schedule": "33 5 * * *"
     },

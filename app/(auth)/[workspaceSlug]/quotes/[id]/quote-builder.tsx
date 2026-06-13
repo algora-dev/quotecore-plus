@@ -25,7 +25,6 @@ import { ConfirmQuoteButton } from './ConfirmQuoteButton';
 import { CurrencySelector } from './CurrencySelector';
 import { FilesManager } from './FilesManager';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
-import { useCopilot } from '@/app/components/copilot/CopilotProvider';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
@@ -51,9 +50,14 @@ interface Props {
   planUrl: string | null;
   planName: string | null;
   supportingFiles: SupportingFile[];
+  hasExistingTakeoff?: boolean;
+  linesImageUrl?: string | null;
+  planStoragePath?: string | null;
   takeoffData?: any[];
   externalPhase?: Phase; // NEW: For URL-based navigation (v2)
   onPhaseChange?: (phase: Phase) => void; // NEW: Callback when phase changes
+  /** When true the company is over storage - block file uploads. */
+  isOverStorage?: boolean;
 }
 
 export function QuoteBuilder({
@@ -68,9 +72,13 @@ export function QuoteBuilder({
   planUrl,
   planName,
   supportingFiles,
+  hasExistingTakeoff = false,
+  linesImageUrl = null,
+  planStoragePath = null,
   takeoffData: _takeoffData = [],
   externalPhase,
-  onPhaseChange
+  onPhaseChange,
+  isOverStorage,
 }: Props) {
   console.log('[QuoteBuilder] Received components:', initialComponents.length, initialComponents.map(c => ({ name: c.name, type: c.component_type })));
   const [internalPhase, setInternalPhase] = useState<Phase>('areas');
@@ -89,8 +97,6 @@ export function QuoteBuilder({
   const tradeLabels = getTradeLabels((quote as { trade?: string }).trade);
   // areaIsOptional covers both cladding and generic (anything that doesn't require pitch).
   const quoteIsGeneric = tradeLabels.areaIsOptional;
-  const { state: copilotState } = useCopilot();
-  
   // Update quote state when props change (e.g., after currency change)
   useEffect(() => {
     setQuote(initialQuote);
@@ -108,8 +114,6 @@ export function QuoteBuilder({
   const [marginSaving, setMarginSaving] = useState(false);
   
   const [roofAreas, setRoofAreas] = useState(initialRoofAreas);
-  const copilotActive = copilotState.enabled && copilotState.activeGuide === 'quote-builder';
-  const hasUnconfirmedArea = roofAreas.some(a => !a.is_locked);
   const [roofAreaEntries, setRoofAreaEntries] = useState(initialRoofAreaEntries);
   const [components, setComponents] = useState(initialComponents);
   const [entries, setEntries] = useState(initialEntries);
@@ -275,6 +279,7 @@ export function QuoteBuilder({
     } else if (comp?.measurement_type === 'lineal') {
       rawValue = linearInputToMetric(rawInputValue, quote.measurement_system);
     }
+    // volume_3d: rawInputValue is already in m³ (converted in ExpandableComponent before calling)
     const areaPitch = comp?.quote_roof_area_id
       ? roofAreas.find(a => a.id === comp.quote_roof_area_id)?.calc_pitch_degrees ?? null
       : null;
@@ -502,6 +507,10 @@ export function QuoteBuilder({
         planUrl={planUrl}
         planName={planName}
         supportingFiles={supportingFiles}
+        hasExistingTakeoff={hasExistingTakeoff}
+        linesImageUrl={linesImageUrl}
+        planStoragePath={planStoragePath}
+        isOverStorage={isOverStorage}
       />
 
       <nav className="flex gap-1 p-1 bg-slate-100 rounded-lg">
@@ -542,8 +551,8 @@ export function QuoteBuilder({
               onRemove={handleRemoveArea}
             />
           ))}
-          {/* Hide add-area input during copilot if there's an unconfirmed area */}
-          {(!copilotActive || !hasUnconfirmedArea) && (
+          {/* Add-area input. (Previously hidden mid-Copilot-guide when an area
+              was unconfirmed; Copilot removed, so it always shows now.) */}
           <div className="flex gap-2" data-copilot="quote-add-area-row">
             <input
               value={newAreaLabel}
@@ -562,7 +571,6 @@ export function QuoteBuilder({
               {tradeLabels.addAreaCta}
             </button>
           </div>
-          )}
           <div className="flex justify-end">
             <button
               onClick={() => setPhase('components')}
@@ -669,6 +677,12 @@ export function QuoteBuilder({
         <div className="space-y-4" data-copilot="quote-extras-phase">
           <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
             <h3 className="font-semibold text-slate-900">Extras</h3>
+            <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+              <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>You can only add pre-saved component extras here. To add fully custom &ldquo;Extras&rdquo; lines, use the customer quote editor tool after finishing this quote builder phase.</span>
+            </div>
             {extraComps.map(comp => (
               <ExpandableComponent
                 key={comp.id}
@@ -1297,10 +1311,21 @@ function ExpandableComponent({
   const showCombineButton =
     isLinearLike && !hasCombinedEntry && compEntries.length >= 2 && !!onCombineEntries;
   const showSplitButton = isLinearLike && hasCombinedEntry && !!onSplitEntries;
+  const isVolume3d = (comp.measurement_type as string) === 'volume_3d';
+  const isLxhFreestyle = (comp.measurement_type as string) === 'length_x_height_freestyle' || (comp.measurement_type as string) === 'multi_lineal_lxh_freestyle';
   const [expanded, setExpanded] = useState(false);
   const [adding, setAdding] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  // volume_3d: separate L / W / D inputs
+  const [vol3dL, setVol3dL] = useState('');
+  const [vol3dW, setVol3dW] = useState('');
+  const [vol3dD, setVol3dD] = useState('');
+  const vol3dRef = useRef<HTMLInputElement>(null);
+  // length_x_height_freestyle / multi_lineal_lxh_freestyle: L × H inputs
+  const [lxhFsL, setLxhFsL] = useState('');
+  const [lxhFsH, setLxhFsH] = useState('');
+  const lxhFsRef = useRef<HTMLInputElement>(null);
   const unit = getUnitLabel(comp.measurement_type as any, quote.measurement_system);
   const label = entryLabel(comp.measurement_type);
   const addLabel = addMoreLabel(comp.measurement_type);
@@ -1331,10 +1356,42 @@ function ExpandableComponent({
     inputRef.current?.focus();
   }
 
+  async function handleSubmitLxhFreestyle() {
+    const L = Number(lxhFsL);
+    const H = Number(lxhFsH);
+    if (!L || L <= 0 || !H || H <= 0) return;
+    const Lm = linearInputToMetric(L, quote.measurement_system);
+    const Hm = linearInputToMetric(H, quote.measurement_system);
+    await onAddEntry(comp.id, Lm * Hm);
+    setLxhFsL('');
+    setLxhFsH('');
+    lxhFsRef.current?.focus();
+  }
+
+  async function handleSubmitVolume3d() {
+    const L = Number(vol3dL);
+    const W = Number(vol3dW);
+    const D = Number(vol3dD);
+    if (!L || L <= 0 || !W || W <= 0 || !D || D <= 0) return;
+    // Convert each dimension to metric then multiply.
+    const Lm = linearInputToMetric(L, quote.measurement_system);
+    const Wm = linearInputToMetric(W, quote.measurement_system);
+    const Dm = linearInputToMetric(D, quote.measurement_system);
+    await onAddEntry(comp.id, Lm * Wm * Dm);
+    setVol3dL('');
+    setVol3dW('');
+    setVol3dD('');
+    vol3dRef.current?.focus();
+  }
+
   function startAdding() {
     setAdding(true);
     setExpanded(true);
-    setTimeout(() => inputRef.current?.focus(), 50);
+    setTimeout(() => {
+      if (isVolume3d) { vol3dRef.current?.focus(); }
+      else if (isLxhFreestyle) { lxhFsRef.current?.focus(); }
+      else { inputRef.current?.focus(); }
+    }, 50);
   }
 
   return (
@@ -1515,6 +1572,91 @@ function ExpandableComponent({
           )}
 
           {adding ? (
+            isLxhFreestyle ? (
+              // Length × Height freestyle: L and H inputs.
+              <div className="space-y-1 mt-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {([
+                    { label: 'L', val: lxhFsL, set: setLxhFsL },
+                    { label: 'H', val: lxhFsH, set: setLxhFsH },
+                  ] as { label: string; val: string; set: (v: string) => void }[]).map(({ label: lbl, val, set }) => (
+                    <>
+                      <span key={`${lbl}-lbl`} className="text-xs text-slate-500 w-4">{lbl}</span>
+                      <input
+                        key={lbl}
+                        ref={lbl === 'L' ? lxhFsRef : undefined}
+                        type="number"
+                        step="0.01"
+                        value={val}
+                        onChange={e => set(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') void handleSubmitLxhFreestyle(); }}
+                        placeholder="0"
+                        className="w-20 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+                      />
+                    </>
+                  ))}
+                  <span className="text-xs text-slate-400">{getUnitLabel('lineal' as 'lineal', quote.measurement_system)}</span>
+                </div>
+                {lxhFsL && lxhFsH && Number(lxhFsL) > 0 && Number(lxhFsH) > 0 && (
+                  <p className="text-xs text-slate-400">
+                    = {(linearInputToMetric(Number(lxhFsL), quote.measurement_system) *
+                        linearInputToMetric(Number(lxhFsH), quote.measurement_system)).toFixed(2)} m²
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <button onClick={() => void handleSubmitLxhFreestyle()}
+                    disabled={!lxhFsL || !lxhFsH || Number(lxhFsL) <= 0 || Number(lxhFsH) <= 0}
+                    className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 transition-all">
+                    Add
+                  </button>
+                  <button onClick={() => { setAdding(false); setLxhFsL(''); setLxhFsH(''); }}
+                    className="px-2 py-0.5 text-xs text-slate-500 hover:text-slate-700">Done</button>
+                </div>
+              </div>
+            ) : isVolume3d ? (
+              // Volume (L × W × D): three separate dimension inputs.
+              <div className="space-y-1 mt-1">
+                <div className="flex items-center gap-2">
+                  {[
+                    { label: 'L', val: vol3dL, set: setVol3dL, ref: vol3dRef },
+                    { label: 'W', val: vol3dW, set: setVol3dW, ref: undefined },
+                    { label: 'D', val: vol3dD, set: setVol3dD, ref: undefined },
+                  ].map(({ label: lbl, val, set }) => (
+                    <>
+                      <span key={`${lbl}-label`} className="text-xs text-slate-500 w-4">{lbl}</span>
+                      <input
+                        key={lbl}
+                        ref={lbl === 'L' ? vol3dRef : undefined}
+                        type="number"
+                        step="0.01"
+                        value={val}
+                        onChange={e => set(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') void handleSubmitVolume3d(); }}
+                        placeholder="0"
+                        className="w-20 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+                      />
+                    </>
+                  ))}
+                  <span className="text-xs text-slate-400">{unit}</span>
+                </div>
+                {vol3dL && vol3dW && vol3dD && Number(vol3dL) > 0 && Number(vol3dW) > 0 && Number(vol3dD) > 0 && (
+                  <p className="text-xs text-slate-400">
+                    = {(linearInputToMetric(Number(vol3dL), quote.measurement_system) *
+                        linearInputToMetric(Number(vol3dW), quote.measurement_system) *
+                        linearInputToMetric(Number(vol3dD), quote.measurement_system)).toFixed(3)} m³
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <button onClick={() => void handleSubmitVolume3d()}
+                    disabled={!vol3dL || !vol3dW || !vol3dD || Number(vol3dL) <= 0 || Number(vol3dW) <= 0 || Number(vol3dD) <= 0}
+                    className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 transition-all">
+                    Add
+                  </button>
+                  <button onClick={() => { setAdding(false); setVol3dL(''); setVol3dW(''); setVol3dD(''); }}
+                    className="px-2 py-0.5 text-xs text-slate-500 hover:text-slate-700">Done</button>
+                </div>
+              </div>
+            ) : (
             <div className="flex items-center gap-2 mt-1">
               <input
                 ref={inputRef}
@@ -1549,6 +1691,7 @@ function ExpandableComponent({
                 Done
               </button>
             </div>
+            )
           ) : (
             <button
               onClick={startAdding}

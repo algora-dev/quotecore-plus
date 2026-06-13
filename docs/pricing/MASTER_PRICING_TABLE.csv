@@ -1,0 +1,21 @@
+Section,Feature,Free Trial,Free,Starter,Pro
+,Price,Free for 14 days,Free forever,$19/mo,$39/mo
+,Best for,Trying the full app,Light/occasional use,Running the business,Going pro + automating
+CORE,Quotes per month,10,5,25,100
+CORE,Components,10,10,20,30
+CORE,Send quotes by link,Yes,Yes,Yes,Yes
+CORE,Send quotes by email (QuoteCore+),Yes,—,Yes,Yes
+CORE,Accept / decline / change alerts,Yes,Yes (bell + email),Yes,Yes
+CORE,Message Center,Yes,—,Yes,Yes
+SALES,Orders per month,5,—,5,20
+SALES,Invoices per month,5,—,5,20
+DESIGN,Drawings & Images,10,—,—,20
+DESIGN,Digital Measuring (takeoff),Yes,—,—,Yes
+DESIGN,Flashings,5,—,—,10
+LIBRARY,Catalogs,2,—,—,3
+LIBRARY,Attachments,3,—,—,10
+AUTOMATION,Follow-up system,Yes,—,—,Yes
+AUTOMATION,Activity system,Yes,—,—,Yes
+ASSISTANT,AI chat tokens per month,1000000,600000,1500000,3000000
+LIMITS,Storage,100 MB,50 MB,500 MB,3 GB
+LIMITS,Team seats,1,1,1,1

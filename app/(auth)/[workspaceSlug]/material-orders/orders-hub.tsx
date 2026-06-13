@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { MaterialOrderTemplateRow, MaterialOrderRow } from '@/app/lib/types';
-import { TemplateManager } from './template-manager-new';
 import { OrderList } from './order-list';
+import { OrderLayoutPickerModal } from './OrderLayoutPickerModal';
 
 interface Props {
   workspaceSlug: string;
@@ -13,17 +13,34 @@ interface Props {
 }
 
 export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrders }: Props) {
-  const [showTemplates, setShowTemplates] = useState(false);
+  const router = useRouter();
+  // Which entry point opened the layout picker: 'custom' -> blank create,
+  // 'from-quote' -> quote selector first. null = picker closed.
+  const [pickerFor, setPickerFor] = useState<'custom' | 'from-quote' | null>(null);
+
+  const handleLayoutSelected = (choice: 'line_by_line' | 'single' | 'double') => {
+    // 3 cards -> 2 layout families. Single/Double both use the 'components'
+    // editor, pre-set to that column via the `column` param.
+    const layout = choice === 'line_by_line' ? 'line_by_line' : 'components';
+    const columnParam = choice === 'single' || choice === 'double' ? `&column=${choice}` : '';
+    const base =
+      pickerFor === 'from-quote'
+        ? `/${workspaceSlug}/material-orders/order-from-quote`
+        : `/${workspaceSlug}/material-orders/create`;
+    setPickerFor(null);
+    router.push(`${base}?layout=${layout}${columnParam}`);
+  };
 
   return (
     <div className="space-y-6">
       {/* Action Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-copilot="mo-action-cards">
         {/* Create Custom Order */}
-        <Link
-          href={`/${workspaceSlug}/material-orders/create`}
+        <button
+          type="button"
+          onClick={() => setPickerFor('custom')}
           data-copilot="mo-custom-order"
-          className="block p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
+          className="block w-full text-left p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
         >
           <div className="flex items-start gap-4">
             <div className="p-3 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
@@ -36,13 +53,14 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
               <p className="text-sm text-slate-600">Start from scratch with a blank order form</p>
             </div>
           </div>
-        </Link>
+        </button>
 
         {/* Order from Quote */}
-        <Link
-          href={`/${workspaceSlug}/material-orders/order-from-quote`}
+        <button
+          type="button"
+          onClick={() => setPickerFor('from-quote')}
           data-copilot="mo-order-from-quote"
-          className="block p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
+          className="block w-full text-left p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
         >
           <div className="flex items-start gap-4">
             <div className="p-3 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
@@ -55,11 +73,11 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
               <p className="text-sm text-slate-600">Pre-populate with data from an existing quote</p>
             </div>
           </div>
-        </Link>
+        </button>
 
-        {/* Manage Templates */}
+        {/* Order Templates - managed in Resource Library */}
         <button
-          onClick={() => setShowTemplates(true)}
+          onClick={() => router.push(`/${workspaceSlug}/resources?tab=order`)}
           className="block w-full p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group text-left"
         >
           <div className="flex items-start gap-4">
@@ -69,12 +87,19 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
               </svg>
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 mb-1">Supplier Templates</h3>
+              <h3 className="font-semibold text-slate-900 mb-1">Order Templates</h3>
               <p className="text-sm text-slate-600">Manage reusable supplier info ({initialTemplates.length} saved)</p>
             </div>
           </div>
         </button>
       </div>
+
+      {pickerFor && (
+        <OrderLayoutPickerModal
+          onSelect={handleLayoutSelected}
+          onClose={() => setPickerFor(null)}
+        />
+      )}
 
       {/* Recent Orders Section */}
       <div className="bg-white border border-slate-200 rounded-xl p-6">
@@ -82,13 +107,7 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
         <OrderList orders={recentOrders} workspaceSlug={workspaceSlug} />
       </div>
 
-      {/* Template Manager Modal */}
-      {showTemplates && (
-        <TemplateManager
-          initialTemplates={initialTemplates}
-          onClose={() => setShowTemplates(false)}
-        />
-      )}
+
     </div>
   );
 }

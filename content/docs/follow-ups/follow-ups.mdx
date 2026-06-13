@@ -1,0 +1,92 @@
+---
+title: Automated follow-ups
+description: Schedule automatic chase emails for your quotes/orders — set it once and the app sends at the right time.
+order: 1
+status: published
+updated: 2026-06-05
+---
+
+# Automated follow-ups
+
+Automated follow-ups let you schedule a chase email for a quote. You pick the template, the trigger, and the wait time — the app sends the email automatically at the calculated time.
+
+<Callout type="note">
+Automated follow-ups are available on **Pro and above**.
+</Callout>
+
+## Where to find it
+
+Open a quote and go to its **summary page**. In the **Activity** card, switch to the **Scheduled** tab, then click **Schedule follow-up**.
+
+## Setting up a follow-up
+
+The "Schedule a follow-up" modal has the following fields:
+
+### Email template
+
+Pick which [email template](/docs/templates/email-templates) to send. You need at least one template saved before you can schedule a follow-up. Templates are managed under **Resource Library > Message**.
+
+### Trigger
+
+Choose when the clock starts:
+
+| Trigger | When it fires |
+|---------|--------------|
+| After the quote was sent | Relative to the first time you sent the quote (only available after at least one send). |
+| After the customer accepts | Fires when the customer accepts the quote, plus your wait time. Can be scheduled before acceptance happens — the app parks it and activates it when the event occurs. |
+| After the customer declines | Same as above, but triggered by a decline. |
+| Starting now | Starts counting from the moment you schedule it. |
+
+### Wait
+
+Set how many **hours** or **days** after the trigger the email should send.
+
+The modal shows a projected send time so you can see exactly when the email would go out.
+
+### Recipient
+
+Pre-filled from the most recent send for this quote. Change the email address and name if needed.
+
+### Safety options
+
+Two optional safety toggles appear below the recipient:
+
+- **Cancel automatically if the customer accepts, declines, or requests a change first** — recommended. If the customer responds before the scheduled time, the app cancels the follow-up so it doesn't fire after they've already replied. Available for "After quote sent" and "Starting now" triggers only.
+- **Avoid evenings (8pm–8am) and weekends** — if the calculated send time falls in a quiet window, the app pushes it to the next allowed slot.
+
+> The app will show a heads-up if your delay is 2 days or less. Most contractors find 5–7 days works best for a first follow-up.
+
+Click **Schedule send** to confirm.
+
+## Viewing and managing follow-ups
+
+Scheduled follow-ups appear in the **Scheduled** tab of the Activity card on the quote summary.
+
+Each follow-up row shows:
+
+- Status badge (Scheduled, Sent, Cancelled, Suppressed, Failed)
+- Template name and recipient
+- When it will fire (or "Waiting for acceptance / decline" for pre-event rules)
+- Trigger label
+
+Active (Scheduled) follow-ups have two action buttons:
+
+- **Send now** — sends the email immediately instead of waiting. Useful if you want to fire the follow-up right away.
+- **Cancel** — cancels the scheduled send. The row moves to the history section.
+
+Past follow-ups are collapsed under a "Show N past follow-ups" link to keep the panel tidy.
+
+## What each status means
+
+| Status | Meaning |
+|--------|---------|
+| **Scheduled** | Waiting to fire at the calculated time. |
+| **Sent** | Email was sent successfully. |
+| **Cancelled** | Cancelled — either by you, or automatically because the customer responded (if the safety toggle was on). |
+| **Suppressed** | Not sent because the recipient is on the suppression list (they unsubscribed from our emails or similar). |
+| **Failed** | Send attempted but an error occurred. |
+
+## Related
+
+- [Sending and acceptance](/docs/customer-facing/sending-and-acceptance)
+- [Email templates](/docs/templates/email-templates)

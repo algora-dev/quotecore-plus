@@ -1,6 +1,7 @@
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadCustomerQuoteLines, loadCustomerQuoteTemplates } from '../../actions';
 import { loadQuoteTaxes, loadCompanyTaxes } from '@/app/lib/taxes/actions';
+import { loadComponentCollections, loadComponentLibrary } from '../../../components/actions';
 import { CustomerQuoteEditor } from './CustomerQuoteEditor';
 import { getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
@@ -12,7 +13,7 @@ export default async function CustomerQuoteEditPage({
   const { workspaceSlug, id } = await params;
   await requireCompanyContext();
 
-  const [quote, roofAreas, components, savedLines, templates, quoteTaxes, companyTaxes] = await Promise.all([
+  const [quote, roofAreas, components, savedLines, templates, quoteTaxes, companyTaxes, collections, companyComponents] = await Promise.all([
     loadQuote(id),
     loadQuoteRoofAreas(id),
     loadQuoteComponents(id),
@@ -20,6 +21,8 @@ export default async function CustomerQuoteEditPage({
     loadCustomerQuoteTemplates(),
     loadQuoteTaxes(id),
     loadCompanyTaxes(),
+    loadComponentCollections(),
+    loadComponentLibrary(),
   ]);
   
   const supabase = await createSupabaseServerClient();
@@ -70,6 +73,12 @@ export default async function CustomerQuoteEditPage({
         rate_percent: Number(t.rate_percent),
       }))}
       taxAudience="quote"
+      collections={(collections ?? []).map((c) => ({ id: c.id, name: c.name }))}
+      componentLibrary={(companyComponents ?? []).map((c) => ({
+        id: c.id as string,
+        name: c.name as string,
+        collection_id: (c.collection_id as string | null) ?? null,
+      }))}
     />
   );
 }

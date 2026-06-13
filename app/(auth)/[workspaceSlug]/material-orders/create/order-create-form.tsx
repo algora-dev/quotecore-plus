@@ -13,14 +13,69 @@ import {
   convertAreaFt2,
 } from '@/app/lib/measurements/conversions';
 import type { ExistingOrderData } from './order-loader';
+import type { LineByLineData } from '../lineByLine';
 import { BackButton } from '@/app/components/BackButton';
 import { AlertModal } from '@/app/components/AlertModal';
+import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
+import { CatalogSearchModal } from '../../quotes/[id]/customer-edit/CatalogSearchModal';
+import { OrderLineByLineEditor } from './OrderLineByLineEditor';
+import { CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
+import {
+  parseLineByLineData,
+  parseLineByLineFooter,
+  parseLineByLineTaxes,
+  parseLineByLineHideAllPrices,
+  type LineByLineItem,
+  type LineByLineTax,
+} from '../lineByLine';
+
+/** Minimal component-library option for the order item picker. */
+interface ComponentOption {
+  id: string;
+  name: string;
+  /** Named library (component_collections.id) this component belongs to. Null = unfiled. */
+  collection_id?: string | null;
+}
+
+/** Named component library for the add-component library selector. */
+interface ComponentCollection {
+  id: string;
+  name: string;
+}
+
+/** Sentinel for the "All components" option in the library selector. */
+const ALL_LIBRARIES = '__all__';
 
 interface OrderCreateFormProps {
   templates: MaterialOrderTemplateRow[];
   flashings: FlashingLibraryRow[];
+  /** Company component library, for the "add from library" dropdown in the item modal. */
+  components?: ComponentOption[];
+  /** Named component libraries for the add-component library selector. */
+  collections?: ComponentCollection[];
+  /** Workspace slug, needed by the catalog search modal endpoint. */
+  workspaceSlug?: string;
   quoteData?: QuoteData | null;
   existingOrder?: ExistingOrderData | null;
+  /** When true the company is over storage - block logo upload. */
+  isOverStorage?: boolean;
+  /** Layout family chosen up front (orders hub picker) and locked for this
+   *  order. 'line_by_line' = customer-quote-style editor; 'components' (default)
+   *  = the Components + Images editor with single/double toggle. */
+  initialLayout?: 'line_by_line' | 'components';
+  /** Initial column mode for the Components editor (from the picker / saved
+   *  order). The user can still toggle single<->double inside the editor. */
+  initialColumn?: 'single' | 'double';
+  /** Company currency code, for line-by-line price rendering. */
+  currency?: string;
+  /** Full company component library, for the line-by-line "Add a component" picker. */
+  componentLibrary?: { id: string; name: string; collection_id: string | null }[];
+  /** Active company default taxes, for the line-by-line optional-tax picker. */
+  companyTaxes?: { id: string; name: string; rate_percent: number }[];
+  /** Decision #4: pre-built line-by-line envelope when creating a NEW order from
+   *  a quote in the line-by-line layout. Mirrors the customer quote editor's
+   *  priced lines + footer + taxes. Null for blank/custom + existing-order edits. */
+  initialLineByLine?: LineByLineData | null;
 }
 
 interface Variable {
@@ -54,11 +109,18 @@ interface OrderLineItem {
   showMeasurements: boolean;
 }
 
-export function OrderCreateForm({ templates, flashings, quoteData, existingOrder }: OrderCreateFormProps) {
+export function OrderCreateForm({ templates, flashings, components = [], collections = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components', initialColumn = 'single', currency = 'GBP', componentLibrary = [], companyTaxes = [], initialLineByLine = null }: OrderCreateFormProps) {
   const router = useRouter();
   
   // Layout state
-  const [layoutMode, setLayoutMode] = useState<'single' | 'double'>('single');
+  const [layoutMode, setLayoutMode] = useState<'single' | 'double'>(initialColumn);
+  // Line-by-line layout lines (separate from the components `orderLines`).
+  // Persisted to `material_orders.line_by_line_data`; hydrated on edit below.
+  const isLineByLine = initialLayout === 'line_by_line';
+  const [lineByLineLines, setLineByLineLines] = useState<LineByLineItem[]>([]);
+  const [lineByLineFooter, setLineByLineFooter] = useState('');
+  const [lineByLineTaxes, setLineByLineTaxes] = useState<LineByLineTax[]>([]);
+  const [lineByLineHideAllPrices, setLineByLineHideAllPrices] = useState(false);
   // App-style alert state. Replaces native alert() calls so the order flow
   // matches the rest of the app's modal styling.
   const [alertState, setAlertState] = useState<{
@@ -81,6 +143,9 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
     if (cb) cb();
   };
   const [headerExpanded, setHeaderExpanded] = useState(true);
+  // Declutter: collapse the components control sidebar so the order-form
+  // preview fills the space. Pure layout state - sidebar stays mounted.
+  const [componentsPanelCollapsed, setComponentsPanelCollapsed] = useState(false);
   const [saving, setSaving] = useState(false);
   
   // Template selection
@@ -102,6 +167,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
   // Header form state - RIGHT
   const [logoUrl, setLogoUrl] = useState('');
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [storageBlocked, setStorageBlocked] = useState(false);
   const [fromCompany, setFromCompany] = useState('');
   const [contactPerson, setContactPerson] = useState('');
   const [contactDetails, setContactDetails] = useState('');
@@ -261,6 +327,15 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
     // rendered UI doesn't receive unexpected values.
     setLayoutMode(order.layout_mode === 'double' ? 'double' : 'single');
 
+    // Line-by-line orders store their items in `line_by_line_data`; hydrate
+    // those here (the components `orderLines` path below stays empty for them).
+    if (order.layout_mode === 'line_by_line') {
+      setLineByLineLines(parseLineByLineData(order.line_by_line_data));
+      setLineByLineFooter(parseLineByLineFooter(order.line_by_line_data));
+      setLineByLineTaxes(parseLineByLineTaxes(order.line_by_line_data));
+      setLineByLineHideAllPrices(parseLineByLineHideAllPrices(order.line_by_line_data));
+    }
+
     // Map line items
     const mappedLines: OrderLineItem[] = lines.map(line => ({
       id: line.id,
@@ -285,6 +360,30 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
     console.log('[OrderCreateForm] Loaded', mappedLines.length, 'line items');
     setOrderLines(mappedLines);
   }, [existingOrder]);
+
+  // Decision #4: hydrate the line-by-line editor from a quote-derived envelope
+  // when creating a NEW line-by-line order from a quote. Ref-guarded ONCE on
+  // mount (same anti-clobber pattern as the other hydrators) so a parent
+  // re-render can never wipe in-progress edits. Only fires when initialLineByLine
+  // is present (line-by-line + quoteId + no existingOrder); the custom blank
+  // line-by-line path passes null and is untouched.
+  const hydratedFromQuoteLblRef = useRef(false);
+  useEffect(() => {
+    if (hydratedFromQuoteLblRef.current) return;
+    if (!initialLineByLine) return;
+    if (initialLayout !== 'line_by_line') return;
+    hydratedFromQuoteLblRef.current = true;
+
+    setLineByLineLines(initialLineByLine.lines);
+    setLineByLineFooter(initialLineByLine.footer);
+    setLineByLineTaxes(initialLineByLine.taxes);
+    setLineByLineHideAllPrices(initialLineByLine.hideAllPrices);
+
+    // Pre-fill the reference the same way the components quote path does.
+    if (quoteData?.quote_number) {
+      setReference((prev) => prev || `Order for ${quoteData.quote_number}`);
+    }
+  }, [initialLineByLine, initialLayout, quoteData]);
   
   // Template auto-fill
   function handleTemplateChange(templateId: string) {
@@ -321,6 +420,7 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
   
   
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (isOverStorage) { setStorageBlocked(true); return; }
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -458,7 +558,12 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
       return;
     }
 
-    if (orderLines.length === 0) {
+    if (isLineByLine) {
+      if (lineByLineLines.length === 0) {
+        showAlert('No lines', 'Please add at least one line before saving.', 'info');
+        return;
+      }
+    } else if (orderLines.length === 0) {
       showAlert('No components', 'Please add at least one component before saving.', 'info');
       return;
     }
@@ -481,8 +586,16 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
         orderNotes,
         logoUrl,
         orderDate,
-        layoutMode,
-        lineItems: orderLines.map((line, index) => ({
+        layoutMode: isLineByLine ? 'line_by_line' : layoutMode,
+        lineByLineData: isLineByLine
+          ? {
+              lines: lineByLineLines,
+              footer: lineByLineFooter,
+              taxes: lineByLineTaxes,
+              hideAllPrices: lineByLineHideAllPrices,
+            }
+          : undefined,
+        lineItems: isLineByLine ? [] : orderLines.map((line, index) => ({
           componentName: line.componentName,
           flashingId: line.flashingId,
           flashingImageUrl: line.flashingImageUrl,
@@ -516,18 +629,25 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
       setSaving(false);
     }
   }
-  
-  return (
-    <div className="flex flex-col h-screen bg-slate-50">
-      {/* Back Button */}
-      <div className="px-6 pt-4">
-        <BackButton />
-      </div>
-      
-      {/* Header Section */}
-      <div className="flex-shrink-0">
+
+  // Shared order header (template selector + To/From two-column form + minimize).
+  // Used by BOTH the components editor and the line-by-line editor so they
+  // share one identical header system (Shaun: line-by-line must use the same
+  // header as the single/double column flow).
+  // `rounded` = line-by-line variant: render the header as a rounded card
+  // (matches the rest of the app) instead of the full-bleed square header the
+  // components editor uses. Components editor calls this with no arg (false).
+  function renderOrderHeader(rounded = false) {
+    return (
+      <div className={rounded ? 'flex-shrink-0 px-6 pt-4' : 'flex-shrink-0'}>
         {headerExpanded ? (
-          <div className="bg-white border-b border-slate-200 shadow-sm">
+          <div
+            className={
+              rounded
+                ? 'bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden'
+                : 'bg-white border-b border-slate-200 shadow-sm'
+            }
+          >
             {/* Template Selector */}
             <div className="px-6 py-3 border-b border-slate-100 bg-slate-50" data-copilot="mo-template">
               <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -552,80 +672,24 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
               {/* LEFT COLUMN */}
               <div className="space-y-3">
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">To (Supplier)</h3>
-                
-                <input
-                  type="text"
-                  value={toSupplier}
-                  onChange={(e) => setToSupplier(e.target.value)}
-                  placeholder="To"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <input
-                  type="text"
-                  value={reference}
-                  onChange={(e) => setReference(e.target.value)}
-                  placeholder="Reference"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <input
-                  type="text"
-                  value={orderType}
-                  onChange={(e) => setOrderType(e.target.value)}
-                  placeholder="Order Type (optional)"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <input
-                  type="text"
-                  value={colours}
-                  onChange={(e) => setColours(e.target.value)}
-                  placeholder="Colours"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <input
-                  type="date"
-                  value={deliveryDate}
-                  onChange={(e) => setDeliveryDate(e.target.value)}
-                  placeholder="Delivery Date"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <textarea
-                  value={deliveryAddress}
-                  onChange={(e) => setDeliveryAddress(e.target.value)}
-                  placeholder="Delivery Address"
-                  rows={2}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <textarea
-                  value={orderNotes}
-                  onChange={(e) => setOrderNotes(e.target.value)}
-                  placeholder="Order Notes"
-                  rows={2}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
+                <input type="text" value={toSupplier} onChange={(e) => setToSupplier(e.target.value)} placeholder="To" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input type="text" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Reference" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input type="text" value={orderType} onChange={(e) => setOrderType(e.target.value)} placeholder="Order Type (optional)" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input type="text" value={colours} onChange={(e) => setColours(e.target.value)} placeholder="Colours" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} placeholder="Delivery Date" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <textarea value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} placeholder="Delivery Address" rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <textarea value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder="Order Notes" rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
               </div>
 
               {/* RIGHT COLUMN */}
               <div className="space-y-3">
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">From (Your Company)</h3>
-                
                 <div className="flex items-start gap-3">
                   {logoUrl ? (
                     <div className="relative w-20 h-20 border border-slate-200 rounded bg-white">
                       <img src={logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
-                      <button
-                        type="button"
-                        onClick={() => setLogoUrl('')}
-                        className="absolute -top-1 -right-1 p-0.5 bg-red-600 text-white rounded-full hover:bg-red-700"
-                      >
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                      <button type="button" onClick={() => setLogoUrl('')} className="absolute -top-1 -right-1 p-0.5 bg-red-600 text-white rounded-full hover:bg-red-700">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>
                     </div>
                   ) : (
@@ -634,88 +698,155 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
                     </div>
                   )}
                   <label className="cursor-pointer">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoUpload}
-                      disabled={uploadingLogo}
-                      className="hidden"
-                    />
+                    <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={uploadingLogo} className="hidden" />
                     <span className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded border border-slate-300 hover:bg-slate-50">
                       {uploadingLogo ? 'Uploading...' : 'Upload'}
                     </span>
                   </label>
                 </div>
-                
-                <input
-                  type="text"
-                  value={fromCompany}
-                  onChange={(e) => setFromCompany(e.target.value)}
-                  placeholder="From"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <input
-                  type="text"
-                  value={contactPerson}
-                  onChange={(e) => setContactPerson(e.target.value)}
-                  placeholder="Contact Person"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <input
-                  type="text"
-                  value={contactDetails}
-                  onChange={(e) => setContactDetails(e.target.value)}
-                  placeholder="Contact Details"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
-                
-                <input
-                  type="date"
-                  value={orderDate}
-                  onChange={(e) => setOrderDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                />
+                <input type="text" value={fromCompany} onChange={(e) => setFromCompany(e.target.value)} placeholder="From" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input type="text" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} placeholder="Contact Person" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input type="text" value={contactDetails} onChange={(e) => setContactDetails(e.target.value)} placeholder="Contact Details" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
               </div>
             </div>
 
             {/* Minimize Button */}
             <div className="px-6 py-2 border-t border-slate-100 bg-slate-50 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setHeaderExpanded(false)}
-                data-copilot="mo-minimize-header"
-                className="px-3 py-1.5 text-xs font-medium rounded border border-slate-300 hover:bg-white transition-colors"
-              >
+              <button type="button" onClick={() => setHeaderExpanded(false)} data-copilot="mo-minimize-header" className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-white transition-colors">
                 Minimize Header
               </button>
             </div>
           </div>
         ) : (
-          <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
+          <div
+            className={
+              rounded
+                ? 'bg-white border border-slate-200 rounded-xl shadow-sm px-6 py-3 flex items-center justify-between'
+                : 'bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between'
+            }
+          >
             <div className="text-sm text-slate-600">
               <span className="font-medium">To:</span> {toSupplier || 'Not set'} · 
               <span className="font-medium ml-2">From:</span> {fromCompany || 'Not set'} · 
               <span className="font-medium ml-2">Ref:</span> {reference || 'Not set'}
             </div>
-            <button
-              type="button"
-              onClick={() => setHeaderExpanded(true)}
-              className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors"
-            >
+            <button type="button" onClick={() => setHeaderExpanded(true)} className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors">
               Edit Header
             </button>
           </div>
         )}
       </div>
+    );
+  }
+
+  // LINE-BY-LINE LAYOUT (Phase 2 editor).
+  // Uses the SAME header system as the components (single/double) editor, then
+  // the OrderLineByLineEditor for the priced item list + footer + taxes.
+  if (initialLayout === 'line_by_line') {
+    return (
+      <>
+        <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
+        <AlertModal
+          open={alertState.open}
+          title={alertState.title}
+          description={alertState.description}
+          variant={alertState.variant}
+          onClose={closeAlert}
+        />
+        {/* Flex column inside the page's h-screen/overflow-hidden wrapper. The
+            header stays put; the editor area owns its OWN vertical scroll so the
+            footer + taxes at the bottom are always reachable on any screen
+            ratio (previously the page wrapper clipped them). */}
+        <div className="flex flex-col h-screen bg-slate-50">
+          <div className="px-6 pt-4 flex-shrink-0">
+            <BackButton />
+          </div>
+          {/* Shared order header (template selector + To/From form + minimize),
+              rounded-card variant to match the rest of the app. */}
+          {renderOrderHeader(true)}
+          {/* Scrollable editor region. Full-width (px-6) so the body frame lines
+              up edge-to-edge with the full-width header above it. */}
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+            {/* Save action sits directly above the editor/preview so it's
+                reachable at 100% zoom without scrolling to the page bottom. */}
+            <div className="flex items-center justify-end gap-3">
+              {existingOrder && (
+                <button
+                  type="button"
+                  onClick={() => window.open(`../material-orders/${existingOrder.order.id}/preview`, '_blank')}
+                  className="px-4 py-2 text-sm font-medium border border-slate-300 bg-white text-slate-700 rounded-full hover:bg-slate-50 transition"
+                >
+                  Preview
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                disabled={saving}
+                className="px-6 py-2 text-sm font-semibold bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              >
+                {saving ? 'Saving…' : 'Save Order'}
+              </button>
+            </div>
+
+            {/* Line editor */}
+            <OrderLineByLineEditor
+              initialLines={lineByLineLines}
+              initialFooter={lineByLineFooter}
+              initialTaxes={lineByLineTaxes}
+              initialHideAllPrices={lineByLineHideAllPrices}
+              currency={currency}
+              workspaceSlug={workspaceSlug}
+              collections={collections}
+              componentLibrary={componentLibrary}
+              companyTaxes={companyTaxes}
+              onChange={setLineByLineLines}
+              onFooterChange={setLineByLineFooter}
+              onTaxesChange={setLineByLineTaxes}
+              onHideAllPricesChange={setLineByLineHideAllPrices}
+            />
+            <div className="pb-10" />
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+    <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
+    <div className="flex flex-col h-screen bg-slate-50">
+      {/* Back Button */}
+      <div className="px-6 pt-4">
+        <BackButton />
+      </div>
+      
+      {/* Header Section (shared with the line-by-line layout) */}
+      {renderOrderHeader()}
 
       {/* Main Content Area - Sidebar + Order Form */}
       <div className="flex-1 flex overflow-hidden">
-        {/* LEFT SIDEBAR - Order Components Control Panel */}
-        <div className="w-80 bg-white border-r border-slate-200 flex flex-col overflow-hidden" data-copilot="mo-sidebar">
+        {/* LEFT SIDEBAR - Order Components Control Panel (collapsible). Width
+            animates to 0 on collapse; the flex-1 order-form pane auto-fills.
+            Sidebar stays mounted (no state loss) - only its width/opacity
+            transition. */}
+        <div
+          className={`bg-white border-r border-slate-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${
+            componentsPanelCollapsed ? 'w-0 opacity-0 pointer-events-none border-r-0' : 'w-80 opacity-100'
+          }`}
+          data-copilot="mo-sidebar"
+          aria-hidden={componentsPanelCollapsed}
+        >
           <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
-            <h3 className="font-semibold text-slate-900 text-sm">Order Components</h3>
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-semibold text-slate-900 text-sm">Order Components</h3>
+              <CollapseButton
+                collapsed={componentsPanelCollapsed}
+                onToggle={() => setComponentsPanelCollapsed(true)}
+                label="Collapse panel"
+              />
+            </div>
             <p className="text-xs text-slate-600 mt-0.5">
               Control what appears in the order form
             </p>
@@ -888,11 +1019,27 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
           </div>
         </div>
 
+        {/* Expand tab - only visible when the sidebar is collapsed. Lives
+            between the sidebar and the form pane so it is never clipped.
+            items-start keeps it pinned to the TOP of the column. */}
+        <div className="flex items-start px-1 py-2">
+          <ExpandTab
+            collapsed={componentsPanelCollapsed}
+            onToggle={() => setComponentsPanelCollapsed(false)}
+            label="Components"
+          />
+        </div>
+
         {/* RIGHT - Order Form Display */}
         <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
           {/* Toolbar */}
           <div className="px-6 py-3 bg-white border-b border-slate-200 flex items-center justify-between">
-            <h3 className="font-semibold text-slate-900">Order Form</h3>
+            <div className="flex items-baseline gap-3 flex-wrap">
+              <h3 className="font-semibold text-slate-900">Order Form</h3>
+              <p className="text-xs text-slate-400 italic">
+                Tip: to view the full preview with header, save, then view order.
+              </p>
+            </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-slate-600" data-copilot="mo-layout-toggle">
                 <button
@@ -1122,6 +1269,9 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
       {showAddItemModal && (
         <AddItemModal
           flashings={flashings}
+          components={components}
+          collections={collections}
+          workspaceSlug={workspaceSlug}
           existingLine={editingLineId ? orderLines.find(l => l.id === editingLineId) : undefined}
           onSave={saveLineItem}
           onCancel={() => {
@@ -1141,12 +1291,19 @@ export function OrderCreateForm({ templates, flashings, quoteData, existingOrder
         onClose={closeAlert}
       />
     </div>
+    </>
   );
 }
 
 // Add Item Modal Component
 interface AddItemModalProps {
   flashings: FlashingLibraryRow[];
+  /** Company component library for the "add from library" dropdown. */
+  components?: ComponentOption[];
+  /** Named component libraries for the add-component library selector. */
+  collections?: ComponentCollection[];
+  /** Workspace slug for the catalog search modal endpoint. */
+  workspaceSlug?: string;
   existingLine?: OrderLineItem;
   onSave: (data: {
     componentName: string;
@@ -1163,8 +1320,13 @@ interface AddItemModalProps {
   showAlert: (title: string, description?: string, variant?: 'info' | 'success' | 'error') => void;
 }
 
-function AddItemModal({ flashings, existingLine, onSave, onCancel, showAlert }: AddItemModalProps) {
+function AddItemModal({ flashings, components = [], collections = [], workspaceSlug = '', existingLine, onSave, onCancel, showAlert }: AddItemModalProps) {
   const [componentName, setComponentName] = useState(existingLine?.componentName || '');
+  // Library filter for the "Add from component library" dropdown. "All" shows
+  // every company component regardless of which named library it belongs to.
+  const [selectedLibraryId, setSelectedLibraryId] = useState<string>(ALL_LIBRARIES);
+  // Catalog search modal toggle (one of the three ways to fill the item name).
+  const [showCatalogSearch, setShowCatalogSearch] = useState(false);
   const [flashingId, setFlashingId] = useState(existingLine?.flashingId || '');
   const [entryMode, setEntryMode] = useState<'single' | 'multiple'>(existingLine?.entryMode || 'single');
   
@@ -1288,6 +1450,84 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel, showAlert }: 
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
+          {/* Three ways to fill the item name: (1) pick from the component
+              library, (2) search a catalog, (3) just type it. All three feed
+              the same Component Name field below. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Add from component library <span className="text-slate-400 font-normal">(Optional)</span>
+              </label>
+              {/* Library selector: pick a named library or "All components".
+                  Only shown when the company has named libraries. */}
+              {collections.length > 0 && (
+                <select
+                  value={selectedLibraryId}
+                  onChange={(e) => setSelectedLibraryId(e.target.value)}
+                  className="w-full px-3 py-2 mb-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  aria-label="Filter components by library"
+                >
+                  <option value={ALL_LIBRARIES}>All components</option>
+                  {collections.map((col) => (
+                    <option key={col.id} value={col.id}>{col.name}</option>
+                  ))}
+                </select>
+              )}
+              {(() => {
+                const filtered = components.filter((c) =>
+                  selectedLibraryId === ALL_LIBRARIES
+                    ? true
+                    : (c.collection_id ?? null) === selectedLibraryId,
+                );
+                const showLib = selectedLibraryId === ALL_LIBRARIES && collections.length > 0;
+                return (
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      const picked = components.find((c) => c.id === e.target.value);
+                      if (picked) setComponentName(picked.name);
+                    }}
+                    disabled={filtered.length === 0}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-slate-50 disabled:text-slate-400"
+                  >
+                    <option value="">
+                      {components.length === 0
+                        ? 'No saved components'
+                        : filtered.length === 0
+                          ? 'No components in this library'
+                          : 'Choose a component…'}
+                    </option>
+                    {filtered.map((c) => {
+                      const libName = showLib && c.collection_id
+                        ? collections.find((col) => col.id === c.collection_id)?.name
+                        : null;
+                      return (
+                        <option key={c.id} value={c.id}>
+                          {libName ? `${c.name} · ${libName}` : c.name}
+                        </option>
+                      );
+                    })}
+                  </select>
+                );
+              })()}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Or search a catalog <span className="text-slate-400 font-normal">(Optional)</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowCatalogSearch(true)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-left text-slate-600 bg-white hover:bg-slate-50 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 inline-flex items-center gap-2"
+              >
+                <svg className="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+                </svg>
+                Search catalog items…
+              </button>
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Component Name <span className="text-red-500">*</span>
@@ -1297,9 +1537,10 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel, showAlert }: 
               value={componentName}
               onChange={(e) => setComponentName(e.target.value)}
               required
-              placeholder="e.g., Ridge Flashing, Valley Gutter"
+              placeholder="e.g., Ridge Flashing, Valley Gutter - or pick/search above"
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
+            <p className="mt-1 text-xs text-slate-400">Pick from your library or search a catalog above, or type a custom item here.</p>
           </div>
 
           <div>
@@ -1605,6 +1846,22 @@ function AddItemModal({ flashings, existingLine, onSave, onCancel, showAlert }: 
           </button>
         </div>
       </div>
+
+      {/* Catalog search - reuses the same modal as the blank-quote builder.
+          On pick it fills the Component Name (and appends the quantity text if
+          the catalog has one). It does not touch price; order lines price
+          separately. */}
+      {showCatalogSearch && (
+        <CatalogSearchModal
+          workspaceSlug={workspaceSlug}
+          onAdd={(text, _amount, _showPrice, quantity) => {
+            const composed = quantity ? `${text} - ${quantity}` : text;
+            setComponentName(composed);
+            setShowCatalogSearch(false);
+          }}
+          onClose={() => setShowCatalogSearch(false)}
+        />
+      )}
     </div>
   );
 }

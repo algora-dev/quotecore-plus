@@ -25,9 +25,22 @@ function getStorageAdminClient() {
  * fresh URL, so 1 hour is plenty for view sessions and short enough that
  * leaked URLs become useless quickly.
  */
-export async function getSignedUrl(bucket: string, path: string, expiresIn: number = 3600): Promise<string> {
+export async function getSignedUrl(
+  bucket: string,
+  path: string,
+  expiresIn: number = 3600,
+  /**
+   * When set, Supabase adds a `Content-Disposition: attachment; filename=...`
+   * to the signed URL so the browser saves the file instead of rendering it
+   * inline (PDFs/images otherwise open in-tab). Auth model is unchanged - the
+   * caller has already authorised access before asking us to sign.
+   */
+  downloadName?: string,
+): Promise<string> {
   const supabase = getStorageAdminClient();
-  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn);
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(path, expiresIn, downloadName ? { download: downloadName } : undefined);
   if (error) {
     throw new Error(`Failed to create signed URL: ${error.message}`);
   }
@@ -64,4 +77,26 @@ export async function getSignedUrls(
     signedUrl: entry.signedUrl ?? null,
     error: entry.error ?? null,
   }));
+}
+
+/**
+ * Download a private storage object's raw bytes as a Buffer.
+ *
+ * Used by the email-attachment builder, which needs the actual file content
+ * (not a URL) to hand to Resend. Goes through the service-role client because
+ * email sending happens in server contexts where object ownership is enforced
+ * by the caller (the caller has already verified the file belongs to the
+ * company/quote before asking us to attach it).
+ *
+ * Throws on failure so the caller can decide whether to skip the attachment
+ * or abort the whole send.
+ */
+export async function downloadStorageObject(bucket: string, path: string): Promise<Buffer> {
+  const supabase = getStorageAdminClient();
+  const { data, error } = await supabase.storage.from(bucket).download(path);
+  if (error || !data) {
+    throw new Error(`Failed to download storage object ${path}: ${error?.message ?? 'no data'}`);
+  }
+  const arrayBuffer = await data.arrayBuffer();
+  return Buffer.from(arrayBuffer);
 }
