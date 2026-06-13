@@ -115,6 +115,17 @@ _Re-architected 2026-06-03 eve, dev 3cfbd60. Legacy Copilot fully removed; assis
 
 ---
 
+## Pending verification (dev - Gerald pre-live audit remediation H-02..H-05 + Mediums, 2026-06-13, commits 86ec34d..feb65c3)
+- [ ] **H-02 invoice gating** - on a Free/expired-trial company with EXISTING invoices: editing lines/meta, reset, mark-paid, change status (non-cancel), save payment details, share-link send, and create/update invoice template all show the upgrade prompt (not a crash). Still allowed: view, PDF export, cancel, delete draft, resolve dispute, delete template.
+- [ ] **H-03 atomic invoice create** - normal invoice creation (blank + from-quote) still works end-to-end; at the monthly cap the create shows the limit/upgrade prompt. (Race itself is structural - covered by RPC advisory lock.)
+- [ ] **H-04 child integrity** - invoice detail + public /invoice/[token] still render lines correctly (composite FK + company_id read filter didn't break normal reads).
+- [ ] **H-05 Q assistant scoping** - a user in 2 workspaces: open Q in workspace A, switch to workspace B -> B starts a fresh thread (no A history bleed); each workspace keeps its own thread on return.
+- [ ] **M-01 race guards** - reporting payment / disputing a normal sent invoice still works; an already-paid/cancelled invoice returns 409 on those public actions.
+- [ ] **M-03/M-05 assistant guards** - normal Q chat still streams + completes; (optional) oversized/invalid-role direct API body is rejected 400/413; a stalled turn surfaces a timeout error rather than hanging.
+- [ ] **M-07 follow-up cap** - scheduling a 4th open follow-up on one quote/order/invoice is refused (UX message); double-click can't sneak past.
+
+---
+
 ## Pending verification (dev - Tutorials page + Welcome modal, 2026-06-12)
 - [ ] **/tutorials hub** - new route renders 13 cards in Resource-Library style; each card opens a modal (not a link); multi-page cards show pager dots + Back/Next; single-page cards (Drawings, Downloading, Q&Docs) have no pager.
 - [ ] **"Go to feature" CTA** - accent button navigates to the right page per card (Quotes/Components/Catalogs/Attachments/Drawings=/flashings/Orders=/material-orders/Invoices/Inbox/Resources).
