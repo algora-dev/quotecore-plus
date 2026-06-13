@@ -30,22 +30,15 @@ end $$;
 -- The endpoint authenticates on `Authorization: Bearer <CRON_SECRET>` and runs
 -- the same sweep Vercel Cron used to trigger.
 --
--- NOTE ON PROMOTION TO PROD: when this job should target the production
--- deployment, update the URL below (and the bearer if the prod CRON_SECRET
--- differs) by re-running an updated version of this migration. Kept inline
--- (not in Vault) deliberately for now so the scheduler is fully self-contained
--- and obvious; revisit Vault-backed secrets if/when we run multiple targets.
-select cron.schedule(
-  'dispatch-scheduled-messages',
-  '* * * * *',
-  $cron$
-  -- GET to match the route's `export async function GET` handler.
-  select net.http_get(
-    url     := 'https://quotecore-plus-dev.vercel.app/api/cron/dispatch-scheduled-messages',
-    headers := jsonb_build_object(
-      'Authorization', 'Bearer A7EQEOYpMe4fg8wLQY-DwjaRk2mZg1XFlwWzCNX79Vs'
-    ),
-    timeout_milliseconds := 25000
-  );
-  $cron$
-);
+-- ⚠️ SUPERSEDED + NEUTRALIZED (Gerald audit C-01, 2026-06-13).
+-- This migration originally embedded a live CRON_SECRET literal and the dev
+-- Vercel URL. That secret has been ROTATED and is dead. The real, hardened
+-- job (Vault-backed secret, prod-targeted) is created by:
+--   20260613100000_pg_cron_dispatch_vault_prod.sql
+-- The block below is intentionally a NO-OP so a fresh `supabase db reset` /
+-- replay cannot re-leak the old token or re-point cron at dev. Do not restore
+-- the literal. The superseding migration runs after this and installs the
+-- correct job.
+do $$ begin
+  raise notice 'pg_cron dispatch job intentionally skipped here; see 20260613100000_pg_cron_dispatch_vault_prod.sql';
+end $$;
