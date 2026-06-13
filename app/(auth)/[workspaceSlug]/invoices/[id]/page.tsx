@@ -25,11 +25,14 @@ export default async function InvoicePage({ params }: Props) {
 
   if (!invoice) notFound();
 
-  // Load invoice lines
+  // Load invoice lines. RLS already scopes this to the caller's company; the
+  // explicit company_id filter is H-04 defence-in-depth (matches the public
+  // page) and is now structurally guaranteed by the composite tenant FK.
   const { data: lines } = await supabase
     .from('invoice_lines')
     .select('*')
     .eq('invoice_id', id)
+    .eq('company_id', invoice.company_id)
     .order('sort_order');
 
   // Load company defaults (currency only - no default_logo_url column)

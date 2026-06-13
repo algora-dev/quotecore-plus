@@ -64,11 +64,15 @@ export default async function PublicInvoicePage({ params }: Props) {
   // POST server action on genuine client mount. See MEMORY "GET-on-mutate is a
   // class of bug".
 
-  // Load lines
+  // Load lines. H-04 defence-in-depth: scope by the invoice's company_id too
+  // (service-role read bypasses RLS), so cross-tenant-polluted child rows can
+  // never render here. The composite tenant FK now makes pollution impossible
+  // at the DB layer; this filter is the belt-and-braces backstop.
   const { data: lines } = await admin
     .from('invoice_lines')
     .select('*')
     .eq('invoice_id', invoice.id)
+    .eq('company_id', invoice.company_id)
     .order('sort_order');
 
   return (
