@@ -2,6 +2,7 @@
 
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { requireInvoiceFeature } from '@/app/lib/billing/entitlements';
 import { revalidatePath } from 'next/cache';
 
 export interface InvoiceTemplate {
@@ -43,6 +44,8 @@ export async function listInvoiceTemplates(): Promise<InvoiceTemplate[]> {
 
 export async function createInvoiceTemplate(input: InvoiceTemplateInput): Promise<string> {
   const profile = await requireCompanyContext();
+  // H-02: invoice templates are part of the invoices feature.
+  await requireInvoiceFeature(profile.company_id);
   const admin = createAdminClient();
 
   const { data, error } = await admin
@@ -58,6 +61,8 @@ export async function createInvoiceTemplate(input: InvoiceTemplateInput): Promis
 
 export async function updateInvoiceTemplate(id: string, input: Partial<InvoiceTemplateInput>) {
   const profile = await requireCompanyContext();
+  // H-02: invoice templates are part of the invoices feature.
+  await requireInvoiceFeature(profile.company_id);
   const supabase = await createSupabaseServerClient();
 
   const { error } = await supabase

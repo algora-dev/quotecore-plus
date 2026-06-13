@@ -693,6 +693,29 @@ export async function requireInvoiceSlot(companyId: string): Promise<void> {
 }
 
 /**
+ * Central gate for MUTATIONS on EXISTING invoices (H-02).
+ *
+ * Invoice CREATION is gated by `requireInvoiceSlot` (feature + monthly cap).
+ * But every mutation on an already-created invoice (edit lines/meta, reset,
+ * mark-paid, change status, save payment details, mark-sent-by-link) and
+ * invoice-template create/update previously had NO feature gate - only an
+ * ownership (company_id) check. That let a company that dropped to Free
+ * (incl. expired-trial) keep fully operating a paid feature on its existing
+ * invoices indefinitely.
+ *
+ * This throws the same typed `FeatureGatedError` / `SubscriptionInactiveError`
+ * the UI already pattern-matches into an upgrade prompt. Use as the gate on
+ * every value-extracting invoice mutation.
+ *
+ * NOT gated by this (intentional wind-down / read paths): listing, viewing,
+ * PDF export, cancel, draft-delete, and resolving a customer dispute - those
+ * only let a downgraded user read history and wind down cleanly.
+ */
+export async function requireInvoiceFeature(companyId: string): Promise<void> {
+  await requireFeature(companyId, 'invoices');
+}
+
+/**
  * Acquire one material-order slot for the current calendar month. Wraps
  * `require_order_slot`. Throws FeatureGatedError if the plan doesn't
  * include material orders (P0012), or OrderLimitReachedError on the

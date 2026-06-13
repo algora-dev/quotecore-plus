@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { alertEnabled } from '@/app/lib/alerts/prefs';
-import { requireInvoiceSlot } from '@/app/lib/billing/entitlements';
+import { requireInvoiceSlot, requireInvoiceFeature } from '@/app/lib/billing/entitlements';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -311,6 +311,8 @@ export async function saveInvoiceLines(
   totals: { subtotal: number; taxTotal: number; discountTotal: number; total: number }
 ) {
   const profile = await requireCompanyContext();
+  // H-02: editing an existing invoice requires the invoices feature.
+  await requireInvoiceFeature(profile.company_id);
   const admin = createAdminClient();
 
   // Verify ownership
@@ -387,6 +389,8 @@ export async function saveInvoiceMeta(
   }
 ) {
   const profile = await requireCompanyContext();
+  // H-02: editing invoice metadata requires the invoices feature.
+  await requireInvoiceFeature(profile.company_id);
   const supabase = await createSupabaseServerClient();
 
   const { error } = await supabase
@@ -444,6 +448,9 @@ export async function resetInvoice(
   invoiceId: string,
 ): Promise<{ ok: true; cancelledFollowUps: number } | { ok: false; error: string }> {
   const profile = await requireCompanyContext();
+  // H-02: resetting an invoice back to draft (a re-send enabler) requires the
+  // invoices feature.
+  await requireInvoiceFeature(profile.company_id);
   const admin = createAdminClient();
 
   const { data: invoice, error: loadErr } = await admin
@@ -502,6 +509,8 @@ export async function resetInvoice(
 
 export async function confirmPaymentReceived(invoiceId: string) {
   const profile = await requireCompanyContext();
+  // H-02: marking an invoice paid requires the invoices feature.
+  await requireInvoiceFeature(profile.company_id);
   const now = new Date().toISOString();
   const admin = createAdminClient();
 
@@ -546,6 +555,8 @@ export async function saveInvoicePaymentDetails(
   }
 ) {
   const profile = await requireCompanyContext();
+  // H-02: editing invoice payment details requires the invoices feature.
+  await requireInvoiceFeature(profile.company_id);
   const supabase = await createSupabaseServerClient();
 
   const { error } = await supabase
@@ -574,6 +585,11 @@ export async function updateInvoiceStatus(invoiceId: string, status: string) {
     throw new Error('Invalid invoice status');
   }
   const profile = await requireCompanyContext();
+  // H-02: changing invoice status requires the invoices feature. Exception:
+  // 'cancelled' is a wind-down action we allow on Free (mirrors cancelInvoice).
+  if (status !== 'cancelled') {
+    await requireInvoiceFeature(profile.company_id);
+  }
   const supabase = await createSupabaseServerClient();
   const now = new Date().toISOString();
 
@@ -606,6 +622,9 @@ export async function updateInvoiceStatus(invoiceId: string, status: string) {
  */
 export async function markInvoiceSentByLink(invoiceId: string): Promise<void> {
   const profile = await requireCompanyContext();
+  // H-02: sharing/sending an invoice via its public link requires the
+  // invoices feature.
+  await requireInvoiceFeature(profile.company_id);
   const supabase = await createSupabaseServerClient();
   const admin = createAdminClient();
 
