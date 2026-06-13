@@ -30,6 +30,54 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
 
 const STORAGE_BUCKETS = ['company-logos', 'QUOTE-DOCUMENTS'] as const;
 
+export interface AccountRow {
+  companyId: string;
+  companyName: string;
+  planCode: string | null;
+  subscriptionStatus: string | null;
+  users: { id: string; email: string; fullName: string | null; isAdmin: boolean }[];
+}
+
+export type ListAccountsResult =
+  | { ok: true; accounts: AccountRow[] }
+  | { ok: false; error: string };
+
+/**
+ * List all company accounts with user + plan info. Used to populate the
+ * admin user list. Returns up to 500 rows; client filters by search term.
+ */
+export async function listAccounts(): Promise<ListAccountsResult> {
+  await requireAdmin();
+  const admin = createAdminClient();
+
+  const { data: companies, error: coErr } = await admin
+    .from('companies')
+    .select('id, name, plan_code, subscription_status')
+    .order('name', { ascending: true })
+    .limit(500);
+  if (coErr) return { ok: false, error: coErr.message };
+
+  const companyIds = (companies ?? []).map((c) => c.id);
+  if (companyIds.length === 0) return { ok: true, accounts: [] };
+
+  const { data: allUsers } = await admin
+    .from('users')
+    .select('id, email, full_name, is_admin, company_id')
+    .in('company_id', companyIds);
+
+  const accounts: AccountRow[] = (companies ?? []).map((co) => ({
+    companyId: co.id,
+    companyName: co.name,
+    planCode: co.plan_code ?? null,
+    subscriptionStatus: co.subscription_status ?? null,
+    users: (allUsers ?? [])
+      .filter((u) => u.company_id === co.id)
+      .map((u) => ({ id: u.id, email: u.email, fullName: u.full_name ?? null, isAdmin: !!u.is_admin })),
+  }));
+
+  return { ok: true, accounts };
+}
+
 export interface AccountMatch {
   companyId: string;
   companyName: string;
@@ -60,6 +108,82 @@ export type DeleteResult =
  * insensitive). Returns enough context for the admin to confirm the right
  * tenant before deleting. Read-only.
  */
+/**
+ * Bulk wipe: delete multiple company tenants in one action.
+ * Confirmation guard: `confirmWord` must equal "DELETE" (case-sensitive).
+ * Self-protection: any company containing the calling admin is silently skipped.
+ */
+export async function deleteAccounts(
+  companyIds: string[],
+  confirmWord: string,
+): Promise<DeleteResult> {
+  const adminProfile = await requireAdmin();
+
+  if (!companyIds || companyIds.length === 0)
+    return { ok: false, error: 'No accounts selected.' };
+  if (confirmWord !== 'DELETE')
+    return { ok: false, error: 'Type DELETE (all caps) to confirm.' };
+
+  const admin = createAdminClient();
+  const results: string[] = [];
+  const failures: string[] = [];
+
+  for (const companyId of companyIds) {
+    // Re-use the single-delete logic by calling the same steps.
+    const { data: company } = await admin
+      .from('companies')
+      .select('id, name')
+      .eq('id', companyId)
+      .maybeSingle();
+    if (!company) { failures.push(`${companyId}: not found`); continue; }
+
+    const { data: users } = await admin
+      .from('users')
+      .select('id, email')
+      .eq('company_id', companyId);
+    const userList = users ?? [];
+
+    // Self-protection.
+    if (userList.some((u) => u.id === adminProfile.id)) {
+      failures.push(`${company.name}: skipped (your own account)`);
+      continue;
+    }
+
+    let storageRemoved = 0;
+    for (const bucket of STORAGE_BUCKETS) {
+      try {
+        const paths = await listCompanyStoragePaths(admin, bucket, companyId);
+        if (paths.length > 0) {
+          for (let i = 0; i < paths.length; i += 100) {
+            await admin.storage.from(bucket).remove(paths.slice(i, i + 100));
+            storageRemoved += paths.slice(i, i + 100).length;
+          }
+        }
+      } catch { /* best-effort */ }
+    }
+
+    for (const u of userList) {
+      await admin.auth.admin.deleteUser(u.id).catch(() => {});
+    }
+
+    const { error: delErr } = await admin.from('companies').delete().eq('id', companyId);
+    if (delErr) {
+      failures.push(`${company.name}: company row failed — ${delErr.message}`);
+      continue;
+    }
+
+    console.log(`[admin/delete-accounts] WIPED ${companyId} (${company.name}) users=${userList.length} storage=${storageRemoved} by admin=${adminProfile.id}`);
+    results.push(company.name);
+  }
+
+  if (results.length === 0 && failures.length > 0)
+    return { ok: false, error: `All deletions failed: ${failures.join('; ')}` };
+
+  const summary = `Deleted ${results.length} account(s): ${results.join(', ')}.` +
+    (failures.length ? ` ${failures.length} skipped/failed: ${failures.join('; ')}` : '');
+  return { ok: true, summary };
+}
+
 export async function lookupAccount(rawEmail: string): Promise<LookupResult> {
   await requireAdmin();
 
