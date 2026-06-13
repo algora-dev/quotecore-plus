@@ -693,6 +693,62 @@ export async function requireInvoiceSlot(companyId: string): Promise<void> {
 }
 
 /**
+ * Atomic invoice creation (H-03). Calls the `create_invoice_atomic` RPC which
+ * takes a per-company advisory lock, runs the active/feature/monthly-cap
+ * checks AND inserts the invoices row in ONE transaction - closing the
+ * count-then-insert race that `requireInvoiceSlot` + a separate INSERT left
+ * open.
+ *
+ * Maps the RPC's SQLSTATEs to the same typed billing errors the UI already
+ * pattern-matches (identical to requireInvoiceSlot):
+ *   P0001 -> SubscriptionInactiveError
+ *   P0012 -> FeatureGatedError(invoices)
+ *   P0015 -> InvoiceLimitReachedError
+ *
+ * Returns the new invoice id. Callers do line imports + activity logging
+ * AFTER this resolves (those are not cap-sensitive).
+ */
+export async function createInvoiceAtomic(
+  companyId: string,
+  userId: string,
+  payload: Record<string, unknown>,
+): Promise<string> {
+  const admin = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (admin as any).rpc('create_invoice_atomic', {
+    p_company_id: companyId,
+    p_user_id: userId,
+    p_payload: payload,
+  });
+  if (!error) {
+    if (!data) throw new Error('create_invoice_atomic returned no id');
+    return data as string;
+  }
+  const code = (error as { code?: string }).code;
+  if (code === 'P0001') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new SubscriptionInactiveError(ent.subscriptionStatus);
+  }
+  if (code === 'P0015') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new InvoiceLimitReachedError({
+      used:     ent.invoiceCount,
+      limit:    ent.invoiceLimit ?? 0,
+      planCode: ent.effectivePlanCode,
+    });
+  }
+  if (code === 'P0012') {
+    const ent = await loadCompanyEntitlements(companyId);
+    throw new FeatureGatedError({
+      feature: 'invoices',
+      currentPlan: ent.effectivePlanCode,
+      requiredPlan: FEATURE_MIN_PLAN.invoices,
+    });
+  }
+  throw new Error(`create_invoice_atomic failed: ${error.message}`);
+}
+
+/**
  * Central gate for MUTATIONS on EXISTING invoices (H-02).
  *
  * Invoice CREATION is gated by `requireInvoiceSlot` (feature + monthly cap).

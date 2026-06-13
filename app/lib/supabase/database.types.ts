@@ -4195,6 +4195,10 @@ export type Database = {
         Args: { p_key: string; p_max: number; p_window_ms: number }
         Returns: boolean
       }
+      create_invoice_atomic: {
+        Args: { p_company_id: string; p_payload: Json; p_user_id: string }
+        Returns: string
+      }
       create_quote_atomic: {
         Args: { p_company_id: string; p_payload: Json; p_user_id: string }
         Returns: string

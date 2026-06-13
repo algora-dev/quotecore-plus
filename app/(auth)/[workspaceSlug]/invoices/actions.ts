@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { alertEnabled } from '@/app/lib/alerts/prefs';
-import { requireInvoiceSlot, requireInvoiceFeature } from '@/app/lib/billing/entitlements';
+import { createInvoiceAtomic, requireInvoiceFeature } from '@/app/lib/billing/entitlements';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -46,21 +46,9 @@ export async function createBlankInvoice(opts: {
   templateId?: string;
 }): Promise<string> {
   const profile = await requireCompanyContext();
-  // Gate: feature + monthly invoice cap (P0012 / P0015). Throws a typed
-  // billing error the UI can pattern-match to an upgrade prompt.
-  await requireInvoiceSlot(profile.company_id);
   const admin = createAdminClient();
 
-  // Generate invoice number atomically
-  const { data: invoiceNumber, error: numErr } = await admin.rpc(
-    'generate_invoice_number',
-    { p_company_id: profile.company_id }
-  );
-  if (numErr || !invoiceNumber) throw new Error('Failed to generate invoice number');
-
-  const paymentReference = 'QCP-' + invoiceNumber;
-
-  // Fetch company defaults + optional template
+  // Fetch company defaults + optional template (not cap-sensitive).
   const { data: company } = await admin
     .from('companies')
     .select('name, default_currency')
@@ -87,55 +75,46 @@ export async function createBlankInvoice(opts: {
     paymentLink: tmpl.payment_link,
   } : {};
 
-  const { data: invoice, error: insertErr } = await admin
-    .from('invoices')
-    .insert({
-      company_id: profile.company_id,
-      user_id: profile.id,
-      invoice_number: invoiceNumber as string,
-      payment_reference: paymentReference,
-      status: 'draft',
-      source_type: 'blank',
-      source_id: null,
-      customer_name: opts.customerName,
-      customer_email: opts.customerEmail ?? null,
-      customer_snapshot: (opts.customerSnapshot ?? {}) as never,
-      // Apply template branding (falls back to company name if no template)
-      cq_company_name: tmpl?.company_name ?? company?.name ?? null,
-      cq_company_address: tmpl?.company_address ?? null,
-      cq_company_email: tmpl?.company_email ?? null,
-      cq_company_phone: tmpl?.company_phone ?? null,
-      cq_company_logo_url: tmpl?.company_logo_url ?? null,
-      cq_footer_text: tmpl?.footer_text ?? null,
-      business_snapshot: { businessName: tmpl?.company_name ?? company?.name ?? '' } as never,
-      payment_details: paymentDetails as never,
-      template_id: opts.templateId ?? null,
-      notes: tmpl?.default_notes ?? null,
-      terms: tmpl?.default_terms ?? null,
-      currency: opts.currency ?? company?.default_currency ?? 'GBP',
-    })
-    .select('id')
-    .single();
+  // H-03: atomic create. The RPC takes the per-company advisory lock, runs
+  // the feature + monthly-cap checks AND inserts the row in one transaction,
+  // closing the count-then-insert race. It throws the same SQLSTATEs
+  // (P0001/P0012/P0015) that createInvoiceError() maps to typed billing
+  // errors for the UI upgrade prompt.
+  const invoiceId = await createInvoiceAtomic(profile.company_id, profile.id, {
+    source_type: 'blank',
+    source_id: null,
+    customer_name: opts.customerName,
+    customer_email: opts.customerEmail ?? null,
+    customer_snapshot: opts.customerSnapshot ?? {},
+    cq_company_name: tmpl?.company_name ?? company?.name ?? null,
+    cq_company_address: tmpl?.company_address ?? null,
+    cq_company_email: tmpl?.company_email ?? null,
+    cq_company_phone: tmpl?.company_phone ?? null,
+    cq_company_logo_url: tmpl?.company_logo_url ?? null,
+    cq_footer_text: tmpl?.footer_text ?? null,
+    business_snapshot: { businessName: tmpl?.company_name ?? company?.name ?? '' },
+    payment_details: paymentDetails,
+    template_id: opts.templateId ?? null,
+    notes: tmpl?.default_notes ?? null,
+    terms: tmpl?.default_terms ?? null,
+    currency: opts.currency ?? company?.default_currency ?? 'GBP',
+  });
 
-  if (insertErr || !invoice) throw new Error('Failed to create invoice');
-
-  // Log creation activity
+  // Log creation activity (post-create; not cap-sensitive).
   await admin.from('invoice_activity').insert({
-    invoice_id: invoice.id,
+    invoice_id: invoiceId,
     company_id: profile.company_id,
     event_type: 'created',
     metadata: { source_type: 'blank', customer_name: opts.customerName },
   });
 
-  return invoice.id;
+  return invoiceId;
 }
 
 // ── Create invoice from quote ──────────────────────────────────────────────
 
 export async function createInvoiceFromQuote(quoteId: string, templateId?: string): Promise<string> {
   const profile = await requireCompanyContext();
-  // Gate: feature + monthly invoice cap (P0012 / P0015).
-  await requireInvoiceSlot(profile.company_id);
   const admin = createAdminClient();
 
   // Load source quote (must belong to this company)
@@ -166,15 +145,6 @@ export async function createInvoiceFromQuote(quoteId: string, templateId?: strin
     tmplFromQuote = t as Record<string, string | null> | null;
   }
 
-  // Generate invoice number
-  const { data: invoiceNumber, error: numErr } = await admin.rpc(
-    'generate_invoice_number',
-    { p_company_id: profile.company_id }
-  );
-  if (numErr || !invoiceNumber) throw new Error('Failed to generate invoice number');
-
-  const paymentReference = 'QCP-' + invoiceNumber;
-
   // Deep-copy snapshots so future quote edits don't affect the invoice
   const customerSnapshot = {
     name: quote.customer_name,
@@ -189,43 +159,34 @@ export async function createInvoiceFromQuote(quoteId: string, templateId?: strin
     address: quote.cq_company_address ?? '',
   };
 
-  const { data: invoice, error: insertErr } = await admin
-    .from('invoices')
-    .insert({
-      company_id: profile.company_id,
-      user_id: profile.id,
-      invoice_number: invoiceNumber as string,
-      payment_reference: paymentReference,
-      status: 'draft',
-      source_type: 'quote',
-      source_id: quoteId,
-      customer_name: quote.customer_name,
-      customer_email: quote.customer_email ?? null,
-      customer_snapshot: customerSnapshot as never,
-      // Template branding overrides quote cq_ fields when a template is selected
-      cq_company_name: (tmplFromQuote?.company_name ?? quote.cq_company_name) ?? null,
-      cq_company_address: (tmplFromQuote?.company_address ?? quote.cq_company_address) ?? null,
-      cq_company_email: (tmplFromQuote?.company_email ?? quote.cq_company_email) ?? null,
-      cq_company_phone: (tmplFromQuote?.company_phone ?? quote.cq_company_phone) ?? null,
-      cq_company_logo_url: (tmplFromQuote?.company_logo_url ?? quote.cq_company_logo_url) ?? null,
-      cq_footer_text: (tmplFromQuote?.footer_text ?? quote.cq_footer_text) ?? null,
-      business_snapshot: businessSnapshot as never,
-      payment_details: tmplFromQuote ? {
-        accountName: tmplFromQuote.payment_account_name,
-        bankName: tmplFromQuote.payment_bank_name,
-        accountNumber: tmplFromQuote.payment_account_number,
-        sortCode: tmplFromQuote.payment_sort_code,
-        paymentLink: tmplFromQuote.payment_link,
-      } as never : {} as never,
-      template_id: templateId ?? null,
-      currency: quote.currency ?? 'GBP',
-      notes: tmplFromQuote?.default_notes ?? quote.notes_internal ?? null,
-      terms: tmplFromQuote?.default_terms ?? null,
-    })
-    .select('id')
-    .single();
+  // H-03: atomic create (see createBlankInvoice). Closes the cap race.
+  const invoiceId = await createInvoiceAtomic(profile.company_id, profile.id, {
+    source_type: 'quote',
+    source_id: quoteId,
+    customer_name: quote.customer_name,
+    customer_email: quote.customer_email ?? null,
+    customer_snapshot: customerSnapshot,
+    cq_company_name: (tmplFromQuote?.company_name ?? quote.cq_company_name) ?? null,
+    cq_company_address: (tmplFromQuote?.company_address ?? quote.cq_company_address) ?? null,
+    cq_company_email: (tmplFromQuote?.company_email ?? quote.cq_company_email) ?? null,
+    cq_company_phone: (tmplFromQuote?.company_phone ?? quote.cq_company_phone) ?? null,
+    cq_company_logo_url: (tmplFromQuote?.company_logo_url ?? quote.cq_company_logo_url) ?? null,
+    cq_footer_text: (tmplFromQuote?.footer_text ?? quote.cq_footer_text) ?? null,
+    business_snapshot: businessSnapshot,
+    payment_details: tmplFromQuote ? {
+      accountName: tmplFromQuote.payment_account_name,
+      bankName: tmplFromQuote.payment_bank_name,
+      accountNumber: tmplFromQuote.payment_account_number,
+      sortCode: tmplFromQuote.payment_sort_code,
+      paymentLink: tmplFromQuote.payment_link,
+    } : {},
+    template_id: templateId ?? null,
+    currency: quote.currency ?? 'GBP',
+    notes: tmplFromQuote?.default_notes ?? quote.notes_internal ?? null,
+    terms: tmplFromQuote?.default_terms ?? null,
+  });
 
-  if (insertErr || !invoice) throw new Error('Failed to create invoice from quote');
+  const invoice = { id: invoiceId };
 
   // Import lines from customer_quote_lines
   if (cqLines && cqLines.length > 0) {
