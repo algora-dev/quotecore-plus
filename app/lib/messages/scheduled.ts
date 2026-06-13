@@ -1293,24 +1293,28 @@ export async function loadScheduledForInvoice(
  * pass. Each row is processed independently \u2014 a failure on one row
  * does not block the rest of the sweep.
  *
- * Concurrency: this route runs at most every 30 minutes and the cap of
- * 3 open rows per quote keeps the working set tiny. We do NOT use a
- * SELECT FOR UPDATE here because two overlapping sweeps would both see
- * the same rows; instead we flip status synchronously in the update
- * call (status='scheduled' -> 'sent' / 'cancelled' / 'failed') and rely
- * on the WHERE-status='scheduled' clause to prevent double-send.
+ * Concurrency (Gerald audit H-01): pg_cron now fires every minute and inline
+ * activators can run concurrently, so two overlapping sweeps could both read
+ * the same due row and both send before either marked it sent. We therefore
+ * ATOMICALLY CLAIM due rows via the claim_due_scheduled_messages RPC
+ * (UPDATE ... FOR UPDATE SKIP LOCKED, 'scheduled' -> 'dispatching') before any
+ * send. Only the worker that wins the claim sees the row; the terminal flip
+ * ('dispatching' -> sent/cancelled/failed/suppressed) is therefore race-free.
+ * Crashed workers are recovered by reclaim_stale_dispatching_messages (called
+ * inside the claim RPC each sweep).
  */
 export async function runDueScheduledMessages(): Promise<DispatchSweepResult> {
   const admin = createAdminClient();
-  const now = new Date().toISOString();
 
-  const { data: dueRows } = await admin
-    .from('scheduled_messages')
-    .select('*')
-    .eq('status', 'scheduled')
-    .lte('fire_at', now)
-    .order('fire_at', { ascending: true })
-    .limit(100);
+  // Atomic claim: returns rows already flipped to 'dispatching' and owned by
+  // this sweep. Concurrent sweeps receive disjoint row sets (SKIP LOCKED).
+  const { data: dueRows, error: claimErr } = await admin.rpc(
+    'claim_due_scheduled_messages',
+    { p_limit: 100, p_stale_minutes: 10 },
+  );
+  if (claimErr) {
+    console.error('[scheduled-messages] claim RPC failed:', claimErr);
+  }
 
   const result: DispatchSweepResult = {
     scanned: dueRows?.length ?? 0,
@@ -1583,7 +1587,7 @@ async function dispatchOne(
         outbound_message_id: sendResult.messageId,
       })
       .eq('id', row.id)
-      .eq('status', 'scheduled');
+      .eq('status', 'dispatching');
     return 'suppressed';
   }
 
@@ -1595,7 +1599,7 @@ async function dispatchOne(
       outbound_message_id: sendResult.messageId,
     })
     .eq('id', row.id)
-    .eq('status', 'scheduled');
+    .eq('status', 'dispatching');
   return 'sent';
 }
 
@@ -1774,7 +1778,7 @@ async function dispatchOrderRow(
         outbound_message_id: sendResult.messageId,
       })
       .eq('id', row.id)
-      .eq('status', 'scheduled');
+      .eq('status', 'dispatching');
     return 'suppressed';
   }
 
@@ -1786,7 +1790,7 @@ async function dispatchOrderRow(
       outbound_message_id: sendResult.messageId,
     })
     .eq('id', row.id)
-    .eq('status', 'scheduled');
+    .eq('status', 'dispatching');
   return 'sent';
 }
 
@@ -1952,7 +1956,7 @@ async function dispatchInvoiceRow(
         outbound_message_id: sendResult.messageId,
       })
       .eq('id', row.id)
-      .eq('status', 'scheduled');
+      .eq('status', 'dispatching');
     return 'suppressed';
   }
 
@@ -1964,7 +1968,7 @@ async function dispatchInvoiceRow(
       outbound_message_id: sendResult.messageId,
     })
     .eq('id', row.id)
-    .eq('status', 'scheduled');
+    .eq('status', 'dispatching');
   return 'sent';
 }
 
@@ -1973,14 +1977,16 @@ async function markCancelled(
   id: string,
   reason: string,
 ) {
-  // Flip the row first - we use the WHERE status='scheduled' clause as
-  // an idempotency lock so concurrent dispatcher invocations can't
-  // double-cancel.
+  // Flip the row first - the WHERE status IN ('scheduled','dispatching')
+  // clause is an idempotency lock so concurrent dispatcher invocations can't
+  // double-cancel. 'dispatching' is included because the dispatch path claims
+  // rows into that transient status before calling this (Gerald H-01); the
+  // activator callers still pass 'scheduled' rows. Both are valid here.
   const { data: updated } = await admin
     .from('scheduled_messages')
     .update({ status: 'cancelled', cancelled_reason: reason })
     .eq('id', id)
-    .eq('status', 'scheduled')
+    .in('status', ['scheduled', 'dispatching'])
     .select('company_id, quote_id, order_id, invoice_id, recipient_email')
     .maybeSingle();
   if (!updated) return;
@@ -2055,7 +2061,7 @@ async function markFailed(
     .from('scheduled_messages')
     .update({ status: 'failed', failed_error: errorMessage })
     .eq('id', id)
-    .eq('status', 'scheduled');
+    .in('status', ['scheduled', 'dispatching']);
 }
 
 // Mirrors the helper in send-message-actions.ts. Duplicated here

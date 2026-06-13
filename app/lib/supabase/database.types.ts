@@ -3256,6 +3256,7 @@ export type Database = {
       scheduled_messages: {
         Row: {
           cancelled_reason: string | null
+          claimed_at: string | null
           company_id: string
           created_at: string
           created_by_user_id: string
@@ -3282,6 +3283,7 @@ export type Database = {
         }
         Insert: {
           cancelled_reason?: string | null
+          claimed_at?: string | null
           company_id: string
           created_at?: string
           created_by_user_id: string
@@ -3308,6 +3310,7 @@ export type Database = {
         }
         Update: {
           cancelled_reason?: string | null
+          claimed_at?: string | null
           company_id?: string
           created_at?: string
           created_by_user_id?: string
@@ -4125,6 +4128,42 @@ export type Database = {
         Args: { p_company_id: string; p_file_size: number }
         Returns: boolean
       }
+      claim_due_scheduled_messages: {
+        Args: { p_limit?: number; p_stale_minutes?: number }
+        Returns: {
+          cancelled_reason: string | null
+          claimed_at: string | null
+          company_id: string
+          created_at: string
+          created_by_user_id: string
+          failed_error: string | null
+          fire_at: string
+          fired_at: string | null
+          id: string
+          invoice_id: string | null
+          order_id: string | null
+          outbound_message_id: string | null
+          pending_wait_days: number | null
+          pending_wait_hours: number | null
+          pending_wait_minutes: number | null
+          quote_id: string | null
+          recipient_email: string
+          recipient_name: string | null
+          require_no_response: boolean
+          respect_quiet_hours: boolean
+          status: string
+          template_id: string | null
+          trigger_anchor_at: string
+          trigger_event: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "scheduled_messages"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       company_attachment_count: {
         Args: { p_company_id: string }
         Returns: number
@@ -4205,6 +4244,10 @@ export type Database = {
         }[]
       }
       prune_rate_limits: { Args: never; Returns: number }
+      reclaim_stale_dispatching_messages: {
+        Args: { p_stale_minutes?: number }
+        Returns: number
+      }
       require_attachment_slot: {
         Args: { p_company_id: string }
         Returns: undefined
