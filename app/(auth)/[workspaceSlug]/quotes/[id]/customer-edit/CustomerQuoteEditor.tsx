@@ -963,7 +963,9 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 footerText={footerText}
                 editingLineId={editingLineId}
                 onEditLine={setEditingLineId}
-                onSaveLine={(id, text, qty, amount, sp) => updateLine(id, text, qty, amount, sp)}
+                onSaveLine={(id, text, quantityText, amount, sp, qty, unitPrice) =>
+                  updateLine(id, text, quantityText, amount, sp, qty ?? 1, unitPrice ?? null)
+                }
                 showQuantityColumn={showQuantityColumn}
                 hideLinePrices={hideLinePrices}
                 hideTotals={hideTotals}

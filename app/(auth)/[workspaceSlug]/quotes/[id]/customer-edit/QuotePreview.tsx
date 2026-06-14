@@ -125,66 +125,84 @@ export function QuotePreview({
         )}
       </div>
 
-      {/* Line items */}
-      <div className="space-y-2 border-t pt-4">
-        {/* Column header row — only shown when qty column is active */}
-        {showQuantityColumn && lines.length > 0 && (
-          <div className="flex items-center justify-between pb-1 border-b border-slate-200">
-            <p className="flex-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">Item</p>
-            <p className="w-12 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty</p>
-            <p className="w-24 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Total</p>
-          </div>
-        )}
+      {/* Line items — table layout for clean column alignment (matches order editor) */}
+      <div className="border-t pt-4">
         {lines.length === 0 ? (
           <p className="text-sm text-slate-400 italic">No items selected</p>
         ) : (
-          lines.map(line =>
-            editingLineId === line.id && onSaveLine && onCancelEdit ? (
-              <div key={line.id} className="py-2">
-<LineEditForm
-                  initialText={splitLineParts(line.text, line.quantityText).description}
-                  initialQuantity={splitLineParts(line.text, line.quantityText).quantity}
-                  initialAmount={line.amount}
-                  initialShowPrice={line.showPrice}
-                  showQuantityColumn={showQuantityColumn}
-                  initialQty={(line as { qty?: number }).qty ?? 1}
-                  initialUnitPrice={(line as { unitPrice?: number | null }).unitPrice ?? null}
-                  onSave={(text, quantity, amount, sp, qty, unitPrice) => onSaveLine(line.id, text, quantity, amount, sp, qty, unitPrice)}
-                  onCancel={onCancelEdit}
-                />
-              </div>
-            ) : (
-<div key={line.id} data-pdf-block className="flex items-start justify-between py-2 border-b border-slate-100 gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-slate-900">{displayLineText(line.text, line.quantityText, line.showUnits)}</p>
-                </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b-2 border-slate-300 text-left">
+                <th className="py-2 pr-3 font-semibold text-slate-600">Item</th>
                 {showQuantityColumn && (
-                  <div className="w-12 flex-shrink-0 text-center">
-                    <span className="text-sm text-slate-600">
-                      {(line as { qty?: number }).qty ?? 1}
-                    </span>
-                  </div>
+                  <th className="py-2 px-2 text-right font-semibold text-slate-600 whitespace-nowrap w-12">Qty</th>
                 )}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {line.showPrice && !hideLinePrices && (
-                    <p className="text-sm font-medium text-slate-900 whitespace-nowrap">
-                      {formatCurrency(line.amount, currency)}
-                    </p>
-                  )}
-                  {showEditButtons && onEditLine && (
-                    <button
-                      onClick={() => onEditLine(line.id)}
-                      className="p-1 text-slate-400 hover:text-slate-600"
+                <th className="py-2 pl-3 text-right font-semibold text-slate-600 whitespace-nowrap">
+                  {hideLinePrices ? '' : 'Total'}
+                </th>
+                {showEditButtons && onEditLine && <th className="w-8" />}
+              </tr>
+            </thead>
+            <tbody>
+              {lines.map(line =>
+                editingLineId === line.id && onSaveLine && onCancelEdit ? (
+                  <tr key={line.id}>
+                    <td
+                      colSpan={
+                        (showQuantityColumn ? 1 : 0) +
+                        (showEditButtons && onEditLine ? 3 : 2)
+                      }
+                      className="py-2"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              </div>
-            )
-          )
+                      <LineEditForm
+                        initialText={splitLineParts(line.text, line.quantityText).description}
+                        initialQuantity={splitLineParts(line.text, line.quantityText).quantity}
+                        initialAmount={line.amount}
+                        initialShowPrice={line.showPrice}
+                        showQuantityColumn={showQuantityColumn}
+                        initialQty={(line as { qty?: number }).qty ?? 1}
+                        initialUnitPrice={(line as { unitPrice?: number | null }).unitPrice ?? null}
+                        onSave={(text, quantity, amount, sp, qty, unitPrice) =>
+                          onSaveLine(line.id, text, quantity, amount, sp, qty, unitPrice)
+                        }
+                        onCancel={onCancelEdit}
+                      />
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={line.id} data-pdf-block className="border-b border-slate-100 align-top">
+                    <td className="py-2 pr-3 text-slate-900">
+                      {displayLineText(line.text, line.quantityText, line.showUnits)}
+                    </td>
+                    {showQuantityColumn && (
+                      <td className="py-2 px-2 text-right text-slate-600 w-12 tabular-nums">
+                        {(line as { qty?: number }).qty ?? 1}
+                      </td>
+                    )}
+                    <td className="py-2 pl-3 text-right font-medium text-slate-900 whitespace-nowrap tabular-nums">
+                      {line.showPrice && !hideLinePrices
+                        ? formatCurrency(line.amount, currency)
+                        : ''}
+                    </td>
+                    {showEditButtons && onEditLine && (
+                      <td className="py-2 pl-2 text-right">
+                        <button
+                          onClick={() => onEditLine(line.id)}
+                          className="p-1 text-slate-400 hover:text-slate-600"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                            />
+                          </svg>
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                )
+              )}
+            </tbody>
+          </table>
         )}
       </div>
 
