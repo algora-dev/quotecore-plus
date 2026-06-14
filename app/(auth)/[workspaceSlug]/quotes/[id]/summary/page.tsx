@@ -25,6 +25,7 @@ import { SummaryTabs } from './SummaryTabs';
 import { SummaryFilesPanel } from './SummaryFilesPanel';
 import { ActivityCard } from './ActivityCard';
 import { QuoteExpiryEditor } from './QuoteExpiryEditor';
+import { QuoteNotesPanel, type QuoteNote } from './QuoteNotesPanel';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { loadQuoteTaxes } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
@@ -68,6 +69,14 @@ export default async function QuoteSummaryPage({
     .eq('id', _profile.id)
     .maybeSingle();
   const sendTestTipSeen = !!(_stt as { send_test_tip_seen_at?: string | null } | null)?.send_test_tip_seen_at;
+
+  // Load notes for this quote (newest first)
+  const { data: notesData } = await supabase
+    .from('quote_notes')
+    .select('id, title, body, created_at, updated_at')
+    .eq('quote_id', id)
+    .order('created_at', { ascending: false });
+  const quoteNotes: QuoteNote[] = (notesData ?? []) as QuoteNote[];
 
   // Load ALL customer quote lines (for overrides + custom lines)
   const { data: allCustomerLines } = await supabase
@@ -552,6 +561,10 @@ export default async function QuoteSummaryPage({
       </div>
       </div>
       </SummaryTabs>
+
+      {/* Notes panel -- always visible below the main summary content */}
+      <QuoteNotesPanel quoteId={id} initialNotes={quoteNotes} />
+
     </div>
   );
 }
