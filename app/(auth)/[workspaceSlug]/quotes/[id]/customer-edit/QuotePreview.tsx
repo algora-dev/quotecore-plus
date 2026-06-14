@@ -191,8 +191,16 @@ export function QuotePreview({
                         initialLineMarginPercent={line.lineMarginPercent ?? null}
                         initialLineLaborMarginPercent={line.lineLaborMarginPercent ?? null}
                         globalMarginPercent={globalMarginPercent}
-                        defaultMaterialMarginPercent={(quote as { material_margin_percent?: number | null }).material_margin_percent ?? null}
-                        defaultLaborMarginPercent={(quote as { labor_margin_percent?: number | null }).labor_margin_percent ?? null}
+                        defaultMaterialMarginPercent={
+                          quote.material_margin_enabled && quote.material_margin_percent != null
+                            ? Number(quote.material_margin_percent)
+                            : null
+                        }
+                        defaultLaborMarginPercent={
+                          quote.labor_margin_enabled && quote.labor_margin_percent != null
+                            ? Number(quote.labor_margin_percent)
+                            : null
+                        }
                         quoteEntryMode={quoteEntryMode}
                         onSave={(text, quantity, amount, sp, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent) =>
                           onSaveLine(line.id, text, quantity, amount, sp, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent)

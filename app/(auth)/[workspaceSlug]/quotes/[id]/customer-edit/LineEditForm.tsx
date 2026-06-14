@@ -106,8 +106,15 @@ export function LineEditForm({
     (initialLineLaborMarginPercent ?? defaultLaborMargin).toString()
   );
 
-  // Show Labor Margin field only for component lines that actually have labour cost.
-  const showLaborMarginField = isComponentLine && (baseLabourCost ?? 0) > 0;
+  // Show Labor Margin field only for:
+  //   - component lines (not custom/catalog)
+  //   - that actually have labour cost > 0 (materials-only components skip it)
+  //   - AND the quote has labor margin enabled (default labor margin > 0 means it was enabled)
+  const showLaborMarginField =
+    isComponentLine &&
+    !isBlankQuote &&
+    (baseLabourCost ?? 0) > 0 &&
+    defaultLaborMarginPercent != null;
   // ─────────────────────────────────────────────────────────────────────────────
 
   // Derived line total when qty column is active
@@ -121,17 +128,27 @@ export function LineEditForm({
    * - Custom lines: proportional formula using the current displayed amount.
    */
   function recalcForMarginChange(newMaterialMargin: number, newLaborMargin: number) {
-    if (isComponentLine && baseMaterialCost !== undefined && baseLabourCost !== undefined) {
-      // Component line: compute from true base costs.
+    // Use base-cost formula ONLY when the component has real cost figures.
+    // If both costs are 0 (e.g. price set manually in Review stage), the formula
+    // would produce $0 — fall back to the proportional formula in that case.
+    const hasRealBaseCosts =
+      isComponentLine &&
+      baseMaterialCost !== undefined &&
+      baseLabourCost !== undefined &&
+      (baseMaterialCost + baseLabourCost) > 0;
+
+    if (hasRealBaseCosts) {
+      // Component line with known costs: compute directly from base costs.
       const newAmt = Math.round(
-        (baseMaterialCost * (1 + newMaterialMargin / 100) +
-          baseLabourCost * (1 + newLaborMargin / 100)) *
+        (baseMaterialCost! * (1 + newMaterialMargin / 100) +
+          baseLabourCost! * (1 + newLaborMargin / 100)) *
           100
       ) / 100;
       setAmount(newAmt.toString());
     } else {
-      // Custom / catalog line: proportional formula.
-      // old effective margin = current marginPercent value
+      // Custom, catalog, or manually-priced component line: proportional formula.
+      // Reads marginPercent BEFORE setMarginPercent applies (React state is async
+      // within the same event), so oldEffective correctly reflects the PREVIOUS margin.
       const oldEffective = parseFloat(marginPercent) || 0;
       const currentAmt = parseFloat(amount) || 0;
       const base = currentAmt / (1 + oldEffective / 100);

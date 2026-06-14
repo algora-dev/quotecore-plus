@@ -73,6 +73,12 @@ export default async function CreateOrderPage(props: Props) {
     .maybeSingle();
   const currency = companyRow?.default_currency ?? 'GBP';
 
+  // Filter quoteData components server-side so the client never needs to touch it.
+  // If selectedComponentIds is null (no line-selector step), pass quoteData unchanged.
+  const filteredQuoteData = quoteData && selectedComponentIds
+    ? { ...quoteData, components: quoteData.components.filter(c => selectedComponentIds.includes(c.id)) }
+    : quoteData;
+
   return (
     <div className="h-screen overflow-hidden">
       <OrderCreateForm
@@ -83,8 +89,7 @@ export default async function CreateOrderPage(props: Props) {
         collections={(collections ?? []).map((c) => ({ id: c.id as string, name: c.name as string }))}
         companyTaxes={(companyTaxes ?? []).map((t) => ({ id: t.id, name: t.name, rate_percent: Number(t.rate_percent) }))}
         workspaceSlug={_workspaceSlug}
-        quoteData={quoteData}
-        selectedComponentIds={selectedComponentIds}
+        quoteData={filteredQuoteData}
         existingOrder={existingOrder}
         isOverStorage={ent.isOverStorage}
         initialLayout={initialLayout}
