@@ -256,6 +256,21 @@ export function OrderLineByLineEditor({
                 />
                 Hide totals
               </label>
+              <label
+                className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none"
+                title="Adds a Qty column to each line. Total = Qty × Unit Price."
+              >
+                <input
+                  type="checkbox"
+                  checked={showQuantityColumn}
+                  onChange={(e) => {
+                    setShowQuantityColumn(e.target.checked);
+                    onShowQuantityColumnChange?.(e.target.checked);
+                  }}
+                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                />
+                Qty column
+              </label>
             </div>
           </div>
 
@@ -358,19 +373,7 @@ export function OrderLineByLineEditor({
           >
             + Add New Line
           </button>
-          {/* Quantity column toggle */}
-          <label className="flex items-center gap-2 px-1 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={showQuantityColumn}
-              onChange={(e) => {
-                setShowQuantityColumn(e.target.checked);
-                onShowQuantityColumnChange?.(e.target.checked);
-              }}
-              className="w-4 h-4 rounded text-orange-600"
-            />
-            <span className="text-xs text-slate-600">Add Quantity Column</span>
-          </label>
+
         </div>
 
         {/* Footer */}
@@ -517,11 +520,11 @@ export function OrderLineByLineEditor({
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b-2 border-slate-300 text-left">
+<tr className="border-b-2 border-slate-300 text-left">
                 <th className="py-2 pr-3 font-semibold text-slate-600">Item / Description</th>
-                {/* Keep the 2nd column header for layout (it also carries the
-                    per-line pencil edit button), but blank the "Price" label
-                    when all prices are hidden so nothing pricing-related shows. */}
+                {showQuantityColumn && (
+                  <th className="py-2 px-2 text-right font-semibold text-slate-600 whitespace-nowrap w-12">Qty</th>
+                )}
                 <th className="py-2 pl-3 text-right font-semibold text-slate-600 whitespace-nowrap">
                   {hideLinePrices ? '' : 'Price'}
                 </th>
@@ -530,15 +533,15 @@ export function OrderLineByLineEditor({
             <tbody>
               {visibleLines.length === 0 ? (
                 <tr>
-                  <td colSpan={2} className="py-4 text-center text-slate-400 italic">
+<td colSpan={showQuantityColumn ? 3 : 2} className="py-4 text-center text-slate-400 italic">
                     No items yet.
                   </td>
                 </tr>
               ) : (
                 visibleLines.map((line) =>
                   editingLineId === line.id ? (
-                    <tr key={line.id}>
-                      <td colSpan={2} className="py-2">
+<tr key={line.id}>
+                      <td colSpan={showQuantityColumn ? 3 : 2} className="py-2">
 <LineEditForm
                           initialText={line.text}
                           initialQuantity={line.quantityText}
@@ -553,8 +556,13 @@ export function OrderLineByLineEditor({
                       </td>
                     </tr>
                   ) : (
-                    <tr key={line.id} className="border-b border-slate-100 align-top">
+<tr key={line.id} className="border-b border-slate-100 align-top">
                       <td className="py-2 pr-3 text-slate-800 whitespace-pre-line">{lineDisplayText(line)}</td>
+                      {showQuantityColumn && (
+                        <td className="py-2 px-2 text-right text-slate-700 tabular-nums w-12">
+                          {line.quantity ?? 1}
+                        </td>
+                      )}
                       <td className="py-2 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
                         <div className="flex items-center justify-end gap-2">
                           {!hideLinePrices && line.showPrice ? formatCurrency(line.amount, currency) : ''}

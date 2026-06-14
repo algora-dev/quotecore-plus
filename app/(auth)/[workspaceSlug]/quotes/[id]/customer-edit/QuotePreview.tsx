@@ -127,6 +127,14 @@ export function QuotePreview({
 
       {/* Line items */}
       <div className="space-y-2 border-t pt-4">
+        {/* Column header row — only shown when qty column is active */}
+        {showQuantityColumn && lines.length > 0 && (
+          <div className="flex items-center justify-between pb-1 border-b border-slate-200">
+            <p className="flex-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">Item</p>
+            <p className="w-12 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty</p>
+            <p className="w-24 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Total</p>
+          </div>
+        )}
         {lines.length === 0 ? (
           <p className="text-sm text-slate-400 italic">No items selected</p>
         ) : (
@@ -146,13 +154,20 @@ export function QuotePreview({
                 />
               </div>
             ) : (
-              <div key={line.id} data-pdf-block className="flex items-start justify-between py-2 border-b border-slate-100">
-                <div className="flex-1">
+<div key={line.id} data-pdf-block className="flex items-start justify-between py-2 border-b border-slate-100 gap-2">
+                <div className="flex-1 min-w-0">
                   <p className="text-sm text-slate-900">{displayLineText(line.text, line.quantityText, line.showUnits)}</p>
                 </div>
-<div className="flex items-center gap-2">
+                {showQuantityColumn && (
+                  <div className="w-12 flex-shrink-0 text-center">
+                    <span className="text-sm text-slate-600">
+                      {(line as { qty?: number }).qty ?? 1}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 flex-shrink-0">
                   {line.showPrice && !hideLinePrices && (
-                    <p className="text-sm font-medium text-slate-900">
+                    <p className="text-sm font-medium text-slate-900 whitespace-nowrap">
                       {formatCurrency(line.amount, currency)}
                     </p>
                   )}

@@ -284,7 +284,7 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
                             type="button"
                             onClick={() => {
                               setSelectedCatalogRow(row);
-                              if (!catalogUnitPrice) setCatalogUnitPrice(String(price));
+                              setCatalogUnitPrice(String(price)); // always update on row change
                             }}
                             className={`w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-slate-50 ${selectedCatalogRow?.id === row.id ? 'bg-orange-50' : ''}`}
                           >

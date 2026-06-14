@@ -105,6 +105,8 @@ export default async function BlankBuildPage({
         collection_id: (c.collection_id as string | null) ?? null,
       }))}
       catalogs={(catalogList ?? []).map((c) => ({ id: c.id, name: c.name }))}
+      editorTitle="Blank Quote"
+      previewTitle="Quote Preview"
     />
   );
 }

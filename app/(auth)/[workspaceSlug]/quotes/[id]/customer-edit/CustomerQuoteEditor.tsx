@@ -551,6 +551,37 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               Easily click/unclick what you want to see or hide from your quote below
             </p>
 
+            {/* Column/price visibility toggles — above the lines list */}
+            <div className="flex flex-wrap gap-x-4 gap-y-1 pb-1 border-b border-slate-100">
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={showQuantityColumn}
+                  onChange={(e) => { setShowQuantityColumn(e.target.checked); setIsDirty(true); }}
+                  className="w-3.5 h-3.5 rounded text-orange-600"
+                />
+                <span className="text-xs text-slate-500">Qty column</span>
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={hideLinePrices}
+                  onChange={(e) => { setHideLinePrices(e.target.checked); setIsDirty(true); }}
+                  className="w-3.5 h-3.5 rounded text-orange-600"
+                />
+                <span className="text-xs text-slate-500">Hide line prices</span>
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={hideTotals}
+                  onChange={(e) => { setHideTotals(e.target.checked); setIsDirty(true); }}
+                  className="w-3.5 h-3.5 rounded text-orange-600"
+                />
+                <span className="text-xs text-slate-500">Hide totals</span>
+              </label>
+            </div>
+
             <div className="space-y-4">
               {/* Grouped by roof areas */}
               {roofAreas.map(area => {
@@ -745,43 +776,13 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               )}
             </div>
 
-            <div className="flex flex-col gap-2">
-              <button
-                data-copilot="cl-add-line-btn"
-                onClick={() => setShowAddLine(true)}
-                className="w-full py-2 text-sm font-medium text-orange-600 border border-orange-200 rounded-full hover:bg-orange-50 hover:border-orange-300 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]"
-              >
-                + Add New Line
-              </button>
-              {/* Column/price visibility toggles */}
-              <label className="flex items-center gap-2 px-1 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={showQuantityColumn}
-                  onChange={(e) => { setShowQuantityColumn(e.target.checked); setIsDirty(true); }}
-                  className="w-4 h-4 rounded text-orange-600"
-                />
-                <span className="text-xs text-slate-600">Add Quantity Column</span>
-              </label>
-              <label className="flex items-center gap-2 px-1 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={hideLinePrices}
-                  onChange={(e) => { setHideLinePrices(e.target.checked); setIsDirty(true); }}
-                  className="w-4 h-4 rounded text-orange-600"
-                />
-                <span className="text-xs text-slate-600">Hide line prices</span>
-              </label>
-              <label className="flex items-center gap-2 px-1 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={hideTotals}
-                  onChange={(e) => { setHideTotals(e.target.checked); setIsDirty(true); }}
-                  className="w-4 h-4 rounded text-orange-600"
-                />
-                <span className="text-xs text-slate-600">Hide totals</span>
-              </label>
-            </div>
+            <button
+              data-copilot="cl-add-line-btn"
+              onClick={() => setShowAddLine(true)}
+              className="w-full py-2 text-sm font-medium text-orange-600 border border-orange-200 rounded-full hover:bg-orange-50 hover:border-orange-300 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]"
+            >
+              + Add New Line
+            </button>
 
             {/* Taxes */}
             <div className="pt-4 border-t space-y-3">
