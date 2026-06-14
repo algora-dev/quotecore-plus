@@ -173,6 +173,36 @@ export async function notifyGenericAlert(input: {
   }
 }
 
+/**
+ * Quote expiry notification — sent by the expire-quotes cron when a quote
+ * passes its valid_until deadline with no customer response.
+ * GATING IS THE CALLER'S JOB: check emailAlertEnabled before calling.
+ */
+export async function notifyQuoteExpired(input: {
+  companyId: string;
+  quoteId: string;
+  quoteNumber: number | null;
+  customerName: string | null;
+}): Promise<void> {
+  try {
+    const slug = await getWorkspaceSlug(input.companyId);
+    if (!slug) return;
+    const url = quoteSummaryUrl(slug, input.quoteId);
+    const quoteRef = input.quoteNumber ? `#${input.quoteNumber}` : 'a quote';
+    const customerName = input.customerName || 'the customer';
+    await notifyGenericAlert({
+      companyId: input.companyId,
+      alertType: 'quote_expired',
+      title: `Quote ${quoteRef} has expired`,
+      body: `Your quote for ${customerName} has expired with no response from the customer. You can resend or review it below.`,
+      ctaUrl: url,
+      ctaLabel: 'View quote',
+    });
+  } catch (err) {
+    console.error('[email] notifyQuoteExpired failed:', err);
+  }
+}
+
 /* ============================================================
    Security emails (always sent, never gated)
    ============================================================ */

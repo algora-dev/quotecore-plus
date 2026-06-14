@@ -211,7 +211,7 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
   // Check quote exists and belongs to company
   const { data: quote } = await supabase
     .from('quotes')
-    .select('id, acceptance_token, status, accepted_at, declined_at, withdrawn_at')
+    .select('id, acceptance_token, status, accepted_at, declined_at, withdrawn_at, job_status')
     .eq('id', quoteId)
     .eq('company_id', profile.company_id)
     .single();
@@ -221,9 +221,12 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
   if ((quote as any).accepted_at) throw new Error('Quote has already been accepted');
   if ((quote as any).declined_at) throw new Error('Quote has already been declined');
 
-  // Reuse the existing token only when there's a live one (not withdrawn).
-  // After a withdrawal, mint a fresh token so the dead URL stays dead.
-  if (quote.acceptance_token && !(quote as any).withdrawn_at) {
+  // Reuse the existing token only when there's a live one, not withdrawn,
+  // and not expired. Expired quotes get a fresh token (+ new expiry) so the
+  // old URL stays dead and the customer can't accept a re-sent quote via a
+  // stale link. Same logic applies after a withdrawal.
+  const isExpired = (quote as any).job_status === 'expired';
+  if (quote.acceptance_token && !(quote as any).withdrawn_at && !isExpired) {
     return quote.acceptance_token;
   }
 
@@ -250,6 +253,53 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
 
   revalidatePath('/');
   return token;
+}
+
+/**
+ * Update the validity period of an already-sent quote.
+ *
+ * Sets acceptance_token_expires_at to now() + chosen days. If the quote was
+ * previously expired (job_status='expired') and the new expiry is in the
+ * future, the status is reset to 'sent' so the quote is live again without
+ * needing a full re-send.
+ */
+export async function updateQuoteExpiry(
+  quoteId: string,
+  days: number,
+): Promise<void> {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  const { data: quote } = await supabase
+    .from('quotes')
+    .select('id, company_id, accepted_at, declined_at, job_status')
+    .eq('id', quoteId)
+    .eq('company_id', profile.company_id)
+    .single();
+
+  if (!quote) throw new Error('Quote not found');
+  if ((quote as any).accepted_at) throw new Error('Cannot edit expiry — quote already accepted.');
+  if ((quote as any).declined_at) throw new Error('Cannot edit expiry — quote already declined.');
+
+  const clampedDays = Math.max(1, Math.min(365, days));
+  const newExpiry = new Date();
+  newExpiry.setDate(newExpiry.getDate() + clampedDays);
+
+  // If extending from an expired state, restore to 'sent' so the quote is
+  // live again. Any other job_status stays as-is.
+  const wasExpired = (quote as any).job_status === 'expired';
+
+  const { error } = await supabase
+    .from('quotes')
+    .update({
+      acceptance_token_expires_at: newExpiry.toISOString(),
+      ...(wasExpired ? { job_status: 'sent' } : {}),
+    })
+    .eq('id', quoteId)
+    .eq('company_id', profile.company_id);
+
+  if (error) throw new Error(error.message);
+  revalidatePath('/');
 }
 
 /**

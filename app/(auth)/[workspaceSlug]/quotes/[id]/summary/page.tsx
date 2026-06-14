@@ -24,6 +24,7 @@ import { ReopenQuoteButton } from './ReopenQuoteButton';
 import { SummaryTabs } from './SummaryTabs';
 import { SummaryFilesPanel } from './SummaryFilesPanel';
 import { ActivityCard } from './ActivityCard';
+import { QuoteExpiryEditor } from './QuoteExpiryEditor';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { loadQuoteTaxes } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
@@ -287,6 +288,15 @@ export default async function QuoteSummaryPage({
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">{quote.customer_name}</h1>
             {quote.job_name && <p className="text-sm text-slate-500 mt-0.5">{quote.job_name}</p>}
+            {(quote as any).acceptance_token_expires_at && (
+              <div className="mt-2">
+                <QuoteExpiryEditor
+                  quoteId={id}
+                  expiresAt={(quote as any).acceptance_token_expires_at}
+                  isFinalised={!!(quote.accepted_at || quote.declined_at)}
+                />
+              </div>
+            )}
           </div>
           <span className="text-sm font-medium text-orange-600">Quote #{quote.quote_number}</span>
         </div>
