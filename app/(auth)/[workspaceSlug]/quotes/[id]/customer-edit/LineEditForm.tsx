@@ -13,6 +13,38 @@ interface Props {
   initialQty?: number;
   /** Per-unit price (used when showQuantityColumn=true). */
   initialUnitPrice?: number | null;
+
+  // ── Margin fields (Task 4) ──────────────────────────────────────────────────
+  /** True when the line is a component line (shows both Margin + Labor Margin). */
+  isComponentLine?: boolean;
+  /** Raw material cost from the component (component lines only). */
+  baseMaterialCost?: number;
+  /** Raw labour cost from the component (component lines only, > 0 = show Labor Margin). */
+  baseLabourCost?: number;
+  /** Current per-line material/profit margin override. Null = use global. */
+  initialLineMarginPercent?: number | null;
+  /** Current per-line labor margin override. Null = use global. */
+  initialLineLaborMarginPercent?: number | null;
+  /**
+   * Global margin % for this quote (blank quotes, Task 3).
+   * Shows as the default in the Margin % input when no per-line override is set.
+   * Null = no global margin active.
+   */
+  globalMarginPercent?: number | null;
+  /**
+   * Default material margin % from the quote Review step (normal quotes).
+   * Shows as the default in the Margin % input for non-blank quotes.
+   */
+  defaultMaterialMarginPercent?: number | null;
+  /**
+   * Default labor margin % from the quote Review step (normal quotes).
+   * Shows as the default in the Labor Margin % input for non-blank quotes.
+   */
+  defaultLaborMarginPercent?: number | null;
+  /** Quote entry mode — used to decide which margin defaults to show. */
+  quoteEntryMode?: string | null;
+  // ────────────────────────────────────────────────────────────────────────────
+
   onSave: (
     text: string,
     quantity: string | null,
@@ -20,6 +52,8 @@ interface Props {
     showPrice: boolean,
     qty: number,
     unitPrice: number | null,
+    lineMarginPercent: number | null,
+    lineLaborMarginPercent: number | null,
   ) => void;
   onCancel: () => void;
 }
@@ -32,6 +66,15 @@ export function LineEditForm({
   showQuantityColumn = false,
   initialQty = 1,
   initialUnitPrice = null,
+  isComponentLine = false,
+  baseMaterialCost,
+  baseLabourCost,
+  initialLineMarginPercent,
+  initialLineLaborMarginPercent,
+  globalMarginPercent,
+  defaultMaterialMarginPercent,
+  defaultLaborMarginPercent,
+  quoteEntryMode,
   onSave,
   onCancel,
 }: Props) {
@@ -45,10 +88,71 @@ export function LineEditForm({
   const [showPrice, setShowPrice] = useState(initialShowPrice);
   const [qty, setQty] = useState(initialQty.toString());
 
+  // ── Margin state ─────────────────────────────────────────────────────────────
+  // Determine the "effective default" margin to show in the input.
+  // For blank quotes: use globalMarginPercent.
+  // For normal quotes: use defaultMaterialMarginPercent from the Review step.
+  const isBlankQuote = quoteEntryMode === 'blank';
+  const defaultMargin = isBlankQuote
+    ? (globalMarginPercent ?? 0)
+    : (defaultMaterialMarginPercent ?? 0);
+  const defaultLaborMargin = defaultLaborMarginPercent ?? 0;
+
+  // The input value = per-line override if set, otherwise the global/review default.
+  const [marginPercent, setMarginPercent] = useState<string>(
+    (initialLineMarginPercent ?? defaultMargin).toString()
+  );
+  const [laborMarginPercent, setLaborMarginPercent] = useState<string>(
+    (initialLineLaborMarginPercent ?? defaultLaborMargin).toString()
+  );
+
+  // Show Labor Margin field only for component lines that actually have labour cost.
+  const showLaborMarginField = isComponentLine && (baseLabourCost ?? 0) > 0;
+  // ─────────────────────────────────────────────────────────────────────────────
+
   // Derived line total when qty column is active
   const lineTotal = showQuantityColumn
     ? Number(((parseFloat(qty) || 1) * (parseFloat(amount) || 0)).toFixed(2))
     : parseFloat(amount) || 0;
+
+  /**
+   * Recompute the price when the margin % changes.
+   * - Component lines: use baseMaterialCost + baseLabourCost for accuracy.
+   * - Custom lines: proportional formula using the current displayed amount.
+   */
+  function recalcForMarginChange(newMaterialMargin: number, newLaborMargin: number) {
+    if (isComponentLine && baseMaterialCost !== undefined && baseLabourCost !== undefined) {
+      // Component line: compute from true base costs.
+      const newAmt = Math.round(
+        (baseMaterialCost * (1 + newMaterialMargin / 100) +
+          baseLabourCost * (1 + newLaborMargin / 100)) *
+          100
+      ) / 100;
+      setAmount(newAmt.toString());
+    } else {
+      // Custom / catalog line: proportional formula.
+      // old effective margin = current marginPercent value
+      const oldEffective = parseFloat(marginPercent) || 0;
+      const currentAmt = parseFloat(amount) || 0;
+      const base = currentAmt / (1 + oldEffective / 100);
+      const newAmt = Math.round(base * (1 + newMaterialMargin / 100) * 100) / 100;
+      setAmount(newAmt.toString());
+    }
+  }
+
+  function handleMarginChange(val: string) {
+    setMarginPercent(val);
+    const newMat = parseFloat(val) || 0;
+    const newLab = showLaborMarginField ? (parseFloat(laborMarginPercent) || 0) : newMat;
+    recalcForMarginChange(newMat, newLab);
+  }
+
+  function handleLaborMarginChange(val: string) {
+    setLaborMarginPercent(val);
+    const newMat = parseFloat(marginPercent) || 0;
+    const newLab = parseFloat(val) || 0;
+    recalcForMarginChange(newMat, newLab);
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -59,13 +163,25 @@ export function LineEditForm({
     }
     const qtyText = quantity.trim() === '' ? null : quantity.trim();
 
+    // Determine margin values to persist.
+    const matMarginVal = parseFloat(marginPercent);
+    const labMarginVal = showLaborMarginField ? parseFloat(laborMarginPercent) : null;
+
+    // If the user hasn't changed from the default, store null (= use global).
+    const finalLineMarginPercent =
+      !isNaN(matMarginVal) && matMarginVal !== defaultMargin ? matMarginVal : null;
+    const finalLineLaborMarginPercent =
+      showLaborMarginField && !isNaN(labMarginVal!) && labMarginVal !== defaultLaborMargin
+        ? labMarginVal
+        : null;
+
     if (showQuantityColumn) {
       const qtyNum = Math.max(1, parseInt(qty) || 1);
       const unitP = amountNum;
       const total = Number((qtyNum * unitP).toFixed(2));
-      onSave(text.trim(), qtyText, total, showPrice, qtyNum, unitP);
+      onSave(text.trim(), qtyText, total, showPrice, qtyNum, unitP, finalLineMarginPercent, finalLineLaborMarginPercent);
     } else {
-      onSave(text.trim(), qtyText, amountNum, showPrice, 1, null);
+      onSave(text.trim(), qtyText, amountNum, showPrice, 1, null, finalLineMarginPercent, finalLineLaborMarginPercent);
     }
   }
 
@@ -175,6 +291,51 @@ export function LineEditForm({
           Line total: ${lineTotal.toFixed(2)}
         </div>
       )}
+
+      {/* ── Margin fields (Task 4) ─────────────────────────────────────────── */}
+      <div className="pt-2 border-t border-slate-200 space-y-2">
+        <p className="text-xs font-medium text-slate-500">Margin</p>
+        <div className="flex gap-3 flex-wrap">
+          {/* Material / Profit Margin */}
+          <div className="flex items-center gap-1.5">
+            <label className="text-xs text-slate-500 whitespace-nowrap">
+              {showLaborMarginField ? 'Material' : 'Margin'}
+            </label>
+            <input
+              type="number"
+              min="0"
+              max="999"
+              step="0.5"
+              value={marginPercent}
+              onChange={(e) => handleMarginChange(e.target.value)}
+              className="w-16 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+            />
+            <span className="text-xs text-slate-400">%</span>
+          </div>
+          {/* Labor Margin — only for component lines with labour_cost > 0 */}
+          {showLaborMarginField && (
+            <div className="flex items-center gap-1.5">
+              <label className="text-xs text-slate-500 whitespace-nowrap">Labor</label>
+              <input
+                type="number"
+                min="0"
+                max="999"
+                step="0.5"
+                value={laborMarginPercent}
+                onChange={(e) => handleLaborMarginChange(e.target.value)}
+                className="w-16 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+              />
+              <span className="text-xs text-slate-400">%</span>
+            </div>
+          )}
+        </div>
+        <p className="text-xs text-slate-400">
+          {showLaborMarginField
+            ? 'Adjust material and labor margins for this line. Changing these updates the price above.'
+            : 'Adjust the profit margin for this line. Changing this updates the price above.'}
+        </p>
+      </div>
+      {/* ──────────────────────────────────────────────────────────────────── */}
 
       <div className="flex gap-2 pt-1">
         <button

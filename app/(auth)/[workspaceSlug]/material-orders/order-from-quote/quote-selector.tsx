@@ -98,7 +98,10 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
 
   function handleConfirm() {
     if (!selectedQuote) return;
-    router.push(`/${workspaceSlug}/material-orders/create?quoteId=${selectedQuote.id}&layout=${layout}${columnParam}`);
+    // Navigate to the line-selection step instead of directly to the order editor.
+    // The user picks which components to include; the selector then forwards to
+    // /material-orders/create with a filtered ?components= list.
+    router.push(`/${workspaceSlug}/material-orders/order-from-quote/${selectedQuote.id}?layout=${layout}${columnParam}`);
   }
 
   return (

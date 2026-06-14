@@ -12,6 +12,16 @@ interface QuoteLine {
   amount: number;
   showPrice: boolean;
   showUnits: boolean;
+  /** Per-line margin override (null = use global). */
+  lineMarginPercent?: number | null;
+  /** Per-line labor margin override (null = use global). */
+  lineLaborMarginPercent?: number | null;
+  /** Raw material cost (component lines only). */
+  baseMaterialCost?: number;
+  /** Raw labour cost (component lines only). */
+  baseLabourCost?: number;
+  /** Whether this line came from a quote component (vs custom/catalog). */
+  type?: 'component' | 'custom';
 }
 
 interface Props {
@@ -31,7 +41,7 @@ interface Props {
   footerText: string;
   editingLineId?: string | null;
   onEditLine?: (lineId: string) => void;
-  onSaveLine?: (lineId: string, text: string, quantity: string | null, amount: number, showPrice: boolean, qty?: number, unitPrice?: number | null) => void;
+  onSaveLine?: (lineId: string, text: string, quantity: string | null, amount: number, showPrice: boolean, qty?: number, unitPrice?: number | null, lineMarginPercent?: number | null, lineLaborMarginPercent?: number | null) => void;
   showQuantityColumn?: boolean;
   hideLinePrices?: boolean;
   hideTotals?: boolean;
@@ -40,6 +50,14 @@ interface Props {
   onEditFooter?: () => void;
   showEditButtons?: boolean;
   currency: string;
+  /** Global margin % for this quote (blank quotes). Null = no global margin. */
+  globalMarginPercent?: number | null;
+  /** Whether to show the margin breakdown row in the preview. */
+  showMarginInPreview?: boolean;
+  /** Subtotal before margin (used to compute the margin $ amount). Null = no margin. */
+  subtotalBeforeMargin?: number | null;
+  /** Quote entry_mode, used to conditionally show margin fields in the line editor. */
+  quoteEntryMode?: string | null;
 }
 
 export function QuotePreview({
@@ -66,6 +84,10 @@ export function QuotePreview({
   showQuantityColumn = false,
   hideLinePrices = false,
   hideTotals = false,
+  globalMarginPercent = null,
+  showMarginInPreview = true,
+  subtotalBeforeMargin = null,
+  quoteEntryMode = null,
 }: Props) {
   // Render a line's text honouring the Units toggle. Catalog lines hide the
   // separate quantity_text; legacy/component lines fall back to hyphen-strip.
@@ -162,8 +184,18 @@ export function QuotePreview({
                         showQuantityColumn={showQuantityColumn}
                         initialQty={(line as { qty?: number }).qty ?? 1}
                         initialUnitPrice={(line as { unitPrice?: number | null }).unitPrice ?? null}
-                        onSave={(text, quantity, amount, sp, qty, unitPrice) =>
-                          onSaveLine(line.id, text, quantity, amount, sp, qty, unitPrice)
+                        // Margin fields
+                        isComponentLine={line.type === 'component'}
+                        baseMaterialCost={line.baseMaterialCost}
+                        baseLabourCost={line.baseLabourCost}
+                        initialLineMarginPercent={line.lineMarginPercent ?? null}
+                        initialLineLaborMarginPercent={line.lineLaborMarginPercent ?? null}
+                        globalMarginPercent={globalMarginPercent}
+                        defaultMaterialMarginPercent={(quote as { material_margin_percent?: number | null }).material_margin_percent ?? null}
+                        defaultLaborMarginPercent={(quote as { labor_margin_percent?: number | null }).labor_margin_percent ?? null}
+                        quoteEntryMode={quoteEntryMode}
+                        onSave={(text, quantity, amount, sp, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent) =>
+                          onSaveLine(line.id, text, quantity, amount, sp, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent)
                         }
                         onCancel={onCancelEdit}
                       />
@@ -212,6 +244,13 @@ export function QuotePreview({
           <span className="text-slate-600">Subtotal</span>
           <span className="font-medium text-slate-900">{formatCurrency(subtotal, currency)}</span>
         </div>
+        {/* Margin breakdown row — shown when a global margin is set and the toggle is on */}
+        {globalMarginPercent != null && globalMarginPercent > 0 && showMarginInPreview && subtotalBeforeMargin != null && (
+          <div className="flex justify-between text-sm">
+            <span className="text-slate-400 italic">Profit margin ({globalMarginPercent}%)</span>
+            <span className="text-slate-400 italic">{formatCurrency(subtotal - subtotalBeforeMargin, currency)} incl.</span>
+          </div>
+        )}
         {taxLines.length > 0 && (
           <>
             {taxLines.map((tl) => (

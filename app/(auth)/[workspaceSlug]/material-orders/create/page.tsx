@@ -11,12 +11,14 @@ import { loadCompanyTaxes } from '@/app/lib/taxes/actions';
 
 interface Props {
   params: Promise<{ workspaceSlug: string }>;
-  searchParams: Promise<{ quoteId?: string; orderId?: string; layout?: string; column?: string }>;
+  searchParams: Promise<{ quoteId?: string; orderId?: string; layout?: string; column?: string; components?: string }>;
 }
 
 export default async function CreateOrderPage(props: Props) {
   const { workspaceSlug: _workspaceSlug } = await props.params;
-  const { quoteId, orderId, layout, column } = await props.searchParams;
+  const { quoteId, orderId, layout, column, components: componentsParam } = await props.searchParams;
+  // Comma-separated component IDs from the line-selector step. If absent, all components are included.
+  const selectedComponentIds: string[] | null = componentsParam ? componentsParam.split(',').filter(Boolean) : null;
   
   
   // Run diagnostic test if quoteId present
@@ -82,6 +84,7 @@ export default async function CreateOrderPage(props: Props) {
         companyTaxes={(companyTaxes ?? []).map((t) => ({ id: t.id, name: t.name, rate_percent: Number(t.rate_percent) }))}
         workspaceSlug={_workspaceSlug}
         quoteData={quoteData}
+        selectedComponentIds={selectedComponentIds}
         existingOrder={existingOrder}
         isOverStorage={ent.isOverStorage}
         initialLayout={initialLayout}

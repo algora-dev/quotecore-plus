@@ -72,6 +72,14 @@ interface QuoteLine {
   isVisible: boolean;
   includeInTotal: boolean;
   sortOrder: number;
+  /** Per-line material/profit margin override. Null = use global margin. */
+  lineMarginPercent?: number | null;
+  /** Per-line labor margin override. Only meaningful for component lines with labour_cost > 0. */
+  lineLaborMarginPercent?: number | null;
+  /** Raw material cost from the component (component lines only). Used for accurate per-line margin recalculation. */
+  baseMaterialCost?: number;
+  /** Raw labour cost from the component (component lines only). Used for accurate per-line labor margin recalculation. */
+  baseLabourCost?: number;
 }
 
 export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave: _disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true, customSaveAction, initialTaxes, companyTaxes, taxAudience = 'quote', collections = [], componentLibrary = [], catalogs = [] }: Props) {
@@ -103,6 +111,14 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [hideTotals, setHideTotals] = useState(
     !!(quote as { hide_totals?: boolean }).hide_totals
   );
+  // Global margin for blank quotes (task 3) — persisted on save.
+  const [globalMarginPercent, setGlobalMarginPercent] = useState<number>(
+    (quote as { global_margin_percent?: number | null }).global_margin_percent ?? 0
+  );
+  const [showMarginInPreview, setShowMarginInPreview] = useState<boolean>(
+    (quote as { show_margin_in_preview?: boolean | null }).show_margin_in_preview ?? true
+  );
+
   // Unified "Add new line" modal (Custom line / Add a component / Search catalog).
   const [showAddLine, setShowAddLine] = useState(false);
   const [showEditHeader, setShowEditHeader] = useState(false);
@@ -161,6 +177,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           const hasCustomAmount = saved.custom_amount != null && saved.custom_amount !== calculatedAmount;
           const finalAmount = hasCustomAmount ? saved.custom_amount : calculatedAmount;
 
+          const savedMarginTyped = saved as {
+            line_margin_percent?: number | null;
+            line_labor_margin_percent?: number | null;
+          };
           return {
             id: component.id,
             type: 'component' as const,
@@ -173,6 +193,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             isVisible: saved.is_visible ?? true,
             includeInTotal: saved.include_in_total ?? true,
             sortOrder: saved.sort_order,
+            lineMarginPercent: savedMarginTyped.line_margin_percent ?? null,
+            lineLaborMarginPercent: savedMarginTyped.line_labor_margin_percent ?? null,
+            baseMaterialCost: baseMaterialCost,
+            baseLabourCost: baseLabourCost,
           };
         } else {
           // Custom line: use saved data
@@ -180,6 +204,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             quantity_text?: string | null;
             quantity?: number | null;
             unit_price?: number | null;
+            line_margin_percent?: number | null;
           };
           return {
             id: saved.id,
@@ -196,6 +221,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             isVisible: saved.is_visible ?? true,
             includeInTotal: saved.include_in_total ?? true,
             sortOrder: saved.sort_order,
+            lineMarginPercent: savedTyped.line_margin_percent ?? null,
           };
         }
       }).filter(Boolean) as QuoteLine[];
@@ -227,6 +253,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             isVisible: true,
             includeInTotal: true,
             sortOrder: idx,
+            lineMarginPercent: null,
+            lineLaborMarginPercent: null,
+            baseMaterialCost: baseMaterialCost,
+            baseLabourCost: baseLabourCost,
           };
         });
       setLines(initialLines);
@@ -360,11 +390,45 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     showPrice: boolean,
     qty: number = 1,
     unitPrice: number | null = null,
+    lineMarginPercent: number | null = null,
+    lineLaborMarginPercent: number | null = null,
   ) {
     setLines(prev => prev.map(l =>
-      l.id === lineId ? { ...l, text, quantityText, amount, showPrice, qty, unitPrice } : l
+      l.id === lineId
+        ? { ...l, text, quantityText, amount, showPrice, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent }
+        : l
     ));
     setEditingLineId(null);
+    setIsDirty(true);
+  }
+
+  /**
+   * Global margin change handler (Task 3 — blank quotes).
+   * Recalculates all lines that DON’T have a per-line override (lineMarginPercent === null).
+   * Lines with per-line overrides are left untouched.
+   * Formula: new_amount = old_amount / (1 + old_margin/100) × (1 + new_margin/100)
+   * Component lines use their baseMaterialCost/baseLabourCost for accurate recalculation.
+   */
+  function handleGlobalMarginChange(newMargin: number) {
+    const oldMargin = globalMarginPercent;
+    setGlobalMarginPercent(newMargin);
+    setLines(prev => prev.map(line => {
+      // Lines with a per-line override are untouched — the override takes precedence.
+      if (line.lineMarginPercent !== null && line.lineMarginPercent !== undefined) return line;
+      // Component lines: use true base costs for precision.
+      if (line.type === 'component' && line.baseMaterialCost !== undefined && line.baseLabourCost !== undefined) {
+        const matMargin = line.lineMarginPercent ?? newMargin;
+        const labMargin = line.lineLaborMarginPercent ?? newMargin;
+        const newAmount = Math.round(
+          (line.baseMaterialCost * (1 + matMargin / 100) + line.baseLabourCost * (1 + labMargin / 100)) * 100
+        ) / 100;
+        return { ...line, amount: newAmount };
+      }
+      // Custom lines: proportional recalculation.
+      const base = line.amount / (1 + (oldMargin ?? 0) / 100);
+      const newAmount = Math.round(base * (1 + newMargin / 100) * 100) / 100;
+      return { ...line, amount: newAmount };
+    }));
     setIsDirty(true);
   }
 
@@ -400,6 +464,8 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         includeInTotal: line.includeInTotal,
         quantity: line.qty ?? 1,
         unitPrice: line.unitPrice ?? null,
+        lineMarginPercent: line.lineMarginPercent ?? null,
+        lineLaborMarginPercent: line.lineLaborMarginPercent ?? null,
       }));
       // Persist the show_quantity_column + price-visibility toggles alongside lines
       const showQtyCol = showQuantityColumn;
@@ -418,7 +484,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       }
 
       await Promise.all([
-        saveLineAction(quote.id, lineData, showQtyCol, hideLinePricesVal, hideTotalsVal),
+        saveLineAction(quote.id, lineData, showQtyCol, hideLinePricesVal, hideTotalsVal, globalMarginPercent > 0 ? globalMarginPercent : null, showMarginInPreview),
         saveCustomerQuoteBranding(quote.id, {
           companyName,
           companyAddress,
@@ -448,7 +514,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     } finally {
       setSaving(false);
     }
-  }, [quote.id, lines, taxes, companyName, companyAddress, companyPhone, companyEmail, companyLogoUrl, footerText, customSaveAction]);
+  }, [quote.id, lines, taxes, showQuantityColumn, hideLinePrices, hideTotals, globalMarginPercent, showMarginInPreview, companyName, companyAddress, companyPhone, companyEmail, companyLogoUrl, footerText, customSaveAction]);
 
   // Auto-save removed per user request
 
@@ -784,6 +850,45 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               + Add New Line
             </button>
 
+            {/* Profit Margin — blank quotes only (Task 3) */}
+            {(quote as { entry_mode?: string }).entry_mode === 'blank' && (
+              <div className="pt-4 border-t space-y-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900">Profit Margin</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Applies a global markup to all line prices. Individual lines can override this below.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-xs text-slate-600 whitespace-nowrap">Global margin</label>
+                  <div className="flex items-center gap-1.5 flex-1">
+                    <input
+                      type="number"
+                      min="0"
+                      max="999"
+                      step="0.5"
+                      value={globalMarginPercent}
+                      onChange={e => {
+                        const val = Math.max(0, parseFloat(e.target.value) || 0);
+                        handleGlobalMarginChange(val);
+                      }}
+                      className="w-20 px-2 py-1 text-sm border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+                    />
+                    <span className="text-sm text-slate-500">%</span>
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={showMarginInPreview}
+                    onChange={e => { setShowMarginInPreview(e.target.checked); setIsDirty(true); }}
+                    className="w-3.5 h-3.5 rounded text-orange-600"
+                  />
+                  <span className="text-xs text-slate-500">Show margin on customer quote</span>
+                </label>
+              </div>
+            )}
+
             {/* Taxes */}
             <div className="pt-4 border-t space-y-3">
               <div className="flex items-start justify-between gap-4">
@@ -963,8 +1068,8 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 footerText={footerText}
                 editingLineId={editingLineId}
                 onEditLine={setEditingLineId}
-                onSaveLine={(id, text, quantityText, amount, sp, qty, unitPrice) =>
-                  updateLine(id, text, quantityText, amount, sp, qty ?? 1, unitPrice ?? null)
+                onSaveLine={(id, text, quantityText, amount, sp, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent) =>
+                  updateLine(id, text, quantityText, amount, sp, qty ?? 1, unitPrice ?? null, lineMarginPercent ?? null, lineLaborMarginPercent ?? null)
                 }
                 showQuantityColumn={showQuantityColumn}
                 hideLinePrices={hideLinePrices}
@@ -973,6 +1078,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 onEditHeader={() => setShowEditHeader(true)}
                 onEditFooter={() => setShowEditFooter(true)}
                 currency={currency}
+                globalMarginPercent={globalMarginPercent > 0 ? globalMarginPercent : null}
+                showMarginInPreview={showMarginInPreview}
+                subtotalBeforeMargin={globalMarginPercent > 0 ? Math.round(subtotal / (1 + globalMarginPercent / 100) * 100) / 100 : null}
+                quoteEntryMode={(quote as { entry_mode?: string }).entry_mode ?? null}
               />
             </div>
           </div>

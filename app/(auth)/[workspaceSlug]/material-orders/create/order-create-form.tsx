@@ -57,6 +57,9 @@ interface OrderCreateFormProps {
   /** Workspace slug, needed by the catalog search modal endpoint. */
   workspaceSlug?: string;
   quoteData?: QuoteData | null;
+  /** When coming from the line-selector step, only map these component IDs into
+   *  the order. Null/absent = map all components (backward compatible). */
+  selectedComponentIds?: string[] | null;
   existingOrder?: ExistingOrderData | null;
   /** When true the company is over storage - block logo upload. */
   isOverStorage?: boolean;
@@ -112,7 +115,7 @@ interface OrderLineItem {
   showMeasurements: boolean;
 }
 
-export function OrderCreateForm({ templates, flashings, components = [], collections = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components', initialColumn = 'single', currency = 'GBP', componentLibrary = [], companyTaxes = [], catalogs = [], initialLineByLine = null }: OrderCreateFormProps) {
+export function OrderCreateForm({ templates, flashings, components = [], collections = [], workspaceSlug = '', quoteData, selectedComponentIds, existingOrder, isOverStorage, initialLayout = 'components', initialColumn = 'single', currency = 'GBP', componentLibrary = [], companyTaxes = [], catalogs = [], initialLineByLine = null }: OrderCreateFormProps) {
   const router = useRouter();
   
   // Layout state
@@ -197,7 +200,13 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
     if (quoteData.components.length === 0) return;
     hydratedFromQuoteRef.current = true;
     
-    console.log('[OrderCreateForm] Mapping', quoteData.components.length, 'components');
+    // Filter to only the components the user selected in the line-selector step.
+    // If selectedComponentIds is null/absent, map all components (backward compat).
+    const componentsToMap = selectedComponentIds
+      ? quoteData.components.filter(c => selectedComponentIds.includes(c.id))
+      : quoteData.components;
+
+    console.log('[OrderCreateForm] Mapping', componentsToMap.length, 'of', quoteData.components.length, 'components');
     
     // The quote's measurement system is locked at creation; the order
     // inherits it. We:
@@ -216,7 +225,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
     };
 
     // Map quote components to order line items
-    const mappedLines: OrderLineItem[] = quoteData.components.map((comp) => {
+    const mappedLines: OrderLineItem[] = componentsToMap.map((comp) => {
       // Get first flashing_id from component_library join (flashing_ids is array)
       const flashingId = comp.component_library?.flashing_ids?.[0] || undefined;
       const flashing = flashingId ? flashings.find(f => f.id === flashingId) : undefined;

@@ -1596,10 +1596,14 @@ export async function saveCustomerQuoteLines(
     includeInTotal: boolean;
     quantity?: number;
     unitPrice?: number | null;
+    lineMarginPercent?: number | null;
+    lineLaborMarginPercent?: number | null;
   }>,
   showQuantityColumn?: boolean,
   hideLinePrices?: boolean,
   hideTotals?: boolean,
+  globalMarginPercent?: number | null,
+  showMarginInPreview?: boolean,
 ) {
   'use server';
   const profile = await requireCompanyContext();
@@ -1639,6 +1643,8 @@ export async function saveCustomerQuoteLines(
       include_in_total: line.includeInTotal,
       quantity: line.quantity ?? 1,
       unit_price: line.unitPrice ?? null,
+      line_margin_percent: line.lineMarginPercent ?? null,
+      line_labor_margin_percent: line.lineLaborMarginPercent ?? null,
     }));
 
     const { error } = await supabase
@@ -1648,12 +1654,20 @@ export async function saveCustomerQuoteLines(
     if (error) throw new Error(error.message);
   }
 
-  // Persist show_quantity_column + price-visibility toggles on the quote row.
-  if (showQuantityColumn !== undefined || hideLinePrices !== undefined || hideTotals !== undefined) {
+  // Persist show_quantity_column, price-visibility toggles, and margin fields on the quote row.
+  if (
+    showQuantityColumn !== undefined ||
+    hideLinePrices !== undefined ||
+    hideTotals !== undefined ||
+    globalMarginPercent !== undefined ||
+    showMarginInPreview !== undefined
+  ) {
     const patch: Record<string, unknown> = {};
     if (showQuantityColumn !== undefined) patch.show_quantity_column = showQuantityColumn;
     if (hideLinePrices !== undefined) patch.hide_line_prices = hideLinePrices;
     if (hideTotals !== undefined) patch.hide_totals = hideTotals;
+    if (globalMarginPercent !== undefined) patch.global_margin_percent = globalMarginPercent;
+    if (showMarginInPreview !== undefined) patch.show_margin_in_preview = showMarginInPreview;
     await supabase
       .from('quotes')
       .update(patch)

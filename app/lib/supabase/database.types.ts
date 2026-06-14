@@ -983,6 +983,8 @@ export type Database = {
           id: string
           include_in_total: boolean | null
           is_visible: boolean
+          line_labor_margin_percent: number | null
+          line_margin_percent: number | null
           line_set_type: string | null
           line_type: Database["public"]["Enums"]["line_type"]
           quantity: number
@@ -1003,6 +1005,8 @@ export type Database = {
           id?: string
           include_in_total?: boolean | null
           is_visible?: boolean
+          line_labor_margin_percent?: number | null
+          line_margin_percent?: number | null
           line_set_type?: string | null
           line_type?: Database["public"]["Enums"]["line_type"]
           quantity?: number
@@ -1023,6 +1027,8 @@ export type Database = {
           id?: string
           include_in_total?: boolean | null
           is_visible?: boolean
+          line_labor_margin_percent?: number | null
+          line_margin_percent?: number | null
           line_set_type?: string | null
           line_type?: Database["public"]["Enums"]["line_type"]
           quantity?: number
@@ -3112,6 +3118,7 @@ export type Database = {
           customer_phone: string | null
           declined_at: string | null
           entry_mode: string | null
+          global_margin_percent: number | null
           global_pitch_degrees: number | null
           hide_line_prices: boolean
           hide_totals: boolean
@@ -3125,6 +3132,7 @@ export type Database = {
           measurement_system: Database["public"]["Enums"]["measurement_system"]
           notes_internal: string | null
           quote_number: number | null
+          show_margin_in_preview: boolean
           show_quantity_column: boolean
           site_address: string | null
           status: Database["public"]["Enums"]["quote_status"]
@@ -3160,6 +3168,7 @@ export type Database = {
           customer_phone?: string | null
           declined_at?: string | null
           entry_mode?: string | null
+          global_margin_percent?: number | null
           global_pitch_degrees?: number | null
           hide_line_prices?: boolean
           hide_totals?: boolean
@@ -3173,6 +3182,7 @@ export type Database = {
           measurement_system?: Database["public"]["Enums"]["measurement_system"]
           notes_internal?: string | null
           quote_number?: number | null
+          show_margin_in_preview?: boolean
           show_quantity_column?: boolean
           site_address?: string | null
           status?: Database["public"]["Enums"]["quote_status"]
@@ -3208,6 +3218,7 @@ export type Database = {
           customer_phone?: string | null
           declined_at?: string | null
           entry_mode?: string | null
+          global_margin_percent?: number | null
           global_pitch_degrees?: number | null
           hide_line_prices?: boolean
           hide_totals?: boolean
@@ -3221,6 +3232,7 @@ export type Database = {
           measurement_system?: Database["public"]["Enums"]["measurement_system"]
           notes_internal?: string | null
           quote_number?: number | null
+          show_margin_in_preview?: boolean
           show_quantity_column?: boolean
           site_address?: string | null
           status?: Database["public"]["Enums"]["quote_status"]
