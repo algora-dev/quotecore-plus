@@ -985,6 +985,7 @@ export type Database = {
           is_visible: boolean
           line_set_type: string | null
           line_type: Database["public"]["Enums"]["line_type"]
+          quantity: number
           quantity_text: string | null
           quote_component_id: string | null
           quote_id: string
@@ -992,6 +993,7 @@ export type Database = {
           show_price: boolean
           show_units: boolean | null
           sort_order: number
+          unit_price: number | null
           updated_at: string
         }
         Insert: {
@@ -1003,6 +1005,7 @@ export type Database = {
           is_visible?: boolean
           line_set_type?: string | null
           line_type?: Database["public"]["Enums"]["line_type"]
+          quantity?: number
           quantity_text?: string | null
           quote_component_id?: string | null
           quote_id: string
@@ -1010,6 +1013,7 @@ export type Database = {
           show_price?: boolean
           show_units?: boolean | null
           sort_order?: number
+          unit_price?: number | null
           updated_at?: string
         }
         Update: {
@@ -1021,6 +1025,7 @@ export type Database = {
           is_visible?: boolean
           line_set_type?: string | null
           line_type?: Database["public"]["Enums"]["line_type"]
+          quantity?: number
           quantity_text?: string | null
           quote_component_id?: string | null
           quote_id?: string
@@ -1028,6 +1033,7 @@ export type Database = {
           show_price?: boolean
           show_units?: boolean | null
           sort_order?: number
+          unit_price?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -3111,6 +3117,7 @@ export type Database = {
           measurement_system: Database["public"]["Enums"]["measurement_system"]
           notes_internal: string | null
           quote_number: number | null
+          show_quantity_column: boolean
           site_address: string | null
           status: Database["public"]["Enums"]["quote_status"]
           takeoff_canvas_path: string | null
@@ -3156,6 +3163,7 @@ export type Database = {
           measurement_system?: Database["public"]["Enums"]["measurement_system"]
           notes_internal?: string | null
           quote_number?: number | null
+          show_quantity_column?: boolean
           site_address?: string | null
           status?: Database["public"]["Enums"]["quote_status"]
           takeoff_canvas_path?: string | null
@@ -3201,6 +3209,7 @@ export type Database = {
           measurement_system?: Database["public"]["Enums"]["measurement_system"]
           notes_internal?: string | null
           quote_number?: number | null
+          show_quantity_column?: boolean
           site_address?: string | null
           status?: Database["public"]["Enums"]["quote_status"]
           takeoff_canvas_path?: string | null

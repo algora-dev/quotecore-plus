@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadQuote, loadCustomerQuoteLines, loadCustomerQuoteTemplates } from '../../actions';
 import { loadQuoteTaxes, loadCompanyTaxes } from '@/app/lib/taxes/actions';
+import { loadComponentCollections, loadComponentLibrary } from '../../../components/actions';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 import { BlankQuoteBuilder } from './BlankQuoteBuilder';
 import { getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
@@ -27,12 +29,15 @@ export default async function BlankBuildPage({
   const { workspaceSlug, id } = await params;
   await requireCompanyContext();
 
-  const [quote, savedLines, templates, quoteTaxes, companyTaxes] = await Promise.all([
+  const admin = createAdminClient();
+  const [quote, savedLines, templates, quoteTaxes, companyTaxes, collections, companyComponents] = await Promise.all([
     loadQuote(id),
     loadCustomerQuoteLines(id),
     loadCustomerQuoteTemplates(),
     loadQuoteTaxes(id),
     loadCompanyTaxes(),
+    loadComponentCollections(),
+    loadComponentLibrary(),
   ]);
 
   // Route-guard: only blank-mode quotes belong here. Anything else gets
@@ -74,6 +79,13 @@ export default async function BlankBuildPage({
     }
   }
 
+  // Load catalogs for Add Line modal
+  const { data: catalogList } = await admin
+    .from('catalogs')
+    .select('id, name')
+    .eq('company_id', quote.company_id)
+    .order('name');
+
   return (
     <BlankQuoteBuilder
       quote={quote}
@@ -88,6 +100,13 @@ export default async function BlankBuildPage({
         name: t.name,
         rate_percent: Number(t.rate_percent),
       }))}
+      collections={(collections ?? []).map((c) => ({ id: c.id, name: c.name }))}
+      componentLibrary={(companyComponents ?? []).map((c) => ({
+        id: c.id as string,
+        name: c.name as string,
+        collection_id: (c.collection_id as string | null) ?? null,
+      }))}
+      catalogs={(catalogList ?? []).map((c) => ({ id: c.id, name: c.name }))}
     />
   );
 }

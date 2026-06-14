@@ -23,7 +23,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
-import { AddLineModal } from '../../quotes/[id]/customer-edit/AddLineModal';
+import { AddLineItemModal, type LineItemPayload } from '@/app/components/AddLineItemModal';
 import { LineEditForm } from '../../quotes/[id]/customer-edit/LineEditForm';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 import {
@@ -39,6 +39,7 @@ interface Props {
   initialFooter: string;
   initialTaxes: LineByLineTax[];
   initialHideAllPrices: boolean;
+  initialShowQuantityColumn?: boolean;
   currency: string;
   /** Workspace slug for the catalog search modal endpoint. */
   workspaceSlug: string;
@@ -46,6 +47,8 @@ interface Props {
   collections: { id: string; name: string }[];
   /** Full company component library for the "Add a component" picker. */
   componentLibrary: { id: string; name: string; collection_id: string | null }[];
+  /** Catalogs for the "Add from catalog" tab. */
+  catalogs?: { id: string; name: string }[];
   /** Active company default taxes, for the "apply default tax" picker. */
   companyTaxes: { id: string; name: string; rate_percent: number }[];
   /** Called on every line change so the parent form can persist on save. */
@@ -53,6 +56,7 @@ interface Props {
   onFooterChange: (footer: string) => void;
   onTaxesChange: (taxes: LineByLineTax[]) => void;
   onHideAllPricesChange: (hide: boolean) => void;
+  onShowQuantityColumnChange?: (show: boolean) => void;
 }
 
 function makeId(): string {
@@ -64,15 +68,18 @@ export function OrderLineByLineEditor({
   initialFooter,
   initialTaxes,
   initialHideAllPrices,
+  initialShowQuantityColumn = false,
   currency,
   workspaceSlug,
   collections,
   componentLibrary,
+  catalogs = [],
   companyTaxes,
   onChange,
   onFooterChange,
   onTaxesChange,
   onHideAllPricesChange,
+  onShowQuantityColumnChange,
 }: Props) {
   const [lines, setLines] = useState<LineByLineItem[]>(initialLines.length > 0 ? initialLines : []);
   const [footer, setFooter] = useState(initialFooter);
@@ -106,6 +113,7 @@ export function OrderLineByLineEditor({
   // preview-only convenience state; it does not mutate the lines themselves.
   // Persisted to the envelope so the saved/sent order matches the editor.
   const [hideAllPrices, setHideAllPrices] = useState(initialHideAllPrices);
+  const [showQuantityColumn, setShowQuantityColumn] = useState(initialShowQuantityColumn);
   // Declutter: collapse the left controls so the preview fills the space.
   // Pure layout state - panel stays mounted (no edit loss).
   const [panelCollapsed, setPanelCollapsed] = useState(false);
@@ -127,37 +135,22 @@ export function OrderLineByLineEditor({
     [onTaxesChange],
   );
 
-  // --- Add-line handlers (shared AddLineModal) -----------------------------
-  const addCustomLine = (text: string, amount: number, showPrice: boolean, quantityText: string | null) => {
+  // --- Add-line handler (shared AddLineItemModal) -------------------------
+  const handleAddLineItem = (payloads: LineItemPayload[]) => {
     commit([
       ...lines,
-      {
+      ...payloads.map((p, i) => ({
         id: makeId(),
-        text,
-        quantityText,
-        amount: Number.isFinite(amount) ? amount : 0,
-        showPrice,
+        text: p.title,
+        quantityText: p.description,
+        amount: p.lineTotal,
+        unitPrice: p.unitPrice,
+        quantity: p.quantity,
+        showPrice: p.showPrice,
         isVisible: true,
         includeInTotal: true,
-        sortOrder: lines.length,
-      },
-    ]);
-  };
-
-  // Component line: name pre-filled, qty + price blank (edit via pencil).
-  const addComponentLine = (name: string) => {
-    commit([
-      ...lines,
-      {
-        id: makeId(),
-        text: name,
-        quantityText: null,
-        amount: 0,
-        showPrice: true,
-        isVisible: true,
-        includeInTotal: true,
-        sortOrder: lines.length,
-      },
+        sortOrder: lines.length + i,
+      })),
     ]);
   };
 
@@ -186,8 +179,10 @@ export function OrderLineByLineEditor({
     quantityText: string | null,
     amount: number,
     showPrice: boolean,
+    qty: number = 1,
+    unitPrice: number | null = null,
   ) => {
-    commit(lines.map((l) => (l.id === id ? { ...l, text, quantityText, amount, showPrice } : l)));
+    commit(lines.map((l) => (l.id === id ? { ...l, text, quantityText, amount, showPrice, quantity: qty, unitPrice } : l)));
     setEditingLineId(null);
   };
 
@@ -338,6 +333,19 @@ export function OrderLineByLineEditor({
           >
             + Add New Line
           </button>
+          {/* Quantity column toggle */}
+          <label className="flex items-center gap-2 px-1 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={showQuantityColumn}
+              onChange={(e) => {
+                setShowQuantityColumn(e.target.checked);
+                onShowQuantityColumnChange?.(e.target.checked);
+              }}
+              className="w-4 h-4 rounded text-orange-600"
+            />
+            <span className="text-xs text-slate-600">Add Quantity Column</span>
+          </label>
         </div>
 
         {/* Footer */}
@@ -506,12 +514,15 @@ export function OrderLineByLineEditor({
                   editingLineId === line.id ? (
                     <tr key={line.id}>
                       <td colSpan={2} className="py-2">
-                        <LineEditForm
+<LineEditForm
                           initialText={line.text}
                           initialQuantity={line.quantityText}
                           initialAmount={line.amount}
                           initialShowPrice={line.showPrice}
-                          onSave={(text, quantity, amount, showPrice) => saveLineEdit(line.id, text, quantity, amount, showPrice)}
+                          showQuantityColumn={showQuantityColumn}
+                          initialQty={line.quantity ?? 1}
+                          initialUnitPrice={line.unitPrice ?? null}
+                          onSave={(text, quantity, amount, sp, qty, unitPrice) => saveLineEdit(line.id, text, quantity, amount, sp, qty, unitPrice)}
                           onCancel={() => setEditingLineId(null)}
                         />
                       </td>
@@ -584,14 +595,15 @@ export function OrderLineByLineEditor({
         </div>
       </div>
 
-      {/* Unified Add New Line modal: Custom line / Add a component / Search catalog */}
+      {/* Unified Add Line Item modal — invoice-style shared modal */}
       {showAddLine && (
-        <AddLineModal
+        <AddLineItemModal
           workspaceSlug={workspaceSlug}
+          currency={currency}
+          catalogs={catalogs}
           collections={collections}
           componentLibrary={componentLibrary}
-          onAddCustom={addCustomLine}
-          onAddComponent={addComponentLine}
+          onAdd={handleAddLineItem}
           onClose={() => setShowAddLine(false)}
         />
       )}

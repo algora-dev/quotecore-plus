@@ -14,7 +14,7 @@ import type { QuoteTaxRow } from '@/app/lib/taxes/types';
 import { TaxEditor, type EditableTax } from '@/app/components/TaxEditor';
 import { EditHeaderModal } from '../customer-edit/EditHeaderModal';
 import { EditFooterModal } from '../customer-edit/EditFooterModal';
-import { CatalogSearchModal } from '../customer-edit/CatalogSearchModal';
+import { AddLineItemModal, type LineItemPayload } from '@/app/components/AddLineItemModal';
 
 /**
  * Blank Quote Builder.
@@ -57,18 +57,21 @@ interface SavedLine {
   is_visible: boolean | null;
   include_in_total: boolean | null;
   sort_order: number | null;
+  quantity?: number | null;
+  unit_price?: number | null;
+  quantity_text?: string | null;
 }
 
 interface QuoteLine {
-  /** Stable id used only for React keys + drag/reorder. New lines get a
-   *  temp id; the DB regenerates a real one on save (lines table is full-
-   *  delete-then-insert), but the temp id is fine for the session. */
   id: string;
   text: string;
+  /** Free-text description (column 2). */
+  quantityText: string | null;
   amount: number;
-  /** Whether the price column renders in the customer-facing preview /
-   *  PDF / accept URL. Stays editable so the user can offer "complimentary"
-   *  lines that read as a deliverable without a number attached. */
+  /** Per-unit price when quantity column is active. Null = legacy. */
+  unitPrice: number | null;
+  /** Numeric quantity when quantity column is active. Default 1. */
+  qty: number;
   showPrice: boolean;
 }
 
@@ -78,6 +81,9 @@ interface Props {
   templates: CustomerQuoteTemplateRow[];
   workspaceSlug: string;
   currency: string;
+  collections?: { id: string; name: string }[];
+  componentLibrary?: { id: string; name: string; collection_id: string | null }[];
+  catalogs?: { id: string; name: string }[];
   defaultLogoUrl: string | null;
   initialTaxes: QuoteTaxRow[];
   companyTaxes: { id: string; name: string; rate_percent: number }[];
@@ -96,6 +102,9 @@ export function BlankQuoteBuilder({
   defaultLogoUrl,
   initialTaxes,
   companyTaxes,
+  collections = [],
+  componentLibrary = [],
+  catalogs = [],
 }: Props) {
   const router = useRouter();
 
@@ -130,14 +139,13 @@ export function BlankQuoteBuilder({
     if (hydratedRef.current) return;
     hydratedRef.current = true;
     const initial: QuoteLine[] = savedLines
-      // Blank quotes only ever produce 'custom' lines via this surface.
-      // If a row arrives with line_type='component' it came from the
-      // customer-edit screen layering on top, and we still want to
-      // surface it here so the user sees everything in one place.
       .map((row) => ({
         id: row.id,
         text: row.custom_text ?? '',
+        quantityText: row.quantity_text ?? null,
         amount: Number(row.custom_amount) || 0,
+        unitPrice: row.unit_price ?? null,
+        qty: row.quantity ?? 1,
         showPrice: row.show_price ?? true,
       }));
     setLines(initial);
@@ -149,27 +157,22 @@ export function BlankQuoteBuilder({
   const [saving, setSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
 
-  const addLine = useCallback(() => {
+  /** Unified handler called by AddLineItemModal for all three tabs. */
+  const handleAddLineItem = useCallback((payloads: LineItemPayload[]) => {
     setLines((prev) => [
       ...prev,
-      { id: tempLineId(), text: '', amount: 0, showPrice: true },
+      ...payloads.map((p, i) => ({
+        id: `${tempLineId()}-${i}`,
+        text: p.title,
+        quantityText: p.description,
+        amount: p.lineTotal,
+        unitPrice: p.unitPrice,
+        qty: p.quantity,
+        showPrice: p.showPrice,
+      })),
     ]);
     setIsDirty(true);
   }, []);
-
-  // Catalog Search adds a fully-populated line in one shot. Mirrors the
-  // customer editor's addCustomLine signature so CatalogSearchModal's
-  // onAdd contract works unchanged.
-  const addCatalogLine = useCallback(
-    (text: string, amount: number, showPrice: boolean) => {
-      setLines((prev) => [
-        ...prev,
-        { id: tempLineId(), text, amount, showPrice },
-      ]);
-      setIsDirty(true);
-    },
-    [],
-  );
 
   const updateLine = useCallback((id: string, patch: Partial<QuoteLine>) => {
     setLines((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
@@ -238,7 +241,10 @@ export function BlankQuoteBuilder({
 
   const [showHeader, setShowHeader] = useState(false);
   const [showFooter, setShowFooter] = useState(false);
-  const [showCatalogSearch, setShowCatalogSearch] = useState(false);
+  const [showAddLine, setShowAddLine] = useState(false);
+  const [showQuantityColumn, setShowQuantityColumn] = useState(
+    !!(quote as { show_quantity_column?: boolean }).show_quantity_column
+  );
 
   const handleSave = useCallback(async () => {
     setSaving(true);
@@ -256,15 +262,18 @@ export function BlankQuoteBuilder({
         lineType: 'custom' as const,
         componentId: undefined,
         text: l.text,
+        quantityText: l.quantityText,
         amount: Number(l.amount) || 0,
         showPrice: l.showPrice,
         showUnits: false,
         sortOrder: idx,
         isVisible: true,
         includeInTotal: true,
+        quantity: l.qty ?? 1,
+        unitPrice: l.unitPrice ?? null,
       }));
       await Promise.all([
-        saveCustomerQuoteLines(quote.id, lineData),
+        saveCustomerQuoteLines(quote.id, lineData, showQuantityColumn),
         saveCustomerQuoteBranding(quote.id, {
           companyName,
           companyAddress,
@@ -412,20 +421,22 @@ export function BlankQuoteBuilder({
           <section className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-slate-900">Quote lines</h2>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={showQuantityColumn}
+                    onChange={(e) => { setShowQuantityColumn(e.target.checked); setIsDirty(true); }}
+                    className="w-4 h-4 rounded text-orange-600"
+                  />
+                  <span className="text-xs text-slate-600">Qty column</span>
+                </label>
                 <button
                   type="button"
-                  onClick={() => setShowCatalogSearch(true)}
-                  className="px-3 py-1.5 text-sm font-medium rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all"
-                >
-                  Search Catalog
-                </button>
-                <button
-                  type="button"
-                  onClick={addLine}
+                  onClick={() => setShowAddLine(true)}
                   className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.4)]"
                 >
-                  + Add line
+                  + Add Line Item
                 </button>
               </div>
             </div>
@@ -727,12 +738,16 @@ export function BlankQuoteBuilder({
         />
       )}
 
-      {/* Catalog Search Modal - same component the customer editor uses */}
-      {showCatalogSearch && (
-        <CatalogSearchModal
+      {/* Add Line Item modal — shared invoice-style modal */}
+      {showAddLine && (
+        <AddLineItemModal
           workspaceSlug={workspaceSlug}
-          onAdd={addCatalogLine}
-          onClose={() => setShowCatalogSearch(false)}
+          currency={currency}
+          catalogs={catalogs}
+          collections={collections}
+          componentLibrary={componentLibrary}
+          onAdd={handleAddLineItem}
+          onClose={() => setShowAddLine(false)}
         />
       )}
     </div>

@@ -1594,7 +1594,10 @@ export async function saveCustomerQuoteLines(
     sortOrder: number;
     isVisible: boolean;
     includeInTotal: boolean;
-  }>
+    quantity?: number;
+    unitPrice?: number | null;
+  }>,
+  showQuantityColumn?: boolean,
 ) {
   'use server';
   const profile = await requireCompanyContext();
@@ -1632,6 +1635,8 @@ export async function saveCustomerQuoteLines(
       sort_order: line.sortOrder,
       is_visible: line.isVisible,
       include_in_total: line.includeInTotal,
+      quantity: line.quantity ?? 1,
+      unit_price: line.unitPrice ?? null,
     }));
 
     const { error } = await supabase
@@ -1639,6 +1644,15 @@ export async function saveCustomerQuoteLines(
       .insert(insertData);
 
     if (error) throw new Error(error.message);
+  }
+
+  // Persist the show_quantity_column toggle on the quote row.
+  if (showQuantityColumn !== undefined) {
+    await supabase
+      .from('quotes')
+      .update({ show_quantity_column: showQuantityColumn } as Record<string, unknown>)
+      .eq('id', quoteId)
+      .eq('company_id', quote.company_id);
   }
 
   // Blank quotes never go through the manual quote builder's Review step,

@@ -131,6 +131,8 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
               text: generateDefaultText(comp, quote.measurement_system),
               quantityText: null,
               amount,
+              unitPrice: null,
+              quantity: 1,
               showPrice: s.show_price ?? true,
               isVisible: s.is_visible ?? true,
               includeInTotal: s.include_in_total ?? true,
@@ -143,6 +145,8 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
             text: s.custom_text || '',
             quantityText: (s.quantity_text as string | null) ?? null,
             amount: Number(s.custom_amount || 0),
+            unitPrice: (s.unit_price as number | null) ?? null,
+            quantity: (s.quantity as number) ?? 1,
             showPrice: s.show_price ?? true,
             isVisible: s.is_visible ?? true,
             includeInTotal: s.include_in_total ?? true,
@@ -159,6 +163,8 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
           text: generateDefaultText(c, quote.measurement_system),
           quantityText: null,
           amount: amountForComponent(c),
+          unitPrice: null,
+          quantity: 1,
           showPrice: true,
           isVisible: true,
           includeInTotal: true,
@@ -182,6 +188,7 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
       footer: quote.cq_footer_text || '',
       taxes: [],
       hideAllPrices: false,
+      showQuantityColumn: false,
     };
   } catch (error) {
     console.error('[quote-lbl-loader] Unexpected error:', error);

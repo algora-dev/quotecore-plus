@@ -121,6 +121,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   const [lineByLineFooter, setLineByLineFooter] = useState('');
   const [lineByLineTaxes, setLineByLineTaxes] = useState<LineByLineTax[]>([]);
   const [lineByLineHideAllPrices, setLineByLineHideAllPrices] = useState(false);
+  const [lineByLineShowQuantityColumn, setLineByLineShowQuantityColumn] = useState(false);
   // App-style alert state. Replaces native alert() calls so the order flow
   // matches the rest of the app's modal styling.
   const [alertState, setAlertState] = useState<{
@@ -593,6 +594,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               footer: lineByLineFooter,
               taxes: lineByLineTaxes,
               hideAllPrices: lineByLineHideAllPrices,
+              showQuantityColumn: lineByLineShowQuantityColumn,
             }
           : undefined,
         lineItems: isLineByLine ? [] : orderLines.map((line, index) => ({
@@ -796,6 +798,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               initialFooter={lineByLineFooter}
               initialTaxes={lineByLineTaxes}
               initialHideAllPrices={lineByLineHideAllPrices}
+              initialShowQuantityColumn={lineByLineShowQuantityColumn}
               currency={currency}
               workspaceSlug={workspaceSlug}
               collections={collections}
@@ -805,6 +808,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               onFooterChange={setLineByLineFooter}
               onTaxesChange={setLineByLineTaxes}
               onHideAllPricesChange={setLineByLineHideAllPrices}
+              onShowQuantityColumnChange={setLineByLineShowQuantityColumn}
             />
             <div className="pb-10" />
           </div>

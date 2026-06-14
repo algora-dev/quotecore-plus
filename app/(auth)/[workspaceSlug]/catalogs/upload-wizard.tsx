@@ -39,9 +39,9 @@ const MAX_ROWS = 35_000;
 const CHUNK_SIZE = 2_000;
 
 const MAPPING_FIELDS: { key: keyof ColumnMapping; label: string; hint: string }[] = [
-  { key: 'description', label: 'Item / Description', hint: 'Primary text shown on the quote line (e.g. product name or full description).' },
-  { key: 'quantity', label: 'Description / Quantity', hint: 'Optional second part appended after the primary text (e.g. pack size, a longer description, or quantity).' },
-  { key: 'price', label: 'Price', hint: 'The amount inserted on the quote line. Currency symbols and separators are stripped automatically.' },
+  { key: 'description', label: 'Item / Name', hint: 'Primary text shown on the quote line (e.g. product name).' },
+  { key: 'quantity', label: 'Description', hint: 'Optional detail text shown alongside the item name (e.g. pack size, material spec, or a longer description).' },
+  { key: 'price', label: 'Price', hint: 'The unit price inserted on the quote line. Currency symbols and separators are stripped automatically.' },
 ];
 
 // ---------------------------------------------------------------------------

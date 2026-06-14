@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
 import { QuotePreview } from './QuotePreview';
-import { AddLineModal } from './AddLineModal';
+import { AddLineItemModal, type LineItemPayload } from '@/app/components/AddLineItemModal';
 import { EditHeaderModal } from './EditHeaderModal';
 import { EditFooterModal } from './EditFooterModal';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
@@ -42,6 +42,8 @@ interface Props {
   collections?: { id: string; name: string }[];
   /** Full company component library for the "Add a component" picker. */
   componentLibrary?: { id: string; name: string; collection_id: string | null }[];
+  /** Catalogs for the "Add from catalog" tab in the Add Line modal. */
+  catalogs?: { id: string; name: string }[];
   initialTaxes: QuoteTaxRow[];
   /** Active company-level tax library, shown as a quick “add from defaults” picker. */
   companyTaxes: { id: string; name: string; rate_percent: number }[];
@@ -56,12 +58,15 @@ interface QuoteLine {
   roofAreaId?: string;
   text: string;
   /**
-   * Toggle-able quantity portion for catalog lines (fix #5). When set, `text`
-   * is the description and this is hidden by the Units toggle without string
-   * splitting. Null for component + legacy lines (hyphen-strip fallback).
+   * Free-text description column (column 2). Separate from the numeric
+   * quantity column added by the Quantity Column feature.
    */
   quantityText?: string | null;
   amount: number;
+  /** Per-unit price when quantity column is active. Null = legacy. */
+  unitPrice?: number | null;
+  /** Numeric quantity when quantity column is active. Default 1. */
+  qty?: number;
   showPrice: boolean;
   showUnits: boolean;
   isVisible: boolean;
@@ -69,7 +74,7 @@ interface QuoteLine {
   sortOrder: number;
 }
 
-export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave: _disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true, customSaveAction, initialTaxes, companyTaxes, taxAudience = 'quote', collections = [], componentLibrary = [] }: Props) {
+export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave: _disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true, customSaveAction, initialTaxes, companyTaxes, taxAudience = 'quote', collections = [], componentLibrary = [], catalogs = [] }: Props) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [taxes, setTaxes] = useState<EditableTax[]>(
@@ -87,6 +92,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  // Quantity column toggle — persisted to quotes.show_quantity_column on save.
+  const [showQuantityColumn, setShowQuantityColumn] = useState(
+    !!(quote as { show_quantity_column?: boolean }).show_quantity_column
+  );
   // Unified "Add new line" modal (Custom line / Add a component / Search catalog).
   const [showAddLine, setShowAddLine] = useState(false);
   const [showEditHeader, setShowEditHeader] = useState(false);
@@ -160,14 +169,21 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           };
         } else {
           // Custom line: use saved data
+          const savedTyped = saved as {
+            quantity_text?: string | null;
+            quantity?: number | null;
+            unit_price?: number | null;
+          };
           return {
             id: saved.id,
             type: 'custom' as const,
             componentId: undefined,
             roofAreaId: undefined,
             text: saved.custom_text || '',
-            quantityText: (saved as { quantity_text?: string | null }).quantity_text ?? null,
+            quantityText: savedTyped.quantity_text ?? null,
             amount: saved.custom_amount || 0,
+            qty: savedTyped.quantity ?? 1,
+            unitPrice: savedTyped.unit_price ?? null,
             showPrice: saved.show_price ?? true,
             showUnits: saved.show_units ?? true,
             isVisible: saved.is_visible ?? true,
@@ -309,47 +325,23 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     setIsDirty(true);
   }
 
-  function addCustomLine(
-    text: string,
-    amount: number,
-    showPrice: boolean,
-    quantityText: string | null = null,
-  ) {
-    const newLine: QuoteLine = {
-      id: `custom-${Date.now()}`,
-      type: 'custom',
-      text,
-      quantityText,
-      amount,
-      showPrice,
+  /** Unified handler: called by AddLineItemModal for all three tabs. */
+  function handleAddLineItem(payloads: LineItemPayload[]) {
+    const newLines: QuoteLine[] = payloads.map((p, i) => ({
+      id: `custom-${Date.now()}-${i}`,
+      type: 'custom' as const,
+      text: p.title,
+      quantityText: p.description,
+      amount: p.lineTotal,
+      unitPrice: p.unitPrice,
+      qty: p.quantity,
+      showPrice: p.showPrice,
       showUnits: true,
       isVisible: true,
       includeInTotal: true,
-      sortOrder: lines.length,
-    };
-    setLines(prev => [...prev, newLine]);
-    setIsDirty(true);
-  }
-
-  /**
-   * Add a line seeded from a component library entry. Per spec: the component
-   * NAME is pre-filled; quantity and price stay blank so the user fills them
-   * via the right-side pencil (LineEditForm). Stored as a custom line.
-   */
-  function addComponentLine(name: string) {
-    const newLine: QuoteLine = {
-      id: `custom-${Date.now()}`,
-      type: 'custom',
-      text: name,
-      quantityText: null,
-      amount: 0,
-      showPrice: true,
-      showUnits: true,
-      isVisible: true,
-      includeInTotal: true,
-      sortOrder: lines.length,
-    };
-    setLines(prev => [...prev, newLine]);
+      sortOrder: lines.length + i,
+    }));
+    setLines(prev => [...prev, ...newLines]);
     setIsDirty(true);
   }
 
@@ -359,9 +351,11 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     quantityText: string | null,
     amount: number,
     showPrice: boolean,
+    qty: number = 1,
+    unitPrice: number | null = null,
   ) {
     setLines(prev => prev.map(l =>
-      l.id === lineId ? { ...l, text, quantityText, amount, showPrice } : l
+      l.id === lineId ? { ...l, text, quantityText, amount, showPrice, qty, unitPrice } : l
     ));
     setEditingLineId(null);
     setIsDirty(true);
@@ -397,7 +391,11 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         sortOrder: line.sortOrder,
         isVisible: line.isVisible,
         includeInTotal: line.includeInTotal,
+        quantity: line.qty ?? 1,
+        unitPrice: line.unitPrice ?? null,
       }));
+      // Persist the show_quantity_column toggle alongside lines
+      const showQtyCol = showQuantityColumn;
 
       // Use custom save action if provided (for labor sheet), otherwise use default
       const saveLineAction = customSaveAction || saveCustomerQuoteLines;
@@ -411,7 +409,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       }
 
       await Promise.all([
-        saveLineAction(quote.id, lineData),
+        saveLineAction(quote.id, lineData, showQtyCol),
         saveCustomerQuoteBranding(quote.id, {
           companyName,
           companyAddress,
@@ -738,14 +736,24 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               )}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
               <button
                 data-copilot="cl-add-line-btn"
                 onClick={() => setShowAddLine(true)}
-                className="flex-1 py-2 text-sm font-medium text-orange-600 border border-orange-200 rounded-full hover:bg-orange-50 hover:border-orange-300 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]"
+                className="w-full py-2 text-sm font-medium text-orange-600 border border-orange-200 rounded-full hover:bg-orange-50 hover:border-orange-300 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]"
               >
                 + Add New Line
               </button>
+              {/* Quantity column toggle */}
+              <label className="flex items-center gap-2 px-1 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={showQuantityColumn}
+                  onChange={(e) => { setShowQuantityColumn(e.target.checked); setIsDirty(true); }}
+                  className="w-4 h-4 rounded text-orange-600"
+                />
+                <span className="text-xs text-slate-600">Add Quantity Column</span>
+              </label>
             </div>
 
             {/* Taxes */}
@@ -927,7 +935,8 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 footerText={footerText}
                 editingLineId={editingLineId}
                 onEditLine={setEditingLineId}
-                onSaveLine={updateLine}
+                onSaveLine={(id, text, qty, amount, sp) => updateLine(id, text, qty, amount, sp)}
+                showQuantityColumn={showQuantityColumn}
                 onCancelEdit={() => setEditingLineId(null)}
                 onEditHeader={() => setShowEditHeader(true)}
                 onEditFooter={() => setShowEditFooter(true)}
@@ -1015,14 +1024,15 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         />
       )}
 
-      {/* Unified Add New Line modal: Custom line / Add a component / Search catalog */}
+      {/* Unified Add Line Item modal: Custom / Catalog / Component */}
       {showAddLine && (
-        <AddLineModal
+        <AddLineItemModal
           workspaceSlug={workspaceSlug}
+          currency={currency}
+          catalogs={catalogs}
           collections={collections}
           componentLibrary={componentLibrary}
-          onAddCustom={addCustomLine}
-          onAddComponent={addComponentLine}
+          onAdd={handleAddLineItem}
           onClose={() => setShowAddLine(false)}
         />
       )}

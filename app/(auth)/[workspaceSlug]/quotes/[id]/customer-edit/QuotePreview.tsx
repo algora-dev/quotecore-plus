@@ -31,7 +31,8 @@ interface Props {
   footerText: string;
   editingLineId?: string | null;
   onEditLine?: (lineId: string) => void;
-  onSaveLine?: (lineId: string, text: string, quantity: string | null, amount: number, showPrice: boolean) => void;
+  onSaveLine?: (lineId: string, text: string, quantity: string | null, amount: number, showPrice: boolean, qty?: number, unitPrice?: number | null) => void;
+  showQuantityColumn?: boolean;
   onCancelEdit?: () => void;
   onEditHeader?: () => void;
   onEditFooter?: () => void;
@@ -60,6 +61,7 @@ export function QuotePreview({
   onEditFooter,
   showEditButtons = true,
   currency,
+  showQuantityColumn = false,
 }: Props) {
   // Render a line's text honouring the Units toggle. Catalog lines hide the
   // separate quantity_text; legacy/component lines fall back to hyphen-strip.
@@ -127,12 +129,15 @@ export function QuotePreview({
           lines.map(line =>
             editingLineId === line.id && onSaveLine && onCancelEdit ? (
               <div key={line.id} className="py-2">
-                <LineEditForm
+<LineEditForm
                   initialText={splitLineParts(line.text, line.quantityText).description}
                   initialQuantity={splitLineParts(line.text, line.quantityText).quantity}
                   initialAmount={line.amount}
                   initialShowPrice={line.showPrice}
-                  onSave={(text, quantity, amount, showPrice) => onSaveLine(line.id, text, quantity, amount, showPrice)}
+                  showQuantityColumn={showQuantityColumn}
+                  initialQty={(line as { qty?: number }).qty ?? 1}
+                  initialUnitPrice={(line as { unitPrice?: number | null }).unitPrice ?? null}
+                  onSave={(text, quantity, amount, sp, qty, unitPrice) => onSaveLine(line.id, text, quantity, amount, sp, qty, unitPrice)}
                   onCancel={onCancelEdit}
                 />
               </div>

@@ -12,10 +12,14 @@ export interface LineByLineItem {
   id: string;
   /** Primary text shown on the order line (e.g. item name / description). */
   text: string;
-  /** Optional secondary text appended after the primary (qty, pack size, etc.). Null = none. */
+  /** Optional secondary text appended after the primary (detail/description column). Null = none. */
   quantityText: string | null;
-  /** Line amount/price. */
+  /** Line total amount (= unitPrice × quantity when qty column is active). */
   amount: number;
+  /** Per-unit price when quantity column is active. Null = legacy (amount is the total). */
+  unitPrice: number | null;
+  /** Numeric quantity when quantity column is active. Default 1. */
+  quantity: number;
   /** Whether the price is shown on this line. */
   showPrice: boolean;
   /** Whether the line is rendered at all (hidden lines are kept but not shown/totaled). */
@@ -66,6 +70,12 @@ export interface LineByLineData {
    * saved/sent order matches what the user chose in the editor.
    */
   hideAllPrices: boolean;
+  /**
+   * Whether the Quantity column is toggled on in the editor. When true, qty +
+   * unit price are shown on each line and the total = qty × unitPrice.
+   * Persisted so the column state is remembered when the user returns.
+   */
+  showQuantityColumn: boolean;
 }
 
 /**
@@ -87,6 +97,8 @@ export function parseLineByLineData(raw: unknown): LineByLineItem[] {
       const o = r as Record<string, unknown>;
       const text = typeof o.text === 'string' ? o.text : '';
       const amountNum = typeof o.amount === 'number' ? o.amount : Number(o.amount);
+      const unitPriceRaw = o.unitPrice;
+      const quantityRaw = o.quantity;
       return {
         id: typeof o.id === 'string' && o.id ? o.id : `line-${i}`,
         text,
@@ -95,6 +107,8 @@ export function parseLineByLineData(raw: unknown): LineByLineItem[] {
             ? o.quantityText
             : null,
         amount: Number.isFinite(amountNum) ? amountNum : 0,
+        unitPrice: (typeof unitPriceRaw === 'number' && Number.isFinite(unitPriceRaw)) ? unitPriceRaw : null,
+        quantity: (typeof quantityRaw === 'number' && quantityRaw > 0) ? quantityRaw : 1,
         showPrice: o.showPrice !== false,
         isVisible: o.isVisible !== false,
         includeInTotal: o.includeInTotal !== false,
@@ -159,6 +173,14 @@ export function parseLineByLineTaxes(raw: unknown): LineByLineTax[] {
     .filter((x): x is LineByLineTax => x !== null);
 }
 
+/** Parse the showQuantityColumn flag (envelope only; legacy = false). */
+export function parseLineByLineShowQuantityColumn(raw: unknown): boolean {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    return (raw as { showQuantityColumn?: unknown }).showQuantityColumn === true;
+  }
+  return false;
+}
+
 /** Parse the full envelope (lines + footer + taxes) from the JSON column. */
 export function parseLineByLineEnvelope(raw: unknown): LineByLineData {
   return {
@@ -166,6 +188,7 @@ export function parseLineByLineEnvelope(raw: unknown): LineByLineData {
     footer: parseLineByLineFooter(raw),
     taxes: parseLineByLineTaxes(raw),
     hideAllPrices: parseLineByLineHideAllPrices(raw),
+    showQuantityColumn: parseLineByLineShowQuantityColumn(raw),
   };
 }
 

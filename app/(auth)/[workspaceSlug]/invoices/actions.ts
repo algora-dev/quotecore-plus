@@ -188,30 +188,112 @@ export async function createInvoiceFromQuote(quoteId: string, templateId?: strin
 
   const invoice = { id: invoiceId };
 
-  // Import lines from customer_quote_lines
-  if (cqLines && cqLines.length > 0) {
-    const invoiceLines = cqLines
-      .filter((l) => l.is_visible !== false)
-      .map((l, idx) => ({
+  // Import lines.
+  //
+  // Preferred source: customer_quote_lines (populated when the user has opened
+  // and saved the Customer Quote Editor for this quote). These hold the exact
+  // customer-facing text, visibility flags, and amounts the user chose.
+  //
+  // Fallback source: quote_components where is_customer_visible = true. This
+  // covers build-mode quotes that were confirmed without ever opening the
+  // Customer Quote Editor — in that case customer_quote_lines is empty and
+  // the invoice would otherwise be blank.
+  const visibleCqLines = (cqLines ?? []).filter((l) => l.is_visible !== false);
+
+  let invoiceLines: Array<{
+    invoice_id: string;
+    company_id: string;
+    sort_order: number;
+    line_source_type: string;
+    source_id: string | null;
+    title: string;
+    description: string | null;
+    quantity: number;
+    unit: string;
+    unit_price: number;
+    line_total: number;
+    show_price: boolean;
+    show_quantity: boolean;
+    show_description: boolean;
+    include_in_total: boolean;
+    is_visible: boolean;
+  }>;
+
+  if (visibleCqLines.length > 0) {
+    // Use the saved customer quote lines.
+    invoiceLines = visibleCqLines.map((l, idx) => {
+      const unitPrice = Number(l.custom_amount ?? 0);
+      return {
         invoice_id: invoice.id,
         company_id: profile.company_id,
         sort_order: idx,
-        line_source_type: 'quote_import' as const,
+        line_source_type: 'quote_import',
         source_id: null,
         title: l.custom_text ?? '',
+        description: (l as { quantity_text?: string | null }).quantity_text ?? null,
+        quantity: 1,
+        unit: 'item',
+        unit_price: unitPrice,
+        line_total: unitPrice,
+        show_price: l.show_price ?? true,
+        show_quantity: false,
+        show_description: !!(l as { quantity_text?: string | null }).quantity_text,
+        include_in_total: (l as { include_in_total?: boolean | null }).include_in_total ?? true,
+        is_visible: true,
+      };
+    });
+  } else {
+    // Fallback: build lines from quote_components (build-mode quotes).
+    // Apply margins exactly as the Customer Quote Editor does so the invoice
+    // amounts match what the user saw during quoting.
+    const { data: qComponents } = await admin
+      .from('quote_components')
+      .select('id, name, material_cost, labour_cost, is_customer_visible, sort_order')
+      .eq('quote_id', quoteId)
+      .eq('is_customer_visible', true)
+      .order('sort_order');
+
+    const materialMarginRate = (quote.material_margin_enabled && quote.material_margin_percent)
+      ? Number(quote.material_margin_percent) / 100
+      : 0;
+    const labourMarginRate = (quote.labor_margin_enabled && quote.labor_margin_percent)
+      ? Number(quote.labor_margin_percent) / 100
+      : 0;
+
+    invoiceLines = (qComponents ?? []).map((c, idx) => {
+      const mat = Number(c.material_cost ?? 0);
+      const lab = Number(c.labour_cost ?? 0);
+      const total = mat * (1 + materialMarginRate) + lab * (1 + labourMarginRate);
+      const unitPrice = Math.round(total * 100) / 100;
+      return {
+        invoice_id: invoice.id,
+        company_id: profile.company_id,
+        sort_order: idx,
+        line_source_type: 'quote_import',
+        source_id: null,
+        title: String(c.name ?? ''),
         description: null,
         quantity: 1,
         unit: 'item',
-        unit_price: Number(l.custom_amount ?? 0),
-        line_total: Number(l.custom_amount ?? 0),
-        show_price: l.show_price ?? true,
+        unit_price: unitPrice,
+        line_total: unitPrice,
+        show_price: true,
+        show_quantity: false,
+        show_description: false,
+        include_in_total: true,
         is_visible: true,
-      }));
+      };
+    });
+  }
 
-    await admin.from('invoice_lines').insert(invoiceLines);
+  if (invoiceLines.length > 0) {
+    const { error: insertErr } = await admin.from('invoice_lines').insert(invoiceLines);
+    if (insertErr) {
+      console.error('[createInvoiceFromQuote] invoice_lines insert error:', insertErr);
+    }
 
     const subtotal = invoiceLines
-      .filter((l) => l.show_price)
+      .filter((l) => l.include_in_total)
       .reduce((s, l) => s + l.line_total, 0);
 
     await admin
