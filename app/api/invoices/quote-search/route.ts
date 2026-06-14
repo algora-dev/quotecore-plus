@@ -14,6 +14,9 @@ export async function GET() {
       .from('quotes')
       .select('id, quote_number, customer_name, job_name, status')
       .eq('company_id', profile.company_id)
+      // Exclude drafts — a draft quote has no finalised lines yet and would
+      // produce a blank invoice. Only confirmed/sent/accepted/etc. are ready.
+      .neq('status', 'draft')
       .order('created_at', { ascending: false })
       .limit(200);
 

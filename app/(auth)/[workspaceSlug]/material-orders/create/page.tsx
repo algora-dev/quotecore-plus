@@ -24,7 +24,8 @@ export default async function CreateOrderPage(props: Props) {
   }
   
   const profile = await requireCompanyContext();
-  const [templates, flashings, components, collections, quoteData, existingOrder, ent, companyTaxes] = await Promise.all([
+  const supabaseForCatalogs = await createSupabaseServerClient();
+  const [templates, flashings, components, collections, quoteData, existingOrder, ent, companyTaxes, catalogList] = await Promise.all([
     loadOrderTemplates(),
     loadFlashingLibrary(),
     loadComponentLibrary(),
@@ -33,6 +34,7 @@ export default async function CreateOrderPage(props: Props) {
     orderId ? loadOrderForEdit(orderId) : Promise.resolve(null),
     loadCompanyEntitlements(profile.company_id),
     loadCompanyTaxes(),
+    supabaseForCatalogs.from('catalogs').select('id, name').eq('company_id', profile.company_id).order('name').then(r => r.data ?? []),
   ]);
   
 
@@ -62,8 +64,7 @@ export default async function CreateOrderPage(props: Props) {
     savedLayout === 'double' || (!savedLayout && column === 'double') ? 'double' : 'single';
 
   // Company currency for line-by-line price rendering.
-  const supabase = await createSupabaseServerClient();
-  const { data: companyRow } = await supabase
+  const { data: companyRow } = await supabaseForCatalogs
     .from('companies')
     .select('default_currency')
     .eq('id', profile.company_id)
@@ -87,6 +88,7 @@ export default async function CreateOrderPage(props: Props) {
         initialColumn={initialColumn}
         initialLineByLine={initialLineByLine}
         currency={currency}
+        catalogs={catalogList.map(c => ({ id: c.id, name: c.name }))}
       />
     </div>
   );

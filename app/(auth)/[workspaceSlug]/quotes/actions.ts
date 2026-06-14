@@ -1598,6 +1598,8 @@ export async function saveCustomerQuoteLines(
     unitPrice?: number | null;
   }>,
   showQuantityColumn?: boolean,
+  hideLinePrices?: boolean,
+  hideTotals?: boolean,
 ) {
   'use server';
   const profile = await requireCompanyContext();
@@ -1646,11 +1648,15 @@ export async function saveCustomerQuoteLines(
     if (error) throw new Error(error.message);
   }
 
-  // Persist the show_quantity_column toggle on the quote row.
-  if (showQuantityColumn !== undefined) {
+  // Persist show_quantity_column + price-visibility toggles on the quote row.
+  if (showQuantityColumn !== undefined || hideLinePrices !== undefined || hideTotals !== undefined) {
+    const patch: Record<string, unknown> = {};
+    if (showQuantityColumn !== undefined) patch.show_quantity_column = showQuantityColumn;
+    if (hideLinePrices !== undefined) patch.hide_line_prices = hideLinePrices;
+    if (hideTotals !== undefined) patch.hide_totals = hideTotals;
     await supabase
       .from('quotes')
-      .update({ show_quantity_column: showQuantityColumn } as Record<string, unknown>)
+      .update(patch)
       .eq('id', quoteId)
       .eq('company_id', quote.company_id);
   }

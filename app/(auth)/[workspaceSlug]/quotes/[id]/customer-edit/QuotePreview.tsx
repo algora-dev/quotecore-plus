@@ -33,6 +33,8 @@ interface Props {
   onEditLine?: (lineId: string) => void;
   onSaveLine?: (lineId: string, text: string, quantity: string | null, amount: number, showPrice: boolean, qty?: number, unitPrice?: number | null) => void;
   showQuantityColumn?: boolean;
+  hideLinePrices?: boolean;
+  hideTotals?: boolean;
   onCancelEdit?: () => void;
   onEditHeader?: () => void;
   onEditFooter?: () => void;
@@ -62,6 +64,8 @@ export function QuotePreview({
   showEditButtons = true,
   currency,
   showQuantityColumn = false,
+  hideLinePrices = false,
+  hideTotals = false,
 }: Props) {
   // Render a line's text honouring the Units toggle. Catalog lines hide the
   // separate quantity_text; legacy/component lines fall back to hyphen-strip.
@@ -146,8 +150,8 @@ export function QuotePreview({
                 <div className="flex-1">
                   <p className="text-sm text-slate-900">{displayLineText(line.text, line.quantityText, line.showUnits)}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  {line.showPrice && (
+<div className="flex items-center gap-2">
+                  {line.showPrice && !hideLinePrices && (
                     <p className="text-sm font-medium text-slate-900">
                       {formatCurrency(line.amount, currency)}
                     </p>
@@ -170,7 +174,7 @@ export function QuotePreview({
       </div>
 
       {/* Totals */}
-      <div data-pdf-block className="space-y-2 pt-4 border-t">
+      {!hideTotals && <div data-pdf-block className="space-y-2 pt-4 border-t">
         <div className="flex justify-between text-sm">
           <span className="text-slate-600">Subtotal</span>
           <span className="font-medium text-slate-900">{formatCurrency(subtotal, currency)}</span>
@@ -197,7 +201,8 @@ export function QuotePreview({
           <span className="text-slate-900">Total</span>
           <span className="text-slate-900">{formatCurrency(total, currency)}</span>
         </div>
-      </div>
+      </div>}
+      {/* end hideTotals guard */}
 
       {/* Footer */}
       {(footerText || (showEditButtons && onEditFooter)) && (

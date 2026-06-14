@@ -25,6 +25,7 @@ import {
   parseLineByLineFooter,
   parseLineByLineTaxes,
   parseLineByLineHideAllPrices,
+  parseLineByLineHideTotals,
   type LineByLineItem,
   type LineByLineTax,
 } from '../lineByLine';
@@ -72,6 +73,8 @@ interface OrderCreateFormProps {
   componentLibrary?: { id: string; name: string; collection_id: string | null }[];
   /** Active company default taxes, for the line-by-line optional-tax picker. */
   companyTaxes?: { id: string; name: string; rate_percent: number }[];
+  /** Catalogs for the line-by-line Add Line Item modal. */
+  catalogs?: { id: string; name: string }[];
   /** Decision #4: pre-built line-by-line envelope when creating a NEW order from
    *  a quote in the line-by-line layout. Mirrors the customer quote editor's
    *  priced lines + footer + taxes. Null for blank/custom + existing-order edits. */
@@ -109,7 +112,7 @@ interface OrderLineItem {
   showMeasurements: boolean;
 }
 
-export function OrderCreateForm({ templates, flashings, components = [], collections = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components', initialColumn = 'single', currency = 'GBP', componentLibrary = [], companyTaxes = [], initialLineByLine = null }: OrderCreateFormProps) {
+export function OrderCreateForm({ templates, flashings, components = [], collections = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components', initialColumn = 'single', currency = 'GBP', componentLibrary = [], companyTaxes = [], catalogs = [], initialLineByLine = null }: OrderCreateFormProps) {
   const router = useRouter();
   
   // Layout state
@@ -120,7 +123,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   const [lineByLineLines, setLineByLineLines] = useState<LineByLineItem[]>([]);
   const [lineByLineFooter, setLineByLineFooter] = useState('');
   const [lineByLineTaxes, setLineByLineTaxes] = useState<LineByLineTax[]>([]);
-  const [lineByLineHideAllPrices, setLineByLineHideAllPrices] = useState(false);
+  const [lineByLineHideLinePrices, setLineByLineHideLinePrices] = useState(false);
+  const [lineByLineHideTotals, setLineByLineHideTotals] = useState(false);
   const [lineByLineShowQuantityColumn, setLineByLineShowQuantityColumn] = useState(false);
   // App-style alert state. Replaces native alert() calls so the order flow
   // matches the rest of the app's modal styling.
@@ -334,7 +338,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
       setLineByLineLines(parseLineByLineData(order.line_by_line_data));
       setLineByLineFooter(parseLineByLineFooter(order.line_by_line_data));
       setLineByLineTaxes(parseLineByLineTaxes(order.line_by_line_data));
-      setLineByLineHideAllPrices(parseLineByLineHideAllPrices(order.line_by_line_data));
+      setLineByLineHideLinePrices(parseLineByLineHideAllPrices(order.line_by_line_data));
+      setLineByLineHideTotals(parseLineByLineHideTotals(order.line_by_line_data));
     }
 
     // Map line items
@@ -378,7 +383,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
     setLineByLineLines(initialLineByLine.lines);
     setLineByLineFooter(initialLineByLine.footer);
     setLineByLineTaxes(initialLineByLine.taxes);
-    setLineByLineHideAllPrices(initialLineByLine.hideAllPrices);
+    setLineByLineHideLinePrices(initialLineByLine.hideLinePrices);
+    setLineByLineHideTotals(initialLineByLine.hideTotals);
 
     // Pre-fill the reference the same way the components quote path does.
     if (quoteData?.quote_number) {
@@ -593,7 +599,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               lines: lineByLineLines,
               footer: lineByLineFooter,
               taxes: lineByLineTaxes,
-              hideAllPrices: lineByLineHideAllPrices,
+              hideLinePrices: lineByLineHideLinePrices,
+              hideTotals: lineByLineHideTotals,
               showQuantityColumn: lineByLineShowQuantityColumn,
             }
           : undefined,
@@ -797,17 +804,20 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               initialLines={lineByLineLines}
               initialFooter={lineByLineFooter}
               initialTaxes={lineByLineTaxes}
-              initialHideAllPrices={lineByLineHideAllPrices}
+              initialHideLinePrices={lineByLineHideLinePrices}
+              initialHideTotals={lineByLineHideTotals}
               initialShowQuantityColumn={lineByLineShowQuantityColumn}
               currency={currency}
               workspaceSlug={workspaceSlug}
               collections={collections}
               componentLibrary={componentLibrary}
+              catalogs={catalogs}
               companyTaxes={companyTaxes}
               onChange={setLineByLineLines}
               onFooterChange={setLineByLineFooter}
               onTaxesChange={setLineByLineTaxes}
-              onHideAllPricesChange={setLineByLineHideAllPrices}
+              onHideLinePricesChange={setLineByLineHideLinePrices}
+              onHideTotalsChange={setLineByLineHideTotals}
               onShowQuantityColumnChange={setLineByLineShowQuantityColumn}
             />
             <div className="pb-10" />

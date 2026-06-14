@@ -96,6 +96,13 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [showQuantityColumn, setShowQuantityColumn] = useState(
     !!(quote as { show_quantity_column?: boolean }).show_quantity_column
   );
+  // Price visibility toggles — persisted to quotes on save.
+  const [hideLinePrices, setHideLinePrices] = useState(
+    !!(quote as { hide_line_prices?: boolean }).hide_line_prices
+  );
+  const [hideTotals, setHideTotals] = useState(
+    !!(quote as { hide_totals?: boolean }).hide_totals
+  );
   // Unified "Add new line" modal (Custom line / Add a component / Search catalog).
   const [showAddLine, setShowAddLine] = useState(false);
   const [showEditHeader, setShowEditHeader] = useState(false);
@@ -394,8 +401,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         quantity: line.qty ?? 1,
         unitPrice: line.unitPrice ?? null,
       }));
-      // Persist the show_quantity_column toggle alongside lines
+      // Persist the show_quantity_column + price-visibility toggles alongside lines
       const showQtyCol = showQuantityColumn;
+      const hideLinePricesVal = hideLinePrices;
+      const hideTotalsVal = hideTotals;
 
       // Use custom save action if provided (for labor sheet), otherwise use default
       const saveLineAction = customSaveAction || saveCustomerQuoteLines;
@@ -409,7 +418,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       }
 
       await Promise.all([
-        saveLineAction(quote.id, lineData, showQtyCol),
+        saveLineAction(quote.id, lineData, showQtyCol, hideLinePricesVal, hideTotalsVal),
         saveCustomerQuoteBranding(quote.id, {
           companyName,
           companyAddress,
@@ -744,7 +753,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               >
                 + Add New Line
               </button>
-              {/* Quantity column toggle */}
+              {/* Column/price visibility toggles */}
               <label className="flex items-center gap-2 px-1 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -753,6 +762,24 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                   className="w-4 h-4 rounded text-orange-600"
                 />
                 <span className="text-xs text-slate-600">Add Quantity Column</span>
+              </label>
+              <label className="flex items-center gap-2 px-1 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={hideLinePrices}
+                  onChange={(e) => { setHideLinePrices(e.target.checked); setIsDirty(true); }}
+                  className="w-4 h-4 rounded text-orange-600"
+                />
+                <span className="text-xs text-slate-600">Hide line prices</span>
+              </label>
+              <label className="flex items-center gap-2 px-1 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={hideTotals}
+                  onChange={(e) => { setHideTotals(e.target.checked); setIsDirty(true); }}
+                  className="w-4 h-4 rounded text-orange-600"
+                />
+                <span className="text-xs text-slate-600">Hide totals</span>
               </label>
             </div>
 
@@ -937,6 +964,8 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 onEditLine={setEditingLineId}
                 onSaveLine={(id, text, qty, amount, sp) => updateLine(id, text, qty, amount, sp)}
                 showQuantityColumn={showQuantityColumn}
+                hideLinePrices={hideLinePrices}
+                hideTotals={hideTotals}
                 onCancelEdit={() => setEditingLineId(null)}
                 onEditHeader={() => setShowEditHeader(true)}
                 onEditFooter={() => setShowEditFooter(true)}

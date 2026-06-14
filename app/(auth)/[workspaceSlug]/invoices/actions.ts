@@ -429,6 +429,8 @@ export async function saveInvoiceMeta(
     cq_company_phone?: string | null;
     cq_company_logo_url?: string | null;
     cq_footer_text?: string | null;
+    hide_line_prices?: boolean;
+    hide_totals?: boolean;
   }
 ) {
   const profile = await requireCompanyContext();

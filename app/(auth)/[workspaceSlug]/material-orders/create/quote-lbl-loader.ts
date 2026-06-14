@@ -187,7 +187,8 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
       lines,
       footer: quote.cq_footer_text || '',
       taxes: [],
-      hideAllPrices: false,
+      hideLinePrices: false,
+      hideTotals: false,
       showQuantityColumn: false,
     };
   } catch (error) {

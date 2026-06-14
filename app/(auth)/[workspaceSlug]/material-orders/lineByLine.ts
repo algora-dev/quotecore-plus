@@ -63,13 +63,18 @@ export interface LineByLineData {
   /** Optional taxes (default none). */
   taxes: LineByLineTax[];
   /**
-   * Master "hide all prices" override. When true, NO pricing renders on ANY
-   * surface (in-app preview, public supplier page, print/PDF) - no per-line
-   * price, no subtotal, no tax lines, no total - regardless of each line's own
-   * showPrice flag. Default false (honour per-line showPrice). Persisted so the
-   * saved/sent order matches what the user chose in the editor.
+   * Hides the price column on each individual line item in previews/PDFs.
+   * Does NOT affect the subtotal/taxes/total footer (see hideTotals).
+   * Default false. Replaces the old `hideAllPrices` which hid both at once.
    */
-  hideAllPrices: boolean;
+  hideLinePrices: boolean;
+  /**
+   * Hides the subtotal + taxes + grand total footer section.
+   * Independent of hideLinePrices — you can show line prices but hide the total,
+   * or hide line prices but still show the grand total.
+   * Default false.
+   */
+  hideTotals: boolean;
   /**
    * Whether the Quantity column is toggled on in the editor. When true, qty +
    * unit price are shown on each line and the total = qty × unitPrice.
@@ -143,10 +148,28 @@ export function parseLineByLineFooter(raw: unknown): string {
   return '';
 }
 
-/** Parse the master hide-all-prices flag (envelope only; legacy = false). */
-export function parseLineByLineHideAllPrices(raw: unknown): boolean {
+/**
+ * Parse hideLinePrices (hides line-item prices only).
+ * Backward compat: old `hideAllPrices=true` maps to hideLinePrices=true.
+ */
+export function parseLineByLineHideLinePrices(raw: unknown): boolean {
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-    return (raw as { hideAllPrices?: unknown }).hideAllPrices === true;
+    const r = raw as { hideLinePrices?: unknown; hideAllPrices?: unknown };
+    if (r.hideLinePrices !== undefined) return r.hideLinePrices === true;
+    return r.hideAllPrices === true; // legacy compat
+  }
+  return false;
+}
+
+/** @deprecated Alias of parseLineByLineHideLinePrices kept for call-site compat. */
+export function parseLineByLineHideAllPrices(raw: unknown): boolean {
+  return parseLineByLineHideLinePrices(raw);
+}
+
+/** Parse hideTotals (hides the subtotal/taxes/total footer). Legacy = false. */
+export function parseLineByLineHideTotals(raw: unknown): boolean {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    return (raw as { hideTotals?: unknown }).hideTotals === true;
   }
   return false;
 }
@@ -187,7 +210,8 @@ export function parseLineByLineEnvelope(raw: unknown): LineByLineData {
     lines: parseLineByLineData(raw),
     footer: parseLineByLineFooter(raw),
     taxes: parseLineByLineTaxes(raw),
-    hideAllPrices: parseLineByLineHideAllPrices(raw),
+    hideLinePrices: parseLineByLineHideLinePrices(raw),
+    hideTotals: parseLineByLineHideTotals(raw),
     showQuantityColumn: parseLineByLineShowQuantityColumn(raw),
   };
 }

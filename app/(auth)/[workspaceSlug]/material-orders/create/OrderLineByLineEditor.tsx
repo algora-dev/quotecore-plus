@@ -38,7 +38,10 @@ interface Props {
   initialLines: LineByLineItem[];
   initialFooter: string;
   initialTaxes: LineByLineTax[];
-  initialHideAllPrices: boolean;
+  /** Hide line-item prices (independent of totals). */
+  initialHideLinePrices?: boolean;
+  /** Hide subtotal + taxes + total footer (independent of line prices). */
+  initialHideTotals?: boolean;
   initialShowQuantityColumn?: boolean;
   currency: string;
   /** Workspace slug for the catalog search modal endpoint. */
@@ -55,7 +58,8 @@ interface Props {
   onChange: (lines: LineByLineItem[]) => void;
   onFooterChange: (footer: string) => void;
   onTaxesChange: (taxes: LineByLineTax[]) => void;
-  onHideAllPricesChange: (hide: boolean) => void;
+  onHideLinePricesChange?: (hide: boolean) => void;
+  onHideTotalsChange?: (hide: boolean) => void;
   onShowQuantityColumnChange?: (show: boolean) => void;
 }
 
@@ -67,7 +71,8 @@ export function OrderLineByLineEditor({
   initialLines,
   initialFooter,
   initialTaxes,
-  initialHideAllPrices,
+  initialHideLinePrices = false,
+  initialHideTotals = false,
   initialShowQuantityColumn = false,
   currency,
   workspaceSlug,
@@ -78,7 +83,8 @@ export function OrderLineByLineEditor({
   onChange,
   onFooterChange,
   onTaxesChange,
-  onHideAllPricesChange,
+  onHideLinePricesChange,
+  onHideTotalsChange,
   onShowQuantityColumnChange,
 }: Props) {
   const [lines, setLines] = useState<LineByLineItem[]>(initialLines.length > 0 ? initialLines : []);
@@ -98,8 +104,9 @@ export function OrderLineByLineEditor({
     setLines(initialLines);
     setFooter(initialFooter);
     setTaxes(initialTaxes);
-    setHideAllPrices(initialHideAllPrices);
-  }, [initialLines, initialFooter, initialTaxes, initialHideAllPrices]);
+    setHideLinePrices(initialHideLinePrices);
+    setHideTotals(initialHideTotals);
+  }, [initialLines, initialFooter, initialTaxes, initialHideLinePrices, initialHideTotals]);
   const [showAddLine, setShowAddLine] = useState(false);
   // id of the line currently being edited in the right-hand preview (pencil).
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
@@ -112,7 +119,8 @@ export function OrderLineByLineEditor({
   // preview honours each line's individual showPrice toggle as before. This is
   // preview-only convenience state; it does not mutate the lines themselves.
   // Persisted to the envelope so the saved/sent order matches the editor.
-  const [hideAllPrices, setHideAllPrices] = useState(initialHideAllPrices);
+  const [hideLinePrices, setHideLinePrices] = useState(initialHideLinePrices);
+  const [hideTotals, setHideTotals] = useState(initialHideTotals);
   const [showQuantityColumn, setShowQuantityColumn] = useState(initialShowQuantityColumn);
   // Declutter: collapse the left controls so the preview fills the space.
   // Pure layout state - panel stays mounted (no edit loss).
@@ -217,21 +225,38 @@ export function OrderLineByLineEditor({
               />
               <h3 className="text-sm font-semibold text-slate-900">Order items</h3>
             </div>
-            <label
-              className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none"
-              title="Hide every price in the preview in one click (overrides each line's Price toggle). Untick to show prices as set per line."
-            >
-              <input
-                type="checkbox"
-                checked={hideAllPrices}
-                onChange={(e) => {
-                  setHideAllPrices(e.target.checked);
-                  onHideAllPricesChange(e.target.checked);
-                }}
-                className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-              />
-              Hide all prices
-            </label>
+            <div className="flex items-center gap-3">
+              <label
+                className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none"
+                title="Hides the price on each line item. The subtotal and total footer remain visible unless 'Hide totals' is also ticked."
+              >
+                <input
+                  type="checkbox"
+                  checked={hideLinePrices}
+                  onChange={(e) => {
+                    setHideLinePrices(e.target.checked);
+                    onHideLinePricesChange?.(e.target.checked);
+                  }}
+                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                />
+                Hide line prices
+              </label>
+              <label
+                className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none"
+                title="Hides the subtotal, taxes, and grand total footer."
+              >
+                <input
+                  type="checkbox"
+                  checked={hideTotals}
+                  onChange={(e) => {
+                    setHideTotals(e.target.checked);
+                    onHideTotalsChange?.(e.target.checked);
+                  }}
+                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                />
+                Hide totals
+              </label>
+            </div>
           </div>
 
           {/* Existing lines with controls */}
@@ -498,7 +523,7 @@ export function OrderLineByLineEditor({
                     per-line pencil edit button), but blank the "Price" label
                     when all prices are hidden so nothing pricing-related shows. */}
                 <th className="py-2 pl-3 text-right font-semibold text-slate-600 whitespace-nowrap">
-                  {hideAllPrices ? '' : 'Price'}
+                  {hideLinePrices ? '' : 'Price'}
                 </th>
               </tr>
             </thead>
@@ -532,7 +557,7 @@ export function OrderLineByLineEditor({
                       <td className="py-2 pr-3 text-slate-800 whitespace-pre-line">{lineDisplayText(line)}</td>
                       <td className="py-2 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
                         <div className="flex items-center justify-end gap-2">
-                          {!hideAllPrices && line.showPrice ? formatCurrency(line.amount, currency) : ''}
+                          {!hideLinePrices && line.showPrice ? formatCurrency(line.amount, currency) : ''}
                           <button
                             type="button"
                             onClick={() => setEditingLineId(line.id)}
@@ -555,7 +580,7 @@ export function OrderLineByLineEditor({
                 )
               )}
             </tbody>
-            {!hideAllPrices && (visibleLines.some((l) => l.showPrice) || taxLines.length > 0) ? (
+            {!hideTotals && (visibleLines.some((l) => l.showPrice) || taxLines.length > 0) ? (
               <tfoot>
                 {taxLines.length > 0 && (
                   <>

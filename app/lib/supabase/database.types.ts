@@ -1652,6 +1652,8 @@ export type Database = {
           discount_total: number
           disputed_at: string | null
           due_date: string | null
+          hide_line_prices: boolean
+          hide_totals: boolean
           id: string
           invoice_date: string
           invoice_number: string
@@ -1692,6 +1694,8 @@ export type Database = {
           discount_total?: number
           disputed_at?: string | null
           due_date?: string | null
+          hide_line_prices?: boolean
+          hide_totals?: boolean
           id?: string
           invoice_date?: string
           invoice_number: string
@@ -1732,6 +1736,8 @@ export type Database = {
           discount_total?: number
           disputed_at?: string | null
           due_date?: string | null
+          hide_line_prices?: boolean
+          hide_totals?: boolean
           id?: string
           invoice_date?: string
           invoice_number?: string
@@ -3107,6 +3113,8 @@ export type Database = {
           declined_at: string | null
           entry_mode: string | null
           global_pitch_degrees: number | null
+          hide_line_prices: boolean
+          hide_totals: boolean
           id: string
           job_name: string | null
           job_status: string | null
@@ -3153,6 +3161,8 @@ export type Database = {
           declined_at?: string | null
           entry_mode?: string | null
           global_pitch_degrees?: number | null
+          hide_line_prices?: boolean
+          hide_totals?: boolean
           id?: string
           job_name?: string | null
           job_status?: string | null
@@ -3199,6 +3209,8 @@ export type Database = {
           declined_at?: string | null
           entry_mode?: string | null
           global_pitch_degrees?: number | null
+          hide_line_prices?: boolean
+          hide_totals?: boolean
           id?: string
           job_name?: string | null
           job_status?: string | null

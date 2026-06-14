@@ -188,6 +188,14 @@ export function InvoiceEditor({
   const [payDirty, setPayDirty] = useState(false);
   const [paymentSaving, setPaymentSaving] = useState(false);
 
+  // ── Price visibility toggles ──
+  const [hideLinePrices, setHideLinePrices] = useState(
+    !!(initial as { hide_line_prices?: boolean }).hide_line_prices
+  );
+  const [hideTotals, setHideTotals] = useState(
+    !!(initial as { hide_totals?: boolean }).hide_totals
+  );
+
   // ── UI state ──
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -328,6 +336,8 @@ export function InvoiceEditor({
       cq_company_phone: companyPhone || null,
       cq_company_logo_url: companyLogoUrl || null,
       cq_footer_text: footerText || null,
+      hide_line_prices: hideLinePrices,
+      hide_totals: hideTotals,
     });
     setIsDirty(false);
     setLastSaved(new Date());
@@ -743,6 +753,30 @@ export function InvoiceEditor({
                   </div>
                 )}
 
+                {/* Price visibility toggles */}
+                {!isReadOnly && (
+                  <div className="flex items-center gap-4 pt-2">
+                    <label className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none">
+                      <input
+                        type="checkbox"
+                        checked={hideLinePrices}
+                        onChange={(e) => { setHideLinePrices(e.target.checked); setIsDirty(true); }}
+                        className="rounded border-slate-300 text-orange-600"
+                      />
+                      Hide line prices
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none">
+                      <input
+                        type="checkbox"
+                        checked={hideTotals}
+                        onChange={(e) => { setHideTotals(e.target.checked); setIsDirty(true); }}
+                        className="rounded border-slate-300 text-orange-600"
+                      />
+                      Hide totals
+                    </label>
+                  </div>
+                )}
+
                 {/* Add line button */}
                 {!isReadOnly && (
                   <button
@@ -952,6 +986,8 @@ export function InvoiceEditor({
             invoice={initial}
             lines={lines}
             currency={currency}
+            hideLinePrices={hideLinePrices}
+            hideTotals={hideTotals}
             companyName={companyName}
             companyAddress={companyAddress}
             companyEmail={companyEmail}
