@@ -24,8 +24,8 @@ export async function addQuoteNote(
   const trimBody = body.trim();
   if (!trimTitle) throw new Error('Note title is required.');
   if (!trimBody) throw new Error('Note body is required.');
-  if (trimTitle.length > 200) throw new Error('Title must be 200 characters or fewer.');
-  if (trimBody.length > 10000) throw new Error('Note must be 10,000 characters or fewer.');
+  if (trimTitle.length > 100) throw new Error('Title must be 100 characters or fewer.');
+  if (trimBody.length > 2000) throw new Error('Note must be 2,000 characters or fewer.');
 
   const { data, error } = await supabase
     .from('quote_notes')
@@ -60,8 +60,8 @@ export async function updateQuoteNote(
   const trimBody = body.trim();
   if (!trimTitle) throw new Error('Note title is required.');
   if (!trimBody) throw new Error('Note body is required.');
-  if (trimTitle.length > 200) throw new Error('Title must be 200 characters or fewer.');
-  if (trimBody.length > 10000) throw new Error('Note must be 10,000 characters or fewer.');
+  if (trimTitle.length > 100) throw new Error('Title must be 100 characters or fewer.');
+  if (trimBody.length > 2000) throw new Error('Note must be 2,000 characters or fewer.');
 
   const { error } = await supabase
     .from('quote_notes')

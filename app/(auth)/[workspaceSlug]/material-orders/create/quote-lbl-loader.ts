@@ -64,7 +64,10 @@ function generateDefaultText(
  * customer quote editor would render. Returns null if the quote is missing or
  * has no customer-visible content (caller falls back to an empty editor).
  */
-export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLineData | null> {
+export async function loadQuoteLineByLineData(
+  quoteId: string,
+  selectedComponentIds?: string[] | null,
+): Promise<LineByLineData | null> {
   try {
     const profile = await requireCompanyContext();
     const supabase = await createSupabaseServerClient();
@@ -95,8 +98,19 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
         .order('sort_order', { ascending: true }),
     ]);
 
-    const comps = components || [];
-    const saved = savedLines || [];
+    // Apply the line-selector filter when the user pre-selected which components
+    // to include. Custom lines (type !== 'component') always pass through.
+    const allComps = components || [];
+    const comps = selectedComponentIds
+      ? allComps.filter((c: any) => selectedComponentIds.includes(c.id))
+      : allComps;
+    const selectedSet = selectedComponentIds ? new Set(selectedComponentIds) : null;
+    const allSaved = savedLines || [];
+    const saved = selectedSet
+      ? allSaved.filter((s: any) =>
+          s.line_type !== 'component' || !s.quote_component_id || selectedSet.has(s.quote_component_id)
+        )
+      : allSaved;
 
     const materialMarginPct =
       quote.material_margin_enabled && quote.material_margin_percent ? quote.material_margin_percent : 0;

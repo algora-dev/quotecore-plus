@@ -57,7 +57,7 @@ export default async function CreateOrderPage(props: Props) {
   // the custom blank line-by-line path passes no quoteId so this stays null.
   const initialLineByLine =
     initialLayout === 'line_by_line' && quoteId && !existingOrder
-      ? await loadQuoteLineByLineData(quoteId)
+      ? await loadQuoteLineByLineData(quoteId, selectedComponentIds)
       : null;
 
   // Column mode for the Components editor. Editing an existing order: use its

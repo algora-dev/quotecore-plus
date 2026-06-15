@@ -110,11 +110,14 @@ export function LineEditForm({
   //   - component lines (not custom/catalog)
   //   - that actually have labour cost > 0 (materials-only components skip it)
   //   - AND the quote has labor margin enabled (default labor margin > 0 means it was enabled)
+  // Show the labor margin field for any component line that has labour cost,
+  // regardless of whether a quote-level default is configured. This ensures
+  // users can always see and adjust the labor margin, even on quotes where
+  // labor_margin_percent was set to 0 or was never explicitly configured.
   const showLaborMarginField =
     isComponentLine &&
     !isBlankQuote &&
-    (baseLabourCost ?? 0) > 0 &&
-    defaultLaborMarginPercent != null;
+    (baseLabourCost ?? 0) > 0;
   // ─────────────────────────────────────────────────────────────────────────────
 
   // Derived line total when qty column is active

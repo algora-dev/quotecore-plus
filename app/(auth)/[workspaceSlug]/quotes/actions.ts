@@ -222,20 +222,30 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
   if ((quote as any).accepted_at) throw new Error('Quote has already been accepted');
   if ((quote as any).declined_at) throw new Error('Quote has already been declined');
 
-  // Reuse the existing token only when there's a live one, not withdrawn,
-  // and not expired. Expired quotes get a fresh token (+ new expiry) so the
-  // old URL stays dead and the customer can't accept a re-sent quote via a
-  // stale link. Same logic applies after a withdrawal.
+  // Reuse the existing token when there's a live one (not withdrawn, not expired)
+  // but ALWAYS update acceptance_token_expires_at to the newly requested expiry.
+  // This lets the user change the deadline in the Send panel without rotating
+  // the customer URL (same link, new expiry). Expired/withdrawn quotes get a
+  // fresh UUID so the old URL stays dead.
   const isExpired = (quote as any).job_status === 'expired';
+  const days = Math.max(1, Math.min(365, expiryDays));
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + days);
+
   if (quote.acceptance_token && !(quote as any).withdrawn_at && !isExpired) {
+    // Live token exists — just refresh the expiry, keep the token UUID.
+    await supabase
+      .from('quotes')
+      .update({ acceptance_token_expires_at: expiresAt.toISOString(), job_status: 'sent' })
+      .eq('id', quoteId)
+      .eq('company_id', profile.company_id);
+    revalidatePath('/');
     return quote.acceptance_token;
   }
 
-  // Generate new token with configurable expiry
-  const days = Math.max(1, Math.min(365, expiryDays)); // Clamp 1-365 days
+  // Generate a fresh token (expired / withdrawn quotes — old URL stays dead)
   const token = crypto.randomUUID();
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + days);
+  // days / expiresAt already computed above
 
   const { error } = await supabase
     .from('quotes')
@@ -263,6 +273,12 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
  * previously expired (job_status='expired') and the new expiry is in the
  * future, the status is reset to 'sent' so the quote is live again without
  * needing a full re-send.
+ */
+/**
+ * Persist material + labor margin settings back to the quotes table from the
+ * CustomerQuoteEditor. Allows users on any quote type (not just blank) to
+ * adjust margins in the customer quote editor and have them sync back to the
+ * Review-stage values.
  */
 export async function updateQuoteExpiry(
   quoteId: string,

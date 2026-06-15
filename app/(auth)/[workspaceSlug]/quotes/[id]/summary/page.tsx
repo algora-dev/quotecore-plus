@@ -396,6 +396,7 @@ export default async function QuoteSummaryPage({
               quoteId={id}
               workspaceSlug={workspaceSlug}
               existingToken={quote.acceptance_token && !quote.withdrawn_at ? quote.acceptance_token : null}
+              existingExpiresAt={(quote as any).acceptance_token_expires_at ?? null}
               hasCustomerQuote={hasCustomerQuote}
               emailTemplates={emailTemplates || []}
               canFollowups={entitlements.features.followups}

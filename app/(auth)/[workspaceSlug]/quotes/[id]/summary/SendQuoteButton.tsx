@@ -31,6 +31,8 @@ interface Props {
   quoteId: string;
   workspaceSlug: string;
   existingToken: string | null;
+  /** ISO expiry of the current acceptance token. Used to pre-populate the expiry selector. */
+  existingExpiresAt?: string | null;
   hasCustomerQuote: boolean;
   emailTemplates: EmailTemplate[];
   /** Whether this company's plan includes scheduled follow-up messages.
@@ -73,7 +75,7 @@ function replacePlaceholders(text: string, data: Record<string, string>): string
     .replace(/\{\{quote_date\}\}/g, sanitize(data.quote_date || ''));
 }
 
-export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCustomerQuote, emailTemplates, canFollowups, canEmail, sendTestTipSeen, libraryFiles, quoteFiles, libraryLocked, quoteMeta }: Props) {
+export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existingExpiresAt, hasCustomerQuote, emailTemplates, canFollowups, canEmail, sendTestTipSeen, libraryFiles, quoteFiles, libraryLocked, quoteMeta }: Props) {
   const router = useRouter();
   const testTip = useSendTestTip(sendTestTipSeen);
   // When the one-time tip needs showing, the first "Send Quote" click opens the
@@ -116,7 +118,20 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
   const [emailCopied, setEmailCopied] = useState(false);
-  const [expiryDays, setExpiryDays] = useState<number>(30);
+  const [expiryDays, setExpiryDays] = useState<number>(() => {
+    // Pre-populate with current remaining days when token already exists.
+    if (existingExpiresAt) {
+      const remaining = Math.ceil((new Date(existingExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      // Snap to nearest option bucket, or default to 30 if expired / far future.
+      if (remaining <= 7) return 7;
+      if (remaining <= 14) return 14;
+      if (remaining <= 30) return 30;
+      if (remaining <= 60) return 60;
+      if (remaining <= 90) return 90;
+      return 180;
+    }
+    return 30;
+  });
 
   // Send mode state (Messages pipeline). Reuses subject/body from email
   // mode so the user can flip between Copy and Send without retyping.
@@ -581,25 +596,26 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
               <div className="space-y-3">
                 <p className="text-sm text-slate-600">How would you like to send this quote?</p>
 
-                {/* Quote Expiry */}
-                {!token && (
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <label className="text-sm font-medium text-slate-700 whitespace-nowrap">Link expires in:</label>
-                    <select
-                      value={expiryDays}
-                      onChange={(e) => setExpiryDays(Number(e.target.value))}
-                      className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
-                    >
-                      <option value={7}>7 days</option>
-                      <option value={14}>14 days</option>
-                      <option value={30}>30 days</option>
-                      <option value={60}>60 days</option>
-                      <option value={90}>90 days</option>
-                      <option value={180}>180 days</option>
-                      <option value={365}>1 year</option>
-                    </select>
-                  </div>
-                )}
+                {/* Quote Expiry — always shown so users can set/change it on first send
+                    AND when updating an already-sent quote */}
+                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <label className="text-sm font-medium text-slate-700 whitespace-nowrap">
+                    {token ? 'Update expiry to:' : 'Link expires in:'}
+                  </label>
+                  <select
+                    value={expiryDays}
+                    onChange={(e) => setExpiryDays(Number(e.target.value))}
+                    className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
+                  >
+                    <option value={7}>7 days from now</option>
+                    <option value={14}>14 days from now</option>
+                    <option value={30}>30 days from now</option>
+                    <option value={60}>60 days from now</option>
+                    <option value={90}>90 days from now</option>
+                    <option value={180}>180 days from now</option>
+                    <option value={365}>1 year from now</option>
+                  </select>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <button
                     onClick={handleSendMode}

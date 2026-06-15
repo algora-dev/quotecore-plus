@@ -52,6 +52,9 @@ interface Props {
   currency: string;
   /** Global margin % for this quote (blank quotes). Null = no global margin. */
   globalMarginPercent?: number | null;
+  /** Live labor margin % from the editor slider — pre-populates the pencil
+   *  editor's labor margin field so it reflects the current editor value. */
+  globalLaborMarginPercent?: number | null;
   /** Whether to show the margin breakdown row in the preview. */
   showMarginInPreview?: boolean;
   /** Subtotal before margin (used to compute the margin $ amount). Null = no margin. */
@@ -85,6 +88,7 @@ export function QuotePreview({
   hideLinePrices = false,
   hideTotals = false,
   globalMarginPercent = null,
+  globalLaborMarginPercent = null,
   showMarginInPreview = true,
   subtotalBeforeMargin = null,
   quoteEntryMode = null,
@@ -197,9 +201,14 @@ export function QuotePreview({
                             : null
                         }
                         defaultLaborMarginPercent={
-                          quote.labor_margin_enabled && quote.labor_margin_percent != null
-                            ? Number(quote.labor_margin_percent)
-                            : null
+                          // Prefer the live editor value (globalLaborMarginPercent prop)
+                          // when passed — it updates in real-time as the user tweaks the
+                          // slider. Fall back to the quote DB field.
+                          typeof globalLaborMarginPercent === 'number'
+                            ? globalLaborMarginPercent
+                            : (quote.labor_margin_enabled && quote.labor_margin_percent != null
+                                ? Number(quote.labor_margin_percent)
+                                : null)
                         }
                         quoteEntryMode={quoteEntryMode}
                         onSave={(text, quantity, amount, sp, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent) =>

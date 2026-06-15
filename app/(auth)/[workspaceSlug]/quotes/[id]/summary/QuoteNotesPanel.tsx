@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { addQuoteNote, updateQuoteNote, deleteQuoteNote } from './quote-notes-actions';
+import { ConfirmModal } from '@/app/components/ConfirmModal';
 
 export interface QuoteNote {
   id: string;
@@ -41,6 +42,7 @@ function NoteRow({ note, onUpdated, onDeleted }: NoteRowProps) {
   const [editBody, setEditBody] = useState(note.body);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   function handleEdit() {
     setEditTitle(note.title);
@@ -63,8 +65,8 @@ function NoteRow({ note, onUpdated, onDeleted }: NoteRowProps) {
     });
   }
 
-  function handleDelete() {
-    if (!confirm('Delete this note? This cannot be undone.')) return;
+  function doDelete() {
+    setConfirmDelete(false);
     startTransition(async () => {
       try {
         await deleteQuoteNote(note.id);
@@ -76,111 +78,124 @@ function NoteRow({ note, onUpdated, onDeleted }: NoteRowProps) {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-      {/* Title row — click to expand/collapse body */}
-      <button
-        type="button"
-        onClick={() => { if (!editing) setExpanded((p) => !p); }}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50/60 transition-colors group"
-      >
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-slate-900 truncate">{note.title}</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">
-            {note.author?.full_name && (
-              <span className="font-medium text-slate-500">{note.author.full_name} · </span>
-            )}
-            {formatDateTime(note.created_at)}
-            {note.updated_at !== note.created_at && ' · edited'}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 ml-3 flex-shrink-0">
-          {/* Edit + Delete — stop propagation so clicking them doesn't toggle expand */}
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); handleEdit(); }}
-            disabled={isPending}
-            className="p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-            aria-label="Edit note"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    <>
+      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        {/* Title row — click to expand/collapse body */}
+        <button
+          type="button"
+          onClick={() => { if (!editing) setExpanded((p) => !p); }}
+          className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50/60 transition-colors group"
+        >
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-slate-900 truncate">{note.title}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {note.author?.full_name && (
+                <span className="font-medium text-slate-500">{note.author.full_name} · </span>
+              )}
+              {formatDateTime(note.created_at)}
+              {note.updated_at !== note.created_at && ' · edited'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 ml-3 flex-shrink-0">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); handleEdit(); }}
+              disabled={isPending}
+              className="p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              aria-label="Edit note"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+              disabled={isPending}
+              className="p-1 rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+              aria-label="Delete note"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+            <svg
+              className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+              fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
-          </button>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-            disabled={isPending}
-            className="p-1 rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-            aria-label="Delete note"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-          <svg
-            className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
-            fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      </button>
+          </div>
+        </button>
 
-      {/* Expanded body / edit form */}
-      {expanded && (
-        <div className="border-t border-slate-100 px-4 py-3 bg-slate-50/40">
-          {editing ? (
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Title</label>
-                <input
-                  type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-400 focus:outline-none bg-white"
-                  placeholder="Note title"
-                  maxLength={200}
-                  disabled={isPending}
-                />
+        {/* Expanded body / edit form */}
+        {expanded && (
+          <div className="border-t border-slate-100 px-4 py-3 bg-slate-50/40">
+            {editing ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Title</label>
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-400 focus:outline-none bg-white"
+                    placeholder="Note title"
+                    maxLength={100}
+                    disabled={isPending}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Note</label>
+                  <textarea
+                    value={editBody}
+                    onChange={(e) => setEditBody(e.target.value)}
+                    rows={5}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-400 focus:outline-none bg-white resize-y"
+                    placeholder="Note content"
+                    maxLength={2000}
+                    disabled={isPending}
+                  />
+                </div>
+                {error && <p className="text-xs text-rose-600">{error}</p>}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveEdit}
+                    disabled={isPending}
+                    className="px-4 py-1.5 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_8px_rgba(255,107,53,0.3)]"
+                  >
+                    {isPending ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setEditing(false); setError(null); }}
+                    disabled={isPending}
+                    className="text-xs text-slate-400 hover:text-slate-600"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Note</label>
-                <textarea
-                  value={editBody}
-                  onChange={(e) => setEditBody(e.target.value)}
-                  rows={5}
-                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-400 focus:outline-none bg-white resize-y"
-                  placeholder="Note content"
-                  maxLength={10000}
-                  disabled={isPending}
-                />
-              </div>
-              {error && <p className="text-xs text-rose-600">{error}</p>}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleSaveEdit}
-                  disabled={isPending}
-                  className="px-4 py-1.5 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_8px_rgba(255,107,53,0.3)]"
-                >
-                  {isPending ? 'Saving…' : 'Save'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setEditing(false); setError(null); }}
-                  disabled={isPending}
-                  className="text-xs text-slate-400 hover:text-slate-600"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{note.body}</p>
-          )}
-        </div>
-      )}
-    </div>
+            ) : (
+              <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{note.body}</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Styled delete confirmation — matches app-wide ConfirmModal pattern */}
+      <ConfirmModal
+        open={confirmDelete}
+        title="Delete this note?"
+        description="This note will be permanently removed. This cannot be undone."
+        confirmLabel="Delete"
+        pending={isPending}
+        pendingLabel="Deleting…"
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={doDelete}
+      />
+    </>
   );
 }
 
@@ -222,7 +237,7 @@ function AddNoteForm({ onAdded, onCancel, quoteId }: AddFormProps) {
           onChange={(e) => setTitle(e.target.value)}
           className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-400 focus:outline-none bg-white"
           placeholder="e.g. Site visit notes, Customer call summary…"
-          maxLength={200}
+          maxLength={100}
           disabled={isPending}
           autoFocus
         />
@@ -235,7 +250,7 @@ function AddNoteForm({ onAdded, onCancel, quoteId }: AddFormProps) {
           rows={5}
           className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-400 focus:outline-none bg-white resize-y"
           placeholder="Enter your note here…"
-          maxLength={10000}
+          maxLength={2000}
           disabled={isPending}
         />
       </div>
@@ -309,7 +324,6 @@ export function QuoteNotesPanel({ quoteId, initialNotes }: Props) {
 
       {sectionOpen && (
         <div className="border-t border-slate-100 px-5 py-4 space-y-3">
-          {/* Add note button — hidden while the form is open */}
           {!adding && (
             <button
               type="button"
