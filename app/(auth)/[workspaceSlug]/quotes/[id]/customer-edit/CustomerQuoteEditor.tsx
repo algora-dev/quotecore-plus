@@ -609,13 +609,16 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const visibleLines = lines.filter(l => l.isVisible);
   const subtotal = lines.filter(l => l.includeInTotal).reduce((sum, l) => sum + l.amount, 0); // Only include items with "Add $" checked
 
-  // Margin display amounts for the preview breakdown rows
+  // Margin display amounts for the preview breakdown rows.
+  // Uses per-line override when set (lineMarginPercent / lineLaborMarginPercent),
+  // falling back to the global slider value — so pencil-edited lines contribute
+  // their actual margin rather than the global rate.
   const materialMarginTotal = lines
     .filter(l => l.type === 'component' && l.baseMaterialCost !== undefined)
-    .reduce((sum, l) => sum + (l.baseMaterialCost! * globalMarginPercent / 100), 0);
+    .reduce((sum, l) => sum + (l.baseMaterialCost! * (l.lineMarginPercent ?? globalMarginPercent) / 100), 0);
   const labourMarginTotal = lines
     .filter(l => l.type === 'component' && l.baseLabourCost !== undefined)
-    .reduce((sum, l) => sum + (l.baseLabourCost! * globalLaborMarginPercent / 100), 0);
+    .reduce((sum, l) => sum + (l.baseLabourCost! * (l.lineLaborMarginPercent ?? globalLaborMarginPercent) / 100), 0);
   const { lines: taxLines, total: taxTotal } = computeTaxLines(
     taxes.map((t) => ({
       id: t.id,
