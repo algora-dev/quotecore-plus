@@ -70,13 +70,13 @@ export default async function QuoteSummaryPage({
     .maybeSingle();
   const sendTestTipSeen = !!(_stt as { send_test_tip_seen_at?: string | null } | null)?.send_test_tip_seen_at;
 
-  // Load notes for this quote (newest first)
+  // Load notes for this quote (newest first), joining author name for M-01
   const { data: notesData } = await supabase
     .from('quote_notes')
-    .select('id, title, body, created_at, updated_at')
+    .select('id, title, body, created_at, updated_at, author:created_by_user_id(full_name)')
     .eq('quote_id', id)
     .order('created_at', { ascending: false });
-  const quoteNotes: QuoteNote[] = (notesData ?? []) as QuoteNote[];
+  const quoteNotes: QuoteNote[] = (notesData ?? []) as unknown as QuoteNote[];
 
   // Load ALL customer quote lines (for overrides + custom lines)
   const { data: allCustomerLines } = await supabase

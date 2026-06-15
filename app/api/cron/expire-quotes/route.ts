@@ -63,17 +63,28 @@ export async function GET(request: Request) {
 
   let updated = 0;
   for (const quote of rows) {
-    // Mark expired — optimistic concurrency: only update if still not expired.
-    const { error: updErr } = await admin
+    // Atomic claim: repeat ALL eligibility predicates in the WHERE so a quote
+    // that was accepted/declined/withdrawn/extended between SELECT and UPDATE is
+    // not marked expired, and a duplicate cron invocation that already expired
+    // the same row claims zero rows and skips the notifications.
+    const { data: claimed, error: updErr } = await admin
       .from('quotes')
       .update({ job_status: 'expired' })
       .eq('id', quote.id)
-      .neq('job_status', 'expired');
+      .lt('acceptance_token_expires_at', nowIso)
+      .is('accepted_at', null)
+      .is('declined_at', null)
+      .is('withdrawn_at', null)
+      .neq('job_status', 'expired')
+      .neq('status', 'draft')
+      .select('id');
 
     if (updErr) {
       console.error(`[cron/expire-quotes] update failed for ${quote.id}:`, updErr.message);
       continue;
     }
+    // Only fire notifications if this invocation actually claimed the row.
+    if (!claimed || claimed.length === 0) continue;
     updated += 1;
 
     const customerName = quote.customer_name || 'the customer';

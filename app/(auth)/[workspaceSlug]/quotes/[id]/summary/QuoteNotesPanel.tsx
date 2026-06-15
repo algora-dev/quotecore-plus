@@ -9,6 +9,8 @@ export interface QuoteNote {
   body: string;
   created_at: string;
   updated_at: string;
+  /** Author populated from server-side join on created_by_user_id. */
+  author?: { full_name: string | null } | null;
 }
 
 interface Props {
@@ -84,6 +86,9 @@ function NoteRow({ note, onUpdated, onDeleted }: NoteRowProps) {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-slate-900 truncate">{note.title}</p>
           <p className="text-[11px] text-slate-400 mt-0.5">
+            {note.author?.full_name && (
+              <span className="font-medium text-slate-500">{note.author.full_name} · </span>
+            )}
             {formatDateTime(note.created_at)}
             {note.updated_at !== note.created_at && ' · edited'}
           </p>
@@ -134,6 +139,7 @@ function NoteRow({ note, onUpdated, onDeleted }: NoteRowProps) {
                   onChange={(e) => setEditTitle(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-400 focus:outline-none bg-white"
                   placeholder="Note title"
+                  maxLength={200}
                   disabled={isPending}
                 />
               </div>
@@ -145,6 +151,7 @@ function NoteRow({ note, onUpdated, onDeleted }: NoteRowProps) {
                   rows={5}
                   className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-400 focus:outline-none bg-white resize-y"
                   placeholder="Note content"
+                  maxLength={10000}
                   disabled={isPending}
                 />
               </div>
@@ -215,6 +222,7 @@ function AddNoteForm({ onAdded, onCancel, quoteId }: AddFormProps) {
           onChange={(e) => setTitle(e.target.value)}
           className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-400 focus:outline-none bg-white"
           placeholder="e.g. Site visit notes, Customer call summary…"
+          maxLength={200}
           disabled={isPending}
           autoFocus
         />
@@ -227,6 +235,7 @@ function AddNoteForm({ onAdded, onCancel, quoteId }: AddFormProps) {
           rows={5}
           className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-400 focus:outline-none bg-white resize-y"
           placeholder="Enter your note here…"
+          maxLength={10000}
           disabled={isPending}
         />
       </div>

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import { verifyQuoteOwnership } from '@/app/lib/auth/ownership';
 
 /**
  * Add a new note to a quote. The note is scoped to the user's company and
@@ -15,10 +16,16 @@ export async function addQuoteNote(
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
+  // Verify the quote belongs to this user's company before inserting — prevents
+  // cross-tenant note linkage via guessed/known foreign quote UUIDs (H-02).
+  await verifyQuoteOwnership(supabase, quoteId, profile.company_id);
+
   const trimTitle = title.trim();
   const trimBody = body.trim();
   if (!trimTitle) throw new Error('Note title is required.');
   if (!trimBody) throw new Error('Note body is required.');
+  if (trimTitle.length > 200) throw new Error('Title must be 200 characters or fewer.');
+  if (trimBody.length > 10000) throw new Error('Note must be 10,000 characters or fewer.');
 
   const { data, error } = await supabase
     .from('quote_notes')
@@ -53,6 +60,8 @@ export async function updateQuoteNote(
   const trimBody = body.trim();
   if (!trimTitle) throw new Error('Note title is required.');
   if (!trimBody) throw new Error('Note body is required.');
+  if (trimTitle.length > 200) throw new Error('Title must be 200 characters or fewer.');
+  if (trimBody.length > 10000) throw new Error('Note must be 10,000 characters or fewer.');
 
   const { error } = await supabase
     .from('quote_notes')

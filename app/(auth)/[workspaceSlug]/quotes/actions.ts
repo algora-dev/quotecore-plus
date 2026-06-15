@@ -8,6 +8,7 @@ import type { InputMode, WasteType, PitchType } from '@/app/lib/types';
 import { verifyQuoteOwnership, verifyRoofAreaOwnership, verifyComponentOwnership } from '@/app/lib/auth/ownership';
 import { seedQuoteTaxesOnCreate } from '@/app/lib/taxes/seed';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { notifyCustomerExpiryExtended } from '@/app/lib/email/notify';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import { pickFields } from '@/app/lib/security/pickFields';
 import { createQuoteAtomic, resolveQuoteCreationDefaults } from '@/app/lib/billing/quote-creation';
@@ -272,14 +273,14 @@ export async function updateQuoteExpiry(
 
   const { data: quote } = await supabase
     .from('quotes')
-    .select('id, company_id, accepted_at, declined_at, job_status')
+    .select('id, company_id, accepted_at, declined_at, job_status, customer_email, customer_name, quote_number, acceptance_token, cq_company_name')
     .eq('id', quoteId)
     .eq('company_id', profile.company_id)
     .single();
 
   if (!quote) throw new Error('Quote not found');
-  if ((quote as any).accepted_at) throw new Error('Cannot edit expiry — quote already accepted.');
-  if ((quote as any).declined_at) throw new Error('Cannot edit expiry — quote already declined.');
+  if ((quote as any).accepted_at) throw new Error('Cannot edit expiry - quote already accepted.');
+  if ((quote as any).declined_at) throw new Error('Cannot edit expiry - quote already declined.');
 
   const clampedDays = Math.max(1, Math.min(365, days));
   const newExpiry = new Date();
@@ -300,6 +301,23 @@ export async function updateQuoteExpiry(
 
   if (error) throw new Error(error.message);
   revalidatePath('/');
+
+  // M-02: Notify the customer that their acceptance window has been extended.
+  // Must await — Vercel serverless terminates on handler return; fire-and-forget
+  // Promises are silently dropped. notifyCustomerExpiryExtended is best-effort
+  // and swallows its own errors, so this never throws.
+  const customerEmail = (quote as any).customer_email as string | null;
+  const acceptanceToken = (quote as any).acceptance_token as string | null;
+  if (customerEmail && acceptanceToken) {
+    await notifyCustomerExpiryExtended({
+      customerEmail,
+      customerName: (quote as any).customer_name ?? null,
+      companyName: (quote as any).cq_company_name ?? null,
+      quoteNumber: (quote as any).quote_number ?? null,
+      acceptanceToken,
+      newExpiryIso: newExpiry.toISOString(),
+    });
+  }
 }
 
 /**
@@ -1245,7 +1263,7 @@ export async function updateQuoteSettings(quoteId: string, input: Record<string,
 export async function confirmQuote(id: string) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
-  
+
   // Check current status + existing number
   const { data: existing } = await supabase
     .from('quotes')
@@ -1253,7 +1271,7 @@ export async function confirmQuote(id: string) {
     .eq('id', id)
     .eq('company_id', profile.company_id)
     .single();
-    
+
   if (!existing) throw new Error('Quote not found');
   if (existing.status === 'confirmed') {
     // Already confirmed - nothing to do. Revalidate the listing so the
@@ -1264,7 +1282,7 @@ export async function confirmQuote(id: string) {
   if (existing.status !== 'draft') {
     throw new Error(`Cannot confirm a quote in status '${existing.status}'.`);
   }
-  
+
   // Get next quote number if not already assigned. The SECDEF RPC is
   // service_role-only per the C-02 audit (otherwise a user could bump
   // another company's counter by passing a different p_company_id). The
@@ -1279,17 +1297,17 @@ export async function confirmQuote(id: string) {
     if (numError) throw new Error(`Failed to generate quote number: ${numError.message}`);
     quoteNumber = numberData;
   }
-  
+
   // Update quote with confirmed status and number
   const { error } = await supabase
     .from('quotes')
-    .update({ 
+    .update({
       status: 'confirmed',
       quote_number: quoteNumber
     })
     .eq('id', id)
     .eq('company_id', profile.company_id);
-    
+
   if (error) throw new Error(error.message);
   revalidatePath('/quotes');
 }
@@ -1331,18 +1349,18 @@ export async function convertQuoteMeasurementSystem(
 export async function updateQuoteCurrency(id: string, currency: string | null) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
-  
+
   // Verify quote is draft
   const { data: quote } = await supabase.from('quotes').select('status').eq('id', id).eq('company_id', profile.company_id).single();
   if (!quote || quote.status !== 'draft') {
     throw new Error('Only draft quotes can change currency');
   }
-  
+
   const { error } = await supabase.from('quotes')
     .update({ currency })
     .eq('id', id)
     .eq('company_id', profile.company_id);
-    
+
   if (error) throw new Error(error.message);
   revalidatePath(`/quotes/${id}`);
 }
@@ -1350,16 +1368,16 @@ export async function updateQuoteCurrency(id: string, currency: string | null) {
 export async function updateQuoteNames(id: string, customerName: string, jobName: string | null) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
-  
+
   const { error } = await supabase
     .from('quotes')
-    .update({ 
+    .update({
       customer_name: customerName,
-      job_name: jobName 
+      job_name: jobName
     })
     .eq('id', id)
     .eq('company_id', profile.company_id);
-    
+
   if (error) throw new Error(error.message);
   revalidatePath(`/quotes/${id}`);
 }
@@ -1434,7 +1452,7 @@ export async function deleteQuote(id: string) {
 export async function cloneQuote(id: string, newCustomerName: string) {
   const { profile, company: _company } = await loadCompanyContext();
   const supabase = await createSupabaseServerClient();
-  
+
   const { data: originalQuote } = await supabase.from('quotes').select('*').eq('id', id).eq('company_id', profile.company_id).single();
   if (!originalQuote) throw new Error('Quote not found');
 
