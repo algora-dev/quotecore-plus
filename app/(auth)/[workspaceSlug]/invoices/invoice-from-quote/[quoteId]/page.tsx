@@ -40,7 +40,7 @@ export default async function InvoiceLineSelectPage({ params }: Props) {
   }));
 
   return (
-    <section className="max-w-2xl mx-auto py-8 px-4 space-y-6">
+    <section className="max-w-4xl mx-auto py-8 px-4 space-y-6">
       {/* Back */}
       <Link
         href={`/${workspaceSlug}/invoices`}

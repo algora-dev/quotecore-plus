@@ -132,6 +132,12 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [laborMarginEnabled, setLaborMarginEnabled] = useState<boolean>(
     Number(quote.labor_margin_percent ?? 0) > 0
   );
+  // Only persist margin changes back to the quotes table when the user has
+  // explicitly touched the margin sliders in THIS editor session. Without this
+  // guard, saving any unrelated change would overwrite Review-stage margin
+  // values with the stale initial state (e.g. 0 for old quotes where the
+  // margin fields were null).
+  const [marginsDirty, setMarginsDirty] = useState(false);
   // For non-blank quotes, default to false so the profit margin row is NOT
   // shown to customers unless the user explicitly enables it. Blank quotes
   // previously defaulted to true (kept for backward compat).
@@ -434,6 +440,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   function handleGlobalMarginChange(newMargin: number) {
     const oldMargin = globalMarginPercent;
     setGlobalMarginPercent(newMargin);
+    setMarginsDirty(true);
     setLines(prev => prev.map(line => {
       // Lines with a per-line override are untouched - the override takes precedence.
       if (line.lineMarginPercent !== null && line.lineMarginPercent !== undefined) return line;
@@ -448,11 +455,9 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         ) / 100;
         return { ...line, amount: newAmount };
       }
-      // Custom lines on NON-blank quotes have fixed prices — don’t let the
-      // material margin slider change them (the user set the price manually).
-      // Blank quotes still use proportional recalculation so the global
-      // markup applies to every item as intended.
-      if (!isBlankQuote) return line;
+      // Proportional recalculation for custom lines. This applies to both
+      // blank and normal quotes — custom items should receive the same
+      // markup as component lines.
       const base = line.amount / (1 + (oldMargin ?? 0) / 100);
       const newAmount = Math.round(base * (1 + newMargin / 100) * 100) / 100;
       return { ...line, amount: newAmount };
@@ -466,6 +471,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
    */
   function handleGlobalLaborMarginChange(newLaborMargin: number) {
     setGlobalLaborMarginPercent(newLaborMargin);
+    setMarginsDirty(true);
     setLines(prev => prev.map(line => {
       if (line.type !== 'component') return line;
       if (line.lineLaborMarginPercent !== null && line.lineLaborMarginPercent !== undefined) return line;
@@ -537,8 +543,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       const laborEnabled = laborMarginEnabled && globalLaborMarginPercent > 0;
       await Promise.all([
         saveLineAction(quote.id, lineData, showQtyCol, hideLinePricesVal, hideTotalsVal, isBlankQuote && globalMarginPercent > 0 ? globalMarginPercent : null, showMarginInPreview),
-        isBlankQuote
-          ? Promise.resolve() // blank quotes: global_margin_percent saved via saveCustomerQuoteLines
+        // Only update when user actually changed margins this session (marginsDirty).
+          // Without this guard, unrelated saves overwrite Review-stage values.
+          isBlankQuote || !marginsDirty
+          ? Promise.resolve()
           : updateQuoteMargins(
               quote.id,
               {
@@ -955,7 +963,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                     <input
                       type="checkbox"
                       checked={laborMarginEnabled}
-                      onChange={e => { setLaborMarginEnabled(e.target.checked); setIsDirty(true); }}
+                      onChange={e => { setLaborMarginEnabled(e.target.checked); setIsDirty(true); setMarginsDirty(true); }}
                       className="w-3.5 h-3.5 rounded text-orange-600"
                     />
                     Labor margin
