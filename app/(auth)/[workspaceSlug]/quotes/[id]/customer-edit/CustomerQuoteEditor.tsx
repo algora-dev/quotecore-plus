@@ -930,7 +930,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 <p className="text-xs text-slate-500 mt-0.5">
                   {isBlankQuote
                     ? 'Applies a global markup to all line prices.'
-                    : 'Material and labor margins applied to component lines. Per-line overrides available via the pencil editor.'}
+                    : 'Material and labor margins applied to all lines. Per-line overrides available via the pencil editor.'}
                 </p>
               </div>
 
