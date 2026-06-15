@@ -448,7 +448,11 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         ) / 100;
         return { ...line, amount: newAmount };
       }
-      // Custom lines: proportional recalculation.
+      // Custom lines on NON-blank quotes have fixed prices — don’t let the
+      // material margin slider change them (the user set the price manually).
+      // Blank quotes still use proportional recalculation so the global
+      // markup applies to every item as intended.
+      if (!isBlankQuote) return line;
       const base = line.amount / (1 + (oldMargin ?? 0) / 100);
       const newAmount = Math.round(base * (1 + newMargin / 100) * 100) / 100;
       return { ...line, amount: newAmount };

@@ -601,6 +601,11 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existin
 
                 {/* Quote Expiry — always shown so users can set/change it on first send
                     AND when updating an already-sent quote */}
+                {token && (
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    ⚠️ Changing the expiry will update the deadline on the customer’s existing link — make sure they know.
+                  </p>
+                )}
                 <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
                   <label className="text-sm font-medium text-slate-700 whitespace-nowrap">
                     {token ? 'Update expiry to:' : 'Link expires in:'}
