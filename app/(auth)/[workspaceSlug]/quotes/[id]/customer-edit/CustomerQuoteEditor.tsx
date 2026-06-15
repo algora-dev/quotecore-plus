@@ -189,24 +189,29 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           const component = components.find(c => c.id === saved.quote_component_id);
           if (!component) return null; // Component was deleted
 
-          // Always recalculate from base costs + current margin settings.
-          // DB custom_amount may reflect stale margin values — always recompute
-          // on load so fresh page and post-slider amounts stay identical.
+          // Always recalculate from base costs + effective margin settings.
+          // Use per-line override (line_margin_percent) when saved, falling back
+          // to the quote-level global margin. This ensures amount stays consistent
+          // with lineMarginPercent state after a reload.
           const baseMaterialCost = component.material_cost || 0;
           const baseLabourCost = component.labour_cost || 0;
-          const matMarginPct = !includeMargins ? 0 : (isBlankQuote
+          const globalMatMarginPct = !includeMargins ? 0 : (isBlankQuote
             ? ((quote as { global_margin_percent?: number | null }).global_margin_percent ?? 0)
             : (quote.material_margin_enabled && quote.material_margin_percent != null
                 ? Number(quote.material_margin_percent) : 0));
-          const labMarginPct = !includeMargins ? 0 : Number(quote.labor_margin_percent ?? 0);
-          const finalAmount = Math.round(
-            (baseMaterialCost * (1 + matMarginPct / 100) + baseLabourCost * (1 + labMarginPct / 100)) * 100
-          ) / 100;
+          const globalLabMarginPct = !includeMargins ? 0 : Number(quote.labor_margin_percent ?? 0);
 
           const savedMarginTyped = saved as {
             line_margin_percent?: number | null;
             line_labor_margin_percent?: number | null;
           };
+          // Per-line override wins; null = use global.
+          const effectiveMatMargin = savedMarginTyped.line_margin_percent ?? globalMatMarginPct;
+          const effectiveLabMargin = savedMarginTyped.line_labor_margin_percent ?? globalLabMarginPct;
+          const finalAmount = Math.round(
+            (baseMaterialCost * (1 + effectiveMatMargin / 100) + baseLabourCost * (1 + effectiveLabMargin / 100)) * 100
+          ) / 100;
+
           return {
             id: component.id,
             type: 'component' as const,
