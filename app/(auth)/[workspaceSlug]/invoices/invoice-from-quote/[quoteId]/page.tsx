@@ -1,6 +1,6 @@
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
+import { BackButton } from '@/app/components/BackButton';
 import { InvoiceLineSelector } from './InvoiceLineSelector';
 
 interface Props {
@@ -40,17 +40,8 @@ export default async function InvoiceLineSelectPage({ params }: Props) {
   }));
 
   return (
-    <section className="max-w-4xl mx-auto py-8 px-4 space-y-6">
-      {/* Back */}
-      <Link
-        href={`/${workspaceSlug}/invoices`}
-        className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors"
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-        Back to Invoices
-      </Link>
+    <section className="space-y-5">
+      <BackButton />
 
       {/* Heading */}
       <div>

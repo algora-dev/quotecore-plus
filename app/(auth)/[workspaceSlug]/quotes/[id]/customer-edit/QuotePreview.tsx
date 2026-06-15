@@ -57,8 +57,10 @@ interface Props {
   globalLaborMarginPercent?: number | null;
   /** Whether to show the margin breakdown row in the preview. */
   showMarginInPreview?: boolean;
-  /** Subtotal before margin (used to compute the margin $ amount). Null = no margin. */
-  subtotalBeforeMargin?: number | null;
+  /** Material margin total to display (null = hidden). Passed from editor. */
+  materialMarginDisplay?: number | null;
+  /** Labour margin total to display (null = hidden). Passed from editor. */
+  labourMarginDisplay?: number | null;
   /** Quote entry_mode, used to conditionally show margin fields in the line editor. */
   quoteEntryMode?: string | null;
 }
@@ -90,7 +92,8 @@ export function QuotePreview({
   globalMarginPercent = null,
   globalLaborMarginPercent = null,
   showMarginInPreview = true,
-  subtotalBeforeMargin = null,
+  materialMarginDisplay = null,
+  labourMarginDisplay = null,
   quoteEntryMode = null,
 }: Props) {
   // Render a line's text honouring the Units toggle. Catalog lines hide the
@@ -261,11 +264,18 @@ export function QuotePreview({
           <span className="text-slate-600">Subtotal</span>
           <span className="font-medium text-slate-900">{formatCurrency(subtotal, currency)}</span>
         </div>
-        {/* Margin breakdown row — shown when a global margin is set and the toggle is on */}
-        {globalMarginPercent != null && globalMarginPercent > 0 && showMarginInPreview && subtotalBeforeMargin != null && (
+        {/* Material margin row */}
+        {materialMarginDisplay != null && globalMarginPercent != null && globalMarginPercent > 0 && (
           <div className="flex justify-between text-sm">
-            <span className="text-slate-400 italic">Profit margin ({globalMarginPercent}%)</span>
-            <span className="text-slate-400 italic">{formatCurrency(subtotal - subtotalBeforeMargin, currency)} incl.</span>
+            <span className="text-slate-400 italic">Material margin ({globalMarginPercent}%)</span>
+            <span className="text-slate-400 italic">{formatCurrency(materialMarginDisplay, currency)} incl.</span>
+          </div>
+        )}
+        {/* Labour margin row */}
+        {labourMarginDisplay != null && globalLaborMarginPercent != null && globalLaborMarginPercent > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-slate-400 italic">Labour margin ({globalLaborMarginPercent}%)</span>
+            <span className="text-slate-400 italic">{formatCurrency(labourMarginDisplay, currency)} incl.</span>
           </div>
         )}
         {taxLines.length > 0 && (

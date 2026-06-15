@@ -189,21 +189,19 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           const component = components.find(c => c.id === saved.quote_component_id);
           if (!component) return null; // Component was deleted
 
-          // Calculate default amount WITH margins applied (if enabled)
+          // Always recalculate from base costs + current margin settings.
+          // DB custom_amount may reflect stale margin values — always recompute
+          // on load so fresh page and post-slider amounts stay identical.
           const baseMaterialCost = component.material_cost || 0;
           const baseLabourCost = component.labour_cost || 0;
-          const materialMargin = includeMargins && quote.material_margin_enabled && quote.material_margin_percent
-            ? baseMaterialCost * (quote.material_margin_percent / 100)
-            : 0;
-          const labourMargin = includeMargins && quote.labor_margin_enabled && quote.labor_margin_percent
-            ? baseLabourCost * (quote.labor_margin_percent / 100)
-            : 0;
-          const calculatedAmount = baseMaterialCost + baseLabourCost + materialMargin + labourMargin;
-
-          // Use saved custom_amount if it exists AND differs from calculated (user override)
-          // Otherwise use calculated amount
-          const hasCustomAmount = saved.custom_amount != null && saved.custom_amount !== calculatedAmount;
-          const finalAmount = hasCustomAmount ? saved.custom_amount : calculatedAmount;
+          const matMarginPct = !includeMargins ? 0 : (isBlankQuote
+            ? ((quote as { global_margin_percent?: number | null }).global_margin_percent ?? 0)
+            : (quote.material_margin_enabled && quote.material_margin_percent != null
+                ? Number(quote.material_margin_percent) : 0));
+          const labMarginPct = !includeMargins ? 0 : Number(quote.labor_margin_percent ?? 0);
+          const finalAmount = Math.round(
+            (baseMaterialCost * (1 + matMarginPct / 100) + baseLabourCost * (1 + labMarginPct / 100)) * 100
+          ) / 100;
 
           const savedMarginTyped = saved as {
             line_margin_percent?: number | null;
@@ -610,6 +608,14 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
 
   const visibleLines = lines.filter(l => l.isVisible);
   const subtotal = lines.filter(l => l.includeInTotal).reduce((sum, l) => sum + l.amount, 0); // Only include items with "Add $" checked
+
+  // Margin display amounts for the preview breakdown rows
+  const materialMarginTotal = lines
+    .filter(l => l.type === 'component' && l.baseMaterialCost !== undefined)
+    .reduce((sum, l) => sum + (l.baseMaterialCost! * globalMarginPercent / 100), 0);
+  const labourMarginTotal = lines
+    .filter(l => l.type === 'component' && l.baseLabourCost !== undefined)
+    .reduce((sum, l) => sum + (l.baseLabourCost! * globalLaborMarginPercent / 100), 0);
   const { lines: taxLines, total: taxTotal } = computeTaxLines(
     taxes.map((t) => ({
       id: t.id,
@@ -1191,7 +1197,8 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 globalMarginPercent={globalMarginPercent > 0 ? globalMarginPercent : null}
                 globalLaborMarginPercent={laborMarginEnabled && globalLaborMarginPercent > 0 ? globalLaborMarginPercent : 0}
                 showMarginInPreview={showMarginInPreview}
-                subtotalBeforeMargin={showMarginInPreview && globalMarginPercent > 0 ? Math.round(subtotal / (1 + globalMarginPercent / 100) * 100) / 100 : null}
+                materialMarginDisplay={showMarginInPreview && globalMarginPercent > 0 ? materialMarginTotal : null}
+                labourMarginDisplay={showMarginInPreview && laborMarginEnabled && globalLaborMarginPercent > 0 ? labourMarginTotal : null}
                 quoteEntryMode={(quote as { entry_mode?: string }).entry_mode ?? null}
               />
             </div>
