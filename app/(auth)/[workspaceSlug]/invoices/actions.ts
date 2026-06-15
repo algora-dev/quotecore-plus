@@ -113,7 +113,27 @@ export async function createBlankInvoice(opts: {
 
 // ── Create invoice from quote ──────────────────────────────────────────────
 
-export async function createInvoiceFromQuote(quoteId: string, templateId?: string): Promise<string> {
+/**
+ * Return the customer-quote lines for a quote, for the Invoice line-selector
+ * step. Only returns visible lines with their id, text, amount, and type.
+ */
+export async function getCustomerQuoteLinesSummary(
+  quoteId: string,
+): Promise<Array<{ id: string; custom_text: string | null; custom_amount: number | null; line_type: string | null; is_visible: boolean | null; sort_order: number | null }>> {
+  'use server';
+  const profile = await requireCompanyContext();
+  const admin = createAdminClient();
+  const { data: quote } = await admin.from('quotes').select('id').eq('id', quoteId).eq('company_id', profile.company_id).maybeSingle();
+  if (!quote) throw new Error('Quote not found');
+  const { data: lines } = await admin
+    .from('customer_quote_lines')
+    .select('id, custom_text, custom_amount, line_type, is_visible, sort_order')
+    .eq('quote_id', quoteId)
+    .order('sort_order', { ascending: true });
+  return (lines ?? []).filter((l) => l.is_visible !== false);
+}
+
+export async function createInvoiceFromQuote(quoteId: string, templateId?: string, selectedLineIds?: string[]): Promise<string> {
   const profile = await requireCompanyContext();
   const admin = createAdminClient();
 
@@ -126,12 +146,16 @@ export async function createInvoiceFromQuote(quoteId: string, templateId?: strin
     .maybeSingle();
   if (!quote) throw new Error('Quote not found');
 
-  // Load customer quote lines
-  const { data: cqLines } = await admin
+  // Load customer quote lines; filter by selectedLineIds when the line-selector
+  // step was used (undefined = include all).
+  const { data: allCqLines } = await admin
     .from('customer_quote_lines')
     .select('*')
     .eq('quote_id', quoteId)
     .order('sort_order');
+  const cqLines = selectedLineIds && selectedLineIds.length > 0
+    ? (allCqLines ?? []).filter((l) => selectedLineIds.includes(l.id))
+    : (allCqLines ?? []);
 
   // Load optional template
   let tmplFromQuote: Record<string, string | null> | null = null;

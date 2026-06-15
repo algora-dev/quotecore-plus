@@ -73,10 +73,11 @@ export default async function QuoteSummaryPage({
   // Load notes for this quote (newest first), joining author name for M-01
   const { data: notesData } = await supabase
     .from('quote_notes')
-    .select('id, title, body, created_at, updated_at, author:created_by_user_id(full_name)')
+    .select('id, title, body, created_at, updated_at, author:users!created_by_user_id(full_name)')
     .eq('quote_id', id)
     .order('created_at', { ascending: false });
   const quoteNotes: QuoteNote[] = (notesData ?? []) as unknown as QuoteNote[];
+  const currentUserFullName = _profile.full_name ?? null;
 
   // Load ALL customer quote lines (for overrides + custom lines)
   const { data: allCustomerLines } = await supabase
@@ -564,7 +565,7 @@ export default async function QuoteSummaryPage({
       </SummaryTabs>
 
       {/* Notes panel -- always visible below the main summary content */}
-      <QuoteNotesPanel quoteId={id} initialNotes={quoteNotes} />
+      <QuoteNotesPanel quoteId={id} initialNotes={quoteNotes} currentUserFullName={currentUserFullName} />
 
     </div>
   );

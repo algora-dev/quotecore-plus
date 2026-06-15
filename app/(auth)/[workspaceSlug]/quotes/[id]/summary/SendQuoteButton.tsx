@@ -271,7 +271,10 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existin
     : null;
 
   async function ensureToken(): Promise<string | null> {
-    if (token) return token;
+    // Always call generateAcceptanceToken — do NOT short-circuit on token.
+    // The server-side function updates acceptance_token_expires_at when a
+    // valid token already exists, so "Generate URL" always applies the
+    // user's selected expiry even on re-sends.
     setLoading(true);
     try {
       const newToken = await generateAcceptanceToken(quoteId, expiryDays);

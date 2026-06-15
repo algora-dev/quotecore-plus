@@ -123,13 +123,14 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           : 0)
   );
   // Labor margin — editable for all quote types when labor margin is configured.
+  // Initialise directly from the DB value regardless of labor_margin_enabled
+  // so the pencil editor pre-populates correctly even when the flag was not
+  // explicitly set to true (e.g. quotes created before the labor-margin feature).
   const [globalLaborMarginPercent, setGlobalLaborMarginPercent] = useState<number>(
-    quote.labor_margin_enabled && quote.labor_margin_percent != null
-      ? Number(quote.labor_margin_percent)
-      : 0
+    Number(quote.labor_margin_percent ?? 0)
   );
   const [laborMarginEnabled, setLaborMarginEnabled] = useState<boolean>(
-    !!(quote.labor_margin_enabled)
+    Number(quote.labor_margin_percent ?? 0) > 0
   );
   const [showMarginInPreview, setShowMarginInPreview] = useState<boolean>(
     (quote as { show_margin_in_preview?: boolean | null }).show_margin_in_preview ?? true
@@ -434,7 +435,9 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       // Component lines: use true base costs for precision.
       if (line.type === 'component' && line.baseMaterialCost !== undefined && line.baseLabourCost !== undefined) {
         const matMargin = line.lineMarginPercent ?? newMargin;
-        const labMargin = line.lineLaborMarginPercent ?? newMargin;
+        // Use the current LABOR margin (not the new material margin) so changing
+        // material% doesn't accidentally stomp a different labor% setting.
+        const labMargin = line.lineLaborMarginPercent ?? globalLaborMarginPercent;
         const newAmount = Math.round(
           (line.baseMaterialCost * (1 + matMargin / 100) + line.baseLabourCost * (1 + labMargin / 100)) * 100
         ) / 100;

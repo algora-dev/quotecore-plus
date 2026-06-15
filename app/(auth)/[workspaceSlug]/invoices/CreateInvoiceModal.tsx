@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createBlankInvoice, createInvoiceFromQuote } from './actions';
+import { createBlankInvoice, createInvoiceFromQuote, getCustomerQuoteLinesSummary } from './actions';
 import type { InvoiceTemplate } from './template-actions';
 
 type QuoteSummary = {
@@ -17,7 +17,17 @@ interface Props {
   onClose: () => void;
 }
 
-type Step = 'pick-method' | 'blank-form' | 'from-quote' | 'pick-template';
+type Step = 'pick-method' | 'blank-form' | 'from-quote' | 'line-select' | 'pick-template';
+
+/** Minimal line shape used in the line-selector step. */
+type QuoteLine = {
+  id: string;
+  custom_text: string | null;
+  custom_amount: number | null;
+  line_type: string | null;
+  is_visible: boolean | null;
+  sort_order: number | null;
+};
 
 function CloseBtn({ onClose }: { onClose: () => void }) {
   return (
@@ -44,6 +54,11 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
   const [quotesLoading, setQuotesLoading] = useState(false);
   const [quoteSearch, setQuoteSearch] = useState('');
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
+  // Line-selector step state
+  const [quoteLines, setQuoteLines] = useState<QuoteLine[]>([]);
+  const [selectedLineIds, setSelectedLineIds] = useState<Set<string>>(new Set());
+  const [linesLoading, setLinesLoading] = useState(false);
+  const [lineSearch, setLineSearch] = useState('');
 
   // Template selection
   const [templates, setTemplates] = useState<InvoiceTemplate[]>([]);
@@ -69,6 +84,19 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
       .finally(() => setQuotesLoading(false));
   }, [step]);
 
+  // Load customer quote lines when line-select step opens
+  useEffect(() => {
+    if (step !== 'line-select' || !selectedQuoteId) return;
+    setLinesLoading(true);
+    getCustomerQuoteLinesSummary(selectedQuoteId)
+      .then((lines) => {
+        setQuoteLines(lines);
+        setSelectedLineIds(new Set(lines.map((l) => l.id)));
+      })
+      .catch(() => setQuoteLines([]))
+      .finally(() => setLinesLoading(false));
+  }, [step, selectedQuoteId]);
+
   // Load templates when template picker opens
   useEffect(() => {
     if (step !== 'pick-template') return;
@@ -87,7 +115,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
 
   function goBackFromTemplate() {
     if (pendingMethod === 'blank') setStep('blank-form');
-    else setStep('from-quote');
+    else setStep('line-select'); // Return to line selector, not quote picker
   }
 
   async function handleCreate() {
@@ -104,7 +132,11 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
         });
       } else {
         if (!selectedQuoteId) { setError('Please select a quote.'); setBusy(false); return; }
-        invoiceId = await createInvoiceFromQuote(selectedQuoteId, selectedTemplateId ?? undefined);
+        invoiceId = await createInvoiceFromQuote(
+          selectedQuoteId,
+          selectedTemplateId ?? undefined,
+          selectedLineIds.size > 0 ? Array.from(selectedLineIds) : undefined,
+        );
       }
       router.push(`/${workspaceSlug}/invoices/${invoiceId}`);
       onClose();
@@ -123,6 +155,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
     'pick-method': 'New Invoice',
     'blank-form': 'Blank Invoice',
     'from-quote': 'Invoice from Quote',
+    'line-select': 'Select Lines',
     'pick-template': 'Choose a Template',
   }[step];
 
@@ -135,6 +168,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
             {step !== 'pick-method' && (
               <button type="button" onClick={() => {
                 if (step === 'pick-template') goBackFromTemplate();
+                else if (step === 'line-select') setStep('from-quote');
                 else if (step === 'blank-form' || step === 'from-quote') setStep('pick-method');
                 setError(null);
               }} className="p-1 rounded text-slate-400 hover:text-slate-700">
@@ -268,16 +302,80 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => { setStep('pick-method'); setError(null); setSelectedQuoteId(null); }}
                   className="flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Back</button>
-                <button type="button" data-copilot="invoice-choose-template" data-assistant-id="invoice-choose-template" onClick={() => { if (!selectedQuoteId) { setError('Please select a quote.'); return; } setError(null); goToTemplateStep('from-quote'); }}
+                <button type="button" onClick={() => { if (!selectedQuoteId) { setError('Please select a quote.'); return; } setError(null); setStep('line-select'); }}
                   disabled={!selectedQuoteId}
                   className="flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-all">
-                  Choose Template
+                  Select Lines →
                 </button>
               </div>
             </div>
           )}
 
           {/* ── Step: pick template ── */}
+          {/* Line selector step - pick which customer quote lines to include in the invoice */}
+          {step === 'line-select' && (() => {
+            const filteredLines = quoteLines.filter((l) =>
+              !lineSearch.trim() || (l.custom_text ?? '').toLowerCase().includes(lineSearch.toLowerCase())
+            );
+            const allSelected = filteredLines.length > 0 && filteredLines.every((l) => selectedLineIds.has(l.id));
+            return (
+              <div className="space-y-3">
+                <p className="text-xs text-slate-500">Tick the lines to include in the invoice. Untick to exclude.</p>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input type="text" value={lineSearch} onChange={(e) => setLineSearch(e.target.value)}
+                      placeholder="Search lines..." autoFocus
+                      className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-300 text-sm focus:border-orange-500 focus:outline-none" />
+                  </div>
+                  <button type="button" onClick={() => {
+                    if (allSelected) {
+                      setSelectedLineIds((prev) => { const s = new Set(prev); filteredLines.forEach((l) => s.delete(l.id)); return s; });
+                    } else {
+                      setSelectedLineIds((prev) => { const s = new Set(prev); filteredLines.forEach((l) => s.add(l.id)); return s; });
+                    }
+                  }} className="text-xs font-medium text-orange-600 hover:text-orange-700 whitespace-nowrap">
+                    {allSelected ? 'Deselect All' : 'Select All'}
+                  </button>
+                </div>
+                <div className="max-h-56 overflow-y-auto rounded-lg border border-slate-200 divide-y divide-slate-100">
+                  {linesLoading ? (
+                    <p className="p-4 text-sm text-slate-400 text-center">Loading lines...</p>
+                  ) : filteredLines.length === 0 ? (
+                    <p className="p-4 text-sm text-slate-400 text-center">
+                      {quoteLines.length === 0 ? 'No customer quote lines saved yet.' : 'No lines match.'}
+                    </p>
+                  ) : filteredLines.map((l) => (
+                    <label key={l.id} className={["flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-orange-50/40 transition", selectedLineIds.has(l.id) ? "" : "opacity-50"].join(" ")}>
+                      <input type="checkbox" checked={selectedLineIds.has(l.id)}
+                        onChange={() => setSelectedLineIds((prev) => { const s = new Set(prev); s.has(l.id) ? s.delete(l.id) : s.add(l.id); return s; })}
+                        className="w-4 h-4 rounded text-orange-600" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-slate-900 truncate">{l.custom_text || <em className="text-slate-400">Unnamed line</em>}</p>
+                      </div>
+                      {l.custom_amount != null && (
+                        <span className="text-xs font-medium text-slate-700 tabular-nums">${Number(l.custom_amount).toFixed(2)}</span>
+                      )}
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-400">{selectedLineIds.size} of {quoteLines.length} lines selected</p>
+                {error && <p className="text-sm text-red-600">{error}</p>}
+                <div className="flex gap-3 pt-1">
+                  <button type="button" onClick={() => { setStep('from-quote'); setError(null); }}
+                    className="flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Back</button>
+                  <button type="button" onClick={() => { setError(null); goToTemplateStep('from-quote'); }}
+                    disabled={selectedLineIds.size === 0}
+                    className="flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-all">
+                    Choose Template
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+
           {step === 'pick-template' && (
             <div className="space-y-4">
               {templatesLoading ? (

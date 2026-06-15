@@ -17,6 +17,8 @@ export interface QuoteNote {
 interface Props {
   quoteId: string;
   initialNotes: QuoteNote[];
+  /** Full name of the logged-in user — used to seed author on optimistic add. */
+  currentUserFullName?: string | null;
 }
 
 function formatDateTime(iso: string): string {
@@ -203,9 +205,10 @@ interface AddFormProps {
   onAdded: (note: QuoteNote) => void;
   onCancel: () => void;
   quoteId: string;
+  currentUserFullName?: string | null;
 }
 
-function AddNoteForm({ onAdded, onCancel, quoteId }: AddFormProps) {
+function AddNoteForm({ onAdded, onCancel, quoteId, currentUserFullName }: AddFormProps) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -217,7 +220,15 @@ function AddNoteForm({ onAdded, onCancel, quoteId }: AddFormProps) {
       try {
         const { id } = await addQuoteNote(quoteId, title, body);
         const now = new Date().toISOString();
-        onAdded({ id, title: title.trim(), body: body.trim(), created_at: now, updated_at: now });
+        onAdded({
+          id,
+          title: title.trim(),
+          body: body.trim(),
+          created_at: now,
+          updated_at: now,
+          // Seed author for immediate display without a page refresh.
+          author: currentUserFullName ? { full_name: currentUserFullName } : undefined,
+        });
         setTitle('');
         setBody('');
       } catch (err) {
@@ -277,7 +288,7 @@ function AddNoteForm({ onAdded, onCancel, quoteId }: AddFormProps) {
   );
 }
 
-export function QuoteNotesPanel({ quoteId, initialNotes }: Props) {
+export function QuoteNotesPanel({ quoteId, initialNotes, currentUserFullName }: Props) {
   const [sectionOpen, setSectionOpen] = useState(true);
   const [notes, setNotes] = useState<QuoteNote[]>(initialNotes);
   const [adding, setAdding] = useState(false);
@@ -342,6 +353,7 @@ export function QuoteNotesPanel({ quoteId, initialNotes }: Props) {
               quoteId={quoteId}
               onAdded={handleAdded}
               onCancel={() => setAdding(false)}
+              currentUserFullName={currentUserFullName}
             />
           )}
 
