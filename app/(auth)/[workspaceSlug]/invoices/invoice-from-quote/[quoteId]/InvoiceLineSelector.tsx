@@ -18,7 +18,7 @@ interface Props {
 }
 
 function formatAmount(amount: number | null): string {
-  if (amount == null) return '';
+  if (amount == null) return '—';
   return new Intl.NumberFormat('en-NZ', { style: 'currency', currency: 'NZD' }).format(amount);
 }
 
@@ -33,28 +33,25 @@ export function InvoiceLineSelector({ quoteId, workspaceSlug, lines }: Props) {
     : lines;
 
   const allFilteredSelected = filtered.length > 0 && filtered.every(l => selected.has(l.id));
+  const noneFilteredSelected = filtered.every(l => !selected.has(l.id));
 
-  function toggleSelectAll() {
-    setSelected(prev => {
-      const next = new Set(prev);
-      if (allFilteredSelected) {
-        filtered.forEach(l => next.delete(l.id));
-      } else {
-        filtered.forEach(l => next.add(l.id));
-      }
-      return next;
-    });
+  function selectAll() {
+    setSelected(prev => { const s = new Set(prev); filtered.forEach(l => s.add(l.id)); return s; });
+  }
+
+  function deselectAll() {
+    setSelected(prev => { const s = new Set(prev); filtered.forEach(l => s.delete(l.id)); return s; });
   }
 
   function toggleLine(id: string) {
-    setSelected(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+    setSelected(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
   }
 
-  function handleCreateInvoice() {
+  function toggleMaster() {
+    if (allFilteredSelected) deselectAll(); else selectAll();
+  }
+
+  function handleCreate() {
     const lineIds = lines.filter(l => selected.has(l.id)).map(l => l.id);
     if (lineIds.length === 0) return;
     setNavigating(true);
@@ -62,9 +59,18 @@ export function InvoiceLineSelector({ quoteId, workspaceSlug, lines }: Props) {
     router.push(`/${workspaceSlug}/invoices/new-from-quote?${params.toString()}`);
   }
 
+  if (lines.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-slate-200 px-6 py-12 text-center">
+        <p className="text-sm text-slate-500 font-medium">No customer quote lines saved yet</p>
+        <p className="text-xs text-slate-400 mt-1">Build the customer quote first, then come back to create an invoice from it.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {/* Search + bulk actions */}
+      {/* Search + bulk action buttons */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
           <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,70 +86,84 @@ export function InvoiceLineSelector({ quoteId, workspaceSlug, lines }: Props) {
         </div>
         <button
           type="button"
-          onClick={toggleSelectAll}
-          className="px-3 py-2 text-xs font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-orange-300 hover:text-orange-700 transition-all whitespace-nowrap"
+          onClick={selectAll}
+          disabled={allFilteredSelected}
+          className="px-3 py-2 text-xs font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-orange-300 hover:text-orange-700 disabled:opacity-40 disabled:cursor-default transition-all"
         >
-          {allFilteredSelected ? 'Deselect All' : 'Select All'}
+          Select all
         </button>
+        <button
+          type="button"
+          onClick={deselectAll}
+          disabled={noneFilteredSelected}
+          className="px-3 py-2 text-xs font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-orange-300 hover:text-orange-700 disabled:opacity-40 disabled:cursor-default transition-all"
+        >
+          Deselect all
+        </button>
+        <span className="text-xs text-slate-500 whitespace-nowrap">
+          {selected.size} of {lines.length} selected
+        </span>
       </div>
 
-      {/* Line list */}
-      {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 px-6 py-10 text-center">
-          <p className="text-sm text-slate-400">
-            {lines.length === 0
-              ? 'No customer quote lines saved for this quote yet. Build the customer quote first.'
-              : 'No lines match your search.'}
-          </p>
+      {/* Table */}
+      <div className="rounded-xl border border-slate-200 overflow-hidden">
+        {/* Header row */}
+        <div className="flex items-center gap-4 px-4 py-3 bg-slate-50 border-b border-slate-200">
+          <input
+            type="checkbox"
+            checked={allFilteredSelected}
+            onChange={toggleMaster}
+            className="w-4 h-4 rounded text-orange-600 border-slate-300"
+          />
+          <span className="flex-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">Line</span>
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide text-right w-24">Amount</span>
         </div>
-      ) : (
-        <div className="rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
-          {filtered.map(line => {
-            const isSelected = selected.has(line.id);
-            return (
-              <label
-                key={line.id}
-                className={`flex items-center gap-4 px-4 py-3.5 cursor-pointer transition-colors ${
-                  isSelected ? 'bg-white hover:bg-orange-50/40' : 'bg-slate-50/60 opacity-50 hover:opacity-70'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => toggleLine(line.id)}
-                  className="w-4 h-4 rounded text-orange-600 border-slate-300"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-slate-900 truncate">
-                    {line.custom_text || <em className="text-slate-400">Unnamed line</em>}
-                  </p>
-                  {line.line_type && line.line_type !== 'custom' && (
-                    <p className="text-xs text-slate-400 mt-0.5 capitalize">{line.line_type}</p>
-                  )}
-                </div>
-                {line.custom_amount != null && (
-                  <span className="text-sm font-medium text-slate-700 tabular-nums">
-                    {formatAmount(line.custom_amount)}
-                  </span>
-                )}
-              </label>
-            );
-          })}
-        </div>
-      )}
 
-      {/* Selection count + CTA */}
-      <div className="flex items-center justify-between pt-1">
-        <p className="text-xs text-slate-500">
-          {selected.size} of {lines.length} line{lines.length !== 1 ? 's' : ''} selected
+        {/* Line rows */}
+        {filtered.length === 0 ? (
+          <div className="px-4 py-8 text-center">
+            <p className="text-sm text-slate-400">No lines match your search.</p>
+          </div>
+        ) : filtered.map(line => {
+          const isSelected = selected.has(line.id);
+          return (
+            <label
+              key={line.id}
+              className={`flex items-center gap-4 px-4 py-3.5 cursor-pointer border-b border-slate-100 last:border-b-0 transition-colors ${
+                isSelected ? 'bg-white hover:bg-orange-50/30' : 'bg-slate-50/60 hover:bg-slate-50'
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => toggleLine(line.id)}
+                className="w-4 h-4 rounded text-orange-600 border-slate-300 flex-shrink-0"
+              />
+              <span className={`flex-1 text-sm truncate ${isSelected ? 'text-slate-900' : 'text-slate-400'}`}>
+                {line.custom_text || <em className="text-slate-400">Unnamed line</em>}
+              </span>
+              <span className={`text-sm tabular-nums text-right w-24 ${isSelected ? 'text-slate-700 font-medium' : 'text-slate-400'}`}>
+                {formatAmount(line.custom_amount)}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+
+      {/* Sticky bottom bar */}
+      <div className="flex items-center justify-between px-4 py-3 bg-slate-50 rounded-xl border border-slate-200">
+        <p className="text-sm text-slate-600">
+          {selected.size === 0
+            ? 'No lines selected.'
+            : `${selected.size} line${selected.size !== 1 ? 's' : ''} will be added to the invoice.`}
         </p>
         <button
           type="button"
-          onClick={handleCreateInvoice}
+          onClick={handleCreate}
           disabled={selected.size === 0 || navigating}
           className="px-5 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.25)] disabled:opacity-40 transition-all"
         >
-          {navigating ? 'Loading…' : `Create Invoice → (${selected.size} lines)`}
+          {navigating ? 'Loading…' : 'Create Invoice →'}
         </button>
       </div>
     </div>
