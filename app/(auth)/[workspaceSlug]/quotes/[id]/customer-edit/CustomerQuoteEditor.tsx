@@ -132,8 +132,13 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [laborMarginEnabled, setLaborMarginEnabled] = useState<boolean>(
     Number(quote.labor_margin_percent ?? 0) > 0
   );
+  // For non-blank quotes, default to false so the profit margin row is NOT
+  // shown to customers unless the user explicitly enables it. Blank quotes
+  // previously defaulted to true (kept for backward compat).
   const [showMarginInPreview, setShowMarginInPreview] = useState<boolean>(
-    (quote as { show_margin_in_preview?: boolean | null }).show_margin_in_preview ?? true
+    isBlankQuote
+      ? ((quote as { show_margin_in_preview?: boolean | null }).show_margin_in_preview ?? true)
+      : ((quote as { show_margin_in_preview?: boolean | null }).show_margin_in_preview ?? false)
   );
 
   // Unified "Add new line" modal (Custom line / Add a component / Search catalog).
@@ -970,17 +975,16 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 </div>
               )}
 
-              {isBlankQuote && (
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={showMarginInPreview}
-                    onChange={e => { setShowMarginInPreview(e.target.checked); setIsDirty(true); }}
-                    className="w-3.5 h-3.5 rounded text-orange-600"
-                  />
-                  <span className="text-xs text-slate-500">Show margin on customer quote</span>
-                </label>
-              )}
+              {/* Show on customer quote toggle — available for all quote types */}
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={showMarginInPreview}
+                  onChange={e => { setShowMarginInPreview(e.target.checked); setIsDirty(true); }}
+                  className="w-3.5 h-3.5 rounded text-orange-600"
+                />
+                <span className="text-xs text-slate-500">Show margin breakdown on customer quote</span>
+              </label>
             </div>
 
             {/* Taxes */}
@@ -1175,7 +1179,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 globalMarginPercent={globalMarginPercent > 0 ? globalMarginPercent : null}
                 globalLaborMarginPercent={laborMarginEnabled && globalLaborMarginPercent > 0 ? globalLaborMarginPercent : 0}
                 showMarginInPreview={showMarginInPreview}
-                subtotalBeforeMargin={globalMarginPercent > 0 ? Math.round(subtotal / (1 + globalMarginPercent / 100) * 100) / 100 : null}
+                subtotalBeforeMargin={showMarginInPreview && globalMarginPercent > 0 ? Math.round(subtotal / (1 + globalMarginPercent / 100) * 100) / 100 : null}
                 quoteEntryMode={(quote as { entry_mode?: string }).entry_mode ?? null}
               />
             </div>
