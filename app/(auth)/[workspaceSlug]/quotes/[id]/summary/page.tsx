@@ -399,6 +399,7 @@ export default async function QuoteSummaryPage({
             <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
               <Link
                 href={`/${workspaceSlug}/quotes/${id}/summary`}
+                title="Your current up to date quote summary"
                 className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
                   !showOriginalView
                     ? 'bg-white text-slate-900 shadow-sm'
@@ -409,6 +410,7 @@ export default async function QuoteSummaryPage({
               </Link>
               <Link
                 href={`/${workspaceSlug}/quotes/${id}/summary?view=original`}
+                title="The first saved Quote Summary version"
                 className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
                   showOriginalView
                     ? 'bg-white text-slate-900 shadow-sm'
