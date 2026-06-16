@@ -343,32 +343,6 @@ export default async function QuoteSummaryPage({
           {backLabel}
         </Link>
 
-        {/* Original / Current tab switcher — top of page, above quote header */}
-        {!!originalSnapshot && (
-          <div className="flex gap-2 mb-4">
-            <Link
-              href={`/${workspaceSlug}/quotes/${id}/summary`}
-              className={`px-4 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                !showOriginalView
-                  ? 'bg-slate-900 text-white border-slate-900'
-                  : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
-              }`}
-            >
-              Current
-            </Link>
-            <Link
-              href={`/${workspaceSlug}/quotes/${id}/summary?view=original`}
-              className={`px-4 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                showOriginalView
-                  ? 'bg-slate-900 text-white border-slate-900'
-                  : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
-              }`}
-            >
-              Original
-            </Link>
-          </div>
-        )}
-
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">{quote.customer_name}</h1>
@@ -420,6 +394,32 @@ export default async function QuoteSummaryPage({
         effectiveCurrency={effectiveCurrency}
         hasLaborSheet={hasLaborSheet}
         laborLines={(laborSheetLines || []).map(l => ({ id: l.id, custom_text: l.custom_text, custom_amount: l.custom_amount, show_price: l.show_price, is_visible: l.is_visible, include_in_total: l.include_in_total }))}
+        summaryHeaderSlot={
+          !!originalSnapshot ? (
+            <div className="flex gap-2 px-4 pt-4 pb-0">
+              <Link
+                href={`/${workspaceSlug}/quotes/${id}/summary`}
+                className={`px-4 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                  !showOriginalView
+                    ? 'bg-slate-900 text-white border-slate-900'
+                    : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
+                }`}
+              >
+                Current
+              </Link>
+              <Link
+                href={`/${workspaceSlug}/quotes/${id}/summary?view=original`}
+                className={`px-4 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                  showOriginalView
+                    ? 'bg-slate-900 text-white border-slate-900'
+                    : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
+                }`}
+              >
+                Original
+              </Link>
+            </div>
+          ) : null
+        }
         summaryActions={
           <>
             {quote.status === 'draft' && (
