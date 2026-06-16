@@ -225,7 +225,6 @@ export function TakeoffWorkstation({
   });
 
   // Sidebar UI state
-  const [openMenuComponentId, setOpenMenuComponentId] = useState<string | null>(null);
   const [componentSearch, setComponentSearch] = useState('');
 
   // Roof Areas
@@ -2371,7 +2370,6 @@ export function TakeoffWorkstation({
                           const assignment = componentColors.find(c => c.componentId === id);
                           const compData = componentMeasurements.find(c => c.componentId === id);
                           const isSelected = selectedComponentId === comp.id;
-                          const isMenuOpen = openMenuComponentId === comp.id;
                           const mt = (comp.measurement_type ?? comp.default_measurement_type ?? '').toLowerCase();
                           const typeLabel = mt === 'line' ? 'Line' : mt === 'area' ? 'Area' : mt === 'point' ? 'Count' : mt === 'multi_lineal' ? 'Multi-line' : mt === 'multi_lineal_lxh' ? 'Multi-line ×H' : mt === 'volume_3d' ? 'Volume' : mt === 'length_x_height_freestyle' ? 'Length ×H' : mt === 'multi_lineal_lxh_freestyle' ? 'Multi-line ×H' : mt || '';
                           return (
@@ -2399,35 +2397,16 @@ export function TakeoffWorkstation({
                                       // P1-2: auto-switch tool when clicking an active component.
                                       // Pass comp.id so activeAreaComponentIdRef is set synchronously.
                                       applyToolForType(mt, comp.id);
-                                      setOpenMenuComponentId(null);
                                     }}
                                   >
                                     <div className="flex-1 min-w-0">
-                                      <div className="text-sm font-semibold text-gray-900 leading-tight">{comp.name}</div>
-                                      {typeLabel && <div className="text-xs text-gray-400 mt-0.5">{typeLabel}</div>}
+                                      <div className="text-sm text-gray-900">{comp.name}</div>
                                     </div>
                                     <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
                                       {/* Measurement count badge */}
                                       {compData && compData.measurements.length > 0 && (
                                         <span className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 font-medium tabular-nums">{compData.measurements.length}</span>
                                       )}
-                                      {/* Three-dot menu */}
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setOpenMenuComponentId(isMenuOpen ? null : comp.id);
-                                        }}
-                                        className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
-                                        title="Options"
-                                      >
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  {/* Three-dot dropdown menu */}
-                                  {isMenuOpen && (
-                                    <div className="mt-2 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                                       {compData && compData.measurements.length > 0 && (
                                         <button
                                           onClick={(e) => {
@@ -2435,47 +2414,34 @@ export function TakeoffWorkstation({
                                             setComponentMeasurements(componentMeasurements.map(c =>
                                               c.componentId === id ? { ...c, expanded: !c.expanded } : c
                                             ));
-                                            setOpenMenuComponentId(null);
                                           }}
-                                          className="w-full text-left px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                                          title={compData?.expanded ? 'Collapse' : 'Expand'}
                                         >
-                                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
-                                          {compData.expanded ? 'Collapse measurements' : 'Show measurements'}
+                                          {compData?.expanded
+                                            ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="18 15 12 9 6 15"/></svg>
+                                            : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="6 9 12 15 18 9"/></svg>
+                                          }
                                         </button>
                                       )}
-                                      {compData && compData.measurements.length > 0 && (
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleToggleComponentVisibility(id);
-                                            setOpenMenuComponentId(null);
-                                          }}
-                                          className="w-full text-left px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-100"
-                                        >
-                                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                          {compData.measurements.every(m => m.visible) ? 'Hide all' : 'Show all'}
-                                        </button>
-                                      )}
+                                      {/* Trash - remove component */}
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           handleRemoveComponent(comp.id);
-                                          setOpenMenuComponentId(null);
                                         }}
-                                        className={`w-full text-left px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 ${
-                                          compData && compData.measurements.length > 0 ? 'border-t border-gray-100' : ''
-                                        }`}
+                                        className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                                        title="Remove component"
                                       >
-                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-                                        Remove component
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
                                       </button>
                                     </div>
-                                  )}
+                                  </div>
 
                                   {/* Measurements list (expanded) */}
                                   {compData && compData.expanded && compData.measurements.length > 0 && (
                                     <div className="mt-2 pt-2 border-t border-gray-100">
-                                      <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Measurements</div>
+                                      <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Measurements{typeLabel ? ` (${typeLabel})` : ''}</div>
                                       <div className="space-y-1">
                                         {compData.measurements.map((m) => (
                                           <div key={m.id} className="flex items-center gap-1.5 text-xs text-gray-700">
@@ -2588,7 +2554,7 @@ export function TakeoffWorkstation({
                               aria-label={`Add ${comp.name}`}
                             >
                               <div className="flex-1 min-w-0">
-                                <span className="text-sm text-gray-700 group-hover:text-gray-900 truncate block">{comp.name}</span>
+                                <span className="text-sm text-gray-700 group-hover:text-gray-900 block">{comp.name}</span>
                                 {selectedLibraryId === ALL_LIBRARIES && comp.collection_id && (
                                   <span className="text-xs text-gray-400">{collections.find(c => c.id === comp.collection_id)?.name ?? ''}</span>
                                 )}
