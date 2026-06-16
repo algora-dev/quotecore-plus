@@ -396,7 +396,7 @@ export default async function QuoteSummaryPage({
         laborLines={(laborSheetLines || []).map(l => ({ id: l.id, custom_text: l.custom_text, custom_amount: l.custom_amount, show_price: l.show_price, is_visible: l.is_visible, include_in_total: l.include_in_total }))}
         summaryHeaderSlot={
           !!originalSnapshot ? (
-            <div className="flex gap-2 px-4 pt-4 pb-0">
+            <div className="flex gap-2">
               <Link
                 href={`/${workspaceSlug}/quotes/${id}/summary`}
                 className={`px-4 py-1.5 text-xs font-medium rounded-full border transition-colors ${
