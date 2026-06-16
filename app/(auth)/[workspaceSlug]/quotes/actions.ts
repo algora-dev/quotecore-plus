@@ -253,16 +253,24 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
   const token = crypto.randomUUID();
   // days / expiresAt already computed above
 
+  // H-03 fix: when applyExpiry=false the caller is only opening the send panel to
+  // display/compose the URL — the quote must NOT be marked sent or get an expiry
+  // until the user actually sends or copies the link. Store the token so the URL
+  // is stable, but leave acceptance_token_expires_at and job_status untouched.
+  const updateFields: Record<string, unknown> = {
+    acceptance_token: token,
+    // Clear any prior withdrawal so the new link is treated as live.
+    withdrawn_at: null,
+    withdrawn_by_user_id: null,
+  };
+  if (applyExpiry) {
+    updateFields.acceptance_token_expires_at = expiresAt.toISOString();
+    updateFields.job_status = 'sent';
+  }
+
   const { error } = await supabase
     .from('quotes')
-    .update({
-      acceptance_token: token,
-      acceptance_token_expires_at: expiresAt.toISOString(),
-      job_status: 'sent',
-      // Clear any prior withdrawal so the new link is treated as live.
-      withdrawn_at: null,
-      withdrawn_by_user_id: null,
-    })
+    .update(updateFields)
     .eq('id', quoteId)
     .eq('company_id', profile.company_id);
 
@@ -1688,6 +1696,7 @@ export async function saveCustomerQuoteLines(
     unitPrice?: number | null;
     lineMarginPercent?: number | null;
     lineLaborMarginPercent?: number | null;
+    baseUnitCost?: number | null;
   }>,
   showQuantityColumn?: boolean,
   hideLinePrices?: boolean,
@@ -1735,6 +1744,7 @@ export async function saveCustomerQuoteLines(
       unit_price: line.unitPrice ?? null,
       line_margin_percent: line.lineMarginPercent ?? null,
       line_labor_margin_percent: line.lineLaborMarginPercent ?? null,
+      base_unit_cost: line.baseUnitCost ?? null,
     }));
 
     const { error } = await supabase

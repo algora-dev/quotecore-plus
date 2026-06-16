@@ -199,9 +199,14 @@ export function QuotePreview({
                         initialLineLaborMarginPercent={line.lineLaborMarginPercent ?? null}
                         globalMarginPercent={globalMarginPercent}
                         defaultMaterialMarginPercent={
-                          quote.material_margin_enabled && quote.material_margin_percent != null
-                            ? Number(quote.material_margin_percent)
-                            : null
+                          // H-02 fix: prefer the live editor value (globalMarginPercent prop)
+                          // so the pencil editor always defaults to the current slider value,
+                          // not the stale DB field. Fall back to DB when no live value.
+                          typeof globalMarginPercent === 'number'
+                            ? globalMarginPercent
+                            : (quote.material_margin_enabled && quote.material_margin_percent != null
+                                ? Number(quote.material_margin_percent)
+                                : null)
                         }
                         defaultLaborMarginPercent={
                           // Prefer the live editor value (globalLaborMarginPercent prop)

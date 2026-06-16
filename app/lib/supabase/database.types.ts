@@ -977,6 +977,7 @@ export type Database = {
       }
       customer_quote_lines: {
         Row: {
+          base_unit_cost: number | null
           created_at: string
           custom_amount: number | null
           custom_text: string | null
@@ -999,6 +1000,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          base_unit_cost?: number | null
           created_at?: string
           custom_amount?: number | null
           custom_text?: string | null
@@ -1021,6 +1023,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          base_unit_cost?: number | null
           created_at?: string
           custom_amount?: number | null
           custom_text?: string | null

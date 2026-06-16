@@ -58,7 +58,7 @@ export default async function QuoteSummaryPage({
   // the card automatically.
   const entitlements = await loadCompanyEntitlements(quote.company_id);
   const activityCardEnabled = entitlements.features.activity_card;
-  
+
   const supabase = await createSupabaseServerClient();
 
   // One-time "test it on yourself first" send tip: has THIS user seen it?
@@ -85,12 +85,12 @@ export default async function QuoteSummaryPage({
     .select('*')
     .eq('quote_id', id)
     .order('sort_order', { ascending: true });
-  
+
   // Separate custom lines (non-component lines added manually by the user)
   const customLines = (allCustomerLines || []).filter(
     line => line.line_type === 'custom' && line.is_visible && line.include_in_total
   );
-  
+
   // Detect if customer quote has been saved
   const hasCustomerQuote = (allCustomerLines || []).length > 0;
 
@@ -100,7 +100,7 @@ export default async function QuoteSummaryPage({
     .select('id, custom_text, custom_amount, show_price, is_visible, include_in_total')
     .eq('quote_id', id)
     .order('sort_order');
-  
+
   const hasLaborSheet = (laborSheetLines || []).length > 0;
 
   // Load email templates for Send Quote modal. attachment_id (Phase 4 baked
@@ -129,14 +129,14 @@ export default async function QuoteSummaryPage({
       fileSize: r.file_size,
     }));
   }
-  
-  // NOTE: The Summary is the pricing-engine view — it always computes from raw
+
+  // NOTE: The Summary is the pricing-engine view - it always computes from raw
   // component base costs + global margins. The Customer Quote Editor is the
   // separate presentation layer where users can customise per-line amounts and
   // margins. We intentionally do NOT apply customer_quote_line custom_amounts
   // here; doing so caused a double-margin bug where margins were applied twice
   // (once baked into custom_amount at save time, again by computeQuoteTotals).
-  
+
   // Load company default currency
   const { data: company } = await supabase
     .from('companies')
@@ -145,7 +145,7 @@ export default async function QuoteSummaryPage({
     .single();
   const companyDefaultCurrency = company?.default_currency || 'NZD';
   const effectiveCurrency = getEffectiveCurrency(quote.currency, companyDefaultCurrency);
-  
+
   // Load customer-submitted revision requests (from the public acceptance URL)
   // so we can surface them on the summary as a pending action.
   const { data: revisionRequestsData } = await supabase
@@ -169,7 +169,7 @@ export default async function QuoteSummaryPage({
     .select('id, file_type, file_name, file_size, storage_path, uploaded_at')
     .eq('quote_id', id)
     .order('uploaded_at', { ascending: false });
-  
+
   const _planFile = filesData?.find(f => f.file_type === 'plan');
   const _supportingFiles = filesData?.filter(f => f.file_type === 'supporting') || [];
 
@@ -234,7 +234,7 @@ export default async function QuoteSummaryPage({
 
 
   const _totalRoofSqm = roofAreas.reduce((sum, a) => sum + (a.computed_sqm ?? 0), 0);
-  
+
   const mainComps = components.filter(c => c.quote_roof_area_id);
   const extraComps = components.filter(c => !c.quote_roof_area_id);
 
@@ -248,7 +248,7 @@ export default async function QuoteSummaryPage({
   const quoteTrade = (quote as { trade?: 'roofing' | 'generic' | null }).trade ?? 'roofing';
   const isGenericNoArea = quoteTrade === 'generic' && roofAreas.length === 0;
   const extrasHeading = isGenericNoArea ? 'Quote items' : 'Extras';
-  
+
   const engineComps = components.map(c => ({
     id: c.id, name: c.name, componentType: c.component_type as 'main' | 'extra',
     measurementType: c.measurement_type as 'area' | 'lineal' | 'quantity' | 'fixed', inputMode: c.input_mode as 'final' | 'calculated',
@@ -260,10 +260,10 @@ export default async function QuoteSummaryPage({
     isWasteOverridden: c.is_waste_overridden, isPitchOverridden: c.is_pitch_overridden, isCustomerVisible: c.is_customer_visible, pricingUnit: c.pricing_unit ?? undefined,
   }));
   const totals = computeQuoteTotals(engineComps, { materialMarginPct: quote.material_margin_percent ?? 0, labourMarginPct: quote.labor_margin_percent ?? 0, taxRate: quote.tax_rate });
-  
+
   // Calculate custom lines total
   const customLinesTotal = (customLines || []).reduce((sum, line) => sum + (line.custom_amount || 0), 0);
-  
+
   // Adjust totals to include custom lines
   const adjustedSubtotal = totals.subtotalWithMargins + customLinesTotal;
   const { lines: summaryTaxLines, total: adjustedTax } = computeTaxLines(quoteTaxes, adjustedSubtotal, 'quote');
@@ -304,18 +304,26 @@ export default async function QuoteSummaryPage({
       adjustedGrandTotal,
       currency: effectiveCurrency,
     };
-    // Fire and forget — page load should not block on this write
-    supabase
+    // M-01 fix: await the write so errors are caught and the snapshot is
+    // available for the "Original" tab on this first visit without a reload.
+    const { error: snapErr } = await supabase
       .from('quotes')
       .update({ original_summary_snapshot: snapshotData })
       .eq('id', id)
-      .is('original_summary_snapshot', null)
-      .then(() => {});
+      .is('original_summary_snapshot', null);
+    if (snapErr) {
+      console.error('[summary] snapshot write failed:', snapErr.message);
+    } else {
+      // Use the freshly written snapshot so Original tab appears on first visit.
+      (snapshotRow as any).original_summary_snapshot = snapshotData;
+    }
   }
 
   // The snapshot shown in the "Original" tab: prefer the existing DB snapshot
   // (already captured on a prior visit) so we never overwrite the true original.
-  const originalSnapshot = existingSnapshot as {
+  // After a successful first-write above, snapshotRow now carries the new snapshot.
+  const resolvedSnapshotData = (snapshotRow as any)?.original_summary_snapshot ?? null;
+  const originalSnapshot = resolvedSnapshotData as {
     capturedAt: string;
     materialMarginPercent: number;
     labourMarginPercent: number;
@@ -524,7 +532,7 @@ export default async function QuoteSummaryPage({
                   </tr></thead>
                   <tbody>{areaComps.map(c => {
                     // Convert canonical metric quantity into the quote's display
-                    // system so an Imperial quote shows ft / ft² / RS, not m / m².
+                    // system so an Imperial quote shows ft / ft2 / RS, not m / m2.
                     const sys = normalizeMeasurementSystem(quote.measurement_system);
                     const rawQty = c.final_quantity ?? 0;
                     let displayQty = rawQty;
@@ -608,7 +616,7 @@ export default async function QuoteSummaryPage({
           <div className="pt-4 space-y-4">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                🔒 Original — captured {new Date(originalSnapshot.capturedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                🔒 Original - captured {new Date(originalSnapshot.capturedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
               </span>
             </div>
             <div className="pt-4 border-t border-slate-300 space-y-4">

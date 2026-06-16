@@ -8,8 +8,8 @@
  *
  * This is the invoice-modal UX pattern applied universally. Three tabs:
  *   Custom   — Title + Description + Qty + Unit + Unit Price
- *   Catalog  — Select catalog → browse/search rows → set Qty + Unit Price
- *   Component — Pick from component library → set Qty + Unit Price
+ *   Catalog  — Select catalog → browse/search rows → set Qty + Unit Cost
+ *   Component — Pick from component library → set Qty + Unit Cost
  *
  * The modal emits a normalised LineItemPayload[] via onAdd. Each consuming
  * editor maps this payload to its own line shape (QuoteLine, LineByLineItem,
@@ -319,7 +319,7 @@ export function AddLineItemModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Unit Price</label>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Unit Cost</label>
                   <input
                     type="number"
                     value={unitPrice}
@@ -421,7 +421,7 @@ export function AddLineItemModal({
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-slate-700 mb-1">Unit Price</label>
+                        <label className="block text-xs font-medium text-slate-700 mb-1">Unit Cost</label>
                         <input
                           type="number"
                           value={catalogUnitPrice}
@@ -497,7 +497,7 @@ export function AddLineItemModal({
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">Unit Price</label>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">Unit Cost</label>
                       <input
                         type="number"
                         value={compPrice}

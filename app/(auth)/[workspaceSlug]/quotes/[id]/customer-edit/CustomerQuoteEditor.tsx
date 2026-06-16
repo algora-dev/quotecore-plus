@@ -235,13 +235,17 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             baseLabourCost: baseLabourCost,
           };
         } else {
-          // Custom line: use saved data
+          // Custom line: use saved data. If base_unit_cost was persisted, restore
+          // baseMaterialCost so slider recalc stays accurate after reload.
           const savedTyped = saved as {
             quantity_text?: string | null;
+            base_unit_cost?: number | null;
             quantity?: number | null;
             unit_price?: number | null;
             line_margin_percent?: number | null;
           };
+          const savedQty = savedTyped.quantity ?? 1;
+          const savedBaseUnitCost = savedTyped.base_unit_cost ?? null;
           return {
             id: saved.id,
             type: 'custom' as const,
@@ -250,7 +254,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             text: saved.custom_text || '',
             quantityText: savedTyped.quantity_text ?? null,
             amount: saved.custom_amount || 0,
-            qty: savedTyped.quantity ?? 1,
+            qty: savedQty,
             unitPrice: savedTyped.unit_price ?? null,
             showPrice: saved.show_price ?? true,
             showUnits: saved.show_units ?? true,
@@ -258,6 +262,8 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             includeInTotal: saved.include_in_total ?? true,
             sortOrder: saved.sort_order,
             lineMarginPercent: savedTyped.line_margin_percent ?? null,
+            // Restore baseMaterialCost from DB so slider recalc is accurate after reload.
+            ...(savedBaseUnitCost !== null ? { baseMaterialCost: savedBaseUnitCost * savedQty } : {}),
           };
         }
       }).filter(Boolean) as QuoteLine[];
@@ -412,20 +418,33 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
 
   /** Unified handler: called by AddLineItemModal for all three tabs. */
   function handleAddLineItem(payloads: LineItemPayload[]) {
-    const newLines: QuoteLine[] = payloads.map((p, i) => ({
-      id: `custom-${Date.now()}-${i}`,
-      type: 'custom' as const,
-      text: p.title,
-      quantityText: p.description,
-      amount: p.lineTotal,
-      unitPrice: p.unitPrice,
-      qty: p.quantity,
-      showPrice: p.showPrice,
-      showUnits: true,
-      isVisible: true,
-      includeInTotal: true,
-      sortOrder: lines.length + i,
-    }));
+    // H-01 fix: the user enters a BASE cost (cost price before margin). Apply the
+    // current global material margin immediately so the stored amount is the
+    // margin-included customer-facing price. Store baseMaterialCost so the global
+    // slider and Apply-Global can recompute accurately without proportional guesses.
+    const matMargin = globalMarginPercent;
+    const newLines: QuoteLine[] = payloads.map((p, i) => {
+      const baseCost = p.lineTotal; // total base cost = unitCost * qty
+      const marginedAmount = Math.round(baseCost * (1 + matMargin / 100) * 100) / 100;
+      const marginedUnitPrice = p.quantity > 0
+        ? Math.round((p.unitPrice * (1 + matMargin / 100)) * 100) / 100
+        : p.unitPrice;
+      return {
+        id: `custom-${Date.now()}-${i}`,
+        type: 'custom' as const,
+        text: p.title,
+        quantityText: p.description,
+        amount: marginedAmount,
+        unitPrice: marginedUnitPrice,
+        qty: p.quantity,
+        showPrice: p.showPrice,
+        showUnits: true,
+        isVisible: true,
+        includeInTotal: true,
+        sortOrder: lines.length + i,
+        baseMaterialCost: baseCost,
+      };
+    });
     setLines(prev => [...prev, ...newLines]);
     setIsDirty(true);
   }
@@ -475,9 +494,13 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         ) / 100;
         return { ...line, amount: newAmount };
       }
-      // Proportional recalculation for custom lines. This applies to both
-      // blank and normal quotes — custom items should receive the same
-      // markup as component lines.
+      // Custom lines with a stored base cost: use direct formula (accurate, no drift).
+      if (line.type === 'custom' && line.baseMaterialCost !== undefined) {
+        const newAmount = Math.round(line.baseMaterialCost * (1 + newMargin / 100) * 100) / 100;
+        return { ...line, amount: newAmount };
+      }
+      // Proportional fallback for old custom lines without a stored base cost.
+      // Works correctly as long as the stored amount was originally set with margin baked in.
       const base = line.amount / (1 + (oldMargin ?? 0) / 100);
       const newAmount = Math.round(base * (1 + newMargin / 100) * 100) / 100;
       return { ...line, amount: newAmount };
@@ -553,15 +576,37 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
    * global baseline — per-line edits can happen after.
    */
   async function handleApplyGlobalMargins() {
-    // Clear all per-line margin overrides — current on-screen amounts stay
-    // exactly as shown (the global margin sliders already updated them live).
-    // Do NOT recalculate from base costs here: that would stomp any unsaved
-    // per-line price edits the user has made.
-    const resetLines = lines.map(line => ({
-      ...line,
-      lineMarginPercent: null as null,
-      lineLaborMarginPercent: null as null,
-    }));
+    // C-01 fix: clear all per-line margin overrides AND recompute amounts from
+    // base costs so the saved custom_amount matches the current global margin.
+    // Lines with per-line overrides were NOT updated by the live slider, so their
+    // stored amounts still reflect the old override — recompute them now.
+    const resetLines = lines.map(line => {
+      const base = {
+        ...line,
+        lineMarginPercent: null as null,
+        lineLaborMarginPercent: null as null,
+      };
+      // Component lines: recompute from true base costs.
+      if (line.type === 'component' && line.baseMaterialCost !== undefined && line.baseLabourCost !== undefined) {
+        const newAmount = Math.round(
+          (line.baseMaterialCost * (1 + globalMarginPercent / 100) + line.baseLabourCost * (1 + globalLaborMarginPercent / 100)) * 100
+        ) / 100;
+        return { ...base, amount: newAmount };
+      }
+      // Custom lines with stored base cost (added after patch-018): recompute directly.
+      if (line.type === 'custom' && line.baseMaterialCost !== undefined) {
+        const newAmount = Math.round(line.baseMaterialCost * (1 + globalMarginPercent / 100) * 100) / 100;
+        return { ...base, amount: newAmount };
+      }
+      // Old custom lines without a stored base cost: use proportional math to
+      // convert from the override price to the new global margin price.
+      if (line.lineMarginPercent !== null && line.lineMarginPercent !== undefined) {
+        const impliedBase = line.amount / (1 + line.lineMarginPercent / 100);
+        const newAmount = Math.round(impliedBase * (1 + globalMarginPercent / 100) * 100) / 100;
+        return { ...base, amount: newAmount };
+      }
+      return base;
+    });
     linesOverrideRef.current = resetLines;
     setLines(resetLines);
     setMarginsDirty(true);
@@ -603,6 +648,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         unitPrice: line.unitPrice ?? null,
         lineMarginPercent: line.lineMarginPercent ?? null,
         lineLaborMarginPercent: line.lineLaborMarginPercent ?? null,
+        // Persist base unit cost for custom lines so reload can accurately recalculate.
+        baseUnitCost: (line.type === 'custom' && line.baseMaterialCost !== undefined && (line.qty ?? 1) > 0)
+          ? line.baseMaterialCost / (line.qty ?? 1)
+          : null,
       }));
       // Persist the show_quantity_column + price-visibility toggles alongside lines
       const showQtyCol = showQuantityColumn;
