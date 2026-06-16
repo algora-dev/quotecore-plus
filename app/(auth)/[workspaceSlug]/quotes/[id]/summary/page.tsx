@@ -37,10 +37,10 @@ export default async function QuoteSummaryPage({
   searchParams,
 }: {
   params: Promise<{ workspaceSlug: string; id: string }>;
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; view?: string }>;
 }) {
   const { workspaceSlug, id } = await params;
-  const { from } = await searchParams;
+  const { from, view } = await searchParams;
   // When opened from the Message Center, "Back" returns to the inbox.
   const backHref = from === 'inbox' ? `/${workspaceSlug}/inbox` : `/${workspaceSlug}/quotes`;
   const backLabel = from === 'inbox' ? 'Back to Message Center' : 'Back';
@@ -268,6 +268,71 @@ export default async function QuoteSummaryPage({
   const adjustedSubtotal = totals.subtotalWithMargins + customLinesTotal;
   const { lines: summaryTaxLines, total: adjustedTax } = computeTaxLines(quoteTaxes, adjustedSubtotal, 'quote');
   const adjustedGrandTotal = adjustedSubtotal + adjustedTax;
+
+  // ── Original Summary Snapshot ─────────────────────────────────────────────
+  // Load or lazily create the "original" snapshot. This is captured the FIRST
+  // time the user arrives on the Summary page (right after saving from Review
+  // or Blank Quote Creator). It is never overwritten after creation.
+  const { data: snapshotRow } = await supabase
+    .from('quotes')
+    .select('original_summary_snapshot')
+    .eq('id', id)
+    .single();
+  const existingSnapshot = (snapshotRow as any)?.original_summary_snapshot ?? null;
+
+  if (!existingSnapshot) {
+    // Build and persist the snapshot on first visit.
+    const snapshotData = {
+      capturedAt: new Date().toISOString(),
+      materialMarginPercent: Number(quote.material_margin_percent ?? 0),
+      labourMarginPercent: Number(quote.labor_margin_percent ?? 0),
+      components: engineComps.map(c => ({
+        id: c.id,
+        name: c.name,
+        materialCost: Number(c.materialCost ?? 0),
+        labourCost: Number(c.labourCost ?? 0),
+        total: Number((c.materialCost ?? 0) + (c.labourCost ?? 0)),
+      })),
+      totalMaterials: totals.totalMaterials,
+      totalLabour: totals.totalLabour,
+      materialMargin: totals.materialMargin,
+      labourMargin: totals.labourMargin,
+      subtotalWithMargins: totals.subtotalWithMargins,
+      customLinesTotal,
+      adjustedSubtotal,
+      adjustedTax,
+      adjustedGrandTotal,
+      currency: effectiveCurrency,
+    };
+    // Fire and forget — page load should not block on this write
+    supabase
+      .from('quotes')
+      .update({ original_summary_snapshot: snapshotData })
+      .eq('id', id)
+      .is('original_summary_snapshot', null)
+      .then(() => {});
+  }
+
+  // The snapshot shown in the "Original" tab: prefer the existing DB snapshot
+  // (already captured on a prior visit) so we never overwrite the true original.
+  const originalSnapshot = existingSnapshot as {
+    capturedAt: string;
+    materialMarginPercent: number;
+    labourMarginPercent: number;
+    components: Array<{ id: string; name: string; materialCost: number; labourCost: number; total: number }>;
+    totalMaterials: number;
+    totalLabour: number;
+    materialMargin: number;
+    labourMargin: number;
+    subtotalWithMargins: number;
+    customLinesTotal: number;
+    adjustedSubtotal: number;
+    adjustedTax: number;
+    adjustedGrandTotal: number;
+    currency: string;
+  } | null;
+
+  const showOriginalView = view === 'original' && !!originalSnapshot;
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 space-y-6">
@@ -509,26 +574,84 @@ export default async function QuoteSummaryPage({
           </div>
         )}
 
-        <div className="pt-6 border-t border-slate-300 space-y-4">
-          <div className="flex justify-between text-base"><span className="text-slate-900">Total Materials</span><span className="text-slate-900 text-right">{formatCurrency(totals.totalMaterials, effectiveCurrency)}</span></div>
-          <div className="flex justify-between text-base"><span className="text-slate-900">Total Labour</span><span className="text-slate-900 text-right">{formatCurrency(totals.totalLabour, effectiveCurrency)}</span></div>
-          {(totals.materialMargin > 0 || totals.labourMargin > 0) && <div className="flex justify-between text-base text-slate-500"><span>Margins</span><span className="text-right">+{formatCurrency(totals.materialMargin + totals.labourMargin, effectiveCurrency)}</span></div>}
-          {customLinesTotal > 0 && <div className="flex justify-between text-base"><span className="text-slate-900">Custom Items</span><span className="text-slate-900 text-right">{formatCurrency(customLinesTotal, effectiveCurrency)}</span></div>}
-          <div className="flex justify-between text-base border-t border-slate-300 pt-4"><span className="text-slate-900">Subtotal</span><span className="text-slate-900 text-right">{formatCurrency(adjustedSubtotal, effectiveCurrency)}</span></div>
-          {summaryTaxLines.map((tl) => (
-            <div key={tl.id} className="flex justify-between text-base">
-              <span className="text-slate-900">{tl.name} ({tl.rate_percent}%)</span>
-              <span className="text-slate-900 text-right">{formatCurrency(tl.amount, effectiveCurrency)}</span>
+        {/* Original / Current tab switcher — only shown once a snapshot exists */}
+        {!!originalSnapshot && (
+          <div className="flex gap-2 mt-6">
+            <Link
+              href={`/${workspaceSlug}/quotes/${id}/summary`}
+              className={`px-4 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                !showOriginalView
+                  ? 'bg-slate-900 text-white border-slate-900'
+                  : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
+              }`}
+            >
+              Current
+            </Link>
+            <Link
+              href={`/${workspaceSlug}/quotes/${id}/summary?view=original`}
+              className={`px-4 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                showOriginalView
+                  ? 'bg-slate-900 text-white border-slate-900'
+                  : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
+              }`}
+            >
+              Original
+            </Link>
+          </div>
+        )}
+
+        {showOriginalView && originalSnapshot ? (
+          // ── ORIGINAL TAB ── Read-only view from the first-save snapshot
+          <div className="pt-4 space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                🔒 Original — captured {new Date(originalSnapshot.capturedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </span>
             </div>
-          ))}
-          {summaryTaxLines.length > 1 && (
-            <div className="flex justify-between text-base border-t border-slate-300 pt-2">
-              <span className="text-slate-900">Tax total</span>
-              <span className="text-slate-900 text-right">{formatCurrency(adjustedTax, effectiveCurrency)}</span>
+            <div className="pt-4 border-t border-slate-300 space-y-4">
+              <div className="flex justify-between text-base"><span className="text-slate-900">Total Materials</span><span className="text-slate-900 text-right">{formatCurrency(originalSnapshot.totalMaterials, originalSnapshot.currency)}</span></div>
+              <div className="flex justify-between text-base"><span className="text-slate-900">Total Labour</span><span className="text-slate-900 text-right">{formatCurrency(originalSnapshot.totalLabour, originalSnapshot.currency)}</span></div>
+              {(originalSnapshot.materialMargin > 0 || originalSnapshot.labourMargin > 0) && (
+                <div className="flex justify-between text-base text-slate-500">
+                  <span>Margins ({originalSnapshot.materialMarginPercent}% mat / {originalSnapshot.labourMarginPercent}% lab)</span>
+                  <span className="text-right">+{formatCurrency(originalSnapshot.materialMargin + originalSnapshot.labourMargin, originalSnapshot.currency)}</span>
+                </div>
+              )}
+              {originalSnapshot.customLinesTotal > 0 && (
+                <div className="flex justify-between text-base"><span className="text-slate-900">Custom Items</span><span className="text-slate-900 text-right">{formatCurrency(originalSnapshot.customLinesTotal, originalSnapshot.currency)}</span></div>
+              )}
+              <div className="flex justify-between text-base border-t border-slate-300 pt-4"><span className="text-slate-900">Subtotal</span><span className="text-slate-900 text-right">{formatCurrency(originalSnapshot.adjustedSubtotal, originalSnapshot.currency)}</span></div>
+              <div className="flex justify-between text-base">
+                <span className="text-slate-900">Tax</span>
+                <span className="text-slate-900 text-right">{formatCurrency(originalSnapshot.adjustedTax, originalSnapshot.currency)}</span>
+              </div>
+              <div className="flex justify-between text-xl font-bold border-t border-slate-300 pt-4"><span className="text-slate-900">Grand Total</span><span className="text-slate-900 text-right">{formatCurrency(originalSnapshot.adjustedGrandTotal, originalSnapshot.currency)}</span></div>
             </div>
-          )}
-          <div className="flex justify-between text-xl font-bold border-t border-slate-300 pt-4"><span className="text-slate-900">Grand Total</span><span className="text-slate-900 text-right">{formatCurrency(adjustedGrandTotal, effectiveCurrency)}</span></div>
-        </div>
+            <p className="text-xs text-slate-400 italic">This is a read-only snapshot of the quote as it was when first saved. Switch to &quot;Current&quot; to see live values.</p>
+          </div>
+        ) : (
+          // ── CURRENT TAB (default) ── Live computed values
+          <div className="pt-6 border-t border-slate-300 space-y-4">
+            <div className="flex justify-between text-base"><span className="text-slate-900">Total Materials</span><span className="text-slate-900 text-right">{formatCurrency(totals.totalMaterials, effectiveCurrency)}</span></div>
+            <div className="flex justify-between text-base"><span className="text-slate-900">Total Labour</span><span className="text-slate-900 text-right">{formatCurrency(totals.totalLabour, effectiveCurrency)}</span></div>
+            {(totals.materialMargin > 0 || totals.labourMargin > 0) && <div className="flex justify-between text-base text-slate-500"><span>Margins</span><span className="text-right">+{formatCurrency(totals.materialMargin + totals.labourMargin, effectiveCurrency)}</span></div>}
+            {customLinesTotal > 0 && <div className="flex justify-between text-base"><span className="text-slate-900">Custom Items</span><span className="text-slate-900 text-right">{formatCurrency(customLinesTotal, effectiveCurrency)}</span></div>}
+            <div className="flex justify-between text-base border-t border-slate-300 pt-4"><span className="text-slate-900">Subtotal</span><span className="text-slate-900 text-right">{formatCurrency(adjustedSubtotal, effectiveCurrency)}</span></div>
+            {summaryTaxLines.map((tl) => (
+              <div key={tl.id} className="flex justify-between text-base">
+                <span className="text-slate-900">{tl.name} ({tl.rate_percent}%)</span>
+                <span className="text-slate-900 text-right">{formatCurrency(tl.amount, effectiveCurrency)}</span>
+              </div>
+            ))}
+            {summaryTaxLines.length > 1 && (
+              <div className="flex justify-between text-base border-t border-slate-300 pt-2">
+                <span className="text-slate-900">Tax total</span>
+                <span className="text-slate-900 text-right">{formatCurrency(adjustedTax, effectiveCurrency)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-xl font-bold border-t border-slate-300 pt-4"><span className="text-slate-900">Grand Total</span><span className="text-slate-900 text-right">{formatCurrency(adjustedGrandTotal, effectiveCurrency)}</span></div>
+          </div>
+        )}
 
         {/* Files & Documents (always visible so users can add more supporting files from here) */}
         <SummaryFilesPanel

@@ -1344,6 +1344,36 @@ export type Database = {
         }
         Relationships: []
       }
+      insight_email_leads: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          insight_next_move: string | null
+          insight_text: string | null
+          insight_title: string | null
+          marketing_consent: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          insight_next_move?: string | null
+          insight_text?: string | null
+          insight_title?: string | null
+          marketing_consent?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          insight_next_move?: string | null
+          insight_text?: string | null
+          insight_title?: string | null
+          marketing_consent?: boolean | null
+        }
+        Relationships: []
+      }
       invoice_activity: {
         Row: {
           company_id: string
@@ -2813,6 +2843,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "quote_notes_quote_company_fk"
+            columns: ["quote_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
             foreignKeyName: "quote_notes_quote_id_fkey"
             columns: ["quote_id"]
             isOneToOne: false
@@ -3186,6 +3223,7 @@ export type Database = {
           material_margin_percent: number | null
           measurement_system: Database["public"]["Enums"]["measurement_system"]
           notes_internal: string | null
+          original_summary_snapshot: Json | null
           quote_number: number | null
           show_margin_in_preview: boolean
           show_quantity_column: boolean
@@ -3236,6 +3274,7 @@ export type Database = {
           material_margin_percent?: number | null
           measurement_system?: Database["public"]["Enums"]["measurement_system"]
           notes_internal?: string | null
+          original_summary_snapshot?: Json | null
           quote_number?: number | null
           show_margin_in_preview?: boolean
           show_quantity_column?: boolean
@@ -3286,6 +3325,7 @@ export type Database = {
           material_margin_percent?: number | null
           measurement_system?: Database["public"]["Enums"]["measurement_system"]
           notes_internal?: string | null
+          original_summary_snapshot?: Json | null
           quote_number?: number | null
           show_margin_in_preview?: boolean
           show_quantity_column?: boolean
