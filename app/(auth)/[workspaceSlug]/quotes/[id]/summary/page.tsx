@@ -396,23 +396,23 @@ export default async function QuoteSummaryPage({
         laborLines={(laborSheetLines || []).map(l => ({ id: l.id, custom_text: l.custom_text, custom_amount: l.custom_amount, show_price: l.show_price, is_visible: l.is_visible, include_in_total: l.include_in_total }))}
         summaryHeaderSlot={
           !!originalSnapshot ? (
-            <div className="flex gap-2">
+            <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
               <Link
                 href={`/${workspaceSlug}/quotes/${id}/summary`}
-                className={`px-4 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
                   !showOriginalView
-                    ? 'bg-slate-900 text-white border-slate-900'
-                    : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
                 }`}
               >
                 Current
               </Link>
               <Link
                 href={`/${workspaceSlug}/quotes/${id}/summary?view=original`}
-                className={`px-4 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
                   showOriginalView
-                    ? 'bg-slate-900 text-white border-slate-900'
-                    : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
                 }`}
               >
                 Original
