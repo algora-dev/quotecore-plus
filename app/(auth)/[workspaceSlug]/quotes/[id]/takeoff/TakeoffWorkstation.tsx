@@ -2055,7 +2055,7 @@ export function TakeoffWorkstation({
         }
         if (!guidance && pages.length <= 1) return null;
         return (
-          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
+          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-50">
             {pages.length > 1 && (
               <>
                 <span className="text-xs text-slate-500">Plan</span>
@@ -2492,15 +2492,16 @@ export function TakeoffWorkstation({
                     {/* Library selector */}
                     {collections.length > 0 && (
                       <div className="mb-3">
+                        <p className="text-[11px] font-medium text-gray-500 mb-1.5">Select Library</p>
                         <select
                           value={selectedLibraryId}
                           onChange={(e) => setSelectedLibraryId(e.target.value)}
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none bg-white text-gray-700"
                           aria-label="Filter components by library"
                         >
-                          <option value={ALL_LIBRARIES}>Library: All Components</option>
+                           <option value={ALL_LIBRARIES}>All Components</option>
                           {collections.map((c) => (
-                            <option key={c.id} value={c.id}>Library: {c.name}</option>
+                             <option key={c.id} value={c.id}>{c.name}</option>
                           ))}
                         </select>
                       </div>
@@ -2591,7 +2592,7 @@ export function TakeoffWorkstation({
           {roofAreas.length > 0 && <div data-copilot="takeoff-ready" className="hidden" />}
 
           {/* Top Toolbar */}
-          <div className="flex-shrink-0 m-6 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-3 shadow-sm" data-copilot="takeoff-toolbar">
+          <div className="flex-shrink-0 mx-4 mt-2 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-3 shadow-sm" data-copilot="takeoff-toolbar">
             {/* Tools - Left Side */}
             <div className="flex gap-2">
               <button
