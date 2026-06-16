@@ -362,16 +362,31 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existin
     setSendStage('gate');
   }
 
+  /**
+   * Commit the acceptance token (expiry + job_status='sent') and rewrite any
+   * stale /accept/<token> URL in the current emailBody with the committed one.
+   * Returns the rewritten body, or null if token commit failed.
+   * Use this before every path where the email body or URL leaves the app.
+   */
+  async function commitAndRewriteBody(): Promise<string | null> {
+    const committedToken = await ensureToken(true);
+    if (!committedToken) return null;
+    const committedUrl = `${window.location.origin}/accept/${committedToken}`;
+    return emailBody.replace(/https?:\/\/[^\s]*\/accept\/[^\s\n]*/g, committedUrl);
+  }
+
   /** Run the actual quote send. Shared by both gate branches. Returns
-   *  the send result so the caller can decide what to do next. */
-  function runSend(): Promise<{ ok: boolean }> {
+   *  the send result so the caller can decide what to do next.
+   *  Pass a rewritten body from commitAndRewriteBody() so the sent email
+   *  always contains the committed token URL. */
+  function runSend(committedBody: string): Promise<{ ok: boolean }> {
     return new Promise((resolve) => {
       startSendTransition(async () => {
         const result = await sendQuoteMessage({
           quoteId,
           templateId: selectedTemplateId || null,
           subject: emailSubject,
-          body: emailBody,
+          body: committedBody,
           recipientEmail: recipientEmail.trim(),
           recipientName: quoteMeta.customerName,
           attachmentSelection,
@@ -390,9 +405,11 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existin
   async function handleSendNow() {
     setSendError(null);
     setSendSuccess(null);
-    // Commit expiry now - user is actually sending.
-    await ensureToken(true);
-    await runSend();
+    // H-07: commit token and rewrite body before send so expired-quote rotation
+    // doesn't leave a dead /accept/<old-token> URL in the outbound email.
+    const committedBody = await commitAndRewriteBody();
+    if (!committedBody) return;
+    await runSend(committedBody);
     // Stay on the form stage so the success/suppressed banner shows.
     setSendStage('form');
   }
@@ -458,9 +475,10 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existin
         setFollowUpError('Some follow-ups could not be scheduled. Fix or remove them, then try again.');
         return;
       }
-      // Commit expiry before sending.
-      await ensureToken(true);
-      const sendResult = await runSend();
+      // H-07: commit token and rewrite body before send.
+      const committedBody = await commitAndRewriteBody();
+      if (!committedBody) return;
+      const sendResult = await runSend(committedBody);
       if (sendResult.ok) {
         router.refresh();
         setSendStage('form');
@@ -557,16 +575,10 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existin
   }
 
   async function handleCopyEmail() {
-    // H-05/H-06 fix: commit expiry + status before the URL leaves the app.
-    // Use the returned token directly — for expired quotes ensureToken(true) rotates
-    // to a fresh token, so emailBody (composed with the old token during handleEmailMode)
-    // would contain a dead /accept/<old-token> URL. Substitute the committed URL
-    // in the body before writing to clipboard.
-    const committedToken = await ensureToken(true);
-    if (!committedToken) return;
-    const committedUrl = `${window.location.origin}/accept/${committedToken}`;
-    const finalBody = emailBody.replace(/https?:\/\/[^\s]*\/accept\/[^\s\n]*/g, committedUrl);
-    const fullEmail = `Subject: ${emailSubject}\n\n${finalBody}`;
+    // H-05/H-06/H-07: use shared helper to commit token + rewrite body.
+    const committedBody = await commitAndRewriteBody();
+    if (!committedBody) return;
+    const fullEmail = `Subject: ${emailSubject}\n\n${committedBody}`;
     try {
       await navigator.clipboard.writeText(fullEmail);
       setEmailCopied(true);
@@ -636,7 +648,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existin
                     AND when updating an already-sent quote */}
                 {token && (
                   <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                    ⚠️ Changing the expiry will update the deadline on the customer's existing link - make sure they know.
+                    ⚠️ Changing the expiry will update the deadline on the customer&apos;s existing link - make sure they know.
                   </p>
                 )}
                 <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
@@ -1153,7 +1165,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existin
                                 </div>
                               ) : (
                                 <div className="space-y-2">
-                                  <p className="text-[11px] text-slate-500">Chases the customer if they don't respond. Auto-cancels when they reply, accept, or decline. Respects quiet hours.</p>
+                                  <p className="text-[11px] text-slate-500">Chases the customer if they don&apos;t respond. Auto-cancels when they reply, accept, or decline. Respects quiet hours.</p>
                                   <div className="flex items-end gap-2">
                                     <div className="w-24">
                                       <label className="block text-[10px] font-medium text-slate-500 mb-0.5"># days</label>
