@@ -205,7 +205,7 @@ export async function createQuoteFromTemplate(
   redirect(`/${company.slug}/quotes/${quote.id}`);
 }
 
-export async function generateAcceptanceToken(quoteId: string, expiryDays: number = 30): Promise<string> {
+export async function generateAcceptanceToken(quoteId: string, expiryDays: number = 30, applyExpiry: boolean = true): Promise<string> {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
@@ -233,7 +233,13 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
   expiresAt.setDate(expiresAt.getDate() + days);
 
   if (quote.acceptance_token && !(quote as any).withdrawn_at && !isExpired) {
-    // Live token exists — just refresh the expiry, keep the token UUID.
+    // Live token exists.
+    if (!applyExpiry) {
+      // Caller is just fetching the token for display/compose purposes;
+      // do NOT touch the expiry or job_status yet.
+      return quote.acceptance_token;
+    }
+    // applyExpiry=true: user has explicitly sent/copied — commit the expiry.
     await supabase
       .from('quotes')
       .update({ acceptance_token_expires_at: expiresAt.toISOString(), job_status: 'sent' })

@@ -342,6 +342,33 @@ export default async function QuoteSummaryPage({
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           {backLabel}
         </Link>
+
+        {/* Original / Current tab switcher — top of page, above quote header */}
+        {!!originalSnapshot && (
+          <div className="flex gap-2 mb-4">
+            <Link
+              href={`/${workspaceSlug}/quotes/${id}/summary`}
+              className={`px-4 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                !showOriginalView
+                  ? 'bg-slate-900 text-white border-slate-900'
+                  : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
+              }`}
+            >
+              Current
+            </Link>
+            <Link
+              href={`/${workspaceSlug}/quotes/${id}/summary?view=original`}
+              className={`px-4 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                showOriginalView
+                  ? 'bg-slate-900 text-white border-slate-900'
+                  : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
+              }`}
+            >
+              Original
+            </Link>
+          </div>
+        )}
+
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">{quote.customer_name}</h1>
@@ -571,32 +598,6 @@ export default async function QuoteSummaryPage({
                 </tr>
               ))}</tbody>
             </table>
-          </div>
-        )}
-
-        {/* Original / Current tab switcher — only shown once a snapshot exists */}
-        {!!originalSnapshot && (
-          <div className="flex gap-2 mt-6">
-            <Link
-              href={`/${workspaceSlug}/quotes/${id}/summary`}
-              className={`px-4 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                !showOriginalView
-                  ? 'bg-slate-900 text-white border-slate-900'
-                  : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
-              }`}
-            >
-              Current
-            </Link>
-            <Link
-              href={`/${workspaceSlug}/quotes/${id}/summary?view=original`}
-              className={`px-4 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                showOriginalView
-                  ? 'bg-slate-900 text-white border-slate-900'
-                  : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
-              }`}
-            >
-              Original
-            </Link>
           </div>
         )}
 

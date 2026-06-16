@@ -553,18 +553,15 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
    * global baseline — per-line edits can happen after.
    */
   async function handleApplyGlobalMargins() {
-    const matMargin = globalMarginPercent;
-    const labMargin = globalLaborMarginPercent;
-    const resetLines = lines.map(line => {
-      if (line.type === 'component' && line.baseMaterialCost !== undefined && line.baseLabourCost !== undefined) {
-        const newAmount = Math.round(
-          (line.baseMaterialCost * (1 + matMargin / 100) + line.baseLabourCost * (1 + labMargin / 100)) * 100
-        ) / 100;
-        return { ...line, amount: newAmount, lineMarginPercent: null as null, lineLaborMarginPercent: null as null };
-      }
-      // Custom lines: clear per-line margin override (price stays unchanged)
-      return { ...line, lineMarginPercent: null as null, lineLaborMarginPercent: null as null };
-    });
+    // Clear all per-line margin overrides — current on-screen amounts stay
+    // exactly as shown (the global margin sliders already updated them live).
+    // Do NOT recalculate from base costs here: that would stomp any unsaved
+    // per-line price edits the user has made.
+    const resetLines = lines.map(line => ({
+      ...line,
+      lineMarginPercent: null as null,
+      lineLaborMarginPercent: null as null,
+    }));
     linesOverrideRef.current = resetLines;
     setLines(resetLines);
     setMarginsDirty(true);

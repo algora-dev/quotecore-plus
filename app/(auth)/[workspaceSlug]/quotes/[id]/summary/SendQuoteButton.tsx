@@ -272,14 +272,18 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existin
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/accept/${token}`
     : null;
 
-  async function ensureToken(): Promise<string | null> {
-    // Always call generateAcceptanceToken — do NOT short-circuit on token.
-    // The server-side function updates acceptance_token_expires_at when a
-    // valid token already exists, so "Generate URL" always applies the
-    // user's selected expiry even on re-sends.
+  /**
+   * Ensure a valid acceptance token exists.
+   * applyExpiry=false (default for mode entry): fetch/create token without
+   *   updating the expiry or job_status — safe to call speculatively.
+   * applyExpiry=true (for actual send/copy): commit the selected expiry and
+   *   set job_status='sent'. Only call this when the user has deliberately
+   *   sent or copied the link.
+   */
+  async function ensureToken(applyExpiry = false): Promise<string | null> {
     setLoading(true);
     try {
-      const newToken = await generateAcceptanceToken(quoteId, expiryDays);
+      const newToken = await generateAcceptanceToken(quoteId, expiryDays, applyExpiry);
       setToken(newToken);
       return newToken;
     } catch (err) {
@@ -318,7 +322,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existin
 
   async function handleUrlMode() {
     setMode('url');
-    await ensureToken();
+    await ensureToken(false); // fetch token for display; expiry committed on Copy
   }
 
   async function handleSendMode() {
@@ -386,6 +390,8 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existin
   async function handleSendNow() {
     setSendError(null);
     setSendSuccess(null);
+    // Commit expiry now — user is actually sending.
+    await ensureToken(true);
     await runSend();
     // Stay on the form stage so the success/suppressed banner shows.
     setSendStage('form');
@@ -452,6 +458,8 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existin
         setFollowUpError('Some follow-ups could not be scheduled. Fix or remove them, then try again.');
         return;
       }
+      // Commit expiry before sending.
+      await ensureToken(true);
       const sendResult = await runSend();
       if (sendResult.ok) {
         router.refresh();
@@ -463,7 +471,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existin
   }
 
   async function handleEmailMode() {
-    const t = await ensureToken();
+    const t = await ensureToken(false); // fetch token for URL in email body; expiry committed on Send
     if (!t) return;
 
     const url = `${window.location.origin}/accept/${t}`;
@@ -525,6 +533,8 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existin
   }
 
   async function handleCopyUrl() {
+    // Commit the selected expiry now — user is actually copying the link.
+    await ensureToken(true);
     if (!acceptanceUrl) return;
     try {
       await navigator.clipboard.writeText(acceptanceUrl);
