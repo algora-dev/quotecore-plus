@@ -54,6 +54,8 @@ interface Props {
     unitPrice: number | null,
     lineMarginPercent: number | null,
     lineLaborMarginPercent: number | null,
+    /** Updated base material cost for custom lines (base cost before margin). Undefined for component lines. */
+    baseMaterialCost?: number,
   ) => void;
   onCancel: () => void;
 }
@@ -78,13 +80,23 @@ export function LineEditForm({
   onSave,
   onCancel,
 }: Props) {
+  // H-04: for custom lines with a stored base cost, the amount field shows the
+  // BASE unit cost (before margin) — not the margin-included customer price.
+  const isCustomWithBaseCost = !isComponentLine && baseMaterialCost !== undefined;
+
   const [text, setText] = useState(initialText);
   const [quantity, setQuantity] = useState(initialQuantity ?? '');
-  const [amount, setAmount] = useState(
-    showQuantityColumn && initialUnitPrice != null
+  const [amount, setAmount] = useState(() => {
+    if (isCustomWithBaseCost) {
+      // Show base unit cost in the amount field.
+      return showQuantityColumn && initialQty > 0
+        ? (baseMaterialCost / initialQty).toFixed(2)
+        : baseMaterialCost.toFixed(2);
+    }
+    return showQuantityColumn && initialUnitPrice != null
       ? initialUnitPrice.toString()
-      : initialAmount.toString(),
-  );
+      : initialAmount.toString();
+  });
   const [showPrice, setShowPrice] = useState(initialShowPrice);
   const [qty, setQty] = useState(initialQty.toString());
 
@@ -127,10 +139,15 @@ export function LineEditForm({
 
   /**
    * Recompute the price when the margin % changes.
-   * - Component lines: use baseMaterialCost + baseLabourCost for accuracy.
-   * - Custom lines: proportional formula using the current displayed amount.
+   * - Custom lines with stored base cost: no recalc — the field shows a base cost;
+   *   margin is applied at save time, not on every keystroke.
+   * - Component lines with real base costs: recompute from base costs.
+   * - Everything else: proportional formula.
    */
   function recalcForMarginChange(newMaterialMargin: number, newLaborMargin: number) {
+    // H-04: custom lines with a stored base cost show the base cost in the amount
+    // field. Changing the margin % doesn't change the base cost — skip recalc.
+    if (isCustomWithBaseCost) return;
     // Use base-cost formula ONLY when the component has real cost figures.
     // If both costs are 0 (e.g. price set manually in Review stage), the formula
     // would produce $0 — fall back to the proportional formula in that case.
@@ -195,6 +212,24 @@ export function LineEditForm({
         ? labMarginVal
         : null;
 
+    // H-04: custom lines with stored base cost — apply margin at save time.
+    // The amount field holds the base unit cost; the customer sees the margin-included price.
+    if (isCustomWithBaseCost) {
+      const effectiveMargin = matMarginVal;
+      if (showQuantityColumn) {
+        const qtyNum = Math.max(1, parseInt(qty) || 1);
+        const newBaseCostTotal = Math.round(amountNum * qtyNum * 100) / 100;
+        const marginedTotal = Math.round(newBaseCostTotal * (1 + effectiveMargin / 100) * 100) / 100;
+        const marginedUnitPrice = Math.round(amountNum * (1 + effectiveMargin / 100) * 100) / 100;
+        onSave(text.trim(), qtyText, marginedTotal, showPrice, qtyNum, marginedUnitPrice, finalLineMarginPercent, finalLineLaborMarginPercent, newBaseCostTotal);
+      } else {
+        const newBaseCostTotal = amountNum;
+        const marginedTotal = Math.round(newBaseCostTotal * (1 + effectiveMargin / 100) * 100) / 100;
+        onSave(text.trim(), qtyText, marginedTotal, showPrice, 1, null, finalLineMarginPercent, finalLineLaborMarginPercent, newBaseCostTotal);
+      }
+      return;
+    }
+
     if (showQuantityColumn) {
       const qtyNum = Math.max(1, parseInt(qty) || 1);
       const unitP = amountNum;
@@ -247,7 +282,7 @@ export function LineEditForm({
             />
           </div>
           <div className="flex-1">
-            <label className="block text-xs font-medium text-slate-500 mb-1">Unit Price</label>
+            <label className="block text-xs font-medium text-slate-500 mb-1">{isCustomWithBaseCost ? 'Unit Cost' : 'Unit Price'}</label>
             <div className="flex items-center gap-1">
               <span className="text-sm text-slate-600">$</span>
               <input
@@ -277,7 +312,7 @@ export function LineEditForm({
       ) : (
         <div className="flex gap-2 items-center">
           <div className="flex-1">
-            <label className="block text-xs font-medium text-slate-500 mb-1">Price</label>
+            <label className="block text-xs font-medium text-slate-500 mb-1">{isCustomWithBaseCost ? 'Cost' : 'Price'}</label>
             <div className="flex items-center gap-1">
               <span className="text-sm text-slate-600">$</span>
               <input

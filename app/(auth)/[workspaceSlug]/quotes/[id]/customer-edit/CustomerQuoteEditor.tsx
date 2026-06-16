@@ -129,7 +129,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [globalLaborMarginPercent, setGlobalLaborMarginPercent] = useState<number>(
     Number(quote.labor_margin_percent ?? 0)
   );
-  const [laborMarginEnabled, setLaborMarginEnabled] = useState<boolean>(
+  const [_laborMarginEnabled, setLaborMarginEnabled] = useState<boolean>(
     Number(quote.labor_margin_percent ?? 0) > 0
   );
   // Only persist margin changes back to the quotes table when the user has
@@ -459,10 +459,15 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     unitPrice: number | null = null,
     lineMarginPercent: number | null = null,
     lineLaborMarginPercent: number | null = null,
+    newBaseMaterialCost?: number,
   ) {
     setLines(prev => prev.map(l =>
       l.id === lineId
-        ? { ...l, text, quantityText, amount, showPrice, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent }
+        ? {
+            ...l, text, quantityText, amount, showPrice, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent,
+            // H-04: update baseMaterialCost when provided so next slider move recalculates from the edited base.
+            ...(newBaseMaterialCost !== undefined ? { baseMaterialCost: newBaseMaterialCost } : {}),
+          }
         : l
     ));
     setEditingLineId(null);
@@ -1360,8 +1365,8 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 footerText={footerText}
                 editingLineId={editingLineId}
                 onEditLine={setEditingLineId}
-                onSaveLine={(id, text, quantityText, amount, sp, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent) =>
-                  updateLine(id, text, quantityText, amount, sp, qty ?? 1, unitPrice ?? null, lineMarginPercent ?? null, lineLaborMarginPercent ?? null)
+                onSaveLine={(id, text, quantityText, amount, sp, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent, bmc) =>
+                  updateLine(id, text, quantityText, amount, sp, qty ?? 1, unitPrice ?? null, lineMarginPercent ?? null, lineLaborMarginPercent ?? null, bmc)
                 }
                 showQuantityColumn={showQuantityColumn}
                 hideLinePrices={hideLinePrices}

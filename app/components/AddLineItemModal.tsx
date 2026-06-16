@@ -69,13 +69,6 @@ interface Props {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function uuid() {
-  // crypto.randomUUID is available in all supported browsers / Node 14.17+
-  return typeof crypto !== 'undefined' && crypto.randomUUID
-    ? crypto.randomUUID()
-    : Math.random().toString(36).slice(2);
-}
-
 function calcTotal(qty: string, price: string): number {
   const q = parseFloat(qty) || 0;
   const p = parseFloat(price) || 0;
@@ -101,7 +94,7 @@ function extractCatalogLine(row: CatalogRow): { label: string; price: number } {
 // ---------------------------------------------------------------------------
 
 export function AddLineItemModal({
-  workspaceSlug,
+  workspaceSlug: _workspaceSlug,
   currency,
   catalogs,
   collections,
@@ -145,13 +138,22 @@ export function AddLineItemModal({
   // Load catalog rows when catalog selected or search changes
   useEffect(() => {
     if (mode !== 'catalog' || !selectedCatalogId) return;
-    setCatalogLoading(true);
-    const qs = new URLSearchParams({ catalogId: selectedCatalogId, search: catalogSearch });
-    fetch(`/api/invoices/catalog-rows?${qs}`)
-      .then((r) => r.json())
-      .then((d) => setCatalogRows(d.rows ?? []))
-      .catch(() => setCatalogRows([]))
-      .finally(() => setCatalogLoading(false));
+    let cancelled = false;
+    async function load() {
+      setCatalogLoading(true);
+      try {
+        const qs = new URLSearchParams({ catalogId: selectedCatalogId, search: catalogSearch });
+        const r = await fetch(`/api/invoices/catalog-rows?${qs}`);
+        const d = await r.json();
+        if (!cancelled) setCatalogRows(d.rows ?? []);
+      } catch {
+        if (!cancelled) setCatalogRows([]);
+      } finally {
+        if (!cancelled) setCatalogLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
   }, [mode, selectedCatalogId, catalogSearch]);
 
   // ── Handlers ──

@@ -41,7 +41,7 @@ interface Props {
   footerText: string;
   editingLineId?: string | null;
   onEditLine?: (lineId: string) => void;
-  onSaveLine?: (lineId: string, text: string, quantity: string | null, amount: number, showPrice: boolean, qty?: number, unitPrice?: number | null, lineMarginPercent?: number | null, lineLaborMarginPercent?: number | null) => void;
+  onSaveLine?: (lineId: string, text: string, quantity: string | null, amount: number, showPrice: boolean, qty?: number, unitPrice?: number | null, lineMarginPercent?: number | null, lineLaborMarginPercent?: number | null, baseMaterialCost?: number) => void;
   showQuantityColumn?: boolean;
   hideLinePrices?: boolean;
   hideTotals?: boolean;
@@ -91,7 +91,7 @@ export function QuotePreview({
   hideTotals = false,
   globalMarginPercent = null,
   globalLaborMarginPercent = null,
-  showMarginInPreview = true,
+  showMarginInPreview: _showMarginInPreview = true,
   materialMarginDisplay = null,
   labourMarginDisplay = null,
   quoteEntryMode = null,
@@ -219,8 +219,8 @@ export function QuotePreview({
                                 : null)
                         }
                         quoteEntryMode={quoteEntryMode}
-                        onSave={(text, quantity, amount, sp, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent) =>
-                          onSaveLine(line.id, text, quantity, amount, sp, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent)
+                        onSave={(text, quantity, amount, sp, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent, bmc) =>
+                          onSaveLine(line.id, text, quantity, amount, sp, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent, bmc)
                         }
                         onCancel={onCancelEdit}
                       />

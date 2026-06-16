@@ -553,6 +553,10 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existin
   }
 
   async function handleCopyEmail() {
+    // H-05 fix: copying the email body is an actual send/export action — the
+    // quote URL is leaving the app. Commit expiry + job_status='sent' before
+    // the clipboard write so the quote is never stuck in a no-expiry live state.
+    await ensureToken(true);
     const fullEmail = `Subject: ${emailSubject}\n\n${emailBody}`;
     try {
       await navigator.clipboard.writeText(fullEmail);
