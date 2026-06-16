@@ -55,6 +55,8 @@ interface Props {
     companyName: string | null;
     quoteDate: string;
   };
+  /** When true, the customer quote shows the profit/margin breakdown — warn the user before sending. */
+  showMarginInPreview?: boolean;
 }
 
 function sanitize(str: string): string {
@@ -75,7 +77,7 @@ function replacePlaceholders(text: string, data: Record<string, string>): string
     .replace(/\{\{quote_date\}\}/g, sanitize(data.quote_date || ''));
 }
 
-export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existingExpiresAt, hasCustomerQuote, emailTemplates, canFollowups, canEmail, sendTestTipSeen, libraryFiles, quoteFiles, libraryLocked, quoteMeta }: Props) {
+export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existingExpiresAt, hasCustomerQuote, emailTemplates, canFollowups, canEmail, sendTestTipSeen, libraryFiles, quoteFiles, libraryLocked, quoteMeta, showMarginInPreview = false }: Props) {
   const router = useRouter();
   const testTip = useSendTestTip(sendTestTipSeen);
   // When the one-time tip needs showing, the first "Send Quote" click opens the
@@ -597,6 +599,14 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existin
             {/* Choose Mode */}
             {mode === 'choose' && !loading && (
               <div className="space-y-3">
+                {showMarginInPreview && (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                    <p className="text-sm text-red-700 font-medium">⚠️ Warning: Profit/margin values are visible to the customer</p>
+                    <p className="text-xs text-red-600 mt-1">
+                      The &quot;Show margin breakdown on customer quote&quot; option is currently enabled. Your customer will be able to see your profit margin values. To hide this, open the Customer Quote Editor and uncheck &quot;Show margin breakdown on customer quote&quot; before sending.
+                    </p>
+                  </div>
+                )}
                 <p className="text-sm text-slate-600">How would you like to send this quote?</p>
 
                 {/* Quote Expiry — always shown so users can set/change it on first send

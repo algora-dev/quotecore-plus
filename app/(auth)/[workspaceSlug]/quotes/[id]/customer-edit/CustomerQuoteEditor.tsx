@@ -138,6 +138,11 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   // values with the stale initial state (e.g. 0 for old quotes where the
   // margin fields were null).
   const [marginsDirty, setMarginsDirty] = useState(false);
+  // Margin visibility warning: shown before "Save & Return" when showMarginInPreview is true.
+  const [showMarginSaveWarning, setShowMarginSaveWarning] = useState(false);
+  // Used by handleApplyGlobalMargins to pass reset lines into handleSave without
+  // fighting React's batched state updates.
+  const linesOverrideRef = useRef<QuoteLine[] | null>(null);
   // For non-blank quotes, default to false so the profit margin row is NOT
   // shown to customers unless the user explicitly enables it. Blank quotes
   // previously defaulted to true (kept for backward compat).
@@ -256,6 +261,18 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           };
         }
       }).filter(Boolean) as QuoteLine[];
+
+      // Detect components added to the quote AFTER the customer quote was first
+      // saved (e.g. a new component was added in the Review stage). These won't
+      // appear in savedLines and need to be surfaced to the user.
+      const savedComponentIds = new Set(
+        savedLines
+          .filter((s: any) => s.line_type === 'component' && s.quote_component_id)
+          .map((s: any) => s.quote_component_id as string)
+      );
+      const missing = components.filter(c => c.is_customer_visible && !savedComponentIds.has(c.id));
+      if (missing.length > 0) setMissingComponents(missing);
+
       setLines(loadedLines);
     } else {
       // Initialize from components (first time) - include margins if enabled
@@ -488,6 +505,73 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     setIsDirty(true);
   }
 
+  // Derived: any component line with labour cost > 0. Controls the labor margin input.
+  const hasLaborLines = lines.some(l => l.type === 'component' && (l.baseLabourCost ?? 0) > 0);
+
+  // Components that exist in the quote but are missing from the customer quote lines
+  // (added to the quote after the initial CQL save).
+  const [missingComponents, setMissingComponents] = useState<QuoteComponentRow[]>([]);
+
+  function addMissingComponents() {
+    const globalMatMarginPct = !includeMargins ? 0 : (isBlankQuote
+      ? ((quote as { global_margin_percent?: number | null }).global_margin_percent ?? 0)
+      : (quote.material_margin_enabled && quote.material_margin_percent != null
+          ? Number(quote.material_margin_percent) : 0));
+    const globalLabMarginPct = !includeMargins ? 0 : Number(quote.labor_margin_percent ?? 0);
+    const newLines: QuoteLine[] = missingComponents.map((c, idx) => {
+      const baseMaterialCost = c.material_cost || 0;
+      const baseLabourCost = c.labour_cost || 0;
+      const finalAmount = Math.round(
+        (baseMaterialCost * (1 + globalMatMarginPct / 100) + baseLabourCost * (1 + globalLabMarginPct / 100)) * 100
+      ) / 100;
+      return {
+        id: c.id,
+        type: 'component' as const,
+        componentId: c.id,
+        roofAreaId: c.quote_roof_area_id || undefined,
+        text: generateDefaultText(c),
+        amount: finalAmount,
+        showPrice: true,
+        showUnits: true,
+        isVisible: true,
+        includeInTotal: true,
+        sortOrder: lines.length + idx,
+        lineMarginPercent: null,
+        lineLaborMarginPercent: null,
+        baseMaterialCost,
+        baseLabourCost,
+      };
+    });
+    setLines(prev => [...prev, ...newLines].map((l, i) => ({ ...l, sortOrder: i })));
+    setMissingComponents([]);
+    setIsDirty(true);
+  }
+
+  /**
+   * Apply & Save: resets ALL line-level margin overrides to global, recalculates
+   * every component line amount, then saves immediately. This sets a clean
+   * global baseline — per-line edits can happen after.
+   */
+  async function handleApplyGlobalMargins() {
+    const matMargin = globalMarginPercent;
+    const labMargin = globalLaborMarginPercent;
+    const resetLines = lines.map(line => {
+      if (line.type === 'component' && line.baseMaterialCost !== undefined && line.baseLabourCost !== undefined) {
+        const newAmount = Math.round(
+          (line.baseMaterialCost * (1 + matMargin / 100) + line.baseLabourCost * (1 + labMargin / 100)) * 100
+        ) / 100;
+        return { ...line, amount: newAmount, lineMarginPercent: null as null, lineLaborMarginPercent: null as null };
+      }
+      // Custom lines: clear per-line margin override (price stays unchanged)
+      return { ...line, lineMarginPercent: null as null, lineLaborMarginPercent: null as null };
+    });
+    linesOverrideRef.current = resetLines;
+    setLines(resetLines);
+    setMarginsDirty(true);
+    setIsDirty(true);
+    await handleSave();
+  }
+
   function applyTemplate(templateId: string) {
     const template = templates.find(t => t.id === templateId);
     if (!template) return;
@@ -506,7 +590,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      const lineData = lines.map(line => ({
+      const lineData = (linesOverrideRef.current ?? lines).map(line => ({
         id: line.id,
         lineType: line.type,
         componentId: line.componentId,
@@ -543,7 +627,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       // with the Review stage values. For blank quotes, global_margin_percent is
       // used; for normal quotes, material_margin_percent + labor_margin_percent.
       const materialEnabled = globalMarginPercent > 0;
-      const laborEnabled = laborMarginEnabled && globalLaborMarginPercent > 0;
+      const laborEnabled = (linesOverrideRef.current ?? lines).some(l => l.type === 'component' && (l.baseLabourCost ?? 0) > 0) && globalLaborMarginPercent > 0;
       await Promise.all([
         saveLineAction(quote.id, lineData, showQtyCol, hideLinePricesVal, hideTotalsVal, isBlankQuote && globalMarginPercent > 0 ? globalMarginPercent : null, showMarginInPreview),
         // Only update when user actually changed margins this session (marginsDirty).
@@ -582,13 +666,14 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       ]);
       setLastSaved(new Date());
       setIsDirty(false);
+      linesOverrideRef.current = null;
     } catch (err) {
       console.error('Failed to save:', err);
       alert('Failed to save changes. Please try again.');
     } finally {
       setSaving(false);
     }
-  }, [quote.id, lines, taxes, showQuantityColumn, hideLinePrices, hideTotals, globalMarginPercent, globalLaborMarginPercent, laborMarginEnabled, isBlankQuote, showMarginInPreview, companyName, companyAddress, companyPhone, companyEmail, companyLogoUrl, footerText, customSaveAction]);
+  }, [quote.id, lines, taxes, showQuantityColumn, hideLinePrices, hideTotals, globalMarginPercent, globalLaborMarginPercent, isBlankQuote, showMarginInPreview, companyName, companyAddress, companyPhone, companyEmail, companyLogoUrl, footerText, customSaveAction]);
 
   // Auto-save removed per user request
 
@@ -935,6 +1020,28 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               + Add New Line
             </button>
 
+            {/* Missing components banner — shown when components were added after initial CQL save */}
+            {missingComponents.length > 0 && (
+              <div className="rounded-xl border border-orange-200 bg-orange-50/60 px-4 py-3 flex items-start gap-3">
+                <svg className="w-5 h-5 text-orange-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-orange-800">
+                    {missingComponents.length} component{missingComponents.length !== 1 ? 's' : ''} not in your quote
+                  </p>
+                  <p className="text-xs text-orange-700 mt-0.5">
+                    {missingComponents.map(c => c.name).join(', ')}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={addMissingComponents}
+                    className="mt-2 text-xs font-medium text-orange-700 underline hover:text-orange-900"
+                  >
+                    Add to quote
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Profit Margin — all quote types. Blank quotes: single global %. Normal
               quotes: separate material + labor %. Saves back to the quote
               record on Save so the Review stage stays in sync. */}
@@ -970,16 +1077,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 </div>
               </div>
 
-              {/* Labor margin — normal quotes only */}
+              {/* Labor margin — always visible for normal quotes; disabled when no labour lines exist */}
               {!isBlankQuote && (
                 <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-1.5 text-xs text-slate-600 w-24 whitespace-nowrap cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={laborMarginEnabled}
-                      onChange={e => { setLaborMarginEnabled(e.target.checked); setIsDirty(true); setMarginsDirty(true); }}
-                      className="w-3.5 h-3.5 rounded text-orange-600"
-                    />
+                  <label className="text-xs text-slate-600 whitespace-nowrap w-24">
                     Labor margin
                   </label>
                   <div className="flex items-center gap-1.5 flex-1">
@@ -989,14 +1090,18 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                       max="999"
                       step="0.5"
                       value={globalLaborMarginPercent}
-                      disabled={!laborMarginEnabled}
+                      disabled={!hasLaborLines}
                       onChange={e => {
                         const val = Math.max(0, parseFloat(e.target.value) || 0);
+                        setLaborMarginEnabled(val > 0);
                         handleGlobalLaborMarginChange(val);
                       }}
-                      className="w-20 px-2 py-1 text-sm border border-slate-300 rounded focus:border-orange-500 focus:outline-none disabled:opacity-40"
+                      className="w-20 px-2 py-1 text-sm border border-slate-300 rounded focus:border-orange-500 focus:outline-none disabled:opacity-40 disabled:bg-slate-50"
                     />
-                    <span className="text-sm text-slate-500">%</span>
+                    <span className={`text-sm ${hasLaborLines ? 'text-slate-500' : 'text-slate-400'}`}>%</span>
+                    {!hasLaborLines && (
+                      <span className="text-xs text-slate-400 italic">no labour lines</span>
+                    )}
                   </div>
                 </div>
               )}
@@ -1011,6 +1116,19 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 />
                 <span className="text-xs text-slate-500">Show margin breakdown on customer quote</span>
               </label>
+
+              {/* Apply Global Margins & Save — resets ALL per-line overrides to global baseline */}
+              <button
+                type="button"
+                onClick={handleApplyGlobalMargins}
+                disabled={saving}
+                className="w-full py-2 text-sm font-medium bg-[#FF6B35] text-white rounded-full hover:bg-orange-600 disabled:opacity-50 transition-all"
+              >
+                {saving ? 'Saving...' : 'Apply Global Margins & Save'}
+              </button>
+              <p className="text-xs text-slate-400">
+                Resets all per-line overrides to these global values and saves immediately.
+              </p>
             </div>
 
             {/* Taxes */}
@@ -1115,6 +1233,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               </p>
               <button
                 onClick={async () => {
+                  if (showMarginInPreview) {
+                    setShowMarginSaveWarning(true);
+                    return;
+                  }
                   await handleSave();
                   router.push(`/${workspaceSlug}/quotes/${quote.id}/summary`);
                 }}
@@ -1203,10 +1325,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 onEditFooter={() => setShowEditFooter(true)}
                 currency={currency}
                 globalMarginPercent={globalMarginPercent > 0 ? globalMarginPercent : null}
-                globalLaborMarginPercent={laborMarginEnabled && globalLaborMarginPercent > 0 ? globalLaborMarginPercent : 0}
+                globalLaborMarginPercent={hasLaborLines && globalLaborMarginPercent > 0 ? globalLaborMarginPercent : 0}
                 showMarginInPreview={showMarginInPreview}
                 materialMarginDisplay={showMarginInPreview && globalMarginPercent > 0 ? materialMarginTotal : null}
-                labourMarginDisplay={showMarginInPreview && laborMarginEnabled && globalLaborMarginPercent > 0 ? labourMarginTotal : null}
+                labourMarginDisplay={showMarginInPreview && hasLaborLines && globalLaborMarginPercent > 0 ? labourMarginTotal : null}
                 quoteEntryMode={(quote as { entry_mode?: string }).entry_mode ?? null}
               />
             </div>
@@ -1314,6 +1436,22 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         onConfirm={() => {
           if (removeLineId) removeLine(removeLineId);
           setRemoveLineId(null);
+        }}
+      />
+
+      {/* Margin visibility warning — shown before Save & Return when breakdown is customer-visible */}
+      <ConfirmModal
+        open={showMarginSaveWarning}
+        title="Margin breakdown is visible to the customer"
+        description={`Your profit/margin breakdown is currently set to show on the customer quote. The customer will be able to see your margin values.\n\nTo hide it, uncheck "Show margin breakdown on customer quote" in the Profit Margin panel before saving.`}
+        confirmLabel="Save anyway"
+        cancelLabel="Go back"
+        destructive={false}
+        onCancel={() => setShowMarginSaveWarning(false)}
+        onConfirm={async () => {
+          setShowMarginSaveWarning(false);
+          await handleSave();
+          router.push(`/${workspaceSlug}/quotes/${quote.id}/summary`);
         }}
       />
     </div>

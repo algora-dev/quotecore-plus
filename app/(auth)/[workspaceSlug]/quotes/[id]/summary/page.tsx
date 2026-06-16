@@ -79,14 +79,14 @@ export default async function QuoteSummaryPage({
   const quoteNotes: QuoteNote[] = (notesData ?? []) as unknown as QuoteNote[];
   const currentUserFullName = _profile.full_name ?? null;
 
-  // Load ALL customer quote lines (for overrides + custom lines)
+  // Load ALL customer quote lines (for custom lines + hasCustomerQuote flag)
   const { data: allCustomerLines } = await supabase
     .from('customer_quote_lines')
     .select('*')
     .eq('quote_id', id)
     .order('sort_order', { ascending: true });
   
-  // Separate custom lines
+  // Separate custom lines (non-component lines added manually by the user)
   const customLines = (allCustomerLines || []).filter(
     line => line.line_type === 'custom' && line.is_visible && line.include_in_total
   );
@@ -130,13 +130,12 @@ export default async function QuoteSummaryPage({
     }));
   }
   
-  // Build component override map (componentId -> custom_amount)
-  const componentOverrides = new Map<string, number>();
-  (allCustomerLines || []).forEach(line => {
-    if (line.line_type === 'component' && line.quote_component_id && line.custom_amount != null) {
-      componentOverrides.set(line.quote_component_id, line.custom_amount);
-    }
-  });
+  // NOTE: The Summary is the pricing-engine view — it always computes from raw
+  // component base costs + global margins. The Customer Quote Editor is the
+  // separate presentation layer where users can customise per-line amounts and
+  // margins. We intentionally do NOT apply customer_quote_line custom_amounts
+  // here; doing so caused a double-margin bug where margins were applied twice
+  // (once baked into custom_amount at save time, again by computeQuoteTotals).
   
   // Load company default currency
   const { data: company } = await supabase
@@ -236,24 +235,8 @@ export default async function QuoteSummaryPage({
 
   const _totalRoofSqm = roofAreas.reduce((sum, a) => sum + (a.computed_sqm ?? 0), 0);
   
-  // Apply customer quote line overrides to component costs
-  const componentsWithOverrides = components.map(c => {
-    const override = componentOverrides.get(c.id);
-    if (override !== undefined) {
-      // Override exists - recalculate material/labour split while preserving total
-      const totalCost = c.material_cost + c.labour_cost;
-      const ratio = totalCost > 0 ? c.material_cost / totalCost : 0.5;
-      return {
-        ...c,
-        material_cost: override * ratio,
-        labour_cost: override * (1 - ratio),
-      };
-    }
-    return c;
-  });
-  
-  const mainComps = componentsWithOverrides.filter(c => c.quote_roof_area_id);
-  const extraComps = componentsWithOverrides.filter(c => !c.quote_roof_area_id);
+  const mainComps = components.filter(c => c.quote_roof_area_id);
+  const extraComps = components.filter(c => !c.quote_roof_area_id);
 
   // Phase 5: trade-aware heading for the "no area" bucket. A generic-trade
   // quote with zero areas means every component lands in `extraComps` by
@@ -266,7 +249,7 @@ export default async function QuoteSummaryPage({
   const isGenericNoArea = quoteTrade === 'generic' && roofAreas.length === 0;
   const extrasHeading = isGenericNoArea ? 'Quote items' : 'Extras';
   
-  const engineComps = componentsWithOverrides.map(c => ({
+  const engineComps = components.map(c => ({
     id: c.id, name: c.name, componentType: c.component_type as 'main' | 'extra',
     measurementType: c.measurement_type as 'area' | 'lineal' | 'quantity' | 'fixed', inputMode: c.input_mode as 'final' | 'calculated',
     finalValue: c.final_value ?? undefined, calcRawValue: c.calc_raw_value ?? undefined,
@@ -417,6 +400,7 @@ export default async function QuoteSummaryPage({
                 companyName: quote.cq_company_name || company?.name || null,
                 quoteDate: new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' }),
               }}
+              showMarginInPreview={!!(quote as { show_margin_in_preview?: boolean | null }).show_margin_in_preview}
             />
           </>
         }
