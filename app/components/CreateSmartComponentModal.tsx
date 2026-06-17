@@ -430,10 +430,10 @@ export function CreateSmartComponentModal({
                 />
               </div>
 
-              {/* Item Cost pricing strategy (generic trades) */}
+              {/* Item Cost strategy (generic trades) */}
               {genericTradesEnabled && (
                 <div className="col-span-2">
-                  <label className="block text-xs text-slate-500 mb-1">Item Cost pricing</label>
+                  <label className="block text-xs text-slate-500 mb-1">Item Cost</label>
                   <select
                     value={formPricingStrategy}
                     onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}

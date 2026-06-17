@@ -912,7 +912,7 @@ export function ComponentList({
                   When flag off: always show the simple Item Cost field. */}
               {genericTradesEnabled && (
                 <div className="col-span-2">
-                  <label className="block text-xs text-slate-500 mb-1">Item Cost pricing</label>
+                  <label className="block text-xs text-slate-500 mb-1">Item Cost</label>
                   <select
                     value={formPricingStrategy}
                     onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
@@ -1142,10 +1142,10 @@ export function ComponentList({
                       <input name="default_labour_rate" type="number" step="0.01" defaultValue={comp.default_labour_rate ?? 0} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                     </div>
 
-                    {/* Item Cost pricing - unified: strategy dropdown drives per-unit vs pack. */}
+                    {/* Item Cost - unified: strategy dropdown drives per-unit vs pack. */}
                     {genericTradesEnabled && (
                       <div className="col-span-2">
-                        <label className="block text-xs text-slate-500 mb-1">Item Cost pricing</label>
+                        <label className="block text-xs text-slate-500 mb-1">Item Cost</label>
                         <select
                           value={formPricingStrategy}
                           onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
@@ -1361,7 +1361,7 @@ export function ComponentList({
                     <span className="text-xs text-slate-400">{MEASUREMENT_LABELS[comp.measurement_type]}</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Material: ${(comp.default_material_rate ?? 0).toFixed(2)}/{unitForMeasurement(comp.measurement_type)} · Labour: ${(comp.default_labour_rate ?? 0).toFixed(2)}/{unitForMeasurement(comp.measurement_type)}
+                    Item Cost: ${(comp.default_material_rate ?? 0).toFixed(2)}/{unitForMeasurement(comp.measurement_type)} · Labour: ${(comp.default_labour_rate ?? 0).toFixed(2)}/{unitForMeasurement(comp.measurement_type)}
                     {comp.default_waste_type !== 'none' && (
                       <> · Waste: {comp.default_waste_type === 'percent' ? `${comp.default_waste_percent}%` : `${comp.default_waste_fixed} ${unitForMeasurement(comp.measurement_type)}`}</>
                     )}
