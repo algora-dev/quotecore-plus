@@ -514,6 +514,13 @@ export default async function QuoteSummaryPage({
           <h1 className="text-2xl font-bold text-slate-900 mb-4">
             Quote #{quote.quote_number || 'DRAFT'} - Summary
           </h1>
+          {showOriginalView && originalSnapshot && (
+            <div className="mb-3">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                🔒 Original - captured {new Date(originalSnapshot.capturedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </span>
+            </div>
+          )}
           <p className="text-base text-slate-700 mb-2">{quote.customer_name}</p>
           {quote.job_name && <p className="text-sm text-slate-500 mb-2">{quote.job_name}</p>}
         </div>
@@ -614,11 +621,6 @@ export default async function QuoteSummaryPage({
         {showOriginalView && originalSnapshot ? (
           // ── ORIGINAL TAB ── Read-only view from the first-save snapshot
           <div className="pt-4 space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                🔒 Original - captured {new Date(originalSnapshot.capturedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-              </span>
-            </div>
             <div className="pt-4 border-t border-slate-300 space-y-4">
               <div className="flex justify-between text-base"><span className="text-slate-900">Total Item Cost</span><span className="text-slate-900 text-right">{formatCurrency(originalSnapshot.totalMaterials, originalSnapshot.currency)}</span></div>
               <div className="flex justify-between text-base"><span className="text-slate-900">Total Labour</span><span className="text-slate-900 text-right">{formatCurrency(originalSnapshot.totalLabour, originalSnapshot.currency)}</span></div>
