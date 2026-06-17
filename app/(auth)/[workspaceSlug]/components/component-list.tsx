@@ -637,8 +637,8 @@ export function ComponentList({
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Components</h1>
-        <p className="text-sm text-slate-500 mt-1">Manage reusable components and extras for quotes.</p>
+        <h1 className="text-2xl font-semibold text-slate-900">Smart Components™</h1>
+        <p className="text-sm text-slate-500 mt-1">Manage your Smart Components™ and extras for quotes.</p>
       </div>
       
 
@@ -736,7 +736,7 @@ export function ComponentList({
             data-copilot="add-component"
             className="inline-flex items-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
-            + Add Component
+            + Add Smart Component™
             {componentLimit !== null && (
               <span className="ml-2 text-xs font-medium text-white/80">
                 {effectiveCount}/{componentLimit}
@@ -847,7 +847,7 @@ export function ComponentList({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search components..."
+            placeholder="Search Smart Components™..."
             className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
           />
           <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -861,7 +861,7 @@ export function ComponentList({
 
            {showForm && (
         <div className="mb-4 p-4 border border-slate-200 rounded-xl bg-white">
-          <h3 className="font-semibold text-slate-900 mb-3">New Component</h3>
+          <h3 className="font-semibold text-slate-900 mb-3">New Smart Component™</h3>
           <form onSubmit={handleCreate} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div data-copilot="component-name">
@@ -1401,8 +1401,8 @@ export function ComponentList({
       {deleteCompId && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-900">Delete Component</h3>
-            <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The component will be removed from your library.</p>
+            <h3 className="text-lg font-semibold text-slate-900">Delete Smart Component™</h3>
+            <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The Smart Component™ will be removed from your library.</p>
             <div className="flex gap-3 justify-end mt-6">
               <button onClick={() => setDeleteCompId(null)} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={deleteLoading}>Cancel</button>
               <button onClick={confirmDeleteComp} className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Delete'}</button>
@@ -1414,8 +1414,8 @@ export function ComponentList({
       <UpgradeModal
         open={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}
-        title={`Component library full on ${effectivePlanCode === 'trial' ? 'the free trial' : `the ${effectivePlanCode} plan`}`}
-        description={`You've reached your ${componentLimit ?? 0} component limit. Upgrade your plan to add more reusable components to your library.`}
+        title={`Smart Components™ library full on ${effectivePlanCode === 'trial' ? 'the free trial' : `the ${effectivePlanCode} plan`}`}
+        description={`You’ve reached your ${componentLimit ?? 0} Smart Component™ limit. Upgrade your plan to add more Smart Components™ to your library.`}
         recommendedPlan="growth"
       />
 
@@ -1430,7 +1430,7 @@ export function ComponentList({
         open={subBlockedOpen}
         onClose={() => setSubBlockedOpen(false)}
         title="Your trial period has ended"
-        description="You need to subscribe to a plan to create more components. Your existing components remain viewable on any plan."
+        description="You need to subscribe to a plan to create more Smart Components™. Your existing Smart Components™ remain viewable on any plan."
         ctaLabel="View plans"
         recommendedPlan="starter"
       />

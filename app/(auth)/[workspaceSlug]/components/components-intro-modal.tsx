@@ -69,9 +69,9 @@ export function ComponentsIntroModal() {
             </svg>
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-slate-900">Welcome to your component library</h3>
+            <h3 className="text-lg font-semibold text-slate-900">Welcome to Smart Components™</h3>
             <p className="text-sm text-slate-600 mt-2">
-              We&apos;ve added 8 starter components covering the main measurement types so you can
+              We&apos;ve added 8 starter Smart Components™ covering the main measurement types so you can
               see how the system works. Feel free to edit them to match your business, or delete
               the ones you don&apos;t need. Take a look around.
             </p>

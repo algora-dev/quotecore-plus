@@ -43,6 +43,44 @@ const icon = (d: string): ReactNode => (
 );
 
 export const TUTORIALS: Tutorial[] = [
+  // 0 ------------------------------------------------------------------
+  {
+    id: 'start-here',
+    title: 'Start Here',
+    tagline: 'The three ways to build a quote, order, or invoice - pick what fits your business.',
+    icon: icon('M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'),
+    ctaLabel: 'Go to Quotes',
+    ctaHref: (b) => `${b}/quotes`,
+    workflowId: null,
+    pages: [
+      {
+        heading: 'Three ways to quote',
+        body: [
+          'QuoteCore+ gives you three systems to get information into a quote: Smart Components™, Catalogs, and Custom Lines. Combine all three, or just use 1-2. Understanding each one means you\'ll always quote fast and accurately.',
+        ],
+      },
+      {
+        heading: 'Smart Components™',
+        body: [
+          'Define your rules once - how it\'s measured, what it costs, labour, waste, and complex calculations (pitch, area, volume, length × height, and more). Enter your measurements per job; the Smart Component™ calculates the rest and populates quote lines instantly. Build it once. Use it forever.',
+        ],
+      },
+      {
+        heading: 'Catalogs',
+        body: [
+          'Upload a spreadsheet of products, labour items, or supplier prices - anything you reference when quoting. Choose which columns appear on the quote line, then search and drop any item in seconds. No more digging through PDFs or external tabs copy and pasting items.',
+        ],
+      },
+      {
+        heading: 'Custom Lines',
+        body: [
+          'Add any line manually: description, quantity, price - exactly as you want it. Slower, but completely custom.',
+          'Every line - whether from a Smart Component™, Catalog, or typed manually - can be fully edited after adding: description, quantity, price, margin, and more.',
+        ],
+      },
+    ],
+  },
+
   // 1 ------------------------------------------------------------------
   {
     id: 'quotes',
@@ -63,15 +101,15 @@ export const TUTORIALS: Tutorial[] = [
       {
         heading: 'Manual Mode',
         body: [
-          'Use saved components to quickly add lines to your quote that require pricing from measurements, items, or areas - including complex calculations for labour, materials, pitch, area squared, length x height, volume, and more.',
+          'Use saved Smart Components™ to quickly add lines to your quote that require pricing from measurements, items, or areas - including complex calculations for labour, materials, pitch, area squared, length x height, volume, and more.',
           'You can also add custom lines or catalog lines later in the customer quote editor section.',
-          'Must have components saved - see the Components tutorial.',
+          'Must have Smart Components™ saved - see the Smart Components™ tutorial.',
         ],
       },
       {
         heading: 'Digital Mode',
         body: [
-          'Measure everything in-app, on-screen, upload a plan, select the components to measure/add, and QuoteCore+ pre-populates your quote with all the info. (Digital mode also requires saved components.)',
+          'Measure everything in-app, on-screen, upload a plan, select the Smart Components™ to measure/add, and QuoteCore+ pre-populates your quote with all the info. (Digital mode also requires saved Smart Components™.)',
           'Best used with aerial images, or digital plans you would normally print off and manually measure.',
         ],
       },
@@ -79,14 +117,14 @@ export const TUTORIALS: Tutorial[] = [
         heading: 'Blank Quote Mode',
         body: [
           'Start from an empty quote, add custom typed lines, or add lines from catalog/components freely - the simplest way to start quoting.',
-          'Blank quotes suit users not needing complex measuring or components. You can write each line, or populate a line from an uploaded catalog/saved component by searching it.',
+          'Blank quotes suit users not needing complex measuring or Smart Components™. You can write each line, or populate a line from an uploaded catalog/saved Smart Component™ by searching it.',
         ],
       },
       {
         heading: 'Then what',
         body: [
           'Save, preview, edit, then send to your customer by link or email.',
-          'See the "Sending" tutorial for how delivery and tracking work, and the "Components" or "Catalog" tutorials to learn how and why each of these powerful tools can help you create quotes faster and more accurately.',
+          'See the "Sending" tutorial for how delivery and tracking work, and the "Smart Components™" or "Catalog" tutorials to learn how and why each of these powerful tools can help you create quotes faster and more accurately.',
         ],
       },
     ],
@@ -137,33 +175,33 @@ export const TUTORIALS: Tutorial[] = [
   // 3 ------------------------------------------------------------------
   {
     id: 'components',
-    title: 'Components',
-    tagline: 'Reusable priced building blocks for fast, consistent quoting.',
+    title: 'Smart Components™',
+    tagline: 'Build them once, use them forever - your rules, your pricing, your calculations.',
     icon: icon('M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10'),
-    ctaLabel: 'Go to Components',
+    ctaLabel: 'Go to Smart Components™',
     ctaHref: (b) => `${b}/components`,
     workflowId: 'components',
     pages: [
       {
         heading: 'What & why',
         body: [
-          'A component is a saved item with your material + labour rates, waste %, and how it’s measured (per m², per metre, each…).',
+          'A Smart Component™ is a saved item with your material + labour rates, waste %, and how it’s measured (per m², per metre, each...).',
           'Build them once, reuse on every quote - consistent pricing, no re-typing.',
         ],
       },
       {
         heading: 'How to use',
         body: [
-          'Create components in Resources → Components.',
-          'When quoting in Digital Mode, your measurements pull the right components and price automatically.',
-          'You can also drop a component straight onto any quote or order line.',
+          'Create Smart Components™ in Resources → Smart Components™.',
+          'When quoting in Digital Mode, your measurements pull the right Smart Components™ and price automatically.',
+          'You can also drop a Smart Component™ straight onto any quote or order line.',
         ],
       },
       {
         heading: 'When',
         body: [
-          'Set up your common components first (the app seeds starter components so you can see and edit working examples).',
-          'Edit components any time - new quotes use the latest.',
+          'Set up your Smart Components™ first (the app seeds starter examples so you can see and edit working ones).',
+          'Edit Smart Components™ any time - new quotes use the latest.',
         ],
       },
     ],

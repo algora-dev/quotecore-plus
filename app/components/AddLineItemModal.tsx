@@ -263,7 +263,7 @@ export function AddLineItemModal({
                   : 'text-slate-500 hover:text-slate-900'
               }`}
             >
-              {m === 'component' ? 'Component' : m.charAt(0).toUpperCase() + m.slice(1)}
+              {m === 'component' ? 'Smart Component™' : m.charAt(0).toUpperCase() + m.slice(1)}
             </button>
           ))}
         </div>
@@ -468,7 +468,7 @@ export function AddLineItemModal({
               )}
               <div className="max-h-48 overflow-y-auto rounded-lg border border-slate-200 divide-y divide-slate-100">
                 {filteredComponents.length === 0 ? (
-                  <p className="p-4 text-sm text-slate-400 text-center">No components found.</p>
+                  <p className="p-4 text-sm text-slate-400 text-center">No Smart Components™ found.</p>
                 ) : (
                   filteredComponents.map((comp) => (
                     <button
