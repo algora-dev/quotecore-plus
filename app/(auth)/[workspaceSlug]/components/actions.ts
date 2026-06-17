@@ -183,7 +183,8 @@ export async function createComponent(input: ComponentLibraryInsert): Promise<Cr
     return { ok: false, code: 'internal_error', message: `${error.message} (Code: ${error.code})` };
   }
 
-  revalidatePath('/components');
+  // Revalidate all workspace-scoped /components pages (dynamic [workspaceSlug] segment).
+  revalidatePath('/[workspaceSlug]/components', 'page');
   return { ok: true, data };
 }
 
@@ -242,7 +243,7 @@ export async function updateComponent(id: string, input: Partial<ComponentLibrar
     .single();
   
   if (error) throw new Error(error.message);
-  revalidatePath('/components');
+  revalidatePath('/[workspaceSlug]/components', 'page');
   return data;
 }
 
@@ -255,7 +256,7 @@ export async function deleteComponent(id: string) {
     .eq('id', id)
     .eq('company_id', profile.company_id);
   if (error) throw new Error(error.message);
-  revalidatePath('/components');
+  revalidatePath('/[workspaceSlug]/components', 'page');
 }
 
 /**

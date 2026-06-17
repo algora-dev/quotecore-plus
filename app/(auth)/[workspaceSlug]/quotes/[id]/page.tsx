@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadAllEntriesForQuote, loadAllRoofAreaEntriesForQuote } from '../actions';
-import { loadComponentLibrary } from '../../components/actions';
+import { loadComponentLibrary, loadComponentCollections } from '../../components/actions';
 import { QuoteBuilder } from './quote-builder';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { getSignedUrl, getSignedUrls } from '@/app/lib/storage/helpers';
@@ -30,7 +30,7 @@ export default async function QuoteBuilderPage({
     redirect(`/${workspaceSlug}/quotes/${id}/blank-build`);
   }
   // Load remaining data for v1 (manual mode)
-  const [roofAreas, roofAreaEntries, components, libraryComponents, entries, takeoffData, ent] = await Promise.all([
+  const [roofAreas, roofAreaEntries, components, libraryComponents, entries, takeoffData, ent, collections] = await Promise.all([
     loadQuoteRoofAreas(id),
     loadAllRoofAreaEntriesForQuote(id),
     loadQuoteComponents(id),
@@ -38,19 +38,22 @@ export default async function QuoteBuilderPage({
     loadAllEntriesForQuote(id),
     loadTakeoffMeasurements(id),
     loadCompanyEntitlements(quote.company_id),
+    loadComponentCollections(),
   ]);
   
   console.log('[QuoteBuilderPage] Loaded components:', components.length, components.map(c => c.name));
   
   const supabase = await createSupabaseServerClient();
   
-  // Load company default currency
+  // Load company defaults (currency, measurement system, trade)
   const { data: company } = await supabase
     .from('companies')
-    .select('default_currency')
+    .select('default_currency, default_measurement_system, default_trade')
     .eq('id', quote.company_id)
     .single();
   const companyDefaultCurrency = company?.default_currency || 'NZD';
+  const companyMeasurementSystem = (company as { default_measurement_system?: string } | null)?.default_measurement_system || 'metric';
+  const companyDefaultTrade = (company as { default_trade?: string } | null)?.default_trade || 'roofing';
   
   // Load roof plan (if exists)
   const { data: planFile } = await supabase
@@ -102,6 +105,9 @@ export default async function QuoteBuilderPage({
       libraryComponents={libraryComponents}
       workspaceSlug={workspaceSlug}
       companyDefaultCurrency={companyDefaultCurrency}
+      companyMeasurementSystem={companyMeasurementSystem as any}
+      companyDefaultTrade={companyDefaultTrade}
+      collections={collections}
       planUrl={planUrl}
       planName={planName}
       supportingFiles={supportingFiles}
