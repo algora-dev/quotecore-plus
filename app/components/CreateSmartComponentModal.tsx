@@ -180,8 +180,8 @@ export function CreateSmartComponentModal({
   const pitchRafterLabel = tradeLabels.pitchRafterLabel ?? 'Rafter Pitch';
   const isRoofingTrade = defaultTrade === 'roofing';
   const featureLabel = tradeLabels.featureLabel ?? 'Flashings';
-  const imageAssignLabel = isRoofingTrade ? 'Assign Flashings (Optional)' : 'Assign Image (Optional)';
-  const imageSelectPlaceholder = isRoofingTrade ? 'Select a flashing...' : 'Select an image...';
+  const imageAssignLabel = 'Assign Images (Optional)';
+  const imageSelectPlaceholder = 'Select an image...';
   const imageHelperText = isRoofingTrade
     ? 'Add flashing drawings to use in material order forms'
     : 'Add images/drawings to use in material order forms';
@@ -430,10 +430,10 @@ export function CreateSmartComponentModal({
                 />
               </div>
 
-              {/* Material pricing strategy (generic trades) */}
+              {/* Item Cost pricing strategy (generic trades) */}
               {genericTradesEnabled && (
                 <div className="col-span-2">
-                  <label className="block text-xs text-slate-500 mb-1">Material pricing</label>
+                  <label className="block text-xs text-slate-500 mb-1">Item Cost pricing</label>
                   <select
                     value={formPricingStrategy}
                     onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
@@ -446,11 +446,11 @@ export function CreateSmartComponentModal({
                 </div>
               )}
 
-              {/* Per-unit material rate */}
+              {/* Per-unit item cost */}
               {(!genericTradesEnabled || formPricingStrategy === 'per_unit') && (
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">
-                    Material Price ({unitForMeasurement(formMeasurementType)})
+                    Item Cost ({unitForMeasurement(formMeasurementType)})
                   </label>
                   <input
                     name="default_material_rate"

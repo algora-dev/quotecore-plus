@@ -162,8 +162,8 @@ export function ComponentList({
   // Drawing-library feature label: 'Flashings' for roofing, 'Drawings & Images' for all others.
   const featureLabel = _tradeLabels.featureLabel ?? 'Flashings';
   const featureLabelSingular = _tradeLabels.featureLabelSingular ?? 'Flashing';
-  const imageAssignLabel = isRoofingTrade ? 'Assign Flashings (Optional)' : 'Assign Image (Optional)';
-  const imageSelectPlaceholder = isRoofingTrade ? 'Select a flashing...' : 'Select an image...';
+  const imageAssignLabel = 'Assign Images (Optional)';
+  const imageSelectPlaceholder = 'Select an image...';
   const imageHelperText = isRoofingTrade ? 'Add flashing drawings to use in material order forms' : 'Add images/drawings to use in material order forms';
   /** Local helper that picks the right unit suffix for a measurement type given the company's default system. */
   const unitForMeasurement = (mt: MeasurementType) =>
@@ -906,13 +906,13 @@ export function ComponentList({
                 <input name="default_labour_rate" type="number" step="0.01" placeholder="0" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
               </div>
 
-              {/* Material pricing: single source of truth.
+              {/* Item Cost pricing: single source of truth.
                   When generic trades on: pricing strategy dropdown drives whether
-                  we show per-unit Material Price OR pack price/size fields.
-                  When flag off: always show the simple Material Price field. */}
+                  we show per-unit Item Cost OR pack price/size fields.
+                  When flag off: always show the simple Item Cost field. */}
               {genericTradesEnabled && (
                 <div className="col-span-2">
-                  <label className="block text-xs text-slate-500 mb-1">Material pricing</label>
+                  <label className="block text-xs text-slate-500 mb-1">Item Cost pricing</label>
                   <select
                     value={formPricingStrategy}
                     onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
@@ -926,7 +926,7 @@ export function ComponentList({
               )}
               {(!genericTradesEnabled || formPricingStrategy === 'per_unit') && (
                 <div data-copilot="component-rates">
-                  <label className="block text-xs text-slate-500 mb-1">Material Price ({unitForMeasurement(formMeasurementType)})</label>
+                  <label className="block text-xs text-slate-500 mb-1">Item Cost ({unitForMeasurement(formMeasurementType)})</label>
                   <input name="default_material_rate" type="number" step="0.01" placeholder="0" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
                 </div>
               )}
@@ -1142,10 +1142,10 @@ export function ComponentList({
                       <input name="default_labour_rate" type="number" step="0.01" defaultValue={comp.default_labour_rate ?? 0} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                     </div>
 
-                    {/* Material pricing - unified: strategy dropdown drives per-unit vs pack. */}
+                    {/* Item Cost pricing - unified: strategy dropdown drives per-unit vs pack. */}
                     {genericTradesEnabled && (
                       <div className="col-span-2">
-                        <label className="block text-xs text-slate-500 mb-1">Material pricing</label>
+                        <label className="block text-xs text-slate-500 mb-1">Item Cost pricing</label>
                         <select
                           value={formPricingStrategy}
                           onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
@@ -1159,7 +1159,7 @@ export function ComponentList({
                     )}
                     {(!genericTradesEnabled || formPricingStrategy === 'per_unit') && (
                       <div>
-                        <label className="block text-xs text-slate-500 mb-1">Material Price ({unitForMeasurement(formMeasurementType)})</label>
+                        <label className="block text-xs text-slate-500 mb-1">Item Cost ({unitForMeasurement(formMeasurementType)})</label>
                         <input name="default_material_rate" type="number" step="0.01" defaultValue={comp.default_material_rate ?? 0} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                       </div>
                     )}

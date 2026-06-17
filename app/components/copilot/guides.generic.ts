@@ -56,8 +56,8 @@ export const COPILOT_GUIDES_GENERIC: CopilotGuide[] = [
       {
         id: 'components-material-rate',
         target: '[data-copilot="component-rates"]',
-        title: 'Material Price',
-        description: 'Set the price per unit for materials. For example, _wall cladding might be $25/m\u00B2. This rate auto-calculates material totals in your quotes based on measurements._ Be sure to calculate for material cover.',
+        title: 'Item Cost',
+        description: 'Set the item cost per unit. For example, _wall cladding might be $25/m\u00B2. This rate auto-calculates item cost totals in your quotes based on measurements._ Be sure to calculate for material cover.',
         position: 'right',
         page: '/components',
         validation: 'input',
