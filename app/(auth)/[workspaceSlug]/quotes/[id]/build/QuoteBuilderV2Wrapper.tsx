@@ -22,6 +22,9 @@ interface Props {
   libraryComponents: ComponentLibraryRow[];
   workspaceSlug: string;
   companyDefaultCurrency: string;
+  companyMeasurementSystem: string;
+  companyDefaultTrade: string;
+  collections: { id: string; name: string; is_bootstrap: boolean }[];
   planUrl: string | null;
   planName: string | null;
   supportingFiles: SupportingFile[];
@@ -47,7 +50,7 @@ const phaseToStep: Record<Phase, string> = {
   'review': 'review',
 };
 
-export function QuoteBuilderV2Wrapper(props: Props) {
+export function QuoteBuilderV2Wrapper({ companyMeasurementSystem, companyDefaultTrade, collections, ...props }: Props) {
   const searchParams = useSearchParams();
   const [phase, setPhase] = useState<Phase>(stepToPhase[props.initialStep] || 'areas');
 
@@ -84,6 +87,9 @@ export function QuoteBuilderV2Wrapper(props: Props) {
   return (
     <QuoteBuilder
       {...builderProps}
+      companyMeasurementSystem={companyMeasurementSystem as any}
+      companyDefaultTrade={companyDefaultTrade}
+      collections={collections}
       externalPhase={phase}
       onPhaseChange={handlePhaseChange}
     />

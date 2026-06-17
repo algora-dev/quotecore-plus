@@ -26,6 +26,8 @@ import { CurrencySelector } from './CurrencySelector';
 import { FilesManager } from './FilesManager';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
+import { CreateSmartComponentModal } from '@/app/components/CreateSmartComponentModal';
+import type { MeasurementSystem } from '@/app/lib/types';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
 
@@ -58,6 +60,10 @@ interface Props {
   onPhaseChange?: (phase: Phase) => void; // NEW: Callback when phase changes
   /** When true the company is over storage - block file uploads. */
   isOverStorage?: boolean;
+  /** Company defaults for mid-quote Smart Component™ creation. */
+  companyMeasurementSystem?: MeasurementSystem;
+  companyDefaultTrade?: string;
+  collections?: { id: string; name: string; is_bootstrap: boolean }[];
 }
 
 export function QuoteBuilder({
@@ -79,6 +85,9 @@ export function QuoteBuilder({
   externalPhase,
   onPhaseChange,
   isOverStorage,
+  companyMeasurementSystem = 'metric',
+  companyDefaultTrade = 'roofing',
+  collections = [],
 }: Props) {
   console.log('[QuoteBuilder] Received components:', initialComponents.length, initialComponents.map(c => ({ name: c.name, type: c.component_type })));
   const [internalPhase, setInternalPhase] = useState<Phase>('areas');
@@ -117,6 +126,13 @@ export function QuoteBuilder({
   const [roofAreaEntries, setRoofAreaEntries] = useState(initialRoofAreaEntries);
   const [components, setComponents] = useState(initialComponents);
   const [entries, setEntries] = useState(initialEntries);
+  // localLibrary: lifted from prop so newly-created mid-quote components are
+  // immediately available for future adds in the same session.
+  const [localLibrary, setLocalLibrary] = useState<ComponentLibraryRow[]>(libraryComponents);
+  // Mid-quote Smart Component™ creation modal state.
+  const [showCreateComponentModal, setShowCreateComponentModal] = useState(false);
+  const [createCompForAreaId, setCreateCompForAreaId] = useState<string | null>(null);
+  const [createCompType, setCreateCompType] = useState<'main' | 'extra'>('main');
   const [newAreaLabel, setNewAreaLabel] = useState('');
   const [areaPendingDelete, setAreaPendingDelete] = useState<{ id: string; label: string } | null>(null);
   const [areaDeleting, setAreaDeleting] = useState(false);
@@ -236,7 +252,7 @@ export function QuoteBuilder({
   }
 
   async function handleAddFromLibrary(libId: string, areaId: string | null, type: 'main' | 'extra') {
-    const lib = libraryComponents.find(c => c.id === libId);
+    const lib = localLibrary.find(c => c.id === libId);
     if (!lib) return;
     const created = await addQuoteComponent(quote.id, {
       quote_roof_area_id: areaId ?? undefined,
@@ -253,6 +269,33 @@ export function QuoteBuilder({
     });
     setComponents(prev => [...prev, created]);
     setEntries(prev => ({ ...prev, [created.id]: [] }));
+  }
+
+  /**
+   * Called when a new Smart Component™ is created mid-quote via the modal.
+   * Adds to localLibrary (so it’s available for future adds this session)
+   * then immediately creates the quote_component row.
+   */
+  async function handleComponentCreated(comp: ComponentLibraryRow) {
+    setLocalLibrary(prev => [...prev, comp]);
+    // Directly create the quote component from the returned library row
+    // (avoids relying on the state update being synchronous).
+    const created = await addQuoteComponent(quote.id, {
+      quote_roof_area_id: createCompForAreaId ?? undefined,
+      component_library_id: comp.id,
+      name: comp.name,
+      component_type: createCompType,
+      measurement_type: comp.measurement_type,
+      material_rate: comp.default_material_rate,
+      labour_rate: comp.default_labour_rate,
+      waste_type: comp.default_waste_type,
+      waste_percent: comp.default_waste_percent,
+      waste_fixed: comp.default_waste_fixed,
+      pitch_type: comp.default_pitch_type,
+    });
+    setComponents(prev => [...prev, created]);
+    setEntries(prev => ({ ...prev, [created.id]: [] }));
+    setShowCreateComponentModal(false);
   }
 
   async function handleRemoveComponent(id: string) {
@@ -611,8 +654,9 @@ export function QuoteBuilder({
                 />
               ))}
               <AddFromLibrary
-                library={libraryComponents}
+                library={localLibrary}
                 onAdd={libId => handleAddFromLibrary(libId, null, 'main')}
+                onCreateNew={() => { setCreateCompForAreaId(null); setCreateCompType('main'); setShowCreateComponentModal(true); }}
                 copilotId="quote-add-from-library"
               />
             </div>
@@ -648,8 +692,9 @@ export function QuoteBuilder({
                   />
                 ))}
                 <AddFromLibrary
-                  library={libraryComponents.filter(c => c.component_type === 'main')}
+                  library={localLibrary.filter(c => c.component_type === 'main')}
                   onAdd={libId => handleAddFromLibrary(libId, area.id, 'main')}
+                  onCreateNew={() => { setCreateCompForAreaId(area.id); setCreateCompType('main'); setShowCreateComponentModal(true); }}
                   copilotId={areaIdx === 0 ? 'quote-add-from-library' : undefined}
                 />
               </div>
@@ -700,8 +745,9 @@ export function QuoteBuilder({
               />
             ))}
             <AddFromLibrary
-              library={libraryComponents.filter(c => c.component_type === 'extra')}
+              library={localLibrary.filter(c => c.component_type === 'extra')}
               onAdd={libId => handleAddFromLibrary(libId, null, 'extra')}
+              onCreateNew={() => { setCreateCompForAreaId(null); setCreateCompType('extra'); setShowCreateComponentModal(true); }}
             />
           </div>
           <div className="flex justify-between">
@@ -1021,6 +1067,16 @@ export function QuoteBuilder({
       onCancel={() => { if (!areaDeleting) setAreaPendingDelete(null); }}
       onConfirm={confirmRemoveArea}
     />
+    {showCreateComponentModal && (
+      <CreateSmartComponentModal
+        measurementSystem={companyMeasurementSystem}
+        defaultTrade={companyDefaultTrade}
+        defaultComponentType={createCompType}
+        collections={collections}
+        onCreated={handleComponentCreated}
+        onClose={() => setShowCreateComponentModal(false)}
+      />
+    )}
     </>
   );
 }
@@ -1706,13 +1762,17 @@ function ExpandableComponent({
   );
 }
 
+const CREATE_NEW_COMPONENT_ID = '__create_new_component__';
+
 function AddFromLibrary({
   library,
   onAdd,
-  copilotId
+  onCreateNew,
+  copilotId,
 }: {
   library: ComponentLibraryRow[];
   onAdd: (id: string) => Promise<void>;
+  onCreateNew?: () => void;
   copilotId?: string;
 }) {
   const [sel, setSel] = useState('');
@@ -1720,10 +1780,21 @@ function AddFromLibrary({
     <div className="flex gap-2" {...(copilotId ? { 'data-copilot': copilotId } : {})}>
       <select
         value={sel}
-        onChange={e => setSel(e.target.value)}
+        onChange={e => {
+          const val = e.target.value;
+          if (val === CREATE_NEW_COMPONENT_ID) {
+            setSel('');
+            onCreateNew?.();
+          } else {
+            setSel(val);
+          }
+        }}
         className="flex-1 px-2 py-1 text-xs border border-slate-300 rounded"
       >
         <option value="">Add from library...</option>
+        {onCreateNew && (
+          <option value={CREATE_NEW_COMPONENT_ID}>+ Create new Smart Component™</option>
+        )}
         {library.map(c => (
           <option key={c.id} value={c.id}>
             {c.name} ({c.measurement_type})
