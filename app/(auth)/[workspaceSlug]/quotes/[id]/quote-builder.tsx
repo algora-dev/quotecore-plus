@@ -571,7 +571,7 @@ export function QuoteBuilder({
 
       <div className="flex gap-4 p-3 bg-slate-50 rounded-lg text-sm">
         <span>{tradeLabels.areaSingularLabel}: <strong>{formatArea(totalRoofSqm, quote.measurement_system)}</strong></span>
-        <span>Materials: <strong>{formatCurrency(totals.totalMaterials, effectiveCurrency)}</strong></span>
+        <span>Item Cost: <strong>{formatCurrency(totals.totalMaterials, effectiveCurrency)}</strong></span>
         <span>Labour: <strong>{formatCurrency(totals.totalLabour, effectiveCurrency)}</strong></span>
         <span className="ml-auto font-semibold">Total: {formatCurrency(totals.grandTotal, effectiveCurrency)}</span>
       </div>
