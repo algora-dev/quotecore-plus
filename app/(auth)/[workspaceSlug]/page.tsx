@@ -74,12 +74,12 @@ export default async function WorkspaceHome({
       ),
     },
     {
-      title: 'Flashings',
-      description: 'Add new drawings for orders',
-      href: `/${workspaceSlug}/flashings`,
+      title: 'Invoices',
+      description: 'Create and manage customer invoices',
+      href: `/${workspaceSlug}/invoices`,
       icon: (
         <svg className="w-6 h-6 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
         </svg>
       ),
     },
