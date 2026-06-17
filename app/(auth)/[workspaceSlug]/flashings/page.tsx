@@ -73,8 +73,8 @@ export default async function FlashingsPage(props: Props) {
     <section className="space-y-5">
       <BackButton />
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">{featureLabel}</h1>
-        <p className="text-sm text-slate-500 mt-1">Manage {featureLabelSingular.toLowerCase()} designs for material orders.</p>
+        <h1 className="text-2xl font-semibold text-slate-900">Drawings/Images</h1>
+        <p className="text-sm text-slate-500 mt-1">Manage drawing and image designs to attach to material orders.</p>
       </div>
       <FlashingList
         initialFlashings={flashings}

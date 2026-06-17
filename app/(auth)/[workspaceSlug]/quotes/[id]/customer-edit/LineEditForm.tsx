@@ -354,7 +354,7 @@ export function LineEditForm({
           {/* Material / Profit Margin */}
           <div className="flex items-center gap-1.5">
             <label className="text-xs text-slate-500 whitespace-nowrap">
-              {showLaborMarginField ? 'Material' : 'Margin'}
+              {showLaborMarginField ? 'Item Cost' : 'Margin'}
             </label>
             <input
               type="number"
@@ -386,7 +386,7 @@ export function LineEditForm({
         </div>
         <p className="text-xs text-slate-400">
           {showLaborMarginField
-            ? 'Adjust material and labor margins for this line. Changing these updates the price above.'
+            ? 'Adjust item cost and labour margins for this line. Changing these updates the price above.'
             : 'Adjust the profit margin for this line. Changing this updates the price above.'}
         </p>
       </div>

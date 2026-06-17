@@ -1102,14 +1102,14 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 <p className="text-xs text-slate-500 mt-0.5">
                   {isBlankQuote
                     ? 'Applies a global markup to all line prices.'
-                    : 'Material and labor margins applied to all lines. Per-line overrides available via the pencil editor.'}
+                    : 'Item Cost and labour margins applied to all lines. Per-line overrides available via the pencil editor.'}
                 </p>
               </div>
 
               {/* Material margin */}
               <div className="flex items-center gap-3">
                 <label className="text-xs text-slate-600 whitespace-nowrap w-24">
-                  {isBlankQuote ? 'Global' : 'Material'} margin
+                  {isBlankQuote ? 'Global' : 'Item Cost'} margin
                 </label>
                 <div className="flex items-center gap-1.5 flex-1">
                   <input

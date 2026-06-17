@@ -32,7 +32,7 @@ export function ConfirmQuoteButton({ quoteId, workspaceSlug, quoteStatus, onBefo
       // non-fatal: margins failed to save but we still proceed
     }
     setPending(false);
-    formRef.current?.submit();
+    formRef.current?.requestSubmit();
   }
 
   return (

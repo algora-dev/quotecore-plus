@@ -781,7 +781,7 @@ export function QuoteBuilder({
                         <th className="py-1">Component</th>
                         <th className="py-1 text-right">Entries</th>
                         <th className="py-1 text-right">Total Qty</th>
-                        <th className="py-1 text-right">Material</th>
+                        <th className="py-1 text-right">Item Cost</th>
                         <th className="py-1 text-right">Labour</th>
                         <th className="py-1 text-right">Total</th>
                       </tr>
@@ -830,7 +830,7 @@ export function QuoteBuilder({
                       <th className="py-1">Component</th>
                       <th className="py-1 text-right">Entries</th>
                       <th className="py-1 text-right">Total Qty</th>
-                      <th className="py-1 text-right">Material</th>
+                      <th className="py-1 text-right">Item Cost</th>
                       <th className="py-1 text-right">Labour</th>
                       <th className="py-1 text-right">Total</th>
                     </tr>
@@ -861,7 +861,7 @@ export function QuoteBuilder({
                     <th className="py-1">Extra</th>
                     <th className="py-1 text-right">Entries</th>
                     <th className="py-1 text-right">Total Qty</th>
-                    <th className="py-1 text-right">Material</th>
+                    <th className="py-1 text-right">Item Cost</th>
                     <th className="py-1 text-right">Labour</th>
                     <th className="py-1 text-right">Total</th>
                   </tr>

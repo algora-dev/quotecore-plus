@@ -185,7 +185,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         heading: 'What & why',
         body: [
-          'A Smart Component™ is a saved item with your material + labour rates, waste %, and how it’s measured (per m², per metre, each...).',
+          'A Smart Component™ is a saved item with your item cost + labour rates, waste %, and how it’s measured (per m², per metre, each...).', 
           'Build them once, reuse on every quote - consistent pricing, no re-typing.',
         ],
       },

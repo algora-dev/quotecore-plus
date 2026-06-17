@@ -88,7 +88,7 @@ export function CompanySettingsForm({
     const labMargin = parseFloat(laborMargin);
 
     if (isNaN(matMargin) || matMargin < 0 || matMargin > 100) {
-      setSaveMessage({ type: 'error', text: 'Material margin must be between 0 and 100%' });
+      setSaveMessage({ type: 'error', text: 'Item Cost margin must be between 0 and 100%' });
       return;
     }
 
@@ -326,12 +326,12 @@ export function CompanySettingsForm({
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Material Margin */}
+          {/* Item Cost Margin */}
           <div className="space-y-2">
             <label className="block">
-              <span className="text-sm font-semibold text-gray-900">Material Margin</span>
+              <span className="text-sm font-semibold text-gray-900">Item Cost Margin</span>
               <p className="text-xs text-gray-600 mt-1 mb-2">
-                Profit margin added to material costs
+                Profit margin added to item costs
               </p>
               <div className="relative">
                 <input

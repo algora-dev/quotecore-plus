@@ -272,7 +272,7 @@ export function QuotePreview({
         {/* Material margin row */}
         {materialMarginDisplay != null && globalMarginPercent != null && globalMarginPercent > 0 && (
           <div className="flex justify-between text-sm">
-            <span className="text-slate-400 italic">Material margin ({globalMarginPercent}%)</span>
+            <span className="text-slate-400 italic">Item Cost margin ({globalMarginPercent}%)</span>
             <span className="text-slate-400 italic">{formatCurrency(materialMarginDisplay, currency)} incl.</span>
           </div>
         )}
