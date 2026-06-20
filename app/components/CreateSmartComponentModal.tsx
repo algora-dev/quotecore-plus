@@ -43,11 +43,11 @@ function buildMeasurementLabels(system: MeasurementSystem): Record<MeasurementTy
   const volumeUnit = norm === 'metric' ? 'm³' : 'ft³';
   return {
     area: `Area (${areaUnit})`,
-    lineal: `Linear (${linealUnit})`,
-    linear: `Linear (${linealUnit})`,
+    lineal: `Linear: Single (${linealUnit})`,
+    linear: `Linear: Single (${linealUnit})`,
     quantity: 'Quantity',
     fixed: 'Fixed',
-    length_x_height: `Length × Height (${areaUnit})`,
+    length_x_height: `Length x Height: Single (${areaUnit})`,
     volume: `Volume - Preset Depth (${volumeUnit})`,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     volume_3d: `Volume (${volumeUnit})`,
@@ -55,10 +55,10 @@ function buildMeasurementLabels(system: MeasurementSystem): Record<MeasurementTy
     count: 'Count (each)',
     curved_line: `Curved Line (${linealUnit})`,
     irregular_area: `Irregular Area (${areaUnit})`,
-    multi_lineal: `Multi-Line Total (${linealUnit})`,
-    multi_lineal_lxh: `Multi-Line Height x Length (${areaUnit})`,
-    length_x_height_freestyle: `Length × Height - Freestyle (${areaUnit})`,
-    multi_lineal_lxh_freestyle: `Multi-Line Height × Length - Freestyle (${areaUnit})`,
+    multi_lineal: `Linear: Multi-Length (${linealUnit})`,
+    multi_lineal_lxh: `Length x Height: Multi-Length (${areaUnit})`,
+    length_x_height_freestyle: `Length x Height: Custom (${areaUnit})`,
+    multi_lineal_lxh_freestyle: `Length x Height: Multi-Length Custom (${areaUnit})`,
   };
 }
 

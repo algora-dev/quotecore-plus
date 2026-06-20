@@ -2114,7 +2114,6 @@ export function FlashingCanvas({
         return (
           <div
             className="fixed inset-0 backdrop-blur-md bg-slate-900/20 flex items-center justify-center z-50"
-            onClick={close}
           >
             <div
               className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md border border-slate-200"

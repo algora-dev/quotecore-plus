@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection } from './actions';
+import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection } from './actions';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
 import type {
   ComponentLibraryRow,
@@ -32,16 +32,16 @@ function buildMeasurementLabels(system: MeasurementSystem): Record<MeasurementTy
   const volumeUnit = norm === 'metric' ? 'm³' : 'ft³';
   return {
     area: `Area (${areaUnit})`,
-    lineal: `Linear (${linealUnit})`,
+    lineal: `Linear: Single (${linealUnit})`,
     // `linear` is the legacy enum value (zero rows in production). Kept in
     // the lookup so an unmigrated row would still render a label rather
     // than crashing; new code uses `lineal`.
-    linear: `Linear (${linealUnit})`,
+    linear: `Linear: Single (${linealUnit})`,
     quantity: 'Quantity',
     fixed: 'Fixed',
     // Phase 2 (Generic Trades) additions. Visible in the dropdown only when
     // NEXT_PUBLIC_GENERIC_TRADES_V1 is on; otherwise filtered out below.
-    length_x_height: `Length × Height (${areaUnit})`,
+    length_x_height: `Length x Height: Single (${areaUnit})`,
     volume: `Volume - Preset Depth (${volumeUnit})`,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     volume_3d: `Volume (${volumeUnit})`,
@@ -49,10 +49,10 @@ function buildMeasurementLabels(system: MeasurementSystem): Record<MeasurementTy
     count: 'Count (each)',
     curved_line: `Curved Line (${linealUnit})`,
     irregular_area: `Irregular Area (${areaUnit})`,
-    multi_lineal: `Multi-Line Total (${linealUnit})`,
-    multi_lineal_lxh: `Multi-Line Height x Length (${areaUnit})`,
-    length_x_height_freestyle: `Length × Height - Freestyle (${areaUnit})`,
-    multi_lineal_lxh_freestyle: `Multi-Line Height × Length - Freestyle (${areaUnit})`,
+    multi_lineal: `Linear: Multi-Length (${linealUnit})`,
+    multi_lineal_lxh: `Length x Height: Multi-Length (${areaUnit})`,
+    length_x_height_freestyle: `Length x Height: Custom (${areaUnit})`,
+    multi_lineal_lxh_freestyle: `Length x Height: Multi-Length Custom (${areaUnit})`,
   };
 }
 
@@ -234,6 +234,10 @@ export function ComponentList({
   const [renameValue, setRenameValue] = useState('');
   const [renaming, setRenaming] = useState(false);
 
+  // Delete library state
+  const [deletingLibraryId, setDeletingLibraryId] = useState<string | null>(null);
+  const [deleteLibraryLoading, setDeleteLibraryLoading] = useState(false);
+
   // Form state for dynamic fields
   const [formWasteType, setFormWasteType] = useState<WasteType>('none');
   const [formMeasurementType, setFormMeasurementType] = useState<MeasurementType>('area');
@@ -348,6 +352,25 @@ export function ComponentList({
 
   function removeFlashing(flashingId: string) {
     setAssignedFlashings(prev => prev.filter(id => id !== flashingId));
+  }
+
+  async function handleDeleteLibrary() {
+    if (!deletingLibraryId) return;
+    setDeleteLibraryLoading(true);
+    const result = await deleteComponentCollection(deletingLibraryId);
+    setDeleteLibraryLoading(false);
+    if (!result.ok) {
+      alert(result.message);
+      setDeletingLibraryId(null);
+      return;
+    }
+    setCollections(prev => prev.filter(c => c.id !== deletingLibraryId));
+    // If the deleted library was active, fall back to the default library.
+    if (activeLibraryId === deletingLibraryId) {
+      const fallback = collections.find(c => c.is_bootstrap && c.id !== deletingLibraryId);
+      setActiveLibraryId(fallback?.id ?? '');
+    }
+    setDeletingLibraryId(null);
   }
 
   async function handleRenameLibrary() {
@@ -683,20 +706,38 @@ export function ComponentList({
                   : 'All Libraries'}
               </span>
               {activeLibraryId && (
-                <button
-                  type="button"
-                  title="Rename library"
-                  onClick={() => {
-                    const col = collections.find(c => c.id === activeLibraryId);
-                    if (col) { setRenamingLibraryId(activeLibraryId); setRenameValue(col.name); }
-                  }}
-                  className="text-slate-400 hover:text-orange-500 transition-colors"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    title="Rename library"
+                    onClick={() => {
+                      const col = collections.find(c => c.id === activeLibraryId);
+                      if (col) { setRenamingLibraryId(activeLibraryId); setRenameValue(col.name); }
+                    }}
+                    className="text-slate-400 hover:text-orange-500 transition-colors"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                  </button>
+                  {!collections.find(c => c.id === activeLibraryId)?.is_bootstrap && (
+                    <button
+                      type="button"
+                      title="Delete library"
+                      onClick={() => setDeletingLibraryId(activeLibraryId)}
+                      className="text-slate-400 hover:text-red-500 transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <path d="M10 11v6" />
+                        <path d="M14 11v6" />
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                      </svg>
+                    </button>
+                  )}
+                </>
               )}
             </>
           )}
@@ -1406,6 +1447,34 @@ export function ComponentList({
             <div className="flex gap-3 justify-end mt-6">
               <button onClick={() => setDeleteCompId(null)} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={deleteLoading}>Cancel</button>
               <button onClick={confirmDeleteComp} className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Delete'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Library Confirm Modal */}
+      {deletingLibraryId && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">Delete Library</h3>
+            <p className="text-sm text-slate-500 mt-2">
+              Are you sure? You will lose all the components in the library. This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end mt-6">
+              <button
+                onClick={() => setDeletingLibraryId(null)}
+                disabled={deleteLibraryLoading}
+                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void handleDeleteLibrary()}
+                disabled={deleteLibraryLoading}
+                className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleteLibraryLoading ? 'Deleting...' : 'Delete Library'}
+              </button>
             </div>
           </div>
         </div>
