@@ -8,6 +8,7 @@ import type { InputMode, WasteType, PitchType } from '@/app/lib/types';
 import { verifyQuoteOwnership, verifyRoofAreaOwnership, verifyComponentOwnership } from '@/app/lib/auth/ownership';
 import { seedQuoteTaxesOnCreate } from '@/app/lib/taxes/seed';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { notifyCustomerExpiryExtended } from '@/app/lib/email/notify';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import { pickFields } from '@/app/lib/security/pickFields';
 import { createQuoteAtomic, resolveQuoteCreationDefaults } from '@/app/lib/billing/quote-creation';
@@ -204,14 +205,14 @@ export async function createQuoteFromTemplate(
   redirect(`/${company.slug}/quotes/${quote.id}`);
 }
 
-export async function generateAcceptanceToken(quoteId: string, expiryDays: number = 30): Promise<string> {
+export async function generateAcceptanceToken(quoteId: string, expiryDays: number = 30, applyExpiry: boolean = true): Promise<string> {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
   // Check quote exists and belongs to company
   const { data: quote } = await supabase
     .from('quotes')
-    .select('id, acceptance_token, status, accepted_at, declined_at, withdrawn_at')
+    .select('id, acceptance_token, status, accepted_at, declined_at, withdrawn_at, job_status')
     .eq('id', quoteId)
     .eq('company_id', profile.company_id)
     .single();
@@ -221,28 +222,55 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
   if ((quote as any).accepted_at) throw new Error('Quote has already been accepted');
   if ((quote as any).declined_at) throw new Error('Quote has already been declined');
 
-  // Reuse the existing token only when there's a live one (not withdrawn).
-  // After a withdrawal, mint a fresh token so the dead URL stays dead.
-  if (quote.acceptance_token && !(quote as any).withdrawn_at) {
-    return quote.acceptance_token;
-  }
-
-  // Generate new token with configurable expiry
-  const days = Math.max(1, Math.min(365, expiryDays)); // Clamp 1-365 days
-  const token = crypto.randomUUID();
+  // Reuse the existing token when there's a live one (not withdrawn, not expired)
+  // but ALWAYS update acceptance_token_expires_at to the newly requested expiry.
+  // This lets the user change the deadline in the Send panel without rotating
+  // the customer URL (same link, new expiry). Expired/withdrawn quotes get a
+  // fresh UUID so the old URL stays dead.
+  const isExpired = (quote as any).job_status === 'expired';
+  const days = Math.max(1, Math.min(365, expiryDays));
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + days);
 
+  if (quote.acceptance_token && !(quote as any).withdrawn_at && !isExpired) {
+    // Live token exists.
+    if (!applyExpiry) {
+      // Caller is just fetching the token for display/compose purposes;
+      // do NOT touch the expiry or job_status yet.
+      return quote.acceptance_token;
+    }
+    // applyExpiry=true: user has explicitly sent/copied — commit the expiry.
+    await supabase
+      .from('quotes')
+      .update({ acceptance_token_expires_at: expiresAt.toISOString(), job_status: 'sent' })
+      .eq('id', quoteId)
+      .eq('company_id', profile.company_id);
+    revalidatePath('/');
+    return quote.acceptance_token;
+  }
+
+  // Generate a fresh token (expired / withdrawn quotes — old URL stays dead)
+  const token = crypto.randomUUID();
+  // days / expiresAt already computed above
+
+  // H-03 fix: when applyExpiry=false the caller is only opening the send panel to
+  // display/compose the URL — the quote must NOT be marked sent or get an expiry
+  // until the user actually sends or copies the link. Store the token so the URL
+  // is stable, but leave acceptance_token_expires_at and job_status untouched.
+  const updateFields: Record<string, unknown> = {
+    acceptance_token: token,
+    // Clear any prior withdrawal so the new link is treated as live.
+    withdrawn_at: null,
+    withdrawn_by_user_id: null,
+  };
+  if (applyExpiry) {
+    updateFields.acceptance_token_expires_at = expiresAt.toISOString();
+    updateFields.job_status = 'sent';
+  }
+
   const { error } = await supabase
     .from('quotes')
-    .update({
-      acceptance_token: token,
-      acceptance_token_expires_at: expiresAt.toISOString(),
-      job_status: 'sent',
-      // Clear any prior withdrawal so the new link is treated as live.
-      withdrawn_at: null,
-      withdrawn_by_user_id: null,
-    })
+    .update(updateFields)
     .eq('id', quoteId)
     .eq('company_id', profile.company_id);
 
@@ -250,6 +278,76 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
 
   revalidatePath('/');
   return token;
+}
+
+/**
+ * Update the validity period of an already-sent quote.
+ *
+ * Sets acceptance_token_expires_at to now() + chosen days. If the quote was
+ * previously expired (job_status='expired') and the new expiry is in the
+ * future, the status is reset to 'sent' so the quote is live again without
+ * needing a full re-send.
+ */
+/**
+ * Persist material + labor margin settings back to the quotes table from the
+ * CustomerQuoteEditor. Allows users on any quote type (not just blank) to
+ * adjust margins in the customer quote editor and have them sync back to the
+ * Review-stage values.
+ */
+export async function updateQuoteExpiry(
+  quoteId: string,
+  days: number,
+): Promise<void> {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  const { data: quote } = await supabase
+    .from('quotes')
+    .select('id, company_id, accepted_at, declined_at, job_status, customer_email, customer_name, quote_number, acceptance_token, cq_company_name')
+    .eq('id', quoteId)
+    .eq('company_id', profile.company_id)
+    .single();
+
+  if (!quote) throw new Error('Quote not found');
+  if ((quote as any).accepted_at) throw new Error('Cannot edit expiry - quote already accepted.');
+  if ((quote as any).declined_at) throw new Error('Cannot edit expiry - quote already declined.');
+
+  const clampedDays = Math.max(1, Math.min(365, days));
+  const newExpiry = new Date();
+  newExpiry.setDate(newExpiry.getDate() + clampedDays);
+
+  // If extending from an expired state, restore to 'sent' so the quote is
+  // live again. Any other job_status stays as-is.
+  const wasExpired = (quote as any).job_status === 'expired';
+
+  const { error } = await supabase
+    .from('quotes')
+    .update({
+      acceptance_token_expires_at: newExpiry.toISOString(),
+      ...(wasExpired ? { job_status: 'sent' } : {}),
+    })
+    .eq('id', quoteId)
+    .eq('company_id', profile.company_id);
+
+  if (error) throw new Error(error.message);
+  revalidatePath('/');
+
+  // M-02: Notify the customer that their acceptance window has been extended.
+  // Must await — Vercel serverless terminates on handler return; fire-and-forget
+  // Promises are silently dropped. notifyCustomerExpiryExtended is best-effort
+  // and swallows its own errors, so this never throws.
+  const customerEmail = (quote as any).customer_email as string | null;
+  const acceptanceToken = (quote as any).acceptance_token as string | null;
+  if (customerEmail && acceptanceToken) {
+    await notifyCustomerExpiryExtended({
+      customerEmail,
+      customerName: (quote as any).customer_name ?? null,
+      companyName: (quote as any).cq_company_name ?? null,
+      quoteNumber: (quote as any).quote_number ?? null,
+      acceptanceToken,
+      newExpiryIso: newExpiry.toISOString(),
+    });
+  }
 }
 
 /**
@@ -1195,7 +1293,7 @@ export async function updateQuoteSettings(quoteId: string, input: Record<string,
 export async function confirmQuote(id: string) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
-  
+
   // Check current status + existing number
   const { data: existing } = await supabase
     .from('quotes')
@@ -1203,7 +1301,7 @@ export async function confirmQuote(id: string) {
     .eq('id', id)
     .eq('company_id', profile.company_id)
     .single();
-    
+
   if (!existing) throw new Error('Quote not found');
   if (existing.status === 'confirmed') {
     // Already confirmed - nothing to do. Revalidate the listing so the
@@ -1214,7 +1312,7 @@ export async function confirmQuote(id: string) {
   if (existing.status !== 'draft') {
     throw new Error(`Cannot confirm a quote in status '${existing.status}'.`);
   }
-  
+
   // Get next quote number if not already assigned. The SECDEF RPC is
   // service_role-only per the C-02 audit (otherwise a user could bump
   // another company's counter by passing a different p_company_id). The
@@ -1229,17 +1327,17 @@ export async function confirmQuote(id: string) {
     if (numError) throw new Error(`Failed to generate quote number: ${numError.message}`);
     quoteNumber = numberData;
   }
-  
+
   // Update quote with confirmed status and number
   const { error } = await supabase
     .from('quotes')
-    .update({ 
+    .update({
       status: 'confirmed',
       quote_number: quoteNumber
     })
     .eq('id', id)
     .eq('company_id', profile.company_id);
-    
+
   if (error) throw new Error(error.message);
   revalidatePath('/quotes');
 }
@@ -1281,18 +1379,18 @@ export async function convertQuoteMeasurementSystem(
 export async function updateQuoteCurrency(id: string, currency: string | null) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
-  
+
   // Verify quote is draft
   const { data: quote } = await supabase.from('quotes').select('status').eq('id', id).eq('company_id', profile.company_id).single();
   if (!quote || quote.status !== 'draft') {
     throw new Error('Only draft quotes can change currency');
   }
-  
+
   const { error } = await supabase.from('quotes')
     .update({ currency })
     .eq('id', id)
     .eq('company_id', profile.company_id);
-    
+
   if (error) throw new Error(error.message);
   revalidatePath(`/quotes/${id}`);
 }
@@ -1300,16 +1398,16 @@ export async function updateQuoteCurrency(id: string, currency: string | null) {
 export async function updateQuoteNames(id: string, customerName: string, jobName: string | null) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
-  
+
   const { error } = await supabase
     .from('quotes')
-    .update({ 
+    .update({
       customer_name: customerName,
-      job_name: jobName 
+      job_name: jobName
     })
     .eq('id', id)
     .eq('company_id', profile.company_id);
-    
+
   if (error) throw new Error(error.message);
   revalidatePath(`/quotes/${id}`);
 }
@@ -1384,7 +1482,7 @@ export async function deleteQuote(id: string) {
 export async function cloneQuote(id: string, newCustomerName: string) {
   const { profile, company: _company } = await loadCompanyContext();
   const supabase = await createSupabaseServerClient();
-  
+
   const { data: originalQuote } = await supabase.from('quotes').select('*').eq('id', id).eq('company_id', profile.company_id).single();
   if (!originalQuote) throw new Error('Quote not found');
 
@@ -1594,7 +1692,17 @@ export async function saveCustomerQuoteLines(
     sortOrder: number;
     isVisible: boolean;
     includeInTotal: boolean;
-  }>
+    quantity?: number;
+    unitPrice?: number | null;
+    lineMarginPercent?: number | null;
+    lineLaborMarginPercent?: number | null;
+    baseUnitCost?: number | null;
+  }>,
+  showQuantityColumn?: boolean,
+  hideLinePrices?: boolean,
+  hideTotals?: boolean,
+  globalMarginPercent?: number | null,
+  showMarginInPreview?: boolean,
 ) {
   'use server';
   const profile = await requireCompanyContext();
@@ -1632,6 +1740,11 @@ export async function saveCustomerQuoteLines(
       sort_order: line.sortOrder,
       is_visible: line.isVisible,
       include_in_total: line.includeInTotal,
+      quantity: line.quantity ?? 1,
+      unit_price: line.unitPrice ?? null,
+      line_margin_percent: line.lineMarginPercent ?? null,
+      line_labor_margin_percent: line.lineLaborMarginPercent ?? null,
+      base_unit_cost: line.baseUnitCost ?? null,
     }));
 
     const { error } = await supabase
@@ -1639,6 +1752,27 @@ export async function saveCustomerQuoteLines(
       .insert(insertData);
 
     if (error) throw new Error(error.message);
+  }
+
+  // Persist show_quantity_column, price-visibility toggles, and margin fields on the quote row.
+  if (
+    showQuantityColumn !== undefined ||
+    hideLinePrices !== undefined ||
+    hideTotals !== undefined ||
+    globalMarginPercent !== undefined ||
+    showMarginInPreview !== undefined
+  ) {
+    const patch: Record<string, unknown> = {};
+    if (showQuantityColumn !== undefined) patch.show_quantity_column = showQuantityColumn;
+    if (hideLinePrices !== undefined) patch.hide_line_prices = hideLinePrices;
+    if (hideTotals !== undefined) patch.hide_totals = hideTotals;
+    if (globalMarginPercent !== undefined) patch.global_margin_percent = globalMarginPercent;
+    if (showMarginInPreview !== undefined) patch.show_margin_in_preview = showMarginInPreview;
+    await supabase
+      .from('quotes')
+      .update(patch)
+      .eq('id', quoteId)
+      .eq('company_id', quote.company_id);
   }
 
   // Blank quotes never go through the manual quote builder's Review step,

@@ -11,12 +11,14 @@ import { loadCompanyTaxes } from '@/app/lib/taxes/actions';
 
 interface Props {
   params: Promise<{ workspaceSlug: string }>;
-  searchParams: Promise<{ quoteId?: string; orderId?: string; layout?: string; column?: string }>;
+  searchParams: Promise<{ quoteId?: string; orderId?: string; layout?: string; column?: string; components?: string }>;
 }
 
 export default async function CreateOrderPage(props: Props) {
   const { workspaceSlug: _workspaceSlug } = await props.params;
-  const { quoteId, orderId, layout, column } = await props.searchParams;
+  const { quoteId, orderId, layout, column, components: componentsParam } = await props.searchParams;
+  // Comma-separated component IDs from the line-selector step. If absent, all components are included.
+  const selectedComponentIds: string[] | null = componentsParam ? componentsParam.split(',').filter(Boolean) : null;
   
   
   // Run diagnostic test if quoteId present
@@ -24,7 +26,8 @@ export default async function CreateOrderPage(props: Props) {
   }
   
   const profile = await requireCompanyContext();
-  const [templates, flashings, components, collections, quoteData, existingOrder, ent, companyTaxes] = await Promise.all([
+  const supabaseForCatalogs = await createSupabaseServerClient();
+  const [templates, flashings, components, collections, quoteData, existingOrder, ent, companyTaxes, catalogList] = await Promise.all([
     loadOrderTemplates(),
     loadFlashingLibrary(),
     loadComponentLibrary(),
@@ -33,6 +36,7 @@ export default async function CreateOrderPage(props: Props) {
     orderId ? loadOrderForEdit(orderId) : Promise.resolve(null),
     loadCompanyEntitlements(profile.company_id),
     loadCompanyTaxes(),
+    supabaseForCatalogs.from('catalogs').select('id, name').eq('company_id', profile.company_id).order('name').then(r => r.data ?? []),
   ]);
   
 
@@ -53,7 +57,7 @@ export default async function CreateOrderPage(props: Props) {
   // the custom blank line-by-line path passes no quoteId so this stays null.
   const initialLineByLine =
     initialLayout === 'line_by_line' && quoteId && !existingOrder
-      ? await loadQuoteLineByLineData(quoteId)
+      ? await loadQuoteLineByLineData(quoteId, selectedComponentIds)
       : null;
 
   // Column mode for the Components editor. Editing an existing order: use its
@@ -62,13 +66,18 @@ export default async function CreateOrderPage(props: Props) {
     savedLayout === 'double' || (!savedLayout && column === 'double') ? 'double' : 'single';
 
   // Company currency for line-by-line price rendering.
-  const supabase = await createSupabaseServerClient();
-  const { data: companyRow } = await supabase
+  const { data: companyRow } = await supabaseForCatalogs
     .from('companies')
     .select('default_currency')
     .eq('id', profile.company_id)
     .maybeSingle();
   const currency = companyRow?.default_currency ?? 'GBP';
+
+  // Filter quoteData components server-side so the client never needs to touch it.
+  // If selectedComponentIds is null (no line-selector step), pass quoteData unchanged.
+  const filteredQuoteData = quoteData && selectedComponentIds
+    ? { ...quoteData, components: quoteData.components.filter(c => selectedComponentIds.includes(c.id)) }
+    : quoteData;
 
   return (
     <div className="h-screen overflow-hidden">
@@ -80,13 +89,14 @@ export default async function CreateOrderPage(props: Props) {
         collections={(collections ?? []).map((c) => ({ id: c.id as string, name: c.name as string }))}
         companyTaxes={(companyTaxes ?? []).map((t) => ({ id: t.id, name: t.name, rate_percent: Number(t.rate_percent) }))}
         workspaceSlug={_workspaceSlug}
-        quoteData={quoteData}
+        quoteData={filteredQuoteData}
         existingOrder={existingOrder}
         isOverStorage={ent.isOverStorage}
         initialLayout={initialLayout}
         initialColumn={initialColumn}
         initialLineByLine={initialLineByLine}
         currency={currency}
+        catalogs={catalogList.map(c => ({ id: c.id, name: c.name }))}
       />
     </div>
   );

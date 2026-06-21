@@ -224,6 +224,9 @@ export function TakeoffWorkstation({
     return ALL_LIBRARIES;
   });
 
+  // Sidebar UI state
+  const [componentSearch, setComponentSearch] = useState('');
+
   // Roof Areas
   const [roofAreas, setRoofAreas] = useState<RoofArea[]>([]);
   // Keep roofAreasRef in sync for canvas event handlers (stale closures).
@@ -2052,7 +2055,7 @@ export function TakeoffWorkstation({
         }
         if (!guidance && pages.length <= 1) return null;
         return (
-          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
+          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-50">
             {pages.length > 1 && (
               <>
                 <span className="text-xs text-slate-500">Plan</span>
@@ -2219,18 +2222,20 @@ export function TakeoffWorkstation({
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar - Calibration, Roof Areas & Components */}
-        <div className="w-80 bg-white border-r border-gray-200 p-4 overflow-y-auto space-y-6" data-copilot="takeoff-sidebar">
+        <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto flex flex-col" data-copilot="takeoff-sidebar">
+          <div className="p-4 space-y-5">
+
           {/* Calibration Section - Show if: not confirmed, calibration mode, or showing flash */}
           {(!calibrationConfirmed || calibrationMode || showConfirmedFlash) && (
             <div>
-              <h2 className="text-sm font-semibold mb-3 text-gray-900 uppercase tracking-wide">Calibration</h2>
+              <h2 className="text-sm font-bold mb-3 text-gray-900 uppercase tracking-wide">Calibration</h2>
               {calibrations.length === 0 ? (
-                <div className="text-sm text-gray-700 font-medium bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="text-sm text-gray-700 font-medium bg-amber-50 border border-amber-200 rounded-xl p-3">
                   ⚠️ Calibrate first to continue
                 </div>
               ) : showConfirmedFlash ? (
                 /* Flash green confirmation briefly */
-                <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-300 animate-pulse">
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 animate-pulse">
                   <div className="text-green-400 font-bold mb-2">✓ Confirmed</div>
                   <div className="text-xs text-gray-600 mb-1">Scale</div>
                   <div className="font-bold text-green-400">
@@ -2241,7 +2246,7 @@ export function TakeoffWorkstation({
               /* Not confirmed - Show details + Confirm button */
               <div className="space-y-2">
                 {/* Average Scale Display */}
-                <div className="p-3 rounded-lg bg-white border border-orange-400">
+                <div className="p-3 rounded-xl bg-white border border-orange-400">
                   <div className="text-xs text-gray-600 mb-1">Average Scale</div>
                   <div className="font-bold text-gray-700">
                     {(calibrations.reduce((sum, cal) => sum + cal.scale, 0) / calibrations.length).toFixed(4)} {calibrations[0].unit}/px
@@ -2250,26 +2255,19 @@ export function TakeoffWorkstation({
                     Based on {calibrations.length} measurement{calibrations.length > 1 ? 's' : ''}
                   </div>
                 </div>
-                
+
                 {/* Individual Calibrations */}
                 {calibrations.map((cal, idx) => (
-                  <div
-                    key={cal.id}
-                    className="p-2 rounded-lg text-sm bg-gray-100"
-                  >
-                    <div className="font-medium">
-                      #{idx + 1}: {cal.actualDistance} {cal.unit}
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      {cal.scale.toFixed(4)} {cal.unit}/px
-                    </div>
+                  <div key={cal.id} className="p-2 rounded-xl text-sm bg-gray-100">
+                    <div className="font-medium">#{idx + 1}: {cal.actualDistance} {cal.unit}</div>
+                    <div className="text-xs text-gray-600">{cal.scale.toFixed(4)} {cal.unit}/px</div>
                   </div>
                 ))}
-                
+
                 {/* Confirm Button */}
                 <button
                   onClick={handleConfirmCalibration}
-                  className="w-full px-3 py-2 bg-black hover:bg-slate-800 text-white rounded-full text-sm font-mediu transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                  className="w-full px-3 py-2 bg-black hover:bg-slate-800 text-white rounded-full text-sm font-medium transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
                 >
                   ✓ Confirm Calibration
                 </button>
@@ -2278,19 +2276,17 @@ export function TakeoffWorkstation({
             </div>
           )}
 
-          <div className="border-t border-gray-200 pt-4">
-            <h2 className="text-sm font-semibold mb-3 text-gray-600">{quoteIsGeneric ? 'Areas' : 'Roof Areas'}</h2>
+          {/* Roof Areas */}
+          <div className={(!calibrationConfirmed || calibrationMode || showConfirmedFlash) ? 'border-t border-gray-200 pt-4' : ''}>
+            <h2 className="text-sm font-bold mb-3 text-gray-900">{quoteIsGeneric ? 'Areas' : 'Roof Areas'}</h2>
             {roofAreas.length === 0 && takeoffMode === 'add' && existingRoofAreas.length > 0 ? (
               // P1-1b mode=add: show existing areas read-only (canvas not reconstructed).
               <div className="space-y-2">
                 {existingRoofAreas.map(area => (
-                  <div
-                    key={area.id}
-                    className="p-2 rounded-lg bg-blue-50 border border-blue-300 flex items-center gap-2"
-                  >
+                  <div key={area.id} className="bg-white rounded-xl border border-gray-200 p-3 flex items-center gap-2">
                     <div className="flex-1">
-                      <div className="font-medium text-sm">{area.label}</div>
-                      <div className="text-xs text-slate-500">Existing area</div>
+                      <div className="font-semibold text-sm text-gray-900">{area.label}</div>
+                      <div className="text-xs text-gray-500">Existing area</div>
                     </div>
                   </div>
                 ))}
@@ -2320,31 +2316,26 @@ export function TakeoffWorkstation({
                     displayUnit = 'm²';
                   }
                   return (
-                    <div
-                      key={area.id}
-                      className="p-2 rounded-lg bg-blue-50 border border-blue-300 flex items-center gap-2"
-                    >
-                      <div className="flex-1">
-                        <div className="font-medium text-sm">{area.name}</div>
-                        <div className="text-xs text-gray-900">
-                          {displayValue.toFixed(2)} {displayUnit}
-                        </div>
+                    <div key={area.id} className="bg-white rounded-xl border border-gray-200 p-3 flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm text-gray-900 truncate">{area.name}</div>
+                        <div className="text-xs text-gray-500">{displayValue.toFixed(2)} {displayUnit}</div>
                       </div>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 flex-shrink-0">
                         <button
                           onClick={() => handleToggleAreaVisibility(area.id)}
-                          className={`w-6 h-6 flex items-center justify-center rounded-lg text-lg transition-colors ${
-                            area.visible 
-                              ? 'text-green-500 hover:bg-green-600/20' 
-                              : 'text-green-500 hover:bg-green-600/20'
-                          }`}
+                          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
                           title={area.visible ? 'Hide area' : 'Show area'}
                         >
-                          {area.visible ? '●' : '○'}
+                          {area.visible ? (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                          ) : (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>
+                          )}
                         </button>
                         <button
                           onClick={() => handleDeleteArea(area.id)}
-                          className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-600/20 rounded-full"
+                          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-lg leading-none"
                           title="Delete area"
                         >
                           ×
@@ -2359,224 +2350,249 @@ export function TakeoffWorkstation({
 
           {calibrationConfirmed && (
             <div className="border-t border-gray-200 pt-4">
-              <h2 className="text-sm font-semibold mb-3 text-gray-600" data-copilot="takeoff-components-heading">Components</h2>
+              <h2 className="text-sm font-bold mb-4 text-gray-900" data-copilot="takeoff-components-heading">Components</h2>
               {displayComponents.length === 0 ? (
-              <div className="text-sm text-gray-500">
-                No components in library
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* Active Components */}
-                {activeComponentIds.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-semibold text-orange-500 uppercase tracking-wide mb-2">Active ({activeComponentIds.length})</h3>
-                    <div className="space-y-2">
-                      {activeComponentIds.map((id) => {
-                        const comp = displayComponents.find(c => c.id === id);
-                        if (!comp) return null;
-                        
-                        const assignment = componentColors.find(c => c.componentId === id);
-                        const compData = componentMeasurements.find(c => c.componentId === id);
-                        const isSelected = selectedComponentId === comp.id;
-                        
-                        return (
-                          <div key={comp.id}>
-                            {/* Component header */}
+                <div className="text-sm text-gray-500">No components in library</div>
+              ) : (
+                <div className="space-y-5">
+
+                  {/* Active Components */}
+                  {activeComponentIds.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Active Components</span>
+                        <span className="text-[11px] font-bold bg-gray-200 text-gray-600 rounded-full px-2 py-0.5">{activeComponentIds.length}</span>
+                      </div>
+                      <div className="space-y-2">
+                        {activeComponentIds.map((id) => {
+                          const comp = displayComponents.find(c => c.id === id);
+                          if (!comp) return null;
+                          const assignment = componentColors.find(c => c.componentId === id);
+                          const compData = componentMeasurements.find(c => c.componentId === id);
+                          const isSelected = selectedComponentId === comp.id;
+                          const mt = (comp.measurement_type ?? comp.default_measurement_type ?? '').toLowerCase();
+                          const typeLabel = mt === 'line' ? 'Line' : mt === 'area' ? 'Area' : mt === 'point' ? 'Count' : mt === 'multi_lineal' ? 'Multi-line' : mt === 'multi_lineal_lxh' ? 'Multi-line ×H' : mt === 'volume_3d' ? 'Volume' : mt === 'length_x_height_freestyle' ? 'Length ×H' : mt === 'multi_lineal_lxh_freestyle' ? 'Multi-line ×H' : mt || '';
+                          return (
                             <div
-                              onClick={() => {
-                                setSelectedComponentId(comp.id);
-                                // P1-2: auto-switch tool when clicking an active component.
-                                // Pass comp.id so activeAreaComponentIdRef is set synchronously.
-                                const mt = (comp.measurement_type ?? comp.default_measurement_type ?? '').toLowerCase();
-                                applyToolForType(mt, comp.id);
-                              }}
-                              className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-all ${
-                                isSelected 
-                                  ? 'bg-orange-100 ring-1 ring-orange-500' 
-                                  : 'bg-orange-50 hover:bg-orange-100'
+                              key={comp.id}
+                              className={`bg-white rounded-xl border overflow-hidden transition-all ${
+                                isSelected
+                                  ? 'border-[#FF6B35] shadow-[0_0_0_1px_rgba(255,107,53,0.2),0_0_8px_rgba(255,107,53,0.1)]'
+                                  : 'border-gray-200 hover:border-gray-300'
                               }`}
                             >
-                              <div
-                                className="w-3 h-3 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: assignment?.color || '#94a3b8' }}
-                              />
-                              <div className="flex-1 text-sm font-medium">{comp.name}</div>
-                              
-                              {/* Measurement count badge */}
-                              {compData && compData.measurements.length > 0 && (
-                                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-md">
-                                  {compData.measurements.length}
-                                </span>
-                              )}
-                              
-                              {/* Hide/show all measurements button */}
-                              {compData && compData.measurements.length > 0 && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleToggleComponentVisibility(id);
-                                  }}
-                                  className="text-green-500 hover:bg-green-600/20 rounded-full text-lg transition-colors"
-                                  title={compData.measurements.every(m => m.visible) ? 'Hide all' : 'Show all'}
-                                >
-                                  {compData.measurements.every(m => m.visible) ? '●' : '○'}
-                                </button>
-                              )}
-                              
-                              {/* Expand/collapse button */}
-                              {compData && compData.measurements.length > 0 && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setComponentMeasurements(componentMeasurements.map(c =>
-                                      c.componentId === id ? { ...c, expanded: !c.expanded } : c
-                                    ));
-                                  }}
-                                  className="text-gray-600 hover:text-gray-900"
-                                >
-                                  {compData.expanded ? '▼' : '▶'}
-                                </button>
-                              )}
-                              
-                              {/* Remove component button */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRemoveComponent(comp.id);
-                                }}
-                                className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-600/20 rounded-full"
-                              >
-                                ×
-                              </button>
-                            </div>
-                            
-                            {/* Measurement list (expanded) */}
-                            {compData && compData.expanded && compData.measurements.length > 0 && (
-                              <div className="ml-8 mt-1 space-y-1">
-                                {compData.measurements.map((m) => (
+                              <div className="flex">
+                                {/* Colored left bar - full height */}
+                                <div
+                                  className="w-1.5 flex-shrink-0"
+                                  style={{ backgroundColor: assignment?.color || '#94a3b8' }}
+                                />
+                                {/* Card body */}
+                                <div className="flex-1 min-w-0 p-3">
+                                  {/* Header row */}
                                   <div
-                                    key={m.id}
-                                    className="flex items-center gap-2 p-1 text-xs text-gray-900 bg-white/50 rounded"
+                                    className="flex items-start gap-2 cursor-pointer"
+                                    onClick={() => {
+                                      setSelectedComponentId(comp.id);
+                                      // P1-2: auto-switch tool when clicking an active component.
+                                      // Pass comp.id so activeAreaComponentIdRef is set synchronously.
+                                      applyToolForType(mt, comp.id);
+                                    }}
                                   >
-                                    <span className="flex-1">
-                                      {(m.type === 'line' || m.type === 'multi_lineal') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'}`}
-                                      {m.type === 'multi_lineal_lxh' && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×h`}
-                                      {m.type === 'area' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
-                                      {m.type === 'point' && `1 item`}
-                                    </span>
-                                    <button
-                                      onClick={() => handleToggleMeasurementVisibility(id, m.id)}
-                                      className="text-green-500 hover:bg-green-600/20 rounded-full"
-                                      title={m.visible ? 'Hide' : 'Show'}
-                                    >
-                                      {m.visible ? '●' : '○'}
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteMeasurement(id, m.id)}
-                                      className="text-red-400 hover:text-red-300"
-                                      title="Delete measurement"
-                                    >
-                                      ×
-                                    </button>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-sm text-gray-900">{comp.name}</div>
+                                    </div>
+                                    <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
+                                      {/* Measurement count badge */}
+                                      {compData && compData.measurements.length > 0 && (
+                                        <span className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 font-medium tabular-nums">{compData.measurements.length}</span>
+                                      )}
+                                      {compData && compData.measurements.length > 0 && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setComponentMeasurements(componentMeasurements.map(c =>
+                                              c.componentId === id ? { ...c, expanded: !c.expanded } : c
+                                            ));
+                                          }}
+                                          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                                          title={compData?.expanded ? 'Collapse' : 'Expand'}
+                                        >
+                                          {compData?.expanded
+                                            ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="18 15 12 9 6 15"/></svg>
+                                            : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="6 9 12 15 18 9"/></svg>
+                                          }
+                                        </button>
+                                      )}
+                                      {/* Trash - remove component */}
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleRemoveComponent(comp.id);
+                                        }}
+                                        className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                                        title="Remove component"
+                                      >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                                      </button>
+                                    </div>
                                   </div>
-                                ))}
+
+                                  {/* Measurements list (expanded) */}
+                                  {compData && compData.expanded && compData.measurements.length > 0 && (
+                                    <div className="mt-2 pt-2 border-t border-gray-100">
+                                      <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Measurements{typeLabel ? ` (${typeLabel})` : ''}</div>
+                                      <div className="space-y-1">
+                                        {compData.measurements.map((m) => (
+                                          <div key={m.id} className="flex items-center gap-1.5 text-xs text-gray-700">
+                                            <span className="flex-1">
+                                              {(m.type === 'line' || m.type === 'multi_lineal') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'}`}
+                                              {m.type === 'multi_lineal_lxh' && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×h`}
+                                              {m.type === 'area' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
+                                              {m.type === 'point' && `1 item`}
+                                              {(m.type === 'length_x_height_freestyle' || m.type === 'multi_lineal_lxh_freestyle') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×h`}
+                                              {m.type === 'volume_3d' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
+                                            </span>
+                                            <button
+                                              onClick={() => handleToggleMeasurementVisibility(id, m.id)}
+                                              className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
+                                              title={m.visible ? 'Hide' : 'Show'}
+                                            >
+                                              {m.visible ? (
+                                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                              ) : (
+                                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>
+                                              )}
+                                            </button>
+                                            <button
+                                              onClick={() => handleDeleteMeasurement(id, m.id)}
+                                              className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-base leading-none"
+                                              title="Delete measurement"
+                                            >
+                                              ×
+                                            </button>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Available Components.
-                    Whole row is clickable to activate the component.
-                    Resting state: empty orange ring + orange plus text.
-                    Hover state: solid orange circle, white plus, no row background. */}
-                <div>
-                  <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Available</h3>
-
-                  {/* Library selector: pick a named component library, or "All"
-                      to show every company component regardless of library.
-                      Mirrors the customer-quote-editor catalog picker. */}
-                  {collections.length > 0 && (
-                    <div className="mb-2">
-                      <label className="block text-[11px] font-medium text-gray-500 mb-1">Library</label>
-                      <select
-                        value={selectedLibraryId}
-                        onChange={(e) => setSelectedLibraryId(e.target.value)}
-                        className="w-full px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
-                        aria-label="Filter components by library"
-                      >
-                        <option value={ALL_LIBRARIES}>All components</option>
-                        {collections.map((c) => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                      </select>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
 
-                  {(() => {
-                    const available = displayComponents
-                      .filter(comp => !activeComponentIds.includes(comp.id))
-                      .filter(comp =>
-                        selectedLibraryId === ALL_LIBRARIES
-                          ? true
-                          : (comp.collection_id ?? null) === selectedLibraryId,
-                      );
-                    if (available.length === 0) {
+                  {/* Add Components */}
+                  <div>
+                    <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-3 block">Add Components</span>
+
+                    {/* Library selector */}
+                    {collections.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-[11px] font-medium text-gray-500 mb-1.5">Select Library</p>
+                        <select
+                          value={selectedLibraryId}
+                          onChange={(e) => setSelectedLibraryId(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none bg-white text-gray-700"
+                          aria-label="Filter components by library"
+                        >
+                           <option value={ALL_LIBRARIES}>All Components</option>
+                          {collections.map((c) => (
+                             <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {/* Search field */}
+                    <div className="relative mb-3">
+                      <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                      <input
+                        type="text"
+                        placeholder="Search components..."
+                        value={componentSearch}
+                        onChange={(e) => setComponentSearch(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none bg-white text-gray-700 placeholder-gray-400"
+                      />
+                    </div>
+
+                    {/* Available component list */}
+                    {(() => {
+                      const available = displayComponents
+                        .filter(comp => !activeComponentIds.includes(comp.id))
+                        .filter(comp =>
+                          selectedLibraryId === ALL_LIBRARIES
+                            ? true
+                            : (comp.collection_id ?? null) === selectedLibraryId,
+                        )
+                        .filter(comp =>
+                          componentSearch.trim() === ''
+                            ? true
+                            : comp.name.toLowerCase().includes(componentSearch.toLowerCase()),
+                        );
+                      if (available.length === 0) {
+                        return (
+                          <p className="text-xs text-gray-400 py-2">
+                            {componentSearch.trim() !== ''
+                              ? 'No matches.'
+                              : selectedLibraryId === ALL_LIBRARIES
+                              ? 'All components are already active.'
+                              : 'No components in this library.'}
+                          </p>
+                        );
+                      }
                       return (
-                        <p className="text-xs text-gray-400 py-2">
-                          {selectedLibraryId === ALL_LIBRARIES
-                            ? 'All components are already active.'
-                            : 'No components in this library.'}
-                        </p>
-                      );
-                    }
-                    return (
-                  <div className="space-y-1">
-                    {available
-                      .map((comp) => (
-                          <button
-                            key={comp.id}
-                            type="button"
-                            onClick={() => handleAddComponent(comp.id)}
-                            className="w-full flex items-center gap-2 p-1.5 rounded transition group text-left cursor-pointer"
-                            aria-label={`Add ${comp.name}`}
-                          >
-                            <div className="flex-1 min-w-0 text-sm text-slate-700 group-hover:text-slate-900">
-                              <span className="truncate">{comp.name}</span>
-                              {selectedLibraryId === ALL_LIBRARIES && comp.collection_id && (
-                                <span className="ml-1 text-xs text-slate-400">
-                                  · {collections.find(c => c.id === comp.collection_id)?.name ?? ''}
-                                </span>
-                              )}
-                            </div>
-                            <span
-                              className="w-7 h-7 flex items-center justify-center rounded-full text-base font-bold transition-all flex-shrink-0 border-2 border-orange-500 text-orange-500 group-hover:bg-orange-500 group-hover:text-white"
-                              aria-hidden="true"
+                        <div className="space-y-1">
+                          {available.map((comp) => (
+                            <button
+                              key={comp.id}
+                              type="button"
+                              onClick={() => handleAddComponent(comp.id)}
+                              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-100 hover:border-gray-200 bg-white transition-all group text-left"
+                              aria-label={`Add ${comp.name}`}
                             >
-                              +
-                            </span>
-                          </button>
-                      ))}
+                              <div className="flex-1 min-w-0">
+                                <span className="text-sm text-gray-700 group-hover:text-gray-900 block">{comp.name}</span>
+                                {selectedLibraryId === ALL_LIBRARIES && comp.collection_id && (
+                                  <span className="text-xs text-gray-400">{collections.find(c => c.id === comp.collection_id)?.name ?? ''}</span>
+                                )}
+                              </div>
+                              <span
+                                className="w-6 h-6 flex items-center justify-center rounded-full text-sm font-bold transition-all flex-shrink-0 border-2 border-[#FF6B35] text-[#FF6B35] group-hover:bg-[#FF6B35] group-hover:text-white"
+                                aria-hidden="true"
+                              >
+                                +
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Info tip */}
+                    <div className="mt-4 p-3 bg-blue-50 rounded-xl flex items-start gap-2">
+                      <svg className="flex-shrink-0 mt-0.5 text-blue-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                      <p className="text-xs text-gray-500 italic">Click on the plan to count this item. Each click adds one.</p>
+                    </div>
                   </div>
-                    );
-                  })()}
+
                 </div>
-              </div>
               )}
             </div>
           )}
-        </div>
 
+          </div>
+        </div>
         {/* Center - Canvas */}
         <div className="flex-1 flex flex-col relative bg-gray-50">
           {/* Hidden marker: copilot only starts after first roof area created */}
           {roofAreas.length > 0 && <div data-copilot="takeoff-ready" className="hidden" />}
 
           {/* Top Toolbar */}
-          <div className="flex-shrink-0 m-6 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-3 shadow-sm" data-copilot="takeoff-toolbar">
+          <div className="flex-shrink-0 mx-4 mt-2 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-3 shadow-sm" data-copilot="takeoff-toolbar">
             {/* Tools - Left Side */}
             <div className="flex gap-2">
               <button

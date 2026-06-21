@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadAllEntriesForQuote, loadAllRoofAreaEntriesForQuote } from '../../actions';
-import { loadComponentLibrary } from '../../../components/actions';
+import { loadComponentLibrary, loadComponentCollections } from '../../../components/actions';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { getSignedUrl, getSignedUrls } from '@/app/lib/storage/helpers';
 import { BUCKETS } from '@/app/lib/storage/buckets';
@@ -27,12 +27,13 @@ export default async function QuoteBuilderV2Page({
 
   // Load remaining data in parallel, now that we have the quote's collection_id.
   const collectionId = (quote as unknown as { component_collection_id?: string | null }).component_collection_id;
-  const [roofAreas, roofAreaEntries, components, entries, libraryComponents] = await Promise.all([
+  const [roofAreas, roofAreaEntries, components, entries, libraryComponents, collections] = await Promise.all([
     loadQuoteRoofAreas(id),
     loadAllRoofAreaEntriesForQuote(id),
     loadQuoteComponents(id),
     loadAllEntriesForQuote(id),
     loadComponentLibrary(collectionId),
+    loadComponentCollections(),
   ]);
 
   // Load files (same as v1)
@@ -84,10 +85,10 @@ export default async function QuoteBuilderV2Page({
     uploadedAt: f.uploaded_at,
   }));
 
-  // Get company default currency
+  // Get company defaults (currency, measurement system, trade)
   const { data: company } = await supabase
     .from('companies')
-    .select('default_currency')
+    .select('default_currency, default_measurement_system, default_trade')
     .eq('id', quote.company_id)
     .single();
 
@@ -101,6 +102,9 @@ export default async function QuoteBuilderV2Page({
       libraryComponents={libraryComponents}
       workspaceSlug={workspaceSlug}
       companyDefaultCurrency={company?.default_currency || 'GBP'}
+      companyMeasurementSystem={(company as { default_measurement_system?: string })?.default_measurement_system as any || 'metric'}
+      companyDefaultTrade={(company as { default_trade?: string })?.default_trade || 'roofing'}
+      collections={collections}
       planUrl={planUrl}
       planName={planFile?.file_name || null}
       supportingFiles={supportingFiles}

@@ -64,8 +64,8 @@ export default async function WorkspaceHome({
       ),
     },
     {
-      title: 'Components',
-      description: 'Add new components for quoting',
+      title: 'Smart Components™',
+      description: 'Build and manage Smart Components™ for your quotes',
       href: `/${workspaceSlug}/components`,
       icon: (
         <svg className="w-6 h-6 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,12 +74,12 @@ export default async function WorkspaceHome({
       ),
     },
     {
-      title: 'Flashings',
-      description: 'Add new drawings for orders',
-      href: `/${workspaceSlug}/flashings`,
+      title: 'Invoices',
+      description: 'Create and manage customer invoices',
+      href: `/${workspaceSlug}/invoices`,
       icon: (
         <svg className="w-6 h-6 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
         </svg>
       ),
     },
@@ -101,9 +101,20 @@ export default async function WorkspaceHome({
       {showWelcome ? <WelcomeModal base={`/${workspaceSlug}`} firstName={firstName} /> : null}
 
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Welcome back, {firstName}</h1>
-        <p className="text-sm text-slate-500 mt-1">What would you like to do?</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Welcome back, {firstName}</h1>
+          <p className="text-sm text-slate-500 mt-1">What would you like to do?</p>
+        </div>
+        <Link
+          href={`/${workspaceSlug}/tutorials`}
+          className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+          Tutorials
+        </Link>
       </div>
 
       {/* Alert banner */}

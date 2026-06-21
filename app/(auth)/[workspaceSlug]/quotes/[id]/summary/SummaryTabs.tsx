@@ -44,6 +44,8 @@ interface Props {
   laborLines: CustomerLine[];
   children: ReactNode;
   summaryActions: ReactNode;
+  /** Optional slot rendered between the tab nav and the summary tab content. */
+  summaryHeaderSlot?: ReactNode;
 }
 
 export function SummaryTabs({
@@ -57,6 +59,7 @@ export function SummaryTabs({
   laborLines,
   children,
   summaryActions,
+  summaryHeaderSlot,
 }: Props) {
   const [activeTab, setActiveTab] = useState<'summary' | 'customer' | 'labor'>('summary');
 
@@ -142,6 +145,7 @@ export function SummaryTabs({
       </div>
 
       {/* Tab Content */}
+      {activeTab === 'summary' && summaryHeaderSlot}
       {activeTab === 'summary' && children}
 
       {activeTab === 'customer' && (

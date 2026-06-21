@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import type { Feature } from '@/app/lib/billing/features';
 import { FEATURE_LABELS, FEATURE_MIN_PLAN } from '@/app/lib/billing/features';
-import { UpgradeModal } from '@/app/components/UpgradeModal';
 
 type NavKey = 'quotes' | 'invoices' | 'material-orders' | 'resources';
 
@@ -45,7 +43,13 @@ const makeNavItems = (slug: string): NavItem[] => {
       copilot: 'nav-orders',
       gatedBy: 'material_orders',
     },
-    { key: 'invoices', href: `${base}/invoices`, label: 'Invoices', copilot: 'nav-invoices' },
+    {
+      key: 'invoices',
+      href: `${base}/invoices`,
+      label: 'Invoices',
+      copilot: 'nav-invoices',
+      gatedBy: 'invoices',
+    },
     { key: 'resources', href: `${base}/resources`, label: 'Resources', copilot: 'nav-resources' },
   ];
 };
@@ -61,7 +65,6 @@ export function WorkspaceNav({
   const items = makeNavItems(workspaceSlug);
   // We only ever surface ONE upgrade modal at a time; storing the gated
   // feature triggers it. null = no modal open.
-  const [upgradeFor, setUpgradeFor] = useState<Feature | null>(null);
 
   return (
     <>
@@ -70,18 +73,17 @@ export function WorkspaceNav({
           const isActive = pathname?.startsWith(`${item.href}`);
           const isGated = item.gatedBy ? !entitlements.features[item.gatedBy] : false;
 
-          // Gated items render as a button (not a Link). Clicking opens
-          // the upgrade modal; the destination page is never reached.
-          // Per Shaun's spec: "greyed out, just not accessible at all".
+          // Gated items: navigate to the page (which shows the upgrade splash)
+          // but still show a lock icon so the user knows it's a paid feature.
           if (isGated && item.gatedBy) {
             return (
-              <button
+              <Link
                 key={item.key}
-                type="button"
-                onClick={() => setUpgradeFor(item.gatedBy!)}
+                href={item.href}
+                prefetch={false}
                 data-copilot={item.copilot}
                 title={`${item.label} requires a higher plan`}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 transition-all duration-200 ease-in-out text-slate-500 border-2 border-transparent hover:bg-slate-100 cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 transition-all duration-200 ease-in-out text-slate-500 border-2 border-transparent hover:bg-slate-100"
               >
                 {item.label}
                 <svg
@@ -96,7 +98,7 @@ export function WorkspaceNav({
                     clipRule="evenodd"
                   />
                 </svg>
-              </button>
+              </Link>
             );
           }
 
@@ -118,17 +120,7 @@ export function WorkspaceNav({
         })}
       </nav>
 
-      <UpgradeModal
-        open={upgradeFor !== null}
-        onClose={() => setUpgradeFor(null)}
-        title={upgradeFor ? `${FEATURE_LABELS[upgradeFor]} requires a higher plan` : ''}
-        description={
-          upgradeFor
-            ? `${FEATURE_LABELS[upgradeFor]} is available on the ${FEATURE_MIN_PLAN[upgradeFor]} plan or above. Upgrade your account to unlock it.`
-            : ''
-        }
-        recommendedPlan={upgradeFor ? FEATURE_MIN_PLAN[upgradeFor] : undefined}
-      />
+
     </>
   );
 }

@@ -14,7 +14,7 @@ import 'server-only';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { sendEmail } from './send';
 import { getCompanyAlertRecipients, getUserById } from './recipients';
-import { quoteSummaryUrl, passwordResetStartUrl } from './urls';
+import { quoteSummaryUrl, passwordResetStartUrl, getSiteUrl } from './urls';
 import {
   quoteAcceptedEmail,
   quoteDeclinedEmail,
@@ -173,6 +173,36 @@ export async function notifyGenericAlert(input: {
   }
 }
 
+/**
+ * Quote expiry notification — sent by the expire-quotes cron when a quote
+ * passes its valid_until deadline with no customer response.
+ * GATING IS THE CALLER'S JOB: check emailAlertEnabled before calling.
+ */
+export async function notifyQuoteExpired(input: {
+  companyId: string;
+  quoteId: string;
+  quoteNumber: number | null;
+  customerName: string | null;
+}): Promise<void> {
+  try {
+    const slug = await getWorkspaceSlug(input.companyId);
+    if (!slug) return;
+    const url = quoteSummaryUrl(slug, input.quoteId);
+    const quoteRef = input.quoteNumber ? `#${input.quoteNumber}` : 'a quote';
+    const customerName = input.customerName || 'the customer';
+    await notifyGenericAlert({
+      companyId: input.companyId,
+      alertType: 'quote_expired',
+      title: `Quote ${quoteRef} has expired`,
+      body: `Your quote for ${customerName} has expired with no response from the customer. You can resend or review it below.`,
+      ctaUrl: url,
+      ctaLabel: 'View quote',
+    });
+  } catch (err) {
+    console.error('[email] notifyQuoteExpired failed:', err);
+  }
+}
+
 /* ============================================================
    Security emails (always sent, never gated)
    ============================================================ */
@@ -224,3 +254,65 @@ export const notifyTwoFactorEnabled = (i: SecuritySendInput) =>
 
 export const notifyTwoFactorDisabled = (i: SecuritySendInput) =>
   sendSecurityEmail(i, twoFactorDisabledEmail, 'two_factor_disabled');
+
+/**
+ * Send a best-effort email to a customer informing them that the quote
+ * acceptance window has been extended. Called by `updateQuoteExpiry` when
+ * the quote has a customer_email address on record.
+ *
+ * This keeps the same acceptance link alive (same token) and just notifies
+ * the customer that they have more time to respond.
+ */
+export async function notifyCustomerExpiryExtended(input: {
+  customerEmail: string;
+  customerName: string | null;
+  companyName: string | null;
+  quoteNumber: number | null;
+  acceptanceToken: string;
+  newExpiryIso: string;
+}): Promise<void> {
+  try {
+    const { customerEmail, customerName, companyName, quoteNumber, acceptanceToken, newExpiryIso } = input;
+    const firstName = customerName ? customerName.split(' ')[0] : null;
+    const greeting = firstName ? `Hi ${firstName},` : 'Hi,';
+    const quoteRef = quoteNumber ? `Quote #${quoteNumber}` : 'Your quote';
+    const fromCompany = companyName ? ` from ${companyName}` : '';
+    const acceptUrl = `${getSiteUrl()}/accept/${encodeURIComponent(acceptanceToken)}`;
+    const newExpiryFormatted = new Date(newExpiryIso).toLocaleDateString('en-GB', {
+      day: 'numeric', month: 'long', year: 'numeric',
+    });
+
+    const subject = `${quoteRef}${fromCompany} — acceptance window extended`;
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"/><title>${subject}</title></head>
+<body style="margin:0;padding:24px;background:#F9FAFB;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#111827;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+<table width="560" style="background:#fff;border-radius:8px;padding:32px 40px;border:1px solid #E5E7EB;">
+<tr><td>
+  <p style="margin:0 0 8px;font-size:14px;color:#6B7280;">${companyName ?? 'QuoteCore+'}</p>
+  <h1 style="margin:0 0 20px;font-size:20px;font-weight:600;color:#111827;">${greeting}</h1>
+  <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">${quoteRef}${fromCompany} has been updated — the acceptance deadline has been extended to <strong>${newExpiryFormatted}</strong>.</p>
+  <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">Your original link is still valid and ready to use:</p>
+  <table cellpadding="0" cellspacing="0"><tr><td style="background:#111827;border-radius:20px;padding:10px 24px;">
+    <a href="${acceptUrl}" style="color:#fff;font-size:14px;font-weight:600;text-decoration:none;">View &amp; Accept Quote</a>
+  </td></tr></table>
+  <p style="margin:20px 0 0;font-size:12px;color:#9CA3AF;">Or copy this link: ${acceptUrl}</p>
+</td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+
+    const text = `${greeting}\n\n${quoteRef}${fromCompany} has been updated — the acceptance deadline has been extended to ${newExpiryFormatted}.\n\nView and accept your quote here:\n${acceptUrl}`;
+
+    await sendEmail({
+      to: customerEmail,
+      subject,
+      html,
+      text,
+      tags: [{ name: 'type', value: 'customer_expiry_extended' }],
+    });
+  } catch (err) {
+    console.error('[email] notifyCustomerExpiryExtended failed:', err);
+  }
+}

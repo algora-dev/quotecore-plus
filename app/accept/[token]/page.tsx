@@ -236,6 +236,19 @@ export default async function AcceptQuotePage({
                   <p className="text-base text-black">
                     <span className="font-semibold">Date:</span> {new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' })}
                   </p>
+                  {quote.acceptance_token_expires_at && (() => {
+                    const expiry = new Date(quote.acceptance_token_expires_at);
+                    const remaining = Math.ceil((expiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                    const expiryLabel = expiry.toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' });
+                    return remaining > 0 ? (
+                      <p className="text-base text-black">
+                        <span className="font-semibold">Valid until:</span> {expiryLabel}
+                        <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 border border-orange-200">
+                          {remaining} day{remaining !== 1 ? 's' : ''} remaining
+                        </span>
+                      </p>
+                    ) : null;
+                  })()}
                 </div>
               </div>
               

@@ -26,6 +26,7 @@ const NOTIFICATION_MATRIX: {
       { key: 'quote_declined', label: 'Declined' },
       { key: 'revision_requested', label: 'Request Info' },
       { key: 'quote_viewed', label: 'Read' },
+      { key: 'quote_expired', label: 'Expired' },
     ],
   },
   {

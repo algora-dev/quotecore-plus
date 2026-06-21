@@ -13,7 +13,9 @@ export default async function CustomerQuoteEditPage({
   const { workspaceSlug, id } = await params;
   await requireCompanyContext();
 
-  const [quote, roofAreas, components, savedLines, templates, quoteTaxes, companyTaxes, collections, companyComponents] = await Promise.all([
+  const supabase = await createSupabaseServerClient();
+  const { data: profileForCatalogs } = await supabase.from('users').select('company_id').single();
+  const [quote, roofAreas, components, savedLines, templates, quoteTaxes, companyTaxes, collections, companyComponents, catalogList] = await Promise.all([
     loadQuote(id),
     loadQuoteRoofAreas(id),
     loadQuoteComponents(id),
@@ -23,9 +25,8 @@ export default async function CustomerQuoteEditPage({
     loadCompanyTaxes(),
     loadComponentCollections(),
     loadComponentLibrary(),
+    supabase.from('catalogs').select('id, name').eq('company_id', profileForCatalogs?.company_id ?? '').order('name').then(r => r.data ?? []),
   ]);
-  
-  const supabase = await createSupabaseServerClient();
   
   // Load company default currency
   const { data: company } = await supabase
@@ -79,6 +80,7 @@ export default async function CustomerQuoteEditPage({
         name: c.name as string,
         collection_id: (c.collection_id as string | null) ?? null,
       }))}
+      catalogs={catalogList.map((c) => ({ id: c.id, name: c.name }))}
     />
   );
 }

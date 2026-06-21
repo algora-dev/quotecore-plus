@@ -977,14 +977,18 @@ export type Database = {
       }
       customer_quote_lines: {
         Row: {
+          base_unit_cost: number | null
           created_at: string
           custom_amount: number | null
           custom_text: string | null
           id: string
           include_in_total: boolean | null
           is_visible: boolean
+          line_labor_margin_percent: number | null
+          line_margin_percent: number | null
           line_set_type: string | null
           line_type: Database["public"]["Enums"]["line_type"]
+          quantity: number
           quantity_text: string | null
           quote_component_id: string | null
           quote_id: string
@@ -992,17 +996,22 @@ export type Database = {
           show_price: boolean
           show_units: boolean | null
           sort_order: number
+          unit_price: number | null
           updated_at: string
         }
         Insert: {
+          base_unit_cost?: number | null
           created_at?: string
           custom_amount?: number | null
           custom_text?: string | null
           id?: string
           include_in_total?: boolean | null
           is_visible?: boolean
+          line_labor_margin_percent?: number | null
+          line_margin_percent?: number | null
           line_set_type?: string | null
           line_type?: Database["public"]["Enums"]["line_type"]
+          quantity?: number
           quantity_text?: string | null
           quote_component_id?: string | null
           quote_id: string
@@ -1010,17 +1019,22 @@ export type Database = {
           show_price?: boolean
           show_units?: boolean | null
           sort_order?: number
+          unit_price?: number | null
           updated_at?: string
         }
         Update: {
+          base_unit_cost?: number | null
           created_at?: string
           custom_amount?: number | null
           custom_text?: string | null
           id?: string
           include_in_total?: boolean | null
           is_visible?: boolean
+          line_labor_margin_percent?: number | null
+          line_margin_percent?: number | null
           line_set_type?: string | null
           line_type?: Database["public"]["Enums"]["line_type"]
+          quantity?: number
           quantity_text?: string | null
           quote_component_id?: string | null
           quote_id?: string
@@ -1028,6 +1042,7 @@ export type Database = {
           show_price?: boolean
           show_units?: boolean | null
           sort_order?: number
+          unit_price?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -1329,6 +1344,36 @@ export type Database = {
           metrics_snapshot?: Json | null
           narrative?: string | null
           recommendations?: Json | null
+        }
+        Relationships: []
+      }
+      insight_email_leads: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          insight_next_move: string | null
+          insight_text: string | null
+          insight_title: string | null
+          marketing_consent: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          insight_next_move?: string | null
+          insight_text?: string | null
+          insight_title?: string | null
+          marketing_consent?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          insight_next_move?: string | null
+          insight_text?: string | null
+          insight_title?: string | null
+          marketing_consent?: boolean | null
         }
         Relationships: []
       }
@@ -1646,6 +1691,8 @@ export type Database = {
           discount_total: number
           disputed_at: string | null
           due_date: string | null
+          hide_line_prices: boolean
+          hide_totals: boolean
           id: string
           invoice_date: string
           invoice_number: string
@@ -1686,6 +1733,8 @@ export type Database = {
           discount_total?: number
           disputed_at?: string | null
           due_date?: string | null
+          hide_line_prices?: boolean
+          hide_totals?: boolean
           id?: string
           invoice_date?: string
           invoice_number: string
@@ -1726,6 +1775,8 @@ export type Database = {
           discount_total?: number
           disputed_at?: string | null
           due_date?: string | null
+          hide_line_prices?: boolean
+          hide_totals?: boolean
           id?: string
           invoice_date?: string
           invoice_number?: string
@@ -2748,6 +2799,68 @@ export type Database = {
           },
         ]
       }
+      quote_notes: {
+        Row: {
+          body: string
+          company_id: string
+          created_at: string
+          created_by_user_id: string | null
+          id: string
+          quote_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          company_id: string
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          quote_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          company_id?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          quote_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_notes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_notes_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_notes_quote_company_fk"
+            columns: ["quote_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "quote_notes_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_number_sequences: {
         Row: {
           company_id: string
@@ -3100,7 +3213,10 @@ export type Database = {
           customer_phone: string | null
           declined_at: string | null
           entry_mode: string | null
+          global_margin_percent: number | null
           global_pitch_degrees: number | null
+          hide_line_prices: boolean
+          hide_totals: boolean
           id: string
           job_name: string | null
           job_status: string | null
@@ -3110,7 +3226,10 @@ export type Database = {
           material_margin_percent: number | null
           measurement_system: Database["public"]["Enums"]["measurement_system"]
           notes_internal: string | null
+          original_summary_snapshot: Json | null
           quote_number: number | null
+          show_margin_in_preview: boolean
+          show_quantity_column: boolean
           site_address: string | null
           status: Database["public"]["Enums"]["quote_status"]
           takeoff_canvas_path: string | null
@@ -3145,7 +3264,10 @@ export type Database = {
           customer_phone?: string | null
           declined_at?: string | null
           entry_mode?: string | null
+          global_margin_percent?: number | null
           global_pitch_degrees?: number | null
+          hide_line_prices?: boolean
+          hide_totals?: boolean
           id?: string
           job_name?: string | null
           job_status?: string | null
@@ -3155,7 +3277,10 @@ export type Database = {
           material_margin_percent?: number | null
           measurement_system?: Database["public"]["Enums"]["measurement_system"]
           notes_internal?: string | null
+          original_summary_snapshot?: Json | null
           quote_number?: number | null
+          show_margin_in_preview?: boolean
+          show_quantity_column?: boolean
           site_address?: string | null
           status?: Database["public"]["Enums"]["quote_status"]
           takeoff_canvas_path?: string | null
@@ -3190,7 +3315,10 @@ export type Database = {
           customer_phone?: string | null
           declined_at?: string | null
           entry_mode?: string | null
+          global_margin_percent?: number | null
           global_pitch_degrees?: number | null
+          hide_line_prices?: boolean
+          hide_totals?: boolean
           id?: string
           job_name?: string | null
           job_status?: string | null
@@ -3200,7 +3328,10 @@ export type Database = {
           material_margin_percent?: number | null
           measurement_system?: Database["public"]["Enums"]["measurement_system"]
           notes_internal?: string | null
+          original_summary_snapshot?: Json | null
           quote_number?: number | null
+          show_margin_in_preview?: boolean
+          show_quantity_column?: boolean
           site_address?: string | null
           status?: Database["public"]["Enums"]["quote_status"]
           takeoff_canvas_path?: string | null

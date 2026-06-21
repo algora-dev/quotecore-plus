@@ -64,7 +64,10 @@ function generateDefaultText(
  * customer quote editor would render. Returns null if the quote is missing or
  * has no customer-visible content (caller falls back to an empty editor).
  */
-export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLineData | null> {
+export async function loadQuoteLineByLineData(
+  quoteId: string,
+  selectedComponentIds?: string[] | null,
+): Promise<LineByLineData | null> {
   try {
     const profile = await requireCompanyContext();
     const supabase = await createSupabaseServerClient();
@@ -95,8 +98,19 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
         .order('sort_order', { ascending: true }),
     ]);
 
-    const comps = components || [];
-    const saved = savedLines || [];
+    // Apply the line-selector filter when the user pre-selected which components
+    // to include. Custom lines (type !== 'component') always pass through.
+    const allComps = components || [];
+    const comps = selectedComponentIds
+      ? allComps.filter((c: any) => selectedComponentIds.includes(c.id))
+      : allComps;
+    const selectedSet = selectedComponentIds ? new Set(selectedComponentIds) : null;
+    const allSaved = savedLines || [];
+    const saved = selectedSet
+      ? allSaved.filter((s: any) =>
+          s.line_type !== 'component' || !s.quote_component_id || selectedSet.has(s.quote_component_id)
+        )
+      : allSaved;
 
     const materialMarginPct =
       quote.material_margin_enabled && quote.material_margin_percent ? quote.material_margin_percent : 0;
@@ -131,6 +145,8 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
               text: generateDefaultText(comp, quote.measurement_system),
               quantityText: null,
               amount,
+              unitPrice: null,
+              quantity: 1,
               showPrice: s.show_price ?? true,
               isVisible: s.is_visible ?? true,
               includeInTotal: s.include_in_total ?? true,
@@ -143,6 +159,8 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
             text: s.custom_text || '',
             quantityText: (s.quantity_text as string | null) ?? null,
             amount: Number(s.custom_amount || 0),
+            unitPrice: (s.unit_price as number | null) ?? null,
+            quantity: (s.quantity as number) ?? 1,
             showPrice: s.show_price ?? true,
             isVisible: s.is_visible ?? true,
             includeInTotal: s.include_in_total ?? true,
@@ -159,6 +177,8 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
           text: generateDefaultText(c, quote.measurement_system),
           quantityText: null,
           amount: amountForComponent(c),
+          unitPrice: null,
+          quantity: 1,
           showPrice: true,
           isVisible: true,
           includeInTotal: true,
@@ -181,7 +201,9 @@ export async function loadQuoteLineByLineData(quoteId: string): Promise<LineByLi
       lines,
       footer: quote.cq_footer_text || '',
       taxes: [],
-      hideAllPrices: false,
+      hideLinePrices: false,
+      hideTotals: false,
+      showQuantityColumn: false,
     };
   } catch (error) {
     console.error('[quote-lbl-loader] Unexpected error:', error);

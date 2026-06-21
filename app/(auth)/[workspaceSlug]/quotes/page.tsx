@@ -71,7 +71,7 @@ export default async function QuotesPage({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Quotes</h1>
-          <p className="text-sm text-slate-500 mt-1">Create and manage roofing quotes.</p>
+          <p className="text-sm text-slate-500 mt-1">Create and manage all your quotes.</p>
         </div>
 
         {showCounter && (

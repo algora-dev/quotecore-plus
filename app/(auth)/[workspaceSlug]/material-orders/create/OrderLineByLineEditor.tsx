@@ -23,7 +23,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
-import { AddLineModal } from '../../quotes/[id]/customer-edit/AddLineModal';
+import { AddLineItemModal, type LineItemPayload } from '@/app/components/AddLineItemModal';
 import { LineEditForm } from '../../quotes/[id]/customer-edit/LineEditForm';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 import {
@@ -38,7 +38,11 @@ interface Props {
   initialLines: LineByLineItem[];
   initialFooter: string;
   initialTaxes: LineByLineTax[];
-  initialHideAllPrices: boolean;
+  /** Hide line-item prices (independent of totals). */
+  initialHideLinePrices?: boolean;
+  /** Hide subtotal + taxes + total footer (independent of line prices). */
+  initialHideTotals?: boolean;
+  initialShowQuantityColumn?: boolean;
   currency: string;
   /** Workspace slug for the catalog search modal endpoint. */
   workspaceSlug: string;
@@ -46,13 +50,17 @@ interface Props {
   collections: { id: string; name: string }[];
   /** Full company component library for the "Add a component" picker. */
   componentLibrary: { id: string; name: string; collection_id: string | null }[];
+  /** Catalogs for the "Add from catalog" tab. */
+  catalogs?: { id: string; name: string }[];
   /** Active company default taxes, for the "apply default tax" picker. */
   companyTaxes: { id: string; name: string; rate_percent: number }[];
   /** Called on every line change so the parent form can persist on save. */
   onChange: (lines: LineByLineItem[]) => void;
   onFooterChange: (footer: string) => void;
   onTaxesChange: (taxes: LineByLineTax[]) => void;
-  onHideAllPricesChange: (hide: boolean) => void;
+  onHideLinePricesChange?: (hide: boolean) => void;
+  onHideTotalsChange?: (hide: boolean) => void;
+  onShowQuantityColumnChange?: (show: boolean) => void;
 }
 
 function makeId(): string {
@@ -63,16 +71,21 @@ export function OrderLineByLineEditor({
   initialLines,
   initialFooter,
   initialTaxes,
-  initialHideAllPrices,
+  initialHideLinePrices = false,
+  initialHideTotals = false,
+  initialShowQuantityColumn = false,
   currency,
   workspaceSlug,
   collections,
   componentLibrary,
+  catalogs = [],
   companyTaxes,
   onChange,
   onFooterChange,
   onTaxesChange,
-  onHideAllPricesChange,
+  onHideLinePricesChange,
+  onHideTotalsChange,
+  onShowQuantityColumnChange,
 }: Props) {
   const [lines, setLines] = useState<LineByLineItem[]>(initialLines.length > 0 ? initialLines : []);
   const [footer, setFooter] = useState(initialFooter);
@@ -91,8 +104,9 @@ export function OrderLineByLineEditor({
     setLines(initialLines);
     setFooter(initialFooter);
     setTaxes(initialTaxes);
-    setHideAllPrices(initialHideAllPrices);
-  }, [initialLines, initialFooter, initialTaxes, initialHideAllPrices]);
+    setHideLinePrices(initialHideLinePrices);
+    setHideTotals(initialHideTotals);
+  }, [initialLines, initialFooter, initialTaxes, initialHideLinePrices, initialHideTotals]);
   const [showAddLine, setShowAddLine] = useState(false);
   // id of the line currently being edited in the right-hand preview (pencil).
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
@@ -105,7 +119,9 @@ export function OrderLineByLineEditor({
   // preview honours each line's individual showPrice toggle as before. This is
   // preview-only convenience state; it does not mutate the lines themselves.
   // Persisted to the envelope so the saved/sent order matches the editor.
-  const [hideAllPrices, setHideAllPrices] = useState(initialHideAllPrices);
+  const [hideLinePrices, setHideLinePrices] = useState(initialHideLinePrices);
+  const [hideTotals, setHideTotals] = useState(initialHideTotals);
+  const [showQuantityColumn, setShowQuantityColumn] = useState(initialShowQuantityColumn);
   // Declutter: collapse the left controls so the preview fills the space.
   // Pure layout state - panel stays mounted (no edit loss).
   const [panelCollapsed, setPanelCollapsed] = useState(false);
@@ -127,37 +143,22 @@ export function OrderLineByLineEditor({
     [onTaxesChange],
   );
 
-  // --- Add-line handlers (shared AddLineModal) -----------------------------
-  const addCustomLine = (text: string, amount: number, showPrice: boolean, quantityText: string | null) => {
+  // --- Add-line handler (shared AddLineItemModal) -------------------------
+  const handleAddLineItem = (payloads: LineItemPayload[]) => {
     commit([
       ...lines,
-      {
+      ...payloads.map((p, i) => ({
         id: makeId(),
-        text,
-        quantityText,
-        amount: Number.isFinite(amount) ? amount : 0,
-        showPrice,
+        text: p.title,
+        quantityText: p.description,
+        amount: p.lineTotal,
+        unitPrice: p.unitPrice,
+        quantity: p.quantity,
+        showPrice: p.showPrice,
         isVisible: true,
         includeInTotal: true,
-        sortOrder: lines.length,
-      },
-    ]);
-  };
-
-  // Component line: name pre-filled, qty + price blank (edit via pencil).
-  const addComponentLine = (name: string) => {
-    commit([
-      ...lines,
-      {
-        id: makeId(),
-        text: name,
-        quantityText: null,
-        amount: 0,
-        showPrice: true,
-        isVisible: true,
-        includeInTotal: true,
-        sortOrder: lines.length,
-      },
+        sortOrder: lines.length + i,
+      })),
     ]);
   };
 
@@ -186,8 +187,10 @@ export function OrderLineByLineEditor({
     quantityText: string | null,
     amount: number,
     showPrice: boolean,
+    qty: number = 1,
+    unitPrice: number | null = null,
   ) => {
-    commit(lines.map((l) => (l.id === id ? { ...l, text, quantityText, amount, showPrice } : l)));
+    commit(lines.map((l) => (l.id === id ? { ...l, text, quantityText, amount, showPrice, quantity: qty, unitPrice } : l)));
     setEditingLineId(null);
   };
 
@@ -222,21 +225,53 @@ export function OrderLineByLineEditor({
               />
               <h3 className="text-sm font-semibold text-slate-900">Order items</h3>
             </div>
-            <label
-              className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none"
-              title="Hide every price in the preview in one click (overrides each line's Price toggle). Untick to show prices as set per line."
-            >
-              <input
-                type="checkbox"
-                checked={hideAllPrices}
-                onChange={(e) => {
-                  setHideAllPrices(e.target.checked);
-                  onHideAllPricesChange(e.target.checked);
-                }}
-                className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-              />
-              Hide all prices
-            </label>
+            <div className="flex items-center gap-3">
+              <label
+                className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none"
+                title="Hides the price on each line item. The subtotal and total footer remain visible unless 'Hide totals' is also ticked."
+              >
+                <input
+                  type="checkbox"
+                  checked={hideLinePrices}
+                  onChange={(e) => {
+                    setHideLinePrices(e.target.checked);
+                    onHideLinePricesChange?.(e.target.checked);
+                  }}
+                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                />
+                Hide line prices
+              </label>
+              <label
+                className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none"
+                title="Hides the subtotal, taxes, and grand total footer."
+              >
+                <input
+                  type="checkbox"
+                  checked={hideTotals}
+                  onChange={(e) => {
+                    setHideTotals(e.target.checked);
+                    onHideTotalsChange?.(e.target.checked);
+                  }}
+                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                />
+                Hide totals
+              </label>
+              <label
+                className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none"
+                title="Adds a Qty column to each line. Total = Qty × Unit Price."
+              >
+                <input
+                  type="checkbox"
+                  checked={showQuantityColumn}
+                  onChange={(e) => {
+                    setShowQuantityColumn(e.target.checked);
+                    onShowQuantityColumnChange?.(e.target.checked);
+                  }}
+                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                />
+                Qty column
+              </label>
+            </div>
           </div>
 
           {/* Existing lines with controls */}
@@ -338,6 +373,7 @@ export function OrderLineByLineEditor({
           >
             + Add New Line
           </button>
+
         </div>
 
         {/* Footer */}
@@ -484,44 +520,52 @@ export function OrderLineByLineEditor({
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b-2 border-slate-300 text-left">
+<tr className="border-b-2 border-slate-300 text-left">
                 <th className="py-2 pr-3 font-semibold text-slate-600">Item / Description</th>
-                {/* Keep the 2nd column header for layout (it also carries the
-                    per-line pencil edit button), but blank the "Price" label
-                    when all prices are hidden so nothing pricing-related shows. */}
+                {showQuantityColumn && (
+                  <th className="py-2 px-2 text-right font-semibold text-slate-600 whitespace-nowrap w-12">Qty</th>
+                )}
                 <th className="py-2 pl-3 text-right font-semibold text-slate-600 whitespace-nowrap">
-                  {hideAllPrices ? '' : 'Price'}
+                  {hideLinePrices ? '' : 'Price'}
                 </th>
               </tr>
             </thead>
             <tbody>
               {visibleLines.length === 0 ? (
                 <tr>
-                  <td colSpan={2} className="py-4 text-center text-slate-400 italic">
+<td colSpan={showQuantityColumn ? 3 : 2} className="py-4 text-center text-slate-400 italic">
                     No items yet.
                   </td>
                 </tr>
               ) : (
                 visibleLines.map((line) =>
                   editingLineId === line.id ? (
-                    <tr key={line.id}>
-                      <td colSpan={2} className="py-2">
-                        <LineEditForm
+<tr key={line.id}>
+                      <td colSpan={showQuantityColumn ? 3 : 2} className="py-2">
+<LineEditForm
                           initialText={line.text}
                           initialQuantity={line.quantityText}
                           initialAmount={line.amount}
                           initialShowPrice={line.showPrice}
-                          onSave={(text, quantity, amount, showPrice) => saveLineEdit(line.id, text, quantity, amount, showPrice)}
+                          showQuantityColumn={showQuantityColumn}
+                          initialQty={line.quantity ?? 1}
+                          initialUnitPrice={line.unitPrice ?? null}
+                          onSave={(text, quantity, amount, sp, qty, unitPrice) => saveLineEdit(line.id, text, quantity, amount, sp, qty, unitPrice)}
                           onCancel={() => setEditingLineId(null)}
                         />
                       </td>
                     </tr>
                   ) : (
-                    <tr key={line.id} className="border-b border-slate-100 align-top">
+<tr key={line.id} className="border-b border-slate-100 align-top">
                       <td className="py-2 pr-3 text-slate-800 whitespace-pre-line">{lineDisplayText(line)}</td>
+                      {showQuantityColumn && (
+                        <td className="py-2 px-2 text-right text-slate-700 tabular-nums w-12">
+                          {line.quantity ?? 1}
+                        </td>
+                      )}
                       <td className="py-2 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
                         <div className="flex items-center justify-end gap-2">
-                          {!hideAllPrices && line.showPrice ? formatCurrency(line.amount, currency) : ''}
+                          {!hideLinePrices && line.showPrice ? formatCurrency(line.amount, currency) : ''}
                           <button
                             type="button"
                             onClick={() => setEditingLineId(line.id)}
@@ -544,7 +588,7 @@ export function OrderLineByLineEditor({
                 )
               )}
             </tbody>
-            {!hideAllPrices && (visibleLines.some((l) => l.showPrice) || taxLines.length > 0) ? (
+            {!hideTotals && (visibleLines.some((l) => l.showPrice) || taxLines.length > 0) ? (
               <tfoot>
                 {taxLines.length > 0 && (
                   <>
@@ -584,14 +628,15 @@ export function OrderLineByLineEditor({
         </div>
       </div>
 
-      {/* Unified Add New Line modal: Custom line / Add a component / Search catalog */}
+      {/* Unified Add Line Item modal — invoice-style shared modal */}
       {showAddLine && (
-        <AddLineModal
+        <AddLineItemModal
           workspaceSlug={workspaceSlug}
+          currency={currency}
+          catalogs={catalogs}
           collections={collections}
           componentLibrary={componentLibrary}
-          onAddCustom={addCustomLine}
-          onAddComponent={addComponentLine}
+          onAdd={handleAddLineItem}
           onClose={() => setShowAddLine(false)}
         />
       )}

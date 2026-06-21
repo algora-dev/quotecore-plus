@@ -28,7 +28,7 @@ import type { Database } from '@/app/lib/supabase/database.types';
 
 /** The complete, real alert-type taxonomy surfaced in the Settings matrix. */
 export const NOTIFICATION_CHANNELS = {
-  quotes: ['quote_accepted', 'quote_declined', 'revision_requested', 'quote_viewed'],
+  quotes: ['quote_accepted', 'quote_declined', 'revision_requested', 'quote_viewed', 'quote_expired'],
   orders: ['order_accepted', 'order_declined', 'order_info_requested', 'order_viewed'],
   invoices: ['invoice_payment_reported', 'invoice_disputed', 'invoice_viewed'],
 } as const;
@@ -51,6 +51,7 @@ export const ALL_NOTIFICATION_KEYS: string[] = Object.values(NOTIFICATION_CHANNE
  */
 export const EMAIL_ON_BY_DEFAULT: ReadonlySet<string> = new Set([
   'quote_accepted',
+  'quote_expired',
   'revision_requested',
   'order_accepted',
   'order_info_requested',

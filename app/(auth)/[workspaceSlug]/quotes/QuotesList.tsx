@@ -80,11 +80,12 @@ const JOB_STATUS_CONFIG: Record<string, { label: string; bg: string; text: strin
   invoice_sent:      { label: 'Invoice Sent',      bg: 'bg-orange-50',   text: 'text-orange-700',  border: 'border-orange-300', dot: 'bg-orange-500' },
   invoice_paid:      { label: 'Invoice Paid',      bg: 'bg-emerald-50',  text: 'text-emerald-700', border: 'border-emerald-300', dot: 'bg-emerald-500' },
   finished:          { label: 'Finished',          bg: 'bg-emerald-50',  text: 'text-emerald-700', border: 'border-emerald-300', dot: 'bg-emerald-500' },
+  expired:           { label: 'Expired',           bg: 'bg-slate-100',   text: 'text-slate-500',   border: 'border-slate-300', dot: 'bg-slate-400' },
 };
 
 const JOB_STATUS_ORDER: string[] = [
   'unsent', 'sent', 'accepted', 'declined', 'deposit_paid',
-  'materials_ordered', 'install', 'invoice_sent', 'invoice_paid', 'finished',
+  'materials_ordered', 'install', 'invoice_sent', 'invoice_paid', 'finished', 'expired',
 ];
 
 // Status filter tabs for confirmed quotes
@@ -96,6 +97,7 @@ const STATUS_FILTERS = [
   { key: 'declined', label: 'Declined' },
   { key: 'in_progress', label: 'In Progress' },
   { key: 'finished', label: 'Finished' },
+  { key: 'expired', label: 'Expired' },
 ];
 
 const IN_PROGRESS_STATUSES = ['deposit_paid', 'materials_ordered', 'install', 'invoice_sent', 'invoice_paid'];

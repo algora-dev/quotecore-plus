@@ -31,6 +31,8 @@ interface Props {
   quoteId: string;
   workspaceSlug: string;
   existingToken: string | null;
+  /** ISO expiry of the current acceptance token. Used to pre-populate the expiry selector. */
+  existingExpiresAt?: string | null;
   hasCustomerQuote: boolean;
   emailTemplates: EmailTemplate[];
   /** Whether this company's plan includes scheduled follow-up messages.
@@ -53,6 +55,8 @@ interface Props {
     companyName: string | null;
     quoteDate: string;
   };
+  /** When true, the customer quote shows the profit/margin breakdown - warn the user before sending. */
+  showMarginInPreview?: boolean;
 }
 
 function sanitize(str: string): string {
@@ -73,7 +77,7 @@ function replacePlaceholders(text: string, data: Record<string, string>): string
     .replace(/\{\{quote_date\}\}/g, sanitize(data.quote_date || ''));
 }
 
-export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCustomerQuote, emailTemplates, canFollowups, canEmail, sendTestTipSeen, libraryFiles, quoteFiles, libraryLocked, quoteMeta }: Props) {
+export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, existingExpiresAt, hasCustomerQuote, emailTemplates, canFollowups, canEmail, sendTestTipSeen, libraryFiles, quoteFiles, libraryLocked, quoteMeta, showMarginInPreview = false }: Props) {
   const router = useRouter();
   const testTip = useSendTestTip(sendTestTipSeen);
   // When the one-time tip needs showing, the first "Send Quote" click opens the
@@ -116,7 +120,20 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
   const [emailCopied, setEmailCopied] = useState(false);
-  const [expiryDays, setExpiryDays] = useState<number>(30);
+  const [expiryDays, setExpiryDays] = useState<number>(() => {
+    // Pre-populate with current remaining days when token already exists.
+    if (existingExpiresAt) {
+      const remaining = Math.ceil((new Date(existingExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      // Snap to nearest option bucket, or default to 30 if expired / far future.
+      if (remaining <= 7) return 7;
+      if (remaining <= 14) return 14;
+      if (remaining <= 30) return 30;
+      if (remaining <= 60) return 60;
+      if (remaining <= 90) return 90;
+      return 180;
+    }
+    return 30;
+  });
 
   // Send mode state (Messages pipeline). Reuses subject/body from email
   // mode so the user can flip between Copy and Send without retyping.
@@ -255,11 +272,18 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/accept/${token}`
     : null;
 
-  async function ensureToken(): Promise<string | null> {
-    if (token) return token;
+  /**
+   * Ensure a valid acceptance token exists.
+   * applyExpiry=false (default for mode entry): fetch/create token without
+   *   updating the expiry or job_status - safe to call speculatively.
+   * applyExpiry=true (for actual send/copy): commit the selected expiry and
+   *   set job_status='sent'. Only call this when the user has deliberately
+   *   sent or copied the link.
+   */
+  async function ensureToken(applyExpiry = false): Promise<string | null> {
     setLoading(true);
     try {
-      const newToken = await generateAcceptanceToken(quoteId, expiryDays);
+      const newToken = await generateAcceptanceToken(quoteId, expiryDays, applyExpiry);
       setToken(newToken);
       return newToken;
     } catch (err) {
@@ -298,7 +322,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
 
   async function handleUrlMode() {
     setMode('url');
-    await ensureToken();
+    await ensureToken(false); // fetch token for display; expiry committed on Copy
   }
 
   async function handleSendMode() {
@@ -338,16 +362,31 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
     setSendStage('gate');
   }
 
+  /**
+   * Commit the acceptance token (expiry + job_status='sent') and rewrite any
+   * stale /accept/<token> URL in the current emailBody with the committed one.
+   * Returns the rewritten body, or null if token commit failed.
+   * Use this before every path where the email body or URL leaves the app.
+   */
+  async function commitAndRewriteBody(): Promise<string | null> {
+    const committedToken = await ensureToken(true);
+    if (!committedToken) return null;
+    const committedUrl = `${window.location.origin}/accept/${committedToken}`;
+    return emailBody.replace(/https?:\/\/[^\s]*\/accept\/[^\s\n]*/g, committedUrl);
+  }
+
   /** Run the actual quote send. Shared by both gate branches. Returns
-   *  the send result so the caller can decide what to do next. */
-  function runSend(): Promise<{ ok: boolean }> {
+   *  the send result so the caller can decide what to do next.
+   *  Pass a rewritten body from commitAndRewriteBody() so the sent email
+   *  always contains the committed token URL. */
+  function runSend(committedBody: string): Promise<{ ok: boolean }> {
     return new Promise((resolve) => {
       startSendTransition(async () => {
         const result = await sendQuoteMessage({
           quoteId,
           templateId: selectedTemplateId || null,
           subject: emailSubject,
-          body: emailBody,
+          body: committedBody,
           recipientEmail: recipientEmail.trim(),
           recipientName: quoteMeta.customerName,
           attachmentSelection,
@@ -366,7 +405,11 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   async function handleSendNow() {
     setSendError(null);
     setSendSuccess(null);
-    await runSend();
+    // H-07: commit token and rewrite body before send so expired-quote rotation
+    // doesn't leave a dead /accept/<old-token> URL in the outbound email.
+    const committedBody = await commitAndRewriteBody();
+    if (!committedBody) return;
+    await runSend(committedBody);
     // Stay on the form stage so the success/suppressed banner shows.
     setSendStage('form');
   }
@@ -390,7 +433,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
     setFollowUpError(null);
     const rules = draftRules.filter((r) => r.templateId);
     if (rules.length === 0) {
-      setFollowUpError('Add at least one follow-up, or go back and choose “Send now”.');
+      setFollowUpError('Add at least one follow-up, or go back and choose "Send now".');
       return;
     }
     setFollowUpSaving(true);
@@ -432,7 +475,10 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
         setFollowUpError('Some follow-ups could not be scheduled. Fix or remove them, then try again.');
         return;
       }
-      const sendResult = await runSend();
+      // H-07: commit token and rewrite body before send.
+      const committedBody = await commitAndRewriteBody();
+      if (!committedBody) return;
+      const sendResult = await runSend(committedBody);
       if (sendResult.ok) {
         router.refresh();
         setSendStage('form');
@@ -443,7 +489,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   }
 
   async function handleEmailMode() {
-    const t = await ensureToken();
+    const t = await ensureToken(false); // fetch token for URL in email body; expiry committed on Send
     if (!t) return;
 
     const url = `${window.location.origin}/accept/${t}`;
@@ -505,14 +551,20 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   }
 
   async function handleCopyUrl() {
-    if (!acceptanceUrl) return;
+    // Commit the selected expiry now - user is actually copying the link.
+    // H-06 fix: use the token returned directly - for expired quotes ensureToken(true)
+    // may rotate to a fresh token; acceptanceUrl state may lag behind React's async
+    // setState, so reading it could copy a stale/dead link.
+    const committedToken = await ensureToken(true);
+    if (!committedToken) return;
+    const committedUrl = `${window.location.origin}/accept/${committedToken}`;
     try {
-      await navigator.clipboard.writeText(acceptanceUrl);
+      await navigator.clipboard.writeText(committedUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       const input = document.createElement('input');
-      input.value = acceptanceUrl;
+      input.value = committedUrl;
       document.body.appendChild(input);
       input.select();
       document.execCommand('copy');
@@ -523,7 +575,10 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
   }
 
   async function handleCopyEmail() {
-    const fullEmail = `Subject: ${emailSubject}\n\n${emailBody}`;
+    // H-05/H-06/H-07: use shared helper to commit token + rewrite body.
+    const committedBody = await commitAndRewriteBody();
+    if (!committedBody) return;
+    const fullEmail = `Subject: ${emailSubject}\n\n${committedBody}`;
     try {
       await navigator.clipboard.writeText(fullEmail);
       setEmailCopied(true);
@@ -579,27 +634,41 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
             {/* Choose Mode */}
             {mode === 'choose' && !loading && (
               <div className="space-y-3">
-                <p className="text-sm text-slate-600">How would you like to send this quote?</p>
-
-                {/* Quote Expiry */}
-                {!token && (
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <label className="text-sm font-medium text-slate-700 whitespace-nowrap">Link expires in:</label>
-                    <select
-                      value={expiryDays}
-                      onChange={(e) => setExpiryDays(Number(e.target.value))}
-                      className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
-                    >
-                      <option value={7}>7 days</option>
-                      <option value={14}>14 days</option>
-                      <option value={30}>30 days</option>
-                      <option value={60}>60 days</option>
-                      <option value={90}>90 days</option>
-                      <option value={180}>180 days</option>
-                      <option value={365}>1 year</option>
-                    </select>
+                {showMarginInPreview && (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                    <p className="text-sm text-red-700 font-medium">⚠️ Warning: Profit/margin values are visible to the customer</p>
+                    <p className="text-xs text-red-600 mt-1">
+                      The &quot;Show margin breakdown on customer quote&quot; option is currently enabled. Your customer will be able to see your profit margin values. To hide this, open the Customer Quote Editor and uncheck &quot;Show margin breakdown on customer quote&quot; before sending.
+                    </p>
                   </div>
                 )}
+                <p className="text-sm text-slate-600">How would you like to send this quote?</p>
+
+                {/* Quote Expiry - always shown so users can set/change it on first send
+                    AND when updating an already-sent quote */}
+                {token && (
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    ⚠️ Changing the expiry will update the deadline on the customer&apos;s existing link - make sure they know.
+                  </p>
+                )}
+                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <label className="text-sm font-medium text-slate-700 whitespace-nowrap">
+                    {token ? 'Update expiry to:' : 'Link expires in:'}
+                  </label>
+                  <select
+                    value={expiryDays}
+                    onChange={(e) => setExpiryDays(Number(e.target.value))}
+                    className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white"
+                  >
+                    <option value={7}>7 days from now</option>
+                    <option value={14}>14 days from now</option>
+                    <option value={30}>30 days from now</option>
+                    <option value={60}>60 days from now</option>
+                    <option value={90}>90 days from now</option>
+                    <option value={180}>180 days from now</option>
+                    <option value={365}>1 year from now</option>
+                  </select>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <button
                     onClick={handleSendMode}
@@ -926,7 +995,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M13 6l6 6-6 6" />
                           </svg>
                         </div>
-                        <h4 className="text-sm font-semibold text-slate-900">{isSending ? 'Sending…' : 'Send now'}</h4>
+                        <h4 className="text-sm font-semibold text-slate-900">{isSending ? 'Sending...' : 'Send now'}</h4>
                         <p className="text-xs text-slate-500">No follow-ups needed</p>
                       </button>
 
@@ -1096,7 +1165,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                                 </div>
                               ) : (
                                 <div className="space-y-2">
-                                  <p className="text-[11px] text-slate-500">Chases the customer if they don’t respond. Auto-cancels when they reply, accept, or decline. Respects quiet hours.</p>
+                                  <p className="text-[11px] text-slate-500">Chases the customer if they don&apos;t respond. Auto-cancels when they reply, accept, or decline. Respects quiet hours.</p>
                                   <div className="flex items-end gap-2">
                                     <div className="w-24">
                                       <label className="block text-[10px] font-medium text-slate-500 mb-0.5"># days</label>
@@ -1173,7 +1242,7 @@ export function SendQuoteButton({ quoteId, workspaceSlug, existingToken, hasCust
                         disabled={followUpSaving || isSending || emailTemplates.length === 0 || draftRules.length === 0}
                         className="px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
                       >
-                        {followUpSaving || isSending ? 'Saving & sending…' : 'Save follow-ups & send'}
+                        {followUpSaving || isSending ? 'Saving & sending...' : 'Save follow-ups & send'}
                       </button>
                     </div>
                   </div>

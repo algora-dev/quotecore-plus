@@ -136,7 +136,7 @@ function TutorialsIntroModal({ onClose }: { onClose: () => void }) {
           <p className="font-semibold text-slate-900">Learn every feature of the app in one place.</p>
           <p>
             Start with <span className="font-semibold">Quotes</span> and{' '}
-            <span className="font-semibold">Components</span>, then move on to{' '}
+            <span className="font-semibold">Smart Components™</span>, then move on to{' '}
             <span className="font-semibold">Orders</span> and <span className="font-semibold">Invoices</span>, or
             explore at your own pace.
           </p>

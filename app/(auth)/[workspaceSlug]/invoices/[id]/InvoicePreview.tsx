@@ -26,6 +26,8 @@ interface Props {
     sortCode?: string;
     paymentLink?: string;
   };
+  hideLinePrices?: boolean;
+  hideTotals?: boolean;
 }
 
 function formatDate(dateStr: string) {
@@ -55,6 +57,8 @@ export function InvoicePreview({
   taxTotal,
   total,
   paymentDetails,
+  hideLinePrices = false,
+  hideTotals = false,
 }: Props) {
   const visibleLines = lines.filter((l) => l.is_visible);
   const customer = invoice.customer_snapshot as Record<string, string>;
@@ -132,10 +136,10 @@ export function InvoicePreview({
                     {line.show_quantity !== false ? `${line.quantity} ${line.unit}` : '-'}
                   </td>
                   <td className="py-3 text-right text-slate-700">
-                    {line.show_price ? formatCurrency(line.unit_price, currency) : '-'}
+                    {line.show_price && !hideLinePrices ? formatCurrency(line.unit_price, currency) : '-'}
                   </td>
                   <td className="py-3 text-right font-medium text-slate-900">
-                    {line.show_price ? formatCurrency(line.line_total, currency) : '-'}
+                    {line.show_price && !hideLinePrices ? formatCurrency(line.line_total, currency) : '-'}
                   </td>
                 </tr>
               ))
@@ -144,7 +148,7 @@ export function InvoicePreview({
         </table>
 
         {/* Totals */}
-        <div data-pdf-block className="mt-4 flex justify-end">
+        {!hideTotals && <div data-pdf-block className="mt-4 flex justify-end">
           <div className="w-64 space-y-1">
             <div className="flex justify-between text-sm text-slate-600">
               <span>Subtotal</span>
@@ -161,7 +165,7 @@ export function InvoicePreview({
               <span>{formatCurrency(total, currency)}</span>
             </div>
           </div>
-        </div>
+        </div>}
       </div>
 
       {/* Payment instructions */}

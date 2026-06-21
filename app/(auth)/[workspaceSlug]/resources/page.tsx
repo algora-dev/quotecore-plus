@@ -40,8 +40,8 @@ export default async function ResourcesHubPage({
 
   const cards = [
     {
-      title: 'Components',
-      description: 'Add and manage reusable components for quoting',
+      title: 'Smart Components™',
+      description: 'Add and manage your Smart Components™ for faster, accurate quoting',
       href: `${base}/components`,
       copilot: 'resources-card-components',
       icon: (

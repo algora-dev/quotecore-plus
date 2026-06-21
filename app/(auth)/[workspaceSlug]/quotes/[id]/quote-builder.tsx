@@ -26,6 +26,8 @@ import { CurrencySelector } from './CurrencySelector';
 import { FilesManager } from './FilesManager';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
+import { CreateSmartComponentModal } from '@/app/components/CreateSmartComponentModal';
+import type { MeasurementSystem } from '@/app/lib/types';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
 
@@ -58,6 +60,10 @@ interface Props {
   onPhaseChange?: (phase: Phase) => void; // NEW: Callback when phase changes
   /** When true the company is over storage - block file uploads. */
   isOverStorage?: boolean;
+  /** Company defaults for mid-quote Smart Component™ creation. */
+  companyMeasurementSystem?: MeasurementSystem;
+  companyDefaultTrade?: string;
+  collections?: { id: string; name: string; is_bootstrap: boolean }[];
 }
 
 export function QuoteBuilder({
@@ -79,6 +85,9 @@ export function QuoteBuilder({
   externalPhase,
   onPhaseChange,
   isOverStorage,
+  companyMeasurementSystem = 'metric',
+  companyDefaultTrade = 'roofing',
+  collections = [],
 }: Props) {
   console.log('[QuoteBuilder] Received components:', initialComponents.length, initialComponents.map(c => ({ name: c.name, type: c.component_type })));
   const [internalPhase, setInternalPhase] = useState<Phase>('areas');
@@ -117,6 +126,13 @@ export function QuoteBuilder({
   const [roofAreaEntries, setRoofAreaEntries] = useState(initialRoofAreaEntries);
   const [components, setComponents] = useState(initialComponents);
   const [entries, setEntries] = useState(initialEntries);
+  // localLibrary: lifted from prop so newly-created mid-quote components are
+  // immediately available for future adds in the same session.
+  const [localLibrary, setLocalLibrary] = useState<ComponentLibraryRow[]>(libraryComponents);
+  // Mid-quote Smart Component™ creation modal state.
+  const [showCreateComponentModal, setShowCreateComponentModal] = useState(false);
+  const [createCompForAreaId, setCreateCompForAreaId] = useState<string | null>(null);
+  const [createCompType, setCreateCompType] = useState<'main' | 'extra'>('main');
   const [newAreaLabel, setNewAreaLabel] = useState('');
   const [areaPendingDelete, setAreaPendingDelete] = useState<{ id: string; label: string } | null>(null);
   const [areaDeleting, setAreaDeleting] = useState(false);
@@ -236,7 +252,7 @@ export function QuoteBuilder({
   }
 
   async function handleAddFromLibrary(libId: string, areaId: string | null, type: 'main' | 'extra') {
-    const lib = libraryComponents.find(c => c.id === libId);
+    const lib = localLibrary.find(c => c.id === libId);
     if (!lib) return;
     const created = await addQuoteComponent(quote.id, {
       quote_roof_area_id: areaId ?? undefined,
@@ -253,6 +269,33 @@ export function QuoteBuilder({
     });
     setComponents(prev => [...prev, created]);
     setEntries(prev => ({ ...prev, [created.id]: [] }));
+  }
+
+  /**
+   * Called when a new Smart Component™ is created mid-quote via the modal.
+   * Adds to localLibrary (so it’s available for future adds this session)
+   * then immediately creates the quote_component row.
+   */
+  async function handleComponentCreated(comp: ComponentLibraryRow) {
+    setLocalLibrary(prev => [...prev, comp]);
+    // Directly create the quote component from the returned library row
+    // (avoids relying on the state update being synchronous).
+    const created = await addQuoteComponent(quote.id, {
+      quote_roof_area_id: createCompForAreaId ?? undefined,
+      component_library_id: comp.id,
+      name: comp.name,
+      component_type: createCompType,
+      measurement_type: comp.measurement_type,
+      material_rate: comp.default_material_rate,
+      labour_rate: comp.default_labour_rate,
+      waste_type: comp.default_waste_type,
+      waste_percent: comp.default_waste_percent,
+      waste_fixed: comp.default_waste_fixed,
+      pitch_type: comp.default_pitch_type,
+    });
+    setComponents(prev => [...prev, created]);
+    setEntries(prev => ({ ...prev, [created.id]: [] }));
+    setShowCreateComponentModal(false);
   }
 
   async function handleRemoveComponent(id: string) {
@@ -427,7 +470,7 @@ export function QuoteBuilder({
     const labPercent = parseFloat(laborMarginPercent);
 
     if (isNaN(matPercent) || matPercent < 0 || matPercent > 100) {
-      alert('Material margin must be between 0 and 100%');
+      alert('Item Cost margin must be between 0 and 100%');
       return;
     }
 
@@ -453,9 +496,6 @@ export function QuoteBuilder({
         material_margin_enabled: materialMarginEnabled,
         labor_margin_enabled: laborMarginEnabled,
       });
-
-      // Refresh to recalculate totals
-      window.location.reload();
     } catch (err) {
       console.error('Failed to save margins:', err);
       alert('Failed to save margins. Please try again.');
@@ -531,7 +571,7 @@ export function QuoteBuilder({
 
       <div className="flex gap-4 p-3 bg-slate-50 rounded-lg text-sm">
         <span>{tradeLabels.areaSingularLabel}: <strong>{formatArea(totalRoofSqm, quote.measurement_system)}</strong></span>
-        <span>Materials: <strong>{formatCurrency(totals.totalMaterials, effectiveCurrency)}</strong></span>
+        <span>Item Cost: <strong>{formatCurrency(totals.totalMaterials, effectiveCurrency)}</strong></span>
         <span>Labour: <strong>{formatCurrency(totals.totalLabour, effectiveCurrency)}</strong></span>
         <span className="ml-auto font-semibold">Total: {formatCurrency(totals.grandTotal, effectiveCurrency)}</span>
       </div>
@@ -611,8 +651,9 @@ export function QuoteBuilder({
                 />
               ))}
               <AddFromLibrary
-                library={libraryComponents}
+                library={localLibrary}
                 onAdd={libId => handleAddFromLibrary(libId, null, 'main')}
+                onCreateNew={() => { setCreateCompForAreaId(null); setCreateCompType('main'); setShowCreateComponentModal(true); }}
                 copilotId="quote-add-from-library"
               />
             </div>
@@ -648,8 +689,9 @@ export function QuoteBuilder({
                   />
                 ))}
                 <AddFromLibrary
-                  library={libraryComponents.filter(c => c.component_type === 'main')}
+                  library={localLibrary.filter(c => c.component_type === 'main')}
                   onAdd={libId => handleAddFromLibrary(libId, area.id, 'main')}
+                  onCreateNew={() => { setCreateCompForAreaId(area.id); setCreateCompType('main'); setShowCreateComponentModal(true); }}
                   copilotId={areaIdx === 0 ? 'quote-add-from-library' : undefined}
                 />
               </div>
@@ -700,8 +742,9 @@ export function QuoteBuilder({
               />
             ))}
             <AddFromLibrary
-              library={libraryComponents.filter(c => c.component_type === 'extra')}
+              library={localLibrary.filter(c => c.component_type === 'extra')}
               onAdd={libId => handleAddFromLibrary(libId, null, 'extra')}
+              onCreateNew={() => { setCreateCompForAreaId(null); setCreateCompType('extra'); setShowCreateComponentModal(true); }}
             />
           </div>
           <div className="flex justify-between">
@@ -709,7 +752,7 @@ export function QuoteBuilder({
               onClick={() => setPhase('components')}
               className="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50"
             >
-              ← Components
+              ← Smart Components™
             </button>
             <button
               onClick={() => setPhase('review')}
@@ -738,7 +781,7 @@ export function QuoteBuilder({
                         <th className="py-1">Component</th>
                         <th className="py-1 text-right">Entries</th>
                         <th className="py-1 text-right">Total Qty</th>
-                        <th className="py-1 text-right">Material</th>
+                        <th className="py-1 text-right">Item Cost</th>
                         <th className="py-1 text-right">Labour</th>
                         <th className="py-1 text-right">Total</th>
                       </tr>
@@ -787,7 +830,7 @@ export function QuoteBuilder({
                       <th className="py-1">Component</th>
                       <th className="py-1 text-right">Entries</th>
                       <th className="py-1 text-right">Total Qty</th>
-                      <th className="py-1 text-right">Material</th>
+                      <th className="py-1 text-right">Item Cost</th>
                       <th className="py-1 text-right">Labour</th>
                       <th className="py-1 text-right">Total</th>
                     </tr>
@@ -818,7 +861,7 @@ export function QuoteBuilder({
                     <th className="py-1">Extra</th>
                     <th className="py-1 text-right">Entries</th>
                     <th className="py-1 text-right">Total Qty</th>
-                    <th className="py-1 text-right">Material</th>
+                    <th className="py-1 text-right">Item Cost</th>
                     <th className="py-1 text-right">Labour</th>
                     <th className="py-1 text-right">Total</th>
                   </tr>
@@ -843,18 +886,9 @@ export function QuoteBuilder({
 
           {/* Profit Margin Controls */}
           <div className="rounded-xl border border-blue-200 bg-blue-50 p-6 space-y-4" data-copilot="quote-margins">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-gray-900 text-lg">💸 Profit Margins</h3>
-                <p className="text-sm text-gray-600 mt-1">Adjust your profit margins for this quote</p>
-              </div>
-              <button
-                onClick={handleSaveMargins}
-                disabled={marginSaving}
-                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-full font-medium disabled:opacity-50 text-s transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-              >
-                {marginSaving ? 'Saving...' : 'Apply Changes'}
-              </button>
+            <div>
+              <h3 className="font-semibold text-gray-900 text-lg">💸 Profit Margins</h3>
+              <p className="text-sm text-gray-600 mt-1">Adjust your profit margins - saved automatically when you confirm.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -867,7 +901,7 @@ export function QuoteBuilder({
                     onChange={(e) => setMaterialMarginEnabled(e.target.checked)}
                     className="w-4 h-4 rounded"
                   />
-                  <span className="font-semibold text-gray-900">Material Margin</span>
+                  <span className="font-semibold text-gray-900">Item Cost Margin</span>
                 </label>
                 <div className="relative">
                   <input
@@ -898,7 +932,7 @@ export function QuoteBuilder({
                     onChange={(e) => setLaborMarginEnabled(e.target.checked)}
                     className="w-4 h-4 rounded"
                   />
-                  <span className="font-semibold text-gray-900">Labor Margin</span>
+                  <span className="font-semibold text-gray-900">Labour Margin</span>
                 </label>
                 <div className="relative">
                   <input
@@ -930,12 +964,12 @@ export function QuoteBuilder({
 
           <div className="rounded-xl border border-slate-300 bg-white p-4 space-y-2">
             <div className="flex justify-between text-sm">
-              <span>Total Materials</span>
+              <span>Total Item Cost</span>
               <span>{formatCurrency(totals.totalMaterials, effectiveCurrency)}</span>
             </div>
             {materialMarginEnabled && parseFloat(materialMarginPercent) > 0 && (
               <div className="flex justify-between text-sm text-emerald-600 font-medium">
-                <span className="ml-4 text-xs">+ Material Margin ({materialMarginPercent}%)</span>
+                <span className="ml-4 text-xs">+ Item Cost Margin ({materialMarginPercent}%)</span>
                 <span>+{formatCurrency(totals.totalMaterials * parseFloat(materialMarginPercent) / 100, effectiveCurrency)}</span>
               </div>
             )}
@@ -945,8 +979,18 @@ export function QuoteBuilder({
             </div>
             {laborMarginEnabled && parseFloat(laborMarginPercent) > 0 && (
               <div className="flex justify-between text-sm text-emerald-600 font-medium">
-                <span className="ml-4 text-xs">+ Labor Margin ({laborMarginPercent}%)</span>
+                <span className="ml-4 text-xs">+ Labour Margin ({laborMarginPercent}%)</span>
                 <span>+{formatCurrency(totals.totalLabour * parseFloat(laborMarginPercent) / 100, effectiveCurrency)}</span>
+              </div>
+            )}
+            {((materialMarginEnabled && parseFloat(materialMarginPercent) > 0) || (laborMarginEnabled && parseFloat(laborMarginPercent) > 0)) && (
+              <div className="flex justify-between text-sm font-semibold text-emerald-600 border-t border-emerald-100 pt-2">
+                <span>Total Margin</span>
+                <span>+{formatCurrency(
+                  (materialMarginEnabled ? totals.totalMaterials * parseFloat(materialMarginPercent || '0') / 100 : 0) +
+                  (laborMarginEnabled ? totals.totalLabour * parseFloat(laborMarginPercent || '0') / 100 : 0),
+                  effectiveCurrency
+                )}</span>
               </div>
             )}
             <div className="flex justify-between text-sm border-t pt-2">
@@ -980,7 +1024,12 @@ export function QuoteBuilder({
             {/* Guard removed per Shaun: areas are optional for generic quotes
                 and the roofing guard was more friction than value. Just show
                 the ConfirmQuoteButton directly. */}
-            <ConfirmQuoteButton quoteId={quote.id} workspaceSlug={workspaceSlug} quoteStatus={quote.status} />
+            <ConfirmQuoteButton
+              quoteId={quote.id}
+              workspaceSlug={workspaceSlug}
+              quoteStatus={quote.status}
+              onBeforeSubmit={handleSaveMargins}
+            />
           </div>
         </div>
       )}
@@ -1021,6 +1070,16 @@ export function QuoteBuilder({
       onCancel={() => { if (!areaDeleting) setAreaPendingDelete(null); }}
       onConfirm={confirmRemoveArea}
     />
+    {showCreateComponentModal && (
+      <CreateSmartComponentModal
+        measurementSystem={companyMeasurementSystem}
+        defaultTrade={companyDefaultTrade}
+        defaultComponentType={createCompType}
+        collections={collections}
+        onCreated={handleComponentCreated}
+        onClose={() => setShowCreateComponentModal(false)}
+      />
+    )}
     </>
   );
 }
@@ -1111,8 +1170,8 @@ function RoofAreaCard({
               >
                 Edit
               </button>
-              <button onClick={() => onRemove(area.id)} className="text-xs text-red-500">
-                ×
+              <button onClick={() => onRemove(area.id)} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
               </button>
             </div>
           </div>
@@ -1125,8 +1184,8 @@ function RoofAreaCard({
               <span className="text-sm font-medium text-orange-600">
                 {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
               </span>
-              <button onClick={() => onRemove(area.id)} className="text-xs text-red-500">
-                ×
+              <button onClick={() => onRemove(area.id)} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
               </button>
             </div>
           </div>
@@ -1173,9 +1232,9 @@ function RoofAreaCard({
                   </span>
                   <button
                     onClick={() => onRemoveEntry(entry.id, area.id)}
-                    className="ml-auto text-red-400 hover:text-red-600"
+                    className="ml-auto w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
                   >
-                    ×
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
                   </button>
                 </div>
               ))}
@@ -1417,9 +1476,9 @@ function ExpandableComponent({
             e.stopPropagation();
             onRemove(comp.id);
           }}
-          className="text-red-400 hover:text-red-600 text-xs ml-1"
+          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
         >
-          ×
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
         </button>
       </div>
 
@@ -1540,9 +1599,9 @@ function ExpandableComponent({
                 {!isCombined && (
                   <button
                     onClick={() => onRemoveEntry(entry.id, comp.id)}
-                    className="ml-auto text-red-400 hover:text-red-600"
+                    className="ml-auto w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
                   >
-                    ×
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
                   </button>
                 )}
               </div>
@@ -1706,13 +1765,17 @@ function ExpandableComponent({
   );
 }
 
+const CREATE_NEW_COMPONENT_ID = '__create_new_component__';
+
 function AddFromLibrary({
   library,
   onAdd,
-  copilotId
+  onCreateNew,
+  copilotId,
 }: {
   library: ComponentLibraryRow[];
   onAdd: (id: string) => Promise<void>;
+  onCreateNew?: () => void;
   copilotId?: string;
 }) {
   const [sel, setSel] = useState('');
@@ -1720,10 +1783,21 @@ function AddFromLibrary({
     <div className="flex gap-2" {...(copilotId ? { 'data-copilot': copilotId } : {})}>
       <select
         value={sel}
-        onChange={e => setSel(e.target.value)}
+        onChange={e => {
+          const val = e.target.value;
+          if (val === CREATE_NEW_COMPONENT_ID) {
+            setSel('');
+            onCreateNew?.();
+          } else {
+            setSel(val);
+          }
+        }}
         className="flex-1 px-2 py-1 text-xs border border-slate-300 rounded"
       >
         <option value="">Add from library...</option>
+        {onCreateNew && (
+          <option value={CREATE_NEW_COMPONENT_ID} style={{ color: '#FF6B35', fontWeight: 600 }}>+ Create new Smart Component™</option>
+        )}
         {library.map(c => (
           <option key={c.id} value={c.id}>
             {c.name} ({c.measurement_type})

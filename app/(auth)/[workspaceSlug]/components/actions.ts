@@ -183,7 +183,8 @@ export async function createComponent(input: ComponentLibraryInsert): Promise<Cr
     return { ok: false, code: 'internal_error', message: `${error.message} (Code: ${error.code})` };
   }
 
-  revalidatePath('/components');
+  // Revalidate all workspace-scoped /components pages (dynamic [workspaceSlug] segment).
+  revalidatePath('/[workspaceSlug]/components', 'page');
   return { ok: true, data };
 }
 
@@ -242,7 +243,7 @@ export async function updateComponent(id: string, input: Partial<ComponentLibrar
     .single();
   
   if (error) throw new Error(error.message);
-  revalidatePath('/components');
+  revalidatePath('/[workspaceSlug]/components', 'page');
   return data;
 }
 
@@ -255,7 +256,7 @@ export async function deleteComponent(id: string) {
     .eq('id', id)
     .eq('company_id', profile.company_id);
   if (error) throw new Error(error.message);
-  revalidatePath('/components');
+  revalidatePath('/[workspaceSlug]/components', 'page');
 }
 
 /**
@@ -310,6 +311,46 @@ export async function createComponentCollection(
  * Rename an existing component collection. Bootstrap collections can be
  * renamed (they just lose the default name label in the UI).
  */
+export async function deleteComponentCollection(
+  id: string,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  try {
+    const profile = await requireCompanyContext();
+    const supabase = await createSupabaseServerClient();
+
+    // Refuse to delete bootstrap (default) libraries.
+    const { data: col, error: fetchErr } = await supabase
+      .from('component_collections')
+      .select('id, is_bootstrap')
+      .eq('id', id)
+      .eq('company_id', profile.company_id)
+      .single();
+    if (fetchErr || !col) return { ok: false, message: 'Library not found.' };
+    if (col.is_bootstrap) return { ok: false, message: 'The default library cannot be deleted.' };
+
+    // Delete all components in this library first.
+    const { error: compErr } = await supabase
+      .from('component_library')
+      .delete()
+      .eq('collection_id', id)
+      .eq('company_id', profile.company_id);
+    if (compErr) return { ok: false, message: compErr.message };
+
+    // Then delete the library itself.
+    const { error: colErr } = await supabase
+      .from('component_collections')
+      .delete()
+      .eq('id', id)
+      .eq('company_id', profile.company_id);
+    if (colErr) return { ok: false, message: colErr.message };
+
+    revalidatePath('/components');
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
 export async function renameComponentCollection(
   id: string,
   name: string,

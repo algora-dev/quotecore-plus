@@ -24,6 +24,8 @@ import { ReopenQuoteButton } from './ReopenQuoteButton';
 import { SummaryTabs } from './SummaryTabs';
 import { SummaryFilesPanel } from './SummaryFilesPanel';
 import { ActivityCard } from './ActivityCard';
+import { QuoteExpiryEditor } from './QuoteExpiryEditor';
+import { QuoteNotesPanel, type QuoteNote } from './QuoteNotesPanel';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { loadQuoteTaxes } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
@@ -35,10 +37,10 @@ export default async function QuoteSummaryPage({
   searchParams,
 }: {
   params: Promise<{ workspaceSlug: string; id: string }>;
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; view?: string }>;
 }) {
   const { workspaceSlug, id } = await params;
-  const { from } = await searchParams;
+  const { from, view } = await searchParams;
   // When opened from the Message Center, "Back" returns to the inbox.
   const backHref = from === 'inbox' ? `/${workspaceSlug}/inbox` : `/${workspaceSlug}/quotes`;
   const backLabel = from === 'inbox' ? 'Back to Message Center' : 'Back';
@@ -56,7 +58,7 @@ export default async function QuoteSummaryPage({
   // the card automatically.
   const entitlements = await loadCompanyEntitlements(quote.company_id);
   const activityCardEnabled = entitlements.features.activity_card;
-  
+
   const supabase = await createSupabaseServerClient();
 
   // One-time "test it on yourself first" send tip: has THIS user seen it?
@@ -68,18 +70,27 @@ export default async function QuoteSummaryPage({
     .maybeSingle();
   const sendTestTipSeen = !!(_stt as { send_test_tip_seen_at?: string | null } | null)?.send_test_tip_seen_at;
 
-  // Load ALL customer quote lines (for overrides + custom lines)
+  // Load notes for this quote (newest first), joining author name for M-01
+  const { data: notesData } = await supabase
+    .from('quote_notes')
+    .select('id, title, body, created_at, updated_at, author:users!created_by_user_id(full_name)')
+    .eq('quote_id', id)
+    .order('created_at', { ascending: false });
+  const quoteNotes: QuoteNote[] = (notesData ?? []) as unknown as QuoteNote[];
+  const currentUserFullName = _profile.full_name ?? null;
+
+  // Load ALL customer quote lines (for custom lines + hasCustomerQuote flag)
   const { data: allCustomerLines } = await supabase
     .from('customer_quote_lines')
     .select('*')
     .eq('quote_id', id)
     .order('sort_order', { ascending: true });
-  
-  // Separate custom lines
+
+  // Separate custom lines (non-component lines added manually by the user)
   const customLines = (allCustomerLines || []).filter(
     line => line.line_type === 'custom' && line.is_visible && line.include_in_total
   );
-  
+
   // Detect if customer quote has been saved
   const hasCustomerQuote = (allCustomerLines || []).length > 0;
 
@@ -89,7 +100,7 @@ export default async function QuoteSummaryPage({
     .select('id, custom_text, custom_amount, show_price, is_visible, include_in_total')
     .eq('quote_id', id)
     .order('sort_order');
-  
+
   const hasLaborSheet = (laborSheetLines || []).length > 0;
 
   // Load email templates for Send Quote modal. attachment_id (Phase 4 baked
@@ -118,15 +129,14 @@ export default async function QuoteSummaryPage({
       fileSize: r.file_size,
     }));
   }
-  
-  // Build component override map (componentId -> custom_amount)
-  const componentOverrides = new Map<string, number>();
-  (allCustomerLines || []).forEach(line => {
-    if (line.line_type === 'component' && line.quote_component_id && line.custom_amount != null) {
-      componentOverrides.set(line.quote_component_id, line.custom_amount);
-    }
-  });
-  
+
+  // NOTE: The Summary is the pricing-engine view - it always computes from raw
+  // component base costs + global margins. The Customer Quote Editor is the
+  // separate presentation layer where users can customise per-line amounts and
+  // margins. We intentionally do NOT apply customer_quote_line custom_amounts
+  // here; doing so caused a double-margin bug where margins were applied twice
+  // (once baked into custom_amount at save time, again by computeQuoteTotals).
+
   // Load company default currency
   const { data: company } = await supabase
     .from('companies')
@@ -135,7 +145,7 @@ export default async function QuoteSummaryPage({
     .single();
   const companyDefaultCurrency = company?.default_currency || 'NZD';
   const effectiveCurrency = getEffectiveCurrency(quote.currency, companyDefaultCurrency);
-  
+
   // Load customer-submitted revision requests (from the public acceptance URL)
   // so we can surface them on the summary as a pending action.
   const { data: revisionRequestsData } = await supabase
@@ -159,7 +169,7 @@ export default async function QuoteSummaryPage({
     .select('id, file_type, file_name, file_size, storage_path, uploaded_at')
     .eq('quote_id', id)
     .order('uploaded_at', { ascending: false });
-  
+
   const _planFile = filesData?.find(f => f.file_type === 'plan');
   const _supportingFiles = filesData?.filter(f => f.file_type === 'supporting') || [];
 
@@ -224,25 +234,9 @@ export default async function QuoteSummaryPage({
 
 
   const _totalRoofSqm = roofAreas.reduce((sum, a) => sum + (a.computed_sqm ?? 0), 0);
-  
-  // Apply customer quote line overrides to component costs
-  const componentsWithOverrides = components.map(c => {
-    const override = componentOverrides.get(c.id);
-    if (override !== undefined) {
-      // Override exists - recalculate material/labour split while preserving total
-      const totalCost = c.material_cost + c.labour_cost;
-      const ratio = totalCost > 0 ? c.material_cost / totalCost : 0.5;
-      return {
-        ...c,
-        material_cost: override * ratio,
-        labour_cost: override * (1 - ratio),
-      };
-    }
-    return c;
-  });
-  
-  const mainComps = componentsWithOverrides.filter(c => c.quote_roof_area_id);
-  const extraComps = componentsWithOverrides.filter(c => !c.quote_roof_area_id);
+
+  const mainComps = components.filter(c => c.quote_roof_area_id);
+  const extraComps = components.filter(c => !c.quote_roof_area_id);
 
   // Phase 5: trade-aware heading for the "no area" bucket. A generic-trade
   // quote with zero areas means every component lands in `extraComps` by
@@ -254,8 +248,8 @@ export default async function QuoteSummaryPage({
   const quoteTrade = (quote as { trade?: 'roofing' | 'generic' | null }).trade ?? 'roofing';
   const isGenericNoArea = quoteTrade === 'generic' && roofAreas.length === 0;
   const extrasHeading = isGenericNoArea ? 'Quote items' : 'Extras';
-  
-  const engineComps = componentsWithOverrides.map(c => ({
+
+  const engineComps = components.map(c => ({
     id: c.id, name: c.name, componentType: c.component_type as 'main' | 'extra',
     measurementType: c.measurement_type as 'area' | 'lineal' | 'quantity' | 'fixed', inputMode: c.input_mode as 'final' | 'calculated',
     finalValue: c.final_value ?? undefined, calcRawValue: c.calc_raw_value ?? undefined,
@@ -266,14 +260,87 @@ export default async function QuoteSummaryPage({
     isWasteOverridden: c.is_waste_overridden, isPitchOverridden: c.is_pitch_overridden, isCustomerVisible: c.is_customer_visible, pricingUnit: c.pricing_unit ?? undefined,
   }));
   const totals = computeQuoteTotals(engineComps, { materialMarginPct: quote.material_margin_percent ?? 0, labourMarginPct: quote.labor_margin_percent ?? 0, taxRate: quote.tax_rate });
-  
+
   // Calculate custom lines total
   const customLinesTotal = (customLines || []).reduce((sum, line) => sum + (line.custom_amount || 0), 0);
-  
+
   // Adjust totals to include custom lines
   const adjustedSubtotal = totals.subtotalWithMargins + customLinesTotal;
   const { lines: summaryTaxLines, total: adjustedTax } = computeTaxLines(quoteTaxes, adjustedSubtotal, 'quote');
   const adjustedGrandTotal = adjustedSubtotal + adjustedTax;
+
+  // ── Original Summary Snapshot ─────────────────────────────────────────────
+  // Load or lazily create the "original" snapshot. This is captured the FIRST
+  // time the user arrives on the Summary page (right after saving from Review
+  // or Blank Quote Creator). It is never overwritten after creation.
+  const { data: snapshotRow } = await supabase
+    .from('quotes')
+    .select('original_summary_snapshot')
+    .eq('id', id)
+    .single();
+  const existingSnapshot = (snapshotRow as any)?.original_summary_snapshot ?? null;
+
+  if (!existingSnapshot) {
+    // Build and persist the snapshot on first visit.
+    const snapshotData = {
+      capturedAt: new Date().toISOString(),
+      materialMarginPercent: Number(quote.material_margin_percent ?? 0),
+      labourMarginPercent: Number(quote.labor_margin_percent ?? 0),
+      components: engineComps.map(c => ({
+        id: c.id,
+        name: c.name,
+        materialCost: Number(c.materialCost ?? 0),
+        labourCost: Number(c.labourCost ?? 0),
+        total: Number((c.materialCost ?? 0) + (c.labourCost ?? 0)),
+      })),
+      totalMaterials: totals.totalMaterials,
+      totalLabour: totals.totalLabour,
+      materialMargin: totals.materialMargin,
+      labourMargin: totals.labourMargin,
+      subtotalWithMargins: totals.subtotalWithMargins,
+      customLinesTotal,
+      adjustedSubtotal,
+      adjustedTax,
+      adjustedGrandTotal,
+      currency: effectiveCurrency,
+    };
+    // M-01 fix: await the write so errors are caught and the snapshot is
+    // available for the "Original" tab on this first visit without a reload.
+    const { error: snapErr } = await supabase
+      .from('quotes')
+      .update({ original_summary_snapshot: snapshotData })
+      .eq('id', id)
+      .is('original_summary_snapshot', null);
+    if (snapErr) {
+      console.error('[summary] snapshot write failed:', snapErr.message);
+    } else {
+      // Use the freshly written snapshot so Original tab appears on first visit.
+      (snapshotRow as any).original_summary_snapshot = snapshotData;
+    }
+  }
+
+  // The snapshot shown in the "Original" tab: prefer the existing DB snapshot
+  // (already captured on a prior visit) so we never overwrite the true original.
+  // After a successful first-write above, snapshotRow now carries the new snapshot.
+  const resolvedSnapshotData = (snapshotRow as any)?.original_summary_snapshot ?? null;
+  const originalSnapshot = resolvedSnapshotData as {
+    capturedAt: string;
+    materialMarginPercent: number;
+    labourMarginPercent: number;
+    components: Array<{ id: string; name: string; materialCost: number; labourCost: number; total: number }>;
+    totalMaterials: number;
+    totalLabour: number;
+    materialMargin: number;
+    labourMargin: number;
+    subtotalWithMargins: number;
+    customLinesTotal: number;
+    adjustedSubtotal: number;
+    adjustedTax: number;
+    adjustedGrandTotal: number;
+    currency: string;
+  } | null;
+
+  const showOriginalView = view === 'original' && !!originalSnapshot;
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 space-y-6">
@@ -283,10 +350,20 @@ export default async function QuoteSummaryPage({
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           {backLabel}
         </Link>
+
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">{quote.customer_name}</h1>
             {quote.job_name && <p className="text-sm text-slate-500 mt-0.5">{quote.job_name}</p>}
+            {(quote as any).acceptance_token_expires_at && (
+              <div className="mt-2">
+                <QuoteExpiryEditor
+                  quoteId={id}
+                  expiresAt={(quote as any).acceptance_token_expires_at}
+                  isFinalised={!!(quote.accepted_at || quote.declined_at)}
+                />
+              </div>
+            )}
           </div>
           <span className="text-sm font-medium text-orange-600">Quote #{quote.quote_number}</span>
         </div>
@@ -325,6 +402,34 @@ export default async function QuoteSummaryPage({
         effectiveCurrency={effectiveCurrency}
         hasLaborSheet={hasLaborSheet}
         laborLines={(laborSheetLines || []).map(l => ({ id: l.id, custom_text: l.custom_text, custom_amount: l.custom_amount, show_price: l.show_price, is_visible: l.is_visible, include_in_total: l.include_in_total }))}
+        summaryHeaderSlot={
+          !!originalSnapshot ? (
+            <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
+              <Link
+                href={`/${workspaceSlug}/quotes/${id}/summary`}
+                title="Your current up to date quote summary"
+                className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
+                  !showOriginalView
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
+                }`}
+              >
+                Current
+              </Link>
+              <Link
+                href={`/${workspaceSlug}/quotes/${id}/summary?view=original`}
+                title="The first saved Quote Summary version"
+                className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
+                  showOriginalView
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
+                }`}
+              >
+                Original
+              </Link>
+            </div>
+          ) : null
+        }
         summaryActions={
           <>
             {quote.status === 'draft' && (
@@ -377,6 +482,7 @@ export default async function QuoteSummaryPage({
               quoteId={id}
               workspaceSlug={workspaceSlug}
               existingToken={quote.acceptance_token && !quote.withdrawn_at ? quote.acceptance_token : null}
+              existingExpiresAt={(quote as any).acceptance_token_expires_at ?? null}
               hasCustomerQuote={hasCustomerQuote}
               emailTemplates={emailTemplates || []}
               canFollowups={entitlements.features.followups}
@@ -396,6 +502,7 @@ export default async function QuoteSummaryPage({
                 companyName: quote.cq_company_name || company?.name || null,
                 quoteDate: new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' }),
               }}
+              showMarginInPreview={!!(quote as { show_margin_in_preview?: boolean | null }).show_margin_in_preview}
             />
           </>
         }
@@ -407,6 +514,13 @@ export default async function QuoteSummaryPage({
           <h1 className="text-2xl font-bold text-slate-900 mb-4">
             Quote #{quote.quote_number || 'DRAFT'} - Summary
           </h1>
+          {showOriginalView && originalSnapshot && (
+            <div className="mb-3">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                🔒 Original - captured {new Date(originalSnapshot.capturedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </span>
+            </div>
+          )}
           <p className="text-base text-slate-700 mb-2">{quote.customer_name}</p>
           {quote.job_name && <p className="text-sm text-slate-500 mb-2">{quote.job_name}</p>}
         </div>
@@ -421,11 +535,11 @@ export default async function QuoteSummaryPage({
                 <table className="w-full text-sm">
                   <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-300">
                     <th className="pb-2 font-medium">Component</th><th className="pb-2 text-right font-medium">Entries</th><th className="pb-2 text-right font-medium">Total Qty</th>
-                    <th className="pb-2 text-right font-medium">Material</th><th className="pb-2 text-right font-medium">Labour</th><th className="pb-2 text-right font-medium">Total</th>
+                    <th className="pb-2 text-right font-medium">Item Cost</th><th className="pb-2 text-right font-medium">Labour</th><th className="pb-2 text-right font-medium">Total</th>
                   </tr></thead>
                   <tbody>{areaComps.map(c => {
                     // Convert canonical metric quantity into the quote's display
-                    // system so an Imperial quote shows ft / ft² / RS, not m / m².
+                    // system so an Imperial quote shows ft / ft2 / RS, not m / m2.
                     const sys = normalizeMeasurementSystem(quote.measurement_system);
                     const rawQty = c.final_quantity ?? 0;
                     let displayQty = rawQty;
@@ -458,7 +572,7 @@ export default async function QuoteSummaryPage({
             <table className="w-full text-sm">
               <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-300">
                 <th className="pb-2 font-medium">{isGenericNoArea ? 'Item' : 'Extra'}</th><th className="pb-2 text-right font-medium">Entries</th><th className="pb-2 text-right font-medium">Total Qty</th>
-                <th className="pb-2 text-right font-medium">Material</th><th className="pb-2 text-right font-medium">Labour</th><th className="pb-2 text-right font-medium">Total</th>
+                <th className="pb-2 text-right font-medium">Item Cost</th><th className="pb-2 text-right font-medium">Labour</th><th className="pb-2 text-right font-medium">Total</th>
               </tr></thead>
               <tbody>{extraComps.map(c => {
                 const sys = normalizeMeasurementSystem(quote.measurement_system);
@@ -504,26 +618,53 @@ export default async function QuoteSummaryPage({
           </div>
         )}
 
-        <div className="pt-6 border-t border-slate-300 space-y-4">
-          <div className="flex justify-between text-base"><span className="text-slate-900">Total Materials</span><span className="text-slate-900 text-right">{formatCurrency(totals.totalMaterials, effectiveCurrency)}</span></div>
-          <div className="flex justify-between text-base"><span className="text-slate-900">Total Labour</span><span className="text-slate-900 text-right">{formatCurrency(totals.totalLabour, effectiveCurrency)}</span></div>
-          {(totals.materialMargin > 0 || totals.labourMargin > 0) && <div className="flex justify-between text-base text-slate-500"><span>Margins</span><span className="text-right">+{formatCurrency(totals.materialMargin + totals.labourMargin, effectiveCurrency)}</span></div>}
-          {customLinesTotal > 0 && <div className="flex justify-between text-base"><span className="text-slate-900">Custom Items</span><span className="text-slate-900 text-right">{formatCurrency(customLinesTotal, effectiveCurrency)}</span></div>}
-          <div className="flex justify-between text-base border-t border-slate-300 pt-4"><span className="text-slate-900">Subtotal</span><span className="text-slate-900 text-right">{formatCurrency(adjustedSubtotal, effectiveCurrency)}</span></div>
-          {summaryTaxLines.map((tl) => (
-            <div key={tl.id} className="flex justify-between text-base">
-              <span className="text-slate-900">{tl.name} ({tl.rate_percent}%)</span>
-              <span className="text-slate-900 text-right">{formatCurrency(tl.amount, effectiveCurrency)}</span>
+        {showOriginalView && originalSnapshot ? (
+          // ── ORIGINAL TAB ── Read-only view from the first-save snapshot
+          <div className="pt-4 space-y-4">
+            <div className="pt-4 border-t border-slate-300 space-y-4">
+              <div className="flex justify-between text-base"><span className="text-slate-900">Total Item Cost</span><span className="text-slate-900 text-right">{formatCurrency(originalSnapshot.totalMaterials, originalSnapshot.currency)}</span></div>
+              <div className="flex justify-between text-base"><span className="text-slate-900">Total Labour</span><span className="text-slate-900 text-right">{formatCurrency(originalSnapshot.totalLabour, originalSnapshot.currency)}</span></div>
+              {(originalSnapshot.materialMargin > 0 || originalSnapshot.labourMargin > 0) && (
+                <div className="flex justify-between text-base text-slate-500">
+                  <span>Margins ({originalSnapshot.materialMarginPercent}% mat / {originalSnapshot.labourMarginPercent}% lab)</span>
+                  <span className="text-right">+{formatCurrency(originalSnapshot.materialMargin + originalSnapshot.labourMargin, originalSnapshot.currency)}</span>
+                </div>
+              )}
+              {originalSnapshot.customLinesTotal > 0 && (
+                <div className="flex justify-between text-base"><span className="text-slate-900">Custom Items</span><span className="text-slate-900 text-right">{formatCurrency(originalSnapshot.customLinesTotal, originalSnapshot.currency)}</span></div>
+              )}
+              <div className="flex justify-between text-base border-t border-slate-300 pt-4"><span className="text-slate-900">Subtotal</span><span className="text-slate-900 text-right">{formatCurrency(originalSnapshot.adjustedSubtotal, originalSnapshot.currency)}</span></div>
+              <div className="flex justify-between text-base">
+                <span className="text-slate-900">Tax</span>
+                <span className="text-slate-900 text-right">{formatCurrency(originalSnapshot.adjustedTax, originalSnapshot.currency)}</span>
+              </div>
+              <div className="flex justify-between text-xl font-bold border-t border-slate-300 pt-4"><span className="text-slate-900">Grand Total</span><span className="text-slate-900 text-right">{formatCurrency(originalSnapshot.adjustedGrandTotal, originalSnapshot.currency)}</span></div>
             </div>
-          ))}
-          {summaryTaxLines.length > 1 && (
-            <div className="flex justify-between text-base border-t border-slate-300 pt-2">
-              <span className="text-slate-900">Tax total</span>
-              <span className="text-slate-900 text-right">{formatCurrency(adjustedTax, effectiveCurrency)}</span>
-            </div>
-          )}
-          <div className="flex justify-between text-xl font-bold border-t border-slate-300 pt-4"><span className="text-slate-900">Grand Total</span><span className="text-slate-900 text-right">{formatCurrency(adjustedGrandTotal, effectiveCurrency)}</span></div>
-        </div>
+            <p className="text-xs text-slate-400 italic">This is a read-only snapshot of the quote as it was when first saved. Switch to &quot;Current&quot; to see live values.</p>
+          </div>
+        ) : (
+          // ── CURRENT TAB (default) ── Live computed values
+          <div className="pt-6 border-t border-slate-300 space-y-4">
+            <div className="flex justify-between text-base"><span className="text-slate-900">Total Item Cost</span><span className="text-slate-900 text-right">{formatCurrency(totals.totalMaterials, effectiveCurrency)}</span></div>
+            <div className="flex justify-between text-base"><span className="text-slate-900">Total Labour</span><span className="text-slate-900 text-right">{formatCurrency(totals.totalLabour, effectiveCurrency)}</span></div>
+            {(totals.materialMargin > 0 || totals.labourMargin > 0) && <div className="flex justify-between text-base text-slate-500"><span>Margins</span><span className="text-right">+{formatCurrency(totals.materialMargin + totals.labourMargin, effectiveCurrency)}</span></div>}
+            {customLinesTotal > 0 && <div className="flex justify-between text-base"><span className="text-slate-900">Custom Items</span><span className="text-slate-900 text-right">{formatCurrency(customLinesTotal, effectiveCurrency)}</span></div>}
+            <div className="flex justify-between text-base border-t border-slate-300 pt-4"><span className="text-slate-900">Subtotal</span><span className="text-slate-900 text-right">{formatCurrency(adjustedSubtotal, effectiveCurrency)}</span></div>
+            {summaryTaxLines.map((tl) => (
+              <div key={tl.id} className="flex justify-between text-base">
+                <span className="text-slate-900">{tl.name} ({tl.rate_percent}%)</span>
+                <span className="text-slate-900 text-right">{formatCurrency(tl.amount, effectiveCurrency)}</span>
+              </div>
+            ))}
+            {summaryTaxLines.length > 1 && (
+              <div className="flex justify-between text-base border-t border-slate-300 pt-2">
+                <span className="text-slate-900">Tax total</span>
+                <span className="text-slate-900 text-right">{formatCurrency(adjustedTax, effectiveCurrency)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-xl font-bold border-t border-slate-300 pt-4"><span className="text-slate-900">Grand Total</span><span className="text-slate-900 text-right">{formatCurrency(adjustedGrandTotal, effectiveCurrency)}</span></div>
+          </div>
+        )}
 
         {/* Files & Documents (always visible so users can add more supporting files from here) */}
         <SummaryFilesPanel
@@ -542,6 +683,10 @@ export default async function QuoteSummaryPage({
       </div>
       </div>
       </SummaryTabs>
+
+      {/* Notes panel -- always visible below the main summary content */}
+      <QuoteNotesPanel quoteId={id} initialNotes={quoteNotes} currentUserFullName={currentUserFullName} />
+
     </div>
   );
 }

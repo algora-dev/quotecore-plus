@@ -39,9 +39,9 @@ const MAX_ROWS = 35_000;
 const CHUNK_SIZE = 2_000;
 
 const MAPPING_FIELDS: { key: keyof ColumnMapping; label: string; hint: string }[] = [
-  { key: 'description', label: 'Item / Description', hint: 'Primary text shown on the quote line (e.g. product name or full description).' },
-  { key: 'quantity', label: 'Description / Quantity', hint: 'Optional second part appended after the primary text (e.g. pack size, a longer description, or quantity).' },
-  { key: 'price', label: 'Price', hint: 'The amount inserted on the quote line. Currency symbols and separators are stripped automatically.' },
+  { key: 'description', label: 'Item / Code', hint: 'Primary text shown on the quote line — item name, product code, or SKU.' },
+  { key: 'quantity', label: 'Description', hint: 'Optional detail text shown alongside the item (e.g. pack size, material spec, or a longer description).' },
+  { key: 'price', label: 'Price', hint: 'The unit price inserted on the quote line. Currency symbols and separators are stripped automatically. Quantity can be set per-line in the editor.' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -508,9 +508,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                 )}
                 <div className="mt-3 rounded-lg bg-blue-50 border border-blue-100 px-3 py-2">
                   <p className="text-xs text-blue-700">
-                    💡 You can create <strong>additional maps</strong> for this catalog once it&rsquo;s saved - go to the
-                    Catalogs page, edit the catalog, and open the &ldquo;Maps&rdquo; tab. Extra maps reuse this same file
-                    (no re-upload, no extra storage).
+                    💡 You can create multiple <strong>maps</strong> for this catalog once it&rsquo;s saved — open the catalog &rsaquo; Maps tab &rsaquo; &ldquo;Add extra map for this catalog&rdquo;
                   </p>
                 </div>
               </div>
