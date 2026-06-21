@@ -928,6 +928,39 @@ export type Database = {
           },
         ]
       }
+      contact_enquiries: {
+        Row: {
+          company: string | null
+          created_at: string | null
+          email: string
+          id: number
+          message: string
+          name: string
+          source: string | null
+          subject: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string | null
+          email: string
+          id?: number
+          message: string
+          name: string
+          source?: string | null
+          subject?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string | null
+          email?: string
+          id?: number
+          message?: string
+          name?: string
+          source?: string | null
+          subject?: string | null
+        }
+        Relationships: []
+      }
       copilot_progress: {
         Row: {
           company_id: string
@@ -4413,6 +4446,10 @@ export type Database = {
       reclaim_stale_dispatching_messages: {
         Args: { p_stale_minutes?: number }
         Returns: number
+      }
+      replace_customer_quote_lines: {
+        Args: { p_company_id: string; p_lines: Json; p_quote_id: string }
+        Returns: undefined
       }
       require_attachment_slot: {
         Args: { p_company_id: string }

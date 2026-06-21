@@ -1720,39 +1720,36 @@ export async function saveCustomerQuoteLines(
     throw new Error('Quote not found');
   }
 
-  // Delete existing lines for this quote
-  await supabase
-    .from('customer_quote_lines')
-    .delete()
-    .eq('quote_id', quoteId);
+  // H-01: atomic delete+insert via RPC. The previous delete-then-insert was
+  // non-transactional and could wipe customer quote lines if the insert failed
+  // or two saves raced. replace_customer_quote_lines() does the whole replace
+  // in one transaction, serialized per-quote with an advisory lock, and
+  // re-checks company ownership server-side.
+  const lineRows = lines.map(line => ({
+    line_type: line.lineType,
+    quote_component_id: line.componentId || null,
+    custom_text: line.text,
+    quantity_text: line.quantityText ?? null,
+    custom_amount: line.amount,
+    show_price: line.showPrice,
+    show_units: line.showUnits,
+    sort_order: line.sortOrder,
+    is_visible: line.isVisible,
+    include_in_total: line.includeInTotal,
+    quantity: line.quantity ?? 1,
+    unit_price: line.unitPrice ?? null,
+    line_margin_percent: line.lineMarginPercent ?? null,
+    line_labor_margin_percent: line.lineLaborMarginPercent ?? null,
+    base_unit_cost: line.baseUnitCost ?? null,
+  }));
 
-  // Insert new lines
-  if (lines.length > 0) {
-    const insertData = lines.map(line => ({
-      quote_id: quoteId,
-      line_type: line.lineType,
-      quote_component_id: line.componentId || null,
-      custom_text: line.text,
-      quantity_text: line.quantityText ?? null,
-      custom_amount: line.amount,
-      show_price: line.showPrice,
-      show_units: line.showUnits,
-      sort_order: line.sortOrder,
-      is_visible: line.isVisible,
-      include_in_total: line.includeInTotal,
-      quantity: line.quantity ?? 1,
-      unit_price: line.unitPrice ?? null,
-      line_margin_percent: line.lineMarginPercent ?? null,
-      line_labor_margin_percent: line.lineLaborMarginPercent ?? null,
-      base_unit_cost: line.baseUnitCost ?? null,
-    }));
+  const { error: replaceErr } = await supabase.rpc('replace_customer_quote_lines', {
+    p_quote_id: quoteId,
+    p_company_id: quote.company_id,
+    p_lines: lineRows,
+  });
 
-    const { error } = await supabase
-      .from('customer_quote_lines')
-      .insert(insertData);
-
-    if (error) throw new Error(error.message);
-  }
+  if (replaceErr) throw new Error(replaceErr.message);
 
   // Persist show_quantity_column, price-visibility toggles, and margin fields on the quote row.
   if (

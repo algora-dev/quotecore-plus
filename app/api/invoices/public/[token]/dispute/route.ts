@@ -20,7 +20,7 @@ export async function POST(
   const ip = getClientIP(hdrs);
 
   // Rate limit: 3 disputes per IP per hour
-  if (!(await checkRateLimit(`invoice-dispute:${ip}`, 3, 60 * 60 * 1000))) {
+  if (!(await checkRateLimit(`invoice-dispute:${ip}`, 3, 60 * 60 * 1000, { failClosed: true }))) {
     return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
   }
 

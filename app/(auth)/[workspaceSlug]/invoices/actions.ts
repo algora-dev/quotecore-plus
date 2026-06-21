@@ -153,8 +153,12 @@ export async function createInvoiceFromQuote(quoteId: string, templateId?: strin
     .select('*')
     .eq('quote_id', quoteId)
     .order('sort_order');
-  const cqLines = selectedLineIds && selectedLineIds.length > 0
-    ? (allCqLines ?? []).filter((l) => selectedLineIds.includes(l.id))
+  // H-03: track whether the caller explicitly provided a selection. If they
+  // did, an empty post-filter result must NOT fall back to importing every
+  // visible component (URL-tampered `lines=` would otherwise overbill).
+  const selectionProvided = Array.isArray(selectedLineIds) && selectedLineIds.length > 0;
+  const cqLines = selectionProvided
+    ? (allCqLines ?? []).filter((l) => selectedLineIds!.includes(l.id))
     : (allCqLines ?? []);
 
   // Load optional template
@@ -223,6 +227,12 @@ export async function createInvoiceFromQuote(quoteId: string, templateId?: strin
   // Customer Quote Editor — in that case customer_quote_lines is empty and
   // the invoice would otherwise be blank.
   const visibleCqLines = (cqLines ?? []).filter((l) => l.is_visible !== false);
+
+  // H-03: if the user explicitly selected lines but the filtered set is empty
+  // (tampered/stale IDs), reject rather than silently importing all components.
+  if (selectionProvided && visibleCqLines.length === 0) {
+    throw new Error('None of the selected quote lines could be found. Please re-select lines and try again.');
+  }
 
   let invoiceLines: Array<{
     invoice_id: string;

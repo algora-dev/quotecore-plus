@@ -56,7 +56,7 @@ export async function submitOrderResponse(
 
   const hdrs = await headers();
   const ip = getClientIP(hdrs);
-  const ipAllowed = await checkRateLimit(`order-respond-ip:${ip}`, 30, 60 * 60 * 1000);
+  const ipAllowed = await checkRateLimit(`order-respond-ip:${ip}`, 30, 60 * 60 * 1000, { failClosed: true });
   if (!ipAllowed) {
     return { ok: false, error: 'Too many requests. Please wait a moment and try again.' };
   }
@@ -76,7 +76,7 @@ export async function submitOrderResponse(
     return { ok: false, error: 'This link has expired.' };
   }
 
-  const orderAllowed = await checkRateLimit(`order-respond-order:${order.id}`, 10, 60 * 60 * 1000);
+  const orderAllowed = await checkRateLimit(`order-respond-order:${order.id}`, 10, 60 * 60 * 1000, { failClosed: true });
   if (!orderAllowed) {
     return { ok: false, error: 'Too many responses. Please wait a moment and try again.' };
   }
