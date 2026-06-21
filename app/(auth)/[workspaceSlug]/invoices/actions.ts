@@ -153,10 +153,14 @@ export async function createInvoiceFromQuote(quoteId: string, templateId?: strin
     .select('*')
     .eq('quote_id', quoteId)
     .order('sort_order');
-  // H-03: track whether the caller explicitly provided a selection. If they
-  // did, an empty post-filter result must NOT fall back to importing every
-  // visible component (URL-tampered `lines=` would otherwise overbill).
-  const selectionProvided = Array.isArray(selectedLineIds) && selectedLineIds.length > 0;
+  // H-03 / H-03-R1: track whether the caller explicitly provided a selection.
+  // selectedLineIds is undefined  → key was absent → no selection, allow fallback.
+  // selectedLineIds is []         → key was present but empty/invalid → reject.
+  // selectedLineIds is [id, ...]  → valid selection → filter + reject if nothing matches.
+  const selectionProvided = selectedLineIds !== undefined;
+  if (selectionProvided && selectedLineIds!.length === 0) {
+    throw new Error('No valid line IDs provided. Please re-select lines and try again.');
+  }
   const cqLines = selectionProvided
     ? (allCqLines ?? []).filter((l) => selectedLineIds!.includes(l.id))
     : (allCqLines ?? []);

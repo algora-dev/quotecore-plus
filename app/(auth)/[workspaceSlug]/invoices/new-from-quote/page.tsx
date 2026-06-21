@@ -15,7 +15,10 @@ interface Props {
 
 export default async function NewFromQuotePage({ params, searchParams }: Props) {
   const { workspaceSlug } = await params;
-  const { quoteId, lines, templateId } = await searchParams;
+  // Await once and keep the resolved object so we can both destructure values
+  // and inspect key presence (needed for H-03-R1 tamper detection below).
+  const resolvedSearchParams = await searchParams;
+  const { quoteId, lines, templateId } = resolvedSearchParams;
 
   await requireCompanyContext();
 
@@ -23,7 +26,15 @@ export default async function NewFromQuotePage({ params, searchParams }: Props) 
     redirect(`/${workspaceSlug}/invoices`);
   }
 
-  const selectedLineIds = lines ? lines.split(',').filter(Boolean) : undefined;
+  // H-03-R1: distinguish "?lines=" / "?lines=,,," (key present but empty/invalid)
+  // from the key being absent entirely. When the `lines` key is present but
+  // all tokens filter out, we pass an empty array so the action treats it as
+  // an explicit-but-invalid selection and rejects instead of falling back to
+  // importing all visible components.
+  const linesKeyPresent = 'lines' in resolvedSearchParams;
+  const selectedLineIds: string[] | undefined = linesKeyPresent
+    ? (lines ?? '').split(',').filter(Boolean)
+    : undefined;
 
   const invoiceId = await createInvoiceFromQuote(
     quoteId,
