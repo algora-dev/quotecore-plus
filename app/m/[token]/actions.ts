@@ -47,7 +47,7 @@ export async function submitMessageReply(
   // Rate limit by token id.
   const hdrs = await headers();
   const ip = getClientIP(hdrs);
-  const allowedToken = await checkRateLimit(`message-reply-token:${payload.mid}`, 10, 60 * 60 * 1000);
+  const allowedToken = await checkRateLimit(`message-reply-token:${payload.mid}`, 10, 60 * 60 * 1000, { failClosed: true });
   if (!allowedToken) {
     return { ok: false, error: 'Too many responses. Please wait a moment and try again.' };
   }

@@ -105,7 +105,7 @@ export async function submitRevisionRequest(
   // actual submissions.
   const hdrs = await headers();
   const ip = getClientIP(hdrs);
-  if (!(await checkRateLimit(`revision:${ip}`, 5, 60 * 60 * 1000))) {
+  if (!(await checkRateLimit(`revision:${ip}`, 5, 60 * 60 * 1000, { failClosed: true }))) {
     return { success: false, error: 'Too many requests. Please try again later or email directly.' };
   }
 
@@ -357,17 +357,36 @@ export async function respondToQuote(token: string, action: 'accept' | 'decline'
   const now = new Date().toISOString();
   const isAccept = action === 'accept';
 
-  // Update quote - double-check token matches (prevents parameter manipulation)
-  const { error } = await supabase
+  // H-04: the final update is the authority, not the read above. Repeat ALL
+  // lifecycle predicates so a stale tab or a race with the expire-quotes cron
+  // cannot record a response after the quote was already actioned/expired.
+  // .select() lets us confirm a row was actually claimed; if 0 rows updated we
+  // bail BEFORE firing alerts/follow-ups.
+  let updateQuery = supabase
     .from('quotes')
     .update(isAccept
       ? { accepted_at: now, job_status: 'accepted' }
       : { declined_at: now, job_status: 'declined' }
     )
     .eq('id', quote.id)
-    .eq('acceptance_token', token); // Double verification
+    .eq('acceptance_token', token) // Double verification
+    .is('accepted_at', null)
+    .is('declined_at', null)
+    .is('withdrawn_at', null);
+
+  // Only honour the response if the token is still unexpired at update time.
+  updateQuery = updateQuery.or(
+    `acceptance_token_expires_at.is.null,acceptance_token_expires_at.gt.${now}`
+  );
+
+  const { data: updatedRows, error } = await updateQuery.select('id');
 
   if (error) throw new Error('Failed to process response');
+  if (!updatedRows || updatedRows.length === 0) {
+    // Lost the race (already responded, withdrawn, or expired between read and
+    // update). Do not send alerts or activate follow-ups.
+    throw new Error('This quote can no longer be responded to. Please contact the sender for a new link.');
+  }
 
   // Create alert (scoped to the quote's company). Status update above always
   // happens; this alert is gated by the Message Center notification matrix.

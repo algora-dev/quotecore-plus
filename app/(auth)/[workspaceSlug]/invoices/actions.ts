@@ -153,8 +153,16 @@ export async function createInvoiceFromQuote(quoteId: string, templateId?: strin
     .select('*')
     .eq('quote_id', quoteId)
     .order('sort_order');
-  const cqLines = selectedLineIds && selectedLineIds.length > 0
-    ? (allCqLines ?? []).filter((l) => selectedLineIds.includes(l.id))
+  // H-03 / H-03-R1: track whether the caller explicitly provided a selection.
+  // selectedLineIds is undefined  → key was absent → no selection, allow fallback.
+  // selectedLineIds is []         → key was present but empty/invalid → reject.
+  // selectedLineIds is [id, ...]  → valid selection → filter + reject if nothing matches.
+  const selectionProvided = selectedLineIds !== undefined;
+  if (selectionProvided && selectedLineIds!.length === 0) {
+    throw new Error('No valid line IDs provided. Please re-select lines and try again.');
+  }
+  const cqLines = selectionProvided
+    ? (allCqLines ?? []).filter((l) => selectedLineIds!.includes(l.id))
     : (allCqLines ?? []);
 
   // Load optional template
@@ -223,6 +231,12 @@ export async function createInvoiceFromQuote(quoteId: string, templateId?: strin
   // Customer Quote Editor — in that case customer_quote_lines is empty and
   // the invoice would otherwise be blank.
   const visibleCqLines = (cqLines ?? []).filter((l) => l.is_visible !== false);
+
+  // H-03: if the user explicitly selected lines but the filtered set is empty
+  // (tampered/stale IDs), reject rather than silently importing all components.
+  if (selectionProvided && visibleCqLines.length === 0) {
+    throw new Error('None of the selected quote lines could be found. Please re-select lines and try again.');
+  }
 
   let invoiceLines: Array<{
     invoice_id: string;

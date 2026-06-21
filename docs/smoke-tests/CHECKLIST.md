@@ -17,6 +17,18 @@
 
 ---
 
+# GERALD GO-LIVE AUDIT REMEDIATION R1 (2026-06-21, commit `35ca401`)
+
+> Blockers H-01..H-04 + M-01..M-03 from `quotecore-plus-golive-security-2026-06-21`. DB objects already verified present (RPC, trigger, 5 CHECK constraints, base_unit_cost col). Behavioural verification pending. Re-audit brief: `docs/audits/GERALD-BRIEF-2026-06-21-REMEDIATION-R1.md`.
+
+- [ ] **H-01 atomic quote-line save**: edit a customer quote with multiple lines, save → lines persist correctly. (Race/failure path now rolled back atomically via RPC.)
+- [ ] **H-03 invoice-from-quote tamper**: start invoice-from-quote, tamper `lines=` to a bogus id in URL → expect error "None of the selected quote lines could be found", NOT a full-component invoice.
+- [ ] **H-04 accept/decline guard**: accept a quote, then try decline from a stale tab → second action rejected with conflict, no duplicate alert. Accept after expiry → rejected.
+- [ ] **M-01/M-02 (DB-enforced, low manual priority)**: normal quote save unaffected; negative qty / cross-quote component only reachable via direct API (constraints confirmed present).
+- [ ] **M-03 rate-limit fail-closed**: no behavioural change in normal use; only matters during a rate-limit RPC outage.
+
+---
+
 # PRE-MERGE RELEASE PASS - `development → main` (66 commits, baseline `8fac898` 2026-05-25)
 
 > This merge ships the entire dev backlog to production. Verify the major features below on dev before sign-off. Gerald cleared the code; remaining risk is **behavioural/product-level**.
