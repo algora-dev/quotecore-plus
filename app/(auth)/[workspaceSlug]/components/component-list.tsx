@@ -27,9 +27,9 @@ import { loadFlashingLibrary } from '../flashings/actions';
 /** Build the radio-button labels that decorate measurement type with the company's preferred unit. */
 function buildMeasurementLabels(system: MeasurementSystem): Record<MeasurementType, string> {
   const norm = normalizeMeasurementSystem(system);
-  const areaUnit = norm === 'metric' ? 'm²' : norm === 'imperial_ft' ? 'ft²' : 'RS';
+  const areaUnit = norm === 'metric' ? 'mÃ‚Â²' : norm === 'imperial_ft' ? 'ftÃ‚Â²' : 'RS';
   const linealUnit = norm === 'metric' ? 'm' : 'ft';
-  const volumeUnit = norm === 'metric' ? 'm³' : 'ft³';
+  const volumeUnit = norm === 'metric' ? 'mÃ‚Â³' : 'ftÃ‚Â³';
   return {
     area: `Area (${areaUnit})`,
     lineal: `Linear: Single (${linealUnit})`,
@@ -66,10 +66,12 @@ const ROOFING_DEFAULT_TYPES = new Set<MeasurementType>([
 
 const PRICING_STRATEGY_LABELS: Record<PricingStrategy, string> = {
   per_unit: 'Per unit (default)',
-  per_pack_length: 'Per pack - by length (e.g. 20m cable rolls)',
-  per_pack_area: 'Per pack - by area (e.g. 50m² underlay rolls)',
-  per_pack_coverage: 'Per Coverage Area (e.g. 20L paint coverage)',
-  per_pack_volume: 'Per pack - by volume (e.g. 5m³ concrete units)',
+  per_pack_length: 'Fixed Quantity (e.g. 20m cable rolls)',
+  per_pack_area: 'Fixed Quantity (e.g. 50mÃ‚Â² tile bundles)',
+  // per_pack_coverage retained for legacy components only; hidden from new
+  // components via allowedStrategiesFor.
+  per_pack_coverage: 'Fixed Quantity (coverage - legacy)',
+  per_pack_volume: 'Fixed Quantity (e.g. 5mÃ‚Â³ concrete units)',
 };
 
 const WASTE_UNIT_LABELS: Record<WasteUnit, string> = {
@@ -87,7 +89,8 @@ function allowedStrategiesFor(mt: MeasurementType): PricingStrategy[] {
     base.push('per_pack_length');
   }
   if (['area', 'length_x_height', 'length_x_height_freestyle', 'irregular_area', 'multi_lineal_lxh', 'multi_lineal_lxh_freestyle'].includes(mt)) {
-    base.push('per_pack_area', 'per_pack_coverage');
+    // per_pack_coverage removed from new components; enum retained for legacy.
+    base.push('per_pack_area');
   }
   if (mt === 'volume' || mt === 'volume_3d') {
     base.push('per_pack_volume');
@@ -660,8 +663,8 @@ export function ComponentList({
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Smart Components™</h1>
-        <p className="text-sm text-slate-500 mt-1">Manage your Smart Components™ and extras for quotes.</p>
+        <h1 className="text-2xl font-semibold text-slate-900">Smart ComponentsÃ¢â€žÂ¢</h1>
+        <p className="text-sm text-slate-500 mt-1">Manage your Smart ComponentsÃ¢â€žÂ¢ and extras for quotes.</p>
       </div>
       
 
@@ -777,7 +780,7 @@ export function ComponentList({
             data-copilot="add-component"
             className="inline-flex items-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
-            + Add Smart Component™
+            + Add Smart ComponentÃ¢â€žÂ¢
             {componentLimit !== null && (
               <span className="ml-2 text-xs font-medium text-white/80">
                 {effectiveCount}/{componentLimit}
@@ -888,7 +891,7 @@ export function ComponentList({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search Smart Components™..."
+            placeholder="Search Smart ComponentsÃ¢â€žÂ¢..."
             className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
           />
           <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -902,7 +905,7 @@ export function ComponentList({
 
            {showForm && (
         <div className="mb-4 p-4 border border-slate-200 rounded-xl bg-white">
-          <h3 className="font-semibold text-slate-900 mb-3">New Smart Component™</h3>
+          <h3 className="font-semibold text-slate-900 mb-3">New Smart ComponentÃ¢â€žÂ¢</h3>
           <form onSubmit={handleCreate} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div data-copilot="component-name">
@@ -976,18 +979,18 @@ export function ComponentList({
                   {/* hidden zero so the form submission always has default_material_rate */}
                   <input type="hidden" name="default_material_rate" value="0" />
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">Pack price ($)</label>
-                    <input type="number" step="0.01" placeholder="e.g. 60" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                    <label className="block text-xs text-slate-500 mb-1">Quantity Price</label>
+                    <input type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                   </div>
                   <div>
                     <label className="block text-xs text-slate-500 mb-1">
-                      Pack size ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
+                      Quantity Amount ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
                     </label>
                     <input type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                   </div>
                   {formPricingStrategy === 'per_pack_coverage' && (
                     <div className="col-span-2">
-                      <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
+                      <label className="block text-xs text-slate-500 mb-1">Coverage per pack (mÃ‚Â²)</label>
                       <input type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                     </div>
                   )}
@@ -1208,18 +1211,18 @@ export function ComponentList({
                       <>
                         <input type="hidden" name="default_material_rate" value="0" />
                         <div>
-                          <label className="block text-xs text-slate-500 mb-1">Pack price ($)</label>
-                          <input type="number" step="0.01" placeholder="e.g. 60" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                          <label className="block text-xs text-slate-500 mb-1">Quantity Price</label>
+                          <input type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                         </div>
                         <div>
                           <label className="block text-xs text-slate-500 mb-1">
-                            Pack size ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
+                            Quantity Amount ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
                           </label>
                           <input type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                         </div>
                         {formPricingStrategy === 'per_pack_coverage' && (
                           <div className="col-span-2">
-                            <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
+                            <label className="block text-xs text-slate-500 mb-1">Coverage per pack (mÃ‚Â²)</label>
                             <input type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                           </div>
                         )}
@@ -1402,11 +1405,11 @@ export function ComponentList({
                     <span className="text-xs text-slate-400">{MEASUREMENT_LABELS[comp.measurement_type]}</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Item Cost: ${(comp.default_material_rate ?? 0).toFixed(2)}/{unitForMeasurement(comp.measurement_type)} · Labour: ${(comp.default_labour_rate ?? 0).toFixed(2)}/{unitForMeasurement(comp.measurement_type)}
+                    Item Cost: ${(comp.default_material_rate ?? 0).toFixed(2)}/{unitForMeasurement(comp.measurement_type)} Ã‚Â· Labour: ${(comp.default_labour_rate ?? 0).toFixed(2)}/{unitForMeasurement(comp.measurement_type)}
                     {comp.default_waste_type !== 'none' && (
-                      <> · Waste: {comp.default_waste_type === 'percent' ? `${comp.default_waste_percent}%` : `${comp.default_waste_fixed} ${unitForMeasurement(comp.measurement_type)}`}</>
+                      <> Ã‚Â· Waste: {comp.default_waste_type === 'percent' ? `${comp.default_waste_percent}%` : `${comp.default_waste_fixed} ${unitForMeasurement(comp.measurement_type)}`}</>
                     )}
-                    {comp.default_pitch_type !== 'none' && <> · {PITCH_LABELS[comp.default_pitch_type]}</>}
+                    {comp.default_pitch_type !== 'none' && <> Ã‚Â· {PITCH_LABELS[comp.default_pitch_type]}</>}
                   </p>
                   {(comp as unknown as { notes?: string | null }).notes && (
                     <p className="text-xs text-slate-400 italic mt-1 line-clamp-1">
@@ -1442,8 +1445,8 @@ export function ComponentList({
       {deleteCompId && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-900">Delete Smart Component™</h3>
-            <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The Smart Component™ will be removed from your library.</p>
+            <h3 className="text-lg font-semibold text-slate-900">Delete Smart ComponentÃ¢â€žÂ¢</h3>
+            <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The Smart ComponentÃ¢â€žÂ¢ will be removed from your library.</p>
             <div className="flex gap-3 justify-end mt-6">
               <button onClick={() => setDeleteCompId(null)} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={deleteLoading}>Cancel</button>
               <button onClick={confirmDeleteComp} className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Delete'}</button>
@@ -1483,8 +1486,8 @@ export function ComponentList({
       <UpgradeModal
         open={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}
-        title={`Smart Components™ library full on ${effectivePlanCode === 'trial' ? 'the free trial' : `the ${effectivePlanCode} plan`}`}
-        description={`You’ve reached your ${componentLimit ?? 0} Smart Component™ limit. Upgrade your plan to add more Smart Components™ to your library.`}
+        title={`Smart ComponentsÃ¢â€žÂ¢ library full on ${effectivePlanCode === 'trial' ? 'the free trial' : `the ${effectivePlanCode} plan`}`}
+        description={`YouÃ¢â‚¬â„¢ve reached your ${componentLimit ?? 0} Smart ComponentÃ¢â€žÂ¢ limit. Upgrade your plan to add more Smart ComponentsÃ¢â€žÂ¢ to your library.`}
         recommendedPlan="growth"
       />
 
@@ -1499,7 +1502,7 @@ export function ComponentList({
         open={subBlockedOpen}
         onClose={() => setSubBlockedOpen(false)}
         title="Your trial period has ended"
-        description="You need to subscribe to a plan to create more Smart Components™. Your existing Smart Components™ remain viewable on any plan."
+        description="You need to subscribe to a plan to create more Smart ComponentsÃ¢â€žÂ¢. Your existing Smart ComponentsÃ¢â€žÂ¢ remain viewable on any plan."
         ctaLabel="View plans"
         recommendedPlan="starter"
       />
