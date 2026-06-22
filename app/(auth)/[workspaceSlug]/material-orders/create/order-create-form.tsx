@@ -79,6 +79,10 @@ interface OrderCreateFormProps {
    *  a quote in the line-by-line layout. Mirrors the customer quote editor's
    *  priced lines + footer + taxes. Null for blank/custom + existing-order edits. */
   initialLineByLine?: LineByLineData | null;
+  /** Company default measurement system - drives metric vs imperial unit options
+   *  in the Add/Edit Order Item modal. Quote-linked orders override with the
+   *  quote's system when present. */
+  companyMeasurementSystem?: string;
 }
 
 interface Variable {
@@ -88,21 +92,35 @@ interface Variable {
 }
 
 interface LengthEntry {
+  /** For linear: the length value. For area/volume: the computed total. */
   length: number;
   multiplier: number;
   variables?: Variable[];
+  /** Area/Volume optional calculator breakdown (display only). When present the
+   *  entry was built from L x W (area) or L x W x D (volume); `length` holds
+   *  the resulting total. Absent when the user typed the total directly. */
+  calcLength?: number;
+  calcWidth?: number;
+  calcDepth?: number;
 }
+
+/**
+ * entryMode: 'single' (qty + optional description), 'linear' (length x qty
+ * entries, formerly 'multiple'), 'area' (m2/ft2 entries), 'volume' (m3/ft3).
+ * Legacy rows stored 'multiple' - normalised to 'linear' on load.
+ */
+type OrderEntryMode = 'single' | 'linear' | 'area' | 'volume';
 
 interface OrderLineItem {
   id: string;
   componentName: string;
   flashingId?: string;
   flashingImageUrl?: string;
-  entryMode: 'single' | 'multiple';
+  entryMode: OrderEntryMode;
   // Single mode
   quantity: number;
   unit: string;
-  // Multiple mode
+  // Linear / area / volume mode
   lengths?: LengthEntry[];
   lengthUnit?: string;
   // Common
@@ -112,7 +130,11 @@ interface OrderLineItem {
   showMeasurements: boolean;
 }
 
-export function OrderCreateForm({ templates, flashings, components = [], collections = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components', initialColumn = 'single', currency = 'GBP', componentLibrary = [], companyTaxes = [], catalogs = [], initialLineByLine = null }: OrderCreateFormProps) {
+export function OrderCreateForm({ templates, flashings, components = [], collections = [], workspaceSlug = '', quoteData, existingOrder, isOverStorage, initialLayout = 'components', initialColumn = 'single', currency = 'GBP', componentLibrary = [], companyTaxes = [], catalogs = [], initialLineByLine = null, companyMeasurementSystem = 'metric' }: OrderCreateFormProps) {
+  // Quote-linked orders use the quote's measurement system; manual orders use
+  // the company default. This single value drives the modal's metric/imperial
+  // unit options so the two systems never mix.
+  const effectiveMeasurementSystem = quoteData?.measurement_system ?? companyMeasurementSystem;
   const router = useRouter();
   
   // Layout state
@@ -264,7 +286,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           componentName: comp.name,
           flashingId,
           flashingImageUrl: flashing?.image_url,
-          entryMode: 'multiple',
+          entryMode: 'linear',
           quantity: 0,
           unit: 'pcs',
           lengths,
@@ -352,7 +374,13 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
       componentName: line.item_name,
       flashingId: line.flashing_id || undefined,
       flashingImageUrl: line.flashing_image_url || undefined,
-      entryMode: line.entry_mode === 'multiple' ? 'multiple' : 'single',
+      // Legacy rows stored 'multiple' for the old multi-length mode -> 'linear'.
+      entryMode: ((): OrderEntryMode => {
+        const m = line.entry_mode;
+        if (m === 'area' || m === 'volume' || m === 'linear') return m;
+        if (m === 'multiple') return 'linear';
+        return 'single';
+      })(),
       quantity: line.quantity || 0,
       unit: line.unit || 'pcs',
       // `lengths` is JSONB on the DB; our app writes LengthEntry[] into it.
@@ -482,7 +510,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   function saveLineItem(data: {
     componentName: string;
     flashingId?: string;
-    entryMode: 'single' | 'multiple';
+    entryMode: OrderEntryMode;
     quantity?: number;
     unit?: string;
     lengths?: LengthEntry[];
@@ -500,6 +528,11 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               componentName: data.componentName,
               flashingId: data.flashingId,
               flashingImageUrl: flashing?.image_url,
+              // BUGFIX: spreading ...line preserved the OLD show_flashing_image
+              // (false for lines created without an image), so newly-added
+              // images never rendered in the preview/sent order after an edit.
+              // Drive it from whether an image is actually attached now.
+              showFlashingImage: !!flashing?.image_url,
               entryMode: data.entryMode,
               quantity: data.quantity || 0,
               unit: data.unit || '',
@@ -1212,10 +1245,12 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
                     {line.showMeasurements && (
                       <div className="text-sm text-slate-700">
                         {line.entryMode === 'single' ? (
-                          <p className="font-medium">Quantity: {line.quantity} {line.unit}</p>
+                          <p className="font-medium">Quantity: {line.quantity}</p>
                         ) : (
                           <div>
-                            <p className="font-medium text-xs text-slate-500 uppercase mb-2">Lengths ({line.lengthUnit}):</p>
+                            <p className="font-medium text-xs text-slate-500 uppercase mb-2">
+                              {line.entryMode === 'area' ? 'Areas' : line.entryMode === 'volume' ? 'Volumes' : 'Lengths'} ({line.lengthUnit}):
+                            </p>
                             <div className="space-y-2">
                               {line.lengths?.map((entry, idx) => (
                                 <div key={idx}>
@@ -1290,6 +1325,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           components={components}
           collections={collections}
           workspaceSlug={workspaceSlug}
+          measurementSystem={effectiveMeasurementSystem}
           existingLine={editingLineId ? orderLines.find(l => l.id === editingLineId) : undefined}
           onSave={saveLineItem}
           onCancel={() => {
@@ -1322,11 +1358,13 @@ interface AddItemModalProps {
   collections?: ComponentCollection[];
   /** Workspace slug for the catalog search modal endpoint. */
   workspaceSlug?: string;
+  /** Company/quote measurement system - drives metric vs imperial unit options. */
+  measurementSystem?: string;
   existingLine?: OrderLineItem;
   onSave: (data: {
     componentName: string;
     flashingId?: string;
-    entryMode: 'single' | 'multiple';
+    entryMode: OrderEntryMode;
     quantity?: number;
     unit?: string;
     lengths?: LengthEntry[];
@@ -1338,7 +1376,18 @@ interface AddItemModalProps {
   showAlert: (title: string, description?: string, variant?: 'info' | 'success' | 'error') => void;
 }
 
-function AddItemModal({ flashings, components = [], collections = [], workspaceSlug = '', existingLine, onSave, onCancel, showAlert }: AddItemModalProps) {
+function AddItemModal({ flashings, components = [], collections = [], workspaceSlug = '', measurementSystem = 'metric', existingLine, onSave, onCancel, showAlert }: AddItemModalProps) {
+  // Metric vs imperial drives every unit option in this modal so the two
+  // systems never mix. imperial_ft / imperial_rs / imperial all map to imperial.
+  const isMetric = measurementSystem === 'metric';
+  const UNITS = isMetric
+    ? { linear: 'm', area: 'm\u00b2', volume: 'm\u00b3' }
+    : { linear: 'ft', area: 'ft\u00b2', volume: 'ft\u00b3' };
+  // Variable dimension units by system (Task 3): metric mm/M/°, imperial in/ft/°.
+  const VAR_UNITS: { value: string; label: string }[] = isMetric
+    ? [ { value: 'mm', label: 'mm' }, { value: 'm', label: 'M' }, { value: '\u00b0', label: '\u00b0' } ]
+    : [ { value: 'in', label: 'in' }, { value: 'ft', label: 'ft' }, { value: '\u00b0', label: '\u00b0' } ];
+
   const [componentName, setComponentName] = useState(existingLine?.componentName || '');
   // Library filter for the "Add from component library" dropdown. "All" shows
   // every company component regardless of which named library it belongs to.
@@ -1346,24 +1395,29 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
   // Catalog search modal toggle (one of the three ways to fill the item name).
   const [showCatalogSearch, setShowCatalogSearch] = useState(false);
   const [flashingId, setFlashingId] = useState(existingLine?.flashingId || '');
-  const [entryMode, setEntryMode] = useState<'single' | 'multiple'>(existingLine?.entryMode || 'single');
+  const [entryMode, setEntryMode] = useState<OrderEntryMode>(existingLine?.entryMode || 'single');
   
-  // Single mode
+  // Single mode (unit dropdown removed - quantity + optional description only)
   const [quantity, setQuantity] = useState(existingLine?.quantity || 0);
   const [unit, setUnit] = useState(existingLine?.unit || 'pcs');
   
-  // Multiple mode
+  // Linear / area / volume entries (all stored in `lengths`).
+  // lengthUnit is derived from the measurement system, not user-chosen.
   const [lengths, setLengths] = useState<LengthEntry[]>(existingLine?.lengths || []);
-  const [lengthUnit, setLengthUnit] = useState(existingLine?.lengthUnit || 'm');
+  const entryUnit = entryMode === 'area' ? UNITS.area : entryMode === 'volume' ? UNITS.volume : UNITS.linear;
   const [newLength, setNewLength] = useState(0);
   const [newMultiplier, setNewMultiplier] = useState(1);
+  // Area/volume calculator inputs (optional - user can type the total directly).
+  const [calcL, setCalcL] = useState(0);
+  const [calcW, setCalcW] = useState(0);
+  const [calcD, setCalcD] = useState(0);
   
   // Variables for current length entry
   const [showVariables, setShowVariables] = useState(false);
   const [currentVariables, setCurrentVariables] = useState<Variable[]>([]);
   const [newVarName, setNewVarName] = useState('');
   const [newVarValue, setNewVarValue] = useState(0);
-  const [newVarUnit, setNewVarUnit] = useState('mm');
+  const [newVarUnit, setNewVarUnit] = useState(VAR_UNITS[0].value);
   
   const [notes, setNotes] = useState(existingLine?.notes || '');
   
@@ -1384,16 +1438,34 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
     }]);
     setNewVarName('');
     setNewVarValue(0);
-    setNewVarUnit('mm');
+    setNewVarUnit(VAR_UNITS[0].value);
   }
   
   function removeVariable(index: number) {
     setCurrentVariables(currentVariables.filter((_, i) => i !== index));
   }
+
+  // Area/volume calculator: total = L x W (area) or L x W x D (volume).
+  // Returns null when the relevant calc inputs aren't all filled.
+  function calcTotal(): number | null {
+    if (entryMode === 'area') {
+      if (calcL > 0 && calcW > 0) return calcL * calcW;
+      return null;
+    }
+    if (entryMode === 'volume') {
+      if (calcL > 0 && calcW > 0 && calcD > 0) return calcL * calcW * calcD;
+      return null;
+    }
+    return null;
+  }
   
   function addLength() {
-    if (newLength <= 0) {
-      showAlert('Invalid length', 'The length must be greater than 0.', 'info');
+    // For area/volume the value can come from the calculator OR a typed total.
+    const calc = calcTotal();
+    const value = calc != null ? calc : newLength;
+    if (value <= 0) {
+      const label = entryMode === 'area' ? 'area' : entryMode === 'volume' ? 'volume' : 'length';
+      showAlert(`Invalid ${label}`, `The ${label} must be greater than 0. Enter it directly or use the calculator.`, 'info');
       return;
     }
     if (newMultiplier <= 0) {
@@ -1402,12 +1474,16 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
     }
     
     setLengths([...lengths, { 
-      length: newLength, 
+      length: Number(value.toFixed(4)), 
       multiplier: newMultiplier,
-      variables: currentVariables.length > 0 ? currentVariables : undefined
+      variables: currentVariables.length > 0 ? currentVariables : undefined,
+      ...(calc != null ? { calcLength: calcL, calcWidth: calcW, ...(entryMode === 'volume' ? { calcDepth: calcD } : {}) } : {}),
     }]);
     setNewLength(0);
     setNewMultiplier(1);
+    setCalcL(0);
+    setCalcW(0);
+    setCalcD(0);
     setCurrentVariables([]);
     setShowVariables(false);
   }
@@ -1435,21 +1511,25 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
         flashingId: flashingId || undefined,
         entryMode: 'single',
         quantity,
-        unit,
+        // Single items no longer carry a unit dropdown; keep a neutral default
+        // so existing render/save paths that read `unit` stay happy.
+        unit: unit || 'pcs',
         notes: notes.trim() || undefined,
       });
     } else {
+      // linear / area / volume all accumulate into `lengths`.
+      const label = entryMode === 'area' ? 'area' : entryMode === 'volume' ? 'volume' : 'length';
       if (lengths.length === 0) {
-        showAlert('No lengths', 'Add at least one length entry before saving.', 'info');
+        showAlert(`No ${label} entries`, `Add at least one ${label} entry before saving.`, 'info');
         return;
       }
       
       onSave({
         componentName: componentName.trim(),
         flashingId: flashingId || undefined,
-        entryMode: 'multiple',
+        entryMode,
         lengths,
-        lengthUnit,
+        lengthUnit: entryUnit,
         notes: notes.trim() || undefined,
       });
     }
@@ -1470,7 +1550,9 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
           {/* Three ways to fill the item name: (1) pick from the component
               library, (2) search a catalog, (3) just type it. All three feed
-              the same Component Name field below. */}
+              the same Component Name field below. Editing an existing item only
+              needs name/image/measurements, so these pickers are add-only. */}
+          {!existingLine && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -1545,6 +1627,7 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
               </button>
             </div>
           </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -1588,44 +1671,45 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
             )}
           </div>
 
-          {/* Entry Mode Toggle */}
+          {/* Item Type: defines what the measurement section below looks like.
+              Linear / Area / Volume accumulate entries; Single is qty-only. */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Entry Mode</label>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setEntryMode('single')}
-                className={`flex-1 px-4 py-2 text-sm font-medium rounded-full border transition-colors ${
-                  entryMode === 'single'
-                    ? 'bg-[#FF6B35] text-white border-orange-600'
-                    : 'border-slate-300 hover:bg-slate-50'
-                }`}
-              >
-                Single Item
-              </button>
-              <button
-                type="button"
-                onClick={() => setEntryMode('multiple')}
-                className={`flex-1 px-4 py-2 text-sm font-medium rounded-full border transition-colors ${
-                  entryMode === 'multiple'
-                    ? 'bg-[#FF6B35] text-white border-orange-600'
-                    : 'border-slate-300 hover:bg-slate-50'
-                }`}
-              >
-                Multiple Lengths
-              </button>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Item Type</label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {([
+                { mode: 'area' as const, label: 'Area' },
+                { mode: 'volume' as const, label: 'Volume' },
+                { mode: 'linear' as const, label: 'Linear' },
+                { mode: 'single' as const, label: 'Single Item' },
+              ]).map(({ mode, label }) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setEntryMode(mode)}
+                  className={`px-3 py-2 text-sm font-medium rounded-full border transition-colors ${
+                    entryMode === mode
+                      ? 'bg-[#FF6B35] text-white border-orange-600'
+                      : 'border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              {entryMode === 'single' 
-                ? 'For bulk items (rolls, sheets, pieces)' 
-                : 'For flashings with multiple cut lengths'
-              }
+              {entryMode === 'single'
+                ? 'For bulk items (rolls, sheets, pieces) - quantity only'
+                : entryMode === 'area'
+                  ? `Area-based items, measured in ${UNITS.area}`
+                  : entryMode === 'volume'
+                    ? `Volume-based items, measured in ${UNITS.volume}`
+                    : `Length-based items, measured in ${UNITS.linear}`}
             </p>
           </div>
 
-          {/* Single Mode Inputs */}
+          {/* Single Mode Inputs: quantity + optional description (no unit dropdown) */}
           {entryMode === 'single' && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Quantity <span className="text-red-500">*</span>
@@ -1643,40 +1727,47 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Unit <span className="text-red-500">*</span>
+                  Description <span className="text-slate-400 font-normal">(Optional)</span>
                 </label>
-                <select
-                  value={unit}
-                  onChange={(e) => setUnit(e.target.value)}
+                <input
+                  type="text"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="e.g. 25kg bags, 3m lengths, box of 100"
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                >
-                  <option value="pcs">Pieces (pcs)</option>
-                  <option value="sheets">Sheets</option>
-                  <option value="rolls">Rolls</option>
-                  <option value="boxes">Boxes</option>
-                </select>
+                />
               </div>
             </div>
           )}
 
-          {/* Multiple Lengths Mode */}
-          {entryMode === 'multiple' && (
+          {/* Linear / Area / Volume entries (all accumulate into `lengths`). */}
+          {entryMode !== 'single' && (
             <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Length Unit</label>
-                <select
-                  value={lengthUnit}
-                  onChange={(e) => setLengthUnit(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                >
-                  <option value="m">Lineal Meters (m)</option>
-                  <option value="ft">Lineal Feet (ft)</option>
-                  <option value="in">Inches (in)</option>
-                </select>
-              </div>
-
               <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Add Length Entry</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  {entryMode === 'area' ? 'Add Area Entry' : entryMode === 'volume' ? 'Add Volume Entry' : 'Add Length Entry'}
+                </label>
+
+                {/* Calculator for area / volume: L x W (x D). Optional - the
+                    user can also type the total directly in the field below. */}
+                {(entryMode === 'area' || entryMode === 'volume') && (
+                  <div className="mb-3 p-2 rounded-lg border border-slate-200 bg-white">
+                    <p className="text-xs text-slate-500 mb-2">Calculator (optional) - or type the total directly below</p>
+                    <div className="flex items-center gap-2">
+                      <input type="number" value={calcL || ''} onChange={(e) => setCalcL(parseFloat(e.target.value) || 0)} step="0.01" min="0" placeholder={`L (${UNITS.linear})`} className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm" />
+                      <span className="text-slate-400">×</span>
+                      <input type="number" value={calcW || ''} onChange={(e) => setCalcW(parseFloat(e.target.value) || 0)} step="0.01" min="0" placeholder={`W (${UNITS.linear})`} className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm" />
+                      {entryMode === 'volume' && (<>
+                        <span className="text-slate-400">×</span>
+                        <input type="number" value={calcD || ''} onChange={(e) => setCalcD(parseFloat(e.target.value) || 0)} step="0.01" min="0" placeholder={`D (${UNITS.linear})`} className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm" />
+                      </>)}
+                    </div>
+                    {calcTotal() != null && (
+                      <p className="text-xs text-slate-600 mt-2">= <span className="font-medium">{calcTotal()!.toFixed(2)} {entryUnit}</span></p>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex gap-2 mb-3">
                   <div className="flex-1">
                     <input
@@ -1685,8 +1776,9 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
                       onChange={(e) => setNewLength(parseFloat(e.target.value) || 0)}
                       step="0.01"
                       min="0"
-                      placeholder="Length (e.g., 5.55)"
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                      placeholder={entryMode === 'area' ? `Area total (${UNITS.area})` : entryMode === 'volume' ? `Volume total (${UNITS.volume})` : 'Length (e.g., 5.55)'}
+                      disabled={(entryMode === 'area' || entryMode === 'volume') && calcTotal() != null}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm disabled:bg-slate-100 disabled:text-slate-400"
                     />
                   </div>
                   <span className="flex items-center text-slate-400 font-medium">×</span>
@@ -1746,10 +1838,9 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
                           onChange={(e) => setNewVarUnit(e.target.value)}
                           className="w-20 px-2 py-1.5 border border-slate-300 rounded text-sm"
                         >
-                          <option value="mm">mm</option>
-                          <option value="cm">cm</option>
-                          <option value="in">in</option>
-                          <option value="°">degrees (°)</option>
+                          {VAR_UNITS.map((u) => (
+                            <option key={u.value} value={u.value}>{u.label}</option>
+                          ))}
                         </select>
                         <button
                           type="button"
@@ -1790,21 +1881,28 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
                   onClick={addLength}
                   className="w-full px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600"
                 >
-                  Add Length Entry
+                  {entryMode === 'area' ? 'Add Area Entry' : entryMode === 'volume' ? 'Add Volume Entry' : 'Add Length Entry'}
                 </button>
 
-                {/* Length List */}
+                {/* Entry List */}
                 {lengths.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-slate-600 uppercase">Added Lengths:</p>
+                    <p className="text-xs font-medium text-slate-600 uppercase">
+                      {entryMode === 'area' ? 'Added Areas:' : entryMode === 'volume' ? 'Added Volumes:' : 'Added Lengths:'}
+                    </p>
                     <div className="space-y-2 max-h-40 overflow-y-auto">
                       {lengths.map((entry, idx) => (
                         <div key={idx} className="bg-white border border-slate-200 rounded p-2">
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-sm">
-                              <span className="font-medium">{entry.length}{lengthUnit}</span>
+                              <span className="font-medium">{entry.length}{entryUnit}</span>
                               <span className="text-slate-400 mx-2">×</span>
                               <span className="text-slate-600">{entry.multiplier}</span>
+                              {entry.calcLength != null && entry.calcWidth != null && (
+                                <span className="text-xs text-slate-400 italic ml-2">
+                                  ({entry.calcLength}×{entry.calcWidth}{entry.calcDepth != null ? `×${entry.calcDepth}` : ''})
+                                </span>
+                              )}
                             </span>
                             <button
                               type="button"
@@ -1833,6 +1931,10 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
             </div>
           )}
 
+          {/* Single-item mode already exposes `notes` as its Description field
+              above, so the general Notes textarea is hidden there to avoid two
+              inputs bound to the same state. */}
+          {entryMode !== 'single' && (
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Notes <span className="text-slate-400 font-normal">(Optional)</span>
@@ -1845,6 +1947,7 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
           </div>
+          )}
         </form>
 
         <div className="px-6 py-4 border-t border-slate-200 flex gap-3 justify-end">

@@ -258,12 +258,12 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
                   <div className="text-sm text-slate-700">
                     {line.entry_mode === 'single' ? (
                       <p>
-                        Quantity: <span className="font-medium">{line.quantity}</span> {line.unit}
+                        Quantity: <span className="font-medium">{line.quantity}</span>
                       </p>
                     ) : line.lengths ? (
                       <div>
                         <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">
-                          Lengths ({(line.length_unit || 'm').toUpperCase()})
+                          {line.entry_mode === 'area' ? 'Areas' : line.entry_mode === 'volume' ? 'Volumes' : 'Lengths'} ({(line.length_unit || 'm').toUpperCase()})
                         </p>
                         <ul className="space-y-0.5">
                           {((line.lengths as unknown) as LengthEntry[]).map((entry, idx) => (
