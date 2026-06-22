@@ -19,6 +19,7 @@ import { AlertModal } from '@/app/components/AlertModal';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 import { CatalogSearchModal } from '../../quotes/[id]/customer-edit/CatalogSearchModal';
+import { AngleCalculatorModal } from '../../flashings/draw/AngleCalculatorModal';
 import { OrderLineByLineEditor } from './OrderLineByLineEditor';
 import { CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
 import {
@@ -412,6 +413,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
     
     console.log('[OrderCreateForm] Loaded', mappedLines.length, 'line items');
     setOrderLines(mappedLines);
+    // Collapse all existing-order lines by default for a cleaner sidebar.
+    setCollapsedLines(new Set(mappedLines.map(l => l.id)));
   }, [existingOrder]);
 
   // Decision #4: hydrate the line-by-line editor from a quote-derived envelope
@@ -1420,6 +1423,16 @@ interface AddItemModalProps {
 }
 
 function AddItemModal({ flashings, components = [], collections = [], workspaceSlug = '', measurementSystem = 'metric', existingLine, onSave, onCancel, showAlert }: AddItemModalProps) {
+  const [showAngleCalc, setShowAngleCalc] = useState(false);
+  const [angleCopied, setAngleCopied] = useState(false);
+
+  function handleAngleApply(angle: number) {
+    void navigator.clipboard.writeText(String(angle)).then(() => {
+      setAngleCopied(true);
+      setTimeout(() => setAngleCopied(false), 2500);
+    });
+  }
+
   // Metric vs imperial drives every unit option in this modal so the two
   // systems never mix. imperial_ft / imperial_rs / imperial all map to imperial.
   const isMetric = measurementSystem === 'metric';
@@ -1583,11 +1596,24 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="px-6 py-4 border-b border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900">
-            {existingLine ? 'Edit Order Item' : 'Add Order Item'}
-          </h2>
-          <p className="text-sm text-slate-600 mt-0.5">Enter component details and measurements</p>
+        <div className="px-6 py-4 border-b border-slate-200 flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">
+              {existingLine ? 'Edit Order Item' : 'Add Order Item'}
+            </h2>
+            <p className="text-sm text-slate-600 mt-0.5">Enter component details and measurements</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowAngleCalc(true)}
+            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400 transition-colors"
+            title="Open angle calculator"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19l16-16M5 6l1 1m9 9l1 1" />
+            </svg>
+            Angle Calc
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
@@ -2025,6 +2051,26 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
           }}
           onClose={() => setShowCatalogSearch(false)}
         />
+      )}
+
+      {/* Angle Calculator — reuses the existing modal from the drawing page.
+          onApply copies the calculated angle to clipboard so the user can
+          paste it wherever they need it (notes, measurements, etc.). */}
+      <AngleCalculatorModal
+        isOpen={showAngleCalc}
+        onClose={() => setShowAngleCalc(false)}
+        onApply={handleAngleApply}
+        currentAngle={0}
+      />
+
+      {/* Clipboard confirmation toast */}
+      {angleCopied && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-full shadow-lg pointer-events-none">
+          <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          Angle copied to clipboard!
+        </div>
       )}
     </div>
   );

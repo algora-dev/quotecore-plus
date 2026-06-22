@@ -195,7 +195,7 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     pitchRequired: false,
     pitchOptional: true,
     pitchHidesValleyHip: true,
-    pitchCheckboxLabel: 'Apply pitch calculation (roof-space runs)',
+    pitchCheckboxLabel: 'Apply Angle/Slope calculation',
     pitchRafterLabel: 'Rise over run',
     areaPitchLabel: 'Pitch (°)',
 
@@ -358,7 +358,7 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     pitchRequired: false,
     pitchOptional: true,
     pitchHidesValleyHip: true,
-    pitchCheckboxLabel: 'Apply angle / slope calculation',
+    pitchCheckboxLabel: 'Apply Angle/Slope calculation',
     pitchRafterLabel: 'Rise over run',
     areaPitchLabel: 'Slope (°)',
 
@@ -551,7 +551,7 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     pitchRequired: false,
     pitchOptional: true,
     pitchHidesValleyHip: true,
-    pitchCheckboxLabel: 'Apply pitch calculation (roof / loft)',
+    pitchCheckboxLabel: 'Apply Angle/Slope calculation',
     pitchRafterLabel: 'Rise over run',
     areaPitchLabel: 'Pitch (°)',
 
@@ -700,7 +700,7 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     pitchRequired: false,
     pitchOptional: true,
     pitchHidesValleyHip: true,
-    pitchCheckboxLabel: 'Apply slope / pitch calculation (fall to drainage)',
+    pitchCheckboxLabel: 'Apply Angle/Slope calculation',
     pitchRafterLabel: 'Rise over run',
     areaPitchLabel: 'Fall / Slope (°)',
 
@@ -752,7 +752,7 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     pitchRequired: false,
     pitchOptional: true,
     pitchHidesValleyHip: true,
-    pitchCheckboxLabel: 'Apply pitch / tilt calculation',
+    pitchCheckboxLabel: 'Apply Angle/Slope calculation',
     pitchRafterLabel: 'Rise over run',
     areaPitchLabel: 'Tilt (°)',
 
