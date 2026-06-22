@@ -16,6 +16,7 @@ import type { ExistingOrderData } from './order-loader';
 import type { LineByLineData } from '../lineByLine';
 import { BackButton } from '@/app/components/BackButton';
 import { AlertModal } from '@/app/components/AlertModal';
+import { ConfirmModal } from '@/app/components/ConfirmModal';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 import { CatalogSearchModal } from '../../quotes/[id]/customer-edit/CatalogSearchModal';
 import { OrderLineByLineEditor } from './OrderLineByLineEditor';
@@ -181,6 +182,18 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   // Add item modal
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  // Collapsed sidebar items: quote-derived lines start collapsed for cleaner UX.
+  // Stored as a Set of line IDs that are currently collapsed.
+  const [collapsedLines, setCollapsedLines] = useState<Set<string>>(new Set());
+  // Remove confirmation: id of the line pending removal, null = modal closed.
+  const [removeConfirmId, setRemoveConfirmId] = useState<string | null>(null);
+  function toggleCollapsed(lineId: string) {
+    setCollapsedLines(prev => {
+      const next = new Set(prev);
+      if (next.has(lineId)) next.delete(lineId); else next.add(lineId);
+      return next;
+    });
+  }
   
   // Header form state - LEFT
   const [toSupplier, setToSupplier] = useState('');
@@ -313,6 +326,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
     
     console.log('[OrderCreateForm] Setting', mappedLines.length, 'order lines');
     setOrderLines(mappedLines);
+    // Collapse all quote-derived lines by default for a cleaner sidebar.
+    setCollapsedLines(new Set(mappedLines.map(l => l.id)));
     
     // Pre-fill reference if available
     if (quoteData.quote_number) {
@@ -567,9 +582,12 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   }
   
   function removeLine(id: string) {
-    if (confirm('Remove this item from the order?')) {
-      setOrderLines(orderLines.filter(l => l.id !== id));
-    }
+    // Open the app-style ConfirmModal instead of native confirm().
+    setRemoveConfirmId(id);
+  }
+  function confirmRemoveLine() {
+    if (removeConfirmId) setOrderLines(orderLines.filter(l => l.id !== removeConfirmId));
+    setRemoveConfirmId(null);
   }
   
   function toggleLineVisibility(lineId: string, field: 'showComponentName' | 'showFlashingImage' | 'showMeasurements') {
@@ -961,8 +979,20 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
                             </svg>
                           </button>
                         </div>
-                        <h4 className="flex-1 font-bold text-sm text-slate-900">{line.componentName}</h4>
+                        <h4 className="flex-1 font-bold text-sm text-slate-900 leading-tight">{line.componentName}</h4>
+                        {/* Collapse toggle */}
+                        <button
+                          type="button"
+                          onClick={() => toggleCollapsed(line.id)}
+                          className="p-0.5 rounded hover:bg-slate-100 text-slate-400 flex-shrink-0"
+                          title={collapsedLines.has(line.id) ? 'Expand' : 'Collapse'}
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={collapsedLines.has(line.id) ? 'M19 9l-7 7-7-7' : 'M5 15l7-7 7 7'} />
+                          </svg>
+                        </button>
                       </div>
+                      {!collapsedLines.has(line.id) && (
                       <div className="flex gap-2">
                         <button
                           type="button"
@@ -979,9 +1009,11 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
                           Remove
                         </button>
                       </div>
+                      )}
                     </div>
 
-                    {/* Visibility Controls */}
+                    {/* Visibility Controls - hidden when collapsed */}
+                    {!collapsedLines.has(line.id) && (
                     <div className="px-3 py-2 space-y-2">
                       <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:bg-white rounded px-2 py-1.5 transition-colors">
                         <input
@@ -1063,6 +1095,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
                         <span>Show Measurements</span>
                       </label>
                     </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1335,6 +1368,16 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           showAlert={showAlert}
         />
       )}
+
+      {/* Remove line confirmation - replaces native confirm() with app-style modal. */}
+      <ConfirmModal
+        open={removeConfirmId !== null}
+        title="Remove this item?"
+        description="This removes the item from the order. This can't be undone."
+        confirmLabel="Remove"
+        onCancel={() => setRemoveConfirmId(null)}
+        onConfirm={confirmRemoveLine}
+      />
 
       {/* App-style alert replaces native alert() across the order create flow. */}
       <AlertModal
@@ -1801,7 +1844,7 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
                     onClick={() => setShowVariables(!showVariables)}
                     className="w-full px-3 py-2 text-xs font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-white transition-colors flex items-center justify-between"
                   >
-                    <span>{showVariables ? '▼' : '▶'} Variables (Optional)</span>
+                    <span>{showVariables ? '▼' : '▶'} Advanced</span>
                     {currentVariables.length > 0 && (
                       <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs">
                         {currentVariables.length}
@@ -1811,7 +1854,7 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
                   
                   {showVariables && (
                     <div className="mt-2 p-3 border border-slate-200 rounded-lg bg-white space-y-2">
-                      <p className="text-xs text-slate-600">Add dimension variables (e.g., x, y, z) for custom flashings</p>
+                      <p className="text-xs text-slate-600">Add dimension variables (e.g., x, y, z) for custom measurements</p>
                       
                       {/* Add Variable Input */}
                       <div className="flex gap-2">

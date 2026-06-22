@@ -178,10 +178,10 @@ export function OnboardingForm({
         </div>
       </div>
 
-      {/* Default Trade */}
+      {/* Default Industry (was 'Default Trade') */}
       <div className="space-y-3">
         <div>
-          <span className="text-sm font-semibold text-slate-900">Default Trade</span>
+          <span className="text-sm font-semibold text-slate-900">Default Industry</span>
           <p className="text-xs text-slate-500 mt-1 mb-3">
             Sets measurement types, tools, and terminology across the app. You can change this per quote later.
           </p>
@@ -199,6 +199,7 @@ export function OnboardingForm({
             { value: 'painting', label: 'Painting' },
             { value: 'fencing', label: 'Fencing' },
             { value: 'insulation', label: 'Insulation' },
+            { value: 'solar', label: 'Solar' },
             { value: 'construction', label: 'Construction' },
             { value: 'foundations', label: 'Foundations' },
             { value: 'generic', label: 'Other / Generic' },

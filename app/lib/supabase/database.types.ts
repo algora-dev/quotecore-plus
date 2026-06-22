@@ -4562,6 +4562,7 @@ export type Database = {
         | "electrical"
         | "plumbing"
         | "landscaping"
+        | "solar"
         | "flooring"
         | "tiling"
         | "foundations"
@@ -4755,6 +4756,7 @@ export const Constants = {
         "electrical",
         "plumbing",
         "landscaping",
+        "solar",
         "flooring",
         "tiling",
         "foundations",

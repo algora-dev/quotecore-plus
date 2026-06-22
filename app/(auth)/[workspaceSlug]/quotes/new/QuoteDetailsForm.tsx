@@ -285,10 +285,10 @@ export function QuoteDetailsForm({
       {/* Phase 8 (Generic Trades): trade + collection pickers. Only when flag on. */}
       {genericTradesEnabled && (
         <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
-          <h3 className="text-sm font-semibold text-slate-800">Trade &amp; Component Collection</h3>
+          <h3 className="text-sm font-semibold text-slate-800">Industry &amp; Component Collection</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-slate-600 mb-1">Trade</label>
+              <label className="block text-xs text-slate-600 mb-1">Industry</label>
               <select
                 value={selectedTrade}
                 onChange={e => setSelectedTrade(e.target.value)}

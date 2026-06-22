@@ -12,7 +12,7 @@ interface CompanySettings {
   materialMargin: number;
   laborMargin: number;
   /** Phase 8 (Generic Trades): optional; only written when provided. */
-  defaultTrade?: 'roofing' | 'cladding' | 'generic' | 'electrical' | 'plumbing' | 'landscaping' | 'flooring' | 'tiling' | 'foundations' | 'insulation' | 'painting' | 'fencing' | 'concrete' | 'construction' | null;
+  defaultTrade?: 'roofing' | 'cladding' | 'generic' | 'electrical' | 'plumbing' | 'landscaping' | 'solar' | 'flooring' | 'tiling' | 'foundations' | 'insulation' | 'painting' | 'fencing' | 'concrete' | 'construction' | null;
 }
 
 export async function updateCompanySettings(

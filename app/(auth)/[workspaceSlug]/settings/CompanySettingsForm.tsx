@@ -46,8 +46,8 @@ export function CompanySettingsForm({
 
   const genericTradesEnabled =
     (process.env.NEXT_PUBLIC_GENERIC_TRADES_V1 ?? '').toLowerCase() === 'true';
-  type TradeOption = 'roofing' | 'cladding' | 'generic' | 'electrical' | 'plumbing' | 'landscaping' | 'flooring' | 'tiling' | 'foundations' | 'insulation' | 'painting' | 'fencing' | 'concrete' | 'construction';
-  const tradeOptions: TradeOption[] = ['roofing', 'cladding', 'electrical', 'plumbing', 'landscaping', 'flooring', 'tiling', 'foundations', 'insulation', 'painting', 'fencing', 'concrete', 'construction', 'generic'];
+  type TradeOption = 'roofing' | 'cladding' | 'generic' | 'electrical' | 'plumbing' | 'landscaping' | 'solar' | 'flooring' | 'tiling' | 'foundations' | 'insulation' | 'painting' | 'fencing' | 'concrete' | 'construction';
+  const tradeOptions: TradeOption[] = ['roofing', 'cladding', 'electrical', 'plumbing', 'landscaping', 'solar', 'flooring', 'tiling', 'foundations', 'insulation', 'painting', 'fencing', 'concrete', 'construction', 'generic'];
   const [defaultTrade, setDefaultTrade] = useState<TradeOption>(
     tradeOptions.includes(currentDefaultTrade as TradeOption)
       ? (currentDefaultTrade as TradeOption)
@@ -276,7 +276,7 @@ export function CompanySettingsForm({
       {genericTradesEnabled && (
         <div className="space-y-1">
           <label htmlFor="default-trade" className="block text-sm font-semibold text-gray-900">
-            Default Trade
+            Default Industry
           </label>
           <p className="text-xs text-gray-600 mb-2">
             Pre-selects the trade when creating a new quote. You can override it per quote. Also determines the keywords and information in Help documents.
@@ -301,6 +301,7 @@ export function CompanySettingsForm({
             <option value="insulation">Insulation</option>
             <option value="painting">Painting</option>
             <option value="fencing">Fencing</option>
+            <option value="solar">Solar</option>
             <option value="construction">Construction</option>
           </select>
         </div>
