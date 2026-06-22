@@ -269,7 +269,7 @@ export default async function QuoteSummaryPage({
   const { lines: summaryTaxLines, total: adjustedTax } = computeTaxLines(quoteTaxes, adjustedSubtotal, 'quote');
   const adjustedGrandTotal = adjustedSubtotal + adjustedTax;
 
-  // â”€â”€ Original Summary Snapshot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Original Summary Snapshot ─────────────────────────────────────────────
   // Load or lazily create the "original" snapshot. This is captured the FIRST
   // time the user arrives on the Summary page (right after saving from Review
   // or Blank Quote Creator). It is never overwritten after creation.
@@ -517,7 +517,7 @@ export default async function QuoteSummaryPage({
           {showOriginalView && originalSnapshot && (
             <div className="mb-3">
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                ðŸ”’ Original - captured {new Date(originalSnapshot.capturedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                🔒 Original - captured {new Date(originalSnapshot.capturedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
               </span>
             </div>
           )}
@@ -619,7 +619,7 @@ export default async function QuoteSummaryPage({
         )}
 
         {showOriginalView && originalSnapshot ? (
-          // â”€â”€ ORIGINAL TAB â”€â”€ Read-only view from the first-save snapshot
+          // ── ORIGINAL TAB ── Read-only view from the first-save snapshot
           <div className="pt-4 space-y-4">
             <div className="pt-4 border-t border-slate-300 space-y-4">
               <div className="flex justify-between text-base"><span className="text-slate-900">Total Item Cost</span><span className="text-slate-900 text-right">{formatCurrency(originalSnapshot.totalMaterials, originalSnapshot.currency)}</span></div>
@@ -643,7 +643,7 @@ export default async function QuoteSummaryPage({
             <p className="text-xs text-slate-400 italic">This is a read-only snapshot of the quote as it was when first saved. Switch to &quot;Current&quot; to see live values.</p>
           </div>
         ) : (
-          // â”€â”€ CURRENT TAB (default) â”€â”€ Live computed values
+          // ── CURRENT TAB (default) ── Live computed values
           <div className="pt-6 border-t border-slate-300 space-y-4">
             <div className="flex justify-between text-base"><span className="text-slate-900">Total Item Cost</span><span className="text-slate-900 text-right">{formatCurrency(totals.totalMaterials, effectiveCurrency)}</span></div>
             <div className="flex justify-between text-base"><span className="text-slate-900">Total Labour</span><span className="text-slate-900 text-right">{formatCurrency(totals.totalLabour, effectiveCurrency)}</span></div>
