@@ -2656,6 +2656,7 @@ export type Database = {
           measurement_type: Database["public"]["Enums"]["measurement_type"]
           name: string
           pitch_type: Database["public"]["Enums"]["pitch_type"]
+          priced_quantity: number | null
           pricing_unit: string | null
           quote_id: string
           quote_roof_area_id: string | null
@@ -2691,6 +2692,7 @@ export type Database = {
           measurement_type: Database["public"]["Enums"]["measurement_type"]
           name: string
           pitch_type?: Database["public"]["Enums"]["pitch_type"]
+          priced_quantity?: number | null
           pricing_unit?: string | null
           quote_id: string
           quote_roof_area_id?: string | null
@@ -2726,6 +2728,7 @@ export type Database = {
           measurement_type?: Database["public"]["Enums"]["measurement_type"]
           name?: string
           pitch_type?: Database["public"]["Enums"]["pitch_type"]
+          priced_quantity?: number | null
           pricing_unit?: string | null
           quote_id?: string
           quote_roof_area_id?: string | null

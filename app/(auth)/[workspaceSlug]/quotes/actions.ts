@@ -1,4 +1,4 @@
-'use server';
+﻿'use server';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
@@ -239,7 +239,7 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
       // do NOT touch the expiry or job_status yet.
       return quote.acceptance_token;
     }
-    // applyExpiry=true: user has explicitly sent/copied — commit the expiry.
+    // applyExpiry=true: user has explicitly sent/copied â€” commit the expiry.
     await supabase
       .from('quotes')
       .update({ acceptance_token_expires_at: expiresAt.toISOString(), job_status: 'sent' })
@@ -249,12 +249,12 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
     return quote.acceptance_token;
   }
 
-  // Generate a fresh token (expired / withdrawn quotes — old URL stays dead)
+  // Generate a fresh token (expired / withdrawn quotes â€” old URL stays dead)
   const token = crypto.randomUUID();
   // days / expiresAt already computed above
 
   // H-03 fix: when applyExpiry=false the caller is only opening the send panel to
-  // display/compose the URL — the quote must NOT be marked sent or get an expiry
+  // display/compose the URL â€” the quote must NOT be marked sent or get an expiry
   // until the user actually sends or copies the link. Store the token so the URL
   // is stable, but leave acceptance_token_expires_at and job_status untouched.
   const updateFields: Record<string, unknown> = {
@@ -333,7 +333,7 @@ export async function updateQuoteExpiry(
   revalidatePath('/');
 
   // M-02: Notify the customer that their acceptance window has been extended.
-  // Must await — Vercel serverless terminates on handler return; fire-and-forget
+  // Must await â€” Vercel serverless terminates on handler return; fire-and-forget
   // Promises are silently dropped. notifyCustomerExpiryExtended is best-effort
   // and swallows its own errors, so this never throws.
   const customerEmail = (quote as any).customer_email as string | null;
@@ -861,7 +861,7 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
   if (!comp) throw new Error('Component not found');
 
   // H-02 (Gerald Round 8): for length_x_height and multi_lineal_lxh, the user
-  // enters a length but the stored unit is area (length × height). Apply the
+  // enters a length but the stored unit is area (length Ã— height). Apply the
   // component's height multiplier before pricing, matching what digital takeoff
   // already does in saveTakeoffMeasurements.
   let adjustedValue = rawValue;
@@ -891,8 +891,13 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
     quote_component_id: quoteComponentId, raw_value: adjustedValue, value_after_waste: afterWaste,
   }).select().single();
   if (error) throw new Error(error.message);
-  await recalcComponentFromEntries(quoteComponentId);
-  return entry;
+  // Return the recalculated totals (incl. priced_quantity for Fixed Quantity
+  // strategies) so the client can apply correct optimistic state instead of
+  // recomputing per-unit math locally. Attached non-enumerably-friendly as a
+  // property on the returned entry object for backwards compat with callers
+  // that only read entry fields.
+  const componentTotals = await recalcComponentFromEntries(quoteComponentId);
+  return { ...entry, componentTotals };
 }
 
 export async function useRoofAreaTotal(quoteComponentId: string, roofAreaSqm: number, areaPitch: number | null) {
@@ -905,7 +910,7 @@ export async function removeComponentEntry(entryId: string, quoteComponentId: st
   await verifyComponentOwnership(supabase, quoteComponentId, profile.company_id);
   const { error } = await supabase.from('quote_component_entries').delete().eq('id', entryId);
   if (error) throw new Error(error.message);
-  await recalcComponentFromEntries(quoteComponentId);
+  return recalcComponentFromEntries(quoteComponentId);
 }
 
 /**
@@ -939,6 +944,7 @@ export async function combineLinealEntries(quoteComponentId: string): Promise<{
   };
   componentTotals?: {
     final_quantity: number;
+    priced_quantity: number | null;
     material_cost: number;
     labour_cost: number;
   };
@@ -1035,7 +1041,7 @@ export async function combineLinealEntries(quoteComponentId: string): Promise<{
       select: (cols: string) => {
         eq: (col: string, val: string) => {
           maybeSingle: () => Promise<{
-            data: { final_quantity: number; material_cost: number; labour_cost: number } | null;
+            data: { final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number } | null;
             error: Error | null;
           }>;
         };
@@ -1043,7 +1049,7 @@ export async function combineLinealEntries(quoteComponentId: string): Promise<{
     };
   })
     .from('quote_components')
-    .select('final_quantity, material_cost, labour_cost')
+    .select('final_quantity, priced_quantity, material_cost, labour_cost')
     .eq('id', quoteComponentId)
     .maybeSingle();
 
@@ -1060,6 +1066,7 @@ export async function combineLinealEntries(quoteComponentId: string): Promise<{
     componentTotals: compAfter
       ? {
           final_quantity: Number(compAfter.final_quantity ?? 0),
+          priced_quantity: compAfter.priced_quantity == null ? null : Number(compAfter.priced_quantity),
           material_cost: Number(compAfter.material_cost ?? 0),
           labour_cost: Number(compAfter.labour_cost ?? 0),
         }
@@ -1087,6 +1094,7 @@ export async function splitLinealEntries(quoteComponentId: string): Promise<{
   }>;
   componentTotals?: {
     final_quantity: number;
+    priced_quantity: number | null;
     material_cost: number;
     labour_cost: number;
   };
@@ -1150,7 +1158,7 @@ export async function splitLinealEntries(quoteComponentId: string): Promise<{
       select: (cols: string) => {
         eq: (col: string, val: string) => {
           maybeSingle: () => Promise<{
-            data: { final_quantity: number; material_cost: number; labour_cost: number } | null;
+            data: { final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number } | null;
             error: Error | null;
           }>;
         };
@@ -1158,7 +1166,7 @@ export async function splitLinealEntries(quoteComponentId: string): Promise<{
     };
   })
     .from('quote_components')
-    .select('final_quantity, material_cost, labour_cost')
+    .select('final_quantity, priced_quantity, material_cost, labour_cost')
     .eq('id', quoteComponentId)
     .maybeSingle();
 
@@ -1174,6 +1182,7 @@ export async function splitLinealEntries(quoteComponentId: string): Promise<{
     componentTotals: compAfter
       ? {
           final_quantity: Number(compAfter.final_quantity ?? 0),
+          priced_quantity: compAfter.priced_quantity == null ? null : Number(compAfter.priced_quantity),
           material_cost: Number(compAfter.material_cost ?? 0),
           labour_cost: Number(compAfter.labour_cost ?? 0),
         }
@@ -1198,7 +1207,7 @@ export async function recalcAllQuoteComponents(quoteId: string): Promise<void> {
   await Promise.all(components.map((c) => recalcComponentFromEntries(c.id)));
 }
 
-async function recalcComponentFromEntries(quoteComponentId: string) {
+async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number }> {
   const supabase = await createSupabaseServerClient();
   const { data: entries } = await supabase.from('quote_component_entries').select('value_after_waste').eq('quote_component_id', quoteComponentId);
   const totalQty = (entries ?? []).reduce((sum, e) => sum + Number(e.value_after_waste), 0);
@@ -1247,7 +1256,7 @@ async function recalcComponentFromEntries(quoteComponentId: string) {
     }
   }
 
-  const { computeMaterialCostByStrategy } = await import('@/app/lib/pricing/engine');
+  const { computeMaterialCostByStrategy, computePackCount } = await import('@/app/lib/pricing/engine');
   const materialCost = computeMaterialCostByStrategy({
     strategy,
     totalQuantity: totalQty,
@@ -1257,7 +1266,13 @@ async function recalcComponentFromEntries(quoteComponentId: string) {
     packCoverageM2,
   });
   const labourCost = totalQty * (comp?.labour_rate ?? 0);
-  await supabase.from('quote_components').update({ final_quantity: totalQty, material_cost: materialCost, labour_cost: labourCost }).eq('id', quoteComponentId);
+  // Fixed Quantity strategies: store the rounded-up purchasable unit count
+  // (e.g. 5 bundles) so the quote line can show "5 (4.84)". per_unit returns 0
+  // here -> stored as NULL so the UI falls back to final_quantity unchanged.
+  const packCount = computePackCount({ strategy, totalQuantity: totalQty, packSize, packCoverageM2 });
+  const pricedQuantity = strategy === 'per_unit' || packCount <= 0 ? null : packCount;
+  await supabase.from('quote_components').update({ final_quantity: totalQty, priced_quantity: pricedQuantity, material_cost: materialCost, labour_cost: labourCost }).eq('id', quoteComponentId);
+  return { final_quantity: totalQty, priced_quantity: pricedQuantity, material_cost: materialCost, labour_cost: labourCost };
 }
 
 export async function updateQuoteSettings(quoteId: string, input: Record<string, unknown>) {
@@ -1955,3 +1970,5 @@ export async function updateQuoteMargins(
 
   revalidatePath(`/`);
 }
+
+

@@ -347,6 +347,16 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       unit = 'units';
     }
 
+    // Fixed Quantity strategies: the customer is billed for whole purchasable
+    // units (priced_quantity, e.g. 5 bundles). Show that rounded count with the
+    // actual measured amount in brackets so the figure matches the price and
+    // the customer can see the rounding. per_unit components (priced_quantity
+    // NULL) render exactly as before.
+    const priced = (component as { priced_quantity?: number | null }).priced_quantity ?? null;
+    if (priced != null && Math.abs(priced - displayQty) > 0.001) {
+      return `${component.name} - ${priced.toFixed(0)} (${displayQty.toFixed(2)} ${unit})`;
+    }
+
     return `${component.name} - ${displayQty.toFixed(1)} ${unit}`;
   }
 

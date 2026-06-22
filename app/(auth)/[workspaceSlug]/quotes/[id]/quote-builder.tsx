@@ -1,5 +1,5 @@
-'use client';
-import { useState, useRef, useEffect } from 'react';
+﻿'use client';
+import { useState, useRef, useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins, combineLinealEntries, splitLinealEntries } from '../actions';
 import { getTradeLabels } from '@/app/lib/trades/labels';
@@ -60,7 +60,7 @@ interface Props {
   onPhaseChange?: (phase: Phase) => void; // NEW: Callback when phase changes
   /** When true the company is over storage - block file uploads. */
   isOverStorage?: boolean;
-  /** Company defaults for mid-quote Smart Component™ creation. */
+  /** Company defaults for mid-quote Smart Componentâ„¢ creation. */
   companyMeasurementSystem?: MeasurementSystem;
   companyDefaultTrade?: string;
   collections?: { id: string; name: string; is_bootstrap: boolean }[];
@@ -129,7 +129,7 @@ export function QuoteBuilder({
   // localLibrary: lifted from prop so newly-created mid-quote components are
   // immediately available for future adds in the same session.
   const [localLibrary, setLocalLibrary] = useState<ComponentLibraryRow[]>(libraryComponents);
-  // Mid-quote Smart Component™ creation modal state.
+  // Mid-quote Smart Componentâ„¢ creation modal state.
   const [showCreateComponentModal, setShowCreateComponentModal] = useState(false);
   const [createCompForAreaId, setCreateCompForAreaId] = useState<string | null>(null);
   const [createCompType, setCreateCompType] = useState<'main' | 'extra'>('main');
@@ -272,8 +272,8 @@ export function QuoteBuilder({
   }
 
   /**
-   * Called when a new Smart Component™ is created mid-quote via the modal.
-   * Adds to localLibrary (so it’s available for future adds this session)
+   * Called when a new Smart Componentâ„¢ is created mid-quote via the modal.
+   * Adds to localLibrary (so itâ€™s available for future adds this session)
    * then immediately creates the quote_component row.
    */
   async function handleComponentCreated(comp: ComponentLibraryRow) {
@@ -312,8 +312,8 @@ export function QuoteBuilder({
     const comp = components.find(c => c.id === compId);
     // Convert imperial inputs to metric for storage. The helpers handle the
     // 3 systems correctly:
-    //   - imperial_ft: ft -> m (linear), ft² -> m² (area)
-    //   - imperial_rs: ft -> m (linear), RS  -> m² (area)
+    //   - imperial_ft: ft -> m (linear), ftÂ² -> mÂ² (area)
+    //   - imperial_rs: ft -> m (linear), RS  -> mÂ² (area)
     //   - metric:     pass through
     //   - quantity / fixed: pass through (no unit attached)
     let rawValue = rawInputValue;
@@ -322,19 +322,19 @@ export function QuoteBuilder({
     } else if (comp?.measurement_type === 'lineal') {
       rawValue = linearInputToMetric(rawInputValue, quote.measurement_system);
     }
-    // volume_3d: rawInputValue is already in m³ (converted in ExpandableComponent before calling)
+    // volume_3d: rawInputValue is already in mÂ³ (converted in ExpandableComponent before calling)
     const areaPitch = comp?.quote_roof_area_id
       ? roofAreas.find(a => a.id === comp.quote_roof_area_id)?.calc_pitch_degrees ?? null
       : null;
     const entry = await addComponentEntry(compId, rawValue, areaPitch);
+    const totals = (entry as { componentTotals?: { final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number } }).componentTotals;
     setEntries(prev => ({ ...prev, [compId]: [...(prev[compId] ?? []), entry] }));
-    const compEntries = [...(entries[compId] ?? []), entry];
-    const totalQty = compEntries.reduce((s, e) => s + Number(e.value_after_waste), 0);
     setComponents(prev => prev.map(c => c.id === compId ? {
       ...c,
-      final_quantity: totalQty,
-      material_cost: totalQty * c.material_rate,
-      labour_cost: totalQty * c.labour_rate
+      final_quantity: totals?.final_quantity ?? c.final_quantity,
+      priced_quantity: totals ? totals.priced_quantity : c.priced_quantity,
+      material_cost: totals?.material_cost ?? c.material_cost,
+      labour_cost: totals?.labour_cost ?? c.labour_cost,
     } : c));
   }
 
@@ -346,27 +346,27 @@ export function QuoteBuilder({
     // action is a larger change; suppress here is the lower-risk path.
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const entry = await useRoofAreaTotal(compId, roofAreaSqm, null);
+    const totals = (entry as { componentTotals?: { final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number } }).componentTotals;
     setEntries(prev => ({ ...prev, [compId]: [...(prev[compId] ?? []), entry] }));
-    const compEntries = [...(entries[compId] ?? []), entry];
-    const totalQty = compEntries.reduce((s, e) => s + Number(e.value_after_waste), 0);
     setComponents(prev => prev.map(c => c.id === compId ? {
       ...c,
-      final_quantity: totalQty,
-      material_cost: totalQty * c.material_rate,
-      labour_cost: totalQty * c.labour_rate
+      final_quantity: totals?.final_quantity ?? c.final_quantity,
+      priced_quantity: totals ? totals.priced_quantity : c.priced_quantity,
+      material_cost: totals?.material_cost ?? c.material_cost,
+      labour_cost: totals?.labour_cost ?? c.labour_cost,
     } : c));
   }
 
   async function handleRemoveEntry(entryId: string, compId: string) {
-    await removeComponentEntry(entryId, compId);
+    const totals = await removeComponentEntry(entryId, compId);
     const updated = (entries[compId] ?? []).filter(e => e.id !== entryId);
     setEntries(prev => ({ ...prev, [compId]: updated }));
-    const totalQty = updated.reduce((s, e) => s + Number(e.value_after_waste), 0);
     setComponents(prev => prev.map(c => c.id === compId ? {
       ...c,
-      final_quantity: totalQty,
-      material_cost: totalQty * c.material_rate,
-      labour_cost: totalQty * c.labour_rate
+      final_quantity: totals?.final_quantity ?? c.final_quantity,
+      priced_quantity: totals ? totals.priced_quantity : c.priced_quantity,
+      material_cost: totals?.material_cost ?? c.material_cost,
+      labour_cost: totals?.labour_cost ?? c.labour_cost,
     } : c));
   }
 
@@ -395,6 +395,7 @@ export function QuoteBuilder({
             ? {
                 ...c,
                 final_quantity: result.componentTotals!.final_quantity,
+                priced_quantity: result.componentTotals!.priced_quantity,
                 material_cost: result.componentTotals!.material_cost,
                 labour_cost: result.componentTotals!.labour_cost,
               }
@@ -423,6 +424,7 @@ export function QuoteBuilder({
             ? {
                 ...c,
                 final_quantity: result.componentTotals!.final_quantity,
+                priced_quantity: result.componentTotals!.priced_quantity,
                 material_cost: result.componentTotals!.material_cost,
                 labour_cost: result.componentTotals!.labour_cost,
               }
@@ -455,6 +457,25 @@ export function QuoteBuilder({
       return formatLinear(qty, quote.measurement_system);
     }
     return `${qty.toFixed(1)} ${getUnitLabel(measurementType as any, quote.measurement_system)}`;
+  }
+
+  // Fixed Quantity strategies: the customer is charged for the rounded-up
+  // purchasable units (priced_quantity, e.g. 5 bundles) but the quote should
+  // also surface the actual (fractional) units (final_quantity, e.g. 4.84) so
+  // the user can decide whether to drop a whole unit on a tight bid.
+  // Renders "5 (4.84)" when a rounded count exists and differs; otherwise the
+  // plain formatted quantity (per_unit lines render exactly as before).
+  function formatPricedQuantity(c: { final_quantity: number | null; priced_quantity?: number | null; measurement_type: string }): ReactNode {
+    const actual = c.final_quantity ?? 0;
+    const priced = c.priced_quantity ?? null;
+    if (priced != null && Math.abs(priced - actual) > 0.001) {
+      return (
+        <>
+          {priced.toFixed(0)} <span className="italic text-slate-400">({actual.toFixed(2)})</span>
+        </>
+      );
+    }
+    return formatQuantity(actual, c.measurement_type);
   }
 
   const phases: { key: Phase; label: string }[] = [
@@ -510,7 +531,7 @@ export function QuoteBuilder({
       <div className="flex items-start justify-between">
         <div>
           <Link href={`/${workspaceSlug}/quotes`} className="text-sm text-slate-500 hover:text-slate-700">
-            ← Quotes
+            â† Quotes
           </Link>
           <div className="mt-1">
             <QuoteNameEditor 
@@ -618,7 +639,7 @@ export function QuoteBuilder({
               data-copilot="quote-next-components"
               className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
-              {allAreasLocked ? 'Next: Components →' : 'Confirm all areas to continue'}
+              {allAreasLocked ? 'Next: Components â†’' : 'Confirm all areas to continue'}
             </button>
           </div>
         </div>
@@ -666,7 +687,7 @@ export function QuoteBuilder({
                   {area.label}{' '}
                   <span className="text-sm font-normal text-slate-500">
                     ({formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
-                    {area.calc_pitch_degrees ? ` @ ${area.calc_pitch_degrees}°` : ''})
+                    {area.calc_pitch_degrees ? ` @ ${area.calc_pitch_degrees}Â°` : ''})
                   </span>
                 </h3>
                 {areaComps.map((comp, compIdx) => (
@@ -702,14 +723,14 @@ export function QuoteBuilder({
               onClick={() => setPhase('areas')}
               className="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50"
             >
-              ← {tradeLabels.areaPluralLabel}
+              â† {tradeLabels.areaPluralLabel}
             </button>
             <button
               onClick={() => setPhase('extras')}
               data-copilot="quote-next-extras"
               className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
-              Next: Extras →
+              Next: Extras â†’
             </button>
           </div>
         </div>
@@ -752,14 +773,14 @@ export function QuoteBuilder({
               onClick={() => setPhase('components')}
               className="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50"
             >
-              ← Smart Components™
+              â† Smart Componentsâ„¢
             </button>
             <button
               onClick={() => setPhase('review')}
               data-copilot="quote-next-review"
               className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
-              Next: Review →
+              Next: Review â†’
             </button>
           </div>
         </div>
@@ -792,12 +813,12 @@ export function QuoteBuilder({
                           <td className="py-1.5">
                             {c.name}
                             {(c.is_rate_overridden || c.is_waste_overridden) && (
-                              <span className="ml-1 text-xs text-amber-600">●</span>
+                              <span className="ml-1 text-xs text-amber-600">â—</span>
                             )}
                           </td>
                           <td className="py-1.5 text-right">{(entries[c.id] ?? []).length}</td>
                           <td className="py-1.5 text-right">
-                            {formatQuantity(c.final_quantity ?? 0, c.measurement_type)}
+                            {formatPricedQuantity(c)}
                           </td>
                           <td className="py-1.5 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
                           <td className="py-1.5 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
@@ -840,7 +861,7 @@ export function QuoteBuilder({
                       <tr key={c.id} className="border-b border-slate-100">
                         <td className="py-1.5">{c.name}</td>
                         <td className="py-1.5 text-right">{(entries[c.id] ?? []).length}</td>
-                        <td className="py-1.5 text-right">{formatQuantity(c.final_quantity ?? 0, c.measurement_type)}</td>
+                        <td className="py-1.5 text-right">{formatPricedQuantity(c)}</td>
                         <td className="py-1.5 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
                         <td className="py-1.5 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
                         <td className="py-1.5 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
@@ -871,7 +892,7 @@ export function QuoteBuilder({
                     <tr key={c.id} className="border-b border-amber-100">
                       <td className="py-1.5">{c.name}</td>
                       <td className="py-1.5 text-right">{(entries[c.id] ?? []).length}</td>
-                      <td className="py-1.5 text-right">{(c.final_quantity ?? 0).toFixed(1)}</td>
+                      <td className="py-1.5 text-right">{formatPricedQuantity(c)}</td>
                       <td className="py-1.5 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
                       <td className="py-1.5 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
                       <td className="py-1.5 text-right font-medium">
@@ -887,7 +908,7 @@ export function QuoteBuilder({
           {/* Profit Margin Controls */}
           <div className="rounded-xl border border-blue-200 bg-blue-50 p-6 space-y-4" data-copilot="quote-margins">
             <div>
-              <h3 className="font-semibold text-gray-900 text-lg">💸 Profit Margins</h3>
+              <h3 className="font-semibold text-gray-900 text-lg">ðŸ’¸ Profit Margins</h3>
               <p className="text-sm text-gray-600 mt-1">Adjust your profit margins - saved automatically when you confirm.</p>
             </div>
 
@@ -957,7 +978,7 @@ export function QuoteBuilder({
 
             <div className="bg-white rounded-lg p-3 border border-blue-200">
               <p className="text-sm text-blue-900">
-                <strong>💡 Note:</strong> Margins are hidden from customers. They only see the final total price.
+                <strong>ðŸ’¡ Note:</strong> Margins are hidden from customers. They only see the final total price.
               </p>
             </div>
           </div>
@@ -1013,13 +1034,13 @@ export function QuoteBuilder({
               <span>{formatCurrency(totals.grandTotal, effectiveCurrency)}</span>
             </div>
           </div>
-          <p className="text-xs text-slate-400">● = value overridden from template default</p>
+          <p className="text-xs text-slate-400">â— = value overridden from template default</p>
           <div className="flex justify-between items-center pt-4 border-t">
             <button
               onClick={() => setPhase('extras')}
               className="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50"
             >
-              ← Back to Extras
+              â† Back to Extras
             </button>
             {/* Guard removed per Shaun: areas are optional for generic quotes
                 and the roofing guard was more friction than value. Just show
@@ -1113,7 +1134,7 @@ function RoofAreaCard({
   // (landscaping, concrete, insulation, electrical). Label changes per trade.
   const _areaTradeLabels = getTradeLabels((quote as { trade?: string }).trade);
   const areaPitchVisible = _areaTradeLabels.pitchRequired || !!_areaTradeLabels.pitchOptional;
-  const areaPitchLabel = _areaTradeLabels.areaPitchLabel ?? 'Pitch (°)';
+  const areaPitchLabel = _areaTradeLabels.areaPitchLabel ?? 'Pitch (Â°)';
   const widthRef = useRef<HTMLInputElement>(null);
 
   async function handleSubmit() {
@@ -1135,7 +1156,7 @@ function RoofAreaCard({
   /**
    * Auto-submit the entry as soon as both fields hold a positive number.
    * Wired to onBlur on width / length so the user no longer needs to click
-   * the explicit "Add" button - entering W × L × pitch "just works" and the
+   * the explicit "Add" button - entering W Ã— L Ã— pitch "just works" and the
    * area's computed_sqm updates immediately. Reported by Shaun 2026-05-17.
    */
   function tryAutoSubmit() {
@@ -1162,7 +1183,7 @@ function RoofAreaCard({
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-orange-600">
                 {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
-                {area.calc_pitch_degrees ? ` @ ${area.calc_pitch_degrees}°` : ''}
+                {area.calc_pitch_degrees ? ` @ ${area.calc_pitch_degrees}Â°` : ''}
               </span>
               <button
                 onClick={() => onToggleLock(area.id, false)}
@@ -1216,11 +1237,11 @@ function RoofAreaCard({
                     }}
                     className="w-20 px-2 py-1 text-xs border border-slate-300 rounded"
                   />
-                  <span className="text-[11px] text-slate-400">max 80°</span>
+                  <span className="text-[11px] text-slate-400">max 80Â°</span>
                 </div>
                 {(area.calc_pitch_degrees ?? 0) >= 60 && (
                   <p className="mt-1 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-                    High angle ({area.calc_pitch_degrees}°): calculated quantities get very large near vertical. Double-check the value is correct.
+                    High angle ({area.calc_pitch_degrees}Â°): calculated quantities get very large near vertical. Double-check the value is correct.
                   </p>
                 )}
               </div>}
@@ -1228,7 +1249,7 @@ function RoofAreaCard({
                 <div key={entry.id} className="flex items-center gap-2 text-xs mb-1">
                   <span className="text-slate-400 w-6">#{idx + 1}</span>
                   <span className="text-slate-700">
-                    {formatLinear(entry.width_m, quote.measurement_system)} × {formatLinear(entry.length_m, quote.measurement_system)} = {formatArea(entry.sqm, quote.measurement_system)}
+                    {formatLinear(entry.width_m, quote.measurement_system)} Ã— {formatLinear(entry.length_m, quote.measurement_system)} = {formatArea(entry.sqm, quote.measurement_system)}
                   </span>
                   <button
                     onClick={() => onRemoveEntry(entry.id, area.id)}
@@ -1258,7 +1279,7 @@ function RoofAreaCard({
                     }}
                     className="w-24 px-2 py-1 text-xs border border-slate-300 rounded"
                   />
-                  <span className="text-xs text-slate-400">×</span>
+                  <span className="text-xs text-slate-400">Ã—</span>
                   <input
                     type="number"
                     step="0.01"
@@ -1381,7 +1402,7 @@ function ExpandableComponent({
   const [vol3dW, setVol3dW] = useState('');
   const [vol3dD, setVol3dD] = useState('');
   const vol3dRef = useRef<HTMLInputElement>(null);
-  // length_x_height_freestyle / multi_lineal_lxh_freestyle: L × H inputs
+  // length_x_height_freestyle / multi_lineal_lxh_freestyle: L Ã— H inputs
   const [lxhFsL, setLxhFsL] = useState('');
   const [lxhFsH, setLxhFsH] = useState('');
   const lxhFsRef = useRef<HTMLInputElement>(null);
@@ -1459,7 +1480,7 @@ function ExpandableComponent({
         className="flex items-center gap-3 px-3 py-2 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
-        <span className="text-xs text-slate-400">{expanded ? '▼' : '▶'}</span>
+        <span className="text-xs text-slate-400">{expanded ? 'â–¼' : 'â–¶'}</span>
         <div className="flex-1 min-w-0">
           <span className="font-medium text-sm text-slate-900">{comp.name}</span>
           <span className="text-xs text-slate-400 ml-2">{comp.measurement_type}</span>
@@ -1468,7 +1489,11 @@ function ExpandableComponent({
           {compEntries.length} {compEntries.length === 1 ? 'entry' : 'entries'}
         </span>
         <span className="text-xs text-slate-500 w-20 text-right">
-          {displayValue(comp.final_quantity ?? 0)}
+          {comp.priced_quantity != null && Math.abs(comp.priced_quantity - (comp.final_quantity ?? 0)) > 0.001 ? (
+            <>{comp.priced_quantity.toFixed(0)} <span className="italic text-slate-400">({(comp.final_quantity ?? 0).toFixed(2)})</span></>
+          ) : (
+            displayValue(comp.final_quantity ?? 0)
+          )}
         </span>
         <span className="text-xs font-medium w-20 text-right">{formatCurrency(totalCost, currency)}</span>
         <button
@@ -1512,7 +1537,7 @@ function ExpandableComponent({
                 <option value="">None</option>
                 {roofAreas.map(a => (
                   <option key={a.id} value={a.id}>
-                    {a.label} ({(a.calc_pitch_degrees ?? 0).toFixed(1)}°)
+                    {a.label} ({(a.calc_pitch_degrees ?? 0).toFixed(1)}Â°)
                   </option>
                 ))}
               </select>
@@ -1530,7 +1555,7 @@ function ExpandableComponent({
                     : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
                 }`}
               >
-                Area ({areaPitch.toFixed(1)}°)
+                Area ({areaPitch.toFixed(1)}Â°)
               </button>
               <button
                 onClick={() => onUpdateSettings(comp.id, { use_custom_pitch: true })}
@@ -1558,7 +1583,7 @@ function ExpandableComponent({
                     }
                     onUpdateSettings(comp.id, { custom_pitch_degrees: clamped });
                   }}
-                  placeholder="°"
+                  placeholder="Â°"
                   className="w-16 px-1 py-0.5 text-xs border border-slate-300 rounded"
                 />
               )}
@@ -1570,7 +1595,7 @@ function ExpandableComponent({
               onClick={() => onUseRoofArea(comp.id, roofArea.computed_sqm ?? 0)}
               className="text-xs text-emerald-600 hover:text-emerald-800 font-medium"
             >
-              → Use {compTradeLabels.areaSingularLabel.toLowerCase()} total ({formatArea(roofArea.computed_sqm ?? 0, quote.measurement_system)})
+              â†’ Use {compTradeLabels.areaSingularLabel.toLowerCase()} total ({formatArea(roofArea.computed_sqm ?? 0, quote.measurement_system)})
             </button>
           )}
 
@@ -1592,7 +1617,7 @@ function ExpandableComponent({
                 )}
                 {comp.waste_type !== 'none' && !isCombined && (
                   <span className="text-slate-400">
-                    → {displayValue(entry.value_after_waste)}{' '}
+                    â†’ {displayValue(entry.value_after_waste)}{' '}
                     <span className="text-slate-300">(+waste)</span>
                   </span>
                 )}
@@ -1616,7 +1641,7 @@ function ExpandableComponent({
                   onClick={() => onCombineEntries?.(comp.id)}
                   className="text-xs text-orange-600 hover:text-orange-800 font-medium"
                 >
-                  ⇋ Combine into total length + waste
+                  â‡‹ Combine into total length + waste
                 </button>
               )}
               {showSplitButton && (
@@ -1624,7 +1649,7 @@ function ExpandableComponent({
                   onClick={() => onSplitEntries?.(comp.id)}
                   className="text-xs text-slate-500 hover:text-slate-700 font-medium"
                 >
-                  ⇅ Split back into individual lengths
+                  â‡… Split back into individual lengths
                 </button>
               )}
             </div>
@@ -1632,7 +1657,7 @@ function ExpandableComponent({
 
           {adding ? (
             isLxhFreestyle ? (
-              // Length × Height freestyle: L and H inputs.
+              // Length Ã— Height freestyle: L and H inputs.
               <div className="space-y-1 mt-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   {([
@@ -1659,7 +1684,7 @@ function ExpandableComponent({
                 {lxhFsL && lxhFsH && Number(lxhFsL) > 0 && Number(lxhFsH) > 0 && (
                   <p className="text-xs text-slate-400">
                     = {(linearInputToMetric(Number(lxhFsL), quote.measurement_system) *
-                        linearInputToMetric(Number(lxhFsH), quote.measurement_system)).toFixed(2)} m²
+                        linearInputToMetric(Number(lxhFsH), quote.measurement_system)).toFixed(2)} mÂ²
                   </p>
                 )}
                 <div className="flex gap-2">
@@ -1673,7 +1698,7 @@ function ExpandableComponent({
                 </div>
               </div>
             ) : isVolume3d ? (
-              // Volume (L × W × D): three separate dimension inputs.
+              // Volume (L Ã— W Ã— D): three separate dimension inputs.
               <div className="space-y-1 mt-1">
                 <div className="flex items-center gap-2">
                   {[
@@ -1702,7 +1727,7 @@ function ExpandableComponent({
                   <p className="text-xs text-slate-400">
                     = {(linearInputToMetric(Number(vol3dL), quote.measurement_system) *
                         linearInputToMetric(Number(vol3dW), quote.measurement_system) *
-                        linearInputToMetric(Number(vol3dD), quote.measurement_system)).toFixed(3)} m³
+                        linearInputToMetric(Number(vol3dD), quote.measurement_system)).toFixed(3)} mÂ³
                   </p>
                 )}
                 <div className="flex gap-2">
@@ -1796,7 +1821,7 @@ function AddFromLibrary({
       >
         <option value="">Add from library...</option>
         {onCreateNew && (
-          <option value={CREATE_NEW_COMPONENT_ID} style={{ color: '#FF6B35', fontWeight: 600 }}>+ Create new Smart Component™</option>
+          <option value={CREATE_NEW_COMPONENT_ID} style={{ color: '#FF6B35', fontWeight: 600 }}>+ Create new Smart Componentâ„¢</option>
         )}
         {library.map(c => (
           <option key={c.id} value={c.id}>
@@ -1820,3 +1845,4 @@ function AddFromLibrary({
     </div>
   );
 }
+

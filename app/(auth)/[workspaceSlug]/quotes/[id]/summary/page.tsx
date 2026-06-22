@@ -269,7 +269,7 @@ export default async function QuoteSummaryPage({
   const { lines: summaryTaxLines, total: adjustedTax } = computeTaxLines(quoteTaxes, adjustedSubtotal, 'quote');
   const adjustedGrandTotal = adjustedSubtotal + adjustedTax;
 
-  // ── Original Summary Snapshot ─────────────────────────────────────────────
+  // â”€â”€ Original Summary Snapshot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Load or lazily create the "original" snapshot. This is captured the FIRST
   // time the user arrives on the Summary page (right after saving from Review
   // or Blank Quote Creator). It is never overwritten after creation.
@@ -517,7 +517,7 @@ export default async function QuoteSummaryPage({
           {showOriginalView && originalSnapshot && (
             <div className="mb-3">
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                🔒 Original - captured {new Date(originalSnapshot.capturedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                ðŸ”’ Original - captured {new Date(originalSnapshot.capturedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
               </span>
             </div>
           )}
@@ -553,7 +553,7 @@ export default async function QuoteSummaryPage({
                     <tr key={c.id} className="border-b border-slate-100">
                       <td className="py-3">{c.name}</td>
                       <td className="py-3 text-right">{(entries[c.id] ?? []).length}</td>
-                      <td className="py-3 text-right">{displayQty.toFixed(1)} {getUnitLabel(c.measurement_type as any, quote.measurement_system)}</td>
+                      <td className="py-3 text-right">{c.priced_quantity != null && Math.abs(c.priced_quantity - displayQty) > 0.001 ? (<>{c.priced_quantity.toFixed(0)} <span className="italic text-slate-400">({displayQty.toFixed(2)})</span></>) : (<>{displayQty.toFixed(1)} {getUnitLabel(c.measurement_type as any, quote.measurement_system)}</>)}</td>
                       <td className="py-3 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
                       <td className="py-3 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
                       <td className="py-3 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
@@ -588,7 +588,7 @@ export default async function QuoteSummaryPage({
                 <tr key={c.id} className="border-b border-slate-100">
                   <td className="py-3">{c.name}</td>
                   <td className="py-3 text-right">{(entries[c.id] ?? []).length}</td>
-                  <td className="py-3 text-right">{displayQty.toFixed(1)} {getUnitLabel(c.measurement_type as any, quote.measurement_system)}</td>
+                  <td className="py-3 text-right">{c.priced_quantity != null && Math.abs(c.priced_quantity - displayQty) > 0.001 ? (<>{c.priced_quantity.toFixed(0)} <span className="italic text-slate-400">({displayQty.toFixed(2)})</span></>) : (<>{displayQty.toFixed(1)} {getUnitLabel(c.measurement_type as any, quote.measurement_system)}</>)}</td>
                   <td className="py-3 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
                   <td className="py-3 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
                   <td className="py-3 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
@@ -619,7 +619,7 @@ export default async function QuoteSummaryPage({
         )}
 
         {showOriginalView && originalSnapshot ? (
-          // ── ORIGINAL TAB ── Read-only view from the first-save snapshot
+          // â”€â”€ ORIGINAL TAB â”€â”€ Read-only view from the first-save snapshot
           <div className="pt-4 space-y-4">
             <div className="pt-4 border-t border-slate-300 space-y-4">
               <div className="flex justify-between text-base"><span className="text-slate-900">Total Item Cost</span><span className="text-slate-900 text-right">{formatCurrency(originalSnapshot.totalMaterials, originalSnapshot.currency)}</span></div>
@@ -643,7 +643,7 @@ export default async function QuoteSummaryPage({
             <p className="text-xs text-slate-400 italic">This is a read-only snapshot of the quote as it was when first saved. Switch to &quot;Current&quot; to see live values.</p>
           </div>
         ) : (
-          // ── CURRENT TAB (default) ── Live computed values
+          // â”€â”€ CURRENT TAB (default) â”€â”€ Live computed values
           <div className="pt-6 border-t border-slate-300 space-y-4">
             <div className="flex justify-between text-base"><span className="text-slate-900">Total Item Cost</span><span className="text-slate-900 text-right">{formatCurrency(totals.totalMaterials, effectiveCurrency)}</span></div>
             <div className="flex justify-between text-base"><span className="text-slate-900">Total Labour</span><span className="text-slate-900 text-right">{formatCurrency(totals.totalLabour, effectiveCurrency)}</span></div>
