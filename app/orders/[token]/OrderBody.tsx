@@ -26,6 +26,10 @@ interface Props {
 interface LengthEntry {
   length: number | string;
   multiplier: number | string;
+  variables?: { name: string; value: number | string; unit: string }[];
+  calcLength?: number;
+  calcWidth?: number;
+  calcDepth?: number;
 }
 
 /**
@@ -258,18 +262,30 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
                   <div className="text-sm text-slate-700">
                     {line.entry_mode === 'single' ? (
                       <p>
-                        Quantity: <span className="font-medium">{line.quantity}</span> {line.unit}
+                        Quantity: <span className="font-medium">{line.quantity}</span>
                       </p>
                     ) : line.lengths ? (
                       <div>
                         <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">
-                          Lengths ({(line.length_unit || 'm').toUpperCase()})
+                          {line.entry_mode === 'area' ? 'Areas' : line.entry_mode === 'volume' ? 'Volumes' : 'Lengths'} ({(line.length_unit || 'm').toUpperCase()})
                         </p>
-                        <ul className="space-y-0.5">
+                        <ul className="space-y-1">
                           {((line.lengths as unknown) as LengthEntry[]).map((entry, idx) => (
                             <li key={idx}>
-                              {String(entry.length)}
-                              {line.length_unit} × {String(entry.multiplier)}
+                              <span className="font-medium">{String(entry.length)}{line.length_unit}</span>
+                              {' × '}{String(entry.multiplier)}
+                              {entry.calcLength != null && entry.calcWidth != null && (
+                                <span className="text-slate-400 text-xs italic ml-1">
+                                  ({entry.calcLength}×{entry.calcWidth}{entry.calcDepth != null ? `×${entry.calcDepth}` : ''})
+                                </span>
+                              )}
+                              {entry.variables && entry.variables.length > 0 && (
+                                <div className="text-xs text-slate-500 pl-3 mt-0.5">
+                                  {entry.variables.map((v, vi) => (
+                                    <span key={vi} className="mr-2">{v.name}={String(v.value)}{v.unit}</span>
+                                  ))}
+                                </div>
+                              )}
                             </li>
                           ))}
                         </ul>

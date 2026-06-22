@@ -66,10 +66,12 @@ const ROOFING_DEFAULT_TYPES = new Set<MeasurementType>([
 
 const PRICING_STRATEGY_LABELS: Record<PricingStrategy, string> = {
   per_unit: 'Per unit (default)',
-  per_pack_length: 'Per pack - by length (e.g. 20m cable rolls)',
-  per_pack_area: 'Per pack - by area (e.g. 50m² underlay rolls)',
-  per_pack_coverage: 'Per Coverage Area (e.g. 20L paint coverage)',
-  per_pack_volume: 'Per pack - by volume (e.g. 5m³ concrete units)',
+  per_pack_length: 'Fixed Quantity (e.g. 20m cable rolls)',
+  per_pack_area: 'Fixed Quantity (e.g. 50m² tile bundles)',
+  // per_pack_coverage retained for legacy components only; hidden from new
+  // components via allowedStrategiesFor.
+  per_pack_coverage: 'Fixed Quantity (coverage - legacy)',
+  per_pack_volume: 'Fixed Quantity (e.g. 5m³ concrete units),'
 };
 
 const WASTE_UNIT_LABELS: Record<WasteUnit, string> = {
@@ -87,7 +89,8 @@ function allowedStrategiesFor(mt: MeasurementType): PricingStrategy[] {
     base.push('per_pack_length');
   }
   if (['area', 'length_x_height', 'length_x_height_freestyle', 'irregular_area', 'multi_lineal_lxh', 'multi_lineal_lxh_freestyle'].includes(mt)) {
-    base.push('per_pack_area', 'per_pack_coverage');
+    // per_pack_coverage removed from new components; enum retained for legacy.
+    base.push('per_pack_area');
   }
   if (mt === 'volume' || mt === 'volume_3d') {
     base.push('per_pack_volume');
@@ -976,12 +979,12 @@ export function ComponentList({
                   {/* hidden zero so the form submission always has default_material_rate */}
                   <input type="hidden" name="default_material_rate" value="0" />
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">Pack price ($)</label>
-                    <input type="number" step="0.01" placeholder="e.g. 60" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                    <label className="block text-xs text-slate-500 mb-1">Quantity Price</label>
+                    <input type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                   </div>
                   <div>
                     <label className="block text-xs text-slate-500 mb-1">
-                      Pack size ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
+                      Quantity Amount ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
                     </label>
                     <input type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                   </div>
@@ -1208,12 +1211,12 @@ export function ComponentList({
                       <>
                         <input type="hidden" name="default_material_rate" value="0" />
                         <div>
-                          <label className="block text-xs text-slate-500 mb-1">Pack price ($)</label>
-                          <input type="number" step="0.01" placeholder="e.g. 60" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                          <label className="block text-xs text-slate-500 mb-1">Quantity Price</label>
+                          <input type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                         </div>
                         <div>
                           <label className="block text-xs text-slate-500 mb-1">
-                            Pack size ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
+                            Quantity Amount ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
                           </label>
                           <input type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
                         </div>

@@ -891,8 +891,8 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
     quote_component_id: quoteComponentId, raw_value: adjustedValue, value_after_waste: afterWaste,
   }).select().single();
   if (error) throw new Error(error.message);
-  await recalcComponentFromEntries(quoteComponentId);
-  return entry;
+  const componentTotals = await recalcComponentFromEntries(quoteComponentId);
+  return { ...entry, componentTotals };
 }
 
 export async function useRoofAreaTotal(quoteComponentId: string, roofAreaSqm: number, areaPitch: number | null) {
@@ -905,7 +905,7 @@ export async function removeComponentEntry(entryId: string, quoteComponentId: st
   await verifyComponentOwnership(supabase, quoteComponentId, profile.company_id);
   const { error } = await supabase.from('quote_component_entries').delete().eq('id', entryId);
   if (error) throw new Error(error.message);
-  await recalcComponentFromEntries(quoteComponentId);
+  return recalcComponentFromEntries(quoteComponentId);
 }
 
 /**
@@ -939,6 +939,7 @@ export async function combineLinealEntries(quoteComponentId: string): Promise<{
   };
   componentTotals?: {
     final_quantity: number;
+    priced_quantity: number | null;
     material_cost: number;
     labour_cost: number;
   };
@@ -1035,7 +1036,7 @@ export async function combineLinealEntries(quoteComponentId: string): Promise<{
       select: (cols: string) => {
         eq: (col: string, val: string) => {
           maybeSingle: () => Promise<{
-            data: { final_quantity: number; material_cost: number; labour_cost: number } | null;
+            data: { final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number } | null;
             error: Error | null;
           }>;
         };
@@ -1043,7 +1044,7 @@ export async function combineLinealEntries(quoteComponentId: string): Promise<{
     };
   })
     .from('quote_components')
-    .select('final_quantity, material_cost, labour_cost')
+    .select('final_quantity, priced_quantity, material_cost, labour_cost')
     .eq('id', quoteComponentId)
     .maybeSingle();
 
@@ -1060,6 +1061,7 @@ export async function combineLinealEntries(quoteComponentId: string): Promise<{
     componentTotals: compAfter
       ? {
           final_quantity: Number(compAfter.final_quantity ?? 0),
+          priced_quantity: compAfter.priced_quantity == null ? null : Number(compAfter.priced_quantity),
           material_cost: Number(compAfter.material_cost ?? 0),
           labour_cost: Number(compAfter.labour_cost ?? 0),
         }
@@ -1087,6 +1089,7 @@ export async function splitLinealEntries(quoteComponentId: string): Promise<{
   }>;
   componentTotals?: {
     final_quantity: number;
+    priced_quantity: number | null;
     material_cost: number;
     labour_cost: number;
   };
@@ -1150,7 +1153,7 @@ export async function splitLinealEntries(quoteComponentId: string): Promise<{
       select: (cols: string) => {
         eq: (col: string, val: string) => {
           maybeSingle: () => Promise<{
-            data: { final_quantity: number; material_cost: number; labour_cost: number } | null;
+            data: { final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number } | null;
             error: Error | null;
           }>;
         };
@@ -1158,7 +1161,7 @@ export async function splitLinealEntries(quoteComponentId: string): Promise<{
     };
   })
     .from('quote_components')
-    .select('final_quantity, material_cost, labour_cost')
+    .select('final_quantity, priced_quantity, material_cost, labour_cost')
     .eq('id', quoteComponentId)
     .maybeSingle();
 
@@ -1174,6 +1177,7 @@ export async function splitLinealEntries(quoteComponentId: string): Promise<{
     componentTotals: compAfter
       ? {
           final_quantity: Number(compAfter.final_quantity ?? 0),
+          priced_quantity: compAfter.priced_quantity == null ? null : Number(compAfter.priced_quantity),
           material_cost: Number(compAfter.material_cost ?? 0),
           labour_cost: Number(compAfter.labour_cost ?? 0),
         }
@@ -1198,7 +1202,7 @@ export async function recalcAllQuoteComponents(quoteId: string): Promise<void> {
   await Promise.all(components.map((c) => recalcComponentFromEntries(c.id)));
 }
 
-async function recalcComponentFromEntries(quoteComponentId: string) {
+async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number }> {
   const supabase = await createSupabaseServerClient();
   const { data: entries } = await supabase.from('quote_component_entries').select('value_after_waste').eq('quote_component_id', quoteComponentId);
   const totalQty = (entries ?? []).reduce((sum, e) => sum + Number(e.value_after_waste), 0);
@@ -1247,7 +1251,7 @@ async function recalcComponentFromEntries(quoteComponentId: string) {
     }
   }
 
-  const { computeMaterialCostByStrategy } = await import('@/app/lib/pricing/engine');
+  const { computeMaterialCostByStrategy, computePackCount } = await import('@/app/lib/pricing/engine');
   const materialCost = computeMaterialCostByStrategy({
     strategy,
     totalQuantity: totalQty,
@@ -1257,7 +1261,14 @@ async function recalcComponentFromEntries(quoteComponentId: string) {
     packCoverageM2,
   });
   const labourCost = totalQty * (comp?.labour_rate ?? 0);
-  await supabase.from('quote_components').update({ final_quantity: totalQty, material_cost: materialCost, labour_cost: labourCost }).eq('id', quoteComponentId);
+  const packCount = computePackCount({ strategy, totalQuantity: totalQty, packSize, packCoverageM2 });
+  const pricedQuantity = strategy === 'per_unit' || packCount <= 0 ? null : packCount;
+  // Snapshot the pack size so display can compute fractional pack counts
+  // (e.g. 3.42 rolls) as final_quantity / pack_size_snapshot without needing
+  // to join back to component_library. NULL for per_unit components.
+  const packSizeForDisplay = strategy !== 'per_unit' && packSize && packSize > 0 ? packSize : null;
+  await supabase.from('quote_components').update({ final_quantity: totalQty, priced_quantity: pricedQuantity, pack_size_snapshot: packSizeForDisplay, material_cost: materialCost, labour_cost: labourCost }).eq('id', quoteComponentId);
+  return { final_quantity: totalQty, priced_quantity: pricedQuantity, material_cost: materialCost, labour_cost: labourCost };
 }
 
 export async function updateQuoteSettings(quoteId: string, input: Record<string, unknown>) {

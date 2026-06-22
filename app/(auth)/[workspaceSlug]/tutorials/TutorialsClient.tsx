@@ -60,7 +60,7 @@ export function TutorialsClient({ base, assistantEnabled }: Props) {
             type="button"
             onClick={() => setActive(t)}
             data-assistant-id={`tutorial-card-${t.id}`}
-            className="group block rounded-xl border border-slate-200 bg-white p-5 text-left transition-all hover:border-orange-200 hover:bg-orange-50/30 hover:shadow-[0_0_12px_rgba(255,107,53,0.08)]"
+            className="group block rounded-xl border border-slate-200 bg-white p-5 text-left hover:scale-[1.02] transition-all hover:border-orange-200 hover:bg-orange-50/30 hover:shadow-[0_0_12px_rgba(255,107,53,0.08)]"
           >
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 rounded-full bg-orange-50 p-3 transition-colors group-hover:bg-orange-100">

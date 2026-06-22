@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins, combineLinealEntries, splitLinealEntries } from '../actions';
 import { getTradeLabels } from '@/app/lib/trades/labels';
@@ -327,14 +327,14 @@ export function QuoteBuilder({
       ? roofAreas.find(a => a.id === comp.quote_roof_area_id)?.calc_pitch_degrees ?? null
       : null;
     const entry = await addComponentEntry(compId, rawValue, areaPitch);
+    const totals = (entry as { componentTotals?: { final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number } }).componentTotals;
     setEntries(prev => ({ ...prev, [compId]: [...(prev[compId] ?? []), entry] }));
-    const compEntries = [...(entries[compId] ?? []), entry];
-    const totalQty = compEntries.reduce((s, e) => s + Number(e.value_after_waste), 0);
     setComponents(prev => prev.map(c => c.id === compId ? {
       ...c,
-      final_quantity: totalQty,
-      material_cost: totalQty * c.material_rate,
-      labour_cost: totalQty * c.labour_rate
+      final_quantity: totals?.final_quantity ?? c.final_quantity,
+      priced_quantity: totals ? totals.priced_quantity : c.priced_quantity,
+      material_cost: totals?.material_cost ?? c.material_cost,
+      labour_cost: totals?.labour_cost ?? c.labour_cost,
     } : c));
   }
 
@@ -346,27 +346,27 @@ export function QuoteBuilder({
     // action is a larger change; suppress here is the lower-risk path.
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const entry = await useRoofAreaTotal(compId, roofAreaSqm, null);
+    const totals = (entry as { componentTotals?: { final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number } }).componentTotals;
     setEntries(prev => ({ ...prev, [compId]: [...(prev[compId] ?? []), entry] }));
-    const compEntries = [...(entries[compId] ?? []), entry];
-    const totalQty = compEntries.reduce((s, e) => s + Number(e.value_after_waste), 0);
     setComponents(prev => prev.map(c => c.id === compId ? {
       ...c,
-      final_quantity: totalQty,
-      material_cost: totalQty * c.material_rate,
-      labour_cost: totalQty * c.labour_rate
+      final_quantity: totals?.final_quantity ?? c.final_quantity,
+      priced_quantity: totals ? totals.priced_quantity : c.priced_quantity,
+      material_cost: totals?.material_cost ?? c.material_cost,
+      labour_cost: totals?.labour_cost ?? c.labour_cost,
     } : c));
   }
 
   async function handleRemoveEntry(entryId: string, compId: string) {
-    await removeComponentEntry(entryId, compId);
+    const totals = await removeComponentEntry(entryId, compId);
     const updated = (entries[compId] ?? []).filter(e => e.id !== entryId);
     setEntries(prev => ({ ...prev, [compId]: updated }));
-    const totalQty = updated.reduce((s, e) => s + Number(e.value_after_waste), 0);
     setComponents(prev => prev.map(c => c.id === compId ? {
       ...c,
-      final_quantity: totalQty,
-      material_cost: totalQty * c.material_rate,
-      labour_cost: totalQty * c.labour_rate
+      final_quantity: totals?.final_quantity ?? c.final_quantity,
+      priced_quantity: totals ? totals.priced_quantity : c.priced_quantity,
+      material_cost: totals?.material_cost ?? c.material_cost,
+      labour_cost: totals?.labour_cost ?? c.labour_cost,
     } : c));
   }
 
@@ -395,6 +395,7 @@ export function QuoteBuilder({
             ? {
                 ...c,
                 final_quantity: result.componentTotals!.final_quantity,
+                priced_quantity: result.componentTotals!.priced_quantity,
                 material_cost: result.componentTotals!.material_cost,
                 labour_cost: result.componentTotals!.labour_cost,
               }
@@ -423,6 +424,7 @@ export function QuoteBuilder({
             ? {
                 ...c,
                 final_quantity: result.componentTotals!.final_quantity,
+                priced_quantity: result.componentTotals!.priced_quantity,
                 material_cost: result.componentTotals!.material_cost,
                 labour_cost: result.componentTotals!.labour_cost,
               }
@@ -455,6 +457,25 @@ export function QuoteBuilder({
       return formatLinear(qty, quote.measurement_system);
     }
     return `${qty.toFixed(1)} ${getUnitLabel(measurementType as any, quote.measurement_system)}`;
+  }
+
+  // Fixed Quantity strategies: show rounded purchasable units (priced_quantity)
+  // with actual in italic brackets e.g. "5 (4.84)". per_unit = NULL priced_quantity
+  // so falls back to formatQuantity, rendering exactly as before.
+  function formatPricedQuantity(c: { final_quantity: number | null; priced_quantity?: number | string | null; pack_size_snapshot?: number | string | null; measurement_type: string }): ReactNode {
+    const actual = Number(c.final_quantity ?? 0);
+    // Supabase returns numeric columns as strings at runtime — use Number().
+    const priced = c.priced_quantity != null ? Number(c.priced_quantity) : null;
+    const packSnap = c.pack_size_snapshot != null ? Number(c.pack_size_snapshot) : null;
+    if (priced != null && !isNaN(priced)) {
+      const fractional = packSnap && !isNaN(packSnap) && packSnap > 0 ? actual / packSnap : actual;
+      return (
+        <>
+          {priced.toFixed(0)} <span className="italic text-slate-400">({fractional.toFixed(2)})</span>
+        </>
+      );
+    }
+    return formatQuantity(actual, c.measurement_type);
   }
 
   const phases: { key: Phase; label: string }[] = [
@@ -797,7 +818,7 @@ export function QuoteBuilder({
                           </td>
                           <td className="py-1.5 text-right">{(entries[c.id] ?? []).length}</td>
                           <td className="py-1.5 text-right">
-                            {formatQuantity(c.final_quantity ?? 0, c.measurement_type)}
+                            {formatPricedQuantity(c)}
                           </td>
                           <td className="py-1.5 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
                           <td className="py-1.5 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
@@ -840,7 +861,7 @@ export function QuoteBuilder({
                       <tr key={c.id} className="border-b border-slate-100">
                         <td className="py-1.5">{c.name}</td>
                         <td className="py-1.5 text-right">{(entries[c.id] ?? []).length}</td>
-                        <td className="py-1.5 text-right">{formatQuantity(c.final_quantity ?? 0, c.measurement_type)}</td>
+                        <td className="py-1.5 text-right">{formatPricedQuantity(c)}</td>
                         <td className="py-1.5 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
                         <td className="py-1.5 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
                         <td className="py-1.5 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
@@ -871,7 +892,7 @@ export function QuoteBuilder({
                     <tr key={c.id} className="border-b border-amber-100">
                       <td className="py-1.5">{c.name}</td>
                       <td className="py-1.5 text-right">{(entries[c.id] ?? []).length}</td>
-                      <td className="py-1.5 text-right">{(c.final_quantity ?? 0).toFixed(1)}</td>
+                      <td className="py-1.5 text-right">{formatPricedQuantity(c)}</td>
                       <td className="py-1.5 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
                       <td className="py-1.5 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
                       <td className="py-1.5 text-right font-medium">
@@ -1468,7 +1489,13 @@ function ExpandableComponent({
           {compEntries.length} {compEntries.length === 1 ? 'entry' : 'entries'}
         </span>
         <span className="text-xs text-slate-500 w-20 text-right">
-          {displayValue(comp.final_quantity ?? 0)}
+          {comp.priced_quantity != null ? (() => {
+            const priced = Number(comp.priced_quantity);
+            const packSnap = comp.pack_size_snapshot != null ? Number(comp.pack_size_snapshot) : null;
+            const actual = Number(comp.final_quantity ?? 0);
+            const fractional = packSnap && !isNaN(packSnap) && packSnap > 0 ? actual / packSnap : actual;
+            return <>{priced.toFixed(0)} <span className="italic text-slate-400">({fractional.toFixed(2)})</span></>;
+          })() : displayValue(comp.final_quantity ?? 0)}
         </span>
         <span className="text-xs font-medium w-20 text-right">{formatCurrency(totalCost, currency)}</span>
         <button

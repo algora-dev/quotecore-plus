@@ -165,7 +165,7 @@ export default async function WorkspaceHome({
               <Link
                 key={action.title}
                 href={action.href}
-                className="block p-5 bg-white border border-slate-200 rounded-xl hover:border-orange-200 hover:bg-orange-50/30 hover:shadow-[0_0_12px_rgba(255,107,53,0.08)] transition-all group"
+                className="block p-5 bg-white border border-slate-200 rounded-xl hover:border-orange-200 hover:bg-orange-50/30 hover:shadow-[0_0_12px_rgba(255,107,53,0.08)] hover:scale-[1.02] transition-all group"
               >
                 {content}
               </Link>

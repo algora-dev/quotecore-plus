@@ -347,6 +347,22 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       unit = 'units';
     }
 
+    // Fixed Quantity strategies: format as "Name - 4 (3.42) - 171.07 m2"
+    // where 4 = rounded-up purchasable units (priced_quantity),
+    // (3.42) = actual fractional units = displayQty / pack_size_snapshot,
+    // 171.07 m2 = the real measured area/length/volume.
+    // per_unit components (priced_quantity NULL) render exactly as before.
+    // Supabase returns `numeric` DB columns as strings at runtime despite the
+    // TS types saying number. Use Number() to safely convert before arithmetic.
+    const pricedRaw = (component as { priced_quantity?: number | string | null }).priced_quantity;
+    const packRaw = (component as { pack_size_snapshot?: number | string | null }).pack_size_snapshot;
+    const priced = pricedRaw != null ? Number(pricedRaw) : null;
+    const packSnap = packRaw != null ? Number(packRaw) : null;
+    if (priced != null && !isNaN(priced) && packSnap != null && !isNaN(packSnap) && packSnap > 0) {
+      const fractional = displayQty / packSnap;
+      return `${component.name} - ${priced.toFixed(0)} (${fractional.toFixed(2)}) - ${displayQty.toFixed(2)} ${unit}`;
+    }
+
     return `${component.name} - ${displayQty.toFixed(1)} ${unit}`;
   }
 

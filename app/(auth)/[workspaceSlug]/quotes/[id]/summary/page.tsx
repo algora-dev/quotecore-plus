@@ -530,11 +530,11 @@ export default async function QuoteSummaryPage({
           const areaComps = mainComps.filter(c => c.quote_roof_area_id === area.id);
           return (
             <div key={area.id}>
-              <h3 className="font-semibold text-slate-900 mb-4">{area.label} - {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}</h3>
+              <h3 className="font-semibold text-slate-900 mb-4">{area.label} - {formatArea(area.computed_sqm ?? 0, quote.measurement_system)} <span className="text-slate-400 font-normal text-sm">(Actual area)</span></h3>
               {areaComps.length > 0 ? (
                 <table className="w-full text-sm">
                   <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-300">
-                    <th className="pb-2 font-medium">Component</th><th className="pb-2 text-right font-medium">Entries</th><th className="pb-2 text-right font-medium">Total Qty</th>
+                    <th className="pb-2 font-medium">Component</th><th className="pb-2 text-right font-medium">Entries</th><th className="pb-2 text-right font-medium">Total Qty <em className="font-normal text-slate-400">(Incl Waste)</em></th>
                     <th className="pb-2 text-right font-medium">Item Cost</th><th className="pb-2 text-right font-medium">Labour</th><th className="pb-2 text-right font-medium">Total</th>
                   </tr></thead>
                   <tbody>{areaComps.map(c => {
@@ -553,7 +553,7 @@ export default async function QuoteSummaryPage({
                     <tr key={c.id} className="border-b border-slate-100">
                       <td className="py-3">{c.name}</td>
                       <td className="py-3 text-right">{(entries[c.id] ?? []).length}</td>
-                      <td className="py-3 text-right">{displayQty.toFixed(1)} {getUnitLabel(c.measurement_type as any, quote.measurement_system)}</td>
+                      <td className="py-3 text-right">{c.priced_quantity != null ? (() => { const priced = Number(c.priced_quantity); const psRaw = (c as { pack_size_snapshot?: number | string | null }).pack_size_snapshot; const ps = psRaw != null ? Number(psRaw) : null; const frac = ps && !isNaN(ps) && ps > 0 ? displayQty / ps : displayQty; return <>{frac.toFixed(2)} <span className="italic text-slate-400">({priced.toFixed(0)})</span></>; })() : (<>{displayQty.toFixed(1)} {getUnitLabel(c.measurement_type as any, quote.measurement_system)}</>)}</td>
                       <td className="py-3 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
                       <td className="py-3 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
                       <td className="py-3 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
@@ -571,7 +571,7 @@ export default async function QuoteSummaryPage({
             <h3 className="font-semibold text-slate-900 mb-4">{extrasHeading}</h3>
             <table className="w-full text-sm">
               <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-300">
-                <th className="pb-2 font-medium">{isGenericNoArea ? 'Item' : 'Extra'}</th><th className="pb-2 text-right font-medium">Entries</th><th className="pb-2 text-right font-medium">Total Qty</th>
+                <th className="pb-2 font-medium">{isGenericNoArea ? 'Item' : 'Extra'}</th><th className="pb-2 text-right font-medium">Entries</th><th className="pb-2 text-right font-medium">Total Qty <em className="font-normal text-slate-400">(Incl Waste)</em></th>
                 <th className="pb-2 text-right font-medium">Item Cost</th><th className="pb-2 text-right font-medium">Labour</th><th className="pb-2 text-right font-medium">Total</th>
               </tr></thead>
               <tbody>{extraComps.map(c => {
@@ -588,7 +588,7 @@ export default async function QuoteSummaryPage({
                 <tr key={c.id} className="border-b border-slate-100">
                   <td className="py-3">{c.name}</td>
                   <td className="py-3 text-right">{(entries[c.id] ?? []).length}</td>
-                  <td className="py-3 text-right">{displayQty.toFixed(1)} {getUnitLabel(c.measurement_type as any, quote.measurement_system)}</td>
+                  <td className="py-3 text-right">{c.priced_quantity != null ? (() => { const priced = Number(c.priced_quantity); const psRaw = (c as { pack_size_snapshot?: number | string | null }).pack_size_snapshot; const ps = psRaw != null ? Number(psRaw) : null; const frac = ps && !isNaN(ps) && ps > 0 ? displayQty / ps : displayQty; return <>{frac.toFixed(2)} <span className="italic text-slate-400">({priced.toFixed(0)})</span></>; })() : (<>{displayQty.toFixed(1)} {getUnitLabel(c.measurement_type as any, quote.measurement_system)}</>)}</td>
                   <td className="py-3 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
                   <td className="py-3 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
                   <td className="py-3 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>

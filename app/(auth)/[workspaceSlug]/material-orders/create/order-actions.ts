@@ -35,7 +35,7 @@ interface SaveOrderInput {
     componentName: string;
     flashingId?: string;
     flashingImageUrl?: string;
-    entryMode: 'single' | 'multiple';
+    entryMode: 'single' | 'linear' | 'area' | 'volume' | 'multiple';
     quantity?: number;
     unit?: string;
     lengths?: Array<{
@@ -46,6 +46,9 @@ interface SaveOrderInput {
         value: number;
         unit: string;
       }>;
+      calcLength?: number;
+      calcWidth?: number;
+      calcDepth?: number;
     }>;
     lengthUnit?: string;
     notes?: string;
@@ -251,8 +254,9 @@ export async function saveDraftOrder(input: SaveOrderInput) {
         entry_mode: item.entryMode,
         quantity: item.entryMode === 'single' ? (item.quantity || null) : null,
         unit: item.entryMode === 'single' ? (item.unit || null) : null,
-        lengths: item.entryMode === 'multiple' ? item.lengths : null,
-        length_unit: item.entryMode === 'multiple' ? item.lengthUnit : null,
+        // linear / area / volume (and legacy 'multiple') all store entries in `lengths`.
+        lengths: item.entryMode !== 'single' ? item.lengths : null,
+        length_unit: item.entryMode !== 'single' ? item.lengthUnit : null,
         flashing_id: item.flashingId || null,
         flashing_image_url: item.flashingImageUrl || null,
         item_notes: item.notes || null,
@@ -267,8 +271,10 @@ export async function saveDraftOrder(input: SaveOrderInput) {
         .insert(lineItemsData);
       
       if (linesError) {
-        console.error('[saveDraftOrder] Line items insert error:', linesError);
-        throw new Error('Failed to save order items');
+        // Log full detail so Vercel function logs show the actual Supabase error.
+        console.error('[saveDraftOrder] Line items insert error:', JSON.stringify(linesError));
+        console.error('[saveDraftOrder] First item sample:', JSON.stringify(lineItemsData[0]));
+        throw new Error(`Failed to save order items: ${linesError.message} (code: ${linesError.code})`);
       }
     }
     

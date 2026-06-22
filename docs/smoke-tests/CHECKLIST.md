@@ -2,13 +2,13 @@
 
 > Single source of truth for **what needs verifying on dev**. Gavin adds items when he ships; Shaun ticks them off. One line per item - detailed per-tier walkthrough scripts live alongside (starter / professional / storage-limit) and are referenced, not duplicated.
 >
-> **Status keys:** `[ ]` pending · `[x]` passed · `[!]` failed (note why) · `[~]` partial/needs retest
+> **Status keys:** `[ ]` pending Â· `[x]` passed Â· `[!]` failed (note why) Â· `[~]` partial/needs retest
 > Passed items move to **Passed (recent)** on the next update; stale ones pruned.
 > Test env: `quotecore-plus-dev.vercel.app` (dev = one Supabase DB shared with main).
 
 ---
 
-# ⚠️ PRE-GO-LIVE / PROD PROMOTION TASKS (do at `development -> main` merge)
+# âš ï¸ PRE-GO-LIVE / PROD PROMOTION TASKS (do at `development -> main` merge)
 
 > Infra steps that MUST happen when promoting dev to production. Not feature tests - hard release gates.
 
@@ -21,15 +21,15 @@
 
 > Blockers H-01..H-04 + M-01..M-03 from `quotecore-plus-golive-security-2026-06-21`. DB objects already verified present (RPC, trigger, 5 CHECK constraints, base_unit_cost col). Behavioural verification pending. Re-audit brief: `docs/audits/GERALD-BRIEF-2026-06-21-REMEDIATION-R1.md`.
 
-- [ ] **H-01 atomic quote-line save**: edit a customer quote with multiple lines, save → lines persist correctly. (Race/failure path now rolled back atomically via RPC.)
-- [ ] **H-03 invoice-from-quote tamper**: start invoice-from-quote, tamper `lines=` to a bogus id in URL → expect error "None of the selected quote lines could be found", NOT a full-component invoice.
-- [ ] **H-04 accept/decline guard**: accept a quote, then try decline from a stale tab → second action rejected with conflict, no duplicate alert. Accept after expiry → rejected.
+- [ ] **H-01 atomic quote-line save**: edit a customer quote with multiple lines, save â†’ lines persist correctly. (Race/failure path now rolled back atomically via RPC.)
+- [ ] **H-03 invoice-from-quote tamper**: start invoice-from-quote, tamper `lines=` to a bogus id in URL â†’ expect error "None of the selected quote lines could be found", NOT a full-component invoice.
+- [ ] **H-04 accept/decline guard**: accept a quote, then try decline from a stale tab â†’ second action rejected with conflict, no duplicate alert. Accept after expiry â†’ rejected.
 - [ ] **M-01/M-02 (DB-enforced, low manual priority)**: normal quote save unaffected; negative qty / cross-quote component only reachable via direct API (constraints confirmed present).
 - [ ] **M-03 rate-limit fail-closed**: no behavioural change in normal use; only matters during a rate-limit RPC outage.
 
 ---
 
-# PRE-MERGE RELEASE PASS - `development → main` (66 commits, baseline `8fac898` 2026-05-25)
+# PRE-MERGE RELEASE PASS - `development â†’ main` (66 commits, baseline `8fac898` 2026-05-25)
 
 > This merge ships the entire dev backlog to production. Verify the major features below on dev before sign-off. Gerald cleared the code; remaining risk is **behavioural/product-level**.
 
@@ -54,11 +54,11 @@
 > Pass
 - [x] **Order attachments** - send order w/ library file; public order page lists + downloads it.
 > Pass
-- [x] **Standalone send (M-02)** - attachment-only message → `/file/<token>` page: View inline (images), Download saves to device.
+- [x] **Standalone send (M-02)** - attachment-only message â†’ `/file/<token>` page: View inline (images), Download saves to device.
 > Pass
 - [x] **Failed-send cleanup (H-01)** - GAVIN-VERIFIED (no Shaun test needed). Hard to trigger manually; cleanup logic confirmed in code. Skip.
 ## B. Catalog Library + import
-- [x] **Import wizard** - upload CSV → name → preview/map columns → save; catalog appears.
+- [x] **Import wizard** - upload CSV â†’ name â†’ preview/map columns â†’ save; catalog appears.
 > Pass
 - [x] **Catalog search in quote** - CustomerQuoteEditor + Blank Quote: Catalog Search adds a line (desc + price + qty).
 > Pass
@@ -73,13 +73,13 @@
 ## C. Storage-red policy
 - [x] **Over-limit blocks uploads** - red company: catalog/attachment/quote-file/logo uploads all blocked w/ banner + modal across portals.
 > Pass
-> BOUNDARY PASS (2026-06-02): set used to 500KB-under limit, attempted 0.68MB attachment upload → blocked pre-commit with "Storage quota exceeded: ... would exceed limit". Confirms attachment/quote-file/logo uploads are gated BEFORE commit (assertCanUseStorage), not allowed to tip over. (Catalog import is the only allowed-to-overspill path - separate item.)
+> BOUNDARY PASS (2026-06-02): set used to 500KB-under limit, attempted 0.68MB attachment upload â†’ blocked pre-commit with "Storage quota exceeded: ... would exceed limit". Confirms attachment/quote-file/logo uploads are gated BEFORE commit (assertCanUseStorage), not allowed to tip over. (Catalog import is the only allowed-to-overspill path - separate item.)
 - [x] **Quote/component/drawing still work** - these use separate quotas, NOT blocked by storage-red.
 > PASS (2026-06-02): while red, attachment/logo/quote-file/2nd-catalog-import all blocked; quote/component/drawing creation all still worked.
 - [x] **Catalog import option-3** - an in-flight import may finish + push over (capped 10MB/catalog); company goes red after.
-> PASS (2026-06-02): from 500KB-under, imported a 781KB CSV (6,590 rows) → import allowed to start, completed (catalog Ready), account flipped red afterward with banner. Banner CTA wrap fixed `5ca8217`.
+> PASS (2026-06-02): from 500KB-under, imported a 781KB CSV (6,590 rows) â†’ import allowed to start, completed (catalog Ready), account flipped red afterward with banner. Banner CTA wrap fixed `5ca8217`.
 - [x] **Top-up threshold (Gavin #4)** - company with a storage top-up is NOT flagged red below `limit + topup` (red triggers only past the combined threshold).
-> PASS (2026-06-02): 100MB top-up, used=base+50MB → NOT red, upload allowed; bumped used past base+topup → red + uploads blocked. Confirmed effective limit = base + topup.
+> PASS (2026-06-02): 100MB top-up, used=base+50MB â†’ NOT red, upload allowed; bumped used past base+topup â†’ red + uploads blocked. Confirmed effective limit = base + topup.
 
 ## D. Resource Library restructure
 - [x] **/resources route** - old `/templates` links redirect to `/resources`; tabs (templates + attachments) all load.
@@ -92,7 +92,7 @@
 - [x] **Auto-message baked attachment (Gavin #6)** - an auto/scheduled message (e.g. quote_sent chase) carries the template's baked default attachment via the resolver. Live data-model path no other item hits.
 
 ## G. Independent of merge gate (already on dev separately - fail here does NOT block the attachments merge)
-- [ ] **Multi-page takeoff (P1-3, dev `e28cbff`)** - component area on Plan 2 (existing-area mode) records correctly (last known bug, fixed `e28cbff`, unconfirmed). Pass → clears takeoff gate.
+- [ ] **Multi-page takeoff (P1-3, dev `e28cbff`)** - component area on Plan 2 (existing-area mode) records correctly (last known bug, fixed `e28cbff`, unconfirmed). Pass â†’ clears takeoff gate.
 - [x] **Email template hotfix (`9697519`)** - GAVIN-VERIFIED (no Shaun test needed). Rendering fix, confirmed in code. Rides the merge. Skip.
 ---
 
@@ -106,7 +106,7 @@
 > Need your help to test
 - [x] **Live ACL evidence retained** - GAVIN-VERIFIED, no Shaun action. Not a test - just confirms the evidence file is linked in merge notes (it is). Skip.
 - [~] **Token isolation sanity** - quote/order/file attachment links from one company do not resolve for unrelated tokens or guessed `file` ids; failures return generic not-found.
-> GAVIN-VERIFIED PASS (2026-06-02): hit dev download route with a random valid-format token + file id → generic 404, empty body, no existence leak. My job, done. No Shaun test needed.
+> GAVIN-VERIFIED PASS (2026-06-02): hit dev download route with a random valid-format token + file id â†’ generic 404, empty body, no existence leak. My job, done. No Shaun test needed.
 ---
 
 ## H. AI Assistant - Guide-me re-architecture (dev only, flag-gated; in the merge bundle but OFF on main via flags)
@@ -114,7 +114,7 @@ _Re-architected 2026-06-03 eve, dev 3cfbd60. Legacy Copilot fully removed; assis
 - [x] **Ask-first** - Guide-me orients on current screen and ASKS what you want (no forced tour). Shaun confirmed.
 - [x] **Cross-page routing** - a goal on another page routes you there (e.g. add a component to a quote, from Components). Shaun confirmed.
 - [x] **Next / Back / Reset** - instant step nav; Reset re-syncs to real step (or asks if ambiguous). Shaun confirmed.
-- [x] **Highlight release on click** - glow clears on any click incl. the target, stays cleared until step changes; Back→Next re-fires. Shaun confirmed.
+- [x] **Highlight release on click** - glow clears on any click incl. the target, stays cleared until step changes; Backâ†’Next re-fires. Shaun confirmed.
 - [x] **Finish** - last step shows Finish; clicking clears the guide bar + warm sign-off. Shaun confirmed.
 - [ ] **Respond mode concise** - a how-to returns a tight summary (not a full dump) + offers Guide-me.
 - [ ] **Facts auto-advance** - doing a step action on a tagged control advances the highlight without clicking Next.
@@ -128,6 +128,14 @@ _Re-architected 2026-06-03 eve, dev 3cfbd60. Legacy Copilot fully removed; assis
 ---
 
 ## Pending verification
+
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
@@ -147,6 +155,14 @@ _Re-architected 2026-06-03 eve, dev 3cfbd60. Legacy Copilot fully removed; assis
 
 ## Pending verification
 
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
+
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
 - [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
@@ -162,6 +178,14 @@ _Re-architected 2026-06-03 eve, dev 3cfbd60. Legacy Copilot fully removed; assis
 > Migration `20260612180000_users_tutorials_seen_at` APPLIED to shared dev+prod DB; types regenerated. `next build` passed. Q-launch uses new `qcp:start-guide` CustomEvent bridge in AssistantWidget (Option A). Card->guide mapping richer than original plan: Drawings/Invoices/Message Center now HAVE guides.
 
 ## Pending verification
+
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
@@ -185,6 +209,14 @@ _(empty - move items here as they pass)_
 
 ## Pending verification
 
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
+
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
 - [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
@@ -196,6 +228,14 @@ _(empty - move items here as they pass)_
   - [ ] **#4 Invoice Activity card**: open a SENT (non-draft) invoice -> Activity card shows below the editor. Sent/Scheduled tabs as above keyed to the invoice; Unresolved tab lists open invoice disputes with a working **Mark resolved** (optimistic, moves to the resolved drawer). Schedule-follow-up + Delete-all work. Draft invoices show NO card.
 
 ## Pending verification
+
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
@@ -209,6 +249,14 @@ _(empty - move items here as they pass)_
 
 ## Pending verification
 
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
+
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
 - [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
@@ -220,6 +268,14 @@ _(empty - move items here as they pass)_
   - [ ] **#3 Invoice send/follow-up uses MESSAGE templates**: with existing message templates (e.g. quote_send ones) and only a header/payment Invoice template, open **Send Invoice** -> your message templates now appear in the template picker (no false "no templates"); **Add follow-up** lists the same message templates; the "create a template" link goes to **Message Templates** (Resources > Message/email tab), NOT Invoice Templates. Follow-ups must never require an invoice_template doc.
 
 ## Pending verification
+
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
@@ -234,6 +290,14 @@ _(empty - move items here as they pass)_
 
 ## Pending verification
 
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
+
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
 - [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
@@ -244,6 +308,14 @@ _(empty - move items here as they pass)_
 
 ## Pending verification
 
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
+
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
 - [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
@@ -251,12 +323,20 @@ _(empty - move items here as they pass)_
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - invoice share-link send + Read robustness + list layout, 2026-06-09)
   - [ ] **Pre-send follow-up gate + mutual-cancel across 3 triggers** (2026-06-09, Phase A): on a quote summary, **Send Quote -> Send from QuoteCore+**, compose, click **Continue** -> a pre-send gate shows two choices. **Send now** ("No follow-ups needed") sends the quote with NO follow-up prompt afterwards. **Add Follow-ups** ("Then send") opens a builder where you can add up to 3 rules: **Triggered** (Quote accepted / declined / Dispute-change-requested, optional "Add time delay" else fires immediately) and **Time-based** (chase with days/hours delay, cancels on reply); one rule per trigger (a used trigger shows "already added"). Confirm -> rules persist then the quote sends. Then verify mutual-cancel: park accepted + declined + revision rules on a quote, have the customer ACCEPT -> the accepted rule activates and BOTH the declined and revision parked rows are cancelled (reason "...other trigger follow-ups no longer needed."); repeat with a customer DISPUTE/revision-request -> revision rule activates, accepted+declined parked rows cancelled. Existing accept/decline follow-ups must still fire. Also: inbox **Settings** per-event (per-line) toggles are visibly ~30% smaller than the channel master toggles and animate on/off correctly at both sizes.
-  - [ ] **Per-event EMAIL notification toggles** (2026-06-09): inbox **Settings** tab now shows TWO toggles per event — **In-app** (orange) + **Email** (blue) — with per-surface channel masters. Email defaults ON only for Quote Accepted, Re-quote Requested, Order Accepted, Order Info Requested, Invoice Disputed; OFF for all others (declines, all Read/Viewed, payment-reported). Verify: toggling an event's Email OFF stops only that email (in-app alert + status still fire); a dispute/accept/info-request now emails all company users when its blue toggle is on; order/invoice/read events that previously sent no email now send a generic branded email when enabled; the Account → Notifications email master is GONE (tab now only hosts Chat Assistant); legacy companies with bare-boolean prefs still load with correct in-app state + email defaults.
+  - [ ] **Per-event EMAIL notification toggles** (2026-06-09): inbox **Settings** tab now shows TWO toggles per event â€” **In-app** (orange) + **Email** (blue) â€” with per-surface channel masters. Email defaults ON only for Quote Accepted, Re-quote Requested, Order Accepted, Order Info Requested, Invoice Disputed; OFF for all others (declines, all Read/Viewed, payment-reported). Verify: toggling an event's Email OFF stops only that email (in-app alert + status still fire); a dispute/accept/info-request now emails all company users when its blue toggle is on; order/invoice/read events that previously sent no email now send a generic branded email when enabled; the Account â†’ Notifications email master is GONE (tab now only hosts Chat Assistant); legacy companies with bare-boolean prefs still load with correct in-app state + email defaults.
   - [ ] **Message Center notification matrix** (2026-06-09): inbox **Settings** tab now shows three channel cards (Quotes / Orders / Invoices), each with an "All <channel> alerts" MASTER toggle + per-event child toggles (all default ON; ON = notify me). Orders shows ONE "Supplier Response" event (not separate accept/decline/request-info); Invoices has NO request-info event. Turning a master OFF greys+disables+turns off its children; turning it back ON re-enables all children. Toggling an event OFF means that event's owner alert is NOT created, while the underlying status (Read/Accepted/Paid/Viewed/etc) STILL updates. Verify each of the 3 "Read" toggles independently gates its channel's Read alert, and the Account -> Notifications email-copy toggle is untouched.
   - [ ] **Notification matrix corrections** (2026-06-09): Orders channel now shows FOUR events - **Accepted / Declined / Info Requested / Read** (the old single "Supplier Response" is gone); a supplier accepting/declining/requesting-info on a sent order creates the matching distinct alert (title "Accepted / Declined / Info Requested - <supplier>"), each independently gated by its own toggle, while the order's lifecycle stamps (confirmed/declined/info-requested) + response row ALWAYS save even with the toggle OFF. Invoices channel now shows only THREE events - **Payment Made / Dispute Opened / Read** (the "Paid" toggle is removed; the invoice_paid alert still fires as before, just no longer user-configurable). Confirm all new Order alerts route to the material-order preview with the blue "Order" badge, and any historical "Supplier Response" (order_supplier_response) alerts already in the DB still render + route correctly (back-compat).
   - [ ] **Invoice share-link = Sent, Read activates, list layout** (2026-06-09): on a DRAFT invoice click **Customer View** in the editor -> status flips to **Sent** + an "Invoice Sent" alert is created (no email); recipient opens public `/invoice/<token>` -> status flips to **Viewed/Read** (+ Read alert if Notify-on-view ON) -> dispute -> **Action Required**. Invoices list now has column headers **Invoice Number | Client/Job | Value | Status | Last Activity** (Status in its own column beside Last Activity), **New Invoice** button on the right, header columns line up with rows.
 
 ## Pending verification
+
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
@@ -278,6 +358,14 @@ _(empty - move items here as they pass)_
 
 ## Pending verification
 
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
+
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
 - [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
@@ -287,13 +375,21 @@ _(empty - move items here as they pass)_
 - [ ] **#1 Seed components (THE bug)**: sign up a NEW company as **Roofing** -> Components page shows the 8 Roofing starter components (not zero). Sign up another as a **generic trade** -> shows the 9 Generic starter components. (Root cause was the tier cap rolling back the seed; now seeded via cap-bypass RPC, trade-aware.)
 - [ ] **#1 Cap still enforced for users**: on a Starter/trial company, after seed, manually adding components past the limit (10) is still blocked with the limit message (seed bypass must NOT disable the user cap).
 - [ ] **#2 Remove line (customer quote editor)**: red **X** top-right of each line row -> ConfirmModal -> line is fully removed (not just hidden). Confirm order + invoice editors still remove cleanly too.
-- [ ] **#3 Pencil edit quantity + dash (customer quote + line-by-line order)**: add a custom line with a quantity; pencil-edit from preview -> Quantity field is editable; clearing it removes the “description — quantity” dash entirely; editing description and price still work.
+- [ ] **#3 Pencil edit quantity + dash (customer quote + line-by-line order)**: add a custom line with a quantity; pencil-edit from preview -> Quantity field is editable; clearing it removes the â€œdescription â€” quantityâ€ dash entirely; editing description and price still work.
 - [ ] **#4 Extras tooltip**: Quote Builder -> Extras phase shows the info note pointing to the customer quote editor for fully custom extra lines.
 - [ ] **#6 Highlights pill**: Guide-me toggle -> OFF = grey track + white knob left; ON = **orange** track + white knob slides right (no blue).
 
 ---
 
 ## Pending verification
+
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
@@ -303,14 +399,22 @@ _(empty - move items here as they pass)_
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - help docs + Guide-Me coverage, 2026-06-05)
 - [ ] **New help docs render** (`26dbb9c`): on `quotecore-plus-dev.vercel.app/docs`, the sidebar shows new sections **Catalog Library**, **Attachments**, **Follow-ups**, plus new pages under **Material orders** (Order layouts / Line-by-line editor / Order from a quote) and **Help** (Meet Q / Guide Me / rewritten Chat Assistant). Each page opens, MDX/Callouts render, internal cross-links resolve (no 404).
 - [ ] **Help-drawer context mapping**: opening the in-app help drawer (`?`) on the Catalogs, Attachments, and Order-from-Quote screens opens the matching new doc, not the index fallback.
-- [ ] **Q answers from new docs** (embed-docs ran, 127 chunks): ask Q (Respond mode) "how do I upload a catalog?", "how do I attach a file to a quote?", "how do automated follow-ups work?" → answers cite/draw from the new docs.
+- [ ] **Q answers from new docs** (embed-docs ran, 127 chunks): ask Q (Respond mode) "how do I upload a catalog?", "how do I attach a file to a quote?", "how do automated follow-ups work?" â†’ answers cite/draw from the new docs.
 - [ ] **Wizard row-cap copy** (`ac7a575`): catalog upload wizard text now reads **35,000 rows** (was 20,000) in both spots.
 - [ ] **Content proofread**: Shaun final read of the published pages for any wording tweaks (drafts were `docs/DRAFT-docs-additions-2026-06-05.md`).
 - [x] **(Now wired) Guide-Me flows**: the 5 new walkthroughs ARE now wired into `guides.generic.ts` + `intents.ts` (`367dbfe`) with 20+ `data-copilot` anchors. See the dedicated nav + Guide-Me section below for the full test pass.
-- [ ] **Guide-Me UX round 2** (`89c0140`, 2026-06-07): (1) **Nav single-click** — with a nav highlight glowing, clicking Quotes/Orders/Resources navigates on the FIRST click (was double-click). (2) **Markdown renders** — guide step bubbles show emphasis as italic/bold, no raw `_underscores_` or `**asterisks**` (re: "Order items panel"). (3) **catalog-add-to-quote** — from an unrelated page: Go to Quotes -> Open a quote -> Open Customer Quote tab (or Create customer quote) -> click edit pencil -> then the existing Add-New-Line steps; flows end-to-end. (4) **Line-by-Line card highlights** — custom order -> the "Line by Line" layout card actually glows when Q says it's highlighted. (5) **Attachments split**: ask Q *"how do I send a quote with an attachment"* -> NEW flow (quote summary -> Send Quote -> Add attachment picker), NOT the library-upload flow; ask *"how do I upload a file to my attachment library"* -> the upload flow (Resources -> Attachments -> Upload file).
+- [ ] **Guide-Me UX round 2** (`89c0140`, 2026-06-07): (1) **Nav single-click** â€” with a nav highlight glowing, clicking Quotes/Orders/Resources navigates on the FIRST click (was double-click). (2) **Markdown renders** â€” guide step bubbles show emphasis as italic/bold, no raw `_underscores_` or `**asterisks**` (re: "Order items panel"). (3) **catalog-add-to-quote** â€” from an unrelated page: Go to Quotes -> Open a quote -> Open Customer Quote tab (or Create customer quote) -> click edit pencil -> then the existing Add-New-Line steps; flows end-to-end. (4) **Line-by-Line card highlights** â€” custom order -> the "Line by Line" layout card actually glows when Q says it's highlighted. (5) **Attachments split**: ask Q *"how do I send a quote with an attachment"* -> NEW flow (quote summary -> Send Quote -> Add attachment picker), NOT the library-upload flow; ask *"how do I upload a file to my attachment library"* -> the upload flow (Resources -> Attachments -> Upload file).
 - [ ] **Guide-Me nav-hop parity** (`af4ff28`, 2026-06-07): all 4 non-catalog flows now match the catalog flow's nav-hop behaviour. Launch EACH from an unrelated page (e.g. an open quote) and confirm the synthetic nav hop highlights + behaves like catalog: **catalog-add-to-quote** now shows a highlighted "Go to Quotes" hop (was missing entirely) -> click Quotes -> press Next; **attachments-send** "Go to Resources" hop AUTO-advances on landing (no manual Next); **order-line-by-line** + **order-from-quote** "Go to Orders" hop AUTO-advances on landing. After the hop, steps proceed individually as before.
 
 ## Pending verification
+
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
@@ -322,35 +426,43 @@ _(empty - move items here as they pass)_
 > Commits: Part A nav `ec6b100`, Guide-Me anchors+flows `367dbfe`, Part B Resources hub `6932d8a`. Assistant is dev-only (flag-gated); these need the AI Assistant ON (it is on the dev project).
 
 ### N. Navigation changes (Part A)
-- [ ] **Nav order + labels**: main nav now reads **Components · Quotes · Orders · Resources**. "Material Orders" is renamed **Orders**; a new **Resources** item appears. Active-pill highlight follows the page you're on (no false highlight of Resources when on Orders, etc.).
+- [ ] **Nav order + labels**: main nav now reads **Components Â· Quotes Â· Orders Â· Resources**. "Material Orders" is renamed **Orders**; a new **Resources** item appears. Active-pill highlight follows the page you're on (no false highlight of Resources when on Orders, etc.).
 - [ ] **Orders link still works**: clicking **Orders** lands on the material-orders hub (same page as before, just renamed). Pro-gating unchanged: on a non-Pro account the Orders item still shows the lock + upgrade modal.
 - [ ] **Resources link works**: clicking **Resources** opens the new `/resources` cards hub.
 
 ### O. Resources cards hub (Part B)
 - [ ] **Hub renders as cards**: `/resources` shows 8 cards styled like the dashboard (icon tile + title + description, orange hover glow), NO tab bar. Cards: Components, Drawings & Images, Catalogs, Attachments, Quote Templates, Quote Header Templates, Message Templates, Order Header Templates.
-- [ ] **Redirect cards**: **Components** card → `/components` (existing page); **Drawings & Images** card → `/flashings` (existing page). Both load their real pages unchanged.
-- [ ] **Sub-route cards — each opens its own URL with ONLY that section, no tab bar, page title = section name:**
-  - Catalogs → `/resources/catalogs`
-  - Attachments → `/resources/attachments`
-  - Quote Templates → `/resources/quote-templates`
-  - Quote Header Templates → `/resources/quote-header-templates`
-  - Message Templates → `/resources/message-templates`
-  - Order Header Templates → `/resources/order-header-templates`
-- [ ] **Section content intact**: inside each sub-route the existing UI works exactly as before (create/edit/delete templates; upload/rename/archive catalogs + attachments; Pro-gating + storage limits still enforced). Nothing about the panels changed — only the wrapper.
+- [ ] **Redirect cards**: **Components** card â†’ `/components` (existing page); **Drawings & Images** card â†’ `/flashings` (existing page). Both load their real pages unchanged.
+- [ ] **Sub-route cards â€” each opens its own URL with ONLY that section, no tab bar, page title = section name:**
+  - Catalogs â†’ `/resources/catalogs`
+  - Attachments â†’ `/resources/attachments`
+  - Quote Templates â†’ `/resources/quote-templates`
+  - Quote Header Templates â†’ `/resources/quote-header-templates`
+  - Message Templates â†’ `/resources/message-templates`
+  - Order Header Templates â†’ `/resources/order-header-templates`
+- [ ] **Section content intact**: inside each sub-route the existing UI works exactly as before (create/edit/delete templates; upload/rename/archive catalogs + attachments; Pro-gating + storage limits still enforced). Nothing about the panels changed â€” only the wrapper.
 - [ ] **Back button**: each sub-route has a Back button returning to the Resources hub. Hub itself has NO back button (it's a top-level destination).
-- [ ] **Back-compat redirects**: visiting old links `/resources?tab=catalogs`, `?tab=attachments`, `?tab=quote`, `?tab=customer`, `?tab=email`, `?tab=order` each 302-redirect to the matching new sub-route (no 404, no dead tab page). The dashboard "Resource Library" card (→ `/resources`) still works.
-- [ ] **Help drawer per section**: the `?` help icon on each sub-route opens the right doc — Catalogs→Catalog overview, Attachments→Attachment overview, Message Templates→Email templates, Order Header Templates→Supplier templates, etc.
+- [ ] **Back-compat redirects**: visiting old links `/resources?tab=catalogs`, `?tab=attachments`, `?tab=quote`, `?tab=customer`, `?tab=email`, `?tab=order` each 302-redirect to the matching new sub-route (no 404, no dead tab page). The dashboard "Resource Library" card (â†’ `/resources`) still works.
+- [ ] **Help drawer per section**: the `?` help icon on each sub-route opens the right doc â€” Catalogsâ†’Catalog overview, Attachmentsâ†’Attachment overview, Message Templatesâ†’Email templates, Order Header Templatesâ†’Supplier templates, etc.
 
-### P. Guide-Me flows (the 5 new walkthroughs) — run each in **Guide me** mode with **Highlights ON**
-- [ ] **Flow 1 — Upload & Map a Catalog**: ask Q "how do I upload a catalog?" (or start on `/catalogs`). Steps highlight in order: Upload catalog btn → drop zone → name input → column-map section → multi-maps note → Save catalog. Each highlight lands on the correct element; Next/Back/Finish work; highlight releases on click.
-- [ ] **Flow 2 — Add a Catalog Item to a Quote**: from inside a customer quote editor. Steps: (nav prompt) → **+ Add New Line** btn → **Search catalog** tab → search input → results → Save and Return. Highlights land correctly. _(Q narrates the nav into a specific quote; it can't deep-link an arbitrary quote — expected.)_
-- [ ] **Flow 3 — Attach & Send Files**: Steps: **Resources** nav → **Attachments card** (on the hub) → Upload file btn (on `/resources/attachments`) → (nav to a quote) → Send Quote → attachment picker → send mode. The re-pointed Attachments **card** highlight (not the old tab) is correct.
-- [ ] **Flow 4 — Build a Line-by-Line Order**: Steps: **Orders** nav → Custom Order card → layout picker → **Line by Line** card → Order items panel → + Add New Line → line controls → Footer → Taxes. Highlights land; layout-picker + line-by-line editor anchors resolve.
-- [ ] **Flow 5 — Create an Order from a Quote**: Steps: **Orders** nav → **Order from Quote** card → layout picker (Line by Line) → quote list → **Create Order** confirm btn → supplier header form → Save Order. The confirm button highlight matches the real **"Create Order"** label.
-- [ ] **Intent routing**: typing natural phrases routes to the right flow — e.g. "add a catalog item to a quote", "attach a file to a quote", "turn a quote into a material order", "build a line by line order".
+### P. Guide-Me flows (the 5 new walkthroughs) â€” run each in **Guide me** mode with **Highlights ON**
+- [ ] **Flow 1 â€” Upload & Map a Catalog**: ask Q "how do I upload a catalog?" (or start on `/catalogs`). Steps highlight in order: Upload catalog btn â†’ drop zone â†’ name input â†’ column-map section â†’ multi-maps note â†’ Save catalog. Each highlight lands on the correct element; Next/Back/Finish work; highlight releases on click.
+- [ ] **Flow 2 â€” Add a Catalog Item to a Quote**: from inside a customer quote editor. Steps: (nav prompt) â†’ **+ Add New Line** btn â†’ **Search catalog** tab â†’ search input â†’ results â†’ Save and Return. Highlights land correctly. _(Q narrates the nav into a specific quote; it can't deep-link an arbitrary quote â€” expected.)_
+- [ ] **Flow 3 â€” Attach & Send Files**: Steps: **Resources** nav â†’ **Attachments card** (on the hub) â†’ Upload file btn (on `/resources/attachments`) â†’ (nav to a quote) â†’ Send Quote â†’ attachment picker â†’ send mode. The re-pointed Attachments **card** highlight (not the old tab) is correct.
+- [ ] **Flow 4 â€” Build a Line-by-Line Order**: Steps: **Orders** nav â†’ Custom Order card â†’ layout picker â†’ **Line by Line** card â†’ Order items panel â†’ + Add New Line â†’ line controls â†’ Footer â†’ Taxes. Highlights land; layout-picker + line-by-line editor anchors resolve.
+- [ ] **Flow 5 â€” Create an Order from a Quote**: Steps: **Orders** nav â†’ **Order from Quote** card â†’ layout picker (Line by Line) â†’ quote list â†’ **Create Order** confirm btn â†’ supplier header form â†’ Save Order. The confirm button highlight matches the real **"Create Order"** label.
+- [ ] **Intent routing**: typing natural phrases routes to the right flow â€” e.g. "add a catalog item to a quote", "attach a file to a quote", "turn a quote into a material order", "build a line by line order".
 - [ ] **No stale anchors / console errors**: stepping through all 5 flows produces no "element not found" highlight failures and no console errors. Highlights release on any click (dismissedKeyRef) and the last step shows **Finish**.
 
 ## Pending verification
+
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
@@ -358,14 +470,22 @@ _(empty - move items here as they pass)_
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - line-by-line order UX + collapsible panels, 2026-06-05)
-- [ ] **Order-from-quote → line-by-line populates** (`67779c0`): create order from a quote choosing the Line-by-Line layout → editor pre-fills priced lines (lines + prices + descriptions, matching the customer quote) + footer; **tax starts EMPTY by default** (user opts in). Reference pre-filled `Order for <n>`. Custom blank line-by-line still starts empty (untouched).
-- [ ] **Order-from-quote repeat save** (`b3e61e2`): save an order from the SAME quote twice → 2nd gets `ON-<n>-2` suffix, NO "Failed to save" error. Also: two custom orders back-to-back get consecutive numbers (no spurious `-2`, `3157462`).
-- [ ] **Hide-all-prices persists** (`5dcd23f`): tick "Hide all prices" beside Order items → Save → saved order, public/sent page, and Print/PDF all show ZERO pricing (no per-line price, subtotal, tax, total, Price header blank). Untick = per-line prices as set. Works on both new + edited orders.
-- [ ] **Line-by-line scroll + width** (`67779c0`→`57c61ae`): footer + taxes reachable by scrolling on any screen ratio; body lines up with full-width header; preview is the wider section; header is a rounded card.
-- [ ] **Collapsible panels — all editors** (`c2b16cc`→`8bf3a7a`): line-by-line order, components/column order, customer quote, AND labor sheet — click `«` to collapse the left controls → preview smoothly fills the space; expand tab (top-left, vertical label) returns to original dims. Header-collapse + panel-collapse work together. **Quote/labor: collapse preview is dominant when expanded.** Saving with a panel collapsed changes nothing (verified in code: save keyed to isDirty / data only; panelCollapsed is isolated layout state).
+- [ ] **Order-from-quote â†’ line-by-line populates** (`67779c0`): create order from a quote choosing the Line-by-Line layout â†’ editor pre-fills priced lines (lines + prices + descriptions, matching the customer quote) + footer; **tax starts EMPTY by default** (user opts in). Reference pre-filled `Order for <n>`. Custom blank line-by-line still starts empty (untouched).
+- [ ] **Order-from-quote repeat save** (`b3e61e2`): save an order from the SAME quote twice â†’ 2nd gets `ON-<n>-2` suffix, NO "Failed to save" error. Also: two custom orders back-to-back get consecutive numbers (no spurious `-2`, `3157462`).
+- [ ] **Hide-all-prices persists** (`5dcd23f`): tick "Hide all prices" beside Order items â†’ Save â†’ saved order, public/sent page, and Print/PDF all show ZERO pricing (no per-line price, subtotal, tax, total, Price header blank). Untick = per-line prices as set. Works on both new + edited orders.
+- [ ] **Line-by-line scroll + width** (`67779c0`â†’`57c61ae`): footer + taxes reachable by scrolling on any screen ratio; body lines up with full-width header; preview is the wider section; header is a rounded card.
+- [ ] **Collapsible panels â€” all editors** (`c2b16cc`â†’`8bf3a7a`): line-by-line order, components/column order, customer quote, AND labor sheet â€” click `Â«` to collapse the left controls â†’ preview smoothly fills the space; expand tab (top-left, vertical label) returns to original dims. Header-collapse + panel-collapse work together. **Quote/labor: collapse preview is dominant when expanded.** Saving with a panel collapsed changes nothing (verified in code: save keyed to isDirty / data only; panelCollapsed is isolated layout state).
 - [ ] **Order editor tip** (`8bf3a7a`): both order editors show "Tip: to view the full preview with header, save, then view order." next to the preview label.
 
 ## Pending verification
+
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
@@ -373,52 +493,68 @@ _(empty - move items here as they pass)_
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - line-by-line orders + catalog UX, 2026-06-04)
-- [ ] **Customer Quote Editor — unified "Add New Line" modal (Phase 1)** (`20b14f9`): under Components & Items there is now ONE "+ Add New Line" button (replaced the old Add Custom Line + Search Catalog pair). Clicking it opens a modal with 3 tabs:
-  - **Custom line**: Description (text) + Quantity/detail (text) + Price (number) → adds line + shows in preview.
-  - **Add a component**: Library dropdown (All + each collection) → Component dropdown (filtered, default All) → "Add to Quote" → line lands with component NAME only, qty + price blank, editable via the right-side pencil.
-  - **Search catalog**: opens the existing catalog search (unchanged) → add row works as before.
-  Verify all 3 paths add correctly, preview updates, save persists. (Phase 2 = clone this editor into the orders line-by-line flow — not yet built.)
-- [ ] **Takeoff component-add library selector** (`117bde2`): in a quote's takeoff panel, the Available components section shows a "Library" dropdown when collections exist. "All components" lists every company component (rows show `· LibraryName` suffix); selecting a named library filters to just that library's components. Defaults to the quote's pinned library if set, else All. Empty library shows "No components in this library."
+- [ ] **Customer Quote Editor â€” unified "Add New Line" modal (Phase 1)** (`20b14f9`): under Components & Items there is now ONE "+ Add New Line" button (replaced the old Add Custom Line + Search Catalog pair). Clicking it opens a modal with 3 tabs:
+  - **Custom line**: Description (text) + Quantity/detail (text) + Price (number) â†’ adds line + shows in preview.
+  - **Add a component**: Library dropdown (All + each collection) â†’ Component dropdown (filtered, default All) â†’ "Add to Quote" â†’ line lands with component NAME only, qty + price blank, editable via the right-side pencil.
+  - **Search catalog**: opens the existing catalog search (unchanged) â†’ add row works as before.
+  Verify all 3 paths add correctly, preview updates, save persists. (Phase 2 = clone this editor into the orders line-by-line flow â€” not yet built.)
+- [ ] **Takeoff component-add library selector** (`117bde2`): in a quote's takeoff panel, the Available components section shows a "Library" dropdown when collections exist. "All components" lists every company component (rows show `Â· LibraryName` suffix); selecting a named library filters to just that library's components. Defaults to the quote's pinned library if set, else All. Empty library shows "No components in this library."
 - [ ] Catalog upload preview: no "first row contains titles" toggle; shows `COL A` + title (when present); no duplicate letters; same in Maps tab + mapping dropdowns. (commits `d11c396`,`51e16c5`)
 - [ ] Assistant chat panel ~25% shorter. (`d11c396`)
-- [ ] **Line-by-line order SAVE now works** (was failing pre-`0d8f047` due to layout_mode CHECK constraint; migration `20260604180000` applied). Create line-by-line order → add lines → Save → appears in orders list → reopen edit (lines rehydrate) → `/preview` + public token page + Print/PDF show priced table + header + correct currency.
-- [ ] **Line-by-line order editor — Phase 2 parity** (`f96825c`): pick "Line by Line" from the orders layout picker → editor shows: (1) header card with **Order Template dropdown** (selecting one pre-fills To/From/Ref/etc.) + To/From/Ref/Date/Notes; (2) **"+ Add New Line" modal** with 3 tabs — Custom line (desc+qty+price+show-price), Add a component (Library dropdown → component, lands name-only), Search catalog (live search → adds line); (3) left list per-line Show/Price/In-total toggles + reorder ▲▼ + Remove; (4) right preview **pencil edit** per line (text+price+show-price); (5) **Footer** free-text; (6) **optional Taxes** (default none — add custom tax OR tick a company default; subtotal/tax rows/total appear). Save → orders list → reopen edit (lines+footer+taxes rehydrate) → `/preview` + public token page + Print/PDF all show priced table + footer + tax lines + correct currency. Verify legacy line-by-line orders (saved pre-`f96825c` as a bare array) still render (back-compat envelope parse).
+- [ ] **Line-by-line order SAVE now works** (was failing pre-`0d8f047` due to layout_mode CHECK constraint; migration `20260604180000` applied). Create line-by-line order â†’ add lines â†’ Save â†’ appears in orders list â†’ reopen edit (lines rehydrate) â†’ `/preview` + public token page + Print/PDF show priced table + header + correct currency.
+- [ ] **Line-by-line order editor â€” Phase 2 parity** (`f96825c`): pick "Line by Line" from the orders layout picker â†’ editor shows: (1) header card with **Order Template dropdown** (selecting one pre-fills To/From/Ref/etc.) + To/From/Ref/Date/Notes; (2) **"+ Add New Line" modal** with 3 tabs â€” Custom line (desc+qty+price+show-price), Add a component (Library dropdown â†’ component, lands name-only), Search catalog (live search â†’ adds line); (3) left list per-line Show/Price/In-total toggles + reorder â–²â–¼ + Remove; (4) right preview **pencil edit** per line (text+price+show-price); (5) **Footer** free-text; (6) **optional Taxes** (default none â€” add custom tax OR tick a company default; subtotal/tax rows/total appear). Save â†’ orders list â†’ reopen edit (lines+footer+taxes rehydrate) â†’ `/preview` + public token page + Print/PDF all show priced table + footer + tax lines + correct currency. Verify legacy line-by-line orders (saved pre-`f96825c` as a bare array) still render (back-compat envelope parse).
 
 ## Pending verification
+
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
 - [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
-- [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev — Invoice System MVP, 2026-06-07, commit `4c00a21`)
-- [ ] **Nav: Invoices tab** — visible between Quotes and Orders in the workspace nav. Clicking navigates to `/invoices`.
-- [ ] **Invoice Library empty state** — fresh account shows empty state with "No invoices yet" + "New Invoice" CTA.
-- [ ] **Create blank invoice** — click New Invoice → Blank Invoice → enter customer name (+ optional email) → Create → lands on invoice editor with correct INV-YYYY-NNNNNN number and QCP-INV-YYYY-NNNNNN payment reference.
-- [ ] **Create from quote** — click New Invoice → From a Quote → search + select a quote → Create → invoice editor pre-populated with customer name, branding (cq_* fields), and line items imported from customer_quote_lines (visible lines only).
-- [ ] **From Job disabled** — "From a Job" option is disabled/greyed with "Coming soon" tooltip.
-- [ ] **Invoice editor: add custom line** — Add Line Item → Custom tab → fill title/qty/unit/unit price → Add → line appears in left panel + live preview updates. Line total = qty × unit price.
-- [ ] **Invoice editor: catalog line** — Add Line Item → Catalog tab → pick catalog → pick row → set qty/price → Add → line in preview.
-- [ ] **Invoice editor: inline edit** — click pencil on a line → inline form → edit title/description/qty/unit price → line total recalculates → Done.
-- [ ] **Invoice editor: reorder lines** — ▲▼ arrows move lines; preview updates order.
-- [ ] **Invoice editor: hide price** — uncheck "Show price" on a line → preview shows "—" for that line's price/total.
-- [ ] **Invoice editor: Details tab** — set invoice date, due date, notes, terms; preview reflects all changes.
-- [ ] **Invoice editor: Business Details** — click Edit → fill company name/address/email/phone/footer → Apply → preview header updates.
-- [ ] **Invoice editor: save** — click Save → "Saved" indicator → reload page → all lines + metadata persist.
-- [ ] **Invoice editor: auto-save** — make a change → wait 2s → "Saved" appears without clicking Save.
-- [ ] **Invoice totals** — subtotal in left panel and preview equals sum of visible show-price lines.
-- [ ] **Public invoice view** — open Customer View link from editor → `/invoice/<token>` renders: business header, customer block, line items table, totals, payment instructions with payment reference + copy button.
-- [ ] **Payment Sent flow** — on public view, click "Payment Sent" → optional message → Confirm → status on library changes to "Payment Reported"; alert fires in the app.
-- [ ] **Confirm Payment Received** — on editor with status payment_reported, click "Confirm Payment" → invoice status → Paid.
-- [ ] **Dispute flow** — on public view, click "Dispute Invoice" → fill name/reason/message → Submit → invoice status → Disputed; alert fires in app.
-- [ ] **Invoice Activity tab** — editor Activity tab shows: created, edited, viewed, payment_reported entries with timestamps.
-- [ ] **Cancel draft** — three-dot menu on library row → Delete Draft → removed from list.
-- [ ] **Cancel sent invoice** — three-dot menu → Cancel Invoice → status → Cancelled; public view shows "Invoice Not Found".
-- [ ] **Status filter tabs** — filter by Paid / Disputed / etc. shows correct subset.
-- [ ] **Search** — search by customer name or invoice number filters correctly.
-- [ ] **Invoice number uniqueness** — create 3 invoices → each gets a unique sequential number (INV-YYYY-000001, -000002, -000003).
+- [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev â€” Invoice System MVP, 2026-06-07, commit `4c00a21`)
+- [ ] **Nav: Invoices tab** â€” visible between Quotes and Orders in the workspace nav. Clicking navigates to `/invoices`.
+- [ ] **Invoice Library empty state** â€” fresh account shows empty state with "No invoices yet" + "New Invoice" CTA.
+- [ ] **Create blank invoice** â€” click New Invoice â†’ Blank Invoice â†’ enter customer name (+ optional email) â†’ Create â†’ lands on invoice editor with correct INV-YYYY-NNNNNN number and QCP-INV-YYYY-NNNNNN payment reference.
+- [ ] **Create from quote** â€” click New Invoice â†’ From a Quote â†’ search + select a quote â†’ Create â†’ invoice editor pre-populated with customer name, branding (cq_* fields), and line items imported from customer_quote_lines (visible lines only).
+- [ ] **From Job disabled** â€” "From a Job" option is disabled/greyed with "Coming soon" tooltip.
+- [ ] **Invoice editor: add custom line** â€” Add Line Item â†’ Custom tab â†’ fill title/qty/unit/unit price â†’ Add â†’ line appears in left panel + live preview updates. Line total = qty Ã— unit price.
+- [ ] **Invoice editor: catalog line** â€” Add Line Item â†’ Catalog tab â†’ pick catalog â†’ pick row â†’ set qty/price â†’ Add â†’ line in preview.
+- [ ] **Invoice editor: inline edit** â€” click pencil on a line â†’ inline form â†’ edit title/description/qty/unit price â†’ line total recalculates â†’ Done.
+- [ ] **Invoice editor: reorder lines** â€” â–²â–¼ arrows move lines; preview updates order.
+- [ ] **Invoice editor: hide price** â€” uncheck "Show price" on a line â†’ preview shows "â€”" for that line's price/total.
+- [ ] **Invoice editor: Details tab** â€” set invoice date, due date, notes, terms; preview reflects all changes.
+- [ ] **Invoice editor: Business Details** â€” click Edit â†’ fill company name/address/email/phone/footer â†’ Apply â†’ preview header updates.
+- [ ] **Invoice editor: save** â€” click Save â†’ "Saved" indicator â†’ reload page â†’ all lines + metadata persist.
+- [ ] **Invoice editor: auto-save** â€” make a change â†’ wait 2s â†’ "Saved" appears without clicking Save.
+- [ ] **Invoice totals** â€” subtotal in left panel and preview equals sum of visible show-price lines.
+- [ ] **Public invoice view** â€” open Customer View link from editor â†’ `/invoice/<token>` renders: business header, customer block, line items table, totals, payment instructions with payment reference + copy button.
+- [ ] **Payment Sent flow** â€” on public view, click "Payment Sent" â†’ optional message â†’ Confirm â†’ status on library changes to "Payment Reported"; alert fires in the app.
+- [ ] **Confirm Payment Received** â€” on editor with status payment_reported, click "Confirm Payment" â†’ invoice status â†’ Paid.
+- [ ] **Dispute flow** â€” on public view, click "Dispute Invoice" â†’ fill name/reason/message â†’ Submit â†’ invoice status â†’ Disputed; alert fires in app.
+- [ ] **Invoice Activity tab** â€” editor Activity tab shows: created, edited, viewed, payment_reported entries with timestamps.
+- [ ] **Cancel draft** â€” three-dot menu on library row â†’ Delete Draft â†’ removed from list.
+- [ ] **Cancel sent invoice** â€” three-dot menu â†’ Cancel Invoice â†’ status â†’ Cancelled; public view shows "Invoice Not Found".
+- [ ] **Status filter tabs** â€” filter by Paid / Disputed / etc. shows correct subset.
+- [ ] **Search** â€” search by customer name or invoice number filters correctly.
+- [ ] **Invoice number uniqueness** â€” create 3 invoices â†’ each gets a unique sequential number (INV-YYYY-000001, -000002, -000003).
 
 ## Pending verification
+
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
@@ -426,15 +562,23 @@ _(empty - move items here as they pass)_
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - Send Invoice phase, 2026-06-07)
-- [ ] **Send Invoice — Send from QuoteCore+** — open invoice editor → click Send Invoice → "Send from QuoteCore+" → enter recipient email → fill subject/body → Send Invoice → invoice status updates to Sent; Activity tab logs "sent" event; in-app alert fires.
-- [ ] **Send Invoice — Copy URL** — Send Invoice → Copy URL Link → paste into browser → `/invoice/<token>` opens customer public view.
-- [ ] **Send Invoice — Generate Email** — Send Invoice → Generate Email → subject/body pre-filled (with template if one exists) → Copy Email copies both.
-- [ ] **Send Invoice — entitlement gate** — Starter plan (no email send): Send from QuoteCore+ shows plan-gate error; Copy URL still works.
-- [ ] **Send Invoice — invoice_send template** — create an email template with kind=invoice_send in Resources → Templates; it appears in the send modal dropdown and placeholders {{invoice_number}}, {{invoice_total}}, {{invoice_link}}, {{due_date}} all substitute correctly.
-- [ ] **Send Invoice — suppression** — send to a suppressed email → shows "blocked" message, invoice status stays draft.
-- [ ] **Send Invoice — hidden on paid/cancelled** — Send Invoice button absent on paid + cancelled invoices.
+- [ ] **Send Invoice â€” Send from QuoteCore+** â€” open invoice editor â†’ click Send Invoice â†’ "Send from QuoteCore+" â†’ enter recipient email â†’ fill subject/body â†’ Send Invoice â†’ invoice status updates to Sent; Activity tab logs "sent" event; in-app alert fires.
+- [ ] **Send Invoice â€” Copy URL** â€” Send Invoice â†’ Copy URL Link â†’ paste into browser â†’ `/invoice/<token>` opens customer public view.
+- [ ] **Send Invoice â€” Generate Email** â€” Send Invoice â†’ Generate Email â†’ subject/body pre-filled (with template if one exists) â†’ Copy Email copies both.
+- [ ] **Send Invoice â€” entitlement gate** â€” Starter plan (no email send): Send from QuoteCore+ shows plan-gate error; Copy URL still works.
+- [ ] **Send Invoice â€” invoice_send template** â€” create an email template with kind=invoice_send in Resources â†’ Templates; it appears in the send modal dropdown and placeholders {{invoice_number}}, {{invoice_total}}, {{invoice_link}}, {{due_date}} all substitute correctly.
+- [ ] **Send Invoice â€” suppression** â€” send to a suppressed email â†’ shows "blocked" message, invoice status stays draft.
+- [ ] **Send Invoice â€” hidden on paid/cancelled** â€” Send Invoice button absent on paid + cancelled invoices.
 
 ## Pending verification
+
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
@@ -446,15 +590,31 @@ _(empty - move items here as they pass)_
 
 ## Pending verification
 
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
+
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
 - [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - PDF pixel-match downloads, 2026-06-09)
-- [ ] **PDF == on-screen preview (single + bulk)** - eyeball that downloads are a pixel match of the preview: (a) Quotes bulk ZIP -> each `Quote-####-Name/01-Customer-Quote.pdf` matches the customer-edit QuotePreview (logo, lines, totals, footer) and `02-Labour-Sheet.pdf` appears only when a visible labour sheet exists; (b) Orders bulk ZIP + owner Order Preview "Download PDF" both match the OrderBody (TO/FROM, flashing images, line-by-line/components layout, totals); (c) Invoices bulk ZIP + owner invoice editor "Download PDF" both match the InvoicePreview (dark header, meta bar, line table, payment box) with NO recipient action forms/buttons; (d) 25-cap + progress modal + best-effort (one bad item doesn't abort the ZIP) still work on all three lists; (e) public window.print() buttons on /accept/[token] + /orders/[token] are unchanged. Watch specifically for: company-logo CORS taint (Supabase public URLs should be fine; a tainted canvas would blank the logo or throw — caught per-item) and long multi-page orders/invoices slicing across A4 pages correctly.
+- [ ] **PDF == on-screen preview (single + bulk)** - eyeball that downloads are a pixel match of the preview: (a) Quotes bulk ZIP -> each `Quote-####-Name/01-Customer-Quote.pdf` matches the customer-edit QuotePreview (logo, lines, totals, footer) and `02-Labour-Sheet.pdf` appears only when a visible labour sheet exists; (b) Orders bulk ZIP + owner Order Preview "Download PDF" both match the OrderBody (TO/FROM, flashing images, line-by-line/components layout, totals); (c) Invoices bulk ZIP + owner invoice editor "Download PDF" both match the InvoicePreview (dark header, meta bar, line table, payment box) with NO recipient action forms/buttons; (d) 25-cap + progress modal + best-effort (one bad item doesn't abort the ZIP) still work on all three lists; (e) public window.print() buttons on /accept/[token] + /orders/[token] are unchanged. Watch specifically for: company-logo CORS taint (Supabase public URLs should be fine; a tainted canvas would blank the logo or throw â€” caught per-item) and long multi-page orders/invoices slicing across A4 pages correctly.
 
 ## Pending verification
+
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
@@ -465,6 +625,14 @@ _(empty - move items here as they pass)_
 - [ ] **Order follow-ups (send-time gate + engine)** - Order Preview -> Send Order -> Send from QuoteCore+ -> Continue shows the pre-send gate: "Send now" sends with no follow-ups; "Add Follow-ups" lets you add up to 3 rules (Triggered = Order accepted / Order declined only, optional add-delay days/hours/minutes; Time-based chase = order_sent, cancels on response) then sends. Verify on the public `/orders/[token]`: supplier Accept activates the order_accepted rule (fires per delay) and cancels the parked declined rule; Decline does the reverse; Request Info cancels BOTH parked order rules and fires nothing. A due-now triggered rule dispatches a real supplier email (order merge context + "View order" CTA at `/orders/<token>`). Confirm quote follow-ups still behave unchanged.
 
 ## Pending verification
+
+### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
+- [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
+- [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.
+- [ ] Per unit component still shows single qty + unchanged price (no regression).
+- [ ] Customer quote line reads 'Tiles - 5 (4.84 m2)'; price matches rounded 5.
+- [ ] Summary page + expandable header show 5 (4.84) for the fixed-qty line.
+- [ ] Remove entry from a fixed-qty component: qty + price recalc in place (no stale per-unit flash).
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
@@ -485,4 +653,4 @@ _(empty - move items here as they pass)_
 ---
 
 ## Detailed scripts (reference, run for a full tier pass)
-- `smoke-test-starter.md` · `smoke-test-professional.md` · `storage-limit-smoke-test.md`
+- `smoke-test-starter.md` Â· `smoke-test-professional.md` Â· `storage-limit-smoke-test.md`

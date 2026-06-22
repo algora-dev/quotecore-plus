@@ -68,10 +68,14 @@ export default async function CreateOrderPage(props: Props) {
   // Company currency for line-by-line price rendering.
   const { data: companyRow } = await supabaseForCatalogs
     .from('companies')
-    .select('default_currency')
+    .select('default_currency, default_measurement_system')
     .eq('id', profile.company_id)
     .maybeSingle();
   const currency = companyRow?.default_currency ?? 'GBP';
+  // Company default measurement system drives the order-item modal unit options
+  // (metric vs imperial). Quote-derived orders still use the quote's system when
+  // present; this is the fallback / source for manual (non-quote) orders.
+  const companyMeasurementSystem = companyRow?.default_measurement_system ?? 'metric';
 
   // Filter quoteData components server-side so the client never needs to touch it.
   // If selectedComponentIds is null (no line-selector step), pass quoteData unchanged.
@@ -97,6 +101,7 @@ export default async function CreateOrderPage(props: Props) {
         initialLineByLine={initialLineByLine}
         currency={currency}
         catalogs={catalogList.map(c => ({ id: c.id, name: c.name }))}
+        companyMeasurementSystem={companyMeasurementSystem}
       />
     </div>
   );

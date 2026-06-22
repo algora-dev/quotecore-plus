@@ -2655,7 +2655,9 @@ export type Database = {
           material_rate: number
           measurement_type: Database["public"]["Enums"]["measurement_type"]
           name: string
+          pack_size_snapshot: number | null
           pitch_type: Database["public"]["Enums"]["pitch_type"]
+          priced_quantity: number | null
           pricing_unit: string | null
           quote_id: string
           quote_roof_area_id: string | null
@@ -2690,7 +2692,9 @@ export type Database = {
           material_rate?: number
           measurement_type: Database["public"]["Enums"]["measurement_type"]
           name: string
+          pack_size_snapshot?: number | null
           pitch_type?: Database["public"]["Enums"]["pitch_type"]
+          priced_quantity?: number | null
           pricing_unit?: string | null
           quote_id: string
           quote_roof_area_id?: string | null
@@ -2725,7 +2729,9 @@ export type Database = {
           material_rate?: number
           measurement_type?: Database["public"]["Enums"]["measurement_type"]
           name?: string
+          pack_size_snapshot?: number | null
           pitch_type?: Database["public"]["Enums"]["pitch_type"]
+          priced_quantity?: number | null
           pricing_unit?: string | null
           quote_id?: string
           quote_roof_area_id?: string | null
@@ -4556,6 +4562,7 @@ export type Database = {
         | "electrical"
         | "plumbing"
         | "landscaping"
+        | "solar"
         | "flooring"
         | "tiling"
         | "foundations"
@@ -4749,6 +4756,7 @@ export const Constants = {
         "electrical",
         "plumbing",
         "landscaping",
+        "solar",
         "flooring",
         "tiling",
         "foundations",
