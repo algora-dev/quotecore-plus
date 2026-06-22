@@ -1263,7 +1263,11 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
   const labourCost = totalQty * (comp?.labour_rate ?? 0);
   const packCount = computePackCount({ strategy, totalQuantity: totalQty, packSize, packCoverageM2 });
   const pricedQuantity = strategy === 'per_unit' || packCount <= 0 ? null : packCount;
-  await supabase.from('quote_components').update({ final_quantity: totalQty, priced_quantity: pricedQuantity, material_cost: materialCost, labour_cost: labourCost }).eq('id', quoteComponentId);
+  // Snapshot the pack size so display can compute fractional pack counts
+  // (e.g. 3.42 rolls) as final_quantity / pack_size_snapshot without needing
+  // to join back to component_library. NULL for per_unit components.
+  const packSizeForDisplay = strategy !== 'per_unit' && packSize && packSize > 0 ? packSize : null;
+  await supabase.from('quote_components').update({ final_quantity: totalQty, priced_quantity: pricedQuantity, pack_size_snapshot: packSizeForDisplay, material_cost: materialCost, labour_cost: labourCost }).eq('id', quoteComponentId);
   return { final_quantity: totalQty, priced_quantity: pricedQuantity, material_cost: materialCost, labour_cost: labourCost };
 }
 

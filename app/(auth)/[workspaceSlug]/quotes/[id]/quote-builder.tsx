@@ -462,13 +462,17 @@ export function QuoteBuilder({
   // Fixed Quantity strategies: show rounded purchasable units (priced_quantity)
   // with actual in italic brackets e.g. "5 (4.84)". per_unit = NULL priced_quantity
   // so falls back to formatQuantity, rendering exactly as before.
-  function formatPricedQuantity(c: { final_quantity: number | null; priced_quantity?: number | null; measurement_type: string }): ReactNode {
+  function formatPricedQuantity(c: { final_quantity: number | null; priced_quantity?: number | null; pack_size_snapshot?: number | null; measurement_type: string }): ReactNode {
     const actual = c.final_quantity ?? 0;
     const priced = c.priced_quantity ?? null;
-    if (priced != null && Math.abs(priced - actual) > 0.001) {
+    const packSnap = c.pack_size_snapshot ?? null;
+    if (priced != null) {
+      // Fractional pack count = actual area / pack size (e.g. 3.42 rolls).
+      // Falls back to raw actual if no snapshot (e.g. pre-migration rows).
+      const fractional = packSnap && packSnap > 0 ? actual / packSnap : actual;
       return (
         <>
-          {priced.toFixed(0)} <span className="italic text-slate-400">({actual.toFixed(2)})</span>
+          {priced.toFixed(0)} <span className="italic text-slate-400">({fractional.toFixed(2)})</span>
         </>
       );
     }
@@ -1486,11 +1490,11 @@ function ExpandableComponent({
           {compEntries.length} {compEntries.length === 1 ? 'entry' : 'entries'}
         </span>
         <span className="text-xs text-slate-500 w-20 text-right">
-          {comp.priced_quantity != null && Math.abs(comp.priced_quantity - (comp.final_quantity ?? 0)) > 0.001 ? (
-            <>{comp.priced_quantity.toFixed(0)} <span className="italic text-slate-400">({(comp.final_quantity ?? 0).toFixed(2)})</span></>
-          ) : (
-            displayValue(comp.final_quantity ?? 0)
-          )}
+          {comp.priced_quantity != null ? (() => {
+            const packSnap = comp.pack_size_snapshot ?? null;
+            const fractional = packSnap && packSnap > 0 ? (comp.final_quantity ?? 0) / packSnap : (comp.final_quantity ?? 0);
+            return <>{comp.priced_quantity.toFixed(0)} <span className="italic text-slate-400">({fractional.toFixed(2)})</span></>;
+          })() : displayValue(comp.final_quantity ?? 0)}
         </span>
         <span className="text-xs font-medium w-20 text-right">{formatCurrency(totalCost, currency)}</span>
         <button

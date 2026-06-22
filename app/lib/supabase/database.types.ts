@@ -2655,6 +2655,7 @@ export type Database = {
           material_rate: number
           measurement_type: Database["public"]["Enums"]["measurement_type"]
           name: string
+          pack_size_snapshot: number | null
           pitch_type: Database["public"]["Enums"]["pitch_type"]
           priced_quantity: number | null
           pricing_unit: string | null
@@ -2691,6 +2692,7 @@ export type Database = {
           material_rate?: number
           measurement_type: Database["public"]["Enums"]["measurement_type"]
           name: string
+          pack_size_snapshot?: number | null
           pitch_type?: Database["public"]["Enums"]["pitch_type"]
           priced_quantity?: number | null
           pricing_unit?: string | null
@@ -2727,6 +2729,7 @@ export type Database = {
           material_rate?: number
           measurement_type?: Database["public"]["Enums"]["measurement_type"]
           name?: string
+          pack_size_snapshot?: number | null
           pitch_type?: Database["public"]["Enums"]["pitch_type"]
           priced_quantity?: number | null
           pricing_unit?: string | null

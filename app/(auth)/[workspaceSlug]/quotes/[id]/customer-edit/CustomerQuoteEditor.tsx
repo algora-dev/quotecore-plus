@@ -347,14 +347,16 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       unit = 'units';
     }
 
-    // Fixed Quantity strategies: the customer is billed for whole purchasable
-    // units (priced_quantity, e.g. 5 bundles). Show that rounded count with the
-    // actual measured amount in brackets so the figure matches the price and
-    // the customer can see the rounding. per_unit components (priced_quantity
-    // NULL) render exactly as before.
+    // Fixed Quantity strategies: format as "Name - 4 (3.42) - 171.07 m2"
+    // where 4 = rounded-up purchasable units (priced_quantity),
+    // (3.42) = actual fractional units = displayQty / pack_size_snapshot,
+    // 171.07 m2 = the real measured area/length/volume.
+    // per_unit components (priced_quantity NULL) render exactly as before.
     const priced = (component as { priced_quantity?: number | null }).priced_quantity ?? null;
-    if (priced != null && Math.abs(priced - displayQty) > 0.001) {
-      return `${component.name} - ${priced.toFixed(0)} (${displayQty.toFixed(2)} ${unit})`;
+    const packSnap = (component as { pack_size_snapshot?: number | null }).pack_size_snapshot ?? null;
+    if (priced != null && packSnap != null && packSnap > 0) {
+      const fractional = displayQty / packSnap;
+      return `${component.name} - ${priced.toFixed(0)} (${fractional.toFixed(2)}) - ${displayQty.toFixed(2)} ${unit}`;
     }
 
     return `${component.name} - ${displayQty.toFixed(1)} ${unit}`;
