@@ -1596,24 +1596,11 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">
-              {existingLine ? 'Edit Order Item' : 'Add Order Item'}
-            </h2>
-            <p className="text-sm text-slate-600 mt-0.5">Enter component details and measurements</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowAngleCalc(true)}
-            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400 transition-colors"
-            title="Open angle calculator"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19l16-16M5 6l1 1m9 9l1 1" />
-            </svg>
-            Angle Calc
-          </button>
+        <div className="px-6 py-4 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900">
+            {existingLine ? 'Edit Order Item' : 'Add Order Item'}
+          </h2>
+          <p className="text-sm text-slate-600 mt-0.5">Enter component details and measurements</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
@@ -2020,6 +2007,13 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
         </form>
 
         <div className="px-6 py-4 border-t border-slate-200 flex gap-3 justify-end">
+          <button
+            type="button"
+            onClick={() => setShowAngleCalc(true)}
+            className="px-6 py-2.5 text-sm font-medium rounded-full border-2 border-[#FF6B35] text-[#FF6B35] hover:bg-orange-50 transition-colors"
+          >
+            Angle Calc
+          </button>
           <button
             type="button"
             onClick={onCancel}
