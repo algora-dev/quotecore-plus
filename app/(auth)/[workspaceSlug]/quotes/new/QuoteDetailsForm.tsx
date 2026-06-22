@@ -308,6 +308,7 @@ export function QuoteDetailsForm({
                 <option value="painting">Painting</option>
                 <option value="fencing">Fencing</option>
                 <option value="construction">Construction</option>
+                <option value="solar">Solar</option>
               </select>
             </div>
             <div>

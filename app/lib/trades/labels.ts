@@ -22,7 +22,8 @@ export type Trade =
   | 'painting'
   | 'fencing'
   | 'concrete'
-  | 'construction';
+  | 'construction'
+  | 'solar';
 
 export interface TradeLabels {
   // ── Identity ──────────────────────────────────────────────────────────────
@@ -739,6 +740,56 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     },
   },
 
+  solar: {
+    tradeLabel: 'Solar',
+    featureLabel: 'Drawings & Images',
+    featureLabelSingular: 'Drawing/Image',
+
+    areaPluralLabel: 'Areas',
+    areaSingularLabel: 'Area',
+    addAreaCta: 'Add Area',
+
+    pitchRequired: false,
+    pitchOptional: true,
+    pitchHidesValleyHip: true,
+    pitchCheckboxLabel: 'Apply pitch / tilt calculation',
+    pitchRafterLabel: 'Rise over run',
+    areaPitchLabel: 'Tilt (°)',
+
+    createAreaModalTitle: 'Create Area',
+    areaNamePlaceholder: 'e.g. Main Roof, North Array, Carport',
+
+    areaIsOptional: true,
+    firstAreaInstructionsTitle: 'Define Your Installation Areas',
+    firstAreaInstructionsBody:
+      'Draw each area where panels or equipment will be installed. ' +
+      'Or skip this and measure runs and items directly.',
+    firstAreaConfirmCta: 'Yes, add an area',
+    toolGuidanceNote:
+      'Use the Area tool for roof or ground-mount panel arrays. ' +
+      'Use the Line / Multi-Line tools for cable and conduit runs. ' +
+      'Use Point for inverters, isolators, meters, and items priced per unit.',
+
+    needAreaPrompt: 'Do you want to define an installation area first?',
+    optionalAreaConfirmCta: 'Yes, add an area',
+    skipAreaCta: 'No, skip',
+
+    builderStepLabel: 'Areas',
+    emptyAreaGuardMessage:
+      'A quote needs at least one component before it can be saved. ' +
+      "We'll take you back so you can add one.",
+
+    customerQuoteSectionLabel: 'Solar Installation',
+
+    measurementTypeLabels: {
+      multi_lineal:  'Multiple Cable / Conduit Runs',
+      curved_line:   'Curved Cable Run',
+      hours_days:    'Hours / Days',
+      count:         'Count (panels / inverters / fittings)',
+      volume:        'Volume',
+    },
+  },
+
   construction: {
     tradeLabel: 'Construction',
     featureLabel: 'Drawings & Images',
@@ -799,5 +850,6 @@ export function getTradeLabels(trade?: string | null): TradeLabels {
   if (trade === 'fencing')      return TRADE_LABELS.fencing;
   if (trade === 'concrete')     return TRADE_LABELS.concrete;
   if (trade === 'construction') return TRADE_LABELS.construction;
+  if (trade === 'solar')        return TRADE_LABELS.solar;
   return TRADE_LABELS.roofing;
 }
