@@ -16,7 +16,6 @@ interface AngleCalculatorWidgetProps {
 }
 
 type FlashingType = 'ridge' | 'hipValley';
-type PitchConfig = 'single' | 'multi';
 type AngleSelection = 'interior' | 'exterior';
 
 const WIDGET_WIDTH = 384; // max-w-md = 28rem = 448px, but we use w-96 = 24rem = 384px for compactness
@@ -28,10 +27,10 @@ export function AngleCalculatorWidget({
   currentAngle: _currentAngle,
 }: AngleCalculatorWidgetProps) {
   const [flashingType, setFlashingType] = useState<FlashingType>('ridge');
-  const [pitchConfig, setPitchConfig] = useState<PitchConfig>('single');
   const [pitch1, setPitch1] = useState<string>('25');
-  const [pitch2, setPitch2] = useState<string>('45');
-  const [planAngle, setPlanAngle] = useState<string>('90');
+  const [pitch2, setPitch2] = useState<string>('25');
+  const [sameAsPitch1, setSameAsPitch1] = useState<boolean>(true);
+  const [cornerAngle, setCornerAngle] = useState<string>('90');
   const [result, setResult] = useState<AngleResult | null>(null);
   const [selectedAngle, setSelectedAngle] = useState<AngleSelection>('interior');
 
@@ -57,6 +56,13 @@ export function AngleCalculatorWidget({
       setInitialized(false);
     }
   }, [isOpen]);
+
+  // Keep pitch2 in sync with pitch1 when sameAsPitch1 is checked
+  useEffect(() => {
+    if (sameAsPitch1) {
+      setPitch2(pitch1);
+    }
+  }, [pitch1, sameAsPitch1]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     // Only start drag from the header bar
@@ -99,7 +105,6 @@ export function AngleCalculatorWidget({
   const handleCalculate = () => {
     const p1 = parseFloat(pitch1);
     const p2 = parseFloat(pitch2);
-    const plan = parseFloat(planAngle);
 
     if (isNaN(p1) || p1 < 0 || p1 > 90) {
       alert('Please enter a valid pitch between 0 and 90 degrees');
@@ -115,18 +120,24 @@ export function AngleCalculatorWidget({
       }
       calculatedResult = calculateRidgeAngle(p1, p2);
     } else {
-      if (pitchConfig === 'single') {
+      // Hip/Valley — auto-route based on inputs
+      const effectiveP2 = sameAsPitch1 ? p1 : p2;
+      const corner = parseFloat(cornerAngle);
+
+      if (sameAsPitch1 && corner === 90) {
+        // Standard case: both pitches equal, square corner
         calculatedResult = calculateHipValleySinglePitch(p1);
       } else {
-        if (isNaN(p2) || p2 < 0 || p2 > 90) {
+        // Advanced case: different pitches or non-square corner
+        if (isNaN(effectiveP2) || effectiveP2 < 0 || effectiveP2 > 90) {
           alert('Please enter a valid second pitch between 0 and 90 degrees');
           return;
         }
-        if (isNaN(plan) || plan <= 0 || plan >= 180) {
-          alert('Please enter a valid plan angle between 0 and 180 degrees');
+        if (isNaN(corner) || corner <= 0 || corner >= 180) {
+          alert('Please enter a valid corner angle between 0 and 180 degrees');
           return;
         }
-        calculatedResult = calculateHipValleyMultiPitch(p1, p2, plan);
+        calculatedResult = calculateHipValleyMultiPitch(p1, effectiveP2, corner);
       }
     }
 
@@ -139,8 +150,10 @@ export function AngleCalculatorWidget({
     onApply(angleToApply);
   };
 
-  const showPitch2 = flashingType === 'ridge' || (flashingType === 'hipValley' && pitchConfig === 'multi');
-  const showPlanAngle = flashingType === 'hipValley' && pitchConfig === 'multi';
+  // Ridge always shows Pitch 2. Hip/Valley shows Pitch 2 only when checkbox is unchecked.
+  const showPitch2 = flashingType === 'ridge' || !sameAsPitch1;
+  // Corner Angle always visible for Hip/Valley (was previously hidden for single-pitch)
+  const showCornerAngle = flashingType === 'hipValley';
 
   return (
     <div
@@ -207,42 +220,7 @@ export function AngleCalculatorWidget({
           </div>
         </div>
 
-        {/* Pitch Configuration (Hip/Valley only) */}
-        {flashingType === 'hipValley' && (
-          <div className="mb-3">
-            <label className="block text-xs font-medium text-slate-700 mb-1.5">Pitch Configuration</label>
-            <div className="space-y-1.5">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="pitchConfig"
-                  value="single"
-                  checked={pitchConfig === 'single'}
-                  onChange={(e) => {
-                    setPitchConfig(e.target.value as PitchConfig);
-                    setResult(null);
-                  }}
-                  className="mr-2"
-                />
-                <span className="text-xs">Single Pitch (both sides same)</span>
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="pitchConfig"
-                  value="multi"
-                  checked={pitchConfig === 'multi'}
-                  onChange={(e) => {
-                    setPitchConfig(e.target.value as PitchConfig);
-                    setResult(null);
-                  }}
-                  className="mr-2"
-                />
-                <span className="text-xs">Multi Pitch (different pitches)</span>
-              </label>
-            </div>
-          </div>
-        )}
+        {/* Pitch Configuration (Hip/Valley only) — removed, replaced by same-as-pitch1 checkbox below */}
 
         <div className="h-px bg-slate-200 my-3" />
 
@@ -285,16 +263,42 @@ export function AngleCalculatorWidget({
           </div>
         )}
 
-        {showPlanAngle && (
+        {/* Same-as-pitch1 checkbox (Hip/Valley only) */}
+        {flashingType === 'hipValley' && (
+          <div className="mb-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={sameAsPitch1}
+                onChange={(e) => {
+                  setSameAsPitch1(e.target.checked);
+                  if (e.target.checked) {
+                    setPitch2(pitch1);
+                  }
+                  setResult(null);
+                }}
+                className="rounded border-slate-300"
+              />
+              <span className="text-xs text-slate-700">Same as Roof Pitch 1</span>
+            </label>
+            {!sameAsPitch1 && (
+              <p className="text-xs text-slate-400 mt-1">Uncheck only if the second roof has a different pitch.</p>
+            )}
+          </div>
+        )}
+
+        {/* Sync pitch2 to pitch1 when checkbox is checked */}
+
+        {showCornerAngle && (
           <div className="mb-3">
             <label className="block text-xs font-medium text-slate-700 mb-1">
-              Plan Angle (degrees) - Default 90° for square corners
+              Corner Angle (degrees)
             </label>
             <input
               type="number"
-              value={planAngle}
+              value={cornerAngle}
               onChange={(e) => {
-                setPlanAngle(e.target.value);
+                setCornerAngle(e.target.value);
                 setResult(null);
               }}
               min="0"
@@ -302,6 +306,7 @@ export function AngleCalculatorWidget({
               step="0.1"
               className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
             />
+            <p className="text-xs text-slate-400 mt-1">Angle between the two roof lines. Usually 90°. Change only if the building corner is not square.</p>
           </div>
         )}
 
