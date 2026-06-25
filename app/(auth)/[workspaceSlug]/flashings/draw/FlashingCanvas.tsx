@@ -68,6 +68,8 @@ interface MeasurementItem {
   interiorValue?: number;
   exteriorValue?: number;
   showInterior?: boolean;
+  // Whether the applied angle is internal (<180°), external (>180°), or straight (=180°)
+  angleType?: 'internal' | 'external' | 'straight';
   // For placement and repositioning
   placementSide?: 'interior' | 'exterior';
   // Store line endpoints for length label repositioning AND point indices
@@ -1329,6 +1331,11 @@ export function FlashingCanvas({
     const currentPoints = linePointsRef.current;
     const pointIdx = measurement.pointIndex;
 
+    // Infer angle type from the applied value:
+    // >180° = external (opens outward), <180° = internal (folds inward), =180° = straight
+    const inferredAngleType: 'internal' | 'external' | 'straight' =
+      Math.abs(newAngle - 180) < 0.5 ? 'straight' : (newAngle > 180 ? 'external' : 'internal');
+
     // Update geometry (same logic as handleEditMeasurementValue for angles)
     if (pointIdx !== undefined && pointIdx >= 1 && pointIdx < currentPoints.length - 1) {
       const p1 = currentPoints[pointIdx - 1];
@@ -1337,10 +1344,58 @@ export function FlashingCanvas({
       
       // Calculate current angle using ACTUAL current points
       const currentInterior = calculateAngle(p1, p2, p3, true);
-      const targetInterior = measurement.showInterior ? newAngle : 360 - newAngle;
-      const angleDiff = targetInterior - currentInterior;
       
-      // Rotate p3 and all subsequent points around p2
+      // For external angles (>180°), the finished angle IS the target — we want
+      // the points to open outward. For internal angles (<180°), the finished angle
+      // is the tight inside. The key insight: the rotation direction must differ
+      // for external vs internal even when the bend amount is the same.
+      //
+      // We compute the target as the finished angle directly. The sign of the
+      // angleDiff will naturally differ for external (positive, opens outward)
+      // vs internal (negative, folds inward) — IF we use the raw finished angle
+      // as the target rather than normalising it through showInterior.
+      //
+      // However, the drawing engine works with interior angles (0-180° range
+      // from calculateAngle). For external angles >180°, we need to rotate the
+      // OPPOSITE direction from what the interior diff would suggest.
+      //
+      // Approach: compute the bend amount and apply it in the correct direction.
+      // bendAmount = |180 - newAngle|
+      // direction: external → rotate one way, internal → rotate the other way
+
+      const bendAmount = Math.abs(180 - newAngle); // e.g. 15° for both 195° and 165°
+      
+      // Current bend from flat = |180 - currentInterior|
+      const currentBend = Math.abs(180 - currentInterior);
+      
+      // How much we need to rotate = difference in bend, with direction
+      // For external angles: points should move outward (positive rotation)
+      // For internal angles: points should move inward (negative rotation)
+      // 
+      // The sign of the rotation depends on which side the points currently are.
+      // We use the signed cross product to determine current bend direction,
+      // then flip if needed to match the target angleType.
+      
+      // Determine current bend direction: is the current angle external or internal?
+      const currentIsExternal = currentInterior > 180;
+      
+      // Target rotation: we want to go from current bend to target bend in the
+      // correct direction. The simplest reliable approach: compute the raw
+      // angleDiff using the finished angle directly (not through showInterior),
+      // so external angles naturally produce opposite rotation from internal.
+      let targetAngle: number;
+      if (inferredAngleType === 'external') {
+        // External: target is >180°. Use the finished angle directly as the target.
+        targetAngle = newAngle;
+      } else if (inferredAngleType === 'internal') {
+        // Internal: target is <180°. Use the finished angle directly.
+        targetAngle = newAngle;
+      } else {
+        // Straight: target is 180°
+        targetAngle = 180;
+      }
+      
+      const angleDiff = targetAngle - currentInterior;
       const angleRad = angleDiff * Math.PI / 180;
       
       for (let i = pointIdx + 1; i < currentPoints.length; i++) {
@@ -1379,13 +1434,14 @@ export function FlashingCanvas({
       (textObj as any).set('text', `${newAngle}°`);
     }
 
-    // Update measurement state
-    const newInterior = measurement.showInterior ? newAngle : 360 - newAngle;
+    // Update measurement state — store angleType so the drawing remembers
+    // which direction this angle bends.
+    const newInterior = inferredAngleType === 'external' ? newAngle : (inferredAngleType === 'internal' ? newAngle : 180);
     const newExterior = 360 - newInterior;
     
     setMeasurements(measurements.map(m =>
       m.id === calculatingAngleId 
-        ? { ...m, value: newAngle, interiorValue: newInterior, exteriorValue: newExterior }
+        ? { ...m, value: newAngle, interiorValue: newInterior, exteriorValue: newExterior, angleType: inferredAngleType }
         : m
     ));
 

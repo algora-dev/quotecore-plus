@@ -42,7 +42,7 @@ const TOOLTIPS: Record<string, { title: string; description: string; image: stri
   },
   changeOfPitch: {
     title: 'Change of Pitch',
-    description: 'Use where one roof slope changes into another roof slope running in the same direction. Formula: 180° + Upper Pitch − Lower Pitch',
+    description: 'Use where one roof slope changes into another roof slope running in the same direction. Formula: 180° + Upper Pitch − Lower Pitch. If the upper pitch is steeper than the lower, the result is an external angle. If flatter, it returns an internal angle. Internal angles are measured on the tight/inside of the fold. External angles are measured on the open/outside of the fold.',
     image: '/angle-calculator/ChangeOfPitch.png',
   },
   upstandOntoRoof: {
@@ -516,6 +516,9 @@ export function AngleCalculatorWidget({
               />
               <p className="text-xs text-slate-400 mt-1">Pitch of the roof section below the change line.</p>
             </div>
+            <div className="mb-3 p-2.5 bg-slate-50 rounded-lg">
+              <p className="text-xs text-slate-500 leading-relaxed">If the upper roof pitch is steeper than the lower roof pitch, the calculator returns an external angle. If the upper roof pitch is flatter than the lower roof pitch, it returns an internal angle.</p>
+            </div>
           </>
         )}
 
@@ -599,6 +602,25 @@ export function AngleCalculatorWidget({
               {result.additionalInfo?.hipSlope !== undefined && (
                 <div className="mt-2.5 p-2.5 bg-blue-50 rounded-lg">
                   <p className="text-xs text-blue-800">Hip Slope: {result.additionalInfo.hipSlope}°</p>
+                </div>
+              )}
+
+              {/* Angle Type badge */}
+              {result.angleType && result.angleType !== 'straight' && (
+                <div className="mt-2.5 flex items-center gap-2">
+                  <span className="text-xs font-medium text-slate-700">Angle Type:</span>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                    result.angleType === 'external'
+                      ? 'bg-orange-100 text-orange-700'
+                      : 'bg-blue-100 text-blue-700'
+                  }`}>
+                    {result.angleType === 'external' ? 'External' : 'Internal'}
+                  </span>
+                </div>
+              )}
+              {result.angleType === 'straight' && (
+                <div className="mt-2.5">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Straight</span>
                 </div>
               )}
             </div>
