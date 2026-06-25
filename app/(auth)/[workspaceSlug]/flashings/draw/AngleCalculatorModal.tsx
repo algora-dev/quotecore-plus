@@ -439,9 +439,6 @@ export function AngleCalculatorModal({
               />
               <p className="text-xs text-slate-400 mt-1">Pitch of the roof section below the change line.</p>
             </div>
-            <div className="mb-4 p-3 bg-slate-50 rounded-lg">
-              <p className="text-xs text-slate-500 leading-relaxed">If the upper roof pitch is steeper than the lower roof pitch, the calculator returns an internal angle (folds inward). If the upper roof pitch is flatter than the lower roof pitch, it returns an external angle (opens outward).</p>
-            </div>
           </>
         )}
 
