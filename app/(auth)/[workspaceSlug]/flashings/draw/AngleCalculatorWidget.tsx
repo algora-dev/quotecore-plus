@@ -3,7 +3,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import {
   calculateRidgeAngle,
-  calculateHipValleySinglePitch,
   calculateHipValleyMultiPitch,
   type AngleResult,
 } from '@/app/lib/roofAngleCalculator';
@@ -120,25 +119,20 @@ export function AngleCalculatorWidget({
       }
       calculatedResult = calculateRidgeAngle(p1, p2);
     } else {
-      // Hip/Valley — auto-route based on inputs
+      // Hip/Valley — always use multi-pitch formula (it handles equal pitches
+      // and 90° corners correctly via its internal simplified branch)
       const effectiveP2 = sameAsPitch1 ? p1 : p2;
       const corner = parseFloat(cornerAngle);
 
-      if (sameAsPitch1 && corner === 90) {
-        // Standard case: both pitches equal, square corner
-        calculatedResult = calculateHipValleySinglePitch(p1);
-      } else {
-        // Advanced case: different pitches or non-square corner
-        if (isNaN(effectiveP2) || effectiveP2 < 0 || effectiveP2 > 90) {
-          alert('Please enter a valid second pitch between 0 and 90 degrees');
-          return;
-        }
-        if (isNaN(corner) || corner <= 0 || corner >= 180) {
-          alert('Please enter a valid corner angle between 0 and 180 degrees');
-          return;
-        }
-        calculatedResult = calculateHipValleyMultiPitch(p1, effectiveP2, corner);
+      if (isNaN(effectiveP2) || effectiveP2 < 0 || effectiveP2 > 90) {
+        alert('Please enter a valid second pitch between 0 and 90 degrees');
+        return;
       }
+      if (isNaN(corner) || corner <= 0 || corner >= 180) {
+        alert('Please enter a valid corner angle between 0 and 180 degrees');
+        return;
+      }
+      calculatedResult = calculateHipValleyMultiPitch(p1, effectiveP2, corner);
     }
 
     setResult(calculatedResult);
