@@ -125,6 +125,7 @@ export function AngleCalculatorWidget({
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
   const resizeRef = useRef<{ startY: number; origH: number } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen && !initialized) {
@@ -281,6 +282,13 @@ export function AngleCalculatorWidget({
     }
 
     setResult(calculatedResult);
+
+    // Auto-scroll to bottom so results are visible
+    requestAnimationFrame(() => {
+      if (bodyRef.current) {
+        bodyRef.current.scrollTo({ top: bodyRef.current.scrollHeight, behavior: 'smooth' });
+      }
+    });
   };
 
   const handleApply = () => {
@@ -322,7 +330,7 @@ export function AngleCalculatorWidget({
       </div>
 
       {/* Body — scrolls within fixed-height panel */}
-      <div className="p-4 flex-1 overflow-y-auto">
+      <div ref={bodyRef} className="p-4 flex-1 overflow-y-auto overflow-x-hidden">
         {/* Main Calculator Type */}
         <div className="mb-3">
           <label className="block text-xs font-medium text-slate-700 mb-1.5">Calculator Type</label>
