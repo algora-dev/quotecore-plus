@@ -22,6 +22,9 @@ type RafterSubType = 'ridge' | 'changeOfPitch' | 'upstandOntoRoof' | 'roofIntoUp
 type AngleSelection = 'finished' | 'bend';
 
 const WIDGET_WIDTH = 384;
+const WIDGET_DEFAULT_HEIGHT = 520;
+const WIDGET_MIN_HEIGHT = 360;
+const WIDGET_MAX_HEIGHT = 800;
 
 // Tooltip content for each option
 const TOOLTIPS: Record<string, { title: string; description: string; image: string }> = {
@@ -115,10 +118,12 @@ export function AngleCalculatorWidget({
   const [result, setResult] = useState<AngleResult | null>(null);
   const [selectedAngle, setSelectedAngle] = useState<AngleSelection>('finished');
 
-  // Dragging state
+  // Dragging + resize state
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [initialized, setInitialized] = useState(false);
+  const [widgetHeight, setWidgetHeight] = useState(WIDGET_DEFAULT_HEIGHT);
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const resizeRef = useRef<{ startY: number; origH: number } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -131,7 +136,10 @@ export function AngleCalculatorWidget({
   }, [isOpen, initialized]);
 
   useEffect(() => {
-    if (!isOpen) setInitialized(false);
+    if (!isOpen) {
+      setInitialized(false);
+      setWidgetHeight(WIDGET_DEFAULT_HEIGHT);
+    }
   }, [isOpen]);
 
   // Sync pitch2 to pitch1 when sameAsPitch1 is checked (Hip/Valley)
@@ -177,6 +185,29 @@ export function AngleCalculatorWidget({
     document.addEventListener('mousemove', handleMove);
     document.addEventListener('mouseup', handleUp);
   }, [position.x, position.y]);
+
+  // Resize handler — drag from bottom-right corner to enlarge/shrink.
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    resizeRef.current = { startY: e.clientY, origH: widgetHeight };
+
+    const handleMove = (ev: MouseEvent) => {
+      if (!resizeRef.current) return;
+      const dy = ev.clientY - resizeRef.current.startY;
+      const newH = Math.max(WIDGET_MIN_HEIGHT, Math.min(WIDGET_MAX_HEIGHT, resizeRef.current.origH + dy));
+      setWidgetHeight(newH);
+    };
+
+    const handleUp = () => {
+      resizeRef.current = null;
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleUp);
+    };
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleUp);
+  }, [widgetHeight]);
 
   if (!isOpen) return null;
 
@@ -265,13 +296,13 @@ export function AngleCalculatorWidget({
   return (
     <div
       ref={panelRef}
-      className="fixed z-50 w-96 bg-white rounded-xl shadow-2xl border border-slate-200 select-none"
-      style={{ left: `${position.x}px`, top: `${position.y}px` }}
+      className="fixed z-50 w-96 bg-white rounded-xl shadow-2xl border border-slate-200 select-none flex flex-col"
+      style={{ left: `${position.x}px`, top: `${position.y}px`, height: `${widgetHeight}px` }}
     >
       {/* Draggable Header */}
       <div
         onMouseDown={handleMouseDown}
-        className="flex items-center justify-between px-4 py-3 border-b border-slate-200 cursor-move bg-slate-50 rounded-t-xl"
+        className="flex items-center justify-between px-4 py-3 border-b border-slate-200 cursor-move bg-slate-50 rounded-t-xl shrink-0"
       >
         <div className="flex items-center gap-2">
           <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -290,8 +321,8 @@ export function AngleCalculatorWidget({
         </button>
       </div>
 
-      {/* Body */}
-      <div className="p-4 max-h-[calc(100vh-180px)] overflow-y-auto">
+      {/* Body — scrolls within fixed-height panel */}
+      <div className="p-4 flex-1 overflow-y-auto">
         {/* Main Calculator Type */}
         <div className="mb-3">
           <label className="block text-xs font-medium text-slate-700 mb-1.5">Calculator Type</label>
@@ -629,7 +660,7 @@ export function AngleCalculatorWidget({
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-slate-200 flex gap-2">
+      <div className="px-4 py-3 border-t border-slate-200 flex gap-2 shrink-0">
         <button
           onClick={onClose}
           className="flex-1 px-3 py-2 border border-slate-300 text-slate-700 font-medium rounded-full hover:bg-slate-50 transition-colors text-xs"
@@ -644,6 +675,17 @@ export function AngleCalculatorWidget({
           Apply Angle
         </button>
       </div>
+
+      {/* Resize handle — bottom-right corner */}
+      <div
+        onMouseDown={handleResizeStart}
+        className="absolute bottom-0 right-0 w-5 h-5 cursor-nwse-resize"
+        style={{
+          background: 'linear-gradient(135deg, transparent 50%, rgb(203 213 225) 50%)',
+          borderBottomRightRadius: '0.75rem',
+        }}
+        title="Drag to resize"
+      />
     </div>
   );
 }
