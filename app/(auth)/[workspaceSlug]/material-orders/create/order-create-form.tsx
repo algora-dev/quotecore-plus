@@ -19,7 +19,7 @@ import { AlertModal } from '@/app/components/AlertModal';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 import { CatalogSearchModal } from '../../quotes/[id]/customer-edit/CatalogSearchModal';
-import { AngleCalculatorModal } from '../../flashings/draw/AngleCalculatorModal';
+import { AngleCalculatorWidget } from '../../flashings/draw/AngleCalculatorWidget';
 import { OrderLineByLineEditor } from './OrderLineByLineEditor';
 import { CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
 import {
@@ -2047,10 +2047,10 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
         />
       )}
 
-      {/* Angle Calculator — reuses the existing modal from the drawing page.
-          onApply copies the calculated angle to clipboard so the user can
-          paste it wherever they need it (notes, measurements, etc.). */}
-      <AngleCalculatorModal
+      {/* Angle Calculator — floating draggable widget so the user can
+          calculate an angle, copy it, and paste into any input without
+          closing the calculator. */}
+      <AngleCalculatorWidget
         isOpen={showAngleCalc}
         onClose={() => setShowAngleCalc(false)}
         onApply={handleAngleApply}

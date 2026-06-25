@@ -1,0 +1,47 @@
+Roofing components video
+
+needs to showcase multiple roofing components that work for all types of roofing
+
+Long run - Corrugate, standing seam 
+tiles concrete tiles, metal tiles
+shingles, asphalt, slate,
+Membrane, synthetic, TPO, bitumen 
+
+Quickly show a manual mode quote to fill
+
+- Show roofing components better
+- Explain manual mode is for adding components that you already have measurements to into a quote, either from a site measure, or you already gained the measurements from a plan.
+- Needs to define the difference between plan measurement and actual measurement
+- Needs to describe rafter pitch vs hip/valley pitch
+- Do the Main roof in Shingles, do a Garage roof in Standing Seam
+- Make the Main roof up in 3 areas
+
+Show a roofing component that calculates area2 + rafter pitch, linear lengths + rafter pitch (barge), linear lengths + hip/valley pitch (Valley + Hips). Extras like underlay, skylight, chimney, delivery fee, site measure fee.
+
+Digital mode is for uploading a roof plan, then measuring each component on the plan, manual mode is useful in 3 scenarios - 
+1) You've already done a site measure, or you already have every actual measurement you need for the roof, and you just want to load those measurements into your components to calculate all your pricing, and also format everything professionally for you to create quotes, orders, or invoices.
+2) You gained measurements from a plan, either printing and measuring with a ruler, or the plan has the measurements already, but all your plan view measurements need to be recalculated to include the rafter pitch, or hip and valley pitch. 
+3) You created a quote template to seed a blank quote with all the components there already, this saves times and avoids needing add each component manually, this is especially useful if you need a lot of components for a roof, and you quote this type of roof a lot. 
+
+Once you get into the quote builder phase, there are 2 simple ways to dictate how you want the app to calculate measurements, you either select the "plan" tab, which is selected by default, or you switch to the "actual" tab. Plan tab will calculate the measurement with correct formula to allow for the roof pitch, and whether this component is a rafter, or hip or valley pitch, it will also add waste to the final figure too.
+For Actual tab, the app assumes this is the final measurement, and it only needs to apply waste (If you prefer to add your own waste, simply set that components waste value to zero waste).
+You can also combine actual and plan measured components too, since the option is per component.
+As well as selecting actual or plan tabs, you can also manually adjust the roof pitch per component too.
+
+The price that shows up will be based on what you saved that component as a per area, or per length item cost and labor cost. You can edit everything later in the quote if you need to.
+
+Add all the lengths, areas, items you need including extras. Then add margin the job, suggest pricing everything at cost, including labor, that way, you can confidently adjust your margin to ensure you make money, but it also makes things easier if a customers asks for a cheaper price, you can just reduce or increase margin - You can also increase/reduce margin per item or component as well, I'll show you that soon.
+
+Show customer quote view and everything that can be edited, then how to send that quote.
+
+------------------------
+
+Order roof from quote
+
+Use that same quote to make an order to a supplier to. First, create an order template, show how they work and save time for the next order, especially for multiple suppliers.
+
+Show some of the images in the order, then save the order, go to drawings and create a barge flashing that includes a "Y" variable, a ridge and hip/valley flashing that includes a Y value. This way we can go back into the orders, add the correct images, apply the Y values, and also use the pitch calculator to gain the correct angles to add to those Y values.
+
+Assemble the order, showcase the lengths of standing seam and corrugate added to them. Explain how you got those lengths.
+
+Send to supplier.
