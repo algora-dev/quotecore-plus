@@ -4,8 +4,14 @@
  */
 
 export interface AngleResult {
+  /** Legacy field — kept for backward compat. Same as finishedAngle. */
   interior: number;
+  /** Legacy field — kept for backward compat. */
   exterior: number;
+  /** The included angle of the finished flashing. */
+  finishedAngle: number;
+  /** Angle the flashing must be bent from a flat sheet = |180 - finishedAngle|. */
+  bendAngleFromFlat: number;
   additionalInfo?: {
     theta?: number;
     hipSlope?: number;
@@ -14,16 +20,75 @@ export interface AngleResult {
 }
 
 /**
- * Ridge/Apron/Change of Pitch Calculator
- * For simple intersections where two roof planes meet
+ * Ridge Calculator
+ * Used where two roof planes meet at the ridge.
+ * Finished Angle = 180 - Pitch1 - Pitch2
  */
 export function calculateRidgeAngle(pitch1: number, pitch2: number): AngleResult {
   const interior = 180 - (pitch1 + pitch2);
   const exterior = 360 - interior;
+  const bend = Math.abs(180 - interior);
   
   return {
-    interior: Math.round(interior * 10) / 10, // Round to 1 decimal
+    interior: Math.round(interior * 10) / 10,
     exterior: Math.round(exterior * 10) / 10,
+    finishedAngle: Math.round(interior * 10) / 10,
+    bendAngleFromFlat: Math.round(bend * 10) / 10,
+  };
+}
+
+/**
+ * Change of Pitch Calculator
+ * Used where one roof slope changes into another running in the same direction.
+ * Finished Angle = 180 + Upper Pitch - Lower Pitch (can exceed 180°)
+ * Bend Angle = |180 - Finished Angle|
+ */
+export function calculateChangeOfPitch(upperPitch: number, lowerPitch: number): AngleResult {
+  const finished = 180 + upperPitch - lowerPitch;
+  const bend = Math.abs(180 - finished);
+  const exterior = 360 - finished;
+  
+  return {
+    interior: Math.round(finished * 10) / 10,
+    exterior: Math.round(exterior * 10) / 10,
+    finishedAngle: Math.round(finished * 10) / 10,
+    bendAngleFromFlat: Math.round(bend * 10) / 10,
+  };
+}
+
+/**
+ * Upstand onto Roof Calculator
+ * Used where flashing starts on a vertical upstand and turns down onto the roof.
+ * Finished Angle = 90 + Roof Pitch
+ */
+export function calculateUpstandOntoRoof(pitch: number): AngleResult {
+  const finished = 90 + pitch;
+  const bend = Math.abs(180 - finished);
+  const exterior = 360 - finished;
+  
+  return {
+    interior: Math.round(finished * 10) / 10,
+    exterior: Math.round(exterior * 10) / 10,
+    finishedAngle: Math.round(finished * 10) / 10,
+    bendAngleFromFlat: Math.round(bend * 10) / 10,
+  };
+}
+
+/**
+ * Roof into Upstand Calculator
+ * Used where flashing starts on the roof and turns up into a vertical upstand.
+ * Finished Angle = 90 - Roof Pitch
+ */
+export function calculateRoofIntoUpstand(pitch: number): AngleResult {
+  const finished = 90 - pitch;
+  const bend = Math.abs(180 - finished);
+  const exterior = 360 - finished;
+  
+  return {
+    interior: Math.round(finished * 10) / 10,
+    exterior: Math.round(exterior * 10) / 10,
+    finishedAngle: Math.round(finished * 10) / 10,
+    bendAngleFromFlat: Math.round(bend * 10) / 10,
   };
 }
 
@@ -43,10 +108,13 @@ export function calculateHipValleySinglePitch(pitch: number): AngleResult {
   // Calculate cap angle
   const interior = 180 - (2 * hipSlope);
   const exterior = 360 - interior;
+  const bend = Math.abs(180 - interior);
   
   return {
     interior: Math.round(interior * 10) / 10,
     exterior: Math.round(exterior * 10) / 10,
+    finishedAngle: Math.round(interior * 10) / 10,
+    bendAngleFromFlat: Math.round(bend * 10) / 10,
     additionalInfo: {
       hipSlope: Math.round(hipSlope * 10) / 10,
     },
@@ -90,10 +158,13 @@ export function calculateHipValleyMultiPitch(
   const interior = 180 - theta;
   const exterior = 360 - interior;
   const foldFromFlat = theta;
+  const bend = Math.abs(180 - interior);
   
   return {
     interior: Math.round(interior * 10) / 10,
     exterior: Math.round(exterior * 10) / 10,
+    finishedAngle: Math.round(interior * 10) / 10,
+    bendAngleFromFlat: Math.round(bend * 10) / 10,
     additionalInfo: {
       theta: Math.round(theta * 10) / 10,
       foldFromFlat: Math.round(foldFromFlat * 10) / 10,
