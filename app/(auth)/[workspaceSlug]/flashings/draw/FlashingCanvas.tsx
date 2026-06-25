@@ -2018,6 +2018,7 @@ export function FlashingCanvas({
                     {m.type === 'angle' && (
                       <>
                         <button
+                          data-copilot="flashing-angle-calc"
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!editingLocked && !checkAdjustPointsExit()) {

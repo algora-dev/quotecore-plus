@@ -3,12 +3,36 @@ title: Changelog
 description: What changed and when.
 order: 4
 status: published
-updated: 2026-06-05
+updated: 2026-06-25
 ---
 
 # Changelog
 
 A running log of features added and significant changes.
+
+## 2026-06-25 — Flashing drawing improvements, angle calculator widget, order editor hover-highlight, dashboard alerts fix
+
+### Flashing drawing system
+
+- **Change of Pitch bend direction fixed.** The angle calculator now bends flashings the correct way: upper roof steeper than lower = internal angle (folds inward), upper roof flatter than lower = external angle (opens outward).
+- **Select All / Deselect All.** "Select All" in the drawing editor no longer traps you — a "Deselect All" button appears when selection is locked, so you can exit and resume editing or save.
+
+### Angle Calculator widget (shared)
+
+The drawing editor and the order editor now share the same angle calculator widget — a draggable floating panel that stays open after applying an angle so you can iterate quickly.
+
+- **Fixed-size with scroll.** Opens at a default height with an internal scroll area. Drag the bottom-right corner to resize.
+- **"Apply Angle" button** (renamed from "Copy Finished Angle").
+- **Auto-scroll to results.** After clicking Calculate, the panel scrolls down so the results are always visible.
+- Supports Rafter Pitch, Hip/Valley Pitch, and Change of Pitch calculations.
+
+### Order editor hover-to-highlight
+
+In both the Line-by-Line and Component layouts, hovering a line or component in the left sidebar highlights the matching item in the order preview with an orange border — so you can quickly see which item you need to edit.
+
+### Dashboard alerts sync
+
+The dashboard alert banner now uses the same lifecycle as the bell icon. Clearing alerts from the bell also clears the dashboard banner.
 
 ## 2026-06-05 — Catalog Library, Attachments, Q assistant, order layouts, and follow-ups
 

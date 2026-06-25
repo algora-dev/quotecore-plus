@@ -744,6 +744,14 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         validation: 'none',
       },
       {
+        id: 'fd-angle-calc',
+        target: '[data-copilot="flashing-angle-calc"]',
+        title: 'Angle Calculator',
+        description: 'Click Auto-Calculate to open the angle calculator widget. Calculate rafter pitch, hip/valley pitch, or change-of-pitch angles, then click Apply Angle to push the result straight onto a selected measurement.',
+        position: 'bottom',
+        validation: 'none',
+      },
+      {
         id: 'fd-save',
         target: '[data-copilot="flashing-save"]',
         title: 'Save Flashing',
