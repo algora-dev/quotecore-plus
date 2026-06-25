@@ -641,7 +641,7 @@ export function AngleCalculatorWidget({
           disabled={!result}
           className="flex-1 px-3 py-2 bg-black text-white font-medium rounded-full hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
         >
-          Copy Finished Angle
+          Apply Angle
         </button>
       </div>
     </div>

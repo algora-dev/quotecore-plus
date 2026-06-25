@@ -957,7 +957,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
             ) : (
               <div className="space-y-3">
                 {orderLines.map((line, index) => (
-                  <div key={line.id} onMouseEnter={() => setHoveredLineId(line.id)} onMouseLeave={() => setHoveredLineId(null)} className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
+                  <div key={line.id} onMouseEnter={() => setHoveredLineId(line.id)} onMouseLeave={() => setHoveredLineId(null)} className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50 cursor-pointer transition-all duration-150 hover:border-orange-300 hover:shadow-[0_0_8px_rgba(255,107,53,0.12)]">
                     {/* Component Header */}
                     <div className="px-3 py-2 bg-white border-b border-slate-200">
                       <div className="flex items-start gap-2 mb-2">
@@ -1264,7 +1264,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
             ) : (
               <div className={layoutMode === 'double' ? 'grid grid-cols-2 gap-6' : 'space-y-6'}>
                 {orderLines.map(line => (
-                  <div key={line.id} className={`bg-white border rounded-lg p-4 space-y-3 ${hoveredLineId === line.id ? 'border-[#FF6B35] ring-2 ring-[#FF6B35] ring-inset' : 'border-slate-200'}`}>
+                  <div key={line.id} className={`bg-white border rounded-lg p-4 space-y-3 transition-all duration-150 ${hoveredLineId === line.id ? 'border-[#FF6B35] ring-2 ring-[#FF6B35] ring-inset bg-orange-50/20' : 'border-slate-200'}`}>
                     {/* Component Name */}
                     {line.showComponentName && (
                       <h4 className="font-semibold text-slate-900 text-base">{line.componentName}</h4>

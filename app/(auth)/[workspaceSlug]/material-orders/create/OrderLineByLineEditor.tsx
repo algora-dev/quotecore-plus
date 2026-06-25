@@ -288,8 +288,8 @@ export function OrderLineByLineEditor({
                   key={line.id}
                   onMouseEnter={() => setHoveredLineId(line.id)}
                   onMouseLeave={() => setHoveredLineId(null)}
-                  className={`rounded-lg border p-3 ${
-                    line.isVisible ? 'border-slate-200 bg-white' : 'border-slate-200 bg-slate-50 opacity-70'
+                  className={`rounded-lg border p-3 cursor-pointer transition-all duration-150 ${
+                    line.isVisible ? 'border-slate-200 bg-white hover:border-orange-300 hover:shadow-[0_0_8px_rgba(255,107,53,0.12)]' : 'border-slate-200 bg-slate-50 opacity-70 hover:border-orange-300'
                   }`}
                >
                   <div className="flex items-start justify-between gap-3">
@@ -562,7 +562,7 @@ export function OrderLineByLineEditor({
                       </td>
                     </tr>
                   ) : (
-<tr key={line.id} className={`border-b border-slate-100 align-top ${hoveredLineId === line.id ? 'ring-2 ring-[#FF6B35] ring-inset' : ''}`}>
+<tr key={line.id} className={`border-b border-slate-100 align-top transition-all duration-150 ${hoveredLineId === line.id ? 'ring-2 ring-[#FF6B35] ring-inset bg-orange-50/30' : ''}`}>
                       <td className="py-2 pr-3 text-slate-800 whitespace-pre-line">{lineDisplayText(line)}</td>
                       {showQuantityColumn && (
                         <td className="py-2 px-2 text-right text-slate-700 tabular-nums w-12">
