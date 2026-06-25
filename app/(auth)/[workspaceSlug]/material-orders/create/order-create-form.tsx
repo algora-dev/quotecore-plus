@@ -175,6 +175,10 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   // Declutter: collapse the components control sidebar so the order-form
   // preview fills the space. Pure layout state - sidebar stays mounted.
   const [componentsPanelCollapsed, setComponentsPanelCollapsed] = useState(false);
+  // Hover-to-highlight: when the user hovers a component in the left sidebar,
+  // the matching card in the order review gets an orange border so they can
+  // quickly see which component they need to edit.
+  const [hoveredLineId, setHoveredLineId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   
   // Template selection
@@ -953,7 +957,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
             ) : (
               <div className="space-y-3">
                 {orderLines.map((line, index) => (
-                  <div key={line.id} className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
+                  <div key={line.id} onMouseEnter={() => setHoveredLineId(line.id)} onMouseLeave={() => setHoveredLineId(null)} className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
                     {/* Component Header */}
                     <div className="px-3 py-2 bg-white border-b border-slate-200">
                       <div className="flex items-start gap-2 mb-2">
@@ -1260,7 +1264,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
             ) : (
               <div className={layoutMode === 'double' ? 'grid grid-cols-2 gap-6' : 'space-y-6'}>
                 {orderLines.map(line => (
-                  <div key={line.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+                  <div key={line.id} className={`bg-white border rounded-lg p-4 space-y-3 ${hoveredLineId === line.id ? 'border-[#FF6B35] ring-2 ring-[#FF6B35] ring-inset' : 'border-slate-200'}`}>
                     {/* Component Name */}
                     {line.showComponentName && (
                       <h4 className="font-semibold text-slate-900 text-base">{line.componentName}</h4>

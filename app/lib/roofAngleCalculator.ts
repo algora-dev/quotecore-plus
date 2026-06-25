@@ -57,27 +57,27 @@ export function calculateRidgeAngle(pitch1: number, pitch2: number): AngleResult
 /**
  * Change of Pitch Calculator
  * Used where one roof slope changes into another running in the same direction.
- * Finished Angle = 180 + Upper Pitch - Lower Pitch (can exceed 180°)
+ * Finished Angle = 180 - Upper Pitch + Lower Pitch (can exceed 180°)
  * Bend Angle = |180 - Finished Angle|
  *
  * Direction is determined by the pitch comparison, NOT just the finished angle:
- * - Upper > Lower → external (opens outward, finished > 180°)
- * - Upper < Lower → internal (folds inward, finished < 180°)
+ * - Upper > Lower → internal (folds inward, finished < 180°)
+ * - Upper < Lower → external (opens outward, finished > 180°)
  * - Upper = Lower → straight (finished = 180°)
  */
 export function calculateChangeOfPitch(upperPitch: number, lowerPitch: number): AngleResult {
-  const finished = 180 + upperPitch - lowerPitch;
+  const finished = 180 - upperPitch + lowerPitch;
   const bend = Math.abs(180 - finished);
   const exterior = 360 - finished;
 
   let angleType: AngleType;
   let bendDirection: BendDirection;
   if (upperPitch > lowerPitch) {
-    angleType = 'external';
-    bendDirection = 'external';
-  } else if (upperPitch < lowerPitch) {
     angleType = 'internal';
     bendDirection = 'internal';
+  } else if (upperPitch < lowerPitch) {
+    angleType = 'external';
+    bendDirection = 'external';
   } else {
     angleType = 'straight';
     bendDirection = 'none';

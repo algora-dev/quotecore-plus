@@ -125,6 +125,10 @@ export function OrderLineByLineEditor({
   // Declutter: collapse the left controls so the preview fills the space.
   // Pure layout state - panel stays mounted (no edit loss).
   const [panelCollapsed, setPanelCollapsed] = useState(false);
+  // Hover-to-highlight: when the user hovers a line in the left sidebar,
+  // the matching row in the right preview gets an orange border so they
+  // can quickly see which item they need to edit.
+  const [hoveredLineId, setHoveredLineId] = useState<string | null>(null);
 
   const commit = useCallback(
     (next: LineByLineItem[]) => {
@@ -282,10 +286,12 @@ export function OrderLineByLineEditor({
               lines.map((line, index) => (
                 <div
                   key={line.id}
+                  onMouseEnter={() => setHoveredLineId(line.id)}
+                  onMouseLeave={() => setHoveredLineId(null)}
                   className={`rounded-lg border p-3 ${
                     line.isVisible ? 'border-slate-200 bg-white' : 'border-slate-200 bg-slate-50 opacity-70'
                   }`}
-                >
+               >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm text-slate-800">{lineDisplayText(line)}</p>
@@ -556,7 +562,7 @@ export function OrderLineByLineEditor({
                       </td>
                     </tr>
                   ) : (
-<tr key={line.id} className="border-b border-slate-100 align-top">
+<tr key={line.id} className={`border-b border-slate-100 align-top ${hoveredLineId === line.id ? 'ring-2 ring-[#FF6B35] ring-inset' : ''}`}>
                       <td className="py-2 pr-3 text-slate-800 whitespace-pre-line">{lineDisplayText(line)}</td>
                       {showQuantityColumn && (
                         <td className="py-2 px-2 text-right text-slate-700 tabular-nums w-12">

@@ -233,6 +233,24 @@ export function FlashingCanvas({
     canvas.requestRenderAll();
   };
 
+  // Deselect All - exits the locked Select All state so the user can
+  // continue editing or save their work. Discards the ActiveSelection
+  // and re-enables editing tools.
+  const handleDeselectAll = () => {
+    if (!fabricRef.current) return;
+    const canvas = fabricRef.current;
+    canvas.discardActiveObject();
+
+    // Make objects non-selectable again (back to drawing mode)
+    canvas.getObjects().forEach((obj: any) => {
+      obj.set({ selectable: false, evented: false });
+    });
+
+    canvas.requestRenderAll();
+    setEditingLocked(false);
+    setDrawMode('none');
+  };
+
   const calculateDistance = (p1: { x: number; y: number }, p2: { x: number; y: number }): number => {
     const dx = p2.x - p1.x;
     const dy = p2.y - p1.y;
@@ -1889,11 +1907,21 @@ export function FlashingCanvas({
         
         <button
           onClick={handleSelectAll}
+          disabled={editingLocked}
           title="Select All (Ctrl+A)"
-          className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50"
+          className={`px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50 ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Select All
         </button>
+        {editingLocked && (
+          <button
+            onClick={handleDeselectAll}
+            title="Deselect All - resume editing"
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all"
+          >
+            Deselect All
+          </button>
+        )}
         
         <div className="ml-auto flex gap-2">
           <button

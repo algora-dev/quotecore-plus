@@ -42,7 +42,7 @@ const TOOLTIPS: Record<string, { title: string; description: string; image: stri
   },
   changeOfPitch: {
     title: 'Change of Pitch',
-    description: 'Use where one roof slope changes into another roof slope running in the same direction. Formula: 180° + Upper Pitch − Lower Pitch. If the upper pitch is steeper than the lower, the result is an external angle. If flatter, it returns an internal angle. Internal angles are measured on the tight/inside of the fold. External angles are measured on the open/outside of the fold.',
+    description: 'Use where one roof slope changes into another roof slope running in the same direction. Formula: 180° − Upper Pitch + Lower Pitch. If the upper pitch is steeper than the lower, the result is an internal angle (folds inward). If flatter, it returns an external angle (opens outward). Internal angles are measured on the tight/inside of the fold. External angles are measured on the open/outside of the fold.',
     image: '/angle-calculator/ChangeOfPitch.png',
   },
   upstandOntoRoof: {
@@ -517,7 +517,7 @@ export function AngleCalculatorWidget({
               <p className="text-xs text-slate-400 mt-1">Pitch of the roof section below the change line.</p>
             </div>
             <div className="mb-3 p-2.5 bg-slate-50 rounded-lg">
-              <p className="text-xs text-slate-500 leading-relaxed">If the upper roof pitch is steeper than the lower roof pitch, the calculator returns an external angle. If the upper roof pitch is flatter than the lower roof pitch, it returns an internal angle.</p>
+              <p className="text-xs text-slate-500 leading-relaxed">If the upper roof pitch is steeper than the lower roof pitch, the calculator returns an internal angle (folds inward). If the upper roof pitch is flatter than the lower roof pitch, it returns an external angle (opens outward).</p>
             </div>
           </>
         )}
