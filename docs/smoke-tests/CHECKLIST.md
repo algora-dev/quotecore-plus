@@ -8,6 +8,23 @@
 
 ---
 
+# 2026-06-25 — Flashing drawing, angle calculator widget, order editor hover-highlight, dashboard alerts
+
+- [ ] **Change of Pitch bend direction** — drawing editor, angle calculator, Change of Pitch: upper=10°, lower=25° → bends external (opens outward). Upper=25°, lower=10° → bends internal (folds inward).
+- [ ] **Select All / Deselect All** — drawing editor: Select All → editing locked, orange "Deselect All" button appears. Click it → exits selection, tools re-enabled. Save + Clear accessible while locked.
+- [ ] **Angle Calculator Widget (drawing editor)** — Auto-Calculate opens draggable floating widget (not centered modal). Stays open after Apply Angle. Fixed height + internal scroll. Resize handle bottom-right.
+- [ ] **Angle Calculator Widget (order editor)** — same widget, same behaviour. Button reads "Apply Angle".
+- [ ] **Widget: no horizontal scroll** — switch modes, expand results → no horizontal scrollbar.
+- [ ] **Widget: auto-scroll to results** — click Calculate → scrolls to bottom so Results visible.
+- [ ] **Widget: tip text removed** — Change of Pitch no longer shows the "If the upper roof pitch is steeper..." info box.
+- [ ] **Hover-to-highlight (Line by Line)** — hover sidebar line → matching preview row gets orange ring + orange bg. Sidebar items show cursor-pointer + orange border on hover.
+- [ ] **Hover-to-highlight (Component layout)** — hover sidebar component card → matching order review card gets orange border + ring.
+- [ ] **Dashboard alerts sync with bell** — clear alerts from bell → dashboard banner gone on next refresh. Counts match.
+- [ ] **Guide Me: angle calculator step** — Flashing Drawing guide → "Angle Calculator" step after "Live Readout", highlights Auto-Calculate button.
+- [ ] **Docs** — /docs/help/changelog has 2026-06-25 entry. /docs/flashings/flashings has "Angle Calculator" section.
+
+---
+
 # âš ï¸ PRE-GO-LIVE / PROD PROMOTION TASKS (do at `development -> main` merge)
 
 > Infra steps that MUST happen when promoting dev to production. Not feature tests - hard release gates.
