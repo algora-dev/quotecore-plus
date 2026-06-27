@@ -1,22 +1,10 @@
 Roofing components video
 
-needs to showcase multiple roofing components that work for all types of roofing
-
-Long run - Corrugate, standing seam 
-tiles concrete tiles, metal tiles
-shingles, asphalt, slate,
-Membrane, synthetic, TPO, bitumen 
-
 Quickly show a manual mode quote to fill
 
-- Show roofing components better
 - Explain manual mode is for adding components that you already have measurements to into a quote, either from a site measure, or you already gained the measurements from a plan.
-- Needs to define the difference between plan measurement and actual measurement
-- Needs to describe rafter pitch vs hip/valley pitch
-- Do the Main roof in Shingles, do a Garage roof in Standing Seam
-- Make the Main roof up in 3 areas
+- Make the Main roof up in 3 areas, Shingles for the main roof 25 degree pitch, standing seem lower roof 10 degrees, TPO membrane for the garage + parapet caps
 
-Show a roofing component that calculates area2 + rafter pitch, linear lengths + rafter pitch (barge), linear lengths + hip/valley pitch (Valley + Hips). Extras like underlay, skylight, chimney, delivery fee, site measure fee.
 
 Digital mode is for uploading a roof plan, then measuring each component on the plan, manual mode is useful in 3 scenarios - 
 1) You've already done a site measure, or you already have every actual measurement you need for the roof, and you just want to load those measurements into your components to calculate all your pricing, and also format everything professionally for you to create quotes, orders, or invoices.
