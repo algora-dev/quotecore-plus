@@ -628,7 +628,7 @@ export const COPILOT_GUIDES: CopilotGuide[] = [
         id: 'dt-tool-area',
         target: '[data-copilot="takeoff-tool-area"]',
         title: 'Area Tool',
-        description: 'You already used this to create your roof area. You can also use it to measure area for a specific component - just select the component first, then trace the area.',
+        description: 'You already used this to create your roof area. You can also use it to measure area for a specific component - just select the component first, then trace the area. Choose Polygon for irregular shapes (click points to outline) or Rectangle for fast square/rectangular areas (click and drag to draw a box).',
         position: 'bottom',
         validation: 'none',
       },

@@ -2207,7 +2207,7 @@ export function TakeoffWorkstation({
             } else if (selCompType === 'volume_3d') {
               guidance = 'Click and drag to draw the footprint (L × W). Release to set the area, then enter the depth.';
             } else {
-              guidance = 'Click and drag to draw a rectangle. Release to set the area.';
+              guidance = 'Create a custom box shape area, click and hold, drag then release to set the area.';
             }
           } else {
             if (!selectedComponentId) {
@@ -2215,7 +2215,7 @@ export function TakeoffWorkstation({
             } else if (selCompType === 'volume_3d') {
               guidance = 'Draw the footprint (L × W). Close the shape on the first point, then enter the depth in the prompt.';
             } else {
-              guidance = 'Click to place points - at least 4. Click the first point again to close the shape.';
+              guidance = 'Draw the area point by point (at least 3 points), to close the area - click back on the first point.';
             }
           }
         } else if (lineMode) {
@@ -2858,7 +2858,7 @@ export function TakeoffWorkstation({
                         ? 'bg-slate-900 text-white'
                         : 'text-gray-500 hover:text-gray-700'
                     }`}
-                    title="Click to outline any shape — 3+ points. Best for irregular areas."
+                    title="Draw the area point by point (at least 3 points), to close the area - click back on the first point"
                   >
                     Polygon
                   </button>
@@ -2873,7 +2873,7 @@ export function TakeoffWorkstation({
                         ? 'bg-slate-900 text-white'
                         : 'text-gray-500 hover:text-gray-700'
                     }`}
-                    title="Click and drag to draw a rectangle. Fastest for square/rectangular areas."
+                    title="Create a custom box shape area, click and hold, drag then release to set the area"
                   >
                     Rectangle
                   </button>
@@ -3073,7 +3073,7 @@ export function TakeoffWorkstation({
                     setMultiLinealMode(false);
                   }}
                   className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
-                  title="Click to outline any shape — 3+ points. Best for irregular areas."
+                  title="Draw the area point by point (at least 3 points), to close the area - click back on the first point"
                 >
                   Draw Area · Polygon
                 </button>
@@ -3087,7 +3087,7 @@ export function TakeoffWorkstation({
                     setMultiLinealMode(false);
                   }}
                   className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
-                  title="Click and drag to draw a rectangle. Fastest for square/rectangular areas."
+                  title="Create a custom box shape area, click and hold, drag then release to set the area"
                 >
                   Draw Area · Rectangle
                 </button>
