@@ -110,7 +110,7 @@ Same form. User picks Trade = `Generic`, Collection = `My fencing` (assume the u
 
 Entry mode = `Manual` (most generic users probably start here; digital is fine too).
 
-### Step 2. Quote builder loads (Manual mode)
+### Step 2. Quote builder loads (Component Quote)
 
 The builder loads with the same structure as roofing — but **labels and behaviour are trade-aware:**
 

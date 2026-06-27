@@ -26,7 +26,7 @@ A complete digital takeoff system that allows roofing contractors to:
 ## 🚀 User Flow
 
 ### Entry Point
-1. Create quote → Select **Digital Mode**
+1. Create quote → Select **Digital Measure**
 2. Upload roof plan → Navigate to digital takeoff canvas
 
 ### Digital Takeoff Canvas
@@ -209,7 +209,7 @@ User reviews, adds extras, confirms quote
 ## 🔍 Testing Checklist
 
 ### Happy Path
-- [x] Create quote → Digital mode → Upload plan
+- [x] Create quote → Digital Measure → Upload plan
 - [x] Calibrate (1-3 times)
 - [x] Create roof area with pitch
 - [x] Add component measurements (line/point/area)
@@ -231,7 +231,7 @@ User reviews, adds extras, confirms quote
 - [x] Browser refresh mid-takeoff (state lost - expected)
 
 ### Regression Tests
-- [x] Manual mode still works (v1 builder)
+- [x] Component Quote still works (v1 builder)
 - [x] Template-based quotes still work
 - [x] File uploads still work
 - [x] Pricing engine still works for manual quotes
