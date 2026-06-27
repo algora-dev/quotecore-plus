@@ -2203,7 +2203,7 @@ export function TakeoffWorkstation({
         } else if (areaMode) {
           if (areaSubTool === 'rect') {
             if (!selectedComponentId && roofAreas.length > 0) {
-              guidance = 'Select a component first, then click and drag to draw a rectangle.';
+              guidance = 'Create a custom box shape area, click and hold, drag then release to set the area';
             } else if (selCompType === 'volume_3d') {
               guidance = 'Click and drag to draw the footprint (L × W). Release to set the area, then enter the depth.';
             } else {
@@ -2211,7 +2211,7 @@ export function TakeoffWorkstation({
             }
           } else {
             if (!selectedComponentId) {
-              guidance = 'Select a component first, then draw its area on the plan.';
+              guidance = 'Draw the area point by point (at least 3 points), to close the area - click back on the first point';
             } else if (selCompType === 'volume_3d') {
               guidance = 'Draw the footprint (L × W). Close the shape on the first point, then enter the depth in the prompt.';
             } else {
