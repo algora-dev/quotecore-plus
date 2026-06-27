@@ -8,8 +8,9 @@
  * migration's perspective on which measurement types matter per trade.
  *
  * Round-3 M-03 correction: `multi_lineal` is in the generic allowlist;
- * roofing intentionally omits it for v1 (gutters / cabling-like roofing
- * cases can widen later). `rafter`/`valley_hip` are NOT measurement types
+ * roofing now includes `multi_lineal` + `multi_lineal_lxh` for gutters,
+ * fascia, barge boards and similar multi-segment roofing components.
+ * `rafter`/`valley_hip` are NOT measurement types
  * (they live on the `pitch_type` enum) so they don't appear here.
  */
 export type Trade =
@@ -49,11 +50,14 @@ export type MeasurementType =
   | 'multi_lineal_lxh_freestyle';
 
 export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet<MeasurementType>>> = {
-  // Roofing v1: the four shipped types + the legacy aliases.
+  // Roofing: the original v1 types + multi_lineal for gutters/fascia/barge
+  // boards (multi-segment linear components measured run-by-run).
   roofing: new Set<MeasurementType>([
     'area',
     'lineal',
     'linear',     // legacy alias of lineal (patch_006 rename history)
+    'multi_lineal',         // gutters, fascia, barge boards - multi-segment linear
+    'multi_lineal_lxh',     // plasterboard-style: multi-segment × height
     'quantity',   // legacy alias of count
     'fixed',
   ]),

@@ -74,6 +74,11 @@ export function applyWaste(value: number, wasteType: WasteType, wastePercent: nu
   switch (wasteType) {
     case 'percent': return value * (1 + (wastePercent || 0) / 100);
     case 'fixed': return value + (wasteFixed || 0);
+    // fixed_per_segment: in manual entry (1 segment per entry) this is
+    // equivalent to plain fixed. The digital takeoff path converts
+    // multi-segment counts before calling this function; this fallback
+    // ensures manual entries still get waste applied.
+    case 'fixed_per_segment': return value + (wasteFixed || 0);
     default: return value;
   }
 }

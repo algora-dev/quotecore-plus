@@ -319,7 +319,12 @@ export function QuoteBuilder({
     let rawValue = rawInputValue;
     if (comp?.measurement_type === 'area') {
       rawValue = areaInputToMetric(rawInputValue, quote.measurement_system);
-    } else if (comp?.measurement_type === 'lineal') {
+    } else if (
+      comp?.measurement_type === 'lineal' ||
+      comp?.measurement_type === 'linear' ||
+      comp?.measurement_type === 'multi_lineal' ||
+      comp?.measurement_type === 'curved_line'
+    ) {
       rawValue = linearInputToMetric(rawInputValue, quote.measurement_system);
     }
     // volume_3d: rawInputValue is already in m³ (converted in ExpandableComponent before calling)
