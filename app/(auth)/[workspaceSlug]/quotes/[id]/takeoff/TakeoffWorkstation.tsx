@@ -2816,73 +2816,69 @@ export function TakeoffWorkstation({
               >
                 Line
               </button>
-              {/* Area tool — expands to show Polygon / Rectangle sub-tools */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => {
-                    // Toggle area mode. If turning on, keep current sub-tool.
-                    // If turning off, clean up everything.
-                    if (areaMode) {
+              {/* Area tool — compact segmented sub-tool selector when active */}
+              <button
+                onClick={() => {
+                  // Toggle area mode. If turning on, keep current sub-tool.
+                  // If turning off, clean up everything.
+                  if (areaMode) {
+                    cleanupBoxDrag();
+                    setAreaMode(false);
+                    setAreaPoints([]);
+                  } else {
+                    setAreaMode(true);
+                    setLineMode(false);
+                    setPointMode(false);
+                    setMultiLinealMode(false);
+                    setMultiLinealPoints([]);
+                    setMultiLinealSegmentObjects([]);
+                    setAreaPoints([]);
+                  }
+                }}
+                disabled={calibrationMode || calibrations.length === 0}
+                data-copilot="takeoff-tool-area"
+                className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  areaMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
+                }`}
+                title={calibrations.length === 0 ? 'Calibrate first' : selectedComponentId ? 'Measure area for component' : quoteIsGeneric ? 'Measure area' : 'Measure roof area (required first!)'}
+              >
+                Area
+              </button>
+              {/* Compact segmented sub-tool toggle: shown when area mode is active */}
+              {areaMode && (
+                <div className="flex items-center rounded-full bg-gray-100 p-0.5">
+                  <button
+                    onClick={() => {
                       cleanupBoxDrag();
-                      setAreaMode(false);
+                      setAreaSubTool('polygon');
                       setAreaPoints([]);
-                    } else {
-                      setAreaMode(true);
-                      setLineMode(false);
-                      setPointMode(false);
-                      setMultiLinealMode(false);
-                      setMultiLinealPoints([]);
-                      setMultiLinealSegmentObjects([]);
+                    }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                      areaSubTool === 'polygon'
+                        ? 'bg-slate-900 text-white'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                    title="Click to outline any shape — 3+ points. Best for irregular areas."
+                  >
+                    Polygon
+                  </button>
+                  <button
+                    onClick={() => {
+                      cleanupBoxDrag();
+                      setAreaSubTool('rect');
                       setAreaPoints([]);
-                    }
-                  }}
-                  disabled={calibrationMode || calibrations.length === 0}
-                  data-copilot="takeoff-tool-area"
-                  className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                    areaMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
-                  }`}
-                  title={calibrations.length === 0 ? 'Calibrate first' : selectedComponentId ? 'Measure area for component' : quoteIsGeneric ? 'Measure area' : 'Measure roof area (required first!)'}
-                >
-                  Area
-                </button>
-                {/* Sub-tools: shown when area mode is active */}
-                {areaMode && (
-                  <div className="flex items-center gap-1 ml-1 pl-2 border-l border-gray-200">
-                    <button
-                      onClick={() => {
-                        cleanupBoxDrag();
-                        setAreaSubTool('polygon');
-                        setAreaPoints([]);
-                      }}
-                      className={`px-2.5 py-1.5 rounded-full text-xs flex items-center gap-1.5 transition-colors ${
-                        areaSubTool === 'polygon'
-                          ? 'bg-slate-900 text-white'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                      }`}
-                      title="Click to outline any shape — 3+ points. Best for irregular areas."
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polygon points="12 2 22 8.5 19 20 5 20 2 8.5"/></svg>
-                      Polygon
-                    </button>
-                    <button
-                      onClick={() => {
-                        cleanupBoxDrag();
-                        setAreaSubTool('rect');
-                        setAreaPoints([]);
-                      }}
-                      className={`px-2.5 py-1.5 rounded-full text-xs flex items-center gap-1.5 transition-colors ${
-                        areaSubTool === 'rect'
-                          ? 'bg-slate-900 text-white'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                      }`}
-                      title="Click and drag to draw a rectangle. Fastest for square/rectangular areas."
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><rect x="3" y="5" width="18" height="14" rx="1"/></svg>
-                      Rectangle
-                    </button>
-                  </div>
-                )}
-              </div>
+                    }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                      areaSubTool === 'rect'
+                        ? 'bg-slate-900 text-white'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                    title="Click and drag to draw a rectangle. Fastest for square/rectangular areas."
+                  >
+                    Rectangle
+                  </button>
+                </div>
+              )}
               <button
                 onClick={() => {
                   // Generic-trade quotes: no area required for point measurements.
@@ -2951,29 +2947,29 @@ export function TakeoffWorkstation({
                 or zoom controls when the user is mid-polyline. */}
 
             {/* Zoom Controls - Right Side */}
-            <div className="flex gap-2">
+            <div className="flex items-center gap-1">
               <button
                 onClick={handleZoomOut}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
+                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
               >
                 −
               </button>
-              <span className="px-3 py-1 text-sm">{Math.round(zoom * 100)}%</span>
+              <span className="px-1 py-1 text-sm tabular-nums">{Math.round(zoom * 100)}%</span>
               <button
                 onClick={handleZoomIn}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
+                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
               >
                 +
               </button>
               <button
                 onClick={handleResetZoom}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
+                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
               >
                 Reset
               </button>
               <button
                 onClick={handleFitToScreen}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
+                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
               >
                 Fit
               </button>
