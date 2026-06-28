@@ -1823,12 +1823,12 @@ function ExpandableComponent({
                     if (isAreaType) {
                       modes = [
                         { key: 'direct', label: 'Area', title: 'Enter total area (m²)' },
-                        { key: 'dims', label: 'W × H', title: 'Width × Height = area (m²)' },
+                        { key: 'dims', label: 'W × L', title: 'Width × Length = area (m²)' },
                       ];
                     } else if (isVolumePreset) {
                       modes = [
                         { key: 'direct', label: 'Area', title: 'Area squared × preset depth = volume' },
-                        { key: 'dims', label: 'W × H', title: 'Width × Height × preset depth = volume' },
+                        { key: 'dims', label: 'W × L', title: 'Width × Length × preset depth = volume' },
                         { key: 'volume', label: 'Volume', title: 'Enter total cubic volume (m³)' },
                       ];
                     } else if (isVolume3d) {
@@ -1934,7 +1934,7 @@ function ExpandableComponent({
                           placeholder="0"
                           className="w-20 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
                         />
-                        <span className="text-xs text-slate-500 w-4">H</span>
+                        <span className="text-xs text-slate-500 w-4">{isLxhPreset ? 'H' : 'L'}</span>
                         <input
                           type="number"
                           step="0.01"
