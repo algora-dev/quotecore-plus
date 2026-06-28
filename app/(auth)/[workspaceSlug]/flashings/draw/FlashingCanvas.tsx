@@ -64,6 +64,7 @@ interface MeasurementItem {
   originalValue: number;
   visible: boolean;
   textHidden?: boolean;
+  arcHidden?: boolean; // Angle arc circle hidden by default
   labelObjectId?: string;
   // For angles
   interiorValue?: number;
@@ -124,7 +125,7 @@ export function FlashingCanvas({
   const [linePoints, setLinePoints] = useState<{ x: number; y: number }[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
   const [selectedMeasurement, setSelectedMeasurement] = useState<string | null>(null);
-  const [showPointMarkers, setShowPointMarkers] = useState(true);
+
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [calculatingAngleId, setCalculatingAngleId] = useState<string | null>(null);
   // Replaces the old window.prompt() flow for Edit Value. Both state
@@ -151,13 +152,12 @@ export function FlashingCanvas({
   // Refs
   const drawModeRef = useRef<DrawMode>('none');
   const linePointsRef = useRef<{ x: number; y: number }[]>([]);
-  const showPointMarkersRef = useRef(true);
+
 
   useEffect(() => {
     drawModeRef.current = drawMode;
     linePointsRef.current = linePoints;
-    showPointMarkersRef.current = showPointMarkers;
-  }, [drawMode, linePoints, showPointMarkers]);
+  }, [drawMode, linePoints]);
 
   // Refs for stable history saving
   const measurementsRef = useRef<MeasurementItem[]>([]);
@@ -383,8 +383,6 @@ export function FlashingCanvas({
         });
         (marker as any).pointIndex = currentPoints.length; // Store which point this is
         (marker as any).isPointMarker = true; // Flag to identify point markers
-        // Respect showPointMarkers toggle (but always show in adjustPoints mode)
-        marker.set('visible', showPointMarkersRef.current || (drawModeRef.current as string) === 'adjustPoints');
         canvas.add(marker);
 
         const newMeasurements: MeasurementItem[] = [];
@@ -438,12 +436,16 @@ export function FlashingCanvas({
             canvas.add(arc);
             canvas.add(angleText);
 
+            // Arc is hidden by default — user can show via sidebar toggle
+            arc.set('visible', false);
+
             newMeasurements.push({
               id: measurementId,
               type: 'angle',
               value: displayValue,
               originalValue: displayValue,
               visible: true,
+              arcHidden: true,
               interiorValue: interiorAngleVal,
               exteriorValue: exteriorAngleVal,
               showInterior: true,
@@ -792,12 +794,18 @@ export function FlashingCanvas({
             console.log('[FlashingCanvas] Successfully loaded', fabricRef.current.getObjects().length, 'objects');
           }
 
-          // Apply showPointMarkers state to loaded point markers
-          fabricRef.current.getObjects().forEach((obj: any) => {
-            if (obj.isPointMarker) {
-              obj.set('visible', showPointMarkersRef.current || drawModeRef.current === 'adjustPoints');
-            }
-          });
+          // Apply arcHidden state to loaded angle arcs
+          const loadedMeasurements = (flashing.measurements as unknown) as StoredMeasurement[] | null;
+          if (loadedMeasurements) {
+            fabricRef.current.getObjects().forEach((obj: any) => {
+              if (obj.type === 'circle' && obj.measurementId) {
+                const m = loadedMeasurements.find((mm: StoredMeasurement) => mm.id === obj.measurementId);
+                if (m && m.arcHidden) {
+                  obj.set('visible', false);
+                }
+              }
+            });
+          }
 
           fabricRef.current.renderAll();
         });
@@ -888,9 +896,9 @@ export function FlashingCanvas({
       // Show/hide angle circles based on mode
       canvas.getObjects().forEach((obj: any) => {
         if (obj.type === 'circle' && obj.measurementId) {
-          // This is an angle arc/circle - check measurement visibility too
+          // This is an angle arc/circle - check measurement visibility + arcHidden
           const measurement = measurements.find(m => m.id === obj.measurementId);
-          const shouldShow = drawMode !== 'adjustPoints' && (!measurement || measurement.visible);
+          const shouldShow = drawMode !== 'adjustPoints' && (!measurement || measurement.visible) && (!measurement || !measurement.arcHidden);
           obj.set('visible', shouldShow);
         }
         if (obj.type === 'rect' && obj.measurementId) {
@@ -911,20 +919,6 @@ export function FlashingCanvas({
       canvas.renderAll();
     }
   }, [drawMode, editingLocked]);
-
-  // Toggle point marker visibility
-  useEffect(() => {
-    if (!fabricRef.current) return;
-    const canvas = fabricRef.current;
-    canvas.getObjects().forEach((obj: any) => {
-      if (obj.isPointMarker) {
-        // Point markers: visible only if showPointMarkers is true AND not in adjustPoints mode
-        // (in adjustPoints mode they need to be visible for dragging)
-        obj.set('visible', showPointMarkers || drawMode === 'adjustPoints');
-      }
-    });
-    canvas.renderAll();
-  }, [showPointMarkers, drawMode]);
 
   // Helper to check if we should show Adjust Points confirmation
   const checkAdjustPointsExit = () => {
@@ -981,6 +975,9 @@ export function FlashingCanvas({
         if (obj.type === 'i-text') {
           // Text labels: respect textHidden state when showing
           obj.set('visible', newVisible && !measurement.textHidden);
+        } else if (obj.type === 'circle') {
+          // Angle arc: respect arcHidden state when showing
+          obj.set('visible', newVisible && !measurement.arcHidden);
         } else {
           obj.set('visible', newVisible);
         }
@@ -1011,6 +1008,28 @@ export function FlashingCanvas({
 
     setMeasurements(measurements.map(m =>
       m.id === id ? { ...m, textHidden: newTextHidden } : m
+    ));
+
+    canvas.renderAll();
+  };
+
+  // Toggle only the angle arc circle visibility (keeps text/line visible)
+  const handleToggleArcVisibility = (id: string) => {
+    const measurement = measurements.find(m => m.id === id);
+    if (!measurement || !fabricRef.current) return;
+
+    const canvas = fabricRef.current;
+    const newArcHidden = !measurement.arcHidden;
+
+    // Only toggle circle objects (the angle arcs), keep text/lines visible
+    canvas.getObjects().forEach((obj: any) => {
+      if (obj.measurementId === id && obj.type === 'circle') {
+        obj.set('visible', !newArcHidden && measurement.visible);
+      }
+    });
+
+    setMeasurements(measurements.map(m =>
+      m.id === id ? { ...m, arcHidden: newArcHidden } : m
     ));
 
     canvas.renderAll();
@@ -1945,20 +1964,6 @@ export function FlashingCanvas({
           Adjust Points
         </button>
 
-        <div className="h-8 w-px bg-slate-300" />
-
-        <button
-          onClick={() => setShowPointMarkers(s => !s)}
-          title={showPointMarkers ? 'Hide point markers' : 'Show point markers'}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            showPointMarkers
-              ? 'bg-white border border-slate-300 hover:bg-slate-50'
-              : 'bg-slate-100 border border-slate-300 text-slate-400'
-          }`}
-        >
-          ○ Points
-        </button>
-
         <button
           onClick={handleRecalibrateAll}
           disabled={editingLocked}
@@ -2072,6 +2077,21 @@ export function FlashingCanvas({
                       >
                         {m.textHidden ? 'Show Text' : 'Hide Text'}
                       </button>
+                      {m.type === 'angle' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!editingLocked && !checkAdjustPointsExit()) {
+                              handleToggleArcVisibility(m.id);
+                            }
+                          }}
+                          disabled={editingLocked || !m.visible}
+                          className={`text-xs px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded ${(editingLocked || !m.visible) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          title={m.arcHidden ? 'Show arc ring' : 'Hide arc ring'}
+                        >
+                          {m.arcHidden ? 'Show Arc' : 'Hide Arc'}
+                        </button>
+                      )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
