@@ -71,6 +71,30 @@ export function convertAreaToMetric(roofingSquares: number): number {
   return roofingSquares / SQM_TO_RS;
 }
 
+// -- Volume (m³ -> ft³) ------------------------------------------------------
+
+const SQM_TO_CUBIC_FT = SQM_TO_FT2 * M_TO_FT; // m³ -> ft³  (≈35.3147)
+
+/** Display a volume (stored in m³) in cubic feet, 2dp. */
+export function convertVolumeFt3(cubicM: number): number {
+  return Number((cubicM * SQM_TO_CUBIC_FT).toFixed(2));
+}
+
+/** Customer typed ft³, store as m³. */
+export function convertVolumeFt3ToMetric(ft3: number): number {
+  return ft3 / SQM_TO_CUBIC_FT;
+}
+
+/**
+ * Convert a volume value typed by the user (in their measurement system) into
+ * canonical metric storage (m³). Imperial users both flavours use ft³.
+ */
+export function volumeInputToMetric(input: number, system: MeasurementSystem): number {
+  const norm = normalizeMeasurementSystem(system);
+  if (norm === 'metric') return input;
+  return convertVolumeFt3ToMetric(input);
+}
+
 // -- Small-unit (mm ↔ in) ----------------------------------------------------
 //
 // Used by the flashings drawing tool, where canvas measurements are stored

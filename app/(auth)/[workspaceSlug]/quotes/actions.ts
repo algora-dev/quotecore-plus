@@ -853,31 +853,49 @@ export async function updateComponentSettings(id: string, updates: { input_mode?
   revalidatePath('/quotes');
 }
 
-export async function addComponentEntry(quoteComponentId: string, rawValue: number, areaPitch: number | null) {
+export async function addComponentEntry(quoteComponentId: string, rawValue: number, areaPitch: number | null, options?: { bypassHeightMultiplier?: boolean }) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
   await verifyComponentOwnership(supabase, quoteComponentId, profile.company_id);
   const { data: comp } = await supabase.from('quote_components').select('*').eq('id', quoteComponentId).single();
   if (!comp) throw new Error('Component not found');
 
-  // H-02 (Gerald Round 8): for length_x_height and multi_lineal_lxh, the user
-  // enters a length but the stored unit is area (length × height). Apply the
-  // component's height multiplier before pricing, matching what digital takeoff
-  // already does in saveTakeoffMeasurements.
   let adjustedValue = rawValue;
+  // Fetch component library for height/depth metadata if needed.
   const needsHeightMultiplier =
-    comp.measurement_type === 'length_x_height' ||
-    comp.measurement_type === 'multi_lineal_lxh';
-  if (needsHeightMultiplier && comp.component_library_id) {
+    !options?.bypassHeightMultiplier &&
+    (comp.measurement_type === 'length_x_height' ||
+     comp.measurement_type === 'multi_lineal_lxh');
+  const needsDepthMultiplier = comp.measurement_type === 'volume';
+
+  if ((needsHeightMultiplier || needsDepthMultiplier) && comp.component_library_id) {
     const { data: lib } = await supabase
       .from('component_library')
-      .select('height_value_mm')
+      .select('height_value_mm, depth_value_mm')
       .eq('id', comp.component_library_id)
       .eq('company_id', profile.company_id)
       .maybeSingle();
-    const heightM = lib?.height_value_mm ? lib.height_value_mm / 1000 : null;
-    if (heightM && heightM > 0) {
-      adjustedValue = rawValue * heightM;
+    const libRow = lib as { height_value_mm?: number | null; depth_value_mm?: number | null } | null;
+
+    // H-02 (Gerald Round 8): for length_x_height and multi_lineal_lxh, the
+    // user enters a length but the stored unit is area (length × height).
+    // Apply the component's height multiplier before pricing, matching what
+    // digital takeoff already does in saveTakeoffMeasurements.
+    // SKIPPED when bypassHeightMultiplier is true (user provided their own area).
+    if (needsHeightMultiplier) {
+      const heightM = libRow?.height_value_mm ? libRow.height_value_mm / 1000 : null;
+      if (heightM && heightM > 0) {
+        adjustedValue = rawValue * heightM;
+      }
+    }
+
+    // Volume (Preset Depth): user enters an area; multiply by the preset
+    // depth to get the volume. Matches takeoff path logic.
+    if (needsDepthMultiplier) {
+      const depthM = libRow?.depth_value_mm ? libRow.depth_value_mm / 1000 : null;
+      if (depthM && depthM > 0) {
+        adjustedValue = rawValue * depthM;
+      }
     }
   }
 

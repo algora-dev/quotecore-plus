@@ -9,6 +9,7 @@ import {
   convertLinearRate,
   convertAreaRate,    // -> $/RS (2dp)
   convertAreaFt2Rate, // -> $/ft² (4dp)
+  convertVolumeFt3,   // -> ft³ (number, 2dp)
 } from './conversions';
 import { normalizeMeasurementSystem } from '../types';
 import type { MeasurementSystem } from '../types';
@@ -27,6 +28,13 @@ export function formatArea(sqm: number, system: MeasurementSystem): string {
   if (norm === 'metric') return `${sqm.toFixed(2)} m²`;
   if (norm === 'imperial_ft') return `${convertAreaFt2(sqm)} ft²`;
   return `${convertArea(sqm)} RS`;
+}
+
+/** Format a volume (stored in m³) with the right unit suffix. */
+export function formatVolume(cubicM: number, system: MeasurementSystem): string {
+  const norm = normalizeMeasurementSystem(system);
+  if (norm === 'metric') return `${cubicM.toFixed(3)} m³`;
+  return `${convertVolumeFt3(cubicM)} ft³`;
 }
 
 /** Format a linear rate ($/m canonical) with the right per-unit suffix. */
