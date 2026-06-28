@@ -1502,9 +1502,14 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
   // Metric vs imperial drives every unit option in this modal so the two
   // systems never mix. imperial_ft / imperial_rs / imperial all map to imperial.
   const isMetric = measurementSystem === 'metric';
+  const isImperialRs = measurementSystem === 'imperial_rs' || measurementSystem === 'imperial';
+  // Area unit depends on the full system: m² (metric), ft² (imperial_ft),
+  // or RS Roofing Squares (imperial_rs / legacy imperial).
   const UNITS = isMetric
     ? { linear: 'm', area: 'm\u00b2', volume: 'm\u00b3' }
-    : { linear: 'ft', area: 'ft\u00b2', volume: 'ft\u00b3' };
+    : isImperialRs
+      ? { linear: 'ft', area: 'RS', volume: 'ft\u00b3' }
+      : { linear: 'ft', area: 'ft\u00b2', volume: 'ft\u00b3' };
   // Variable dimension units by system (Task 3): metric mm/M/°, imperial in/ft/°.
   const VAR_UNITS: { value: string; label: string }[] = isMetric
     ? [ { value: 'mm', label: 'mm' }, { value: 'm', label: 'M' }, { value: '\u00b0', label: '\u00b0' } ]
@@ -1552,9 +1557,13 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
   );
   // Split measurementDisplay into numeric value + unit selector so the user
   // doesn't have to type the unit manually. Parse from existingLine if present.
+  // All common units available in the dropdown so the user can pick
+  // whatever fits — includes RS (Roofing Squares) for imperial_rs users.
   const FIXED_QTY_UNITS = isMetric
     ? [UNITS.area, UNITS.linear, UNITS.volume]
-    : [UNITS.area, UNITS.linear, UNITS.volume];
+    : isImperialRs
+      ? ['RS', 'ft\u00b2', 'ft', 'ft\u00b3', 'm\u00b2', 'm']
+      : ['ft\u00b2', 'ft', 'ft\u00b3', 'm\u00b2', 'm'];
   function parseMeasurementDisplay(raw: string): { value: string; unit: string } {
     if (!raw) return { value: '', unit: FIXED_QTY_UNITS[0] };
     // Try to split numeric prefix from unit suffix (e.g. "38.56m²" → "38.56" + "m²").
