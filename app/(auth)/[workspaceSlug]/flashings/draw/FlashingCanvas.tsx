@@ -2086,10 +2086,10 @@ export function FlashingCanvas({
                             }
                           }}
                           disabled={editingLocked || !m.visible}
-                          className={`flex items-center justify-center w-7 h-6 bg-slate-200 hover:bg-slate-300 rounded text-sm ${(editingLocked || !m.visible) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className={`flex items-center justify-center w-7 h-6 bg-slate-200 hover:bg-slate-300 rounded ${(editingLocked || !m.visible) ? 'opacity-50 cursor-not-allowed' : ''}`}
                           title={m.arcHidden ? 'Show angle arc ring' : 'Hide angle arc ring'}
                         >
-                          <span style={{ color: m.arcHidden ? '#94a3b8' : '#FF6B35', fontSize: '16px', lineHeight: 1 }}>○</span>
+                          <span style={{ color: m.arcHidden ? '#94a3b8' : '#FF6B35', fontSize: '20px', lineHeight: 1, fontWeight: 'bold' }}>○</span>
                         </button>
                       )}
                       <button

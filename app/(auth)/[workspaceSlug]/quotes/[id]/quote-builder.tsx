@@ -1819,33 +1819,34 @@ function ExpandableComponent({
                 {/* Entry mode toggle */}
                 <div className="flex items-center gap-1">
                   {(() => {
-                    let modes: { key: 'direct' | 'dims' | 'volume' | 'area_depth'; label: string }[] = [];
+                    let modes: { key: 'direct' | 'dims' | 'volume' | 'area_depth'; label: string; title: string }[] = [];
                     if (isAreaType) {
                       modes = [
-                        { key: 'direct', label: 'Area' },
-                        { key: 'dims', label: 'W × H' },
+                        { key: 'direct', label: 'Area', title: 'Enter total area (m²)' },
+                        { key: 'dims', label: 'W × H', title: 'Width × Height = area (m²)' },
                       ];
                     } else if (isVolumePreset) {
                       modes = [
-                        { key: 'direct', label: 'Area' },
-                        { key: 'dims', label: 'W × H' },
-                        { key: 'volume', label: 'Volume' },
+                        { key: 'direct', label: 'Area', title: 'Area squared × preset depth = volume' },
+                        { key: 'dims', label: 'W × H', title: 'Width × Height × preset depth = volume' },
+                        { key: 'volume', label: 'Volume', title: 'Enter total cubic volume (m³)' },
                       ];
                     } else if (isVolume3d) {
                       modes = [
-                        { key: 'direct', label: 'Volume' },
-                        { key: 'dims', label: 'L × W × D' },
-                        { key: 'area_depth', label: 'Area + Depth' },
+                        { key: 'direct', label: 'Volume', title: 'Enter total cubic volume (m³)' },
+                        { key: 'dims', label: 'L × W × D', title: 'Length × Width × Depth = volume (m³)' },
+                        { key: 'area_depth', label: 'Area + Depth', title: 'Area squared × custom depth = volume (m³)' },
                       ];
                     } else if (isLxhPreset) {
                       modes = [
-                        { key: 'direct', label: 'Length' },
-                        { key: 'dims', label: 'L × H' },
+                        { key: 'direct', label: 'Length', title: 'Length × preset height = area (m²)' },
+                        { key: 'dims', label: 'L × H', title: 'Length × Height = area (m²)' },
                       ];
                     }
                     return modes.map(m => (
                       <button
                         key={m.key}
+                        title={m.title}
                         onClick={() => {
                           setEntryMode(m.key);
                           setInputValue('');
