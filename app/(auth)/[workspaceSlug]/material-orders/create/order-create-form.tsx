@@ -1331,37 +1331,41 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
                         ) : (
                           <div>
                             {line.pricedQuantity != null && (
-                              <p className="font-medium mb-1">
+                              <p className="font-medium">
                                 Quantity: <span className="text-black">{line.pricedQuantity}</span>
                                 {line.measurementDisplay && (
                                   <span className="text-slate-400 ml-1">({line.measurementDisplay})</span>
                                 )}
                               </p>
                             )}
-                            <p className="font-medium text-xs text-slate-500 uppercase mb-2">
-                              {line.entryMode === 'area' ? 'Areas' : line.entryMode === 'volume' ? 'Volumes' : 'Lengths'} ({line.lengthUnit}):
-                            </p>
-                            <div className="space-y-2">
-                              {line.lengths?.map((entry, idx) => (
-                                <div key={idx}>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium">{entry.length}{line.lengthUnit}</span>
-                                    <span className="text-slate-400">×</span>
-                                    <span className="text-slate-600">{entry.multiplier}</span>
-                                  </div>
-                                  {entry.variables && entry.variables.length > 0 && (
-                                    <div className="text-xs text-slate-500 pl-4 mt-0.5">
-                                      {entry.variables.map((v, vIdx) => (
-                                        <span key={vIdx} className="mr-2">
-                                          {v.name}={v.value}{v.unit}
-                                          {vIdx < entry.variables!.length - 1 && ', '}
-                                        </span>
-                                      ))}
+                            {line.pricedQuantity == null && (
+                              <>
+                                <p className="font-medium text-xs text-slate-500 uppercase mb-2">
+                                  {line.entryMode === 'area' ? 'Areas' : line.entryMode === 'volume' ? 'Volumes' : 'Lengths'} ({line.lengthUnit}):
+                                </p>
+                                <div className="space-y-2">
+                                  {line.lengths?.map((entry, idx) => (
+                                    <div key={idx}>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium">{entry.length}{line.lengthUnit}</span>
+                                        <span className="text-slate-400">×</span>
+                                        <span className="text-slate-600">{entry.multiplier}</span>
+                                      </div>
+                                      {entry.variables && entry.variables.length > 0 && (
+                                        <div className="text-xs text-slate-500 pl-4 mt-0.5">
+                                          {entry.variables.map((v, vIdx) => (
+                                            <span key={vIdx} className="mr-2">
+                                              {v.name}={v.value}{v.unit}
+                                              {vIdx < entry.variables!.length - 1 && ', '}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
                                     </div>
-                                  )}
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
+                              </>
+                            )}
                           </div>
                         )}
                         {line.notes && <p className="text-slate-600 mt-2 text-xs italic">{line.notes}</p>}

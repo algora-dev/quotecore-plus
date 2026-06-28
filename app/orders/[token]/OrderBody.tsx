@@ -269,37 +269,40 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
                       </p>
                     ) : line.lengths ? (
                       <div>
-                        {line.priced_quantity != null && (
-                          <p className="mb-1">
+                        {line.priced_quantity != null ? (
+                          <p>
                             Quantity: <span className="font-medium text-black">{line.priced_quantity}</span>
                             {line.measurement_display && (
                               <span className="text-slate-400 ml-1">({line.measurement_display})</span>
                             )}
                           </p>
+                        ) : (
+                          <>
+                            <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">
+                              {line.entry_mode === 'area' ? 'Areas' : line.entry_mode === 'volume' ? 'Volumes' : 'Lengths'} ({(line.length_unit || 'm').toUpperCase()})
+                            </p>
+                            <ul className="space-y-1">
+                              {((line.lengths as unknown) as LengthEntry[]).map((entry, idx) => (
+                                <li key={idx}>
+                                  <span className="font-medium">{String(entry.length)}{line.length_unit}</span>
+                                  {' × '}{String(entry.multiplier)}
+                                  {entry.calcLength != null && entry.calcWidth != null && (
+                                    <span className="text-slate-400 text-xs italic ml-1">
+                                      ({entry.calcLength}×{entry.calcWidth}{entry.calcDepth != null ? `×${entry.calcDepth}` : ''})
+                                    </span>
+                                  )}
+                                  {entry.variables && entry.variables.length > 0 && (
+                                    <div className="text-xs text-slate-500 pl-3 mt-0.5">
+                                      {entry.variables.map((v, vi) => (
+                                        <span key={vi} className="mr-2">{v.name}={String(v.value)}{v.unit}</span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          </>
                         )}
-                        <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">
-                          {line.entry_mode === 'area' ? 'Areas' : line.entry_mode === 'volume' ? 'Volumes' : 'Lengths'} ({(line.length_unit || 'm').toUpperCase()})
-                        </p>
-                        <ul className="space-y-1">
-                          {((line.lengths as unknown) as LengthEntry[]).map((entry, idx) => (
-                            <li key={idx}>
-                              <span className="font-medium">{String(entry.length)}{line.length_unit}</span>
-                              {' × '}{String(entry.multiplier)}
-                              {entry.calcLength != null && entry.calcWidth != null && (
-                                <span className="text-slate-400 text-xs italic ml-1">
-                                  ({entry.calcLength}×{entry.calcWidth}{entry.calcDepth != null ? `×${entry.calcDepth}` : ''})
-                                </span>
-                              )}
-                              {entry.variables && entry.variables.length > 0 && (
-                                <div className="text-xs text-slate-500 pl-3 mt-0.5">
-                                  {entry.variables.map((v, vi) => (
-                                    <span key={vi} className="mr-2">{v.name}={String(v.value)}{v.unit}</span>
-                                  ))}
-                                </div>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
                       </div>
                     ) : null}
                   </div>
