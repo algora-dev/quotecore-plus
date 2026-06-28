@@ -28,7 +28,7 @@ export default async function OrderLineSelectPage({ params, searchParams }: Prop
   // Load its components — the user will pick which ones to include in the order
   const { data: components } = await supabase
     .from('quote_components')
-    .select('id, name, measurement_type, final_quantity, material_cost, labour_cost')
+    .select('id, name, measurement_type, final_quantity, priced_quantity, material_cost, labour_cost')
     .eq('quote_id', quoteId)
     .order('sort_order', { ascending: true });
 

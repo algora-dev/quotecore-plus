@@ -16,8 +16,13 @@ export interface QuoteComponentData {
   final_quantity: number;
   measurement_type: string;
   sort_order: number;
+  /** Snapshot of priced_quantity from quote_components (non-null = Fixed Quantity pricing). */
+  priced_quantity: number | null;
+  /** Snapshot of pack_size from quote_components (the pack size the priced_quantity was computed from). */
+  pack_size_snapshot: number | null;
   component_library?: {
     flashing_ids: string[] | null;
+    pricing_strategy: string | null;
   } | null;
   measurements?: { measurement_value: number; measurement_unit: string }[];
 }
@@ -66,7 +71,9 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
         final_quantity,
         measurement_type,
         sort_order,
-        component_library:component_library_id(flashing_ids)
+        priced_quantity,
+        pack_size_snapshot,
+        component_library:component_library_id(flashing_ids, pricing_strategy)
       `)
       .eq('quote_id', quoteId)
       .order('sort_order', { ascending: true });
@@ -175,6 +182,8 @@ export async function loadQuoteData(quoteId: string): Promise<QuoteData | null> 
         final_quantity: comp.final_quantity,
         measurement_type: comp.measurement_type,
         sort_order: comp.sort_order,
+        priced_quantity: comp.priced_quantity ?? null,
+        pack_size_snapshot: comp.pack_size_snapshot ?? null,
         component_library: Array.isArray(comp.component_library) && comp.component_library.length > 0
           ? comp.component_library[0]
           : comp.component_library,

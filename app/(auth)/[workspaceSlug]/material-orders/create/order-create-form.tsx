@@ -125,6 +125,12 @@ interface OrderLineItem {
   // Linear / area / volume mode
   lengths?: LengthEntry[];
   lengthUnit?: string;
+  // Fixed Quantity display: when the component uses per_pack_* pricing,
+  // pricedQuantity is the rounded-up purchasable unit count and
+  // measurementDisplay is the human-readable total length/area/volume
+  // (e.g. "23.4m" or "12.5m\u00b2"). Rendered as: qty (measurement).
+  pricedQuantity?: number;
+  measurementDisplay?: string;
   // Common
   notes?: string;
   showComponentName: boolean;
@@ -280,6 +286,26 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           ? toDisplayArea(rawQty)
           : rawQty;
 
+      // Fixed Quantity display: when the component uses per_pack_* pricing,
+      // priced_quantity is the rounded-up purchasable unit count and
+      // final_quantity is the real measured total. Build a human-readable
+      // measurement string (e.g. "23.4m" or "12.5m²") for display alongside
+      // the quantity.
+      const pricedQty = comp.priced_quantity ?? null;
+      let measurementDisplay: string | undefined;
+      if (pricedQty != null) {
+        const mt = comp.measurement_type;
+        if (mt === 'lineal') {
+          measurementDisplay = `${Math.round(displayQty * 100) / 100}${lengthUnit}`;
+        } else if (mt === 'area') {
+          measurementDisplay = `${Math.round(displayQty * 100) / 100}${areaUnit}`;
+        } else if (mt === 'volume') {
+          measurementDisplay = `${Math.round(displayQty * 100) / 100}m³`;
+        } else {
+          measurementDisplay = `${Math.round(displayQty * 100) / 100} ${singleUnit}`;
+        }
+      }
+
       // Check if we have individual measurements for this component
       const hasMeasurements = comp.measurements && comp.measurements.length > 0;
 
@@ -309,6 +335,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           unit: 'pcs',
           lengths,
           lengthUnit: entryUnit,
+          pricedQuantity: pricedQty ?? undefined,
+          measurementDisplay,
           showComponentName: true,
           showFlashingImage: !!flashing?.image_url,
           showMeasurements: true,
@@ -322,6 +350,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           entryMode: 'single',
           quantity: displayQty,
           unit: singleUnit,
+          pricedQuantity: pricedQty ?? undefined,
+          measurementDisplay,
           showComponentName: true,
           showFlashingImage: !!flashing?.image_url,
           showMeasurements: true,
@@ -413,6 +443,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
       showComponentName: line.show_component_name ?? false,
       showFlashingImage: line.show_flashing_image ?? false,
       showMeasurements: line.show_measurements ?? false,
+      pricedQuantity: line.priced_quantity ?? undefined,
+      measurementDisplay: line.measurement_display ?? undefined,
     }));
     
     console.log('[OrderCreateForm] Loaded', mappedLines.length, 'line items');
@@ -679,6 +711,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           showComponentName: line.showComponentName,
           showFlashingImage: line.showFlashingImage,
           showMeasurements: line.showMeasurements,
+          pricedQuantity: line.pricedQuantity,
+          measurementDisplay: line.measurementDisplay,
           sortOrder: index,
         })),
       });
@@ -958,11 +992,14 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               <div className="space-y-3">
                 {orderLines.map((line, index) => (
                   <div key={line.id} onMouseEnter={() => setHoveredLineId(line.id)} onMouseLeave={() => setHoveredLineId(null)} className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50 cursor-pointer transition-all duration-150 hover:border-orange-300 hover:shadow-[0_0_8px_rgba(255,107,53,0.12)]">
-                    {/* Component Header */}
-                    <div className="px-3 py-2 bg-white border-b border-slate-200">
+                    {/* Component Header - click anywhere toggles expand/collapse */}
+                    <div
+                      className="px-3 py-2 bg-white border-b border-slate-200"
+                      onClick={() => toggleCollapsed(line.id)}
+                    >
                       <div className="flex items-start gap-2 mb-2">
                         {/* Up/Down Arrows */}
-                        <div className="flex flex-col gap-0.5">
+                        <div className="flex flex-col gap-0.5" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
                             onClick={() => moveLineUp(line.id)}
@@ -990,7 +1027,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
                         {/* Collapse toggle */}
                         <button
                           type="button"
-                          onClick={() => toggleCollapsed(line.id)}
+                          onClick={(e) => { e.stopPropagation(); toggleCollapsed(line.id); }}
                           className="p-0.5 rounded hover:bg-slate-100 text-slate-400 flex-shrink-0"
                           title={collapsedLines.has(line.id) ? 'Expand' : 'Collapse'}
                         >
@@ -1000,7 +1037,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
                         </button>
                       </div>
                       {!collapsedLines.has(line.id) && (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                         <button
                           type="button"
                           onClick={() => openEditModal(line.id)}
@@ -1021,7 +1058,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
 
                     {/* Visibility Controls - hidden when collapsed */}
                     {!collapsedLines.has(line.id) && (
-                    <div className="px-3 py-2 space-y-2">
+                    <div className="px-3 py-2 space-y-2" onClick={(e) => e.stopPropagation()}>
                       <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:bg-white rounded px-2 py-1.5 transition-colors">
                         <input
                           type="checkbox"
@@ -1285,9 +1322,22 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
                     {line.showMeasurements && (
                       <div className="text-sm text-slate-700">
                         {line.entryMode === 'single' ? (
-                          <p className="font-medium">Quantity: {line.quantity}</p>
+                          <p className="font-medium">
+                            Quantity: <span className="text-black">{line.pricedQuantity ?? line.quantity}</span>
+                            {line.measurementDisplay && (
+                              <span className="text-slate-400 ml-1">({line.measurementDisplay})</span>
+                            )}
+                          </p>
                         ) : (
                           <div>
+                            {line.pricedQuantity != null && (
+                              <p className="font-medium mb-1">
+                                Quantity: <span className="text-black">{line.pricedQuantity}</span>
+                                {line.measurementDisplay && (
+                                  <span className="text-slate-400 ml-1">({line.measurementDisplay})</span>
+                                )}
+                              </p>
+                            )}
                             <p className="font-medium text-xs text-slate-500 uppercase mb-2">
                               {line.entryMode === 'area' ? 'Areas' : line.entryMode === 'volume' ? 'Volumes' : 'Lengths'} ({line.lengthUnit}):
                             </p>

@@ -8,6 +8,7 @@ interface Component {
   name: string;
   measurement_type: string | null;
   final_quantity: number | null;
+  priced_quantity: number | null;
   material_cost: number | null;
   labour_cost: number | null;
 }
@@ -21,6 +22,9 @@ interface Props {
 }
 
 function formatQty(comp: Component): string {
+  // Fixed Quantity: show priced units (rounded-up purchasable count)
+  // plus the actual measurement in brackets.
+  const priced = comp.priced_quantity;
   const qty = comp.final_quantity;
   if (!qty) return '';
   const mt = comp.measurement_type;
@@ -29,7 +33,11 @@ function formatQty(comp: Component): string {
     : mt === 'area' ? 'm²'
     : mt === 'quantity' ? 'pcs'
     : '';
-  return `${Math.round(qty * 100) / 100}${unit ? ' ' + unit : ''}`;
+  const measurementStr = `${Math.round(qty * 100) / 100}${unit ? ' ' + unit : ''}`;
+  if (priced != null) {
+    return `${priced} (${measurementStr})`;
+  }
+  return measurementStr;
 }
 
 export function LineSelector({ quoteId, workspaceSlug, layout, column, components }: Props) {

@@ -962,6 +962,23 @@ export function FlashingCanvas({
     setDrawMode('none');
   };
 
+  // Finish button: deselects everything and exits the active creative tool
+  // (Line / Text / Pencil / Edit). Lets the user cleanly drop back to a
+  // neutral state so they can pick a new tool, interact with the sidebar,
+  // or save without the current tool staying sticky.
+  const handleFinishTool = () => {
+    const canvas = fabricRef.current;
+    if (canvas) {
+      canvas.discardActiveObject();
+      canvas.renderAll();
+    }
+    setLinePoints([]);
+    setCursorPos(null);
+    setSelectedPoint(null);
+    setSelectedMeasurement(null);
+    setDrawMode('none');
+  };
+
   const handleToggleMeasurementVisibility = (id: string) => {
     const measurement = measurements.find(m => m.id === id);
     if (!measurement || !fabricRef.current) return;
@@ -2018,8 +2035,8 @@ export function FlashingCanvas({
         </div>
       </div>
 
-      {/* Live Measurements - Subtle Professional Design */}
-      <div className="mb-4 p-3 bg-slate-100 border border-slate-200 rounded-lg inline-block" data-copilot="flashing-live-readout">
+      {/* Live Measurements + Finish button - Subtle Professional Design */}
+      <div className="mb-4 p-3 bg-slate-100 border border-slate-200 rounded-lg inline-flex items-center" data-copilot="flashing-live-readout">
         <div className="flex gap-6 text-sm">
           <div>
             <span className="text-slate-600 font-medium">Length:</span>{' '}
@@ -2034,6 +2051,17 @@ export function FlashingCanvas({
             </span>
           </div>
         </div>
+        {/* Orange Finish button - appears when a creative tool is active.
+            Clicking it deselects everything and exits the tool so the user
+            can freely pick a new tool, interact with the sidebar, or save. */}
+        {(['line', 'text', 'draw', 'edit'] as DrawMode[]).includes(drawMode) && (
+          <button
+            onClick={handleFinishTool}
+            className="ml-4 px-4 py-1.5 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          >
+            Finish
+          </button>
+        )}
       </div>
 
       {/* Main Layout: Sidebar + Canvas */}

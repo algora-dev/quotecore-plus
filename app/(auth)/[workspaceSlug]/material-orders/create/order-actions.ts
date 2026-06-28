@@ -55,6 +55,10 @@ interface SaveOrderInput {
     showComponentName: boolean;
     showFlashingImage: boolean;
     showMeasurements: boolean;
+    /** Fixed Quantity: rounded-up purchasable unit count. */
+    pricedQuantity?: number;
+    /** Fixed Quantity: pre-computed measurement display (e.g. "23.4m"). */
+    measurementDisplay?: string;
     sortOrder: number;
   }[];
 }
@@ -263,6 +267,8 @@ export async function saveDraftOrder(input: SaveOrderInput) {
         show_component_name: item.showComponentName,
         show_flashing_image: item.showFlashingImage,
         show_measurements: item.showMeasurements,
+        priced_quantity: item.pricedQuantity || null,
+        measurement_display: item.measurementDisplay || null,
         sort_order: item.sortOrder,
       }));
       
