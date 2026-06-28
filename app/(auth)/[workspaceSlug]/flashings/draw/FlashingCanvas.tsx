@@ -124,6 +124,7 @@ export function FlashingCanvas({
   const [linePoints, setLinePoints] = useState<{ x: number; y: number }[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
   const [selectedMeasurement, setSelectedMeasurement] = useState<string | null>(null);
+  const [showPointMarkers, setShowPointMarkers] = useState(true);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [calculatingAngleId, setCalculatingAngleId] = useState<string | null>(null);
   // Replaces the old window.prompt() flow for Edit Value. Both state
@@ -150,11 +151,13 @@ export function FlashingCanvas({
   // Refs
   const drawModeRef = useRef<DrawMode>('none');
   const linePointsRef = useRef<{ x: number; y: number }[]>([]);
+  const showPointMarkersRef = useRef(true);
 
   useEffect(() => {
     drawModeRef.current = drawMode;
     linePointsRef.current = linePoints;
-  }, [drawMode, linePoints]);
+    showPointMarkersRef.current = showPointMarkers;
+  }, [drawMode, linePoints, showPointMarkers]);
 
   // Refs for stable history saving
   const measurementsRef = useRef<MeasurementItem[]>([]);
@@ -380,6 +383,8 @@ export function FlashingCanvas({
         });
         (marker as any).pointIndex = currentPoints.length; // Store which point this is
         (marker as any).isPointMarker = true; // Flag to identify point markers
+        // Respect showPointMarkers toggle (but always show in adjustPoints mode)
+        marker.set('visible', showPointMarkersRef.current || (drawModeRef.current as string) === 'adjustPoints');
         canvas.add(marker);
 
         const newMeasurements: MeasurementItem[] = [];
@@ -899,6 +904,20 @@ export function FlashingCanvas({
       canvas.renderAll();
     }
   }, [drawMode, editingLocked]);
+
+  // Toggle point marker visibility
+  useEffect(() => {
+    if (!fabricRef.current) return;
+    const canvas = fabricRef.current;
+    canvas.getObjects().forEach((obj: any) => {
+      if (obj.isPointMarker) {
+        // Point markers: visible only if showPointMarkers is true AND not in adjustPoints mode
+        // (in adjustPoints mode they need to be visible for dragging)
+        obj.set('visible', showPointMarkers || drawMode === 'adjustPoints');
+      }
+    });
+    canvas.renderAll();
+  }, [showPointMarkers, drawMode]);
 
   // Helper to check if we should show Adjust Points confirmation
   const checkAdjustPointsExit = () => {
@@ -1920,6 +1939,18 @@ export function FlashingCanvas({
         </button>
 
         <div className="h-8 w-px bg-slate-300" />
+
+        <button
+          onClick={() => setShowPointMarkers(s => !s)}
+          title={showPointMarkers ? 'Hide point markers' : 'Show point markers'}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+            showPointMarkers
+              ? 'bg-white border border-slate-300 hover:bg-slate-50'
+              : 'bg-slate-100 border border-slate-300 text-slate-400'
+          }`}
+        >
+          ○ Points
+        </button>
 
         <button
           onClick={handleRecalibrateAll}
