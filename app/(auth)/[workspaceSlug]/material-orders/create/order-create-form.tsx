@@ -1550,9 +1550,25 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
   const [pricedQuantity, setPricedQuantity] = useState(
     existingLine?.pricedQuantity != null ? String(existingLine.pricedQuantity) : ''
   );
-  const [measurementDisplay, setMeasurementDisplay] = useState(
-    existingLine?.measurementDisplay || ''
-  );
+  // Split measurementDisplay into numeric value + unit selector so the user
+  // doesn't have to type the unit manually. Parse from existingLine if present.
+  const FIXED_QTY_UNITS = isMetric
+    ? [UNITS.area, UNITS.linear, UNITS.volume]
+    : [UNITS.area, UNITS.linear, UNITS.volume];
+  function parseMeasurementDisplay(raw: string): { value: string; unit: string } {
+    if (!raw) return { value: '', unit: FIXED_QTY_UNITS[0] };
+    // Try to split numeric prefix from unit suffix (e.g. "38.56m²" → "38.56" + "m²").
+    const match = raw.match(/^([\d.\s]+)\s*(.*)$/);
+    if (match) {
+      const val = match[1].trim();
+      const unit = match[2].trim();
+      return { value: val, unit: unit || FIXED_QTY_UNITS[0] };
+    }
+    return { value: raw, unit: FIXED_QTY_UNITS[0] };
+  }
+  const parsedInitial = parseMeasurementDisplay(existingLine?.measurementDisplay || '');
+  const [measurementValue, setMeasurementValue] = useState(parsedInitial.value);
+  const [measurementUnit, setMeasurementUnit] = useState(parsedInitial.unit);
   // Toggle for showing the Fixed Quantity Display section on new items.
   // Auto-shows when editing a line that already has pricedQuantity.
   const [showFixedQty, setShowFixedQty] = useState(existingLine?.pricedQuantity != null);
@@ -1640,7 +1656,10 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
     // normal display). pricedQuantity is parsed as a number; measurementDisplay
     // is free-text so the user can type "240m²" or anything else.
     const parsedPricedQty = pricedQuantity.trim() === '' ? undefined : parseFloat(pricedQuantity);
-    const trimmedMeasurement = measurementDisplay.trim() === '' ? undefined : measurementDisplay.trim();
+    // Combine numeric value + unit selector into the display string.
+    const trimmedMeasurement = measurementValue.trim() === ''
+      ? undefined
+      : `${measurementValue.trim()}${measurementUnit}`;
 
     if (entryMode === 'single') {
       if (quantity <= 0) {
@@ -1854,13 +1873,24 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1">Measurement</label>
-                  <input
-                    type="text"
-                    value={measurementDisplay}
-                    onChange={(e) => setMeasurementDisplay(e.target.value)}
-                    placeholder="e.g. 231.71m²"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={measurementValue}
+                      onChange={(e) => setMeasurementValue(e.target.value)}
+                      placeholder="e.g. 231.71"
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                    <select
+                      value={measurementUnit}
+                      onChange={(e) => setMeasurementUnit(e.target.value)}
+                      className="w-20 px-2 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    >
+                      {FIXED_QTY_UNITS.map((u) => (
+                        <option key={u} value={u}>{u}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
