@@ -792,6 +792,13 @@ export function FlashingCanvas({
             console.log('[FlashingCanvas] Successfully loaded', fabricRef.current.getObjects().length, 'objects');
           }
 
+          // Apply showPointMarkers state to loaded point markers
+          fabricRef.current.getObjects().forEach((obj: any) => {
+            if (obj.isPointMarker) {
+              obj.set('visible', showPointMarkersRef.current || drawModeRef.current === 'adjustPoints');
+            }
+          });
+
           fabricRef.current.renderAll();
         });
 
