@@ -63,6 +63,7 @@ interface MeasurementItem {
   value: number;
   originalValue: number;
   visible: boolean;
+  textHidden?: boolean;
   labelObjectId?: string;
   // For angles
   interiorValue?: number;
@@ -951,12 +952,39 @@ export function FlashingCanvas({
     // Find ALL objects with this measurementId (arc + text for angles, just text for lengths)
     canvas.getObjects().forEach((obj: any) => {
       if (obj.measurementId === id) {
-        obj.set('visible', newVisible);
+        if (obj.type === 'i-text') {
+          // Text labels: respect textHidden state when showing
+          obj.set('visible', newVisible && !measurement.textHidden);
+        } else {
+          obj.set('visible', newVisible);
+        }
       }
     });
 
     setMeasurements(measurements.map(m =>
       m.id === id ? { ...m, visible: newVisible } : m
+    ));
+
+    canvas.renderAll();
+  };
+
+  // Toggle only the text label visibility (keeps line/arc visible)
+  const handleToggleTextVisibility = (id: string) => {
+    const measurement = measurements.find(m => m.id === id);
+    if (!measurement || !fabricRef.current) return;
+
+    const canvas = fabricRef.current;
+    const newTextHidden = !measurement.textHidden;
+
+    // Only toggle i-text objects (the value labels), keep lines/arcs visible
+    canvas.getObjects().forEach((obj: any) => {
+      if (obj.measurementId === id && obj.type === 'i-text') {
+        obj.set('visible', !newTextHidden);
+      }
+    });
+
+    setMeasurements(measurements.map(m =>
+      m.id === id ? { ...m, textHidden: newTextHidden } : m
     ));
 
     canvas.renderAll();
@@ -1992,19 +2020,34 @@ export function FlashingCanvas({
                     <span className="text-xs font-medium text-slate-600">
                       {m.type === 'length' ? 'Length' : 'Angle'}
                     </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!editingLocked && !checkAdjustPointsExit()) {
-                          handleToggleMeasurementVisibility(m.id);
-                        }
-                      }}
-                      disabled={editingLocked}
-                      className={`text-xs px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      title={m.visible ? 'Hide' : 'Show'}
-                    >
-                      {m.visible ? 'Hide' : 'Show'}
-                    </button>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!editingLocked && !checkAdjustPointsExit()) {
+                            handleToggleTextVisibility(m.id);
+                          }
+                        }}
+                        disabled={editingLocked || !m.visible}
+                        className={`text-xs px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded ${(editingLocked || !m.visible) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        title={m.textHidden ? 'Show text' : 'Hide text'}
+                      >
+                        {m.textHidden ? 'Show Text' : 'Hide Text'}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!editingLocked && !checkAdjustPointsExit()) {
+                            handleToggleMeasurementVisibility(m.id);
+                          }
+                        }}
+                        disabled={editingLocked}
+                        className={`text-xs px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        title={m.visible ? 'Hide all' : 'Show all'}
+                      >
+                        {m.visible ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
                   </div>
                   <div className="text-base font-bold text-slate-900 mb-3">
                     {m.type === 'length' ? `${formatLength(m.value, lengthUnit)}${lengthUnit}` : `${m.value}°`}

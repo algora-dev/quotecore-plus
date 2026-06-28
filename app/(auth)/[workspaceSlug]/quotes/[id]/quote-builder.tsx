@@ -309,7 +309,7 @@ export function QuoteBuilder({
     });
   }
 
-  async function handleAddEntry(compId: string, rawInputValue: number, options?: { bypassHeightMultiplier?: boolean; convertAs?: 'area' | 'linear' | 'volume' | 'none' }) {
+  async function handleAddEntry(compId: string, rawInputValue: number, options?: { bypassHeightMultiplier?: boolean; bypassDepthMultiplier?: boolean; convertAs?: 'area' | 'linear' | 'volume' | 'none' }) {
     const comp = components.find(c => c.id === compId);
     // Convert imperial inputs to metric for storage. The helpers handle the
     // 3 systems correctly:
@@ -1372,7 +1372,7 @@ function ExpandableComponent({
   roofArea?: QuoteRoofAreaRow;
   quote: QuoteRow;
   currency: string;
-  onAddEntry: (compId: string, rawValue: number, options?: { bypassHeightMultiplier?: boolean; convertAs?: 'area' | 'linear' | 'volume' | 'none' }) => Promise<void>;
+  onAddEntry: (compId: string, rawValue: number, options?: { bypassHeightMultiplier?: boolean; bypassDepthMultiplier?: boolean; convertAs?: 'area' | 'linear' | 'volume' | 'none' }) => Promise<void>;
   onUseRoofArea?: (compId: string, roofAreaSqm: number) => Promise<void>;
   onRemoveEntry: (entryId: string, compId: string) => Promise<void>;
   onRemove: (id: string) => Promise<void>;
@@ -1415,7 +1415,7 @@ function ExpandableComponent({
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   // Entry mode for toggleable types: 'direct' = single value, 'dims' = dimension inputs
-  const [entryMode, setEntryMode] = useState<'direct' | 'dims'>('direct');
+  const [entryMode, setEntryMode] = useState<'direct' | 'dims' | 'volume' | 'area_depth'>('direct');
   // Dimension inputs for W×H / L×H mode (area, volume preset, length_x_height)
   const [dimA, setDimA] = useState('');
   const [dimB, setDimB] = useState('');
@@ -1425,6 +1425,11 @@ function ExpandableComponent({
   const [vol3dW, setVol3dW] = useState('');
   const [vol3dD, setVol3dD] = useState('');
   const vol3dRef = useRef<HTMLInputElement>(null);
+  // Volume (Preset Depth) direct volume mode: single m³ input bypasses depth
+  // Volume (m³) area+depth mode: area² × custom depth = m³
+  const [adArea, setAdArea] = useState('');
+  const [adDepth, setAdDepth] = useState('');
+  const adAreaRef = useRef<HTMLInputElement>(null);
   // length_x_height_freestyle / multi_lineal_lxh_freestyle: L × H inputs
   const [lxhFsL, setLxhFsL] = useState('');
   const [lxhFsH, setLxhFsH] = useState('');
@@ -1535,11 +1540,40 @@ function ExpandableComponent({
     vol3dRef.current?.focus();
   }
 
+  // Volume (Preset Depth) — direct volume mode: user enters m³ directly,
+  // bypassing the preset depth multiplier. Waste is applied server-side.
+  async function handleSubmitDirectVolume() {
+    const val = Number(inputValue);
+    if (!val || val <= 0) return;
+    // Convert to metric m³, bypass preset depth on server.
+    await onAddEntry(comp.id, val, { convertAs: 'volume', bypassDepthMultiplier: true });
+    setInputValue('');
+    inputRef.current?.focus();
+  }
+
+  // Volume (m³) — area + custom depth mode: user enters area² and a depth,
+  // system calculates area² × depth = m³. Bypasses preset depth (none exists
+  // for volume_3d). Waste is applied server-side.
+  async function handleSubmitAreaDepth() {
+    const A = Number(adArea);
+    const D = Number(adDepth);
+    if (!A || A <= 0 || !D || D <= 0) return;
+    const Am = areaInputToMetric(A, quote.measurement_system);
+    const Dm = linearInputToMetric(D, quote.measurement_system);
+    // Product is already metric m³; skip auto-conversion.
+    await onAddEntry(comp.id, Am * Dm, { convertAs: 'none' });
+    setAdArea('');
+    setAdDepth('');
+    adAreaRef.current?.focus();
+  }
+
   function startAdding() {
     setAdding(true);
     setExpanded(true);
     setTimeout(() => {
       if (isVolume3d && entryMode === 'dims') { vol3dRef.current?.focus(); }
+      else if (isVolume3d && entryMode === 'area_depth') { adAreaRef.current?.focus(); }
+      else if (isVolumePreset && entryMode === 'volume') { inputRef.current?.focus(); }
       else if (isLxhFreestyle) { lxhFsRef.current?.focus(); }
       else if (hasEntryModeToggle && entryMode === 'dims') { dimRef.current?.focus(); }
       else { inputRef.current?.focus(); }
@@ -1777,16 +1811,23 @@ function ExpandableComponent({
                 {/* Entry mode toggle */}
                 <div className="flex items-center gap-1">
                   {(() => {
-                    let modes: { key: 'direct' | 'dims'; label: string }[] = [];
-                    if (isAreaType || isVolumePreset) {
+                    let modes: { key: 'direct' | 'dims' | 'volume' | 'area_depth'; label: string }[] = [];
+                    if (isAreaType) {
                       modes = [
-                        { key: 'direct', label: isVolumePreset ? 'Area' : 'Area' },
+                        { key: 'direct', label: 'Area' },
                         { key: 'dims', label: 'W × H' },
+                      ];
+                    } else if (isVolumePreset) {
+                      modes = [
+                        { key: 'direct', label: 'Area' },
+                        { key: 'dims', label: 'W × H' },
+                        { key: 'volume', label: 'Volume' },
                       ];
                     } else if (isVolume3d) {
                       modes = [
                         { key: 'direct', label: 'Volume' },
                         { key: 'dims', label: 'L × W × D' },
+                        { key: 'area_depth', label: 'Area + Depth' },
                       ];
                     } else if (isLxhPreset) {
                       modes = [
@@ -1802,10 +1843,13 @@ function ExpandableComponent({
                           setInputValue('');
                           setDimA(''); setDimB('');
                           setVol3dL(''); setVol3dW(''); setVol3dD('');
+                          setAdArea(''); setAdDepth('');
                           setTimeout(() => {
                             if (m.key === 'dims') {
                               if (isVolume3d) vol3dRef.current?.focus();
                               else dimRef.current?.focus();
+                            } else if (m.key === 'area_depth') {
+                              adAreaRef.current?.focus();
                             } else {
                               inputRef.current?.focus();
                             }
@@ -1911,6 +1955,78 @@ function ExpandableComponent({
                       </div>
                     </>
                   )
+                ) : entryMode === 'volume' && isVolumePreset ? (
+                  // Volume (Preset Depth) — direct volume mode: enter m³, bypass preset depth.
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={inputRef}
+                      type="number"
+                      step="0.01"
+                      value={inputValue}
+                      onChange={e => setInputValue(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') void handleSubmitDirectVolume();
+                        if (e.key === 'Escape') { setAdding(false); setInputValue(''); }
+                      }}
+                      placeholder="Enter volume"
+                      className="w-32 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+                    />
+                    <span className="text-xs text-slate-400">{getUnitLabel('volume_3d' as 'volume_3d', quote.measurement_system)}</span>
+                    <button
+                      onClick={() => void handleSubmitDirectVolume()}
+                      className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.5)]"
+                    >
+                      Add
+                    </button>
+                    <button
+                      onClick={() => { setAdding(false); setInputValue(''); }}
+                      className="px-2 py-0.5 text-xs text-slate-500 hover:text-slate-700"
+                    >
+                      Done
+                    </button>
+                  </div>
+                ) : entryMode === 'area_depth' && isVolume3d ? (
+                  // Volume (m³) — area + custom depth mode: area² × depth = m³.
+                  <>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500">Area</span>
+                      <input
+                        ref={adAreaRef}
+                        type="number"
+                        step="0.01"
+                        value={adArea}
+                        onChange={e => setAdArea(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') { if (adDepth) void handleSubmitAreaDepth(); else { (e.target as HTMLInputElement).blur(); } } }}
+                        placeholder="0"
+                        className="w-20 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+                      />
+                      <span className="text-xs text-slate-500">Depth</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={adDepth}
+                        onChange={e => setAdDepth(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') void handleSubmitAreaDepth(); }}
+                        placeholder="0"
+                        className="w-20 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+                      />
+                    </div>
+                    {adArea && adDepth && Number(adArea) > 0 && Number(adDepth) > 0 && (
+                      <p className="text-xs text-slate-400">
+                        = {(areaInputToMetric(Number(adArea), quote.measurement_system) *
+                            linearInputToMetric(Number(adDepth), quote.measurement_system)).toFixed(3)} m³
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <button onClick={() => void handleSubmitAreaDepth()}
+                        disabled={!adArea || !adDepth || Number(adArea) <= 0 || Number(adDepth) <= 0}
+                        className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 transition-all">
+                        Add
+                      </button>
+                      <button onClick={() => { setAdding(false); setAdArea(''); setAdDepth(''); }}
+                        className="px-2 py-0.5 text-xs text-slate-500 hover:text-slate-700">Done</button>
+                    </div>
+                  </>
                 ) : (
                   // Direct single-value entry
                   <div className="flex items-center gap-2">

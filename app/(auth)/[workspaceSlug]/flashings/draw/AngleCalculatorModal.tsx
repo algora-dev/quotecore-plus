@@ -524,25 +524,6 @@ export function AngleCalculatorModal({
                   <p className="text-xs text-blue-800">Hip Slope: {result.additionalInfo.hipSlope}°</p>
                 </div>
               )}
-
-              {/* Angle Type badge */}
-              {result.angleType && result.angleType !== 'straight' && (
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="text-sm font-medium text-slate-700">Angle Type:</span>
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                    result.angleType === 'external'
-                      ? 'bg-orange-100 text-orange-700'
-                      : 'bg-blue-100 text-blue-700'
-                  }`}>
-                    {result.angleType === 'external' ? 'External' : 'Internal'}
-                  </span>
-                </div>
-              )}
-              {result.angleType === 'straight' && (
-                <div className="mt-3">
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Straight</span>
-                </div>
-              )}
             </div>
           </>
         )}

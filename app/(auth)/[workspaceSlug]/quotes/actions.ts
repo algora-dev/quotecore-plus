@@ -853,7 +853,7 @@ export async function updateComponentSettings(id: string, updates: { input_mode?
   revalidatePath('/quotes');
 }
 
-export async function addComponentEntry(quoteComponentId: string, rawValue: number, areaPitch: number | null, options?: { bypassHeightMultiplier?: boolean }) {
+export async function addComponentEntry(quoteComponentId: string, rawValue: number, areaPitch: number | null, options?: { bypassHeightMultiplier?: boolean; bypassDepthMultiplier?: boolean }) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
   await verifyComponentOwnership(supabase, quoteComponentId, profile.company_id);
@@ -866,7 +866,7 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
     !options?.bypassHeightMultiplier &&
     (comp.measurement_type === 'length_x_height' ||
      comp.measurement_type === 'multi_lineal_lxh');
-  const needsDepthMultiplier = comp.measurement_type === 'volume';
+  const needsDepthMultiplier = comp.measurement_type === 'volume' && !options?.bypassDepthMultiplier;
 
   if ((needsHeightMultiplier || needsDepthMultiplier) && comp.component_library_id) {
     const { data: lib } = await supabase
