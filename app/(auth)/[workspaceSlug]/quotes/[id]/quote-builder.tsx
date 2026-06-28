@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins, combineLinealEntries, splitLinealEntries } from '../actions';
 import { getTradeLabels } from '@/app/lib/trades/labels';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
-import { entryLabel, addMoreLabel } from '@/app/lib/types';
+import { entryLabel, addMoreLabel, measurementTypeLabel } from '@/app/lib/types';
 // Use the polymorphic helpers for any user-input -> metric conversion. They
 // dispatch correctly across all three systems (metric / imperial_ft /
 // imperial_rs) so we don't have to branch on the system manually anywhere
@@ -687,6 +687,7 @@ export function QuoteBuilder({
                 onAdd={libId => handleAddFromLibrary(libId, null, 'main')}
                 onCreateNew={() => { setCreateCompForAreaId(null); setCreateCompType('main'); setShowCreateComponentModal(true); }}
                 copilotId="quote-add-from-library"
+                measurementSystem={quote.measurement_system}
               />
             </div>
           )}
@@ -725,6 +726,7 @@ export function QuoteBuilder({
                   onAdd={libId => handleAddFromLibrary(libId, area.id, 'main')}
                   onCreateNew={() => { setCreateCompForAreaId(area.id); setCreateCompType('main'); setShowCreateComponentModal(true); }}
                   copilotId={areaIdx === 0 ? 'quote-add-from-library' : undefined}
+                  measurementSystem={quote.measurement_system}
                 />
               </div>
             );
@@ -777,6 +779,7 @@ export function QuoteBuilder({
               library={localLibrary.filter(c => c.component_type === 'extra')}
               onAdd={libId => handleAddFromLibrary(libId, null, 'extra')}
               onCreateNew={() => { setCreateCompForAreaId(null); setCreateCompType('extra'); setShowCreateComponentModal(true); }}
+              measurementSystem={quote.measurement_system}
             />
           </div>
           <div className="flex justify-between">
@@ -1435,6 +1438,11 @@ function ExpandableComponent({
   const [lxhFsH, setLxhFsH] = useState('');
   const lxhFsRef = useRef<HTMLInputElement>(null);
   const unit = getUnitLabel(comp.measurement_type as any, quote.measurement_system);
+  // When Volume (Preset Depth) is in Area direct mode, the user enters area² not volume.
+  // Show the area unit (m²/ft²) instead of the volume unit (m³/ft³).
+  const displayUnit = (isVolumePreset && entryMode === 'direct')
+    ? getUnitLabel('area' as any, quote.measurement_system)
+    : unit;
   const label = entryLabel(comp.measurement_type);
   const addLabel = addMoreLabel(comp.measurement_type);
   const compTradeLabels = getTradeLabels((quote as { trade?: string }).trade);
@@ -1589,7 +1597,7 @@ function ExpandableComponent({
         <span className="text-xs text-slate-400">{expanded ? '▼' : '▶'}</span>
         <div className="flex-1 min-w-0">
           <span className="font-medium text-sm text-slate-900">{comp.name}</span>
-          <span className="text-xs text-slate-400 ml-2">{comp.measurement_type}</span>
+          <span className="text-xs text-slate-400 ml-2">{measurementTypeLabel(comp.measurement_type as any, quote.measurement_system)}</span>
         </div>
         <span className="text-xs text-slate-500">
           {compEntries.length} {compEntries.length === 1 ? 'entry' : 'entries'}
@@ -2049,7 +2057,7 @@ function ExpandableComponent({
                       placeholder={`Enter ${isVolume3d ? 'volume' : isAreaType || isVolumePreset ? 'area' : isLxhPreset ? 'length' : label}`}
                       className="w-32 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
                     />
-                    <span className="text-xs text-slate-400">{unit}</span>
+                    <span className="text-xs text-slate-400">{displayUnit}</span>
                     <button
                       onClick={() => isVolume3d ? void handleSubmitVolume3d() : handleSubmitEntry()}
                       className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.5)]"
@@ -2125,11 +2133,13 @@ function AddFromLibrary({
   onAdd,
   onCreateNew,
   copilotId,
+  measurementSystem,
 }: {
   library: ComponentLibraryRow[];
   onAdd: (id: string) => Promise<void>;
   onCreateNew?: () => void;
   copilotId?: string;
+  measurementSystem: MeasurementSystem;
 }) {
   const [sel, setSel] = useState('');
   return (
@@ -2153,7 +2163,7 @@ function AddFromLibrary({
         )}
         {library.map(c => (
           <option key={c.id} value={c.id}>
-            {c.name} ({c.measurement_type})
+            {c.name} ({measurementTypeLabel(c.measurement_type as any, measurementSystem)})
           </option>
         ))}
       </select>

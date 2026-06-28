@@ -230,6 +230,39 @@ export function addMoreLabel(mt: MeasurementType): string {
   }
 }
 
+/**
+ * Human-friendly display name for a measurement type, with optional unit system
+ * for unit suffix. Used wherever the raw enum value would be shown to users.
+ */
+export function measurementTypeLabel(
+  mt: MeasurementType,
+  system?: MeasurementSystem
+): string {
+  const norm = system ? normalizeMeasurementSystem(system) : 'metric';
+  const areaUnit = norm === 'metric' ? 'm²' : norm === 'imperial_ft' ? 'ft²' : 'RS';
+  const linealUnit = norm === 'metric' ? 'm' : 'ft';
+  const volumeUnit = norm === 'metric' ? 'm³' : 'ft³';
+  switch (mt) {
+    case 'area': return `Area (${areaUnit})`;
+    case 'lineal': return `Linear (${linealUnit})`;
+    case 'linear': return `Linear (${linealUnit})`;
+    case 'quantity': return 'Quantity';
+    case 'fixed': return 'Fixed';
+    case 'length_x_height': return `Length × Height (${areaUnit})`;
+    case 'volume': return `Volume - Preset Depth (${volumeUnit})`;
+    case 'volume_3d': return `Volume (${volumeUnit})`;
+    case 'hours_days': return 'Hours / Days';
+    case 'count': return 'Count';
+    case 'curved_line': return `Curved Line (${linealUnit})`;
+    case 'irregular_area': return `Irregular Area (${areaUnit})`;
+    case 'multi_lineal': return `Linear: Multi-Length (${linealUnit})`;
+    case 'multi_lineal_lxh': return `Length × Height: Multi-Length (${areaUnit})`;
+    case 'length_x_height_freestyle': return `Length × Height: Custom (${areaUnit})`;
+    case 'multi_lineal_lxh_freestyle': return `Length × Height: Multi-Length Custom (${areaUnit})`;
+    default: return String(mt);
+  }
+}
+
 export type ComponentLibraryRow = Tables<'component_library'>;
 /**
  * Client-facing Insert shape. `company_id` is stamped server-side by the
