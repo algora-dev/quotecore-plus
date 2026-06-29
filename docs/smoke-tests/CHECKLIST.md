@@ -11,13 +11,18 @@
 # 2026-06-29 — Pre-launch: email confirmation, searchable flashing select, hide pricing in orders, docs sync
 
 - [ ] **Email confirmation flow** — sign up with email/password → redirected to login page with blue "Check your email" banner → Supabase sends branded confirmation email → click Confirm button → auth callback creates session → welcome email arrives (branded, with tutorials link + Q prompt) → redirected to workspace dashboard.
+- [ ] **Email not confirmed — friendly error + resend** — try logging in with an unconfirmed email/password → instead of cryptic "Server Components render error", see amber "Confirm your email to continue" banner with the email address and a "Resend confirmation email" link. Click resend → confirmation email re-sent. Check inbox + spam.
 - [ ] **Google signup welcome email** — sign up with Google → complete onboarding → welcome email arrives (same template) within a minute.
+- [ ] **Google onboarding rebrand** — Google signup Step 3 shows Q avatar + "Welcome to QuoteCore+" (not "Meet Copilot"), mentions Q assistant, has Tutorials link, and "Get Started" button. Buttons use rounded-full + hover glow (design system).
+- [ ] **Google onboarding data-loss guard** — if a Google user with an existing company lands on /onboarding (e.g. profile was deleted but auth user exists), completeGoogleOnboarding does NOT create a new company — redirects to existing company instead.
 - [ ] **Searchable flashing select (inline editor)** — in order editor, click flashing dropdown → type to search → results filter in real-time → grouping (Component Flashings / All Other) preserved → select one → flashing image loads correctly.
 - [ ] **Searchable flashing select (AddItemModal)** — in order editor, open AddItemModal → flashing dropdown is searchable → same filter + group behaviour → select one → works.
 - [ ] **Hide pricing in order-from-quote (line-by-line)** — create order from quote → line-by-line editor opens with all prices hidden by default → "Show all pricing" checkbox unticked → tick it → prices appear → untick → prices hide again.
 - [ ] **Hide pricing in order-from-quote (single/double column)** — order-from-quote in single/double column mode still shows per-line toggle as before (no regression).
 - [ ] **Delete library modal text** — components page, non-bootstrap library, click trash icon → modal says "Deleting this library will delete all components inside it. Move any components you want to keep to another library first, or delete them forever here." + "This action cannot be undone."
 - [ ] **Docs accuracy** — /docs/account/billing shows Free plan in table; /docs/account/tier-limits shows Free column + correct caps (Starter components=20, Pro components=30, Starter storage=500MB, Trial flashings=10); /docs/account/trial says collapses to Free; /docs/account/upgrading-and-cancelling says collapses to Free.
+- [ ] **Docs: "Flashings" → "Drawings & Images"** — /docs/account/billing, /docs/account/tier-limits, /docs/account/trial, /docs/account/team, /docs/flashings/flashings, /docs/material-orders/creating-orders all use "Drawings & Images" in generic-trade context. Roofing-specific references (changelog angle calculator, drawing tool respects units) still say "flashings".
+- [ ] **Email rate limit** — Supabase auth `rate_limit_email_sent` raised from 2 to 500/hour (verify by signing up multiple accounts in quick succession without hitting the limit).
 
 ---
 
