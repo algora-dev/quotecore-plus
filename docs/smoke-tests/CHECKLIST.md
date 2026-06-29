@@ -13,7 +13,10 @@
 - [ ] **Drawings & Images page loads** — navigate to /flashings (Drawings & Images) page → page loads without error (was broken: files missing from disk, now restored).
 - [ ] **Welcome email single button** — sign up fresh → confirm email → welcome email arrives with ONE "Confirm Email" button only (no Tutorials or secondary buttons).
 - [ ] **Upload validation on Drawings & Images** — try uploading a >10MB file or non-image file via drag-drop → friendly error message shown ("File too large" or "Invalid file type"), not a silent failure.
-- [ ] **Orphan recovery by email (Gerald H-01)** — if a user's profile is deleted but they have quotes with `created_by_email` populated, logging in restores their profile to the original company (not a new company). Legacy `created_by_user_id` fallback still works for pre-migration rows.
+- [ ] **Two-stage email signup (Gerald M-01)** — sign up with email/password → only auth user created (no company/profile) → redirected to login with "Check your email" banner → Supabase sends confirmation email → click Confirm → /auth/callback creates company + profile from metadata → welcome email arrives with single "Confirm Email" button → redirected to /onboarding → complete onboarding → land in workspace.
+- [ ] **Google signup welcome email with Tutorials** — sign up with Google → complete onboarding → welcome email arrives with Tutorials blurb + "Go to Tutorials" button (not the email/password "Confirm Email" variant).
+- [ ] **Email login blocked until confirmed** — try logging in with an unconfirmed email/password → see amber "Please confirm your email to log in" banner with resend link.
+- [ ] **Orphan recovery by email (Gerald H-01)** — if a user's profile is deleted but they have quotes with `created_by_email` populated, logging in restores their profile to the original company (not a new company).
 
 ---
 
