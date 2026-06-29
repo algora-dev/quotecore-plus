@@ -294,6 +294,7 @@ export async function completeGoogleOnboarding(formData: FormData) {
       fullName,
       workspaceSlug: company.slug || 'workspace',
       appUrl,
+      isGoogleSignup: true,
     });
     await sendEmail({
       to: authUser.email || '',
