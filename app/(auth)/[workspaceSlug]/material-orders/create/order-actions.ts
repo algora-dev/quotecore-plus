@@ -279,7 +279,7 @@ export async function saveDraftOrder(input: SaveOrderInput) {
       if (linesError) {
         // Log full detail so Vercel function logs show the actual Supabase error.
         console.error('[saveDraftOrder] Line items insert error:', JSON.stringify(linesError));
-        console.error('[saveDraftOrder] First item sample:', JSON.stringify(lineItemsData[0]));
+        console.error('[saveDraftOrder] Line items count:', lineItemsData.length, '| keys:', lineItemsData[0] ? Object.keys(lineItemsData[0]).join(',') : 'empty');
         throw new Error(`Failed to save order items: ${linesError.message} (code: ${linesError.code})`);
       }
     }
