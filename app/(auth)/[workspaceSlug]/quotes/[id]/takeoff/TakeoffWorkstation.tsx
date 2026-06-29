@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Canvas, FabricImage, Line, Circle, Polygon, Triangle } from 'fabric';
+import { Canvas, FabricImage, Line, Circle, Polygon, Triangle, Rect } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId } from './actions';
@@ -233,6 +233,8 @@ export function TakeoffWorkstation({
   const roofAreasRef = useRef<RoofArea[]>([]);
   roofAreasRef.current = roofAreas;
   const [areaMode, setAreaMode] = useState(false);
+  // Sub-tool selection for area mode: 'polygon' (click points) or 'rect' (click-drag box).
+  const [areaSubTool, setAreaSubTool] = useState<'polygon' | 'rect'>('polygon');
   const [areaPoints, setAreaPoints] = useState<{ x: number; y: number }[]>([]);
   const [_tempAreaPolygon, _setTempAreaPolygon] = useState<any>(null);
   const [showAreaNamePrompt, setShowAreaNamePrompt] = useState(false);
@@ -553,7 +555,18 @@ export function TakeoffWorkstation({
   // activeAreaComponentIdRef SYNCHRONOUSLY when switching to the area tool.
   // Relying solely on the post-render useEffect left a narrow window where a
   // canvas event could fire before the ref was updated.
+  const cleanupBoxDrag = () => {
+    isBoxDraggingRef.current = false;
+    boxDragStartRef.current = null;
+    if (tempBoxRectRef.current && fabricRef.current) {
+      fabricRef.current.remove(tempBoxRectRef.current);
+      fabricRef.current.renderAll();
+    }
+    tempBoxRectRef.current = null;
+  };
+
   const applyToolForType = (measurementType: string, forComponentId?: string) => {
+    cleanupBoxDrag();
     setLineMode(false);
     setAreaMode(false);
     setPointMode(false);
@@ -1319,6 +1332,12 @@ export function TakeoffWorkstation({
   const calibrationsRef = useRef(calibrations);
   const areaModeRef = useRef(areaMode);
   const areaPointsRef = useRef(areaPoints);
+  const areaSubToolRef = useRef(areaSubTool);
+  // Box-drag refs: start point + dragging flag + temp Fabric rect object.
+  const boxDragStartRef = useRef<{ x: number; y: number } | null>(null);
+  const isBoxDraggingRef = useRef(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tempBoxRectRef = useRef<any>(null);
   const lineModeRef = useRef(lineMode);
   const linePointsRef = useRef(linePoints);
   const pointModeRef = useRef(pointMode);
@@ -1338,6 +1357,7 @@ export function TakeoffWorkstation({
     calibrationsRef.current = calibrations;
     areaModeRef.current = areaMode;
     areaPointsRef.current = areaPoints;
+    areaSubToolRef.current = areaSubTool;
     lineModeRef.current = lineMode;
     linePointsRef.current = linePoints;
     pointModeRef.current = pointMode;
@@ -1355,7 +1375,7 @@ export function TakeoffWorkstation({
       // Only set if not already set synchronously (avoid overwriting with stale state).
       activeAreaComponentIdRef.current = selectedComponentId;
     }
-  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints, selectedComponentId, componentColors, isExistingAreaMode]);
+  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, areaSubTool, lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints, selectedComponentId, componentColors, isExistingAreaMode]);
 
   // Stable ref for the signed plan URL. The signed URL is regenerated on
   // every server render (it embeds a fresh JWT), so reading it directly
@@ -1590,10 +1610,39 @@ export function TakeoffWorkstation({
         return;
       }
       
-      // Area mode: add polygon points
+      // Area mode: add polygon points OR start box drag
       if (areaModeRef.current && !evt.altKey) {
         const pointer = canvas.getScenePoint(opt.e);
         const newPoint = { x: pointer.x, y: pointer.y };
+
+        // ── Box (rect) sub-tool: click-drag to define a rectangle ──
+        // On mouse:down we capture the start corner and begin dragging.
+        // mouse:move draws a live preview; mouse:up finalises into 4 points.
+        if (areaSubToolRef.current === 'rect') {
+          boxDragStartRef.current = newPoint;
+          isBoxDraggingRef.current = true;
+          // Create a preview rect (will be updated on mouse:move).
+          const componentColor = componentColorsRef.current.find(c => c.componentId === (activeAreaComponentIdRef.current ?? selectedComponentIdRef.current))?.color || '#3b82f6';
+          const rect = new Rect({
+            left: newPoint.x,
+            top: newPoint.y,
+            width: 0,
+            height: 0,
+            fill: `${componentColor}22`,
+            stroke: componentColor,
+            strokeWidth: 1.5,
+            strokeDashArray: [5, 4],
+            selectable: false,
+            evented: false,
+            originX: 'left',
+            originY: 'top',
+          });
+          canvas.add(rect);
+          tempBoxRectRef.current = rect;
+          return;
+        }
+
+        // ── Polygon sub-tool (default): click to add points ──
         const currentPoints = areaPointsRef.current;
         
         // Check if click is near start point (close polygon)
@@ -1788,6 +1837,19 @@ export function TakeoffWorkstation({
     });
 
     canvas.on('mouse:move', (opt) => {
+      // Box-drag live preview: update rect size as user drags.
+      if (isBoxDraggingRef.current && boxDragStartRef.current && tempBoxRectRef.current) {
+        const pointer = canvas.getScenePoint(opt.e);
+        const start = boxDragStartRef.current;
+        const left = Math.min(start.x, pointer.x);
+        const top = Math.min(start.y, pointer.y);
+        const width = Math.abs(pointer.x - start.x);
+        const height = Math.abs(pointer.y - start.y);
+        tempBoxRectRef.current.set({ left, top, width, height });
+        canvas.requestRenderAll();
+        return;
+      }
+
       if (canvas.isDragging) {
         const e = opt.e;
         const vpt = canvas.viewportTransform!;
@@ -1801,7 +1863,104 @@ export function TakeoffWorkstation({
       }
     });
 
-    canvas.on('mouse:up', () => {
+    canvas.on('mouse:up', (opt) => {
+      // Box-drag finalise: convert drag rect into 4 polygon points.
+      if (isBoxDraggingRef.current && boxDragStartRef.current) {
+        isBoxDraggingRef.current = false;
+        const start = boxDragStartRef.current;
+        boxDragStartRef.current = null;
+
+        const pointer = canvas.getScenePoint(opt.e);
+        const x1 = Math.min(start.x, pointer.x);
+        const y1 = Math.min(start.y, pointer.y);
+        const x2 = Math.max(start.x, pointer.x);
+        const y2 = Math.max(start.y, pointer.y);
+        const dragWidth = x2 - x1;
+        const dragHeight = y2 - y1;
+
+        // Remove the preview rect.
+        if (tempBoxRectRef.current) {
+          canvas.remove(tempBoxRectRef.current);
+          tempBoxRectRef.current = null;
+          canvas.renderAll();
+        }
+
+        // Ignore tiny drags (accidental clicks) — under 5px in either dimension.
+        if (dragWidth < 5 || dragHeight < 5) {
+          return;
+        }
+
+        // Build 4 corner points (clockwise from top-left).
+        const boxPoints = [
+          { x: x1, y: y1 }, // top-left
+          { x: x2, y: y1 }, // top-right
+          { x: x2, y: y2 }, // bottom-right
+          { x: x1, y: y2 }, // bottom-left
+        ];
+
+        console.log('[Area:Box] Drag complete', { width: dragWidth, height: dragHeight, points: boxPoints });
+
+        // Run the 4 points through the exact same flow as polygon close.
+        setPendingAreaPoints(boxPoints);
+        const currentRoofAreas = roofAreasRef.current;
+        const currentSelectedId = activeAreaComponentIdRef.current ?? selectedComponentIdRef.current;
+        setPendingComponentId(currentSelectedId);
+
+        // Same guards as polygon close:
+        if (currentRoofAreas.length > 0 && !currentSelectedId) {
+          setPendingAreaPoints([]);
+          setPendingComponentId(null);
+          showAlert(
+            'Select a component first',
+            'To measure an area for a component, select it from the panel on the left before drawing.',
+            'info'
+          );
+          return;
+        }
+
+        if (takeoffMode === 'new-page' && currentRoofAreas.length === 0 && !currentSelectedId) {
+          // Boundary drawing for a new page — pitch-only prompt.
+          setPendingComponentId(null);
+          setPitchOnlyInput('');
+          setShowPitchOnlyPrompt(true);
+        } else if (isExistingAreaModeRef.current && !currentSelectedId) {
+          setPendingAreaPoints([]);
+          setPendingComponentId(null);
+          showAlert(
+            'Select a component first',
+            'You are adding measurements to an existing area. Select a component from the panel before drawing.',
+            'info'
+          );
+          return;
+        } else {
+          // volume_3d: skip area name modal, go straight to depth prompt.
+          const compForArea = components.find(c => c.id === currentSelectedId);
+          if ((compForArea?.measurement_type as string) === 'volume_3d') {
+            const areaCalibrated = calculatePolygonArea(boxPoints);
+            setPendingVolumeCalibratedArea(areaCalibrated);
+            setPendingVolumeComponentId(currentSelectedId);
+            setPendingVolumePoints([...boxPoints]);
+            const compColor = componentColorsRef.current.find(c => c.componentId === currentSelectedId)?.color || '#3b82f6';
+            const previewPoly = new Polygon(boxPoints, {
+              fill: `${compColor}22`,
+              stroke: compColor,
+              strokeWidth: 1.5,
+              strokeDashArray: [5, 4],
+              selectable: false,
+              evented: false,
+            });
+            canvas.add(previewPoly);
+            canvas.renderAll();
+            setPendingVolumePolygon(previewPoly);
+            setVolumeDepthInput('');
+            setShowVolumeDepthPrompt(true);
+          } else {
+            setShowAreaNamePrompt(true);
+          }
+        }
+        return;
+      }
+
       canvas.setViewportTransform(canvas.viewportTransform!);
       canvas.isDragging = false;
       canvas.selection = true;
@@ -1842,7 +2001,7 @@ export function TakeoffWorkstation({
   
   // Update cursor when hovering near first point (to close loop)
   useEffect(() => {
-    if (!fabricRef.current || !areaMode || areaPoints.length < 3) return;
+    if (!fabricRef.current || !areaMode || areaSubTool !== 'polygon' || areaPoints.length < 3) return;
     
     const canvas = fabricRef.current;
     const handleMouseMove = (opt: any) => {
@@ -1867,7 +2026,7 @@ export function TakeoffWorkstation({
     return () => {
       canvas.off('mouse:move', handleMouseMove);
     };
-  }, [areaMode, areaPoints]);
+  }, [areaMode, areaSubTool, areaPoints]);
 
   // Zoom controls
   const handleZoomIn = () => {
@@ -1909,6 +2068,7 @@ export function TakeoffWorkstation({
   };
 
   const handleStartCalibration = () => {
+    cleanupBoxDrag();
     // If recalibrating, clear confirmation
     if (calibrationConfirmed) {
       setCalibrationConfirmed(false);
@@ -1916,6 +2076,8 @@ export function TakeoffWorkstation({
     }
     setCalibrationMode(true);
     setCalibrationPoints([]);
+    setAreaMode(false);
+    setAreaPoints([]);
   };
 
   const handleConfirmCalibration = () => {
@@ -2039,12 +2201,22 @@ export function TakeoffWorkstation({
         if (calibrationMode) {
           guidance = 'Click two points that represent a known distance, then enter that distance.';
         } else if (areaMode) {
-          if (!selectedComponentId) {
-            guidance = 'Select a component first, then draw its area on the plan.';
-          } else if (selCompType === 'volume_3d') {
-            guidance = 'Draw the footprint (L × W). Close the shape on the first point, then enter the depth in the prompt.';
+          if (areaSubTool === 'rect') {
+            if (!selectedComponentId && roofAreas.length > 0) {
+              guidance = 'Create a custom box shape area, click and hold, drag then release to set the area';
+            } else if (selCompType === 'volume_3d') {
+              guidance = 'Click and drag to draw the footprint (L × W). Release to set the area, then enter the depth.';
+            } else {
+              guidance = 'Create a custom box shape area, click and hold, drag then release to set the area.';
+            }
           } else {
-            guidance = 'Click to place points - at least 4. Click the first point again to close the shape.';
+            if (!selectedComponentId) {
+              guidance = 'Draw the area point by point (at least 3 points), to close the area - click back on the first point';
+            } else if (selCompType === 'volume_3d') {
+              guidance = 'Draw the footprint (L × W). Close the shape on the first point, then enter the depth in the prompt.';
+            } else {
+              guidance = 'Draw the area point by point (at least 3 points), to close the area - click back on the first point.';
+            }
           }
         } else if (lineMode) {
           guidance = 'Click two points to measure a length - confirm. Add multiple lines for the same component.';
@@ -2627,6 +2799,7 @@ export function TakeoffWorkstation({
                     return;
                   }
                   setLineMode(!lineMode);
+                  cleanupBoxDrag();
                   setAreaMode(false);
                   setPointMode(false);
                   setMultiLinealMode(false);
@@ -2643,15 +2816,24 @@ export function TakeoffWorkstation({
               >
                 Line
               </button>
+              {/* Area tool — compact segmented sub-tool selector when active */}
               <button
                 onClick={() => {
-                  setAreaMode(!areaMode);
-                  setLineMode(false);
-                  setPointMode(false);
-                  setMultiLinealMode(false);
-                  setMultiLinealPoints([]);
-                  setMultiLinealSegmentObjects([]);
-                  setAreaPoints([]);
+                  // Toggle area mode. If turning on, keep current sub-tool.
+                  // If turning off, clean up everything.
+                  if (areaMode) {
+                    cleanupBoxDrag();
+                    setAreaMode(false);
+                    setAreaPoints([]);
+                  } else {
+                    setAreaMode(true);
+                    setLineMode(false);
+                    setPointMode(false);
+                    setMultiLinealMode(false);
+                    setMultiLinealPoints([]);
+                    setMultiLinealSegmentObjects([]);
+                    setAreaPoints([]);
+                  }
                 }}
                 disabled={calibrationMode || calibrations.length === 0}
                 data-copilot="takeoff-tool-area"
@@ -2662,6 +2844,41 @@ export function TakeoffWorkstation({
               >
                 Area
               </button>
+              {/* Compact segmented sub-tool toggle: shown when area mode is active */}
+              {areaMode && (
+                <div className="flex items-center rounded-full bg-gray-100 p-0.5">
+                  <button
+                    onClick={() => {
+                      cleanupBoxDrag();
+                      setAreaSubTool('polygon');
+                      setAreaPoints([]);
+                    }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                      areaSubTool === 'polygon'
+                        ? 'bg-slate-900 text-white'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                    title="Draw the area point by point (at least 3 points), to close the area - click back on the first point"
+                  >
+                    Polygon
+                  </button>
+                  <button
+                    onClick={() => {
+                      cleanupBoxDrag();
+                      setAreaSubTool('rect');
+                      setAreaPoints([]);
+                    }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                      areaSubTool === 'rect'
+                        ? 'bg-slate-900 text-white'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                    title="Create a custom box shape area, click and hold, drag then release to set the area"
+                  >
+                    Rectangle
+                  </button>
+                </div>
+              )}
               <button
                 onClick={() => {
                   // Generic-trade quotes: no area required for point measurements.
@@ -2681,6 +2898,7 @@ export function TakeoffWorkstation({
                     return;
                   }
                   setPointMode(!pointMode);
+                  cleanupBoxDrag();
                   setLineMode(false);
                   setAreaMode(false);
                   setMultiLinealMode(false);
@@ -2708,6 +2926,7 @@ export function TakeoffWorkstation({
                     handleCancelMultiLineal();
                   } else {
                     setMultiLinealMode(true);
+                    cleanupBoxDrag();
                     setLineMode(false);
                     setAreaMode(false);
                     setPointMode(false);
@@ -2728,29 +2947,29 @@ export function TakeoffWorkstation({
                 or zoom controls when the user is mid-polyline. */}
 
             {/* Zoom Controls - Right Side */}
-            <div className="flex gap-2">
+            <div className="flex items-center gap-1">
               <button
                 onClick={handleZoomOut}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
+                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
               >
                 −
               </button>
-              <span className="px-3 py-1 text-sm">{Math.round(zoom * 100)}%</span>
+              <span className="px-1 py-1 text-sm tabular-nums">{Math.round(zoom * 100)}%</span>
               <button
                 onClick={handleZoomIn}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
+                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
               >
                 +
               </button>
               <button
                 onClick={handleResetZoom}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
+                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
               >
                 Reset
               </button>
               <button
                 onClick={handleFitToScreen}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
+                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
               >
                 Fit
               </button>
@@ -2842,22 +3061,40 @@ export function TakeoffWorkstation({
                 {tradeConfig.toolGuidanceNote}
               </div>
             )}
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowRoofAreaInstructions(false);
-                  setAreaMode(true);
-                  setLineMode(false);
-                  setPointMode(false);
-                  setMultiLinealMode(false);
-                }}
-                className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
-              >
-                Draw Area
-              </button>
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setShowRoofAreaInstructions(false);
+                    setAreaSubTool('polygon');
+                    setAreaMode(true);
+                    setLineMode(false);
+                    setPointMode(false);
+                    setMultiLinealMode(false);
+                  }}
+                  className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
+                  title="Draw the area point by point (at least 3 points), to close the area - click back on the first point"
+                >
+                  Draw Area · Polygon
+                </button>
+                <button
+                  onClick={() => {
+                    setShowRoofAreaInstructions(false);
+                    setAreaSubTool('rect');
+                    setAreaMode(true);
+                    setLineMode(false);
+                    setPointMode(false);
+                    setMultiLinealMode(false);
+                  }}
+                  className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
+                  title="Create a custom box shape area, click and hold, drag then release to set the area"
+                >
+                  Draw Area · Rectangle
+                </button>
+              </div>
               <button
                 onClick={() => setShowRoofAreaInstructions(false)}
-                className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+                className="py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
               >
                 Skip
               </button>

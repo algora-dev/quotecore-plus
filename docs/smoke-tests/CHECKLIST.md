@@ -8,6 +8,23 @@
 
 ---
 
+# 2026-06-25 — Flashing drawing, angle calculator widget, order editor hover-highlight, dashboard alerts
+
+- [ ] **Change of Pitch bend direction** — drawing editor, angle calculator, Change of Pitch: upper=10°, lower=25° → bends external (opens outward). Upper=25°, lower=10° → bends internal (folds inward).
+- [ ] **Select All / Deselect All** — drawing editor: Select All → editing locked, orange "Deselect All" button appears. Click it → exits selection, tools re-enabled. Save + Clear accessible while locked.
+- [ ] **Angle Calculator Widget (drawing editor)** — Auto-Calculate opens draggable floating widget (not centered modal). Stays open after Apply Angle. Fixed height + internal scroll. Resize handle bottom-right.
+- [ ] **Angle Calculator Widget (order editor)** — same widget, same behaviour. Button reads "Apply Angle".
+- [ ] **Widget: no horizontal scroll** — switch modes, expand results → no horizontal scrollbar.
+- [ ] **Widget: auto-scroll to results** — click Calculate → scrolls to bottom so Results visible.
+- [ ] **Widget: tip text removed** — Change of Pitch no longer shows the "If the upper roof pitch is steeper..." info box.
+- [ ] **Hover-to-highlight (Line by Line)** — hover sidebar line → matching preview row gets orange ring + orange bg. Sidebar items show cursor-pointer + orange border on hover.
+- [ ] **Hover-to-highlight (Component layout)** — hover sidebar component card → matching order review card gets orange border + ring.
+- [ ] **Dashboard alerts sync with bell** — clear alerts from bell → dashboard banner gone on next refresh. Counts match.
+- [ ] **Guide Me: angle calculator step** — Flashing Drawing guide → "Angle Calculator" step after "Live Readout", highlights Auto-Calculate button.
+- [ ] **Docs** — /docs/help/changelog has 2026-06-25 entry. /docs/flashings/flashings has "Angle Calculator" section.
+
+---
+
 # âš ï¸ PRE-GO-LIVE / PROD PROMOTION TASKS (do at `development -> main` merge)
 
 > Infra steps that MUST happen when promoting dev to production. Not feature tests - hard release gates.
@@ -60,7 +77,7 @@
 ## B. Catalog Library + import
 - [x] **Import wizard** - upload CSV â†’ name â†’ preview/map columns â†’ save; catalog appears.
 > Pass
-- [x] **Catalog search in quote** - CustomerQuoteEditor + Blank Quote: Catalog Search adds a line (desc + price + qty).
+- [x] **Catalog search in quote** - CustomerQuoteEditor + Standard Quote: Catalog Search adds a line (desc + price + qty).
 > Pass
 - [x] **#5 Units toggle** - catalog line: toggle Units off hides the quantity; hyphenated descriptions NOT truncated; component lines unchanged.
 > Pass
@@ -139,7 +156,7 @@ _Re-architected 2026-06-03 eve, dev 3cfbd60. Legacy Copilot fully removed; assis
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - Gerald pre-live audit remediation H-02..H-05 + Mediums, 2026-06-13, commits 86ec34d..feb65c3)
@@ -165,7 +182,7 @@ _Re-architected 2026-06-03 eve, dev 3cfbd60. Legacy Copilot fully removed; assis
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - Tutorials page + Welcome modal, 2026-06-12)
@@ -189,7 +206,7 @@ _Re-architected 2026-06-03 eve, dev 3cfbd60. Legacy Copilot fully removed; assis
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - Pricing Tier v2 gating, 2026-06-11, commit `52312e1`)
@@ -219,7 +236,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - #4 Activity card for orders & invoices, 2026-06-10, commit ba68dfe)
@@ -239,7 +256,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - transient Read + Reset + On-Read trigger, 2026-06-10, commits 528b3a6..44d72cb)
@@ -259,7 +276,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - followups unblock + bell decouple + invoice templates, 2026-06-10, commit `abdd25b`)
@@ -279,7 +296,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - MC badge/clear/full-text + page-aware PDF, 2026-06-10, commit `93c25d3`)
@@ -300,7 +317,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - follow-up MINUTES + html2canvas single-quote PDF, 2026-06-09)
@@ -318,7 +335,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - invoice share-link send + Read robustness + list layout, 2026-06-09)
@@ -340,7 +357,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - #5 in-app plan upgrade/downgrade, 2026-06-08, commit `91eedde`) - STRIPE TEST MODE
@@ -368,7 +385,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - starter-test fixes, 2026-06-08, commit `223e189`)
@@ -393,7 +410,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - help docs + Guide-Me coverage, 2026-06-05)
@@ -418,7 +435,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - navigation + Resources hub + Guide-Me flows, 2026-06-05)
@@ -466,7 +483,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - line-by-line order UX + collapsible panels, 2026-06-05)
@@ -489,7 +506,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - line-by-line orders + catalog UX, 2026-06-04)
@@ -516,7 +533,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev â€” Invoice System MVP, 2026-06-07, commit `4c00a21`)
@@ -558,7 +575,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - Send Invoice phase, 2026-06-07)
@@ -582,7 +599,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - Orders/Invoices bulk multi-select, 2026-06-09)
@@ -600,7 +617,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - PDF pixel-match downloads, 2026-06-09)
@@ -618,7 +635,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - Order follow-ups, 2026-06-09)
@@ -636,7 +653,7 @@ _(empty - move items here as they pass)_
 
 ## Quantity Column (2026-06-14)
 - [ ] **Qty column persistence fix** - tick Qty column checkbox on a quote, save, reload: confirm it stays ticked. Untick, save, reload: confirm it stays unticked. (Task 1 stale-closure fix)
-- [ ] **Blank quote: Global margin controller** - open a blank quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
+- [ ] **Standard Quote: Global margin controller** - open a Standard Quote, set 20% margin, see all line prices inflate by 20%, margin row appears in preview ("Profit margin (20%): X incl."). Toggle "Show on customer quote" off: margin row disappears. Save, reload: margin % persists.
 - [ ] **Per-line margin override** - click pencil on any line: Margin % field shows the global default. Change to 5%: price updates immediately. Save: that one line price is at 5% margin, others unchanged.
 - [ ] **Component line margin (normal quote)** - click pencil on a component line from a normal quote with review-stage margins: shows both Material % and Labor % fields at their review defaults. Change material margin: only that line's price changes.
 - [ ] **Order from Quote line selector** - Materials > Order from Quote > select a quote > NEW step: see list of all components with checkboxes, Select All / Deselect All controls. Deselect some, click Create Order: order editor shows only the selected components. Backward compat: quoteId directly in URL without components param still maps all. (dev - Invoice follow-ups, Phase C, 2026-06-09)

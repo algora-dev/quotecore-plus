@@ -169,7 +169,7 @@ export function QuoteDetailsForm({
     }
 
     if (!entryMode) {
-      alert('Please select an entry mode (Manual, Digital, or Blank Quote)');
+      alert('Please select an entry mode (Component, Digital Measure, or Standard Quote)');
       return;
     }
 
@@ -479,9 +479,9 @@ export function QuoteDetailsForm({
         </select>
         <p className="text-xs text-slate-500 mt-1">
           {entryMode === 'digital'
-            ? 'Templates are not available in digital mode (components added in process)'
+            ? 'Templates are not available in Digital Measure mode (components added in process)'
             : entryMode === 'blank'
-            ? 'Templates do not apply to blank quotes (no areas or components)'
+            ? 'Templates do not apply to Standard quotes (no areas or components)'
             : 'Templates pre-load roof areas and components'}
         </p>
       </div>
@@ -495,7 +495,7 @@ export function QuoteDetailsForm({
             adds the takeoff canvas step first, Blank skips the builder and
             uses the customer quote editor as the master source. */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {/* Manual Mode Button */}
+          {/* Component Quote Button */}
           <button
             type="button"
             onClick={() => {
@@ -508,18 +508,18 @@ export function QuoteDetailsForm({
                 ? 'border-orange-500 bg-blue-50'
                 : 'border-slate-300 hover:border-slate-400'
             }`}
-            title="Transfer already sourced measurements directly into Roof Areas and Components"
+            title="Build your quote using saved Smart Components™ with measurements, labour, materials and pricing"
           >
             <div className="flex items-center justify-center mb-2">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <div className="text-sm font-medium text-slate-900">Manual Mode</div>
-            <div className="text-xs text-slate-500 mt-1">Traditional quote builder</div>
+            <div className="text-sm font-medium text-slate-900">Component Quote</div>
+            <div className="text-xs text-slate-500 mt-1">Using Smart Components™</div>
           </button>
 
-          {/* Digital Mode Button - locked when plan lacks the feature */}
+          {/* Digital Measure Button - locked when plan lacks the feature */}
           <button
             type="button"
             onClick={() => {
@@ -553,11 +553,11 @@ export function QuoteDetailsForm({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
               </svg>
             </div>
-            <div className="text-sm font-medium text-slate-900">Digital Mode</div>
-            <div className="text-xs text-slate-500 mt-1">Digital takeoff canvas</div>
+            <div className="text-sm font-medium text-slate-900">Digital Measure</div>
+            <div className="text-xs text-slate-500 mt-1">Upload & measure from plan</div>
           </button>
 
-          {/* Blank Quote Button */}
+          {/* Standard Quote Button */}
           <button
             type="button"
             onClick={() => {
@@ -571,7 +571,7 @@ export function QuoteDetailsForm({
                 ? 'border-orange-500 bg-blue-50'
                 : 'border-slate-300 hover:border-slate-400'
             }`}
-            title="For fully custom quotes without using components or areas"
+            title="Build a fully custom quote line by line - no components or areas required"
           >
             <div className="flex items-center justify-center mb-2">
               {/* Document-with-pencil icon - reads as "freeform write". */}
@@ -579,13 +579,13 @@ export function QuoteDetailsForm({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-3M16.5 3.5a2.121 2.121 0 113 3L12 14l-4 1 1-4 7.5-7.5z" />
               </svg>
             </div>
-            <div className="text-sm font-medium text-slate-900">Blank Quote</div>
-            <div className="text-xs text-slate-500 mt-1">No components or areas</div>
+            <div className="text-sm font-medium text-slate-900">Standard Quote</div>
+            <div className="text-xs text-slate-500 mt-1">Custom - Line by line</div>
           </button>
         </div>
       </div>
 
-      {/* Roof Plan Upload (Digital Mode Only) */}
+      {/* Roof Plan Upload (Digital Measure Only) */}
       {entryMode === 'digital' && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
           <div>
@@ -635,7 +635,7 @@ export function QuoteDetailsForm({
             : entryMode === 'digital'
             ? 'Start Digital Takeoff'
             : entryMode === 'blank'
-            ? 'Start Blank Quote'
+            ? 'Start Standard Quote'
             : 'Create Quote'}
         </button>
       </div>

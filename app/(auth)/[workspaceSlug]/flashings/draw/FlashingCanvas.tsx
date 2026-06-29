@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Canvas, Line, Circle, IText, Rect, ActiveSelection, Object as _FabricObject, PencilBrush } from 'fabric';
 import { createFlashingFromCanvas, updateFlashingWithImage, loadFlashingById } from '../actions';
-import { AngleCalculatorModal } from './AngleCalculatorModal';
+import { AngleCalculatorWidget } from './AngleCalculatorWidget';
 
 type DrawMode = 'none' | 'line' | 'text' | 'edit' | 'adjustPoints' | 'draw';
 type CanvasSize = 'small' | 'medium' | 'large';
@@ -63,11 +63,15 @@ interface MeasurementItem {
   value: number;
   originalValue: number;
   visible: boolean;
+  textHidden?: boolean;
+  arcHidden?: boolean; // Angle arc circle hidden by default
   labelObjectId?: string;
   // For angles
   interiorValue?: number;
   exteriorValue?: number;
   showInterior?: boolean;
+  // Whether the applied angle is internal (<180°), external (>180°), or straight (=180°)
+  angleType?: 'internal' | 'external' | 'straight';
   // For placement and repositioning
   placementSide?: 'interior' | 'exterior';
   // Store line endpoints for length label repositioning AND point indices
@@ -109,11 +113,11 @@ export function FlashingCanvas({
   const searchParams = useSearchParams();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fabricRef = useRef<Canvas | null>(null);
-  
+
   // Detect edit mode
   const editMode = searchParams.get('edit') === 'true';
   const flashingId = searchParams.get('id');
-  
+
   const [canvasSize, setCanvasSize] = useState<CanvasSize>('medium');
   const [drawMode, setDrawMode] = useState<DrawMode>('none');
   const [measurements, setMeasurements] = useState<MeasurementItem[]>([]);
@@ -121,6 +125,7 @@ export function FlashingCanvas({
   const [linePoints, setLinePoints] = useState<{ x: number; y: number }[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
   const [selectedMeasurement, setSelectedMeasurement] = useState<string | null>(null);
+
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [calculatingAngleId, setCalculatingAngleId] = useState<string | null>(null);
   // Replaces the old window.prompt() flow for Edit Value. Both state
@@ -136,9 +141,9 @@ export function FlashingCanvas({
   const [loading, setLoading] = useState(editMode); // Loading state for edit mode
   const [canvasReady, setCanvasReady] = useState(false); // Track when canvas is initialized
   const [flashingLoaded, setFlashingLoaded] = useState(false); // Track if flashing data loaded
-  
+
   // History removed - was causing issues with canvas state sync
-  
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
@@ -148,6 +153,7 @@ export function FlashingCanvas({
   const drawModeRef = useRef<DrawMode>('none');
   const linePointsRef = useRef<{ x: number; y: number }[]>([]);
 
+
   useEffect(() => {
     drawModeRef.current = drawMode;
     linePointsRef.current = linePoints;
@@ -155,7 +161,7 @@ export function FlashingCanvas({
 
   // Refs for stable history saving
   const measurementsRef = useRef<MeasurementItem[]>([]);
-  
+
   useEffect(() => {
     measurementsRef.current = measurements;
   }, [measurements]);
@@ -170,7 +176,7 @@ export function FlashingCanvas({
         }
       }
     };
-    
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
@@ -178,40 +184,40 @@ export function FlashingCanvas({
   // Select All - with warning (final step, locks editing)
   const handleSelectAll = () => {
     if (!fabricRef.current) return;
-    
+
     // Show warning modal first
     setShowSelectAllWarning(true);
   };
 
   const handleConfirmSelectAll = (proceed: boolean) => {
     setShowSelectAllWarning(false);
-    
+
     if (!proceed || !fabricRef.current) return;
-    
+
     // Lock editing - Select All is final
     setEditingLocked(true);
-    
+
     // Exit Line mode to prevent adding points while moving selection
     setDrawMode('none');
-    
+
     const canvas = fabricRef.current;
     // Select ALL objects (including point markers so they move with the drawing)
     const allObjects = canvas.getObjects();
-    
+
     if (allObjects.length === 0) return;
-    
+
     // Make objects selectable
     allObjects.forEach((obj: any) => {
       obj.set({ selectable: true, evented: true });
     });
-    
+
     // Create active selection
     canvas.discardActiveObject();
     const selection = new ActiveSelection(allObjects as any, { canvas });
-    
+
     // Set as active FIRST
     canvas.setActiveObject(selection as any);
-    
+
     // Then disable middle handles (must be after setActiveObject)
     const activeObj = canvas.getActiveObject();
     if (activeObj) {
@@ -227,8 +233,26 @@ export function FlashingCanvas({
         mtr: true,  // keep rotation
       });
     }
-    
+
     canvas.requestRenderAll();
+  };
+
+  // Deselect All - exits the locked Select All state so the user can
+  // continue editing or save their work. Discards the ActiveSelection
+  // and re-enables editing tools.
+  const handleDeselectAll = () => {
+    if (!fabricRef.current) return;
+    const canvas = fabricRef.current;
+    canvas.discardActiveObject();
+
+    // Make objects non-selectable again (back to drawing mode)
+    canvas.getObjects().forEach((obj: any) => {
+      obj.set({ selectable: false, evented: false });
+    });
+
+    canvas.requestRenderAll();
+    setEditingLocked(false);
+    setDrawMode('none');
   };
 
   const calculateDistance = (p1: { x: number; y: number }, p2: { x: number; y: number }): number => {
@@ -245,14 +269,14 @@ export function FlashingCanvas({
   ): number => {
     const v1 = { x: p1.x - p2.x, y: p1.y - p2.y };
     const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
-    
+
     const dot = v1.x * v2.x + v1.y * v2.y;
     const det = v1.x * v2.y - v1.y * v2.x;
     let angle = Math.atan2(det, dot) * (180 / Math.PI);
-    
+
     if (interior && angle < 0) angle += 360;
     if (!interior && angle > 0) angle -= 360;
-    
+
     return Math.abs(angle);
   };
 
@@ -265,10 +289,10 @@ export function FlashingCanvas({
     const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
     const len1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
     const len2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
-    
+
     const norm1 = { x: v1.x / len1, y: v1.y / len1 };
     const norm2 = { x: v2.x / len2, y: v2.y / len2 };
-    
+
     return {
       x: (norm1.x + norm2.x) / 2,
       y: (norm1.y + norm2.y) / 2
@@ -278,7 +302,7 @@ export function FlashingCanvas({
   // Initialize canvas
   useEffect(() => {
     if (!canvasRef.current) return;
-    
+
     if (fabricRef.current) {
       fabricRef.current.dispose();
     }
@@ -365,19 +389,19 @@ export function FlashingCanvas({
 
         if (currentPoints.length > 0) {
           const prevPoint = currentPoints[currentPoints.length - 1];
-          
+
           // Add angle if we now have 3+ points (angle at previous point)
           if (currentPoints.length >= 2) {
             const prevPrevPoint = currentPoints[currentPoints.length - 2];
-            
+
             const interiorAngleVal = Math.round(calculateAngle(prevPrevPoint, prevPoint, newPoint, true));
             const exteriorAngleVal = 360 - interiorAngleVal;
             const displayValue = interiorAngleVal;
-            
+
             const bisector = getAngleBisector(prevPrevPoint, prevPoint, newPoint);
-            
+
             const arcRadius = 25;
-            
+
             const arc = new Circle({
               left: prevPoint.x,
               top: prevPoint.y,
@@ -390,10 +414,10 @@ export function FlashingCanvas({
               selectable: true,
               evented: true,
             });
-            
+
             const textOffset = arcRadius + 15;
             const measurementId = `angle-${Date.now()}`;
-            
+
             const angleText = new IText(`${displayValue}°`, {
               left: prevPoint.x + bisector.x * textOffset,
               top: prevPoint.y + bisector.y * textOffset,
@@ -406,11 +430,14 @@ export function FlashingCanvas({
               selectable: true,
             });
             (angleText as any).measurementId = measurementId;
-            
+
             (arc as any).measurementId = measurementId;
-            
+
             canvas.add(arc);
             canvas.add(angleText);
+
+            // Arc is hidden by default — user can show via sidebar toggle
+            arc.set('visible', false);
 
             newMeasurements.push({
               id: measurementId,
@@ -418,6 +445,7 @@ export function FlashingCanvas({
               value: displayValue,
               originalValue: displayValue,
               visible: true,
+              arcHidden: true,
               interiorValue: interiorAngleVal,
               exteriorValue: exteriorAngleVal,
               showInterior: true,
@@ -425,10 +453,10 @@ export function FlashingCanvas({
               pointIndex: currentPoints.length - 1, // Angle is at the previous point
             });
           }
-          
+
           // Add line
           const measurementId = `length-${Date.now() + 1}`;
-          
+
           const line = new Line([prevPoint.x, prevPoint.y, newPoint.x, newPoint.y], {
             stroke: '#000000',
             strokeWidth: 2,
@@ -444,17 +472,17 @@ export function FlashingCanvas({
           const length = Math.round(calculateDistance(prevPoint, newPoint));
           const midX = (prevPoint.x + newPoint.x) / 2;
           const midY = (prevPoint.y + newPoint.y) / 2;
-          
+
           const dx = newPoint.x - prevPoint.x;
           const dy = newPoint.y - prevPoint.y;
           const lineLength = Math.sqrt(dx * dx + dy * dy);
           const perpX = -dy / lineLength;
           const perpY = dx / lineLength;
-          
+
           const offset = 15;
           const labelX = midX + perpX * offset;
           const labelY = midY + perpY * offset;
-          
+
           const lengthLabel = new IText(`${formatLength(length, lengthUnit)}${lengthUnit}`, {
             left: labelX,
             top: labelY,
@@ -467,7 +495,7 @@ export function FlashingCanvas({
             evented: true,
           });
           (lengthLabel as any).measurementId = measurementId;
-          
+
           canvas.add(lengthLabel);
 
           newMeasurements.push({
@@ -518,34 +546,34 @@ export function FlashingCanvas({
     canvas.on('object:moving', (e) => {
       const obj = e.target;
       if (!obj || !(obj as any).isPointMarker) return;
-      
+
       const pointIdx = (obj as any).pointIndex;
       if (pointIdx === undefined) return;
-      
+
       const newX = obj.left!;
       const newY = obj.top!;
-      
+
       // Mark that recalibration is needed
       setNeedsRecalibration(true);
-      
+
       // Update linePoints ref
       const currentPoints = linePointsRef.current;
       if (pointIdx >= currentPoints.length) return;
       currentPoints[pointIdx] = { x: newX, y: newY };
-      
+
       // Update all connected lines
       canvas.getObjects().forEach((canvasObj: any) => {
         if (canvasObj.type === 'line') {
           const startIdx = canvasObj.lineStartIndex;
           const endIdx = canvasObj.lineEndIndex;
-          
+
           if (startIdx === pointIdx) {
             canvasObj.set({ x1: newX, y1: newY });
           }
           if (endIdx === pointIdx) {
             canvasObj.set({ x2: newX, y2: newY });
           }
-          
+
           // If this line was affected, update its length label
           if (startIdx === pointIdx || endIdx === pointIdx) {
             const measurementId = canvasObj.measurementId;
@@ -556,9 +584,9 @@ export function FlashingCanvas({
                 const newLength = Math.round(calculateDistance(p1, p2));
                 const midX = (p1.x + p2.x) / 2;
                 const midY = (p1.y + p2.y) / 2;
-                
+
                 // Find and update label
-                const label = canvas.getObjects().find((o: any) => 
+                const label = canvas.getObjects().find((o: any) =>
                   o.measurementId === measurementId && o.type === 'i-text'
                 );
                 if (label) {
@@ -568,47 +596,47 @@ export function FlashingCanvas({
                   const perpX = -dy / lineLength;
                   const perpY = dx / lineLength;
                   const offset = 15;
-                  
+
                   (label as any).set({
                     text: `${formatLength(newLength, lengthUnit)}${lengthUnit}`,
                     left: midX + perpX * offset,
                     top: midY + perpY * offset,
                   });
                 }
-                
+
                 // Update measurement state
-                setMeasurements(prev => prev.map(m => 
-                  m.id === measurementId 
-                    ? { ...m, value: newLength, lineStart: p1, lineEnd: p2 } 
+                setMeasurements(prev => prev.map(m =>
+                  m.id === measurementId
+                    ? { ...m, value: newLength, lineStart: p1, lineEnd: p2 }
                     : m
                 ));
               }
             }
           }
         }
-        
+
         // Update angles at this point
         if (canvasObj.type === 'circle' && canvasObj.measurementId) {
           // Find angle measurements at this point
           const angleMeasurements = measurementsRef.current.filter(
             m => m.type === 'angle' && m.pointIndex === pointIdx
           );
-          
+
           angleMeasurements.forEach(angleMeas => {
             // Recalculate angle if we have adjacent points
             if (pointIdx > 0 && pointIdx < currentPoints.length - 1) {
               const p1 = currentPoints[pointIdx - 1];
               const p2 = currentPoints[pointIdx];
               const p3 = currentPoints[pointIdx + 1];
-              
+
               if (p1 && p2 && p3) {
                 const newInterior = Math.round(calculateAngle(p1, p2, p3, true));
                 const newExterior = 360 - newInterior;
                 const newValue = angleMeas.showInterior ? newInterior : newExterior;
-                
+
                 // Update arc position
                 canvasObj.set({ left: newX, top: newY });
-                
+
                 // Update text position and value
                 const bisector = getAngleBisector(p1, p2, p3);
                 const textOffset = 40;
@@ -622,7 +650,7 @@ export function FlashingCanvas({
                     top: newY + bisector.y * textOffset,
                   });
                 }
-                
+
                 // Update state
                 setMeasurements(prev => prev.map(m =>
                   m.id === angleMeas.id
@@ -634,7 +662,7 @@ export function FlashingCanvas({
           });
         }
       });
-      
+
       canvas.requestRenderAll();
     });
 
@@ -669,38 +697,38 @@ export function FlashingCanvas({
   // Load existing flashing in edit mode (AFTER canvas is ready, ONCE only)
   useEffect(() => {
     console.log('[FlashingCanvas] Load check:', { editMode, flashingId, canvasReady, flashingLoaded, hasCanvas: !!fabricRef.current });
-    
+
     if (!editMode || !flashingId) {
       setLoading(false); // Not in edit mode, stop loading
       return;
     }
-    
+
     if (flashingLoaded) {
       console.log('[FlashingCanvas] Already loaded, skipping');
       return; // Already loaded, don't load again
     }
-    
+
     if (!canvasReady || !fabricRef.current) {
       console.log('[FlashingCanvas] Waiting for canvas to initialize...');
       return;
     }
-    
+
     async function loadFlashing() {
       try {
         console.log('[FlashingCanvas] Loading flashing for edit:', flashingId);
         const flashing = await loadFlashingById(flashingId!);
-        
+
         console.log('[FlashingCanvas] Flashing data received:', {
           hasCanvasData: !!flashing.canvas_data,
           measurementsCount: flashing.measurements?.length || 0,
         });
-        
+
         if (!flashing || !fabricRef.current) {
           console.error('[FlashingCanvas] Missing flashing data or canvas ref');
           setLoading(false);
           return;
         }
-        
+
         // Parse canvas data if it's a string. The DB column is typed Json;
         // narrow to the fabric-shaped view we actually wrote to it.
         let canvasDataObj: FabricCanvasData = flashing.canvas_data as FabricCanvasData;
@@ -722,7 +750,7 @@ export function FlashingCanvas({
           setFlashingLoaded(true);
           return;
         }
-        
+
         // Debug: Log the actual canvas data structure
         console.log('[FlashingCanvas] Canvas data TYPE:', typeof canvasDataObj);
         console.log('[FlashingCanvas] Has objects array?', !!canvasDataObj.objects);
@@ -735,7 +763,7 @@ export function FlashingCanvas({
           width: fabricRef.current.getWidth(),
           height: fabricRef.current.getHeight(),
         });
-        
+
         // CRITICAL FIX: Set canvas dimensions BEFORE loading objects
         if (canvasDataObj.width && canvasDataObj.height) {
           console.log('[FlashingCanvas] Resizing canvas to match saved dimensions...');
@@ -744,9 +772,9 @@ export function FlashingCanvas({
             height: canvasDataObj.height,
           });
         }
-        
+
         console.log('[FlashingCanvas] First object sample:', JSON.stringify(canvasDataObj.objects?.[0]).substring(0, 200));
-        
+
         // Load canvas from JSON. fabric's typing wants string | Record;
         // canvasDataObj is the narrowed view so a deliberate cast is
         // safe here.
@@ -754,10 +782,10 @@ export function FlashingCanvas({
           canvasDataObj as unknown as Record<string, unknown>,
           () => {
           if (!fabricRef.current) return;
-          
+
           console.log('[FlashingCanvas] loadFromJSON callback fired');
           console.log('[FlashingCanvas] Objects after load:', fabricRef.current.getObjects().length);
-          
+
           if (fabricRef.current.getObjects().length === 0) {
             console.error('[FlashingCanvas] CRITICAL: No objects loaded!');
             console.error('[FlashingCanvas] This indicates a fabric.js deserialization failure');
@@ -765,10 +793,23 @@ export function FlashingCanvas({
           } else {
             console.log('[FlashingCanvas] Successfully loaded', fabricRef.current.getObjects().length, 'objects');
           }
-          
+
+          // Apply arcHidden state to loaded angle arcs
+          const loadedMeasurements = (flashing.measurements as unknown) as StoredMeasurement[] | null;
+          if (loadedMeasurements) {
+            fabricRef.current.getObjects().forEach((obj: any) => {
+              if (obj.type === 'circle' && obj.measurementId) {
+                const m = loadedMeasurements.find((mm: StoredMeasurement) => mm.id === obj.measurementId);
+                if (m && m.arcHidden) {
+                  obj.set('visible', false);
+                }
+              }
+            });
+          }
+
           fabricRef.current.renderAll();
         });
-        
+
         // Restore state (outside callback to avoid loops). The DB column
         // is Json; we wrote MeasurementItem[] into it, so the narrowing
         // cast here is safe.
@@ -799,12 +840,12 @@ export function FlashingCanvas({
           });
         }
         setLinePoints(points.filter(p => p)); // Remove undefined entries
-        
+
         setName(flashing.name);
         setDescription(flashing.description || '');
         setFlashingLoaded(true); // Mark as loaded
         setLoading(false);
-        
+
         console.log('[FlashingCanvas] Flashing loaded successfully');
         console.log('[FlashingCanvas] Canvas data size:', JSON.stringify(flashing.canvas_data).length, 'bytes');
         console.log('[FlashingCanvas] Measurements count:', flashing.measurements?.length || 0);
@@ -814,7 +855,7 @@ export function FlashingCanvas({
         setLoading(false);
       }
     }
-    
+
     loadFlashing();
   }, [editMode, flashingId, canvasReady, flashingLoaded]); // Trigger when canvas becomes ready
 
@@ -833,9 +874,9 @@ export function FlashingCanvas({
       const cursor = (drawMode === 'line' || drawMode === 'text' || drawMode === 'draw') ? 'crosshair' : 'default';
       fabricRef.current.defaultCursor = cursor;
       fabricRef.current.hoverCursor = cursor;
-      
+
       const canvas = fabricRef.current;
-      
+
       // Handle freehand drawing mode
       if (drawMode === 'draw') {
         canvas.isDrawingMode = true;
@@ -846,18 +887,18 @@ export function FlashingCanvas({
       } else {
         canvas.isDrawingMode = false;
       }
-      
+
       // Deselect everything when switching modes (UNLESS editing is locked from Select All)
       if (!editingLocked) {
         canvas.discardActiveObject();
       }
-      
+
       // Show/hide angle circles based on mode
       canvas.getObjects().forEach((obj: any) => {
         if (obj.type === 'circle' && obj.measurementId) {
-          // This is an angle arc/circle - check measurement visibility too
+          // This is an angle arc/circle - check measurement visibility + arcHidden
           const measurement = measurements.find(m => m.id === obj.measurementId);
-          const shouldShow = drawMode !== 'adjustPoints' && (!measurement || measurement.visible);
+          const shouldShow = drawMode !== 'adjustPoints' && (!measurement || measurement.visible) && (!measurement || !measurement.arcHidden);
           obj.set('visible', shouldShow);
         }
         if (obj.type === 'rect' && obj.measurementId) {
@@ -867,14 +908,14 @@ export function FlashingCanvas({
           obj.set('visible', shouldShow);
         }
       });
-      
+
       // Make point markers selectable only in adjustPoints mode
       canvas.getObjects().forEach((obj: any) => {
         if (obj.isPointMarker) {
           obj.set('selectable', drawMode === 'adjustPoints');
         }
       });
-      
+
       canvas.renderAll();
     }
   }, [drawMode, editingLocked]);
@@ -921,24 +962,93 @@ export function FlashingCanvas({
     setDrawMode('none');
   };
 
+  // Finish button: deselects everything and exits the active creative tool
+  // (Line / Text / Pencil / Edit). Lets the user cleanly drop back to a
+  // neutral state so they can pick a new tool, interact with the sidebar,
+  // or save without the current tool staying sticky.
+  const handleFinishTool = () => {
+    const canvas = fabricRef.current;
+    if (canvas) {
+      canvas.discardActiveObject();
+      canvas.renderAll();
+    }
+    setLinePoints([]);
+    setCursorPos(null);
+    setSelectedPoint(null);
+    setSelectedMeasurement(null);
+    setDrawMode('none');
+  };
+
   const handleToggleMeasurementVisibility = (id: string) => {
     const measurement = measurements.find(m => m.id === id);
     if (!measurement || !fabricRef.current) return;
 
     const canvas = fabricRef.current;
     const newVisible = !measurement.visible;
-    
+
     // Find ALL objects with this measurementId (arc + text for angles, just text for lengths)
     canvas.getObjects().forEach((obj: any) => {
       if (obj.measurementId === id) {
-        obj.set('visible', newVisible);
+        if (obj.type === 'i-text') {
+          // Text labels: respect textHidden state when showing
+          obj.set('visible', newVisible && !measurement.textHidden);
+        } else if (obj.type === 'circle') {
+          // Angle arc: respect arcHidden state when showing
+          obj.set('visible', newVisible && !measurement.arcHidden);
+        } else {
+          obj.set('visible', newVisible);
+        }
       }
     });
-    
-    setMeasurements(measurements.map(m => 
+
+    setMeasurements(measurements.map(m =>
       m.id === id ? { ...m, visible: newVisible } : m
     ));
-    
+
+    canvas.renderAll();
+  };
+
+  // Toggle only the text label visibility (keeps line/arc visible)
+  const handleToggleTextVisibility = (id: string) => {
+    const measurement = measurements.find(m => m.id === id);
+    if (!measurement || !fabricRef.current) return;
+
+    const canvas = fabricRef.current;
+    const newTextHidden = !measurement.textHidden;
+
+    // Only toggle i-text objects (the value labels), keep lines/arcs visible
+    canvas.getObjects().forEach((obj: any) => {
+      if (obj.measurementId === id && obj.type === 'i-text') {
+        obj.set('visible', !newTextHidden);
+      }
+    });
+
+    setMeasurements(measurements.map(m =>
+      m.id === id ? { ...m, textHidden: newTextHidden } : m
+    ));
+
+    canvas.renderAll();
+  };
+
+  // Toggle only the angle arc circle visibility (keeps text/line visible)
+  const handleToggleArcVisibility = (id: string) => {
+    const measurement = measurements.find(m => m.id === id);
+    if (!measurement || !fabricRef.current) return;
+
+    const canvas = fabricRef.current;
+    const newArcHidden = !measurement.arcHidden;
+
+    // Only toggle circle objects (the angle arcs), keep text/lines visible
+    canvas.getObjects().forEach((obj: any) => {
+      if (obj.measurementId === id && obj.type === 'circle') {
+        obj.set('visible', !newArcHidden && measurement.visible);
+      }
+    });
+
+    setMeasurements(measurements.map(m =>
+      m.id === id ? { ...m, arcHidden: newArcHidden } : m
+    ));
+
     canvas.renderAll();
   };
 
@@ -946,18 +1056,18 @@ export function FlashingCanvas({
   const updateConnectedGeometry = (changedPointIdx: number, offsetX: number, offsetY: number) => {
     const canvas = fabricRef.current;
     if (!canvas) return;
-    
+
     const currentPoints = linePointsRef.current;
-    
+
     // Move all points AFTER the changed point by the same offset
     for (let i = changedPointIdx + 1; i < currentPoints.length; i++) {
       currentPoints[i] = {
         x: currentPoints[i].x + offsetX,
         y: currentPoints[i].y + offsetY,
       };
-      
+
       // Update point marker
-      const marker = canvas.getObjects().find((o: any) => 
+      const marker = canvas.getObjects().find((o: any) =>
         o.isPointMarker && o.pointIndex === i
       );
       if (marker) {
@@ -967,17 +1077,17 @@ export function FlashingCanvas({
         });
       }
     }
-    
+
     // Update ALL lines and measurements
     canvas.getObjects().forEach((obj: any) => {
       if (obj.type === 'line') {
         const startIdx = obj.lineStartIndex;
         const endIdx = obj.lineEndIndex;
-        
+
         if (startIdx !== undefined && endIdx !== undefined) {
           const p1 = currentPoints[startIdx];
           const p2 = currentPoints[endIdx];
-          
+
           if (p1 && p2) {
             obj.set({
               x1: p1.x,
@@ -985,15 +1095,15 @@ export function FlashingCanvas({
               x2: p2.x,
               y2: p2.y,
             });
-            
+
             // Update length measurement and label
             const measurementId = obj.measurementId;
             if (measurementId) {
               const newLength = Math.round(calculateDistance(p1, p2));
               const midX = (p1.x + p2.x) / 2;
               const midY = (p1.y + p2.y) / 2;
-              
-              const label = canvas.getObjects().find((o: any) => 
+
+              const label = canvas.getObjects().find((o: any) =>
                 o.measurementId === measurementId && o.type === 'i-text'
               );
               if (label) {
@@ -1003,14 +1113,14 @@ export function FlashingCanvas({
                 const perpX = -dy / lineLength;
                 const perpY = dx / lineLength;
                 const offset = 15;
-                
+
                 (label as any).set({
                   text: `${formatLength(newLength, lengthUnit)}${lengthUnit}`,
                   left: midX + perpX * offset,
                   top: midY + perpY * offset,
                 });
               }
-              
+
               setMeasurements(prev => prev.map(m =>
                 m.id === measurementId
                   ? { ...m, value: newLength, lineStart: p1, lineEnd: p2 }
@@ -1021,7 +1131,7 @@ export function FlashingCanvas({
         }
       }
     });
-    
+
     // Update all angles
     measurements.forEach(m => {
       if (m.type === 'angle' && m.pointIndex !== undefined) {
@@ -1030,12 +1140,12 @@ export function FlashingCanvas({
           const p1 = currentPoints[pointIdx - 1];
           const p2 = currentPoints[pointIdx];
           const p3 = currentPoints[pointIdx + 1];
-          
+
           if (p1 && p2 && p3) {
             const newInterior = Math.round(calculateAngle(p1, p2, p3, true));
             const newExterior = 360 - newInterior;
             const newValue = m.showInterior ? newInterior : newExterior;
-            
+
             // Update arc position
             const arc = canvas.getObjects().find((o: any) =>
               o.measurementId === m.id && o.type === 'circle'
@@ -1043,7 +1153,7 @@ export function FlashingCanvas({
             if (arc) {
               arc.set({ left: p2.x, top: p2.y });
             }
-            
+
             // Update text position and value
             const bisector = getAngleBisector(p1, p2, p3);
             const textOffset = 40;
@@ -1057,7 +1167,7 @@ export function FlashingCanvas({
                 top: p2.y + bisector.y * textOffset,
               });
             }
-            
+
             setMeasurements(prev => prev.map(measure =>
               measure.id === m.id
                 ? { ...measure, value: newValue, interiorValue: newInterior, exteriorValue: newExterior }
@@ -1106,15 +1216,15 @@ export function FlashingCanvas({
 
       const startIdx = measurement.lineStartIndex;
       const endIdx = measurement.lineEndIndex;
-      
+
       if (startIdx !== undefined && endIdx !== undefined && currentPoints[startIdx] && currentPoints[endIdx]) {
         const p1 = currentPoints[startIdx];
         const p2 = currentPoints[endIdx];
-        
+
         const currentLengthPx = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
         const newLengthPx = numValue / SCALE;
         const scale = newLengthPx / currentLengthPx;
-        
+
         // Calculate new end point
         const dx = p2.x - p1.x;
         const dy = p2.y - p1.y;
@@ -1122,16 +1232,16 @@ export function FlashingCanvas({
           x: p1.x + dx * scale,
           y: p1.y + dy * scale,
         };
-        
+
         // Calculate offset
         const offsetX = newP2.x - p2.x;
         const offsetY = newP2.y - p2.y;
-        
+
         // Update this point
         currentPoints[endIdx] = newP2;
-        
+
         // Update the marker for THIS point first
-        const changedMarker = canvas.getObjects().find((o: any) => 
+        const changedMarker = canvas.getObjects().find((o: any) =>
           o.isPointMarker && o.pointIndex === endIdx
         );
         if (changedMarker) {
@@ -1140,40 +1250,40 @@ export function FlashingCanvas({
             top: newP2.y,
           });
         }
-        
+
         // Propagate to all connected points
         updateConnectedGeometry(endIdx, offsetX, offsetY);
-        
+
         setLinePoints([...currentPoints]);
       }
     } else if (measurement.type === 'angle') {
       const pointIdx = measurement.pointIndex;
       if (pointIdx === undefined || pointIdx < 1 || pointIdx >= currentPoints.length - 1) return;
-      
+
       const p1 = currentPoints[pointIdx - 1];
       const p2 = currentPoints[pointIdx];
       const p3 = currentPoints[pointIdx + 1];
-      
+
       // Calculate current angle using ACTUAL current points
       const currentInterior = calculateAngle(p1, p2, p3, true);
       const targetInterior = measurement.showInterior ? numValue : 360 - numValue;
       const angleDiff = targetInterior - currentInterior;
-      
+
       // Rotate p3 and all subsequent points around p2
       const angleRad = angleDiff * Math.PI / 180;
-      
+
       for (let i = pointIdx + 1; i < currentPoints.length; i++) {
         const pt = currentPoints[i];
         const dx = pt.x - p2.x;
         const dy = pt.y - p2.y;
-        
+
         currentPoints[i] = {
           x: p2.x + dx * Math.cos(angleRad) - dy * Math.sin(angleRad),
           y: p2.y + dx * Math.sin(angleRad) + dy * Math.cos(angleRad),
         };
-        
+
         // Update point marker
-        const marker = canvas.getObjects().find((o: any) => 
+        const marker = canvas.getObjects().find((o: any) =>
           o.isPointMarker && o.pointIndex === i
         );
         if (marker) {
@@ -1183,10 +1293,10 @@ export function FlashingCanvas({
           });
         }
       }
-      
+
       // Update all connected geometry
       updateConnectedGeometry(pointIdx, 0, 0);
-      
+
       setLinePoints([...currentPoints]);
     }
 
@@ -1216,30 +1326,30 @@ export function FlashingCanvas({
 
   const handleRecalibrateAll = () => {
     if (!fabricRef.current) return;
-    
+
     const canvas = fabricRef.current;
     const currentPoints = linePointsRef.current;
-    
+
     // Reset recalibration flag
     setNeedsRecalibration(false);
-    
+
     // Recalculate ALL measurements from actual canvas positions
     const updatedMeasurements = measurements.map(m => {
       if (m.type === 'length' && m.lineStartIndex !== undefined && m.lineEndIndex !== undefined) {
         const p1 = currentPoints[m.lineStartIndex];
         const p2 = currentPoints[m.lineEndIndex];
-        
+
         if (p1 && p2) {
           const actualLength = Math.round(calculateDistance(p1, p2));
-          
+
           // Update label text
-          const textObj = canvas.getObjects().find((o: any) => 
+          const textObj = canvas.getObjects().find((o: any) =>
             o.measurementId === m.id && o.type === 'i-text'
           );
           if (textObj) {
             (textObj as any).set('text', `${formatLength(actualLength, lengthUnit)}${lengthUnit}`);
           }
-          
+
           return {
             ...m,
             value: actualLength,
@@ -1254,20 +1364,20 @@ export function FlashingCanvas({
           const p1 = currentPoints[pointIdx - 1];
           const p2 = currentPoints[pointIdx];
           const p3 = currentPoints[pointIdx + 1];
-          
+
           if (p1 && p2 && p3) {
             const actualInterior = Math.round(calculateAngle(p1, p2, p3, true));
             const actualExterior = 360 - actualInterior;
             const actualValue = m.showInterior ? actualInterior : actualExterior;
-            
+
             // Update label text
-            const textObj = canvas.getObjects().find((o: any) => 
+            const textObj = canvas.getObjects().find((o: any) =>
               o.measurementId === m.id && o.type === 'i-text'
             );
             if (textObj) {
               (textObj as any).set('text', `${actualValue}°`);
             }
-            
+
             return {
               ...m,
               value: actualValue,
@@ -1280,7 +1390,7 @@ export function FlashingCanvas({
       }
       return m;
     });
-    
+
     setMeasurements(updatedMeasurements);
     canvas.renderAll();
   };
@@ -1293,10 +1403,10 @@ export function FlashingCanvas({
     const newValue = newShowInterior ? measurement.interiorValue! : measurement.exteriorValue!;
 
     const canvas = fabricRef.current;
-    const textObj = canvas.getObjects().find((o: any) => 
+    const textObj = canvas.getObjects().find((o: any) =>
       o.measurementId === id && o.type === 'i-text'
     );
-    
+
     if (textObj) {
       (textObj as any).set('text', `${newValue}°`);
     }
@@ -1311,7 +1421,7 @@ export function FlashingCanvas({
   const handleOpenCalculator = (id: string) => {
     const measurement = measurements.find(m => m.id === id);
     if (!measurement || measurement.type !== 'angle') return;
-    
+
     setCalculatingAngleId(id);
     setCalculatorOpen(true);
   };
@@ -1329,32 +1439,85 @@ export function FlashingCanvas({
     const currentPoints = linePointsRef.current;
     const pointIdx = measurement.pointIndex;
 
+    // Infer angle type from the applied value:
+    // >180° = external (opens outward), <180° = internal (folds inward), =180° = straight
+    const inferredAngleType: 'internal' | 'external' | 'straight' =
+      Math.abs(newAngle - 180) < 0.5 ? 'straight' : (newAngle > 180 ? 'external' : 'internal');
+
     // Update geometry (same logic as handleEditMeasurementValue for angles)
     if (pointIdx !== undefined && pointIdx >= 1 && pointIdx < currentPoints.length - 1) {
       const p1 = currentPoints[pointIdx - 1];
       const p2 = currentPoints[pointIdx];
       const p3 = currentPoints[pointIdx + 1];
-      
+
       // Calculate current angle using ACTUAL current points
       const currentInterior = calculateAngle(p1, p2, p3, true);
-      const targetInterior = measurement.showInterior ? newAngle : 360 - newAngle;
-      const angleDiff = targetInterior - currentInterior;
-      
-      // Rotate p3 and all subsequent points around p2
+
+      // For external angles (>180°), the finished angle IS the target - we want
+      // the points to open outward. For internal angles (<180°), the finished angle
+      // is the tight inside. The key insight: the rotation direction must differ
+      // for external vs internal even when the bend amount is the same.
+      //
+      // We compute the target as the finished angle directly. The sign of the
+      // angleDiff will naturally differ for external (positive, opens outward)
+      // vs internal (negative, folds inward) - IF we use the raw finished angle
+      // as the target rather than normalising it through showInterior.
+      //
+      // However, the drawing engine works with interior angles (0-180° range
+      // from calculateAngle). For external angles >180°, we need to rotate the
+      // OPPOSITE direction from what the interior diff would suggest.
+      //
+      // Approach: compute the bend amount and apply it in the correct direction.
+      // bendAmount = |180 - newAngle|
+      // direction: external → rotate one way, internal → rotate the other way
+
+      const bendAmount = Math.abs(180 - newAngle); // e.g. 15° for both 195° and 165°
+
+      // Current bend from flat = |180 - currentInterior|
+      const currentBend = Math.abs(180 - currentInterior);
+
+      // How much we need to rotate = difference in bend, with direction
+      // For external angles: points should move outward (positive rotation)
+      // For internal angles: points should move inward (negative rotation)
+      //
+      // The sign of the rotation depends on which side the points currently are.
+      // We use the signed cross product to determine current bend direction,
+      // then flip if needed to match the target angleType.
+
+      // Determine current bend direction: is the current angle external or internal?
+      const currentIsExternal = currentInterior > 180;
+
+      // Target rotation: we want to go from current bend to target bend in the
+      // correct direction. The simplest reliable approach: compute the raw
+      // angleDiff using the finished angle directly (not through showInterior),
+      // so external angles naturally produce opposite rotation from internal.
+      let targetAngle: number;
+      if (inferredAngleType === 'external') {
+        // External: target is >180°. Use the finished angle directly as the target.
+        targetAngle = newAngle;
+      } else if (inferredAngleType === 'internal') {
+        // Internal: target is <180°. Use the finished angle directly.
+        targetAngle = newAngle;
+      } else {
+        // Straight: target is 180°
+        targetAngle = 180;
+      }
+
+      const angleDiff = targetAngle - currentInterior;
       const angleRad = angleDiff * Math.PI / 180;
-      
+
       for (let i = pointIdx + 1; i < currentPoints.length; i++) {
         const pt = currentPoints[i];
         const dx = pt.x - p2.x;
         const dy = pt.y - p2.y;
-        
+
         currentPoints[i] = {
           x: p2.x + dx * Math.cos(angleRad) - dy * Math.sin(angleRad),
           y: p2.y + dx * Math.sin(angleRad) + dy * Math.cos(angleRad),
         };
-        
+
         // Update point marker
-        const marker = canvas.getObjects().find((o: any) => 
+        const marker = canvas.getObjects().find((o: any) =>
           o.isPointMarker && o.pointIndex === i
         );
         if (marker) {
@@ -1364,28 +1527,29 @@ export function FlashingCanvas({
           });
         }
       }
-      
+
       // Update all connected geometry
       updateConnectedGeometry(pointIdx, 0, 0);
-      
+
       setLinePoints([...currentPoints]);
     }
 
     // Update text label
-    const textObj = canvas.getObjects().find((o: any) => 
+    const textObj = canvas.getObjects().find((o: any) =>
       o.measurementId === calculatingAngleId && o.type === 'i-text'
     );
     if (textObj) {
       (textObj as any).set('text', `${newAngle}°`);
     }
 
-    // Update measurement state
-    const newInterior = measurement.showInterior ? newAngle : 360 - newAngle;
+    // Update measurement state - store angleType so the drawing remembers
+    // which direction this angle bends.
+    const newInterior = inferredAngleType === 'external' ? newAngle : (inferredAngleType === 'internal' ? newAngle : 180);
     const newExterior = 360 - newInterior;
-    
+
     setMeasurements(measurements.map(m =>
-      m.id === calculatingAngleId 
-        ? { ...m, value: newAngle, interiorValue: newInterior, exteriorValue: newExterior }
+      m.id === calculatingAngleId
+        ? { ...m, value: newAngle, interiorValue: newInterior, exteriorValue: newExterior, angleType: inferredAngleType }
         : m
     ));
 
@@ -1395,15 +1559,15 @@ export function FlashingCanvas({
 
   const handleSelectMeasurement = (id: string) => {
     if (!fabricRef.current) return;
-    
+
     setSelectedMeasurement(id);
-    
+
     // Highlight the corresponding canvas object
     const canvas = fabricRef.current;
-    const obj = canvas.getObjects().find((o: any) => 
+    const obj = canvas.getObjects().find((o: any) =>
       o.measurementId === id && o.type === 'i-text'
     );
-    
+
     if (obj) {
       canvas.setActiveObject(obj as any);
       canvas.requestRenderAll();
@@ -1416,27 +1580,27 @@ export function FlashingCanvas({
     if (!measurement.lineStart || !measurement.lineEnd) return;
 
     const newSide = measurement.placementSide === 'exterior' ? 'interior' : 'exterior';
-    
+
     const canvas = fabricRef.current;
-    const textObj = canvas.getObjects().find((o: any) => 
+    const textObj = canvas.getObjects().find((o: any) =>
       o.measurementId === id && o.type === 'i-text'
     );
-    
+
     if (textObj) {
       // Recalculate label position on the opposite side
       const midX = (measurement.lineStart.x + measurement.lineEnd.x) / 2;
       const midY = (measurement.lineStart.y + measurement.lineEnd.y) / 2;
-      
+
       const dx = measurement.lineEnd.x - measurement.lineStart.x;
       const dy = measurement.lineEnd.y - measurement.lineStart.y;
       const lineLength = Math.sqrt(dx * dx + dy * dy);
       const perpX = -dy / lineLength;
       const perpY = dx / lineLength;
-      
+
       const offset = newSide === 'exterior' ? 15 : -15;
       const labelX = midX + perpX * offset;
       const labelY = midY + perpY * offset;
-      
+
       (textObj as any).set({
         left: labelX,
         top: labelY,
@@ -1455,9 +1619,9 @@ export function FlashingCanvas({
       alert('Right angle can only be added to middle points');
       return;
     }
-    
+
     const pt = linePoints[selectedPoint];
-    
+
     if (fabricRef.current) {
       const size = 12;
       const square = new Rect({
@@ -1480,7 +1644,7 @@ export function FlashingCanvas({
       fabricRef.current.add(square);
       fabricRef.current.renderAll();
     }
-    
+
     setSelectedPoint(null);
   };
 
@@ -1489,20 +1653,20 @@ export function FlashingCanvas({
       alert('Custom angle requires a middle point');
       return;
     }
-    
+
     const pt = linePoints[selectedPoint];
     const prevPt = linePoints[selectedPoint - 1];
     const nextPt = linePoints[selectedPoint + 1];
-    
+
     const interiorAngleVal = Math.round(calculateAngle(prevPt, pt, nextPt, true));
     const exteriorAngleVal = 360 - interiorAngleVal;
     const displayValue = interiorAngleVal;
-    
+
     const bisector = getAngleBisector(prevPt, pt, nextPt);
-    
+
     if (fabricRef.current) {
       const arcRadius = 25;
-      
+
       const arc = new Circle({
         left: pt.x,
         top: pt.y,
@@ -1515,7 +1679,7 @@ export function FlashingCanvas({
         selectable: true,
         evented: true,
       });
-      
+
       const textOffset = arcRadius + 15;
       const text = new IText(`${displayValue}°`, {
         left: pt.x + bisector.x * textOffset,
@@ -1528,7 +1692,7 @@ export function FlashingCanvas({
         editable: true,
         selectable: true,
       });
-      
+
       fabricRef.current.add(arc);
       fabricRef.current.add(text);
 
@@ -1544,10 +1708,10 @@ export function FlashingCanvas({
         showInterior: true,
         labelObjectId: (text as any)._id,
       }]);
-      
+
       fabricRef.current.renderAll();
     }
-    
+
     setSelectedPoint(null);
   };
 
@@ -1593,7 +1757,7 @@ export function FlashingCanvas({
         // conversion happens on render via formatLength(). Angles stay
         // in degrees.
         unit: m.type === 'length' ? 'mm' : 'degrees',
-        pointIndices: m.type === 'length' 
+        pointIndices: m.type === 'length'
           ? [m.lineStartIndex, m.lineEndIndex]
           : [m.pointIndex! - 1, m.pointIndex!, (m.pointIndex! + 1) % linePoints.length],
         visible: m.visible,
@@ -1816,29 +1980,37 @@ export function FlashingCanvas({
         >
           Adjust Points
         </button>
-        
-        <div className="h-8 w-px bg-slate-300" />
-        
+
         <button
           onClick={handleRecalibrateAll}
           disabled={editingLocked}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            needsRecalibration 
-              ? 'bg-[#FF6B35] text-white shadow-lg animate-pulse hover:bg-[#ff5722]' 
+            needsRecalibration
+              ? 'bg-[#FF6B35] text-white shadow-lg animate-pulse hover:bg-[#ff5722]'
               : 'bg-white border border-slate-300 hover:bg-slate-50'
           } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Recalibrate
         </button>
-        
+
         <button
           onClick={handleSelectAll}
+          disabled={editingLocked}
           title="Select All (Ctrl+A)"
-          className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50"
+          className={`px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50 ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Select All
         </button>
-        
+        {editingLocked && (
+          <button
+            onClick={handleDeselectAll}
+            title="Deselect All - resume editing"
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all"
+          >
+            Deselect All
+          </button>
+        )}
+
         <div className="ml-auto flex gap-2">
           <button
             onClick={handleClear}
@@ -1863,8 +2035,8 @@ export function FlashingCanvas({
         </div>
       </div>
 
-      {/* Live Measurements - Subtle Professional Design */}
-      <div className="mb-4 p-3 bg-slate-100 border border-slate-200 rounded-lg inline-block" data-copilot="flashing-live-readout">
+      {/* Live Measurements + Finish button - Subtle Professional Design */}
+      <div className="mb-4 p-3 bg-slate-100 border border-slate-200 rounded-lg inline-flex items-center" data-copilot="flashing-live-readout">
         <div className="flex gap-6 text-sm">
           <div>
             <span className="text-slate-600 font-medium">Length:</span>{' '}
@@ -1879,6 +2051,17 @@ export function FlashingCanvas({
             </span>
           </div>
         </div>
+        {/* Orange Finish button - appears when a creative tool is active.
+            Clicking it deselects everything and exits the tool so the user
+            can freely pick a new tool, interact with the sidebar, or save. */}
+        {(['line', 'text', 'draw', 'edit'] as DrawMode[]).includes(drawMode) && (
+          <button
+            onClick={handleFinishTool}
+            className="ml-4 px-4 py-1.5 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          >
+            Finish
+          </button>
+        )}
       </div>
 
       {/* Main Layout: Sidebar + Canvas */}
@@ -1891,16 +2074,16 @@ export function FlashingCanvas({
           ) : (
             <div className="space-y-3">
               {measurements.map((m) => (
-                <div 
-                  key={m.id} 
+                <div
+                  key={m.id}
                   onClick={() => {
                     if (!checkAdjustPointsExit()) {
                       handleSelectMeasurement(m.id);
                     }
                   }}
                   className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                    selectedMeasurement === m.id 
-                      ? 'border-[#FF6B35] bg-orange-50 shadow-sm ring-1 ring-orange-200' 
+                    selectedMeasurement === m.id
+                      ? 'border-[#FF6B35] bg-orange-50 shadow-sm ring-1 ring-orange-200'
                       : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
                   }`}
                 >
@@ -1908,19 +2091,49 @@ export function FlashingCanvas({
                     <span className="text-xs font-medium text-slate-600">
                       {m.type === 'length' ? 'Length' : 'Angle'}
                     </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!editingLocked && !checkAdjustPointsExit()) {
-                          handleToggleMeasurementVisibility(m.id);
-                        }
-                      }}
-                      disabled={editingLocked}
-                      className={`text-xs px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      title={m.visible ? 'Hide' : 'Show'}
-                    >
-                      {m.visible ? 'Hide' : 'Show'}
-                    </button>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!editingLocked && !checkAdjustPointsExit()) {
+                            handleToggleTextVisibility(m.id);
+                          }
+                        }}
+                        disabled={editingLocked || !m.visible}
+                        className={`text-xs px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded ${(editingLocked || !m.visible) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        title={m.textHidden ? 'Show text' : 'Hide text'}
+                      >
+                        {m.textHidden ? 'Show Text' : 'Hide Text'}
+                      </button>
+                      {m.type === 'angle' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!editingLocked && !checkAdjustPointsExit()) {
+                              handleToggleArcVisibility(m.id);
+                            }
+                          }}
+                          disabled={editingLocked || !m.visible}
+                          className={`flex items-center justify-center w-7 h-6 bg-slate-200 hover:bg-slate-300 rounded ${(editingLocked || !m.visible) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          title={m.arcHidden ? 'Show angle arc ring' : 'Hide angle arc ring'}
+                        >
+                          <span style={{ color: m.arcHidden ? '#94a3b8' : '#FF6B35', fontSize: '20px', lineHeight: 1, fontWeight: 'bold' }}>○</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!editingLocked && !checkAdjustPointsExit()) {
+                            handleToggleMeasurementVisibility(m.id);
+                          }
+                        }}
+                        disabled={editingLocked}
+                        className={`text-xs px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        title={m.visible ? 'Hide all' : 'Show all'}
+                      >
+                        {m.visible ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
                   </div>
                   <div className="text-base font-bold text-slate-900 mb-3">
                     {m.type === 'length' ? `${formatLength(m.value, lengthUnit)}${lengthUnit}` : `${m.value}°`}
@@ -1934,6 +2147,7 @@ export function FlashingCanvas({
                     {m.type === 'angle' && (
                       <>
                         <button
+                          data-copilot="flashing-angle-calc"
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!editingLocked && !checkAdjustPointsExit()) {
@@ -2019,13 +2233,15 @@ export function FlashingCanvas({
         </ul>
       </div>
 
-      {/* Angle Calculator Modal */}
-      <AngleCalculatorModal
+      {/* Angle Calculator Widget — same draggable floating widget used in
+          the order editor. Stays open so the user can apply multiple angles
+          without re-opening the calculator. */}
+      <AngleCalculatorWidget
         isOpen={calculatorOpen}
         onClose={() => setCalculatorOpen(false)}
         onApply={handleApplyCalculatedAngle}
         currentAngle={
-          calculatingAngleId 
+          calculatingAngleId
             ? measurements.find(m => m.id === calculatingAngleId)?.value || 0
             : 0
         }
@@ -2069,7 +2285,7 @@ export function FlashingCanvas({
               <strong>Make sure you are finished editing your drawing.</strong>
             </p>
             <p className="text-slate-700 mb-6">
-              Once you use the Select All feature, you <strong>cannot edit the drawing any further</strong>. 
+              Once you use the Select All feature, you <strong>cannot edit the drawing any further</strong>.
               You will only be able to move and resize the entire image.
             </p>
             <p className="text-sm text-slate-500 mb-6">

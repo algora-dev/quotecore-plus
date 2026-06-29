@@ -13,12 +13,14 @@ export default async function WorkspaceHome({
   const profile = await getCurrentProfile();
   const supabase = await createSupabaseServerClient();
 
-  // Load unread alert count
+  // Load bell-visible alert count (same lifecycle as the bell icon:
+  // bell_cleared_at IS NULL). This keeps the dashboard banner in sync with
+  // the bell — clearing alerts from the bell also clears the banner.
   const { count: unreadAlerts } = await supabase
     .from('alerts')
     .select('id', { count: 'exact', head: true })
     .eq('company_id', company.id)
-    .eq('is_read', false);
+    .is('bell_cleared_at', null);
 
   // Load user name + first-login Tutorials flag (gates the Welcome modal).
   const { data: user } = await supabase
@@ -131,7 +133,7 @@ export default async function WorkspaceHome({
             <p className="text-sm font-medium text-orange-800">
               You have {unreadAlerts} unread notification{unreadAlerts !== 1 ? 's' : ''}
             </p>
-            <p className="text-xs text-orange-600">Check the bell icon above to view them.</p>
+            <p className="text-xs text-orange-600">Click the bell icon above to view and clear them.</p>
           </div>
         </div>
       )}

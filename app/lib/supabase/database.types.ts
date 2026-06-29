@@ -1972,7 +1972,9 @@ export type Database = {
           item_notes: string | null
           length_unit: string | null
           lengths: Json | null
+          measurement_display: string | null
           order_id: string
+          priced_quantity: number | null
           quantity: number | null
           show_component_name: boolean | null
           show_flashing_image: boolean | null
@@ -1991,7 +1993,9 @@ export type Database = {
           item_notes?: string | null
           length_unit?: string | null
           lengths?: Json | null
+          measurement_display?: string | null
           order_id: string
+          priced_quantity?: number | null
           quantity?: number | null
           show_component_name?: boolean | null
           show_flashing_image?: boolean | null
@@ -2010,7 +2014,9 @@ export type Database = {
           item_notes?: string | null
           length_unit?: string | null
           lengths?: Json | null
+          measurement_display?: string | null
           order_id?: string
+          priced_quantity?: number | null
           quantity?: number | null
           show_component_name?: boolean | null
           show_flashing_image?: boolean | null
@@ -4562,7 +4568,6 @@ export type Database = {
         | "electrical"
         | "plumbing"
         | "landscaping"
-        | "solar"
         | "flooring"
         | "tiling"
         | "foundations"
@@ -4571,6 +4576,7 @@ export type Database = {
         | "fencing"
         | "concrete"
         | "construction"
+        | "solar"
       waste_type: "percent" | "fixed" | "none" | "fixed_per_segment"
       waste_unit: "percent" | "flat" | "flat_per_segment"
     }
@@ -4756,7 +4762,6 @@ export const Constants = {
         "electrical",
         "plumbing",
         "landscaping",
-        "solar",
         "flooring",
         "tiling",
         "foundations",
@@ -4765,6 +4770,7 @@ export const Constants = {
         "fencing",
         "concrete",
         "construction",
+        "solar",
       ],
       waste_type: ["percent", "fixed", "none", "fixed_per_segment"],
       waste_unit: ["percent", "flat", "flat_per_segment"],

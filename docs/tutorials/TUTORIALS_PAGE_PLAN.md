@@ -106,9 +106,9 @@ Copy is **trade-neutral** (generic, not roofing-specific) per Shaun's standing p
 ### 1. Quotes  → `/quotes`  [Q: create-quote]  (multi-page)
 - **Tagline:** Three ways to build a quote — pick what suits the job.
 - **P1 — What & why:** A quote is the priced document you send a customer. QuoteCore+ gives you three entry modes so you can quote fast for simple jobs and in detail for complex ones.
-- **P2 — Manual Mode:** Type lines in yourself (description, qty, price). Best when you already know your numbers or want a fully custom quote. Add components or catalog items as lines too.
-- **P3 — Digital Mode:** Measure the job on-screen (digital takeoff), attach your saved components, and let QuoteCore+ price it from your rates. Best for measured work where area/length drives the price.
-- **P4 — Blank Quote Mode:** Start from an empty quote and add lines freely — no measuring, no template. Fastest for a quick one-off.
+- **P2 — Component Quote:** Type lines in yourself (description, qty, price). Best when you already know your numbers or want a fully custom quote. Add components or catalog items as lines too.
+- **P3 — Digital Measure:** Measure the job on-screen (digital takeoff), attach your saved components, and let QuoteCore+ price it from your rates. Best for measured work where area/length drives the price.
+- **P4 — Standard Quote:** Start from an empty quote and add lines freely — no measuring, no template. Fastest for a quick one-off.
 - **P5 — Then what:** Save it, preview it, and send by link or email. (See "Sending" tutorial.)
 
 ### 2. Sending Quotes, Orders, or Invoices  → `/quotes`  [Q: none v1]  (multi-page)
@@ -121,7 +121,7 @@ Copy is **trade-neutral** (generic, not roofing-specific) per Shaun's standing p
 ### 3. Components  → `/components`  [Q: components]  (multi-page)
 - **Tagline:** Reusable priced building blocks for fast, consistent quoting.
 - **P1 — What & why:** A component is a saved item with your material + labour rates, waste %, and how it's measured (per m², per metre, each…). Build them once, reuse on every quote — consistent pricing, no re-typing.
-- **P2 — How to use:** Create components in Resources → Components. When quoting in Digital Mode, your measurements pull the right components and price automatically. You can also drop a component straight onto any quote/order line.
+- **P2 — How to use:** Create components in Resources → Components. When quoting in Digital Measure, your measurements pull the right components and price automatically. You can also drop a component straight onto any quote/order line.
 - **P3 — When:** Set up your common components first (the app seeds starter ones for your trade). Edit rates any time — new quotes use the latest.
 
 ### 4. Catalogs  → `/resources/catalogs`  [Q: catalog-add-to-quote]  (multi-page)

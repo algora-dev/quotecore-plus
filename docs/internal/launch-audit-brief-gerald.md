@@ -78,7 +78,7 @@ This is the headline list. Full code in commits `69fe397..bd55039` on `developme
 
 **UI gating:**
 - New `<UpgradeModal>` component used at every cap/feature gate.
-- `/quotes/new` greys out Digital Mode button on non-feature plans; submit blocked at monthly cap.
+- `/quotes/new` greys out Digital Measure button on non-feature plans; submit blocked at monthly cap.
 - `/quotes` list page intercepts `+ New Quote` at cap.
 - `/components` `+ Add Component` checks lifetime cap + counter badge.
 - `/flashings` hard server-gate splash on non-feature plans + cap-aware Create/Upload buttons.
@@ -133,7 +133,7 @@ This is the headline list. Full code in commits `69fe397..bd55039` on `developme
 
 ### 6. Smaller changes worth flagging
 
-- Blank Quote mode (`entry_mode='blank'`) — separate builder, auto-confirm on first save.
+- Standard Quote (`entry_mode='blank'`) — separate builder, auto-confirm on first save.
 - Imperial measurement system (metric / imperial_ft / imperial_rs) — per-quote lock at creation, flashings tool unit-aware.
 - 2FA + recovery codes + security questions.
 - Email change with double-confirmation, 7-day cooldown.
@@ -155,7 +155,7 @@ Shaun and I have run smoke tests on the following. Treat as "happy path is confi
 | A2 | Component cap at trial (10) blocks Add button | ✅ |
 | A3 | Flashing cap at trial (5) blocks Create/Upload | ✅ |
 | A4 | Quote cap at trial (10) blocks + New Quote | ✅ |
-| A5 | Digital Mode greyed on Starter, opens upgrade modal | ✅ |
+| A5 | Digital Measure greyed on Starter, opens upgrade modal | ✅ |
 | A6 | Flashings nav opens upgrade modal on Starter/Growth | ✅ |
 | A7 | Material Orders nav opens upgrade modal on Starter/Growth | ✅ |
 | A8 | Direct URL access to `/flashings` and `/material-orders` shows upgrade splash on gated plans | ✅ |

@@ -19,7 +19,7 @@ import { AlertModal } from '@/app/components/AlertModal';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 import { CatalogSearchModal } from '../../quotes/[id]/customer-edit/CatalogSearchModal';
-import { AngleCalculatorModal } from '../../flashings/draw/AngleCalculatorModal';
+import { AngleCalculatorWidget } from '../../flashings/draw/AngleCalculatorWidget';
 import { OrderLineByLineEditor } from './OrderLineByLineEditor';
 import { CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
 import {
@@ -125,6 +125,12 @@ interface OrderLineItem {
   // Linear / area / volume mode
   lengths?: LengthEntry[];
   lengthUnit?: string;
+  // Fixed Quantity display: when the component uses per_pack_* pricing,
+  // pricedQuantity is the rounded-up purchasable unit count and
+  // measurementDisplay is the human-readable total length/area/volume
+  // (e.g. "23.4m" or "12.5m\u00b2"). Rendered as: qty (measurement).
+  pricedQuantity?: number;
+  measurementDisplay?: string;
   // Common
   notes?: string;
   showComponentName: boolean;
@@ -175,6 +181,10 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   // Declutter: collapse the components control sidebar so the order-form
   // preview fills the space. Pure layout state - sidebar stays mounted.
   const [componentsPanelCollapsed, setComponentsPanelCollapsed] = useState(false);
+  // Hover-to-highlight: when the user hovers a component in the left sidebar,
+  // the matching card in the order review gets an orange border so they can
+  // quickly see which component they need to edit.
+  const [hoveredLineId, setHoveredLineId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   
   // Template selection
@@ -276,6 +286,26 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           ? toDisplayArea(rawQty)
           : rawQty;
 
+      // Fixed Quantity display: when the component uses per_pack_* pricing,
+      // priced_quantity is the rounded-up purchasable unit count and
+      // final_quantity is the real measured total. Build a human-readable
+      // measurement string (e.g. "23.4m" or "12.5m²") for display alongside
+      // the quantity.
+      const pricedQty = comp.priced_quantity ?? null;
+      let measurementDisplay: string | undefined;
+      if (pricedQty != null) {
+        const mt = comp.measurement_type;
+        if (mt === 'lineal') {
+          measurementDisplay = `${Math.round(displayQty * 100) / 100}${lengthUnit}`;
+        } else if (mt === 'area') {
+          measurementDisplay = `${Math.round(displayQty * 100) / 100}${areaUnit}`;
+        } else if (mt === 'volume') {
+          measurementDisplay = `${Math.round(displayQty * 100) / 100}m³`;
+        } else {
+          measurementDisplay = `${Math.round(displayQty * 100) / 100} ${singleUnit}`;
+        }
+      }
+
       // Check if we have individual measurements for this component
       const hasMeasurements = comp.measurements && comp.measurements.length > 0;
 
@@ -305,6 +335,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           unit: 'pcs',
           lengths,
           lengthUnit: entryUnit,
+          pricedQuantity: pricedQty ?? undefined,
+          measurementDisplay,
           showComponentName: true,
           showFlashingImage: !!flashing?.image_url,
           showMeasurements: true,
@@ -318,6 +350,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           entryMode: 'single',
           quantity: displayQty,
           unit: singleUnit,
+          pricedQuantity: pricedQty ?? undefined,
+          measurementDisplay,
           showComponentName: true,
           showFlashingImage: !!flashing?.image_url,
           showMeasurements: true,
@@ -409,6 +443,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
       showComponentName: line.show_component_name ?? false,
       showFlashingImage: line.show_flashing_image ?? false,
       showMeasurements: line.show_measurements ?? false,
+      pricedQuantity: line.priced_quantity ?? undefined,
+      measurementDisplay: line.measurement_display ?? undefined,
     }));
     
     console.log('[OrderCreateForm] Loaded', mappedLines.length, 'line items');
@@ -534,6 +570,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
     lengths?: LengthEntry[];
     lengthUnit?: string;
     notes?: string;
+    pricedQuantity?: number;
+    measurementDisplay?: string;
   }) {
     const flashing = data.flashingId ? flashings.find(f => f.id === data.flashingId) : undefined;
     
@@ -557,6 +595,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               lengths: data.lengths,
               lengthUnit: data.lengthUnit,
               notes: data.notes,
+              pricedQuantity: data.pricedQuantity,
+              measurementDisplay: data.measurementDisplay,
             }
           : line
       ));
@@ -573,6 +613,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
         lengths: data.lengths,
         lengthUnit: data.lengthUnit,
         notes: data.notes,
+        pricedQuantity: data.pricedQuantity,
+        measurementDisplay: data.measurementDisplay,
         showComponentName: true,
         showFlashingImage: true,
         showMeasurements: true,
@@ -675,6 +717,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           showComponentName: line.showComponentName,
           showFlashingImage: line.showFlashingImage,
           showMeasurements: line.showMeasurements,
+          pricedQuantity: line.pricedQuantity,
+          measurementDisplay: line.measurementDisplay,
           sortOrder: index,
         })),
       });
@@ -953,12 +997,15 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
             ) : (
               <div className="space-y-3">
                 {orderLines.map((line, index) => (
-                  <div key={line.id} className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
-                    {/* Component Header */}
-                    <div className="px-3 py-2 bg-white border-b border-slate-200">
+                  <div key={line.id} onMouseEnter={() => setHoveredLineId(line.id)} onMouseLeave={() => setHoveredLineId(null)} className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50 cursor-pointer transition-all duration-150 hover:border-orange-300 hover:shadow-[0_0_8px_rgba(255,107,53,0.12)]">
+                    {/* Component Header - click anywhere toggles expand/collapse */}
+                    <div
+                      className="px-3 py-2 bg-white border-b border-slate-200"
+                      onClick={() => toggleCollapsed(line.id)}
+                    >
                       <div className="flex items-start gap-2 mb-2">
                         {/* Up/Down Arrows */}
-                        <div className="flex flex-col gap-0.5">
+                        <div className="flex flex-col gap-0.5" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
                             onClick={() => moveLineUp(line.id)}
@@ -986,7 +1033,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
                         {/* Collapse toggle */}
                         <button
                           type="button"
-                          onClick={() => toggleCollapsed(line.id)}
+                          onClick={(e) => { e.stopPropagation(); toggleCollapsed(line.id); }}
                           className="p-0.5 rounded hover:bg-slate-100 text-slate-400 flex-shrink-0"
                           title={collapsedLines.has(line.id) ? 'Expand' : 'Collapse'}
                         >
@@ -996,7 +1043,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
                         </button>
                       </div>
                       {!collapsedLines.has(line.id) && (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                         <button
                           type="button"
                           onClick={() => openEditModal(line.id)}
@@ -1017,7 +1064,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
 
                     {/* Visibility Controls - hidden when collapsed */}
                     {!collapsedLines.has(line.id) && (
-                    <div className="px-3 py-2 space-y-2">
+                    <div className="px-3 py-2 space-y-2" onClick={(e) => e.stopPropagation()}>
                       <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:bg-white rounded px-2 py-1.5 transition-colors">
                         <input
                           type="checkbox"
@@ -1260,7 +1307,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
             ) : (
               <div className={layoutMode === 'double' ? 'grid grid-cols-2 gap-6' : 'space-y-6'}>
                 {orderLines.map(line => (
-                  <div key={line.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+                  <div key={line.id} className={`bg-white border rounded-lg p-4 space-y-3 transition-all duration-150 ${hoveredLineId === line.id ? 'border-[#FF6B35] ring-2 ring-[#FF6B35] ring-inset bg-orange-50/20' : 'border-slate-200'}`}>
                     {/* Component Name */}
                     {line.showComponentName && (
                       <h4 className="font-semibold text-slate-900 text-base">{line.componentName}</h4>
@@ -1281,33 +1328,50 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
                     {line.showMeasurements && (
                       <div className="text-sm text-slate-700">
                         {line.entryMode === 'single' ? (
-                          <p className="font-medium">Quantity: {line.quantity}</p>
+                          <p className="font-medium">
+                            Quantity: <span className="text-black">{line.pricedQuantity ?? line.quantity}</span>
+                            {line.measurementDisplay && (
+                              <span className="text-slate-400 ml-1">({line.measurementDisplay})</span>
+                            )}
+                          </p>
                         ) : (
                           <div>
-                            <p className="font-medium text-xs text-slate-500 uppercase mb-2">
-                              {line.entryMode === 'area' ? 'Areas' : line.entryMode === 'volume' ? 'Volumes' : 'Lengths'} ({line.lengthUnit}):
-                            </p>
-                            <div className="space-y-2">
-                              {line.lengths?.map((entry, idx) => (
-                                <div key={idx}>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium">{entry.length}{line.lengthUnit}</span>
-                                    <span className="text-slate-400">×</span>
-                                    <span className="text-slate-600">{entry.multiplier}</span>
-                                  </div>
-                                  {entry.variables && entry.variables.length > 0 && (
-                                    <div className="text-xs text-slate-500 pl-4 mt-0.5">
-                                      {entry.variables.map((v, vIdx) => (
-                                        <span key={vIdx} className="mr-2">
-                                          {v.name}={v.value}{v.unit}
-                                          {vIdx < entry.variables!.length - 1 && ', '}
-                                        </span>
-                                      ))}
+                            {line.pricedQuantity != null && (
+                              <p className="font-medium">
+                                Quantity: <span className="text-black">{line.pricedQuantity}</span>
+                                {line.measurementDisplay && (
+                                  <span className="text-slate-400 ml-1">({line.measurementDisplay})</span>
+                                )}
+                              </p>
+                            )}
+                            {line.pricedQuantity == null && (
+                              <>
+                                <p className="font-medium text-xs text-slate-500 uppercase mb-2">
+                                  {line.entryMode === 'area' ? 'Areas' : line.entryMode === 'volume' ? 'Volumes' : 'Lengths'} ({line.lengthUnit}):
+                                </p>
+                                <div className="space-y-2">
+                                  {line.lengths?.map((entry, idx) => (
+                                    <div key={idx}>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium">{entry.length}{line.lengthUnit}</span>
+                                        <span className="text-slate-400">×</span>
+                                        <span className="text-slate-600">{entry.multiplier}</span>
+                                      </div>
+                                      {entry.variables && entry.variables.length > 0 && (
+                                        <div className="text-xs text-slate-500 pl-4 mt-0.5">
+                                          {entry.variables.map((v, vIdx) => (
+                                            <span key={vIdx} className="mr-2">
+                                              {v.name}={v.value}{v.unit}
+                                              {vIdx < entry.variables!.length - 1 && ', '}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
                                     </div>
-                                  )}
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
+                              </>
+                            )}
                           </div>
                         )}
                         {line.notes && <p className="text-slate-600 mt-2 text-xs italic">{line.notes}</p>}
@@ -1416,6 +1480,8 @@ interface AddItemModalProps {
     lengths?: LengthEntry[];
     lengthUnit?: string;
     notes?: string;
+    pricedQuantity?: number;
+    measurementDisplay?: string;
   }) => void;
   onCancel: () => void;
   /** Inherited from the parent so this modal can pop the same app-style alerts instead of native ones. */
@@ -1436,9 +1502,14 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
   // Metric vs imperial drives every unit option in this modal so the two
   // systems never mix. imperial_ft / imperial_rs / imperial all map to imperial.
   const isMetric = measurementSystem === 'metric';
+  const isImperialRs = measurementSystem === 'imperial_rs' || measurementSystem === 'imperial';
+  // Area unit depends on the full system: m² (metric), ft² (imperial_ft),
+  // or RS Roofing Squares (imperial_rs / legacy imperial).
   const UNITS = isMetric
     ? { linear: 'm', area: 'm\u00b2', volume: 'm\u00b3' }
-    : { linear: 'ft', area: 'ft\u00b2', volume: 'ft\u00b3' };
+    : isImperialRs
+      ? { linear: 'ft', area: 'RS', volume: 'ft\u00b3' }
+      : { linear: 'ft', area: 'ft\u00b2', volume: 'ft\u00b3' };
   // Variable dimension units by system (Task 3): metric mm/M/°, imperial in/ft/°.
   const VAR_UNITS: { value: string; label: string }[] = isMetric
     ? [ { value: 'mm', label: 'mm' }, { value: 'm', label: 'M' }, { value: '\u00b0', label: '\u00b0' } ]
@@ -1476,6 +1547,40 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
   const [newVarUnit, setNewVarUnit] = useState(VAR_UNITS[0].value);
   
   const [notes, setNotes] = useState(existingLine?.notes || '');
+  
+  // Fixed Quantity display overrides: editable text values that show in the
+  // order preview (e.g. "5" and "231.71m²"). Pre-fill from existingLine when
+  // editing; empty for new items. These are order-line-only — they never
+  // write back to the quote or component library.
+  const [pricedQuantity, setPricedQuantity] = useState(
+    existingLine?.pricedQuantity != null ? String(existingLine.pricedQuantity) : ''
+  );
+  // Split measurementDisplay into numeric value + unit selector so the user
+  // doesn't have to type the unit manually. Parse from existingLine if present.
+  // All common units available in the dropdown so the user can pick
+  // whatever fits — includes RS (Roofing Squares) for imperial_rs users.
+  const FIXED_QTY_UNITS = isMetric
+    ? [UNITS.area, UNITS.linear, UNITS.volume]
+    : isImperialRs
+      ? ['RS', 'ft\u00b2', 'ft', 'ft\u00b3', 'm\u00b2', 'm']
+      : ['ft\u00b2', 'ft', 'ft\u00b3', 'm\u00b2', 'm'];
+  function parseMeasurementDisplay(raw: string): { value: string; unit: string } {
+    if (!raw) return { value: '', unit: FIXED_QTY_UNITS[0] };
+    // Try to split numeric prefix from unit suffix (e.g. "38.56m²" → "38.56" + "m²").
+    const match = raw.match(/^([\d.\s]+)\s*(.*)$/);
+    if (match) {
+      const val = match[1].trim();
+      const unit = match[2].trim();
+      return { value: val, unit: unit || FIXED_QTY_UNITS[0] };
+    }
+    return { value: raw, unit: FIXED_QTY_UNITS[0] };
+  }
+  const parsedInitial = parseMeasurementDisplay(existingLine?.measurementDisplay || '');
+  const [measurementValue, setMeasurementValue] = useState(parsedInitial.value);
+  const [measurementUnit, setMeasurementUnit] = useState(parsedInitial.unit);
+  // Toggle for showing the Fixed Quantity Display section on new items.
+  // Auto-shows when editing a line that already has pricedQuantity.
+  const [showFixedQty, setShowFixedQty] = useState(existingLine?.pricedQuantity != null);
   
   function addVariable() {
     if (!newVarName.trim()) {
@@ -1556,6 +1661,15 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
       return;
     }
 
+    // Parse fixed-quantity display overrides. Empty = not set (falls back to
+    // normal display). pricedQuantity is parsed as a number; measurementDisplay
+    // is free-text so the user can type "240m²" or anything else.
+    const parsedPricedQty = pricedQuantity.trim() === '' ? undefined : parseFloat(pricedQuantity);
+    // Combine numeric value + unit selector into the display string.
+    const trimmedMeasurement = measurementValue.trim() === ''
+      ? undefined
+      : `${measurementValue.trim()}${measurementUnit}`;
+
     if (entryMode === 'single') {
       if (quantity <= 0) {
         showAlert('Invalid quantity', 'The quantity must be greater than 0.', 'info');
@@ -1571,6 +1685,8 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
         // so existing render/save paths that read `unit` stay happy.
         unit: unit || 'pcs',
         notes: notes.trim() || undefined,
+        pricedQuantity: parsedPricedQty,
+        measurementDisplay: trimmedMeasurement,
       });
     } else {
       // linear / area / volume all accumulate into `lengths`.
@@ -1587,6 +1703,8 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
         lengths,
         lengthUnit: entryUnit,
         notes: notes.trim() || undefined,
+        pricedQuantity: parsedPricedQty,
+        measurementDisplay: trimmedMeasurement,
       });
     }
   }
@@ -1726,6 +1844,77 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
               </div>
             )}
           </div>
+
+          {/* Fixed Quantity Display: editable text overrides that show in the
+              order preview as "Quantity: N (measurement)". Pre-fills from the
+              existing line when editing. For new items, a toggle reveals the
+              fields. These are order-line-only display values — they never
+              write back to the quote or component library. */}
+          {(existingLine?.pricedQuantity != null || showFixedQty) && (
+            <div className="border border-orange-200 rounded-lg p-3 bg-orange-50/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-slate-700">
+                  Fixed Quantity Display
+                </label>
+                {!existingLine?.pricedQuantity && (
+                  <button
+                    type="button"
+                    onClick={() => setShowFixedQty(false)}
+                    className="text-xs text-slate-400 hover:text-slate-600"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-slate-500">
+                These values appear in the order as "Quantity: N (measurement)". Edit them to adjust what shows on this order — the quote stays unchanged.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Quantity</label>
+                  <input
+                    type="text"
+                    value={pricedQuantity}
+                    onChange={(e) => setPricedQuantity(e.target.value)}
+                    placeholder="e.g. 5"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Measurement</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={measurementValue}
+                      onChange={(e) => setMeasurementValue(e.target.value)}
+                      placeholder="e.g. 231.71"
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                    <select
+                      value={measurementUnit}
+                      onChange={(e) => setMeasurementUnit(e.target.value)}
+                      className="w-20 px-2 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    >
+                      {FIXED_QTY_UNITS.map((u) => (
+                        <option key={u} value={u}>{u}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Show toggle to add Fixed Quantity Display for new items or items
+              that don't already have it. */}
+          {existingLine?.pricedQuantity == null && !showFixedQty && (
+            <button
+              type="button"
+              onClick={() => setShowFixedQty(true)}
+              className="text-sm text-[#FF6B35] hover:text-orange-700 font-medium"
+            >
+              + Add Fixed Quantity Display
+            </button>
+          )}
 
           {/* Item Type: defines what the measurement section below looks like.
               Linear / Area / Volume accumulate entries; Single is qty-only. */}
@@ -2047,10 +2236,10 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
         />
       )}
 
-      {/* Angle Calculator — reuses the existing modal from the drawing page.
-          onApply copies the calculated angle to clipboard so the user can
-          paste it wherever they need it (notes, measurements, etc.). */}
-      <AngleCalculatorModal
+      {/* Angle Calculator — floating draggable widget so the user can
+          calculate an angle, copy it, and paste into any input without
+          closing the calculator. */}
+      <AngleCalculatorWidget
         isOpen={showAngleCalc}
         onClose={() => setShowAngleCalc(false)}
         onApply={handleAngleApply}

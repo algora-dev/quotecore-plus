@@ -99,7 +99,7 @@ export const TUTORIALS: Tutorial[] = [
         ],
       },
       {
-        heading: 'Manual Mode',
+        heading: 'Component Quote',
         body: [
           'Use saved Smart Components™ to quickly add lines to your quote that require pricing from measurements, items, or areas - including complex calculations for labour, materials, pitch, area squared, length x height, volume, and more.',
           'You can also add custom lines or catalog lines later in the customer quote editor section.',
@@ -107,17 +107,17 @@ export const TUTORIALS: Tutorial[] = [
         ],
       },
       {
-        heading: 'Digital Mode',
+        heading: 'Digital Measure',
         body: [
-          'Measure everything in-app, on-screen, upload a plan, select the Smart Components™ to measure/add, and QuoteCore+ pre-populates your quote with all the info. (Digital mode also requires saved Smart Components™.)',
+          'Measure everything in-app, on-screen, upload a plan, select the Smart Components™ to measure/add, and QuoteCore+ pre-populates your quote with all the info. (Digital Measure also requires saved Smart Components™.)',
           'Best used with aerial images, or digital plans you would normally print off and manually measure.',
         ],
       },
       {
-        heading: 'Blank Quote Mode',
+        heading: 'Standard Quote',
         body: [
           'Start from an empty quote, add custom typed lines, or add lines from catalog/components freely - the simplest way to start quoting.',
-          'Blank quotes suit users not needing complex measuring or Smart Components™. You can write each line, or populate a line from an uploaded catalog/saved Smart Component™ by searching it.',
+          'Standard quotes suit users not needing complex measuring or Smart Components™. You can write each line, or populate a line from an uploaded catalog/saved Smart Component™ by searching it.',
         ],
       },
       {
@@ -193,7 +193,7 @@ export const TUTORIALS: Tutorial[] = [
         heading: 'How to use',
         body: [
           'Create Smart Components™ in Resources → Smart Components™.',
-          'When quoting in Digital Mode, your measurements pull the right Smart Components™ and price automatically.',
+          'When quoting in Digital Measure, your measurements pull the right Smart Components™ and price automatically.',
           'You can also drop a Smart Component™ straight onto any quote or order line.',
         ],
       },

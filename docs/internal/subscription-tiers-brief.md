@@ -85,7 +85,7 @@ Phase 1 ships **trial → starter → growth → pro**. The four higher tiers re
 | Tier code | Display name | Price | Quotes/mo | Storage | Seats | Features |
 |---|---|---|---|---|---|---|
 | `trial` | 14-day Trial | Free | 10 | 200 MB | 1 | Same gates as Starter |
-| `starter` | Starter | $19 / $39 | 50 | 1 GB | 1 | Manual + blank quote modes only. PDF export, client + job records |
+| `starter` | Starter | $19 / $39 | 50 | 1 GB | 1 | Manual + Standard Quotes only. PDF export, client + job records |
 | `growth` | Growth | $29 / $59 | 100 | 3 GB | 1 | Adds digital takeoff + email-via-QuoteCore+ |
 | `pro` | Professional | $39 / $89 | 100 | 5 GB | 1 | Adds flashings + material orders + follow-up automation |
 | `scaling` | Scaling Contractor | $49 / $109 | 200 | 10 GB | 2 | Pro + PM mode (future) |

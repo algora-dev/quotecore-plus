@@ -149,7 +149,7 @@
 
 ### D2 — Catalog Library + import **[PRE-VERIFIED dev] [BLOCKER]**
 1. Import a CSV catalog (wizard: upload → name → preview/map → save).
-2. In a quote (CustomerQuoteEditor + Blank Quote) use **Catalog Search** to add a line (desc + price + qty); Units toggle hides quantity; hyphenated descriptions not truncated.
+2. In a quote (CustomerQuoteEditor + Standard Quote) use **Catalog Search** to add a line (desc + price + qty); Units toggle hides quantity; hyphenated descriptions not truncated.
 3. **Pass:** catalog import + quote-line population work on live.
 
 ### D2a — Catalog privacy: one company can't see another's catalog **[SECURITY-BLOCKER] [EVIDENCE-GATE]**

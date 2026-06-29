@@ -55,6 +55,10 @@ interface SaveOrderInput {
     showComponentName: boolean;
     showFlashingImage: boolean;
     showMeasurements: boolean;
+    /** Fixed Quantity: rounded-up purchasable unit count. */
+    pricedQuantity?: number;
+    /** Fixed Quantity: pre-computed measurement display (e.g. "23.4m"). */
+    measurementDisplay?: string;
     sortOrder: number;
   }[];
 }
@@ -263,6 +267,8 @@ export async function saveDraftOrder(input: SaveOrderInput) {
         show_component_name: item.showComponentName,
         show_flashing_image: item.showFlashingImage,
         show_measurements: item.showMeasurements,
+        priced_quantity: item.pricedQuantity || null,
+        measurement_display: item.measurementDisplay || null,
         sort_order: item.sortOrder,
       }));
       
@@ -273,7 +279,7 @@ export async function saveDraftOrder(input: SaveOrderInput) {
       if (linesError) {
         // Log full detail so Vercel function logs show the actual Supabase error.
         console.error('[saveDraftOrder] Line items insert error:', JSON.stringify(linesError));
-        console.error('[saveDraftOrder] First item sample:', JSON.stringify(lineItemsData[0]));
+        console.error('[saveDraftOrder] Line items count:', lineItemsData.length, '| keys:', lineItemsData[0] ? Object.keys(lineItemsData[0]).join(',') : 'empty');
         throw new Error(`Failed to save order items: ${linesError.message} (code: ${linesError.code})`);
       }
     }
