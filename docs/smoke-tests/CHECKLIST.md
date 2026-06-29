@@ -8,6 +8,19 @@
 
 ---
 
+# 2026-06-29 — Pre-launch: email confirmation, searchable flashing select, hide pricing in orders, docs sync
+
+- [ ] **Email confirmation flow** — sign up with email/password → redirected to login page with blue "Check your email" banner → Supabase sends branded confirmation email → click Confirm button → auth callback creates session → welcome email arrives (branded, with tutorials link + Q prompt) → redirected to workspace dashboard.
+- [ ] **Google signup welcome email** — sign up with Google → complete onboarding → welcome email arrives (same template) within a minute.
+- [ ] **Searchable flashing select (inline editor)** — in order editor, click flashing dropdown → type to search → results filter in real-time → grouping (Component Flashings / All Other) preserved → select one → flashing image loads correctly.
+- [ ] **Searchable flashing select (AddItemModal)** — in order editor, open AddItemModal → flashing dropdown is searchable → same filter + group behaviour → select one → works.
+- [ ] **Hide pricing in order-from-quote (line-by-line)** — create order from quote → line-by-line editor opens with all prices hidden by default → "Show all pricing" checkbox unticked → tick it → prices appear → untick → prices hide again.
+- [ ] **Hide pricing in order-from-quote (single/double column)** — order-from-quote in single/double column mode still shows per-line toggle as before (no regression).
+- [ ] **Delete library modal text** — components page, non-bootstrap library, click trash icon → modal says "Deleting this library will delete all components inside it. Move any components you want to keep to another library first, or delete them forever here." + "This action cannot be undone."
+- [ ] **Docs accuracy** — /docs/account/billing shows Free plan in table; /docs/account/tier-limits shows Free column + correct caps (Starter components=20, Pro components=30, Starter storage=500MB, Trial flashings=10); /docs/account/trial says collapses to Free; /docs/account/upgrading-and-cancelling says collapses to Free.
+
+---
+
 # 2026-06-25 — Flashing drawing, angle calculator widget, order editor hover-highlight, dashboard alerts
 
 - [ ] **Change of Pitch bend direction** — drawing editor, angle calculator, Change of Pitch: upper=10°, lower=25° → bends external (opens outward). Upper=25°, lower=10° → bends internal (folds inward).
