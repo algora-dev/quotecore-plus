@@ -83,13 +83,13 @@ When `bypassHeightMultiplier` is true, the server skips the height-multiplier ap
 1. `entry_mode` type expanded from `'single' | 'multiple'` to `'single' | 'linear' | 'area' | 'volume' | 'multiple'`. Matches the DB constraint change.
 2. `lengths` array now stores entries for all non-`'single'` modes (was `'multiple'` only). Includes new optional `calcLength`/`calcWidth`/`calcDepth` fields per entry.
 3. New `pricedQuantity` and `measurementDisplay` fields written to `material_order_lines` (the new nullable columns).
-4. Error logging improved — full Supabase error JSON + first item sample logged to Vercel function logs.
+4. Error logging improved — full Supabase error JSON logged. **Fixed in `e3ea56e`:** raw line-item content redacted; now logs count + key shape only (see §8.3).
 
 **Security analysis:**
 - All writes go through existing `requireCompanyContext()` + company-scoped insert. No new authorization surface.
 - `pricedQuantity` and `measurementDisplay` are display-only fields stored from client input. A malicious client could inject arbitrary display strings. **Risk: LOW** — these are text/numeric display fields rendered in the order preview, not used for pricing or billing. XSS risk depends on rendering path (confirm OrderBody.tsx escapes/renders as text, not dangerouslySetInnerHTML).
 - The expanded `entry_mode` values are validated by the DB CHECK constraint. Invalid values are rejected at the DB level.
-- **Error logging change:** `console.error` now logs full error JSON including `linesError.message` and `lineItemsData[0]` (first order line). This could log PII (customer name, component names) to Vercel function logs. **Risk: LOW-MEDIUM** — Vercel logs are scoped to the project owner, but consider whether order line data should be in error logs.
+- **Error logging change:** `console.error` logs the Supabase error JSON. Raw line-item content was redacted in commit `e3ea56e` — now logs `lineItemsData.length` + `Object.keys(...)` only. **Risk: LOW** (resolved).
 
 ### `app/(auth)/[workspaceSlug]/settings/actions.ts`
 - Added `'solar'` to the `defaultTrade` union type in `CompanySettings`. Matches the DB enum extension. No other change.
@@ -289,8 +289,168 @@ Gerald flagged `saveDraftOrder` logging `lineItemsData[0]` (raw line-item conten
 
 **Fix:** Commit `e3ea56e` on `development` (2026-06-29 07:49 +01:00). Error log now reports `lineItemsData.length` + `Object.keys(lineItemsData[0]).join(',')` — count and key shape only, no raw component names, measurements, or supplier data.
 
-**Push status:** `e3ea56e` is committed locally on `development`, ahead of `origin/development` by 1 commit. Will be pushed with the next push to `origin/development`.
+**Push status:** `e3ea56e` and `93e687f` are committed locally on `development`, ahead of `origin/development` by 2 commits. Will be pushed with the next push to `origin/development`.
 
 ### 8.4 XSS — measurement_display + priced_quantity render path
 
 Gerald confirmed (and Gavin agrees): both fields render as React text nodes in `app/orders/[token]/OrderBody.tsx:265-276`. No `dangerouslySetInnerHTML` in the render path. XSS risk is LOW. No action needed.
+
+---
+
+## 9. quote_components RLS Leak Fix — Gerald H-01 (2026-06-29)
+
+Gerald's Post-R2 blocker review identified a confirmed High finding in the `quote_components_all` RLS policy. The previous `USING` predicate had a logic flaw that leaked null-area components across companies.
+
+### 9.1 The flaw (confirmed)
+
+Previous policy `qual`:
+```sql
+EXISTS (
+  SELECT 1
+  FROM quotes q JOIN quote_roof_areas qra ON qra.quote_id = q.id
+  WHERE (quote_components.quote_roof_area_id = qra.id OR quote_components.quote_roof_area_id IS NULL)
+    AND q.company_id = current_company_id()
+    AND q.id = qra.quote_id
+)
+```
+
+When `quote_roof_area_id IS NULL`, the first branch is true for ANY `qra` row. The `q.id = qra.quote_id` link only connects `q` to `qra` — there is no join tying `quote_components.quote_id` to `q.id`. Any authenticated user whose company has at least one roof area could satisfy the `EXISTS` for null-area components from any other company.
+
+### 9.2 The fix
+
+**Migration:** `supabase/migrations/20260629110000_fix_quote_components_rls_leak.sql`
+
+Drops and recreates `quote_components_all` with a corrected `USING` predicate:
+```sql
+DROP POLICY IF EXISTS quote_components_all ON public.quote_components;
+
+CREATE POLICY quote_components_all ON public.quote_components
+  FOR ALL TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.quotes q
+      WHERE q.id = quote_components.quote_id
+        AND q.company_id = current_company_id()
+    )
+    AND (
+      quote_roof_area_id IS NULL
+      OR EXISTS (
+        SELECT 1
+        FROM public.quote_roof_areas qra
+        WHERE qra.id = quote_components.quote_roof_area_id
+          AND qra.quote_id = quote_components.quote_id
+      )
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM public.quotes q
+      WHERE q.id = quote_components.quote_id
+        AND q.company_id = current_company_id()
+    )
+  );
+```
+
+Key change: the `USING` predicate now scopes directly through `quote_components.quote_id → quotes.company_id = current_company_id()`, with a separate roof-area consistency check.
+
+**Applied to shared DB:** Yes, via Management API on 2026-06-29.
+
+### 9.3 Live DB proof — new policy active
+
+**Query:**
+```sql
+SELECT polname, polcmd, polroles::regrole[] AS roles,
+       pg_get_expr(polqual, polrelid) AS qual,
+       pg_get_expr(polwithcheck, polrelid) AS with_check
+FROM pg_policy
+WHERE polrelid = 'public.quote_components'::regclass;
+```
+
+**Result:**
+```
+polname:     quote_components_all
+polcmd:      *  (ALL)
+roles:       {authenticated}
+
+qual:
+((EXISTS (
+  SELECT 1
+  FROM quotes q
+  WHERE ((q.id = quote_components.quote_id) AND (q.company_id = current_company_id()))
+))
+AND ((quote_roof_area_id IS NULL)
+  OR (EXISTS (
+    SELECT 1
+    FROM quote_roof_areas qra
+    WHERE ((qra.id = quote_components.quote_roof_area_id) AND (qra.quote_id = quote_components.quote_id))
+  ))
+))
+
+with_check:
+(EXISTS (
+  SELECT 1
+  FROM quotes q
+  WHERE ((q.id = quote_components.quote_id) AND (q.company_id = current_company_id()))
+))
+```
+
+### 9.4 Adversarial verification
+
+Test setup: two companies with null-area components in the live DB.
+- Company A: `9773760c-adf1-411a-9854-72ff16ce6cd8` (user `2d077a5e-5579-4ab8-99aa-369553d5b37a`)
+- Company B: `10453bde-98f5-46cb-a621-e540c19580ea` (has null-area component `b1559dad-00b0-4cd5-aba8-6ede4c6f96e5`)
+
+All tests executed via Management API with `SET LOCAL role authenticated` + `SET LOCAL request.jwt.claim.sub` to simulate the authenticated user context.
+
+**Test 1 — Company A user cannot SELECT Company B null-area components:**
+```sql
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claim.sub = '2d077a5e-5579-4ab8-99aa-369553d5b37a';
+SELECT count(*) as total_visible,
+       count(*) FILTER (WHERE q.company_id = '9773760c...') as own_company_rows,
+       count(*) FILTER (WHERE q.company_id = '10453bde...') as other_company_rows
+FROM public.quote_components qc
+JOIN public.quotes q ON q.id = qc.quote_id
+WHERE qc.quote_roof_area_id IS NULL;
+```
+**Result:**
+```
+total_visible:      1
+own_company_rows:   1
+other_company_rows: 0  ← Company A sees ZERO Company B components
+```
+**PASS ✅**
+
+**Test 2 — Company A user CAN still SELECT their own null-area components (legitimate access intact):**
+```sql
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claim.sub = '2d077a5e-5579-4ab8-99aa-369553d5b37a';
+SELECT count(*) FROM public.quote_components qc
+JOIN public.quotes q ON q.id = qc.quote_id
+WHERE qc.quote_roof_area_id IS NULL AND q.company_id = '9773760c-adf1-411a-9854-72ff16ce6cd8';
+```
+**Result:** `1` — own null-area component visible.
+**PASS ✅**
+
+**Test 3 — Company A user cannot DELETE Company B null-area components:**
+```sql
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claim.sub = '2d077a5e-5579-4ab8-99aa-369553d5b37a';
+DELETE FROM public.quote_components WHERE id = 'b1559dad-00b0-4cd5-aba8-6ede4c6f96e5' RETURNING id;
+```
+**Result:** 0 rows returned — DELETE blocked by RLS.
+**PASS ✅**
+
+### 9.5 Build status
+
+`next build` passes clean on `development` after the migration and type regeneration.
+
+### 9.6 Commit
+
+- `e3ea56e` — error-log PII redaction (Gerald Low-Medium)
+- `93e687f` — §8 proof added to brief
+- `20260629110000` migration applied to shared DB, pending commit
+
+All commits local on `development`, ahead of `origin/development` by 2 commits (migration SQL file will be committed with this brief update).
