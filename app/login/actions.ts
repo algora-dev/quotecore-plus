@@ -3,12 +3,18 @@
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 
-export async function loginAction(formData: FormData) {
+export type LoginResult =
+  | { ok: true }
+  | { ok: false; code: 'EMAIL_NOT_CONFIRMED'; email: string }
+  | { ok: false; code: 'INVALID_CREDENTIALS'; message: string }
+  | { ok: false; code: 'OTHER'; message: string };
+
+export async function loginAction(formData: FormData): Promise<LoginResult> {
   const email = String(formData.get('email') || '').trim().toLowerCase();
   const password = String(formData.get('password') || '');
 
   if (!email || !password) {
-    throw new Error('Email and password are required.');
+    return { ok: false, code: 'OTHER', message: 'Email and password are required.' };
   }
 
   const supabase = await createSupabaseServerClient();
@@ -23,15 +29,22 @@ export async function loginAction(formData: FormData) {
   });
 
   if (error) {
+    const msg = error.message.toLowerCase();
     // Supabase returns "Email not confirmed" when the user hasn't clicked
-    // their confirmation link yet. Instead of throwing (which produces a
-    // cryptic "Server Components render error" in production), return a
-    // structured result so the client can show a friendly message with a
-    // resend-confirmation option.
-    if (error.message.toLowerCase().includes('email not confirmed')) {
-      throw new Error('EMAIL_NOT_CONFIRMED');
+    // their confirmation link yet. Return a structured result so the client
+    // can show a friendly message with a resend-confirmation option.
+    // IMPORTANT: we must RETURN this, not throw it. Thrown errors from
+    // server actions are sanitized by Next.js in production builds and the
+    // client sees a generic "Server Components render error" instead of
+    // our sentinel value.
+    if (msg.includes('email not confirmed')) {
+      return { ok: false, code: 'EMAIL_NOT_CONFIRMED', email };
     }
-    throw new Error(error.message);
+    // Invalid credentials and other auth errors.
+    if (msg.includes('invalid login credentials') || msg.includes('invalid credentials')) {
+      return { ok: false, code: 'INVALID_CREDENTIALS', message: 'Incorrect email or password.' };
+    }
+    return { ok: false, code: 'OTHER', message: error.message };
   }
 
   const userId = authData.user.id;
@@ -41,7 +54,7 @@ export async function loginAction(formData: FormData) {
     .from('users')
     .select('company_id')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (!profile?.company_id) {
     redirect('/onboarding');
@@ -52,7 +65,7 @@ export async function loginAction(formData: FormData) {
     .from('companies')
     .select('slug, onboarding_completed_at')
     .eq('id', profile.company_id)
-    .single();
+    .maybeSingle();
 
   if (!company?.onboarding_completed_at) {
     redirect('/onboarding');

@@ -44,6 +44,24 @@ export async function signupWithCompany(input: SignupInput) {
 
   const supabaseAdmin = getAdminClient();
 
+  // Pre-check: if the email is already registered, fail fast with a friendly
+  // message. createUser will also catch this, but checking first avoids
+  // any partial state and gives a cleaner error.
+  try {
+    const { data: existingUsers } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .limit(1)
+      .maybeSingle();
+    if (existingUsers) {
+      return { ok: false, error: 'An account with this email already exists. Try logging in instead.' };
+    }
+  } catch {
+    // If the pre-check fails (e.g. RLS issue), fall through to createUser
+    // which will catch the duplicate anyway.
+  }
+
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,

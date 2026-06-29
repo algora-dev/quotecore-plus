@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createFlashing, deleteFlashing } from './actions';
 import type { FlashingLibraryRow } from '@/app/lib/types';
@@ -89,6 +89,71 @@ function printFlashing(flashing: FlashingLibraryRow) {
   w.document.close();
 }
 
+/**
+ * Drag-and-drop upload zone for the flashing/drawing image upload form.
+ * Matches the FileUploader pattern used elsewhere in the app.
+ */
+function FlashingDropZone({
+  isDragging,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onClick,
+  fileName,
+  saving,
+  featureSingularLower,
+}: {
+  isDragging: boolean;
+  onDragOver: (e: React.DragEvent) => void;
+  onDragLeave: () => void;
+  onDrop: (e: React.DragEvent) => void;
+  onClick: () => void;
+  fileName: string | null;
+  saving: boolean;
+  featureSingularLower: string;
+}) {
+  return (
+    <div
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      onClick={onClick}
+      className={`
+        relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition
+        ${isDragging ? 'border-orange-500 bg-orange-50' : 'border-slate-300 hover:border-slate-400 bg-white'}
+        ${saving ? 'opacity-50 cursor-not-allowed' : ''}
+      `}
+    >
+      <div className="space-y-2">
+        {saving ? (
+          <>
+            <div className="inline-block w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-slate-600">Uploading...</p>
+          </>
+        ) : fileName ? (
+          <>
+            <svg className="mx-auto w-10 h-10 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <p className="text-sm font-medium text-slate-700">{fileName}</p>
+            <p className="text-xs text-slate-500">Click to change file</p>
+          </>
+        ) : (
+          <>
+            <svg className="mx-auto w-12 h-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-slate-700">Click to browse or drag and drop</p>
+              <p className="text-xs text-slate-500 mt-1">PNG or JPG image of the {featureSingularLower}</p>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, flashingCount, isRoofing = true, featureLabel = 'Flashings', featureLabelSingular = 'Flashing', effectivePlanCode, isOverStorage }: Props) {
   // Lowercased forms for inline copy.
   const featureLower = featureLabel.toLowerCase();
@@ -102,6 +167,9 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [storageBlocked, setStorageBlocked] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadFileName, setUploadFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Live cap: prefer the local count once we've started mutating the list,
   // but never undershoot the server-side count (defends against concurrent
@@ -136,6 +204,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
 
       setFlashings([...flashings, result.data]);
       setShowUploadForm(false);
+      setUploadFileName(null);
       // Form will be unmounted when upload form closes, no need to reset
     } catch (err: any) {
       console.error('Failed to create flashing:', err);
@@ -222,19 +291,40 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
                 />
               </div>
             </div>
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Image File *</label>
-              <input
-                type="file"
-                name="image"
-                accept="image/*"
-                required
-                className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
-              />
-              <p className="text-xs text-slate-400 mt-1">
-                Upload a PNG or JPG image of the {featureSingularLower}
-              </p>
-            </div>
+            <FlashingDropZone
+              isDragging={isDragging}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                const file = e.dataTransfer.files[0];
+                if (file) {
+                  const dt = new DataTransfer();
+                  dt.items.add(file);
+                  if (fileInputRef.current) {
+                    fileInputRef.current.files = dt.files;
+                    setUploadFileName(file.name);
+                  }
+                }
+              }}
+              onClick={() => fileInputRef.current?.click()}
+              fileName={uploadFileName}
+              saving={saving}
+              featureSingularLower={featureSingularLower}
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              name="image"
+              accept="image/*"
+              required
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                setUploadFileName(file?.name || null);
+              }}
+            />
             <div className="flex gap-2 pt-2">
               <button
                 type="submit"
@@ -247,6 +337,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
                 type="button"
                 onClick={() => {
                   setShowUploadForm(false);
+                  setUploadFileName(null);
                 }}
                 className="px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50"
               >

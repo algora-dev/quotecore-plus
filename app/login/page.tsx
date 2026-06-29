@@ -4,7 +4,7 @@
 import { useState, useTransition, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { loginAction, resendConfirmationAction } from './actions';
+import { loginAction, resendConfirmationAction, type LoginResult } from './actions';
 import { GoogleSignInButton } from '@/app/components/auth/GoogleSignInButton';
 import { TroubleSigningInPanel } from './TroubleSigningInPanel';
 import { PublicFooter } from '@/app/components/PublicFooter';
@@ -63,7 +63,7 @@ function LoginForm() {
           {/* Email-not-confirmed banner with resend option */}
           {pendingEmail && (
             <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
-              <p className="text-sm font-medium text-amber-900">Confirm your email to continue</p>
+              <p className="text-sm font-medium text-amber-900">Please confirm your email to log in</p>
               <p className="text-xs text-amber-700 mt-1 mb-3">
                 We sent a confirmation link to <strong>{pendingEmail}</strong>. Click the button in that email to activate your account, then try logging in again.
               </p>
@@ -112,21 +112,31 @@ function LoginForm() {
 
               startTransition(async () => {
                 try {
-                  await loginAction(formData);
-                } catch (err) {
-                  // Next.js signals a server-action redirect by throwing an Error
-                  // whose message is "NEXT_REDIRECT". Re-throw it so the framework
-                  // can complete the navigation instead of rendering it as a UI error.
-                  if (err instanceof Error && err.message === 'NEXT_REDIRECT') throw err;
+                  const result: LoginResult = await loginAction(formData);
 
-                  // Email-not-confirmed: show the resend banner instead of a raw error.
-                  if (err instanceof Error && err.message === 'EMAIL_NOT_CONFIRMED') {
-                    const email = String(formData.get('email') || '').trim();
-                    setPendingEmail(email);
+                  // If we get here, loginAction returned (not redirected).
+                  // Handle the structured result.
+                  if (!result.ok) {
+                    if (result.code === 'EMAIL_NOT_CONFIRMED') {
+                      setPendingEmail(result.email);
+                      return;
+                    }
+                    setError(result.message);
                     return;
                   }
+                  // result.ok === true — the action should have redirected,
+                  // but if it didn't, the client won't navigate. This
+                  // shouldn't happen in normal flow. If it does, reload.
+                  window.location.reload();
+                } catch (err) {
+                  // Next.js signals a server-action redirect by throwing an
+                  // Error whose message starts with "NEXT_REDIRECT". Re-throw
+                  // it so the framework can complete the navigation.
+                  if (err instanceof Error && (err.message === 'NEXT_REDIRECT' || err.message.startsWith('NEXT_REDIRECT'))) throw err;
 
-                  setError(err instanceof Error ? err.message : 'Login failed');
+                  // Any other thrown error is unexpected.
+                  console.error('Login error:', err);
+                  setError('An unexpected error occurred. Please try again.');
                 }
               });
             }}
