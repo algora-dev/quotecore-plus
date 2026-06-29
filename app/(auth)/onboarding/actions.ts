@@ -109,6 +109,60 @@ export async function completeGoogleOnboarding(formData: FormData) {
   const authUser = await requireUser();
   const supabaseAdmin = createAdminClient();
 
+  // ── DATA-LOSS GUARD ──────────────────────────────────────────────
+  // If the user already has a profile with a company_id, do NOT create a
+  // new company. This prevents a catastrophic bug where a returning Google
+  // user whose profile was missing (but auth user still existed) would get
+  // a brand-new company, orphaning their old company's data forever.
+  // Instead, redirect them to their existing company. If the company row
+  // itself is gone (hard-deleted), we fall through to company creation —
+  // but only as a last resort, and we log it loudly.
+  const { data: existingProfile } = await supabaseAdmin
+    .from('users')
+    .select('id, company_id, full_name')
+    .eq('id', authUser.id)
+    .single();
+
+  if (existingProfile?.company_id) {
+    const { data: existingCompany } = await supabaseAdmin
+      .from('companies')
+      .select('id, slug, onboarding_completed_at')
+      .eq('id', existingProfile.company_id)
+      .single();
+
+    if (existingCompany) {
+      // Update name if the user provided a new one, but keep the company.
+      if (fullName && fullName !== existingProfile.full_name) {
+        await supabaseAdmin
+          .from('users')
+          .update({ full_name: fullName })
+          .eq('id', authUser.id);
+      }
+
+      // Skip redirect if requested (client handles navigation)
+      const skipRedirect = formData.get('skipRedirect') === 'true';
+      if (!skipRedirect) {
+        redirect(`/${existingCompany.slug}`);
+      }
+      return { slug: existingCompany.slug };
+    }
+
+    // Company row is gone but profile still points at it — this is a
+    // data-integrity issue. Log it, clear the stale reference, and proceed
+    // to create a new company as a fallback.
+    console.error(
+      `[completeGoogleOnboarding] DATA INTEGRITY WARNING: user ${authUser.id} has company_id ${existingProfile.company_id} but company row not found. Creating new company as fallback.`,
+    );
+    // Clear the stale company_id reference. Cast to any because the generated
+    // type for company_id is `string` (not nullable) even though the DB column
+    // allows NULL — the type was generated when the column was NOT NULL.
+    await supabaseAdmin
+      .from('users')
+      .update({ company_id: null as any })
+      .eq('id', authUser.id);
+  }
+  // ── END DATA-LOSS GUARD ──────────────────────────────────────────
+
   // Create company
   const slugBase = companyName
     .toLowerCase()
@@ -136,13 +190,6 @@ export async function completeGoogleOnboarding(formData: FormData) {
   if (companyError || !company) {
     throw new Error(companyError?.message || 'Failed to create company');
   }
-
-  // Check if user profile exists
-  const { data: existingProfile } = await supabaseAdmin
-    .from('users')
-    .select('id')
-    .eq('id', authUser.id)
-    .single();
 
   if (existingProfile) {
     await supabaseAdmin

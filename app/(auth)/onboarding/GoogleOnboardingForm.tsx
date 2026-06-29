@@ -55,8 +55,6 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
       try {
         const result = await completeGoogleOnboarding(formData) as { slug?: string } | undefined;
         if (!result?.slug) {
-          // Server should always return { slug } when skipRedirect=true. If not, we've got nothing
-          // safe to redirect to - don't guess (computed slugs collide / 404). Surface the error.
           setError('Onboarding completed but no workspace slug was returned. Please refresh and try again.');
           return;
         }
@@ -64,26 +62,17 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
         setStep(3);
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : '';
-        // skipRedirect=true is set above, so a NEXT_REDIRECT here means the server bypassed it -
-        // surface as an error rather than guessing a slug from the company name.
         setError(errMsg || 'Something went wrong');
       }
     });
   }
 
-  function handleCopilotChoice(choice: 'tutorial' | 'on' | 'off') {
+  function handleFinish() {
     if (!savedSlug) {
       setError('Workspace slug missing. Please refresh and complete onboarding again.');
       return;
     }
-    const slug = savedSlug;
-    if (choice === 'tutorial') {
-      router.push(`/${slug}/components?copilot=on`);
-    } else if (choice === 'on') {
-      router.push(`/${slug}?copilot=on`);
-    } else {
-      router.push(`/${slug}?copilot=off`);
-    }
+    router.push(`/${savedSlug}?copilot=on`);
   }
 
   return (
@@ -141,7 +130,7 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
           <button
             type="button"
             onClick={handleNext}
-            className="w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 transition-colors mt-2"
+            className="w-full px-6 py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] mt-2"
           >
             Next →
           </button>
@@ -214,6 +203,7 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
                 { value: 'painting', label: 'Painting' },
                 { value: 'fencing', label: 'Fencing' },
                 { value: 'insulation', label: 'Insulation' },
+                { value: 'solar', label: 'Solar' },
                 { value: 'construction', label: 'Construction' },
                 { value: 'foundations', label: 'Foundations' },
                 { value: 'generic', label: 'Other / Generic' },
@@ -240,14 +230,14 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="px-4 py-3 border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 transition"
+              className="px-4 py-3 border border-slate-300 rounded-full text-sm font-medium hover:bg-slate-50 transition"
             >
               ← Back
             </button>
             <button
               type="submit"
               disabled={isPending}
-              className="flex-1 px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-colors"
+              className="flex-1 px-6 py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
               {isPending ? 'Setting up...' : 'Complete Setup →'}
             </button>
@@ -255,72 +245,48 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
         </div>
       )}
 
-      {/* Step 3: Copilot Introduction */}
+      {/* Step 3: Q + Tutorials (matches OnboardingForm welcome step) */}
       {step === 3 && (
         <div className="space-y-6">
           <div className="text-center space-y-3">
-            <div className="w-16 h-16 mx-auto bg-orange-100 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
+            <div className="w-20 h-20 mx-auto rounded-full overflow-hidden ring-2 ring-orange-200 shadow-sm">
+              <img src="/q-avatar.png" alt="Q, your QuoteCore+ assistant" className="w-full h-full object-cover" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">Meet Copilot</h2>
+            <h2 className="text-xl font-semibold text-slate-900">Welcome to QuoteCore+</h2>
             <p className="text-sm text-slate-600 max-w-md mx-auto">
-              We have an interactive tutorial system called Copilot that walks you through each step of the app. It highlights the buttons and fields you need to use, so you can learn as you go.
+              To get started, use <span className="font-semibold text-slate-900">&ldquo;Q&rdquo;</span> &mdash; your
+              assistant for any help, guide-me assistance, or general questions to get you up and
+              running easily.
             </p>
             <p className="text-sm text-slate-600 max-w-md mx-auto">
-              You can switch Copilot on or off anytime from the navigation bar or in Account Settings.
+              Q is not your average chat bot, he&apos;s kinda smart.
             </p>
           </div>
 
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-slate-700 text-center">We recommend starting with these tutorials:</p>
-            <div className="flex gap-2 justify-center">
-              <span className="px-3 py-1 text-xs font-medium bg-orange-100 text-orange-700 rounded-full">Adding Components</span>
-              <span className="px-3 py-1 text-xs font-medium bg-orange-100 text-orange-700 rounded-full">Creating a Quote</span>
-            </div>
-          </div>
-
-          {/* Prefer-reading-over-Copilot alternative; see OnboardingForm for
-              context. Mirrored here so Google-signup users get the same
-              education about the help library. */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            <p className="font-medium text-slate-900 mb-1">Prefer to read it yourself?</p>
+            <p className="font-medium text-slate-900 mb-1">New here? Check out Tutorials</p>
             <p>
-              Every feature is documented in our{' '}
+              We&apos;ve put together step-by-step tutorials that walk you through the basics &mdash;
+              from creating your first component to sending a quote.{' '}
               <a
-                href="/docs"
+                href="/tutorials"
                 target="_blank"
                 rel="noopener"
                 className="text-orange-600 font-medium hover:text-orange-700 underline underline-offset-2"
               >
-                help library
+                View Tutorials
               </a>
-              . You can browse it any time from the Help button in the top navigation, or open the in-app help drawer from any page.
             </p>
           </div>
 
           <div className="space-y-3">
             <button
               type="button"
-              onClick={() => handleCopilotChoice('tutorial')}
-              className="w-full py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              onClick={handleFinish}
+              disabled={isPending}
+              className="w-full py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
             >
-              Start with Components Tutorial
-            </button>
-            <button
-              type="button"
-              onClick={() => handleCopilotChoice('on')}
-              className="w-full py-3 font-medium rounded-full border-2 border-slate-200 hover:border-orange-300 hover:bg-orange-50/50 transition text-slate-700"
-            >
-              Turn Copilot On, I will explore on my own
-            </button>
-            <button
-              type="button"
-              onClick={() => handleCopilotChoice('off')}
-              className="w-full py-2 text-sm text-slate-500 hover:text-slate-700 transition"
-            >
-              Skip for now
+              {isPending ? 'Setting up...' : 'Get Started'}
             </button>
           </div>
         </div>

@@ -23,6 +23,14 @@ export async function loginAction(formData: FormData) {
   });
 
   if (error) {
+    // Supabase returns "Email not confirmed" when the user hasn't clicked
+    // their confirmation link yet. Instead of throwing (which produces a
+    // cryptic "Server Components render error" in production), return a
+    // structured result so the client can show a friendly message with a
+    // resend-confirmation option.
+    if (error.message.toLowerCase().includes('email not confirmed')) {
+      throw new Error('EMAIL_NOT_CONFIRMED');
+    }
     throw new Error(error.message);
   }
 
@@ -51,4 +59,28 @@ export async function loginAction(formData: FormData) {
   }
 
   redirect(`/${company?.slug || 'workspace'}`);
+}
+
+/**
+ * Resend the email confirmation link for a user who hasn't confirmed yet.
+ * Uses Supabase's resend endpoint, which sends a fresh confirmation email
+ * with a secure link to /auth/callback.
+ */
+export async function resendConfirmationAction(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) {
+    return { ok: false, error: 'Email is required.' };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email: normalizedEmail,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true };
 }
