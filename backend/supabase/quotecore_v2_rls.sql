@@ -172,22 +172,31 @@ create policy "quote_roof_areas_all" on public.quote_roof_areas
     )
   );
 
--- Quote components: access via quote ownership
+-- Quote components: access via direct quote ownership (fixed 2026-06-29, Gerald H-01)
+-- Previous policy had a flawed USING predicate: when quote_roof_area_id IS NULL,
+-- the EXISTS was satisfied by ANY roof area row with no tie to quote_components.quote_id,
+-- leaking null-area components across companies.
 drop policy if exists "quote_components_all" on public.quote_components;
 create policy "quote_components_all" on public.quote_components
   for all to authenticated
   using (
     exists (
       select 1 from public.quotes q
-      join public.quote_roof_areas qra on qra.quote_id = q.id
-      where (quote_roof_area_id = qra.id or quote_roof_area_id is null)
+      where q.id = quote_components.quote_id
         and q.company_id = public.current_company_id()
-        and q.id = quote_id
+    )
+    and (
+      quote_roof_area_id is null
+      or exists (
+        select 1 from public.quote_roof_areas qra
+        where qra.id = quote_components.quote_roof_area_id
+          and qra.quote_id = quote_components.quote_id
+      )
     )
   )
   with check (
     exists (
       select 1 from public.quotes q
-      where q.id = quote_id and q.company_id = public.current_company_id()
+      where q.id = quote_components.quote_id and q.company_id = public.current_company_id()
     )
   );

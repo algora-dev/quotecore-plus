@@ -8,6 +8,19 @@
 
 ---
 
+# 2026-06-29 — Pre-launch: email confirmation, searchable flashing select, hide pricing in orders, docs sync
+
+- [ ] **Email confirmation flow** — sign up with email/password → redirected to login page with blue "Check your email" banner → Supabase sends branded confirmation email → click Confirm button → auth callback creates session → welcome email arrives (branded, with tutorials link + Q prompt) → redirected to workspace dashboard.
+- [ ] **Google signup welcome email** — sign up with Google → complete onboarding → welcome email arrives (same template) within a minute.
+- [ ] **Searchable flashing select (inline editor)** — in order editor, click flashing dropdown → type to search → results filter in real-time → grouping (Component Flashings / All Other) preserved → select one → flashing image loads correctly.
+- [ ] **Searchable flashing select (AddItemModal)** — in order editor, open AddItemModal → flashing dropdown is searchable → same filter + group behaviour → select one → works.
+- [ ] **Hide pricing in order-from-quote (line-by-line)** — create order from quote → line-by-line editor opens with all prices hidden by default → "Show all pricing" checkbox unticked → tick it → prices appear → untick → prices hide again.
+- [ ] **Hide pricing in order-from-quote (single/double column)** — order-from-quote in single/double column mode still shows per-line toggle as before (no regression).
+- [ ] **Delete library modal text** — components page, non-bootstrap library, click trash icon → modal says "Deleting this library will delete all components inside it. Move any components you want to keep to another library first, or delete them forever here." + "This action cannot be undone."
+- [ ] **Docs accuracy** — /docs/account/billing shows Free plan in table; /docs/account/tier-limits shows Free column + correct caps (Starter components=20, Pro components=30, Starter storage=500MB, Trial flashings=10); /docs/account/trial says collapses to Free; /docs/account/upgrading-and-cancelling says collapses to Free.
+
+---
+
 # 2026-06-25 — Flashing drawing, angle calculator widget, order editor hover-highlight, dashboard alerts
 
 - [ ] **Change of Pitch bend direction** — drawing editor, angle calculator, Change of Pitch: upper=10°, lower=25° → bends external (opens outward). Upper=25°, lower=10° → bends internal (folds inward).
@@ -195,6 +208,16 @@ _Re-architected 2026-06-03 eve, dev 3cfbd60. Legacy Copilot fully removed; assis
 > Migration `20260612180000_users_tutorials_seen_at` APPLIED to shared dev+prod DB; types regenerated. `next build` passed. Q-launch uses new `qcp:start-guide` CustomEvent bridge in AssistantWidget (Option A). Card->guide mapping richer than original plan: Drawings/Invoices/Message Center now HAVE guides.
 
 ## Pending verification
+
+### Order editor UX + Fixed Quantity display (2026-06-28, commits 8bcb59a→00dc8d9)
+- [ ] **Drawing Finish button** - in FlashingCanvas, select Line/Text/Pencil/Edit tool → orange "Finish" button appears next to Length/Angle readout. Click it → everything deselects, tool exits to neutral. Confirm Adjust Points/Recalibrate/Select All do NOT show the button.
+- [ ] **Order sidebar click-to-expand** - in order editor, click anywhere on a component header row → it expands/collapses. Confirm Edit, Remove, up/down arrows, ^ toggle, and visibility checkboxes still work independently (don't double-trigger).
+- [ ] **Fixed Quantity display in orders** - create an order from a quote that has fixed-quantity components. Confirm the order sidebar + preview + supplier-facing OrderBody all show `Quantity: N (measurement)` with N in black and measurement in light grey brackets.
+- [ ] **No LENGTHS/Areas breakdown for fixed-qty** - confirm fixed-qty components do NOT show the "LENGTHS (M²):" label or individual measurement entries. Per-unit components still show the full breakdown.
+- [ ] **Edit modal fixed-qty fields** - click Edit on a fixed-qty component → "Fixed Quantity Display" section auto-shows with Quantity + Measurement pre-filled. Change values, save → order preview updates. Confirm quote data is unchanged.
+- [ ] **Add fixed-qty to new item** - in blank order, click "+ Add Fixed Quantity Display" → section appears with empty fields. Fill in, save → shows in preview.
+- [ ] **Measurement unit selector** - in the edit modal, confirm the Measurement field is split into number input + unit dropdown. Metric=[m²,m,m³], imperial_rs=[RS,ft²,ft,ft³,m²,m], imperial_ft=[ft²,ft,ft³,m²,m]. Save → value+unit combine correctly (e.g. `38.56m²`).
+- [ ] **RS support** - set company measurement system to Imperial (Roofing Squares). Create a fixed-qty area component, add to quote, create order. Confirm the unit dropdown defaults to RS and the display shows RS.
 
 ### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
 - [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.

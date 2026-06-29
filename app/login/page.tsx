@@ -1,8 +1,9 @@
 
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { loginAction } from './actions';
 import { GoogleSignInButton } from '@/app/components/auth/GoogleSignInButton';
 import { TroubleSigningInPanel } from './TroubleSigningInPanel';
@@ -10,8 +11,18 @@ import { PublicFooter } from '@/app/components/PublicFooter';
 import { PasswordField } from '@/app/components/ui/PasswordField';
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const searchParams = useSearchParams();
+  const signupPending = searchParams.get('signup') === 'pending';
 
   return (
     <main className="min-h-screen flex flex-col bg-slate-50 px-4">
@@ -22,6 +33,15 @@ export default function LoginPage() {
 
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
           <h1 className="text-2xl font-semibold text-slate-900 mb-6 text-center">Log in to QuoteCore</h1>
+
+          {signupPending && (
+            <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <p className="text-sm font-medium text-blue-900">Check your email to confirm your account</p>
+              <p className="text-xs text-blue-700 mt-1">
+                We&apos;ve sent a confirmation link to your email address. Click the link in the email to activate your account and sign in.
+              </p>
+            </div>
+          )}
 
           {/* Google Sign-In */}
           <GoogleSignInButton />

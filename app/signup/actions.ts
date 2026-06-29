@@ -47,7 +47,7 @@ export async function signupWithCompany(input: SignupInput) {
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
-    email_confirm: true,
+    email_confirm: false,
     user_metadata: {
       full_name: fullName,
       role: 'owner',
@@ -126,7 +126,11 @@ export async function signupWithCompany(input: SignupInput) {
   // (bootstrapCollectionId is still created here so the collection exists.)
   void bootstrapCollectionId;
 
-  redirect('/login?signup=success');
+  // Email confirmation is required — Supabase sends a confirmation email
+  // with a secure link to /auth/callback. The user must click it before
+  // they can sign in. The welcome email is sent AFTER confirmation (in
+  // the auth callback) so we know the email address is valid.
+  redirect('/login?signup=pending');
 }
 
 

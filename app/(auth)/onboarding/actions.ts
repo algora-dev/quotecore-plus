@@ -178,6 +178,28 @@ export async function completeGoogleOnboarding(formData: FormData) {
   // onboarding must still succeed if this fails.
   await seedTemplateComponents(supabaseAdmin, company.id, defaultTrade, bootstrapCollectionId);
 
+  // Send welcome email (Google signups don't go through email confirmation,
+  // so we send it here after onboarding completes). Best-effort: never blocks.
+  try {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://quotecore-plus-main.vercel.app';
+    const { renderWelcomeEmail } = await import('@/app/lib/email/templates/welcome');
+    const { sendEmail } = await import('@/app/lib/email/send');
+    const { html, text, subject } = renderWelcomeEmail({
+      fullName,
+      workspaceSlug: company.slug || 'workspace',
+      appUrl,
+    });
+    await sendEmail({
+      to: authUser.email || '',
+      subject,
+      html,
+      text,
+      tags: [{ name: 'type', value: 'welcome' }],
+    });
+  } catch (err) {
+    console.error('[completeGoogleOnboarding] Welcome email failed (non-fatal):', err);
+  }
+
   // Skip redirect if requested (copilot intro step handles navigation)
   const skipRedirect = formData.get('skipRedirect') === 'true';
   if (!skipRedirect) {

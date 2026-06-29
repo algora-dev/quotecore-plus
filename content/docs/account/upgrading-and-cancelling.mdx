@@ -3,7 +3,7 @@ title: Upgrading and cancelling
 description: Step-by-step for picking a plan, switching plans, and cancelling.
 order: 7
 status: published
-updated: 2026-05-18
+updated: 2026-06-29
 ---
 
 # Upgrading and cancelling
@@ -17,10 +17,7 @@ All plan changes happen on **Account > Billing**. Stripe handles payment, card s
 1. Open **Account > Billing**.
 2. In the **Plans** grid, find the tier you want and click **Choose &lt;plan&gt;** - or click **View** first to see the full feature list, then **Purchase** from inside the modal.
 3. You're sent to a Stripe-hosted checkout page on `checkout.stripe.com`.
-4. The page shows the launch discount applied:
-   - Subtotal: original price (e.g. $60.00)
-   - Discount: −$X.XX (launch discount, applied automatically)
-   - Total: launch price (e.g. $29.00/month)
+4. The page shows the price (e.g. $19.00/month for Starter). The strikethrough "was" price you see in the app is display-only — Stripe charges the listed price directly.
 5. Enter card details and confirm. Stripe charges you immediately.
 6. You're redirected back to **Account > Billing** with a green "Subscription started" banner.
 7. Within a few seconds the current-plan card updates to your new tier and your status changes to **active**.
@@ -28,7 +25,7 @@ All plan changes happen on **Account > Billing**. Stripe handles payment, card s
 </Steps>
 
 <Callout type="tip">
-The launch discount is locked in for the lifetime of your subscription. As long as you stay subscribed, renewals continue at the launch price, not the full original price.
+The launch price is locked in for the lifetime of your subscription. As long as you stay subscribed, renewals continue at the same price.
 </Callout>
 
 ## Switching between paid plans
@@ -65,7 +62,7 @@ After you cancel:
 
 - The status badge on your current-plan card may change to reflect the wind-down.
 - You **keep paid features** until the end of the current billing period - you've paid for it, you get to use it.
-- At the period end, Stripe deletes the subscription and our webhook collapses your effective plan to **Starter**.
+- At the period end, Stripe deletes the subscription and our webhook collapses your effective plan to **Free**.
 - Your data is **never deleted** on cancellation.
 
 ## Reactivating a cancelled subscription
@@ -73,7 +70,7 @@ After you cancel:
 You can resubscribe any time:
 
 - **Before the period end** (sub is winding down): use **Manage subscription** in the portal to "renew" or "resume". Stripe will remove the cancellation flag.
-- **After the period end** (sub is fully gone): from **Account > Billing**, pick any paid plan and click **Choose / Purchase**. Stripe checkout opens. New subscription, same launch pricing.
+- **After the period end** (sub is fully gone): from **Account > Billing**, pick any paid plan and click **Choose / Purchase**. Stripe checkout opens. New subscription at current pricing.
 
 <Callout type="note">
 You can't re-trial after subscribing. The 14-day trial is a once-per-account offer. The Trial card on the billing page will show "Trial unavailable" for anyone who's ever had a Stripe customer record.

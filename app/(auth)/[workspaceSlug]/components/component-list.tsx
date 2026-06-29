@@ -1461,7 +1461,10 @@ export function ComponentList({
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Delete Library</h3>
             <p className="text-sm text-slate-500 mt-2">
-              Are you sure? You will lose all the components in the library. This action cannot be undone.
+              Deleting this library will delete all components inside it. Move any components you want to keep to another library first, or delete them forever here.
+            </p>
+            <p className="text-xs text-slate-400 mt-2">
+              This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end mt-6">
               <button

@@ -201,8 +201,11 @@ export async function loadQuoteLineByLineData(
       lines,
       footer: quote.cq_footer_text || '',
       taxes: [],
-      hideLinePrices: false,
-      hideTotals: false,
+      // Default: hide all pricing when creating an order from a quote.
+      // Most users don't send prices to suppliers. The editor has a
+      // "Show all pricing" checkbox the user can tick to reveal them.
+      hideLinePrices: true,
+      hideTotals: true,
       showQuantityColumn: false,
     };
   } catch (error) {
