@@ -220,6 +220,29 @@ export function OrderLineByLineEditor({
       <CollapsiblePanel collapsed={panelCollapsed} widthClass="lg:w-[400px] lg:flex-shrink-0">
       <div className="w-full lg:w-[400px] space-y-4" data-assistant-id="order-lbl-controls" data-copilot="order-lbl-controls">
         <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+          {/* Show all pricing - master toggle. When unticked (default for
+              order-from-quote), all pricing is hidden. Ticking reveals line
+              prices + totals. The individual Hide line prices / Hide totals
+              checkboxes below give fine-grained control after that. */}
+          <label
+            className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-900 select-none p-2 -m-2 rounded-lg hover:bg-orange-50/50 transition-colors"
+            title="When unticked, all pricing is hidden from the order. Tick to show line prices and totals. Most users don't send prices to suppliers."
+          >
+            <input
+              type="checkbox"
+              checked={!hideLinePrices && !hideTotals}
+              onChange={(e) => {
+                const show = e.target.checked;
+                setHideLinePrices(!show);
+                setHideTotals(!show);
+                onHideLinePricesChange?.(!show);
+                onHideTotalsChange?.(!show);
+              }}
+              className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+            />
+            Show all pricing
+          </label>
+          <div className="border-t border-slate-100 pt-3"></div>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <CollapseButton

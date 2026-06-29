@@ -196,6 +196,16 @@ _Re-architected 2026-06-03 eve, dev 3cfbd60. Legacy Copilot fully removed; assis
 
 ## Pending verification
 
+### Order editor UX + Fixed Quantity display (2026-06-28, commits 8bcb59a→00dc8d9)
+- [ ] **Drawing Finish button** - in FlashingCanvas, select Line/Text/Pencil/Edit tool → orange "Finish" button appears next to Length/Angle readout. Click it → everything deselects, tool exits to neutral. Confirm Adjust Points/Recalibrate/Select All do NOT show the button.
+- [ ] **Order sidebar click-to-expand** - in order editor, click anywhere on a component header row → it expands/collapses. Confirm Edit, Remove, up/down arrows, ^ toggle, and visibility checkboxes still work independently (don't double-trigger).
+- [ ] **Fixed Quantity display in orders** - create an order from a quote that has fixed-quantity components. Confirm the order sidebar + preview + supplier-facing OrderBody all show `Quantity: N (measurement)` with N in black and measurement in light grey brackets.
+- [ ] **No LENGTHS/Areas breakdown for fixed-qty** - confirm fixed-qty components do NOT show the "LENGTHS (M²):" label or individual measurement entries. Per-unit components still show the full breakdown.
+- [ ] **Edit modal fixed-qty fields** - click Edit on a fixed-qty component → "Fixed Quantity Display" section auto-shows with Quantity + Measurement pre-filled. Change values, save → order preview updates. Confirm quote data is unchanged.
+- [ ] **Add fixed-qty to new item** - in blank order, click "+ Add Fixed Quantity Display" → section appears with empty fields. Fill in, save → shows in preview.
+- [ ] **Measurement unit selector** - in the edit modal, confirm the Measurement field is split into number input + unit dropdown. Metric=[m²,m,m³], imperial_rs=[RS,ft²,ft,ft³,m²,m], imperial_ft=[ft²,ft,ft³,m²,m]. Save → value+unit combine correctly (e.g. `38.56m²`).
+- [ ] **RS support** - set company measurement system to Imperial (Roofing Squares). Create a fixed-qty area component, add to quote, create order. Confirm the unit dropdown defaults to RS and the display shows RS.
+
 ### Fixed Quantity pricing (2026-06-22, commit 363c7a5)
 - [ ] Create an area component, Item Cost = Fixed Quantity, Quantity Amount = 50 (m2), Quantity Price = 500. Confirm 'Per Coverage Area' is GONE and labels read 'Quantity Price' / 'Quantity Amount'.
 - [ ] Add to a quote, enter 220m2 area + 10% waste. Confirm Total Qty shows 5 (4.84), Item Cost = $2,500 (5 x 500), not 242 x rate.

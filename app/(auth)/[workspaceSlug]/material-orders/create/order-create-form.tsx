@@ -21,6 +21,7 @@ import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModa
 import { CatalogSearchModal } from '../../quotes/[id]/customer-edit/CatalogSearchModal';
 import { AngleCalculatorWidget } from '../../flashings/draw/AngleCalculatorWidget';
 import { OrderLineByLineEditor } from './OrderLineByLineEditor';
+import { SearchableFlashingSelect } from '@/app/components/SearchableFlashingSelect';
 import { CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
 import {
   parseLineByLineData,
@@ -1075,64 +1076,35 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
                         <span>Show Name</span>
                       </label>
                       
-                      {/* Flashing Drawing Selector */}
+                      {/* Flashing Drawing Selector (searchable) */}
                       <div className="px-2 py-1.5">
-                        <label className="block text-xs text-slate-600 mb-1">Flashing Drawing:</label>
-                        <select
-                          value={line.flashingId || ''}
-                          onChange={(e) => {
-                            const newFlashingId = e.target.value || undefined;
-                            const updatedFlashing = newFlashingId ? flashings.find(f => f.id === newFlashingId) : undefined;
-                            setOrderLines(orderLines.map(l => 
-                              l.id === line.id 
-                                ? { 
-                                    ...l, 
-                                    flashingId: newFlashingId, 
-                                    flashingImageUrl: updatedFlashing?.image_url,
-                                    showFlashingImage: !!newFlashingId
-                                  }
-                                : l
-                            ));
-                          }}
-                          className="w-full px-2 py-1 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
-                        >
-                          <option value="">None</option>
-                          
-                          {/* Show component's linked flashings first (if from quote) */}
-                          {(() => {
-                            // Get component data if this is from a quote
-                            const quoteComponentId = line.id.startsWith('quote-') ? line.id.replace('quote-', '') : null;
-                            const quoteComponent = quoteComponentId ? quoteData?.components.find(c => c.id === quoteComponentId) : null;
-                            const linkedFlashingIds = quoteComponent?.component_library?.flashing_ids || [];
-                            
-                            if (linkedFlashingIds.length > 0) {
-                              const linkedFlashings = flashings.filter(f => linkedFlashingIds.includes(f.id));
-                              const otherFlashings = flashings.filter(f => !linkedFlashingIds.includes(f.id));
-                              
-                              return (
-                                <>
-                                  <optgroup label="━━ Component Flashings ━━">
-                                    {linkedFlashings.map(f => (
-                                      <option key={f.id} value={f.id}>{f.name}</option>
-                                    ))}
-                                  </optgroup>
-                                  {otherFlashings.length > 0 && (
-                                    <optgroup label="━━ All Other Flashings ━━">
-                                      {otherFlashings.map(f => (
-                                        <option key={f.id} value={f.id}>{f.name}</option>
-                                      ))}
-                                    </optgroup>
-                                  )}
-                                </>
-                              );
-                            } else {
-                              // No linked flashings, show all
-                              return flashings.map(f => (
-                                <option key={f.id} value={f.id}>{f.name}</option>
-                              ));
-                            }
-                          })()}
-                        </select>
+                        {(() => {
+                          const quoteComponentId = line.id.startsWith('quote-') ? line.id.replace('quote-', '') : null;
+                          const quoteComponent = quoteComponentId ? quoteData?.components.find(c => c.id === quoteComponentId) : null;
+                          const linkedFlashingIds = quoteComponent?.component_library?.flashing_ids || [];
+                          return (
+                            <SearchableFlashingSelect
+                              flashings={flashings}
+                              value={line.flashingId}
+                              onChange={(newFlashingId) => {
+                                const updatedFlashing = newFlashingId ? flashings.find(f => f.id === newFlashingId) : undefined;
+                                setOrderLines(orderLines.map(l =>
+                                  l.id === line.id
+                                    ? {
+                                        ...l,
+                                        flashingId: newFlashingId,
+                                        flashingImageUrl: updatedFlashing?.image_url,
+                                        showFlashingImage: !!newFlashingId
+                                      }
+                                    : l
+                                ));
+                              }}
+                              linkedFlashingIds={linkedFlashingIds.length > 0 ? linkedFlashingIds : undefined}
+                              label="Flashing Drawing:"
+                              size="sm"
+                            />
+                          );
+                        })()}
                       </div>
                       
                       <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:bg-white rounded px-2 py-1.5 transition-colors">
@@ -1822,18 +1794,13 @@ function AddItemModal({ flashings, components = [], collections = [], workspaceS
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Flashing Drawing <span className="text-slate-400 font-normal">(Optional)</span>
             </label>
-            <select
-              value={flashingId}
-              onChange={(e) => setFlashingId(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-            >
-              <option value="">No flashing image</option>
-              {flashings.map(flashing => (
-                <option key={flashing.id} value={flashing.id}>
-                  {flashing.name}
-                </option>
-              ))}
-            </select>
+            <SearchableFlashingSelect
+              flashings={flashings}
+              value={flashingId || undefined}
+              onChange={(id) => setFlashingId(id || '')}
+              size="md"
+              placeholder="Search drawings & images..."
+            />
             {selectedFlashing && (
               <div className="mt-3 border border-slate-200 rounded-lg p-2 bg-slate-50">
                 <img 
