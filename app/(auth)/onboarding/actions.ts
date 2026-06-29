@@ -109,6 +109,119 @@ export async function completeGoogleOnboarding(formData: FormData) {
   const authUser = await requireUser();
   const supabaseAdmin = createAdminClient();
 
+  // ── DATA-LOSS GUARD ──────────────────────────────────────────────
+  // If the user already has a profile with a company_id, do NOT create a
+  // new company. This prevents a catastrophic bug where a returning Google
+  // user whose profile was missing (but auth user still existed) would get
+  // a brand-new company, orphaning their old company's data forever.
+  // Instead, redirect them to their existing company. If the company row
+  // itself is gone (hard-deleted), we fall through to company creation —
+  // but only as a last resort, and we log it loudly.
+  const { data: existingProfile } = await supabaseAdmin
+    .from('users')
+    .select('id, company_id, full_name')
+    .eq('id', authUser.id)
+    .maybeSingle();
+
+  if (existingProfile?.company_id) {
+    const { data: existingCompany } = await supabaseAdmin
+      .from('companies')
+      .select('id, slug, onboarding_completed_at')
+      .eq('id', existingProfile.company_id)
+      .maybeSingle();
+
+    if (existingCompany) {
+      // Update name if the user provided a new one, but keep the company.
+      if (fullName && fullName !== existingProfile.full_name) {
+        await supabaseAdmin
+          .from('users')
+          .update({ full_name: fullName })
+          .eq('id', authUser.id);
+      }
+
+      // Skip redirect if requested (client handles navigation)
+      const skipRedirect = formData.get('skipRedirect') === 'true';
+      if (!skipRedirect) {
+        redirect(`/${existingCompany.slug}`);
+      }
+      return { slug: existingCompany.slug };
+    }
+
+    // Company row is gone but profile still points at it — this is a
+    // data-integrity issue. Log it, clear the stale reference, and proceed
+    // to create a new company as a fallback.
+    console.error(
+      `[completeGoogleOnboarding] DATA INTEGRITY WARNING: user ${authUser.id} has company_id ${existingProfile.company_id} but company row not found. Creating new company as fallback.`,
+    );
+    // Clear the stale company_id reference. Cast to any because the generated
+    // type for company_id is `string` (not nullable) even though the DB column
+    // allows NULL — the type was generated when the column was NOT NULL.
+    await supabaseAdmin
+      .from('users')
+      .update({ company_id: null as any })
+      .eq('id', authUser.id);
+  }
+
+  // ── ORPHANED-DATA GUARD ─────────────────────────────────────────
+  // Even if no profile row exists, check if the auth user has quotes
+  // belonging to them. Match by `created_by_email` (durable — survives
+  // profile deletion) with a `created_by_user_id` fallback. This is the
+  // third line of defense (after /auth/callback and /onboarding page
+  // checks) to prevent data orphaning. (Gerald H-01)
+  if (!existingProfile) {
+    const userEmail = authUser.email?.toLowerCase() || '';
+    let orphanedQuote: { company_id: string } | null = null;
+
+    if (userEmail) {
+      const { data: emailMatch } = await supabaseAdmin
+        .from('quotes')
+        .select('company_id')
+        .eq('created_by_email', userEmail)
+        .limit(1)
+        .maybeSingle();
+      orphanedQuote = emailMatch;
+    }
+
+    if (!orphanedQuote) {
+      const { data: idMatch } = await supabaseAdmin
+        .from('quotes')
+        .select('company_id')
+        .eq('created_by_user_id', authUser.id)
+        .limit(1)
+        .maybeSingle();
+      orphanedQuote = idMatch;
+    }
+
+    if (orphanedQuote?.company_id) {
+      const { data: orphanedCompany } = await supabaseAdmin
+        .from('companies')
+        .select('id, slug, onboarding_completed_at')
+        .eq('id', orphanedQuote.company_id)
+        .maybeSingle();
+
+      if (orphanedCompany) {
+        // Restore the profile row.
+        await supabaseAdmin.from('users').insert({
+          id: authUser.id,
+          company_id: orphanedQuote.company_id,
+          email: authUser.email || '',
+          full_name: fullName,
+          role: 'owner',
+        });
+        console.error(
+          `[completeGoogleOnboarding] ORPHAN RECOVERY: restored profile for user ${authUser.id} (email: ${userEmail}) to company ${orphanedQuote.company_id}`,
+        );
+        const skipRedirect = formData.get('skipRedirect') === 'true';
+        if (!skipRedirect) {
+          redirect(`/${orphanedCompany.slug}`);
+        }
+        return { slug: orphanedCompany.slug };
+      }
+    }
+  }
+  // ── END ORPHANED-DATA GUARD ─────────────────────────────────────
+  // ── END DATA-LOSS GUARD ──────────────────────────────────────────
+
   // Create company
   const slugBase = companyName
     .toLowerCase()
@@ -136,13 +249,6 @@ export async function completeGoogleOnboarding(formData: FormData) {
   if (companyError || !company) {
     throw new Error(companyError?.message || 'Failed to create company');
   }
-
-  // Check if user profile exists
-  const { data: existingProfile } = await supabaseAdmin
-    .from('users')
-    .select('id')
-    .eq('id', authUser.id)
-    .single();
 
   if (existingProfile) {
     await supabaseAdmin
@@ -188,6 +294,7 @@ export async function completeGoogleOnboarding(formData: FormData) {
       fullName,
       workspaceSlug: company.slug || 'workspace',
       appUrl,
+      isGoogleSignup: true,
     });
     await sendEmail({
       to: authUser.email || '',

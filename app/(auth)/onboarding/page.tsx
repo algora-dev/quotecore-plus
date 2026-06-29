@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 import { OnboardingForm } from './OnboardingForm';
 import { GoogleOnboardingForm } from './GoogleOnboardingForm';
 
@@ -24,7 +25,62 @@ export default async function OnboardingPage() {
     .from('users')
     .select('id, company_id')
     .eq('id', authUser.id)
-    .single();
+    .maybeSingle();
+
+  // ── ORPHANED-PROFILE RECOVERY (second line of defense) ────────
+  // If the auth user has no profile row but has quotes belonging to
+  // them, restore the link instead of showing the Google signup form
+  // (which would create a new company and orphan their data).
+  // Match by `created_by_email` (durable — survives profile deletion)
+  // with a `created_by_user_id` fallback. Mirrors /auth/callback.
+  if (!profile) {
+    const userEmail = authUser.email?.toLowerCase() || '';
+    let orphanedQuote: { company_id: string } | null = null;
+
+    if (userEmail) {
+      const { data: emailMatch } = await supabase
+        .from('quotes')
+        .select('company_id')
+        .eq('created_by_email', userEmail)
+        .limit(1)
+        .maybeSingle();
+      orphanedQuote = emailMatch;
+    }
+
+    if (!orphanedQuote) {
+      const { data: idMatch } = await supabase
+        .from('quotes')
+        .select('company_id')
+        .eq('created_by_user_id', authUser.id)
+        .limit(1)
+        .maybeSingle();
+      orphanedQuote = idMatch;
+    }
+
+    if (orphanedQuote?.company_id) {
+      const { data: orphanedCompany } = await supabase
+        .from('companies')
+        .select('slug, onboarding_completed_at')
+        .eq('id', orphanedQuote.company_id)
+        .maybeSingle();
+
+      if (orphanedCompany) {
+        const admin = createAdminClient();
+        await admin.from('users').insert({
+          id: authUser.id,
+          company_id: orphanedQuote.company_id,
+          email: authUser.email || '',
+          full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || '',
+          role: 'owner',
+        });
+        console.error(
+          `[onboarding] ORPHAN RECOVERY: restored profile for user ${authUser.id} (email: ${userEmail}) to company ${orphanedQuote.company_id}`,
+        );
+        redirect(`/${orphanedCompany.slug || 'workspace'}`);
+      }
+    }
+  }
+  // ── END ORPHANED-PROFILE RECOVERY ─────────────────────────────
 
   // Case 1: No profile at all (Google OAuth new user) - show company setup form
   if (!profile) {

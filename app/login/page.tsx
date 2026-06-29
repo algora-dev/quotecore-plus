@@ -4,7 +4,7 @@
 import { useState, useTransition, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { loginAction } from './actions';
+import { loginAction, resendConfirmationAction, type LoginResult } from './actions';
 import { GoogleSignInButton } from '@/app/components/auth/GoogleSignInButton';
 import { TroubleSigningInPanel } from './TroubleSigningInPanel';
 import { PublicFooter } from '@/app/components/PublicFooter';
@@ -21,8 +21,25 @@ export default function LoginPage() {
 function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const searchParams = useSearchParams();
   const signupPending = searchParams.get('signup') === 'pending';
+
+  async function handleResend() {
+    if (!pendingEmail) return;
+    setResendStatus('sending');
+    try {
+      const result = await resendConfirmationAction(pendingEmail);
+      if (result.ok) {
+        setResendStatus('sent');
+      } else {
+        setResendStatus('error');
+      }
+    } catch {
+      setResendStatus('error');
+    }
+  }
 
   return (
     <main className="min-h-screen flex flex-col bg-slate-50 px-4">
@@ -43,6 +60,35 @@ function LoginForm() {
             </div>
           )}
 
+          {/* Email-not-confirmed banner with resend option */}
+          {pendingEmail && (
+            <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <p className="text-sm font-medium text-amber-900">Please confirm your email to log in</p>
+              <p className="text-xs text-amber-700 mt-1 mb-3">
+                We sent a confirmation link to <strong>{pendingEmail}</strong>. Click the button in that email to activate your account, then try logging in again.
+              </p>
+              {resendStatus === 'sent' ? (
+                <p className="text-xs font-medium text-emerald-700">
+                  ✓ Confirmation email re-sent. Check your inbox (and spam folder).
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendStatus === 'sending'}
+                  className="text-xs font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-700 disabled:opacity-50"
+                >
+                  {resendStatus === 'sending' ? 'Sending...' : 'Resend confirmation email'}
+                </button>
+              )}
+              {resendStatus === 'error' && (
+                <p className="text-xs text-red-600 mt-1">
+                  Could not resend. Try again in a few minutes.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Google Sign-In */}
           <GoogleSignInButton />
 
@@ -60,17 +106,37 @@ function LoginForm() {
             onSubmit={(e) => {
               e.preventDefault();
               setError(null);
+              setPendingEmail(null);
+              setResendStatus('idle');
               const formData = new FormData(e.currentTarget);
 
               startTransition(async () => {
                 try {
-                  await loginAction(formData);
+                  const result: LoginResult = await loginAction(formData);
+
+                  // If we get here, loginAction returned (not redirected).
+                  // Handle the structured result.
+                  if (!result.ok) {
+                    if (result.code === 'EMAIL_NOT_CONFIRMED') {
+                      setPendingEmail(result.email);
+                      return;
+                    }
+                    setError(result.message);
+                    return;
+                  }
+                  // result.ok === true — the action should have redirected,
+                  // but if it didn't, the client won't navigate. This
+                  // shouldn't happen in normal flow. If it does, reload.
+                  window.location.reload();
                 } catch (err) {
-                  // Next.js signals a server-action redirect by throwing an Error
-                  // whose message is "NEXT_REDIRECT". Re-throw it so the framework
-                  // can complete the navigation instead of rendering it as a UI error.
-                  if (err instanceof Error && err.message === 'NEXT_REDIRECT') throw err;
-                  setError(err instanceof Error ? err.message : 'Login failed');
+                  // Next.js signals a server-action redirect by throwing an
+                  // Error whose message starts with "NEXT_REDIRECT". Re-throw
+                  // it so the framework can complete the navigation.
+                  if (err instanceof Error && (err.message === 'NEXT_REDIRECT' || err.message.startsWith('NEXT_REDIRECT'))) throw err;
+
+                  // Any other thrown error is unexpected.
+                  console.error('Login error:', err);
+                  setError('An unexpected error occurred. Please try again.');
                 }
               });
             }}
@@ -78,10 +144,10 @@ function LoginForm() {
             <div className="grid gap-4">
               <label className="block">
                 <span className="block text-sm font-medium text-slate-700 mb-1">Email</span>
-                <input 
-                  name="email" 
-                  type="email" 
-                  required 
+                <input
+                  name="email"
+                  type="email"
+                  required
                   className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="you@example.com"
                 />
@@ -101,8 +167,8 @@ function LoginForm() {
                 <TroubleSigningInPanel />
               </div>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={isPending}
                 className="w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >

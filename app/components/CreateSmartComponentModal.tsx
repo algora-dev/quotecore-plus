@@ -13,7 +13,7 @@
 
 import { useState, useEffect } from 'react';
 import { createComponent } from '@/app/(auth)/[workspaceSlug]/components/actions';
-import { loadFlashingLibrary } from '@/app/(auth)/[workspaceSlug]/flashings/actions';
+import { loadFlashingLibrary } from '@/app/(auth)/[workspaceSlug]/drawings/actions';
 import type {
   ComponentLibraryRow,
   ComponentLibraryInsert,

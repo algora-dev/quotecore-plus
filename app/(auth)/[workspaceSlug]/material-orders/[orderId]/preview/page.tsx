@@ -1,5 +1,5 @@
 import { loadOrderForEdit } from '../../create/order-loader';
-import { loadFlashingLibrary } from '../../../flashings/actions';
+import { loadFlashingLibrary } from '../../../drawings/actions';
 import { OrderPreview } from './order-preview';
 import { OrderActivityCard } from '@/app/components/activity/OrderActivityCard';
 import { notFound } from 'next/navigation';

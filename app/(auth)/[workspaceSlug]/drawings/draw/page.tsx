@@ -18,10 +18,10 @@ export default async function DrawFlashingPage(props: Props) {
   const { company } = await loadCompanyContext();
   const ent = await loadCompanyEntitlements(company.id);
   if (!ent.features.flashings) {
-    redirect(`/${workspaceSlug}/flashings`);
+    redirect(`/${workspaceSlug}/drawings`);
   }
   if (ent.flashingLimit !== null && ent.flashingCount >= ent.flashingLimit) {
-    redirect(`/${workspaceSlug}/flashings`);
+    redirect(`/${workspaceSlug}/drawings`);
   }
 
   // Resolve the company's measurement system so length inputs render in

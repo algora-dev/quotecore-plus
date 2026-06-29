@@ -167,7 +167,7 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
       // Update with new image
       await updateFlashingWithImage(flashing.id, formData);
 
-      router.push(`/${workspaceSlug}/flashings`);
+      router.push(`/${workspaceSlug}/drawings`);
     } catch (err: any) {
       console.error('Failed to update flashing:', err);
       alert(`Error: ${err.message}`);
@@ -265,7 +265,7 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
       {/* Actions */}
       <div className="bg-white border border-slate-200 rounded-lg p-4 flex gap-3 justify-end">
         <button
-          onClick={() => router.push(`/${workspaceSlug}/flashings`)}
+          onClick={() => router.push(`/${workspaceSlug}/drawings`)}
           className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50 transition-all shadow-sm"
         >
           Cancel

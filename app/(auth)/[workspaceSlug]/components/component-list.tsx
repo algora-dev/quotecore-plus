@@ -22,7 +22,7 @@ import { getTradeLabels } from '@/app/lib/trades/labels';
 import type { MeasurementSystem } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { getUnitLabel } from '@/app/lib/measurements/displayHelpers';
-import { loadFlashingLibrary } from '../flashings/actions';
+import { loadFlashingLibrary } from '../drawings/actions';
 
 /** Build the radio-button labels that decorate measurement type with the company's preferred unit. */
 function buildMeasurementLabels(system: MeasurementSystem): Record<MeasurementType, string> {
@@ -789,7 +789,7 @@ export function ComponentList({
           </button>
           {flashingsFeatureEnabled ? (
             <Link
-              href={`/${workspaceSlug}/flashings`}
+              href={`/${workspaceSlug}/drawings`}
               className="inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
               {featureLabel}

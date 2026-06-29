@@ -36,7 +36,7 @@ export function pathnameToDocSlug(pathname: string | null | undefined): string {
     { match: /^templates(\/|$)/,                           slug: 'templates/quote-templates' },
     { match: /^customer-quote-templates(\/|$)/,            slug: 'templates/customer-quote-templates' },
 
-    { match: /^flashings(\/|$)/,                           slug: 'flashings/flashings' },
+    { match: /^drawings(\/|$)/,                           slug: 'flashings/flashings' },
 
     { match: /^catalogs(\/|$)/,                            slug: 'catalog/overview' },
     { match: /^attachments(\/|$)/,                         slug: 'attachments/overview' },

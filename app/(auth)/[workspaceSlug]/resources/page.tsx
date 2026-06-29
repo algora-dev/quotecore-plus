@@ -53,7 +53,7 @@ export default async function ResourcesHubPage({
     {
       title: 'Drawings & Images',
       description: 'Draw or upload drawings and images for components and orders',
-      href: `${base}/flashings`,
+      href: `${base}/drawings`,
       copilot: 'resources-card-drawings',
       icon: (
         <svg className="w-6 h-6 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
