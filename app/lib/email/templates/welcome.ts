@@ -2,9 +2,8 @@
  * Welcome email template — sent after a user confirms their email address.
  *
  * Triggered from the auth callback when a new user completes email
- * verification. Includes the user's name, a thanks-for-joining message,
- * a link to the tutorials page, and a prompt to ask Q (the in-app
- * assistant) if they need help.
+ * verification. Single CTA: "Confirm Email" button linking to the
+ * dashboard so the user lands straight in the app.
  */
 
 import 'server-only';
@@ -21,7 +20,7 @@ const escapeHtml = (s: string) =>
 export type WelcomeEmailInput = {
   /** The user's full name (from signup). */
   fullName: string;
-  /** The workspace slug, used to build the tutorials link. */
+  /** The workspace slug, used to build the dashboard link. */
   workspaceSlug: string;
   /** Base URL of the app (e.g. https://quotecore-plus-main.vercel.app). */
   appUrl: string;
@@ -33,30 +32,13 @@ export function renderWelcomeEmail({ fullName, workspaceSlug, appUrl }: WelcomeE
   text: string;
 } {
   const firstName = fullName.split(' ')[0] || fullName;
-  const tutorialsUrl = `${appUrl}/${workspaceSlug}/tutorials`;
   const dashboardUrl = `${appUrl}/${workspaceSlug}`;
 
   const innerHtml = `
     <p style="margin:0 0 16px 0;font-size:15px;line-height:24px;color:#374151;">Hi ${escapeHtml(firstName)},</p>
     ${paraHtml(`Welcome to <strong style="color:#F97316;">QuoteCore+</strong> — we're glad to have you on board.`)}
-    ${paraHtml(`Your account is ready. You can start quoting, measuring, and managing jobs right away.`)}
-    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px 0;">
-      <tr><td style="padding:12px 16px;background-color:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;">
-        <p style="margin:0;font-size:14px;line-height:22px;color:#9A3412;">
-          <strong>New here?</strong> Check out our tutorials to get up and running in minutes — from setting up your company to sending your first quote.
-        </p>
-      </td></tr>
-    </table>
-    ${ctaBlock('Go to Tutorials', tutorialsUrl)}
-    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:32px 0 0 0;">
-      <tr><td style="padding:0;">
-        <p style="margin:0 0 8px 0;font-size:15px;line-height:24px;color:#374151;">Need a hand with something specific?</p>
-        <p style="margin:0;font-size:14px;line-height:22px;color:#6B7280;">
-          Look for <strong style="color:#F97316;">Q</strong> — the circular button in the bottom-right corner of any page. Q is your built-in assistant: ask it questions, get step-by-step walkthroughs, and learn how to use every feature in QuoteCore+.
-        </p>
-      </td></tr>
-    </table>
-    ${ctaBlock('Open QuoteCore+', dashboardUrl, 'Or go straight to your dashboard:')}
+    ${paraHtml(`Your account is ready. Click below to confirm your email and start quoting, measuring, and managing jobs right away.`)}
+    ${ctaBlock('Confirm Email', dashboardUrl)}
     ${note("If you didn't create an account, you can safely ignore this email.")}
   `;
 
@@ -70,13 +52,9 @@ export function renderWelcomeEmail({ fullName, workspaceSlug, appUrl }: WelcomeE
 
 Welcome to QuoteCore+ — we're glad to have you on board.
 
-Your account is ready. You can start quoting, measuring, and managing jobs right away.
+Your account is ready. Click below to confirm your email and start quoting, measuring, and managing jobs right away:
 
-New here? Check out our tutorials to get up and running in minutes: ${tutorialsUrl}
-
-Need a hand with something specific? Look for Q — the circular button in the bottom-right corner of any page. Q is your built-in assistant: ask it questions, get step-by-step walkthroughs, and learn how to use every feature in QuoteCore+.
-
-Open QuoteCore+: ${dashboardUrl}
+${dashboardUrl}
 
 If you didn't create an account, you can safely ignore this email.
 

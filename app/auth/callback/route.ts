@@ -33,18 +33,36 @@ export async function GET(request: Request) {
         // ── ORPHANED-PROFILE RECOVERY ─────────────────────────────
         // If the auth user has no profile row (e.g. it was manually
         // deleted but the auth.users row survived), check if they have
-        // data belonging to them (quotes, components, etc.) under their
-        // auth user ID. If so, find the company and restore the profile
-        // link instead of sending them to onboarding (which would create
-        // a NEW company and orphan all their old data — the exact bug
-        // that cost secarter23@gmail.com their data on 2026-06-29).
+        // quotes belonging to them. We match by `created_by_email`
+        // (durable — survives profile deletion because it's not an FK)
+        // instead of `created_by_user_id` (which is `ON DELETE SET NULL`
+        // and gets nulled when the profile is deleted — Gerald H-01).
         if (!profile) {
-          const { data: orphanedQuote } = await supabase
-            .from('quotes')
-            .select('company_id')
-            .eq('created_by_user_id', user.id)
-            .limit(1)
-            .maybeSingle();
+          const userEmail = user.email?.toLowerCase() || '';
+          let orphanedQuote: { company_id: string } | null = null;
+
+          if (userEmail) {
+            const { data: emailMatch } = await supabase
+              .from('quotes')
+              .select('company_id')
+              .eq('created_by_email', userEmail)
+              .limit(1)
+              .maybeSingle();
+            orphanedQuote = emailMatch;
+          }
+
+          // Fallback: legacy created_by_user_id (works for profiles
+          // deleted via a path that didn't null the FK, or pre-migration
+          // rows where created_by_email was never populated).
+          if (!orphanedQuote) {
+            const { data: idMatch } = await supabase
+              .from('quotes')
+              .select('company_id')
+              .eq('created_by_user_id', user.id)
+              .limit(1)
+              .maybeSingle();
+            orphanedQuote = idMatch;
+          }
 
           if (orphanedQuote?.company_id) {
             const { data: orphanedCompany } = await supabase
@@ -64,7 +82,7 @@ export async function GET(request: Request) {
                 role: 'owner',
               });
               console.error(
-                `[auth/callback] ORPHAN RECOVERY: restored profile for user ${user.id} to company ${orphanedQuote.company_id}`,
+                `[auth/callback] ORPHAN RECOVERY: restored profile for user ${user.id} (email: ${userEmail}) to company ${orphanedQuote.company_id}`,
               );
               return NextResponse.redirect(`${origin}/${orphanedCompany.slug || 'workspace'}`);
             }

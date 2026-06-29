@@ -3251,6 +3251,7 @@ export type Database = {
           cq_company_phone: string | null
           cq_footer_text: string | null
           created_at: string
+          created_by_email: string | null
           created_by_user_id: string | null
           currency: string | null
           customer_email: string | null
@@ -3302,6 +3303,7 @@ export type Database = {
           cq_company_phone?: string | null
           cq_footer_text?: string | null
           created_at?: string
+          created_by_email?: string | null
           created_by_user_id?: string | null
           currency?: string | null
           customer_email?: string | null
@@ -3353,6 +3355,7 @@ export type Database = {
           cq_company_phone?: string | null
           cq_footer_text?: string | null
           created_at?: string
+          created_by_email?: string | null
           created_by_user_id?: string | null
           currency?: string | null
           customer_email?: string | null

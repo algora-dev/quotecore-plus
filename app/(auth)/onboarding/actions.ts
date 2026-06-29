@@ -163,18 +163,34 @@ export async function completeGoogleOnboarding(formData: FormData) {
   }
 
   // ── ORPHANED-DATA GUARD ─────────────────────────────────────────
-  // Even if no profile row exists, check if the auth user has data
-  // (quotes, components) belonging to them. If so, find the company
-  // and restore the profile link instead of creating a new company.
-  // This is the third line of defense (after /auth/callback and
-  // /onboarding page checks) to prevent data orphaning.
+  // Even if no profile row exists, check if the auth user has quotes
+  // belonging to them. Match by `created_by_email` (durable — survives
+  // profile deletion) with a `created_by_user_id` fallback. This is the
+  // third line of defense (after /auth/callback and /onboarding page
+  // checks) to prevent data orphaning. (Gerald H-01)
   if (!existingProfile) {
-    const { data: orphanedQuote } = await supabaseAdmin
-      .from('quotes')
-      .select('company_id')
-      .eq('created_by_user_id', authUser.id)
-      .limit(1)
-      .maybeSingle();
+    const userEmail = authUser.email?.toLowerCase() || '';
+    let orphanedQuote: { company_id: string } | null = null;
+
+    if (userEmail) {
+      const { data: emailMatch } = await supabaseAdmin
+        .from('quotes')
+        .select('company_id')
+        .eq('created_by_email', userEmail)
+        .limit(1)
+        .maybeSingle();
+      orphanedQuote = emailMatch;
+    }
+
+    if (!orphanedQuote) {
+      const { data: idMatch } = await supabaseAdmin
+        .from('quotes')
+        .select('company_id')
+        .eq('created_by_user_id', authUser.id)
+        .limit(1)
+        .maybeSingle();
+      orphanedQuote = idMatch;
+    }
 
     if (orphanedQuote?.company_id) {
       const { data: orphanedCompany } = await supabaseAdmin
@@ -193,7 +209,7 @@ export async function completeGoogleOnboarding(formData: FormData) {
           role: 'owner',
         });
         console.error(
-          `[completeGoogleOnboarding] ORPHAN RECOVERY: restored profile for user ${authUser.id} to company ${orphanedQuote.company_id}`,
+          `[completeGoogleOnboarding] ORPHAN RECOVERY: restored profile for user ${authUser.id} (email: ${userEmail}) to company ${orphanedQuote.company_id}`,
         );
         const skipRedirect = formData.get('skipRedirect') === 'true';
         if (!skipRedirect) {

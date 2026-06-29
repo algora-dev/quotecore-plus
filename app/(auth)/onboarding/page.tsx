@@ -28,18 +28,34 @@ export default async function OnboardingPage() {
     .maybeSingle();
 
   // ── ORPHANED-PROFILE RECOVERY (second line of defense) ────────
-  // If the auth user has no profile row but has data (quotes, etc.)
-  // belonging to their user ID, they're an existing user whose profile
-  // was deleted. Restore the link instead of showing the Google signup
-  // form (which would create a new company and orphan their data).
-  // This mirrors the recovery in /auth/callback/route.ts.
+  // If the auth user has no profile row but has quotes belonging to
+  // them, restore the link instead of showing the Google signup form
+  // (which would create a new company and orphan their data).
+  // Match by `created_by_email` (durable — survives profile deletion)
+  // with a `created_by_user_id` fallback. Mirrors /auth/callback.
   if (!profile) {
-    const { data: orphanedQuote } = await supabase
-      .from('quotes')
-      .select('company_id')
-      .eq('created_by_user_id', authUser.id)
-      .limit(1)
-      .maybeSingle();
+    const userEmail = authUser.email?.toLowerCase() || '';
+    let orphanedQuote: { company_id: string } | null = null;
+
+    if (userEmail) {
+      const { data: emailMatch } = await supabase
+        .from('quotes')
+        .select('company_id')
+        .eq('created_by_email', userEmail)
+        .limit(1)
+        .maybeSingle();
+      orphanedQuote = emailMatch;
+    }
+
+    if (!orphanedQuote) {
+      const { data: idMatch } = await supabase
+        .from('quotes')
+        .select('company_id')
+        .eq('created_by_user_id', authUser.id)
+        .limit(1)
+        .maybeSingle();
+      orphanedQuote = idMatch;
+    }
 
     if (orphanedQuote?.company_id) {
       const { data: orphanedCompany } = await supabase
@@ -58,7 +74,7 @@ export default async function OnboardingPage() {
           role: 'owner',
         });
         console.error(
-          `[onboarding] ORPHAN RECOVERY: restored profile for user ${authUser.id} to company ${orphanedQuote.company_id}`,
+          `[onboarding] ORPHAN RECOVERY: restored profile for user ${authUser.id} (email: ${userEmail}) to company ${orphanedQuote.company_id}`,
         );
         redirect(`/${orphanedCompany.slug || 'workspace'}`);
       }

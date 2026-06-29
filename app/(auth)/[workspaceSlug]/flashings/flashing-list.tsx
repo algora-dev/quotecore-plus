@@ -102,6 +102,7 @@ function FlashingDropZone({
   fileName,
   saving,
   featureSingularLower,
+  error,
 }: {
   isDragging: boolean;
   onDragOver: (e: React.DragEvent) => void;
@@ -111,6 +112,7 @@ function FlashingDropZone({
   fileName: string | null;
   saving: boolean;
   featureSingularLower: string;
+  error: string | null;
 }) {
   return (
     <div
@@ -150,6 +152,9 @@ function FlashingDropZone({
           </>
         )}
       </div>
+      {error && (
+        <p className="text-xs text-red-600 mt-2 text-center">{error}</p>
+      )}
     </div>
   );
 }
@@ -169,6 +174,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
   const [storageBlocked, setStorageBlocked] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadFileName, setUploadFileName] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Live cap: prefer the local count once we've started mutating the list,
@@ -176,6 +182,21 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
   // edits in another tab).
   const effectiveCount = Math.max(flashingCount, flashings.length);
   const atCap = flashingLimit !== null && effectiveCount >= flashingLimit;
+
+  // Max file size: 10MB (matches FileUploader default for images).
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
+  const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+
+  function validateUploadFile(file: File): string | null {
+    if (file.size > MAX_FILE_SIZE) {
+      const maxMB = (MAX_FILE_SIZE / 1024 / 1024).toFixed(0);
+      return `File too large. Max size: ${maxMB} MB`;
+    }
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return 'Invalid file type. Allowed: PNG, JPG, WebP';
+    }
+    return null;
+  }
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -185,7 +206,14 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
       const imageFile = fd.get('image') as File;
 
       if (!imageFile || imageFile.size === 0) {
-        alert('Please select an image file');
+        setUploadError('Please select an image file');
+        setSaving(false);
+        return;
+      }
+
+      const validationError = validateUploadFile(imageFile);
+      if (validationError) {
+        setUploadError(validationError);
         setSaving(false);
         return;
       }
@@ -205,6 +233,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
       setFlashings([...flashings, result.data]);
       setShowUploadForm(false);
       setUploadFileName(null);
+      setUploadError(null);
       // Form will be unmounted when upload form closes, no need to reset
     } catch (err: any) {
       console.error('Failed to create flashing:', err);
@@ -300,6 +329,9 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
                 setIsDragging(false);
                 const file = e.dataTransfer.files[0];
                 if (file) {
+                  const err = validateUploadFile(file);
+                  if (err) { setUploadError(err); return; }
+                  setUploadError(null);
                   const dt = new DataTransfer();
                   dt.items.add(file);
                   if (fileInputRef.current) {
@@ -312,17 +344,23 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
               fileName={uploadFileName}
               saving={saving}
               featureSingularLower={featureSingularLower}
+              error={uploadError}
             />
             <input
               ref={fileInputRef}
               type="file"
               name="image"
-              accept="image/*"
+              accept="image/png,image/jpeg,image/webp"
               required
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                setUploadFileName(file?.name || null);
+                if (file) {
+                  const err = validateUploadFile(file);
+                  if (err) { setUploadError(err); return; }
+                  setUploadError(null);
+                  setUploadFileName(file.name);
+                }
               }}
             />
             <div className="flex gap-2 pt-2">
@@ -338,6 +376,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
                 onClick={() => {
                   setShowUploadForm(false);
                   setUploadFileName(null);
+                  setUploadError(null);
                 }}
                 className="px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50"
               >
