@@ -8,6 +8,15 @@
 
 ---
 
+# 2026-06-29 — Auth fixes + Gerald H-01/L-01 + welcome email simplification
+
+- [ ] **Drawings & Images page loads** — navigate to /flashings (Drawings & Images) page → page loads without error (was broken: files missing from disk, now restored).
+- [ ] **Welcome email single button** — sign up fresh → confirm email → welcome email arrives with ONE "Confirm Email" button only (no Tutorials or secondary buttons).
+- [ ] **Upload validation on Drawings & Images** — try uploading a >10MB file or non-image file via drag-drop → friendly error message shown ("File too large" or "Invalid file type"), not a silent failure.
+- [ ] **Orphan recovery by email (Gerald H-01)** — if a user's profile is deleted but they have quotes with `created_by_email` populated, logging in restores their profile to the original company (not a new company). Legacy `created_by_user_id` fallback still works for pre-migration rows.
+
+---
+
 # 2026-06-29 — Pre-launch: email confirmation, searchable flashing select, hide pricing in orders, docs sync
 
 - [ ] **Email confirmation flow** — sign up with email/password → redirected to login page with blue "Check your email" banner → Supabase sends branded confirmation email → click Confirm button → auth callback creates session → welcome email arrives (branded, with tutorials link + Q prompt) → redirected to workspace dashboard.
