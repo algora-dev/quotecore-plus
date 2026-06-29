@@ -1,5 +1,5 @@
-﻿import { loadOrderTemplates } from '../template-actions';
-import { loadFlashingLibrary } from '../../flashings/actions';
+import { loadOrderTemplates } from '../template-actions';
+import { loadFlashingLibrary } from '../../drawings/actions';
 import { loadComponentLibrary, loadComponentCollections } from '../../components/actions';
 import { OrderCreateForm } from './order-create-form';
 import { loadQuoteData } from './quote-loader';

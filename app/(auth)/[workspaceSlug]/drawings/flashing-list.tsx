@@ -275,7 +275,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
                 setUpgradeOpen(true);
                 return;
               }
-              router.push(`/${workspaceSlug}/flashings/draw`);
+              router.push(`/${workspaceSlug}/drawings/draw`);
             }}
             data-copilot={isRoofing ? 'draw-flashing' : 'create-drawing'}
             title={atCap ? `Upgrade to create more ${featureLower}` : `Create a new ${featureSingularLower}`}

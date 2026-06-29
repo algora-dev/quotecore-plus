@@ -21,7 +21,7 @@ export default async function EditFlashingPage(props: Props) {
   // to edit existing flashing rows either. Cap doesn't apply to edits.
   const ent = await loadCompanyEntitlements(profile.company_id);
   if (!ent.features.flashings) {
-    redirect(`/${workspaceSlug}/flashings`);
+    redirect(`/${workspaceSlug}/drawings`);
   }
   
   const supabase = await createSupabaseServerClient();

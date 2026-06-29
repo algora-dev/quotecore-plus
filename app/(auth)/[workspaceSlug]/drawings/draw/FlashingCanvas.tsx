@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -1790,7 +1790,7 @@ export function FlashingCanvas({
             // user squeaks through (e.g. limit hit between page load and
             // save) bounce them to the flashings page where the cap-aware
             // UpgradeModal lives.
-            router.push(`/${workspaceSlug}/flashings`);
+            router.push(`/${workspaceSlug}/drawings`);
             return;
           }
           const msg = result.code === 'internal_error' ? result.message : `Save failed (${result.code})`;
@@ -1799,7 +1799,7 @@ export function FlashingCanvas({
         }
       }
 
-      router.push(`/${workspaceSlug}/flashings`);
+      router.push(`/${workspaceSlug}/drawings`);
     } catch (err: any) {
       console.error('Failed to save flashing:', err);
       alert(`Error: ${err.message}`);
@@ -1823,7 +1823,7 @@ export function FlashingCanvas({
       )}
       <div className="mb-6">
         <button
-          onClick={() => router.push(`/${workspaceSlug}/flashings`)}
+          onClick={() => router.push(`/${workspaceSlug}/drawings`)}
           className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-3"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
@@ -2019,7 +2019,7 @@ export function FlashingCanvas({
             Clear
           </button>
           <button
-            onClick={() => router.push(`/${workspaceSlug}/flashings`)}
+            onClick={() => router.push(`/${workspaceSlug}/drawings`)}
             className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50"
           >
             Cancel

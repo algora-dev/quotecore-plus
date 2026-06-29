@@ -19,7 +19,7 @@ import { AlertModal } from '@/app/components/AlertModal';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 import { CatalogSearchModal } from '../../quotes/[id]/customer-edit/CatalogSearchModal';
-import { AngleCalculatorWidget } from '../../flashings/draw/AngleCalculatorWidget';
+import { AngleCalculatorWidget } from '../../drawings/draw/AngleCalculatorWidget';
 import { OrderLineByLineEditor } from './OrderLineByLineEditor';
 import { SearchableFlashingSelect } from '@/app/components/SearchableFlashingSelect';
 import { CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';

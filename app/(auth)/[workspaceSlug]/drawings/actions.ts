@@ -164,7 +164,7 @@ export async function createFlashing(formData: FormData): Promise<CreateFlashing
     return { ok: false, code: 'internal_error', message: `Failed to create flashing: ${error.message}` };
   }
   
-  revalidatePath('/[workspaceSlug]/flashings');
+  revalidatePath('/[workspaceSlug]/drawings');
   return { ok: true, data: data as unknown as FlashingLibraryRow };
 }
 
@@ -243,7 +243,7 @@ export async function updateFlashing(id: string, input: Partial<FlashingLibraryI
     throw new Error(`Failed to update flashing: ${error.message}`);
   }
 
-  revalidatePath('/[workspaceSlug]/flashings');
+  revalidatePath('/[workspaceSlug]/drawings');
   return data as unknown as FlashingLibraryRow;
 }
 
@@ -345,7 +345,7 @@ export async function updateFlashingWithImage(id: string, formData: FormData): P
     }
   }
 
-  revalidatePath('/[workspaceSlug]/flashings');
+  revalidatePath('/[workspaceSlug]/drawings');
   return data as unknown as FlashingLibraryRow;
 }
 
@@ -412,7 +412,7 @@ export async function deleteFlashing(id: string) {
     throw new Error(`Failed to delete flashing: ${error.message}`);
   }
   
-  revalidatePath('/[workspaceSlug]/flashings');
+  revalidatePath('/[workspaceSlug]/drawings');
 }
 
 export async function createFlashingFromCanvas(formData: FormData): Promise<CreateFlashingResult> {
@@ -491,6 +491,6 @@ export async function createFlashingFromCanvas(formData: FormData): Promise<Crea
     return { ok: false, code: 'internal_error', message: `Failed to create flashing: ${error.message}` };
   }
   
-  revalidatePath('/[workspaceSlug]/flashings');
+  revalidatePath('/[workspaceSlug]/drawings');
   return { ok: true, data: data as unknown as FlashingLibraryRow };
 }
