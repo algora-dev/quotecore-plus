@@ -267,8 +267,8 @@ export async function saveDraftOrder(input: SaveOrderInput) {
         show_component_name: item.showComponentName,
         show_flashing_image: item.showFlashingImage,
         show_measurements: item.showMeasurements,
-        priced_quantity: item.pricedQuantity || null,
-        measurement_display: item.measurementDisplay || null,
+        priced_quantity: item.pricedQuantity != null ? Math.min(Math.max(Number(item.pricedQuantity) || 0, 0), 999999) : null,
+        measurement_display: item.measurementDisplay ? String(item.measurementDisplay).slice(0, 100) : null,
         sort_order: item.sortOrder,
       }));
       
