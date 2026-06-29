@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 import { OnboardingForm } from './OnboardingForm';
 import { GoogleOnboardingForm } from './GoogleOnboardingForm';
 
@@ -24,7 +25,46 @@ export default async function OnboardingPage() {
     .from('users')
     .select('id, company_id')
     .eq('id', authUser.id)
-    .single();
+    .maybeSingle();
+
+  // ── ORPHANED-PROFILE RECOVERY (second line of defense) ────────
+  // If the auth user has no profile row but has data (quotes, etc.)
+  // belonging to their user ID, they're an existing user whose profile
+  // was deleted. Restore the link instead of showing the Google signup
+  // form (which would create a new company and orphan their data).
+  // This mirrors the recovery in /auth/callback/route.ts.
+  if (!profile) {
+    const { data: orphanedQuote } = await supabase
+      .from('quotes')
+      .select('company_id')
+      .eq('created_by_user_id', authUser.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (orphanedQuote?.company_id) {
+      const { data: orphanedCompany } = await supabase
+        .from('companies')
+        .select('slug, onboarding_completed_at')
+        .eq('id', orphanedQuote.company_id)
+        .maybeSingle();
+
+      if (orphanedCompany) {
+        const admin = createAdminClient();
+        await admin.from('users').insert({
+          id: authUser.id,
+          company_id: orphanedQuote.company_id,
+          email: authUser.email || '',
+          full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || '',
+          role: 'owner',
+        });
+        console.error(
+          `[onboarding] ORPHAN RECOVERY: restored profile for user ${authUser.id} to company ${orphanedQuote.company_id}`,
+        );
+        redirect(`/${orphanedCompany.slug || 'workspace'}`);
+      }
+    }
+  }
+  // ── END ORPHANED-PROFILE RECOVERY ─────────────────────────────
 
   // Case 1: No profile at all (Google OAuth new user) - show company setup form
   if (!profile) {

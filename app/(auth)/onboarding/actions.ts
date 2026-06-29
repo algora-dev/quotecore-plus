@@ -121,14 +121,14 @@ export async function completeGoogleOnboarding(formData: FormData) {
     .from('users')
     .select('id, company_id, full_name')
     .eq('id', authUser.id)
-    .single();
+    .maybeSingle();
 
   if (existingProfile?.company_id) {
     const { data: existingCompany } = await supabaseAdmin
       .from('companies')
       .select('id, slug, onboarding_completed_at')
       .eq('id', existingProfile.company_id)
-      .single();
+      .maybeSingle();
 
     if (existingCompany) {
       // Update name if the user provided a new one, but keep the company.
@@ -161,6 +161,49 @@ export async function completeGoogleOnboarding(formData: FormData) {
       .update({ company_id: null as any })
       .eq('id', authUser.id);
   }
+
+  // ── ORPHANED-DATA GUARD ─────────────────────────────────────────
+  // Even if no profile row exists, check if the auth user has data
+  // (quotes, components) belonging to them. If so, find the company
+  // and restore the profile link instead of creating a new company.
+  // This is the third line of defense (after /auth/callback and
+  // /onboarding page checks) to prevent data orphaning.
+  if (!existingProfile) {
+    const { data: orphanedQuote } = await supabaseAdmin
+      .from('quotes')
+      .select('company_id')
+      .eq('created_by_user_id', authUser.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (orphanedQuote?.company_id) {
+      const { data: orphanedCompany } = await supabaseAdmin
+        .from('companies')
+        .select('id, slug, onboarding_completed_at')
+        .eq('id', orphanedQuote.company_id)
+        .maybeSingle();
+
+      if (orphanedCompany) {
+        // Restore the profile row.
+        await supabaseAdmin.from('users').insert({
+          id: authUser.id,
+          company_id: orphanedQuote.company_id,
+          email: authUser.email || '',
+          full_name: fullName,
+          role: 'owner',
+        });
+        console.error(
+          `[completeGoogleOnboarding] ORPHAN RECOVERY: restored profile for user ${authUser.id} to company ${orphanedQuote.company_id}`,
+        );
+        const skipRedirect = formData.get('skipRedirect') === 'true';
+        if (!skipRedirect) {
+          redirect(`/${orphanedCompany.slug}`);
+        }
+        return { slug: orphanedCompany.slug };
+      }
+    }
+  }
+  // ── END ORPHANED-DATA GUARD ─────────────────────────────────────
   // ── END DATA-LOSS GUARD ──────────────────────────────────────────
 
   // Create company

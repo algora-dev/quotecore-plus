@@ -26,16 +26,58 @@ export async function GET(request: Request) {
 
         const { data: profile } = await supabase
           .from('users')
-          .select('company_id, full_name')
+          .select('company_id, full_name, email')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
+
+        // ── ORPHANED-PROFILE RECOVERY ─────────────────────────────
+        // If the auth user has no profile row (e.g. it was manually
+        // deleted but the auth.users row survived), check if they have
+        // data belonging to them (quotes, components, etc.) under their
+        // auth user ID. If so, find the company and restore the profile
+        // link instead of sending them to onboarding (which would create
+        // a NEW company and orphan all their old data — the exact bug
+        // that cost secarter23@gmail.com their data on 2026-06-29).
+        if (!profile) {
+          const { data: orphanedQuote } = await supabase
+            .from('quotes')
+            .select('company_id')
+            .eq('created_by_user_id', user.id)
+            .limit(1)
+            .maybeSingle();
+
+          if (orphanedQuote?.company_id) {
+            const { data: orphanedCompany } = await supabase
+              .from('companies')
+              .select('slug')
+              .eq('id', orphanedQuote.company_id)
+              .maybeSingle();
+
+            if (orphanedCompany) {
+              // Restore the profile row so future logins go straight through.
+              const adminClient = (await import('@/app/lib/supabase/admin')).createAdminClient();
+              await adminClient.from('users').insert({
+                id: user.id,
+                company_id: orphanedQuote.company_id,
+                email: user.email || '',
+                full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+                role: 'owner',
+              });
+              console.error(
+                `[auth/callback] ORPHAN RECOVERY: restored profile for user ${user.id} to company ${orphanedQuote.company_id}`,
+              );
+              return NextResponse.redirect(`${origin}/${orphanedCompany.slug || 'workspace'}`);
+            }
+          }
+        }
+        // ── END ORPHANED-PROFILE RECOVERY ──────────────────────────
 
         if (profile?.company_id) {
           const { data: company } = await supabase
             .from('companies')
             .select('slug')
             .eq('id', profile.company_id)
-            .single();
+            .maybeSingle();
 
           // Send welcome email on first confirmation. We detect "first"
           // by checking that email_confirmed_at was set within the last 5

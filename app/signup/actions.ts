@@ -55,7 +55,12 @@ export async function signupWithCompany(input: SignupInput) {
   });
 
   if (authError || !authData.user) {
-    return { ok: false, error: authError?.message ?? 'Failed to create auth user.' };
+    const msg = authError?.message ?? 'Failed to create auth user.';
+    // Friendlier message for the most common case: email already exists.
+    if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already been registered')) {
+      return { ok: false, error: 'An account with this email already exists. Try logging in instead.' };
+    }
+    return { ok: false, error: msg };
   }
 
   const userId = authData.user.id;
