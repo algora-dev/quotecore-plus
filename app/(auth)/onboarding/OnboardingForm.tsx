@@ -83,12 +83,28 @@ export function OnboardingForm({
           </div>
           <h2 className="text-xl font-semibold text-slate-900">Welcome to QuoteCore+</h2>
           <p className="text-sm text-slate-600 max-w-md mx-auto">
-            To get started, use <span className="font-semibold text-slate-900">“Q”</span> - your
+            To get started, use <span className="font-semibold text-slate-900">“Q”</span> &mdash; your
             assistant for any help, guide-me assistance, or general questions to get you up and
             running easily.
           </p>
           <p className="text-sm text-slate-600 max-w-md mx-auto">
             Q is not your average chat bot, he&apos;s kinda smart.
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          <p className="font-medium text-slate-900 mb-1">New here? Check out Tutorials</p>
+          <p>
+            We&apos;ve put together step-by-step tutorials that walk you through the basics &mdash;
+            from creating your first component to sending a quote.{' '}
+            <a
+              href="/${companySlug}/tutorials"
+              target="_blank"
+              rel="noopener"
+              className="text-orange-600 font-medium hover:text-orange-700 underline underline-offset-2"
+            >
+              View Tutorials
+            </a>
           </p>
         </div>
 

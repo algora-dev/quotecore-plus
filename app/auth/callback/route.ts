@@ -181,27 +181,10 @@ export async function GET(request: Request) {
             .eq('id', profile.company_id)
             .maybeSingle();
 
-          // Send welcome email on first confirmation for users who already
-          // have a profile (e.g. legacy signups where profile was created
-          // before the two-stage flow). Best-effort: never blocks sign-in.
-          if (isRecentConfirmation && profile.full_name && company?.slug) {
-            try {
-              const { html, text, subject } = renderWelcomeEmail({
-                fullName: profile.full_name,
-                workspaceSlug: company.slug,
-                appUrl: origin,
-              });
-              await sendEmail({
-                to: user.email || '',
-                subject,
-                html,
-                text,
-                tags: [{ name: 'type', value: 'welcome' }],
-              });
-            } catch (err) {
-              console.error('[auth/callback] Welcome email failed (non-fatal):', err);
-            }
-          }
+          // Note: welcome email is sent during first-confirmation workspace
+          // creation above. We do NOT send it again here — this path is for
+          // users who already have a profile (e.g. logins after the initial
+          // setup was completed). Sending here would cause duplicate emails.
 
           return NextResponse.redirect(`${origin}/${company?.slug || 'workspace'}`);
         } else {
