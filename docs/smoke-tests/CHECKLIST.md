@@ -8,6 +8,24 @@
 
 ---
 
+# 2026-06-30 — Admin User Management (commit `cae3717`)
+
+- [ ] **Users search page** — /admin/users loads with search bar + "Show all" button. Search by email → matching users appear. Search by company name → matches. Click "Show all" → recent accounts listed. Click a row → navigates to /admin/users/[userId].
+- [ ] **Company info section** — profile page shows company name (editable inline with reason), slug, plan code, subscription status badge, Stripe customer/subscription IDs (links to Stripe dashboard), current period end, storage used/limit, created date. Paused + Override badges appear when applicable.
+- [ ] **Override (free comp)** — click "Override (free comp)", pick a plan, enter reason, apply → success notice. Override badge appears on company info. User now has that plan's features without Stripe charge.
+- [ ] **Change paid plan** — for a user with a Stripe subscription, click "Change paid plan", pick a plan, enter reason → Stripe subscription updated. Verify in Stripe dashboard. Override cleared if active.
+- [ ] **Remove override** — with an active override, click "Remove override", enter reason → override cleared. User reverts to Stripe plan.
+- [ ] **Coupon apply/remove** — for a user with a Stripe subscription, select a coupon from dropdown, enter reason, apply → coupon shows as current. Remove coupon → cleared. (Requires running `node scripts/create-admin-coupons.mjs` first.)
+- [ ] **Pause access** — click "Pause access", enter reason → user locked out. Paused badge appears. User cannot log in / use app. Stripe subscription NOT cancelled.
+- [ ] **Resume access** — while paused, click "Resume access", enter reason → pause cleared. Stripe data synced (plan/status current). User can log in again.
+- [ ] **Password reset** — click "Send password reset email", confirm → reset email sent to user's email. User receives email and can set a new password. URL is NOT shown to admin.
+- [ ] **Delete account** — in Danger Zone, type user's email to confirm, delete → account wiped (storage + auth + company). Redirected to /admin/users. Account gone from search.
+- [ ] **Admin nav** — sidebar shows "Users" (not "Delete account").
+- [ ] **Self-protection** — try to pause/delete your own admin account → error message, action blocked.
+- [ ] **Audit trail** — after any admin action, verify `admin_actions` table has a row with admin email snapshot, target info, action type, and reason.
+
+---
+
 # 2026-06-29 — Auth fixes + Gerald H-01/L-01 + welcome email simplification
 
 - [ ] **Drawings & Images page loads** — navigate to /flashings (Drawings & Images) page → page loads without error (was broken: files missing from disk, now restored).
