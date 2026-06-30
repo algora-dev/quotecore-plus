@@ -1,0 +1,53 @@
+ So what are smart components?
+
+Think of Smart Components as building a repeatable digital version of the way your business works. Every business has products, services, tasks, or jobs that are quoted repeatedly. Smart Components allow you to build those once, define exactly how they should be measured and priced, then reuse them forever. Whether you build five Smart Components or five hundred, they become a digital library of your business that grows more valuable every time you use it.
+
+The goal isn't to force your business to adapt to our software. The goal is for QuoteCore+ to adapt to the way your business already works.
+
+Every business works differently. Even two roofers quoting the exact same house may use different products, different labour rates, different waste allowances and completely different pricing strategies.
+
+Most software expects everyone to work the same way. We don't. QuoteCore+ was designed so every business can build a system that reflects the way they already operate.
+
+Let's look at a few examples and explore how different measurement types can be applied across completely different industries.
+
+ Area squared measurement type
+
+Maybe you need to paint a wall, you can measure the area digitally on our app, or manually type the area or dimensions in. Our system, automatically calculates the rest based on what you save here in these components settings. You can add a per unit cost, or quantity cost, labor rate per unit, waste options, pitch or angle calculations, everything you need to be able to calculate is here.
+
+Area measurement components work for so many things, roofing, flooring, landscaping, cladding, solar panels, fencing, and many more! 
+
+You can also gain an area squared from these extra measurement types: Linea length times height, or Linea multi length times height, same area measurement, just measured differently.
+
+Volume measurement type
+
+Lets say you need to quote for a concrete slab, same as area measurement, you can use our digital measure system, or type your measurements in during the quoting process. Our system automatically calculates the rest based on what you save here in the actual component settings.
+
+There are 2 Volume measurement types, Volume - preset depth (You set the depth to a fixed measurement and only add the area measurement) or Volume - add area and depth for each volume measurement.
+
+You could use volume components for landscaping, foundations, pools, attic spaces and much more!
+
+Linear measurement type - Use this for measuring length, point to point, or you can choose multi length, which allows more than 1 length and combines them.
+
+Maybe you need to quote an electric cable install - You can price the cable per roll, or per meter, labor price, waste allowance.
+
+You could use Linear measured components for so many things, spouting, plumbing, drainage, skirting boards, cap flashings, garden edging and many more.
+
+Fixed Measurement type - You could use this component for basically anything at all, services like cleaning, delivery fee, inspections. A website, solar panel, light fixture, air conditioner, fridge.
+
+Let say you install hot water cylinders
+
+you might have 20 different hot water cylinder models with different costs per unit, install and labor costs, you would just create a component for each model. This component measurement type is super flexible and probably the one that will be used the most.
+
+Quantity.
+
+Similar to fixed, could be for anything that you buy in multiples, like boxes of screws, packs of tiles, chairs, plants, lights.
+
+Hours - Again, another very simple component to understand - apply hours for a specific job, a person, different people in your business, perhaps you charge them out at different rates, you could create a component called Jim the lawyer, charge him out at $50 an hour, or Bob the IT specialist, he's charged out at $200 an hour. You could combine 4 people working on a job for a day, there's nothing you can't price in hours or days with this measurement type literally no industry that it can't be applied to.
+
+Every business already has a system. Pricing. Services. Processes. Labour. Materials. Waste. Measurements.
+
+The difference is... Most businesses keep that knowledge in people's heads, Or buried inside old quotes. QuoteCore+ stores that knowledge inside Smart Components.  Every Smart Component you build today makes every future quote Faster. Easier. More accurate. More consistent.
+
+Which means: More jobs. More profit. And more time to enjoy both.
+
+QuoteCore+ helps businesses digitise the way they operate. Smart Components are the simple, repeatable way to make that happen.​
