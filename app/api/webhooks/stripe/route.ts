@@ -347,7 +347,7 @@ async function handleSubscriptionEvent(
   const admin = createAdminClient();
   let { data: company, error: companyErr } = await admin
     .from('companies')
-    .select('id, plan_code, subscription_status, stripe_subscription_id')
+    .select('id, plan_code, subscription_status, stripe_subscription_id, admin_paused')
     .eq('stripe_customer_id', customerId)
     .maybeSingle();
 
@@ -363,7 +363,7 @@ async function handleSubscriptionEvent(
     if (metaCompanyId) {
       const { data: companyByMeta, error: metaErr } = await admin
         .from('companies')
-        .select('id, plan_code, subscription_status, stripe_subscription_id')
+        .select('id, plan_code, subscription_status, stripe_subscription_id, admin_paused')
         .eq('id', metaCompanyId)
         .maybeSingle();
       if (metaErr) throw retryable(`companies metadata lookup: ${metaErr.message}`);
@@ -380,6 +380,25 @@ async function handleSubscriptionEvent(
   }
 
   if (!company) return 'quarantined:company_not_found_for_customer';
+
+  // Admin-pause guard (Gerald v3 M-02): while admin_paused, ALL billing
+  // webhooks log events but skip ALL local mutations. Resume does mandatory
+  // full Stripe reconciliation.
+  if (company.admin_paused) {
+    await admin.from('subscription_events').insert({
+      company_id: company.id,
+      event_type: 'paused_event_logged',
+      from_plan_code: company.plan_code,
+      to_plan_code: company.plan_code,
+      from_status: company.subscription_status,
+      to_status: company.subscription_status,
+      stripe_event_id: event.id,
+      stripe_event_type: event.type,
+      stripe_event_created: new Date(event.created * 1000).toISOString(),
+      notes: 'Event received while admin_paused; no mutation applied.',
+    });
+    return 'ok:admin_paused';
+  }
 
   // Gerald audit H-03: validate the event's subscription id against the
   // company's current subscription. Mismatches happen when:
@@ -494,7 +513,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<string> {
   const admin = createAdminClient();
   const { data: company, error: companyErr } = await admin
     .from('companies')
-    .select('id, subscription_status, plan_code, stripe_subscription_id')
+    .select('id, subscription_status, plan_code, stripe_subscription_id, admin_paused')
     .eq('stripe_customer_id', customerId)
     .maybeSingle();
   if (companyErr) throw retryable(`companies lookup: ${companyErr.message}`);
@@ -502,6 +521,22 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<string> {
 
   if (invoiceSubId && company.stripe_subscription_id && invoiceSubId !== company.stripe_subscription_id) {
     return `quarantined:stale_subscription:${invoiceSubId}_vs_current_${company.stripe_subscription_id}`;
+  }
+
+  // Admin-pause guard (Gerald v3 M-02): skip ALL local mutations while paused.
+  if (company.admin_paused) {
+    await admin.from('subscription_events').insert({
+      company_id: company.id,
+      event_type: 'paused_event_logged',
+      from_plan_code: company.plan_code,
+      to_plan_code: company.plan_code,
+      from_status: company.subscription_status,
+      to_status: company.subscription_status,
+      stripe_event_id: invoice.id,
+      stripe_event_type: 'invoice.payment_succeeded',
+      notes: 'Event received while admin_paused; no mutation applied.',
+    });
+    return 'ok:admin_paused';
   }
 
   // Restore to active if we were in any payment-failure state.
@@ -548,7 +583,7 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice): Promise<string> {
   const admin = createAdminClient();
   const { data: company, error: companyErr } = await admin
     .from('companies')
-    .select('id, subscription_status, plan_code, first_payment_failure_at, stripe_subscription_id')
+    .select('id, subscription_status, plan_code, first_payment_failure_at, stripe_subscription_id, admin_paused')
     .eq('stripe_customer_id', customerId)
     .maybeSingle();
   if (companyErr) throw retryable(`companies lookup: ${companyErr.message}`);
@@ -556,6 +591,22 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice): Promise<string> {
 
   if (invoiceSubId && company.stripe_subscription_id && invoiceSubId !== company.stripe_subscription_id) {
     return `quarantined:stale_subscription:${invoiceSubId}_vs_current_${company.stripe_subscription_id}`;
+  }
+
+  // Admin-pause guard (Gerald v3 M-02): skip ALL local mutations while paused.
+  if (company.admin_paused) {
+    await admin.from('subscription_events').insert({
+      company_id: company.id,
+      event_type: 'paused_event_logged',
+      from_plan_code: company.plan_code,
+      to_plan_code: company.plan_code,
+      from_status: company.subscription_status,
+      to_status: company.subscription_status,
+      stripe_event_id: invoice.id,
+      stripe_event_type: 'invoice.payment_failed',
+      notes: 'Event received while admin_paused; no mutation applied.',
+    });
+    return 'ok:admin_paused';
   }
 
   const now = new Date().toISOString();
@@ -609,11 +660,51 @@ async function handleDisputeCreated(dispute: Stripe.Dispute): Promise<string> {
   const admin = createAdminClient();
   const { data: company, error: companyErr } = await admin
     .from('companies')
-    .select('id, subscription_status, plan_code')
+    .select('id, subscription_status, plan_code, admin_paused')
     .eq('stripe_customer_id', customerId)
     .maybeSingle();
   if (companyErr) throw retryable(`companies lookup: ${companyErr.message}`);
   if (!company) return 'quarantined:company_not_found_for_customer';
+
+  // Admin-pause guard (Gerald v2 M-03): while paused, STILL create the
+  // support ticket + subscription_events row, but do NOT set
+  // subscription_status = 'disputed'. Chargebacks are never silently swallowed.
+  if (company.admin_paused) {
+    const autoCloseAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+    const { data: firstUser } = await admin
+      .from('users')
+      .select('id')
+      .eq('company_id', company.id)
+      .limit(1)
+      .maybeSingle();
+    if (firstUser?.id) {
+      await admin.from('support_tickets').insert({
+        company_id: company.id,
+        user_id: firstUser.id,
+        category: 'payment_dispute',
+        subject: `Payment dispute opened: ${dispute.reason || 'no reason'}`,
+        body:
+          `A dispute has been opened against your subscription payment.\n\n` +
+          `Reason: ${dispute.reason || 'not specified'}\n` +
+          `Amount: ${(dispute.amount / 100).toFixed(2)} ${dispute.currency.toUpperCase()}\n\n` +
+          `Please respond within 48 hours to resolve.`,
+        status: 'open',
+        priority: 'high',
+        related_stripe_dispute_id: dispute.id,
+        related_stripe_charge_id: chargeId,
+        auto_close_at: autoCloseAt,
+        created_by_system: true,
+      });
+    }
+    await admin.from('subscription_events').insert({
+      company_id: company.id,
+      event_type: 'dispute_opened',
+      from_status: company.subscription_status,
+      to_status: company.subscription_status,
+      notes: `Stripe dispute ${dispute.id}: ${dispute.reason || 'no reason'} (admin_paused; status not mutated)`,
+    });
+    return 'ok:admin_paused';
+  }
 
   const { error: updErr } = await admin
     .from('companies')
@@ -683,11 +774,28 @@ async function handleDisputeClosed(dispute: Stripe.Dispute): Promise<string> {
   const admin = createAdminClient();
   const { data: company, error: companyErr } = await admin
     .from('companies')
-    .select('id, subscription_status')
+    .select('id, subscription_status, admin_paused')
     .eq('stripe_customer_id', customerId)
     .maybeSingle();
   if (companyErr) throw retryable(`companies lookup: ${companyErr.message}`);
   if (!company) return 'quarantined:company_not_found_for_customer';
+
+  // Admin-pause guard (Gerald v2 M-03): while paused, still close the
+  // support ticket + log event, but do NOT set subscription_status.
+  if (company.admin_paused) {
+    await admin
+      .from('support_tickets')
+      .update({ status: 'resolved' })
+      .eq('related_stripe_dispute_id', dispute.id);
+    await admin.from('subscription_events').insert({
+      company_id: company.id,
+      event_type: 'dispute_closed',
+      from_status: company.subscription_status,
+      to_status: company.subscription_status,
+      notes: `Stripe dispute ${dispute.id} closed as ${dispute.status} (admin_paused; status not mutated)`,
+    });
+    return 'ok:admin_paused';
+  }
 
   const won = dispute.status === 'won';
   const newStatus = won ? 'active' : 'canceled';

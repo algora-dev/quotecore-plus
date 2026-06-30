@@ -55,6 +55,70 @@ export type Database = {
           },
         ]
       }
+      admin_actions: {
+        Row: {
+          action_type: string
+          admin_email_snapshot: string
+          admin_user_id: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          reason: string | null
+          target_company_id: string | null
+          target_company_name_snapshot: string | null
+          target_user_email_snapshot: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          admin_email_snapshot: string
+          admin_user_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          reason?: string | null
+          target_company_id?: string | null
+          target_company_name_snapshot?: string | null
+          target_user_email_snapshot?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          admin_email_snapshot?: string
+          admin_user_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          reason?: string | null
+          target_company_id?: string | null
+          target_company_name_snapshot?: string | null
+          target_user_email_snapshot?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_actions_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_actions_target_company_id_fkey"
+            columns: ["target_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_actions_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alerts: {
         Row: {
           alert_type: string
@@ -542,6 +606,13 @@ export type Database = {
       }
       companies: {
         Row: {
+          admin_override_notes: string | null
+          admin_override_plan_code: string | null
+          admin_override_until: string | null
+          admin_pause_reason: string | null
+          admin_paused: boolean
+          admin_paused_at: string | null
+          admin_paused_by: string | null
           cancel_at: string | null
           cancel_at_period_end: boolean
           cancellation_confirmation_required_at: string | null
@@ -582,6 +653,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_override_notes?: string | null
+          admin_override_plan_code?: string | null
+          admin_override_until?: string | null
+          admin_pause_reason?: string | null
+          admin_paused?: boolean
+          admin_paused_at?: string | null
+          admin_paused_by?: string | null
           cancel_at?: string | null
           cancel_at_period_end?: boolean
           cancellation_confirmation_required_at?: string | null
@@ -622,6 +700,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_override_notes?: string | null
+          admin_override_plan_code?: string | null
+          admin_override_until?: string | null
+          admin_pause_reason?: string | null
+          admin_paused?: boolean
+          admin_paused_at?: string | null
+          admin_paused_by?: string | null
           cancel_at?: string | null
           cancel_at_period_end?: boolean
           cancellation_confirmation_required_at?: string | null
@@ -662,6 +747,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "companies_admin_override_plan_code_fkey"
+            columns: ["admin_override_plan_code"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "companies_admin_paused_by_fkey"
+            columns: ["admin_paused_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "companies_plan_code_fkey"
             columns: ["plan_code"]

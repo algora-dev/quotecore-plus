@@ -42,40 +42,138 @@ export type ListAccountsResult =
   | { ok: true; accounts: AccountRow[] }
   | { ok: false; error: string };
 
+export interface SearchUserRow {
+  id: string;
+  email: string;
+  fullName: string | null;
+  companyId: string;
+  companyName: string;
+  planCode: string | null;
+  subscriptionStatus: string | null;
+  adminPaused: boolean;
+}
+
+export type SearchResult =
+  | { ok: true; users: SearchUserRow[]; total: number }
+  | { ok: false; error: string };
+
 /**
- * List all company accounts with user + plan info. Used to populate the
- * admin user list. Returns up to 500 rows; client filters by search term.
+ * Server-side paginated search for admin user management.
+ * Searches by email, then company name, then user full_name (ilike).
  */
-export async function listAccounts(): Promise<ListAccountsResult> {
+export async function searchUsers(query: string, limit: number = 20, offset: number = 0): Promise<SearchResult> {
   await requireAdmin();
   const admin = createAdminClient();
 
-  const { data: companies, error: coErr } = await admin
-    .from('companies')
-    .select('id, name, plan_code, subscription_status')
-    .order('name', { ascending: true })
-    .limit(500);
-  if (coErr) return { ok: false, error: coErr.message };
+  const q = (query ?? '').trim();
 
-  const companyIds = (companies ?? []).map((c) => c.id);
-  if (companyIds.length === 0) return { ok: true, accounts: [] };
+  if (!q) {
+    // No query: return most recent accounts
+    const { data: companies, error: coErr } = await admin
+      .from('companies')
+      .select('id, name, plan_code, subscription_status, admin_paused')
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+    if (coErr) return { ok: false, error: coErr.message };
 
-  const { data: allUsers } = await admin
+    const companyIds = (companies ?? []).map((c) => c.id);
+    if (companyIds.length === 0) return { ok: true, users: [], total: 0 };
+
+    const { data: allUsers } = await admin
+      .from('users')
+      .select('id, email, full_name, is_admin, company_id')
+      .in('company_id', companyIds);
+
+    const users: SearchUserRow[] = [];
+    for (const co of companies ?? []) {
+      const coUsers = (allUsers ?? []).filter((u) => u.company_id === co.id);
+      for (const u of coUsers) {
+        users.push({
+          id: u.id,
+          email: u.email,
+          fullName: u.full_name,
+          companyId: co.id,
+          companyName: co.name,
+          planCode: co.plan_code,
+          subscriptionStatus: co.subscription_status,
+          adminPaused: co.admin_paused,
+        });
+      }
+    }
+    return { ok: true, users, total: users.length };
+  }
+
+  // Search by email first
+  const { data: emailMatches, error: emailErr } = await admin
     .from('users')
     .select('id, email, full_name, is_admin, company_id')
-    .in('company_id', companyIds);
+    .ilike('email', `%${q}%`)
+    .order('email', { ascending: true })
+    .limit(limit);
+  if (emailErr) return { ok: false, error: emailErr.message };
 
-  const accounts: AccountRow[] = (companies ?? []).map((co) => ({
-    companyId: co.id,
-    companyName: co.name,
-    planCode: co.plan_code ?? null,
-    subscriptionStatus: co.subscription_status ?? null,
-    users: (allUsers ?? [])
-      .filter((u) => u.company_id === co.id)
-      .map((u) => ({ id: u.id, email: u.email, fullName: u.full_name ?? null, isAdmin: !!u.is_admin })),
-  }));
+  const emailCompanyIds = (emailMatches ?? []).map((u) => u.company_id).filter(Boolean) as string[];
+  let companiesById: Record<string, { id: string; name: string; plan_code: string | null; subscription_status: string | null; admin_paused: boolean }> = {};
 
-  return { ok: true, accounts };
+  if (emailCompanyIds.length > 0) {
+    const { data: cos } = await admin
+      .from('companies')
+      .select('id, name, plan_code, subscription_status, admin_paused')
+      .in('id', emailCompanyIds);
+    for (const c of cos ?? []) {
+      companiesById[c.id] = c;
+    }
+  }
+
+  const users: SearchUserRow[] = (emailMatches ?? []).map((u) => {
+    const co = companiesById[u.company_id];
+    return {
+      id: u.id,
+      email: u.email,
+      fullName: u.full_name,
+      companyId: u.company_id ?? '',
+      companyName: co?.name ?? 'Unknown',
+      planCode: co?.plan_code ?? null,
+      subscriptionStatus: co?.subscription_status ?? null,
+      adminPaused: co?.admin_paused ?? false,
+    };
+  });
+
+  // If we didn't get enough results from email search, also search by company name
+  if (users.length < limit) {
+    const { data: coMatches } = await admin
+      .from('companies')
+      .select('id, name, plan_code, subscription_status, admin_paused')
+      .ilike('name', `%${q}%`)
+      .limit(limit);
+
+    const existingCompanyIds = new Set(Object.keys(companiesById));
+    const newCoIds = (coMatches ?? []).filter((c) => !existingCompanyIds.has(c.id)).map((c) => c.id);
+
+    if (newCoIds.length > 0) {
+      const { data: coUsers } = await admin
+        .from('users')
+        .select('id, email, full_name, is_admin, company_id')
+        .in('company_id', newCoIds);
+
+      for (const c of coMatches ?? []) {
+        for (const u of (coUsers ?? []).filter((cu) => cu.company_id === c.id)) {
+          users.push({
+            id: u.id,
+            email: u.email,
+            fullName: u.full_name,
+            companyId: c.id,
+            companyName: c.name,
+            planCode: c.plan_code,
+            subscriptionStatus: c.subscription_status,
+            adminPaused: c.admin_paused,
+          });
+        }
+      }
+    }
+  }
+
+  return { ok: true, users: users.slice(0, limit), total: users.length };
 }
 
 export interface AccountMatch {

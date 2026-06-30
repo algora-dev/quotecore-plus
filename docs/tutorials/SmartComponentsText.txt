@@ -1,4 +1,4 @@
- So what are smart components?
+So what are smart components?
 
 Think of Smart Components as building a repeatable digital version of the way your business works. Every business has products, services, tasks, or jobs that are quoted repeatedly. Smart Components allow you to build those once, define exactly how they should be measured and priced, then reuse them forever. Whether you build five Smart Components or five hundred, they become a digital library of your business that grows more valuable every time you use it.
 

@@ -167,6 +167,25 @@ export interface CompanyEntitlements {
   graceEndsAt: string | null;
   firstPaymentFailureAt: string | null;
   compUntil: string | null;
+
+  /**
+   * True when an admin has manually paused the company. Access is fully
+   * locked (read AND write). Separate from subscription_status / dunning.
+   */
+  adminPaused: boolean;
+
+  /**
+   * Plan code an admin has assigned as an override. Active when non-null
+   * AND adminOverrideUntil > now(). The effective-plan SQL function
+   * returns this over plan_code when active.
+   */
+  adminOverridePlanCode: string | null;
+
+  /**
+   * When the admin override expires. Nullable; the SQL function checks
+   * admin_override_until > now().
+   */
+  adminOverrideUntil: string | null;
 }
 
 /**
@@ -183,6 +202,9 @@ interface EntitlementRowRaw {
   storage_used_bytes: number;
   storage_topup_bytes: number;
   seat_count: number;
+  admin_paused: boolean;
+  admin_override_plan_code: string | null;
+  admin_override_until: string | null;
 }
 
 interface PlanRowRaw {
@@ -249,7 +271,7 @@ export const loadCompanyEntitlements = cache(
       admin
         .from('companies')
         .select(
-          'plan_code, subscription_status, trial_ends_at, current_period_end, first_payment_failure_at, comp_until, storage_used_bytes, storage_topup_bytes, seat_count',
+          'plan_code, subscription_status, trial_ends_at, current_period_end, first_payment_failure_at, comp_until, storage_used_bytes, storage_topup_bytes, seat_count, admin_paused, admin_override_plan_code, admin_override_until',
         )
         .eq('id', companyId)
         .limit(1)
@@ -356,6 +378,9 @@ export const loadCompanyEntitlements = cache(
       graceEndsAt: null,
       firstPaymentFailureAt: company.first_payment_failure_at,
       compUntil: company.comp_until,
+      adminPaused: company.admin_paused,
+      adminOverridePlanCode: company.admin_override_plan_code,
+      adminOverrideUntil: company.admin_override_until,
     };
   },
 );
@@ -492,6 +517,9 @@ export async function entitlementsForClient(
   currentPeriodEnd: string | null;
   firstPaymentFailureAt: string | null;
   compUntil: string | null;
+  adminPaused: boolean;
+  adminOverridePlanCode: string | null;
+  adminOverrideUntil: string | null;
 }> {
   const ent = await loadCompanyEntitlements(companyId);
   return {
@@ -519,6 +547,9 @@ export async function entitlementsForClient(
     currentPeriodEnd: ent.currentPeriodEnd,
     firstPaymentFailureAt: ent.firstPaymentFailureAt,
     compUntil: ent.compUntil,
+    adminPaused: ent.adminPaused,
+    adminOverridePlanCode: ent.adminOverridePlanCode,
+    adminOverrideUntil: ent.adminOverrideUntil,
   };
 }
 

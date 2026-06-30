@@ -1,17 +1,14 @@
 import { requireAdmin } from '@/app/lib/supabase/server';
-import { DeleteAccountPanel } from './DeleteAccountPanel';
+import { UsersPanel } from './UsersPanel';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Admin "Delete Account" tool.
+ * Admin user management page.
  *
- * Search any user by email, review the matched company + what will be
- * removed, then perform a full irreversible tenant wipe (storage + auth
- * logins + company cascade) so the email can sign up again clean.
- *
- * There is no self-service account deletion in the app; this is the only
- * delete path. Admin-only (requireAdmin).
+ * Search any user by email or company name, click through to their profile
+ * to manage subscription, pause/resume access, send password reset, or
+ * delete the account.
  */
 export default async function AdminUsersPage() {
   await requireAdmin();
@@ -19,15 +16,14 @@ export default async function AdminUsersPage() {
   return (
     <section className="space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Delete account</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Users</h1>
         <p className="text-sm text-slate-500 mt-1">
-          Search a user by email, then permanently wipe their company tenant —
-          all data, files, and login(s). The email becomes free to sign up again.
-          This cannot be undone.
+          Search for a user by email or company name to manage their subscription,
+          pause access, or delete their account.
         </p>
       </div>
 
-      <DeleteAccountPanel />
+      <UsersPanel />
     </section>
   );
 }
