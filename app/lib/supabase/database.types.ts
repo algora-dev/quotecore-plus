@@ -121,6 +121,7 @@ export type Database = {
       }
       admin_impersonation_sessions: {
         Row: {
+          admin_refresh_token: string | null
           admin_user_id: string
           created_at: string
           ended_at: string | null
@@ -130,6 +131,7 @@ export type Database = {
           target_user_id: string
         }
         Insert: {
+          admin_refresh_token?: string | null
           admin_user_id: string
           created_at?: string
           ended_at?: string | null
@@ -139,6 +141,7 @@ export type Database = {
           target_user_id: string
         }
         Update: {
+          admin_refresh_token?: string | null
           admin_user_id?: string
           created_at?: string
           ended_at?: string | null

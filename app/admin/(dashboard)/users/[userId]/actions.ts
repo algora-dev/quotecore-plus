@@ -827,7 +827,8 @@ export async function adminToggleArchiveAttachment(
 
 // ---------------------------------------------------------------------------
 // Feature 6: Impersonate User
-// Gerald H-01: server-side overlay, no client-held admin session
+// Gerald H-01: magic-link session swap. Admin's refresh token stored in DB
+// for restoration. Opaque session-id cookie for audit tracking.
 // ---------------------------------------------------------------------------
 
 export async function startImpersonation(
@@ -861,12 +862,24 @@ export async function startImpersonation(
     return { ok: false, error: 'Cannot impersonate an admin user' };
   }
 
-  // Create impersonation session
+  // Capture admin's current refresh token so we can restore their session later.
+  // We read it from the incoming request cookies via the server client.
+  const { createSupabaseServerClient } = await import('@/app/lib/supabase/server');
+  const serverClient = await createSupabaseServerClient();
+  const { data: sessionData } = await serverClient.auth.getSession();
+  const adminRefreshToken = sessionData.session?.refresh_token ?? null;
+
+  if (!adminRefreshToken) {
+    return { ok: false, error: 'Could not capture admin session for restoration. Aborting.' };
+  }
+
+  // Create impersonation session row (stores admin refresh token for restore)
   const { data: session, error: sessionErr } = await admin
     .from('admin_impersonation_sessions')
     .insert({
       admin_user_id: adminProfile.id,
       target_user_id: targetUserId,
+      admin_refresh_token: adminRefreshToken,
     })
     .select('id')
     .single();
@@ -877,7 +890,7 @@ export async function startImpersonation(
 
   const sessionId = (session as { id: string }).id;
 
-  // Set cookie
+  // Set cookie (for audit tracking + banner display)
   const { cookies } = await import('next/headers');
   const cookieStore = await cookies();
   cookieStore.set('qcp_impersonation', sessionId, {
@@ -887,6 +900,26 @@ export async function startImpersonation(
     path: '/',
     maxAge: 1800, // 30 min
   });
+
+  // Generate a magic link for the target user
+  const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+    type: 'magiclink',
+    email: targetUser.email,
+  });
+
+  if (linkErr || !linkData) {
+    // Clean up session row if link generation failed
+    await admin.from('admin_impersonation_sessions').delete().eq('id', sessionId);
+    cookieStore.delete('qcp_impersonation');
+    return { ok: false, error: `Failed to generate impersonation link: ${linkErr?.message ?? 'unknown'}` };
+  }
+
+  const tokenHash = linkData.properties?.hashed_token;
+  if (!tokenHash) {
+    await admin.from('admin_impersonation_sessions').delete().eq('id', sessionId);
+    cookieStore.delete('qcp_impersonation');
+    return { ok: false, error: 'Magic link response missing hashed_token' };
+  }
 
   // Notify user (optional)
   if (opts?.notifyUser) {
@@ -901,7 +934,9 @@ export async function startImpersonation(
     { sessionId, notifyUser: opts?.notifyUser ?? false },
   );
 
-  return { ok: true, message: `Impersonating ${targetUser.email}`, redirect: '/' };
+  // Redirect through the verify route — this swaps the auth session
+  const verifyUrl = `/auth/verify?token_hash=${encodeURIComponent(tokenHash)}&type=magiclink&next=/`;
+  return { ok: true, message: `Impersonating ${targetUser.email}`, redirect: verifyUrl };
 }
 
 export async function endImpersonation(): Promise<ActionResult & { redirect?: string }> {
@@ -915,14 +950,14 @@ export async function endImpersonation(): Promise<ActionResult & { redirect?: st
 
   const admin = createAdminClient();
 
-  // Fetch session
+  // Fetch session row (includes admin refresh token for restoration)
   const { data: session } = await admin
     .from('admin_impersonation_sessions')
-    .select('admin_user_id, target_user_id, started_at')
+    .select('admin_user_id, target_user_id, admin_refresh_token')
     .eq('id', sessionId)
     .maybeSingle();
 
-  // End session
+  // End session row
   await admin
     .from('admin_impersonation_sessions')
     .update({ ended_at: new Date().toISOString() })
@@ -931,32 +966,68 @@ export async function endImpersonation(): Promise<ActionResult & { redirect?: st
   // Clear cookie
   cookieStore.delete('qcp_impersonation');
 
-  if (session) {
-    const s = session as { admin_user_id: string; target_user_id: string };
-
-    // Fetch admin email for audit
-    const { data: adminUser } = await admin
-      .from('users')
-      .select('email')
-      .eq('id', s.admin_user_id)
-      .maybeSingle();
-
-    const { data: targetUser } = await admin
-      .from('users')
-      .select('email')
-      .eq('id', s.target_user_id)
-      .maybeSingle();
-
-    await writeAudit(
-      admin,
-      { id: s.admin_user_id, email: (adminUser as { email: string })?.email ?? 'unknown' },
-      'impersonation_end',
-      null, s.target_user_id, (targetUser as { email: string })?.email ?? null, null, null,
-      { sessionId },
-    );
-
-    return { ok: true, message: 'Impersonation ended', redirect: `/admin/users/${s.target_user_id}` };
+  if (!session) {
+    return { ok: true, message: 'Impersonation ended', redirect: '/admin' };
   }
 
-  return { ok: true, message: 'Impersonation ended', redirect: '/admin' };
+  const s = session as { admin_user_id: string; target_user_id: string; admin_refresh_token: string | null };
+
+  // Fetch admin email for audit + magic link
+  const { data: adminUser } = await admin
+    .from('users')
+    .select('email')
+    .eq('id', s.admin_user_id)
+    .maybeSingle();
+
+  const { data: targetUser } = await admin
+    .from('users')
+    .select('email')
+    .eq('id', s.target_user_id)
+    .maybeSingle();
+
+  const adminEmail = (adminUser as { email: string })?.email ?? null;
+  const targetEmail = (targetUser as { email: string })?.email ?? null;
+
+  await writeAudit(
+    admin,
+    { id: s.admin_user_id, email: adminEmail ?? 'unknown' },
+    'impersonation_end',
+    null, s.target_user_id, targetEmail, null, null,
+    { sessionId },
+  );
+
+  // Restore admin session: try refresh token first, then magic link as fallback
+  if (s.admin_refresh_token && adminEmail) {
+    // Try to restore the admin's session using their stored refresh token
+    const { createSupabaseServerClient } = await import('@/app/lib/supabase/server');
+    const serverClient = await createSupabaseServerClient();
+    const { data: restored, error: restoreErr } = await serverClient.auth.refreshSession({
+      refresh_token: s.admin_refresh_token,
+    });
+
+    if (!restoreErr && restored.session) {
+      // Session restored — redirect to admin
+      return { ok: true, message: 'Impersonation ended', redirect: `/admin/users/${s.target_user_id}` };
+    }
+
+    // Refresh token expired — fall through to magic link
+    console.warn('[impersonation] Admin refresh token expired, falling back to magic link');
+  }
+
+  // Fallback: generate a magic link for the admin to sign back in
+  if (adminEmail) {
+    const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+      type: 'magiclink',
+      email: adminEmail,
+    });
+
+    if (!linkErr && linkData?.properties?.hashed_token) {
+      const tokenHash = linkData.properties.hashed_token;
+      const verifyUrl = `/auth/verify?token_hash=${encodeURIComponent(tokenHash)}&type=magiclink&next=/admin/users/${s.target_user_id}`;
+      return { ok: true, message: 'Impersonation ended', redirect: verifyUrl };
+    }
+  }
+
+  // Last resort: redirect to admin login
+  return { ok: true, message: 'Impersonation ended — please log back in', redirect: '/admin/login' };
 }

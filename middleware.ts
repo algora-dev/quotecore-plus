@@ -7,6 +7,7 @@ const PUBLIC_PATHS = [
   '/signup',
   '/accept',       // Quote acceptance (public)
   '/auth/callback', // OAuth callback
+  '/auth/verify',   // Magic-link verification (impersonation flow)
   '/auth/reset-password', // Password reset
   '/onboarding',   // New user onboarding
   '/privacy',      // Privacy Policy (legally required to be public)
