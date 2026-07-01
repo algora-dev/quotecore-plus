@@ -242,8 +242,9 @@ export async function POST(req: NextRequest) {
           controller.close();
           return;
         }
-      } catch {
+      } catch (earlyErr) {
         // If early-intent check fails, fall through to normal orchestrator
+        console.warn('[assistant.chat] early-intent router error:', earlyErr);
       }
 
       try {

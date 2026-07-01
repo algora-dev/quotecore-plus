@@ -148,7 +148,7 @@ export async function checkUserNewness(
   // Fetch user created_at
   const { data: userRow } = await admin
     .from('users')
-    .select('created_at')
+    .select('created_at, is_admin')
     .eq('id', userId)
     .maybeSingle();
 
@@ -166,8 +166,10 @@ export async function checkUserNewness(
     .eq('company_id', companyId);
 
   // TEMP TESTING: widened to 365 days / 50 quotes so Shaun can test with his existing account.
+  // Also bypass newness check for admin users during testing.
   // Revert to 14 / 3 after testing.
-  const isNew = daysSinceSignup <= 365 && (quoteCount ?? 0) < 50;
+  const isAdmin = !!(userRow as { is_admin?: boolean } | null)?.is_admin;
+  const isNew = isAdmin || (daysSinceSignup <= 365 && (quoteCount ?? 0) < 50);
 
   return { isNew, daysSinceSignup, quoteCount: quoteCount ?? 0 };
 }
@@ -177,6 +179,79 @@ export async function checkUserNewness(
 // ---------------------------------------------------------------------------
 
 /**
+ * Quick keyword pre-check: if the message matches common triggers
+ * exactly, skip the LLM classification call entirely. Faster + cheaper.
+ * Falls through to LLM classification for messages that don't hit
+ * an exact keyword match.
+ */
+const KEYWORD_PATTERNS: { intent: EarlyIntent; patterns: RegExp[] }[] = [
+  {
+    intent: 'getting_started',
+    patterns: [
+      /where do i start/i,
+      /how do i get started/i,
+      /i'?m new/i,
+      /what should i do first/i,
+      /where should i begin/i,
+      /how do i learn.*quotecore/i,
+      /is there a tutorial/i,
+      /do you have tutorials/i,
+      /where are the tutorials/i,
+      /i don'?t know where to start/i,
+      /help me get started/i,
+      /first time.*quotecore/i,
+      /show me the basics/i,
+      /what'?s this app for/i,
+      /i just signed up/i,
+    ],
+  },
+  {
+    intent: 'learning_components',
+    patterns: [
+      /what (are|is) smart components?/i,
+      /explain components/i,
+      /how do components work/i,
+      /why do i need components/i,
+      /how do i make a component/i,
+      /first component/i,
+      /component tutorial/i,
+      /teach me components/i,
+    ],
+  },
+  {
+    intent: 'creating_quotes',
+    patterns: [
+      /how do i create a quote/i,
+      /how do i make a quote/i,
+      /how do i start a quote/i,
+      /how do quotes work/i,
+      /how do i quote a customer/i,
+      /first quote/i,
+      /teach me quoting/i,
+      /new quote/i,
+    ],
+  },
+  {
+    intent: 'navigation',
+    patterns: [
+      /where (is|are) (the )?(resources|tutorials|guides|help)/i,
+      /i can'?t find (the )?tutorials/i,
+      /where'?s the help section/i,
+      /show me the tutorials/i,
+    ],
+  },
+];
+
+function keywordMatch(message: string): EarlyIntent | null {
+  for (const { intent, patterns } of KEYWORD_PATTERNS) {
+    for (const p of patterns) {
+      if (p.test(message)) return intent;
+    }
+  }
+  return null;
+}
+
+/**
  * Classify the user's message into an early-stage intent using a fast,
  * cheap LLM call. Returns 'none' if no intent matches or if the message
  * is clearly not an early-stage question.
@@ -184,6 +259,9 @@ export async function checkUserNewness(
 export async function classifyEarlyIntent(
   userMessage: string
 ): Promise<EarlyIntent> {
+  // Keyword fast-path first
+  const kwMatch = keywordMatch(userMessage);
+  if (kwMatch) return kwMatch;
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return 'none';
 
