@@ -89,7 +89,7 @@ export const getCurrentProfile = cache(async (existingClient?: SupabaseClient<Da
     throw new Error('Profile not found');
   }
 
-  // Check if this is an impersonation session (for banner display)
+  // Check if this is an impersonation session (admin viewing user's account)
   try {
     const cookieStore = await cookies();
     const sessionId = cookieStore.get('qcp_impersonation')?.value;
@@ -123,6 +123,35 @@ export const getCurrentProfile = cache(async (existingClient?: SupabaseClient<Da
     }
   } catch {
     // ignore — if cookie check fails, just return normal profile
+  }
+
+  // Check if this user's account is currently being impersonated by an admin
+  // (user-facing banner). Only check for non-admin users.
+  if (!data.is_admin) {
+    try {
+      const { createAdminClient } = await import('./admin');
+      const admin = createAdminClient();
+      const { data: activeSession } = await admin
+        .from('admin_impersonation_sessions')
+        .select('admin_user_id, started_at')
+        .eq('target_user_id', user.id)
+        .is('ended_at', null)
+        .gt('started_at', new Date(Date.now() - 30 * 60 * 1000).toISOString())
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (activeSession) {
+        const s = activeSession as { admin_user_id: string; started_at: string };
+        return {
+          ...data,
+          isBeingImpersonated: true as const,
+          impersonationStartedAt: s.started_at,
+        };
+      }
+    } catch {
+      // ignore — if check fails, just return normal profile
+    }
   }
 
   return data;

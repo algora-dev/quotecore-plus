@@ -17,6 +17,7 @@ import { EntitlementBanner } from '@/app/components/billing/EntitlementBanner';
 import { TrialRolledToFreeBanner } from '@/app/components/billing/TrialRolledToFreeBanner';
 import { GlobalAnnouncementBanner } from '@/app/components/GlobalAnnouncementBanner';
 import { ImpersonationBanner } from '@/app/components/ImpersonationBanner';
+import { UserImpersonationBanner } from '@/app/components/UserImpersonationBanner';
 import { getAnnouncement } from '@/app/admin/(dashboard)/settings/actions';
 
 export default async function WorkspaceLayout({
@@ -95,6 +96,9 @@ export default async function WorkspaceLayout({
                 adminEmail={profile.impersonationAdminEmail ?? null}
                 targetEmail={profile.email}
               />
+            )}
+            {'isBeingImpersonated' in profile && profile.isBeingImpersonated && (
+              <UserImpersonationBanner />
             )}
             <header className="border-b border-slate-200 bg-white shadow-sm">
               <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-4">
