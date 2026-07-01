@@ -148,6 +148,11 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     addAreaCta: 'Add Area',
 
     pitchRequired: false,
+    pitchOptional: true,
+    pitchHidesValleyHip: true,
+    pitchCheckboxLabel: 'Apply Angle/Slope calculation',
+    pitchRafterLabel: 'Rise over run',
+    areaPitchLabel: 'Fall / Slope (°)',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Bathroom, Kitchen, Ground Floor',
@@ -278,6 +283,11 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     addAreaCta: 'Add Wall Area',
 
     pitchRequired: false,
+    pitchOptional: true,
+    pitchHidesValleyHip: true,
+    pitchCheckboxLabel: 'Apply Angle/Slope calculation',
+    pitchRafterLabel: 'Rise over run',
+    areaPitchLabel: 'Pitch (°)',
 
     createAreaModalTitle: 'Create Wall Area',
     areaNamePlaceholder: 'e.g. North Elevation',
@@ -320,6 +330,11 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     addAreaCta: 'Add Area',
 
     pitchRequired: false,
+    pitchOptional: true,
+    pitchHidesValleyHip: true,
+    pitchCheckboxLabel: 'Apply Angle/Slope calculation',
+    pitchRafterLabel: 'Rise over run',
+    areaPitchLabel: 'Pitch (°)',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Zone A',
@@ -408,6 +423,11 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     addAreaCta: 'Add Area',
 
     pitchRequired: false,
+    pitchOptional: true,
+    pitchHidesValleyHip: true,
+    pitchCheckboxLabel: 'Apply Angle/Slope calculation',
+    pitchRafterLabel: 'Rise over run',
+    areaPitchLabel: 'Fall / Slope (°)',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Living Room, Hallway, Kitchen',
@@ -454,6 +474,11 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     addAreaCta: 'Add Area',
 
     pitchRequired: false,
+    pitchOptional: true,
+    pitchHidesValleyHip: true,
+    pitchCheckboxLabel: 'Apply Angle/Slope calculation',
+    pitchRafterLabel: 'Rise over run',
+    areaPitchLabel: 'Fall / Slope (°)',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Bathroom, Kitchen Splashback',
@@ -503,6 +528,11 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     addAreaCta: 'Add Area',
 
     pitchRequired: false,
+    pitchOptional: true,
+    pitchHidesValleyHip: true,
+    pitchCheckboxLabel: 'Apply Angle/Slope calculation',
+    pitchRafterLabel: 'Rise over run',
+    areaPitchLabel: 'Slope (°)',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Main Slab, Garage Footing',
@@ -602,6 +632,11 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     addAreaCta: 'Add Area',
 
     pitchRequired: false,
+    pitchOptional: true,
+    pitchHidesValleyHip: true,
+    pitchCheckboxLabel: 'Apply Angle/Slope calculation',
+    pitchRafterLabel: 'Rise over run',
+    areaPitchLabel: 'Pitch (°)',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Living Room, External North Wall',
@@ -651,6 +686,11 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     addAreaCta: 'Add Area',
 
     pitchRequired: false,
+    pitchOptional: true,
+    pitchHidesValleyHip: true,
+    pitchCheckboxLabel: 'Apply Angle/Slope calculation',
+    pitchRafterLabel: 'Rise over run',
+    areaPitchLabel: 'Slope (°)',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Boundary, Paddock',
@@ -800,6 +840,11 @@ export const TRADE_LABELS: Readonly<Record<Trade, TradeLabels>> = {
     addAreaCta: 'Add Area',
 
     pitchRequired: false,
+    pitchOptional: true,
+    pitchHidesValleyHip: true,
+    pitchCheckboxLabel: 'Apply Angle/Slope calculation',
+    pitchRafterLabel: 'Rise over run',
+    areaPitchLabel: 'Pitch (°)',
 
     createAreaModalTitle: 'Create Area',
     areaNamePlaceholder: 'e.g. Zone A, Ground Floor, Extension',
