@@ -123,7 +123,7 @@ function buildSystemPrompt(
     '  Main nav (top-left area): nav-quotes (Quotes page), nav-orders (Orders / material orders page), nav-resources (Resource Library hub). Components, Drawings & Images, Catalogs, Attachments and templates all live UNDER Resources now (resources-card-components is the Components card on the /resources hub) - Components is NOT in the main nav anymore.',
     '  Top-RIGHT utility controls: nav-help ("Help" button, opens help/docs drawer), nav-alerts (notifications bell icon), nav-account (the "Account" link - opens account settings: company, security/password, notifications, billing, support), nav-logout ("Logout" button).',
     mode === 'guide_me'
-      ? 'These are NOT workflows - do NOT call find_workflows / get_workflow for a pure "get me to page X" / "where is X control" request. Instead, in ONE turn: call get_current_context, then if the target id is in visibleElementIds call request_ui_highlight on it (treatment "pulse") and reply with ONE short sentence ("Click the highlighted Account link in the top-right."). If it is not visible, just name it by its real label and location. Keep it to a single highlight + one sentence - never spin through multiple tool calls for a simple navigation ask.'
+      ? 'These are NOT workflows - do NOT call find_workflows / get_workflow for a pure "get me to page X" / "where is X control" request. Step 1: call get_current_context to see what page the user is currently on. Step 2: if the target nav id (e.g. nav-quotes, nav-resources, nav-account) IS in visibleElementIds, call request_ui_highlight on it (treatment "pulse") and reply with ONE short sentence ("Click the highlighted Resources link in the top nav."). Step 3: if the target is NOT visible (user is on a different page or a sub-page that hides the main nav), tell the user where to find it by name and location in ONE sentence ("Click the Resources link in the top nav bar to get to the Drawings & Images page."). Do NOT spin through multiple tool calls or start a guide workflow. One highlight + one sentence maximum.'
       : 'These are NOT workflows - do NOT call find_workflows / get_workflow for a pure "get me to page X" / "where is X control" request. In Respond mode you CANNOT highlight - just tell the user where to find it by name and location in ONE short sentence (e.g. "Click the Resources link in the top nav bar."). Do NOT call request_ui_highlight - it is not available. If the user wants to be shown visually, tell them to switch on Guide Me mode.',
     'CRITICAL - describe controls ACCURATELY: "Account" is a TEXT LINK/pill labelled "Account" in the top-right corner. There is NO profile avatar, NO profile photo, and NO user initials anywhere in this app. NEVER tell the user to click an avatar, profile picture, or their initials. Say "the Account link in the top-right".',
     'GETTING STARTED / "where do I start?" / "I\'m new" / "how do I set this up?": do NOT immediately dump a feature tour or pick a workflow. FIRST ask a SHORT batch of discovery questions (2-4, in one tight message) to learn how they work, then point them at the matching tools. Good questions: (1) What trade/industry are you in? (2) How do you normally price jobs - line by line by hand, from a price list/catalog, or by measuring areas/lengths off plans? (3) Do you send material orders to suppliers and/or invoices to customers? (4) Roughly how many quotes a month? Then map their answers to our tools: measures areas/plans -> Digital Measure + Components + Digital Takeoff; line-by-line or from a price list -> Standard/Component quotes + Catalogs; repeats the same items -> Components & Templates; orders suppliers -> Orders; bills customers -> Invoices; wants to chase quotes -> Auto Follow-ups. Recommend starting with Quotes + Components, then Orders/Invoices, and mention the Tutorials page (top-right Help drawer) as the fastest overview. Keep it warm and brief - a couple of questions, then a clear recommendation once they answer.',
@@ -491,6 +491,12 @@ async function dispatchTool(
  */
 const SHOW_ME_RE =
   /\b(show me how|walk me through|guide me|step[\s-]?by[\s-]?step|how (do|can) i|how to|teach me|talk me through)\b/i;
+
+// Pure navigation requests — "how do I find X", "where is X", "take me to X".
+// These should NOT trigger the deterministic guide launcher; the LLM handles
+// them via the NAVIGATION REQUESTS section (highlight the nav item, one sentence).
+const NAVIGATION_RE =
+  /\b(?:how do i|how to|where(?:'?s| is| are)|how can i|take me to|get to|find the|find my|go to|navigate to)\b[^.?]*\b(?:page|tab|menu|nav|button|link|setting|settings|account|orders?|quotes?|resources?|components?|catalogs?|drawings?|images?|flashing|attachments?|dashboard|help|billing|support|logout|log out|sign out|notifications?)\b/i;
 const AFFIRMATIVE_RE =
   /^(yes|yep|yeah|yup|ya|sure|ok|okay|go|go ahead|do it|start|start it|begin|please do|guide me|let'?s go|already said yes)\b/i;
 const GUIDE_OFFER_RE =
@@ -513,6 +519,11 @@ function tryDeterministicGuideLaunch(
     GUIDE_OFFER_RE.test(lastAssistant.content);
   const isShowMe = SHOW_ME_RE.test(text);
   if (!isShowMe && !isAffirmativeToOffer) return null;
+
+  // Navigation requests ("how do I find the drawings page?") look like show-me
+  // requests because of "how do I", but they are NOT workflow triggers. Let the
+  // LLM handle them via the NAVIGATION REQUESTS section instead.
+  if (NAVIGATION_RE.test(text)) return null;
 
   // For an affirmative, the intent is the PRIOR user message ("upload a catalog")
   // since the affirmative itself ("yes") carries no task words.
