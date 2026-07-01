@@ -165,7 +165,9 @@ export async function checkUserNewness(
     .select('id', { count: 'exact', head: true })
     .eq('company_id', companyId);
 
-  const isNew = daysSinceSignup <= 14 && (quoteCount ?? 0) < 3;
+  // TEMP TESTING: widened to 365 days / 50 quotes so Shaun can test with his existing account.
+  // Revert to 14 / 3 after testing.
+  const isNew = daysSinceSignup <= 365 && (quoteCount ?? 0) < 50;
 
   return { isNew, daysSinceSignup, quoteCount: quoteCount ?? 0 };
 }
