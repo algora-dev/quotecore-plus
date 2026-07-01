@@ -3,6 +3,7 @@
 import { requireAdmin } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { writeAudit } from '@/app/lib/admin/audit';
+import { getBucketMeta, getSeverity, type RateLimitRowWithMeta, type BucketSeverity } from './helpers';
 
 export type RateLimitRow = {
   bucket_key: string;
@@ -10,10 +11,6 @@ export type RateLimitRow = {
   window_start: string;
   updated_at: string;
 };
-
-export type RateLimitResult =
-  | { ok: true; rows: RateLimitRow[] }
-  | { ok: false; error: string };
 
 export type ActionResult =
   | { ok: true; message: string }
@@ -23,7 +20,7 @@ export type ActionResult =
 // listRateLimits
 // ---------------------------------------------------------------------------
 
-export async function listRateLimits(filter?: string): Promise<RateLimitResult> {
+export async function listRateLimits(filter?: string): Promise<{ ok: true; rows: RateLimitRowWithMeta[] } | { ok: false; error: string }> {
   const adminProfile = await requireAdmin();
   const admin = createAdminClient();
 
@@ -43,7 +40,30 @@ export async function listRateLimits(filter?: string): Promise<RateLimitResult> 
     return { ok: false, error: error.message };
   }
 
-  return { ok: true, rows: (data ?? []) as RateLimitRow[] };
+  const rawRows = (data ?? []) as RateLimitRow[];
+  const rowsWithMeta: RateLimitRowWithMeta[] = rawRows.map((r) => {
+    const meta = getBucketMeta(r.bucket_key);
+    const pct = meta.max > 0 ? (r.count / meta.max) * 100 : 0;
+    return {
+      ...r,
+      max: meta.max,
+      label: meta.label,
+      severity: getSeverity(r.count, meta.max),
+      pct: Math.round(pct),
+    };
+  });
+
+  // Sort by severity: red first, then yellow, then green
+  const severityOrder: Record<BucketSeverity, number> = { red: 0, yellow: 1, green: 2 };
+  rowsWithMeta.sort((a, b) => {
+    if (severityOrder[a.severity] !== severityOrder[b.severity]) {
+      return severityOrder[a.severity] - severityOrder[b.severity];
+    }
+    // Within same severity, higher count first
+    return b.count - a.count;
+  });
+
+  return { ok: true, rows: rowsWithMeta };
 }
 
 // ---------------------------------------------------------------------------

@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { listRateLimits, resetRateLimit, resetAllRateLimits, type RateLimitRow } from './actions';
+import { listRateLimits, resetRateLimit, resetAllRateLimits } from './actions';
+import type { RateLimitRowWithMeta, BucketSeverity } from './helpers';
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
@@ -16,9 +17,30 @@ function formatTime(iso: string): string {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
-export function RateLimitsPanel({ initialRows }: { initialRows: RateLimitRow[] }) {
+const SEVERITY_STYLES: Record<BucketSeverity, { dot: string; badge: string; bar: string; label: string }> = {
+  red: {
+    dot: 'bg-red-500',
+    badge: 'bg-red-100 text-red-700 border-red-200',
+    bar: 'bg-red-500',
+    label: 'URGENT',
+  },
+  yellow: {
+    dot: 'bg-amber-500',
+    badge: 'bg-amber-100 text-amber-700 border-amber-200',
+    bar: 'bg-amber-500',
+    label: 'WARNING',
+  },
+  green: {
+    dot: 'bg-emerald-500',
+    badge: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    bar: 'bg-emerald-500',
+    label: 'OK',
+  },
+};
+
+export function RateLimitsPanel({ initialRows }: { initialRows: RateLimitRowWithMeta[] }) {
   const router = useRouter();
-  const [rows, setRows] = useState<RateLimitRow[]>(initialRows);
+  const [rows, setRows] = useState<RateLimitRowWithMeta[]>(initialRows);
   const [search, setSearch] = useState('');
   const [loading, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -45,11 +67,10 @@ export function RateLimitsPanel({ initialRows }: { initialRows: RateLimitRow[] }
       const res = await resetRateLimit(bucketKey);
       if (res.ok) {
         setNotice(res.message);
-        // Update local state
         setRows((prev) =>
           prev.map((r) =>
             r.bucket_key === bucketKey
-              ? { ...r, count: 0, window_start: new Date().toISOString(), updated_at: new Date().toISOString() }
+              ? { ...r, count: 0, severity: 'green' as const, pct: 0, window_start: new Date().toISOString(), updated_at: new Date().toISOString() }
               : r,
           ),
         );
@@ -67,7 +88,6 @@ export function RateLimitsPanel({ initialRows }: { initialRows: RateLimitRow[] }
       const res = await resetAllRateLimits(search);
       if (res.ok) {
         setNotice(res.message);
-        // Refresh from server
         const listRes = await listRateLimits(search);
         if (listRes.ok) {
           setRows(listRes.rows);
@@ -79,8 +99,40 @@ export function RateLimitsPanel({ initialRows }: { initialRows: RateLimitRow[] }
     });
   }
 
+  const redCount = rows.filter(r => r.severity === 'red').length;
+  const yellowCount = rows.filter(r => r.severity === 'yellow').length;
+  const greenCount = rows.filter(r => r.severity === 'green').length;
+
   return (
     <div className="space-y-4">
+      {/* Summary cards */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-red-500" />
+            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Urgent</span>
+          </div>
+          <p className="text-2xl font-bold text-slate-900 mt-1">{redCount}</p>
+          <p className="text-xs text-slate-400">≥80% of limit</p>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
+            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Warning</span>
+          </div>
+          <p className="text-2xl font-bold text-slate-900 mt-1">{yellowCount}</p>
+          <p className="text-xs text-slate-400">50-79% of limit</p>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Healthy</span>
+          </div>
+          <p className="text-2xl font-bold text-slate-900 mt-1">{greenCount}</p>
+          <p className="text-xs text-slate-400">&lt;50% of limit</p>
+        </div>
+      </div>
+
       {/* Search + actions */}
       <form onSubmit={onSearch} className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-sm">
@@ -91,7 +143,7 @@ export function RateLimitsPanel({ initialRows }: { initialRows: RateLimitRow[] }
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Filter by bucket key…"
+            placeholder="Filter by bucket key (email, IP, user ID…)"
             className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
           />
         </div>
@@ -137,44 +189,57 @@ export function RateLimitsPanel({ initialRows }: { initialRows: RateLimitRow[] }
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Bucket Key</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Count</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Window Start</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Last Updated</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Status</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Bucket</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Usage</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Updated</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {rows.map((r) => (
-                <tr
-                  key={r.bucket_key}
-                  className="hover:bg-orange-50/40 hover:border-orange-200 transition"
-                >
-                  <td className="px-4 py-3 font-mono text-xs text-slate-900 break-all">{r.bucket_key}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border ${
-                      r.count > 0
-                        ? 'bg-amber-100 text-amber-700 border-amber-200'
-                        : 'bg-emerald-100 text-emerald-700 border-emerald-200'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${r.count > 0 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
-                      {r.count}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">{formatTime(r.window_start)}</td>
-                  <td className="px-4 py-3 text-slate-500">{formatTime(r.updated_at)}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      type="button"
-                      onClick={() => onReset(r.bucket_key)}
-                      disabled={loading || r.count === 0}
-                      className="text-xs font-medium text-slate-600 hover:text-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                    >
-                      Reset
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {rows.map((r) => {
+                const sty = SEVERITY_STYLES[r.severity];
+                return (
+                  <tr
+                    key={r.bucket_key}
+                    className="hover:bg-orange-50/40 hover:border-orange-200 transition"
+                  >
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border ${sty.badge}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${sty.dot}`} />
+                        {sty.label}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-mono text-xs text-slate-900 break-all">{r.bucket_key}</div>
+                      <div className="text-xs text-slate-400 mt-0.5">{r.label}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-slate-700 tabular-nums">{r.count}/{r.max}</span>
+                        <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${sty.bar}`}
+                            style={{ width: `${Math.min(100, r.pct)}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-slate-400 tabular-nums">{r.pct}%</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-slate-500 text-xs">{formatTime(r.updated_at)}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => onReset(r.bucket_key)}
+                        disabled={loading || r.count === 0}
+                        className="text-xs font-medium text-slate-600 hover:text-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                      >
+                        Reset
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -182,6 +247,7 @@ export function RateLimitsPanel({ initialRows }: { initialRows: RateLimitRow[] }
           <div className="px-4 py-2 border-t border-slate-100 text-xs text-slate-400">
             {rows.length} bucket{rows.length !== 1 ? 's' : ''}
             {search ? ` matching "${search}"` : ''}
+            {' · '}Sorted by urgency (red → yellow → green)
           </div>
         )}
       </div>
