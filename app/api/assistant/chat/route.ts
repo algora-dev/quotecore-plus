@@ -35,6 +35,7 @@ import {
 import { checkAssistantRateLimits } from '@/app/lib/assistant/rateLimit';
 import { checkCostBudget, recordTokenUsage } from '@/app/lib/assistant/costGuard';
 import { runAssistantTurn } from '@/app/lib/assistant/orchestrator';
+import { checkUserNewness, tryEarlyIntent } from '@/app/lib/assistant/earlyIntentRouter';
 import {
   ensureSession,
   persistMessage,
@@ -201,6 +202,49 @@ export async function POST(req: NextRequest) {
 
       // Persist the user message.
       await persistMessage({ sessionId, role: 'user', content: lastUser.content });
+
+      // Early-intent router: for new users, check if the message matches
+      // a common early-stage question (getting started, components, etc).
+      // If it matches, stream a fixed, pre-written response and skip the
+      // full orchestrator turn entirely. Falls through if no match.
+      try {
+        const newness = await checkUserNewness(context.userId, context.companyId);
+        const earlyMatch = await tryEarlyIntent(lastUser.content, newness);
+        if (earlyMatch) {
+          // Stream the fixed response token-by-token for a natural feel.
+          // Split into word chunks so the client sees progressive typing.
+          const words = earlyMatch.response.split(' ');
+          for (let i = 0; i < words.length; i++) {
+            const chunk = i === 0 ? words[i] : ' ' + words[i];
+            send({ type: 'token', text: chunk });
+          }
+
+          await persistMessage({
+            sessionId,
+            role: 'assistant',
+            content: earlyMatch.response,
+          });
+          await recordEvent({
+            sessionId,
+            userId: context.userId,
+            companyId: context.companyId,
+            eventType: 'turn_complete',
+            metadata: {
+              mode,
+              tools: [],
+              tokens: 0,
+              screen: context.screenKey,
+              earlyIntent: earlyMatch.intent,
+            },
+          });
+
+          send({ type: 'done', messageId: sessionId });
+          controller.close();
+          return;
+        }
+      } catch {
+        // If early-intent check fails, fall through to normal orchestrator
+      }
 
       try {
         const result = await runAssistantTurn({
