@@ -16,8 +16,12 @@ import {
   resumeAccess,
   sendPasswordReset,
   deleteAccount,
+  startImpersonation,
+  listAttachments,
   type CouponInfo,
+  type AttachmentRow,
 } from './actions';
+import { StorageTab } from './StorageTab';
 
 const PLAN_OPTIONS = [
   { code: 'free', label: 'Free' },
@@ -75,6 +79,15 @@ export function UserProfile({ data }: { data: UserProfileData }) {
 
   return (
     <div className="space-y-5">
+      {/* Impersonation bar */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900">Impersonate User</h2>
+          <p className="text-xs text-slate-500 mt-0.5">Log in as this user to see their view. 30-min session, fully audited.</p>
+        </div>
+        <ImpersonateButton userId={data.user.id} userEmail={data.user.email} onAction={runAction} pending={pending} />
+      </div>
+
       {notice && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
           ✅ {notice}
@@ -111,6 +124,9 @@ export function UserProfile({ data }: { data: UserProfileData }) {
           <p className="text-sm text-slate-500">Coming soon — add/remove additional users on a company account.</p>
         </div>
       </div>
+
+      {/* H. Storage & Files */}
+      <StorageSection data={data} />
     </div>
   );
 }
@@ -710,6 +726,119 @@ function DeleteAccountSection({
         >
           Delete account
         </button>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Impersonate Button (Feature 6 — Gerald H-01: server-side overlay)
+// ---------------------------------------------------------------------------
+
+function ImpersonateButton({
+  userId,
+  userEmail,
+  onAction,
+  pending,
+}: {
+  userId: string;
+  userEmail: string;
+  onAction: (
+    fn: () => Promise<{ ok: true; message: string } | { ok: false; error: string }>,
+    onSuccess?: () => void,
+  ) => void;
+  pending: boolean;
+}) {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [notifyUser, setNotifyUser] = useState(true);
+  const router = useRouter();
+
+  function impersonate() {
+    onAction(async () => {
+      const res = await startImpersonation(userId, { notifyUser });
+      if (res.ok && res.redirect) {
+        router.push(res.redirect);
+      }
+      return res;
+    });
+  }
+
+  if (showConfirm) {
+    return (
+      <div className="flex items-center gap-3">
+        <label className="flex items-center gap-1.5 text-xs text-slate-600">
+          <input
+            type="checkbox"
+            checked={notifyUser}
+            onChange={(e) => setNotifyUser(e.target.checked)}
+            className="rounded"
+          />
+          Notify user
+        </label>
+        <button
+          type="button"
+          onClick={impersonate}
+          disabled={pending}
+          className="inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#e55a2b] disabled:opacity-50"
+        >
+          {pending ? 'Starting…' : 'Confirm impersonation'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowConfirm(false)}
+          className="px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition"
+        >
+          Cancel
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setShowConfirm(true)}
+      disabled={pending}
+      className="inline-flex items-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30 disabled:opacity-50"
+    >
+      Log in as {userEmail.split('@')[0]}
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Storage Section (Feature 4 — Gerald H-03: trigger-based accounting)
+// ---------------------------------------------------------------------------
+
+function StorageSection({ data }: { data: UserProfileData }) {
+  const [attachments, setAttachments] = useState<AttachmentRow[] | null>(null);
+  const [loading, startLoad] = useTransition();
+
+  useEffect(() => {
+    startLoad(async () => {
+      const res = await listAttachments(data.company.id);
+      if (res.ok) {
+        setAttachments(res.rows);
+      } else {
+        setAttachments([]);
+      }
+    });
+  }, [data.company.id]);
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+      <h2 className="text-lg font-semibold text-slate-900 mb-4">Storage &amp; Files</h2>
+      {loading && attachments === null ? (
+        <p className="text-sm text-slate-500">Loading files…</p>
+      ) : attachments !== null ? (
+        <StorageTab
+          attachments={attachments}
+          companyId={data.company.id}
+          storageUsed={data.company.storageUsedBytes}
+          storageLimit={data.company.storageLimitBytes}
+        />
+      ) : (
+        <p className="text-sm text-slate-500">Failed to load files.</p>
       )}
     </div>
   );

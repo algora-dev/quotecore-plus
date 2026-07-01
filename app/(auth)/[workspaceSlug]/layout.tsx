@@ -15,6 +15,9 @@ import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabas
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { EntitlementBanner } from '@/app/components/billing/EntitlementBanner';
 import { TrialRolledToFreeBanner } from '@/app/components/billing/TrialRolledToFreeBanner';
+import { GlobalAnnouncementBanner } from '@/app/components/GlobalAnnouncementBanner';
+import { ImpersonationBanner } from '@/app/components/ImpersonationBanner';
+import { getAnnouncement } from '@/app/admin/(dashboard)/settings/actions';
 
 export default async function WorkspaceLayout({
   children,
@@ -68,6 +71,11 @@ export default async function WorkspaceLayout({
     .maybeSingle();
   const assistantEnabled = (assistantPref as { assistant_enabled?: boolean } | null)?.assistant_enabled ?? true;
 
+  // Global announcement banner (admin-controlled, localStorage dismissal)
+  const announcement = await getAnnouncement();
+
+  // Impersonation overlay: profile was fetched above, cached per request
+
   return (
       <HelpDrawerProvider>
         {/*
@@ -81,6 +89,13 @@ export default async function WorkspaceLayout({
         <HelpDrawerPanel />
         <HelpDrawerLayout>
           <div className="min-h-screen">
+            {announcement && <GlobalAnnouncementBanner config={announcement} />}
+            {'isImpersonating' in profile && profile.isImpersonating && (
+              <ImpersonationBanner
+                adminEmail={profile.impersonationAdminEmail ?? null}
+                targetEmail={profile.email}
+              />
+            )}
             <header className="border-b border-slate-200 bg-white shadow-sm">
               <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-4">
                 <div className="flex items-center justify-between">

@@ -8,6 +8,17 @@
 
 ---
 
+# 2026-07-01 — Admin Expansion (rate limits, settings, storage, impersonation)
+
+- [ ] **Rate limits page** — /admin/rate-limits loads, shows bucket list with counts + last updated. Filter by bucket_key works. Reset single bucket → count goes to 0, audit row created. Reset all (filtered) → all matching reset, audit row created.
+- [ ] **Settings: Plans tab** — /admin/settings loads, Plans tab shows all plans. Click a plan → expands with editable fields. Stripe price IDs are read-only. Change a non-price field (e.g. tagline) → save → success, audit row created. Change price_cents_monthly without checkbox → error. Change with checkbox → save succeeds, audit row created.
+- [ ] **Settings: Cron tab** — Cron Jobs tab shows all 6 jobs with source + schedule. Click "Trigger now" on dispatch_scheduled_messages → success, audit row created. Stats cards show pending/claimed/failed counts. Failed messages list shows recent failures. Click "Retry" on a failed message → status back to pending, audit row created.
+- [ ] **Settings: Announcement tab** — Announcement tab loads. Set message + type + active → save. Banner appears at top of app for all users. Dismiss (X) → hidden per-browser via localStorage. Set active=false → banner disappears for everyone.
+- [ ] **Storage browser** — On user profile page, scroll to "Storage & Files" section. Storage usage bar shows used/limit. File list shows name, size, date, status. Click Archive → archived_at set, badge changes. Click Delete → confirm → file deleted from storage + DB, audit row created. Storage usage updates (trigger-driven).
+- [ ] **Impersonate user** — On user profile, click "Log in as [name]". Confirm with "Notify user" checkbox. Redirected to workspace home. Banner shows "Impersonating [email]". Navigate pages → see user's data. Click "Exit impersonation" → redirected back to admin user profile. Audit rows for start + end created. Try impersonating an admin → error blocked. Rate limit: 10/hour per admin.
+
+---
+
 # 2026-06-30 — Admin User Management (commit `cae3717`)
 
 - [ ] **Users search page** — /admin/users loads with search bar + "Show all" button. Search by email → matching users appear. Search by company name → matches. Click "Show all" → recent accounts listed. Click a row → navigates to /admin/users/[userId].

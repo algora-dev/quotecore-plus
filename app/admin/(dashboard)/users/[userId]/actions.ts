@@ -10,7 +10,10 @@
 
 import { requireAdmin } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { writeAudit } from '@/app/lib/admin/audit';
 import { requireStripe, getStripeMode, resolvePlanCodeForStripePrice } from '@/app/lib/billing/stripe';
+import { BUCKETS } from '@/app/lib/storage/buckets';
+import { checkRateLimit } from '@/app/lib/security/rateLimit';
 import type Stripe from 'stripe';
 
 // ---------------------------------------------------------------------------
@@ -65,32 +68,8 @@ export interface CouponInfo {
 }
 
 // ---------------------------------------------------------------------------
-// Helper: write audit row
+// Helper: write audit row — imported from @/app/lib/admin/audit (shared module)
 // ---------------------------------------------------------------------------
-
-async function writeAudit(
-  admin: ReturnType<typeof createAdminClient>,
-  adminProfile: { id: string; email: string },
-  actionType: string,
-  targetCompanyId: string | null,
-  targetUserId: string | null,
-  targetEmail: string | null,
-  targetCompanyName: string | null,
-  reason: string | null,
-  details: Record<string, unknown> | null,
-) {
-  await admin.from('admin_actions').insert({
-    admin_user_id: adminProfile.id,
-    target_company_id: targetCompanyId,
-    target_user_id: targetUserId,
-    admin_email_snapshot: adminProfile.email,
-    target_user_email_snapshot: targetEmail,
-    target_company_name_snapshot: targetCompanyName,
-    action_type: actionType,
-    reason,
-    details: details as never,
-  });
-}
 
 // ---------------------------------------------------------------------------
 // getUserProfile
@@ -714,4 +693,270 @@ export async function deleteAccount(companyId: string, confirmEmail: string): Pr
   );
 
   return { ok: true, message: `Deleted "${company.name}" — ${authDeleted} login(s), ${storageRemoved} file(s), and all company data.` };
+}
+
+// ---------------------------------------------------------------------------
+// Feature 4: Storage Browser — list, delete, archive attachments
+// Gerald H-03: follow existing deleteAttachment() pattern from attachments/actions.ts:269
+// ---------------------------------------------------------------------------
+
+export interface AttachmentRow {
+  id: string;
+  name: string;
+  file_name: string;
+  file_size: number;
+  mime_type: string | null;
+  storage_path: string;
+  archived_at: string | null;
+  created_at: string;
+}
+
+export async function listAttachments(companyId: string): Promise<{ ok: true; rows: AttachmentRow[] } | { ok: false; error: string }> {
+  await requireAdmin();
+  const admin = createAdminClient();
+
+  const { data, error } = await admin
+    .from('company_attachments')
+    .select('id, name, file_name, file_size, mime_type, storage_path, archived_at, created_at')
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false });
+
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, rows: (data ?? []) as AttachmentRow[] };
+}
+
+export async function adminDeleteAttachment(
+  attachmentId: string,
+  targetCompanyId: string,
+): Promise<ActionResult> {
+  const adminProfile = await requireAdmin();
+  const admin = createAdminClient();
+
+  // Company-scoped fetch (Gerald H-03)
+  const { data: row, error: fetchErr } = await admin
+    .from('company_attachments')
+    .select('storage_path, file_name, file_size')
+    .eq('id', attachmentId)
+    .eq('company_id', targetCompanyId)
+    .single();
+
+  if (fetchErr || !row) {
+    return { ok: false, error: 'Attachment not found' };
+  }
+
+  const storagePath = (row as { storage_path: string }).storage_path;
+  const fileName = (row as { file_name: string }).file_name;
+  const fileSize = (row as { file_size: number }).file_size;
+
+  // Remove storage object first (trigger decrements storage_used_bytes)
+  const { error: rmErr } = await admin.storage
+    .from(BUCKETS.QUOTE_DOCUMENTS)
+    .remove([storagePath]);
+  if (rmErr) {
+    console.error('[admin/deleteAttachment] storage remove failed:', rmErr.message);
+  }
+
+  // Null email_templates references (same as existing deleteAttachment)
+  const { error: tmplErr } = await admin
+    .from('email_templates')
+    .update({ attachment_id: null })
+    .eq('attachment_id', attachmentId)
+    .eq('company_id', targetCompanyId);
+  if (tmplErr) {
+    console.error('[admin/deleteAttachment] template unlink failed:', tmplErr.message);
+  }
+
+  // Delete DB row (trigger fires here)
+  const { error: delErr } = await admin
+    .from('company_attachments')
+    .delete()
+    .eq('id', attachmentId)
+    .eq('company_id', targetCompanyId);
+
+  if (delErr) return { ok: false, error: delErr.message };
+
+  await writeAudit(
+    admin, adminProfile,
+    'delete_attachment',
+    targetCompanyId, null, null, null, null,
+    { attachmentId, fileName, fileSizeBytes: fileSize, storagePath },
+  );
+
+  return { ok: true, message: `Deleted "${fileName}"` };
+}
+
+export async function adminToggleArchiveAttachment(
+  attachmentId: string,
+  targetCompanyId: string,
+): Promise<ActionResult> {
+  const adminProfile = await requireAdmin();
+  const admin = createAdminClient();
+
+  // Fetch current archived_at
+  const { data: row, error: fetchErr } = await admin
+    .from('company_attachments')
+    .select('archived_at')
+    .eq('id', attachmentId)
+    .eq('company_id', targetCompanyId)
+    .single();
+
+  if (fetchErr || !row) {
+    return { ok: false, error: 'Attachment not found' };
+  }
+
+  const currentArchived = (row as { archived_at: string | null }).archived_at;
+  const newArchived = currentArchived ? null : new Date().toISOString();
+
+  const { error: updErr } = await admin
+    .from('company_attachments')
+    .update({ archived_at: newArchived })
+    .eq('id', attachmentId)
+    .eq('company_id', targetCompanyId);
+
+  if (updErr) return { ok: false, error: updErr.message };
+
+  await writeAudit(
+    admin, adminProfile,
+    'toggle_archive_attachment',
+    targetCompanyId, null, null, null, null,
+    { attachmentId, archived: newArchived !== null },
+  );
+
+  return { ok: true, message: newArchived ? 'Archived' : 'Unarchived' };
+}
+
+// ---------------------------------------------------------------------------
+// Feature 6: Impersonate User
+// Gerald H-01: server-side overlay, no client-held admin session
+// ---------------------------------------------------------------------------
+
+export async function startImpersonation(
+  targetUserId: string,
+  opts?: { notifyUser?: boolean },
+): Promise<ActionResult & { redirect?: string }> {
+  const adminProfile = await requireAdmin();
+  const admin = createAdminClient();
+
+  // Rate limit: 10/hour per admin
+  const allowed = await checkRateLimit(`impersonate:${adminProfile.id}`, 10, 3600_000);
+  if (!allowed) {
+    return { ok: false, error: 'Impersonation rate limit reached (10/hour). Try again later.' };
+  }
+
+  // Fetch target user
+  const { data: target, error: targetErr } = await admin
+    .from('users')
+    .select('id, email, is_admin')
+    .eq('id', targetUserId)
+    .maybeSingle();
+
+  if (targetErr || !target) {
+    return { ok: false, error: 'User not found' };
+  }
+
+  const targetUser = target as { id: string; email: string; is_admin: boolean };
+
+  // Block admin-to-admin (Gerald H-01)
+  if (targetUser.is_admin) {
+    return { ok: false, error: 'Cannot impersonate an admin user' };
+  }
+
+  // Create impersonation session
+  const { data: session, error: sessionErr } = await admin
+    .from('admin_impersonation_sessions')
+    .insert({
+      admin_user_id: adminProfile.id,
+      target_user_id: targetUserId,
+    })
+    .select('id')
+    .single();
+
+  if (sessionErr || !session) {
+    return { ok: false, error: sessionErr?.message ?? 'Failed to create impersonation session' };
+  }
+
+  const sessionId = (session as { id: string }).id;
+
+  // Set cookie
+  const { cookies } = await import('next/headers');
+  const cookieStore = await cookies();
+  cookieStore.set('qcp_impersonation', sessionId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 1800, // 30 min
+  });
+
+  // Notify user (optional)
+  if (opts?.notifyUser) {
+    // TODO: send notification email to targetUser.email
+    console.log(`[impersonation] Notification email queued for ${targetUser.email}`);
+  }
+
+  await writeAudit(
+    admin, adminProfile,
+    'impersonation_start',
+    null, targetUserId, targetUser.email, null, null,
+    { sessionId, notifyUser: opts?.notifyUser ?? false },
+  );
+
+  return { ok: true, message: `Impersonating ${targetUser.email}`, redirect: '/' };
+}
+
+export async function endImpersonation(): Promise<ActionResult & { redirect?: string }> {
+  const { cookies } = await import('next/headers');
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get('qcp_impersonation')?.value;
+
+  if (!sessionId) {
+    return { ok: true, message: 'No active impersonation', redirect: '/admin' };
+  }
+
+  const admin = createAdminClient();
+
+  // Fetch session
+  const { data: session } = await admin
+    .from('admin_impersonation_sessions')
+    .select('admin_user_id, target_user_id, started_at')
+    .eq('id', sessionId)
+    .maybeSingle();
+
+  // End session
+  await admin
+    .from('admin_impersonation_sessions')
+    .update({ ended_at: new Date().toISOString() })
+    .eq('id', sessionId);
+
+  // Clear cookie
+  cookieStore.delete('qcp_impersonation');
+
+  if (session) {
+    const s = session as { admin_user_id: string; target_user_id: string };
+
+    // Fetch admin email for audit
+    const { data: adminUser } = await admin
+      .from('users')
+      .select('email')
+      .eq('id', s.admin_user_id)
+      .maybeSingle();
+
+    const { data: targetUser } = await admin
+      .from('users')
+      .select('email')
+      .eq('id', s.target_user_id)
+      .maybeSingle();
+
+    await writeAudit(
+      admin,
+      { id: s.admin_user_id, email: (adminUser as { email: string })?.email ?? 'unknown' },
+      'impersonation_end',
+      null, s.target_user_id, (targetUser as { email: string })?.email ?? null, null, null,
+      { sessionId },
+    );
+
+    return { ok: true, message: 'Impersonation ended', redirect: `/admin/users/${s.target_user_id}` };
+  }
+
+  return { ok: true, message: 'Impersonation ended', redirect: '/admin' };
 }

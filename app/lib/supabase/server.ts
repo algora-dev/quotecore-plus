@@ -74,10 +74,39 @@ export const getCurrentProfile = cache(async (existingClient?: SupabaseClient<Da
   const supabase = existingClient ?? (await createSupabaseServerClient());
   const user = await requireUser();
 
+  // Check for impersonation overlay (Feature 6, Gerald H-01)
+  // If qcp_impersonation cookie is set and the session is active,
+  // load the TARGET user's profile instead of the admin's.
+  let impersonationTargetUserId: string | null = null;
+  try {
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get('qcp_impersonation')?.value;
+    if (sessionId) {
+      // Check for an active impersonation session using the admin client
+      const { createAdminClient } = await import('./admin');
+      const admin = createAdminClient();
+      const { data: session } = await admin
+        .from('admin_impersonation_sessions')
+        .select('target_user_id')
+        .eq('id', sessionId)
+        .is('ended_at', null)
+        .gt('started_at', new Date(Date.now() - 30 * 60 * 1000).toISOString())
+        .maybeSingle();
+
+      if (session) {
+        impersonationTargetUserId = (session as { target_user_id: string }).target_user_id;
+      }
+    }
+  } catch {
+    // ignore — if cookie check fails, just use the real user
+  }
+
+  const profileUserId = impersonationTargetUserId ?? user.id;
+
   const { data, error } = await supabase
     .from('users')
     .select('id, email, full_name, role, company_id, is_admin')
-    .eq('id', user.id)
+    .eq('id', profileUserId)
     .limit(1)
     .maybeSingle();
 
@@ -87,6 +116,16 @@ export const getCurrentProfile = cache(async (existingClient?: SupabaseClient<Da
 
   if (!data) {
     throw new Error('Profile not found');
+  }
+
+  // Attach impersonation metadata if active
+  if (impersonationTargetUserId && impersonationTargetUserId !== user.id) {
+    return {
+      ...data,
+      isImpersonating: true as const,
+      impersonationAdminUserId: user.id,
+      impersonationAdminEmail: user.email ?? null,
+    };
   }
 
   return data;
