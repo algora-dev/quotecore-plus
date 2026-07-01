@@ -157,8 +157,8 @@ function buildSystemPrompt(
       'RESPOND MODE - answer reactively and CONCISELY.',
       'Rules for respond mode:',
       '- DON’T RE-ASK: never ask the user something they already told you. If their message states a clear goal or already answered your previous question, ANSWER/act on it - do not bounce it back as another clarifying question. Scan recent turns first.',
-      '- WANTS TO BE SHOWN? START THE GUIDE - DON’T TELL THEM TO SWITCH MODES. If the user asks to be SHOWN / WALKED THROUGH / GUIDED / "how do I do X" where X is a real task (upload a catalog, add a component to a quote, create an order, send a quote, etc.), do NOT just describe it and do NOT say "switch to Guide me". Instead call find_workflows {their words}, and if there’s a confident match, call begin_guide {workflowId} in the SAME turn - the on-screen step engine then walks them through it (it handles navigation, highlighting, and one-step-at-a-time display). After begin_guide reply with ONE short line ("On it - follow the steps below.") and STOP - never list the steps yourself. Telling a user who asked to be shown to "switch modes" is the runaround that frustrates them; just guide them.',
-      '- NEVER ASK "ready to begin?" / "want me to start?" - a request to be shown IS the go-ahead; an affirmative reply to your own offer means start NOW via begin_guide.',
+      '- WANTS TO BE SHOWN / WALKED THROUGH? If the user asks to be shown how to do something ("how do I upload a catalog?", "show me how to add a component", "walk me through creating an order"), do NOT try to guide them yourself in Respond mode. Instead tell them: "Switch on Guide Me mode (the toggle at the bottom of this chat) and I’ll walk you through it step by step." Keep it to one sentence. Do NOT call begin_guide, do NOT list steps, do NOT say "follow the steps below". If they just want a quick answer ("how do quotes work?"), answer concisely without offering a guide.',
+      '- NEVER ASK "ready to begin?" / "want me to start?" — in Respond mode, just tell them to switch on Guide Me.',
       '- For a pure factual / conceptual question ("what is waste?", "does pricing include VAT?"), just answer it concisely - use get_ui_element_details / search_help_docs. Don’t start a guide for these.',
       '- Do NOT pre-emptively dump an entire step-by-step walkthrough in prose. If it’s a real task, guide them (above); if you must summarise, keep it to 2-4 bullets.',
       '- Be direct and practical. If you don’t know, say so and point to where to look.',
@@ -184,6 +184,7 @@ const LIVE_TOOL_IDS = new Set([
 /** Tools available in guide_me mode only (highlighting is Guide-me exclusive). */
 const GUIDE_ME_ONLY_TOOLS = new Set([
   'request_ui_highlight',
+  'begin_guide',
 ]);
 
 function toLlmTools(mode: AssistantMode): LlmToolSchema[] {
@@ -548,7 +549,8 @@ export async function runAssistantTurn(
   // Deterministic fast-path: if the user clearly wants to be shown how to do
   // something (or just said "yes" to our guide offer), start the guide directly
   // - no model discretion, no "ready to begin?" loop, no step-dump.
-  const direct = tryDeterministicGuideLaunch(input);
+  // ONLY in guide_me mode — in respond_only the user has not opted into a guide.
+  const direct = input.mode === 'guide_me' ? tryDeterministicGuideLaunch(input) : null;
   if (direct) {
     input.onGuideStart?.(direct.command);
     input.onToken?.(direct.reply);
