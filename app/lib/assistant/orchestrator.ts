@@ -159,7 +159,8 @@ function buildSystemPrompt(
       '- NEVER ASK "ready to begin?" / "want me to start?" - a request to be shown IS the go-ahead; an affirmative reply to your own offer means start NOW via begin_guide.',
       '- For a pure factual / conceptual question ("what is waste?", "does pricing include VAT?"), just answer it concisely - use get_ui_element_details / search_help_docs. Don’t start a guide for these.',
       '- Do NOT pre-emptively dump an entire step-by-step walkthrough in prose. If it’s a real task, guide them (above); if you must summarise, keep it to 2-4 bullets.',
-      '- Be direct and practical. If you don’t know, say so and point to where to look.'
+      '- Be direct and practical. If you don’t know, say so and point to where to look.',
+      '- NO HIGHLIGHTING IN RESPOND MODE: you CANNOT highlight, point at, or glow anything on the user screen. Do NOT call request_ui_highlight. Do NOT say "the highlighted control" or imply anything is visually marked. If the user needs to find something on screen, tell them where it is by name and location (e.g. "the Resources link in the top nav"). If the user needs to be SHOWN where to go or walked through a task, tell them to switch on Guide Me mode — that is the only mode where highlighting works.'
     );
   }
   return base.join('\n');
@@ -178,9 +179,15 @@ const LIVE_TOOL_IDS = new Set([
   'begin_guide',
 ]);
 
-function toLlmTools(): LlmToolSchema[] {
+/** Tools available in guide_me mode only (highlighting is Guide-me exclusive). */
+const GUIDE_ME_ONLY_TOOLS = new Set([
+  'request_ui_highlight',
+]);
+
+function toLlmTools(mode: AssistantMode): LlmToolSchema[] {
   return getLiveToolDefinitions()
     .filter((d) => LIVE_TOOL_IDS.has(d.id))
+    .filter((d) => mode === 'guide_me' || !GUIDE_ME_ONLY_TOOLS.has(d.id))
     .map((d) => ({
       name: d.id,
       description: d.description,
@@ -546,7 +553,7 @@ export async function runAssistantTurn(
     return { finalText: direct.reply, totalTokens: 0, toolsUsed: ['begin_guide'] };
   }
 
-  const tools = toLlmTools();
+  const tools = toLlmTools(input.mode);
   const messages: LlmMessage[] = [
     {
       role: 'system',
