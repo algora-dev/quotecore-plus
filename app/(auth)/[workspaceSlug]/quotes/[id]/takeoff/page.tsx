@@ -11,10 +11,10 @@ export default async function Page({
   searchParams,
 }: {
   params: Promise<{ workspaceSlug: string; id: string }>;
-  searchParams: Promise<{ mode?: string; areaName?: string; planMode?: string; pageId?: string; roofAreaId?: string }>;
+  searchParams: Promise<{ mode?: string; areaName?: string; pageId?: string; roofAreaId?: string }>;
 }) {
   const { workspaceSlug, id: quoteId } = await params;
-  const { mode, areaName, planMode, pageId, roofAreaId: urlRoofAreaId } = await searchParams;
+  const { mode, areaName, pageId, roofAreaId: urlRoofAreaId } = await searchParams;
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
@@ -93,17 +93,10 @@ export default async function Page({
   // -----------------------------------------------------------------------
 
   if (mode === 'add') {
-    // Determine the plan image: clean plan or lines overlay.
+    // Canvas-rework: always use the clean plan image. The canvas is
+    // fully reconstructed from stored measurement data, so no baked overlay needed.
     let planUrl: string;
-    // takeoff_canvas_path = full composite (original plan + coloured shapes).
-    // takeoff_lines_path  = lines only (no background). We use the canvas version
-    // so "Show measurements on plan" shows the plan WITH its coloured overlays.
-    const canvasPath = (quote as unknown as { takeoff_canvas_path?: string | null }).takeoff_canvas_path;
-    if (planMode === 'lines' && canvasPath) {
-      planUrl = await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, canvasPath);
-    } else {
-      planUrl = await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, planFile.storage_path);
-    }
+    planUrl = await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, planFile.storage_path);
 
     // Load existing measurements so the panel hydrates.
     const hydrationData = await loadTakeoffHydrationData(quoteId);
@@ -111,7 +104,7 @@ export default async function Page({
     // Load existing roof areas so the left panel can display them (no canvas reconstruction).
     const { data: existingAreas } = await supabase
       .from('quote_roof_areas')
-      .select('id, label')
+      .select('id, label, calc_pitch_degrees, final_value_sqm')
       .eq('quote_id', quoteId)
       .order('sort_order', { ascending: true });
 
@@ -125,7 +118,7 @@ export default async function Page({
         collections={collections}
         hydrationData={hydrationData}
         takeoffMode="add"
-        existingRoofAreas={(existingAreas || []).map(a => ({ id: a.id, label: a.label }))}
+        existingRoofAreas={(existingAreas || []).map(a => ({ id: a.id, label: a.label, pitch: a.calc_pitch_degrees ?? 0, area: a.final_value_sqm ?? 0 }))}
         isOverStorage={isOverStorage}
       />
     );

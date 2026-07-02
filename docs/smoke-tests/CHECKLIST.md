@@ -8,6 +8,20 @@
 
 ---
 
+# 2026-07-02 — Takeoff Canvas Rework (undo/redo + reconstruction + simplified re-entry)
+
+- [ ] **Undo/Redo on Takeoff canvas** — open takeoff, draw a line measurement, click Undo → line disappears. Click Redo → line reappears. Repeat with area drawing, point measurement, calibration. Confirm undo depth is at least 10 steps.
+- [ ] **Undo/Redo on Drawings canvas** — open FlashingCanvas, draw lines/angles, click Undo → last action reverts. Click Redo → reappears. Ctrl+Z / Ctrl+Y keyboard shortcuts work.
+- [ ] **Canvas reconstruction on re-entry** — draw measurements on takeoff (areas, lines, points), save. Exit to quote builder. Click takeoff again → choose "Edit This Plan" → canvas loads with ALL previous shapes visible and editable (not blank).
+- [ ] **Calibration persistence** — calibrate the canvas (set scale), save, exit, re-enter via Edit This Plan → calibration is still set. New measurements use the saved scale.
+- [ ] **Roof area polygon reconstruction** — draw a roof area boundary, save, exit, re-enter → area polygon is visible on canvas with correct shape and position.
+- [ ] **2-option re-entry modal** — on a quote with existing takeoff, click takeoff → modal shows exactly 2 options: "Edit This Plan" and "Add New Plan". No 3rd option, no clean/lines sub-toggle.
+- [ ] **Add New Plan flow** — choose "Add New Plan", enter area name, upload a plan image → fresh canvas with no previous measurements. Previous plan's areas still accessible from quote builder.
+- [ ] **Multi-page save flow** — in takeoff, use "Save & Upload another plan" → saves current page, loads new plan. Measurements from first page are preserved. Navigate back to first page → its measurements still there.
+- [ ] **Undo doesn't desync** — on Drawings canvas, draw 3 lines, toggle visibility on one, undo → both canvas AND sidebar reflect the pre-toggle state (line visible, toggle correct). Old bug was canvas-only restore causing sidebar mismatch.
+
+---
+
 # 2026-07-01 — Admin Expansion (rate limits, settings, storage, impersonation)
 
 - [ ] **Rate limits page** — /admin/rate-limits loads, shows bucket list with counts + last updated. Filter by bucket_key works. Reset single bucket → count goes to 0, audit row created. Reset all (filtered) → all matching reset, audit row created.

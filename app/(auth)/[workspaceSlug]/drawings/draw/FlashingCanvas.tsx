@@ -20,6 +20,7 @@ import {
   type MeasurementItem,
   type _CanvasState,
 } from './parts/helpers';
+import { useCanvasHistory } from '@/app/lib/takeoff/useCanvasHistory';
 export function FlashingCanvas({
   workspaceSlug,
   lengthUnit = 'mm',
@@ -73,7 +74,36 @@ export function FlashingCanvas({
   const [canvasReady, setCanvasReady] = useState(false); // Track when canvas is initialized
   const [flashingLoaded, setFlashingLoaded] = useState(false); // Track if flashing data loaded
 
-  // History removed - was causing issues with canvas state sync
+  // Canvas-rework: Undo/redo system (replaces the old history that was removed).
+  // Snapshots both canvas JSON AND React state together to prevent sync desync.
+  const { canUndo, canRedo, pushSnapshot, undo, redo, clear: clearHistory } = useCanvasHistory(20);
+
+  const pushHistorySnapshot = () => {
+    if (!fabricRef.current) return;
+    pushSnapshot(fabricRef.current, { measurements });
+  };
+
+  const restoreSnapshot = (snapshot: { canvasJSON: string; reactState: Record<string, unknown> }) => {
+    if (!fabricRef.current) return;
+    const fabricJSON = JSON.parse(snapshot.canvasJSON);
+    fabricRef.current.loadFromJSON(fabricJSON, () => {
+      fabricRef.current?.renderAll();
+      const restored = snapshot.reactState.measurements as MeasurementItem[] | undefined;
+      if (restored) setMeasurements(restored);
+    });
+  };
+
+  const handleUndo = () => {
+    if (!fabricRef.current) return;
+    const snapshot = undo(fabricRef.current, { measurements });
+    if (snapshot) restoreSnapshot(snapshot);
+  };
+
+  const handleRedo = () => {
+    if (!fabricRef.current) return;
+    const snapshot = redo(fabricRef.current, { measurements });
+    if (snapshot) restoreSnapshot(snapshot);
+  };
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -104,6 +134,14 @@ export function FlashingCanvas({
         if (e.key === 'a') {
           e.preventDefault();
           handleSelectAll();
+        }
+        if (e.key === 'z' && !e.shiftKey) {
+          e.preventDefault();
+          handleUndo();
+        }
+        if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) {
+          e.preventDefault();
+          handleRedo();
         }
       }
     };
@@ -446,6 +484,7 @@ export function FlashingCanvas({
 
         setLinePoints([...currentPoints, newPoint]);
         if (newMeasurements.length > 0) {
+          pushHistorySnapshot();
           setMeasurements(prev => [...prev, ...newMeasurements]);
         }
         canvas.requestRenderAll();
@@ -878,6 +917,7 @@ export function FlashingCanvas({
   const measurements_live = liveMeasurements();
 
   const handleClear = () => {
+    pushHistorySnapshot();
     if (fabricRef.current) {
       fabricRef.current.clear();
       fabricRef.current.backgroundColor = '#ffffff';
@@ -913,6 +953,7 @@ export function FlashingCanvas({
   const handleToggleMeasurementVisibility = (id: string) => {
     const measurement = measurements.find(m => m.id === id);
     if (!measurement || !fabricRef.current) return;
+    pushHistorySnapshot();
 
     const canvas = fabricRef.current;
     const newVisible = !measurement.visible;
@@ -943,6 +984,7 @@ export function FlashingCanvas({
   const handleToggleTextVisibility = (id: string) => {
     const measurement = measurements.find(m => m.id === id);
     if (!measurement || !fabricRef.current) return;
+    pushHistorySnapshot();
 
     const canvas = fabricRef.current;
     const newTextHidden = !measurement.textHidden;
@@ -965,6 +1007,7 @@ export function FlashingCanvas({
   const handleToggleArcVisibility = (id: string) => {
     const measurement = measurements.find(m => m.id === id);
     if (!measurement || !fabricRef.current) return;
+    pushHistorySnapshot();
 
     const canvas = fabricRef.current;
     const newArcHidden = !measurement.arcHidden;
@@ -1119,6 +1162,7 @@ export function FlashingCanvas({
   const handleEditMeasurementValue = (id: string) => {
     const measurement = measurements.find(m => m.id === id);
     if (!measurement || !fabricRef.current) return;
+    pushHistorySnapshot();
     setEditValueMeasurementId(id);
     setEditValueInput(
       measurement.type === 'length'
@@ -1257,6 +1301,7 @@ export function FlashingCanvas({
 
   const handleRecalibrateAll = () => {
     if (!fabricRef.current) return;
+    pushHistorySnapshot();
 
     const canvas = fabricRef.current;
     const currentPoints = linePointsRef.current;
@@ -1329,6 +1374,7 @@ export function FlashingCanvas({
   const handleToggleAngleType = (id: string) => {
     const measurement = measurements.find(m => m.id === id);
     if (!measurement || measurement.type !== 'angle' || !fabricRef.current) return;
+    pushHistorySnapshot();
 
     const newShowInterior = !measurement.showInterior;
     const newValue = newShowInterior ? measurement.interiorValue! : measurement.exteriorValue!;
@@ -1359,6 +1405,7 @@ export function FlashingCanvas({
 
   const handleApplyCalculatedAngle = (newAngle: number) => {
     if (!calculatingAngleId || !fabricRef.current) return;
+    pushHistorySnapshot();
 
     const measurement = measurements.find(m => m.id === calculatingAngleId);
     if (!measurement || measurement.type !== 'angle') {
@@ -1509,6 +1556,7 @@ export function FlashingCanvas({
     const measurement = measurements.find(m => m.id === id);
     if (!measurement || measurement.type !== 'length' || !fabricRef.current) return;
     if (!measurement.lineStart || !measurement.lineEnd) return;
+    pushHistorySnapshot();
 
     const newSide = measurement.placementSide === 'exterior' ? 'interior' : 'exterior';
 
@@ -1550,6 +1598,7 @@ export function FlashingCanvas({
       alert('Right angle can only be added to middle points');
       return;
     }
+    pushHistorySnapshot();
 
     const pt = linePoints[selectedPoint];
 
@@ -1584,6 +1633,7 @@ export function FlashingCanvas({
       alert('Custom angle requires a middle point');
       return;
     }
+    pushHistorySnapshot();
 
     const pt = linePoints[selectedPoint];
     const prevPt = linePoints[selectedPoint - 1];
@@ -1943,6 +1993,22 @@ export function FlashingCanvas({
         )}
 
         <div className="ml-auto flex gap-2">
+          <button
+            onClick={handleUndo}
+            disabled={!canUndo}
+            className="px-3 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Undo (Ctrl+Z)"
+          >
+            ↩ Undo
+          </button>
+          <button
+            onClick={handleRedo}
+            disabled={!canRedo}
+            className="px-3 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Redo (Ctrl+Y)"
+          >
+            ↪ Redo
+          </button>
           <button
             onClick={handleClear}
             className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50"

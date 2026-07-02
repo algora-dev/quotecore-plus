@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle, Rect } from 'fabric';
@@ -7,6 +7,8 @@ import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
+import { useCanvasHistory } from '@/app/lib/takeoff/useCanvasHistory';
+import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
 import type { TakeoffHydrationData } from './actions';
 import { uploadCanvasImage } from './uploadCanvasImage';
 import { AlertModal } from '@/app/components/AlertModal';
@@ -100,7 +102,7 @@ interface Props {
   /** P1-1b: human-readable label for the new page. */
   initialPageName?: string;
   /** P1-1b mode=add: existing roof areas loaded from DB, shown read-only in the panel. */
-  existingRoofAreas?: { id: string; label: string }[];
+  existingRoofAreas?: { id: string; label: string; pitch?: number; area?: number }[];
   /** P1-1b mode=new-page: pre-created quote_roof_areas ID. Passed as target_roof_area_id
    *  to save_takeoff_atomic so components route to the correct area. */
   initialRoofAreaId?: string;
@@ -214,6 +216,9 @@ export function TakeoffWorkstation({
   );
   // Guard so the one-shot hydration effect only fires on first mount.
   const hydrationAppliedRef = useRef<boolean>(false);
+  // Canvas-rework: track when the canvas background image has loaded so
+  // reconstruction can run after both canvas + hydration data are ready.
+  const [canvasReady, setCanvasReady] = useState(false);
 
   // Component colors (auto-assign on mount)
   const [componentColors, setComponentColors] = useState<ComponentColor[]>([]);
@@ -248,7 +253,7 @@ export function TakeoffWorkstation({
   const [showPitchOnlyPrompt, setShowPitchOnlyPrompt] = useState(false);
   const [pitchOnlyInput, setPitchOnlyInput] = useState('');
 
-  // Volume (L × W × D) - depth prompt state.
+  // Volume (L Ã— W Ã— D) - depth prompt state.
   // Fires after the area polygon is closed for a volume_3d component.
   const [showVolumeDepthPrompt, setShowVolumeDepthPrompt] = useState(false);
   const [volumeDepthInput, setVolumeDepthInput] = useState('');
@@ -361,6 +366,162 @@ export function TakeoffWorkstation({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quote.id, initialPageId]);
 
+  // â”€â”€â”€ Canvas-rework: Undo/Redo system â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Snapshots both canvas JSON and React state together to avoid the sync
+  // issue that plagued the old FlashingCanvas history (which only restored
+  // canvas, not React state).
+  const history = useCanvasHistory(20);
+
+  // Helper: capture all relevant React state for an undo snapshot.
+  // Called BEFORE every canvas mutation.
+  const pushHistorySnapshot = useCallback(() => {
+    if (!fabricRef.current) return;
+    history.pushSnapshot(fabricRef.current, {
+      componentMeasurements,
+      roofAreas,
+      calibrations,
+      calibrationPoints,
+      calibrationConfirmed,
+      calibrationMode,
+      areaMode,
+      areaPoints,
+      areaSubTool,
+      lineMode,
+      linePoints,
+      pointMode,
+      multiLinealMode,
+      multiLinealPoints,
+      multiLinealSegmentObjects,
+      pendingVolumePolygon,
+      pendingAreaPoints,
+      activeComponentIds,
+      selectedComponentId,
+      activeSaveRoofAreaId,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [componentMeasurements, roofAreas, calibrations, calibrationPoints,
+      calibrationConfirmed, calibrationMode, areaMode, areaPoints, areaSubTool,
+      lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints,
+      multiLinealSegmentObjects, pendingVolumePolygon, pendingAreaPoints,
+      activeComponentIds, selectedComponentId, activeSaveRoofAreaId]);
+
+  // Restore canvas + state from a history snapshot.
+  const restoreSnapshot = useCallback((snapshot: { canvasJSON: string; reactState: Record<string, unknown> }) => {
+    if (!fabricRef.current) return;
+    const canvas = fabricRef.current;
+    const data = JSON.parse(snapshot.canvasJSON);
+    canvas.loadFromJSON(data, () => {
+      canvas.renderAll();
+      // Re-link canvasObjects on measurements by matching measurementId tags.
+      const allObjects = canvas.getObjects();
+      const restoredMeasurements = snapshot.reactState.componentMeasurements as ComponentWithMeasurements[];
+      if (restoredMeasurements) {
+        restoredMeasurements.forEach(comp => {
+          comp.measurements.forEach(m => {
+            m.canvasObjects = allObjects.filter((obj: any) => obj.measurementId === m.id);
+          });
+        });
+        setComponentMeasurements(restoredMeasurements);
+      }
+      const restoredRoofAreas = snapshot.reactState.roofAreas as RoofArea[];
+      if (restoredRoofAreas) {
+        restoredRoofAreas.forEach(ra => {
+          ra.polygon = allObjects.find((obj: any) => obj.measurementId === ra.id && obj.type === 'polygon');
+          ra.markers = allObjects.filter((obj: any) => obj.measurementId === ra.id && obj.type === 'circle');
+        });
+        setRoofAreas(restoredRoofAreas);
+      }
+    });
+    // Restore simple state values
+    setCalibrations((snapshot.reactState.calibrations as Calibration[]) || []);
+    setCalibrationPoints((snapshot.reactState.calibrationPoints as CalibrationPoint[]) || []);
+    setCalibrationConfirmed(snapshot.reactState.calibrationConfirmed as boolean ?? false);
+    setCalibrationMode(snapshot.reactState.calibrationMode as boolean ?? false);
+    setAreaMode(snapshot.reactState.areaMode as boolean ?? false);
+    setAreaPoints((snapshot.reactState.areaPoints as { x: number; y: number }[]) || []);
+    setAreaSubTool(snapshot.reactState.areaSubTool as 'polygon' | 'rect' ?? 'polygon');
+    setLineMode(snapshot.reactState.lineMode as boolean ?? false);
+    setLinePoints((snapshot.reactState.linePoints as { x: number; y: number }[]) || []);
+    setPointMode(snapshot.reactState.pointMode as boolean ?? false);
+    setMultiLinealMode(snapshot.reactState.multiLinealMode as boolean ?? false);
+    setMultiLinealPoints((snapshot.reactState.multiLinealPoints as { x: number; y: number }[]) || []);
+    setMultiLinealSegmentObjects((snapshot.reactState.multiLinealSegmentObjects as any[]) || []);
+    setPendingVolumePolygon(snapshot.reactState.pendingVolumePolygon ?? null);
+    setPendingAreaPoints((snapshot.reactState.pendingAreaPoints as { x: number; y: number }[]) || []);
+    setActiveComponentIds((snapshot.reactState.activeComponentIds as string[]) || []);
+    setSelectedComponentId(snapshot.reactState.selectedComponentId as string | null ?? null);
+    setActiveSaveRoofAreaId(snapshot.reactState.activeSaveRoofAreaId as string | null ?? null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleUndo = useCallback(() => {
+    if (!fabricRef.current) return;
+    const snapshot = history.undo(fabricRef.current, {
+      componentMeasurements,
+      roofAreas,
+      calibrations,
+      calibrationPoints,
+      calibrationConfirmed,
+      calibrationMode,
+      areaMode,
+      areaPoints,
+      areaSubTool,
+      lineMode,
+      linePoints,
+      pointMode,
+      multiLinealMode,
+      multiLinealPoints,
+      multiLinealSegmentObjects,
+      pendingVolumePolygon,
+      pendingAreaPoints,
+      activeComponentIds,
+      selectedComponentId,
+      activeSaveRoofAreaId,
+    });
+    if (snapshot) {
+      restoreSnapshot(snapshot);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [componentMeasurements, roofAreas, calibrations, calibrationPoints,
+      calibrationConfirmed, calibrationMode, areaMode, areaPoints, areaSubTool,
+      lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints,
+      multiLinealSegmentObjects, pendingVolumePolygon, pendingAreaPoints,
+      activeComponentIds, selectedComponentId, activeSaveRoofAreaId, history, restoreSnapshot]);
+
+  const handleRedo = useCallback(() => {
+    if (!fabricRef.current) return;
+    const snapshot = history.redo(fabricRef.current, {
+      componentMeasurements,
+      roofAreas,
+      calibrations,
+      calibrationPoints,
+      calibrationConfirmed,
+      calibrationMode,
+      areaMode,
+      areaPoints,
+      areaSubTool,
+      lineMode,
+      linePoints,
+      pointMode,
+      multiLinealMode,
+      multiLinealPoints,
+      multiLinealSegmentObjects,
+      pendingVolumePolygon,
+      pendingAreaPoints,
+      activeComponentIds,
+      selectedComponentId,
+      activeSaveRoofAreaId,
+    });
+    if (snapshot) {
+      restoreSnapshot(snapshot);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [componentMeasurements, roofAreas, calibrations, calibrationPoints,
+      calibrationConfirmed, calibrationMode, areaMode, areaPoints, areaSubTool,
+      lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints,
+      multiLinealSegmentObjects, pendingVolumePolygon, pendingAreaPoints,
+      activeComponentIds, selectedComponentId, activeSaveRoofAreaId, history, restoreSnapshot]);
+
   // P1-1a C-01: One-shot hydration from server-loaded DB state.
   // Restores componentMeasurements panel data + pages list from the last saved session.
   // Canvas shapes are NOT reconstructed here (P1-1b); values show in the panel.
@@ -383,9 +544,24 @@ export function TakeoffWorkstation({
 
     // Group measurements by component and restore componentMeasurements state.
     const grouped = new Map<string, ComponentWithMeasurements>();
+    // Also collect roof area measurements (componentId = null, type = 'area')
+    // so we can reconstruct their boundary polygons on the canvas.
+    const hydratedRoofAreas: RoofArea[] = [];
     hydrationData.measurements
-      .filter(m => m.componentId !== null)
       .forEach(m => {
+        if (m.componentId === null && m.type === 'area') {
+          // Roof area boundary measurement â€” restore to roofAreas state.
+          hydratedRoofAreas.push({
+            id: m.id,
+            name: `Area ${hydratedRoofAreas.length + 1}`,
+            points: m.points ?? [],
+            area: m.value,
+            pitch: 0, // pitch is in quote_roof_areas, not on this measurement row
+            visible: m.visible,
+          });
+          return;
+        }
+        if (m.componentId === null) return;
         const cid = m.componentId!;
         if (!grouped.has(cid)) {
           grouped.set(cid, { componentId: cid, measurements: [], expanded: false });
@@ -396,12 +572,7 @@ export function TakeoffWorkstation({
           value: m.value,
           points: m.points ?? undefined,
           visible: m.visible,
-          // fromPageId: records which DB page this measurement belongs to.
-          // handleSaveTakeoffCore uses this to exclude other pages' measurements
-          // from a current-page save, preventing H-01 double-counting when
-          // persistTakeoffData() is called from a mode=add session.
           fromPageId: m.pageId ?? null,
-          // canvasObjects intentionally empty: canvas shapes not yet reconstructed (P1-1b).
         });
       });
 
@@ -410,9 +581,79 @@ export function TakeoffWorkstation({
       setActiveComponentIds(Array.from(grouped.keys()));
       console.info('[Hydration] Restored', grouped.size, 'components from DB');
     }
+
+    // Restore roof area boundary polygons from DB (componentId = null, type = 'area').
+    // Merge in pitch from existingRoofAreas prop (fetched from quote_roof_areas table).
+    if (hydratedRoofAreas.length > 0) {
+      // If we have existingRoofAreas from the server, use their pitch + label.
+      if (existingRoofAreas.length > 0) {
+        hydratedRoofAreas.forEach((ra, i) => {
+          const match = existingRoofAreas[i];
+          if (match) {
+            ra.pitch = match.pitch ?? 0;
+            ra.name = match.label;
+          }
+        });
+      }
+      setRoofAreas(hydratedRoofAreas);
+      console.info('[Hydration] Restored', hydratedRoofAreas.length, 'roof areas from DB');
+    }
+
+    // Canvas-rework: restore calibrations from DB so the scale is available
+    // for new measurements on re-entry. Calibrations are stored per-page in
+    // takeoff_pages.scale_calibration.
+    const firstPage = hydrationData.pages[0];
+    if (firstPage?.scaleCalibration) {
+      try {
+        const restored = (firstPage.scaleCalibration as Calibration[]);
+        if (Array.isArray(restored) && restored.length > 0) {
+          setCalibrations(restored);
+          setCalibrationConfirmed(true);
+          setShowCalibrationHelp(false);
+          console.info('[Hydration] Restored', restored.length, 'calibrations from DB');
+        }
+      } catch (err) {
+        console.warn('[Hydration] Failed to restore calibrations:', err);
+      }
+    }
   // Intentionally only runs once on mount.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ─── Canvas-rework: Reconstruct canvas shapes from DB on re-entry ────────
+  // Runs once after both canvasReady and hydrationData are available.
+  // Rebuilds all Fabric.js objects (polygons, lines, markers) from stored
+  // canvas_points so the user can visually edit existing measurements.
+  useEffect(() => {
+    if (reconstructAppliedRef.current) return;
+    if (!canvasReady || !fabricRef.current) return;
+    if (!hydrationData || hydrationData.measurements.length === 0) return;
+
+    // Only reconstruct if there are measurements with points to restore.
+    const hasPoints = hydrationData.measurements.some(m => m.points && m.points.length > 0);
+    if (!hasPoints) return;
+
+    reconstructAppliedRef.current = true;
+    console.info('[Reconstruct] Starting canvas reconstruction from DB data');
+
+    const result = reconstructCanvas(fabricRef.current, {
+      componentMeasurements: componentMeasurements.map(c => ({
+        componentId: c.componentId,
+        measurements: c.measurements,
+      })),
+      roofAreas,
+      componentColors,
+      currentPageId: pages[currentPageIndex]?.id ?? null,
+    });
+
+    // Update state with reconstructed canvasObjects.
+    setComponentMeasurements(result.componentMeasurements);
+    setRoofAreas(result.roofAreas);
+    console.info('[Reconstruct] Canvas reconstruction complete:',
+      result.componentMeasurements.reduce((sum, c) => sum + c.measurements.length, 0),
+      'measurements restored');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canvasReady]);
 
   // Trade-aware labels + config. Single source of truth for all copy that
   // varies by trade (roofing / cladding / generic). Replaces the old
@@ -440,6 +681,7 @@ export function TakeoffWorkstation({
   }, [calibrationConfirmed, calibrations.length, roofAreas.length, takeoffMode, isExistingAreaMode]);
   
   const handleDeleteArea = (areaId: string) => {
+    pushHistorySnapshot();
     const area = roofAreas.find(a => a.id === areaId);
     if (area && fabricRef.current) {
       if (area.polygon) fabricRef.current.remove(area.polygon);
@@ -449,6 +691,7 @@ export function TakeoffWorkstation({
   };
   
   const handleSaveArea = (name: string, pitch?: number) => {
+    pushHistorySnapshot();
     const calculatedArea = calculatePolygonArea(pendingAreaPoints);
 
     // Route by pendingComponentId first (captured at polygon-close time).
@@ -540,6 +783,7 @@ export function TakeoffWorkstation({
   };
   
   const handleToggleAreaVisibility = (areaId: string) => {
+    pushHistorySnapshot();
     setRoofAreas(roofAreas.map(area => {
       if (area.id === areaId) {
         const newVisible = !area.visible;
@@ -593,7 +837,7 @@ export function TakeoffWorkstation({
       setPointMode(true);
       activeAreaComponentIdRef.current = null;
     } else {
-      // null → manual entry only; no tool active.
+      // null â†’ manual entry only; no tool active.
       activeAreaComponentIdRef.current = null;
     }
   };
@@ -615,6 +859,7 @@ export function TakeoffWorkstation({
   };
   
   const handleRemoveComponent = (componentId: string) => {
+    pushHistorySnapshot();
     // Remove from active list
     setActiveComponentIds(activeComponentIds.filter(id => id !== componentId));
     
@@ -637,6 +882,7 @@ export function TakeoffWorkstation({
   };
   
   const handleDeleteMeasurement = (componentId: string, measurementId: string) => {
+    pushHistorySnapshot();
     setComponentMeasurements(componentMeasurements.map(comp => {
       if (comp.componentId === componentId) {
         const measurement = comp.measurements.find(m => m.id === measurementId);
@@ -657,6 +903,7 @@ export function TakeoffWorkstation({
   };
   
   const handleToggleMeasurementVisibility = (componentId: string, measurementId: string) => {
+    pushHistorySnapshot();
     setComponentMeasurements(componentMeasurements.map(comp => {
       if (comp.componentId === componentId) {
         return {
@@ -703,6 +950,7 @@ export function TakeoffWorkstation({
   // Sums all segment lengths using the calibration scale and adds a single
   // 'multi_lineal' measurement to the selected component.
   const handleFinishMultiLineal = () => {
+    pushHistorySnapshot();
     const currentPoints = multiLinealPointsRef.current;
     if (currentPoints.length < 2) return;
 
@@ -784,6 +1032,7 @@ export function TakeoffWorkstation({
   };
 
   const handleCancelMultiLineal = () => {
+    pushHistorySnapshot();
     // Remove all drawn segment objects from canvas.
     if (fabricRef.current) {
       multiLinealSegmentObjects.forEach(obj => fabricRef.current!.remove(obj));
@@ -901,6 +1150,7 @@ export function TakeoffWorkstation({
 
   /** Confirm handler for the freestyle height prompt (length_x_height_freestyle / multi_lineal_lxh_freestyle). */
   const handleConfirmFreestyleHeight = () => {
+    pushHistorySnapshot();
     const height = parseFloat(freestyleHeightInput);
     if (!height || height <= 0 || !pendingFreestyleComponentId) return;
     const unit = calibrations[0]?.unit ?? 'meters';
@@ -1016,10 +1266,10 @@ export function TakeoffWorkstation({
       // componentMeasurements are hydrated from other pages and excluded above.
       //
       // Contract (M-02 Gerald audit 2026-05-29):
-      //  – We do NOT advance the session version (no RPC call).
-      //  – We do NOT clear isDirty (no data was actually committed here).
-      //  – We only navigate if the caller explicitly requests it.
-      //  – This branch must NEVER be used when there are local unsaved changes
+      //  â€“ We do NOT advance the session version (no RPC call).
+      //  â€“ We do NOT clear isDirty (no data was actually committed here).
+      //  â€“ We only navigate if the caller explicitly requests it.
+      //  â€“ This branch must NEVER be used when there are local unsaved changes
       //    (those would have a null/undefined fromPageId and would NOT be filtered).
       if (allMeasurements.length === 0) {
         console.log('[SaveTakeoff] Safe skip - no new measurements for current page. Not a full save.');
@@ -1154,6 +1404,8 @@ export function TakeoffWorkstation({
         // page. Starts as initialRoofAreaId (for mode=new-page entries) and
         // is updated client-side when the user uploads another plan.
         activeSaveRoofAreaId,
+        // Canvas-rework: persist calibrations so re-entry can restore scale.
+        calibrations.length > 0 ? calibrations : null,
       );
 
       if (!saveResult.success) {
@@ -1324,7 +1576,7 @@ export function TakeoffWorkstation({
     
     // Convert to real-world units using calibration scale
     const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / calibrations.length;
-    const realArea = pixelArea * avgScale * avgScale; // scale² for area
+    const realArea = pixelArea * avgScale * avgScale; // scaleÂ² for area
     
     return realArea;
   };
@@ -1406,6 +1658,8 @@ export function TakeoffWorkstation({
   // of how many times the parent re-renders. Following the same one-shot
   // hydration pattern used on the customer quote / blank-quote editors.
   const canvasInitedRef = useRef(false);
+  // Canvas-rework: reconstruction runs once, after canvas is ready + hydration applied.
+  const reconstructAppliedRef = useRef(false);
   useEffect(() => {
     if (canvasInitedRef.current) return;
     if (!canvasRef.current) return;
@@ -1448,6 +1702,9 @@ export function TakeoffWorkstation({
       canvas.add(fabricImg);
       canvas.sendObjectToBack(fabricImg);
       canvas.renderAll();
+
+      // Canvas-rework: canvas is now ready for reconstruction.
+      setCanvasReady(true);
     };
     // Read the latest URL from the ref so we always use the most
     // recent signed URL even though the init effect is dep-less.
@@ -1456,6 +1713,12 @@ export function TakeoffWorkstation({
     // Pan on drag OR calibration click OR area click OR line click
     canvas.on('mouse:down', (opt) => {
       const evt = opt.e;
+      
+      // Canvas-rework: snapshot before any tool-based canvas mutation.
+      if (calibrationModeRef.current || areaModeRef.current || lineModeRef.current ||
+          pointModeRef.current || multiLinealModeRef.current) {
+        pushHistorySnapshot();
+      }
       
       // Line mode: measure distance (2 points)
       if (lineModeRef.current && !evt.altKey) {
@@ -1568,7 +1831,7 @@ export function TakeoffWorkstation({
         canvas.add(marker);
         const newObjects: any[] = [marker];
 
-        // Draw segment line from previous point if this isn’t the first.
+        // Draw segment line from previous point if this isnâ€™t the first.
         if (currentPoints.length > 0) {
           const prev = currentPoints[currentPoints.length - 1];
           const segLine = new Line([prev.x, prev.y, newPoint.x, newPoint.y], {
@@ -1620,7 +1883,7 @@ export function TakeoffWorkstation({
         const pointer = canvas.getScenePoint(opt.e);
         const newPoint = { x: pointer.x, y: pointer.y };
 
-        // ── Box (rect) sub-tool: click-drag to define a rectangle ──
+        // â”€â”€ Box (rect) sub-tool: click-drag to define a rectangle â”€â”€
         // On mouse:down we capture the start corner and begin dragging.
         // mouse:move draws a live preview; mouse:up finalises into 4 points.
         if (areaSubToolRef.current === 'rect') {
@@ -1647,7 +1910,7 @@ export function TakeoffWorkstation({
           return;
         }
 
-        // ── Polygon sub-tool (default): click to add points ──
+        // â”€â”€ Polygon sub-tool (default): click to add points â”€â”€
         const currentPoints = areaPointsRef.current;
         
         // Check if click is near start point (close polygon)
@@ -1691,11 +1954,11 @@ export function TakeoffWorkstation({
               );
               return;
             }
-            // P1-1b: new-page first area → pitch-only (clear component; this is the boundary).
-            // P1-3 existing-area + NO component selected → warn instead of silently
+            // P1-1b: new-page first area â†’ pitch-only (clear component; this is the boundary).
+            // P1-3 existing-area + NO component selected â†’ warn instead of silently
             //   creating a spurious roof-area boundary (isExistingAreaMode means no new
             //   boundaries should be created client-side).
-            // P1-3 existing-area + component IS selected → normal area modal.
+            // P1-3 existing-area + component IS selected â†’ normal area modal.
             if (takeoffMode === 'new-page' && currentRoofAreas.length === 0 && !currentSelectedId) {
               // Boundary drawing for a new page - show pitch-only prompt.
               setPendingComponentId(null);
@@ -1890,7 +2153,7 @@ export function TakeoffWorkstation({
           canvas.renderAll();
         }
 
-        // Ignore tiny drags (accidental clicks) — under 5px in either dimension.
+        // Ignore tiny drags (accidental clicks) â€” under 5px in either dimension.
         if (dragWidth < 5 || dragHeight < 5) {
           return;
         }
@@ -1924,7 +2187,7 @@ export function TakeoffWorkstation({
         }
 
         if (takeoffMode === 'new-page' && currentRoofAreas.length === 0 && !currentSelectedId) {
-          // Boundary drawing for a new page — pitch-only prompt.
+          // Boundary drawing for a new page â€” pitch-only prompt.
           setPendingComponentId(null);
           setPitchOnlyInput('');
           setShowPitchOnlyPrompt(true);
@@ -2086,6 +2349,7 @@ export function TakeoffWorkstation({
   };
 
   const handleConfirmCalibration = () => {
+    pushHistorySnapshot();
     console.log('[Calibration] Confirming... current state:', { calibrationConfirmed, showConfirmedFlash });
     setCalibrationConfirmed(true);
     setShowConfirmedFlash(true);
@@ -2124,6 +2388,7 @@ export function TakeoffWorkstation({
   };
 
   const handleSaveCalibration = (actualDistance: number, unit: 'feet' | 'meters', addAnother: boolean) => {
+    pushHistorySnapshot();
     if (calibrationPoints.length !== 2) return;
     
     const [point1, point2] = calibrationPoints;
@@ -2169,7 +2434,7 @@ export function TakeoffWorkstation({
         href={`/${workspaceSlug}/quotes/${quote.id}`}
         className="mb-2 text-sm text-slate-500 hover:text-slate-800 self-start"
       >
-        ← Back to quote
+        â† Back to quote
       </Link>
       <div className="flex-1 flex flex-col bg-white rounded-xl shadow-lg overflow-hidden">
         {/* Header: title + action buttons only - no nav links */}
@@ -2210,7 +2475,7 @@ export function TakeoffWorkstation({
             if (!selectedComponentId && roofAreas.length > 0) {
               guidance = 'Create a custom box shape area, click and hold, drag then release to set the area';
             } else if (selCompType === 'volume_3d') {
-              guidance = 'Click and drag to draw the footprint (L × W). Release to set the area, then enter the depth.';
+              guidance = 'Click and drag to draw the footprint (L Ã— W). Release to set the area, then enter the depth.';
             } else {
               guidance = 'Create a custom box shape area, click and hold, drag then release to set the area.';
             }
@@ -2218,7 +2483,7 @@ export function TakeoffWorkstation({
             if (!selectedComponentId) {
               guidance = 'Draw the area point by point (at least 3 points), to close the area - click back on the first point';
             } else if (selCompType === 'volume_3d') {
-              guidance = 'Draw the footprint (L × W). Close the shape on the first point, then enter the depth in the prompt.';
+              guidance = 'Draw the footprint (L Ã— W). Close the shape on the first point, then enter the depth in the prompt.';
             } else {
               guidance = 'Draw the area point by point (at least 3 points), to close the area - click back on the first point.';
             }
@@ -2240,7 +2505,7 @@ export function TakeoffWorkstation({
                   {currentPageIndex + 1} of {pages.length}
                 </span>
                 <span className="text-xs text-slate-400 mr-1">{pages[currentPageIndex]?.name}</span>
-                {guidance && <span className="text-xs text-slate-300">·</span>}
+                {guidance && <span className="text-xs text-slate-300">Â·</span>}
               </>
             )}
             {guidance && (
@@ -2267,7 +2532,7 @@ export function TakeoffWorkstation({
             <div className="p-6">
               <h2 className="text-lg font-semibold text-slate-900 mb-1">Save & upload another plan</h2>
               <p className="text-sm text-slate-500 mb-5">
-                We’ll save your current measurements first, then load the new plan so you can keep measuring.
+                Weâ€™ll save your current measurements first, then load the new plan so you can keep measuring.
               </p>
 
               {/* Option 1: attach to original area(s) */}
@@ -2389,7 +2654,7 @@ export function TakeoffWorkstation({
                   disabled={isUploadingPage}
                   className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors disabled:opacity-50"
                 >
-                  {isUploadingPage ? 'Saving…' : 'Save & start new takeoff'}
+                  {isUploadingPage ? 'Savingâ€¦' : 'Save & start new takeoff'}
                 </button>
               </div>
             </div>
@@ -2408,12 +2673,12 @@ export function TakeoffWorkstation({
               <h2 className="text-sm font-bold mb-3 text-gray-900 uppercase tracking-wide">Calibration</h2>
               {calibrations.length === 0 ? (
                 <div className="text-sm text-gray-700 font-medium bg-amber-50 border border-amber-200 rounded-xl p-3">
-                  ⚠️ Calibrate first to continue
+                  âš ï¸ Calibrate first to continue
                 </div>
               ) : showConfirmedFlash ? (
                 /* Flash green confirmation briefly */
                 <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 animate-pulse">
-                  <div className="text-green-400 font-bold mb-2">✓ Confirmed</div>
+                  <div className="text-green-400 font-bold mb-2">âœ“ Confirmed</div>
                   <div className="text-xs text-gray-600 mb-1">Scale</div>
                   <div className="font-bold text-green-400">
                     {(calibrations.reduce((sum, cal) => sum + cal.scale, 0) / calibrations.length).toFixed(4)} {calibrations[0].unit}/px
@@ -2446,7 +2711,7 @@ export function TakeoffWorkstation({
                   onClick={handleConfirmCalibration}
                   className="w-full px-3 py-2 bg-black hover:bg-slate-800 text-white rounded-full text-sm font-medium transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
                 >
-                  ✓ Confirm Calibration
+                  âœ“ Confirm Calibration
                 </button>
               </div>
               )}
@@ -2484,13 +2749,13 @@ export function TakeoffWorkstation({
                   let displayValue = area.area;
                   let displayUnit: string;
                   if (calibUnit === 'feet' && sys === 'imperial_rs') {
-                    // sq ft → RS  (1 RS = 100 ft²)
+                    // sq ft â†’ RS  (1 RS = 100 ftÂ²)
                     displayValue = area.area / 100;
                     displayUnit = 'RS';
                   } else if (calibUnit === 'feet') {
-                    displayUnit = 'ft²';
+                    displayUnit = 'ftÂ²';
                   } else {
-                    displayUnit = 'm²';
+                    displayUnit = 'mÂ²';
                   }
                   return (
                     <div key={area.id} className="bg-white rounded-xl border border-gray-200 p-3 flex items-center gap-3">
@@ -2515,7 +2780,7 @@ export function TakeoffWorkstation({
                           className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-lg leading-none"
                           title="Delete area"
                         >
-                          ×
+                          Ã—
                         </button>
                       </div>
                     </div>
@@ -2548,7 +2813,7 @@ export function TakeoffWorkstation({
                           const compData = componentMeasurements.find(c => c.componentId === id);
                           const isSelected = selectedComponentId === comp.id;
                           const mt = (comp.measurement_type ?? comp.default_measurement_type ?? '').toLowerCase();
-                          const typeLabel = mt === 'line' ? 'Line' : mt === 'area' ? 'Area' : mt === 'point' ? 'Count' : mt === 'multi_lineal' ? 'Multi-line' : mt === 'multi_lineal_lxh' ? 'Multi-line ×H' : mt === 'volume_3d' ? 'Volume' : mt === 'length_x_height_freestyle' ? 'Length ×H' : mt === 'multi_lineal_lxh_freestyle' ? 'Multi-line ×H' : mt || '';
+                          const typeLabel = mt === 'line' ? 'Line' : mt === 'area' ? 'Area' : mt === 'point' ? 'Count' : mt === 'multi_lineal' ? 'Multi-line' : mt === 'multi_lineal_lxh' ? 'Multi-line Ã—H' : mt === 'volume_3d' ? 'Volume' : mt === 'length_x_height_freestyle' ? 'Length Ã—H' : mt === 'multi_lineal_lxh_freestyle' ? 'Multi-line Ã—H' : mt || '';
                           return (
                             <div
                               key={comp.id}
@@ -2624,10 +2889,10 @@ export function TakeoffWorkstation({
                                           <div key={m.id} className="flex items-center gap-1.5 text-xs text-gray-700">
                                             <span className="flex-1">
                                               {(m.type === 'line' || m.type === 'multi_lineal') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'}`}
-                                              {m.type === 'multi_lineal_lxh' && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×h`}
+                                              {m.type === 'multi_lineal_lxh' && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} Ã—h`}
                                               {m.type === 'area' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
                                               {m.type === 'point' && `1 item`}
-                                              {(m.type === 'length_x_height_freestyle' || m.type === 'multi_lineal_lxh_freestyle') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×h`}
+                                              {(m.type === 'length_x_height_freestyle' || m.type === 'multi_lineal_lxh_freestyle') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} Ã—h`}
                                               {m.type === 'volume_3d' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
                                             </span>
                                             <button
@@ -2646,7 +2911,7 @@ export function TakeoffWorkstation({
                                               className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-base leading-none"
                                               title="Delete measurement"
                                             >
-                                              ×
+                                              Ã—
                                             </button>
                                           </div>
                                         ))}
@@ -2821,7 +3086,7 @@ export function TakeoffWorkstation({
               >
                 Line
               </button>
-              {/* Area tool — compact segmented sub-tool selector when active */}
+              {/* Area tool â€” compact segmented sub-tool selector when active */}
               <button
                 onClick={() => {
                   // Toggle area mode. If turning on, keep current sub-tool.
@@ -2957,7 +3222,7 @@ export function TakeoffWorkstation({
                 onClick={handleZoomOut}
                 className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
               >
-                −
+                âˆ’
               </button>
               <span className="px-1 py-1 text-sm tabular-nums">{Math.round(zoom * 100)}%</span>
               <button
@@ -2977,6 +3242,24 @@ export function TakeoffWorkstation({
                 className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
               >
                 Fit
+              </button>
+              {/* Canvas-rework: Undo/Redo buttons */}
+              <div className="w-px h-5 bg-gray-300 mx-1" />
+              <button
+                onClick={handleUndo}
+                disabled={!history.canUndo}
+                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Undo"
+              >
+                â†¶
+              </button>
+              <button
+                onClick={handleRedo}
+                disabled={!history.canRedo}
+                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Redo"
+              >
+                â†·
               </button>
             </div>
           </div>
@@ -3080,7 +3363,7 @@ export function TakeoffWorkstation({
                   className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
                   title="Draw the area point by point (at least 3 points), to close the area - click back on the first point"
                 >
-                  Draw Area · Polygon
+                  Draw Area Â· Polygon
                 </button>
                 <button
                   onClick={() => {
@@ -3094,7 +3377,7 @@ export function TakeoffWorkstation({
                   className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
                   title="Create a custom box shape area, click and hold, drag then release to set the area"
                 >
-                  Draw Area · Rectangle
+                  Draw Area Â· Rectangle
                 </button>
               </div>
               <button
@@ -3112,7 +3395,7 @@ export function TakeoffWorkstation({
       {showCalibrationHelp && calibrations.length === 0 && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4">📐 Calibrate Your Plan</h2>
+            <h2 className="text-xl font-semibold mb-4">ðŸ“ Calibrate Your Plan</h2>
             <div className="space-y-3 text-sm">
               <p>Before you can measure, you need to set the scale:</p>
               <ol className="list-decimal list-inside space-y-2 text-gray-900">
@@ -3140,7 +3423,7 @@ export function TakeoffWorkstation({
         </div>
       )}
 
-      {/* Volume (L × W × D) depth prompt - fires after area polygon is closed for a volume_3d component */}
+      {/* Volume (L Ã— W Ã— D) depth prompt - fires after area polygon is closed for a volume_3d component */}
       {showVolumeDepthPrompt && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-80 border border-gray-200 shadow-xl">
@@ -3164,14 +3447,14 @@ export function TakeoffWorkstation({
               />
               {volumeDepthInput && parseFloat(volumeDepthInput) > 0 && (
                 <p className="text-xs text-slate-400 mt-1">
-                  Volume ≈ {(
+                  Volume â‰ˆ {(
                     (calibrations[0]?.unit === 'feet'
                       ? convertAreaFt2ToMetric(pendingVolumeCalibratedArea)
                       : pendingVolumeCalibratedArea) *
                     (calibrations[0]?.unit === 'feet'
                       ? convertLinearToMetric(parseFloat(volumeDepthInput))
                       : parseFloat(volumeDepthInput))
-                  ).toFixed(3)} m³
+                  ).toFixed(3)} mÂ³
                 </p>
               )}
             </div>
@@ -3218,7 +3501,7 @@ export function TakeoffWorkstation({
             </h2>
             <p className="text-sm text-slate-500 mb-4">
               {tradeConfig.pitchRequired
-                ? 'Enter the roof pitch for this area, or skip to use 0°.'
+                ? 'Enter the roof pitch for this area, or skip to use 0Â°.'
                 : 'Enter the slope or angle if applicable, or skip.'}
             </p>
             <div className="mb-4">
@@ -3247,7 +3530,7 @@ export function TakeoffWorkstation({
                 }}
                 className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
               >
-                {pitchOnlyInput.trim() ? `Save at ${pitchOnlyInput}°` : 'Save (0° flat)'}
+                {pitchOnlyInput.trim() ? `Save at ${pitchOnlyInput}Â°` : 'Save (0Â° flat)'}
               </button>
               <button
                 onClick={() => {
@@ -3288,6 +3571,7 @@ export function TakeoffWorkstation({
         <PointMeasurementModal
           componentName={displayComponents.find(c => c.id === selectedComponentId)?.name || 'Component'}
           onConfirm={() => {
+            pushHistorySnapshot();
             // Add point measurement
             const marker = fabricRef.current?.getObjects().slice(-1)[0]; // Last object added
             
@@ -3323,6 +3607,7 @@ export function TakeoffWorkstation({
             setPendingPointLocation(null);
           }}
           onCancel={() => {
+            pushHistorySnapshot();
             // Remove marker from canvas
             if (fabricRef.current) {
               const objects = fabricRef.current.getObjects();
@@ -3344,6 +3629,7 @@ export function TakeoffWorkstation({
           unit={calibrations[0]?.unit || 'feet'}
           onConfirm={() => {
             if (!selectedComponentId) return;
+            pushHistorySnapshot();
 
             // Freestyle intercept: length_x_height_freestyle - show height prompt.
             const selectedComp = components.find(c => c.id === selectedComponentId);
@@ -3402,6 +3688,7 @@ export function TakeoffWorkstation({
             setLinePoints([]);
           }}
           onCancel={() => {
+            pushHistorySnapshot();
             // Remove line and markers from canvas (last 3 objects)
             if (fabricRef.current) {
               const objects = fabricRef.current.getObjects();
@@ -3446,14 +3733,14 @@ export function TakeoffWorkstation({
               />
               {freestyleHeightInput && parseFloat(freestyleHeightInput) > 0 && (
                 <p className="text-xs text-slate-400 mt-1">
-                  Area ≈ {(
+                  Area â‰ˆ {(
                     (calibrations[0]?.unit === 'feet'
                       ? convertLinearToMetric(pendingFreestyleLength)
                       : pendingFreestyleLength) *
                     (calibrations[0]?.unit === 'feet'
                       ? convertLinearToMetric(parseFloat(freestyleHeightInput))
                       : parseFloat(freestyleHeightInput))
-                  ).toFixed(2)} m²
+                  ).toFixed(2)} mÂ²
                 </p>
               )}
             </div>

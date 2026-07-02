@@ -41,8 +41,7 @@ interface Props {
   isOverStorage?: boolean;
 }
 
-type TakeoffOption = 'continue' | 'new-area-same-plan' | 'new-area-new-plan';
-type PlanMode = 'clean' | 'lines';
+type TakeoffOption = 'edit' | 'new-plan';
 
 export function FilesManager({
   quoteId,
@@ -68,8 +67,8 @@ export function FilesManager({
 
   // --- Takeoff re-entry modal state ---
   const [showTakeoffModal, setShowTakeoffModal] = useState(false);
-  const [takeoffOption, setTakeoffOption] = useState<TakeoffOption>('continue');
-  const [planMode, setPlanMode] = useState<PlanMode>('clean');
+  const [takeoffOption, setTakeoffOption] = useState<TakeoffOption>('edit');
+  // planMode removed â€” canvas is always fully reconstructed on edit.
   const [areaName, setAreaName] = useState('');
   const [newPlanFile, setNewPlanFile] = useState<File | null>(null);
   const [isStartingTakeoff, setIsStartingTakeoff] = useState(false);
@@ -198,9 +197,8 @@ export function FilesManager({
       router.push(`/${workspaceSlug}/quotes/${quoteId}/takeoff`);
       return;
     }
-    // Re-entry - show the 3-option modal.
-    setTakeoffOption('continue');
-    setPlanMode('clean');
+    // Re-entry - show the 2-option modal.
+    setTakeoffOption('edit');
     setAreaName('');
     setNewPlanFile(null);
     setTakeoffError(null);
@@ -212,26 +210,14 @@ export function FilesManager({
     setIsStartingTakeoff(true);
 
     try {
-      if (takeoffOption === 'continue') {
-        const pm = linesImageUrl ? `&planMode=${planMode}` : '';
-        router.push(`/${workspaceSlug}/quotes/${quoteId}/takeoff?mode=add${pm}`);
+      if (takeoffOption === 'edit') {
+        // Edit This Plan â€” reconstruct canvas with all existing measurements.
+        router.push(`/${workspaceSlug}/quotes/${quoteId}/takeoff?mode=add`);
         setShowTakeoffModal(false);
         return;
       }
 
-      if (takeoffOption === 'new-area-same-plan') {
-        if (!areaName.trim()) {
-          setTakeoffError('Please enter a name for this area.');
-          return;
-        }
-        // Server creates the new page (uses page-1 image path).
-        const encoded = encodeURIComponent(areaName.trim());
-        router.push(`/${workspaceSlug}/quotes/${quoteId}/takeoff?mode=new-page&areaName=${encoded}`);
-        setShowTakeoffModal(false);
-        return;
-      }
-
-      if (takeoffOption === 'new-area-new-plan') {
+      if (takeoffOption === 'new-plan') {
         if (!areaName.trim()) {
           setTakeoffError('Please enter a name for this area.');
           return;
@@ -357,7 +343,7 @@ export function FilesManager({
                       rel="noopener noreferrer"
                       className="text-xs text-orange-600 hover:text-blue-800"
                     >
-                      View Plan →
+                      View Plan â†’
                     </a>
                   </div>
                 </div>
@@ -506,107 +492,39 @@ export function FilesManager({
       onConfirm={confirmDelete}
     />
 
-    {/* --- Takeoff re-entry modal --- */}
+    {/* --- Takeoff re-entry modal (simplified: 2 options) --- */}
     {showTakeoffModal && (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
         <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
           <div className="p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-1">Edit Digital Take-off</h2>
+            <h2 className="text-lg font-semibold text-slate-900 mb-1">Digital Take-off</h2>
             <p className="text-sm text-slate-500 mb-5">
               This quote already has measurements. What would you like to do?
             </p>
 
-            {/* Option A */}
+            {/* Option 1: Edit This Plan */}
             <button
-              onClick={() => setTakeoffOption('continue')}
-              className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors ${
-                takeoffOption === 'continue'
-                  ? 'border-orange-500 bg-orange-50'
-                  : 'border-slate-200 hover:border-slate-300'
-              }`}
+              onClick={() => setTakeoffOption('edit')}
+              className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors ${takeoffOption === 'edit' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:border-slate-300'}`}
             >
-              <p className="text-sm font-semibold text-slate-900">Continue measuring on this plan</p>
+              <p className="text-sm font-semibold text-slate-900">Edit This Plan</p>
               <p className="text-xs text-slate-500 mt-0.5">
-                Add more measurements to the existing plan. Existing entries are preserved.
+                Open the canvas with all existing measurements, lines and areas visible. Add, edit, or remove anything.
               </p>
             </button>
 
-            {/* Option A sub-toggle - plan mode */}
-            {takeoffOption === 'continue' && linesImageUrl && (
-              <div className="ml-4 mb-3 space-y-2">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="radio"
-                    name="planMode"
-                    checked={planMode === 'clean'}
-                    onChange={() => setPlanMode('clean')}
-                    className="w-4 h-4 accent-orange-500"
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">Use clean plan</p>
-                    <p className="text-xs text-slate-500">Original plan without any markings</p>
-                  </div>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="radio"
-                    name="planMode"
-                    checked={planMode === 'lines'}
-                    onChange={() => setPlanMode('lines')}
-                    className="w-4 h-4 accent-orange-500"
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">Show measurements on plan</p>
-                    <p className="text-xs text-slate-500">Plan with previous measurements marked in colour</p>
-                  </div>
-                </label>
-              </div>
-            )}
-
-            {/* Option B */}
+            {/* Option 2: Add New Plan */}
             <button
-              onClick={() => setTakeoffOption('new-area-same-plan')}
-              className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors ${
-                takeoffOption === 'new-area-same-plan'
-                  ? 'border-orange-500 bg-orange-50'
-                  : 'border-slate-200 hover:border-slate-300'
-              }`}
+              onClick={() => setTakeoffOption('new-plan')}
+              className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors ${takeoffOption === 'new-plan' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:border-slate-300'}`}
             >
-              <p className="text-sm font-semibold text-slate-900">New area, same plan</p>
+              <p className="text-sm font-semibold text-slate-900">Add New Plan</p>
               <p className="text-xs text-slate-500 mt-0.5">
-                Measure a different area using the same plan (e.g. garage roof).
+                Upload a different plan image and measure a new area. Completely separate from the original.
               </p>
             </button>
 
-            {takeoffOption === 'new-area-same-plan' && (
-              <div className="ml-4 mb-3">
-                <label className="block text-xs font-medium text-slate-700 mb-1">Area name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Garage Roof"
-                  value={areaName}
-                  onChange={e => setAreaName(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-              </div>
-            )}
-
-            {/* Option C */}
-            <button
-              onClick={() => setTakeoffOption('new-area-new-plan')}
-              className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors ${
-                takeoffOption === 'new-area-new-plan'
-                  ? 'border-orange-500 bg-orange-50'
-                  : 'border-slate-200 hover:border-slate-300'
-              }`}
-            >
-              <p className="text-sm font-semibold text-slate-900">New area, new plan</p>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Upload a different plan and measure a new area.
-              </p>
-            </button>
-
-            {takeoffOption === 'new-area-new-plan' && (
+            {takeoffOption === 'new-plan' && (
               <div className="ml-4 mb-3 space-y-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1">Area name</label>

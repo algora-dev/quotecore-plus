@@ -36,6 +36,9 @@ export async function saveTakeoffMeasurements(
    *  When supplied: disables H-01 cross-page aggregation (this page's
    *  components are routed to this area only, not merged with page 1). */
   targetRoofAreaId?: string | null,
+  /** Canvas-rework: calibration data to persist on the takeoff_pages row.
+   *  Stored in scale_calibration JSONB so re-entry can restore the scale. */
+  calibrations?: unknown,
 ): Promise<{ success: true } | { success: false; error: string }> {
   const supabase = await createSupabaseServerClient();
 
@@ -283,6 +286,22 @@ export async function saveTakeoffMeasurements(
     return { success: false, error: `Failed to save takeoff: ${rpcError.message}` };
   }
 
+  // Canvas-rework: persist calibration data to the takeoff_pages row so
+  // re-entry can restore the scale. Non-fatal: a failure here doesn't affect
+  // the save result (calibrations are session-level metadata, not transactional
+  // with the measurements).
+  if (currentPageId && calibrations != null) {
+    try {
+      await supabase
+        .from('takeoff_pages')
+        .update({ scale_calibration: calibrations as unknown as never })
+        .eq('id', currentPageId)
+        .eq('quote_id', quoteId);
+    } catch (err) {
+      console.warn('[SaveTakeoff] Failed to persist calibrations:', err);
+    }
+  }
+
   // Gerald round-6 H-03: save_takeoff_atomic writes material_cost as quantity × rate
   // (no pack rounding). Recalculate all components through computeMaterialCostByStrategy
   // so pack pricing (per_pack_area, per_pack_coverage, etc.) is applied before the
@@ -342,6 +361,7 @@ export interface TakeoffHydrationPage {
   pageName: string | null;
   imagePath: string | null;
   imageUrl: string | null; // signed URL, minted server-side
+  scaleCalibration: unknown | null; // persisted calibration data for canvas reconstruction
 }
 
 export interface TakeoffHydrationMeasurement {
@@ -386,7 +406,7 @@ export async function loadTakeoffHydrationData(
   // 2. Pages (ordered)
   const { data: pages } = await supabase
     .from('takeoff_pages')
-    .select('id, page_order, page_name, image_storage_path')
+    .select('id, page_order, page_name, image_storage_path, scale_calibration')
     .eq('quote_id', quoteId)
     .order('page_order', { ascending: true });
 
@@ -406,6 +426,7 @@ export async function loadTakeoffHydrationData(
         pageName: p.page_name,
         imagePath: p.image_storage_path,
         imageUrl,
+        scaleCalibration: (p as { scale_calibration?: unknown }).scale_calibration ?? null,
       };
     }),
   );
