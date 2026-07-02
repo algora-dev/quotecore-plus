@@ -11,10 +11,12 @@ export const dynamic = 'force-dynamic';
  * AND fire_at <= now(), re-evaluates cancel conditions, then dispatches
  * through the same sendOutboundMessage pipeline manual sends use.
  *
- * Scheduled every 30 minutes in `vercel.json`. 30 min is the most
- * cost-effective option on Vercel's free tier that still keeps
- * follow-up timing tight enough that "send 7 days after no response"
- * never drifts by more than half an hour.
+ * Triggered every minute via pg_cron (Supabase) which calls this endpoint
+ * with a Vault-stored Bearer secret. See migrations:
+ *   20260611150000_pg_cron_dispatch_scheduled_messages.sql
+ *   20260613100000_pg_cron_dispatch_vault_prod.sql
+ * pg_cron is the primary trigger because Vercel Cron on the Hobby plan only
+ * runs once/day. This route is also listed in vercel.json as a backup.
  *
  * Authentication: same Bearer-token pattern as prune-rate-limits.
  * Vercel automatically attaches `Authorization: Bearer <CRON_SECRET>`

@@ -229,7 +229,18 @@ export async function completeGoogleOnboarding(formData: FormData) {
     .replace(/(^-|-$)/g, '')
     .slice(0, 50);
 
-  const companySlug = `${slugBase || 'company'}-${authUser.id.slice(0, 8)}`;
+  let companySlug = `${slugBase || 'company'}-${authUser.id.slice(0, 8)}`;
+
+  // Defence-in-depth: ensure the generated slug doesn't collide with a
+  // public route prefix (e.g. 'm-xxxxxxxx', 'orders-xxxxxxxx'). Extremely
+  // unlikely with the UUID suffix, but if it ever did happen the workspace
+  // would be unreachable via middleware. The segment-boundary fix in
+  // middleware.ts already prevents the bypass; this is a belt-and-braces check.
+  const RESERVED_PREFIXES = ['m', 'orders', 'invoice', 'file', 'accept', 'docs', 'terms', 'privacy', 'cookies', 'admin', 'api', 'login', 'signup', 'auth', 'onboarding', '2fa'];
+  const firstSegment = companySlug.split('-')[0];
+  if (RESERVED_PREFIXES.includes(firstSegment)) {
+    companySlug = `ws-${companySlug}`;
+  }
 
   const { data: company, error: companyError } = await supabaseAdmin
     .from('companies')

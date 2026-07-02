@@ -38,7 +38,9 @@ function isAal1Allowed(pathname: string): boolean {
 }
 
 function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some(p => pathname.startsWith(p));
+  // Match on segment boundary: either exact match or the path continues
+  // with a '/'. This prevents '/m' from matching '/meadow-roofing/...' etc.
+  return PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'));
 }
 
 function isStaticAsset(pathname: string): boolean {

@@ -1,12 +1,15 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 
 export type LoginResult =
   | { ok: true }
   | { ok: false; code: 'EMAIL_NOT_CONFIRMED'; email: string }
   | { ok: false; code: 'INVALID_CREDENTIALS'; message: string }
+  | { ok: false; code: 'RATE_LIMITED'; message: string }
   | { ok: false; code: 'OTHER'; message: string };
 
 export async function loginAction(formData: FormData): Promise<LoginResult> {
@@ -15,6 +18,18 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
 
   if (!email || !password) {
     return { ok: false, code: 'OTHER', message: 'Email and password are required.' };
+  }
+
+  // Rate limit: 10 attempts per IP per 15 minutes, 5 per email per 15 minutes.
+  const h = await headers();
+  const ip = getClientIP(h);
+  const ipAllowed = await checkRateLimit(`login-ip:${ip}`, 10, 15 * 60 * 1000);
+  if (!ipAllowed) {
+    return { ok: false, code: 'RATE_LIMITED', message: 'Too many login attempts. Please try again in a few minutes.' };
+  }
+  const emailAllowed = await checkRateLimit(`login-email:${email}`, 5, 15 * 60 * 1000);
+  if (!emailAllowed) {
+    return { ok: false, code: 'RATE_LIMITED', message: 'Too many login attempts for this email. Please try again in a few minutes.' };
   }
 
   const supabase = await createSupabaseServerClient();
@@ -50,22 +65,33 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
   const userId = authData.user.id;
 
   // Use the same authenticated supabase instance (has the session in memory).
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('users')
     .select('company_id')
     .eq('id', userId)
     .maybeSingle();
+
+  // F-14: Surface DB errors instead of silently redirecting to onboarding.
+  if (profileError) {
+    console.error('[login] profile query error:', profileError.message);
+    return { ok: false, code: 'OTHER', message: 'Something went wrong. Please try again.' };
+  }
 
   if (!profile?.company_id) {
     redirect('/onboarding');
   }
 
   // Check onboarding completion and get workspace slug in one query.
-  const { data: company } = await supabase
+  const { data: company, error: companyError } = await supabase
     .from('companies')
     .select('slug, onboarding_completed_at')
     .eq('id', profile.company_id)
     .maybeSingle();
+
+  if (companyError) {
+    console.error('[login] company query error:', companyError.message);
+    return { ok: false, code: 'OTHER', message: 'Something went wrong. Please try again.' };
+  }
 
   if (!company?.onboarding_completed_at) {
     redirect('/onboarding');
@@ -83,6 +109,18 @@ export async function resendConfirmationAction(email: string) {
   const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail) {
     return { ok: false, error: 'Email is required.' };
+  }
+
+  // Rate limit: 3 per email per hour, failClosed to prevent email-bombing.
+  const h = await headers();
+  const ip = getClientIP(h);
+  const ipAllowed = await checkRateLimit(`resend-ip:${ip}`, 5, 60 * 60 * 1000, { failClosed: true });
+  if (!ipAllowed) {
+    return { ok: false, error: 'Too many requests. Please try again later.' };
+  }
+  const emailAllowed = await checkRateLimit(`resend-email:${normalizedEmail}`, 3, 60 * 60 * 1000, { failClosed: true });
+  if (!emailAllowed) {
+    return { ok: false, error: 'Too many confirmation emails sent. Please try again in an hour.' };
   }
 
   const supabase = await createSupabaseServerClient();
