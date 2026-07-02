@@ -28,11 +28,12 @@ import { getSiteUrl } from '@/app/lib/email/urls';
 import type { SendDocumentInput, SendDocumentResult, DocumentSendAdapter } from './types';
 import { invoiceAdapter } from './adapters/invoice';
 import { orderAdapter, ensureOrderSupplierToken } from './adapters/order';
+import { quoteAdapter, ensureQuoteAcceptanceToken, computeQuoteTotalForMerge } from './adapters/quote';
 
 const ADAPTERS: Record<string, DocumentSendAdapter> = {
   invoice: invoiceAdapter,
   order: orderAdapter,
-  // quote adapter is added in PR 2.
+  quote: quoteAdapter,
 };
 
 export async function sendDocumentMessage(
@@ -89,6 +90,14 @@ export async function sendDocumentMessage(
     token = await ensureOrderSupplierToken(supabase, input.entityId, profile.company_id);
   }
 
+  // Quotes: mint a new token if none exists and the quote is sendable.
+  if (input.entityKind === 'quote' && !token) {
+    const quote = entity as unknown as { accepted_at: string | null; declined_at: string | null; status: string };
+    if (!quote.accepted_at && !quote.declined_at && quote.status !== 'draft') {
+      token = await ensureQuoteAcceptanceToken(supabase, input.entityId, profile.company_id);
+    }
+  }
+
   // ─── 5. Load company row (name, currency) ───
   const { data: company } = await supabase
     .from('companies')
@@ -126,6 +135,23 @@ export async function sendDocumentMessage(
       ...entityMerge,
       order_total_items: itemCount != null ? String(itemCount) : undefined,
       order_link: token ? `${getSiteUrl()}/orders/${token}` : undefined,
+    };
+  }
+
+  // Quotes: inject quote_total (needs customer_quote_lines + tax computation) + quote_link.
+  if (input.entityKind === 'quote') {
+    const quote = entity as unknown as { id: string; tax_rate: number | null; currency: string | null };
+    const quoteTotalString = await computeQuoteTotalForMerge(
+      supabase,
+      quote.id,
+      quote.tax_rate,
+      quote.currency,
+      company?.default_currency ?? 'NZD',
+    );
+    entityMerge = {
+      ...entityMerge,
+      quote_total: quoteTotalString ?? undefined,
+      quote_link: token ? `${getSiteUrl()}/accept/${token}` : undefined,
     };
   }
 

@@ -2068,8 +2068,9 @@ async function markFailed(
     .in('status', ['scheduled', 'dispatching']);
 }
 
-// Mirrors the helper in send-message-actions.ts. Duplicated here
-// because that file is scoped to one route and this module needs to
+// Mirrors the helper in the old send-message-actions.ts (now unified
+// into app/lib/send-document/orchestrator.ts). Duplicated here because
+// the orchestrator is scoped to 'use server' and this module needs to
 // run from the cron route too. If we add a third caller we should
 // hoist this to app/lib/messages/mergeContext.ts.
 async function computeCustomerTotalString(

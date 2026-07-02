@@ -14,7 +14,7 @@ import type { ScheduledTriggerEvent } from '@/app/lib/messages/scheduled-types';
  * follow-up" button across quotes / orders / invoices.
  *
  * Deliberately mirrors the SEND-TIME builder embedded in
- * SendQuoteButton / SendOrderButton / SendInvoiceButton (the
+ * SendDocumentButton (the
  * 'followups' stage): the user adds up to 3 rules, each either a
  * "Triggered follow-up" (fires on an event, optional delay) or a
  * "Time-based follow-up" (a chase that fires after a delay and cancels

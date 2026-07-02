@@ -18,7 +18,7 @@ import { CurrencySelector } from './CurrencySelector';
 import { DownloadSummaryPDFButton } from './DownloadSummaryPDFButton';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
-import { SendQuoteButton } from './SendQuoteButton';
+import { SendDocumentButton } from '@/app/components/send/SendDocumentButton';
 import { WithdrawQuoteButton } from './WithdrawQuoteButton';
 import { ReopenQuoteButton } from './ReopenQuoteButton';
 import { SummaryTabs } from './SummaryTabs';
@@ -478,31 +478,31 @@ export default async function QuoteSummaryPage({
             ) : quote.withdrawn_at ? (
               <ReopenQuoteButton quoteId={id} state="withdrawn" />
             ) : null}
-            <SendQuoteButton
-              quoteId={id}
+            <SendDocumentButton
+              entityKind="quote"
+              entityId={id}
               workspaceSlug={workspaceSlug}
-              existingToken={quote.acceptance_token && !quote.withdrawn_at ? quote.acceptance_token : null}
-              existingExpiresAt={(quote as any).acceptance_token_expires_at ?? null}
-              hasCustomerQuote={hasCustomerQuote}
               emailTemplates={emailTemplates || []}
+              mergeData={{
+                customer_name: quote.customer_name ?? '',
+                quote_number: quote.quote_number != null ? String(quote.quote_number) : '',
+                job_name: quote.job_name ?? '',
+                company_name: quote.cq_company_name || company?.name || '',
+              }}
+              defaultRecipientName={quote.customer_name ?? undefined}
               canFollowups={entitlements.features.followups}
               canEmail={entitlements.features.email_send}
               sendTestTipSeen={sendTestTipSeen}
               libraryFiles={libraryPickerFiles}
-              libraryLocked={!attachmentsEnabled}
-              quoteFiles={(filesData || []).map((f) => ({
+              entityFiles={(filesData || []).map((f) => ({
                 id: f.id,
                 name: f.file_name,
                 fileSize: f.file_size,
               }))}
-              quoteMeta={{
-                customerName: quote.customer_name,
-                quoteNumber: quote.quote_number,
-                jobName: quote.job_name,
-                companyName: quote.cq_company_name || company?.name || null,
-                quoteDate: new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' }),
-              }}
-              showMarginInPreview={!!(quote as { show_margin_in_preview?: boolean | null }).show_margin_in_preview}
+              libraryLocked={!attachmentsEnabled}
+              existingToken={quote.acceptance_token && !quote.withdrawn_at ? quote.acceptance_token : null}
+              existingExpiresAt={(quote as { acceptance_token_expires_at?: string | null }).acceptance_token_expires_at ?? null}
+              showMarginWarning={!!(quote as { show_margin_in_preview?: boolean | null }).show_margin_in_preview}
             />
           </>
         }
