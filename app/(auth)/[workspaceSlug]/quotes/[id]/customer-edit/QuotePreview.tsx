@@ -1,4 +1,4 @@
-﻿import type { QuoteRow } from '@/app/lib/types';
+import type { QuoteRow } from '@/app/lib/types';
 import type { TaxLine } from '@/app/lib/taxes/types';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import { LineEditForm } from './LineEditForm';

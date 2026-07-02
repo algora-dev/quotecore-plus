@@ -25,92 +25,9 @@ import { getUnitLabel } from '@/app/lib/measurements/displayHelpers';
 import { loadFlashingLibrary } from '../drawings/actions';
 
 /** Build the radio-button labels that decorate measurement type with the company's preferred unit. */
-function buildMeasurementLabels(system: MeasurementSystem): Record<MeasurementType, string> {
-  const norm = normalizeMeasurementSystem(system);
-  const areaUnit = norm === 'metric' ? 'm²' : norm === 'imperial_ft' ? 'ft²' : 'RS';
-  const linealUnit = norm === 'metric' ? 'm' : 'ft';
-  const volumeUnit = norm === 'metric' ? 'm³' : 'ft³';
-  return {
-    area: `Area (${areaUnit})`,
-    lineal: `Linear: Single (${linealUnit})`,
-    // `linear` is the legacy enum value (zero rows in production). Kept in
-    // the lookup so an unmigrated row would still render a label rather
-    // than crashing; new code uses `lineal`.
-    linear: `Linear: Single (${linealUnit})`,
-    quantity: 'Quantity',
-    fixed: 'Fixed',
-    // Phase 2 (Generic Trades) additions. Visible in the dropdown only when
-    // NEXT_PUBLIC_GENERIC_TRADES_V1 is on; otherwise filtered out below.
-    length_x_height: `Length x Height: Single (${areaUnit})`,
-    volume: `Volume - Preset Depth (${volumeUnit})`,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    volume_3d: `Volume (${volumeUnit})`,
-    hours_days: 'Hours / Days',
-    count: 'Count (each)',
-    curved_line: `Curved Line (${linealUnit})`,
-    irregular_area: `Irregular Area (${areaUnit})`,
-    multi_lineal: `Linear: Multi-Length (${linealUnit})`,
-    multi_lineal_lxh: `Length x Height: Multi-Length (${areaUnit})`,
-    length_x_height_freestyle: `Length x Height: Custom (${areaUnit})`,
-    multi_lineal_lxh_freestyle: `Length x Height: Multi-Length Custom (${areaUnit})`,
-  };
-}
-
-/** Measurement types shown when the generic-trades flag is off. */
-const ROOFING_DEFAULT_TYPES = new Set<MeasurementType>([
-  'area',
-  'lineal',
-  'quantity',
-  'fixed',
-]);
-
-const PRICING_STRATEGY_LABELS: Record<PricingStrategy, string> = {
-  per_unit: 'Per unit (default)',
-  per_pack_length: 'Fixed Quantity (e.g. 20m cable rolls)',
-  per_pack_area: 'Fixed Quantity (e.g. 50m² tile bundles)',
-  // per_pack_coverage retained for legacy components only; hidden from new
-  // components via allowedStrategiesFor.
-  per_pack_coverage: 'Fixed Quantity (coverage - legacy)',
-  per_pack_volume: 'Fixed Quantity (e.g. 5m³ concrete units),'
-};
-
-const WASTE_UNIT_LABELS: Record<WasteUnit, string> = {
-  percent: 'Percentage (% of measured)',
-  flat: 'Flat \u2014 total length (added once to total)',
-  flat_per_segment: 'Flat \u2014 per segment (added per point-to-point length)',
-};
-
-/** Which pricing strategies are allowed for which measurement types.
- *  Mirrors ck_component_library_strategy_compat from the Phase 2 migration. */
-function allowedStrategiesFor(mt: MeasurementType): PricingStrategy[] {
-  // per_unit always allowed.
-  const base: PricingStrategy[] = ['per_unit'];
-  if (['lineal', 'linear', 'multi_lineal', 'curved_line'].includes(mt)) {
-    base.push('per_pack_length');
-  }
-  if (['area', 'length_x_height', 'length_x_height_freestyle', 'irregular_area', 'multi_lineal_lxh', 'multi_lineal_lxh_freestyle'].includes(mt)) {
-    // per_pack_coverage removed from new components; enum retained for legacy.
-    base.push('per_pack_area');
-  }
-  if (mt === 'volume' || mt === 'volume_3d') {
-    base.push('per_pack_volume');
-  }
-  return base;
-}
-
-const WASTE_LABELS: Record<WasteType, string> = {
-  none: 'None',
-  percent: 'Percentage',
-  fixed: 'Fixed (total)',
-  fixed_per_segment: 'Fixed (per segment)',
-};
-
-const PITCH_LABELS: Record<PitchType, string> = {
-  none: 'None',
-  rafter: 'Rafter Pitch',
-  valley_hip: 'Valley/Hip Pitch',
-};
-
+// F-15: Extracted helpers + sub-components
+import { buildMeasurementLabels, allowedStrategiesFor, ROOFING_DEFAULT_TYPES, PRICING_STRATEGY_LABELS, WASTE_UNIT_LABELS, WASTE_LABELS, PITCH_LABELS } from './parts/helpers';
+import { TypeSpecificFields } from './parts/TypeSpecificFields';
 export function ComponentList({
   initialComponents,
   workspaceSlug,
@@ -1519,43 +1436,3 @@ export function ComponentList({
  * length_x_height, depth for volume, time-unit for hours_days.
  * Pricing strategy and waste interpretation are now inline in the main form.
  */
-function TypeSpecificFields(props: {
-  measurementType: MeasurementType;
-  heightMm: string;
-  setHeightMm: (v: string) => void;
-  depthMm: string;
-  setDepthMm: (v: string) => void;
-  hoursUnit: 'hr' | 'day';
-  setHoursUnit: (v: 'hr' | 'day') => void;
-}) {
-  const { measurementType, heightMm, setHeightMm, depthMm, setDepthMm, hoursUnit, setHoursUnit } = props;
-  if (!['length_x_height', 'multi_lineal_lxh', 'volume', 'volume_3d', 'hours_days'].includes(measurementType)) return null;
-  return (
-    <div className="space-y-3 mt-1">
-      {(measurementType === 'length_x_height' || measurementType === 'multi_lineal_lxh') && (
-        <div>
-          <label className="block text-xs text-slate-500 mb-1">Component height (mm)</label>
-          <input type="number" step="1" placeholder="e.g. 2400" value={heightMm} onChange={(e) => setHeightMm(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
-          <p className="text-xs text-slate-400 mt-1">Area = measured length x height.</p>
-        </div>
-      )}
-      {/* volume_3d has NO preset depth - depth is entered per measurement in the quote builder / takeoff */}
-      {measurementType === 'volume' && (
-        <div>
-          <label className="block text-xs text-slate-500 mb-1">Component depth (mm)</label>
-          <input type="number" step="1" placeholder="e.g. 100" value={depthMm} onChange={(e) => setDepthMm(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
-          <p className="text-xs text-slate-400 mt-1">Volume = measured area x depth.</p>
-        </div>
-      )}
-      {measurementType === 'hours_days' && (
-        <div>
-          <label className="block text-xs text-slate-500 mb-1">Time unit</label>
-          <select value={hoursUnit} onChange={(e) => setHoursUnit(e.target.value as 'hr' | 'day')} className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
-            <option value="hr">Hours</option>
-            <option value="day">Days</option>
-          </select>
-        </div>
-      )}
-    </div>
-  );
-}
