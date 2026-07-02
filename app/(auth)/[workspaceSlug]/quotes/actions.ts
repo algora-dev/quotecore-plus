@@ -1270,7 +1270,7 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
   }
 
   const { computeMaterialCostByStrategy, computePackCount } = await import('@/app/lib/pricing/engine');
-  const materialCost = computeMaterialCostByStrategy({
+  const costResult = computeMaterialCostByStrategy({
     strategy,
     totalQuantity: totalQty,
     materialRate: comp?.material_rate ?? 0,
@@ -1278,6 +1278,10 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
     packSize,
     packCoverageM2,
   });
+  const materialCost = costResult.cost;
+  if (costResult.packDataMissing) {
+    console.warn(`[recalc] quote_component ${quoteComponentId}: pack strategy ${strategy} has missing pack data — material cost set to £0`);
+  }
   const labourCost = totalQty * (comp?.labour_rate ?? 0);
   const packCount = computePackCount({ strategy, totalQuantity: totalQty, packSize, packCoverageM2 });
   const pricedQuantity = strategy === 'per_unit' || packCount <= 0 ? null : packCount;

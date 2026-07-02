@@ -126,28 +126,36 @@ export const getCurrentProfile = cache(async (existingClient?: SupabaseClient<Da
   }
 
   // Check if this user's account is currently being impersonated by an admin
-  // (user-facing banner). Only check for non-admin users.
+  // (user-facing banner). Only check for non-admin users, and only when the
+  // impersonation cookie is present — the cookie is set on the admin's session
+  // when they start impersonating, so it's a cheap signal that this *might* be
+  // an impersonation session. This avoids a service-role query on every
+  // authenticated request for normal users.
   if (!data.is_admin) {
     try {
-      const { createAdminClient } = await import('./admin');
-      const admin = createAdminClient();
-      const { data: activeSession } = await admin
-        .from('admin_impersonation_sessions')
-        .select('admin_user_id, started_at')
-        .eq('target_user_id', user.id)
-        .is('ended_at', null)
-        .gt('started_at', new Date(Date.now() - 30 * 60 * 1000).toISOString())
-        .order('started_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const cookieStore = await cookies();
+      const sessionId = cookieStore.get('qcp_impersonation')?.value;
+      if (sessionId) {
+        const { createAdminClient } = await import('./admin');
+        const admin = createAdminClient();
+        const { data: activeSession } = await admin
+          .from('admin_impersonation_sessions')
+          .select('admin_user_id, started_at')
+          .eq('target_user_id', user.id)
+          .is('ended_at', null)
+          .gt('started_at', new Date(Date.now() - 30 * 60 * 1000).toISOString())
+          .order('started_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      if (activeSession) {
-        const s = activeSession as { admin_user_id: string; started_at: string };
-        return {
-          ...data,
-          isBeingImpersonated: true as const,
-          impersonationStartedAt: s.started_at,
-        };
+        if (activeSession) {
+          const s = activeSession as { admin_user_id: string; started_at: string };
+          return {
+            ...data,
+            isBeingImpersonated: true as const,
+            impersonationStartedAt: s.started_at,
+          };
+        }
       }
     } catch {
       // ignore — if check fails, just return normal profile

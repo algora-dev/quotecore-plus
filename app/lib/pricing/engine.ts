@@ -127,6 +127,12 @@ export type PricingStrategy =
   | 'per_pack_coverage'
   | 'per_pack_volume';
 
+export interface MaterialCostResult {
+  cost: number;
+  /** True when a pack strategy had missing/invalid pack data and cost was set to 0. */
+  packDataMissing: boolean;
+}
+
 /**
  * Computes material cost for a component given its purchasing strategy.
  *
@@ -139,9 +145,11 @@ export type PricingStrategy =
  *   quantity (e.g. 20L) for display only; `pack_coverage_m2` is what the
  *   pack actually covers. Cost = `ceil(area_m2 / pack_coverage_m2) * pack_price`.
  *
- * Returns 0 for nonsense inputs rather than throwing - the DB
- * ck_component_library_pack_values_positive CHECK already rejects bad
- * data on write, so this is a defensive belt at the math layer.
+ * Returns { cost: 0, packDataMissing: true } for nonsense inputs rather than
+ * throwing - the DB ck_component_library_pack_values_positive CHECK already
+ * rejects bad data on write, so this is a defensive belt at the math layer.
+ * Callers should check `packDataMissing` to warn the user (e.g. ⚠ badge in
+ * the quote builder) so quotes don't silently ship with £0 material cost.
  */
 export function computeMaterialCostByStrategy(args: {
   strategy: PricingStrategy;
@@ -150,26 +158,26 @@ export function computeMaterialCostByStrategy(args: {
   packPrice: number | null;
   packSize: number | null;
   packCoverageM2: number | null;
-}): number {
+}): MaterialCostResult {
   const { strategy, totalQuantity, materialRate, packPrice, packSize, packCoverageM2 } = args;
 
-  if (totalQuantity <= 0) return 0;
+  if (totalQuantity <= 0) return { cost: 0, packDataMissing: false };
 
   switch (strategy) {
     case 'per_unit': {
-      return totalQuantity * materialRate;
+      return { cost: totalQuantity * materialRate, packDataMissing: false };
     }
     case 'per_pack_length':
     case 'per_pack_area':
     case 'per_pack_volume': {
-      if (!packPrice || !packSize || packSize <= 0) return 0;
+      if (!packPrice || !packSize || packSize <= 0) return { cost: 0, packDataMissing: true };
       const packs = Math.ceil(totalQuantity / packSize);
-      return packs * packPrice;
+      return { cost: packs * packPrice, packDataMissing: false };
     }
     case 'per_pack_coverage': {
-      if (!packPrice || !packCoverageM2 || packCoverageM2 <= 0) return 0;
+      if (!packPrice || !packCoverageM2 || packCoverageM2 <= 0) return { cost: 0, packDataMissing: true };
       const packs = Math.ceil(totalQuantity / packCoverageM2);
-      return packs * packPrice;
+      return { cost: packs * packPrice, packDataMissing: false };
     }
   }
 }
