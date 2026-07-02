@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import type { MaterialOrderRow, MaterialOrderLineRow, FlashingLibraryRow } from '@/app/lib/types';
 import { markOrderAsOrdered, resetOrder } from '../../order-list-actions';
-import { SendOrderButton } from './SendOrderButton';
+import { SendDocumentButton } from '@/app/components/send/SendDocumentButton';
 import { ResetButton } from '@/app/components/ResetButton';
 import { OrderBody } from '@/app/orders/[token]/OrderBody';
 import type { PickerFile } from '@/app/components/attachments/AttachmentSendPicker';
@@ -180,19 +180,25 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
           >
             Print / Save PDF
           </button>
-          <SendOrderButton
-            orderId={order.id}
-            orderNumber={order.order_number}
+          <SendDocumentButton
+            entityKind="order"
+            entityId={order.id}
             workspaceSlug={workspaceSlug}
-            existingToken={order.acceptance_token ?? null}
+            emailTemplates={emailTemplates ?? []}
+            mergeData={{
+              order_number: order.order_number,
+              order_reference: order.reference ?? '',
+              order_supplier: order.to_supplier ?? '',
+              company_name: order.from_company ?? '',
+            }}
             defaultRecipientName={order.to_supplier}
-            companyName={order.from_company}
-            libraryFiles={libraryFiles}
-            libraryLocked={libraryLocked}
-            emailTemplates={emailTemplates}
             canFollowups={canFollowups}
             canEmail={canEmail}
             sendTestTipSeen={sendTestTipSeen}
+            libraryFiles={libraryFiles}
+            entityFiles={[]}
+            libraryLocked={libraryLocked}
+            existingToken={order.acceptance_token ?? null}
           />
         </div>
       </div>

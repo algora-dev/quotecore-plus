@@ -6,7 +6,8 @@ import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/ed
 import { saveInvoiceLines, saveInvoiceMeta, saveInvoicePaymentDetails, cancelInvoice, confirmPaymentReceived, markInvoiceSentByLink, resetInvoice } from '../actions';
 import { ResetButton } from '@/app/components/ResetButton';
 import { InvoicePreview } from './InvoicePreview';
-import { SendInvoiceButton, type EmailTemplate } from './SendInvoiceButton';
+import { SendDocumentButton } from '@/app/components/send/SendDocumentButton';
+import type { EmailTemplate } from '@/app/components/send/types';
 import { elementToPdf } from '@/app/lib/pdf/renderPreviewToPdf';
 import { AddInvoiceLineModal } from './AddInvoiceLineModal';
 import { InvoiceHeaderModal } from './InvoiceHeaderModal';
@@ -87,6 +88,8 @@ interface Props {
   invoice: InvoiceRow;
   savedLines: InvoiceLineRow[];
   emailTemplates: EmailTemplate[];
+  libraryFiles: { id: string; name: string; fileSize: number }[];
+  libraryLocked: boolean;
   workspaceSlug: string;
   defaultLogoUrl: string | null;
   currency: string;
@@ -132,6 +135,8 @@ export function InvoiceEditor({
   componentLibrary,
   activity,
   emailTemplates,
+  libraryFiles,
+  libraryLocked,
   canFollowups = false,
   canEmail = false,
   sendTestTipSeen = false,
@@ -512,25 +517,29 @@ export function InvoiceEditor({
 
           {/* Send Invoice - pinned far right (primary action), matching the
               Quotes/Orders editors where Send is the right-most action. */}
-          <SendInvoiceButton
-            invoiceId={initial.id}
+          <SendDocumentButton
+            entityKind="invoice"
+            entityId={initial.id}
             workspaceSlug={workspaceSlug}
-            publicToken={initial.public_token}
-            status={initial.status}
             emailTemplates={emailTemplates}
+            mergeData={{
+              customer_name: initial.customer_name ?? '',
+              invoice_number: initial.invoice_number ?? '',
+              invoice_total: formatCurrency(Number(initial.total ?? 0), currency),
+              company_name: initial.cq_company_name ?? '',
+              due_date: initial.due_date
+                ? new Date(initial.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                : '',
+            }}
+            defaultRecipientEmail={initial.customer_email}
             canFollowups={canFollowups}
             canEmail={canEmail}
             sendTestTipSeen={sendTestTipSeen}
-            invoiceMeta={{
-              customerName: initial.customer_name ?? '',
-              invoiceNumber: initial.invoice_number ?? '',
-              invoiceTotal: formatCurrency(Number(initial.total ?? 0), currency),
-              companyName: initial.cq_company_name ?? null,
-              dueDate: initial.due_date
-                ? new Date(initial.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-                : null,
-            }}
-            defaultRecipientEmail={initial.customer_email}
+            libraryFiles={libraryFiles}
+            entityFiles={[]}
+            libraryLocked={libraryLocked}
+            existingToken={initial.public_token}
+            hidden={['cancelled', 'paid'].includes(initial.status)}
           />
         </div>
       </div>

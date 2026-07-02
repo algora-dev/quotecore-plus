@@ -113,11 +113,25 @@ export default async function InvoicePage({ params }: Props) {
     .eq('company_id', profile.company_id)
     .order('name');
 
+  // Load library attachments for the send modal's attachment picker.
+  // Invoices now support library-file attachments (approved 2026-07-02).
+  const { data: libraryAttachments } = await admin
+    .from('company_attachments')
+    .select('id, file_name, file_size')
+    .eq('company_id', profile.company_id)
+    .order('file_name');
+  const libraryFiles = (libraryAttachments ?? []).map((a) => ({
+    id: a.id,
+    name: a.file_name,
+    fileSize: a.file_size,
+  }));
+
   // Whether this company's plan includes scheduled follow-ups (mirrors
   // the quote/order send surfaces).
   const entitlements = await loadCompanyEntitlements(profile.company_id);
   const canFollowups = entitlements.features.followups;
   const canEmail = entitlements.features.email_send;
+  const libraryLocked = !entitlements.features.attachment_library;
 
   // One-time "test it on yourself first" send tip: has THIS user seen it?
   const { data: _stt } = await supabase
@@ -156,6 +170,8 @@ export default async function InvoicePage({ params }: Props) {
       componentLibrary={componentLibrary ?? []}
       activity={(activity ?? []) as unknown as { id: string; event_type: string; metadata: Record<string, unknown> | null; created_at: string }[]}
       emailTemplates={(emailTemplates ?? []) as { id: string; name: string; subject: string; body: string; is_default: boolean | null }[]}
+      libraryFiles={libraryFiles}
+      libraryLocked={libraryLocked}
       canFollowups={canFollowups}
       canEmail={canEmail}
       sendTestTipSeen={sendTestTipSeen}
