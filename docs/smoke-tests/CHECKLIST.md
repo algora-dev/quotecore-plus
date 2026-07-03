@@ -2,9 +2,21 @@
 
 > Single source of truth for **what needs verifying on dev**. Gavin adds items when he ships; Shaun ticks them off. One line per item - detailed per-tier walkthrough scripts live alongside (starter / professional / storage-limit) and are referenced, not duplicated.
 >
-> **Status keys:** `[ ]` pending Â· `[x]` passed Â· `[!]` failed (note why) Â· `[~]` partial/needs retest
+> **Status keys:** `[ ]` pending · `[x]` passed · `[!]` failed (note why) · `[~]` partial/needs retest
 > Passed items move to **Passed (recent)** on the next update; stale ones pruned.
 > Test env: `quotecore-plus-dev.vercel.app` (dev = one Supabase DB shared with main).
+
+---
+
+# 2026-07-03 — Takeoff Canvas Bug Fix (undo/redo rewrite, image lock, mojibake)
+
+- [ ] **Symbols render correctly** — open takeoff, confirm back arrow (← SVG), checkmark (✓ SVG), undo/redo buttons (SVG icons), m², ft², °, · all render correctly. No mojibake (â†, âœ“, mÂ², etc.).
+- [ ] **Image is locked** — try to click+drag the plan image → cannot move it. Alt+drag pans the view. Zoom In/Out/Fit/Reset work. Image never disappears during undo.
+- [ ] **Undo = one step only** — calibrate → add roof area → add component A → add component B → Undo → only B removed (canvas + sidebar). Undo → only A removed. Undo → roof area removed. Each undo = exactly one step.
+- [ ] **Points don't block after undo** — draw partial polygon (3 clicks) → Undo → no stray dots; click to start new point works immediately.
+- [ ] **Redo repopulates correctly** — after undoing, Redo re-adds each measurement in order, on canvas + sidebar.
+- [ ] **Save uses live state** — draw 3 measurements, undo 1, Save → exit → re-enter (Edit This Plan) → exactly 2 measurements reconstructed; calibration scale restored.
+- [ ] **Reconstruction still works** — existing saved takeoff with areas + lines + points re-opens with all shapes visible and image immovable.
 
 ---
 
