@@ -1037,11 +1037,11 @@ export function TakeoffWorkstation({
   // Issue 5: Handle area-assignment modal confirmation.
   // When the user draws a new area polygon in mode=add (editing existing plan),
   // they choose which existing area to add the measurement to, or create a new area.
-  const handleConfirmAreaAssignment = () => {
+  const handleConfirmAreaAssignment = async () => {
     if (!pendingNewArea) return;
     pushHistorySnapshot();
     cleanupInProgressObjects();
-    const areaId = `area-${Date.now()}`;
+    const clientId = `area-${Date.now()}`;
 
     // Draw the polygon on canvas (tagged with measurementId)
     const polygon = new Polygon(pendingNewArea.points, {
@@ -1051,33 +1051,54 @@ export function TakeoffWorkstation({
       selectable: false,
       evented: false,
     });
-    (polygon as unknown as { measurementId: string }).measurementId = areaId;
+    (polygon as unknown as { measurementId: string }).measurementId = clientId;
     fabricRef.current?.add(polygon);
 
     if (areaAssignmentChoice === '__new__') {
-      // Create a new roof area with the user-provided name
-      const newName = areaAssignmentNewName.trim() || `Area ${roofAreas.length + 1}`;
-      const newArea: RoofArea = {
-        id: areaId,
-        name: newName,
-        points: pendingNewArea.points,
-        area: pendingNewArea.area,
-        pitch: 0,
-        visible: true,
-        polygon,
-        markers: [],
-      };
-      setRoofAreas([...roofAreas, newArea]);
+      // Batch 6: create the DB row immediately so the area appears in the
+      // left panel switcher with a real UUID. Auto-dedup name handled by
+      // the server action (scans existing labels, picks next free "Area N").
+      const userLabel = areaAssignmentNewName.trim();
+      try {
+        const dbArea = await createNewTakeoffArea(quote.id);
+        if (!dbArea.ok || !dbArea.areaId) throw new Error(dbArea.error || 'Failed to create area');
+        const finalLabel = userLabel || dbArea.label || 'Area';
+        const newArea: RoofArea = {
+          id: dbArea.areaId, // real DB UUID
+          name: finalLabel,
+          points: pendingNewArea.points,
+          area: pendingNewArea.area,
+          pitch: 0,
+          visible: true,
+          polygon,
+          markers: [],
+        };
+        setRoofAreas(prev => [...prev, newArea]);
+        setAreaList(prev => [...prev, { id: dbArea.areaId!, label: finalLabel }]);
+        setActiveAreaId(dbArea.areaId!);
+        setActiveSaveRoofAreaId(dbArea.areaId!);
+      } catch (err) {
+        // Fallback: use client-side ID if server action fails
+        console.error('[AreaAssignment] createNewTakeoffArea failed:', err);
+        const newName = userLabel || `Area ${roofAreas.length + 1}`;
+        const newArea: RoofArea = {
+          id: clientId,
+          name: newName,
+          points: pendingNewArea.points,
+          area: pendingNewArea.area,
+          pitch: 0,
+          visible: true,
+          polygon,
+          markers: [],
+        };
+        setRoofAreas([...roofAreas, newArea]);
+      }
     } else {
-      // Add to an existing area: create a new roof area entry that will be saved
-      // as an additional area measurement linked to the same quote_roof_areas row.
-      // The save logic (Issue 5 fix below) routes this to the existing area via
-      // activeSaveRoofAreaId, and the measurement row stores canvas_points for
-      // reconstruction on next edit.
+      // Add to existing area: set activeAreaId to the chosen area
       const existingArea = existingRoofAreas.find(a => a.id === areaAssignmentChoice);
       const newName = existingArea?.label || 'Existing Area';
       const newArea: RoofArea = {
-        id: areaId,
+        id: clientId,
         name: newName,
         points: pendingNewArea.points,
         area: pendingNewArea.area,
@@ -1087,6 +1108,9 @@ export function TakeoffWorkstation({
         markers: [],
       };
       setRoofAreas([...roofAreas, newArea]);
+      // Switch active context to the chosen existing area
+      setActiveAreaId(areaAssignmentChoice);
+      setActiveSaveRoofAreaId(areaAssignmentChoice);
     }
 
     // Reset state
