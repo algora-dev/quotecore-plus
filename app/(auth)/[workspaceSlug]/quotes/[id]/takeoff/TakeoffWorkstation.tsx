@@ -1570,6 +1570,7 @@ export function TakeoffWorkstation({
             value: m.value,
             points: m.points,
             visible: m.visible,
+            quoteRoofAreaId: activeAreaId ?? activeSaveRoofAreaId,
           });
         });
       });
@@ -1590,6 +1591,7 @@ export function TakeoffWorkstation({
             name: area.name,
             points: area.points,
             visible: area.visible,
+            quoteRoofAreaId: activeAreaId ?? activeSaveRoofAreaId,
           });
         });
       } else {
@@ -1609,6 +1611,7 @@ export function TakeoffWorkstation({
               name: area.name,
               points: area.points,
               visible: area.visible,
+              quoteRoofAreaId: activeAreaId ?? activeSaveRoofAreaId,
             });
           }
         });

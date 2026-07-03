@@ -15,6 +15,7 @@ interface TakeoffMeasurement {
   points?: { x: number; y: number }[];
   visible: boolean;
   pageId?: string | null; // Phase 7: optional takeoff_pages FK
+  quoteRoofAreaId?: string | null; // Batch 5: area-scoped measurements
   /** P1-1a H-01: unit override for measurements loaded from DB (other pages).
    *  When set, this overrides the top-level `unit` param for this measurement. */
   measurementUnit?: string;
