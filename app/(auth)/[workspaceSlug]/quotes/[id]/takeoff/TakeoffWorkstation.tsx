@@ -7,7 +7,7 @@ import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
-import { useCanvasHistory } from '@/app/lib/takeoff/useCanvasHistory';
+import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
 import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
 import type { TakeoffHydrationData } from './actions';
 import { uploadCanvasImage } from './uploadCanvasImage';
@@ -142,6 +142,28 @@ interface Calibration {
   scale: number;
 }
 
+/** Serializable undo/redo snapshot. Contains only plain data — no Fabric refs.
+ *  The canvas is rebuilt from this via redrawCanvasFromState(). */
+interface TakeoffSnapshot {
+  componentMeasurements: { componentId: string; expanded: boolean; measurements: { id: string; type: ComponentMeasurement['type']; value: number; points?: { x: number; y: number }[]; visible: boolean; fromPageId?: string | null }[] }[];
+  roofAreas: { id: string; name: string; points: { x: number; y: number }[]; area: number; pitch: number; visible: boolean }[];
+  calibrations: Calibration[];
+  calibrationPoints: CalibrationPoint[];
+  calibrationConfirmed: boolean;
+  calibrationMode: boolean;
+  areaMode: boolean;
+  areaPoints: { x: number; y: number }[];
+  areaSubTool: 'polygon' | 'rect';
+  lineMode: boolean;
+  linePoints: { x: number; y: number }[];
+  pointMode: boolean;
+  multiLinealMode: boolean;
+  multiLinealPoints: { x: number; y: number }[];
+  activeComponentIds: string[];
+  selectedComponentId: string | null;
+  activeSaveRoofAreaId: string | null;
+}
+
 export function TakeoffWorkstation({
   workspaceSlug,
   quote,
@@ -253,7 +275,7 @@ export function TakeoffWorkstation({
   const [showPitchOnlyPrompt, setShowPitchOnlyPrompt] = useState(false);
   const [pitchOnlyInput, setPitchOnlyInput] = useState('');
 
-  // Volume (L Ã— W Ã— D) - depth prompt state.
+  // Volume (L × W × D) - depth prompt state.
   // Fires after the area polygon is closed for a volume_3d component.
   const [showVolumeDepthPrompt, setShowVolumeDepthPrompt] = useState(false);
   const [volumeDepthInput, setVolumeDepthInput] = useState('');
@@ -366,161 +388,222 @@ export function TakeoffWorkstation({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quote.id, initialPageId]);
 
-  // â”€â”€â”€ Canvas-rework: Undo/Redo system â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // Snapshots both canvas JSON and React state together to avoid the sync
-  // issue that plagued the old FlashingCanvas history (which only restored
-  // canvas, not React state).
-  const history = useCanvasHistory(20);
+  // ─── State-only Undo/Redo system ───────────────────────────────────────
+  // Stores plain serializable data snapshots — no Fabric.js canvas JSON.
+  // The canvas is redrawn from React state after every undo/redo via
+  // redrawCanvasFromState(). This fixes:
+  // - Stale closures in once-bound canvas listeners (undo jumped to start)
+  // - Lost measurementId during toJSON/loadFromJSON round-trip
+  // - Async loadFromJSON races causing the image to flash/disappear
+  // - Orphan markers persisting on canvas after undo
+  const history = useStateHistory<TakeoffSnapshot>(30);
 
-  // Helper: capture all relevant React state for an undo snapshot.
-  // Called BEFORE every canvas mutation.
-  const pushHistorySnapshot = useCallback(() => {
-    if (!fabricRef.current) return;
-    history.pushSnapshot(fabricRef.current, {
-      componentMeasurements,
-      roofAreas,
-      calibrations,
-      calibrationPoints,
+  // Bump this to trigger a canvas redraw after state restoration.
+  const [redrawNonce, setRedrawNonce] = useState(0);
+
+  // Capture all relevant React state for an undo snapshot.
+  // Strips non-serializable Fabric refs (canvasObjects, polygon, markers)
+  // before storing — they are rebuilt by redrawCanvasFromState().
+  const captureSnapshot = useCallback((): TakeoffSnapshot => {
+    return {
+      componentMeasurements: componentMeasurements.map(c => ({
+        componentId: c.componentId,
+        expanded: c.expanded,
+        measurements: c.measurements.map(m => ({
+          id: m.id,
+          type: m.type,
+          value: m.value,
+          points: m.points ? m.points.map(p => ({ x: p.x, y: p.y })) : undefined,
+          visible: m.visible,
+          fromPageId: m.fromPageId,
+          // canvasObjects stripped — rebuilt on redraw
+        })),
+      })),
+      roofAreas: roofAreas.map(ra => ({
+        id: ra.id,
+        name: ra.name,
+        points: ra.points.map(p => ({ x: p.x, y: p.y })),
+        area: ra.area,
+        pitch: ra.pitch,
+        visible: ra.visible,
+        // polygon + markers stripped — rebuilt on redraw
+      })),
+      calibrations: calibrations.map(c => ({ ...c })),
+      calibrationPoints: calibrationPoints.map(p => ({ ...p })),
       calibrationConfirmed,
       calibrationMode,
       areaMode,
-      areaPoints,
+      areaPoints: areaPoints.map(p => ({ ...p })),
       areaSubTool,
       lineMode,
-      linePoints,
+      linePoints: linePoints.map(p => ({ ...p })),
       pointMode,
       multiLinealMode,
-      multiLinealPoints,
-      multiLinealSegmentObjects,
-      pendingVolumePolygon,
-      pendingAreaPoints,
-      activeComponentIds,
+      multiLinealPoints: multiLinealPoints.map(p => ({ ...p })),
+      // multiLinealSegmentObjects are Fabric objects — stripped, rebuilt on redraw
+      activeComponentIds: [...activeComponentIds],
       selectedComponentId,
       activeSaveRoofAreaId,
-    });
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [componentMeasurements, roofAreas, calibrations, calibrationPoints,
       calibrationConfirmed, calibrationMode, areaMode, areaPoints, areaSubTool,
       lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints,
-      multiLinealSegmentObjects, pendingVolumePolygon, pendingAreaPoints,
       activeComponentIds, selectedComponentId, activeSaveRoofAreaId]);
 
-  // Restore canvas + state from a history snapshot.
-  const restoreSnapshot = useCallback((snapshot: { canvasJSON: string; reactState: Record<string, unknown> }) => {
-    if (!fabricRef.current) return;
+  // Push a snapshot before a committed action. Called from React handlers
+  // (NOT from the once-bound canvas mouse:down listener) so closures are fresh.
+  const pushHistorySnapshot = useCallback(() => {
+    history.pushSnapshot(captureSnapshot());
+  }, [history, captureSnapshot]);
+
+  // Clear all non-background objects and rebuild from current React state.
+  // The background image (canvas.backgroundImage) survives because it is
+  // not in canvas.getObjects().
+  const redrawCanvasFromState = useCallback(() => {
     const canvas = fabricRef.current;
-    const data = JSON.parse(snapshot.canvasJSON);
-    canvas.loadFromJSON(data, () => {
-      canvas.renderAll();
-      // Re-link canvasObjects on measurements by matching measurementId tags.
-      const allObjects = canvas.getObjects();
-      const restoredMeasurements = snapshot.reactState.componentMeasurements as ComponentWithMeasurements[];
-      if (restoredMeasurements) {
-        restoredMeasurements.forEach(comp => {
-          comp.measurements.forEach(m => {
-            m.canvasObjects = allObjects.filter((obj: any) => obj.measurementId === m.id);
-          });
-        });
-        setComponentMeasurements(restoredMeasurements);
-      }
-      const restoredRoofAreas = snapshot.reactState.roofAreas as RoofArea[];
-      if (restoredRoofAreas) {
-        restoredRoofAreas.forEach(ra => {
-          ra.polygon = allObjects.find((obj: any) => obj.measurementId === ra.id && obj.type === 'polygon');
-          ra.markers = allObjects.filter((obj: any) => obj.measurementId === ra.id && obj.type === 'circle');
-        });
-        setRoofAreas(restoredRoofAreas);
-      }
+    if (!canvas) return;
+
+    // Remove every object (background image is NOT in getObjects()).
+    const objects = canvas.getObjects();
+    objects.slice().forEach((obj) => canvas.remove(obj));
+
+    // Rebuild from state using reconstructCanvas.
+    const result = reconstructCanvas(canvas, {
+      componentMeasurements: componentMeasurements.map(c => ({
+        componentId: c.componentId,
+        measurements: c.measurements.map(m => ({
+          id: m.id,
+          type: m.type,
+          value: m.value,
+          points: m.points,
+          visible: m.visible,
+          fromPageId: m.fromPageId,
+        })),
+      })),
+      roofAreas: roofAreas.map(ra => ({
+        id: ra.id,
+        name: ra.name,
+        points: ra.points,
+        area: ra.area,
+        pitch: ra.pitch,
+        visible: ra.visible,
+      })),
+      componentColors,
+      currentPageId: pages[currentPageIndex]?.id ?? null,
     });
-    // Restore simple state values
-    setCalibrations((snapshot.reactState.calibrations as Calibration[]) || []);
-    setCalibrationPoints((snapshot.reactState.calibrationPoints as CalibrationPoint[]) || []);
-    setCalibrationConfirmed(snapshot.reactState.calibrationConfirmed as boolean ?? false);
-    setCalibrationMode(snapshot.reactState.calibrationMode as boolean ?? false);
-    setAreaMode(snapshot.reactState.areaMode as boolean ?? false);
-    setAreaPoints((snapshot.reactState.areaPoints as { x: number; y: number }[]) || []);
-    setAreaSubTool(snapshot.reactState.areaSubTool as 'polygon' | 'rect' ?? 'polygon');
-    setLineMode(snapshot.reactState.lineMode as boolean ?? false);
-    setLinePoints((snapshot.reactState.linePoints as { x: number; y: number }[]) || []);
-    setPointMode(snapshot.reactState.pointMode as boolean ?? false);
-    setMultiLinealMode(snapshot.reactState.multiLinealMode as boolean ?? false);
-    setMultiLinealPoints((snapshot.reactState.multiLinealPoints as { x: number; y: number }[]) || []);
-    setMultiLinealSegmentObjects((snapshot.reactState.multiLinealSegmentObjects as any[]) || []);
-    setPendingVolumePolygon(snapshot.reactState.pendingVolumePolygon ?? null);
-    setPendingAreaPoints((snapshot.reactState.pendingAreaPoints as { x: number; y: number }[]) || []);
-    setActiveComponentIds((snapshot.reactState.activeComponentIds as string[]) || []);
-    setSelectedComponentId(snapshot.reactState.selectedComponentId as string | null ?? null);
-    setActiveSaveRoofAreaId(snapshot.reactState.activeSaveRoofAreaId as string | null ?? null);
+
+    // Update React state with fresh canvasObjects refs.
+    setComponentMeasurements(result.componentMeasurements as ComponentWithMeasurements[]);
+    setRoofAreas(result.roofAreas as RoofArea[]);
+
+    // Redraw in-progress drawing buffers if a tool is active.
+    if (areaMode && areaPoints.length > 0) {
+      areaPoints.forEach(p => {
+        const marker = new Circle({
+          left: p.x, top: p.y, radius: 4,
+          fill: '#f59e0b', stroke: '#000', strokeWidth: 1,
+          originX: 'center', originY: 'center',
+          selectable: false, evented: false, hasControls: false, hasBorders: false,
+        });
+        canvas.add(marker);
+      });
+    }
+    if (lineMode && linePoints.length > 0) {
+      linePoints.forEach(p => {
+        const marker = new Circle({
+          left: p.x, top: p.y, radius: 4,
+          fill: '#f59e0b', stroke: '#000', strokeWidth: 1,
+          originX: 'center', originY: 'center',
+          selectable: false, evented: false, hasControls: false, hasBorders: false,
+        });
+        canvas.add(marker);
+      });
+    }
+    if (multiLinealMode && multiLinealPoints.length > 0) {
+      multiLinealPoints.forEach(p => {
+        const marker = new Circle({
+          left: p.x, top: p.y, radius: 4,
+          fill: '#f59e0b', stroke: '#000', strokeWidth: 1,
+          originX: 'center', originY: 'center',
+          selectable: false, evented: false, hasControls: false, hasBorders: false,
+        });
+        canvas.add(marker);
+      });
+    }
+
+    canvas.requestRenderAll();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [componentMeasurements, roofAreas, componentColors, pages, currentPageIndex,
+      areaMode, areaPoints, lineMode, linePoints, multiLinealMode, multiLinealPoints]);
+
+  // Trigger redraw after state has been committed by undo/redo.
+  useEffect(() => {
+    if (redrawNonce > 0) {
+      redrawCanvasFromState();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [redrawNonce]);
 
   const handleUndo = useCallback(() => {
-    if (!fabricRef.current) return;
-    const snapshot = history.undo(fabricRef.current, {
-      componentMeasurements,
-      roofAreas,
-      calibrations,
-      calibrationPoints,
-      calibrationConfirmed,
-      calibrationMode,
-      areaMode,
-      areaPoints,
-      areaSubTool,
-      lineMode,
-      linePoints,
-      pointMode,
-      multiLinealMode,
-      multiLinealPoints,
-      multiLinealSegmentObjects,
-      pendingVolumePolygon,
-      pendingAreaPoints,
-      activeComponentIds,
-      selectedComponentId,
-      activeSaveRoofAreaId,
-    });
-    if (snapshot) {
-      restoreSnapshot(snapshot);
-    }
+    const snapshot = history.undo(captureSnapshot());
+    if (!snapshot) return;
+    // Restore plain state values.
+    setComponentMeasurements(snapshot.componentMeasurements.map(c => ({
+      ...c,
+      measurements: c.measurements.map(m => ({ ...m, canvasObjects: [] })),
+    })));
+    setRoofAreas(snapshot.roofAreas.map(ra => ({ ...ra, polygon: undefined, markers: [] })));
+    setCalibrations(snapshot.calibrations);
+    setCalibrationPoints(snapshot.calibrationPoints);
+    setCalibrationConfirmed(snapshot.calibrationConfirmed);
+    setCalibrationMode(snapshot.calibrationMode);
+    setAreaMode(snapshot.areaMode);
+    setAreaPoints(snapshot.areaPoints);
+    setAreaSubTool(snapshot.areaSubTool);
+    setLineMode(snapshot.lineMode);
+    setLinePoints(snapshot.linePoints);
+    setPointMode(snapshot.pointMode);
+    setMultiLinealMode(snapshot.multiLinealMode);
+    setMultiLinealPoints(snapshot.multiLinealPoints);
+    setMultiLinealSegmentObjects([]);
+    setActiveComponentIds(snapshot.activeComponentIds);
+    setSelectedComponentId(snapshot.selectedComponentId);
+    setActiveSaveRoofAreaId(snapshot.activeSaveRoofAreaId);
+    // Trigger canvas redraw after state commits.
+    setRedrawNonce(n => n + 1);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [componentMeasurements, roofAreas, calibrations, calibrationPoints,
-      calibrationConfirmed, calibrationMode, areaMode, areaPoints, areaSubTool,
-      lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints,
-      multiLinealSegmentObjects, pendingVolumePolygon, pendingAreaPoints,
-      activeComponentIds, selectedComponentId, activeSaveRoofAreaId, history, restoreSnapshot]);
+  }, [history, captureSnapshot]);
 
   const handleRedo = useCallback(() => {
-    if (!fabricRef.current) return;
-    const snapshot = history.redo(fabricRef.current, {
-      componentMeasurements,
-      roofAreas,
-      calibrations,
-      calibrationPoints,
-      calibrationConfirmed,
-      calibrationMode,
-      areaMode,
-      areaPoints,
-      areaSubTool,
-      lineMode,
-      linePoints,
-      pointMode,
-      multiLinealMode,
-      multiLinealPoints,
-      multiLinealSegmentObjects,
-      pendingVolumePolygon,
-      pendingAreaPoints,
-      activeComponentIds,
-      selectedComponentId,
-      activeSaveRoofAreaId,
-    });
-    if (snapshot) {
-      restoreSnapshot(snapshot);
-    }
+    const snapshot = history.redo(captureSnapshot());
+    if (!snapshot) return;
+    // Restore plain state values (same as undo).
+    setComponentMeasurements(snapshot.componentMeasurements.map(c => ({
+      ...c,
+      measurements: c.measurements.map(m => ({ ...m, canvasObjects: [] })),
+    })));
+    setRoofAreas(snapshot.roofAreas.map(ra => ({ ...ra, polygon: undefined, markers: [] })));
+    setCalibrations(snapshot.calibrations);
+    setCalibrationPoints(snapshot.calibrationPoints);
+    setCalibrationConfirmed(snapshot.calibrationConfirmed);
+    setCalibrationMode(snapshot.calibrationMode);
+    setAreaMode(snapshot.areaMode);
+    setAreaPoints(snapshot.areaPoints);
+    setAreaSubTool(snapshot.areaSubTool);
+    setLineMode(snapshot.lineMode);
+    setLinePoints(snapshot.linePoints);
+    setPointMode(snapshot.pointMode);
+    setMultiLinealMode(snapshot.multiLinealMode);
+    setMultiLinealPoints(snapshot.multiLinealPoints);
+    setMultiLinealSegmentObjects([]);
+    setActiveComponentIds(snapshot.activeComponentIds);
+    setSelectedComponentId(snapshot.selectedComponentId);
+    setActiveSaveRoofAreaId(snapshot.activeSaveRoofAreaId);
+    // Trigger canvas redraw after state commits.
+    setRedrawNonce(n => n + 1);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [componentMeasurements, roofAreas, calibrations, calibrationPoints,
-      calibrationConfirmed, calibrationMode, areaMode, areaPoints, areaSubTool,
-      lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints,
-      multiLinealSegmentObjects, pendingVolumePolygon, pendingAreaPoints,
-      activeComponentIds, selectedComponentId, activeSaveRoofAreaId, history, restoreSnapshot]);
+  }, [history, captureSnapshot]);
 
   // P1-1a C-01: One-shot hydration from server-loaded DB state.
   // Restores componentMeasurements panel data + pages list from the last saved session.
@@ -550,7 +633,7 @@ export function TakeoffWorkstation({
     hydrationData.measurements
       .forEach(m => {
         if (m.componentId === null && m.type === 'area') {
-          // Roof area boundary measurement â€” restore to roofAreas state.
+          // Roof area boundary measurement — restore to roofAreas state.
           hydratedRoofAreas.push({
             id: m.id,
             name: `Area ${hydratedRoofAreas.length + 1}`,
@@ -689,7 +772,20 @@ export function TakeoffWorkstation({
     }
     setRoofAreas(roofAreas.filter(a => a.id !== areaId));
   };
-  
+  // Remove all canvas objects that don't have a measurementId (i.e. in-progress
+  // vertex markers, preview shapes, calibration lines) — committed objects
+  // are tagged with measurementId by reconstructCanvas or handleSaveArea.
+  const cleanupInProgressObjects = useCallback(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    canvas.getObjects().slice().forEach((obj: any) => {
+      if (!obj.measurementId) {
+        canvas.remove(obj);
+      }
+    });
+    canvas.requestRenderAll();
+  }, []);
+
   const handleSaveArea = (name: string, pitch?: number) => {
     pushHistorySnapshot();
     const calculatedArea = calculatePolygonArea(pendingAreaPoints);
@@ -702,6 +798,9 @@ export function TakeoffWorkstation({
 
     // Roof area: explicit pitch OR no component attached
     if (!isComponentArea && pitch !== undefined) {
+      // Remove in-progress vertex markers before adding the committed polygon.
+      cleanupInProgressObjects();
+      const areaId = `area-${Date.now()}`;
       // Create polygon on canvas
       const polygon = new Polygon(pendingAreaPoints, {
         fill: 'rgba(59, 130, 246, 0.2)',
@@ -710,11 +809,12 @@ export function TakeoffWorkstation({
         selectable: false,
         evented: false,
       });
+      (polygon as unknown as { measurementId: string }).measurementId = areaId;
       fabricRef.current?.add(polygon);
       
       // Store roof area with pitch
       const newArea: RoofArea = {
-        id: `area-${Date.now()}`,
+        id: areaId,
         name: name || 'Area',
         points: pendingAreaPoints,
         area: calculatedArea,
@@ -741,6 +841,9 @@ export function TakeoffWorkstation({
 
       const componentColor = componentColors.find(c => c.componentId === componentId)?.color || '#3b82f6';
       
+      // Remove in-progress vertex markers before adding the committed polygon.
+      cleanupInProgressObjects();
+      const measurementId = `area-${Date.now()}`;
       const polygon = new Polygon(pendingAreaPoints, {
         fill: `${componentColor}33`,
         stroke: componentColor,
@@ -748,10 +851,11 @@ export function TakeoffWorkstation({
         selectable: false,
         evented: false,
       });
+      (polygon as unknown as { measurementId: string }).measurementId = measurementId;
       fabricRef.current?.add(polygon);
       
       const newMeasurement: ComponentMeasurement = {
-        id: `area-${Date.now()}`,
+        id: measurementId,
         type: 'area',
         value: calculatedArea,
         points: pendingAreaPoints,
@@ -837,7 +941,7 @@ export function TakeoffWorkstation({
       setPointMode(true);
       activeAreaComponentIdRef.current = null;
     } else {
-      // null â†’ manual entry only; no tool active.
+      // null → manual entry only; no tool active.
       activeAreaComponentIdRef.current = null;
     }
   };
@@ -996,8 +1100,12 @@ export function TakeoffWorkstation({
         ? 'multi_lineal_lxh'
         : 'multi_lineal';
 
+    const mlId = `ml-${Date.now()}`;
+    // Tag segment objects with measurementId so cleanupInProgressObjects won't remove them.
+    multiLinealSegmentObjects.forEach((obj: any) => { obj.measurementId = mlId; });
+
     const newMeasurement: ComponentMeasurement = {
-      id: `ml-${Date.now()}`,
+      id: mlId,
       type: resolvedType,
       value: totalLength,
       points: currentPoints,
@@ -1066,8 +1174,10 @@ export function TakeoffWorkstation({
         originX: 'left', originY: 'top',
         selectable: false, evented: false,
       });
-      canvas.add(fabricImg);
-      canvas.sendObjectToBack(fabricImg);
+      // Image is the canvas background — structurally outside the object list,
+      // so it can never be selected, dragged, or captured in undo snapshots.
+      // Only viewportTransform (pan/zoom) moves the view, not the image.
+      canvas.backgroundImage = fabricImg;
       canvas.renderAll();
     };
     imgElement.src = imageUrl;
@@ -1107,6 +1217,7 @@ export function TakeoffWorkstation({
   const handleConfirmVolumeDepth = () => {
     const depth = parseFloat(volumeDepthInput);
     if (!depth || depth <= 0 || !pendingVolumeComponentId) return;
+    pushHistorySnapshot();
     const unit = calibrations[0]?.unit ?? 'meters';
     const areaM2 = unit === 'feet'
       ? convertAreaFt2ToMetric(pendingVolumeCalibratedArea)
@@ -1114,8 +1225,11 @@ export function TakeoffWorkstation({
     const depthM = unit === 'feet' ? convertLinearToMetric(depth) : depth;
     const volumeM3 = areaM2 * depthM;
     const componentId = pendingVolumeComponentId;
+    const volId = `meas-${Date.now()}`;
+    // Tag polygon with measurementId.
+    if (pendingVolumePolygon) (pendingVolumePolygon as any).measurementId = volId;
     const newMeasurement: ComponentMeasurement = {
-      id: `meas-${Date.now()}`,
+      id: volId,
       type: 'volume_3d',
       value: volumeM3,
       points: pendingVolumePoints,
@@ -1159,8 +1273,11 @@ export function TakeoffWorkstation({
     const areaM2 = lengthM * heightM;
     const measType = pendingFreestyleIsMultiLineal ? 'multi_lineal_lxh_freestyle' : 'length_x_height_freestyle';
     const componentId = pendingFreestyleComponentId;
+    const fsId = `fs-${Date.now()}`;
+    // Tag canvas objects with measurementId.
+    pendingFreestyleCanvasObjects.forEach((obj: any) => { obj.measurementId = fsId; });
     const newMeasurement: ComponentMeasurement = {
-      id: `fs-${Date.now()}`,
+      id: fsId,
       type: measType as ComponentMeasurement['type'],
       value: areaM2,
       points: pendingFreestylePoints,
@@ -1266,10 +1383,10 @@ export function TakeoffWorkstation({
       // componentMeasurements are hydrated from other pages and excluded above.
       //
       // Contract (M-02 Gerald audit 2026-05-29):
-      //  â€“ We do NOT advance the session version (no RPC call).
-      //  â€“ We do NOT clear isDirty (no data was actually committed here).
-      //  â€“ We only navigate if the caller explicitly requests it.
-      //  â€“ This branch must NEVER be used when there are local unsaved changes
+      //  – We do NOT advance the session version (no RPC call).
+      //  – We do NOT clear isDirty (no data was actually committed here).
+      //  – We only navigate if the caller explicitly requests it.
+      //  – This branch must NEVER be used when there are local unsaved changes
       //    (those would have a null/undefined fromPageId and would NOT be filtered).
       if (allMeasurements.length === 0) {
         console.log('[SaveTakeoff] Safe skip - no new measurements for current page. Not a full save.');
@@ -1312,9 +1429,7 @@ export function TakeoffWorkstation({
         console.log('[SaveTakeoff] Exporting lines-only image...');
         try {
           const objects = canvas.getObjects();
-          const bgImage = objects.find((obj: any) => 
-            obj.type === 'image' && !obj.selectable
-          );
+          const bgImage = canvas.backgroundImage;
           
           // Store original state for all objects
           const originalBg = canvas.backgroundColor;
@@ -1330,7 +1445,8 @@ export function TakeoffWorkstation({
           });
           
           // Hide background image
-          if (bgImage) bgImage.set('visible', false);
+          const originalBgVisible = bgImage ? (bgImage as any).visible : true;
+          if (bgImage) (bgImage as any).set('visible', false);
           canvas.backgroundColor = '#ffffff';
           
           // Convert all drawable objects to black, remove area fills
@@ -1373,6 +1489,7 @@ export function TakeoffWorkstation({
           originalStates.forEach(({ obj, fill, stroke, visible }) => {
             obj.set({ fill, stroke, visible });
           });
+          if (bgImage) (bgImage as any).set('visible', originalBgVisible);
           canvas.backgroundColor = originalBg as string;
           canvas.renderAll();
           
@@ -1576,7 +1693,7 @@ export function TakeoffWorkstation({
     
     // Convert to real-world units using calibration scale
     const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / calibrations.length;
-    const realArea = pixelArea * avgScale * avgScale; // scaleÂ² for area
+    const realArea = pixelArea * avgScale * avgScale; // scale² for area
     
     return realArea;
   };
@@ -1699,8 +1816,9 @@ export function TakeoffWorkstation({
         evented: false,
       });
 
-      canvas.add(fabricImg);
-      canvas.sendObjectToBack(fabricImg);
+      // Image is the canvas background — never selectable, never draggable,
+      // never in undo snapshots. Pan/zoom via viewportTransform still works.
+      canvas.backgroundImage = fabricImg;
       canvas.renderAll();
 
       // Canvas-rework: canvas is now ready for reconstruction.
@@ -1714,11 +1832,11 @@ export function TakeoffWorkstation({
     canvas.on('mouse:down', (opt) => {
       const evt = opt.e;
       
-      // Canvas-rework: snapshot before any tool-based canvas mutation.
-      if (calibrationModeRef.current || areaModeRef.current || lineModeRef.current ||
-          pointModeRef.current || multiLinealModeRef.current) {
-        pushHistorySnapshot();
-      }
+      // No snapshot here — snapshots are pushed at commit points in React
+      // handlers (handleSaveArea, handleConfirmCalibration, etc.) where
+      // closures are fresh. The old per-click snapshot caused stale-closure
+      // bugs (undo jumped to start) and wrong granularity (per-click, not
+      // per-logical-action).
       
       // Line mode: measure distance (2 points)
       if (lineModeRef.current && !evt.altKey) {
@@ -1831,7 +1949,7 @@ export function TakeoffWorkstation({
         canvas.add(marker);
         const newObjects: any[] = [marker];
 
-        // Draw segment line from previous point if this isnâ€™t the first.
+        // Draw segment line from previous point if this isn’t the first.
         if (currentPoints.length > 0) {
           const prev = currentPoints[currentPoints.length - 1];
           const segLine = new Line([prev.x, prev.y, newPoint.x, newPoint.y], {
@@ -1883,7 +2001,7 @@ export function TakeoffWorkstation({
         const pointer = canvas.getScenePoint(opt.e);
         const newPoint = { x: pointer.x, y: pointer.y };
 
-        // â”€â”€ Box (rect) sub-tool: click-drag to define a rectangle â”€â”€
+        // ── Box (rect) sub-tool: click-drag to define a rectangle ──
         // On mouse:down we capture the start corner and begin dragging.
         // mouse:move draws a live preview; mouse:up finalises into 4 points.
         if (areaSubToolRef.current === 'rect') {
@@ -1910,7 +2028,7 @@ export function TakeoffWorkstation({
           return;
         }
 
-        // â”€â”€ Polygon sub-tool (default): click to add points â”€â”€
+        // ── Polygon sub-tool (default): click to add points ──
         const currentPoints = areaPointsRef.current;
         
         // Check if click is near start point (close polygon)
@@ -1954,11 +2072,11 @@ export function TakeoffWorkstation({
               );
               return;
             }
-            // P1-1b: new-page first area â†’ pitch-only (clear component; this is the boundary).
-            // P1-3 existing-area + NO component selected â†’ warn instead of silently
+            // P1-1b: new-page first area → pitch-only (clear component; this is the boundary).
+            // P1-3 existing-area + NO component selected → warn instead of silently
             //   creating a spurious roof-area boundary (isExistingAreaMode means no new
             //   boundaries should be created client-side).
-            // P1-3 existing-area + component IS selected â†’ normal area modal.
+            // P1-3 existing-area + component IS selected → normal area modal.
             if (takeoffMode === 'new-page' && currentRoofAreas.length === 0 && !currentSelectedId) {
               // Boundary drawing for a new page - show pitch-only prompt.
               setPendingComponentId(null);
@@ -2153,7 +2271,7 @@ export function TakeoffWorkstation({
           canvas.renderAll();
         }
 
-        // Ignore tiny drags (accidental clicks) â€” under 5px in either dimension.
+        // Ignore tiny drags (accidental clicks) — under 5px in either dimension.
         if (dragWidth < 5 || dragHeight < 5) {
           return;
         }
@@ -2187,7 +2305,7 @@ export function TakeoffWorkstation({
         }
 
         if (takeoffMode === 'new-page' && currentRoofAreas.length === 0 && !currentSelectedId) {
-          // Boundary drawing for a new page â€” pitch-only prompt.
+          // Boundary drawing for a new page — pitch-only prompt.
           setPendingComponentId(null);
           setPitchOnlyInput('');
           setShowPitchOnlyPrompt(true);
@@ -2321,8 +2439,7 @@ export function TakeoffWorkstation({
 
   const handleFitToScreen = () => {
     if (!fabricRef.current) return;
-    const objects = fabricRef.current.getObjects();
-    const img = objects.find(obj => obj.type === 'image');
+    const img = fabricRef.current.backgroundImage;
     if (!img) return;
 
     const scaleX = CANVAS_WIDTH / (img.width! * img.scaleX!);
@@ -2380,10 +2497,19 @@ export function TakeoffWorkstation({
     setCalibrationPoints([]);
     setShowCalibrationModal(false);
     
-    // Remove temp line
-    if (tempCalibrationLine && fabricRef.current) {
-      fabricRef.current.remove(tempCalibrationLine);
-      setTempCalibrationLine(null);
+    // Remove temp line + calibration markers (yellow objects without measurementId)
+    if (fabricRef.current) {
+      if (tempCalibrationLine) {
+        fabricRef.current.remove(tempCalibrationLine);
+        setTempCalibrationLine(null);
+      }
+      // Remove calibration markers (yellow circles without measurementId)
+      fabricRef.current.getObjects().slice().forEach((obj: any) => {
+        if (!obj.measurementId && obj.fill === '#facc15') {
+          fabricRef.current!.remove(obj);
+        }
+      });
+      fabricRef.current.requestRenderAll();
     }
   };
 
@@ -2434,7 +2560,7 @@ export function TakeoffWorkstation({
         href={`/${workspaceSlug}/quotes/${quote.id}`}
         className="mb-2 text-sm text-slate-500 hover:text-slate-800 self-start"
       >
-        â† Back to quote
+        <svg className="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg> Back to quote
       </Link>
       <div className="flex-1 flex flex-col bg-white rounded-xl shadow-lg overflow-hidden">
         {/* Header: title + action buttons only - no nav links */}
@@ -2475,7 +2601,7 @@ export function TakeoffWorkstation({
             if (!selectedComponentId && roofAreas.length > 0) {
               guidance = 'Create a custom box shape area, click and hold, drag then release to set the area';
             } else if (selCompType === 'volume_3d') {
-              guidance = 'Click and drag to draw the footprint (L Ã— W). Release to set the area, then enter the depth.';
+              guidance = 'Click and drag to draw the footprint (L × W). Release to set the area, then enter the depth.';
             } else {
               guidance = 'Create a custom box shape area, click and hold, drag then release to set the area.';
             }
@@ -2483,7 +2609,7 @@ export function TakeoffWorkstation({
             if (!selectedComponentId) {
               guidance = 'Draw the area point by point (at least 3 points), to close the area - click back on the first point';
             } else if (selCompType === 'volume_3d') {
-              guidance = 'Draw the footprint (L Ã— W). Close the shape on the first point, then enter the depth in the prompt.';
+              guidance = 'Draw the footprint (L × W). Close the shape on the first point, then enter the depth in the prompt.';
             } else {
               guidance = 'Draw the area point by point (at least 3 points), to close the area - click back on the first point.';
             }
@@ -2505,7 +2631,7 @@ export function TakeoffWorkstation({
                   {currentPageIndex + 1} of {pages.length}
                 </span>
                 <span className="text-xs text-slate-400 mr-1">{pages[currentPageIndex]?.name}</span>
-                {guidance && <span className="text-xs text-slate-300">Â·</span>}
+                {guidance && <span className="text-xs text-slate-300">·</span>}
               </>
             )}
             {guidance && (
@@ -2532,7 +2658,7 @@ export function TakeoffWorkstation({
             <div className="p-6">
               <h2 className="text-lg font-semibold text-slate-900 mb-1">Save & upload another plan</h2>
               <p className="text-sm text-slate-500 mb-5">
-                Weâ€™ll save your current measurements first, then load the new plan so you can keep measuring.
+                We’ll save your current measurements first, then load the new plan so you can keep measuring.
               </p>
 
               {/* Option 1: attach to original area(s) */}
@@ -2654,7 +2780,7 @@ export function TakeoffWorkstation({
                   disabled={isUploadingPage}
                   className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors disabled:opacity-50"
                 >
-                  {isUploadingPage ? 'Savingâ€¦' : 'Save & start new takeoff'}
+                  {isUploadingPage ? 'Saving…' : 'Save & start new takeoff'}
                 </button>
               </div>
             </div>
@@ -2673,12 +2799,12 @@ export function TakeoffWorkstation({
               <h2 className="text-sm font-bold mb-3 text-gray-900 uppercase tracking-wide">Calibration</h2>
               {calibrations.length === 0 ? (
                 <div className="text-sm text-gray-700 font-medium bg-amber-50 border border-amber-200 rounded-xl p-3">
-                  âš ï¸ Calibrate first to continue
+                  ⚠️ Calibrate first to continue
                 </div>
               ) : showConfirmedFlash ? (
                 /* Flash green confirmation briefly */
                 <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 animate-pulse">
-                  <div className="text-green-400 font-bold mb-2">âœ“ Confirmed</div>
+                  <div className="text-green-400 font-bold mb-2 flex items-center gap-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m4.5 12.75 6 6 9-13.5" /></svg> Confirmed</div>
                   <div className="text-xs text-gray-600 mb-1">Scale</div>
                   <div className="font-bold text-green-400">
                     {(calibrations.reduce((sum, cal) => sum + cal.scale, 0) / calibrations.length).toFixed(4)} {calibrations[0].unit}/px
@@ -2711,7 +2837,7 @@ export function TakeoffWorkstation({
                   onClick={handleConfirmCalibration}
                   className="w-full px-3 py-2 bg-black hover:bg-slate-800 text-white rounded-full text-sm font-medium transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
                 >
-                  âœ“ Confirm Calibration
+                  <svg className="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m4.5 12.75 6 6 9-13.5" /></svg> Confirm Calibration
                 </button>
               </div>
               )}
@@ -2749,13 +2875,13 @@ export function TakeoffWorkstation({
                   let displayValue = area.area;
                   let displayUnit: string;
                   if (calibUnit === 'feet' && sys === 'imperial_rs') {
-                    // sq ft â†’ RS  (1 RS = 100 ftÂ²)
+                    // sq ft → RS  (1 RS = 100 ft²)
                     displayValue = area.area / 100;
                     displayUnit = 'RS';
                   } else if (calibUnit === 'feet') {
-                    displayUnit = 'ftÂ²';
+                    displayUnit = 'ft²';
                   } else {
-                    displayUnit = 'mÂ²';
+                    displayUnit = 'm²';
                   }
                   return (
                     <div key={area.id} className="bg-white rounded-xl border border-gray-200 p-3 flex items-center gap-3">
@@ -2780,7 +2906,7 @@ export function TakeoffWorkstation({
                           className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-lg leading-none"
                           title="Delete area"
                         >
-                          Ã—
+                          ×
                         </button>
                       </div>
                     </div>
@@ -2813,7 +2939,7 @@ export function TakeoffWorkstation({
                           const compData = componentMeasurements.find(c => c.componentId === id);
                           const isSelected = selectedComponentId === comp.id;
                           const mt = (comp.measurement_type ?? comp.default_measurement_type ?? '').toLowerCase();
-                          const typeLabel = mt === 'line' ? 'Line' : mt === 'area' ? 'Area' : mt === 'point' ? 'Count' : mt === 'multi_lineal' ? 'Multi-line' : mt === 'multi_lineal_lxh' ? 'Multi-line Ã—H' : mt === 'volume_3d' ? 'Volume' : mt === 'length_x_height_freestyle' ? 'Length Ã—H' : mt === 'multi_lineal_lxh_freestyle' ? 'Multi-line Ã—H' : mt || '';
+                          const typeLabel = mt === 'line' ? 'Line' : mt === 'area' ? 'Area' : mt === 'point' ? 'Count' : mt === 'multi_lineal' ? 'Multi-line' : mt === 'multi_lineal_lxh' ? 'Multi-line ×H' : mt === 'volume_3d' ? 'Volume' : mt === 'length_x_height_freestyle' ? 'Length ×H' : mt === 'multi_lineal_lxh_freestyle' ? 'Multi-line ×H' : mt || '';
                           return (
                             <div
                               key={comp.id}
@@ -2889,10 +3015,10 @@ export function TakeoffWorkstation({
                                           <div key={m.id} className="flex items-center gap-1.5 text-xs text-gray-700">
                                             <span className="flex-1">
                                               {(m.type === 'line' || m.type === 'multi_lineal') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'}`}
-                                              {m.type === 'multi_lineal_lxh' && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} Ã—h`}
+                                              {m.type === 'multi_lineal_lxh' && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×h`}
                                               {m.type === 'area' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
                                               {m.type === 'point' && `1 item`}
-                                              {(m.type === 'length_x_height_freestyle' || m.type === 'multi_lineal_lxh_freestyle') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} Ã—h`}
+                                              {(m.type === 'length_x_height_freestyle' || m.type === 'multi_lineal_lxh_freestyle') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×h`}
                                               {m.type === 'volume_3d' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
                                             </span>
                                             <button
@@ -2911,7 +3037,7 @@ export function TakeoffWorkstation({
                                               className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-base leading-none"
                                               title="Delete measurement"
                                             >
-                                              Ã—
+                                              ×
                                             </button>
                                           </div>
                                         ))}
@@ -3086,7 +3212,7 @@ export function TakeoffWorkstation({
               >
                 Line
               </button>
-              {/* Area tool â€” compact segmented sub-tool selector when active */}
+              {/* Area tool — compact segmented sub-tool selector when active */}
               <button
                 onClick={() => {
                   // Toggle area mode. If turning on, keep current sub-tool.
@@ -3251,7 +3377,7 @@ export function TakeoffWorkstation({
                 className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm disabled:opacity-30 disabled:cursor-not-allowed"
                 title="Undo"
               >
-                â†¶
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
               </button>
               <button
                 onClick={handleRedo}
@@ -3259,7 +3385,7 @@ export function TakeoffWorkstation({
                 className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm disabled:opacity-30 disabled:cursor-not-allowed"
                 title="Redo"
               >
-                â†·
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m15 15 6-6m0 0-6-6m6 6H9a6 6 0 0 0 0 12h3" /></svg>
               </button>
             </div>
           </div>
@@ -3363,7 +3489,7 @@ export function TakeoffWorkstation({
                   className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
                   title="Draw the area point by point (at least 3 points), to close the area - click back on the first point"
                 >
-                  Draw Area Â· Polygon
+                  Draw Area · Polygon
                 </button>
                 <button
                   onClick={() => {
@@ -3377,7 +3503,7 @@ export function TakeoffWorkstation({
                   className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
                   title="Create a custom box shape area, click and hold, drag then release to set the area"
                 >
-                  Draw Area Â· Rectangle
+                  Draw Area · Rectangle
                 </button>
               </div>
               <button
@@ -3423,7 +3549,7 @@ export function TakeoffWorkstation({
         </div>
       )}
 
-      {/* Volume (L Ã— W Ã— D) depth prompt - fires after area polygon is closed for a volume_3d component */}
+      {/* Volume (L × W × D) depth prompt - fires after area polygon is closed for a volume_3d component */}
       {showVolumeDepthPrompt && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-80 border border-gray-200 shadow-xl">
@@ -3447,14 +3573,14 @@ export function TakeoffWorkstation({
               />
               {volumeDepthInput && parseFloat(volumeDepthInput) > 0 && (
                 <p className="text-xs text-slate-400 mt-1">
-                  Volume â‰ˆ {(
+                  Volume ≈ {(
                     (calibrations[0]?.unit === 'feet'
                       ? convertAreaFt2ToMetric(pendingVolumeCalibratedArea)
                       : pendingVolumeCalibratedArea) *
                     (calibrations[0]?.unit === 'feet'
                       ? convertLinearToMetric(parseFloat(volumeDepthInput))
                       : parseFloat(volumeDepthInput))
-                  ).toFixed(3)} mÂ³
+                  ).toFixed(3)} m³
                 </p>
               )}
             </div>
@@ -3501,7 +3627,7 @@ export function TakeoffWorkstation({
             </h2>
             <p className="text-sm text-slate-500 mb-4">
               {tradeConfig.pitchRequired
-                ? 'Enter the roof pitch for this area, or skip to use 0Â°.'
+                ? 'Enter the roof pitch for this area, or skip to use 0°.'
                 : 'Enter the slope or angle if applicable, or skip.'}
             </p>
             <div className="mb-4">
@@ -3530,7 +3656,7 @@ export function TakeoffWorkstation({
                 }}
                 className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
               >
-                {pitchOnlyInput.trim() ? `Save at ${pitchOnlyInput}Â°` : 'Save (0Â° flat)'}
+                {pitchOnlyInput.trim() ? `Save at ${pitchOnlyInput}°` : 'Save (0° flat)'}
               </button>
               <button
                 onClick={() => {
@@ -3574,9 +3700,11 @@ export function TakeoffWorkstation({
             pushHistorySnapshot();
             // Add point measurement
             const marker = fabricRef.current?.getObjects().slice(-1)[0]; // Last object added
+            const pointId = `point-${Date.now()}`;
+            if (marker) (marker as any).measurementId = pointId;
             
             const newMeasurement: ComponentMeasurement = {
-              id: `point-${Date.now()}`,
+              id: pointId,
               type: 'point',
               value: 1,
               points: [pendingPointLocation],
@@ -3652,10 +3780,13 @@ export function TakeoffWorkstation({
             // Collect canvas objects (line + markers) - last 3 objects added
             const objects = fabricRef.current?.getObjects() || [];
             const canvasObjects = objects.slice(-3); // Last 3 objects (2 markers + 1 line)
+            const lineId = `line-${Date.now()}`;
+            // Tag objects with measurementId so cleanupInProgressObjects won't remove them.
+            canvasObjects.forEach((obj: any) => { obj.measurementId = lineId; });
             
             // Create measurement
             const newMeasurement: ComponentMeasurement = {
-              id: `line-${Date.now()}`,
+              id: lineId,
               type: 'line',
               value: pendingLineMeasurement.length,
               points: pendingLineMeasurement.points,
@@ -3733,14 +3864,14 @@ export function TakeoffWorkstation({
               />
               {freestyleHeightInput && parseFloat(freestyleHeightInput) > 0 && (
                 <p className="text-xs text-slate-400 mt-1">
-                  Area â‰ˆ {(
+                  Area ≈ {(
                     (calibrations[0]?.unit === 'feet'
                       ? convertLinearToMetric(pendingFreestyleLength)
                       : pendingFreestyleLength) *
                     (calibrations[0]?.unit === 'feet'
                       ? convertLinearToMetric(parseFloat(freestyleHeightInput))
                       : parseFloat(freestyleHeightInput))
-                  ).toFixed(2)} mÂ²
+                  ).toFixed(2)} m²
                 </p>
               )}
             </div>
