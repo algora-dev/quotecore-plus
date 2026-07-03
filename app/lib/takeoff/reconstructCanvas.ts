@@ -55,7 +55,6 @@ export function reconstructCanvas(
         stroke: '#3b82f6',
         strokeWidth: 2,
         selectable: false,
-        hoverCursor: 'default',
         objectCaching: false,
       },
     );
@@ -65,21 +64,7 @@ export function reconstructCanvas(
 
     // Vertex markers
     const markers = area.points.map((p) => {
-      const marker = new Circle({
-        left: p.x,
-        top: p.y,
-        radius: 3,
-        fill: '#3b82f6',
-        stroke: '#000',
-        strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
-        selectable: false,
-        hoverCursor: 'default',
-        hasControls: false,
-        hasBorders: false,
-      });
-      (marker as unknown as { measurementId: string }).measurementId = area.id;
+      const marker = createMarker(p.x, p.y, '#3b82f6', area.id);
       canvas.add(marker);
       return marker;
     });
@@ -109,8 +94,7 @@ export function reconstructCanvas(
               stroke: color,
               strokeWidth: 2,
               selectable: false,
-              hoverCursor: 'default',
-              hasControls: false,
+                    hasControls: false,
               hasBorders: false,
             });
             (line as unknown as { measurementId: string }).measurementId = m.id;
@@ -129,8 +113,7 @@ export function reconstructCanvas(
                 stroke: color,
                 strokeWidth: 2,
                 selectable: false,
-                hoverCursor: 'default',
-                objectCaching: false,
+                        objectCaching: false,
               },
             );
             (poly as unknown as { measurementId: string }).measurementId = m.id;
@@ -161,8 +144,7 @@ export function reconstructCanvas(
               originX: 'center',
               originY: 'center',
               selectable: false,
-              hoverCursor: 'default',
-              hasControls: false,
+                    hasControls: false,
               hasBorders: false,
             });
             (triangle as unknown as { measurementId: string }).measurementId = m.id;
@@ -190,8 +172,7 @@ export function reconstructCanvas(
                 stroke: color,
                 strokeWidth: 2,
                 selectable: false,
-                hoverCursor: 'default',
-                hasControls: false,
+                        hasControls: false,
                 hasBorders: false,
               });
               (line as unknown as { measurementId: string }).measurementId = m.id;
@@ -212,8 +193,7 @@ export function reconstructCanvas(
                 strokeWidth: 2,
                 strokeDashArray: [],
                 selectable: false,
-                hoverCursor: 'default',
-                objectCaching: false,
+                        objectCaching: false,
               },
             );
             (poly as unknown as { measurementId: string }).measurementId = m.id;
@@ -239,8 +219,7 @@ export function reconstructCanvas(
               stroke: color,
               strokeWidth: 2,
               selectable: false,
-              hoverCursor: 'default',
-              hasControls: false,
+                    hasControls: false,
               hasBorders: false,
             });
             (line as unknown as { measurementId: string }).measurementId = m.id;
@@ -287,7 +266,6 @@ function createMarker(x: number, y: number, color: string, measurementId: string
     originX: 'center',
     originY: 'center',
     selectable: false,
-    hoverCursor: 'default',
     hasControls: false,
     hasBorders: false,
   });

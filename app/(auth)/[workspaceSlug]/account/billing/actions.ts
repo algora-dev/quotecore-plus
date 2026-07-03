@@ -39,7 +39,7 @@ const TRIAL_DAYS = 14;
  *
  * Stripe needs absolute success/cancel URLs; we read the current host from
  * request headers so this works correctly on previews (vercel.app subdomains)
- * AND on production AND on localhost â€” no env var needed.
+ * AND on production AND on localhost — no env var needed.
  */
 async function baseUrl(): Promise<string> {
   const h = await headers();

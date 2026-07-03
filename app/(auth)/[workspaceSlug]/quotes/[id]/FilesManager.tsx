@@ -68,7 +68,7 @@ export function FilesManager({
   // --- Takeoff re-entry modal state ---
   const [showTakeoffModal, setShowTakeoffModal] = useState(false);
   const [takeoffOption, setTakeoffOption] = useState<TakeoffOption>('edit');
-  // planMode removed â€” canvas is always fully reconstructed on edit.
+  // planMode removed — canvas is always fully reconstructed on edit.
   const [areaName, setAreaName] = useState('');
   const [newPlanFile, setNewPlanFile] = useState<File | null>(null);
   const [isStartingTakeoff, setIsStartingTakeoff] = useState(false);
@@ -211,7 +211,7 @@ export function FilesManager({
 
     try {
       if (takeoffOption === 'edit') {
-        // Edit This Plan â€” reconstruct canvas with all existing measurements.
+        // Edit This Plan — reconstruct canvas with all existing measurements.
         router.push(`/${workspaceSlug}/quotes/${quoteId}/takeoff?mode=add`);
         setShowTakeoffModal(false);
         return;
@@ -343,7 +343,7 @@ export function FilesManager({
                       rel="noopener noreferrer"
                       className="text-xs text-orange-600 hover:text-blue-800"
                     >
-                      View Plan â†’
+                      View Plan →
                     </a>
                   </div>
                 </div>

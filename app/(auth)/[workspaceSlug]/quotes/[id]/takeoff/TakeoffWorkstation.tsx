@@ -12,6 +12,7 @@ import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
 import type { TakeoffHydrationData } from './actions';
 import { uploadCanvasImage } from './uploadCanvasImage';
 import { AlertModal } from '@/app/components/AlertModal';
+import { ConfirmModal } from '@/app/components/ConfirmModal';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 import { getTradeLabels } from '@/app/lib/trades/labels';
 import { createClient as createSupabaseBrowserClient } from '@/app/lib/supabase/client';
@@ -217,6 +218,15 @@ export function TakeoffWorkstation({
   const [isExistingAreaMode, setIsExistingAreaMode] = useState(false);
   const [existingAreaLabel, setExistingAreaLabel] = useState<string>('');
 
+  // Issue 4+5: Area-assignment modal for new roof areas drawn in mode=add.
+  // When the user closes a new area polygon while editing an existing plan,
+  // this modal lets them pick which existing area to add the measurement to,
+  // or create a new area.
+  const [showAreaAssignmentModal, setShowAreaAssignmentModal] = useState(false);
+  const [pendingNewArea, setPendingNewArea] = useState<{ points: { x: number; y: number }[]; area: number } | null>(null);
+  const [areaAssignmentChoice, setAreaAssignmentChoice] = useState<string>('');
+  const [areaAssignmentNewName, setAreaAssignmentNewName] = useState('');
+
   // P1-3 (multi-page Save & Upload another plan): modal state.
   // - target = 'existing' attaches the new page to the FIRST existing roof area
   //   (mirrors FilesManager Option B: new page, same area target).
@@ -228,6 +238,8 @@ export function TakeoffWorkstation({
   const [uploadAnotherFile, setUploadAnotherFile] = useState<File | null>(null);
   const [uploadAnotherError, setUploadAnotherError] = useState<string | null>(null);
   const [storageBlocked, setStorageBlocked] = useState(false);
+  // Reset canvas confirm modal
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isUploadingPage, setIsUploadingPage] = useState(false);
   // H-03: track unsaved changes so we can warn before switching pages.
   const [isDirty, setIsDirty] = useState(false);
@@ -396,7 +408,7 @@ export function TakeoffWorkstation({
   // - Lost measurementId during toJSON/loadFromJSON round-trip
   // - Async loadFromJSON races causing the image to flash/disappear
   // - Orphan markers persisting on canvas after undo
-  const history = useStateHistory<TakeoffSnapshot>(30);
+  const history = useStateHistory<TakeoffSnapshot>(2);
 
   // Bump this to trigger a canvas redraw after state restoration.
   const [redrawNonce, setRedrawNonce] = useState(0);
@@ -506,7 +518,8 @@ export function TakeoffWorkstation({
           originX: 'center', originY: 'center',
           selectable: false, evented: false, hasControls: false, hasBorders: false,
         });
-        canvas.add(marker);
+        (marker as any).isInProgressMarker = true;
+      canvas.add(marker);
       });
     }
     if (lineMode && linePoints.length > 0) {
@@ -517,7 +530,8 @@ export function TakeoffWorkstation({
           originX: 'center', originY: 'center',
           selectable: false, evented: false, hasControls: false, hasBorders: false,
         });
-        canvas.add(marker);
+        (marker as any).isInProgressMarker = true;
+      canvas.add(marker);
       });
     }
     if (multiLinealMode && multiLinealPoints.length > 0) {
@@ -528,7 +542,8 @@ export function TakeoffWorkstation({
           originX: 'center', originY: 'center',
           selectable: false, evented: false, hasControls: false, hasBorders: false,
         });
-        canvas.add(marker);
+        (marker as any).isInProgressMarker = true;
+      canvas.add(marker);
       });
     }
 
@@ -699,6 +714,16 @@ export function TakeoffWorkstation({
         console.warn('[Hydration] Failed to restore calibrations:', err);
       }
     }
+
+    // Issue 4 fix: In mode=add, set isExistingAreaMode=true and route saves to
+    // the first existing roof area. Without this, the save logic re-inserts all
+    // hydrated roof areas as NEW rows → duplication.
+    if (takeoffMode === 'add' && existingRoofAreas.length > 0) {
+      setIsExistingAreaMode(true);
+      setActiveSaveRoofAreaId(existingRoofAreas[0].id);
+      setExistingAreaLabel(existingRoofAreas[0].label);
+      console.info('[Hydration] mode=add: set isExistingAreaMode=true, activeSaveRoofAreaId=', existingRoofAreas[0].id);
+    }
   // Intentionally only runs once on mount.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -779,7 +804,9 @@ export function TakeoffWorkstation({
     const canvas = fabricRef.current;
     if (!canvas) return;
     canvas.getObjects().slice().forEach((obj: any) => {
-      if (!obj.measurementId) {
+      // Issue C: skip objects tagged as in-progress markers - these are
+      // active drawing vertex points that must survive cleanup at commit time.
+      if (!obj.measurementId && !obj.isInProgressMarker) {
         canvas.remove(obj);
       }
     });
@@ -884,6 +911,71 @@ export function TakeoffWorkstation({
       // cursor returns to default and the user doesn't accidentally keep drawing.
       setAreaMode(false);
     }
+  };
+
+  // Issue 5: Handle area-assignment modal confirmation.
+  // When the user draws a new area polygon in mode=add (editing existing plan),
+  // they choose which existing area to add the measurement to, or create a new area.
+  const handleConfirmAreaAssignment = () => {
+    if (!pendingNewArea) return;
+    pushHistorySnapshot();
+    cleanupInProgressObjects();
+    const areaId = `area-${Date.now()}`;
+
+    // Draw the polygon on canvas (tagged with measurementId)
+    const polygon = new Polygon(pendingNewArea.points, {
+      fill: 'rgba(59, 130, 246, 0.2)',
+      stroke: '#3b82f6',
+      strokeWidth: 1.25,
+      selectable: false,
+      evented: false,
+    });
+    (polygon as unknown as { measurementId: string }).measurementId = areaId;
+    fabricRef.current?.add(polygon);
+
+    if (areaAssignmentChoice === '__new__') {
+      // Create a new roof area with the user-provided name
+      const newName = areaAssignmentNewName.trim() || `Area ${roofAreas.length + 1}`;
+      const newArea: RoofArea = {
+        id: areaId,
+        name: newName,
+        points: pendingNewArea.points,
+        area: pendingNewArea.area,
+        pitch: 0,
+        visible: true,
+        polygon,
+        markers: [],
+      };
+      setRoofAreas([...roofAreas, newArea]);
+    } else {
+      // Add to an existing area: create a new roof area entry that will be saved
+      // as an additional area measurement linked to the same quote_roof_areas row.
+      // The save logic (Issue 5 fix below) routes this to the existing area via
+      // activeSaveRoofAreaId, and the measurement row stores canvas_points for
+      // reconstruction on next edit.
+      const existingArea = existingRoofAreas.find(a => a.id === areaAssignmentChoice);
+      const newName = existingArea?.label || 'Existing Area';
+      const newArea: RoofArea = {
+        id: areaId,
+        name: newName,
+        points: pendingNewArea.points,
+        area: pendingNewArea.area,
+        pitch: existingArea?.pitch ?? 0,
+        visible: true,
+        polygon,
+        markers: [],
+      };
+      setRoofAreas([...roofAreas, newArea]);
+    }
+
+    // Reset state
+    setShowAreaAssignmentModal(false);
+    setPendingNewArea(null);
+    setPendingAreaPoints([]);
+    setAreaPoints([]);
+    setAreaMode(false);
+    setAreaAssignmentChoice('');
+    setAreaAssignmentNewName('');
   };
   
   const handleToggleAreaVisibility = (areaId: string) => {
@@ -1360,8 +1452,10 @@ export function TakeoffWorkstation({
       });
       
       // Add area measurements.
-      // In existing-area mode: skip writing area rows so Plan 1's area survives in DB.
-      // Component measurements route to the original area via activeSaveRoofAreaId.
+      // Issue 4+5 fix: In existing-area mode, skip HYDRATED areas (they're already
+      // in the DB — re-inserting them causes duplication). But DO include newly
+      // drawn areas (client-side IDs like `area-${Date.now()}`) so the user's
+      // new work is saved. Hydrated areas have DB UUIDs; new ones have timestamp IDs.
       // Trade-agnostic: applies to roofing and generic trades.
       if (!isExistingAreaMode) {
         roofAreas.forEach(area => {
@@ -1374,6 +1468,26 @@ export function TakeoffWorkstation({
             points: area.points,
             visible: area.visible,
           });
+        });
+      } else {
+        // Existing-area mode: only include NEWLY drawn areas (client-side IDs).
+        // Hydrated areas (DB UUIDs) are skipped to prevent duplication.
+        roofAreas.forEach(area => {
+          if (area.id.startsWith('area-')) {
+            // Newly drawn area — include it.
+            // If it was assigned to an existing area, it adds to that area's total
+            // via the measurement row. If it was created as a new area, it creates
+            // a new quote_roof_areas row.
+            allMeasurements.push({
+              componentId: null,
+              type: 'area' as const,
+              value: area.area,
+              pitch: area.pitch,
+              name: area.name,
+              points: area.points,
+              visible: area.visible,
+            });
+          }
         });
       }
       
@@ -1854,6 +1968,8 @@ export function TakeoffWorkstation({
         if (currentPoints.length === 0) {
           // First point
           console.log('[Line] First point');
+          // Issue B: push snapshot before first point
+          pushHistorySnapshot();
           setLinePoints([newPoint]);
           
           // Draw marker (component color)
@@ -1869,6 +1985,7 @@ export function TakeoffWorkstation({
             selectable: false,
             evented: false,
           });
+          (marker as any).isInProgressMarker = true;
           canvas.add(marker);
         } else if (currentPoints.length === 1) {
           // Second point - draw line, calculate length, prompt
@@ -1888,6 +2005,7 @@ export function TakeoffWorkstation({
             selectable: false,
             evented: false,
           });
+          (marker as any).isInProgressMarker = true;
           canvas.add(marker);
           
           // Draw line (component color)
@@ -1918,6 +2036,8 @@ export function TakeoffWorkstation({
             length: realDistance 
           });
           setShowLineMeasurementPrompt(true);
+          // Issue B: push snapshot before second point
+          pushHistorySnapshot();
           setLinePoints([firstPoint, newPoint]);
         }
         
@@ -1946,6 +2066,7 @@ export function TakeoffWorkstation({
           selectable: false,
           evented: false,
         });
+        (marker as any).isInProgressMarker = true;
         canvas.add(marker);
         const newObjects: any[] = [marker];
 
@@ -1963,6 +2084,8 @@ export function TakeoffWorkstation({
         }
 
         canvas.renderAll();
+        // Issue B: push snapshot before each point
+        pushHistorySnapshot();
         setMultiLinealPoints([...currentPoints, newPoint]);
         setMultiLinealSegmentObjects(prev => [...prev, ...newObjects]);
         return;
@@ -1987,6 +2110,7 @@ export function TakeoffWorkstation({
           selectable: false,
           evented: false,
         });
+        (marker as any).isInProgressMarker = true;
         canvas.add(marker);
         
         // Show confirmation
@@ -2083,16 +2207,14 @@ export function TakeoffWorkstation({
               setPitchOnlyInput('');
               setShowPitchOnlyPrompt(true);
             } else if (isExistingAreaModeRef.current && !currentSelectedId) {
-              // Existing-area mode but no component selected - can't create a new boundary.
-              setPendingAreaPoints([]);
-              setAreaPoints([]);
-              setPendingComponentId(null);
-              showAlert(
-                'Select a component first',
-                'You are adding measurements to an existing area. Select a component from the panel before drawing.',
-                'info'
-              );
-              return;
+              // Issue 5: Existing-area mode + no component → the user drew a NEW area
+              // polygon. Show the area-assignment modal so they can pick which existing
+              // area to add this measurement to, or create a new area.
+              const calculatedArea = calculatePolygonArea(currentPoints);
+              setPendingNewArea({ points: [...currentPoints], area: calculatedArea });
+              setAreaAssignmentChoice(existingRoofAreas[0]?.id ?? '');
+              setAreaAssignmentNewName('');
+              setShowAreaAssignmentModal(true);
             } else {
               // volume_3d: skip area name modal, go straight to depth prompt.
               const compForArea = components.find(c => c.id === currentSelectedId);
@@ -2123,6 +2245,8 @@ export function TakeoffWorkstation({
           }
         }
         
+        // Issue B: push snapshot before each point so undo steps back click-by-click
+        pushHistorySnapshot();
         // Add point
         console.log('[Area] Added point', currentPoints.length + 1);
         setAreaPoints([...currentPoints, newPoint]);
@@ -2141,6 +2265,7 @@ export function TakeoffWorkstation({
           selectable: false,
           evented: false,
         });
+        (marker as any).isInProgressMarker = true;
         canvas.add(marker);
         
         return;
@@ -2166,6 +2291,7 @@ export function TakeoffWorkstation({
             selectable: false,
             evented: false,
           });
+          (marker as any).isInProgressMarker = true;
           canvas.add(marker);
           setCalibrationPoints([newPoint]);
         } else if (calibrationPointsRef.current.length === 1) {
@@ -2435,6 +2561,213 @@ export function TakeoffWorkstation({
     fabricRef.current.viewportTransform = [1, 0, 0, 1, 0, 0];
     fabricRef.current.requestRenderAll();
     setZoom(1);
+  };
+
+  // Reset Canvas: replaces the old Reset Zoom button.
+  // New takeoff (no hydration) → wipe to blank canvas + calibrate step.
+  // Saved takeoff (has hydration) → re-run reconstructCanvas from DB state.
+  const handleResetCanvas = () => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    setShowResetConfirm(false);
+
+    if (!hydrationData || hydrationData.measurements.length === 0) {
+      // New takeoff: wipe everything, back to calibrate step.
+      // Reuse the same state-reset sequence from loadPageImage.
+      canvas.clear();
+      canvas.backgroundColor = '#1e293b';
+
+      // Reload the plan image as background
+      const currentPage = pages[currentPageIndex];
+      if (currentPage?.url) {
+        const imgElement = new Image();
+        imgElement.crossOrigin = 'anonymous';
+        imgElement.onload = () => {
+          const fabricImg = new FabricImage(imgElement);
+          const scaleX = CANVAS_WIDTH / imgElement.width;
+          const scaleY = CANVAS_HEIGHT / imgElement.height;
+          const scale = Math.min(scaleX, scaleY);
+          fabricImg.set({
+            scaleX: scale, scaleY: scale,
+            left: (CANVAS_WIDTH - imgElement.width * scale) / 2,
+            top: (CANVAS_HEIGHT - imgElement.height * scale) / 2,
+            originX: 'left', originY: 'top',
+            selectable: false, evented: false,
+          });
+          canvas.backgroundImage = fabricImg;
+          canvas.renderAll();
+        };
+        imgElement.src = currentPage.url;
+      }
+
+      // Reset all tool modes + state
+      setAreaMode(false);
+      setLineMode(false);
+      setPointMode(false);
+      setMultiLinealMode(false);
+      setCalibrationMode(false);
+      setCalibrationPoints([]);
+      setShowCalibrationModal(false);
+      setShowCalibrationHelp(true);
+      setShowConfirmedFlash(false);
+      setCalibrations([]);
+      setCalibrationConfirmed(false);
+      setAreaPoints([]);
+      setLinePoints([]);
+      setMultiLinealPoints([]);
+      setMultiLinealSegmentObjects([]);
+      setComponentMeasurements([]);
+      setRoofAreas([]);
+      setSelectedComponentId(null);
+      setIsExistingAreaMode(false);
+      setExistingAreaLabel('');
+      setIsDirty(false);
+      // Clear undo history
+      history.clear();
+      console.info('[ResetCanvas] Reset to fresh takeoff (calibrate step)');
+    } else {
+      // Saved takeoff: re-run reconstruction from DB state.
+      // Clear canvas and reload the plan image, then reconstruct.
+      canvas.clear();
+      canvas.backgroundColor = '#1e293b';
+
+      const currentPage = pages[currentPageIndex];
+      if (currentPage?.url) {
+        const imgElement = new Image();
+        imgElement.crossOrigin = 'anonymous';
+        imgElement.onload = () => {
+          const fabricImg = new FabricImage(imgElement);
+          const scaleX = CANVAS_WIDTH / imgElement.width;
+          const scaleY = CANVAS_HEIGHT / imgElement.height;
+          const scale = Math.min(scaleX, scaleY);
+          fabricImg.set({
+            scaleX: scale, scaleY: scale,
+            left: (CANVAS_WIDTH - imgElement.width * scale) / 2,
+            top: (CANVAS_HEIGHT - imgElement.height * scale) / 2,
+            originX: 'left', originY: 'top',
+            selectable: false, evented: false,
+          });
+          canvas.backgroundImage = fabricImg;
+          canvas.renderAll();
+
+          // Re-hydrate from original DB data
+          hydrationAppliedRef.current = false;
+          reconstructAppliedRef.current = false;
+          setCanvasReady(false);
+
+          // Re-trigger hydration by setting canvasReady after image loads
+          // The hydration effect + reconstruct effect will fire again.
+          // We need to reset the refs and re-apply hydration data.
+          const grouped = new Map<string, { componentId: string; measurements: any[]; expanded: boolean }>();
+          const hydratedRoofAreas: { id: string; name: string; points: { x: number; y: number }[]; area: number; pitch: number; visible: boolean }[] = [];
+          hydrationData.measurements.forEach(m => {
+            if (m.componentId === null && m.type === 'area') {
+              hydratedRoofAreas.push({
+                id: m.id,
+                name: 'Area ' + (hydratedRoofAreas.length + 1),
+                points: m.points || [],
+                area: m.value,
+                pitch: 0,
+                visible: m.visible,
+              });
+              return;
+            }
+            if (m.componentId === null) return;
+            const cid = m.componentId;
+            if (!grouped.has(cid)) {
+              grouped.set(cid, { componentId: cid, measurements: [], expanded: false });
+            }
+            const g = grouped.get(cid); if (g) g.measurements.push({
+              id: m.id,
+              type: m.type,
+              value: m.value,
+              points: m.points || undefined,
+              visible: m.visible,
+              fromPageId: m.pageId || null,
+            });
+          });
+
+          if (grouped.size > 0) {
+            setComponentMeasurements(Array.from(grouped.values()));
+            setActiveComponentIds(Array.from(grouped.keys()));
+          }
+
+          if (hydratedRoofAreas.length > 0) {
+            if (existingRoofAreas.length > 0) {
+              hydratedRoofAreas.forEach((ra, i) => {
+                const match = existingRoofAreas[i];
+                if (match) {
+                  ra.pitch = match.pitch || 0;
+                  ra.name = match.label;
+                }
+              });
+            }
+            setRoofAreas(hydratedRoofAreas);
+          }
+
+          // Restore calibrations
+          const firstPage = hydrationData.pages[0];
+          if (firstPage && firstPage.scaleCalibration) {
+            try {
+              const restored = firstPage.scaleCalibration;
+              if (Array.isArray(restored) && restored.length > 0) {
+                setCalibrations(restored);
+                setCalibrationConfirmed(true);
+                setShowCalibrationHelp(false);
+              }
+            } catch (err) {
+              console.warn('[ResetCanvas] Failed to restore calibrations:', err);
+            }
+          }
+
+          // Re-run canvas reconstruction
+          const result = reconstructCanvas(canvas, {
+            componentMeasurements: Array.from(grouped.values()).map(c => ({
+              componentId: c.componentId,
+              measurements: c.measurements,
+            })),
+            roofAreas: hydratedRoofAreas,
+            componentColors,
+            currentPageId: currentPage?.id || null,
+          });
+          setComponentMeasurements(result.componentMeasurements);
+          setRoofAreas(result.roofAreas);
+
+          // Reset tool modes
+          setAreaMode(false);
+          setLineMode(false);
+          setPointMode(false);
+          setMultiLinealMode(false);
+          setCalibrationMode(false);
+          setAreaPoints([]);
+          setLinePoints([]);
+          setMultiLinealPoints([]);
+          setMultiLinealSegmentObjects([]);
+
+          // Issue 4 fix: re-apply existing area mode
+          if (takeoffMode === 'add' && existingRoofAreas.length > 0) {
+            setIsExistingAreaMode(true);
+            setActiveSaveRoofAreaId(existingRoofAreas[0].id);
+            setExistingAreaLabel(existingRoofAreas[0].label);
+          }
+
+          // Also reset zoom
+          canvas.setZoom(1);
+          canvas.viewportTransform = [1, 0, 0, 1, 0, 0];
+          setZoom(1);
+
+          setIsDirty(false);
+          history.clear();
+          console.info('[ResetCanvas] Reset to saved takeoff state (reconstructed from DB)');
+        };
+        imgElement.src = currentPage.url;
+      } else {
+        // No page URL — just reset zoom
+        canvas.setZoom(1);
+        canvas.viewportTransform = [1, 0, 0, 1, 0, 0];
+        setZoom(1);
+      }
+    }
   };
 
   const handleFitToScreen = () => {
@@ -3240,9 +3573,10 @@ export function TakeoffWorkstation({
               >
                 Area
               </button>
-              {/* Compact segmented sub-tool toggle: shown when area mode is active */}
-              {areaMode && (
-                <div className="flex items-center rounded-full bg-gray-100 p-0.5">
+              {/* Compact segmented sub-tool toggle: always rendered to prevent
+                  toolbar layout shift. Uses invisible (not hidden) when area mode
+                  is inactive so the space is reserved. */}
+              <div className={`flex items-center rounded-full bg-gray-100 p-0.5 ${areaMode ? '' : 'invisible'}`}>
                   <button
                     onClick={() => {
                       cleanupBoxDrag();
@@ -3274,7 +3608,6 @@ export function TakeoffWorkstation({
                     Rectangle
                   </button>
                 </div>
-              )}
               <button
                 onClick={() => {
                   // Generic-trade quotes: no area required for point measurements.
@@ -3348,7 +3681,7 @@ export function TakeoffWorkstation({
                 onClick={handleZoomOut}
                 className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
               >
-                âˆ’
+                −
               </button>
               <span className="px-1 py-1 text-sm tabular-nums">{Math.round(zoom * 100)}%</span>
               <button
@@ -3358,8 +3691,9 @@ export function TakeoffWorkstation({
                 +
               </button>
               <button
-                onClick={handleResetZoom}
+                onClick={() => setShowResetConfirm(true)}
                 className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
+                title="Reset canvas to starting state"
               >
                 Reset
               </button>
@@ -3521,7 +3855,7 @@ export function TakeoffWorkstation({
       {showCalibrationHelp && calibrations.length === 0 && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4">ðŸ“ Calibrate Your Plan</h2>
+            <h2 className="text-xl font-semibold mb-4">📐 Calibrate Your Plan</h2>
             <div className="space-y-3 text-sm">
               <p>Before you can measure, you need to set the scale:</p>
               <ol className="list-decimal list-inside space-y-2 text-gray-900">
@@ -3690,6 +4024,103 @@ export function TakeoffWorkstation({
             setAreaPoints([]);
           }}
         />
+      )}
+
+      {/* Issue 5: Area Assignment Modal — shown when user draws a new area
+          polygon while editing an existing plan (mode=add). Lets them pick
+          which existing area to add the measurement to, or create a new area. */}
+      {showAreaAssignmentModal && pendingNewArea && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-1">Assign Area Measurement</h2>
+              <p className="text-sm text-slate-500 mb-4">
+                You drew a new area measuring {pendingNewArea.area.toFixed(2)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'}.
+                Choose which area to add it to, or create a new one.
+              </p>
+              <div className="space-y-2 mb-4">
+                {existingRoofAreas.map(area => (
+                  <label
+                    key={area.id}
+                    className={`w-full text-left p-3 rounded-xl border-2 transition-colors cursor-pointer flex items-center gap-3 ${
+                      areaAssignmentChoice === area.id
+                        ? 'border-orange-500 bg-orange-50'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="areaAssignment"
+                      checked={areaAssignmentChoice === area.id}
+                      onChange={() => setAreaAssignmentChoice(area.id)}
+                      className="w-4 h-4 accent-orange-500"
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-slate-900">{area.label}</p>
+                      {area.area != null && area.area > 0 && (
+                        <p className="text-xs text-slate-500">Current: {area.area.toFixed(2)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'}</p>
+                      )}
+                    </div>
+                  </label>
+                ))}
+                <label
+                  className={`w-full text-left p-3 rounded-xl border-2 transition-colors cursor-pointer flex items-center gap-3 ${
+                    areaAssignmentChoice === '__new__'
+                      ? 'border-orange-500 bg-orange-50'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="areaAssignment"
+                    checked={areaAssignmentChoice === '__new__'}
+                    onChange={() => setAreaAssignmentChoice('__new__')}
+                    className="w-4 h-4 accent-orange-500"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-900">New Area</p>
+                    <p className="text-xs text-slate-500">Create a separate area for this measurement</p>
+                  </div>
+                </label>
+              </div>
+              {areaAssignmentChoice === '__new__' && (
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Area name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Garage Roof"
+                    value={areaAssignmentNewName}
+                    onChange={e => setAreaAssignmentNewName(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+              )}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAreaAssignmentModal(false);
+                    setPendingNewArea(null);
+                    setPendingAreaPoints([]);
+                    setAreaPoints([]);
+                    setAreaMode(false);
+                  }}
+                  className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmAreaAssignment}
+                  disabled={!areaAssignmentChoice || (areaAssignmentChoice === '__new__' && !areaAssignmentNewName.trim())}
+                  className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Point Measurement Prompt */}
@@ -3908,7 +4339,19 @@ export function TakeoffWorkstation({
       )}
 
       {/* App-style alert replaces native alert() across this workstation. */}
-      <AlertModal
+      {/* Reset Canvas confirm modal */}
+        <ConfirmModal
+          open={showResetConfirm}
+          title="Reset Canvas?"
+          description={hydrationData && hydrationData.measurements.length > 0
+            ? 'This will discard all unsaved changes and restore the canvas to the last saved state.'
+            : 'This will clear all measurements, calibrations, and drawings. You will start over from the calibration step.'}
+          confirmLabel="Reset"
+          destructive={true}
+          onCancel={() => setShowResetConfirm(false)}
+          onConfirm={handleResetCanvas}
+        />
+        <AlertModal
         open={alertState.open}
         title={alertState.title}
         description={alertState.description}
