@@ -155,6 +155,7 @@ interface TakeoffSnapshot {
   areaMode: boolean;
   areaPoints: { x: number; y: number }[];
   areaSubTool: 'polygon' | 'rect';
+  lineSubTool: 'single' | 'multi';
   lineMode: boolean;
   linePoints: { x: number; y: number }[];
   pointMode: boolean;
@@ -279,6 +280,9 @@ export function TakeoffWorkstation({
   const [areaMode, setAreaMode] = useState(false);
   // Sub-tool selection for area mode: 'polygon' (click points) or 'rect' (click-drag box).
   const [areaSubTool, setAreaSubTool] = useState<'polygon' | 'rect'>('polygon');
+  // Fix #3: sub-tool selection for line mode: 'single' (2-point line) or
+  // 'multi' (N-point polyline, formerly the standalone Multi-Line button).
+  const [lineSubTool, setLineSubTool] = useState<'single' | 'multi'>('single');
   const [areaPoints, setAreaPoints] = useState<{ x: number; y: number }[]>([]);
   const [_tempAreaPolygon, _setTempAreaPolygon] = useState<any>(null);
   const [showAreaNamePrompt, setShowAreaNamePrompt] = useState(false);
@@ -447,6 +451,7 @@ export function TakeoffWorkstation({
       areaMode,
       areaPoints: areaPoints.map(p => ({ ...p })),
       areaSubTool,
+      lineSubTool,
       lineMode,
       linePoints: linePoints.map(p => ({ ...p })),
       pointMode,
@@ -468,6 +473,21 @@ export function TakeoffWorkstation({
   const pushHistorySnapshot = useCallback(() => {
     history.pushSnapshot(captureSnapshot());
   }, [history, captureSnapshot]);
+
+  // Fix #5a: the canvas mouse handlers are bound ONCE on mount ([] deps), so
+  // any pushHistorySnapshot they reference is a mount-time closure that
+  // captures EMPTY state. Every snapshot pushed from a canvas click was the
+  // initial blank state, which is why undo "reset" the whole canvas.
+  // The ref is refreshed every render so listeners always get the latest.
+  const pushHistorySnapshotRef = useRef(pushHistorySnapshot);
+  useEffect(() => { pushHistorySnapshotRef.current = pushHistorySnapshot; });
+
+  // Fix #5b: rapid undo/redo clicks can fire before React re-renders, so
+  // captureSnapshot() would read pre-undo state and corrupt the redo stack.
+  // liveStateRef mirrors the latest committed state (refreshed every render) and
+  // is updated SYNCHRONOUSLY inside undo/redo.
+  const liveStateRef = useRef<TakeoffSnapshot | null>(null);
+  useEffect(() => { liveStateRef.current = captureSnapshot(); });
 
   // Clear all non-background objects and rebuild from current React state.
   // The background image (canvas.backgroundImage) survives because it is
@@ -561,8 +581,11 @@ export function TakeoffWorkstation({
   }, [redrawNonce]);
 
   const handleUndo = useCallback(() => {
-    const snapshot = history.undo(captureSnapshot());
+    // Fix #5b: use the live ref (synchronously updated) - rapid clicks fire
+    // before React re-renders and captureSnapshot() would read stale state.
+    const snapshot = history.undo(liveStateRef.current ?? captureSnapshot());
     if (!snapshot) return;
+    liveStateRef.current = snapshot;
     // Restore plain state values.
     setComponentMeasurements(snapshot.componentMeasurements.map(c => ({
       ...c,
@@ -576,6 +599,7 @@ export function TakeoffWorkstation({
     setAreaMode(snapshot.areaMode);
     setAreaPoints(snapshot.areaPoints);
     setAreaSubTool(snapshot.areaSubTool);
+    setLineSubTool(snapshot.lineSubTool);
     setLineMode(snapshot.lineMode);
     setLinePoints(snapshot.linePoints);
     setPointMode(snapshot.pointMode);
@@ -591,8 +615,10 @@ export function TakeoffWorkstation({
   }, [history, captureSnapshot]);
 
   const handleRedo = useCallback(() => {
-    const snapshot = history.redo(captureSnapshot());
+    // Fix #5b: same live-ref pattern as handleUndo.
+    const snapshot = history.redo(liveStateRef.current ?? captureSnapshot());
     if (!snapshot) return;
+    liveStateRef.current = snapshot;
     // Restore plain state values (same as undo).
     setComponentMeasurements(snapshot.componentMeasurements.map(c => ({
       ...c,
@@ -606,6 +632,7 @@ export function TakeoffWorkstation({
     setAreaMode(snapshot.areaMode);
     setAreaPoints(snapshot.areaPoints);
     setAreaSubTool(snapshot.areaSubTool);
+    setLineSubTool(snapshot.lineSubTool);
     setLineMode(snapshot.lineMode);
     setLinePoints(snapshot.linePoints);
     setPointMode(snapshot.pointMode);
@@ -1021,9 +1048,11 @@ export function TakeoffWorkstation({
     const tool = toolForMeasurementType(measurementType);
     if (tool === 'line') {
       setLineMode(true);
+      setLineSubTool('single');
       activeAreaComponentIdRef.current = null; // clear area ref when switching away
     } else if (tool === 'multi_line') {
       setMultiLinealMode(true);
+      setLineSubTool('multi');
       activeAreaComponentIdRef.current = null;
     } else if (tool === 'area') {
       setAreaMode(true);
@@ -1968,8 +1997,8 @@ export function TakeoffWorkstation({
         if (currentPoints.length === 0) {
           // First point
           console.log('[Line] First point');
-          // Issue B: push snapshot before first point
-          pushHistorySnapshot();
+          // Issue B: push snapshot before first point (via ref - see Fix #5a)
+          pushHistorySnapshotRef.current();
           setLinePoints([newPoint]);
           
           // Draw marker (component color)
@@ -2036,8 +2065,8 @@ export function TakeoffWorkstation({
             length: realDistance 
           });
           setShowLineMeasurementPrompt(true);
-          // Issue B: push snapshot before second point
-          pushHistorySnapshot();
+          // Issue B: push snapshot before second point (via ref - see Fix #5a)
+          pushHistorySnapshotRef.current();
           setLinePoints([firstPoint, newPoint]);
         }
         
@@ -2084,8 +2113,8 @@ export function TakeoffWorkstation({
         }
 
         canvas.renderAll();
-        // Issue B: push snapshot before each point
-        pushHistorySnapshot();
+        // Issue B: push snapshot before each point (via ref - see Fix #5a)
+        pushHistorySnapshotRef.current();
         setMultiLinealPoints([...currentPoints, newPoint]);
         setMultiLinealSegmentObjects(prev => [...prev, ...newObjects]);
         return;
@@ -2185,7 +2214,7 @@ export function TakeoffWorkstation({
             // Guard: if a roof area already exists and no component is selected,
             // the user is drawing a second boundary without attaching it to a
             // component. Warn and cancel the polygon.
-            if (currentRoofAreas.length > 0 && !currentSelectedId) {
+            if (currentRoofAreas.length > 0 && !currentSelectedId && !isExistingAreaModeRef.current) {
               setPendingAreaPoints([]);
               setAreaPoints([]);
               setPendingComponentId(null);
@@ -2245,8 +2274,8 @@ export function TakeoffWorkstation({
           }
         }
         
-        // Issue B: push snapshot before each point so undo steps back click-by-click
-        pushHistorySnapshot();
+        // Issue B: push snapshot before each point so undo steps back click-by-click (via ref - see Fix #5a)
+        pushHistorySnapshotRef.current();
         // Add point
         console.log('[Area] Added point', currentPoints.length + 1);
         setAreaPoints([...currentPoints, newPoint]);
@@ -2419,7 +2448,7 @@ export function TakeoffWorkstation({
         setPendingComponentId(currentSelectedId);
 
         // Same guards as polygon close:
-        if (currentRoofAreas.length > 0 && !currentSelectedId) {
+        if (currentRoofAreas.length > 0 && !currentSelectedId && !isExistingAreaModeRef.current) {
           setPendingAreaPoints([]);
           setPendingComponentId(null);
           showAlert(
@@ -2436,14 +2465,13 @@ export function TakeoffWorkstation({
           setPitchOnlyInput('');
           setShowPitchOnlyPrompt(true);
         } else if (isExistingAreaModeRef.current && !currentSelectedId) {
-          setPendingAreaPoints([]);
-          setPendingComponentId(null);
-          showAlert(
-            'Select a component first',
-            'You are adding measurements to an existing area. Select a component from the panel before drawing.',
-            'info'
-          );
-          return;
+          // Issue 5: existing-area mode + no component -> area-assignment modal
+          // (same flow as the polygon sub-tool path).
+          const calculatedArea = calculatePolygonArea(boxPoints);
+          setPendingNewArea({ points: [...boxPoints], area: calculatedArea });
+          setAreaAssignmentChoice(existingRoofAreas[0]?.id ?? '');
+          setAreaAssignmentNewName('');
+          setShowAreaAssignmentModal(true);
         } else {
           // volume_3d: skip area name modal, go straight to depth prompt.
           const compForArea = components.find(c => c.id === currentSelectedId);
@@ -3511,6 +3539,19 @@ export function TakeoffWorkstation({
               </button>
               <button
                 onClick={() => {
+                  // Fix #3: Line is now a toggle covering BOTH sub-tools
+                  // (Single = 2-point line, Multi = N-point polyline).
+                  const isActive = lineMode || multiLinealMode;
+                  if (isActive) {
+                    if (multiLinealMode) {
+                      handleCancelMultiLineal();
+                    }
+                    cleanupBoxDrag();
+                    setLineMode(false);
+                    setMultiLinealMode(false);
+                    setLinePoints([]);
+                    return;
+                  }
                   // Generic-trade quotes: no area required. Roofing: area with pitch required.
                   if (!quoteIsGeneric) {
                     const hasRoofAreaWithPitch = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0);
@@ -3527,24 +3568,70 @@ export function TakeoffWorkstation({
                     showAlert('Select a component first', 'Pick a component from the list before measuring.', 'info');
                     return;
                   }
-                  setLineMode(!lineMode);
                   cleanupBoxDrag();
                   setAreaMode(false);
                   setPointMode(false);
-                  setMultiLinealMode(false);
-                  setMultiLinealPoints([]);
-                  setMultiLinealSegmentObjects([]);
-                  setLinePoints([]);
+                  if (lineSubTool === 'multi') {
+                    setMultiLinealMode(true);
+                    setLineMode(false);
+                    setLinePoints([]);
+                  } else {
+                    setLineMode(true);
+                    setMultiLinealMode(false);
+                    setMultiLinealPoints([]);
+                    setMultiLinealSegmentObjects([]);
+                    setLinePoints([]);
+                  }
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)))}
                 data-copilot="takeoff-tool-line"
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  lineMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
+                  (lineMode || multiLinealMode) ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
-                title={calibrations.length === 0 ? 'Calibrate first' : (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))) ? 'Create roof area with pitch first' : selectedComponentId ? 'Measure line' : 'Select component first'}
+                title={calibrations.length === 0 ? 'Calibrate first' : (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))) ? 'Create roof area with pitch first' : selectedComponentId ? 'Measure line (Single) or polyline (Multi)' : 'Select component first'}
               >
                 Line
               </button>
+              {/* Fix #3: Line sub-tool toggle (Single | Multi) - same invisible
+                  pattern as the Area sub-tool so the toolbar never reflows. */}
+              <div className={`flex items-center rounded-full bg-gray-100 p-0.5 ${(lineMode || multiLinealMode) ? '' : 'invisible'}`}>
+                  <button
+                    onClick={() => {
+                      setLineSubTool('single');
+                      if (multiLinealMode) {
+                        handleCancelMultiLineal();
+                        setLineMode(true);
+                      }
+                      setLinePoints([]);
+                    }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                      lineSubTool === 'single'
+                        ? 'bg-slate-900 text-white'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                    title="Single line: click two points to measure one length"
+                  >
+                    Single
+                  </button>
+                  <button
+                    onClick={() => {
+                      setLineSubTool('multi');
+                      if (lineMode) {
+                        setLineMode(false);
+                        setLinePoints([]);
+                        setMultiLinealMode(true);
+                      }
+                    }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                      lineSubTool === 'multi'
+                        ? 'bg-slate-900 text-white'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                    title="Multi-line: click multiple points, double-click or Finish to commit as one total length"
+                  >
+                    Multi
+                  </button>
+              </div>
               {/* Area tool — compact segmented sub-tool selector when active */}
               <button
                 onClick={() => {
@@ -3643,32 +3730,6 @@ export function TakeoffWorkstation({
               >
                 Point
               </button>
-              {/* Phase 7: multi-lineal tool button */}
-              <button
-                onClick={() => {
-                  if (!selectedComponentId) {
-                    showAlert('Select a component first', 'Pick a multi-line component from the list before measuring.', 'info');
-                    return;
-                  }
-                  if (multiLinealMode) {
-                    // Toggling off - cancel in-progress polyline.
-                    handleCancelMultiLineal();
-                  } else {
-                    setMultiLinealMode(true);
-                    cleanupBoxDrag();
-                    setLineMode(false);
-                    setAreaMode(false);
-                    setPointMode(false);
-                  }
-                }}
-                disabled={calibrationMode || calibrations.length === 0}
-                className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  multiLinealMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
-                }`}
-                title={calibrations.length === 0 ? 'Calibrate first' : 'Multi-line: click multiple points, double-click or Finish to commit as one total length'}
-              >
-                Multi-Line
-              </button>
             </div>
 
             {/* Phase 7: Multi-lineal in-progress readout floats below the toolbar
@@ -3696,12 +3757,6 @@ export function TakeoffWorkstation({
                 title="Reset canvas to starting state"
               >
                 Reset
-              </button>
-              <button
-                onClick={handleFitToScreen}
-                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
-              >
-                Fit
               </button>
               {/* Canvas-rework: Undo/Redo buttons */}
               <div className="w-px h-5 bg-gray-300 mx-1" />
