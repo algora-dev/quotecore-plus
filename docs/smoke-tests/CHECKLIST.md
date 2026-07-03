@@ -8,17 +8,23 @@
 
 ---
 
+# 2026-07-03 — Takeoff Batch 1 re-fixes (modal guard, Line sub-tool, undo stale closure) — commit c759f3f
+
+- [ ] **Area assignment modal (retest #2)** — "Edit This Plan" → draw a new roof area polygon (no component selected) → modal appears listing existing areas + "New Area". Also works with the Rectangle sub-tool. Pick existing → measurement routes to that area; pick New Area → named new area created.
+- [ ] **Toolbar single-stack (retest #3)** — Fit button gone. Multi-Line button gone; Line now shows Single/Multi sub-tool toggle when active (like Area's Polygon/Rectangle). All toolbar buttons render single-stack text, no vertical stacking. Multi polyline still works: Line → Multi → click points → double-click/Finish commits one total length.
+- [ ] **Undo click-by-click (retest #5)** — draw a polygon with 4 clicks → Undo removes 4th point only → Undo removes 3rd point (max 2 steps back). Undo NEVER wipes the whole canvas. Redo restores points. Rapid double-click on Undo behaves the same as two slow clicks.
+
 # 2026-07-03 — Takeoff Canvas Bug Fix Batch 2 (area dup, toolbar, cursor, undo cap, reset)
 
-- [ ] **No area duplication in Edit This Plan** — open a saved takeoff via "Edit This Plan", draw a new component measurement, Save → re-enter → exactly 1 new measurement (no duplicated roof areas).
-- [ ] **Area assignment modal** — in "Edit This Plan" mode, draw a new roof area polygon → modal pops up listing existing areas + "New Area" option. Pick existing → measurement routes to that area. Pick New Area → name prompt → creates new area row.
-- [ ] **Toolbar no layout shift** — toggle area mode on/off → the Polygon/Rectangle sub-tool toggle stays in place (invisible when area mode off, visible when on). Toolbar width doesn't jump.
-- [ ] **Crosshair cursor on reconstructed objects** — open a saved takeoff, hover over reconstructed polygons/lines → cursor stays as crosshair (not default arrow).
-- [ ] **Undo = click-by-click (max 2 steps)** — draw a polygon with 4 clicks, Undo → removes 4th point only. Undo → removes 3rd point. Further undos won't go deeper than 2 steps back. In-progress markers survive the undo redraw.
-- [ ] **cleanupInProgressObjects doesn't wipe mid-draw markers** — start drawing a polygon (3 clicks), then save another measurement → the 3 in-progress vertex markers stay on canvas (not wiped).
-- [ ] **Reset button (new takeoff)** — on a fresh takeoff, click Reset → confirm modal → canvas wipes to blank + calibrate step. All measurements/calibrations cleared.
-- [ ] **Reset button (saved takeoff)** — on an edited saved takeoff, click Reset → confirm modal → canvas reverts to the last saved state (all saved measurements reconstructed from DB). Unsaved changes discarded.
-- [ ] **Mojibake fix (billing)** — billing page loads, plan names/descriptions render correctly (no â†, âœ“, mÂ² characters).
+- [x] **No area duplication in Edit This Plan** — open a saved takeoff via "Edit This Plan", draw a new component measurement, Save → re-enter → exactly 1 new measurement (no duplicated roof areas).
+- [!] **Area assignment modal** — FAILED 2026-07-03: "select a component first" alert fired instead of the modal (guard ordering). Re-fixed in c759f3f → see retest item above.
+- [!] **Toolbar no layout shift** — FAILED 2026-07-03: still stacking (too many buttons). Re-fixed in c759f3f (Fit removed, Multi-Line merged into Line) → see retest item above.
+- [x] **Crosshair cursor on reconstructed objects** — open a saved takeoff, hover over reconstructed polygons/lines → cursor stays as crosshair (not default arrow).
+- [!] **Undo = click-by-click (max 2 steps)** — FAILED 2026-07-03: >1 undo reset the whole canvas (stale mount-time closure captured empty snapshots). Re-fixed in c759f3f → see retest item above.
+- [x] **cleanupInProgressObjects doesn't wipe mid-draw markers** — start drawing a polygon (3 clicks), then save another measurement → the 3 in-progress vertex markers stay on canvas (not wiped).
+- [x] **Reset button (new takeoff)** — on a fresh takeoff, click Reset → confirm modal → canvas wipes to blank + calibrate step. All measurements/calibrations cleared.
+- [x] **Reset button (saved takeoff)** — on an edited saved takeoff, click Reset → confirm modal → canvas reverts to the last saved state (all saved measurements reconstructed from DB). Unsaved changes discarded.
+- [x] **Mojibake fix (billing)** — billing page loads, plan names/descriptions render correctly (no â†, âœ“, mÂ² characters).
 
 # 2026-07-03 — Takeoff Canvas Bug Fix (undo/redo rewrite, image lock, mojibake)
 
