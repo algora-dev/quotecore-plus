@@ -3302,6 +3302,7 @@ export type Database = {
           measurement_value: number
           page_id: string | null
           quote_id: string
+          quote_roof_area_id: string | null
           unassigned: boolean
           updated_at: string | null
         }
@@ -3317,6 +3318,7 @@ export type Database = {
           measurement_value: number
           page_id?: string | null
           quote_id: string
+          quote_roof_area_id?: string | null
           unassigned?: boolean
           updated_at?: string | null
         }
@@ -3332,6 +3334,7 @@ export type Database = {
           measurement_value?: number
           page_id?: string | null
           quote_id?: string
+          quote_roof_area_id?: string | null
           unassigned?: boolean
           updated_at?: string | null
         }
@@ -3362,6 +3365,13 @@ export type Database = {
             columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_takeoff_measurements_quote_roof_area_id_fkey"
+            columns: ["quote_roof_area_id"]
+            isOneToOne: false
+            referencedRelation: "quote_roof_areas"
             referencedColumns: ["id"]
           },
         ]
