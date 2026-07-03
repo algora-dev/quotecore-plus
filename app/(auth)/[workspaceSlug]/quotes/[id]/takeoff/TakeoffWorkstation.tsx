@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle, Rect } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea } from './actions';
+import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
 import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
@@ -682,61 +682,48 @@ export function TakeoffWorkstation({
       );
     }
 
-    // Group measurements by component and restore componentMeasurements state.
-    const grouped = new Map<string, ComponentWithMeasurements>();
-    // Also collect roof area measurements (componentId = null, type = 'area')
-    // so we can reconstruct their boundary polygons on the canvas.
-    const hydratedRoofAreas: RoofArea[] = [];
-    hydrationData.measurements
-      .forEach(m => {
-        if (m.componentId === null && m.type === 'area') {
-          // Roof area boundary measurement — restore to roofAreas state.
-          hydratedRoofAreas.push({
-            id: m.id,
-            name: `Area ${hydratedRoofAreas.length + 1}`,
-            points: m.points ?? [],
-            area: m.value,
-            pitch: 0, // pitch is in quote_roof_areas, not on this measurement row
-            visible: m.visible,
-          });
-          return;
-        }
-        if (m.componentId === null) return;
-        const cid = m.componentId!;
-        if (!grouped.has(cid)) {
-          grouped.set(cid, { componentId: cid, measurements: [], expanded: false });
-        }
-        grouped.get(cid)!.measurements.push({
-          id: m.id,
-          type: m.type as ComponentMeasurement['type'],
-          value: m.value,
-          points: m.points ?? undefined,
-          visible: m.visible,
-          fromPageId: m.pageId ?? null,
-        });
-      });
-
-    if (grouped.size > 0) {
-      setComponentMeasurements(Array.from(grouped.values()));
-      setActiveComponentIds(Array.from(grouped.keys()));
-      console.info('[Hydration] Restored', grouped.size, 'components from DB');
-    }
-
-    // Restore roof area boundary polygons from DB (componentId = null, type = 'area').
-    // Merge in pitch from existingRoofAreas prop (fetched from quote_roof_areas table).
-    if (hydratedRoofAreas.length > 0) {
-      // If we have existingRoofAreas from the server, use their pitch + label.
-      if (existingRoofAreas.length > 0) {
-        hydratedRoofAreas.forEach((ra, i) => {
-          const match = existingRoofAreas[i];
-          if (match) {
-            ra.pitch = match.pitch ?? 0;
-            ra.name = match.label;
-          }
-        });
+    // Fix 2: Group measurements by quoteRoofAreaId for per-area restore.
+    // Pre-Batch-5 data (null quoteRoofAreaId) goes to first area.
+    const firstAreaId = allRoofAreas[0]?.id ?? null;
+    const byArea = new Map<string, { components: Map<string, ComponentWithMeasurements>; areas: RoofArea[] }>();
+    
+    hydrationData.measurements.forEach(m => {
+      const areaKey = m.quoteRoofAreaId ?? firstAreaId ?? '__no_area__';
+      if (!byArea.has(areaKey)) byArea.set(areaKey, { components: new Map(), areas: [] });
+      const ad = byArea.get(areaKey)!;
+      
+      if (m.componentId === null && m.type === 'area') {
+        const idx = ad.areas.length;
+        const label = allRoofAreas.find(a => a.id === areaKey)?.label ?? existingRoofAreas[idx]?.label ?? `Area ${idx + 1}`;
+        ad.areas.push({ id: m.id, name: label, points: m.points ?? [], area: m.value, pitch: allRoofAreas.find(a => a.id === areaKey)?.pitch ?? existingRoofAreas[idx]?.pitch ?? 0, visible: m.visible });
+        return;
       }
-      setRoofAreas(hydratedRoofAreas);
-      console.info('[Hydration] Restored', hydratedRoofAreas.length, 'roof areas from DB');
+      if (m.componentId === null) return;
+      const cid = m.componentId!;
+      if (!ad.components.has(cid)) ad.components.set(cid, { componentId: cid, measurements: [], expanded: false });
+      ad.components.get(cid)!.measurements.push({ id: m.id, type: m.type as ComponentMeasurement['type'], value: m.value, points: m.points ?? undefined, visible: m.visible, fromPageId: m.pageId ?? null });
+    });
+
+    // Cache per-area state for handleSwitchArea
+    byArea.forEach((ad, aid) => {
+      areaCanvasStatesRef.current.set(aid, {
+        componentMeasurements: Array.from(ad.components.values()).map(comp => ({
+          componentId: comp.componentId, expanded: false,
+          measurements: comp.measurements.map(m => ({ id: m.id, type: m.type, value: m.value, points: m.points, visible: m.visible, fromPageId: m.fromPageId })),
+        })),
+        roofAreas: ad.areas.map(ra => ({ id: ra.id, name: ra.name, points: ra.points, area: ra.area, pitch: ra.pitch, visible: ra.visible })),
+      });
+    });
+
+    // Display active area's data
+    const dispId = activeAreaId ?? firstAreaId;
+    const disp = byArea.get(dispId ?? '__no_area__');
+    if (disp) {
+      if (disp.components.size > 0) {
+        setComponentMeasurements(Array.from(disp.components.values()));
+        setActiveComponentIds(Array.from(disp.components.keys()));
+      }
+      if (disp.areas.length > 0) setRoofAreas(disp.areas);
     }
 
     // Canvas-rework: restore calibrations from DB so the scale is available
@@ -870,12 +857,9 @@ export function TakeoffWorkstation({
       setActiveComponentIds(cached.activeComponentIds);
       setSelectedComponentId(cached.selectedComponentId);
     } else {
-      // Fresh state for a new area — clear everything
+      // Fix 3: Fresh area — clear components/areas but KEEP calibrations (same plan = same scale)
       setComponentMeasurements([]);
       setRoofAreas([]);
-      setCalibrations([]);
-      setCalibrationPoints([]);
-      setCalibrationConfirmed(false);
       setActiveComponentIds([]);
       setSelectedComponentId(null);
     }
@@ -908,6 +892,32 @@ export function TakeoffWorkstation({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quote.id, handleSwitchArea]);
+
+  // Fix 8: Auto-create the first area on first-time entry (no saved takeoff).
+  // This ensures the area switcher + "+ New Area" button are always visible
+  // and the user starts with a named area instead of a blank panel.
+  const autoCreateTriedRef = useRef(false);
+  useEffect(() => {
+    if (autoCreateTriedRef.current) return;
+    if (areaList.length > 0) return; // areas already exist
+    if (hydrationData) return; // re-entry, don't auto-create
+    autoCreateTriedRef.current = true;
+    // First-time entry: create the first area silently
+    (async () => {
+      try {
+        const result = await createNewTakeoffArea(quote.id);
+        if (result.ok && result.areaId) {
+          const newArea = { id: result.areaId, label: result.label || 'Area 1' };
+          setAreaList([newArea]);
+          setActiveAreaId(newArea.id);
+          setActiveSaveRoofAreaId(newArea.id);
+        }
+      } catch (err) {
+        console.warn('[AutoCreate] Failed to create first area:', err);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [areaList.length, hydrationData, quote.id]);
 
   const handleDeleteArea = (areaId: string) => {
     pushHistorySnapshot();
@@ -1063,6 +1073,10 @@ export function TakeoffWorkstation({
         const dbArea = await createNewTakeoffArea(quote.id);
         if (!dbArea.ok || !dbArea.areaId) throw new Error(dbArea.error || 'Failed to create area');
         const finalLabel = userLabel || dbArea.label || 'Area';
+        // Fix 6: persist the user's chosen name to DB so it survives reloads
+        if (userLabel && userLabel !== dbArea.label) {
+          await renameTakeoffArea(dbArea.areaId, userLabel);
+        }
         const newArea: RoofArea = {
           id: dbArea.areaId, // real DB UUID
           name: finalLabel,
@@ -3328,10 +3342,9 @@ export function TakeoffWorkstation({
 
           {/* Batch 3: Area Switcher — left panel shows all areas for the quote.
               Click an area to switch the canvas + component list. */}
-          {areaList.length > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-bold text-gray-900">{quoteIsGeneric ? 'Areas' : 'Roof Areas'}</h2>
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-bold text-gray-900">{quoteIsGeneric ? 'Areas' : 'Roof Areas'}</h2>
                 <button
                   onClick={handleCreateNewArea}
                   disabled={isCreatingArea}
@@ -3341,104 +3354,62 @@ export function TakeoffWorkstation({
                   {isCreatingArea ? 'Creating…' : '+ New Area'}
                 </button>
               </div>
-              <div className="space-y-1.5">
-                {areaList.map(area => (
-                  <button
-                    key={area.id}
-                    onClick={() => handleSwitchArea(area.id)}
-                    className={`w-full text-left px-3 py-2 rounded-xl border transition-all ${
-                      area.id === activeAreaId
-                        ? 'border-[#FF6B35] bg-orange-50 shadow-[0_0_0_1px_rgba(255,107,53,0.15)]'
-                        : 'border-gray-200 hover:border-gray-300 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-900 truncate">{area.label}</span>
-                      {area.id === activeAreaId && (
-                        <span className="w-2 h-2 rounded-full bg-[#FF6B35] flex-shrink-0 ml-2" />
-                      )}
-                    </div>
-                    {area.area != null && area.area > 0 && (
-                      <span className="text-xs text-gray-500">
-                        {area.area.toFixed(1)} m²
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Roof Areas (canvas-level area list — for the current area's drawn polygons) */}
-          <div className={(!calibrationConfirmed || calibrationMode || showConfirmedFlash) ? 'border-t border-gray-200 pt-4' : ''}>
-            <h2 className="text-sm font-bold mb-3 text-gray-900">{quoteIsGeneric ? 'Areas' : 'Roof Areas'}</h2>
-            {roofAreas.length === 0 && takeoffMode === 'add' && existingRoofAreas.length > 0 ? (
-              // P1-1b mode=add: show existing areas read-only (canvas not reconstructed).
               <div className="space-y-2">
-                {existingRoofAreas.map(area => (
-                  <div key={area.id} className="bg-white rounded-xl border border-gray-200 p-3 flex items-center gap-2">
-                    <div className="flex-1">
-                      <div className="font-semibold text-sm text-gray-900">{area.label}</div>
-                      <div className="text-xs text-gray-500">Existing area</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : roofAreas.length === 0 ? (
-              <div className="text-sm text-gray-500">
-                {calibrationConfirmed ? 'Click "Area" to draw' : 'Calibrate first'}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {roofAreas.map((area) => {
-                  // The on-canvas value is already in the calibration's units
-                  // (sq ft when calibrated in feet, sq m when calibrated in meters).
-                  // For imperial_rs quotes we still want to surface the value in
-                  // Roofing Squares so the user sees the unit they price in.
+                {areaList.map(area => {
                   const calibUnit = calibrations[0]?.unit || 'feet';
                   const sys = normalizeMeasurementSystem(quote.measurement_system);
-                  let displayValue = area.area;
+                  const canvasArea = roofAreas.find(ra => ra.name === area.label || ra.id === area.id);
+                  let displayValue = canvasArea?.area ?? area.area ?? 0;
                   let displayUnit: string;
-                  if (calibUnit === 'feet' && sys === 'imperial_rs') {
-                    // sq ft → RS  (1 RS = 100 ft²)
-                    displayValue = area.area / 100;
-                    displayUnit = 'RS';
-                  } else if (calibUnit === 'feet') {
-                    displayUnit = 'ft²';
-                  } else {
-                    displayUnit = 'm²';
-                  }
+                  if (calibUnit === 'feet' && sys === 'imperial_rs') { displayValue = displayValue / 100; displayUnit = 'RS'; }
+                  else if (calibUnit === 'feet') { displayUnit = 'ft'+'\u00b2'; }
+                  else { displayUnit = 'm'+'\u00b2'; }
+                  const isActive = area.id === activeAreaId;
                   return (
-                    <div key={area.id} className="bg-white rounded-xl border border-gray-200 p-3 flex items-center gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-sm text-gray-900 truncate">{area.name}</div>
-                        <div className="text-xs text-gray-500">{displayValue.toFixed(2)} {displayUnit}</div>
-                      </div>
-                      <div className="flex gap-1 flex-shrink-0">
-                        <button
-                          onClick={() => handleToggleAreaVisibility(area.id)}
-                          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                          title={area.visible ? 'Hide area' : 'Show area'}
-                        >
-                          {area.visible ? (
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                          ) : (
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>
+                    <div
+                      key={area.id}
+                      onClick={() => handleSwitchArea(area.id)}
+                      className={`w-full text-left px-3 py-2 rounded-xl border transition-all cursor-pointer ${
+                        isActive ? 'border-[#FF6B35] bg-orange-50 shadow-[0_0_0_1px_rgba(255,107,53,0.15)]' : 'border-gray-200 hover:border-gray-300 bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-900 truncate">{area.label}</span>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {isActive && <span className="w-2 h-2 rounded-full bg-[#FF6B35]" />}
+                          {canvasArea && (
+                            <>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleToggleAreaVisibility(area.id); }}
+                                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                                title={canvasArea.visible ? 'Hide' : 'Show'}
+                              >
+                                {canvasArea.visible ? (
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                ) : (
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>
+                                )}
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleDeleteArea(area.id); }}
+                                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-base leading-none"
+                                title="Delete"
+                              >×</button>
+                            </>
                           )}
-                        </button>
-                        <button
-                          onClick={() => handleDeleteArea(area.id)}
-                          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-lg leading-none"
-                          title="Delete area"
-                        >
-                          ×
-                        </button>
+                        </div>
                       </div>
+                      {displayValue > 0 && <span className="text-xs text-gray-500">{displayValue.toFixed(2)} {displayUnit}</span>}
                     </div>
                   );
                 })}
+                {areaList.length === 0 && (
+                  <div className="text-sm text-gray-500">
+                    {calibrationConfirmed ? 'Click "+ New Area" or draw an area' : 'Calibrate first, then create areas'}
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {calibrationConfirmed && (
@@ -3686,215 +3657,85 @@ export function TakeoffWorkstation({
 
           {/* Top Toolbar */}
           <div className="flex-shrink-0 mx-4 mt-2 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-3 shadow-sm" data-copilot="takeoff-toolbar">
-            {/* Tools - Left Side */}
-            <div className="flex gap-2">
+            {/* Tools - Fix 7: Calibrate, Area, Line, Point. Sub-tools conditional. */}
+            <div className="flex gap-2 items-center">
               <button
                 onClick={handleStartCalibration}
                 data-copilot="takeoff-tool-calibrate"
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 ${
-                  calibrationMode
-                    ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-500'
-                    : calibrationConfirmed
-                    ? 'bg-gray-200 hover:bg-gray-300'
-                    : 'bg-gray-100 hover:bg-gray-200'
+                  calibrationMode ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-500'
+                  : calibrationConfirmed ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-100 hover:bg-gray-200'
                 }`}
               >
                 {calibrationConfirmed ? 'Recalibrate' : 'Calibrate'}
               </button>
               <button
                 onClick={() => {
-                  // Fix #3: Line is now a toggle covering BOTH sub-tools
-                  // (Single = 2-point line, Multi = N-point polyline).
-                  const isActive = lineMode || multiLinealMode;
-                  if (isActive) {
-                    if (multiLinealMode) {
-                      handleCancelMultiLineal();
-                    }
-                    cleanupBoxDrag();
-                    setLineMode(false);
-                    setMultiLinealMode(false);
-                    setLinePoints([]);
-                    return;
-                  }
-                  // Generic-trade quotes: no area required. Roofing: area with pitch required.
-                  if (!quoteIsGeneric) {
-                    const hasRoofAreaWithPitch = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0);
-                    if (!hasRoofAreaWithPitch) {
-                      showAlert(
-                        'Roof area required',
-                        'Create a roof area with pitch first - components are calculated against the roof pitch.',
-                        'info'
-                      );
-                      return;
-                    }
-                  }
-                  if (!selectedComponentId) {
-                    showAlert('Select a component first', 'Pick a component from the list before measuring.', 'info');
-                    return;
-                  }
-                  cleanupBoxDrag();
-                  setAreaMode(false);
-                  setPointMode(false);
-                  if (lineSubTool === 'multi') {
-                    setMultiLinealMode(true);
-                    setLineMode(false);
-                    setLinePoints([]);
-                  } else {
-                    setLineMode(true);
-                    setMultiLinealMode(false);
-                    setMultiLinealPoints([]);
-                    setMultiLinealSegmentObjects([]);
-                    setLinePoints([]);
-                  }
-                }}
-                disabled={calibrationMode || calibrations.length === 0 || (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)))}
-                data-copilot="takeoff-tool-line"
-                className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  (lineMode || multiLinealMode) ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
-                }`}
-                title={calibrations.length === 0 ? 'Calibrate first' : (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))) ? 'Create roof area with pitch first' : selectedComponentId ? 'Measure line (Single) or polyline (Multi)' : 'Select component first'}
-              >
-                Line
-              </button>
-              {/* Fix #3: Line sub-tool toggle (Single | Multi) - same invisible
-                  pattern as the Area sub-tool so the toolbar never reflows. */}
-              <div className={`flex items-center rounded-full bg-gray-100 p-0.5 ${(lineMode || multiLinealMode) ? '' : 'invisible'}`}>
-                  <button
-                    onClick={() => {
-                      setLineSubTool('single');
-                      if (multiLinealMode) {
-                        handleCancelMultiLineal();
-                        setLineMode(true);
-                      }
-                      setLinePoints([]);
-                    }}
-                    className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
-                      lineSubTool === 'single'
-                        ? 'bg-slate-900 text-white'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                    title="Single line: click two points to measure one length"
-                  >
-                    Single
-                  </button>
-                  <button
-                    onClick={() => {
-                      setLineSubTool('multi');
-                      if (lineMode) {
-                        setLineMode(false);
-                        setLinePoints([]);
-                        setMultiLinealMode(true);
-                      }
-                    }}
-                    className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
-                      lineSubTool === 'multi'
-                        ? 'bg-slate-900 text-white'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                    title="Multi-line: click multiple points, double-click or Finish to commit as one total length"
-                  >
-                    Multi
-                  </button>
-              </div>
-              {/* Area tool — compact segmented sub-tool selector when active */}
-              <button
-                onClick={() => {
-                  // Toggle area mode. If turning on, keep current sub-tool.
-                  // If turning off, clean up everything.
-                  if (areaMode) {
-                    cleanupBoxDrag();
-                    setAreaMode(false);
-                    setAreaPoints([]);
-                  } else {
-                    setAreaMode(true);
-                    setLineMode(false);
-                    setPointMode(false);
-                    setMultiLinealMode(false);
-                    setMultiLinealPoints([]);
-                    setMultiLinealSegmentObjects([]);
-                    setAreaPoints([]);
-                  }
+                  if (areaMode) { cleanupBoxDrag(); setAreaMode(false); setAreaPoints([]); }
+                  else { setAreaMode(true); setLineMode(false); setPointMode(false); setMultiLinealMode(false); setMultiLinealPoints([]); setMultiLinealSegmentObjects([]); setAreaPoints([]); }
                 }}
                 disabled={calibrationMode || calibrations.length === 0}
                 data-copilot="takeoff-tool-area"
-                className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`px-3 py-2 rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
                   areaMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
-                title={calibrations.length === 0 ? 'Calibrate first' : selectedComponentId ? 'Measure area for component' : quoteIsGeneric ? 'Measure area' : 'Measure roof area (required first!)'}
-              >
-                Area
-              </button>
-              {/* Compact segmented sub-tool toggle: always rendered to prevent
-                  toolbar layout shift. Uses invisible (not hidden) when area mode
-                  is inactive so the space is reserved. */}
-              <div className={`flex items-center rounded-full bg-gray-100 p-0.5 ${areaMode ? '' : 'invisible'}`}>
-                  <button
-                    onClick={() => {
-                      cleanupBoxDrag();
-                      setAreaSubTool('polygon');
-                      setAreaPoints([]);
-                    }}
-                    className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
-                      areaSubTool === 'polygon'
-                        ? 'bg-slate-900 text-white'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                    title="Draw the area point by point (at least 3 points), to close the area - click back on the first point"
-                  >
-                    Polygon
-                  </button>
-                  <button
-                    onClick={() => {
-                      cleanupBoxDrag();
-                      setAreaSubTool('rect');
-                      setAreaPoints([]);
-                    }}
-                    className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
-                      areaSubTool === 'rect'
-                        ? 'bg-slate-900 text-white'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                    title="Create a custom box shape area, click and hold, drag then release to set the area"
-                  >
-                    Rectangle
-                  </button>
+                title={calibrations.length === 0 ? 'Calibrate first' : 'Measure roof area'}
+              >Area</button>
+              {areaMode && (
+                <div className="flex items-center rounded-full bg-gray-100 p-0.5">
+                  <button onClick={() => { cleanupBoxDrag(); setAreaSubTool('polygon'); setAreaPoints([]); }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${areaSubTool === 'polygon' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                    title="Point by point, click first point to close"
+                  >Polygon</button>
+                  <button onClick={() => { cleanupBoxDrag(); setAreaSubTool('rect'); setAreaPoints([]); }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${areaSubTool === 'rect' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                    title="Click and drag to create box"
+                  >Rectangle</button>
                 </div>
+              )}
               <button
                 onClick={() => {
-                  // Generic-trade quotes: no area required for point measurements.
-                  if (!quoteIsGeneric) {
-                    const hasRoofAreaWithPitch = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0);
-                    if (!hasRoofAreaWithPitch) {
-                      showAlert(
-                        'Roof area required',
-                        'Create a roof area with pitch first - components are calculated against the roof pitch.',
-                        'info'
-                      );
-                      return;
-                    }
-                  }
-                  if (!selectedComponentId) {
-                    showAlert('Select a component first', 'Pick a component from the list before measuring.', 'info');
-                    return;
-                  }
-                  setPointMode(!pointMode);
-                  cleanupBoxDrag();
-                  setLineMode(false);
-                  setAreaMode(false);
-                  setMultiLinealMode(false);
-                  setMultiLinealPoints([]);
-                  setMultiLinealSegmentObjects([]);
+                  const isActive = lineMode || multiLinealMode;
+                  if (isActive) { if (multiLinealMode) handleCancelMultiLineal(); cleanupBoxDrag(); setLineMode(false); setMultiLinealMode(false); setLinePoints([]); return; }
+                  if (!quoteIsGeneric) { const h = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0); if (!h) { showAlert('Roof area required', 'Create a roof area with pitch first.', 'info'); return; } }
+                  if (!selectedComponentId) { showAlert('Select a component first', 'Pick a component from the list.', 'info'); return; }
+                  cleanupBoxDrag(); setAreaMode(false); setPointMode(false);
+                  if (lineSubTool === 'multi') { setMultiLinealMode(true); setLineMode(false); setLinePoints([]); }
+                  else { setLineMode(true); setMultiLinealMode(false); setMultiLinealPoints([]); setMultiLinealSegmentObjects([]); setLinePoints([]); }
+                }}
+                disabled={calibrationMode || calibrations.length === 0 || (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)))}
+                data-copilot="takeoff-tool-line"
+                className={`px-3 py-2 rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+                  (lineMode || multiLinealMode) ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
+                }`}
+                title="Measure line or polyline"
+              >Line</button>
+              {(lineMode || multiLinealMode) && (
+                <div className="flex items-center rounded-full bg-gray-100 p-0.5">
+                  <button onClick={() => { setLineSubTool('single'); if (multiLinealMode) { handleCancelMultiLineal(); setLineMode(true); } }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${lineSubTool === 'single' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                    title="Two-point line"
+                  >Single</button>
+                  <button onClick={() => { setLineSubTool('multi'); if (lineMode) { setLineMode(false); setLinePoints([]); setMultiLinealMode(true); } }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${lineSubTool === 'multi' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                    title="Multi-point polyline"
+                  >Multi</button>
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  if (!quoteIsGeneric) { const h = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0); if (!h) { showAlert('Roof area required', 'Create a roof area with pitch first.', 'info'); return; } }
+                  if (!selectedComponentId) { showAlert('Select a component first', 'Pick a component from the list.', 'info'); return; }
+                  setPointMode(!pointMode); cleanupBoxDrag(); setLineMode(false); setAreaMode(false); setMultiLinealMode(false); setMultiLinealPoints([]); setMultiLinealSegmentObjects([]);
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)))}
                 data-copilot="takeoff-tool-point"
-                className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`px-3 py-2 rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
                   pointMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
-                title={calibrations.length === 0 ? 'Calibrate first' : (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0))) ? 'Create roof area with pitch first' : selectedComponentId ? 'Add point marker' : 'Select component first'}
-              >
-                Point
-              </button>
-            </div>
+                title="Add point marker"
+              >Point</button>
+                        </div>
 
             {/* Phase 7: Multi-lineal in-progress readout floats below the toolbar
                 (see banner block further down) so it never reflows the tool buttons
@@ -4577,7 +4418,6 @@ export function TakeoffWorkstation({
         variant={alertState.variant}
         onClose={closeAlert}
       />
-      </div>
     </div>
     </>
   );

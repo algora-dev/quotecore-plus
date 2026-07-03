@@ -374,6 +374,7 @@ export interface TakeoffHydrationMeasurement {
   points: { x: number; y: number }[] | null;
   visible: boolean;
   pageId: string | null;
+  quoteRoofAreaId: string | null;
 }
 
 export interface TakeoffHydrationData {
@@ -435,7 +436,7 @@ export async function loadTakeoffHydrationData(
   // 3. Measurements for all pages
   const { data: measurements } = await supabase
     .from('quote_takeoff_measurements')
-    .select('id, component_library_id, measurement_type, measurement_value, measurement_unit, canvas_points, is_visible, page_id')
+    .select('id, component_library_id, measurement_type, measurement_value, measurement_unit, canvas_points, is_visible, page_id, quote_roof_area_id')
     .eq('quote_id', quoteId)
     .order('created_at', { ascending: true });
 
@@ -448,6 +449,7 @@ export async function loadTakeoffHydrationData(
     points: (m.canvas_points as { x: number; y: number }[] | null),
     visible: m.is_visible ?? true,
     pageId: m.page_id,
+    quoteRoofAreaId: (m as { quote_roof_area_id?: string | null }).quote_roof_area_id ?? null,
   }));
 
   return {
@@ -848,6 +850,42 @@ export async function createNewTakeoffArea(
     return { ok: true, areaId: newArea.id, label: newArea.label };
   } catch (err) {
     console.error('[createNewTakeoffArea] Error:', err);
+    return { ok: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+/**
+ * Batch 6 fix: rename a roof area in the DB so the user's chosen label
+ * persists across sessions. Called from handleConfirmAreaAssignment and
+ * the area switcher inline rename.
+ */
+export async function renameTakeoffArea(
+  areaId: string,
+  label: string,
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const { requireCompanyContext } = await import('@/app/lib/supabase/server');
+    const profile = await requireCompanyContext();
+    const admin = createAdminClient();
+
+    const { error } = await admin
+      .from('quote_roof_areas')
+      .update({ label: label.trim() })
+      .eq('id', areaId)
+      // RLS-bypass safety: scope by company via the quote join.
+      .in(
+        'quote_id',
+        await admin
+          .from('quotes')
+          .select('id')
+          .eq('company_id', profile.company_id)
+          .then(({ data }) => (data ?? []).map(q => q.id)),
+      );
+
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  } catch (err) {
+    console.error('[renameTakeoffArea] Error:', err);
     return { ok: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }
