@@ -8,6 +8,18 @@
 
 ---
 
+# 2026-07-03 — Takeoff Canvas Bug Fix Batch 2 (area dup, toolbar, cursor, undo cap, reset)
+
+- [ ] **No area duplication in Edit This Plan** — open a saved takeoff via "Edit This Plan", draw a new component measurement, Save → re-enter → exactly 1 new measurement (no duplicated roof areas).
+- [ ] **Area assignment modal** — in "Edit This Plan" mode, draw a new roof area polygon → modal pops up listing existing areas + "New Area" option. Pick existing → measurement routes to that area. Pick New Area → name prompt → creates new area row.
+- [ ] **Toolbar no layout shift** — toggle area mode on/off → the Polygon/Rectangle sub-tool toggle stays in place (invisible when area mode off, visible when on). Toolbar width doesn't jump.
+- [ ] **Crosshair cursor on reconstructed objects** — open a saved takeoff, hover over reconstructed polygons/lines → cursor stays as crosshair (not default arrow).
+- [ ] **Undo = click-by-click (max 2 steps)** — draw a polygon with 4 clicks, Undo → removes 4th point only. Undo → removes 3rd point. Further undos won't go deeper than 2 steps back. In-progress markers survive the undo redraw.
+- [ ] **cleanupInProgressObjects doesn't wipe mid-draw markers** — start drawing a polygon (3 clicks), then save another measurement → the 3 in-progress vertex markers stay on canvas (not wiped).
+- [ ] **Reset button (new takeoff)** — on a fresh takeoff, click Reset → confirm modal → canvas wipes to blank + calibrate step. All measurements/calibrations cleared.
+- [ ] **Reset button (saved takeoff)** — on an edited saved takeoff, click Reset → confirm modal → canvas reverts to the last saved state (all saved measurements reconstructed from DB). Unsaved changes discarded.
+- [ ] **Mojibake fix (billing)** — billing page loads, plan names/descriptions render correctly (no â†, âœ“, mÂ² characters).
+
 # 2026-07-03 — Takeoff Canvas Bug Fix (undo/redo rewrite, image lock, mojibake)
 
 - [ ] **Symbols render correctly** — open takeoff, confirm back arrow (← SVG), checkmark (✓ SVG), undo/redo buttons (SVG icons), m², ft², °, · all render correctly. No mojibake (â†, âœ“, mÂ², etc.).
