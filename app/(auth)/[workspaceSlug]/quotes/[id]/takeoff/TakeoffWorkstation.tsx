@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle, Rect } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId } from './actions';
+import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
 import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
@@ -109,6 +109,8 @@ interface Props {
   initialRoofAreaId?: string;
   /** When true the company is over storage - block plan-image uploads. */
   isOverStorage?: boolean;
+  /** All roof areas for this quote (loaded server-side). Used by the left-panel area switcher. */
+  allRoofAreas?: { id: string; label: string; pitch?: number; area?: number }[];
 }
 
 const CANVAS_WIDTH = 800;
@@ -179,6 +181,7 @@ export function TakeoffWorkstation({
   existingRoofAreas = [],
   initialRoofAreaId,
   isOverStorage,
+  allRoofAreas = [],
 }: Props) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -218,6 +221,18 @@ export function TakeoffWorkstation({
   // new area rows to the DB on save. Trade-agnostic.
   const [isExistingAreaMode, setIsExistingAreaMode] = useState(false);
   const [existingAreaLabel, setExistingAreaLabel] = useState<string>('');
+
+  // Batch 3: Area switcher state. activeAreaId tracks which area is selected
+  // in the left panel. areaCanvasStates stores per-area canvas state so
+  // switching areas preserves undo/drawings without a DB round-trip.
+  const [activeAreaId, setActiveAreaId] = useState<string | null>(
+    initialRoofAreaId ?? allRoofAreas[0]?.id ?? null
+  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const areaCanvasStatesRef = useRef<Map<string, any>>(new Map());
+  // Track all areas (can grow when user creates new areas via the button)
+  const [areaList, setAreaList] = useState(allRoofAreas);
+  const [isCreatingArea, setIsCreatingArea] = useState(false);
 
   // Issue 4+5: Area-assignment modal for new roof areas drawn in mode=add.
   // When the user closes a new area polygon while editing an existing plan,
@@ -815,6 +830,85 @@ export function TakeoffWorkstation({
     }
   }, [calibrationConfirmed, calibrations.length, roofAreas.length, takeoffMode, isExistingAreaMode]);
   
+  // Save current canvas state to the area cache, then load the target area.
+  // If the target area has cached state, restore it. Otherwise, clear the
+  // canvas for a fresh start (the user will calibrate + draw on the new area).
+  const handleSwitchArea = useCallback((targetAreaId: string) => {
+    if (targetAreaId === activeAreaId) return;
+
+    // Save current state for the current area
+    if (activeAreaId) {
+      areaCanvasStatesRef.current.set(activeAreaId, {
+        componentMeasurements: componentMeasurements.map(c => ({
+          componentId: c.componentId,
+          expanded: c.expanded,
+          measurements: c.measurements.map(m => ({
+            id: m.id, type: m.type, value: m.value, points: m.points,
+            visible: m.visible, fromPageId: m.fromPageId,
+          })),
+        })),
+        roofAreas: roofAreas.map(ra => ({
+          id: ra.id, name: ra.name, points: ra.points, area: ra.area,
+          pitch: ra.pitch, visible: ra.visible,
+        })),
+        calibrations: calibrations.map(cal => ({ ...cal })),
+        calibrationPoints: calibrationPoints.map(p => ({ ...p })),
+        calibrationConfirmed,
+        activeComponentIds: [...activeComponentIds],
+        selectedComponentId,
+      });
+    }
+
+    // Load target area state
+    const cached = areaCanvasStatesRef.current.get(targetAreaId);
+    if (cached) {
+      setComponentMeasurements(cached.componentMeasurements);
+      setRoofAreas(cached.roofAreas);
+      setCalibrations(cached.calibrations);
+      setCalibrationPoints(cached.calibrationPoints);
+      setCalibrationConfirmed(cached.calibrationConfirmed);
+      setActiveComponentIds(cached.activeComponentIds);
+      setSelectedComponentId(cached.selectedComponentId);
+    } else {
+      // Fresh state for a new area — clear everything
+      setComponentMeasurements([]);
+      setRoofAreas([]);
+      setCalibrations([]);
+      setCalibrationPoints([]);
+      setCalibrationConfirmed(false);
+      setActiveComponentIds([]);
+      setSelectedComponentId(null);
+    }
+
+    setActiveAreaId(targetAreaId);
+    setActiveSaveRoofAreaId(targetAreaId);
+
+    // Trigger canvas redraw
+    setRedrawNonce(n => n + 1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeAreaId, componentMeasurements, roofAreas, calibrations,
+      calibrationPoints, calibrationConfirmed, activeComponentIds,
+      selectedComponentId]);
+
+  // Create a new area via server action, add to list, switch to it.
+  const handleCreateNewArea = useCallback(async () => {
+    setIsCreatingArea(true);
+    try {
+      const result = await createNewTakeoffArea(quote.id);
+      if (!result.ok || !result.areaId) {
+        showAlert('Failed to create area', result.error || 'Unknown error', 'error');
+        return;
+      }
+      const newArea = { id: result.areaId, label: result.label || 'New Area' };
+      setAreaList(prev => [...prev, newArea]);
+      // Switch to the new area (clears canvas for fresh start)
+      handleSwitchArea(newArea.id);
+    } finally {
+      setIsCreatingArea(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quote.id, handleSwitchArea]);
+
   const handleDeleteArea = (areaId: string) => {
     pushHistorySnapshot();
     const area = roofAreas.find(a => a.id === areaId);
@@ -3205,7 +3299,50 @@ export function TakeoffWorkstation({
             </div>
           )}
 
-          {/* Roof Areas */}
+          {/* Batch 3: Area Switcher — left panel shows all areas for the quote.
+              Click an area to switch the canvas + component list. */}
+          {areaList.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-bold text-gray-900">{quoteIsGeneric ? 'Areas' : 'Roof Areas'}</h2>
+                <button
+                  onClick={handleCreateNewArea}
+                  disabled={isCreatingArea}
+                  className="text-xs font-medium text-[#FF6B35] hover:text-orange-600 disabled:opacity-50"
+                  title="Create a new area"
+                >
+                  {isCreatingArea ? 'Creating…' : '+ New Area'}
+                </button>
+              </div>
+              <div className="space-y-1.5">
+                {areaList.map(area => (
+                  <button
+                    key={area.id}
+                    onClick={() => handleSwitchArea(area.id)}
+                    className={`w-full text-left px-3 py-2 rounded-xl border transition-all ${
+                      area.id === activeAreaId
+                        ? 'border-[#FF6B35] bg-orange-50 shadow-[0_0_0_1px_rgba(255,107,53,0.15)]'
+                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-900 truncate">{area.label}</span>
+                      {area.id === activeAreaId && (
+                        <span className="w-2 h-2 rounded-full bg-[#FF6B35] flex-shrink-0 ml-2" />
+                      )}
+                    </div>
+                    {area.area != null && area.area > 0 && (
+                      <span className="text-xs text-gray-500">
+                        {area.area.toFixed(1)} m²
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Roof Areas (canvas-level area list — for the current area's drawn polygons) */}
           <div className={(!calibrationConfirmed || calibrationMode || showConfirmedFlash) ? 'border-t border-gray-200 pt-4' : ''}>
             <h2 className="text-sm font-bold mb-3 text-gray-900">{quoteIsGeneric ? 'Areas' : 'Roof Areas'}</h2>
             {roofAreas.length === 0 && takeoffMode === 'add' && existingRoofAreas.length > 0 ? (

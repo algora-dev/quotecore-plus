@@ -793,6 +793,65 @@ export async function getFirstRoofAreaId(
 }
 
 /**
+ * Create a new roof area for a quote with auto-deduplicated naming.
+ * Scans existing quote_roof_areas labels for the quote and picks the next
+ * free "Area N" (Area 1, Area 2, …) — never produces a duplicate label.
+ * Returns the new area's ID + label so the client can add it to the panel.
+ */
+export async function createNewTakeoffArea(
+  quoteId: string,
+): Promise<{ ok: boolean; areaId?: string; label?: string; error?: string }> {
+  try {
+    const { requireCompanyContext } = await import('@/app/lib/supabase/server');
+    const profile = await requireCompanyContext();
+    const admin = createAdminClient();
+
+    // Load all existing area labels for this quote.
+    const { data: existing } = await admin
+      .from('quote_roof_areas')
+      .select('label')
+      .eq('quote_id', quoteId)
+      .order('sort_order', { ascending: true });
+
+    // Find the next free "Area N" — scan for the first N where
+    // "Area N" does NOT already exist as a label.
+    const existingLabels = new Set((existing ?? []).map(a => a.label));
+    let n = 1;
+    while (existingLabels.has(`Area ${n}`)) n++;
+    const label = `Area ${n}`;
+
+    const { count: areaCount } = await admin
+      .from('quote_roof_areas')
+      .select('id', { count: 'exact', head: true })
+      .eq('quote_id', quoteId);
+
+    const { data: newArea, error: areaError } = await admin
+      .from('quote_roof_areas')
+      .insert({
+        quote_id: quoteId,
+        label,
+        input_mode: 'calculated' as const,
+        final_value_sqm: 0,
+        computed_sqm: 0,
+        calc_pitch_degrees: 0,
+        is_locked: false,
+        sort_order: (areaCount ?? 0) + 1,
+      })
+      .select('id, label')
+      .single();
+
+    if (areaError || !newArea) {
+      return { ok: false, error: areaError?.message ?? 'Failed to create area' };
+    }
+
+    return { ok: true, areaId: newArea.id, label: newArea.label };
+  } catch (err) {
+    console.error('[createNewTakeoffArea] Error:', err);
+    return { ok: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+/**
  * H-02 (Gerald round-5): after uploading a page image to storage, write
  * its path back to the takeoff_pages row so it survives reload.
  * Ownership enforced: only updates pages belonging to the caller's company.

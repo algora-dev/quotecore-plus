@@ -47,6 +47,8 @@ interface Props {
   initialRoofAreaId?: string;
   /** When true the company is over storage - block plan-image uploads. */
   isOverStorage?: boolean;
+  /** All roof areas for this quote (server-loaded). */
+  allRoofAreas?: { id: string; label: string; pitch?: number; area?: number }[];
 }
 
 export function TakeoffPage({
@@ -62,6 +64,7 @@ export function TakeoffPage({
   existingRoofAreas,
   initialRoofAreaId,
   isOverStorage,
+  allRoofAreas,
 }: Props) {
   return (
     <TakeoffWorkstation
@@ -77,6 +80,7 @@ export function TakeoffPage({
       existingRoofAreas={existingRoofAreas}
       initialRoofAreaId={initialRoofAreaId}
       isOverStorage={isOverStorage}
+      allRoofAreas={allRoofAreas}
     />
   );
 }

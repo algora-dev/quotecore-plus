@@ -81,6 +81,19 @@ export default async function Page({
     console.warn('[Takeoff] ⚠️ NO COMPONENTS FOUND - Check component_library table for company:', profile.company_id);
   }
 
+  // Batch 3: Load ALL roof areas for the area switcher (all entry modes).
+  const { data: allAreasRaw } = await supabase
+    .from('quote_roof_areas')
+    .select('id, label, calc_pitch_degrees, final_value_sqm')
+    .eq('quote_id', quoteId)
+    .order('sort_order', { ascending: true });
+  const allRoofAreas = (allAreasRaw ?? []).map(a => ({
+    id: a.id,
+    label: a.label,
+    pitch: a.calc_pitch_degrees ?? 0,
+    area: a.final_value_sqm ?? 0,
+  }));
+
   // -----------------------------------------------------------------------
   // P1-1b: Handle re-entry modes.
   //
@@ -120,6 +133,7 @@ export default async function Page({
         takeoffMode="add"
         existingRoofAreas={(existingAreas || []).map(a => ({ id: a.id, label: a.label, pitch: a.calc_pitch_degrees ?? 0, area: a.final_value_sqm ?? 0 }))}
         isOverStorage={isOverStorage}
+        allRoofAreas={allRoofAreas}
       />
     );
   }
@@ -179,6 +193,7 @@ export default async function Page({
         initialPageName={decodedAreaName}
         initialRoofAreaId={resolvedRoofAreaId}
         isOverStorage={isOverStorage}
+        allRoofAreas={allRoofAreas}
       />
     );
   }
@@ -197,6 +212,7 @@ export default async function Page({
       collections={collections}
       hydrationData={hydrationData}
       isOverStorage={isOverStorage}
+      allRoofAreas={allRoofAreas}
     />
   );
 }
