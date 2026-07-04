@@ -3530,9 +3530,9 @@ export function TakeoffWorkstation({
         </div>
       )}
 
-      <div className="flex flex-1 overflow-hidden min-h-0">
+      <div className="flex-1 overflow-hidden min-h-0 grid grid-cols-[320px_1fr]">
         {/* Left Sidebar - Calibration, Roof Areas & Components */}
-        <div className="w-80 flex-shrink-0 bg-white border-r border-gray-200 overflow-y-auto flex flex-col" data-copilot="takeoff-sidebar">
+        <div className="bg-white border-r border-gray-200 overflow-y-auto flex flex-col" data-copilot="takeoff-sidebar">
           <div className="p-4 space-y-5">
 
           {/* Calibration Section - Show if: not confirmed, calibration mode, or showing flash */}
@@ -3899,7 +3899,7 @@ export function TakeoffWorkstation({
           </div>
         </div>
         {/* Center - Canvas */}
-        <div className="flex-1 flex flex-col relative bg-gray-50">
+        <div className="flex flex-col relative bg-gray-50 overflow-hidden">
           {/* Hidden marker: copilot only starts after first roof area created */}
           {roofAreas.length > 0 && <div data-copilot="takeoff-ready" className="hidden" />}
 
