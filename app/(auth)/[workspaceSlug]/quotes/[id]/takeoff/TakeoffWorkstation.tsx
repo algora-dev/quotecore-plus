@@ -730,9 +730,26 @@ export function TakeoffWorkstation({
       });
     });
 
-    // Display active area's data
-    const dispId = activeAreaId ?? firstAreaId;
-    const disp = byArea.get(dispId ?? '__no_area__');
+    // Display active area's data.
+    // Fix (2026-07-04): if the initially-selected area has no saved data
+    // (e.g. it was an empty/ghost area), fall back to the first area that
+    // actually has measurements — otherwise re-entry showed a blank panel
+    // and "Save & Continue" failed with "no measurements to save".
+    let dispId = activeAreaId ?? firstAreaId;
+    let disp = byArea.get(dispId ?? '__no_area__');
+    if (!disp || (disp.components.size === 0 && disp.areas.length === 0)) {
+      for (const [aid, ad] of byArea) {
+        if (ad.components.size > 0 || ad.areas.length > 0) {
+          dispId = aid;
+          disp = ad;
+          if (aid !== '__no_area__') {
+            setActiveAreaId(aid);
+            setActiveSaveRoofAreaId(aid);
+          }
+          break;
+        }
+      }
+    }
     if (disp) {
       if (disp.components.size > 0) {
         setComponentMeasurements(Array.from(disp.components.values()));
@@ -823,6 +840,9 @@ export function TakeoffWorkstation({
     // showing it caused users to think they needed to draw a boundary and then go directly
     // to component area drawing, which broke the polygon-close routing (deselection gotcha).
     if (isExistingAreaMode) return;
+    // Fix (2026-07-04): never show on re-entry to a saved takeoff. The user
+    // already has saved areas — they can use "+ New Area" or upload a plan.
+    if (hydrationData && hydrationData.measurements.length > 0) return;
     if (calibrationConfirmed && calibrations.length > 0 && roofAreas.length === 0) {
       // Delay slightly to show after calibration flash
       const timer = setTimeout(() => {
@@ -830,7 +850,7 @@ export function TakeoffWorkstation({
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [calibrationConfirmed, calibrations.length, roofAreas.length, takeoffMode, isExistingAreaMode]);
+  }, [calibrationConfirmed, calibrations.length, roofAreas.length, takeoffMode, isExistingAreaMode, hydrationData]);
   
   // Save current canvas state to the area cache, then load the target area.
   // If the target area has cached state, restore it. Otherwise, clear the
@@ -908,16 +928,28 @@ export function TakeoffWorkstation({
       }
     }
 
-    // Load target area state from cache
+    // Load target area state from cache.
+    // Fix (2026-07-04): hydration-built cache entries only contain
+    // componentMeasurements/roofAreas/pageIds — calibration fields are
+    // page-level and may be absent. Restoring `undefined` into calibrations
+    // crashed the render (`calibrations.length` on undefined → error page).
+    // Restore defensively: only overwrite fields the cache actually has.
     const cached = areaCanvasStatesRef.current.get(targetAreaId);
     if (cached) {
-      setComponentMeasurements(cached.componentMeasurements);
-      setRoofAreas(cached.roofAreas);
-      setCalibrations(cached.calibrations);
-      setCalibrationPoints(cached.calibrationPoints);
-      setCalibrationConfirmed(cached.calibrationConfirmed);
-      setActiveComponentIds(cached.activeComponentIds);
-      setSelectedComponentId(cached.selectedComponentId);
+      setComponentMeasurements(cached.componentMeasurements ?? []);
+      setRoofAreas(cached.roofAreas ?? []);
+      if (Array.isArray(cached.calibrations) && cached.calibrations.length > 0) {
+        setCalibrations(cached.calibrations);
+        setCalibrationPoints(cached.calibrationPoints ?? []);
+        setCalibrationConfirmed(cached.calibrationConfirmed ?? true);
+      }
+      // If the cache lacks activeComponentIds (hydration path), derive them
+      // from the cached component measurements so the panel stays populated.
+      setActiveComponentIds(
+        cached.activeComponentIds
+          ?? (cached.componentMeasurements ?? []).map((c: { componentId: string }) => c.componentId)
+      );
+      setSelectedComponentId(cached.selectedComponentId ?? null);
     } else {
       // Fresh area — clear components/areas but KEEP calibrations (same plan = same scale)
       setComponentMeasurements([]);
@@ -1007,31 +1039,10 @@ export function TakeoffWorkstation({
     }
   };
 
-  // Fix 8: Auto-create the first area on first-time entry (no saved takeoff).
-  // This ensures the area switcher + "+ New Area" button are always visible
-  // and the user starts with a named area instead of a blank panel.
-  const autoCreateTriedRef = useRef(false);
-  useEffect(() => {
-    if (autoCreateTriedRef.current) return;
-    if (areaList.length > 0) return; // areas already exist
-    if (hydrationData) return; // re-entry, don't auto-create
-    autoCreateTriedRef.current = true;
-    // First-time entry: create the first area silently
-    (async () => {
-      try {
-        const result = await createNewTakeoffArea(quote.id);
-        if (result.ok && result.areaId) {
-          const newArea = { id: result.areaId, label: result.label || 'Area 1' };
-          setAreaList([newArea]);
-          setActiveAreaId(newArea.id);
-          setActiveSaveRoofAreaId(newArea.id);
-        }
-      } catch (err) {
-        console.warn('[AutoCreate] Failed to create first area:', err);
-      }
-    })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [areaList.length, hydrationData, quote.id]);
+  // Fix (2026-07-04): auto-create-first-area REMOVED. It minted a ghost
+  // "Area 1" quote_roof_areas row on page load, before the user calibrated
+  // or drew anything. Areas are now created only when the user draws their
+  // first area (named via AreaNameModal) or via the "+ New Area" flow.
 
   // Phase 5: Area delete — opens ConfirmModal, then calls deleteTakeoffArea server action.
   const handleDeleteArea = (areaId: string) => {
@@ -3297,7 +3308,7 @@ export function TakeoffWorkstation({
   return (
     <>
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-    <div className="h-[calc(100vh-180px)] bg-gray-50 text-gray-900 flex flex-col p-4 overflow-hidden">
+    <div className="-my-8 h-[calc(100vh-116px)] bg-gray-50 text-gray-900 flex flex-col p-4 overflow-hidden">
       {/* Back link sits above the canvas card so it never crowds the header */}
       <Link
         href={`/${workspaceSlug}/quotes/${quote.id}`}
@@ -3307,7 +3318,7 @@ export function TakeoffWorkstation({
       </Link>
       <div className="flex-1 flex flex-col bg-white rounded-xl shadow-lg overflow-hidden min-h-0">
         {/* Header: title + action buttons only - no nav links */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
           <h1 className="text-xl font-semibold">{quote.customer_name} - Digital Takeoff</h1>
         <div className="flex items-center gap-2">
           {/* P1-3: Save current takeoff + upload another plan image. */}
@@ -3903,7 +3914,7 @@ export function TakeoffWorkstation({
           {roofAreas.length > 0 && <div data-copilot="takeoff-ready" className="hidden" />}
 
           {/* Top Toolbar */}
-          <div className="flex-shrink-0 mx-4 mt-2 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-3 shadow-sm" data-copilot="takeoff-toolbar">
+          <div className="flex-shrink-0 mx-4 mt-1 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-2 shadow-sm" data-copilot="takeoff-toolbar">
             {/* Tools - Fix 7: Calibrate, Area, Line, Point. Sub-tools conditional. */}
             <div className="flex gap-2 items-center">
               <button

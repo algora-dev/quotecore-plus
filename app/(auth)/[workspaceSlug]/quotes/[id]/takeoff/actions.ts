@@ -87,6 +87,9 @@ export async function saveTakeoffMeasurements(
     const pitchedArea = valueSqm * pitchFactor;
     return {
       label: m.name || `Roof Area ${i + 1}`,
+      // Fix (2026-07-04): carry the target area id per element so the RPC
+      // resolves the row directly instead of label/ordinal heuristics.
+      quote_roof_area_id: m.quoteRoofAreaId ?? null,
       final_value_sqm: pitchedArea,
       computed_sqm: pitchedArea,
       calc_pitch_degrees: pitchDegrees,
