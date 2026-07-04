@@ -248,6 +248,9 @@ export async function saveTakeoffMeasurements(
     // Phase 7: page_id passed through when the caller supplies it (multi-page
     // takeoff). Omitted for single-page callers - RPC writes NULL.
     ...(m.pageId ? { page_id: m.pageId } : {}),
+    // Phase 3: area-scoped measurement routing. Each measurement carries its
+    // own quote_roof_area_id so the RPC can group by area.
+    ...(m.quoteRoofAreaId ? { quote_roof_area_id: m.quoteRoofAreaId } : {}),
   }));
 
   // Pass STORAGE PATHS to the RPC (Gerald audit pass 2). The RPC keeps
@@ -797,12 +800,14 @@ export async function getFirstRoofAreaId(
 
 /**
  * Create a new roof area for a quote with auto-deduplicated naming.
- * Scans existing quote_roof_areas labels for the quote and picks the next
- * free "Area N" (Area 1, Area 2, …) — never produces a duplicate label.
- * Returns the new area's ID + label so the client can add it to the panel.
+ * When `label` is supplied, inserts with that label directly (dedup:
+ * if label exists, appends " 2", " 3"…). When omitted, auto-picks the
+ * next free "Area N". Returns the new area's ID + label so the client
+ * can add it to the panel immediately.
  */
 export async function createNewTakeoffArea(
   quoteId: string,
+  label?: string,
 ): Promise<{ ok: boolean; areaId?: string; label?: string; error?: string }> {
   try {
     const { requireCompanyContext } = await import('@/app/lib/supabase/server');
@@ -816,12 +821,26 @@ export async function createNewTakeoffArea(
       .eq('quote_id', quoteId)
       .order('sort_order', { ascending: true });
 
-    // Find the next free "Area N" — scan for the first N where
-    // "Area N" does NOT already exist as a label.
     const existingLabels = new Set((existing ?? []).map(a => a.label));
-    let n = 1;
-    while (existingLabels.has(`Area ${n}`)) n++;
-    const label = `Area ${n}`;
+
+    // Resolve the final label: user-supplied (with dedup) or auto "Area N".
+    let finalLabel: string;
+    if (label && label.trim()) {
+      const base = label.trim();
+      if (!existingLabels.has(base)) {
+        finalLabel = base;
+      } else {
+        // Dedup: append " 2", " 3", …
+        let suffix = 2;
+        while (existingLabels.has(`${base} ${suffix}`)) suffix++;
+        finalLabel = `${base} ${suffix}`;
+      }
+    } else {
+      // Auto-name: find the next free "Area N".
+      let n = 1;
+      while (existingLabels.has(`Area ${n}`)) n++;
+      finalLabel = `Area ${n}`;
+    }
 
     const { count: areaCount } = await admin
       .from('quote_roof_areas')
@@ -832,7 +851,7 @@ export async function createNewTakeoffArea(
       .from('quote_roof_areas')
       .insert({
         quote_id: quoteId,
-        label,
+        label: finalLabel,
         input_mode: 'calculated' as const,
         final_value_sqm: 0,
         computed_sqm: 0,
@@ -868,19 +887,28 @@ export async function renameTakeoffArea(
     const profile = await requireCompanyContext();
     const admin = createAdminClient();
 
+    // Direct ownership check: load the area's quote_id, then verify the
+    // quote belongs to the caller's company. This replaces the fragile
+    // `.in('quote_id', subquery)` pattern that could fail on large datasets.
+    const { data: area } = await admin
+      .from('quote_roof_areas')
+      .select('id, quote_id')
+      .eq('id', areaId)
+      .maybeSingle();
+    if (!area) return { ok: false, error: 'Area not found' };
+
+    const { data: quote } = await admin
+      .from('quotes')
+      .select('id')
+      .eq('id', area.quote_id)
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+    if (!quote) return { ok: false, error: 'Unauthorized' };
+
     const { error } = await admin
       .from('quote_roof_areas')
       .update({ label: label.trim() })
-      .eq('id', areaId)
-      // RLS-bypass safety: scope by company via the quote join.
-      .in(
-        'quote_id',
-        await admin
-          .from('quotes')
-          .select('id')
-          .eq('company_id', profile.company_id)
-          .then(({ data }) => (data ?? []).map(q => q.id)),
-      );
+      .eq('id', areaId);
 
     if (error) return { ok: false, error: error.message };
     return { ok: true };
@@ -926,5 +954,66 @@ export async function finalizeTakeoffPageImage(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return { ok: false, error: msg };
+  }
+}
+
+/**
+ * Phase 5: Delete a takeoff area and all its associated data.
+ * - Deletes quote_roof_area_entries (sub-measurements)
+ * - Deletes quote_takeoff_measurements for this area
+ * - Detaches quote_components (sets quote_roof_area_id = NULL)
+ * - Deletes the quote_roof_areas row itself
+ * - Recalculates quote component totals
+ * Ownership: verified via quote → company chain.
+ */
+export async function deleteTakeoffArea(
+  areaId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const { requireCompanyContext } = await import('@/app/lib/supabase/server');
+    const profile = await requireCompanyContext();
+    const admin = createAdminClient();
+
+    // Ownership check: load area's quote_id, verify quote belongs to company.
+    const { data: area } = await admin
+      .from('quote_roof_areas')
+      .select('id, quote_id')
+      .eq('id', areaId)
+      .maybeSingle();
+    if (!area) return { ok: false, error: 'Area not found' };
+
+    const { data: quote } = await admin
+      .from('quotes')
+      .select('id')
+      .eq('id', area.quote_id)
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+    if (!quote) return { ok: false, error: 'Unauthorized' };
+
+    const quoteId = area.quote_id;
+
+    // 1. Delete sub-measurement entries
+    await admin.from('quote_roof_area_entries').delete().eq('quote_roof_area_id', areaId);
+
+    // 2. Delete takeoff measurements for this area
+    await admin.from('quote_takeoff_measurements').delete().eq('quote_roof_area_id', areaId);
+
+    // 3. Detach quote_components (set quote_roof_area_id = NULL, don't delete components)
+    await admin.from('quote_components').update({ quote_roof_area_id: null }).eq('quote_roof_area_id', areaId);
+
+    // 4. Detach takeoff_pages (set quote_roof_area_id = NULL)
+    await admin.from('takeoff_pages').update({ quote_roof_area_id: null }).eq('quote_roof_area_id', areaId);
+
+    // 5. Delete the area row itself
+    const { error: deleteError } = await admin.from('quote_roof_areas').delete().eq('id', areaId);
+    if (deleteError) return { ok: false, error: deleteError.message };
+
+    // 6. Recalculate quote component totals
+    await recalcAllQuoteComponents(quoteId);
+
+    return { ok: true };
+  } catch (err) {
+    console.error('[deleteTakeoffArea] Error:', err);
+    return { ok: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle, Rect } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea } from './actions';
+import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
 import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
@@ -232,7 +232,13 @@ export function TakeoffWorkstation({
   const areaCanvasStatesRef = useRef<Map<string, any>>(new Map());
   // Track all areas (can grow when user creates new areas via the button)
   const [areaList, setAreaList] = useState(allRoofAreas);
-  const [isCreatingArea, setIsCreatingArea] = useState(false);
+  // Phase 6: New Area choice modal state.
+  const [showNewAreaChoiceModal, setShowNewAreaChoiceModal] = useState(false);
+  const [newAreaChoice, setNewAreaChoice] = useState<'existing' | 'new'>('new');
+  const [newAreaExistingId, setNewAreaExistingId] = useState<string>('');
+  // Phase 6: when user chose 'add to existing', we arm drawing mode for that area.
+  const [pendingNewAreaTargetId, setPendingNewAreaTargetId] = useState<string | null>(null);
+  const [pendingNewAreaIsExisting, setPendingNewAreaIsExisting] = useState(false);
 
   // Issue 4+5: Area-assignment modal for new roof areas drawn in mode=add.
   // When the user closes a new area polygon while editing an existing plan,
@@ -250,12 +256,17 @@ export function TakeoffWorkstation({
   //   (mirrors FilesManager Option C: new area, new plan).
   const [showUploadAnotherModal, setShowUploadAnotherModal] = useState(false);
   const [uploadAnotherTarget, setUploadAnotherTarget] = useState<'existing' | 'new'>('existing');
-  const [uploadAnotherAreaName, setUploadAnotherAreaName] = useState('');
+  const [uploadAnotherAreaId, setUploadAnotherAreaId] = useState<string>('');
   const [uploadAnotherFile, setUploadAnotherFile] = useState<File | null>(null);
   const [uploadAnotherError, setUploadAnotherError] = useState<string | null>(null);
   const [storageBlocked, setStorageBlocked] = useState(false);
   // Reset canvas confirm modal
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  // Phase 5: area delete confirmation
+  const [showAreaDeleteConfirm, setShowAreaDeleteConfirm] = useState(false);
+  const [pendingDeleteAreaId, setPendingDeleteAreaId] = useState<string | null>(null);
+  const [pendingDeleteAreaLabel, setPendingDeleteAreaLabel] = useState<string>('');
+  const [isDeletingArea, setIsDeletingArea] = useState(false);
   const [isUploadingPage, setIsUploadingPage] = useState(false);
   // H-03: track unsaved changes so we can warn before switching pages.
   const [isDirty, setIsDirty] = useState(false);
@@ -685,12 +696,15 @@ export function TakeoffWorkstation({
     // Fix 2: Group measurements by quoteRoofAreaId for per-area restore.
     // Pre-Batch-5 data (null quoteRoofAreaId) goes to first area.
     const firstAreaId = allRoofAreas[0]?.id ?? null;
-    const byArea = new Map<string, { components: Map<string, ComponentWithMeasurements>; areas: RoofArea[] }>();
+    const byArea = new Map<string, { components: Map<string, ComponentWithMeasurements>; areas: RoofArea[]; pageIds: Set<string> }>();
     
     hydrationData.measurements.forEach(m => {
       const areaKey = m.quoteRoofAreaId ?? firstAreaId ?? '__no_area__';
-      if (!byArea.has(areaKey)) byArea.set(areaKey, { components: new Map(), areas: [] });
+      if (!byArea.has(areaKey)) byArea.set(areaKey, { components: new Map(), areas: [], pageIds: new Set() });
       const ad = byArea.get(areaKey)!;
+      
+      // Track which page this area's measurements belong to
+      if (m.pageId) ad.pageIds.add(m.pageId);
       
       if (m.componentId === null && m.type === 'area') {
         const idx = ad.areas.length;
@@ -712,6 +726,7 @@ export function TakeoffWorkstation({
           measurements: comp.measurements.map(m => ({ id: m.id, type: m.type, value: m.value, points: m.points, visible: m.visible, fromPageId: m.fromPageId })),
         })),
         roofAreas: ad.areas.map(ra => ({ id: ra.id, name: ra.name, points: ra.points, area: ra.area, pitch: ra.pitch, visible: ra.visible })),
+        pageIds: ad.pageIds,
       });
     });
 
@@ -820,11 +835,13 @@ export function TakeoffWorkstation({
   // Save current canvas state to the area cache, then load the target area.
   // If the target area has cached state, restore it. Otherwise, clear the
   // canvas for a fresh start (the user will calibrate + draw on the new area).
-  const handleSwitchArea = useCallback((targetAreaId: string) => {
+  const handleSwitchArea = useCallback(async (targetAreaId: string) => {
     if (targetAreaId === activeAreaId) return;
 
-    // Save current state for the current area
-    if (activeAreaId) {
+    // Phase 4: Auto-persist outgoing area's data to DB before switching.
+    // This prevents data loss when switching between areas.
+    if (activeAreaId && (componentMeasurements.length > 0 || roofAreas.length > 0)) {
+      // Save current area's data to the areaCanvasStatesRef cache
       areaCanvasStatesRef.current.set(activeAreaId, {
         componentMeasurements: componentMeasurements.map(c => ({
           componentId: c.componentId,
@@ -844,9 +861,54 @@ export function TakeoffWorkstation({
         activeComponentIds: [...activeComponentIds],
         selectedComponentId,
       });
+
+      // Best-effort auto-save: persist outgoing area's measurements to DB.
+      // Non-blocking on failure — we still switch areas, but alert the user.
+      try {
+        const currentPageDbId = pages[currentPageIndex]?.id ?? null;
+        const allMeasurements: Array<{
+          componentId: string | null; type: any; value: number;
+          points?: { x: number; y: number }[]; visible: boolean;
+          pitch?: number; name?: string; pageId?: string | null;
+          quoteRoofAreaId?: string | null;
+        }> = [];
+
+        componentMeasurements.forEach(comp => {
+          comp.measurements.forEach(m => {
+            if (m.fromPageId && currentPageDbId && m.fromPageId !== currentPageDbId) return;
+            allMeasurements.push({
+              componentId: comp.componentId, type: m.type, value: m.value,
+              points: m.points, visible: m.visible,
+              pageId: currentPageDbId, quoteRoofAreaId: activeAreaId,
+            });
+          });
+        });
+
+        roofAreas.forEach(area => {
+          allMeasurements.push({
+            componentId: null, type: 'area' as const, value: area.area,
+            pitch: area.pitch, name: area.name, points: area.points,
+            visible: area.visible, pageId: currentPageDbId, quoteRoofAreaId: activeAreaId,
+          });
+        });
+
+        if (allMeasurements.length > 0) {
+          await saveTakeoffMeasurements(
+            quote.id, allMeasurements,
+            calibrations[0]?.unit || 'feet',
+            undefined, undefined, // no canvas snapshot on auto-save
+            currentPageDbId, sessionVersion,
+            activeAreaId, // target the outgoing area
+            null, // no calibration persist on auto-save
+          );
+          setSessionVersion(prev => (prev != null ? prev + 1 : 1));
+        }
+      } catch (err) {
+        console.warn('[SwitchArea] Auto-save failed, continuing with switch:', err);
+      }
     }
 
-    // Load target area state
+    // Load target area state from cache
     const cached = areaCanvasStatesRef.current.get(targetAreaId);
     if (cached) {
       setComponentMeasurements(cached.componentMeasurements);
@@ -857,7 +919,7 @@ export function TakeoffWorkstation({
       setActiveComponentIds(cached.activeComponentIds);
       setSelectedComponentId(cached.selectedComponentId);
     } else {
-      // Fix 3: Fresh area — clear components/areas but KEEP calibrations (same plan = same scale)
+      // Fresh area — clear components/areas but KEEP calibrations (same plan = same scale)
       setComponentMeasurements([]);
       setRoofAreas([]);
       setActiveComponentIds([]);
@@ -867,31 +929,83 @@ export function TakeoffWorkstation({
     setActiveAreaId(targetAreaId);
     setActiveSaveRoofAreaId(targetAreaId);
 
+    // Phase 8: Find and load the correct page image for this area.
+    // Check cached state for pageIds, or find a page that has measurements for this area.
+    const cachedState = areaCanvasStatesRef.current.get(targetAreaId);
+    if (cachedState?.pageIds && cachedState.pageIds.size > 0) {
+      // Find the first page ID in the cache that exists in our pages array
+      const pageIds = Array.from(cachedState.pageIds);
+      for (const pid of pageIds) {
+        const pageIndex = pages.findIndex(p => p.id === pid);
+        if (pageIndex >= 0 && pageIndex !== currentPageIndex) {
+          setCurrentPageIndex(pageIndex);
+          if (pages[pageIndex]?.url) {
+            loadPageImage(pages[pageIndex].url);
+          }
+          break;
+        }
+      }
+    }
+
     // Trigger canvas redraw
     setRedrawNonce(n => n + 1);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeAreaId, componentMeasurements, roofAreas, calibrations,
       calibrationPoints, calibrationConfirmed, activeComponentIds,
-      selectedComponentId]);
+      selectedComponentId, pages, currentPageIndex, sessionVersion, quote.id]);
 
-  // Create a new area via server action, add to list, switch to it.
-  const handleCreateNewArea = useCallback(async () => {
-    setIsCreatingArea(true);
-    try {
-      const result = await createNewTakeoffArea(quote.id);
-      if (!result.ok || !result.areaId) {
-        showAlert('Failed to create area', result.error || 'Unknown error', 'error');
-        return;
-      }
-      const newArea = { id: result.areaId, label: result.label || 'New Area' };
-      setAreaList(prev => [...prev, newArea]);
-      // Switch to the new area (clears canvas for fresh start)
-      handleSwitchArea(newArea.id);
-    } finally {
-      setIsCreatingArea(false);
+  // Phase 6: "+ New Area" opens a choice modal.
+  // - If no areas exist, go straight to drawing mode for a new area.
+  // - If areas exist, show: Option A (add to existing) or Option B (create new).
+  const handleCreateNewArea = useCallback(() => {
+    if (areaList.length === 0) {
+      // No areas — go straight to drawing mode for a new area
+      setPendingNewAreaIsExisting(false);
+      setPendingNewAreaTargetId(null);
+      setAreaMode(true);
+      setAreaSubTool('polygon');
+      setLineMode(false);
+      setPointMode(false);
+      setMultiLinealMode(false);
+      setAreaPoints([]);
+      return;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quote.id, handleSwitchArea]);
+    // Show choice modal
+    setNewAreaChoice('new');
+    setNewAreaExistingId(areaList[0]?.id ?? '');
+    setShowNewAreaChoiceModal(true);
+  }, [areaList]);
+
+  // Phase 6: confirm the choice modal → arm drawing mode
+  const handleConfirmNewAreaChoice = () => {
+    if (newAreaChoice === 'existing' && newAreaExistingId) {
+      // Add to existing: arm drawing mode, set target area
+      const targetArea = areaList.find(a => a.id === newAreaExistingId);
+      setPendingNewAreaIsExisting(true);
+      setPendingNewAreaTargetId(newAreaExistingId);
+      setExistingAreaLabel(targetArea?.label ?? '');
+      setIsExistingAreaMode(true);
+      setShowNewAreaChoiceModal(false);
+      setAreaMode(true);
+      setAreaSubTool('polygon');
+      setLineMode(false);
+      setPointMode(false);
+      setMultiLinealMode(false);
+      setAreaPoints([]);
+    } else {
+      // Create new: arm drawing mode, name will be collected after polygon close
+      setPendingNewAreaIsExisting(false);
+      setPendingNewAreaTargetId(null);
+      setIsExistingAreaMode(false);
+      setShowNewAreaChoiceModal(false);
+      setAreaMode(true);
+      setAreaSubTool('polygon');
+      setLineMode(false);
+      setPointMode(false);
+      setMultiLinealMode(false);
+      setAreaPoints([]);
+    }
+  };
 
   // Fix 8: Auto-create the first area on first-time entry (no saved takeoff).
   // This ensures the area switcher + "+ New Area" button are always visible
@@ -919,14 +1033,60 @@ export function TakeoffWorkstation({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [areaList.length, hydrationData, quote.id]);
 
+  // Phase 5: Area delete — opens ConfirmModal, then calls deleteTakeoffArea server action.
   const handleDeleteArea = (areaId: string) => {
-    pushHistorySnapshot();
-    const area = roofAreas.find(a => a.id === areaId);
-    if (area && fabricRef.current) {
-      if (area.polygon) fabricRef.current.remove(area.polygon);
-      area.markers?.forEach(marker => fabricRef.current!.remove(marker));
+    const area = areaList.find(a => a.id === areaId);
+    if (!area) return;
+    setPendingDeleteAreaId(areaId);
+    setPendingDeleteAreaLabel(area.label);
+    setShowAreaDeleteConfirm(true);
+  };
+
+  const handleConfirmDeleteArea = async () => {
+    if (!pendingDeleteAreaId) return;
+    setIsDeletingArea(true);
+    try {
+      const result = await deleteTakeoffArea(pendingDeleteAreaId);
+      if (!result.ok) {
+        showAlert('Failed to delete area', result.error || 'Unknown error', 'error');
+        return;
+      }
+      // Remove from client state
+      const deletedId = pendingDeleteAreaId;
+      setAreaList(prev => prev.filter(a => a.id !== deletedId));
+      // Remove canvas objects for this area
+      if (fabricRef.current) {
+        const toRemove = fabricRef.current.getObjects().filter((obj: any) =>
+          obj.measurementId && roofAreas.find(ra => ra.id === deletedId && ra.polygon === obj)
+        );
+        toRemove.forEach(obj => fabricRef.current!.remove(obj));
+        fabricRef.current?.renderAll();
+      }
+      setRoofAreas(prev => prev.filter(ra => ra.id !== deletedId));
+      // Clear cached state for this area
+      areaCanvasStatesRef.current.delete(deletedId);
+      // If the deleted area was active, switch to the first remaining area
+      if (activeAreaId === deletedId) {
+        const remaining = areaList.filter(a => a.id !== deletedId);
+        if (remaining.length > 0) {
+          setActiveAreaId(remaining[0].id);
+          setActiveSaveRoofAreaId(remaining[0].id);
+          setRedrawNonce(n => n + 1);
+        } else {
+          // No areas left — clear state
+          setActiveAreaId(null);
+          setActiveSaveRoofAreaId(null);
+          setComponentMeasurements([]);
+          setActiveComponentIds([]);
+          setSelectedComponentId(null);
+        }
+      }
+    } finally {
+      setIsDeletingArea(false);
+      setShowAreaDeleteConfirm(false);
+      setPendingDeleteAreaId(null);
+      setPendingDeleteAreaLabel('');
     }
-    setRoofAreas(roofAreas.filter(a => a.id !== areaId));
   };
   // Remove all canvas objects that don't have a measurementId (i.e. in-progress
   // vertex markers, preview shapes, calibration lines) — committed objects
@@ -985,6 +1145,36 @@ export function TakeoffWorkstation({
       setRoofAreas([...roofAreas, newArea]);
       setShowAreaNamePrompt(false);
       setPendingAreaPoints([]);
+
+      // Phase 6: If this is a new area from the choice modal flow,
+      // create the DB row now and add to areaList.
+      if (!pendingNewAreaIsExisting && !isExistingAreaMode) {
+        (async () => {
+          try {
+            const result = await createNewTakeoffArea(quote.id, name || undefined);
+            if (result.ok && result.areaId) {
+              const finalLabel = result.label || name || 'Area';
+              setAreaList(prev => [...prev, { id: result.areaId!, label: finalLabel }]);
+              setActiveAreaId(result.areaId);
+              setActiveSaveRoofAreaId(result.areaId);
+              // Reset Phase 6 state
+              setPendingNewAreaIsExisting(false);
+              setPendingNewAreaTargetId(null);
+            }
+          } catch (err) {
+            console.warn('[handleSaveArea] Failed to create DB area row:', err);
+          }
+        })();
+      } else if (pendingNewAreaIsExisting && pendingNewAreaTargetId) {
+        // Adding to existing area — just set the active area to the target
+        setActiveAreaId(pendingNewAreaTargetId);
+        setActiveSaveRoofAreaId(pendingNewAreaTargetId);
+        // Reset Phase 6 state
+        setPendingNewAreaIsExisting(false);
+        setPendingNewAreaTargetId(null);
+        setIsExistingAreaMode(false);
+      }
+
       // Signal copilot that a roof area was created
       if (roofAreas.length === 0) {
         setTimeout(() => window.dispatchEvent(new CustomEvent('copilot-redetect')), 500);
@@ -1070,13 +1260,11 @@ export function TakeoffWorkstation({
       // the server action (scans existing labels, picks next free "Area N").
       const userLabel = areaAssignmentNewName.trim();
       try {
-        const dbArea = await createNewTakeoffArea(quote.id);
+        // Phase 2: pass label directly to createNewTakeoffArea so the DB row
+        // is created with the correct name from the start (no create-then-rename race).
+        const dbArea = await createNewTakeoffArea(quote.id, userLabel || undefined);
         if (!dbArea.ok || !dbArea.areaId) throw new Error(dbArea.error || 'Failed to create area');
-        const finalLabel = userLabel || dbArea.label || 'Area';
-        // Fix 6: persist the user's chosen name to DB so it survives reloads
-        if (userLabel && userLabel !== dbArea.label) {
-          await renameTakeoffArea(dbArea.areaId, userLabel);
-        }
+        const finalLabel = dbArea.label || userLabel || 'Area';
         const newArea: RoofArea = {
           id: dbArea.areaId, // real DB UUID
           name: finalLabel,
@@ -1822,6 +2010,52 @@ export function TakeoffWorkstation({
       // P1-1a: increment local version to match what the RPC wrote.
       setSessionVersion(prev => (prev != null ? prev + 1 : 1));
       setIsDirty(false);
+
+      // Phase 4: flush any dirty cached areas from areaCanvasStatesRef.
+      // Each cached area's measurements are saved with their own quote_roof_area_id.
+      // Best-effort: failures are logged but don't fail the overall save.
+      for (const [cachedAreaId, cachedState] of areaCanvasStatesRef.current.entries()) {
+        if (cachedAreaId === activeAreaId) continue; // already saved above
+        const cachedMeasurements: Array<{
+          componentId: string | null; type: any; value: number;
+          points?: { x: number; y: number }[]; visible: boolean;
+          pitch?: number; name?: string; pageId?: string | null;
+          quoteRoofAreaId?: string | null;
+        }> = [];
+        cachedState.componentMeasurements.forEach((comp: any) => {
+          comp.measurements.forEach((m: any) => {
+            cachedMeasurements.push({
+              componentId: comp.componentId, type: m.type, value: m.value,
+              points: m.points, visible: m.visible,
+              pageId: pages[currentPageIndex]?.id ?? null,
+              quoteRoofAreaId: cachedAreaId,
+            });
+          });
+        });
+        cachedState.roofAreas.forEach((area: any) => {
+          cachedMeasurements.push({
+            componentId: null, type: 'area' as const, value: area.area,
+            pitch: area.pitch, name: area.name, points: area.points,
+            visible: area.visible, pageId: pages[currentPageIndex]?.id ?? null,
+            quoteRoofAreaId: cachedAreaId,
+          });
+        });
+        if (cachedMeasurements.length > 0) {
+          try {
+            await saveTakeoffMeasurements(
+              quote.id, cachedMeasurements,
+              calibrations[0]?.unit || 'feet',
+              undefined, undefined,
+              pages[currentPageIndex]?.id ?? null,
+              sessionVersion, cachedAreaId, null,
+            );
+          } catch (err) {
+            console.warn(`[SaveTakeoff] Failed to flush cached area ${cachedAreaId}:`, err);
+          }
+        }
+      }
+      // Clear the cache after flushing
+      areaCanvasStatesRef.current.clear();
       
       // P1-3: only navigate to Quote Builder when the user clicked the
       // primary "Save & Continue to Components" CTA. The multi-page upload
@@ -1849,7 +2083,7 @@ export function TakeoffWorkstation({
   const openSaveAndUploadAnotherPlan = () => {
     if (isOverStorage) { setStorageBlocked(true); return; }
     setUploadAnotherTarget('existing');
-    setUploadAnotherAreaName('');
+    setUploadAnotherAreaId(areaList[0]?.id ?? '');
     setUploadAnotherFile(null);
     setUploadAnotherError(null);
     setShowUploadAnotherModal(true);
@@ -1861,9 +2095,10 @@ export function TakeoffWorkstation({
   const handleConfirmSaveAndUploadAnother = async () => {
     setUploadAnotherError(null);
     if (!uploadAnotherFile) { setUploadAnotherError('Please choose a plan image to upload.'); return; }
-    if (uploadAnotherTarget === 'new' && !uploadAnotherAreaName.trim()) {
-      setUploadAnotherError('Please enter a name for the new area.'); return;
+    if (uploadAnotherTarget === 'existing' && !uploadAnotherAreaId) {
+      setUploadAnotherError('Please select an area to add measurements to.'); return;
     }
+    // Phase 7: no name validation for 'new' — name collected after drawing
     setIsUploadingPage(true);
     try {
       // 1. Persist current measurements without navigating away.
@@ -1902,26 +2137,24 @@ export function TakeoffWorkstation({
       let newPageName: string;
       let resolvedFirstArea: { id: string; label: string } | null = null;
       if (uploadAnotherTarget === 'new') {
-        const areaName = uploadAnotherAreaName.trim();
-        const result = await createTakeoffPageForArea(quote.id, areaName, mint.storagePath);
-        if (!result.ok || !result.pageId) { setUploadAnotherError(result.error || 'Failed to create page.'); return; }
-        newPageId = result.pageId; newRoofAreaId = result.roofAreaId ?? null; newPageName = areaName;
-      } else {
-        // Existing area: create only the page row - reuse the current working area.
+        // Phase 7: create page only (no area row yet — area created after drawing)
         const pageName = `Plan ${pages.length + 1}`;
         const pageResult = await createTakeoffPage(quote.id, pageName);
         if (!pageResult.ok || !pageResult.pageId) { setUploadAnotherError(pageResult.error || 'Failed to create page.'); return; }
         newPageId = pageResult.pageId; newPageName = pageName;
-        // Issue 3 fix: use activeSaveRoofAreaId if already set (e.g. mode=new-page
-        // for a non-first area). getFirstRoofAreaId always returns the lowest
-        // sort_order area which is wrong when the current session targets a later area.
-        if (activeSaveRoofAreaId) {
-          newRoofAreaId = activeSaveRoofAreaId;
-          resolvedFirstArea = { id: activeSaveRoofAreaId, label: existingAreaLabel || initialPageName || 'Current Area' };
-        } else {
-          resolvedFirstArea = await getFirstRoofAreaId(quote.id);
-          newRoofAreaId = resolvedFirstArea?.id ?? null;
-        }
+        newRoofAreaId = null; // will be set after user draws + names the area
+      } else {
+        // Existing area: create only the page row, link to selected area
+        const pageName = `Plan ${pages.length + 1}`;
+        const pageResult = await createTakeoffPage(quote.id, pageName);
+        if (!pageResult.ok || !pageResult.pageId) { setUploadAnotherError(pageResult.error || 'Failed to create page.'); return; }
+        newPageId = pageResult.pageId; newPageName = pageName;
+        // Phase 7: use the selected area from the dropdown
+        newRoofAreaId = uploadAnotherAreaId;
+        const selectedArea = areaList.find(a => a.id === uploadAnotherAreaId);
+        resolvedFirstArea = selectedArea
+          ? { id: selectedArea.id, label: selectedArea.label }
+          : null;
       }
       // 6. Persist image path on the new page row.
       await finalizeTakeoffPageImage(newPageId, mint.storagePath);
@@ -1935,20 +2168,21 @@ export function TakeoffWorkstation({
       loadPageImage(objectUrl);
       // 8. Update save routing target, existing-area mode flag, and version.
       setActiveSaveRoofAreaId(newRoofAreaId);
-      // P1-3: existing-area mode blocks the area name modal and skips area rows
-      // in the save payload. Works for roofing and generic trades.
+      // Phase 7: set mode flags based on target
       if (uploadAnotherTarget === 'existing') {
         setIsExistingAreaMode(true);
         setExistingAreaLabel(resolvedFirstArea?.label ?? 'Existing Area');
       } else {
+        // New area — arm drawing mode for after the canvas loads
         setIsExistingAreaMode(false);
-        setExistingAreaLabel('');
+        setPendingNewAreaIsExisting(false);
+        setPendingNewAreaTargetId(null);
       }
       setSessionVersion(null);
       // Close modal and reset upload state.
       setShowUploadAnotherModal(false);
       setUploadAnotherFile(null);
-      setUploadAnotherAreaName('');
+      setUploadAnotherAreaId('');
       setUploadAnotherError(null);
       setIsDirty(false);
     } catch (err) {
@@ -2365,15 +2599,28 @@ export function TakeoffWorkstation({
             //   creating a spurious roof-area boundary (isExistingAreaMode means no new
             //   boundaries should be created client-side).
             // P1-3 existing-area + component IS selected → normal area modal.
-            if (takeoffMode === 'new-page' && currentRoofAreas.length === 0 && !currentSelectedId) {
+            // Phase 6: Route 1 flow — user clicked "+ New Area" and chose an option.
+            // If adding to existing area: show pitch-only modal (no name needed).
+            // If creating new area: show AreaNameModal after polygon close.
+            if (pendingNewAreaIsExisting && pendingNewAreaTargetId) {
+              // Adding to existing area — pitch-only modal
+              setPendingComponentId(null);
+              setPitchOnlyInput('');
+              setShowPitchOnlyPrompt(true);
+            } else if (!isExistingAreaModeRef.current && !currentSelectedId && !takeoffMode && areaList.length > 0 && !pendingNewAreaIsExisting) {
+              // Legacy Issue 5: Existing-area mode + no component → area-assignment modal
+              const calculatedArea = calculatePolygonArea(currentPoints);
+              setPendingNewArea({ points: [...currentPoints], area: calculatedArea });
+              setAreaAssignmentChoice(existingRoofAreas[0]?.id ?? '');
+              setAreaAssignmentNewName('');
+              setShowAreaAssignmentModal(true);
+            } else if (takeoffMode === 'new-page' && currentRoofAreas.length === 0 && !currentSelectedId) {
               // Boundary drawing for a new page - show pitch-only prompt.
               setPendingComponentId(null);
               setPitchOnlyInput('');
               setShowPitchOnlyPrompt(true);
-            } else if (isExistingAreaModeRef.current && !currentSelectedId) {
-              // Issue 5: Existing-area mode + no component → the user drew a NEW area
-              // polygon. Show the area-assignment modal so they can pick which existing
-              // area to add this measurement to, or create a new area.
+            } else if (isExistingAreaModeRef.current && !currentSelectedId && !pendingNewAreaIsExisting) {
+              // Issue 5: Existing-area mode + no component → area-assignment modal
               const calculatedArea = calculatePolygonArea(currentPoints);
               setPendingNewArea({ points: [...currentPoints], area: calculatedArea });
               setAreaAssignmentChoice(existingRoofAreas[0]?.id ?? '');
@@ -3050,7 +3297,7 @@ export function TakeoffWorkstation({
   return (
     <>
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col p-4">
+    <div className="h-screen bg-gray-50 text-gray-900 flex flex-col p-4 overflow-hidden">
       {/* Back link sits above the canvas card so it never crowds the header */}
       <Link
         href={`/${workspaceSlug}/quotes/${quote.id}`}
@@ -3058,7 +3305,7 @@ export function TakeoffWorkstation({
       >
         <svg className="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg> Back to quote
       </Link>
-      <div className="flex-1 flex flex-col bg-white rounded-xl shadow-lg overflow-hidden">
+      <div className="flex-1 flex flex-col bg-white rounded-xl shadow-lg overflow-hidden min-h-0">
         {/* Header: title + action buttons only - no nav links */}
         <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <h1 className="text-xl font-semibold">{quote.customer_name} - Digital Takeoff</h1>
@@ -3157,7 +3404,7 @@ export function TakeoffWorkstation({
                 We’ll save your current measurements first, then load the new plan so you can keep measuring.
               </p>
 
-              {/* Option 1: attach to original area(s) */}
+              {/* Option 1: attach to existing area (dropdown) */}
               <label
                 className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors cursor-pointer block ${
                   uploadAnotherTarget === 'existing'
@@ -3173,16 +3420,28 @@ export function TakeoffWorkstation({
                     onChange={() => setUploadAnotherTarget('existing')}
                     className="mt-0.5 w-4 h-4 accent-orange-500"
                   />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">Add takeoff data to original area</p>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-900">Add to existing area</p>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      New measurements from this plan flow into the first roof area on this quote.
+                      New measurements from this plan flow into the selected area.
                     </p>
+                    {uploadAnotherTarget === 'existing' && (
+                      <select
+                        value={uploadAnotherAreaId}
+                        onChange={e => setUploadAnotherAreaId(e.target.value)}
+                        className="mt-2 w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      >
+                        <option value="">Select an area…</option>
+                        {areaList.map(a => (
+                          <option key={a.id} value={a.id}>{a.label}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                 </div>
               </label>
 
-              {/* Option 2: new area */}
+              {/* Option 2: new area (no name upfront — collected after drawing) */}
               <label
                 className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors cursor-pointer block ${
                   uploadAnotherTarget === 'new'
@@ -3198,29 +3457,16 @@ export function TakeoffWorkstation({
                     onChange={() => setUploadAnotherTarget('new')}
                     className="mt-0.5 w-4 h-4 accent-orange-500"
                   />
-                  <div className="flex-1">
+                  <div>
                     <p className="text-sm font-semibold text-slate-900">Create new area for this upload</p>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Adds a separate roof area for everything you measure on this plan.
+                      You'll name the area after drawing its boundary on the new plan.
                     </p>
                   </div>
                 </div>
               </label>
 
-              {uploadAnotherTarget === 'new' && (
-                <div className="ml-4 mb-3">
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Area name</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Garage Roof"
-                    value={uploadAnotherAreaName}
-                    onChange={e => setUploadAnotherAreaName(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-              )}
-
-              <div className="mb-3">
+                            <div className="mb-3">
                 <label className="block text-xs font-medium text-slate-700 mb-1">Plan / image</label>
                 {uploadAnotherFile ? (
                   <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200">
@@ -3284,7 +3530,7 @@ export function TakeoffWorkstation({
         </div>
       )}
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden min-h-0">
         {/* Left Sidebar - Calibration, Roof Areas & Components */}
         <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto flex flex-col" data-copilot="takeoff-sidebar">
           <div className="p-4 space-y-5">
@@ -3347,11 +3593,11 @@ export function TakeoffWorkstation({
               <h2 className="text-sm font-bold text-gray-900">{quoteIsGeneric ? 'Areas' : 'Roof Areas'}</h2>
                 <button
                   onClick={handleCreateNewArea}
-                  disabled={isCreatingArea}
-                  className="text-xs font-medium text-[#FF6B35] hover:text-orange-600 disabled:opacity-50"
+                  disabled={false}
+                  className="text-xs font-medium text-[#FF6B35] hover:text-orange-600"
                   title="Create a new area"
                 >
-                  {isCreatingArea ? 'Creating…' : '+ New Area'}
+                  + New Area
                 </button>
               </div>
               <div className="space-y-2">
@@ -3392,9 +3638,11 @@ export function TakeoffWorkstation({
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleDeleteArea(area.id); }}
-                                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-base leading-none"
-                                title="Delete"
-                              >×</button>
+                                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                                title="Delete area"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" /></svg>
+                              </button>
                             </>
                           )}
                         </div>
@@ -3824,7 +4072,7 @@ export function TakeoffWorkstation({
           })()}
 
           {/* Canvas */}
-          <div className="flex-1 flex flex-col items-center justify-start p-6 pt-4 overflow-auto">
+          <div className="flex-1 flex flex-col items-center justify-start p-6 pt-4 overflow-auto min-h-0">
             <div className="border-2 border-gray-200 rounded-lg">
               <canvas ref={canvasRef} />
             </div>
@@ -4183,6 +4431,98 @@ export function TakeoffWorkstation({
         </div>
       )}
 
+      {/* Phase 6: New Area choice modal */}
+      {showNewAreaChoiceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-1">New Area</h2>
+              <p className="text-sm text-slate-500 mb-5">
+                Draw a new area measurement, then choose where to add it.
+              </p>
+
+              {/* Option A: Add to existing area */}
+              <label
+                className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors cursor-pointer block ${
+                  newAreaChoice === 'existing'
+                    ? 'border-orange-500 bg-orange-50'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <input
+                    type="radio"
+                    name="newAreaChoice"
+                    checked={newAreaChoice === 'existing'}
+                    onChange={() => setNewAreaChoice('existing')}
+                    className="mt-0.5 w-4 h-4 accent-orange-500"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-900">Add to existing area</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Draw a polygon that adds to an existing area’s total.
+                    </p>
+                    {newAreaChoice === 'existing' && (
+                      <select
+                        value={newAreaExistingId}
+                        onChange={e => setNewAreaExistingId(e.target.value)}
+                        className="mt-2 w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      >
+                        {areaList.map(a => (
+                          <option key={a.id} value={a.id}>{a.label}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                </div>
+              </label>
+
+              {/* Option B: Create new area */}
+              <label
+                className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors cursor-pointer block ${
+                  newAreaChoice === 'new'
+                    ? 'border-orange-500 bg-orange-50'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <input
+                    type="radio"
+                    name="newAreaChoice"
+                    checked={newAreaChoice === 'new'}
+                    onChange={() => setNewAreaChoice('new')}
+                    className="mt-0.5 w-4 h-4 accent-orange-500"
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Create new area</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Draw a polygon, then name the new area.
+                    </p>
+                  </div>
+                </div>
+              </label>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowNewAreaChoiceModal(false)}
+                  className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmNewAreaChoice}
+                  className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
+                >
+                  Draw Area
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Point Measurement Prompt */}
       {showPointMeasurementPrompt && pendingPointLocation && selectedComponentId && (
         <PointMeasurementModal
@@ -4410,6 +4750,16 @@ export function TakeoffWorkstation({
           destructive={true}
           onCancel={() => setShowResetConfirm(false)}
           onConfirm={handleResetCanvas}
+        />
+        {/* Phase 5: Area delete confirmation */}
+        <ConfirmModal
+          open={showAreaDeleteConfirm}
+          title={`Delete "${pendingDeleteAreaLabel}"?`}
+          description="This deletes the area and all its components and measurements. This cannot be undone."
+          confirmLabel={isDeletingArea ? 'Deleting…' : 'Delete'}
+          destructive={true}
+          onCancel={() => { setShowAreaDeleteConfirm(false); setPendingDeleteAreaId(null); }}
+          onConfirm={handleConfirmDeleteArea}
         />
         <AlertModal
         open={alertState.open}

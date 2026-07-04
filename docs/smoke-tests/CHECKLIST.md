@@ -1,18 +1,20 @@
-# Smoke Test Checklist — Takeoff Structural Redesign
+# Smoke Test Checklist — Takeoff Area Fixes (9-Phase Plan)
 
-## Pending verification (post-fix commit 3357ca9)
+## Status: BUILD IN PROGRESS (not ready for testing)
 
-### Smoke test run 2026-07-04 — ISSUES FOUND
-1. **First-time create** — New quote → upload plan → Edit Digital Take-off → canvas with area switcher + "Area 1" auto-created
-2. **Same as edit** — Create layout identical to edit layout
-3. **New Area** — Click "+ New Area" → modal → enter "Garage" → Confirm → appears as "Garage"
-4. **Rename persists** — Reload → "Garage" still "Garage"
-5. **Switch areas** — Draw on Area 1 → click "Garage" → canvas switches → Garage blank → back to Area 1 → drawings intact
-6. **Shared calibration** — Calibrate on Area 1 → switch to Garage → calibration still active
-7. **Per-area save** — Draw on both areas → save → reload → each area shows only its own measurements
-8. **State restore** — Reload → click each area → canvas shows exactly what was saved
+### Build phases (see `docs/plans/TAKEOFF-AREA-FIXES-2026-07-04.md`)
+1. ☐ Layout fix — canvas/toolbar beside panel
+2. ☐ DB-first naming — `createNewTakeoffArea(quoteId, label?)`
+3. ☐ Area sub-measurement rows — reuse quote builder Area-tab system
+4. ☐ Save/restore all areas — auto-save on area switch
+5. ☐ Area delete — trash icon + ConfirmModal + real DB delete
+6. ☐ "+ New Area" Route 1 — choice modal (add to existing / create new)
+7. ☐ "Save & upload another plan" Route 2 — dropdown for existing, no upfront name for new
+8. ☐ Multi-plan re-entry — area click loads associated plan
+9. ☐ Cleanup — dead code removal, `next build`, smoke-test checklist rewrite
 
-**Result:** Issues found — Shaun has detailed list for next session. See `memory/2026-07-04.md`.
+### Pre-test cleanup
+- Delete orphaned/duplicate areas on "Updated Digi Test" quote (or provide one-off cleanup script)
 
-## Passed (recent)
-_(none yet — all pending)_
+### Smoke test items (run AFTER all phases built)
+_To be written in Phase 9._
