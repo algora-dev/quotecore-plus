@@ -3658,7 +3658,6 @@ export function TakeoffWorkstation({
                 )}
               </div>
             </div>
-          </div>
 
           {calibrationConfirmed && (
             <div className="border-t border-gray-200 pt-4">
@@ -4768,6 +4767,7 @@ export function TakeoffWorkstation({
         variant={alertState.variant}
         onClose={closeAlert}
       />
+    </div>
     </div>
     </>
   );
