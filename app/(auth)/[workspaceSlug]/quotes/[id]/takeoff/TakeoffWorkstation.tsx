@@ -3297,7 +3297,7 @@ export function TakeoffWorkstation({
   return (
     <>
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-    <div className="h-screen bg-gray-50 text-gray-900 flex flex-col p-4 overflow-hidden">
+    <div className="h-[calc(100vh-180px)] bg-gray-50 text-gray-900 flex flex-col p-4 overflow-hidden">
       {/* Back link sits above the canvas card so it never crowds the header */}
       <Link
         href={`/${workspaceSlug}/quotes/${quote.id}`}
@@ -3532,7 +3532,7 @@ export function TakeoffWorkstation({
 
       <div className="flex-1 overflow-hidden min-h-0 grid grid-cols-[320px_1fr]">
         {/* Left Sidebar - Calibration, Roof Areas & Components */}
-        <div className="bg-white border-r border-gray-200 overflow-y-auto flex flex-col" data-copilot="takeoff-sidebar">
+        <div className="bg-white border-r border-gray-200 overflow-y-auto flex flex-col min-h-0" data-copilot="takeoff-sidebar">
           <div className="p-4 space-y-5">
 
           {/* Calibration Section - Show if: not confirmed, calibration mode, or showing flash */}
@@ -3899,7 +3899,7 @@ export function TakeoffWorkstation({
           </div>
         </div>
         {/* Center - Canvas */}
-        <div className="flex flex-col relative bg-gray-50 overflow-hidden">
+        <div className="flex flex-col relative bg-gray-50 overflow-hidden min-h-0">
           {/* Hidden marker: copilot only starts after first roof area created */}
           {roofAreas.length > 0 && <div data-copilot="takeoff-ready" className="hidden" />}
 
