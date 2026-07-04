@@ -240,11 +240,12 @@ export async function saveTakeoffMeasurements(
   }
 
   // 3. Raw measurements list (mirrored to quote_takeoff_measurements 1:1).
+  // Guard: coerce NaN/null/undefined to 0 to prevent NOT NULL constraint violations.
   const measurementsPayload = measurements.map(m => ({
     company_id: quote.company_id,
     component_library_id: m.componentId,
     measurement_type: m.type,
-    measurement_value: m.value,
+    measurement_value: (typeof m.value === 'number' && isFinite(m.value)) ? m.value : 0,
     measurement_unit: unit,
     canvas_points: m.points ?? null,
     is_visible: m.visible,

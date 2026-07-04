@@ -990,6 +990,13 @@ export function TakeoffWorkstation({
   // - If no areas exist, go straight to drawing mode for a new area.
   // - If areas exist, show: Option A (add to existing) or Option B (create new).
   const handleCreateNewArea = useCallback(() => {
+    // RULE: "+ New Area" always deselects any active component so the
+    // drawn polygon is routed as a roof area, not a component measurement.
+    setSelectedComponentId(null);
+    setActiveComponentIds([]);
+    activeAreaComponentIdRef.current = null;
+    setPendingComponentId(null);
+
     if (areaList.length === 0) {
       // No areas — go straight to drawing mode for a new area
       setPendingNewAreaIsExisting(false);
@@ -1010,6 +1017,12 @@ export function TakeoffWorkstation({
 
   // Phase 6: confirm the choice modal → arm drawing mode
   const handleConfirmNewAreaChoice = () => {
+    // Defensive: clear component selection again (in case state didn't flush yet)
+    setSelectedComponentId(null);
+    setActiveComponentIds([]);
+    activeAreaComponentIdRef.current = null;
+    setPendingComponentId(null);
+
     if (newAreaChoice === 'existing' && newAreaExistingId) {
       // Add to existing: arm drawing mode, set target area
       const targetArea = areaList.find(a => a.id === newAreaExistingId);
@@ -1177,13 +1190,16 @@ export function TakeoffWorkstation({
           }
         })();
       } else if (pendingNewAreaIsExisting && pendingNewAreaTargetId) {
-        // Adding to existing area — just set the active area to the target
+        // Adding to existing area — set the active area to the target
         setActiveAreaId(pendingNewAreaTargetId);
         setActiveSaveRoofAreaId(pendingNewAreaTargetId);
-        // Reset Phase 6 state
+        // Reset Phase 6 state — but keep isExistingAreaMode=true so the save
+        // only includes NEWLY drawn areas (client-side IDs), not hydrated ones.
+        // This prevents duplicating hydrated areas on re-entry saves.
         setPendingNewAreaIsExisting(false);
         setPendingNewAreaTargetId(null);
-        setIsExistingAreaMode(false);
+        // Do NOT reset isExistingAreaMode here — it stays true so the save
+        // filter at `!isExistingAreaMode` includes only new polygon areas.
       }
 
       // Signal copilot that a roof area was created
@@ -2214,9 +2230,22 @@ export function TakeoffWorkstation({
     }
     const pixelArea = Math.abs(sum / 2);
     
+    // Guard: if calibrations is empty, we can't convert pixels to real-world units.
+    // Return 0 rather than NaN to prevent NOT NULL constraint violations on save.
+    if (calibrations.length === 0) {
+      console.warn('[calculatePolygonArea] No calibrations available — returning 0');
+      return 0;
+    }
+    
     // Convert to real-world units using calibration scale
     const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / calibrations.length;
     const realArea = pixelArea * avgScale * avgScale; // scale² for area
+    
+    // Guard against NaN/Infinity (shouldn't happen with the empty check above, but belt-and-braces)
+    if (!isFinite(realArea) || isNaN(realArea)) {
+      console.warn('[calculatePolygonArea] Calculated area is NaN/Infinity — returning 0');
+      return 0;
+    }
     
     return realArea;
   };
@@ -2587,17 +2616,17 @@ export function TakeoffWorkstation({
             // and is only cleared when area mode is explicitly turned off - it is immune
             // to Fabric deselection side-effects.
             const currentSelectedId = activeAreaComponentIdRef.current ?? selectedComponentIdRef.current;
-            // Capture the component ID NOW before any canvas deselection fires.
-            // Without this, selectedComponentId may be null by the time the
-            // modal renders, causing the area to be treated as a roof area.
-            setPendingComponentId(currentSelectedId);
+            // Default: clear pendingComponentId. It will only be set in the
+            // explicit component-area branch below. This prevents drawn areas
+            // from being misrouted to a component that was selected before the
+            // user clicked "+ New Area".
+            setPendingComponentId(null);
             // Guard: if a roof area already exists and no component is selected,
-            // the user is drawing a second boundary without attaching it to a
-            // component. Warn and cancel the polygon.
-            if (currentRoofAreas.length > 0 && !currentSelectedId && !isExistingAreaModeRef.current) {
+            // and the user is NOT in a Phase 6 new-area flow, warn and cancel.
+            if (currentRoofAreas.length > 0 && !currentSelectedId && !isExistingAreaModeRef.current
+                && !pendingNewAreaIsExisting && !pendingNewAreaTargetId) {
               setPendingAreaPoints([]);
               setAreaPoints([]);
-              setPendingComponentId(null);
               showAlert(
                 'Select a component first',
                 'To measure an area for a component, select it from the panel on the left before drawing.',
@@ -2638,6 +2667,9 @@ export function TakeoffWorkstation({
               setAreaAssignmentNewName('');
               setShowAreaAssignmentModal(true);
             } else {
+              // Component area (or new roof area with no existing areas):
+              // This is the ONLY branch that should set pendingComponentId.
+              setPendingComponentId(currentSelectedId);
               // volume_3d: skip area name modal, go straight to depth prompt.
               const compForArea = components.find(c => c.id === currentSelectedId);
               if ((compForArea?.measurement_type as string) === 'volume_3d') {
@@ -3615,8 +3647,11 @@ export function TakeoffWorkstation({
                 {areaList.map(area => {
                   const calibUnit = calibrations[0]?.unit || 'feet';
                   const sys = normalizeMeasurementSystem(quote.measurement_system);
-                  const canvasArea = roofAreas.find(ra => ra.name === area.label || ra.id === area.id);
-                  let displayValue = canvasArea?.area ?? area.area ?? 0;
+                  // Sum ALL roofAreas matching this area (by id or label) so the
+                  // displayed total reflects multiple drawn polygons for one area.
+                  const matchingAreas = roofAreas.filter(ra => ra.id === area.id || ra.name === area.label);
+                  const totalArea = matchingAreas.reduce((sum, ra) => sum + (ra.area || 0), 0);
+                  let displayValue = totalArea || area.area || 0;
                   let displayUnit: string;
                   if (calibUnit === 'feet' && sys === 'imperial_rs') { displayValue = displayValue / 100; displayUnit = 'RS'; }
                   else if (calibUnit === 'feet') { displayUnit = 'ft'+'\u00b2'; }
@@ -3634,14 +3669,14 @@ export function TakeoffWorkstation({
                         <span className="text-sm font-medium text-gray-900 truncate">{area.label}</span>
                         <div className="flex items-center gap-1 flex-shrink-0">
                           {isActive && <span className="w-2 h-2 rounded-full bg-[#FF6B35]" />}
-                          {canvasArea && (
+                          {matchingAreas.length > 0 && (
                             <>
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleToggleAreaVisibility(area.id); }}
                                 className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                                title={canvasArea.visible ? 'Hide' : 'Show'}
+                                title={matchingAreas[0].visible ? 'Hide' : 'Show'}
                               >
-                                {canvasArea.visible ? (
+                                {matchingAreas[0].visible ? (
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                                 ) : (
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>
