@@ -3532,7 +3532,7 @@ export function TakeoffWorkstation({
 
       <div className="flex flex-1 overflow-hidden min-h-0">
         {/* Left Sidebar - Calibration, Roof Areas & Components */}
-        <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto flex flex-col" data-copilot="takeoff-sidebar">
+        <div className="w-80 flex-shrink-0 bg-white border-r border-gray-200 overflow-y-auto flex flex-col" data-copilot="takeoff-sidebar">
           <div className="p-4 space-y-5">
 
           {/* Calibration Section - Show if: not confirmed, calibration mode, or showing flash */}
