@@ -20,6 +20,16 @@
 7. **Per-plan calibration**: each plan keeps its own scale; restored on chip/area switch; re-entry restores the ACTIVE page's calibration (not blindly page 1's).
 8. Canvas redraw filters shapes by page (reconstructCanvas `belongsOnPage`) and preserves `quoteRoofAreaId` through redraws.
 
+### Round 7 (2026-07-05 eve, commits `15aa64c`/`c39cf02`/`09c8143`) — pending verification
+- [ ] Quote ee6609ab: Main Roof Valley = 17.74 m, Ridge = 13.54 m in quote builder (Plan 2 entries restored)
+- [ ] Re-enter takeoff on ee6609ab: Page 1 shows the ORIGINAL plan image (not Q Area's)
+- [ ] Switch to Main Roof Plan 2: NO calibration modal (inherits/restores scale)
+- [ ] Upload new plan → create NEW area: component panel starts EMPTY (no stale actives)
+- [ ] Measure same area on plan A, save, measure on plan B, save, re-save from plan A → plan B entries survive (component + area totals cross-page correct)
+- [ ] Area duplicates still gone (regression check on 820be48c)
+- [ ] Components under correct areas still (regression check on 42630e51)
+- [ ] NOTE: the ~4+ m² area Shaun drew on ee6609ab Plan 2 was unrecoverable (deleted before page-scoping existed) — re-draw it on Plan 2 and confirm it persists
+
 ### Pending verification (fresh quote recommended)
 - [ ] Plan 1: calibrate → draw Main Roof + components → "+ New Area" → Garage on same plan → totals/panels per area correct
 - [ ] Save & Upload another plan → "Add to existing: Main Roof" → NO second dialog; calibrate; draw a component → it appears under Main Roof's parent component list
