@@ -1376,7 +1376,7 @@ export function TakeoffWorkstation({
         // the save filter can exclude this area when the user uploads a
         // second plan for the same parent. Without this, un-stamped areas
         // pass through the filter and get duplicated onto the new page.
-        fromPageId: pages[currentPageIndex]?.id ?? null,
+        fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
       };
       
       setRoofAreas([...roofAreas, newArea]);
@@ -1620,7 +1620,7 @@ export function TakeoffWorkstation({
         visible: true,
         canvasObjects: [polygon],
         quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
-        fromPageId: pages[currentPageIndex]?.id ?? null, // stamp page at draw time
+        fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
       };
       
       const compData = componentMeasurements.find(c => c.componentId === componentId);
@@ -1876,7 +1876,7 @@ export function TakeoffWorkstation({
       visible: true,
       canvasObjects: multiLinealSegmentObjects,
       quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
-      fromPageId: pages[currentPageIndex]?.id ?? null, // stamp page at draw time
+      fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
     };
 
     // Add measurement to state. Mirrors the create-or-update pattern used by
@@ -2017,7 +2017,7 @@ export function TakeoffWorkstation({
       visible: true,
       canvasObjects: pendingVolumePolygon ? [pendingVolumePolygon] : [],
       quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
-      fromPageId: pages[currentPageIndex]?.id ?? null, // stamp page at draw time
+      fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
     };
     // Solid polygon (remove dash preview)
     if (pendingVolumePolygon) {
@@ -2067,7 +2067,7 @@ export function TakeoffWorkstation({
       visible: true,
       canvasObjects: pendingFreestyleCanvasObjects,
       quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
-      fromPageId: pages[currentPageIndex]?.id ?? null, // stamp page at draw time
+      fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
     };
     setComponentMeasurements(prev => {
       const exists = prev.some(c => c.componentId === componentId);
@@ -2727,6 +2727,12 @@ export function TakeoffWorkstation({
   // measurement commit points MUST read the active area via this ref, never
   // from activeAreaId state directly.
   const activeAreaIdRef = useRef<string | null>(null);
+  // Stale-closure fix (2026-07-05): the canvas mouse:down handler is bound
+  // ONCE on mount and never re-binds. It captured the initial `pages` state
+  // where pages[0].id was undefined (fetched async by initializeTakeoffPage).
+  // So fromPageId at draw time was always null. This ref stays in sync so
+  // draw-time handlers can read the real current page id.
+  const currentPageIdRef = useRef<string | null>(null);
   // Captures the component ID at the moment area mode is activated for a component.
   // Unlike selectedComponentIdRef, this is NOT cleared by Fabric canvas deselection
   // events that fire on the same click that closes the polygon.
@@ -2750,6 +2756,9 @@ export function TakeoffWorkstation({
     pendingNewAreaIsExistingRef.current = pendingNewAreaIsExisting;
     pendingNewAreaTargetIdRef.current = pendingNewAreaTargetId;
     activeAreaIdRef.current = activeAreaId;
+    // Stale-closure fix (2026-07-05): keep currentPageIdRef in sync so
+    // canvas handlers (bound once) always see the real current page id.
+    currentPageIdRef.current = pages[currentPageIndex]?.id ?? null;
     // Fallback: sync activeAreaComponentIdRef from state after render.
     // applyToolForType sets this synchronously (M-01 Gerald audit 2026-05-29),
     // but this effect serves as a safety net and handles the clear-on-mode-off case.
@@ -4994,7 +5003,7 @@ export function TakeoffWorkstation({
               visible: true,
               canvasObjects: marker ? [marker] : [],
               quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
-              fromPageId: pages[currentPageIndex]?.id ?? null, // stamp page at draw time
+              fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
             };
             
             const compData = componentMeasurements.find(c => c.componentId === selectedComponentId);
@@ -5078,7 +5087,7 @@ export function TakeoffWorkstation({
               visible: true,
               canvasObjects,
               quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
-              fromPageId: pages[currentPageIndex]?.id ?? null, // stamp page at draw time
+              fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
             };
             
             // Add to component measurements
