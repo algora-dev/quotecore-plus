@@ -20,6 +20,13 @@
 7. **Per-plan calibration**: each plan keeps its own scale; restored on chip/area switch; re-entry restores the ACTIVE page's calibration (not blindly page 1's).
 8. Canvas redraw filters shapes by page (reconstructCanvas `belongsOnPage`) and preserves `quoteRoofAreaId` through redraws.
 
+### Round 8 (2026-07-05 late, commit `6011806`) — pending verification
+- [ ] Quote c7a973e1 (Digital Test): Main Roof shows exactly 3 entries (4.04 + 66.14 on Page 1, 37.92 on Plan 2), total 108.10 m² — duplicates #2/#4 gone (data repaired)
+- [ ] Re-enter takeoff on c7a973e1: Plan 1 canvas now SHOWS the two area polygons (66.14 + 4.04) — they were re-homed from Plan 2
+- [ ] NOTE: third Main Roof entry is now 37.92 (not 41.95) — 41.95 was a stale first-save value; 37.92 matches the actual stored polygon
+- [ ] Fresh quote full flow: draw areas on plan 1 IMMEDIATELY after load → upload plan 2 to existing area → draw → new area → Save & Continue → NO duplicate entries in any parent (retro-stamp + RPC v5 fix)
+- [ ] Per-area flush no longer wipes another area's same-page measurements (RPC v5 area-scoped delete)
+
 ### Round 7 (2026-07-05 eve, commits `15aa64c`/`c39cf02`/`09c8143`) — pending verification
 - [ ] Quote ee6609ab: Main Roof Valley = 17.74 m, Ridge = 13.54 m in quote builder (Plan 2 entries restored)
 - [ ] Re-enter takeoff on ee6609ab: Page 1 shows the ORIGINAL plan image (not Q Area's)
