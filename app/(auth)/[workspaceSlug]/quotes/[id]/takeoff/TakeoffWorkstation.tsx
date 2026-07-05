@@ -1372,6 +1372,11 @@ export function TakeoffWorkstation({
         polygon,
         markers: [],
         quoteRoofAreaId: drawTimeAreaId,
+        // Parent/child plans (2026-07-05): stamp the page at draw time so
+        // the save filter can exclude this area when the user uploads a
+        // second plan for the same parent. Without this, un-stamped areas
+        // pass through the filter and get duplicated onto the new page.
+        fromPageId: pages[currentPageIndex]?.id ?? null,
       };
       
       setRoofAreas([...roofAreas, newArea]);
@@ -1615,6 +1620,7 @@ export function TakeoffWorkstation({
         visible: true,
         canvasObjects: [polygon],
         quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
+        fromPageId: pages[currentPageIndex]?.id ?? null, // stamp page at draw time
       };
       
       const compData = componentMeasurements.find(c => c.componentId === componentId);
@@ -1870,6 +1876,7 @@ export function TakeoffWorkstation({
       visible: true,
       canvasObjects: multiLinealSegmentObjects,
       quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
+      fromPageId: pages[currentPageIndex]?.id ?? null, // stamp page at draw time
     };
 
     // Add measurement to state. Mirrors the create-or-update pattern used by
@@ -2010,6 +2017,7 @@ export function TakeoffWorkstation({
       visible: true,
       canvasObjects: pendingVolumePolygon ? [pendingVolumePolygon] : [],
       quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
+      fromPageId: pages[currentPageIndex]?.id ?? null, // stamp page at draw time
     };
     // Solid polygon (remove dash preview)
     if (pendingVolumePolygon) {
@@ -2059,6 +2067,7 @@ export function TakeoffWorkstation({
       visible: true,
       canvasObjects: pendingFreestyleCanvasObjects,
       quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
+      fromPageId: pages[currentPageIndex]?.id ?? null, // stamp page at draw time
     };
     setComponentMeasurements(prev => {
       const exists = prev.some(c => c.componentId === componentId);
@@ -4985,6 +4994,7 @@ export function TakeoffWorkstation({
               visible: true,
               canvasObjects: marker ? [marker] : [],
               quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
+              fromPageId: pages[currentPageIndex]?.id ?? null, // stamp page at draw time
             };
             
             const compData = componentMeasurements.find(c => c.componentId === selectedComponentId);
@@ -5068,6 +5078,7 @@ export function TakeoffWorkstation({
               visible: true,
               canvasObjects,
               quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
+              fromPageId: pages[currentPageIndex]?.id ?? null, // stamp page at draw time
             };
             
             // Add to component measurements
