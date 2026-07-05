@@ -66,6 +66,10 @@ interface RoofArea {
   visible: boolean;
   polygon?: any; // fabric.js polygon object
   markers?: any[]; // fabric.js marker objects
+  /** RC-6 (2026-07-05): DB page_id this area came from (hydration). Undefined
+   *  for newly drawn areas (they belong to the current page). Used to filter
+   *  cross-page areas out of saves, mirroring ComponentMeasurement.fromPageId. */
+  fromPageId?: string | null;
 }
 
 interface ComponentMeasurement {
@@ -244,10 +248,8 @@ export function TakeoffWorkstation({
   // When the user closes a new area polygon while editing an existing plan,
   // this modal lets them pick which existing area to add the measurement to,
   // or create a new area.
-  const [showAreaAssignmentModal, setShowAreaAssignmentModal] = useState(false);
-  const [pendingNewArea, setPendingNewArea] = useState<{ points: { x: number; y: number }[]; area: number } | null>(null);
-  const [areaAssignmentChoice, setAreaAssignmentChoice] = useState<string>('');
-  const [areaAssignmentNewName, setAreaAssignmentNewName] = useState('');
+  // (2026-07-05) Assign-Area-Measurement modal REMOVED — all roof-area draws
+  // now route to the pitch-only modal or AreaNameModal. See RC-1/RC-5 fix.
 
   // P1-3 (multi-page Save & Upload another plan): modal state.
   // - target = 'existing' attaches the new page to the FIRST existing roof area
@@ -709,7 +711,7 @@ export function TakeoffWorkstation({
       if (m.componentId === null && m.type === 'area') {
         const idx = ad.areas.length;
         const label = allRoofAreas.find(a => a.id === areaKey)?.label ?? existingRoofAreas[idx]?.label ?? `Area ${idx + 1}`;
-        ad.areas.push({ id: m.id, name: label, points: m.points ?? [], area: m.value, pitch: allRoofAreas.find(a => a.id === areaKey)?.pitch ?? existingRoofAreas[idx]?.pitch ?? 0, visible: m.visible });
+        ad.areas.push({ id: m.id, name: label, points: m.points ?? [], area: m.value, pitch: allRoofAreas.find(a => a.id === areaKey)?.pitch ?? existingRoofAreas[idx]?.pitch ?? 0, visible: m.visible, fromPageId: m.pageId ?? null });
         return;
       }
       if (m.componentId === null) return;
@@ -725,7 +727,7 @@ export function TakeoffWorkstation({
           componentId: comp.componentId, expanded: false,
           measurements: comp.measurements.map(m => ({ id: m.id, type: m.type, value: m.value, points: m.points, visible: m.visible, fromPageId: m.fromPageId })),
         })),
-        roofAreas: ad.areas.map(ra => ({ id: ra.id, name: ra.name, points: ra.points, area: ra.area, pitch: ra.pitch, visible: ra.visible })),
+        roofAreas: ad.areas.map(ra => ({ id: ra.id, name: ra.name, points: ra.points, area: ra.area, pitch: ra.pitch, visible: ra.visible, fromPageId: ra.fromPageId })),
         pageIds: ad.pageIds,
       });
     });
@@ -843,6 +845,11 @@ export function TakeoffWorkstation({
     // Fix (2026-07-04): never show on re-entry to a saved takeoff. The user
     // already has saved areas — they can use "+ New Area" or upload a plan.
     if (hydrationData && hydrationData.measurements.length > 0) return;
+    // RC-3 fix (2026-07-05): if the user already started drawing, never pop
+    // this modal on top of their drawing (or on top of the AreaNameModal).
+    // areaMode in the deps means the cleanup cancels the pending timer the
+    // moment drawing starts.
+    if (areaMode) return;
     if (calibrationConfirmed && calibrations.length > 0 && roofAreas.length === 0) {
       // Delay slightly to show after calibration flash
       const timer = setTimeout(() => {
@@ -850,7 +857,7 @@ export function TakeoffWorkstation({
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [calibrationConfirmed, calibrations.length, roofAreas.length, takeoffMode, isExistingAreaMode, hydrationData]);
+  }, [calibrationConfirmed, calibrations.length, roofAreas.length, takeoffMode, isExistingAreaMode, hydrationData, areaMode]);
   
   // Save current canvas state to the area cache, then load the target area.
   // If the target area has cached state, restore it. Otherwise, clear the
@@ -992,8 +999,9 @@ export function TakeoffWorkstation({
   const handleCreateNewArea = useCallback(() => {
     // RULE: "+ New Area" always deselects any active component so the
     // drawn polygon is routed as a roof area, not a component measurement.
+    // RC-2 fix (2026-07-05): do NOT clear activeComponentIds here — that wiped
+    // the entire left-panel component list. Deselecting is enough.
     setSelectedComponentId(null);
-    setActiveComponentIds([]);
     activeAreaComponentIdRef.current = null;
     setPendingComponentId(null);
 
@@ -1001,6 +1009,10 @@ export function TakeoffWorkstation({
       // No areas — go straight to drawing mode for a new area
       setPendingNewAreaIsExisting(false);
       setPendingNewAreaTargetId(null);
+      // RC-1/RC-5: sync refs synchronously — canvas handlers read refs, not state.
+      pendingNewAreaIsExistingRef.current = false;
+      pendingNewAreaTargetIdRef.current = null;
+      viaNewAreaFlowRef.current = true;
       setAreaMode(true);
       setAreaSubTool('polygon');
       setLineMode(false);
@@ -1018,18 +1030,24 @@ export function TakeoffWorkstation({
   // Phase 6: confirm the choice modal → arm drawing mode
   const handleConfirmNewAreaChoice = () => {
     // Defensive: clear component selection again (in case state didn't flush yet)
+    // RC-2 fix (2026-07-05): do NOT clear activeComponentIds — keep the panel intact.
     setSelectedComponentId(null);
-    setActiveComponentIds([]);
     activeAreaComponentIdRef.current = null;
     setPendingComponentId(null);
+    // RC-5: mark this draw as authorised via the "+ New Area" flow.
+    viaNewAreaFlowRef.current = true;
 
     if (newAreaChoice === 'existing' && newAreaExistingId) {
       // Add to existing: arm drawing mode, set target area
       const targetArea = areaList.find(a => a.id === newAreaExistingId);
       setPendingNewAreaIsExisting(true);
       setPendingNewAreaTargetId(newAreaExistingId);
+      // RC-1: sync refs SYNCHRONOUSLY — the canvas handler reads refs, not state.
+      pendingNewAreaIsExistingRef.current = true;
+      pendingNewAreaTargetIdRef.current = newAreaExistingId;
       setExistingAreaLabel(targetArea?.label ?? '');
       setIsExistingAreaMode(true);
+      isExistingAreaModeRef.current = true;
       setShowNewAreaChoiceModal(false);
       setAreaMode(true);
       setAreaSubTool('polygon');
@@ -1041,7 +1059,10 @@ export function TakeoffWorkstation({
       // Create new: arm drawing mode, name will be collected after polygon close
       setPendingNewAreaIsExisting(false);
       setPendingNewAreaTargetId(null);
+      pendingNewAreaIsExistingRef.current = false;
+      pendingNewAreaTargetIdRef.current = null;
       setIsExistingAreaMode(false);
+      isExistingAreaModeRef.current = false;
       setShowNewAreaChoiceModal(false);
       setAreaMode(true);
       setAreaSubTool('polygon');
@@ -1169,6 +1190,7 @@ export function TakeoffWorkstation({
       setRoofAreas([...roofAreas, newArea]);
       setShowAreaNamePrompt(false);
       setPendingAreaPoints([]);
+      viaNewAreaFlowRef.current = false; // RC-5: consume the flow flag
 
       // Phase 6: If this is a new area from the choice modal flow,
       // create the DB row now and add to areaList.
@@ -1184,6 +1206,7 @@ export function TakeoffWorkstation({
               // Reset Phase 6 state
               setPendingNewAreaIsExisting(false);
               setPendingNewAreaTargetId(null);
+              viaNewAreaFlowRef.current = false; // RC-5: consume the flow flag
             }
           } catch (err) {
             console.warn('[handleSaveArea] Failed to create DB area row:', err);
@@ -1198,6 +1221,7 @@ export function TakeoffWorkstation({
         // This prevents duplicating hydrated areas on re-entry saves.
         setPendingNewAreaIsExisting(false);
         setPendingNewAreaTargetId(null);
+        viaNewAreaFlowRef.current = false; // RC-5: consume the flow flag
         // Do NOT reset isExistingAreaMode here — it stays true so the save
         // filter at `!isExistingAreaMode` includes only new polygon areas.
       }
@@ -1261,96 +1285,7 @@ export function TakeoffWorkstation({
     }
   };
 
-  // Issue 5: Handle area-assignment modal confirmation.
-  // When the user draws a new area polygon in mode=add (editing existing plan),
-  // they choose which existing area to add the measurement to, or create a new area.
-  const handleConfirmAreaAssignment = async () => {
-    if (!pendingNewArea) return;
-    pushHistorySnapshot();
-    cleanupInProgressObjects();
-    const clientId = `area-${Date.now()}`;
-
-    // Draw the polygon on canvas (tagged with measurementId)
-    const polygon = new Polygon(pendingNewArea.points, {
-      fill: 'rgba(59, 130, 246, 0.2)',
-      stroke: '#3b82f6',
-      strokeWidth: 1.25,
-      selectable: false,
-      evented: false,
-    });
-    (polygon as unknown as { measurementId: string }).measurementId = clientId;
-    fabricRef.current?.add(polygon);
-
-    if (areaAssignmentChoice === '__new__') {
-      // Batch 6: create the DB row immediately so the area appears in the
-      // left panel switcher with a real UUID. Auto-dedup name handled by
-      // the server action (scans existing labels, picks next free "Area N").
-      const userLabel = areaAssignmentNewName.trim();
-      try {
-        // Phase 2: pass label directly to createNewTakeoffArea so the DB row
-        // is created with the correct name from the start (no create-then-rename race).
-        const dbArea = await createNewTakeoffArea(quote.id, userLabel || undefined);
-        if (!dbArea.ok || !dbArea.areaId) throw new Error(dbArea.error || 'Failed to create area');
-        const finalLabel = dbArea.label || userLabel || 'Area';
-        const newArea: RoofArea = {
-          id: dbArea.areaId, // real DB UUID
-          name: finalLabel,
-          points: pendingNewArea.points,
-          area: pendingNewArea.area,
-          pitch: 0,
-          visible: true,
-          polygon,
-          markers: [],
-        };
-        setRoofAreas(prev => [...prev, newArea]);
-        setAreaList(prev => [...prev, { id: dbArea.areaId!, label: finalLabel }]);
-        setActiveAreaId(dbArea.areaId!);
-        setActiveSaveRoofAreaId(dbArea.areaId!);
-      } catch (err) {
-        // Fallback: use client-side ID if server action fails
-        console.error('[AreaAssignment] createNewTakeoffArea failed:', err);
-        const newName = userLabel || `Area ${roofAreas.length + 1}`;
-        const newArea: RoofArea = {
-          id: clientId,
-          name: newName,
-          points: pendingNewArea.points,
-          area: pendingNewArea.area,
-          pitch: 0,
-          visible: true,
-          polygon,
-          markers: [],
-        };
-        setRoofAreas([...roofAreas, newArea]);
-      }
-    } else {
-      // Add to existing area: set activeAreaId to the chosen area
-      const existingArea = existingRoofAreas.find(a => a.id === areaAssignmentChoice);
-      const newName = existingArea?.label || 'Existing Area';
-      const newArea: RoofArea = {
-        id: clientId,
-        name: newName,
-        points: pendingNewArea.points,
-        area: pendingNewArea.area,
-        pitch: existingArea?.pitch ?? 0,
-        visible: true,
-        polygon,
-        markers: [],
-      };
-      setRoofAreas([...roofAreas, newArea]);
-      // Switch active context to the chosen existing area
-      setActiveAreaId(areaAssignmentChoice);
-      setActiveSaveRoofAreaId(areaAssignmentChoice);
-    }
-
-    // Reset state
-    setShowAreaAssignmentModal(false);
-    setPendingNewArea(null);
-    setPendingAreaPoints([]);
-    setAreaPoints([]);
-    setAreaMode(false);
-    setAreaAssignmentChoice('');
-    setAreaAssignmentNewName('');
-  };
+  // (2026-07-05) handleConfirmAreaAssignment REMOVED with the Assign-Area modal.
   
   const handleToggleAreaVisibility = (areaId: string) => {
     pushHistorySnapshot();
@@ -1829,46 +1764,28 @@ export function TakeoffWorkstation({
       });
       
       // Add area measurements.
-      // Issue 4+5 fix: In existing-area mode, skip HYDRATED areas (they're already
-      // in the DB — re-inserting them causes duplication). But DO include newly
-      // drawn areas (client-side IDs like `area-${Date.now()}`) so the user's
-      // new work is saved. Hydrated areas have DB UUIDs; new ones have timestamp IDs.
-      // Trade-agnostic: applies to roofing and generic trades.
-      if (!isExistingAreaMode) {
-        roofAreas.forEach(area => {
-          allMeasurements.push({
-            componentId: null,
-            type: 'area' as const,
-            value: area.area,
-            pitch: area.pitch,
-            name: area.name,
-            points: area.points,
-            visible: area.visible,
-            quoteRoofAreaId: activeAreaId ?? activeSaveRoofAreaId,
-          });
+      // RC-6 fix (2026-07-05): the RPC now scopes its delete by page_id, so we
+      // must re-send ALL current-page roof areas (hydrated + newly drawn).
+      // Hydrated areas from OTHER pages are filtered out by fromPageId — they
+      // are already in the DB under their own page and the page-scoped delete
+      // won't touch them.
+      const currentPageDbIdForAreas = pages[currentPageIndex]?.id ?? null;
+      roofAreas.forEach(area => {
+        // Skip hydrated areas that belong to a different page.
+        if (area.fromPageId && currentPageDbIdForAreas && area.fromPageId !== currentPageDbIdForAreas) {
+          return;
+        }
+        allMeasurements.push({
+          componentId: null,
+          type: 'area' as const,
+          value: area.area,
+          pitch: area.pitch,
+          name: area.name,
+          points: area.points,
+          visible: area.visible,
+          quoteRoofAreaId: area.id.startsWith('area-') ? (activeAreaId ?? activeSaveRoofAreaId) : area.id,
         });
-      } else {
-        // Existing-area mode: only include NEWLY drawn areas (client-side IDs).
-        // Hydrated areas (DB UUIDs) are skipped to prevent duplication.
-        roofAreas.forEach(area => {
-          if (area.id.startsWith('area-')) {
-            // Newly drawn area — include it.
-            // If it was assigned to an existing area, it adds to that area's total
-            // via the measurement row. If it was created as a new area, it creates
-            // a new quote_roof_areas row.
-            allMeasurements.push({
-              componentId: null,
-              type: 'area' as const,
-              value: area.area,
-              pitch: area.pitch,
-              name: area.name,
-              points: area.points,
-              visible: area.visible,
-              quoteRoofAreaId: activeAreaId ?? activeSaveRoofAreaId,
-            });
-          }
-        });
-      }
+      });
       
       // After filtering, if there's nothing to save for the current page,
       // treat this as a SAFE SKIP - not a full save. This happens in mode=add
@@ -2198,12 +2115,21 @@ export function TakeoffWorkstation({
       // Phase 7: set mode flags based on target
       if (uploadAnotherTarget === 'existing') {
         setIsExistingAreaMode(true);
+        isExistingAreaModeRef.current = true;
         setExistingAreaLabel(resolvedFirstArea?.label ?? 'Existing Area');
+        // RC-6/Issue 10 fix (2026-07-05): set activeAreaId so the save filter
+        // routes roof area measurements to the correct area.
+        if (newRoofAreaId) {
+          setActiveAreaId(newRoofAreaId);
+        }
       } else {
         // New area — arm drawing mode for after the canvas loads
         setIsExistingAreaMode(false);
+        isExistingAreaModeRef.current = false;
         setPendingNewAreaIsExisting(false);
         setPendingNewAreaTargetId(null);
+        pendingNewAreaIsExistingRef.current = false;
+        pendingNewAreaTargetIdRef.current = null;
       }
       setSessionVersion(null);
       // Close modal and reset upload state.
@@ -2230,15 +2156,19 @@ export function TakeoffWorkstation({
     }
     const pixelArea = Math.abs(sum / 2);
     
-    // Guard: if calibrations is empty, we can't convert pixels to real-world units.
-    // Return 0 rather than NaN to prevent NOT NULL constraint violations on save.
-    if (calibrations.length === 0) {
+    // RC-4 fix (2026-07-05): read calibrations via REF, not state. This
+    // function is called from canvas mouse handlers bound once at mount
+    // (stale closures) where the `calibrations` state variable is permanently
+    // []. That made every area measure 0.00 while line tools (which already
+    // used calibrationsRef) worked fine.
+    const currentCalibrations = calibrationsRef.current;
+    if (currentCalibrations.length === 0) {
       console.warn('[calculatePolygonArea] No calibrations available — returning 0');
       return 0;
     }
-    
+
     // Convert to real-world units using calibration scale
-    const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / calibrations.length;
+    const avgScale = currentCalibrations.reduce((s, cal) => s + cal.scale, 0) / currentCalibrations.length;
     const realArea = pixelArea * avgScale * avgScale; // scale² for area
     
     // Guard against NaN/Infinity (shouldn't happen with the empty check above, but belt-and-braces)
@@ -2272,6 +2202,17 @@ export function TakeoffWorkstation({
   const selectedComponentIdRef = useRef(selectedComponentId);
   const componentColorsRef = useRef(componentColors);
   const isExistingAreaModeRef = useRef(isExistingAreaMode);
+  // RC-1 fix (2026-07-05): the canvas mouse handlers are bound ONCE (one-shot
+  // init effect) and never re-bound, so any state they read must go through
+  // refs. These two were read as raw state — permanently false/null inside the
+  // handler — which broke every "+ New Area" route.
+  const pendingNewAreaIsExistingRef = useRef(pendingNewAreaIsExisting);
+  const pendingNewAreaTargetIdRef = useRef(pendingNewAreaTargetId);
+  // RC-5 fix (2026-07-05): true only while an area-draw armed via the
+  // "+ New Area" flow is in flight. Distinguishes "+ New Area" (roof area
+  // allowed, no component needed) from a direct Area-tool click (component
+  // required). Set synchronously in the flow handlers, cleared on save/cancel.
+  const viaNewAreaFlowRef = useRef(false);
   // Captures the component ID at the moment area mode is activated for a component.
   // Unlike selectedComponentIdRef, this is NOT cleared by Fabric canvas deselection
   // events that fire on the same click that closes the polygon.
@@ -2292,6 +2233,8 @@ export function TakeoffWorkstation({
     selectedComponentIdRef.current = selectedComponentId;
     componentColorsRef.current = componentColors;
     isExistingAreaModeRef.current = isExistingAreaMode;
+    pendingNewAreaIsExistingRef.current = pendingNewAreaIsExisting;
+    pendingNewAreaTargetIdRef.current = pendingNewAreaTargetId;
     // Fallback: sync activeAreaComponentIdRef from state after render.
     // applyToolForType sets this synchronously (M-01 Gerald audit 2026-05-29),
     // but this effect serves as a safety net and handles the clear-on-mode-off case.
@@ -2301,7 +2244,7 @@ export function TakeoffWorkstation({
       // Only set if not already set synchronously (avoid overwriting with stale state).
       activeAreaComponentIdRef.current = selectedComponentId;
     }
-  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, areaSubTool, lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints, selectedComponentId, componentColors, isExistingAreaMode]);
+  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, areaSubTool, lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints, selectedComponentId, componentColors, isExistingAreaMode, pendingNewAreaIsExisting, pendingNewAreaTargetId]);
 
   // Stable ref for the signed plan URL. The signed URL is regenerated on
   // every server render (it embeds a fresh JWT), so reading it directly
@@ -2621,53 +2564,47 @@ export function TakeoffWorkstation({
             // from being misrouted to a component that was selected before the
             // user clicked "+ New Area".
             setPendingComponentId(null);
-            // Guard: if a roof area already exists and no component is selected,
-            // and the user is NOT in a Phase 6 new-area flow, warn and cancel.
-            if (currentRoofAreas.length > 0 && !currentSelectedId && !isExistingAreaModeRef.current
-                && !pendingNewAreaIsExisting && !pendingNewAreaTargetId) {
+            // ── Routing rewrite (2026-07-05, RC-1/RC-5): all flow flags are read
+            // via refs — this handler is a stale one-shot closure. Priority:
+            //   1. component selected          → component-area flow (else-branch below)
+            //   2. +New Area → add-to-existing → pitch-only modal
+            //   3. +New Area → create new      → AreaNameModal (name + pitch)
+            //   4. new-page first boundary     → pitch-only modal
+            //   5. upload-to-existing plan     → pitch-only modal (target pre-chosen)
+            //   6. first area, fresh takeoff   → AreaNameModal
+            //   7. otherwise                   → "Select a component first" alert
+            //      ("+ New Area" is the ONLY way to add a roof area without a component)
+            if (!currentSelectedId && viaNewAreaFlowRef.current && pendingNewAreaIsExistingRef.current && pendingNewAreaTargetIdRef.current) {
+              // "+ New Area" → add to existing — pitch-only modal (shows measured area)
+              setPitchOnlyInput('');
+              setShowPitchOnlyPrompt(true);
+            } else if (!currentSelectedId && viaNewAreaFlowRef.current) {
+              // "+ New Area" → create new — AreaNameModal (name + pitch + measured area)
+              setShowAreaNamePrompt(true);
+            } else if (!currentSelectedId && takeoffMode === 'new-page' && currentRoofAreas.length === 0) {
+              // Boundary drawing for a new page - show pitch-only prompt.
+              setPitchOnlyInput('');
+              setShowPitchOnlyPrompt(true);
+            } else if (!currentSelectedId && isExistingAreaModeRef.current) {
+              // Upload-to-existing plan: the target area was chosen in the upload
+              // modal — pitch-only modal adds this measurement to it.
+              setPitchOnlyInput('');
+              setShowPitchOnlyPrompt(true);
+            } else if (!currentSelectedId && currentRoofAreas.length === 0) {
+              // First area on a fresh takeoff — AreaNameModal.
+              setShowAreaNamePrompt(true);
+            } else if (!currentSelectedId) {
+              // Area tool used directly with no component — not allowed.
               setPendingAreaPoints([]);
               setAreaPoints([]);
               showAlert(
                 'Select a component first',
-                'To measure an area for a component, select it from the panel on the left before drawing.',
+                'To measure an area for a component, select it from the panel on the left before drawing. To add a new roof area, use the "+ New Area" button.',
                 'info'
               );
               return;
-            }
-            // P1-1b: new-page first area → pitch-only (clear component; this is the boundary).
-            // P1-3 existing-area + NO component selected → warn instead of silently
-            //   creating a spurious roof-area boundary (isExistingAreaMode means no new
-            //   boundaries should be created client-side).
-            // P1-3 existing-area + component IS selected → normal area modal.
-            // Phase 6: Route 1 flow — user clicked "+ New Area" and chose an option.
-            // If adding to existing area: show pitch-only modal (no name needed).
-            // If creating new area: show AreaNameModal after polygon close.
-            if (pendingNewAreaIsExisting && pendingNewAreaTargetId) {
-              // Adding to existing area — pitch-only modal
-              setPendingComponentId(null);
-              setPitchOnlyInput('');
-              setShowPitchOnlyPrompt(true);
-            } else if (!isExistingAreaModeRef.current && !currentSelectedId && !takeoffMode && areaList.length > 0 && !pendingNewAreaIsExisting) {
-              // Legacy Issue 5: Existing-area mode + no component → area-assignment modal
-              const calculatedArea = calculatePolygonArea(currentPoints);
-              setPendingNewArea({ points: [...currentPoints], area: calculatedArea });
-              setAreaAssignmentChoice(existingRoofAreas[0]?.id ?? '');
-              setAreaAssignmentNewName('');
-              setShowAreaAssignmentModal(true);
-            } else if (takeoffMode === 'new-page' && currentRoofAreas.length === 0 && !currentSelectedId) {
-              // Boundary drawing for a new page - show pitch-only prompt.
-              setPendingComponentId(null);
-              setPitchOnlyInput('');
-              setShowPitchOnlyPrompt(true);
-            } else if (isExistingAreaModeRef.current && !currentSelectedId && !pendingNewAreaIsExisting) {
-              // Issue 5: Existing-area mode + no component → area-assignment modal
-              const calculatedArea = calculatePolygonArea(currentPoints);
-              setPendingNewArea({ points: [...currentPoints], area: calculatedArea });
-              setAreaAssignmentChoice(existingRoofAreas[0]?.id ?? '');
-              setAreaAssignmentNewName('');
-              setShowAreaAssignmentModal(true);
             } else {
-              // Component area (or new roof area with no existing areas):
+              // Component area:
               // This is the ONLY branch that should set pendingComponentId.
               setPendingComponentId(currentSelectedId);
               // volume_3d: skip area name modal, go straight to depth prompt.
@@ -2872,31 +2809,40 @@ export function TakeoffWorkstation({
         const currentSelectedId = activeAreaComponentIdRef.current ?? selectedComponentIdRef.current;
         setPendingComponentId(currentSelectedId);
 
-        // Same guards as polygon close:
-        if (currentRoofAreas.length > 0 && !currentSelectedId && !isExistingAreaModeRef.current) {
-          setPendingAreaPoints([]);
+        // ── Routing (2026-07-05, RC-1/RC-5): identical chain to polygon close. ──
+        if (!currentSelectedId && viaNewAreaFlowRef.current && pendingNewAreaIsExistingRef.current && pendingNewAreaTargetIdRef.current) {
+          // "+ New Area" → add to existing — pitch-only modal (shows measured area)
           setPendingComponentId(null);
-          showAlert(
-            'Select a component first',
-            'To measure an area for a component, select it from the panel on the left before drawing.',
-            'info'
-          );
-          return;
-        }
-
-        if (takeoffMode === 'new-page' && currentRoofAreas.length === 0 && !currentSelectedId) {
+          setPitchOnlyInput('');
+          setShowPitchOnlyPrompt(true);
+        } else if (!currentSelectedId && viaNewAreaFlowRef.current) {
+          // "+ New Area" → create new — AreaNameModal (name + pitch + measured area)
+          setPendingComponentId(null);
+          setShowAreaNamePrompt(true);
+        } else if (!currentSelectedId && takeoffMode === 'new-page' && currentRoofAreas.length === 0) {
           // Boundary drawing for a new page — pitch-only prompt.
           setPendingComponentId(null);
           setPitchOnlyInput('');
           setShowPitchOnlyPrompt(true);
-        } else if (isExistingAreaModeRef.current && !currentSelectedId) {
-          // Issue 5: existing-area mode + no component -> area-assignment modal
-          // (same flow as the polygon sub-tool path).
-          const calculatedArea = calculatePolygonArea(boxPoints);
-          setPendingNewArea({ points: [...boxPoints], area: calculatedArea });
-          setAreaAssignmentChoice(existingRoofAreas[0]?.id ?? '');
-          setAreaAssignmentNewName('');
-          setShowAreaAssignmentModal(true);
+        } else if (!currentSelectedId && isExistingAreaModeRef.current) {
+          // Upload-to-existing plan: target pre-chosen — pitch-only modal.
+          setPendingComponentId(null);
+          setPitchOnlyInput('');
+          setShowPitchOnlyPrompt(true);
+        } else if (!currentSelectedId && currentRoofAreas.length === 0) {
+          // First area on a fresh takeoff — AreaNameModal.
+          setPendingComponentId(null);
+          setShowAreaNamePrompt(true);
+        } else if (!currentSelectedId) {
+          // Area tool used directly with no component — not allowed.
+          setPendingAreaPoints([]);
+          setPendingComponentId(null);
+          showAlert(
+            'Select a component first',
+            'To measure an area for a component, select it from the panel on the left before drawing. To add a new roof area, use the "+ New Area" button.',
+            'info'
+          );
+          return;
         } else {
           // volume_3d: skip area name modal, go straight to depth prompt.
           const compForArea = components.find(c => c.id === currentSelectedId);
@@ -3112,7 +3058,7 @@ export function TakeoffWorkstation({
           // The hydration effect + reconstruct effect will fire again.
           // We need to reset the refs and re-apply hydration data.
           const grouped = new Map<string, { componentId: string; measurements: any[]; expanded: boolean }>();
-          const hydratedRoofAreas: { id: string; name: string; points: { x: number; y: number }[]; area: number; pitch: number; visible: boolean }[] = [];
+          const hydratedRoofAreas: { id: string; name: string; points: { x: number; y: number }[]; area: number; pitch: number; visible: boolean; fromPageId?: string | null }[] = [];
           hydrationData.measurements.forEach(m => {
             if (m.componentId === null && m.type === 'area') {
               hydratedRoofAreas.push({
@@ -3122,6 +3068,7 @@ export function TakeoffWorkstation({
                 area: m.value,
                 pitch: 0,
                 visible: m.visible,
+                fromPageId: m.pageId || null,
               });
               return;
             }
@@ -4215,12 +4162,9 @@ export function TakeoffWorkstation({
                 <li>Click the <span className="font-bold text-gray-700">&quot;Calibrate&quot;</span> button</li>
                 <li>Click <span className="font-bold">two points</span> on the plan with a known distance</li>
                 <li>Enter the <span className="font-bold">actual distance</span> between those points</li>
-                <li>Add 2-3 calibrations for best accuracy</li>
+                <li>Add 2-3 calibrations and use the longest known measurements for best accuracy</li>
                 <li>Click <span className="font-bold text-orange-600">&quot;Confirm Calibration&quot;</span> when done</li>
               </ol>
-              <p className="text-gray-600 text-xs mt-4">
-                Tip: Use existing dimensions on your image, we suggest using the longest lengths to calibrate from.
-              </p>
             </div>
             <button
               onClick={() => {
@@ -4350,6 +4294,7 @@ export function TakeoffWorkstation({
                   setShowPitchOnlyPrompt(false);
                   setPendingAreaPoints([]);
                   setAreaPoints([]);
+                  viaNewAreaFlowRef.current = false; // RC-5: cancel resets the flow flag
                 }}
                 className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
               >
@@ -4375,106 +4320,12 @@ export function TakeoffWorkstation({
             setShowAreaNamePrompt(false);
             setPendingAreaPoints([]);
             setAreaPoints([]);
+            viaNewAreaFlowRef.current = false; // RC-5: cancel resets the flow flag
           }}
         />
       )}
 
-      {/* Issue 5: Area Assignment Modal — shown when user draws a new area
-          polygon while editing an existing plan (mode=add). Lets them pick
-          which existing area to add the measurement to, or create a new area. */}
-      {showAreaAssignmentModal && pendingNewArea && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-            <div className="p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-1">Assign Area Measurement</h2>
-              <p className="text-sm text-slate-500 mb-4">
-                You drew a new area measuring {pendingNewArea.area.toFixed(2)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'}.
-                Choose which area to add it to, or create a new one.
-              </p>
-              <div className="space-y-2 mb-4">
-                {existingRoofAreas.map(area => (
-                  <label
-                    key={area.id}
-                    className={`w-full text-left p-3 rounded-xl border-2 transition-colors cursor-pointer flex items-center gap-3 ${
-                      areaAssignmentChoice === area.id
-                        ? 'border-orange-500 bg-orange-50'
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="areaAssignment"
-                      checked={areaAssignmentChoice === area.id}
-                      onChange={() => setAreaAssignmentChoice(area.id)}
-                      className="w-4 h-4 accent-orange-500"
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-slate-900">{area.label}</p>
-                      {area.area != null && area.area > 0 && (
-                        <p className="text-xs text-slate-500">Current: {area.area.toFixed(2)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'}</p>
-                      )}
-                    </div>
-                  </label>
-                ))}
-                <label
-                  className={`w-full text-left p-3 rounded-xl border-2 transition-colors cursor-pointer flex items-center gap-3 ${
-                    areaAssignmentChoice === '__new__'
-                      ? 'border-orange-500 bg-orange-50'
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="areaAssignment"
-                    checked={areaAssignmentChoice === '__new__'}
-                    onChange={() => setAreaAssignmentChoice('__new__')}
-                    className="w-4 h-4 accent-orange-500"
-                  />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-900">New Area</p>
-                    <p className="text-xs text-slate-500">Create a separate area for this measurement</p>
-                  </div>
-                </label>
-              </div>
-              {areaAssignmentChoice === '__new__' && (
-                <div className="mb-4">
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Area name</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Garage Roof"
-                    value={areaAssignmentNewName}
-                    onChange={e => setAreaAssignmentNewName(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-              )}
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAreaAssignmentModal(false);
-                    setPendingNewArea(null);
-                    setPendingAreaPoints([]);
-                    setAreaPoints([]);
-                    setAreaMode(false);
-                  }}
-                  className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmAreaAssignment}
-                  disabled={!areaAssignmentChoice || (areaAssignmentChoice === '__new__' && !areaAssignmentNewName.trim())}
-                  className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Confirm
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* (2026-07-05) Assign Area Measurement modal REMOVED (RC-1/RC-5). */}
 
       {/* Phase 6: New Area choice modal */}
       {showNewAreaChoiceModal && (
