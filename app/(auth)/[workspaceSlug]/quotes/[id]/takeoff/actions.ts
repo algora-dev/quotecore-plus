@@ -118,6 +118,15 @@ export async function saveTakeoffMeasurements(
 
   // We need to fetch the component_library rows up-front to compute pitch/waste correctly.
   const componentIds = [...new Set(allMeasurementsForComponents.filter(m => m.componentId).map(m => m.componentId!))];
+  // Area-ownership fix (2026-07-05): group component entries by
+  // (component, roof area) so the same library component drawn on two areas
+  // produces TWO quote_components rows — one per area — matching how manual
+  // quote-builder areas behave. Group key: componentId::quoteRoofAreaId.
+  const componentGroupKeys = [...new Set(
+    allMeasurementsForComponents
+      .filter(m => m.componentId)
+      .map(m => `${m.componentId}::${m.quoteRoofAreaId ?? ''}`)
+  )];
   let componentsPayload: Array<Record<string, unknown>> = [];
   if (componentIds.length > 0) {
     const { data: libComps } = await supabase
@@ -126,12 +135,17 @@ export async function saveTakeoffMeasurements(
       .in('id', componentIds);
     const libById = new Map((libComps || []).map(c => [c.id, c]));
 
-    componentsPayload = componentIds
-      .map(componentId => {
+    componentsPayload = componentGroupKeys
+      .map(groupKey => {
+        const sepIdx = groupKey.indexOf('::');
+        const componentId = groupKey.slice(0, sepIdx);
+        const groupAreaId = groupKey.slice(sepIdx + 2) || null;
         const libComp = libById.get(componentId);
         if (!libComp) return null;
         // Current-page measurements only - no H-01 aggregation.
-        const componentMeasurements = allMeasurementsForComponents.filter(m => m.componentId === componentId);
+        const componentMeasurements = allMeasurementsForComponents.filter(
+          m => m.componentId === componentId && (m.quoteRoofAreaId ?? null) === groupAreaId
+        );
         const pitchType = libComp.default_pitch_type || 'none';
         // Cast: database.types.ts is stale; fixed_per_segment is a valid DB value.
         const wasteType = (libComp.default_waste_type as string) || 'none';
@@ -219,6 +233,9 @@ export async function saveTakeoffMeasurements(
 
         return {
           component_library_id: componentId,
+          // Area-ownership fix (2026-07-05): route this component group to its
+          // owning roof area. The RPC uses this for per-area quote_components.
+          quote_roof_area_id: groupAreaId,
           name: libComp.name,
           // M-02 (Gerald round-5): include the real measurement_type from
           // component_library so the RPC doesn't hardcode 'lineal' for every

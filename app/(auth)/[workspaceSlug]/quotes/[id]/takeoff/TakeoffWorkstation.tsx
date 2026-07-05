@@ -70,6 +70,10 @@ interface RoofArea {
    *  for newly drawn areas (they belong to the current page). Used to filter
    *  cross-page areas out of saves, mirroring ComponentMeasurement.fromPageId. */
   fromPageId?: string | null;
+  /** Area-ownership fix (2026-07-05): DB quote_roof_areas.id this polygon
+   *  belongs to, stamped at DRAW time (not save time). Prevents polygons
+   *  being re-stamped to whatever area is active when the save fires. */
+  quoteRoofAreaId?: string | null;
 }
 
 interface ComponentMeasurement {
@@ -83,6 +87,11 @@ interface ComponentMeasurement {
    *  cross-page saves don't re-save other pages' measurements under the wrong
    *  page. Undefined for newly drawn measurements (they get the current page). */
   fromPageId?: string | null;
+  /** Area-ownership fix (2026-07-05): DB quote_roof_areas.id this measurement
+   *  belongs to, stamped at DRAW time via activeAreaIdRef. Save paths use this
+   *  instead of the save-time activeAreaId, so creating a new area no longer
+   *  re-assigns earlier measurements to it. */
+  quoteRoofAreaId?: string | null;
 }
 
 interface ComponentWithMeasurements {
@@ -711,13 +720,13 @@ export function TakeoffWorkstation({
       if (m.componentId === null && m.type === 'area') {
         const idx = ad.areas.length;
         const label = allRoofAreas.find(a => a.id === areaKey)?.label ?? existingRoofAreas[idx]?.label ?? `Area ${idx + 1}`;
-        ad.areas.push({ id: m.id, name: label, points: m.points ?? [], area: m.value, pitch: allRoofAreas.find(a => a.id === areaKey)?.pitch ?? existingRoofAreas[idx]?.pitch ?? 0, visible: m.visible, fromPageId: m.pageId ?? null });
+        ad.areas.push({ id: m.id, name: label, points: m.points ?? [], area: m.value, pitch: allRoofAreas.find(a => a.id === areaKey)?.pitch ?? existingRoofAreas[idx]?.pitch ?? 0, visible: m.visible, fromPageId: m.pageId ?? null, quoteRoofAreaId: areaKey === '__no_area__' ? null : areaKey });
         return;
       }
       if (m.componentId === null) return;
       const cid = m.componentId!;
       if (!ad.components.has(cid)) ad.components.set(cid, { componentId: cid, measurements: [], expanded: false });
-      ad.components.get(cid)!.measurements.push({ id: m.id, type: m.type as ComponentMeasurement['type'], value: m.value, points: m.points ?? undefined, visible: m.visible, fromPageId: m.pageId ?? null });
+      ad.components.get(cid)!.measurements.push({ id: m.id, type: m.type as ComponentMeasurement['type'], value: m.value, points: m.points ?? undefined, visible: m.visible, fromPageId: m.pageId ?? null, quoteRoofAreaId: areaKey === '__no_area__' ? null : areaKey });
     });
 
     // Cache per-area state for handleSwitchArea
@@ -725,9 +734,9 @@ export function TakeoffWorkstation({
       areaCanvasStatesRef.current.set(aid, {
         componentMeasurements: Array.from(ad.components.values()).map(comp => ({
           componentId: comp.componentId, expanded: false,
-          measurements: comp.measurements.map(m => ({ id: m.id, type: m.type, value: m.value, points: m.points, visible: m.visible, fromPageId: m.fromPageId })),
+          measurements: comp.measurements.map(m => ({ id: m.id, type: m.type, value: m.value, points: m.points, visible: m.visible, fromPageId: m.fromPageId, quoteRoofAreaId: m.quoteRoofAreaId })),
         })),
-        roofAreas: ad.areas.map(ra => ({ id: ra.id, name: ra.name, points: ra.points, area: ra.area, pitch: ra.pitch, visible: ra.visible, fromPageId: ra.fromPageId })),
+        roofAreas: ad.areas.map(ra => ({ id: ra.id, name: ra.name, points: ra.points, area: ra.area, pitch: ra.pitch, visible: ra.visible, fromPageId: ra.fromPageId, quoteRoofAreaId: ra.quoteRoofAreaId })),
         pageIds: ad.pageIds,
       });
     });
@@ -876,11 +885,13 @@ export function TakeoffWorkstation({
           measurements: c.measurements.map(m => ({
             id: m.id, type: m.type, value: m.value, points: m.points,
             visible: m.visible, fromPageId: m.fromPageId,
+            quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId,
           })),
         })),
         roofAreas: roofAreas.map(ra => ({
           id: ra.id, name: ra.name, points: ra.points, area: ra.area,
-          pitch: ra.pitch, visible: ra.visible,
+          pitch: ra.pitch, visible: ra.visible, fromPageId: ra.fromPageId,
+          quoteRoofAreaId: ra.quoteRoofAreaId ?? activeAreaId,
         })),
         calibrations: calibrations.map(cal => ({ ...cal })),
         calibrationPoints: calibrationPoints.map(p => ({ ...p })),
@@ -906,7 +917,8 @@ export function TakeoffWorkstation({
             allMeasurements.push({
               componentId: comp.componentId, type: m.type, value: m.value,
               points: m.points, visible: m.visible,
-              pageId: currentPageDbId, quoteRoofAreaId: activeAreaId,
+              pageId: currentPageDbId,
+              quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId,
             });
           });
         });
@@ -915,7 +927,8 @@ export function TakeoffWorkstation({
           allMeasurements.push({
             componentId: null, type: 'area' as const, value: area.area,
             pitch: area.pitch, name: area.name, points: area.points,
-            visible: area.visible, pageId: currentPageDbId, quoteRoofAreaId: activeAreaId,
+            visible: area.visible, pageId: currentPageDbId,
+            quoteRoofAreaId: area.quoteRoofAreaId ?? activeAreaId,
           });
         });
 
@@ -966,6 +979,7 @@ export function TakeoffWorkstation({
     }
 
     setActiveAreaId(targetAreaId);
+    activeAreaIdRef.current = targetAreaId; // sync ref for canvas handlers
     setActiveSaveRoofAreaId(targetAreaId);
 
     // Phase 8: Find and load the correct page image for this area.
@@ -1175,6 +1189,14 @@ export function TakeoffWorkstation({
       (polygon as unknown as { measurementId: string }).measurementId = areaId;
       fabricRef.current?.add(polygon);
       
+      // Area-ownership fix (2026-07-05): resolve the owning DB area id at
+      // DRAW time. Add-to-existing → the chosen target; upload-to-existing
+      // plan mode → the pre-chosen save area; create-new → stamped in the
+      // async callback below once the DB row exists.
+      const drawTimeAreaId = (pendingNewAreaIsExisting && pendingNewAreaTargetId)
+        ? pendingNewAreaTargetId
+        : (isExistingAreaMode ? (activeSaveRoofAreaId ?? activeAreaId) : null);
+
       // Store roof area with pitch
       const newArea: RoofArea = {
         id: areaId,
@@ -1185,6 +1207,7 @@ export function TakeoffWorkstation({
         visible: true,
         polygon,
         markers: [],
+        quoteRoofAreaId: drawTimeAreaId,
       };
       
       setRoofAreas([...roofAreas, newArea]);
@@ -1195,27 +1218,165 @@ export function TakeoffWorkstation({
       // Phase 6: If this is a new area from the choice modal flow,
       // create the DB row now and add to areaList.
       if (!pendingNewAreaIsExisting && !isExistingAreaMode) {
+        // Phase B (2026-07-05): capture the OUTGOING area's state BEFORE the
+        // async gap. Creating a new area switches activeAreaId, and without
+        // caching first the old area's canvas/panel appeared empty and its
+        // measurements were re-stamped to the new area on save.
+        const outgoingAreaId = activeAreaId;
+        const outgoingComponentMeasurements = componentMeasurements;
+        const outgoingRoofAreas = roofAreas; // WITHOUT newArea
+        const outgoingActiveComponentIds = activeComponentIds;
+        const outgoingCalibrations = calibrations;
+        const outgoingCalibrationPoints = calibrationPoints;
+        const outgoingCalibrationConfirmed = calibrationConfirmed;
         (async () => {
           try {
             const result = await createNewTakeoffArea(quote.id, name || undefined);
             if (result.ok && result.areaId) {
               const finalLabel = result.label || name || 'Area';
-              setAreaList(prev => [...prev, { id: result.areaId!, label: finalLabel }]);
-              setActiveAreaId(result.areaId);
-              setActiveSaveRoofAreaId(result.areaId);
+              const newDbAreaId = result.areaId;
+
+              if (outgoingAreaId && (outgoingComponentMeasurements.length > 0 || outgoingRoofAreas.length > 0)) {
+                // 1. Cache the outgoing area's state so switching back restores it.
+                areaCanvasStatesRef.current.set(outgoingAreaId, {
+                  componentMeasurements: outgoingComponentMeasurements.map(c => ({
+                    componentId: c.componentId,
+                    expanded: c.expanded,
+                    measurements: c.measurements.map(m => ({
+                      id: m.id, type: m.type, value: m.value, points: m.points,
+                      visible: m.visible, fromPageId: m.fromPageId,
+                      quoteRoofAreaId: m.quoteRoofAreaId ?? outgoingAreaId,
+                    })),
+                  })),
+                  roofAreas: outgoingRoofAreas.map(ra => ({
+                    id: ra.id, name: ra.name, points: ra.points, area: ra.area,
+                    pitch: ra.pitch, visible: ra.visible, fromPageId: ra.fromPageId,
+                    quoteRoofAreaId: ra.quoteRoofAreaId ?? outgoingAreaId,
+                  })),
+                  calibrations: outgoingCalibrations.map(cal => ({ ...cal })),
+                  calibrationPoints: outgoingCalibrationPoints.map(p => ({ ...p })),
+                  calibrationConfirmed: outgoingCalibrationConfirmed,
+                  activeComponentIds: [...outgoingActiveComponentIds],
+                  selectedComponentId: null,
+                });
+
+                // 2. Best-effort persist of the outgoing area to the DB.
+                try {
+                  const currentPageDbId = pages[currentPageIndex]?.id ?? null;
+                  const outgoingMeasurements: Array<{
+                    componentId: string | null; type: any; value: number;
+                    points?: { x: number; y: number }[]; visible: boolean;
+                    pitch?: number; name?: string; pageId?: string | null;
+                    quoteRoofAreaId?: string | null;
+                  }> = [];
+                  outgoingComponentMeasurements.forEach(comp => {
+                    comp.measurements.forEach(m => {
+                      if (m.fromPageId && currentPageDbId && m.fromPageId !== currentPageDbId) return;
+                      outgoingMeasurements.push({
+                        componentId: comp.componentId, type: m.type, value: m.value,
+                        points: m.points, visible: m.visible, pageId: currentPageDbId,
+                        quoteRoofAreaId: m.quoteRoofAreaId ?? outgoingAreaId,
+                      });
+                    });
+                  });
+                  outgoingRoofAreas.forEach(area => {
+                    if (area.fromPageId && currentPageDbId && area.fromPageId !== currentPageDbId) return;
+                    outgoingMeasurements.push({
+                      componentId: null, type: 'area' as const, value: area.area,
+                      pitch: area.pitch, name: area.name, points: area.points,
+                      visible: area.visible, pageId: currentPageDbId,
+                      quoteRoofAreaId: area.quoteRoofAreaId ?? (area.id.startsWith('area-') ? outgoingAreaId : area.id),
+                    });
+                  });
+                  if (outgoingMeasurements.length > 0) {
+                    const persistResult = await saveTakeoffMeasurements(
+                      quote.id, outgoingMeasurements,
+                      outgoingCalibrations[0]?.unit || 'feet',
+                      undefined, undefined, currentPageDbId, sessionVersion,
+                      outgoingAreaId, null,
+                    );
+                    if (persistResult.success) {
+                      setSessionVersion(prev => (prev != null ? prev + 1 : 1));
+                    }
+                  }
+                } catch (persistErr) {
+                  console.warn('[handleSaveArea] Outgoing-area auto-save failed (state cached, will flush on save):', persistErr);
+                }
+              }
+
+              setAreaList(prev => [...prev, { id: newDbAreaId, label: finalLabel }]);
+
+              // 3. Start the NEW area's view. If there was a previous area, its
+              // state is cached above — show only the new polygon. If this is
+              // the FIRST area (no outgoing), keep whatever is on screen and
+              // just stamp the polygon (its measurements belong here anyway).
+              const stampedNewArea = { ...newArea, name: finalLabel, quoteRoofAreaId: newDbAreaId };
+              if (outgoingAreaId) {
+                setComponentMeasurements([]);
+                setActiveComponentIds([]);
+                setSelectedComponentId(null);
+                setRoofAreas([stampedNewArea]);
+              } else {
+                setRoofAreas(prev => prev.map(ra => ra.id === newArea.id ? { ...ra, name: finalLabel, quoteRoofAreaId: newDbAreaId } : ra));
+              }
+
+              setActiveAreaId(newDbAreaId);
+              activeAreaIdRef.current = newDbAreaId; // sync ref for canvas handlers
+              setActiveSaveRoofAreaId(newDbAreaId);
               // Reset Phase 6 state
               setPendingNewAreaIsExisting(false);
               setPendingNewAreaTargetId(null);
               viaNewAreaFlowRef.current = false; // RC-5: consume the flow flag
+              // Rebuild canvas from the new state (old area's shapes removed).
+              if (outgoingAreaId) {
+                setRedrawNonce(n => n + 1);
+              }
             }
           } catch (err) {
             console.warn('[handleSaveArea] Failed to create DB area row:', err);
           }
         })();
       } else if (pendingNewAreaIsExisting && pendingNewAreaTargetId) {
-        // Adding to existing area — set the active area to the target
-        setActiveAreaId(pendingNewAreaTargetId);
-        setActiveSaveRoofAreaId(pendingNewAreaTargetId);
+        const targetId = pendingNewAreaTargetId;
+        // Add-to-existing where the target is NOT the on-screen area: cache the
+        // outgoing area's state (without the new polygon), then switch the view
+        // to the target area with the polygon appended to its cached state.
+        if (activeAreaId && targetId !== activeAreaId) {
+          areaCanvasStatesRef.current.set(activeAreaId, {
+            componentMeasurements: componentMeasurements.map(c => ({
+              componentId: c.componentId,
+              expanded: c.expanded,
+              measurements: c.measurements.map(m => ({
+                id: m.id, type: m.type, value: m.value, points: m.points,
+                visible: m.visible, fromPageId: m.fromPageId,
+                quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId,
+              })),
+            })),
+            roofAreas: roofAreas.map(ra => ({
+              id: ra.id, name: ra.name, points: ra.points, area: ra.area,
+              pitch: ra.pitch, visible: ra.visible, fromPageId: ra.fromPageId,
+              quoteRoofAreaId: ra.quoteRoofAreaId ?? activeAreaId,
+            })),
+            calibrations: calibrations.map(cal => ({ ...cal })),
+            calibrationPoints: calibrationPoints.map(p => ({ ...p })),
+            calibrationConfirmed,
+            activeComponentIds: [...activeComponentIds],
+            selectedComponentId: null,
+          });
+          const cached = areaCanvasStatesRef.current.get(targetId);
+          setComponentMeasurements(cached?.componentMeasurements ?? []);
+          setActiveComponentIds(
+            cached?.activeComponentIds
+              ?? (cached?.componentMeasurements ?? []).map((c: { componentId: string }) => c.componentId)
+          );
+          setSelectedComponentId(null);
+          setRoofAreas([...(cached?.roofAreas ?? []), newArea]);
+          setRedrawNonce(n => n + 1);
+        }
+        // Set the active area to the target
+        setActiveAreaId(targetId);
+        activeAreaIdRef.current = targetId; // sync ref for canvas handlers
+        setActiveSaveRoofAreaId(targetId);
         // Reset Phase 6 state — but keep isExistingAreaMode=true so the save
         // only includes NEWLY drawn areas (client-side IDs), not hydrated ones.
         // This prevents duplicating hydrated areas on re-entry saves.
@@ -1260,6 +1421,7 @@ export function TakeoffWorkstation({
         points: pendingAreaPoints,
         visible: true,
         canvasObjects: [polygon],
+        quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
       };
       
       const compData = componentMeasurements.find(c => c.componentId === componentId);
@@ -1514,6 +1676,7 @@ export function TakeoffWorkstation({
       points: currentPoints,
       visible: true,
       canvasObjects: multiLinealSegmentObjects,
+      quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
     };
 
     // Add measurement to state. Mirrors the create-or-update pattern used by
@@ -1638,6 +1801,7 @@ export function TakeoffWorkstation({
       points: pendingVolumePoints,
       visible: true,
       canvasObjects: pendingVolumePolygon ? [pendingVolumePolygon] : [],
+      quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
     };
     // Solid polygon (remove dash preview)
     if (pendingVolumePolygon) {
@@ -1686,6 +1850,7 @@ export function TakeoffWorkstation({
       points: pendingFreestylePoints,
       visible: true,
       canvasObjects: pendingFreestyleCanvasObjects,
+      quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
     };
     setComponentMeasurements(prev => {
       const exists = prev.some(c => c.componentId === componentId);
@@ -1758,7 +1923,9 @@ export function TakeoffWorkstation({
             value: m.value,
             points: m.points,
             visible: m.visible,
-            quoteRoofAreaId: activeAreaId ?? activeSaveRoofAreaId,
+            // Area-ownership fix (2026-07-05): use the DRAW-time stamp; only
+            // fall back to the save-time active area for legacy/unstamped rows.
+            quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId ?? activeSaveRoofAreaId,
           });
         });
       });
@@ -1783,7 +1950,9 @@ export function TakeoffWorkstation({
           name: area.name,
           points: area.points,
           visible: area.visible,
-          quoteRoofAreaId: area.id.startsWith('area-') ? (activeAreaId ?? activeSaveRoofAreaId) : area.id,
+          // Area-ownership fix (2026-07-05): draw-time stamp first; hydrated
+          // areas carry their DB area id; legacy fallback = save-time active.
+          quoteRoofAreaId: area.quoteRoofAreaId ?? (area.id.startsWith('area-') ? (activeAreaId ?? activeSaveRoofAreaId) : area.id),
         });
       });
       
@@ -1955,6 +2124,12 @@ export function TakeoffWorkstation({
       setSessionVersion(prev => (prev != null ? prev + 1 : 1));
       setIsDirty(false);
 
+      // Version cursor fix (2026-07-05): the main save above bumped the DB
+      // version, and every flush below bumps it again. Passing the stale
+      // `sessionVersion` made every flush fail STALE_TAKEOFF_VERSION silently
+      // (caught + warn-logged), losing other areas' data on Save & Continue.
+      let versionCursor = (sessionVersion ?? 0) + 1;
+
       // Phase 4: flush any dirty cached areas from areaCanvasStatesRef.
       // Each cached area's measurements are saved with their own quote_roof_area_id.
       // Best-effort: failures are logged but don't fail the overall save.
@@ -1972,7 +2147,7 @@ export function TakeoffWorkstation({
               componentId: comp.componentId, type: m.type, value: m.value,
               points: m.points, visible: m.visible,
               pageId: pages[currentPageIndex]?.id ?? null,
-              quoteRoofAreaId: cachedAreaId,
+              quoteRoofAreaId: m.quoteRoofAreaId ?? cachedAreaId,
             });
           });
         });
@@ -1981,23 +2156,30 @@ export function TakeoffWorkstation({
             componentId: null, type: 'area' as const, value: area.area,
             pitch: area.pitch, name: area.name, points: area.points,
             visible: area.visible, pageId: pages[currentPageIndex]?.id ?? null,
-            quoteRoofAreaId: cachedAreaId,
+            quoteRoofAreaId: area.quoteRoofAreaId ?? cachedAreaId,
           });
         });
         if (cachedMeasurements.length > 0) {
           try {
-            await saveTakeoffMeasurements(
+            const flushResult = await saveTakeoffMeasurements(
               quote.id, cachedMeasurements,
               calibrations[0]?.unit || 'feet',
               undefined, undefined,
               pages[currentPageIndex]?.id ?? null,
-              sessionVersion, cachedAreaId, null,
+              versionCursor, cachedAreaId, null,
             );
+            if (flushResult.success) {
+              versionCursor += 1; // each successful flush bumps the DB version
+            } else {
+              console.warn(`[SaveTakeoff] Flush for cached area ${cachedAreaId} rejected:`, (flushResult as { error?: string }).error);
+            }
           } catch (err) {
             console.warn(`[SaveTakeoff] Failed to flush cached area ${cachedAreaId}:`, err);
           }
         }
       }
+      // Sync local version to the cursor after all flushes.
+      setSessionVersion(versionCursor);
       // Clear the cache after flushing
       areaCanvasStatesRef.current.clear();
       
@@ -2213,6 +2395,10 @@ export function TakeoffWorkstation({
   // allowed, no component needed) from a direct Area-tool click (component
   // required). Set synchronously in the flow handlers, cleared on save/cancel.
   const viaNewAreaFlowRef = useRef(false);
+  // Area-ownership fix (2026-07-05): canvas handlers are stale closures, so
+  // measurement commit points MUST read the active area via this ref, never
+  // from activeAreaId state directly.
+  const activeAreaIdRef = useRef<string | null>(null);
   // Captures the component ID at the moment area mode is activated for a component.
   // Unlike selectedComponentIdRef, this is NOT cleared by Fabric canvas deselection
   // events that fire on the same click that closes the polygon.
@@ -2235,6 +2421,7 @@ export function TakeoffWorkstation({
     isExistingAreaModeRef.current = isExistingAreaMode;
     pendingNewAreaIsExistingRef.current = pendingNewAreaIsExisting;
     pendingNewAreaTargetIdRef.current = pendingNewAreaTargetId;
+    activeAreaIdRef.current = activeAreaId;
     // Fallback: sync activeAreaComponentIdRef from state after render.
     // applyToolForType sets this synchronously (M-01 Gerald audit 2026-05-29),
     // but this effect serves as a safety net and handles the clear-on-mode-off case.
@@ -2244,7 +2431,7 @@ export function TakeoffWorkstation({
       // Only set if not already set synchronously (avoid overwriting with stale state).
       activeAreaComponentIdRef.current = selectedComponentId;
     }
-  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, areaSubTool, lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints, selectedComponentId, componentColors, isExistingAreaMode, pendingNewAreaIsExisting, pendingNewAreaTargetId]);
+  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, areaSubTool, lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints, selectedComponentId, componentColors, isExistingAreaMode, pendingNewAreaIsExisting, pendingNewAreaTargetId, activeAreaId]);
 
   // Stable ref for the signed plan URL. The signed URL is regenerated on
   // every server render (it embeds a fresh JWT), so reading it directly
@@ -3594,9 +3781,11 @@ export function TakeoffWorkstation({
                 {areaList.map(area => {
                   const calibUnit = calibrations[0]?.unit || 'feet';
                   const sys = normalizeMeasurementSystem(quote.measurement_system);
-                  // Sum ALL roofAreas matching this area (by id or label) so the
-                  // displayed total reflects multiple drawn polygons for one area.
-                  const matchingAreas = roofAreas.filter(ra => ra.id === area.id || ra.name === area.label);
+                  // Sum ALL roofAreas matching this area so the displayed total
+                  // reflects multiple drawn polygons for one area. Match by the
+                  // draw-time quoteRoofAreaId stamp first (2026-07-05 fix);
+                  // id/label matching kept as legacy fallback.
+                  const matchingAreas = roofAreas.filter(ra => ra.quoteRoofAreaId === area.id || ra.id === area.id || ra.name === area.label);
                   const totalArea = matchingAreas.reduce((sum, ra) => sum + (ra.area || 0), 0);
                   let displayValue = totalArea || area.area || 0;
                   let displayUnit: string;
@@ -4261,6 +4450,12 @@ export function TakeoffWorkstation({
                 ? 'Enter the roof pitch for this area, or skip to use 0°.'
                 : 'Enter the slope or angle if applicable, or skip.'}
             </p>
+            {/* Issue 1 fix (2026-07-05): show the measured area, same as AreaNameModal */}
+            <div className="p-3 bg-gray-50 border border-orange-400 rounded-lg mb-4">
+              <p className="text-xs text-gray-900 font-medium">
+                Plan Area: {(pendingAreaPoints.length > 0 ? calculatePolygonArea(pendingAreaPoints) : 0).toFixed(2)} sq {calibrations[0]?.unit || 'feet'}{tradeConfig.pitchRequired ? ' (before pitch adjustment)' : ''}
+              </p>
+            </div>
             <div className="mb-4">
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 {tradeConfig.pitchRequired ? 'Pitch (degrees)' : 'Slope / angle (degrees)'}
@@ -4437,6 +4632,7 @@ export function TakeoffWorkstation({
               points: [pendingPointLocation],
               visible: true,
               canvasObjects: marker ? [marker] : [],
+              quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
             };
             
             const compData = componentMeasurements.find(c => c.componentId === selectedComponentId);
@@ -4519,6 +4715,7 @@ export function TakeoffWorkstation({
               points: pendingLineMeasurement.points,
               visible: true,
               canvasObjects,
+              quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
             };
             
             // Add to component measurements
