@@ -1950,9 +1950,11 @@ export function TakeoffWorkstation({
           name: area.name,
           points: area.points,
           visible: area.visible,
-          // Area-ownership fix (2026-07-05): draw-time stamp first; hydrated
-          // areas carry their DB area id; legacy fallback = save-time active.
-          quoteRoofAreaId: area.quoteRoofAreaId ?? (area.id.startsWith('area-') ? (activeAreaId ?? activeSaveRoofAreaId) : area.id),
+          // Area-ownership fix (2026-07-05): draw-time stamp first; fallback
+          // to active area. NEVER use area.id (that's a measurement id for
+          // hydrated areas, not a quote_roof_areas.id — using it fails RPC
+          // validation: "quote_roof_area_id does not belong to quote").
+          quoteRoofAreaId: area.quoteRoofAreaId ?? activeAreaId ?? activeSaveRoofAreaId,
         });
       });
       
