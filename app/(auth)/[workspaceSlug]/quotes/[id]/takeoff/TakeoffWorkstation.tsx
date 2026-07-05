@@ -441,6 +441,17 @@ export function TakeoffWorkstation({
             }
             return updated;
           });
+          // Duplicate-areas fix (2026-07-05): anything drawn BEFORE this id
+          // resolved has fromPageId=null (currentPageIdRef was null). Those
+          // rows were drawn on page-1 by definition — retro-stamp them now so
+          // later saves can never re-home them onto a different plan (the
+          // "duplicate areas in first parent" bug).
+          const resolvedPageId = result.pageId;
+          setComponentMeasurements(prev => prev.map(c => ({
+            ...c,
+            measurements: c.measurements.map(m => m.fromPageId ? m : { ...m, fromPageId: resolvedPageId }),
+          })));
+          setRoofAreas(prev => prev.map(ra => ra.fromPageId ? ra : { ...ra, fromPageId: resolvedPageId }));
         }
       } catch (err) {
         // Non-fatal: single-page save still works via quote-wide delete.
