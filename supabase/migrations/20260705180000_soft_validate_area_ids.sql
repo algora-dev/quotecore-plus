@@ -8,6 +8,9 @@
 --   out invalid quote_roof_area_id values in the measurements JSON before
 --   insert. The coalesce in the INSERT then falls back to v_target_roof_area.
 --   This way, one bad measurement doesn't block the entire save.
+-- Drop the old 2-arg signature so Postgres doesn't get ambiguous function resolution.
+DROP FUNCTION IF EXISTS public.save_takeoff_atomic(uuid, jsonb);
+
 -- Rollback: re-apply 20260705170000_drafts_dont_count_quotas.sql
 
 CREATE OR REPLACE FUNCTION public.save_takeoff_atomic(
