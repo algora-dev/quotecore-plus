@@ -66,9 +66,9 @@ BEGIN
   IF v_company_id IS NULL THEN
     RAISE EXCEPTION 'Quote % not found', p_quote_id;
   END IF;
-  IF v_caller_uid IS NOT NULL THEN
+  IF p_caller_uid IS NOT NULL THEN
     SELECT company_id INTO v_caller_company_id
-      FROM public.users WHERE id = v_caller_uid;
+      FROM public.users WHERE id = p_caller_uid;
     IF v_caller_company_id IS NULL OR v_caller_company_id <> v_company_id THEN
       RAISE EXCEPTION 'Unauthorized';
     END IF;
