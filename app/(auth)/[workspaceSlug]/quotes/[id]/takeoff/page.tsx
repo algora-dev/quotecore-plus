@@ -30,13 +30,16 @@ export default async function Page({
   const ent = await loadCompanyEntitlements(profile.company_id);
   const isOverStorage = ent.isOverStorage;
 
-  // Load roof plan file (most recent plan)
+  // Load roof plan file (FIRST uploaded plan). planUrl is only the fallback
+  // for takeoff_pages rows without image_storage_path — those are always the
+  // FIRST plan upload (its image lives in quote_files), so ordering by most
+  // recent showed the newest plan's image on Page 1 (multi-plan bug 2026-07-05).
   const { data: planFile } = await supabase
     .from('quote_files')
     .select('storage_path')
     .eq('quote_id', quoteId)
     .eq('file_type', 'plan')
-    .order('uploaded_at', { ascending: false })
+    .order('uploaded_at', { ascending: true })
     .limit(1)
     .single();
 

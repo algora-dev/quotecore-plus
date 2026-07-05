@@ -1016,7 +1016,10 @@ export function TakeoffWorkstation({
             undefined, undefined, // no canvas snapshot on auto-save
             currentPageDbId, sessionVersion,
             activeAreaId, // target the outgoing area
-            null, // no calibration persist on auto-save
+            // Fix (2026-07-05): persist the outgoing page's calibration —
+            // dropping it here left pages with scale_calibration=NULL, which
+            // forced a pointless recalibration on every re-entry/page switch.
+            calibrations.length > 0 ? calibrations : null,
           );
           setSessionVersion(prev => (prev != null ? prev + 1 : 1));
         }
@@ -1085,6 +1088,12 @@ export function TakeoffWorkstation({
           setCalibrationPoints([]);
           setCalibrationConfirmed(true);
           setShowCalibrationHelp(false);
+        } else if (calibrations.length > 0) {
+          // Fix (2026-07-05): inherit current scale for legacy pages with no
+          // stored calibration (see handleSwitchPage).
+          pageCalibrationsRef.current.set(pid, calibrations.map(c => ({ ...c })));
+          setCalibrationConfirmed(true);
+          setShowCalibrationHelp(false);
         }
       }
       break;
@@ -1125,6 +1134,16 @@ export function TakeoffWorkstation({
       setCalibrationPoints([]);
       setCalibrationConfirmed(true);
       setShowCalibrationHelp(false);
+    } else if (calibrations.length > 0) {
+      // Fix (2026-07-05): no stored scale for this page (legacy data whose
+      // calibration was never persisted). Inherit the current plan's scale
+      // instead of forcing a recalibration — the user can still hit
+      // "Recalibrate" if the plans genuinely differ.
+      pageCalibrationsRef.current.set(targetPageId, calibrations.map(c => ({ ...c })));
+      setCalibrationPoints([]);
+      setCalibrationConfirmed(true);
+      setShowCalibrationHelp(false);
+      console.info('[SwitchPage] No stored calibration for page', targetPageId, '- inherited current scale');
     } else {
       setCalibrations([]);
       setCalibrationPoints([]);
@@ -1462,7 +1481,9 @@ export function TakeoffWorkstation({
                       quote.id, outgoingMeasurements,
                       outgoingCalibrations[0]?.unit || 'feet',
                       undefined, undefined, currentPageDbId, sessionVersion,
-                      outgoingAreaId, null,
+                      outgoingAreaId,
+                      // Fix (2026-07-05): persist calibration on this path too.
+                      outgoingCalibrations.length > 0 ? outgoingCalibrations : null,
                     );
                     if (persistResult.success) {
                       setSessionVersion(prev => (prev != null ? prev + 1 : 1));
@@ -1983,6 +2004,9 @@ export function TakeoffWorkstation({
       setComponentMeasurements([]);
       setRoofAreas([]);
       setSelectedComponentId(null);
+      // Fix (2026-07-05): also clear the ACTIVE component panel — leaving it
+      // populated made a brand-new area show the previous area's components.
+      setActiveComponentIds([]);
       // P1-3: reset existing-area mode so a fresh plan doesn't inherit the constraint.
       setIsExistingAreaMode(false);
       setExistingAreaLabel('');
@@ -2411,7 +2435,10 @@ export function TakeoffWorkstation({
               quote.id, group, flushUnit,
               undefined, undefined,
               pid,
-              versionCursor, cachedAreaId, null,
+              versionCursor, cachedAreaId,
+              // Fix (2026-07-05): persist the flushed page's calibration when
+              // we have it (cached per page); fall back to null (no change).
+              (pid ? pageCalibrationsRef.current.get(pid) : null) ?? cachedState.calibrations ?? null,
             );
             if (flushResult.success) {
               versionCursor += 1; // each successful flush bumps the DB version
