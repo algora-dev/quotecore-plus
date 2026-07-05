@@ -41,9 +41,20 @@ export function reconstructCanvas(
 ): ReconstructOutput {
   const objectsAdded: unknown[] = [];
 
+  // Parent/child plans (2026-07-05): a measurement belongs on the canvas only
+  // if it was drawn on the CURRENT page. Rows with a different fromPageId stay
+  // in React state (so left-panel totals/components aggregate across the
+  // parent area's plans) but are NOT drawn. Null fromPageId = legacy or fresh
+  // drawing on the current page → draw it.
+  const belongsOnPage = (fromPageId: string | null | undefined): boolean => {
+    if (!input.currentPageId) return true;
+    if (fromPageId == null) return true;
+    return fromPageId === input.currentPageId;
+  };
+
   // ─── Roof Area boundaries ──────────────────────────────────────────
   const restoredRoofAreas: RoofArea[] = input.roofAreas.map((area, areaIdx) => {
-    if (!area.points || area.points.length < 3) {
+    if (!area.points || area.points.length < 3 || !belongsOnPage(area.fromPageId)) {
       return { ...area, polygon: undefined, markers: [] };
     }
 
@@ -78,7 +89,7 @@ export function reconstructCanvas(
     const color = input.componentColors.find(c => c.componentId === comp.componentId)?.color || '#10b981';
 
     const restoredMeasurements: ComponentMeasurement[] = comp.measurements.map((m) => {
-      if (!m.points || m.points.length === 0) {
+      if (!m.points || m.points.length === 0 || !belongsOnPage(m.fromPageId)) {
         return { ...m, canvasObjects: [] };
       }
 

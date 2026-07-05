@@ -1,40 +1,41 @@
-# Smoke Test Checklist — Takeoff Area Ownership Fix (Round 5)
+# Smoke Test Checklist — Takeoff Parent/Child Plans (Round 6)
 
-## Status: BUILT (round 5) — awaiting smoke test on Dev
+## Status: BUILT (round 6) — awaiting smoke test on Dev
 
 ### Build history
 - `c4ee521` — 9-phase area fixes (round 1)
 - `a6cf527` — 5 smoke-test-1 bug fixes (round 2)
 - `1212a9c` — 2 smoke-test-2 bug fixes (round 3)
 - `784b131` — RC-1 through RC-6 + area assignment modal removal (round 4)
-- round 5 (current) — area OWNERSHIP fix: draw-time `quoteRoofAreaId` stamping, per-area state isolation, per-area quote_components (migration `20260705160000`)
+- `efda453`/`aefe57c` — area ownership (draw-time stamping) + RPC repair (round 5)
+- round 6 (current) — PARENT/CHILD PLANS: each named area holds multiple plans (numbered child slots), per-plan calibration, state-wipe fixes, session-version authoritative sync
 
-### Round 5 fixes (spec: docs/plans/TAKEOFF-AREA-OWNERSHIP-FIX-2026-07-05.md)
-1. Measurements + area polygons stamped with owning `quote_roof_area_id` at DRAW time (not save time) — creating a new area no longer re-assigns earlier work to it
-2. `handleSaveArea` create-new: outgoing area's state cached + auto-saved BEFORE switching — old area no longer shows empty canvas/panel
-3. Add-to-existing with a different target area: state cached + view switches to target with polygon appended
-4. Pitch-only modal now shows the measured Plan Area (same as AreaNameModal)
-5. Left panel per-area totals matched via draw-time stamp (sum of polygons per area)
-6. Flush version-cursor fix: cached-area flushes no longer silently fail STALE_TAKEOFF_VERSION after the main save
-7. Migration `20260705160000`: per-area `quote_components` — same component on two areas = two rows, one per area (matches manual quote-builder behaviour)
+### Round 6 changes (Shaun-approved Option A, 2026-07-05)
+1. **Parent/child model**: each area can hold multiple plans; numbered chips (1, 2, 3…) under each area card in the left panel; click chip = view that plan's image + its drawings; components/totals stay parent-level (aggregate across plans). No DB changes — page_id + quote_roof_area_id already existed.
+2. **Upload → existing area**: plan becomes a child slot of the chosen parent instantly. No second dialog, no "+ New Area" click. Calibrate + measure; everything rolls to the parent.
+3. **Upload → new area**: after calibrating the new plan, area drawing mode arms AUTOMATICALLY (no "+ New Area" click). Draw boundary → name it → done.
+4. **State-wipe fixes**: `loadPageImage` no longer wipes all areas' state on upload-to-existing; save no longer clears the per-area cache (both caused "Garage/Main Roof went blank"); `handleSwitchArea` no longer calls the state-wiping loader.
+5. **Page-corruption fix**: cached-area flush now groups by the page each row was DRAWN on — no more re-homing other pages' drawings onto the current plan.
+6. **Version fix**: after every save chain the client fetches the authoritative version from the DB (new `getTakeoffSessionVersion` action) — kills the false "Takeoff edited in another tab" error.
+7. **Per-plan calibration**: each plan keeps its own scale; restored on chip/area switch; re-entry restores the ACTIVE page's calibration (not blindly page 1's).
+8. Canvas redraw filters shapes by page (reconstructCanvas `belongsOnPage`) and preserves `quoteRoofAreaId` through redraws.
 
-### Pending verification (fresh quote — old "DigiTakeoff Test" draft has corrupted assignments, delete it)
-- [ ] Draw areas + components on Main Roof → "+ New Area" → create "Garage" → left panel shows Main Roof with ITS total, Garage with its own
-- [ ] Click Main Roof in left panel → canvas + component panel show ONLY Main Roof's drawings/components
-- [ ] Click Garage → canvas + component panel show ONLY Garage's drawings/components
-- [ ] "+ New Area" → "Add to existing" → pitch-only modal SHOWS the measured area value
-- [ ] Add-to-existing polygon: left panel total = SUM of that area's polygons (e.g. 58.71 + 3.71 = 62.42)
-- [ ] Save & Continue → quote builder Roof Areas: Main Roof entries under Main Roof, Garage entries under Garage
-- [ ] Components step: components listed under the area they were drawn on (not all under one area)
-- [ ] Same component drawn on two areas → two line items, one per area, each with own entries
-- [ ] Re-entry: exit takeoff → re-enter → per-area data still correct after switching areas
-- [ ] Multi-page: upload second plan to existing area → first plan's entries survive (RC-6 regression check)
+### Pending verification (fresh quote recommended)
+- [ ] Plan 1: calibrate → draw Main Roof + components → "+ New Area" → Garage on same plan → totals/panels per area correct
+- [ ] Save & Upload another plan → "Add to existing: Main Roof" → NO second dialog; calibrate; draw a component → it appears under Main Roof's parent component list
+- [ ] Left panel: Main Roof now shows chips 1 and 2; clicking 1 shows plan 1 image + its drawings; clicking 2 shows the new plan + its drawings
+- [ ] While on Main Roof chip 2, component list still shows ALL Main Roof components (both plans)
+- [ ] Save & Upload another plan → "Create new area" → calibrate → drawing mode arms itself → draw boundary → name "Teepee" → SAVES with no "edited in another tab" error
+- [ ] Click Garage / Main Roof after uploads → each shows ITS OWN plan image + drawings + components (regression: they went blank/inherited newest image)
+- [ ] Save & Continue → quote builder: entries under correct areas, no duplicates, no cross-page corruption
+- [ ] Re-entry: exit → re-enter → parent areas + child chips rebuilt; each chip shows right image/drawings; calibration correct per plan
+- [ ] Per-area totals = sum of all polygons across that area's plans
+- [ ] Same component on two areas → two line items, one per area
 
-### Round 4 carryover (retest if touched)
+### Round 5 carryover (retest if touched)
 - [ ] Direct Area tool click with no component → "Select a component first" alert
 - [ ] "+ New Area" does NOT clear the component panel
-- [ ] Area measurements show real m² values (not 0.00)
-- [ ] No "Assign Area Measurement" modal appears anywhere (removed)
+- [ ] Drafts do NOT consume monthly quote quota (round 5b fix)
 
 ### Passed (recent)
-- (round 4 items pending re-verification under round 5 — superseded by list above)
+- Round 5: RPC saves work (column-name repair verified live, single 2-arg signature)

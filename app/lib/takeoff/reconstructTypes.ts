@@ -29,6 +29,8 @@ export interface RoofArea {
   visible: boolean;
   polygon?: unknown;
   markers?: unknown[];
+  /** Parent/child plans (2026-07-05): which takeoff page this polygon was drawn on. */
+  fromPageId?: string | null;
 }
 
 export interface ComponentMeasurement {

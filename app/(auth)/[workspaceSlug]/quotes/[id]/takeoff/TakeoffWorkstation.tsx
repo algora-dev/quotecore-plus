@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle, Rect } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea } from './actions';
+import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea, getTakeoffSessionVersion } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
 import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
@@ -245,6 +245,17 @@ export function TakeoffWorkstation({
   const areaCanvasStatesRef = useRef<Map<string, any>>(new Map());
   // Track all areas (can grow when user creates new areas via the button)
   const [areaList, setAreaList] = useState(allRoofAreas);
+  // Parent/child plans (2026-07-05): each parent area can hold MULTIPLE plans.
+  // areaPages maps areaId → ordered list of takeoff_pages ids ("child slots").
+  // Rendered as numbered chips (1, 2, 3…) under each area card in the left
+  // panel. Populated at hydration, on upload-to-existing, and on area create.
+  const [areaPages, setAreaPages] = useState<Record<string, string[]>>({});
+  // Per-page calibrations: each plan keeps its own scale. Keyed by page DB id.
+  const pageCalibrationsRef = useRef<Map<string, Calibration[]>>(new Map());
+  // Option A upload flow: after uploading a plan for a NEW area the user
+  // calibrates first; when calibration confirms we auto-arm the new-area
+  // drawing flow (no second "+ New Area" click).
+  const armNewAreaAfterCalibrationRef = useRef(false);
   // Phase 6: New Area choice modal state.
   const [showNewAreaChoiceModal, setShowNewAreaChoiceModal] = useState(false);
   const [newAreaChoice, setNewAreaChoice] = useState<'existing' | 'new'>('new');
@@ -548,6 +559,9 @@ export function TakeoffWorkstation({
           points: m.points,
           visible: m.visible,
           fromPageId: m.fromPageId,
+          // Preserve the draw-time area stamp through redraws — dropping it
+          // reverted measurements to the save-time fallback area.
+          quoteRoofAreaId: m.quoteRoofAreaId,
         })),
       })),
       roofAreas: roofAreas.map(ra => ({
@@ -557,6 +571,10 @@ export function TakeoffWorkstation({
         area: ra.area,
         pitch: ra.pitch,
         visible: ra.visible,
+        // Parent/child plans (2026-07-05): the redraw filter needs the page
+        // stamp or every page's polygons render on every plan.
+        fromPageId: ra.fromPageId,
+        quoteRoofAreaId: ra.quoteRoofAreaId,
       })),
       componentColors,
       currentPageId: pages[currentPageIndex]?.id ?? null,
@@ -741,6 +759,25 @@ export function TakeoffWorkstation({
       });
     });
 
+    // Parent/child plans (2026-07-05): build the areaPages index (areaId →
+    // ordered pageIds) for the left-panel child chips, and stash every page's
+    // calibration so each plan restores its own scale on switch.
+    const pageOrderIndex = new Map(hydrationData.pages.map(p => [p.id, p.pageOrder] as const));
+    const nextAreaPages: Record<string, string[]> = {};
+    byArea.forEach((ad, aid) => {
+      if (aid === '__no_area__') return;
+      nextAreaPages[aid] = Array.from(ad.pageIds).sort(
+        (a, b) => (pageOrderIndex.get(a) ?? 0) - (pageOrderIndex.get(b) ?? 0)
+      );
+    });
+    setAreaPages(nextAreaPages);
+    hydrationData.pages.forEach(p => {
+      const cal = p.scaleCalibration;
+      if (Array.isArray(cal) && cal.length > 0) {
+        pageCalibrationsRef.current.set(p.id, cal as Calibration[]);
+      }
+    });
+
     // Display active area's data.
     // Fix (2026-07-04): if the initially-selected area has no saved data
     // (e.g. it was an empty/ghost area), fall back to the first area that
@@ -769,13 +806,28 @@ export function TakeoffWorkstation({
       if (disp.areas.length > 0) setRoofAreas(disp.areas);
     }
 
+    // Parent/child plans: point the canvas at the active area's FIRST plan
+    // (child slot 1) so re-entry shows that area's own plan image, not
+    // whatever page happened to be index 0.
+    let activePageForCalibration = hydrationData.pages[0] ?? null;
+    if (dispId && dispId !== '__no_area__') {
+      const dispPageIds = nextAreaPages[dispId];
+      if (dispPageIds && dispPageIds.length > 0) {
+        const idx = hydrationData.pages.findIndex(p => p.id === dispPageIds[0]);
+        if (idx >= 0) {
+          setCurrentPageIndex(idx);
+          activePageForCalibration = hydrationData.pages[idx];
+        }
+      }
+    }
+
     // Canvas-rework: restore calibrations from DB so the scale is available
     // for new measurements on re-entry. Calibrations are stored per-page in
-    // takeoff_pages.scale_calibration.
-    const firstPage = hydrationData.pages[0];
-    if (firstPage?.scaleCalibration) {
+    // takeoff_pages.scale_calibration — restore the ACTIVE page's scale, not
+    // blindly page 1's (parent/child plans fix, 2026-07-05).
+    if (activePageForCalibration?.scaleCalibration) {
       try {
-        const restored = (firstPage.scaleCalibration as Calibration[]);
+        const restored = (activePageForCalibration.scaleCalibration as Calibration[]);
         if (Array.isArray(restored) && restored.length > 0) {
           setCalibrations(restored);
           setCalibrationConfirmed(true);
@@ -829,6 +881,14 @@ export function TakeoffWorkstation({
     // Update state with reconstructed canvasObjects.
     setComponentMeasurements(result.componentMeasurements);
     setRoofAreas(result.roofAreas);
+
+    // Parent/child plans (2026-07-05): canvas-init loaded the route-level
+    // planUrl; if hydration pointed us at a different plan (the active area's
+    // first child slot), swap the background to the correct page image.
+    const activePage = pages[currentPageIndex];
+    if (activePage?.url && activePage.url !== planUrl) {
+      setPageBackgroundImage(activePage.url);
+    }
     console.info('[Reconstruct] Canvas reconstruction complete:',
       result.componentMeasurements.reduce((sum, c) => sum + c.measurements.length, 0),
       'measurements restored');
@@ -871,12 +931,28 @@ export function TakeoffWorkstation({
   // Save current canvas state to the area cache, then load the target area.
   // If the target area has cached state, restore it. Otherwise, clear the
   // canvas for a fresh start (the user will calibrate + draw on the new area).
-  const handleSwitchArea = useCallback(async (targetAreaId: string) => {
+  const handleSwitchArea = useCallback(async (targetAreaId: string, targetPageId?: string) => {
     if (targetAreaId === activeAreaId) return;
+
+    // Parent/child plans (2026-07-05): stamp un-stamped (freshly drawn)
+    // measurements with the page they were drawn on before caching, and
+    // preserve the cache entry's pageIds (hydration wrote them; a plain
+    // .set() replacement dropped them, breaking the child-chip index).
+    const outgoingPageId = pages[currentPageIndex]?.id ?? null;
 
     // Phase 4: Auto-persist outgoing area's data to DB before switching.
     // This prevents data loss when switching between areas.
     if (activeAreaId && (componentMeasurements.length > 0 || roofAreas.length > 0)) {
+      const prevCached = areaCanvasStatesRef.current.get(activeAreaId);
+      const mergedPageIds = new Set<string>(prevCached?.pageIds ?? []);
+      componentMeasurements.forEach(c => c.measurements.forEach(m => {
+        const pid = m.fromPageId ?? outgoingPageId;
+        if (pid) mergedPageIds.add(pid);
+      }));
+      roofAreas.forEach(ra => {
+        const pid = ra.fromPageId ?? outgoingPageId;
+        if (pid) mergedPageIds.add(pid);
+      });
       // Save current area's data to the areaCanvasStatesRef cache
       areaCanvasStatesRef.current.set(activeAreaId, {
         componentMeasurements: componentMeasurements.map(c => ({
@@ -884,13 +960,13 @@ export function TakeoffWorkstation({
           expanded: c.expanded,
           measurements: c.measurements.map(m => ({
             id: m.id, type: m.type, value: m.value, points: m.points,
-            visible: m.visible, fromPageId: m.fromPageId,
+            visible: m.visible, fromPageId: m.fromPageId ?? outgoingPageId,
             quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId,
           })),
         })),
         roofAreas: roofAreas.map(ra => ({
           id: ra.id, name: ra.name, points: ra.points, area: ra.area,
-          pitch: ra.pitch, visible: ra.visible, fromPageId: ra.fromPageId,
+          pitch: ra.pitch, visible: ra.visible, fromPageId: ra.fromPageId ?? outgoingPageId,
           quoteRoofAreaId: ra.quoteRoofAreaId ?? activeAreaId,
         })),
         calibrations: calibrations.map(cal => ({ ...cal })),
@@ -898,6 +974,7 @@ export function TakeoffWorkstation({
         calibrationConfirmed,
         activeComponentIds: [...activeComponentIds],
         selectedComponentId,
+        pageIds: mergedPageIds,
       });
 
       // Best-effort auto-save: persist outgoing area's measurements to DB.
@@ -982,22 +1059,35 @@ export function TakeoffWorkstation({
     activeAreaIdRef.current = targetAreaId; // sync ref for canvas handlers
     setActiveSaveRoofAreaId(targetAreaId);
 
-    // Phase 8: Find and load the correct page image for this area.
-    // Check cached state for pageIds, or find a page that has measurements for this area.
+    // Parent/child plans (2026-07-05): resolve the target page — explicit
+    // child slot when supplied, else the area's first plan (areaPages index,
+    // falling back to cached pageIds). Swap ONLY the background image. NEVER
+    // call loadPageImage here — it wiped the state restored above, which is
+    // exactly the "every area shows the newest plan, panel empty" bug.
+    if (outgoingPageId && calibrations.length > 0) {
+      pageCalibrationsRef.current.set(outgoingPageId, calibrations.map(c => ({ ...c })));
+    }
     const cachedState = areaCanvasStatesRef.current.get(targetAreaId);
-    if (cachedState?.pageIds && cachedState.pageIds.size > 0) {
-      // Find the first page ID in the cache that exists in our pages array
-      const pageIds = Array.from(cachedState.pageIds);
-      for (const pid of pageIds) {
-        const pageIndex = pages.findIndex(p => p.id === pid);
-        if (pageIndex >= 0 && pageIndex !== currentPageIndex) {
-          setCurrentPageIndex(pageIndex);
-          if (pages[pageIndex]?.url) {
-            loadPageImage(pages[pageIndex].url);
-          }
-          break;
+    const candidatePids: string[] = targetPageId
+      ? [targetPageId]
+      : (areaPages[targetAreaId]
+          ?? (cachedState?.pageIds ? Array.from(cachedState.pageIds as Set<string>) : []));
+    for (const pid of candidatePids) {
+      const pageIndex = pages.findIndex(p => p.id === pid);
+      if (pageIndex < 0) continue;
+      if (pageIndex !== currentPageIndex) {
+        setCurrentPageIndex(pageIndex);
+        if (pages[pageIndex]?.url) setPageBackgroundImage(pages[pageIndex].url);
+        // Per-plan calibration: restore the target page's own scale.
+        const pageCal = pageCalibrationsRef.current.get(pid);
+        if (pageCal && pageCal.length > 0) {
+          setCalibrations(pageCal.map(c => ({ ...c })));
+          setCalibrationPoints([]);
+          setCalibrationConfirmed(true);
+          setShowCalibrationHelp(false);
         }
       }
+      break;
     }
 
     // Trigger canvas redraw
@@ -1005,7 +1095,55 @@ export function TakeoffWorkstation({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeAreaId, componentMeasurements, roofAreas, calibrations,
       calibrationPoints, calibrationConfirmed, activeComponentIds,
-      selectedComponentId, pages, currentPageIndex, sessionVersion, quote.id]);
+      selectedComponentId, pages, currentPageIndex, sessionVersion, quote.id, areaPages]);
+
+  // Parent/child plans (2026-07-05): switch between the ACTIVE area's plans
+  // (child slots 1, 2, 3…). All measurements stay in state — the redraw
+  // filter draws only the target page's shapes. Each plan has its own scale.
+  const handleSwitchPage = useCallback((targetPageId: string) => {
+    const targetIndex = pages.findIndex(p => p.id === targetPageId);
+    if (targetIndex < 0 || targetIndex === currentPageIndex) return;
+    const currentPid = pages[currentPageIndex]?.id ?? null;
+    // Stamp fresh drawings with the page they were drawn on so the redraw
+    // filter doesn't carry them onto the target page.
+    if (currentPid) {
+      setComponentMeasurements(prev => prev.map(c => ({
+        ...c,
+        measurements: c.measurements.map(m => m.fromPageId ? m : { ...m, fromPageId: currentPid }),
+      })));
+      setRoofAreas(prev => prev.map(ra => ra.fromPageId ? ra : { ...ra, fromPageId: currentPid }));
+      if (calibrations.length > 0) {
+        pageCalibrationsRef.current.set(currentPid, calibrations.map(c => ({ ...c })));
+      }
+    }
+    setCurrentPageIndex(targetIndex);
+    if (pages[targetIndex]?.url) setPageBackgroundImage(pages[targetIndex].url);
+    // Restore the target page's own calibration.
+    const pageCal = pageCalibrationsRef.current.get(targetPageId);
+    if (pageCal && pageCal.length > 0) {
+      setCalibrations(pageCal.map(c => ({ ...c })));
+      setCalibrationPoints([]);
+      setCalibrationConfirmed(true);
+      setShowCalibrationHelp(false);
+    } else {
+      setCalibrations([]);
+      setCalibrationPoints([]);
+      setCalibrationConfirmed(false);
+      setShowCalibrationHelp(true);
+    }
+    // Reset in-progress drawing buffers/modes for the page swap.
+    setAreaMode(false);
+    setLineMode(false);
+    setPointMode(false);
+    setMultiLinealMode(false);
+    setCalibrationMode(false);
+    setAreaPoints([]);
+    setLinePoints([]);
+    setMultiLinealPoints([]);
+    setMultiLinealSegmentObjects([]);
+    setRedrawNonce(n => n + 1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pages, currentPageIndex, calibrations]);
 
   // Phase 6: "+ New Area" opens a choice modal.
   // - If no areas exist, go straight to drawing mode for a new area.
@@ -1086,6 +1224,32 @@ export function TakeoffWorkstation({
       setAreaPoints([]);
     }
   };
+
+  // Option A (2026-07-05): after "Save & Upload another plan" → new area,
+  // the user calibrates the fresh plan first. The moment calibration is
+  // confirmed, arm the new-area drawing flow automatically so they draw the
+  // boundary right away — no second "+ New Area" click (the double-work
+  // complaint).
+  useEffect(() => {
+    if (!armNewAreaAfterCalibrationRef.current) return;
+    if (!calibrationConfirmed) return;
+    armNewAreaAfterCalibrationRef.current = false;
+    setSelectedComponentId(null);
+    activeAreaComponentIdRef.current = null;
+    setPendingComponentId(null);
+    setPendingNewAreaIsExisting(false);
+    setPendingNewAreaTargetId(null);
+    pendingNewAreaIsExistingRef.current = false;
+    pendingNewAreaTargetIdRef.current = null;
+    viaNewAreaFlowRef.current = true;
+    setAreaMode(true);
+    setAreaSubTool('polygon');
+    setLineMode(false);
+    setPointMode(false);
+    setMultiLinealMode(false);
+    setAreaPoints([]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calibrationConfirmed]);
 
   // Fix (2026-07-04): auto-create-first-area REMOVED. It minted a ghost
   // "Area 1" quote_roof_areas row on page load, before the user calibrated
@@ -1306,6 +1470,15 @@ export function TakeoffWorkstation({
 
               setAreaList(prev => [...prev, { id: newDbAreaId, label: finalLabel }]);
 
+              // Parent/child plans (2026-07-05): register this area's first
+              // plan slot so the left-panel child chips stay accurate.
+              const newAreaPageId = pages[currentPageIndex]?.id ?? null;
+              if (newAreaPageId) {
+                setAreaPages(prev => prev[newDbAreaId]?.includes(newAreaPageId)
+                  ? prev
+                  : { ...prev, [newDbAreaId]: [...(prev[newDbAreaId] ?? []), newAreaPageId] });
+              }
+
               // 3. Start the NEW area's view. If there was a previous area, its
               // state is cached above — show only the new polygon. If this is
               // the FIRST area (no outgoing), keep whatever is on screen and
@@ -1342,19 +1515,28 @@ export function TakeoffWorkstation({
         // outgoing area's state (without the new polygon), then switch the view
         // to the target area with the polygon appended to its cached state.
         if (activeAreaId && targetId !== activeAreaId) {
+          // Parent/child plans (2026-07-05): preserve the cache entry's
+          // pageIds and stamp un-paged rows with the current page.
+          const cachePageFallback = pages[currentPageIndex]?.id ?? null;
+          const prevCachedEntry = areaCanvasStatesRef.current.get(activeAreaId);
+          const mergedCachePageIds = new Set<string>(prevCachedEntry?.pageIds ?? []);
+          componentMeasurements.forEach(c => c.measurements.forEach(m => {
+            const pid = m.fromPageId ?? cachePageFallback; if (pid) mergedCachePageIds.add(pid);
+          }));
+          roofAreas.forEach(ra => { const pid = ra.fromPageId ?? cachePageFallback; if (pid) mergedCachePageIds.add(pid); });
           areaCanvasStatesRef.current.set(activeAreaId, {
             componentMeasurements: componentMeasurements.map(c => ({
               componentId: c.componentId,
               expanded: c.expanded,
               measurements: c.measurements.map(m => ({
                 id: m.id, type: m.type, value: m.value, points: m.points,
-                visible: m.visible, fromPageId: m.fromPageId,
+                visible: m.visible, fromPageId: m.fromPageId ?? cachePageFallback,
                 quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId,
               })),
             })),
             roofAreas: roofAreas.map(ra => ({
               id: ra.id, name: ra.name, points: ra.points, area: ra.area,
-              pitch: ra.pitch, visible: ra.visible, fromPageId: ra.fromPageId,
+              pitch: ra.pitch, visible: ra.visible, fromPageId: ra.fromPageId ?? cachePageFallback,
               quoteRoofAreaId: ra.quoteRoofAreaId ?? activeAreaId,
             })),
             calibrations: calibrations.map(cal => ({ ...cal })),
@@ -1362,6 +1544,7 @@ export function TakeoffWorkstation({
             calibrationConfirmed,
             activeComponentIds: [...activeComponentIds],
             selectedComponentId: null,
+            pageIds: mergedCachePageIds,
           });
           const cached = areaCanvasStatesRef.current.get(targetId);
           setComponentMeasurements(cached?.componentMeasurements ?? []);
@@ -1377,6 +1560,16 @@ export function TakeoffWorkstation({
         setActiveAreaId(targetId);
         activeAreaIdRef.current = targetId; // sync ref for canvas handlers
         setActiveSaveRoofAreaId(targetId);
+        // Parent/child plans (2026-07-05): the target area now has content on
+        // the current page — register the child slot.
+        {
+          const targetPagePid = pages[currentPageIndex]?.id ?? null;
+          if (targetPagePid) {
+            setAreaPages(prev => prev[targetId]?.includes(targetPagePid)
+              ? prev
+              : { ...prev, [targetId]: [...(prev[targetId] ?? []), targetPagePid] });
+          }
+        }
         // Reset Phase 6 state — but keep isExistingAreaMode=true so the save
         // only includes NEWLY drawn areas (client-side IDs), not hydrated ones.
         // This prevents duplicating hydrated areas on re-entry saves.
@@ -1720,12 +1913,14 @@ export function TakeoffWorkstation({
   // Phase 7: load a new image onto the canvas. Used when switching pages.
   // Clears all drawn objects first (areas, lines, markers) then loads the
   // new image as the canvas background.
-  const loadPageImage = (imageUrl: string) => {
+  // Parent/child plans (2026-07-05): background-image-only loader. Swaps the
+  // plan image WITHOUT touching measurements/areas/components state. Used when
+  // switching between areas/child plans — the caller is responsible for
+  // clearing drawn objects (redrawCanvasFromState does that) and restoring the
+  // page's calibration.
+  const setPageBackgroundImage = (imageUrl: string) => {
     const canvas = fabricRef.current;
     if (!canvas) return;
-    // Remove all objects (measurements, calibration lines, etc.).
-    canvas.clear();
-    canvas.backgroundColor = '#1e293b';
     const imgElement = new Image();
     imgElement.crossOrigin = 'anonymous';
     imgElement.onload = () => {
@@ -1740,14 +1935,20 @@ export function TakeoffWorkstation({
         originX: 'left', originY: 'top',
         selectable: false, evented: false,
       });
-      // Image is the canvas background — structurally outside the object list,
-      // so it can never be selected, dragged, or captured in undo snapshots.
-      // Only viewportTransform (pan/zoom) moves the view, not the image.
       canvas.backgroundImage = fabricImg;
       canvas.renderAll();
     };
     imgElement.src = imageUrl;
-    // Reset ALL tool modes + calibration + measurements for the fresh page.
+  };
+
+  const loadPageImage = (imageUrl: string, opts?: { preserveMeasurements?: boolean }) => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    // Remove all objects (measurements, calibration lines, etc.).
+    canvas.clear();
+    canvas.backgroundColor = '#1e293b';
+    setPageBackgroundImage(imageUrl);
+    // Reset ALL tool modes + calibration for the fresh page.
     // CRITICAL: mode resets must come first. Without them the canvas click
     // handler routes to the wrong tool after the page switch (e.g. areaMode)
     // so calibration points are silently dropped, leaving the user stuck.
@@ -1766,12 +1967,19 @@ export function TakeoffWorkstation({
     setLinePoints([]);
     setMultiLinealPoints([]);
     setMultiLinealSegmentObjects([]);
-    setComponentMeasurements([]);
-    setRoofAreas([]);
-    setSelectedComponentId(null);
-    // P1-3: reset existing-area mode so a fresh plan doesn't inherit the constraint.
-    setIsExistingAreaMode(false);
-    setExistingAreaLabel('');
+    // Parent/child plans (2026-07-05): preserveMeasurements keeps the parent
+    // area's measurements/components in state when attaching a new plan to an
+    // EXISTING area — the wipe below destroyed every area's panel data (the
+    // "Garage and Main Roof went blank" bug). Canvas objects are already
+    // cleared above; the redraw filter keeps other pages' shapes off-canvas.
+    if (!opts?.preserveMeasurements) {
+      setComponentMeasurements([]);
+      setRoofAreas([]);
+      setSelectedComponentId(null);
+      // P1-3: reset existing-area mode so a fresh plan doesn't inherit the constraint.
+      setIsExistingAreaMode(false);
+      setExistingAreaLabel('');
+    }
     setIsDirty(false);
   };
 
@@ -2126,6 +2334,20 @@ export function TakeoffWorkstation({
       setSessionVersion(prev => (prev != null ? prev + 1 : 1));
       setIsDirty(false);
 
+      // Parent/child plans (2026-07-05): stamp fresh drawings with the page
+      // they were saved under, and persist this page's calibration, so page
+      // switches keep shapes and scale on the right plan.
+      if (currentPageDbId) {
+        setComponentMeasurements(prev => prev.map(c => ({
+          ...c,
+          measurements: c.measurements.map(m => m.fromPageId ? m : { ...m, fromPageId: currentPageDbId }),
+        })));
+        setRoofAreas(prev => prev.map(ra => ra.fromPageId ? ra : { ...ra, fromPageId: currentPageDbId }));
+        if (calibrations.length > 0) {
+          pageCalibrationsRef.current.set(currentPageDbId, calibrations.map(c => ({ ...c })));
+        }
+      }
+
       // Version cursor fix (2026-07-05): the main save above bumped the DB
       // version, and every flush below bumps it again. Passing the stale
       // `sessionVersion` made every flush fail STALE_TAKEOFF_VERSION silently
@@ -2135,55 +2357,76 @@ export function TakeoffWorkstation({
       // Phase 4: flush any dirty cached areas from areaCanvasStatesRef.
       // Each cached area's measurements are saved with their own quote_roof_area_id.
       // Best-effort: failures are logged but don't fail the overall save.
+      // Parent/child plans (2026-07-05): group each cached area's rows by the
+      // page they were DRAWN on (fromPageId) and flush per (area, page). The
+      // old code stamped everything with the CURRENT page id, silently
+      // re-homing other pages' drawings onto whatever plan was open.
+      type FlushMeasurement = {
+        componentId: string | null; type: any; value: number;
+        points?: { x: number; y: number }[]; visible: boolean;
+        pitch?: number; name?: string; pageId?: string | null;
+        quoteRoofAreaId?: string | null;
+      };
       for (const [cachedAreaId, cachedState] of areaCanvasStatesRef.current.entries()) {
         if (cachedAreaId === activeAreaId) continue; // already saved above
-        const cachedMeasurements: Array<{
-          componentId: string | null; type: any; value: number;
-          points?: { x: number; y: number }[]; visible: boolean;
-          pitch?: number; name?: string; pageId?: string | null;
-          quoteRoofAreaId?: string | null;
-        }> = [];
+        const byPage = new Map<string | null, FlushMeasurement[]>();
+        const pushTo = (pid: string | null, m: FlushMeasurement) => {
+          if (!byPage.has(pid)) byPage.set(pid, []);
+          byPage.get(pid)!.push(m);
+        };
         cachedState.componentMeasurements.forEach((comp: any) => {
           comp.measurements.forEach((m: any) => {
-            cachedMeasurements.push({
+            const pid = m.fromPageId ?? null;
+            pushTo(pid, {
               componentId: comp.componentId, type: m.type, value: m.value,
               points: m.points, visible: m.visible,
-              pageId: pages[currentPageIndex]?.id ?? null,
+              pageId: pid,
               quoteRoofAreaId: m.quoteRoofAreaId ?? cachedAreaId,
             });
           });
         });
         cachedState.roofAreas.forEach((area: any) => {
-          cachedMeasurements.push({
+          const pid = area.fromPageId ?? null;
+          pushTo(pid, {
             componentId: null, type: 'area' as const, value: area.area,
             pitch: area.pitch, name: area.name, points: area.points,
-            visible: area.visible, pageId: pages[currentPageIndex]?.id ?? null,
+            visible: area.visible, pageId: pid,
             quoteRoofAreaId: area.quoteRoofAreaId ?? cachedAreaId,
           });
         });
-        if (cachedMeasurements.length > 0) {
+        const flushUnit = cachedState.calibrations?.[0]?.unit || calibrations[0]?.unit || 'feet';
+        for (const [pid, group] of byPage.entries()) {
+          if (group.length === 0) continue;
           try {
             const flushResult = await saveTakeoffMeasurements(
-              quote.id, cachedMeasurements,
-              calibrations[0]?.unit || 'feet',
+              quote.id, group, flushUnit,
               undefined, undefined,
-              pages[currentPageIndex]?.id ?? null,
+              pid,
               versionCursor, cachedAreaId, null,
             );
             if (flushResult.success) {
               versionCursor += 1; // each successful flush bumps the DB version
             } else {
-              console.warn(`[SaveTakeoff] Flush for cached area ${cachedAreaId} rejected:`, (flushResult as { error?: string }).error);
+              console.warn(`[SaveTakeoff] Flush for cached area ${cachedAreaId} page ${pid} rejected:`, (flushResult as { error?: string }).error);
             }
           } catch (err) {
-            console.warn(`[SaveTakeoff] Failed to flush cached area ${cachedAreaId}:`, err);
+            console.warn(`[SaveTakeoff] Failed to flush cached area ${cachedAreaId} page ${pid}:`, err);
           }
         }
       }
-      // Sync local version to the cursor after all flushes.
-      setSessionVersion(versionCursor);
-      // Clear the cache after flushing
-      areaCanvasStatesRef.current.clear();
+      // Authoritative version sync (2026-07-05): read the REAL version from
+      // the DB instead of trusting a local cursor — cursor drift caused the
+      // false "Takeoff edited in another tab" (STALE_TAKEOFF_VERSION) errors.
+      try {
+        const authoritativeVersion = await getTakeoffSessionVersion(quote.id);
+        setSessionVersion(authoritativeVersion ?? versionCursor);
+      } catch {
+        setSessionVersion(versionCursor);
+      }
+      // Parent/child plans (2026-07-05): DO NOT clear the cache. It mirrors
+      // DB state and drives every non-active area's panel/canvas — clearing
+      // it here blanked all other areas after any save (the "Garage and Main
+      // Roof went blank" bug).
       
       // P1-3: only navigate to Quote Builder when the user clicked the
       // primary "Save & Continue to Components" CTA. The multi-page upload
@@ -2215,6 +2458,39 @@ export function TakeoffWorkstation({
     setUploadAnotherFile(null);
     setUploadAnotherError(null);
     setShowUploadAnotherModal(true);
+  };
+
+  // Parent/child plans (2026-07-05): snapshot the CURRENT on-screen area's
+  // state into the per-area cache. pageIdFallback stamps un-paged (freshly
+  // drawn) rows with the page they were drawn on. Preserves cached pageIds.
+  const cacheCurrentAreaState = (areaId: string, pageIdFallback: string | null) => {
+    const prevCached = areaCanvasStatesRef.current.get(areaId);
+    const mergedPageIds = new Set<string>(prevCached?.pageIds ?? []);
+    componentMeasurements.forEach(c => c.measurements.forEach(m => {
+      const pid = m.fromPageId ?? pageIdFallback; if (pid) mergedPageIds.add(pid);
+    }));
+    roofAreas.forEach(ra => { const pid = ra.fromPageId ?? pageIdFallback; if (pid) mergedPageIds.add(pid); });
+    areaCanvasStatesRef.current.set(areaId, {
+      componentMeasurements: componentMeasurements.map(c => ({
+        componentId: c.componentId, expanded: c.expanded,
+        measurements: c.measurements.map(m => ({
+          id: m.id, type: m.type, value: m.value, points: m.points,
+          visible: m.visible, fromPageId: m.fromPageId ?? pageIdFallback,
+          quoteRoofAreaId: m.quoteRoofAreaId ?? areaId,
+        })),
+      })),
+      roofAreas: roofAreas.map(ra => ({
+        id: ra.id, name: ra.name, points: ra.points, area: ra.area,
+        pitch: ra.pitch, visible: ra.visible, fromPageId: ra.fromPageId ?? pageIdFallback,
+        quoteRoofAreaId: ra.quoteRoofAreaId ?? areaId,
+      })),
+      calibrations: calibrations.map(cal => ({ ...cal })),
+      calibrationPoints: calibrationPoints.map(p => ({ ...p })),
+      calibrationConfirmed,
+      activeComponentIds: [...activeComponentIds],
+      selectedComponentId,
+      pageIds: mergedPageIds,
+    });
   };
 
   // P1-3: confirm flow for Save & Upload another plan.
@@ -2286,36 +2562,77 @@ export function TakeoffWorkstation({
       }
       // 6. Persist image path on the new page row.
       await finalizeTakeoffPageImage(newPageId, mint.storagePath);
-      // 7. Switch canvas client-side: loadPageImage clears ALL canvas state.
+      // 7+8. Parent/child plans (2026-07-05): switch canvas client-side.
       // createObjectURL is immediate and doesn't require re-signing.
       const objectUrl = URL.createObjectURL(uploadAnotherFile);
       const newPage = { id: newPageId, url: objectUrl, name: newPageName, order: pages.length + 1 };
       const updatedPages = [...pages, newPage];
+
+      // Stash the outgoing page's calibration before leaving it.
+      const priorPageId = pages[currentPageIndex]?.id ?? null;
+      if (priorPageId && calibrations.length > 0) {
+        pageCalibrationsRef.current.set(priorPageId, calibrations.map(c => ({ ...c })));
+      }
+
       setPages(updatedPages);
       setCurrentPageIndex(updatedPages.length - 1);
-      loadPageImage(objectUrl);
-      // 8. Update save routing target, existing-area mode flag, and version.
       setActiveSaveRoofAreaId(newRoofAreaId);
-      // Phase 7: set mode flags based on target
-      if (uploadAnotherTarget === 'existing') {
+
+      if (uploadAnotherTarget === 'existing' && newRoofAreaId) {
+        // ── Child slot under an existing parent area (Option A) ──
+        // No second dialog, no "+ New Area" click: the new plan is attached
+        // to the chosen parent immediately. User calibrates and measures;
+        // everything rolls up to the parent.
+        if (newRoofAreaId !== activeAreaId && activeAreaId) {
+          // Parent is not the on-screen area: cache the outgoing area (already
+          // persisted to DB by persistTakeoffData above) and restore the
+          // parent's cached state so its components stay in the left panel.
+          if (componentMeasurements.length > 0 || roofAreas.length > 0) {
+            cacheCurrentAreaState(activeAreaId, priorPageId);
+          }
+          const parentCached = areaCanvasStatesRef.current.get(newRoofAreaId);
+          setComponentMeasurements(parentCached?.componentMeasurements ?? []);
+          setRoofAreas(parentCached?.roofAreas ?? []);
+          setActiveComponentIds(
+            parentCached?.activeComponentIds
+              ?? (parentCached?.componentMeasurements ?? []).map((c: { componentId: string }) => c.componentId)
+          );
+          setSelectedComponentId(null);
+        }
+        // Swap the canvas: keep parent-level measurements, reset tools +
+        // calibration for the fresh plan (each plan has its own scale).
+        loadPageImage(objectUrl, { preserveMeasurements: true });
+        setActiveAreaId(newRoofAreaId);
+        activeAreaIdRef.current = newRoofAreaId;
         setIsExistingAreaMode(true);
         isExistingAreaModeRef.current = true;
         setExistingAreaLabel(resolvedFirstArea?.label ?? 'Existing Area');
-        // RC-6/Issue 10 fix (2026-07-05): set activeAreaId so the save filter
-        // routes roof area measurements to the correct area.
-        if (newRoofAreaId) {
-          setActiveAreaId(newRoofAreaId);
-        }
+        // Register the child slot so the numbered chip appears immediately.
+        setAreaPages(prev => ({
+          ...prev,
+          [newRoofAreaId as string]: [...(prev[newRoofAreaId as string] ?? []), newPageId],
+        }));
       } else {
-        // New area — arm drawing mode for after the canvas loads
+        // ── New parent area (Option A) ── cache the outgoing area first so
+        // switching back later restores it, then full-reset for the fresh
+        // plan. After calibration the new-area drawing flow arms itself.
+        if (activeAreaId && (componentMeasurements.length > 0 || roofAreas.length > 0)) {
+          cacheCurrentAreaState(activeAreaId, priorPageId);
+        }
+        loadPageImage(objectUrl);
         setIsExistingAreaMode(false);
         isExistingAreaModeRef.current = false;
         setPendingNewAreaIsExisting(false);
         setPendingNewAreaTargetId(null);
         pendingNewAreaIsExistingRef.current = false;
         pendingNewAreaTargetIdRef.current = null;
+        setActiveAreaId(null);
+        activeAreaIdRef.current = null;
+        armNewAreaAfterCalibrationRef.current = true;
       }
-      setSessionVersion(null);
+      // Version fix (2026-07-05): persistTakeoffData already synced the
+      // authoritative version from the DB. Nulling it here caused the false
+      // "Takeoff edited in another tab" error on the next save.
       // Close modal and reset upload state.
       setShowUploadAnotherModal(false);
       setUploadAnotherFile(null);
@@ -3602,7 +3919,7 @@ export function TakeoffWorkstation({
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-slate-900">Add to existing area</p>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      New measurements from this plan flow into the selected area.
+                      This plan becomes a numbered slot under the selected area. Just calibrate and measure — everything rolls into that area.
                     </p>
                     {uploadAnotherTarget === 'existing' && (
                       <select
@@ -3639,7 +3956,7 @@ export function TakeoffWorkstation({
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Create new area for this upload</p>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      You'll name the area after drawing its boundary on the new plan.
+                      Calibrate the new plan, then draw the area boundary — you'll name it when you close the shape. No extra clicks needed.
                     </p>
                   </div>
                 </div>
@@ -3832,6 +4149,39 @@ export function TakeoffWorkstation({
                         </div>
                       </div>
                       {displayValue > 0 && <span className="text-xs text-gray-500">{displayValue.toFixed(2)} {displayUnit}</span>}
+                      {/* Parent/child plans (2026-07-05): numbered chips, one
+                          per plan attached to this area. Click = view that
+                          plan's image + drawings. Components stay parent-level. */}
+                      {(areaPages[area.id]?.length ?? 0) > 1 && (
+                        <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                          <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mr-0.5">Plans</span>
+                          {areaPages[area.id].map((pid, i) => {
+                            const pIdx = pages.findIndex(p => p.id === pid);
+                            const isCurrentChip = isActive && pIdx === currentPageIndex;
+                            return (
+                              <button
+                                key={pid}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!isActive) {
+                                    handleSwitchArea(area.id, pid);
+                                  } else {
+                                    handleSwitchPage(pid);
+                                  }
+                                }}
+                                className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold border transition-all ${
+                                  isCurrentChip
+                                    ? 'bg-slate-900 text-white border-slate-900'
+                                    : 'bg-white text-gray-600 border-gray-300 hover:border-orange-300 hover:text-orange-600'
+                                }`}
+                                title={`View plan ${i + 1} for ${area.label}`}
+                              >
+                                {i + 1}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

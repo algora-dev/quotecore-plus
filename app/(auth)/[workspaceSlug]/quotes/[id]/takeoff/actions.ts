@@ -549,6 +549,25 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
  * Uses service-role because takeoff_sessions RLS is company-scoped and we
  * need to upsert atomically without a race.
  */
+/**
+ * Fetch the authoritative takeoff session version from the DB.
+ * Used after save chains (main save + cached-area flushes) so the client's
+ * optimistic version cursor never drifts from the DB — drift caused the
+ * false "Takeoff edited in another tab" (STALE_TAKEOFF_VERSION) errors.
+ * Returns null when no session row exists yet.
+ */
+export async function getTakeoffSessionVersion(quoteId: string): Promise<number | null> {
+  const supabase = await createSupabaseServerClient();
+  // RLS scopes this read to the caller's company via the quotes join policy.
+  const { data, error } = await supabase
+    .from('takeoff_sessions')
+    .select('version')
+    .eq('quote_id', quoteId)
+    .maybeSingle();
+  if (error) return null;
+  return data?.version ?? null;
+}
+
 async function ensureTakeoffSession(quoteId: string, companyId: string): Promise<string> {
   const admin = createAdminClient();
   // H-01 (Gerald round-5): verify the quote belongs to the caller's company
