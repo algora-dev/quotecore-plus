@@ -36,7 +36,7 @@ export default async function QuoteBuilderV2Page({
     loadComponentCollections(),
   ]);
 
-  // Load files (same as v1)
+  // Load files (same as v1) — most recent plan for the FilesManager header.
   const { data: planFile } = await supabase
     .from('quote_files')
     .select('storage_path, file_name')
@@ -45,6 +45,21 @@ export default async function QuoteBuilderV2Page({
     .order('uploaded_at', { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  // Also fetch the FIRST (oldest) plan file — this is the original plan
+  // uploaded for Page 1, used as the thumbnail fallback when takeoff_pages
+  // has no image_storage_path for page 1 (2026-07-06).
+  const { data: firstPlanFile } = await supabase
+    .from('quote_files')
+    .select('storage_path, file_name')
+    .eq('quote_id', id)
+    .eq('file_type', 'plan')
+    .order('uploaded_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  const firstPlanUrl = firstPlanFile
+    ? await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, firstPlanFile.storage_path)
+    : null;
 
   // QUOTE-DOCUMENTS is private; mint short-lived signed URLs at render time.
   const planUrl = planFile
@@ -93,9 +108,10 @@ export default async function QuoteBuilderV2Page({
   const allPlans = await Promise.all((takeoffPagesRaw ?? []).map(async (tp) => {
     const imgPath = (tp as { image_storage_path: string | null }).image_storage_path;
     // Page 1 has no image_storage_path (uses the original uploaded plan file).
+    // Use the OLDEST plan file (firstPlanUrl), not the most recent (planUrl).
     const signedUrl = imgPath
       ? await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, imgPath)
-      : planUrl;
+      : firstPlanUrl;
     return {
       pageId: (tp as { id: string }).id,
       pageOrder: (tp as { page_order: number }).page_order,
