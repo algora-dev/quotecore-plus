@@ -61,6 +61,7 @@ interface Props {
   hasExistingTakeoff?: boolean;
   linesImageUrl?: string | null;
   planStoragePath?: string | null;
+  allPlans?: { pageId: string; pageOrder: number; pageName: string; thumbnailUrl: string | null; areas: string[] }[];
   takeoffData?: any[];
   externalPhase?: Phase; // NEW: For URL-based navigation (v2)
   onPhaseChange?: (phase: Phase) => void; // NEW: Callback when phase changes
@@ -87,6 +88,7 @@ export function QuoteBuilder({
   hasExistingTakeoff = false,
   linesImageUrl = null,
   planStoragePath = null,
+  allPlans = [],
   takeoffData: _takeoffData = [],
   externalPhase,
   onPhaseChange,
@@ -576,6 +578,21 @@ export function QuoteBuilder({
         </div>
       </div>
 
+      {/* Edit Digital Take-off — always visible above Plans & Files (2026-07-06) */}
+      {((hasExistingTakeoff || planUrl) && (
+        <div className="mb-3">
+          <Link
+            href={`/${workspaceSlug}/quotes/${quote.id}/takeoff`}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white font-medium rounded-full text-sm hover:bg-slate-800 transition-colors hover:shadow-[0_0_12px_rgba(249,115,22,0.45)]"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            {hasExistingTakeoff ? 'Edit Digital Take-off' : 'Use Digital Take-off'}
+          </Link>
+        </div>
+      ))}
+
       {/* Files & Documents (Roof Plan + Supporting) */}
       <FilesManager 
         quoteId={quote.id}
@@ -587,6 +604,7 @@ export function QuoteBuilder({
         hasExistingTakeoff={hasExistingTakeoff}
         linesImageUrl={linesImageUrl}
         planStoragePath={planStoragePath}
+        allPlans={allPlans}
         isOverStorage={isOverStorage}
       />
 

@@ -13,6 +13,14 @@ interface SupportingFile {
   uploadedAt: string;
 }
 
+interface PlanThumbnail {
+  pageId: string;
+  pageOrder: number;
+  pageName: string;
+  thumbnailUrl: string | null;
+  areas: string[];
+}
+
 interface Props {
   quote: QuoteRow;
   initialRoofAreas: QuoteRoofAreaRow[];
@@ -31,6 +39,7 @@ interface Props {
   hasExistingTakeoff?: boolean;
   linesImageUrl?: string | null;
   planStoragePath?: string | null;
+  allPlans?: PlanThumbnail[];
   initialStep: string;
 }
 

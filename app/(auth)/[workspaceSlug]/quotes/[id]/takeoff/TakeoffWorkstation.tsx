@@ -3948,7 +3948,7 @@ export function TakeoffWorkstation({
             className="px-3 py-2 bg-black hover:bg-slate-900 text-white rounded-full text-sm disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(249,115,22,0.45)]"
             title="Save current measurements, then upload a new plan to keep measuring"
           >
-            Save & Upload another plan
+            Upload another plan or image
           </button>
           <button
             onClick={handleSaveTakeoff}
@@ -3957,7 +3957,7 @@ export function TakeoffWorkstation({
             className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(249,115,22,0.5)]"
             title={calibrations.length === 0 ? 'Calibrate the plan first' : ''}
           >
-            {isSaving ? 'Saving...' : 'Save & Continue to Components'}
+            {isSaving ? 'Saving...' : 'Finish and Save'}
           </button>
         </div>
       </div>
@@ -4030,7 +4030,7 @@ export function TakeoffWorkstation({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
             <div className="p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-1">Save & upload another plan</h2>
+              <h2 className="text-lg font-semibold text-slate-900 mb-1">Upload another plan or image</h2>
               <p className="text-sm text-slate-500 mb-5">
                 We’ll save your current measurements first, then load the new plan so you can keep measuring.
               </p>
@@ -4153,7 +4153,7 @@ export function TakeoffWorkstation({
                   disabled={isUploadingPage}
                   className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors disabled:opacity-50"
                 >
-                  {isUploadingPage ? 'Saving…' : 'Save & start new takeoff'}
+                  {isUploadingPage ? 'Saving…' : 'Upload plan'}
                 </button>
               </div>
             </div>

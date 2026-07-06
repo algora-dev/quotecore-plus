@@ -58,6 +58,53 @@ export default async function QuoteBuilderV2Page({
     .eq('quote_id', id);
   const hasExistingTakeoff = (takeoffMeasurementCount ?? 0) > 0;
 
+  // All uploaded plans for thumbnail strip (2026-07-06):
+  // Fetch takeoff_pages with their images + which roof areas have entries on each page.
+  const { data: takeoffPagesRaw } = await supabase
+    .from('takeoff_pages')
+    .select('id, page_order, page_name, image_storage_path')
+    .eq('quote_id', id)
+    .order('page_order', { ascending: true });
+
+  // Fetch area-to-page mappings via entries.
+  const { data: areaEntriesRaw } = await supabase
+    .from('quote_roof_area_entries')
+    .select('page_id, quote_roof_area_id')
+    .in('quote_roof_area_id', roofAreas.map(ra => ra.id));
+
+  // Also need area labels.
+  const areaLabelMap = new Map(roofAreas.map(ra => [ra.id, ra.label]));
+
+  // Build page_id -> [area labels] map.
+  const pageAreaMap = new Map<string, string[]>();
+  for (const e of areaEntriesRaw ?? []) {
+    const pid = (e as { page_id: string }).page_id;
+    const aid = (e as { quote_roof_area_id: string }).quote_roof_area_id;
+    const label = areaLabelMap.get(aid);
+    if (pid && label) {
+      if (!pageAreaMap.has(pid)) pageAreaMap.set(pid, []);
+      const arr = pageAreaMap.get(pid)!;
+      if (!arr.includes(label)) arr.push(label);
+    }
+  }
+
+  // Build the allPlans array: Page 1 uses the original quote_files plan image,
+  // subsequent pages use takeoff_pages.image_storage_path.
+  const allPlans = await Promise.all((takeoffPagesRaw ?? []).map(async (tp) => {
+    const imgPath = (tp as { image_storage_path: string | null }).image_storage_path;
+    // Page 1 has no image_storage_path (uses the original uploaded plan file).
+    const signedUrl = imgPath
+      ? await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, imgPath)
+      : planUrl;
+    return {
+      pageId: (tp as { id: string }).id,
+      pageOrder: (tp as { page_order: number }).page_order,
+      pageName: (tp as { page_name: string }).page_name,
+      thumbnailUrl: signedUrl,
+      areas: pageAreaMap.get((tp as { id: string }).id) ?? [],
+    };
+  }));
+
   // P1-1b: Sign the full canvas image (plan + coloured measurements) if it exists.
   // takeoff_canvas_path holds the composite image; takeoff_lines_path is lines-only.
   const canvasPath = (quote as unknown as { takeoff_canvas_path?: string | null }).takeoff_canvas_path;
@@ -111,6 +158,7 @@ export default async function QuoteBuilderV2Page({
       hasExistingTakeoff={hasExistingTakeoff}
       linesImageUrl={linesImageUrl}
       planStoragePath={planFile?.storage_path || null}
+      allPlans={allPlans}
       initialStep={step}
     />
   );
