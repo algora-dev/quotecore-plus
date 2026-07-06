@@ -20,6 +20,13 @@
 7. **Per-plan calibration**: each plan keeps its own scale; restored on chip/area switch; re-entry restores the ACTIVE page's calibration (not blindly page 1's).
 8. Canvas redraw filters shapes by page (reconstructCanvas `belongsOnPage`) and preserves `quoteRoofAreaId` through redraws.
 
+### Round 9 (2026-07-06, commit `7b0c6b2`) — pending verification
+- [ ] Page switch: draw on Plan 1 → switch to Plan 2 → draw → switch back to Plan 1 → data still there (auto-save persisted)
+- [ ] Multi-plan: add area to existing parent from 3rd plan → save → quote builder shows all child areas including 3rd plan
+- [ ] Per-entry pitch: draw area with 15° pitch → draw another with 25° → quote builder shows `@ 15°` and `@ 25°` per entry
+- [ ] Parent pitch: first area's pitch becomes parent `calc_pitch_degrees`; second area with different pitch does NOT overwrite it
+- [ ] Regression: no duplicate areas in quote builder
+
 ### Round 8 (2026-07-05 late, commit `6011806`) — pending verification
 - [ ] Quote c7a973e1 (Digital Test): Main Roof shows exactly 3 entries (4.04 + 66.14 on Page 1, 37.92 on Plan 2), total 108.10 m² — duplicates #2/#4 gone (data repaired)
 - [ ] Re-enter takeoff on c7a973e1: Plan 1 canvas now SHOWS the two area polygons (66.14 + 4.04) — they were re-homed from Plan 2
