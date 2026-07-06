@@ -20,11 +20,13 @@
 7. **Per-plan calibration**: each plan keeps its own scale; restored on chip/area switch; re-entry restores the ACTIVE page's calibration (not blindly page 1's).
 8. Canvas redraw filters shapes by page (reconstructCanvas `belongsOnPage`) and preserves `quoteRoofAreaId` through redraws.
 
-### Round 10 (2026-07-06, commit `e62f7ae`) — pending verification
-- [ ] Re-entry pitch preservation: quote 81381c23 (Digital Test) — re-enter takeoff editor, add anything, save → Main Roof entry stays 50.27 @ 35° (data repaired; hydration now restores per-entry pitch instead of parent's 25°)
-- [ ] Fresh check: create takeoff with two areas at different pitches under one parent → save → re-enter editor → save again WITHOUT changes → both entries keep their original pitches in quote builder
+### Round 10 (2026-07-06, commits `e62f7ae`+`4014ce3`) — PASSED ✅
+- [x] Re-entry pitch preservation: quote 6ef48466 — all entries survived save/re-enter/save cycle with correct pitches
+- [x] Fresh quote full flow: create takeoff with multiple areas, pitches, components → save → quote builder shows all correct
+- [x] STALE_TAKEOFF_VERSION false error resolved (sessionVersionRef fix)
+- [x] Pitch math verified against DB: every entry = raw polygon area × 1/cos(pitch), all match
 
-### Round 9 (2026-07-06, commit `7b0c6b2`) — pending verification
+### Round 9 (2026-07-06, commit `7b0c6b2`) — PASSED ✅ (superseded by Round 10 verification)
 - [ ] Page switch: draw on Plan 1 → switch to Plan 2 → draw → switch back to Plan 1 → data still there (auto-save persisted)
 - [ ] Multi-plan: add area to existing parent from 3rd plan → save → quote builder shows all child areas including 3rd plan
 - [ ] Per-entry pitch: draw area with 15° pitch → draw another with 25° → quote builder shows `@ 15°` and `@ 25°` per entry
