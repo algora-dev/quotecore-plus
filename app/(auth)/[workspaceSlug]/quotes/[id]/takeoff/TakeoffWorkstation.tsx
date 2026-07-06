@@ -1012,6 +1012,11 @@ export function TakeoffWorkstation({
         });
 
         roofAreas.forEach(area => {
+          // Fix (2026-07-06): mirror the fromPageId filter that component
+          // measurements already use (line ~1004). Without this, hydrated
+          // areas from OTHER pages get re-saved onto the current page on
+          // every area switch, creating duplicate area entries.
+          if (area.fromPageId && currentPageDbId && area.fromPageId !== currentPageDbId) return;
           allMeasurements.push({
             componentId: null, type: 'area' as const, value: area.area,
             pitch: area.pitch, name: area.name, points: area.points,
