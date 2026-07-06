@@ -749,7 +749,11 @@ export function TakeoffWorkstation({
       if (m.componentId === null && m.type === 'area') {
         const idx = ad.areas.length;
         const label = allRoofAreas.find(a => a.id === areaKey)?.label ?? existingRoofAreas[idx]?.label ?? `Area ${idx + 1}`;
-        ad.areas.push({ id: m.id, name: label, points: m.points ?? [], area: m.value, pitch: allRoofAreas.find(a => a.id === areaKey)?.pitch ?? existingRoofAreas[idx]?.pitch ?? 0, visible: m.visible, fromPageId: m.pageId ?? null, quoteRoofAreaId: areaKey === '__no_area__' ? null : areaKey });
+        // Per-entry pitch fix (2026-07-06): use the pitch this polygon was
+        // SAVED with (from quote_roof_area_entries via hydration), falling
+        // back to the parent area pitch only for legacy rows. Using the
+        // parent pitch here caused re-saves to overwrite entry pitches.
+        ad.areas.push({ id: m.id, name: label, points: m.points ?? [], area: m.value, pitch: m.pitch ?? allRoofAreas.find(a => a.id === areaKey)?.pitch ?? existingRoofAreas[idx]?.pitch ?? 0, visible: m.visible, fromPageId: m.pageId ?? null, quoteRoofAreaId: areaKey === '__no_area__' ? null : areaKey });
         return;
       }
       if (m.componentId === null) return;
@@ -3684,7 +3688,9 @@ export function TakeoffWorkstation({
                 name: 'Area ' + (hydratedRoofAreas.length + 1),
                 points: m.points || [],
                 area: m.value,
-                pitch: 0,
+                // Per-entry pitch fix (2026-07-06): restore the pitch this
+                // polygon was saved with, not 0 / the parent's pitch.
+                pitch: m.pitch ?? 0,
                 visible: m.visible,
                 fromPageId: m.pageId || null,
               });
@@ -3715,7 +3721,10 @@ export function TakeoffWorkstation({
               hydratedRoofAreas.forEach((ra, i) => {
                 const match = existingRoofAreas[i];
                 if (match) {
-                  ra.pitch = match.pitch || 0;
+                  // Per-entry pitch fix (2026-07-06): only fall back to the
+                  // parent area pitch when the entry had none — never clobber
+                  // a real per-entry pitch with the parent's.
+                  if (!ra.pitch) ra.pitch = match.pitch || 0;
                   ra.name = match.label;
                 }
               });

@@ -399,6 +399,10 @@ export interface TakeoffHydrationMeasurement {
   visible: boolean;
   pageId: string | null;
   quoteRoofAreaId: string | null;
+  /** Per-entry pitch (2026-07-06): true pitch this area polygon was saved
+   *  with, from quote_roof_area_entries.pitch_degrees. Null for component
+   *  measurements and legacy rows with no matching entry. */
+  pitch: number | null;
 }
 
 export interface TakeoffHydrationData {
@@ -464,17 +468,61 @@ export async function loadTakeoffHydrationData(
     .eq('quote_id', quoteId)
     .order('created_at', { ascending: true });
 
-  const hydratedMeasurements: TakeoffHydrationMeasurement[] = (measurements ?? []).map(m => ({
-    id: m.id,
-    componentId: m.component_library_id,
-    type: m.measurement_type,
-    value: Number(m.measurement_value),
-    unit: m.measurement_unit,
-    points: (m.canvas_points as { x: number; y: number }[] | null),
-    visible: m.is_visible ?? true,
-    pageId: m.page_id,
-    quoteRoofAreaId: (m as { quote_roof_area_id?: string | null }).quote_roof_area_id ?? null,
-  }));
+  // 3b. Per-entry pitch (2026-07-06): quote_takeoff_measurements has no pitch
+  // column — the true pitch each polygon was saved with lives on
+  // quote_roof_area_entries.pitch_degrees. Without this, re-entry hydration
+  // falls back to the PARENT area's calc_pitch_degrees, and the next save
+  // silently overwrites per-entry pitches (35° → 25° bug, 2026-07-06).
+  //
+  // Matching: the RPC inserts area entries in the same order as the payload's
+  // roof_areas array, which the client builds from area measurements in draw
+  // order — so within a (quote_roof_area_id, page_id) group, entries zip 1:1
+  // to area-type measurements by insertion order.
+  const { data: areaIdRows } = await supabase
+    .from('quote_roof_areas')
+    .select('id')
+    .eq('quote_id', quoteId);
+  const areaIds = (areaIdRows ?? []).map(a => a.id);
+
+  const pitchQueues = new Map<string, number[]>();
+  if (areaIds.length > 0) {
+    const { data: areaEntries } = await supabase
+      .from('quote_roof_area_entries')
+      .select('quote_roof_area_id, page_id, pitch_degrees, sort_order, created_at')
+      .in('quote_roof_area_id', areaIds)
+      .eq('source', 'takeoff')
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true });
+    (areaEntries ?? []).forEach(e => {
+      const key = `${e.quote_roof_area_id}::${(e as { page_id?: string | null }).page_id ?? ''}`;
+      if (!pitchQueues.has(key)) pitchQueues.set(key, []);
+      const p = (e as { pitch_degrees?: number | string | null }).pitch_degrees;
+      pitchQueues.get(key)!.push(p != null ? Number(p) : 0);
+    });
+  }
+
+  const hydratedMeasurements: TakeoffHydrationMeasurement[] = (measurements ?? []).map(m => {
+    let pitch: number | null = null;
+    if (m.component_library_id === null && m.measurement_type === 'area') {
+      const areaId = (m as { quote_roof_area_id?: string | null }).quote_roof_area_id ?? null;
+      if (areaId) {
+        const queue = pitchQueues.get(`${areaId}::${m.page_id ?? ''}`);
+        if (queue && queue.length > 0) pitch = queue.shift()!;
+      }
+    }
+    return {
+      id: m.id,
+      componentId: m.component_library_id,
+      type: m.measurement_type,
+      value: Number(m.measurement_value),
+      unit: m.measurement_unit,
+      points: (m.canvas_points as { x: number; y: number }[] | null),
+      visible: m.is_visible ?? true,
+      pageId: m.page_id,
+      quoteRoofAreaId: (m as { quote_roof_area_id?: string | null }).quote_roof_area_id ?? null,
+      pitch,
+    };
+  });
 
   return {
     sessionId: session.id,
