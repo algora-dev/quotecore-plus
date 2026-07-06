@@ -297,6 +297,20 @@ export function TakeoffWorkstation({
   const [sessionVersion, setSessionVersion] = useState<number | null>(
     hydrationData?.sessionVersion ?? null,
   );
+  // Version ref (2026-07-06): React state is async/batched, so concurrent
+  // saves (page-switch auto-save + main save, or multiple area creates) can
+  // read a stale sessionVersion from closure. The ref is always current.
+  const sessionVersionRef = useRef<number | null>(hydrationData?.sessionVersion ?? null);
+  const updateSessionVersion = useCallback((updater: (prev: number | null) => number | null) => {
+    setSessionVersion(prev => {
+      const next = updater(prev);
+      sessionVersionRef.current = next;
+      return next;
+    });
+  }, []);
+  // Sync ref whenever sessionVersion state changes from external sources
+  // (e.g. hydration, getTakeoffSessionVersion sync).
+  useEffect(() => { sessionVersionRef.current = sessionVersion; }, [sessionVersion]);
   // Guard so the one-shot hydration effect only fires on first mount.
   const hydrationAppliedRef = useRef<boolean>(false);
   // Canvas-rework: track when the canvas background image has loaded so
@@ -1034,14 +1048,14 @@ export function TakeoffWorkstation({
             quote.id, allMeasurements,
             calibrations[0]?.unit || 'feet',
             undefined, undefined, // no canvas snapshot on auto-save
-            currentPageDbId, sessionVersion,
+            currentPageDbId, sessionVersionRef.current,
             activeAreaId, // target the outgoing area
             // Fix (2026-07-05): persist the outgoing page's calibration —
             // dropping it here left pages with scale_calibration=NULL, which
             // forced a pointless recalibration on every re-entry/page switch.
             calibrations.length > 0 ? calibrations : null,
           );
-          setSessionVersion(prev => (prev != null ? prev + 1 : 1));
+          updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
         }
       } catch (err) {
         console.warn('[SwitchArea] Auto-save failed, continuing with switch:', err);
@@ -1185,11 +1199,11 @@ export function TakeoffWorkstation({
             quote.id, allMeasurements,
             calibrations[0]?.unit || 'feet',
             undefined, undefined,
-            currentPid, sessionVersion,
+            currentPid, sessionVersionRef.current,
             activeAreaId,
             calibrations.length > 0 ? calibrations : null,
           );
-          setSessionVersion(prev => (prev != null ? prev + 1 : 1));
+          updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
           setIsDirty(false);
         }
       } catch (err) {
@@ -1551,13 +1565,13 @@ export function TakeoffWorkstation({
                     const persistResult = await saveTakeoffMeasurements(
                       quote.id, outgoingMeasurements,
                       outgoingCalibrations[0]?.unit || 'feet',
-                      undefined, undefined, currentPageDbId, sessionVersion,
+                      undefined, undefined, currentPageDbId, sessionVersionRef.current,
                       outgoingAreaId,
                       // Fix (2026-07-05): persist calibration on this path too.
                       outgoingCalibrations.length > 0 ? outgoingCalibrations : null,
                     );
                     if (persistResult.success) {
-                      setSessionVersion(prev => (prev != null ? prev + 1 : 1));
+                      updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
                     }
                   }
                 } catch (persistErr) {
@@ -2409,7 +2423,7 @@ export function TakeoffWorkstation({
         canvasImagePath,
         linesImagePath,
         currentPageDbId,
-        sessionVersion, // P1-1a: optimistic version guard
+        sessionVersionRef.current, // P1-1a: optimistic version guard (ref: always current, never stale)
         // P1-3: activeSaveRoofAreaId tracks the target area for the current
         // page. Starts as initialRoofAreaId (for mode=new-page entries) and
         // is updated client-side when the user uploads another plan.
@@ -2435,7 +2449,7 @@ export function TakeoffWorkstation({
       }
 
       // P1-1a: increment local version to match what the RPC wrote.
-      setSessionVersion(prev => (prev != null ? prev + 1 : 1));
+      updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
       setIsDirty(false);
 
       // Parent/child plans (2026-07-05): stamp fresh drawings with the page
@@ -2456,7 +2470,7 @@ export function TakeoffWorkstation({
       // version, and every flush below bumps it again. Passing the stale
       // `sessionVersion` made every flush fail STALE_TAKEOFF_VERSION silently
       // (caught + warn-logged), losing other areas' data on Save & Continue.
-      let versionCursor = (sessionVersion ?? 0) + 1;
+      let versionCursor = (sessionVersionRef.current ?? 0) + 1;
 
       // Phase 4: flush any dirty cached areas from areaCanvasStatesRef.
       // Each cached area's measurements are saved with their own quote_roof_area_id.
@@ -2526,9 +2540,9 @@ export function TakeoffWorkstation({
       // false "Takeoff edited in another tab" (STALE_TAKEOFF_VERSION) errors.
       try {
         const authoritativeVersion = await getTakeoffSessionVersion(quote.id);
-        setSessionVersion(authoritativeVersion ?? versionCursor);
+        updateSessionVersion(() => authoritativeVersion ?? versionCursor);
       } catch {
-        setSessionVersion(versionCursor);
+        updateSessionVersion(() => versionCursor);
       }
       // Parent/child plans (2026-07-05): DO NOT clear the cache. It mirrors
       // DB state and drives every non-active area's panel/canvas — clearing
