@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { CustomerQuoteTemplateRow } from '@/app/lib/types';
 
-type CreationMode = 'scratch' | 'starter' | 'copy' | null;
+type CreationMode = 'scratch' | 'copy' | null;
 
 interface Props {
   workspaceSlug: string;
@@ -17,20 +17,11 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [templateName, setTemplateName] = useState('');
 
-  const starterTemplate = existingTemplates.find(t => t.is_starter_template);
-  const customTemplates = existingTemplates.filter(t => !t.is_starter_template);
-
   const handleContinue = () => {
     if (!mode) return;
 
     if (mode === 'scratch') {
       router.push(`/${workspaceSlug}/customer-quote-templates/create/build?name=${encodeURIComponent(templateName)}`);
-    } else if (mode === 'starter') {
-      if (!starterTemplate) {
-        alert('Starter template not found. Please contact support.');
-        return;
-      }
-      router.push(`/${workspaceSlug}/customer-quote-templates/create/build?name=${encodeURIComponent(templateName)}&starter=true`);
     }
   };
 
@@ -61,7 +52,7 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
             value={templateName}
             onChange={(e) => setTemplateName(e.target.value)}
             placeholder="e.g. Standard Roofing Quote"
-            className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           />
         </div>
 
@@ -95,41 +86,8 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
             </div>
           </button>
 
-          {/* Option 2: Use Starter */}
-          <button
-            onClick={() => setMode('starter')}
-            className={`w-full text-left p-6 rounded-xl border-2 transition-all ${
-              mode === 'starter'
-                ? 'border-orange-500 bg-blue-50'
-                : 'border-slate-200 bg-white hover:border-slate-300'
-            }`}
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-slate-900 mb-1">
-                  Use Starter Template
-                </h3>
-                <p className="text-sm text-slate-600">
-                  Start with our pre-built template with basic company details and layout
-                </p>
-                {starterTemplate && (
-                  <div className="mt-2 text-xs text-slate-500">
-                    Includes: Company details section, logo area, and footer for terms
-                  </div>
-                )}
-              </div>
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                mode === 'starter' ? 'border-orange-500 bg-black' : 'border-slate-300'
-              }`}>
-                {mode === 'starter' && (
-                  <div className="w-2 h-2 bg-white rounded-full" />
-                )}
-              </div>
-            </div>
-          </button>
-
-          {/* Option 3: Copy Existing */}
-          {customTemplates.length > 0 && (
+          {/* Option 2: Copy Existing */}
+          {existingTemplates.length > 0 && (
             <div
               className={`rounded-xl border-2 transition-all ${
                 mode === 'copy'
@@ -168,10 +126,10 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
                   <select
                     value={selectedTemplateId}
                     onChange={(e) => setSelectedTemplateId(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                   >
                     <option value="">Choose a template...</option>
-                    {customTemplates.map((template) => (
+                    {existingTemplates.map((template) => (
                       <option key={template.id} value={template.id}>
                         {template.name}
                       </option>

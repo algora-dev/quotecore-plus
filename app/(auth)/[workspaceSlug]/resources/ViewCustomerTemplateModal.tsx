@@ -76,14 +76,6 @@ export function ViewCustomerTemplateModal({ template, onClose }: Props) {
             </p>
           </div>
 
-          {/* Metadata */}
-          {template.is_starter_template && (
-            <div className="pt-6 border-t border-slate-200">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                Starter Template
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Footer */}

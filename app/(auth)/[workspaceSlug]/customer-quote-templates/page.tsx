@@ -51,9 +51,6 @@ export default async function CustomerQuoteTemplatesPage({
                     Template Name
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                    Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
                     Company Name
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">
@@ -67,17 +64,6 @@ export default async function CustomerQuoteTemplatesPage({
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-slate-900">{template.name}</div>
                     </td>
-                    <td className="px-6 py-4">
-                      {template.is_starter_template ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                          Starter
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          Custom
-                        </span>
-                      )}
-                    </td>
                     <td className="px-6 py-4 text-sm text-slate-600">
                       {template.company_name || '-'}
                     </td>
@@ -88,16 +74,12 @@ export default async function CustomerQuoteTemplatesPage({
                       >
                         View
                       </Link>
-                      {!template.is_starter_template && (
-                        <>
-                          <Link
-                            href={`/${workspaceSlug}/customer-quote-templates/${template.id}/edit`}
-                            className="text-sm text-slate-600 hover:text-slate-700"
-                          >
-                            Edit
-                          </Link>
-                        </>
-                      )}
+                      <Link
+                        href={`/${workspaceSlug}/customer-quote-templates/${template.id}/edit`}
+                        className="text-sm text-slate-600 hover:text-slate-700"
+                      >
+                        Edit
+                      </Link>
                     </td>
                   </tr>
                 ))}

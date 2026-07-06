@@ -1879,11 +1879,11 @@ export async function loadCustomerQuoteTemplates() {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
-  // Load all templates: company-owned + starter template
+  // Load company-owned templates only (starter template removed)
   const { data: templates, error } = await supabase
     .from('customer_quote_templates')
     .select('*')
-    .or(`company_id.eq.${profile.company_id},is_starter_template.eq.true`)
+    .eq('company_id', profile.company_id)
     .order('name');
 
   if (error) throw new Error(error.message);

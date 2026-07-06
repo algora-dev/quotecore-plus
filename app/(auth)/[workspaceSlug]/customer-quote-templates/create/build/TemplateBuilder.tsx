@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { CustomerQuoteTemplateRow } from '@/app/lib/types';
 import { createCustomerQuoteTemplate } from './actions';
 import { createClient } from '@/app/lib/supabase/client';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
@@ -10,36 +9,22 @@ import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModa
 interface Props {
   workspaceSlug: string;
   templateName: string;
-  useStarter: boolean;
-  starterTemplate: CustomerQuoteTemplateRow | null;
   /** When true the company is over storage - block logo upload. */
   isOverStorage?: boolean;
 }
 
-export function TemplateBuilder({ workspaceSlug, templateName, useStarter, starterTemplate, isOverStorage }: Props) {
+export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: Props) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [storageBlocked, setStorageBlocked] = useState(false);
 
-  // Company details (pre-filled from starter if applicable)
-  const [companyName, setCompanyName] = useState(
-    useStarter && starterTemplate ? starterTemplate.company_name || '' : ''
-  );
-  const [companyAddress, setCompanyAddress] = useState(
-    useStarter && starterTemplate ? starterTemplate.company_address || '' : ''
-  );
-  const [companyPhone, setCompanyPhone] = useState(
-    useStarter && starterTemplate ? starterTemplate.company_phone || '' : ''
-  );
-  const [companyEmail, setCompanyEmail] = useState(
-    useStarter && starterTemplate ? starterTemplate.company_email || '' : ''
-  );
-  const [footerText, setFooterText] = useState(
-    useStarter && starterTemplate ? starterTemplate.footer_text || '' : ''
-  );
-  const [logoUrl, setLogoUrl] = useState<string | null>(
-    useStarter && starterTemplate ? starterTemplate.company_logo_url || null : null
-  );
+  // Company details (always start blank)
+  const [companyName, setCompanyName] = useState('');
+  const [companyAddress, setCompanyAddress] = useState('');
+  const [companyPhone, setCompanyPhone] = useState('');
+  const [companyEmail, setCompanyEmail] = useState('');
+  const [footerText, setFooterText] = useState('');
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,7 +114,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
             {templateName}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            {useStarter ? 'Customize starter template details' : 'Build your customer quote template'}
+            Build your customer quote template
           </p>
         </div>
 
@@ -150,7 +135,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="Your Company Name"
-                className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
@@ -163,7 +148,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
                 value={companyPhone}
                 onChange={(e) => setCompanyPhone(e.target.value)}
                 placeholder="+64 21 123 4567"
-                className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
@@ -176,7 +161,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
                 value={companyEmail}
                 onChange={(e) => setCompanyEmail(e.target.value)}
                 placeholder="info@yourcompany.com"
-                className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
@@ -189,7 +174,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
                 value={companyAddress}
                 onChange={(e) => setCompanyAddress(e.target.value)}
                 placeholder="123 Main Street, City, Country"
-                className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -261,7 +246,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, useStarter, start
             onChange={(e) => setFooterText(e.target.value)}
             placeholder="e.g. Payment due within 30 days. Quote valid for 30 days. All work carried out to industry standards."
             rows={4}
-            className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           />
         </div>
 

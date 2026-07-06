@@ -73,7 +73,7 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines: _savedLines, t
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -82,7 +82,7 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines: _savedLines, t
                 type="tel"
                 value={companyPhone}
                 onChange={(e) => setCompanyPhone(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -91,7 +91,7 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines: _savedLines, t
                 type="email"
                 value={companyEmail}
                 onChange={(e) => setCompanyEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -100,7 +100,7 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines: _savedLines, t
                 type="text"
                 value={companyAddress}
                 onChange={(e) => setCompanyAddress(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
             </div>
           </div>
@@ -113,7 +113,7 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines: _savedLines, t
             value={footerText}
             onChange={(e) => setFooterText(e.target.value)}
             rows={4}
-            className="w-full px-3 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
           />
         </div>
 
