@@ -1,71 +1,52 @@
-# Smoke Test Checklist — Takeoff Parent/Child Plans (Round 6)
+# Smoke Test Checklist
 
-## Status: BUILT (round 6) — awaiting smoke test on Dev
+## Status: Main production test — commit `9b652e0` on `main`
 
-### Build history
-- `c4ee521` — 9-phase area fixes (round 1)
-- `a6cf527` — 5 smoke-test-1 bug fixes (round 2)
-- `1212a9c` — 2 smoke-test-2 bug fixes (round 3)
-- `784b131` — RC-1 through RC-6 + area assignment modal removal (round 4)
-- `efda453`/`aefe57c` — area ownership (draw-time stamping) + RPC repair (round 5)
-- round 6 (current) — PARENT/CHILD PLANS: each named area holds multiple plans (numbered child slots), per-plan calibration, state-wipe fixes, session-version authoritative sync
+### Pending verification (test on app.quote-core.com)
 
-### Round 6 changes (Shaun-approved Option A, 2026-07-05)
-1. **Parent/child model**: each area can hold multiple plans; numbered chips (1, 2, 3…) under each area card in the left panel; click chip = view that plan's image + its drawings; components/totals stay parent-level (aggregate across plans). No DB changes — page_id + quote_roof_area_id already existed.
-2. **Upload → existing area**: plan becomes a child slot of the chosen parent instantly. No second dialog, no "+ New Area" click. Calibrate + measure; everything rolls to the parent.
-3. **Upload → new area**: after calibrating the new plan, area drawing mode arms AUTOMATICALLY (no "+ New Area" click). Draw boundary → name it → done.
-4. **State-wipe fixes**: `loadPageImage` no longer wipes all areas' state on upload-to-existing; save no longer clears the per-area cache (both caused "Garage/Main Roof went blank"); `handleSwitchArea` no longer calls the state-wiping loader.
-5. **Page-corruption fix**: cached-area flush now groups by the page each row was DRAWN on — no more re-homing other pages' drawings onto the current plan.
-6. **Version fix**: after every save chain the client fetches the authoritative version from the DB (new `getTakeoffSessionVersion` action) — kills the false "Takeoff edited in another tab" error.
-7. **Per-plan calibration**: each plan keeps its own scale; restored on chip/area switch; re-entry restores the ACTIVE page's calibration (not blindly page 1's).
-8. Canvas redraw filters shapes by page (reconstructCanvas `belongsOnPage`) and preserves `quoteRoofAreaId` through redraws.
+**A. Quote email sending**
+- [ ] Open a quote → Send → enter recipient email → send
+- [ ] Email arrives in recipient inbox (check spam if not visible)
+- [ ] Quote acceptance link in the email works (opens accept page)
 
-### Round 10 (2026-07-06, commits `e62f7ae`+`4014ce3`) — PASSED ✅
-- [x] Re-entry pitch preservation: quote 6ef48466 — all entries survived save/re-enter/save cycle with correct pitches
-- [x] Fresh quote full flow: create takeoff with multiple areas, pitches, components → save → quote builder shows all correct
-- [x] STALE_TAKEOFF_VERSION false error resolved (sessionVersionRef fix)
-- [x] Pitch math verified against DB: every entry = raw polygon area × 1/cos(pitch), all match
+**B. Follow-ups**
+- [ ] After sending a quote, schedule a follow-up (e.g. "Chase in 2 days")
+- [ ] Verify follow-up appears in Activity → Scheduled Messages
+- [ ] If 30+ min have passed, verify follow-up dispatches (check recipient inbox)
 
-### Round 9 (2026-07-06, commit `7b0c6b2`) — PASSED ✅ (superseded by Round 10 verification)
-- [ ] Page switch: draw on Plan 1 → switch to Plan 2 → draw → switch back to Plan 1 → data still there (auto-save persisted)
-- [ ] Multi-plan: add area to existing parent from 3rd plan → save → quote builder shows all child areas including 3rd plan
-- [ ] Per-entry pitch: draw area with 15° pitch → draw another with 25° → quote builder shows `@ 15°` and `@ 25°` per entry
-- [ ] Parent pitch: first area's pitch becomes parent `calc_pitch_degrees`; second area with different pitch does NOT overwrite it
-- [ ] Regression: no duplicate areas in quote builder
+**C. Quote notes**
+- [ ] Open a quote → Summary page → Notes panel
+- [ ] Add a note (title + body) → saves without error
+- [ ] Note appears in the list after adding
+- [ ] Edit the note → saves without error
+- [ ] Delete the note → removes without error
+- [ ] If error occurs: copy the EXACT error message for Gavin
 
-### Round 8 (2026-07-05 late, commit `6011806`) — pending verification
-- [ ] Quote c7a973e1 (Digital Test): Main Roof shows exactly 3 entries (4.04 + 66.14 on Page 1, 37.92 on Plan 2), total 108.10 m² — duplicates #2/#4 gone (data repaired)
-- [ ] Re-enter takeoff on c7a973e1: Plan 1 canvas now SHOWS the two area polygons (66.14 + 4.04) — they were re-homed from Plan 2
-- [ ] NOTE: third Main Roof entry is now 37.92 (not 41.95) — 41.95 was a stale first-save value; 37.92 matches the actual stored polygon
-- [ ] Fresh quote full flow: draw areas on plan 1 IMMEDIATELY after load → upload plan 2 to existing area → draw → new area → Save & Continue → NO duplicate entries in any parent (retro-stamp + RPC v5 fix)
-- [ ] Per-area flush no longer wipes another area's same-page measurements (RPC v5 area-scoped delete)
+**D. "Server Components render" error**
+- [ ] Navigate through all main pages: Quotes list, Quote Builder, Summary, Takeoff, Resources, Invoices, Orders, Account, Dashboard
+- [ ] Note which page (if any) shows the "An error occurred in the Server Components render" error
+- [ ] If you see it: tell Gavin the URL / page name so he can debug
 
-### Round 7 (2026-07-05 eve, commits `15aa64c`/`c39cf02`/`09c8143`) — pending verification
-- [ ] Quote ee6609ab: Main Roof Valley = 17.74 m, Ridge = 13.54 m in quote builder (Plan 2 entries restored)
-- [ ] Re-enter takeoff on ee6609ab: Page 1 shows the ORIGINAL plan image (not Q Area's)
-- [ ] Switch to Main Roof Plan 2: NO calibration modal (inherits/restores scale)
-- [ ] Upload new plan → create NEW area: component panel starts EMPTY (no stale actives)
-- [ ] Measure same area on plan A, save, measure on plan B, save, re-save from plan A → plan B entries survive (component + area totals cross-page correct)
-- [ ] Area duplicates still gone (regression check on 820be48c)
-- [ ] Components under correct areas still (regression check on 42630e51)
-- [ ] NOTE: the ~4+ m² area Shaun drew on ee6609ab Plan 2 was unrecoverable (deleted before page-scoping existed) — re-draw it on Plan 2 and confirm it persists
+**E. Template builder — starter removed**
+- [ ] Go to Resources → Templates → Create Template
+- [ ] Only two options visible: "Build from Scratch" and "Copy Existing" (no "Use Starter Template")
+- [ ] Build from Scratch → all input fields have square-ish corners (rounded-lg, NOT pill/rounded-full)
+- [ ] Footer textarea has rounded-lg corners (not fully round)
+- [ ] Save a template → appears in list without "Starter" badge
+- [ ] Templates list page: no "Type" column (removed)
 
-### Pending verification (fresh quote recommended)
-- [ ] Plan 1: calibrate → draw Main Roof + components → "+ New Area" → Garage on same plan → totals/panels per area correct
-- [ ] Save & Upload another plan → "Add to existing: Main Roof" → NO second dialog; calibrate; draw a component → it appears under Main Roof's parent component list
-- [ ] Left panel: Main Roof now shows chips 1 and 2; clicking 1 shows plan 1 image + its drawings; clicking 2 shows the new plan + its drawings
-- [ ] While on Main Roof chip 2, component list still shows ALL Main Roof components (both plans)
-- [ ] Save & Upload another plan → "Create new area" → calibrate → drawing mode arms itself → draw boundary → name "Teepee" → SAVES with no "edited in another tab" error
-- [ ] Click Garage / Main Roof after uploads → each shows ITS OWN plan image + drawings + components (regression: they went blank/inherited newest image)
-- [ ] Save & Continue → quote builder: entries under correct areas, no duplicates, no cross-page corruption
-- [ ] Re-entry: exit → re-enter → parent areas + child chips rebuilt; each chip shows right image/drawings; calibration correct per plan
-- [ ] Per-area totals = sum of all polygons across that area's plans
-- [ ] Same component on two areas → two line items, one per area
+**F. Quote summary file upload**
+- [ ] Open a quote → Summary page → Files & Documents panel
+- [ ] Click upload icon → select a PDF or image → uploads successfully
+- [ ] File appears in the list after upload
+- [ ] If error: copy the EXACT error message
 
-### Round 5 carryover (retest if touched)
-- [ ] Direct Area tool click with no component → "Select a component first" alert
-- [ ] "+ New Area" does NOT clear the component panel
-- [ ] Drafts do NOT consume monthly quote quota (round 5b fix)
+**G. Mojibake / bad symbols**
+- [ ] Visually scan a few pages for garbled text (âˆ’, ðŸ", â€", etc.)
+- [ ] Especially check: Takeoff toolbar (zoom buttons), Files Manager, any button labels
+- [ ] Report any garbled characters if found
 
 ### Passed (recent)
-- Round 5: RPC saves work (column-name repair verified live, single 2-arg signature)
+- Round 10: Re-entry pitch preservation ✅
+- Round 9: Page-switch auto-save + per-entry pitch ✅
+- Round 5: RPC saves work ✅
