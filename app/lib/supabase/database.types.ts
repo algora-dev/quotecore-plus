@@ -3185,6 +3185,7 @@ export type Database = {
           id: string
           length_m: number
           page_id: string | null
+          pitch_degrees: number | null
           quote_roof_area_id: string
           sort_order: number | null
           source: string
@@ -3197,6 +3198,7 @@ export type Database = {
           id?: string
           length_m: number
           page_id?: string | null
+          pitch_degrees?: number | null
           quote_roof_area_id: string
           sort_order?: number | null
           source?: string
@@ -3209,6 +3211,7 @@ export type Database = {
           id?: string
           length_m?: number
           page_id?: string | null
+          pitch_degrees?: number | null
           quote_roof_area_id?: string
           sort_order?: number | null
           source?: string

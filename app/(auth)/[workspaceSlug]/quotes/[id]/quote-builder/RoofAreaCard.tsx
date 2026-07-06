@@ -152,6 +152,9 @@ export function RoofAreaCard({
                   <span className="text-slate-400 w-6">#{idx + 1}</span>
                   <span className="text-slate-700">
                     {formatLinear(entry.width_m, quote.measurement_system)} × {formatLinear(entry.length_m, quote.measurement_system)} = {formatArea(entry.sqm, quote.measurement_system)}
+                    {entry.pitch_degrees != null && entry.pitch_degrees > 0 && (
+                      <span className="text-slate-400 ml-1">@ {entry.pitch_degrees}°</span>
+                    )}
                   </span>
                   <button
                     onClick={() => onRemoveEntry(entry.id, area.id)}

@@ -1125,7 +1125,7 @@ export function TakeoffWorkstation({
   // Parent/child plans (2026-07-05): switch between the ACTIVE area's plans
   // (child slots 1, 2, 3…). All measurements stay in state — the redraw
   // filter draws only the target page's shapes. Each plan has its own scale.
-  const handleSwitchPage = useCallback((targetPageId: string) => {
+  const handleSwitchPage = useCallback(async (targetPageId: string) => {
     const targetIndex = pages.findIndex(p => p.id === targetPageId);
     if (targetIndex < 0 || targetIndex === currentPageIndex) return;
     const currentPid = pages[currentPageIndex]?.id ?? null;
@@ -1139,6 +1139,57 @@ export function TakeoffWorkstation({
       setRoofAreas(prev => prev.map(ra => ra.fromPageId ? ra : { ...ra, fromPageId: currentPid }));
       if (calibrations.length > 0) {
         pageCalibrationsRef.current.set(currentPid, calibrations.map(c => ({ ...c })));
+      }
+
+      // Fix (2026-07-06): auto-save the current page's measurements to DB
+      // before switching — same pattern as handleSwitchArea. Without this,
+      // measurements drawn on the current page are silently lost when the
+      // user switches pages and then saves from a different page (the main
+      // save filters by fromPageId, and the flush skips the active area).
+      try {
+        const allMeasurements: Array<{
+          componentId: string | null; type: any; value: number;
+          points?: { x: number; y: number }[]; visible: boolean;
+          pitch?: number; name?: string; pageId?: string | null;
+          quoteRoofAreaId?: string | null;
+        }> = [];
+
+        componentMeasurements.forEach(comp => {
+          comp.measurements.forEach(m => {
+            if (m.fromPageId && currentPid && m.fromPageId !== currentPid) return;
+            allMeasurements.push({
+              componentId: comp.componentId, type: m.type, value: m.value,
+              points: m.points, visible: m.visible,
+              pageId: currentPid,
+              quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId,
+            });
+          });
+        });
+
+        roofAreas.forEach(area => {
+          if (area.fromPageId && currentPid && area.fromPageId !== currentPid) return;
+          allMeasurements.push({
+            componentId: null, type: 'area' as const, value: area.area,
+            pitch: area.pitch, name: area.name, points: area.points,
+            visible: area.visible, pageId: currentPid,
+            quoteRoofAreaId: area.quoteRoofAreaId ?? activeAreaId,
+          });
+        });
+
+        if (allMeasurements.length > 0) {
+          await saveTakeoffMeasurements(
+            quote.id, allMeasurements,
+            calibrations[0]?.unit || 'feet',
+            undefined, undefined,
+            currentPid, sessionVersion,
+            activeAreaId,
+            calibrations.length > 0 ? calibrations : null,
+          );
+          setSessionVersion(prev => (prev != null ? prev + 1 : 1));
+          setIsDirty(false);
+        }
+      } catch (err) {
+        console.warn('[SwitchPage] Auto-save failed, continuing with switch:', err);
       }
     }
     setCurrentPageIndex(targetIndex);
@@ -1178,7 +1229,7 @@ export function TakeoffWorkstation({
     setMultiLinealSegmentObjects([]);
     setRedrawNonce(n => n + 1);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pages, currentPageIndex, calibrations]);
+  }, [pages, currentPageIndex, calibrations, componentMeasurements, roofAreas, activeAreaId, sessionVersion, quote.id]);
 
   // Phase 6: "+ New Area" opens a choice modal.
   // - If no areas exist, go straight to drawing mode for a new area.
