@@ -135,12 +135,14 @@ export function useSendDocument(props: SendDocumentProps) {
   useEffect(() => {
     if (mode !== 'send' && mode !== 'email') return;
     if (emailSubject || emailBody) return; // Don't clobber edits.
-    const def = props.emailTemplates.find((t) => t.is_default) || props.emailTemplates[0];
+    const def = props.emailTemplates.find((t) => t.is_default);
     if (def) {
       setSelectedTemplateId(def.id);
       setEmailSubject(replacePlaceholders(def.subject, placeholderData));
       setEmailBody(replacePlaceholders(def.body, placeholderData));
     } else {
+      // No user template marked as default → use built-in default email.
+      setSelectedTemplateId('__default__');
       buildDefaultEmail();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -171,16 +173,20 @@ export function useSendDocument(props: SendDocumentProps) {
 
   function handleTemplateChange(templateId: string) {
     setSelectedTemplateId(templateId);
-    prefillFromTemplate(props.emailTemplates.find((t) => t.id === templateId));
+    if (templateId === '__default__') {
+      buildDefaultEmail();
+    } else {
+      prefillFromTemplate(props.emailTemplates.find((t) => t.id === templateId));
+    }
   }
 
   function openEmailOrSendMode(nextMode: 'email' | 'send') {
-    const def = props.emailTemplates.find((t) => t.is_default) || props.emailTemplates[0];
+    const def = props.emailTemplates.find((t) => t.is_default);
     if (def) {
       setSelectedTemplateId(def.id);
       prefillFromTemplate(def);
     } else {
-      setSelectedTemplateId('');
+      setSelectedTemplateId('__default__');
       buildDefaultEmail();
     }
     setSendError(null);
@@ -214,8 +220,8 @@ export function useSendDocument(props: SendDocumentProps) {
   }
 
   function defaultTemplateId(): string {
-    const def = props.emailTemplates.find((t) => t.is_default) || props.emailTemplates[0];
-    return def?.id ?? selectedTemplateId ?? '';
+    const def = props.emailTemplates.find((t) => t.is_default);
+    return def?.id ?? '__default__';
   }
 
   // ─── Follow-up rule management ───

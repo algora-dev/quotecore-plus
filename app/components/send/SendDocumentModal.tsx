@@ -199,7 +199,7 @@ export function SendDocumentModal(props: SendDocumentProps & { hook: Hook }) {
                   onChange={(e) => handleTemplateChange(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                 >
-                  <option value="">- Select template -</option>
+                  <option value="__default__">Default</option>
                   {emailTemplates.map((t) => (
                     <option key={t.id} value={t.id}>{t.name}{t.is_default ? ' (Default)' : ''}</option>
                   ))}
@@ -278,7 +278,7 @@ export function SendDocumentModal(props: SendDocumentProps & { hook: Hook }) {
                   onChange={(e) => handleTemplateChange(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                 >
-                  <option value="">- None (custom message) -</option>
+                  <option value="__default__">Default</option>
                   {emailTemplates.map((t) => (
                     <option key={t.id} value={t.id}>{t.name}{t.is_default ? ' (Default)' : ''}</option>
                   ))}
