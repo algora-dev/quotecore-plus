@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle, Rect } from 'fabric';
@@ -387,6 +387,10 @@ export function TakeoffWorkstation({
   const [multiLinealMode, setMultiLinealMode] = useState(false);
   const [multiLinealPoints, setMultiLinealPoints] = useState<{ x: number; y: number }[]>([]);
   const [multiLinealSegmentObjects, setMultiLinealSegmentObjects] = useState<any[]>([]); // fabric objects drawn so far
+  // Draggable multi-lineal popup position (null = default top-center).
+  const [popupPos, setPopupPos] = useState<{ x: number; y: number } | null>(null);
+  const popupDragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const popupContainerRef = useRef<HTMLDivElement>(null);
   const [showLineMeasurementPrompt, setShowLineMeasurementPrompt] = useState(false);
   const [pendingLineMeasurement, setPendingLineMeasurement] = useState<{ points: { x: number; y: number }[], length: number } | null>(null);
   const [_showAreaMeasurementPrompt, _setShowAreaMeasurementPrompt] = useState(false);
@@ -2019,6 +2023,7 @@ export function TakeoffWorkstation({
     // Reset multi-lineal state (keep objects on canvas, they're captured above).
     setMultiLinealPoints([]);
     setMultiLinealSegmentObjects([]);
+    setPopupPos(null); // reset popup position on finish
   };
 
   const handleCancelMultiLineal = () => {
@@ -2031,6 +2036,7 @@ export function TakeoffWorkstation({
     setMultiLinealPoints([]);
     setMultiLinealSegmentObjects([]);
     setMultiLinealMode(false);
+    setPopupPos(null); // reset popup position on cancel
   };
 
   // Phase 7: load a new image onto the canvas. Used when switching pages.
@@ -4758,11 +4764,9 @@ export function TakeoffWorkstation({
             </div>
           </div>
 
-          {/* Phase 7: Multi-lineal in-progress floating banner. Lives BELOW the
-              toolbar instead of inside it so the tool buttons + zoom controls
-              never shift around when the user starts a polyline. Absolute-
-              positioned so it overlays the canvas top edge without consuming
-              its own layout row. */}
+          {/* Phase 7: Multi-lineal in-progress floating banner. DRAGGABLE so it
+              never blocks the canvas where the user needs to click. Drag from
+              the grip handle on the left; buttons remain clickable. */}
           {multiLinealMode && multiLinealPoints.length >= 1 && (() => {
             const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / (calibrations.length || 1);
             let runningTotal = 0;
@@ -4772,9 +4776,47 @@ export function TakeoffWorkstation({
               runningTotal += Math.sqrt(dx * dx + dy * dy) * avgScale;
             }
             const segCount = multiLinealPoints.length - 1;
+            const style: CSSProperties = popupPos
+              ? { left: popupPos.x, top: popupPos.y, transform: 'none' }
+              : { left: '50%', transform: 'translateX(-50%)', top: 96 };
             return (
-              <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[96px] z-10">
-                <div className="pointer-events-auto flex items-center gap-3 px-4 py-2 bg-orange-50 border border-orange-300 rounded-full text-sm shadow-md">
+              <div
+                ref={popupContainerRef}
+                className="absolute z-20"
+                style={style}
+              >
+                <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-300 rounded-full text-sm shadow-md">
+                  {/* Drag handle */}
+                  <div
+                    className="cursor-grab active:cursor-grabbing flex items-center text-orange-300 hover:text-orange-500 select-none"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      const container = popupContainerRef.current;
+                      if (!container) return;
+                      const rect = container.getBoundingClientRect();
+                      const parentRect = container.offsetParent?.getBoundingClientRect();
+                      if (!parentRect) return;
+                      const origX = rect.left - parentRect.left;
+                      const origY = rect.top - parentRect.top;
+                      popupDragRef.current = { startX: e.clientX, startY: e.clientY, origX, origY };
+                      const onMove = (ev: MouseEvent) => {
+                        if (!popupDragRef.current) return;
+                        const dx = ev.clientX - popupDragRef.current.startX;
+                        const dy = ev.clientY - popupDragRef.current.startY;
+                        setPopupPos({ x: popupDragRef.current.origX + dx, y: popupDragRef.current.origY + dy });
+                      };
+                      const onUp = () => {
+                        popupDragRef.current = null;
+                        document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('mouseup', onUp);
+                      };
+                      document.addEventListener('mousemove', onMove);
+                      document.addEventListener('mouseup', onUp);
+                    }}
+                    title="Drag to move"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6h2v2H8V6zm0 5h2v2H8v-2zm0 5h2v2H8v-2zm6-10h2v2h-2V6zm0 5h2v2h-2v-2zm0 5h2v2h-2v-2z" /></svg>
+                  </div>
                   <span className="text-orange-800 font-medium whitespace-nowrap">
                     Total: {runningTotal.toFixed(2)}m ({segCount} segment{segCount !== 1 ? 's' : ''})
                   </span>

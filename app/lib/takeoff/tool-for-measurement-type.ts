@@ -15,10 +15,10 @@ export function toolForMeasurementType(type: string): CanvasTool {
     case 'area':
     case 'volume':
     case 'irregular_area':
-    case 'length_x_height':
       return 'area';
     case 'lineal':
     case 'linear':
+    case 'length_x_height':
     case 'length_x_height_freestyle':
       return 'line';
     case 'multi_lineal':

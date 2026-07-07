@@ -50,16 +50,27 @@ export type MeasurementType =
   | 'multi_lineal_lxh_freestyle';
 
 export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet<MeasurementType>>> = {
-  // Roofing: the original v1 types + multi_lineal for gutters/fascia/barge
-  // boards (multi-segment linear components measured run-by-run).
+  // Roofing: original v1 types + multi-segment lineals + wall-area types +
+  // volume/count/hours for ancillary work (concrete pads, fittings, labor).
+  // Roofers commonly do foundation, cladding, and general construction work
+  // alongside the roof, so the whitelist is intentionally broad.
   roofing: new Set<MeasurementType>([
     'area',
     'lineal',
-    'linear',     // legacy alias of lineal (patch_006 rename history)
-    'multi_lineal',         // gutters, fascia, barge boards - multi-segment linear
-    'multi_lineal_lxh',     // plasterboard-style: multi-segment × height
-    'quantity',   // legacy alias of count
+    'linear',                    // legacy alias of lineal
+    'multi_lineal',              // gutters, fascia, barge boards
+    'multi_lineal_lxh',          // multi-segment × height (wall sections)
+    'multi_lineal_lxh_freestyle',
+    'length_x_height',           // single wall: length × height
+    'length_x_height_freestyle',
+    'irregular_area',            // odd-shaped roof sections
+    'volume',                    // concrete pads, excavation
+    'volume_3d',                 // true 3D volume (L × W × D)
+    'curved_line',               // curved gutters, valleys
+    'count',
+    'quantity',                  // legacy alias of count
     'fixed',
+    'hours_days',                // labor
   ]),
   // Cladding: area-producing types (direct area + lineal×height) plus lineal
   // for trim/flashings and fixed/quantity for fittings.
