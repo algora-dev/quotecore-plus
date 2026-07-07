@@ -28,11 +28,12 @@ interface Props {
   hasPriorSend: boolean;
 }
 
-type UnitChoice = 'hours' | 'days';
+type UnitChoice = 'minutes' | 'hours' | 'days';
 
 interface FormState {
   templateId: string;
   triggerEvent: ScheduledTriggerEvent;
+  isInstant: boolean;
   wait: number;
   unit: UnitChoice;
   requireNoResponse: boolean;
@@ -73,6 +74,7 @@ export function ScheduleFollowUpButton({
   const [form, setForm] = useState<FormState>({
     templateId: emailTemplates[0]?.id ?? '',
     triggerEvent: defaultTrigger,
+    isInstant: false,
     wait: 7,
     unit: 'days',
     requireNoResponse: true,
@@ -88,25 +90,34 @@ export function ScheduleFollowUpButton({
   // case the server wins.
   const projectedFire = useMemo(() => {
     const now = new Date();
+    if (form.isInstant) return now;
     const ms =
       form.unit === 'days'
         ? form.wait * 24 * 60 * 60 * 1000
-        : form.wait * 60 * 60 * 1000;
+        : form.unit === 'hours'
+          ? form.wait * 60 * 60 * 1000
+          : form.wait * 60 * 1000;
     let candidate = new Date(now.getTime() + ms);
     if (form.respectQuietHours) {
       candidate = applyQuietHoursClient(candidate);
     }
     return candidate;
-  }, [form.wait, form.unit, form.respectQuietHours]);
+  }, [form.isInstant, form.wait, form.unit, form.respectQuietHours]);
 
-  // Nudge: pushy delay.
-  const isPushyDelay =
+  // Show warning when instant or short delay.
+  const isPushyDelay = form.isInstant ||
     (form.unit === 'days' && form.wait <= 2) ||
-    (form.unit === 'hours' && form.wait <= 48);
+    (form.unit === 'hours' && form.wait <= 48) ||
+    (form.unit === 'minutes' && form.wait <= 120);
+
+  const isEventTrigger =
+    form.triggerEvent === 'quote_accepted' ||
+    form.triggerEvent === 'quote_declined' ||
+    form.triggerEvent === 'quote_revision_requested';
 
   const canSubmit =
     !!form.templateId &&
-    form.wait > 0 &&
+    (form.isInstant || form.wait > 0) &&
     form.recipientEmail.trim().length > 0 &&
     !isPending;
 
@@ -114,14 +125,16 @@ export function ScheduleFollowUpButton({
     if (!canSubmit) return;
     setError(null);
     startTransition(async () => {
-      const waitDays = form.unit === 'days' ? form.wait : 0;
-      const waitHours = form.unit === 'hours' ? form.wait : 0;
+      const waitDays = form.isInstant ? 0 : (form.unit === 'days' ? form.wait : 0);
+      const waitHours = form.isInstant ? 0 : (form.unit === 'hours' ? form.wait : 0);
+      const waitMinutes = form.isInstant ? 0 : (form.unit === 'minutes' ? form.wait : 0);
       const result = await scheduleQuoteFollowUp({
         quoteId,
         templateId: form.templateId,
         triggerEvent: form.triggerEvent,
         waitDays,
         waitHours,
+        waitMinutes,
         requireNoResponse: form.requireNoResponse,
         respectQuietHours: form.respectQuietHours,
         recipientEmail: form.recipientEmail,
@@ -247,27 +260,45 @@ export function ScheduleFollowUpButton({
               {/* Delay */}
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Wait</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min={1}
-                    max={365}
-                    value={form.wait}
-                    onChange={(e) => setForm((f) => ({ ...f, wait: Number(e.target.value) || 0 }))}
-                    className="w-24 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
-                  />
-                  <select
-                    value={form.unit}
-                    onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value as UnitChoice }))}
-                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
-                  >
-                    <option value="hours">hours</option>
-                    <option value="days">days</option>
-                  </select>
-                  <span className="text-xs text-slate-500 flex-1">
-                    after {triggerOptions.find((t) => t.value === form.triggerEvent)?.label.toLowerCase()}
-                  </span>
-                </div>
+                {isEventTrigger ? (
+                  <label className="flex items-center gap-2 text-sm text-slate-700 mb-2">
+                    <input
+                      type="checkbox"
+                      checked={form.isInstant}
+                      onChange={(e) => setForm((f) => ({ ...f, isInstant: e.target.checked }))}
+                      className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                    />
+                    Instant (fire immediately when the event happens)
+                  </label>
+                ) : null}
+                {!form.isInstant ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      max={365}
+                      value={form.wait}
+                      onChange={(e) => setForm((f) => ({ ...f, wait: Number(e.target.value) || 0 }))}
+                      className="w-24 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    />
+                    <select
+                      value={form.unit}
+                      onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value as UnitChoice }))}
+                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    >
+                      <option value="minutes">minutes</option>
+                      <option value="hours">hours</option>
+                      <option value="days">days</option>
+                    </select>
+                    <span className="text-xs text-slate-500 flex-1">
+                      after {triggerOptions.find((t) => t.value === form.triggerEvent)?.label.toLowerCase()}
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500">
+                    Fires immediately when {triggerOptions.find((t) => t.value === form.triggerEvent)?.label.toLowerCase()}
+                  </p>
+                )}
               </div>
 
               {/* Recipient */}
@@ -339,13 +370,31 @@ export function ScheduleFollowUpButton({
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                 {form.triggerEvent === 'quote_accepted' && !quote.accepted_at ? (
                   <p>
-                    Parked until the customer accepts. Then fires {form.wait}{' '}
-                    {form.unit === 'days' ? (form.wait === 1 ? 'day' : 'days') : (form.wait === 1 ? 'hour' : 'hours')} later.
+                    Parked until the customer accepts. Then fires{' '}
+                    {form.isInstant
+                      ? 'instantly'
+                      : `${form.wait} ${
+                          form.unit === 'days'
+                            ? form.wait === 1 ? 'day' : 'days'
+                            : form.unit === 'hours'
+                              ? form.wait === 1 ? 'hour' : 'hours'
+                              : form.wait === 1 ? 'minute' : 'minutes'
+                        } later`}
+                    .
                   </p>
                 ) : form.triggerEvent === 'quote_declined' && !quote.declined_at ? (
                   <p>
-                    Parked until the customer declines. Then fires {form.wait}{' '}
-                    {form.unit === 'days' ? (form.wait === 1 ? 'day' : 'days') : (form.wait === 1 ? 'hour' : 'hours')} later.
+                    Parked until the customer declines. Then fires{' '}
+                    {form.isInstant
+                      ? 'instantly'
+                      : `${form.wait} ${
+                          form.unit === 'days'
+                            ? form.wait === 1 ? 'day' : 'days'
+                            : form.unit === 'hours'
+                              ? form.wait === 1 ? 'hour' : 'hours'
+                              : form.wait === 1 ? 'minute' : 'minutes'
+                        } later`}
+                    .
                   </p>
                 ) : (
                   <p>
@@ -366,7 +415,7 @@ export function ScheduleFollowUpButton({
 
               {isPushyDelay ? (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                  Heads-up: a short delay can come across as pushy. Most contractors find 5–7 days works best for a first follow-up.
+                  Heads-up: a short delay can come across as pushy. Try send follow ups even 10 minutes after the event happens.
                 </div>
               ) : null}
 

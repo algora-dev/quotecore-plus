@@ -201,7 +201,7 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
                 type="text"
                 value={orderType}
                 onChange={(e) => setOrderType(e.target.value)}
-                placeholder="e.g., roof, flashings, underlay"
+                placeholder="e.g., materials, labour, equipment"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
@@ -220,7 +220,7 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
                 <button
                   type="button"
                   onClick={addColour}
-                  className="px-4 py-2 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors"
+                  className="px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors"
                 >
                   Add
                 </button>
@@ -303,7 +303,7 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
                       disabled={uploadingLogo}
                       className="hidden"
                     />
-                    <span className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 hover:bg-slate-50 cursor-pointer transition-colors">
+                    <span className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 cursor-pointer transition-colors">
                       {uploadingLogo ? (
                         <>
                           <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -369,14 +369,14 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
           type="button"
           onClick={onCancel}
           disabled={saving}
-          className="px-6 py-2.5 text-sm font-medium rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors disabled:opacity-50"
+          className="px-6 py-2.5 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={saving}
-          className="px-6 py-2.5 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-50"
+          className="px-6 py-2.5 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-50"
         >
           {saving ? 'Saving...' : mode === 'create' ? 'Create Template' : 'Save Changes'}
         </button>

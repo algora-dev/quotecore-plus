@@ -247,6 +247,60 @@ export async function updateComponent(id: string, input: Partial<ComponentLibrar
   return data;
 }
 
+/**
+ * Returns true if the current user has dismissed the component edit
+ * warning modal ("edited changes only affect new entries").
+ */
+export async function hasDismissedComponentEditWarning(): Promise<boolean> {
+  try {
+    const user = await requireUser();
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from('copilot_progress')
+      .select('dismiss_component_edit_warning')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (error) {
+      console.error('[hasDismissedComponentEditWarning] read failed:', error);
+      return false;
+    }
+    return data?.dismiss_component_edit_warning === true;
+  } catch (err) {
+    console.error('[hasDismissedComponentEditWarning] threw:', err);
+    return false;
+  }
+}
+
+/**
+ * Persist the user's choice to never show the component edit warning again.
+ */
+export async function dismissComponentEditWarning(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const profile = await requireCompanyContext();
+    const supabase = await createSupabaseServerClient();
+    const { error: upsertError } = await supabase
+      .from('copilot_progress')
+      .upsert(
+        {
+          user_id: profile.id,
+          company_id: profile.company_id,
+          dismiss_component_edit_warning: true,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' },
+      );
+    if (upsertError) {
+      console.error('[dismissComponentEditWarning] upsert failed:', upsertError);
+      return { ok: false, error: upsertError.message };
+    }
+    return { ok: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[dismissComponentEditWarning] threw:', message);
+    return { ok: false, error: message };
+  }
+}
+
 export async function deleteComponent(id: string) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();

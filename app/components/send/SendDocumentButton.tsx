@@ -20,7 +20,7 @@ export function SendDocumentButton(props: SendDocumentProps) {
 
   if (props.hidden) return null;
 
-  const { config, handleOpen, showTestTip, setShowTestTip, testTip, openSendModal } = hook;
+  const { config, handleOpen, showTestTip, setShowTestTip, testTip, openSendModal, showNoCustomerQuote, setShowNoCustomerQuote } = hook;
 
   return (
     <>
@@ -42,6 +42,30 @@ export function SendDocumentButton(props: SendDocumentProps) {
           onContinue={() => { testTip.markSeen(); setShowTestTip(false); openSendModal(); }}
           onClose={() => { testTip.markSeen(); setShowTestTip(false); }}
         />
+      )}
+
+      {showNoCustomerQuote && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <h3 className="text-lg font-semibold text-slate-900">Build your customer quote first</h3>
+            <p className="text-sm text-slate-500 mt-2">
+              You need to create a customer quote before sending it. Click the Customer Quote tab then click create.
+            </p>
+            <div className="flex justify-end mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowNoCustomerQuote(false);
+                  // Tell SummaryTabs to switch to the Customer Quote tab.
+                  window.dispatchEvent(new CustomEvent('switch-to-customer-tab'));
+                }}
+                className="px-4 py-2 text-sm font-medium rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              >
+                Ok
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <SendDocumentModal {...props} hook={hook} />

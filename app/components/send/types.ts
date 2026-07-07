@@ -39,4 +39,7 @@ export interface SendDocumentProps {
   existingExpiresAt?: string | null;
   showMarginWarning?: boolean;
   hidden?: boolean;
+  /** Quotes only: false when no customer quote lines exist yet.
+   *  Gates the send button with a "build customer quote first" modal. */
+  hasCustomerQuote?: boolean;
 }

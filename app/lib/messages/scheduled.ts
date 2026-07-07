@@ -1132,17 +1132,28 @@ export async function activateEventScheduledMessages(input: {
   // same audit trail, same final status flip. Best-effort: failures
   // are logged but don't bubble up because the customer's action
   // already succeeded.
+  //
+  // CRITICAL: We must atomically claim each row (flip status from
+  // 'scheduled' -> 'dispatching') BEFORE calling dispatchOne. Without
+  // this claim, dispatchOne's final status update uses
+  // `.eq('status','dispatching')` which silently matches 0 rows (the
+  // row is still 'scheduled'), leaving it visible to the cron sweep
+  // which then dispatches a DUPLICATE. This was the root cause of the
+  // duplicate follow-up bug Shaun reported on 2026-07-07.
   let firedImmediately = 0;
   for (const rowId of dueNowRowIds) {
     try {
-      // Reload with the new fire_at so dispatchOne sees a current row.
-      const { data: freshRow } = await admin
+      // Atomic claim: scheduled -> dispatching. If another sweep already
+      // claimed it, this returns 0 rows and we skip.
+      const { data: claimed } = await admin
         .from('scheduled_messages')
-        .select('*')
+        .update({ status: 'dispatching' })
         .eq('id', rowId)
+        .eq('status', 'scheduled')
+        .select('*')
         .maybeSingle();
-      if (!freshRow || freshRow.status !== 'scheduled') continue;
-      const outcome = await dispatchOne(freshRow as ScheduledMessageRow, admin);
+      if (!claimed) continue; // Already claimed by a concurrent sweep
+      const outcome = await dispatchOne(claimed as ScheduledMessageRow, admin);
       if (outcome === 'sent' || outcome === 'suppressed') firedImmediately += 1;
     } catch (err) {
       console.error('[activateEventScheduledMessages] inline dispatch failed:', err);
