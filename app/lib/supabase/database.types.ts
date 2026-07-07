@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -2825,6 +2825,7 @@ export type Database = {
       }
       quote_components: {
         Row: {
+          calc_audit: Json | null
           calc_pitch_degrees: number | null
           calc_pitch_factor: number | null
           calc_raw_value: number | null
@@ -2862,6 +2863,7 @@ export type Database = {
           waste_type: Database["public"]["Enums"]["waste_type"]
         }
         Insert: {
+          calc_audit?: Json | null
           calc_pitch_degrees?: number | null
           calc_pitch_factor?: number | null
           calc_raw_value?: number | null
@@ -2899,6 +2901,7 @@ export type Database = {
           waste_type?: Database["public"]["Enums"]["waste_type"]
         }
         Update: {
+          calc_audit?: Json | null
           calc_pitch_degrees?: number | null
           calc_pitch_factor?: number | null
           calc_raw_value?: number | null

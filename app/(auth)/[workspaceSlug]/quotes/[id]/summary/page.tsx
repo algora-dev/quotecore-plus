@@ -23,6 +23,7 @@ import { WithdrawQuoteButton } from './WithdrawQuoteButton';
 import { ReopenQuoteButton } from './ReopenQuoteButton';
 import { SummaryTabs } from './SummaryTabs';
 import { SummaryFilesPanel } from './SummaryFilesPanel';
+import { CalcAuditPanel } from '../calc-audit/CalcAuditPanel';
 import { ActivityCard } from './ActivityCard';
 import { QuoteExpiryEditor } from './QuoteExpiryEditor';
 import { QuoteNotesPanel, type QuoteNote } from './QuoteNotesPanel';
@@ -683,6 +684,12 @@ export default async function QuoteSummaryPage({
         />
       </div>
       </div>
+
+      {/* Calculation audit trace — admin only */}
+      {_profile.is_admin && (
+        <CalcAuditPanel quoteId={id} currency={effectiveCurrency} />
+      )}
+
       </SummaryTabs>
 
       {/* Notes panel -- always visible below the main summary content */}
