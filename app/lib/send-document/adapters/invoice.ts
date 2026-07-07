@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Invoice adapter for the unified send-document pipeline.
  *

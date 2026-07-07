@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Order adapter for the unified send-document pipeline.
  *

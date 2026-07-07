@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Quote adapter for the unified send-document pipeline.
  *
