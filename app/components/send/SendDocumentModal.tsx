@@ -578,15 +578,22 @@ function FollowUpBuilder({ hook, props }: { hook: Hook; props: SendDocumentProps
                   )}
 
                   {rule.kind === 'triggered' && (
-                    <label className="flex items-center gap-1.5 text-[11px] text-slate-600">
-                      <input
-                        type="checkbox"
-                        checked={rule.addDelay}
-                        onChange={(e) => updateDraftRule(rule.id, { addDelay: e.target.checked })}
-                        className="rounded"
-                      />
-                      Add delay before sending
-                    </label>
+                    <div className="space-y-1">
+                      <label className="flex items-center gap-1.5 text-[11px] text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={!rule.addDelay}
+                          onChange={(e) => updateDraftRule(rule.id, { addDelay: !e.target.checked })}
+                          className="rounded"
+                        />
+                        Instant (fire immediately when the event happens)
+                      </label>
+                      {!rule.addDelay && (
+                        <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                          Heads-up: a short delay can come across as pushy. Try send follow ups even 10 minutes after the event happens.
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
 

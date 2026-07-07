@@ -1,4 +1,4 @@
-import { loadComponentLibrary, hasSeenComponentsIntro, loadComponentCollections } from './actions';
+import { loadComponentLibrary, hasSeenComponentsIntro, loadComponentCollections, hasDismissedComponentEditWarning } from './actions';
 import { ComponentList } from './component-list';
 import { ComponentsIntroModal } from './components-intro-modal';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
@@ -35,6 +35,7 @@ export default async function ComponentsPage(props: {params: Promise<{workspaceS
   // user has copilot enabled.
   const introSeen = await hasSeenComponentsIntro();
   const collections = await loadComponentCollections();
+  const editWarningDismissed = await hasDismissedComponentEditWarning();
 
   return (
     <>
@@ -51,6 +52,7 @@ export default async function ComponentsPage(props: {params: Promise<{workspaceS
         effectivePlanCode={ent.effectivePlanCode}
         flashingsFeatureEnabled={ent.features.flashings}
         subscriptionActive={ent.isActive}
+        editWarningDismissed={editWarningDismissed}
       />
     </>
   );

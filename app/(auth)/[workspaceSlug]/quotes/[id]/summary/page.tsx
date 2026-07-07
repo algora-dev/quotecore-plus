@@ -503,6 +503,7 @@ export default async function QuoteSummaryPage({
               existingToken={quote.acceptance_token && !quote.withdrawn_at ? quote.acceptance_token : null}
               existingExpiresAt={(quote as { acceptance_token_expires_at?: string | null }).acceptance_token_expires_at ?? null}
               showMarginWarning={!!(quote as { show_margin_in_preview?: boolean | null }).show_margin_in_preview}
+              hasCustomerQuote={hasCustomerQuote}
             />
           </>
         }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection } from './actions';
+import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning } from './actions';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
 import type {
   ComponentLibraryRow,
@@ -39,6 +39,7 @@ export function ComponentList({
   effectivePlanCode,
   flashingsFeatureEnabled,
   subscriptionActive,
+  editWarningDismissed = false,
 }: {
   initialComponents: ComponentLibraryRow[];
   workspaceSlug: string;
@@ -65,6 +66,8 @@ export function ComponentList({
    * before reaching the cap check), so this is purely UX.
    */
   subscriptionActive: boolean;
+  /** Per-user: true when the user has ticked "Don't show me this warning anymore". */
+  editWarningDismissed?: boolean;
 }) {
   const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);
   // Pitch is shown when the trade requires it (roofing) or opts in optionally
@@ -436,13 +439,11 @@ export function ComponentList({
 
   async function handleUpdate(e: React.FormEvent<HTMLFormElement>, id: string) {
     e.preventDefault();
-    setSaving(true);
 
     // Validate per_pack_coverage requires all three pack fields.
     if (formPricingStrategy === 'per_pack_coverage') {
       if (!formPackPrice || !formPackSize || !formPackCoverageM2) {
         alert('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
-        setSaving(false);
         return;
       }
     }
@@ -457,7 +458,6 @@ export function ComponentList({
       const decimals = wasteAmountRaw.split('.')[1];
       if (decimals && decimals.length > 2) {
         alert('Reduce your decimal places to two or less (e.g. 0.25)');
-        setSaving(false);
         return;
       }
     }
@@ -501,8 +501,23 @@ export function ComponentList({
         } as unknown as Partial<ComponentLibraryInsert>)
       : { ...input, collection_id: selectedCollectionId || null, notes: formNotes.trim() || null };
 
+    // If the user hasn't permanently dismissed the warning, show the modal
+    // and stash the data for confirmation.
+    if (!editWarningDismissedState) {
+      setPendingUpdateData({ id, input: inputWithGenericTrades });
+      setEditWarningDontShow(false);
+      setEditWarningOpen(true);
+      return;
+    }
+
+    // Already dismissed — proceed directly.
+    await confirmUpdate(id, inputWithGenericTrades);
+  }
+
+  async function confirmUpdate(id: string, input: Partial<ComponentLibraryInsert>) {
+    setSaving(true);
     try {
-      const updated = await updateComponent(id, inputWithGenericTrades);
+      const updated = await updateComponent(id, input);
       setComponents((prev) => prev.map((c) => (c.id === id ? updated : c)));
       cancelEdit();
     } catch (err) {
@@ -512,8 +527,34 @@ export function ComponentList({
     }
   }
 
+  async function handleConfirmEditWarning() {
+    if (!pendingUpdateData) return;
+    const { id, input } = pendingUpdateData;
+
+    // If user ticked "don't show again", persist to DB.
+    if (editWarningDontShow) {
+      try {
+        await dismissComponentEditWarning();
+        setEditWarningDismissedState(true);
+      } catch (err) {
+        // Non-fatal: the warning will show again next time. Log and continue.
+        console.error('Failed to persist edit warning dismissal:', err);
+      }
+    }
+
+    setEditWarningOpen(false);
+    setPendingUpdateData(null);
+    await confirmUpdate(id, input);
+  }
+
   const [deleteCompId, setDeleteCompId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Component edit warning modal state
+  const [editWarningOpen, setEditWarningOpen] = useState(false);
+  const [editWarningDontShow, setEditWarningDontShow] = useState(false);
+  const [editWarningDismissedState, setEditWarningDismissedState] = useState(editWarningDismissed);
+  const [pendingUpdateData, setPendingUpdateData] = useState<{ id: string; input: Partial<ComponentLibraryInsert> } | null>(null);
 
   async function confirmDeleteComp() {
     if (!deleteCompId) return;
@@ -1426,6 +1467,47 @@ export function ComponentList({
         ctaLabel="View plans"
         recommendedPlan="starter"
       />
+
+      {/* Component Edit Warning Modal */}
+      {editWarningOpen && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">Heads up before saving</h3>
+            <p className="text-sm text-slate-500 mt-2">
+              Beware: edited changes will only affect new component entries moving forward, not previously saved component entries.
+            </p>
+            <label className="flex items-center gap-2 mt-4 text-xs text-slate-600">
+              <input
+                type="checkbox"
+                checked={editWarningDontShow}
+                onChange={(e) => setEditWarningDontShow(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+              />
+              Don’t show me this warning anymore
+            </label>
+            <div className="flex gap-3 justify-end mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditWarningOpen(false);
+                  setPendingUpdateData(null);
+                }}
+                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleConfirmEditWarning()}
+                disabled={saving}
+                className="px-4 py-2 text-sm font-medium rounded-full bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              >
+                {saving ? 'Saving...' : 'Confirm and Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

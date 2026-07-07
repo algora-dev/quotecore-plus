@@ -90,6 +90,9 @@ export function useSendDocument(props: SendDocumentProps) {
   const [followUpSaving, setFollowUpSaving] = useState(false);
   const [followUpError, setFollowUpError] = useState<string | null>(null);
 
+  // Customer-quote-required guard (quotes only)
+  const [showNoCustomerQuote, setShowNoCustomerQuote] = useState(false);
+
   const isPlanGated = sendError?.includes("isn't included in your current plan") ?? false;
 
   const today = new Date().toLocaleDateString('en-GB', {
@@ -153,8 +156,9 @@ export function useSendDocument(props: SendDocumentProps) {
 
   function buildDefaultEmail() {
     const name = props.defaultRecipientName ? ` ${props.defaultRecipientName}` : '';
+    const quoteNumber = props.mergeData.quote_number || '';
     const subject = `${config.noun} from ${props.mergeData.company_name || 'us'}`;
-    const body = `Hi${name},\n\nPlease find your ${config.noun.toLowerCase()} at the following link:\n\n${publicUrl || `[${config.noun} link will appear here]`}\n\nKind regards`;
+    const body = `Hi${name},\n\nPlease click the button below to view quote${quoteNumber ? ` ${quoteNumber}` : ''}. You can accept, decline, or request more information directly in the page below the quote via the buttons.\n\nPlease accept or decline the quote, this helps us a lot.\n\nKind regards`;
     setEmailSubject(subject);
     setEmailBody(body);
   }
@@ -197,6 +201,11 @@ export function useSendDocument(props: SendDocumentProps) {
   }
 
   function handleOpen() {
+    // Quotes only: block sending if no customer quote has been built yet.
+    if (props.entityKind === 'quote' && props.hasCustomerQuote === false) {
+      setShowNoCustomerQuote(true);
+      return;
+    }
     if (testTip.shouldShow) {
       setShowTestTip(true);
       return;
@@ -483,5 +492,8 @@ export function useSendDocument(props: SendDocumentProps) {
     bodyHasExtraUrls,
     goCreateTemplate,
     emailTemplates: props.emailTemplates,
+    // customer-quote guard
+    showNoCustomerQuote,
+    setShowNoCustomerQuote,
   };
 }

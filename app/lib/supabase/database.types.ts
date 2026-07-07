@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -1122,6 +1122,7 @@ export type Database = {
           created_at: string | null
           current_guide: string | null
           current_step: number | null
+          dismiss_component_edit_warning: boolean
           guides_completed: string[] | null
           id: string
           updated_at: string | null
@@ -1134,6 +1135,7 @@ export type Database = {
           created_at?: string | null
           current_guide?: string | null
           current_step?: number | null
+          dismiss_component_edit_warning?: boolean
           guides_completed?: string[] | null
           id?: string
           updated_at?: string | null
@@ -1146,6 +1148,7 @@ export type Database = {
           created_at?: string | null
           current_guide?: string | null
           current_step?: number | null
+          dismiss_component_edit_warning?: boolean
           guides_completed?: string[] | null
           id?: string
           updated_at?: string | null

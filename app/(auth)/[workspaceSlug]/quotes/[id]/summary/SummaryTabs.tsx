@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import jsPDF from 'jspdf';
@@ -62,6 +62,14 @@ export function SummaryTabs({
   summaryHeaderSlot,
 }: Props) {
   const [activeTab, setActiveTab] = useState<'summary' | 'customer' | 'labor'>('summary');
+
+  // Listen for the "switch to customer tab" event from the SendDocumentButton
+  // guard modal (fires when user tries to send without a customer quote).
+  useEffect(() => {
+    const handler = () => setActiveTab('customer');
+    window.addEventListener('switch-to-customer-tab', handler);
+    return () => window.removeEventListener('switch-to-customer-tab', handler);
+  }, []);
 
   return (
     <>
