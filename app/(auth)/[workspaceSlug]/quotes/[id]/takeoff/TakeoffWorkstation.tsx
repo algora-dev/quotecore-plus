@@ -1044,7 +1044,7 @@ export function TakeoffWorkstation({
         });
 
         if (allMeasurements.length > 0) {
-          await saveTakeoffMeasurements(
+          const switchSaveResult = await saveTakeoffMeasurements(
             quote.id, allMeasurements,
             calibrations[0]?.unit || 'feet',
             undefined, undefined, // no canvas snapshot on auto-save
@@ -1055,7 +1055,13 @@ export function TakeoffWorkstation({
             // forced a pointless recalibration on every re-entry/page switch.
             calibrations.length > 0 ? calibrations : null,
           );
-          updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
+          // Only bump local version if the save actually succeeded.
+          // If it failed (e.g. STALE_VERSION), bumping causes further drift.
+          if (switchSaveResult.success) {
+            updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
+          } else {
+            console.warn('[SwitchArea] Auto-save rejected:', (switchSaveResult as { error?: string }).error);
+          }
         }
       } catch (err) {
         console.warn('[SwitchArea] Auto-save failed, continuing with switch:', err);
@@ -1195,7 +1201,7 @@ export function TakeoffWorkstation({
         });
 
         if (allMeasurements.length > 0) {
-          await saveTakeoffMeasurements(
+          const pageSaveResult = await saveTakeoffMeasurements(
             quote.id, allMeasurements,
             calibrations[0]?.unit || 'feet',
             undefined, undefined,
@@ -1203,8 +1209,12 @@ export function TakeoffWorkstation({
             activeAreaId,
             calibrations.length > 0 ? calibrations : null,
           );
-          updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
-          setIsDirty(false);
+          if (pageSaveResult.success) {
+            updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
+            setIsDirty(false);
+          } else {
+            console.warn('[SwitchPage] Auto-save rejected:', (pageSaveResult as { error?: string }).error);
+          }
         }
       } catch (err) {
         console.warn('[SwitchPage] Auto-save failed, continuing with switch:', err);
@@ -2447,6 +2457,44 @@ export function TakeoffWorkstation({
         // since we return errors rather than throwing.
         const msg = saveResult.error;
         if (msg.includes('STALE_TAKEOFF_VERSION')) {
+          // Recovery: fetch the authoritative version from DB and retry once.
+          // The version drift is usually caused by a prior auto-save that
+          // bumped the DB version without the client knowing (e.g. a
+          // page-switch save that succeeded but whose response was lost).
+          try {
+            const authoritativeVersion = await getTakeoffSessionVersion(quote.id);
+            if (authoritativeVersion != null) {
+              updateSessionVersion(() => authoritativeVersion);
+              // Retry the save with the correct version.
+              const retryResult = await saveTakeoffMeasurements(
+                quote.id,
+                allMeasurements,
+                calibrations[0]?.unit || 'feet',
+                canvasImagePath,
+                linesImagePath,
+                currentPageDbId,
+                authoritativeVersion,
+                activeSaveRoofAreaId,
+                calibrations.length > 0 ? calibrations : null,
+              );
+              if (retryResult.success) {
+                updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
+                setIsDirty(false);
+                // Continue with post-save logic (stamping, cache, etc.)
+                if (currentPageDbId) {
+                  setComponentMeasurements(prev => prev.map(c => ({
+                    ...c,
+                    measurements: c.measurements.map(m => ({ ...m, fromPageId: currentPageDbId }))
+                  })));
+                  pageCalibrationsRef.current.set(currentPageDbId, calibrations.map(c => ({ ...c })));
+                }
+                return true;
+              }
+            }
+          } catch (retryErr) {
+            console.warn('[SaveTakeoff] STALE_VERSION retry failed:', retryErr);
+          }
+          // If retry didn't succeed, show the error.
           showAlert(
             'Takeoff edited in another tab',
             'Your takeoff was saved from another browser tab. Reload this page to see the latest version, then continue measuring.',
