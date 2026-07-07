@@ -1,52 +1,25 @@
 # Smoke Test Checklist
 
-## Status: Main production test — commit `9b652e0` on `main`
+## Status: Baseline `ea0cf06` on BOTH main + development (2026-07-07)
 
 ### Pending verification (test on app.quote-core.com)
 
-**A. Quote email sending**
-- [ ] Open a quote → Send → enter recipient email → send
-- [ ] Email arrives in recipient inbox (check spam if not visible)
-- [ ] Quote acceptance link in the email works (opens accept page)
+**A. Digital takeoff regression check (Shaun doing now)**
+- [ ] Open a quote → Takeoff → measure, save, re-enter → everything persists
+- [ ] Multi-page: switch pages, verify measurements/calibrations survive
+- [ ] Pitch values preserved on re-entry (35° stays 35°)
 
-**B. Follow-ups**
-- [ ] After sending a quote, schedule a follow-up (e.g. "Chase in 2 days")
-- [ ] Verify follow-up appears in Activity → Scheduled Messages
-- [ ] If 30+ min have passed, verify follow-up dispatches (check recipient inbox)
+**B. Follow-ups (leftover from last round — not yet confirmed)**
+- [ ] After sending a quote, schedule a follow-up → appears in Activity → Scheduled Messages
+- [ ] Follow-up dispatches after its fire time (check recipient inbox)
 
-**C. Quote notes**
-- [ ] Open a quote → Summary page → Notes panel
-- [ ] Add a note (title + body) → saves without error
-- [ ] Note appears in the list after adding
-- [ ] Edit the note → saves without error
-- [ ] Delete the note → removes without error
-- [ ] If error occurs: copy the EXACT error message for Gavin
-
-**D. "Server Components render" error**
-- [ ] Navigate through all main pages: Quotes list, Quote Builder, Summary, Takeoff, Resources, Invoices, Orders, Account, Dashboard
-- [ ] Note which page (if any) shows the "An error occurred in the Server Components render" error
-- [ ] If you see it: tell Gavin the URL / page name so he can debug
-
-**E. Template builder — starter removed**
-- [ ] Go to Resources → Templates → Create Template
-- [ ] Only two options visible: "Build from Scratch" and "Copy Existing" (no "Use Starter Template")
-- [ ] Build from Scratch → all input fields have square-ish corners (rounded-lg, NOT pill/rounded-full)
-- [ ] Footer textarea has rounded-lg corners (not fully round)
-- [ ] Save a template → appears in list without "Starter" badge
-- [ ] Templates list page: no "Type" column (removed)
-
-**F. Quote summary file upload**
-- [ ] Open a quote → Summary page → Files & Documents panel
-- [ ] Click upload icon → select a PDF or image → uploads successfully
-- [ ] File appears in the list after upload
-- [ ] If error: copy the EXACT error message
-
-**G. Mojibake / bad symbols**
-- [ ] Visually scan a few pages for garbled text (âˆ’, ðŸ", â€", etc.)
-- [ ] Especially check: Takeoff toolbar (zoom buttons), Files Manager, any button labels
-- [ ] Report any garbled characters if found
+**C. Template create flow (changed 2026-07-07)**
+- [ ] Resources → tab now reads "Customer quote templates" (renamed)
+- [ ] Create Template → goes STRAIGHT to the builder (selector page removed)
+- [ ] Builder "Back" and "Cancel" return to the templates list (no redirect loop)
 
 ### Passed (recent)
+- 2026-07-07 baseline test by Shaun ✅ — quote email send, quote notes add/edit/delete, summary file upload, no Server-Components 500s (root cause: 'use server' on adapter files, fixed in `ea0cf06`)
 - Round 10: Re-entry pitch preservation ✅
 - Round 9: Page-switch auto-save + per-entry pitch ✅
 - Round 5: RPC saves work ✅
