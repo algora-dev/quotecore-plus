@@ -154,7 +154,7 @@ export function TemplateEditor({ workspaceSlug, template, componentLibrary, cust
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Standard Residential Roof"
+                placeholder="e.g., Standard Quote Template"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 required
               />
@@ -168,20 +168,20 @@ export function TemplateEditor({ workspaceSlug, template, componentLibrary, cust
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="e.g., Standard setup for residential roofing jobs"
+                placeholder="e.g., Standard setup for typical jobs"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Roofing Profile
+                Profile / Type
               </label>
               <input
                 type="text"
                 value={roofingProfile}
                 onChange={(e) => setRoofingProfile(e.target.value)}
-                placeholder="e.g., Tile, Metal, Shingle"
+                placeholder="e.g., Standard, Premium, Basic"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
@@ -191,7 +191,7 @@ export function TemplateEditor({ workspaceSlug, template, componentLibrary, cust
           <div className="space-y-3 pt-6 border-t border-slate-200">
             <h3 className="text-sm font-semibold text-slate-900">Main Components</h3>
             <p className="text-xs text-slate-500">
-              Components that will be pre-added to roof areas when building a quote
+              Components that will be pre-added to areas when building a quote
             </p>
 
             <div>
