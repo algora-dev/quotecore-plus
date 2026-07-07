@@ -2326,8 +2326,13 @@ export function TakeoffWorkstation({
         });
         
         try {
-          canvasImagePath = await uploadCanvasImage(quote.id, fullDataUrl);
-          console.log('[SaveTakeoff] Full canvas image uploaded (path):', canvasImagePath);
+          const uploadResult = await uploadCanvasImage(quote.id, fullDataUrl);
+          if (uploadResult.ok) {
+            canvasImagePath = uploadResult.path;
+            console.log('[SaveTakeoff] Full canvas image uploaded (path):', canvasImagePath);
+          } else {
+            console.error('[SaveTakeoff] Failed to upload full canvas image:', uploadResult.error);
+          }
         } catch (uploadError) {
           console.error('[SaveTakeoff] Failed to upload full canvas image:', uploadError);
         }
@@ -2401,8 +2406,13 @@ export function TakeoffWorkstation({
           canvas.renderAll();
           
           // Upload lines-only image
-          linesImagePath = await uploadCanvasImage(quote.id, linesDataUrl, 'lines');
-          console.log('[SaveTakeoff] Lines-only image uploaded (path):', linesImagePath);
+          const linesResult = await uploadCanvasImage(quote.id, linesDataUrl, 'lines');
+          if (linesResult.ok) {
+            linesImagePath = linesResult.path;
+            console.log('[SaveTakeoff] Lines-only image uploaded (path):', linesImagePath);
+          } else {
+            console.error('[SaveTakeoff] Failed to upload lines-only image:', linesResult.error);
+          }
         } catch (linesError) {
           console.error('[SaveTakeoff] Failed to export lines-only image:', linesError);
         }

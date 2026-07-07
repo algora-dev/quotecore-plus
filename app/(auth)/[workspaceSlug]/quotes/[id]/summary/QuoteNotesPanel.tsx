@@ -57,12 +57,12 @@ function NoteRow({ note, onUpdated, onDeleted }: NoteRowProps) {
   function handleSaveEdit() {
     setError(null);
     startTransition(async () => {
-      try {
-        await updateQuoteNote(note.id, editTitle, editBody);
+      const result = await updateQuoteNote(note.id, editTitle, editBody);
+      if (result.ok) {
         onUpdated({ ...note, title: editTitle.trim(), body: editBody.trim(), updated_at: new Date().toISOString() });
         setEditing(false);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Save failed');
+      } else {
+        setError(result.error);
       }
     });
   }
@@ -70,11 +70,11 @@ function NoteRow({ note, onUpdated, onDeleted }: NoteRowProps) {
   function doDelete() {
     setConfirmDelete(false);
     startTransition(async () => {
-      try {
-        await deleteQuoteNote(note.id);
+      const result = await deleteQuoteNote(note.id);
+      if (result.ok) {
         onDeleted(note.id);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Delete failed');
+      } else {
+        setError(result.error);
       }
     });
   }
@@ -217,11 +217,11 @@ function AddNoteForm({ onAdded, onCancel, quoteId, currentUserFullName }: AddFor
   function handleSave() {
     setError(null);
     startTransition(async () => {
-      try {
-        const { id } = await addQuoteNote(quoteId, title, body);
+      const result = await addQuoteNote(quoteId, title, body);
+      if (result.ok) {
         const now = new Date().toISOString();
         onAdded({
-          id,
+          id: result.id!,
           title: title.trim(),
           body: body.trim(),
           created_at: now,
@@ -231,8 +231,8 @@ function AddNoteForm({ onAdded, onCancel, quoteId, currentUserFullName }: AddFor
         });
         setTitle('');
         setBody('');
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to save note');
+      } else {
+        setError(result.error);
       }
     });
   }

@@ -105,7 +105,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
         {/* Header */}
         <div>
           <Link
-            href={`/${workspaceSlug}/customer-quote-templates/create`}
+            href={`/${workspaceSlug}/customer-quote-templates`}
             className="text-sm text-slate-500 hover:text-slate-700"
           >
             ← Back
@@ -316,7 +316,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
         {/* Actions */}
         <div className="flex gap-3 justify-end pt-4">
           <Link
-            href={`/${workspaceSlug}/customer-quote-templates/create`}
+            href={`/${workspaceSlug}/customer-quote-templates`}
             className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50"
           >
             Cancel

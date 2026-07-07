@@ -102,7 +102,7 @@ export function TemplatesPageClient({
 
   const TABS: { key: typeof activeTab; label: string }[] = [
     { key: 'quote', label: 'Quote Templates' },
-    { key: 'customer', label: 'Quote Header Templates' },
+    { key: 'customer', label: 'Customer quote templates' },
     { key: 'email', label: 'Message Templates' },
     { key: 'order', label: 'Order Header Templates' },
     { key: 'catalogs', label: 'Catalogs' },

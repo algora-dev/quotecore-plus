@@ -98,10 +98,10 @@ export async function sendDocumentMessage(
     }
   }
 
-  // ─── 5. Load company row (name, currency) ───
+  // ─── 5. Load company row (name, currency, slug) ───
   const { data: company } = await supabase
     .from('companies')
-    .select('name, default_currency')
+    .select('name, default_currency, slug')
     .eq('id', profile.company_id)
     .maybeSingle();
 
@@ -211,9 +211,8 @@ export async function sendDocumentMessage(
   }
 
   // ─── 13. Revalidate paths ───
-  // We don't have workspaceSlug in the server action context, but
-  // revalidatePath with the literal pattern works for Next.js route invalidation.
-  for (const path of adapter.revalidatePaths('', input.entityId)) {
+  const workspaceSlug = company?.slug ?? '';
+  for (const path of adapter.revalidatePaths(workspaceSlug, input.entityId)) {
     revalidatePath(path);
   }
 

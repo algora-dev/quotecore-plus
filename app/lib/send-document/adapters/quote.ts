@@ -158,7 +158,7 @@ export const quoteAdapter: DocumentSendAdapter = {
 
   revalidatePaths(workspaceSlug, entityId) {
     return [
-      `/[workspaceSlug]/quotes/${entityId}/summary`,
+      `/${workspaceSlug}/quotes/${entityId}/summary`,
     ];
   },
 

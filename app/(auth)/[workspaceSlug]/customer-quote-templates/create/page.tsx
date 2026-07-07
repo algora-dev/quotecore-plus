@@ -1,21 +1,16 @@
+import { redirect } from 'next/navigation';
 import { requireCompanyContext } from '@/app/lib/supabase/server';
-import { loadCustomerQuoteTemplates } from '../../quotes/actions';
-import { TemplateCreator } from './TemplateCreator';
 
 export default async function CreateTemplatePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ workspaceSlug: string }>;
+  searchParams: Promise<{ name?: string }>;
 }) {
   const { workspaceSlug } = await params;
   await requireCompanyContext();
-
-  const existingTemplates = await loadCustomerQuoteTemplates();
-
-  return (
-    <TemplateCreator
-      workspaceSlug={workspaceSlug}
-      existingTemplates={existingTemplates}
-    />
-  );
+  const { name } = await searchParams;
+  const nameParam = name ? `?name=${encodeURIComponent(name)}` : '';
+  redirect(`/${workspaceSlug}/customer-quote-templates/create/build${nameParam}`);
 }

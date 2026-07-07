@@ -95,7 +95,7 @@ export default async function ResourcesHubPage({
       ),
     },
     {
-      title: 'Quote Header Templates',
+      title: 'Customer quote templates',
       description: 'Customer-facing quote header layouts',
       href: `${base}/resources/quote-header-templates`,
       copilot: 'resources-card-quote-header-templates',

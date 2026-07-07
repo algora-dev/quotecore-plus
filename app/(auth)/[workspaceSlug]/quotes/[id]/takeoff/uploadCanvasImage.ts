@@ -4,6 +4,8 @@ import { requireCompanyContext } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 
+type UploadResult = { ok: true; path: string } | { ok: false; error: string };
+
 /**
  * Upload a canvas snapshot to QUOTE-DOCUMENTS and return its STORAGE PATH.
  *
@@ -22,7 +24,7 @@ export async function uploadCanvasImage(
   quoteId: string,
   dataUrl: string,
   suffix: string = '',
-): Promise<string> {
+): Promise<UploadResult> {
   const profile = await requireCompanyContext();
   // Gerald audit H-05: storage RLS denies direct authenticated INSERT on
   // QUOTE-DOCUMENTS. This server action already runs under server auth +
@@ -32,7 +34,7 @@ export async function uploadCanvasImage(
   // Convert data URL to blob
   const base64Data = dataUrl.split(',')[1];
   if (!base64Data) {
-    throw new Error('Invalid canvas data URL');
+    return { ok: false, error: 'Invalid canvas data URL' };
   }
 
   const buffer = Buffer.from(base64Data, 'base64');
@@ -53,9 +55,9 @@ export async function uploadCanvasImage(
 
   if (error) {
     console.error('[uploadCanvasImage] Upload failed:', error);
-    throw new Error(`Failed to upload canvas image: ${error.message}`);
+    return { ok: false, error: `Failed to upload canvas image: ${error.message}` };
   }
 
   // Return the storage path. Callers sign on render.
-  return data.path;
+  return { ok: true, path: data.path };
 }

@@ -137,8 +137,8 @@ export const invoiceAdapter: DocumentSendAdapter = {
 
   revalidatePaths(workspaceSlug, entityId) {
     return [
-      `/[workspaceSlug]/invoices/${entityId}`,
-      `/[workspaceSlug]/invoices`,
+      `/${workspaceSlug}/invoices/${entityId}`,
+      `/${workspaceSlug}/invoices`,
     ];
   },
 

@@ -11,6 +11,7 @@ import { useState, useTransition, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { sendDocumentMessage } from '@/app/lib/send-document/orchestrator';
 import { scheduleDocumentFollowUp } from '@/app/lib/send-document/followups';
+import { generateAcceptanceToken } from '@/app/(auth)/[workspaceSlug]/quotes/actions';
 import { useSendTestTip } from './sendTestTip';
 import type { SendDocumentProps, EmailTemplate } from './types';
 import { ENTITY_CONFIG } from './entityConfig';
@@ -115,11 +116,17 @@ export function useSendDocument(props: SendDocumentProps) {
       // Static tokens (invoice) should already be in props.existingToken.
       return;
     }
-    // For idempotent-generate (order) and expiring-commit (quote, PR2),
-    // we'd call ensureDocumentToken here. For now, orders use the existing
-    // token passed from the server. This effect is primarily for quote (PR2).
-    // We'll fully wire this in PR 2 when we add the quote adapter.
-  }, [mode, token, tokenLoading, config.tokenStrategy]);
+    if (config.tokenStrategy === 'idempotent-generate') {
+      // Orders: token should already be in props.existingToken (server-side).
+      return;
+    }
+    // Expiring-commit (quote): fetch a token for display without committing expiry/job_status.
+    setTokenLoading(true);
+    generateAcceptanceToken(props.entityId, 30, false)
+      .then((t) => setToken(t))
+      .catch((err) => setSendError(err instanceof Error ? err.message : 'Failed to generate link.'))
+      .finally(() => setTokenLoading(false));
+  }, [mode, token, tokenLoading, config.tokenStrategy, props.entityId]);
 
   // ─── Prefill subject/body when entering send/email mode ───
   useEffect(() => {

@@ -134,7 +134,7 @@ export const orderAdapter: DocumentSendAdapter = {
   // No afterSend for orders.
 
   revalidatePaths(workspaceSlug, entityId) {
-    return [`/[workspaceSlug]/material-orders/${entityId}/preview`];
+    return [`/${workspaceSlug}/material-orders/${entityId}/preview`];
   },
 
   filterAttachments(sel) {
