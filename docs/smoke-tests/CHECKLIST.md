@@ -1,6 +1,6 @@
 # Smoke Test Checklist
 
-## Status: `main` at `158f17d` · `development` at `cc98660`
+## Status: `main` at `158f17d` · `development` at `4b8c323`
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
 
@@ -11,6 +11,7 @@
 - [ ] Preset L×H / Volume(preset depth) component: row shows the preset H/D from the library
 - [ ] Pitched component (takeoff): row shows `… °` pitch next to H/D; no-waste component shows `- (H: … · 45°)` without "Incl waste"
 - [ ] Takeoff re-entry + re-save: H/D values still shown after re-save (hydration passthrough)
+- [ ] Two-area takeoff: draw freestyle/volume entries on area 1, create/switch to area 2, save → area 1 entries KEEP their H/D display (redraw no longer strips entryInputs, fix `4b8c323`)
 - [ ] Old entries (pre-v8): show nothing extra — no fake values; quantities/costs unchanged everywhere
 - [ ] Imperial quote: H/D display in ft
 

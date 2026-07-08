@@ -977,6 +977,9 @@ export function TakeoffWorkstation({
   const handleSwitchArea = useCallback(async (targetAreaId: string, targetPageId?: string) => {
     if (targetAreaId === activeAreaId) return;
 
+    // Discard any in-progress drawing before switching areas
+    discardInProgressDrawing();
+
     // Parent/child plans (2026-07-05): stamp un-stamped (freshly drawn)
     // measurements with the page they were drawn on before caching, and
     // preserve the cache entry's pageIds (hydration wrote them; a plain
@@ -1169,6 +1172,10 @@ export function TakeoffWorkstation({
   const handleSwitchPage = useCallback(async (targetPageId: string) => {
     const targetIndex = pages.findIndex(p => p.id === targetPageId);
     if (targetIndex < 0 || targetIndex === currentPageIndex) return;
+
+    // Discard any in-progress drawing before switching pages
+    discardInProgressDrawing();
+
     const currentPid = pages[currentPageIndex]?.id ?? null;
     // Stamp fresh drawings with the page they were drawn on so the redraw
     // filter doesn't carry them onto the target page.
@@ -1819,14 +1826,39 @@ export function TakeoffWorkstation({
     tempBoxRectRef.current = null;
   };
 
+  // Discard any in-progress drawing buffers + remove their preview dots from canvas.
+  // Called on every tool switch, component switch, and area switch.
+  // Committed measurements (tagged with measurementId) are never touched.
+  const discardInProgressDrawing = useCallback(() => {
+    setLinePoints([]);
+    setAreaPoints([]);
+    setMultiLinealPoints([]);
+    setMultiLinealSegmentObjects(prev => {
+      if (fabricRef.current) {
+        prev.forEach((obj: any) => {
+          if (obj && !obj.measurementId) fabricRef.current!.remove(obj);
+        });
+        fabricRef.current.requestRenderAll();
+      }
+      return [];
+    });
+    // Remove in-progress vertex markers (yellow dots) from canvas
+    const canvas = fabricRef.current;
+    if (canvas) {
+      canvas.getObjects().slice().forEach((obj: any) => {
+        if (obj.isInProgressMarker) canvas.remove(obj);
+      });
+      canvas.requestRenderAll();
+    }
+  }, []);
+
   const applyToolForType = (measurementType: string, forComponentId?: string) => {
     cleanupBoxDrag();
+    discardInProgressDrawing();
     setLineMode(false);
     setAreaMode(false);
     setPointMode(false);
     setMultiLinealMode(false);
-    setMultiLinealPoints([]);
-    setMultiLinealSegmentObjects([]);
     const tool = toolForMeasurementType(measurementType);
     if (tool === 'line') {
       setLineMode(true);
@@ -1867,6 +1899,8 @@ export function TakeoffWorkstation({
   
   const handleRemoveComponent = (componentId: string) => {
     pushHistorySnapshot();
+    // Discard any in-progress drawing when removing a component
+    discardInProgressDrawing();
     // Remove from active list
     setActiveComponentIds(activeComponentIds.filter(id => id !== componentId));
     
