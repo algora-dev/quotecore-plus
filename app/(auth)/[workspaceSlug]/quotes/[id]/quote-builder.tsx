@@ -316,7 +316,7 @@ export function QuoteBuilder({
     });
   }
 
-  async function handleAddEntry(compId: string, rawInputValue: number, options?: { bypassHeightMultiplier?: boolean; bypassDepthMultiplier?: boolean; convertAs?: 'area' | 'linear' | 'volume' | 'none' }) {
+  async function handleAddEntry(compId: string, rawInputValue: number, options?: { bypassHeightMultiplier?: boolean; bypassDepthMultiplier?: boolean; convertAs?: 'area' | 'linear' | 'volume' | 'none'; entryHeightM?: number | null; entryDepthM?: number | null }) {
     const comp = components.find(c => c.id === compId);
     // Convert imperial inputs to metric for storage. The helpers handle the
     // 3 systems correctly:

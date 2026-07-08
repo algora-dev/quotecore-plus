@@ -33,7 +33,7 @@ export function ExpandableComponent({
   roofArea?: QuoteRoofAreaRow;
   quote: QuoteRow;
   currency: string;
-  onAddEntry: (compId: string, rawValue: number, options?: { bypassHeightMultiplier?: boolean; bypassDepthMultiplier?: boolean; convertAs?: 'area' | 'linear' | 'volume' | 'none' }) => Promise<void>;
+  onAddEntry: (compId: string, rawValue: number, options?: { bypassHeightMultiplier?: boolean; bypassDepthMultiplier?: boolean; convertAs?: 'area' | 'linear' | 'volume' | 'none'; entryHeightM?: number | null; entryDepthM?: number | null }) => Promise<void>;
   onUseRoofArea?: (compId: string, roofAreaSqm: number) => Promise<void>;
   onRemoveEntry: (entryId: string, compId: string) => Promise<void>;
   onRemove: (id: string) => Promise<void>;
@@ -155,7 +155,8 @@ export function ExpandableComponent({
     const Lm = linearInputToMetric(L, quote.measurement_system);
     const Hm = linearInputToMetric(H, quote.measurement_system);
     // Product is already metric m²; skip auto-conversion.
-    await onAddEntry(comp.id, Lm * Hm, { convertAs: 'none' });
+    // v8: pass the entered height for read-only display on the entry row.
+    await onAddEntry(comp.id, Lm * Hm, { convertAs: 'none', entryHeightM: Hm });
     setLxhFsL('');
     setLxhFsH('');
     lxhFsRef.current?.focus();
@@ -171,7 +172,8 @@ export function ExpandableComponent({
     // Product is already metric area (m²); skip auto-conversion.
     // For length_x_height: user provided L×H = area directly, bypass preset height.
     const opts = isLxhPreset
-      ? { bypassHeightMultiplier: true, convertAs: 'none' as const }
+      // v8: dimB is the user's height for L×H — pass for read-only display.
+      ? { bypassHeightMultiplier: true, convertAs: 'none' as const, entryHeightM: Bm }
       : { convertAs: 'none' as const };
     await onAddEntry(comp.id, Am * Bm, opts);
     setDimA('');
@@ -199,7 +201,8 @@ export function ExpandableComponent({
     const Wm = linearInputToMetric(W, quote.measurement_system);
     const Dm = linearInputToMetric(D, quote.measurement_system);
     // Skip auto-conversion since we already converted.
-    await onAddEntry(comp.id, Lm * Wm * Dm, { convertAs: 'none' });
+    // v8: pass the entered depth for read-only display on the entry row.
+    await onAddEntry(comp.id, Lm * Wm * Dm, { convertAs: 'none', entryDepthM: Dm });
     setVol3dL('');
     setVol3dW('');
     setVol3dD('');
@@ -227,7 +230,8 @@ export function ExpandableComponent({
     const Am = areaInputToMetric(A, quote.measurement_system);
     const Dm = linearInputToMetric(D, quote.measurement_system);
     // Product is already metric m³; skip auto-conversion.
-    await onAddEntry(comp.id, Am * Dm, { convertAs: 'none' });
+    // v8: pass the entered depth for read-only display on the entry row.
+    await onAddEntry(comp.id, Am * Dm, { convertAs: 'none', entryDepthM: Dm });
     setAdArea('');
     setAdDepth('');
     adAreaRef.current?.focus();
@@ -389,12 +393,34 @@ export function ExpandableComponent({
                     combined from {sourceCount}
                   </span>
                 )}
-                {comp.waste_type !== 'none' && !isCombined && (
-                  <span className="text-slate-400">
-                    → {displayValue(entry.value_after_waste)}{' '}
-                    <span className="text-slate-300">(+waste)</span>
-                  </span>
-                )}
+                {!isCombined && (() => {
+                  // v8 (2026-07-08): read-only input reference display. Shows
+                  // the values used to produce this entry's final value —
+                  // height/depth (user-entered or preset snapshot) and pitch.
+                  // Purely informational; never feeds any calculation.
+                  const ei = (entry as unknown as { entry_inputs?: { height_m?: number | null; depth_m?: number | null } | null }).entry_inputs;
+                  const ep = (entry as unknown as { pitch_degrees?: number | string | null }).pitch_degrees;
+                  const refParts: string[] = [];
+                  if (ei?.height_m && Number(ei.height_m) > 0) refParts.push(`H: ${formatLinear(Number(ei.height_m), quote.measurement_system)}`);
+                  if (ei?.depth_m && Number(ei.depth_m) > 0) refParts.push(`D: ${formatLinear(Number(ei.depth_m), quote.measurement_system)}`);
+                  if (comp.pitch_type !== 'none' && ep != null && Number(ep) > 0) {
+                    const deg = Number(ep);
+                    refParts.push(`${Number.isInteger(deg) ? deg.toFixed(0) : deg.toFixed(1)}°`);
+                  }
+                  const hasWaste = comp.waste_type !== 'none';
+                  const valuesDiffer = Math.abs(entry.value_after_waste - entry.raw_value) > 1e-6;
+                  if (!hasWaste && refParts.length === 0) return null;
+                  return (
+                    <span className="text-slate-400">
+                      {(hasWaste || valuesDiffer) && <>→ {displayValue(entry.value_after_waste)}{' '}</>}
+                      {hasWaste ? (
+                        <span className="text-slate-300">- Incl waste{refParts.length > 0 ? ` (${refParts.join(' · ')})` : ''}</span>
+                      ) : (
+                        <span className="text-slate-300">- ({refParts.join(' · ')})</span>
+                      )}
+                    </span>
+                  );
+                })()}
                 {!isCombined && (
                   <button
                     onClick={() => onRemoveEntry(entry.id, comp.id)}

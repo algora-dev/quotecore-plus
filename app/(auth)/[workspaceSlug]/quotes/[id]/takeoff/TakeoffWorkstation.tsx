@@ -92,6 +92,11 @@ interface ComponentMeasurement {
    *  instead of the save-time activeAreaId, so creating a new area no longer
    *  re-assigns earlier measurements to it. */
   quoteRoofAreaId?: string | null;
+  /** v8 (2026-07-08): user-entered height/depth (metric) captured at draw
+   *  time (freestyle L×H height, volume_3d custom depth). READ-ONLY display
+   *  reference — `value` is already the final product. Persisted via
+   *  entry_inputs so re-entry doesn't wipe it. */
+  entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
 }
 
 interface ComponentWithMeasurements {
@@ -161,7 +166,7 @@ interface Calibration {
 /** Serializable undo/redo snapshot. Contains only plain data — no Fabric refs.
  *  The canvas is rebuilt from this via redrawCanvasFromState(). */
 interface TakeoffSnapshot {
-  componentMeasurements: { componentId: string; expanded: boolean; measurements: { id: string; type: ComponentMeasurement['type']; value: number; points?: { x: number; y: number }[]; visible: boolean; fromPageId?: string | null }[] }[];
+  componentMeasurements: { componentId: string; expanded: boolean; measurements: { id: string; type: ComponentMeasurement['type']; value: number; points?: { x: number; y: number }[]; visible: boolean; fromPageId?: string | null; entryInputs?: { height_m?: number | null; depth_m?: number | null } | null }[] }[];
   roofAreas: { id: string; name: string; points: { x: number; y: number }[]; area: number; pitch: number; visible: boolean }[];
   calibrations: Calibration[];
   calibrationPoints: CalibrationPoint[];
@@ -509,6 +514,7 @@ export function TakeoffWorkstation({
           points: m.points ? m.points.map(p => ({ x: p.x, y: p.y })) : undefined,
           visible: m.visible,
           fromPageId: m.fromPageId,
+          entryInputs: m.entryInputs,
           // canvasObjects stripped — rebuilt on redraw
         })),
       })),
@@ -777,7 +783,7 @@ export function TakeoffWorkstation({
       if (m.componentId === null) return;
       const cid = m.componentId!;
       if (!ad.components.has(cid)) ad.components.set(cid, { componentId: cid, measurements: [], expanded: false });
-      ad.components.get(cid)!.measurements.push({ id: m.id, type: m.type as ComponentMeasurement['type'], value: m.value, points: m.points ?? undefined, visible: m.visible, fromPageId: m.pageId ?? null, quoteRoofAreaId: areaKey === '__no_area__' ? null : areaKey });
+      ad.components.get(cid)!.measurements.push({ id: m.id, type: m.type as ComponentMeasurement['type'], value: m.value, points: m.points ?? undefined, visible: m.visible, fromPageId: m.pageId ?? null, quoteRoofAreaId: areaKey === '__no_area__' ? null : areaKey, entryInputs: m.entryInputs ?? null });
     });
 
     // Cache per-area state for handleSwitchArea
@@ -785,7 +791,7 @@ export function TakeoffWorkstation({
       areaCanvasStatesRef.current.set(aid, {
         componentMeasurements: Array.from(ad.components.values()).map(comp => ({
           componentId: comp.componentId, expanded: false,
-          measurements: comp.measurements.map(m => ({ id: m.id, type: m.type, value: m.value, points: m.points, visible: m.visible, fromPageId: m.fromPageId, quoteRoofAreaId: m.quoteRoofAreaId })),
+          measurements: comp.measurements.map(m => ({ id: m.id, type: m.type, value: m.value, points: m.points, visible: m.visible, fromPageId: m.fromPageId, quoteRoofAreaId: m.quoteRoofAreaId, entryInputs: m.entryInputs ?? null })),
         })),
         roofAreas: ad.areas.map(ra => ({ id: ra.id, name: ra.name, points: ra.points, area: ra.area, pitch: ra.pitch, visible: ra.visible, fromPageId: ra.fromPageId, quoteRoofAreaId: ra.quoteRoofAreaId })),
         pageIds: ad.pageIds,
@@ -995,6 +1001,7 @@ export function TakeoffWorkstation({
             id: m.id, type: m.type, value: m.value, points: m.points,
             visible: m.visible, fromPageId: m.fromPageId ?? outgoingPageId,
             quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId,
+            entryInputs: m.entryInputs ?? null,
           })),
         })),
         roofAreas: roofAreas.map(ra => ({
@@ -1019,6 +1026,7 @@ export function TakeoffWorkstation({
           points?: { x: number; y: number }[]; visible: boolean;
           pitch?: number; name?: string; pageId?: string | null;
           quoteRoofAreaId?: string | null;
+          entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
         }> = [];
 
         componentMeasurements.forEach(comp => {
@@ -1029,6 +1037,7 @@ export function TakeoffWorkstation({
               points: m.points, visible: m.visible,
               pageId: currentPageDbId,
               quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId,
+              entryInputs: m.entryInputs ?? null,
             });
           });
         });
@@ -1180,6 +1189,7 @@ export function TakeoffWorkstation({
           points?: { x: number; y: number }[]; visible: boolean;
           pitch?: number; name?: string; pageId?: string | null;
           quoteRoofAreaId?: string | null;
+          entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
         }> = [];
 
         componentMeasurements.forEach(comp => {
@@ -1190,6 +1200,7 @@ export function TakeoffWorkstation({
               points: m.points, visible: m.visible,
               pageId: currentPid,
               quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId,
+              entryInputs: m.entryInputs ?? null,
             });
           });
         });
@@ -1533,6 +1544,7 @@ export function TakeoffWorkstation({
                       id: m.id, type: m.type, value: m.value, points: m.points,
                       visible: m.visible, fromPageId: m.fromPageId,
                       quoteRoofAreaId: m.quoteRoofAreaId ?? outgoingAreaId,
+                      entryInputs: m.entryInputs ?? null,
                     })),
                   })),
                   roofAreas: outgoingRoofAreas.map(ra => ({
@@ -1555,6 +1567,7 @@ export function TakeoffWorkstation({
                     points?: { x: number; y: number }[]; visible: boolean;
                     pitch?: number; name?: string; pageId?: string | null;
                     quoteRoofAreaId?: string | null;
+                    entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
                   }> = [];
                   outgoingComponentMeasurements.forEach(comp => {
                     comp.measurements.forEach(m => {
@@ -1563,6 +1576,7 @@ export function TakeoffWorkstation({
                         componentId: comp.componentId, type: m.type, value: m.value,
                         points: m.points, visible: m.visible, pageId: currentPageDbId,
                         quoteRoofAreaId: m.quoteRoofAreaId ?? outgoingAreaId,
+                        entryInputs: m.entryInputs ?? null,
                       });
                     });
                   });
@@ -1657,6 +1671,7 @@ export function TakeoffWorkstation({
                 id: m.id, type: m.type, value: m.value, points: m.points,
                 visible: m.visible, fromPageId: m.fromPageId ?? cachePageFallback,
                 quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId,
+                entryInputs: m.entryInputs ?? null,
               })),
             })),
             roofAreas: roofAreas.map(ra => ({
@@ -2143,6 +2158,7 @@ export function TakeoffWorkstation({
       canvasObjects: pendingVolumePolygon ? [pendingVolumePolygon] : [],
       quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
       fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
+      entryInputs: { depth_m: depthM }, // v8: user-entered depth (display only)
     };
     // Solid polygon (remove dash preview)
     if (pendingVolumePolygon) {
@@ -2193,6 +2209,7 @@ export function TakeoffWorkstation({
       canvasObjects: pendingFreestyleCanvasObjects,
       quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
       fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
+      entryInputs: { height_m: heightM }, // v8: user-entered height (display only)
     };
     setComponentMeasurements(prev => {
       const exists = prev.some(c => c.componentId === componentId);
@@ -2268,6 +2285,8 @@ export function TakeoffWorkstation({
             // Area-ownership fix (2026-07-05): use the DRAW-time stamp; only
             // fall back to the save-time active area for legacy/unstamped rows.
             quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId ?? activeSaveRoofAreaId,
+            // v8: user-entered H/D reference (display only).
+            entryInputs: m.entryInputs ?? null,
           });
         });
       });
@@ -2548,6 +2567,7 @@ export function TakeoffWorkstation({
         points?: { x: number; y: number }[]; visible: boolean;
         pitch?: number; name?: string; pageId?: string | null;
         quoteRoofAreaId?: string | null;
+        entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
       };
       for (const [cachedAreaId, cachedState] of areaCanvasStatesRef.current.entries()) {
         if (cachedAreaId === activeAreaId) continue; // already saved above
@@ -2564,6 +2584,7 @@ export function TakeoffWorkstation({
               points: m.points, visible: m.visible,
               pageId: pid,
               quoteRoofAreaId: m.quoteRoofAreaId ?? cachedAreaId,
+              entryInputs: m.entryInputs ?? null,
             });
           });
         });
@@ -2662,6 +2683,7 @@ export function TakeoffWorkstation({
           id: m.id, type: m.type, value: m.value, points: m.points,
           visible: m.visible, fromPageId: m.fromPageId ?? pageIdFallback,
           quoteRoofAreaId: m.quoteRoofAreaId ?? areaId,
+          entryInputs: m.entryInputs ?? null,
         })),
       })),
       roofAreas: roofAreas.map(ra => ({
@@ -3804,6 +3826,7 @@ export function TakeoffWorkstation({
               points: m.points || undefined,
               visible: m.visible,
               fromPageId: m.pageId || null,
+              entryInputs: m.entryInputs ?? null,
             });
           });
 

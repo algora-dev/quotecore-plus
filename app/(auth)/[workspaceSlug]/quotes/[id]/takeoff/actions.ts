@@ -19,6 +19,12 @@ interface TakeoffMeasurement {
   /** P1-1a H-01: unit override for measurements loaded from DB (other pages).
    *  When set, this overrides the top-level `unit` param for this measurement. */
   measurementUnit?: string;
+  /** Entry-input reference (v8, 2026-07-08): USER-entered height/depth in
+   *  metric, captured at draw time (freestyle L×H height, volume_3d custom
+   *  depth). Display-only — never feeds calculation (m.value is already the
+   *  final product). Persisted to quote_takeoff_measurements.entry_inputs so
+   *  re-entry hydration + re-save doesn't wipe it. */
+  entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
 }
 
 export async function saveTakeoffMeasurements(
@@ -234,6 +240,22 @@ export async function saveTakeoffMeasurements(
         const depthM = depthMm ? depthMm / 1000 : null;
 
         const entries = componentMeasurements.map((m, index) => {
+          // v8 (2026-07-08): snapshot the input reference values used for this
+          // entry so the quote builder can display them (READ-ONLY — nothing
+          // reads entry_inputs for calculation).
+          //  - preset height/depth: from component_library at save time
+          //  - user height/depth: carried on the measurement (freestyle/volume_3d)
+          let entryInputs: { height_m?: number; depth_m?: number; source?: 'preset' | 'user' } | null = null;
+          if (m.type === 'multi_lineal_lxh' && heightMm && heightM > 0) {
+            entryInputs = { height_m: heightM, source: 'preset' };
+          } else if (m.type === 'area' && libComp.measurement_type === 'volume' && depthM) {
+            entryInputs = { depth_m: depthM, source: 'preset' };
+          } else if ((m.type === 'length_x_height_freestyle' || m.type === 'multi_lineal_lxh_freestyle') && m.entryInputs?.height_m) {
+            entryInputs = { height_m: Number(m.entryInputs.height_m), source: 'user' };
+          } else if (m.type === 'volume_3d' && m.entryInputs?.depth_m) {
+            entryInputs = { depth_m: Number(m.entryInputs.depth_m), source: 'user' };
+          }
+
           // All measurements are from the current page and share the same unit.
           // (H-01 multi-page unit mixing was removed per Gerald audit 2026-05-29.)
           const mToMetricLinear = toMetricLinear;
@@ -300,6 +322,8 @@ export async function saveTakeoffMeasurements(
             // Per-entry pitch (2026-07-08): actual pitch used for this entry so
             // the calc audit + UI can report it faithfully per page/area.
             pitch_degrees: groupPitch,
+            // v8: input reference snapshot (display only).
+            entry_inputs: entryInputs,
           };
         });
 
@@ -345,6 +369,8 @@ export async function saveTakeoffMeasurements(
     measurement_unit: unit,
     canvas_points: m.points ?? null,
     is_visible: m.visible,
+    // v8: user-entered height/depth passthrough (display only).
+    entry_inputs: m.entryInputs ?? null,
     // Phase 7: page_id passed through when the caller supplies it (multi-page
     // takeoff). Omitted for single-page callers - RPC writes NULL.
     ...(m.pageId ? { page_id: m.pageId } : {}),
@@ -482,6 +508,9 @@ export interface TakeoffHydrationMeasurement {
    *  with, from quote_roof_area_entries.pitch_degrees. Null for component
    *  measurements and legacy rows with no matching entry. */
   pitch: number | null;
+  /** v8 (2026-07-08): user-entered height/depth reference values (metric)
+   *  saved with this measurement. Display-only passthrough. */
+  entryInputs: { height_m?: number | null; depth_m?: number | null } | null;
 }
 
 export interface TakeoffHydrationData {
@@ -543,7 +572,7 @@ export async function loadTakeoffHydrationData(
   // 3. Measurements for all pages
   const { data: measurements } = await supabase
     .from('quote_takeoff_measurements')
-    .select('id, component_library_id, measurement_type, measurement_value, measurement_unit, canvas_points, is_visible, page_id, quote_roof_area_id')
+    .select('id, component_library_id, measurement_type, measurement_value, measurement_unit, canvas_points, is_visible, page_id, quote_roof_area_id, entry_inputs')
     .eq('quote_id', quoteId)
     .order('created_at', { ascending: true });
 
@@ -600,6 +629,8 @@ export async function loadTakeoffHydrationData(
       pageId: m.page_id,
       quoteRoofAreaId: (m as { quote_roof_area_id?: string | null }).quote_roof_area_id ?? null,
       pitch,
+      // v8: display-only passthrough so re-save doesn't wipe user H/D values.
+      entryInputs: (m as { entry_inputs?: { height_m?: number | null; depth_m?: number | null } | null }).entry_inputs ?? null,
     };
   });
 

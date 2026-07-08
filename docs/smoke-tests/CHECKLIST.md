@@ -4,6 +4,16 @@
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
 
+**H. Per-entry input reference display + RPC v8 (new on dev, 2026-07-08 pm)**
+- [ ] Entry rows in component phase now read `→ X - Incl waste (…)` — "(+waste)" wording is gone
+- [ ] Freestyle L×H entry (takeoff or builder): entry row shows `(H: <height>)` with the height you typed
+- [ ] Volume custom-depth entry (takeoff depth prompt / builder area+depth): row shows `(D: <depth>)`
+- [ ] Preset L×H / Volume(preset depth) component: row shows the preset H/D from the library
+- [ ] Pitched component (takeoff): row shows `… °` pitch next to H/D; no-waste component shows `- (H: … · 45°)` without "Incl waste"
+- [ ] Takeoff re-entry + re-save: H/D values still shown after re-save (hydration passthrough)
+- [ ] Old entries (pre-v8): show nothing extra — no fake values; quantities/costs unchanged everywhere
+- [ ] Imperial quote: H/D display in ft
+
 **G. Per-area component pitch + RPC v7 (new on dev, 2026-07-08)**
 - [ ] Parent area with 2 plans at different pitches (e.g. 25° + 45°): components on each plan calculate at THEIR area/plan's pitch, not the first area's
 - [ ] Summary page shows "@ X° pitch" next to pitched components

@@ -898,7 +898,7 @@ export async function updateComponentSettings(id: string, updates: { input_mode?
   revalidatePath('/quotes');
 }
 
-export async function addComponentEntry(quoteComponentId: string, rawValue: number, areaPitch: number | null, options?: { bypassHeightMultiplier?: boolean; bypassDepthMultiplier?: boolean }) {
+export async function addComponentEntry(quoteComponentId: string, rawValue: number, areaPitch: number | null, options?: { bypassHeightMultiplier?: boolean; bypassDepthMultiplier?: boolean; entryHeightM?: number | null; entryDepthM?: number | null }) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
   await verifyComponentOwnership(supabase, quoteComponentId, profile.company_id);
@@ -906,6 +906,16 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
   if (!comp) throw new Error('Component not found');
 
   let adjustedValue = rawValue;
+  // v8 (2026-07-08): input reference snapshot for READ-ONLY display in the
+  // entry row. User-entered H/D come via options (dims / area+depth /
+  // freestyle modes); preset H/D are captured below when the multiplier is
+  // applied. Nothing reads entry_inputs for calculation.
+  let entryInputs: { height_m?: number; depth_m?: number; source?: 'preset' | 'user' } | null = null;
+  if (options?.entryHeightM && options.entryHeightM > 0) {
+    entryInputs = { height_m: options.entryHeightM, source: 'user' };
+  } else if (options?.entryDepthM && options.entryDepthM > 0) {
+    entryInputs = { depth_m: options.entryDepthM, source: 'user' };
+  }
   // Fetch component library for height/depth metadata if needed.
   const needsHeightMultiplier =
     !options?.bypassHeightMultiplier &&
@@ -931,6 +941,7 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
       const heightM = libRow?.height_value_mm ? libRow.height_value_mm / 1000 : null;
       if (heightM && heightM > 0) {
         adjustedValue = rawValue * heightM;
+        entryInputs = { height_m: heightM, source: 'preset' }; // v8 display snapshot
       }
     }
 
@@ -940,6 +951,7 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
       const depthM = libRow?.depth_value_mm ? libRow.depth_value_mm / 1000 : null;
       if (depthM && depthM > 0) {
         adjustedValue = rawValue * depthM;
+        entryInputs = { depth_m: depthM, source: 'preset' }; // v8 display snapshot
       }
     }
   }
@@ -947,12 +959,18 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
   const isPlan = comp.input_mode === 'calculated';
   const pitchDegrees = comp.use_custom_pitch ? (comp.custom_pitch_degrees ?? 0) : (areaPitch ?? 0);
   const { afterWaste } = applyPitchAndWaste(adjustedValue, isPlan, comp.pitch_type, pitchDegrees, comp.waste_type, comp.waste_percent, comp.waste_fixed);
+  // v8: store the pitch actually applied (display + audit only — pricing
+  // already baked it into value_after_waste above). applyPitchAndWaste only
+  // applies pitch for calculated-mode components with a pitch type.
+  const pitchApplied = isPlan && comp.pitch_type !== 'none' && pitchDegrees > 0;
   const { data: entry, error } = await supabase.from('quote_component_entries').insert({
     // Store the adjusted area as raw_value (consistent with digital takeoff).
     // The user sees their entered length in the UI; the entry reflects the
     // priced area so totals are correct.
     quote_component_id: quoteComponentId, raw_value: adjustedValue, value_after_waste: afterWaste,
-  }).select().single();
+    pitch_degrees: pitchApplied ? pitchDegrees : null,
+    entry_inputs: entryInputs,
+  } as never).select().single();
   if (error) throw new Error(error.message);
   const componentTotals = await recalcComponentFromEntries(quoteComponentId);
   return { ...entry, componentTotals };
