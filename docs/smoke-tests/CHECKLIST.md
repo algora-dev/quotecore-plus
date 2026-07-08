@@ -1,8 +1,15 @@
 # Smoke Test Checklist
 
-## Status: `main` at `158f17d` · `development` at `09816fb` (4 commits ahead)
+## Status: `main` at `158f17d` · `development` at `cc98660`
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
+
+**G. Per-area component pitch + RPC v7 (new on dev, 2026-07-08)**
+- [ ] Parent area with 2 plans at different pitches (e.g. 25° + 45°): components on each plan calculate at THEIR area/plan's pitch, not the first area's
+- [ ] Summary page shows "@ X° pitch" next to pitched components
+- [ ] Calc audit trace shows real pitchDegrees/pitchFactor per entry (no more pitch hidden inside the waste step)
+- [ ] Upload another plan → prior plan's sub-areas/measurements do NOT appear on the new plan's canvas
+- [ ] Multi-lineal popup drags from anywhere on the bar (not just the grip icon); buttons still click
 
 **A. Calc audit system (new on dev)**
 - [ ] Create a quote with digital takeoff → save → Summary page → expand "Calculation Audit Trace" panel
