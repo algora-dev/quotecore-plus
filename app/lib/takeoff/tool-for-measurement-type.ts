@@ -14,6 +14,7 @@ export function toolForMeasurementType(type: string): CanvasTool {
   switch (type.toLowerCase()) {
     case 'area':
     case 'volume':
+    case 'volume_3d': // L×W×D — drawn as an area polygon, then depth prompt (2026-07-08)
     case 'irregular_area':
       return 'area';
     case 'lineal':
