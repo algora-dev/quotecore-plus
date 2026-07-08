@@ -1,6 +1,6 @@
 # Smoke Test Checklist
 
-## Status: `main` at `158f17d` · `development` at `4b8c323`
+## Status: `main` at `1a80228` · `development` at `8c7826e`
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
 
@@ -14,6 +14,14 @@
 - [ ] Two-area takeoff: draw freestyle/volume entries on area 1, create/switch to area 2, save → area 1 entries KEEP their H/D display (redraw no longer strips entryInputs, fix `4b8c323`)
 - [ ] Old entries (pre-v8): show nothing extra — no fake values; quantities/costs unchanged everywhere
 - [ ] Imperial quote: H/D display in ft
+
+**I. In-progress canvas points discard (new on main, 2026-07-08)**
+- [ ] Start drawing a line (click 1 point), switch to a different component/tool → unfinished point disappears from canvas
+- [ ] Start drawing an area polygon (click 2-3 points), switch tool → dots gone, no orphaned shape
+- [ ] Mid-draw, switch roof area → dots cleared on old area
+- [ ] Mid-draw, switch plan page → dots cleared
+- [ ] Mid-draw, remove the active component → dots cleared
+- [ ] Committed measurements are NOT affected by any of the above
 
 **G. Per-area component pitch + RPC v7 (new on dev, 2026-07-08)**
 - [ ] Parent area with 2 plans at different pitches (e.g. 25° + 45°): components on each plan calculate at THEIR area/plan's pitch, not the first area's
