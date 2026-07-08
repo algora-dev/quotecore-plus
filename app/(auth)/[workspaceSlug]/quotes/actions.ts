@@ -1270,13 +1270,14 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
   // Fetch entries with full detail for calc audit tracing.
   const { data: entries } = await supabase
     .from('quote_component_entries')
-    .select('value_after_waste, raw_value, sort_order, is_combined, combined_from')
+    .select('value_after_waste, raw_value, sort_order, is_combined, combined_from, pitch_degrees')
     .eq('quote_component_id', quoteComponentId) as unknown as { data: Array<{
       value_after_waste: number;
       raw_value: number;
       sort_order: number | null;
       is_combined?: boolean | null;
       combined_from?: Array<{ raw: number; after: number; sort: number }> | null;
+      pitch_degrees?: number | string | null;
     }> | null; error: Error | null };
   const totalQty = (entries ?? []).reduce((sum, e) => sum + Number(e.value_after_waste), 0);
   const { data: comp } = await supabase
@@ -1324,7 +1325,7 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
     }
   }
 
-  const { computeMaterialCostByStrategy, computePackCount } = await import('@/app/lib/pricing/engine');
+  const { computeMaterialCostByStrategy, computePackCount, rafterPitchFactor, hipValleyPitchFactor } = await import('@/app/lib/pricing/engine');
   const costResult = computeMaterialCostByStrategy({
     strategy,
     totalQuantity: totalQty,
@@ -1353,19 +1354,34 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
   const existingAudit = (comp as { calc_audit?: { overrides?: CalcAudit['overrides'] } } | null)?.calc_audit;
   const existingOverrides = existingAudit?.overrides ?? [];
 
+  // Per-entry pitch (2026-07-08): entries store the pitch they were actually
+  // calculated at (RPC v7). Fall back to the component-level pitch for legacy
+  // rows. afterPitch is recomputed with the same engine factor functions so
+  // the audit shows the true raw → pitched → wasted progression instead of
+  // lumping the pitch factor invisibly into the waste step.
+  const compPitchType = (comp as { pitch_type?: string } | null)?.pitch_type ?? 'none';
+  const compPitchDegrees = Number(comp?.calc_pitch_degrees ?? 0);
+  const pitchFactorFor = (deg: number) =>
+    compPitchType !== 'none' && deg > 0
+      ? (compPitchType === 'valley_hip' ? hipValleyPitchFactor(deg) : rafterPitchFactor(deg))
+      : 1;
+
   const audit = traceComponentCalc({
     componentName: comp?.name ?? '',
     measurementType: comp?.measurement_type ?? '',
-    entries: (entries ?? []).map((e) => ({
-      rawValue: Number(e.raw_value ?? 0),
-      metricValue: Number(e.raw_value ?? 0),
-      afterPitch: Number(e.raw_value ?? 0),
-      afterWaste: Number(e.value_after_waste ?? 0),
-      pitchDegrees: Number(comp?.calc_pitch_degrees ?? 0),
-      sortOrder: e.sort_order ?? 0,
-      isCombined: e.is_combined ?? false,
-      combinedFrom: e.combined_from ?? undefined,
-    })),
+    entries: (entries ?? []).map((e) => {
+      const entryPitch = e.pitch_degrees != null ? Number(e.pitch_degrees) : compPitchDegrees;
+      return {
+        rawValue: Number(e.raw_value ?? 0),
+        metricValue: Number(e.raw_value ?? 0),
+        afterPitch: Number(e.raw_value ?? 0) * pitchFactorFor(entryPitch),
+        afterWaste: Number(e.value_after_waste ?? 0),
+        pitchDegrees: entryPitch,
+        sortOrder: e.sort_order ?? 0,
+        isCombined: e.is_combined ?? false,
+        combinedFrom: e.combined_from ?? undefined,
+      };
+    }),
     totalQuantity: totalQty,
     materialRate: comp?.material_rate ?? 0,
     labourRate: comp?.labour_rate ?? 0,

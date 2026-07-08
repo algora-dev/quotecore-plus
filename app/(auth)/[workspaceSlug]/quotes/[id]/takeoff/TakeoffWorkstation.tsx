@@ -2759,6 +2759,19 @@ export function TakeoffWorkstation({
         pageCalibrationsRef.current.set(priorPageId, calibrations.map(c => ({ ...c })));
       }
 
+      // Cross-page leak fix (2026-07-08): stamp any un-paged shapes with the
+      // page they were drawn on BEFORE switching — same pattern as
+      // handleSwitchPage. reconstructCanvas treats fromPageId=null as
+      // "draw on every page", so unstamped plan-1 shapes were reappearing on
+      // the freshly uploaded plan's canvas.
+      if (priorPageId) {
+        setComponentMeasurements(prev => prev.map(c => ({
+          ...c,
+          measurements: c.measurements.map(m => m.fromPageId ? m : { ...m, fromPageId: priorPageId }),
+        })));
+        setRoofAreas(prev => prev.map(ra => ra.fromPageId ? ra : { ...ra, fromPageId: priorPageId }));
+      }
+
       setPages(updatedPages);
       setCurrentPageIndex(updatedPages.length - 1);
       setActiveSaveRoofAreaId(newRoofAreaId);
@@ -2815,6 +2828,11 @@ export function TakeoffWorkstation({
         activeAreaIdRef.current = null;
         armNewAreaAfterCalibrationRef.current = true;
       }
+      // Cross-page leak fix (2026-07-08): rebuild the canvas through the
+      // page filter so only the new (blank) page's shapes render. Without
+      // this the canvas relied on staying blank until the next redraw, and
+      // any redraw trigger re-drew other pages' unstamped shapes here.
+      setRedrawNonce(n => n + 1);
       // Version fix (2026-07-05): persistTakeoffData already synced the
       // authoritative version from the DB. Nulling it here caused the false
       // "Takeoff edited in another tab" error on the next save.
@@ -4009,10 +4027,10 @@ export function TakeoffWorkstation({
           <button
             onClick={openSaveAndUploadAnotherPlan}
             disabled={isSaving || isUploadingPage}
-            className="px-3 py-2 bg-black hover:bg-slate-900 text-white rounded-full text-sm disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(249,115,22,0.45)]"
-            title="Save current measurements, then upload a new plan to keep measuring"
+            className="px-3 py-2 bg-black hover:bg-slate-900 text-white rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(249,115,22,0.45)]"
+            title={isSaving || isUploadingPage ? 'Please wait — saving in progress' : 'Save current measurements, then upload a new plan to keep measuring'}
           >
-            Upload another plan or image
+            {isSaving || isUploadingPage ? 'Saving…' : 'Upload another plan or image'}
           </button>
           <button
             onClick={handleSaveTakeoff}
@@ -4785,36 +4803,38 @@ export function TakeoffWorkstation({
                 className="absolute z-20"
                 style={style}
               >
-                <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-300 rounded-full text-sm shadow-md">
-                  {/* Drag handle */}
-                  <div
-                    className="cursor-grab active:cursor-grabbing flex items-center text-orange-300 hover:text-orange-500 select-none"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      const container = popupContainerRef.current;
-                      if (!container) return;
-                      const rect = container.getBoundingClientRect();
-                      const parentRect = container.offsetParent?.getBoundingClientRect();
-                      if (!parentRect) return;
-                      const origX = rect.left - parentRect.left;
-                      const origY = rect.top - parentRect.top;
-                      popupDragRef.current = { startX: e.clientX, startY: e.clientY, origX, origY };
-                      const onMove = (ev: MouseEvent) => {
-                        if (!popupDragRef.current) return;
-                        const dx = ev.clientX - popupDragRef.current.startX;
-                        const dy = ev.clientY - popupDragRef.current.startY;
-                        setPopupPos({ x: popupDragRef.current.origX + dx, y: popupDragRef.current.origY + dy });
-                      };
-                      const onUp = () => {
-                        popupDragRef.current = null;
-                        document.removeEventListener('mousemove', onMove);
-                        document.removeEventListener('mouseup', onUp);
-                      };
-                      document.addEventListener('mousemove', onMove);
-                      document.addEventListener('mouseup', onUp);
-                    }}
-                    title="Drag to move"
-                  >
+                <div
+                  className="flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-300 rounded-full text-sm shadow-md cursor-grab active:cursor-grabbing select-none"
+                  onMouseDown={(e) => {
+                    // Drag from anywhere on the toolbar EXCEPT the buttons.
+                    if ((e.target as HTMLElement).closest('button')) return;
+                    e.preventDefault();
+                    const container = popupContainerRef.current;
+                    if (!container) return;
+                    const rect = container.getBoundingClientRect();
+                    const parentRect = container.offsetParent?.getBoundingClientRect();
+                    if (!parentRect) return;
+                    const origX = rect.left - parentRect.left;
+                    const origY = rect.top - parentRect.top;
+                    popupDragRef.current = { startX: e.clientX, startY: e.clientY, origX, origY };
+                    const onMove = (ev: MouseEvent) => {
+                      if (!popupDragRef.current) return;
+                      const dx = ev.clientX - popupDragRef.current.startX;
+                      const dy = ev.clientY - popupDragRef.current.startY;
+                      setPopupPos({ x: popupDragRef.current.origX + dx, y: popupDragRef.current.origY + dy });
+                    };
+                    const onUp = () => {
+                      popupDragRef.current = null;
+                      document.removeEventListener('mousemove', onMove);
+                      document.removeEventListener('mouseup', onUp);
+                    };
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                  }}
+                  title="Drag to move"
+                >
+                  {/* Drag handle (visual affordance; whole bar is draggable) */}
+                  <div className="flex items-center text-orange-300 hover:text-orange-500">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6h2v2H8V6zm0 5h2v2H8v-2zm0 5h2v2H8v-2zm6-10h2v2h-2V6zm0 5h2v2h-2v-2zm0 5h2v2h-2v-2z" /></svg>
                   </div>
                   <span className="text-orange-800 font-medium whitespace-nowrap">

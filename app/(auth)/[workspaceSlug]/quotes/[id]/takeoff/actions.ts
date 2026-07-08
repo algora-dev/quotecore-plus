@@ -97,6 +97,16 @@ export async function saveTakeoffMeasurements(
   });
   const firstRoofAreaPitch = roofAreaMeasurements[0]?.pitch || 0;
 
+  // Per-area pitch fix (2026-07-08): components must be pitched at the pitch
+  // of the roof area they belong to — NOT the first area measured on the page.
+  // Seed from THIS save's area measurements (first measurement per area wins
+  // for this page); missing areas are resolved from the DB further down.
+  const areaPitchByAreaId = new Map<string, number>();
+  for (const m of roofAreaMeasurements) {
+    const key = m.quoteRoofAreaId ?? '';
+    if (key && !areaPitchByAreaId.has(key)) areaPitchByAreaId.set(key, m.pitch || 0);
+  }
+
   // 2. Components + their entries (current page only).
   //
   // Gerald audit 2026-05-29 H-01: the previous H-01 cross-page aggregation
@@ -135,6 +145,56 @@ export async function saveTakeoffMeasurements(
       .in('id', componentIds);
     const libById = new Map((libComps || []).map(c => [c.id, c]));
 
+    // Per-area pitch fix (2026-07-08): resolve the pitch for every component
+    // group's roof area. Resolution order:
+    //   1. Area measurement drawn in THIS save for that area (areaPitchByAreaId).
+    //   2. Stored quote_roof_area_entries.pitch_degrees for (area, current page).
+    //   3. Latest stored entry pitch for the area on any page.
+    //   4. Parent quote_roof_areas.calc_pitch_degrees.
+    // Falls back to firstRoofAreaPitch only for legacy area-less groups.
+    const groupAreaIds = [...new Set(
+      componentGroupKeys
+        .map(k => k.slice(k.indexOf('::') + 2))
+        .filter((id): id is string => !!id)
+    )];
+    const groupPitchByAreaId = new Map<string, number>();
+    for (const areaId of groupAreaIds) {
+      const fromSave = areaPitchByAreaId.get(areaId);
+      if (fromSave !== undefined && fromSave > 0) groupPitchByAreaId.set(areaId, fromSave);
+    }
+    const unresolvedAreaIds = groupAreaIds.filter(id => !groupPitchByAreaId.has(id));
+    if (unresolvedAreaIds.length > 0) {
+      const { data: entryPitchRows } = await supabase
+        .from('quote_roof_area_entries')
+        .select('quote_roof_area_id, page_id, pitch_degrees, created_at')
+        .in('quote_roof_area_id', unresolvedAreaIds)
+        .order('created_at', { ascending: false }) as unknown as { data: Array<{
+          quote_roof_area_id: string;
+          page_id: string | null;
+          pitch_degrees: number | string | null;
+          created_at: string;
+        }> | null };
+      for (const areaId of unresolvedAreaIds) {
+        const rows = (entryPitchRows ?? []).filter(r => r.quote_roof_area_id === areaId);
+        const samePage = currentPageId
+          ? rows.find(r => r.page_id === currentPageId && Number(r.pitch_degrees ?? 0) > 0)
+          : undefined;
+        const anyPage = rows.find(r => Number(r.pitch_degrees ?? 0) > 0);
+        if (samePage) groupPitchByAreaId.set(areaId, Number(samePage.pitch_degrees));
+        else if (anyPage) groupPitchByAreaId.set(areaId, Number(anyPage.pitch_degrees));
+      }
+      const stillUnresolved = unresolvedAreaIds.filter(id => !groupPitchByAreaId.has(id));
+      if (stillUnresolved.length > 0) {
+        const { data: parentAreas } = await supabase
+          .from('quote_roof_areas')
+          .select('id, calc_pitch_degrees')
+          .in('id', stillUnresolved);
+        for (const a of parentAreas ?? []) {
+          groupPitchByAreaId.set(a.id, Number(a.calc_pitch_degrees ?? 0));
+        }
+      }
+    }
+
     componentsPayload = componentGroupKeys
       .map(groupKey => {
         const sepIdx = groupKey.indexOf('::');
@@ -147,6 +207,10 @@ export async function saveTakeoffMeasurements(
           m => m.componentId === componentId && (m.quoteRoofAreaId ?? null) === groupAreaId
         );
         const pitchType = libComp.default_pitch_type || 'none';
+        // Per-area pitch fix (2026-07-08): pitch this group at ITS area's pitch.
+        const groupPitch = groupAreaId
+          ? (groupPitchByAreaId.get(groupAreaId) ?? firstRoofAreaPitch)
+          : firstRoofAreaPitch;
         // Cast: database.types.ts is stale; fixed_per_segment is a valid DB value.
         const wasteType = (libComp.default_waste_type as string) || 'none';
         const wastePercent = libComp.default_waste_percent || 0;
@@ -215,7 +279,7 @@ export async function saveTakeoffMeasurements(
             metricValue,
             true,
             pitchType as any,
-            firstRoofAreaPitch,
+            groupPitch,
             effectiveWasteType as any,
             wastePercent,
             effectiveWasteFixed
@@ -224,6 +288,9 @@ export async function saveTakeoffMeasurements(
             raw_value: metricValue,
             value_after_waste: result.afterWaste,
             sort_order: index,
+            // Per-entry pitch (2026-07-08): actual pitch used for this entry so
+            // the calc audit + UI can report it faithfully per page/area.
+            pitch_degrees: groupPitch,
           };
         });
 
@@ -247,6 +314,9 @@ export async function saveTakeoffMeasurements(
           waste_percent: wastePercent,
           waste_fixed: wasteFixed,
           pitch_type: pitchType,
+          // Per-area pitch fix (2026-07-08): persist the pitch this component
+          // group was calculated at (RPC v7 writes it to calc_pitch_degrees).
+          calc_pitch_degrees: groupPitch,
           final_quantity: totalQuantity,
           material_cost: materialCost,
           labour_cost: labourCost,

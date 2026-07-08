@@ -2779,6 +2779,7 @@ export type Database = {
           id: string
           is_combined: boolean
           page_id: string | null
+          pitch_degrees: number | null
           quote_component_id: string
           raw_value: number
           sort_order: number
@@ -2790,6 +2791,7 @@ export type Database = {
           id?: string
           is_combined?: boolean
           page_id?: string | null
+          pitch_degrees?: number | null
           quote_component_id: string
           raw_value: number
           sort_order?: number
@@ -2801,6 +2803,7 @@ export type Database = {
           id?: string
           is_combined?: boolean
           page_id?: string | null
+          pitch_degrees?: number | null
           quote_component_id?: string
           raw_value?: number
           sort_order?: number

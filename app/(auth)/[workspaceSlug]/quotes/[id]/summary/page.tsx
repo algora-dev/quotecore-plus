@@ -551,9 +551,13 @@ export default async function QuoteSummaryPage({
                     } else if (c.measurement_type === 'lineal') {
                       if (sys !== 'metric') displayQty = convertLinear(rawQty);
                     }
+                    // Per-area pitch (2026-07-08): show the pitch this component
+                    // was measured/calculated at when pitch applies to it.
+                    const compPitch = Number((c as { calc_pitch_degrees?: number | string | null }).calc_pitch_degrees ?? 0);
+                    const showPitch = (c.pitch_type ?? 'none') !== 'none' && compPitch > 0;
                     return (
                     <tr key={c.id} className="border-b border-slate-100">
-                      <td className="py-3">{c.name}</td>
+                      <td className="py-3">{c.name}{showPitch && <span className="ml-1.5 text-xs text-slate-400">@ {compPitch % 1 === 0 ? compPitch.toFixed(0) : compPitch.toFixed(1)}° pitch</span>}</td>
                       <td className="py-3 text-right">{(entries[c.id] ?? []).length}</td>
                       <td className="py-3 text-right">{c.priced_quantity != null ? (() => { const priced = Number(c.priced_quantity); const psRaw = (c as { pack_size_snapshot?: number | string | null }).pack_size_snapshot; const ps = psRaw != null ? Number(psRaw) : null; const frac = ps && !isNaN(ps) && ps > 0 ? displayQty / ps : displayQty; return <>{frac.toFixed(2)} <span className="italic text-slate-400">({priced.toFixed(0)})</span></>; })() : (<>{displayQty.toFixed(1)} {getUnitLabel(c.measurement_type as any, quote.measurement_system)}</>)}</td>
                       <td className="py-3 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
@@ -586,9 +590,11 @@ export default async function QuoteSummaryPage({
                 } else if (c.measurement_type === 'lineal') {
                   if (sys !== 'metric') displayQty = convertLinear(rawQty);
                 }
+                const compPitch = Number((c as { calc_pitch_degrees?: number | string | null }).calc_pitch_degrees ?? 0);
+                const showPitch = (c.pitch_type ?? 'none') !== 'none' && compPitch > 0;
                 return (
                 <tr key={c.id} className="border-b border-slate-100">
-                  <td className="py-3">{c.name}</td>
+                  <td className="py-3">{c.name}{showPitch && <span className="ml-1.5 text-xs text-slate-400">@ {compPitch % 1 === 0 ? compPitch.toFixed(0) : compPitch.toFixed(1)}° pitch</span>}</td>
                   <td className="py-3 text-right">{(entries[c.id] ?? []).length}</td>
                   <td className="py-3 text-right">{c.priced_quantity != null ? (() => { const priced = Number(c.priced_quantity); const psRaw = (c as { pack_size_snapshot?: number | string | null }).pack_size_snapshot; const ps = psRaw != null ? Number(psRaw) : null; const frac = ps && !isNaN(ps) && ps > 0 ? displayQty / ps : displayQty; return <>{frac.toFixed(2)} <span className="italic text-slate-400">({priced.toFixed(0)})</span></>; })() : (<>{displayQty.toFixed(1)} {getUnitLabel(c.measurement_type as any, quote.measurement_system)}</>)}</td>
                   <td className="py-3 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
