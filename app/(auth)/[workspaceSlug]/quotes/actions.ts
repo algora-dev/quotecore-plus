@@ -848,12 +848,57 @@ export async function updateComponentSettings(id: string, updates: { input_mode?
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
   await verifyComponentOwnership(supabase, id, profile.company_id);
+
+  // ── Calc audit: capture manual overrides before applying updates ──
+  // When the user changes pitch settings, record what the previous value
+  // was so the audit trail shows the original calc vs the manual change.
+  if (updates.custom_pitch_degrees !== undefined || updates.use_custom_pitch !== undefined) {
+    const { data: current } = await supabase
+      .from('quote_components')
+      .select('calc_audit, custom_pitch_degrees, use_custom_pitch')
+      .eq('id', id)
+      .maybeSingle() as unknown as { data: { calc_audit?: unknown; custom_pitch_degrees?: number | null; use_custom_pitch?: boolean } | null; error: Error | null };
+
+    if (current?.calc_audit) {
+      const { appendOverride } = await import('@/app/lib/pricing/calcTracer');
+      const existingAudit = current.calc_audit as import('@/app/lib/pricing/calcTracer').CalcAudit;
+      const overrides: import('@/app/lib/pricing/calcTracer').CalcAuditOverride[] = [...(existingAudit.overrides ?? [])];
+
+      if (updates.custom_pitch_degrees !== undefined && updates.custom_pitch_degrees !== current.custom_pitch_degrees) {
+        overrides.push({
+          field: 'custom_pitch_degrees',
+          previousValue: current.custom_pitch_degrees ?? null,
+          newValue: updates.custom_pitch_degrees ?? null,
+          timestamp: new Date().toISOString(),
+          userId: profile.id,
+        });
+      }
+      if (updates.use_custom_pitch !== undefined && updates.use_custom_pitch !== current.use_custom_pitch) {
+        overrides.push({
+          field: 'use_custom_pitch',
+          previousValue: current.use_custom_pitch ?? null,
+          newValue: updates.use_custom_pitch ?? null,
+          timestamp: new Date().toISOString(),
+          userId: profile.id,
+        });
+      }
+
+      const updatedAudit = appendOverride(existingAudit, overrides[overrides.length - 1]);
+      // Replace the overrides array with the full list (appendOverride only adds one).
+      updatedAudit.overrides = overrides;
+      await supabase
+        .from('quote_components')
+        .update({ calc_audit: updatedAudit as unknown as never })
+        .eq('id', id);
+    }
+  }
+
   const { error } = await supabase.from('quote_components').update(updates).eq('id', id);
   if (error) throw new Error(error.message);
   revalidatePath('/quotes');
 }
 
-export async function addComponentEntry(quoteComponentId: string, rawValue: number, areaPitch: number | null, options?: { bypassHeightMultiplier?: boolean; bypassDepthMultiplier?: boolean }) {
+export async function addComponentEntry(quoteComponentId: string, rawValue: number, areaPitch: number | null, options?: { bypassHeightMultiplier?: boolean; bypassDepthMultiplier?: boolean; entryHeightM?: number | null; entryDepthM?: number | null }) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
   await verifyComponentOwnership(supabase, quoteComponentId, profile.company_id);
@@ -861,6 +906,16 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
   if (!comp) throw new Error('Component not found');
 
   let adjustedValue = rawValue;
+  // v8 (2026-07-08): input reference snapshot for READ-ONLY display in the
+  // entry row. User-entered H/D come via options (dims / area+depth /
+  // freestyle modes); preset H/D are captured below when the multiplier is
+  // applied. Nothing reads entry_inputs for calculation.
+  let entryInputs: { height_m?: number; depth_m?: number; source?: 'preset' | 'user' } | null = null;
+  if (options?.entryHeightM && options.entryHeightM > 0) {
+    entryInputs = { height_m: options.entryHeightM, source: 'user' };
+  } else if (options?.entryDepthM && options.entryDepthM > 0) {
+    entryInputs = { depth_m: options.entryDepthM, source: 'user' };
+  }
   // Fetch component library for height/depth metadata if needed.
   const needsHeightMultiplier =
     !options?.bypassHeightMultiplier &&
@@ -886,6 +941,7 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
       const heightM = libRow?.height_value_mm ? libRow.height_value_mm / 1000 : null;
       if (heightM && heightM > 0) {
         adjustedValue = rawValue * heightM;
+        entryInputs = { height_m: heightM, source: 'preset' }; // v8 display snapshot
       }
     }
 
@@ -895,6 +951,7 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
       const depthM = libRow?.depth_value_mm ? libRow.depth_value_mm / 1000 : null;
       if (depthM && depthM > 0) {
         adjustedValue = rawValue * depthM;
+        entryInputs = { depth_m: depthM, source: 'preset' }; // v8 display snapshot
       }
     }
   }
@@ -902,12 +959,18 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
   const isPlan = comp.input_mode === 'calculated';
   const pitchDegrees = comp.use_custom_pitch ? (comp.custom_pitch_degrees ?? 0) : (areaPitch ?? 0);
   const { afterWaste } = applyPitchAndWaste(adjustedValue, isPlan, comp.pitch_type, pitchDegrees, comp.waste_type, comp.waste_percent, comp.waste_fixed);
+  // v8: store the pitch actually applied (display + audit only — pricing
+  // already baked it into value_after_waste above). applyPitchAndWaste only
+  // applies pitch for calculated-mode components with a pitch type.
+  const pitchApplied = isPlan && comp.pitch_type !== 'none' && pitchDegrees > 0;
   const { data: entry, error } = await supabase.from('quote_component_entries').insert({
     // Store the adjusted area as raw_value (consistent with digital takeoff).
     // The user sees their entered length in the UI; the entry reflects the
     // priced area so totals are correct.
     quote_component_id: quoteComponentId, raw_value: adjustedValue, value_after_waste: afterWaste,
-  }).select().single();
+    pitch_degrees: pitchApplied ? pitchDegrees : null,
+    entry_inputs: entryInputs,
+  } as never).select().single();
   if (error) throw new Error(error.message);
   const componentTotals = await recalcComponentFromEntries(quoteComponentId);
   return { ...entry, componentTotals };
@@ -1222,11 +1285,22 @@ export async function recalcAllQuoteComponents(quoteId: string): Promise<void> {
 
 async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number }> {
   const supabase = await createSupabaseServerClient();
-  const { data: entries } = await supabase.from('quote_component_entries').select('value_after_waste').eq('quote_component_id', quoteComponentId);
+  // Fetch entries with full detail for calc audit tracing.
+  const { data: entries } = await supabase
+    .from('quote_component_entries')
+    .select('value_after_waste, raw_value, sort_order, is_combined, combined_from, pitch_degrees')
+    .eq('quote_component_id', quoteComponentId) as unknown as { data: Array<{
+      value_after_waste: number;
+      raw_value: number;
+      sort_order: number | null;
+      is_combined?: boolean | null;
+      combined_from?: Array<{ raw: number; after: number; sort: number }> | null;
+      pitch_degrees?: number | string | null;
+    }> | null; error: Error | null };
   const totalQty = (entries ?? []).reduce((sum, e) => sum + Number(e.value_after_waste), 0);
   const { data: comp } = await supabase
     .from('quote_components')
-    .select('material_rate, labour_rate, component_library_id')
+    .select('material_rate, labour_rate, component_library_id, name, measurement_type, waste_type, waste_percent, waste_fixed, pitch_type, calc_pitch_degrees, calc_audit')
     .eq('id', quoteComponentId)
     .single();
 
@@ -1269,7 +1343,7 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
     }
   }
 
-  const { computeMaterialCostByStrategy, computePackCount } = await import('@/app/lib/pricing/engine');
+  const { computeMaterialCostByStrategy, computePackCount, rafterPitchFactor, hipValleyPitchFactor } = await import('@/app/lib/pricing/engine');
   const costResult = computeMaterialCostByStrategy({
     strategy,
     totalQuantity: totalQty,
@@ -1289,7 +1363,70 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
   // (e.g. 3.42 rolls) as final_quantity / pack_size_snapshot without needing
   // to join back to component_library. NULL for per_unit components.
   const packSizeForDisplay = strategy !== 'per_unit' && packSize && packSize > 0 ? packSize : null;
-  await supabase.from('quote_components').update({ final_quantity: totalQty, priced_quantity: pricedQuantity, pack_size_snapshot: packSizeForDisplay, material_cost: materialCost, labour_cost: labourCost }).eq('id', quoteComponentId);
+
+  // ── Calc audit trace ──────────────────────────────
+  // Build the audit object from the current calculation and persist it.
+  // Preserve existing overrides from the prior audit.
+  const { traceComponentCalc } = await import('@/app/lib/pricing/calcTracer');
+  type CalcAudit = import('@/app/lib/pricing/calcTracer').CalcAudit;
+  const existingAudit = (comp as { calc_audit?: { overrides?: CalcAudit['overrides'] } } | null)?.calc_audit;
+  const existingOverrides = existingAudit?.overrides ?? [];
+
+  // Per-entry pitch (2026-07-08): entries store the pitch they were actually
+  // calculated at (RPC v7). Fall back to the component-level pitch for legacy
+  // rows. afterPitch is recomputed with the same engine factor functions so
+  // the audit shows the true raw → pitched → wasted progression instead of
+  // lumping the pitch factor invisibly into the waste step.
+  const compPitchType = (comp as { pitch_type?: string } | null)?.pitch_type ?? 'none';
+  const compPitchDegrees = Number(comp?.calc_pitch_degrees ?? 0);
+  const pitchFactorFor = (deg: number) =>
+    compPitchType !== 'none' && deg > 0
+      ? (compPitchType === 'valley_hip' ? hipValleyPitchFactor(deg) : rafterPitchFactor(deg))
+      : 1;
+
+  const audit = traceComponentCalc({
+    componentName: comp?.name ?? '',
+    measurementType: comp?.measurement_type ?? '',
+    entries: (entries ?? []).map((e) => {
+      const entryPitch = e.pitch_degrees != null ? Number(e.pitch_degrees) : compPitchDegrees;
+      return {
+        rawValue: Number(e.raw_value ?? 0),
+        metricValue: Number(e.raw_value ?? 0),
+        afterPitch: Number(e.raw_value ?? 0) * pitchFactorFor(entryPitch),
+        afterWaste: Number(e.value_after_waste ?? 0),
+        pitchDegrees: entryPitch,
+        sortOrder: e.sort_order ?? 0,
+        isCombined: e.is_combined ?? false,
+        combinedFrom: e.combined_from ?? undefined,
+      };
+    }),
+    totalQuantity: totalQty,
+    materialRate: comp?.material_rate ?? 0,
+    labourRate: comp?.labour_rate ?? 0,
+    pricingStrategy: strategy,
+    packPrice,
+    packSize,
+    packCoverageM2,
+    wasteType: (comp as { waste_type?: string })?.waste_type ?? 'none',
+    wastePercent: (comp as { waste_percent?: number })?.waste_percent ?? 0,
+    wasteFixed: (comp as { waste_fixed?: number })?.waste_fixed ?? 0,
+    pitchType: (comp as { pitch_type?: string })?.pitch_type ?? 'none',
+    pitchDegrees: Number(comp?.calc_pitch_degrees ?? 0),
+    source: 'recalc',
+    existingOverrides,
+  });
+
+  await supabase
+    .from('quote_components')
+    .update({
+      final_quantity: totalQty,
+      priced_quantity: pricedQuantity,
+      pack_size_snapshot: packSizeForDisplay,
+      material_cost: materialCost,
+      labour_cost: labourCost,
+      calc_audit: audit as unknown as never,
+    })
+    .eq('id', quoteComponentId);
   return { final_quantity: totalQty, priced_quantity: pricedQuantity, material_cost: materialCost, labour_cost: labourCost };
 }
 

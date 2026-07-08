@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle, Rect } from 'fabric';
@@ -92,6 +92,11 @@ interface ComponentMeasurement {
    *  instead of the save-time activeAreaId, so creating a new area no longer
    *  re-assigns earlier measurements to it. */
   quoteRoofAreaId?: string | null;
+  /** v8 (2026-07-08): user-entered height/depth (metric) captured at draw
+   *  time (freestyle L×H height, volume_3d custom depth). READ-ONLY display
+   *  reference — `value` is already the final product. Persisted via
+   *  entry_inputs so re-entry doesn't wipe it. */
+  entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
 }
 
 interface ComponentWithMeasurements {
@@ -161,7 +166,7 @@ interface Calibration {
 /** Serializable undo/redo snapshot. Contains only plain data — no Fabric refs.
  *  The canvas is rebuilt from this via redrawCanvasFromState(). */
 interface TakeoffSnapshot {
-  componentMeasurements: { componentId: string; expanded: boolean; measurements: { id: string; type: ComponentMeasurement['type']; value: number; points?: { x: number; y: number }[]; visible: boolean; fromPageId?: string | null }[] }[];
+  componentMeasurements: { componentId: string; expanded: boolean; measurements: { id: string; type: ComponentMeasurement['type']; value: number; points?: { x: number; y: number }[]; visible: boolean; fromPageId?: string | null; entryInputs?: { height_m?: number | null; depth_m?: number | null } | null }[] }[];
   roofAreas: { id: string; name: string; points: { x: number; y: number }[]; area: number; pitch: number; visible: boolean }[];
   calibrations: Calibration[];
   calibrationPoints: CalibrationPoint[];
@@ -387,6 +392,10 @@ export function TakeoffWorkstation({
   const [multiLinealMode, setMultiLinealMode] = useState(false);
   const [multiLinealPoints, setMultiLinealPoints] = useState<{ x: number; y: number }[]>([]);
   const [multiLinealSegmentObjects, setMultiLinealSegmentObjects] = useState<any[]>([]); // fabric objects drawn so far
+  // Draggable multi-lineal popup position (null = default top-center).
+  const [popupPos, setPopupPos] = useState<{ x: number; y: number } | null>(null);
+  const popupDragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const popupContainerRef = useRef<HTMLDivElement>(null);
   const [showLineMeasurementPrompt, setShowLineMeasurementPrompt] = useState(false);
   const [pendingLineMeasurement, setPendingLineMeasurement] = useState<{ points: { x: number; y: number }[], length: number } | null>(null);
   const [_showAreaMeasurementPrompt, _setShowAreaMeasurementPrompt] = useState(false);
@@ -505,6 +514,7 @@ export function TakeoffWorkstation({
           points: m.points ? m.points.map(p => ({ x: p.x, y: p.y })) : undefined,
           visible: m.visible,
           fromPageId: m.fromPageId,
+          entryInputs: m.entryInputs,
           // canvasObjects stripped — rebuilt on redraw
         })),
       })),
@@ -587,6 +597,10 @@ export function TakeoffWorkstation({
           // Preserve the draw-time area stamp through redraws — dropping it
           // reverted measurements to the save-time fallback area.
           quoteRoofAreaId: m.quoteRoofAreaId,
+          // v8 fix (2026-07-08): redraw REPLACES state with reconstructCanvas
+          // output — omitting entryInputs here stripped user H/D from state on
+          // every redraw (area create/switch), so saves sent null.
+          entryInputs: m.entryInputs,
         })),
       })),
       roofAreas: roofAreas.map(ra => ({
@@ -773,7 +787,7 @@ export function TakeoffWorkstation({
       if (m.componentId === null) return;
       const cid = m.componentId!;
       if (!ad.components.has(cid)) ad.components.set(cid, { componentId: cid, measurements: [], expanded: false });
-      ad.components.get(cid)!.measurements.push({ id: m.id, type: m.type as ComponentMeasurement['type'], value: m.value, points: m.points ?? undefined, visible: m.visible, fromPageId: m.pageId ?? null, quoteRoofAreaId: areaKey === '__no_area__' ? null : areaKey });
+      ad.components.get(cid)!.measurements.push({ id: m.id, type: m.type as ComponentMeasurement['type'], value: m.value, points: m.points ?? undefined, visible: m.visible, fromPageId: m.pageId ?? null, quoteRoofAreaId: areaKey === '__no_area__' ? null : areaKey, entryInputs: m.entryInputs ?? null });
     });
 
     // Cache per-area state for handleSwitchArea
@@ -781,7 +795,7 @@ export function TakeoffWorkstation({
       areaCanvasStatesRef.current.set(aid, {
         componentMeasurements: Array.from(ad.components.values()).map(comp => ({
           componentId: comp.componentId, expanded: false,
-          measurements: comp.measurements.map(m => ({ id: m.id, type: m.type, value: m.value, points: m.points, visible: m.visible, fromPageId: m.fromPageId, quoteRoofAreaId: m.quoteRoofAreaId })),
+          measurements: comp.measurements.map(m => ({ id: m.id, type: m.type, value: m.value, points: m.points, visible: m.visible, fromPageId: m.fromPageId, quoteRoofAreaId: m.quoteRoofAreaId, entryInputs: m.entryInputs ?? null })),
         })),
         roofAreas: ad.areas.map(ra => ({ id: ra.id, name: ra.name, points: ra.points, area: ra.area, pitch: ra.pitch, visible: ra.visible, fromPageId: ra.fromPageId, quoteRoofAreaId: ra.quoteRoofAreaId })),
         pageIds: ad.pageIds,
@@ -963,6 +977,9 @@ export function TakeoffWorkstation({
   const handleSwitchArea = useCallback(async (targetAreaId: string, targetPageId?: string) => {
     if (targetAreaId === activeAreaId) return;
 
+    // Discard any in-progress drawing before switching areas
+    discardInProgressDrawing();
+
     // Parent/child plans (2026-07-05): stamp un-stamped (freshly drawn)
     // measurements with the page they were drawn on before caching, and
     // preserve the cache entry's pageIds (hydration wrote them; a plain
@@ -991,6 +1008,7 @@ export function TakeoffWorkstation({
             id: m.id, type: m.type, value: m.value, points: m.points,
             visible: m.visible, fromPageId: m.fromPageId ?? outgoingPageId,
             quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId,
+            entryInputs: m.entryInputs ?? null,
           })),
         })),
         roofAreas: roofAreas.map(ra => ({
@@ -1015,6 +1033,7 @@ export function TakeoffWorkstation({
           points?: { x: number; y: number }[]; visible: boolean;
           pitch?: number; name?: string; pageId?: string | null;
           quoteRoofAreaId?: string | null;
+          entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
         }> = [];
 
         componentMeasurements.forEach(comp => {
@@ -1025,6 +1044,7 @@ export function TakeoffWorkstation({
               points: m.points, visible: m.visible,
               pageId: currentPageDbId,
               quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId,
+              entryInputs: m.entryInputs ?? null,
             });
           });
         });
@@ -1044,7 +1064,7 @@ export function TakeoffWorkstation({
         });
 
         if (allMeasurements.length > 0) {
-          await saveTakeoffMeasurements(
+          const switchSaveResult = await saveTakeoffMeasurements(
             quote.id, allMeasurements,
             calibrations[0]?.unit || 'feet',
             undefined, undefined, // no canvas snapshot on auto-save
@@ -1055,7 +1075,13 @@ export function TakeoffWorkstation({
             // forced a pointless recalibration on every re-entry/page switch.
             calibrations.length > 0 ? calibrations : null,
           );
-          updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
+          // Only bump local version if the save actually succeeded.
+          // If it failed (e.g. STALE_VERSION), bumping causes further drift.
+          if (switchSaveResult.success) {
+            updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
+          } else {
+            console.warn('[SwitchArea] Auto-save rejected:', (switchSaveResult as { error?: string }).error);
+          }
         }
       } catch (err) {
         console.warn('[SwitchArea] Auto-save failed, continuing with switch:', err);
@@ -1146,6 +1172,10 @@ export function TakeoffWorkstation({
   const handleSwitchPage = useCallback(async (targetPageId: string) => {
     const targetIndex = pages.findIndex(p => p.id === targetPageId);
     if (targetIndex < 0 || targetIndex === currentPageIndex) return;
+
+    // Discard any in-progress drawing before switching pages
+    discardInProgressDrawing();
+
     const currentPid = pages[currentPageIndex]?.id ?? null;
     // Stamp fresh drawings with the page they were drawn on so the redraw
     // filter doesn't carry them onto the target page.
@@ -1170,6 +1200,7 @@ export function TakeoffWorkstation({
           points?: { x: number; y: number }[]; visible: boolean;
           pitch?: number; name?: string; pageId?: string | null;
           quoteRoofAreaId?: string | null;
+          entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
         }> = [];
 
         componentMeasurements.forEach(comp => {
@@ -1180,6 +1211,7 @@ export function TakeoffWorkstation({
               points: m.points, visible: m.visible,
               pageId: currentPid,
               quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId,
+              entryInputs: m.entryInputs ?? null,
             });
           });
         });
@@ -1195,7 +1227,7 @@ export function TakeoffWorkstation({
         });
 
         if (allMeasurements.length > 0) {
-          await saveTakeoffMeasurements(
+          const pageSaveResult = await saveTakeoffMeasurements(
             quote.id, allMeasurements,
             calibrations[0]?.unit || 'feet',
             undefined, undefined,
@@ -1203,8 +1235,12 @@ export function TakeoffWorkstation({
             activeAreaId,
             calibrations.length > 0 ? calibrations : null,
           );
-          updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
-          setIsDirty(false);
+          if (pageSaveResult.success) {
+            updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
+            setIsDirty(false);
+          } else {
+            console.warn('[SwitchPage] Auto-save rejected:', (pageSaveResult as { error?: string }).error);
+          }
         }
       } catch (err) {
         console.warn('[SwitchPage] Auto-save failed, continuing with switch:', err);
@@ -1519,6 +1555,7 @@ export function TakeoffWorkstation({
                       id: m.id, type: m.type, value: m.value, points: m.points,
                       visible: m.visible, fromPageId: m.fromPageId,
                       quoteRoofAreaId: m.quoteRoofAreaId ?? outgoingAreaId,
+                      entryInputs: m.entryInputs ?? null,
                     })),
                   })),
                   roofAreas: outgoingRoofAreas.map(ra => ({
@@ -1541,6 +1578,7 @@ export function TakeoffWorkstation({
                     points?: { x: number; y: number }[]; visible: boolean;
                     pitch?: number; name?: string; pageId?: string | null;
                     quoteRoofAreaId?: string | null;
+                    entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
                   }> = [];
                   outgoingComponentMeasurements.forEach(comp => {
                     comp.measurements.forEach(m => {
@@ -1549,6 +1587,7 @@ export function TakeoffWorkstation({
                         componentId: comp.componentId, type: m.type, value: m.value,
                         points: m.points, visible: m.visible, pageId: currentPageDbId,
                         quoteRoofAreaId: m.quoteRoofAreaId ?? outgoingAreaId,
+                        entryInputs: m.entryInputs ?? null,
                       });
                     });
                   });
@@ -1643,6 +1682,7 @@ export function TakeoffWorkstation({
                 id: m.id, type: m.type, value: m.value, points: m.points,
                 visible: m.visible, fromPageId: m.fromPageId ?? cachePageFallback,
                 quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId,
+                entryInputs: m.entryInputs ?? null,
               })),
             })),
             roofAreas: roofAreas.map(ra => ({
@@ -1786,14 +1826,39 @@ export function TakeoffWorkstation({
     tempBoxRectRef.current = null;
   };
 
+  // Discard any in-progress drawing buffers + remove their preview dots from canvas.
+  // Called on every tool switch, component switch, and area switch.
+  // Committed measurements (tagged with measurementId) are never touched.
+  const discardInProgressDrawing = useCallback(() => {
+    setLinePoints([]);
+    setAreaPoints([]);
+    setMultiLinealPoints([]);
+    setMultiLinealSegmentObjects(prev => {
+      if (fabricRef.current) {
+        prev.forEach((obj: any) => {
+          if (obj && !obj.measurementId) fabricRef.current!.remove(obj);
+        });
+        fabricRef.current.requestRenderAll();
+      }
+      return [];
+    });
+    // Remove in-progress vertex markers (yellow dots) from canvas
+    const canvas = fabricRef.current;
+    if (canvas) {
+      canvas.getObjects().slice().forEach((obj: any) => {
+        if (obj.isInProgressMarker) canvas.remove(obj);
+      });
+      canvas.requestRenderAll();
+    }
+  }, []);
+
   const applyToolForType = (measurementType: string, forComponentId?: string) => {
     cleanupBoxDrag();
+    discardInProgressDrawing();
     setLineMode(false);
     setAreaMode(false);
     setPointMode(false);
     setMultiLinealMode(false);
-    setMultiLinealPoints([]);
-    setMultiLinealSegmentObjects([]);
     const tool = toolForMeasurementType(measurementType);
     if (tool === 'line') {
       setLineMode(true);
@@ -1834,6 +1899,8 @@ export function TakeoffWorkstation({
   
   const handleRemoveComponent = (componentId: string) => {
     pushHistorySnapshot();
+    // Discard any in-progress drawing when removing a component
+    discardInProgressDrawing();
     // Remove from active list
     setActiveComponentIds(activeComponentIds.filter(id => id !== componentId));
     
@@ -2009,6 +2076,7 @@ export function TakeoffWorkstation({
     // Reset multi-lineal state (keep objects on canvas, they're captured above).
     setMultiLinealPoints([]);
     setMultiLinealSegmentObjects([]);
+    setPopupPos(null); // reset popup position on finish
   };
 
   const handleCancelMultiLineal = () => {
@@ -2021,6 +2089,7 @@ export function TakeoffWorkstation({
     setMultiLinealPoints([]);
     setMultiLinealSegmentObjects([]);
     setMultiLinealMode(false);
+    setPopupPos(null); // reset popup position on cancel
   };
 
   // Phase 7: load a new image onto the canvas. Used when switching pages.
@@ -2127,6 +2196,7 @@ export function TakeoffWorkstation({
       canvasObjects: pendingVolumePolygon ? [pendingVolumePolygon] : [],
       quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
       fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
+      entryInputs: { depth_m: depthM }, // v8: user-entered depth (display only)
     };
     // Solid polygon (remove dash preview)
     if (pendingVolumePolygon) {
@@ -2177,6 +2247,7 @@ export function TakeoffWorkstation({
       canvasObjects: pendingFreestyleCanvasObjects,
       quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
       fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
+      entryInputs: { height_m: heightM }, // v8: user-entered height (display only)
     };
     setComponentMeasurements(prev => {
       const exists = prev.some(c => c.componentId === componentId);
@@ -2252,6 +2323,8 @@ export function TakeoffWorkstation({
             // Area-ownership fix (2026-07-05): use the DRAW-time stamp; only
             // fall back to the save-time active area for legacy/unstamped rows.
             quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId ?? activeSaveRoofAreaId,
+            // v8: user-entered H/D reference (display only).
+            entryInputs: m.entryInputs ?? null,
           });
         });
       });
@@ -2447,6 +2520,44 @@ export function TakeoffWorkstation({
         // since we return errors rather than throwing.
         const msg = saveResult.error;
         if (msg.includes('STALE_TAKEOFF_VERSION')) {
+          // Recovery: fetch the authoritative version from DB and retry once.
+          // The version drift is usually caused by a prior auto-save that
+          // bumped the DB version without the client knowing (e.g. a
+          // page-switch save that succeeded but whose response was lost).
+          try {
+            const authoritativeVersion = await getTakeoffSessionVersion(quote.id);
+            if (authoritativeVersion != null) {
+              updateSessionVersion(() => authoritativeVersion);
+              // Retry the save with the correct version.
+              const retryResult = await saveTakeoffMeasurements(
+                quote.id,
+                allMeasurements,
+                calibrations[0]?.unit || 'feet',
+                canvasImagePath,
+                linesImagePath,
+                currentPageDbId,
+                authoritativeVersion,
+                activeSaveRoofAreaId,
+                calibrations.length > 0 ? calibrations : null,
+              );
+              if (retryResult.success) {
+                updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
+                setIsDirty(false);
+                // Continue with post-save logic (stamping, cache, etc.)
+                if (currentPageDbId) {
+                  setComponentMeasurements(prev => prev.map(c => ({
+                    ...c,
+                    measurements: c.measurements.map(m => ({ ...m, fromPageId: currentPageDbId }))
+                  })));
+                  pageCalibrationsRef.current.set(currentPageDbId, calibrations.map(c => ({ ...c })));
+                }
+                return true;
+              }
+            }
+          } catch (retryErr) {
+            console.warn('[SaveTakeoff] STALE_VERSION retry failed:', retryErr);
+          }
+          // If retry didn't succeed, show the error.
           showAlert(
             'Takeoff edited in another tab',
             'Your takeoff was saved from another browser tab. Reload this page to see the latest version, then continue measuring.',
@@ -2494,6 +2605,7 @@ export function TakeoffWorkstation({
         points?: { x: number; y: number }[]; visible: boolean;
         pitch?: number; name?: string; pageId?: string | null;
         quoteRoofAreaId?: string | null;
+        entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
       };
       for (const [cachedAreaId, cachedState] of areaCanvasStatesRef.current.entries()) {
         if (cachedAreaId === activeAreaId) continue; // already saved above
@@ -2510,6 +2622,7 @@ export function TakeoffWorkstation({
               points: m.points, visible: m.visible,
               pageId: pid,
               quoteRoofAreaId: m.quoteRoofAreaId ?? cachedAreaId,
+              entryInputs: m.entryInputs ?? null,
             });
           });
         });
@@ -2608,6 +2721,7 @@ export function TakeoffWorkstation({
           id: m.id, type: m.type, value: m.value, points: m.points,
           visible: m.visible, fromPageId: m.fromPageId ?? pageIdFallback,
           quoteRoofAreaId: m.quoteRoofAreaId ?? areaId,
+          entryInputs: m.entryInputs ?? null,
         })),
       })),
       roofAreas: roofAreas.map(ra => ({
@@ -2705,6 +2819,19 @@ export function TakeoffWorkstation({
         pageCalibrationsRef.current.set(priorPageId, calibrations.map(c => ({ ...c })));
       }
 
+      // Cross-page leak fix (2026-07-08): stamp any un-paged shapes with the
+      // page they were drawn on BEFORE switching — same pattern as
+      // handleSwitchPage. reconstructCanvas treats fromPageId=null as
+      // "draw on every page", so unstamped plan-1 shapes were reappearing on
+      // the freshly uploaded plan's canvas.
+      if (priorPageId) {
+        setComponentMeasurements(prev => prev.map(c => ({
+          ...c,
+          measurements: c.measurements.map(m => m.fromPageId ? m : { ...m, fromPageId: priorPageId }),
+        })));
+        setRoofAreas(prev => prev.map(ra => ra.fromPageId ? ra : { ...ra, fromPageId: priorPageId }));
+      }
+
       setPages(updatedPages);
       setCurrentPageIndex(updatedPages.length - 1);
       setActiveSaveRoofAreaId(newRoofAreaId);
@@ -2761,6 +2888,11 @@ export function TakeoffWorkstation({
         activeAreaIdRef.current = null;
         armNewAreaAfterCalibrationRef.current = true;
       }
+      // Cross-page leak fix (2026-07-08): rebuild the canvas through the
+      // page filter so only the new (blank) page's shapes render. Without
+      // this the canvas relied on staying blank until the next redraw, and
+      // any redraw trigger re-drew other pages' unstamped shapes here.
+      setRedrawNonce(n => n + 1);
       // Version fix (2026-07-05): persistTakeoffData already synced the
       // authoritative version from the DB. Nulling it here caused the false
       // "Takeoff edited in another tab" error on the next save.
@@ -3732,6 +3864,7 @@ export function TakeoffWorkstation({
               points: m.points || undefined,
               visible: m.visible,
               fromPageId: m.pageId || null,
+              entryInputs: m.entryInputs ?? null,
             });
           });
 
@@ -3955,10 +4088,10 @@ export function TakeoffWorkstation({
           <button
             onClick={openSaveAndUploadAnotherPlan}
             disabled={isSaving || isUploadingPage}
-            className="px-3 py-2 bg-black hover:bg-slate-900 text-white rounded-full text-sm disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(249,115,22,0.45)]"
-            title="Save current measurements, then upload a new plan to keep measuring"
+            className="px-3 py-2 bg-black hover:bg-slate-900 text-white rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(249,115,22,0.45)]"
+            title={isSaving || isUploadingPage ? 'Please wait — saving in progress' : 'Save current measurements, then upload a new plan to keep measuring'}
           >
-            Upload another plan or image
+            {isSaving || isUploadingPage ? 'Saving…' : 'Upload another plan or image'}
           </button>
           <button
             onClick={handleSaveTakeoff}
@@ -4710,11 +4843,9 @@ export function TakeoffWorkstation({
             </div>
           </div>
 
-          {/* Phase 7: Multi-lineal in-progress floating banner. Lives BELOW the
-              toolbar instead of inside it so the tool buttons + zoom controls
-              never shift around when the user starts a polyline. Absolute-
-              positioned so it overlays the canvas top edge without consuming
-              its own layout row. */}
+          {/* Phase 7: Multi-lineal in-progress floating banner. DRAGGABLE so it
+              never blocks the canvas where the user needs to click. Drag from
+              the grip handle on the left; buttons remain clickable. */}
           {multiLinealMode && multiLinealPoints.length >= 1 && (() => {
             const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / (calibrations.length || 1);
             let runningTotal = 0;
@@ -4724,9 +4855,49 @@ export function TakeoffWorkstation({
               runningTotal += Math.sqrt(dx * dx + dy * dy) * avgScale;
             }
             const segCount = multiLinealPoints.length - 1;
+            const style: CSSProperties = popupPos
+              ? { left: popupPos.x, top: popupPos.y, transform: 'none' }
+              : { left: '50%', transform: 'translateX(-50%)', top: 96 };
             return (
-              <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[96px] z-10">
-                <div className="pointer-events-auto flex items-center gap-3 px-4 py-2 bg-orange-50 border border-orange-300 rounded-full text-sm shadow-md">
+              <div
+                ref={popupContainerRef}
+                className="absolute z-20"
+                style={style}
+              >
+                <div
+                  className="flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-300 rounded-full text-sm shadow-md cursor-grab active:cursor-grabbing select-none"
+                  onMouseDown={(e) => {
+                    // Drag from anywhere on the toolbar EXCEPT the buttons.
+                    if ((e.target as HTMLElement).closest('button')) return;
+                    e.preventDefault();
+                    const container = popupContainerRef.current;
+                    if (!container) return;
+                    const rect = container.getBoundingClientRect();
+                    const parentRect = container.offsetParent?.getBoundingClientRect();
+                    if (!parentRect) return;
+                    const origX = rect.left - parentRect.left;
+                    const origY = rect.top - parentRect.top;
+                    popupDragRef.current = { startX: e.clientX, startY: e.clientY, origX, origY };
+                    const onMove = (ev: MouseEvent) => {
+                      if (!popupDragRef.current) return;
+                      const dx = ev.clientX - popupDragRef.current.startX;
+                      const dy = ev.clientY - popupDragRef.current.startY;
+                      setPopupPos({ x: popupDragRef.current.origX + dx, y: popupDragRef.current.origY + dy });
+                    };
+                    const onUp = () => {
+                      popupDragRef.current = null;
+                      document.removeEventListener('mousemove', onMove);
+                      document.removeEventListener('mouseup', onUp);
+                    };
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                  }}
+                  title="Drag to move"
+                >
+                  {/* Drag handle (visual affordance; whole bar is draggable) */}
+                  <div className="flex items-center text-orange-300 hover:text-orange-500">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6h2v2H8V6zm0 5h2v2H8v-2zm0 5h2v2H8v-2zm6-10h2v2h-2V6zm0 5h2v2h-2v-2zm0 5h2v2h-2v-2z" /></svg>
+                  </div>
                   <span className="text-orange-800 font-medium whitespace-nowrap">
                     Total: {runningTotal.toFixed(2)}m ({segCount} segment{segCount !== 1 ? 's' : ''})
                   </span>

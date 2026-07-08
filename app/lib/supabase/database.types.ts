@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -2776,9 +2776,11 @@ export type Database = {
         Row: {
           combined_from: Json | null
           created_at: string
+          entry_inputs: Json | null
           id: string
           is_combined: boolean
           page_id: string | null
+          pitch_degrees: number | null
           quote_component_id: string
           raw_value: number
           sort_order: number
@@ -2787,9 +2789,11 @@ export type Database = {
         Insert: {
           combined_from?: Json | null
           created_at?: string
+          entry_inputs?: Json | null
           id?: string
           is_combined?: boolean
           page_id?: string | null
+          pitch_degrees?: number | null
           quote_component_id: string
           raw_value: number
           sort_order?: number
@@ -2798,9 +2802,11 @@ export type Database = {
         Update: {
           combined_from?: Json | null
           created_at?: string
+          entry_inputs?: Json | null
           id?: string
           is_combined?: boolean
           page_id?: string | null
+          pitch_degrees?: number | null
           quote_component_id?: string
           raw_value?: number
           sort_order?: number
@@ -2825,6 +2831,7 @@ export type Database = {
       }
       quote_components: {
         Row: {
+          calc_audit: Json | null
           calc_pitch_degrees: number | null
           calc_pitch_factor: number | null
           calc_raw_value: number | null
@@ -2862,6 +2869,7 @@ export type Database = {
           waste_type: Database["public"]["Enums"]["waste_type"]
         }
         Insert: {
+          calc_audit?: Json | null
           calc_pitch_degrees?: number | null
           calc_pitch_factor?: number | null
           calc_raw_value?: number | null
@@ -2899,6 +2907,7 @@ export type Database = {
           waste_type?: Database["public"]["Enums"]["waste_type"]
         }
         Update: {
+          calc_audit?: Json | null
           calc_pitch_degrees?: number | null
           calc_pitch_factor?: number | null
           calc_raw_value?: number | null
@@ -3314,6 +3323,7 @@ export type Database = {
           company_id: string
           component_library_id: string | null
           created_at: string | null
+          entry_inputs: Json | null
           id: string
           is_visible: boolean | null
           measurement_type: string
@@ -3330,6 +3340,7 @@ export type Database = {
           company_id: string
           component_library_id?: string | null
           created_at?: string | null
+          entry_inputs?: Json | null
           id?: string
           is_visible?: boolean | null
           measurement_type: string
@@ -3346,6 +3357,7 @@ export type Database = {
           company_id?: string
           component_library_id?: string | null
           created_at?: string | null
+          entry_inputs?: Json | null
           id?: string
           is_visible?: boolean | null
           measurement_type?: string

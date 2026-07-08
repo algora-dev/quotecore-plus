@@ -19,6 +19,12 @@ interface TakeoffMeasurement {
   /** P1-1a H-01: unit override for measurements loaded from DB (other pages).
    *  When set, this overrides the top-level `unit` param for this measurement. */
   measurementUnit?: string;
+  /** Entry-input reference (v8, 2026-07-08): USER-entered height/depth in
+   *  metric, captured at draw time (freestyle L×H height, volume_3d custom
+   *  depth). Display-only — never feeds calculation (m.value is already the
+   *  final product). Persisted to quote_takeoff_measurements.entry_inputs so
+   *  re-entry hydration + re-save doesn't wipe it. */
+  entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
 }
 
 export async function saveTakeoffMeasurements(
@@ -97,6 +103,16 @@ export async function saveTakeoffMeasurements(
   });
   const firstRoofAreaPitch = roofAreaMeasurements[0]?.pitch || 0;
 
+  // Per-area pitch fix (2026-07-08): components must be pitched at the pitch
+  // of the roof area they belong to — NOT the first area measured on the page.
+  // Seed from THIS save's area measurements (first measurement per area wins
+  // for this page); missing areas are resolved from the DB further down.
+  const areaPitchByAreaId = new Map<string, number>();
+  for (const m of roofAreaMeasurements) {
+    const key = m.quoteRoofAreaId ?? '';
+    if (key && !areaPitchByAreaId.has(key)) areaPitchByAreaId.set(key, m.pitch || 0);
+  }
+
   // 2. Components + their entries (current page only).
   //
   // Gerald audit 2026-05-29 H-01: the previous H-01 cross-page aggregation
@@ -135,6 +151,65 @@ export async function saveTakeoffMeasurements(
       .in('id', componentIds);
     const libById = new Map((libComps || []).map(c => [c.id, c]));
 
+    // Per-area pitch fix (2026-07-08, Shaun-confirmed spec): resolve the pitch
+    // for every component group's roof area. Resolution order:
+    //   1. Area measurement drawn in THIS save for that area (areaPitchByAreaId)
+    //      — i.e. the pitch given to this area on the CURRENT plan.
+    //   2. Stored quote_roof_area_entries.pitch_degrees for (area, current page)
+    //      — pitch previously given on this plan.
+    //   3. No pitch on this plan → the FIRST plan's pitch for this area
+    //      (earliest entry with a pitch; per spec: "if there is no new pitch
+    //      value added to the new plan, use the first plan's pitch value").
+    //   4. Parent quote_roof_areas.calc_pitch_degrees (first-area-wins, same
+    //      semantics as 3 — covers legacy areas with no stored entries).
+    // Falls back to firstRoofAreaPitch only for legacy area-less groups.
+    const groupAreaIds = [...new Set(
+      componentGroupKeys
+        .map(k => k.slice(k.indexOf('::') + 2))
+        .filter((id): id is string => !!id)
+    )];
+    const groupPitchByAreaId = new Map<string, number>();
+    for (const areaId of groupAreaIds) {
+      const fromSave = areaPitchByAreaId.get(areaId);
+      if (fromSave !== undefined && fromSave > 0) groupPitchByAreaId.set(areaId, fromSave);
+    }
+    const unresolvedAreaIds = groupAreaIds.filter(id => !groupPitchByAreaId.has(id));
+    if (unresolvedAreaIds.length > 0) {
+      const { data: entryPitchRows } = await supabase
+        .from('quote_roof_area_entries')
+        .select('quote_roof_area_id, page_id, pitch_degrees, created_at')
+        .in('quote_roof_area_id', unresolvedAreaIds)
+        .order('created_at', { ascending: true }) as unknown as { data: Array<{
+          quote_roof_area_id: string;
+          page_id: string | null;
+          pitch_degrees: number | string | null;
+          created_at: string;
+        }> | null };
+      for (const areaId of unresolvedAreaIds) {
+        // Rows are ordered ASCENDING (oldest first).
+        const rows = (entryPitchRows ?? []).filter(r => r.quote_roof_area_id === areaId);
+        // Current plan: most recent pitch stored for this page (last match).
+        const samePageRows = currentPageId
+          ? rows.filter(r => r.page_id === currentPageId && Number(r.pitch_degrees ?? 0) > 0)
+          : [];
+        const samePage = samePageRows.length > 0 ? samePageRows[samePageRows.length - 1] : undefined;
+        // Fallback: the FIRST plan's pitch = earliest entry with a pitch.
+        const firstPlan = rows.find(r => Number(r.pitch_degrees ?? 0) > 0);
+        if (samePage) groupPitchByAreaId.set(areaId, Number(samePage.pitch_degrees));
+        else if (firstPlan) groupPitchByAreaId.set(areaId, Number(firstPlan.pitch_degrees));
+      }
+      const stillUnresolved = unresolvedAreaIds.filter(id => !groupPitchByAreaId.has(id));
+      if (stillUnresolved.length > 0) {
+        const { data: parentAreas } = await supabase
+          .from('quote_roof_areas')
+          .select('id, calc_pitch_degrees')
+          .in('id', stillUnresolved);
+        for (const a of parentAreas ?? []) {
+          groupPitchByAreaId.set(a.id, Number(a.calc_pitch_degrees ?? 0));
+        }
+      }
+    }
+
     componentsPayload = componentGroupKeys
       .map(groupKey => {
         const sepIdx = groupKey.indexOf('::');
@@ -147,6 +222,10 @@ export async function saveTakeoffMeasurements(
           m => m.componentId === componentId && (m.quoteRoofAreaId ?? null) === groupAreaId
         );
         const pitchType = libComp.default_pitch_type || 'none';
+        // Per-area pitch fix (2026-07-08): pitch this group at ITS area's pitch.
+        const groupPitch = groupAreaId
+          ? (groupPitchByAreaId.get(groupAreaId) ?? firstRoofAreaPitch)
+          : firstRoofAreaPitch;
         // Cast: database.types.ts is stale; fixed_per_segment is a valid DB value.
         const wasteType = (libComp.default_waste_type as string) || 'none';
         const wastePercent = libComp.default_waste_percent || 0;
@@ -161,6 +240,22 @@ export async function saveTakeoffMeasurements(
         const depthM = depthMm ? depthMm / 1000 : null;
 
         const entries = componentMeasurements.map((m, index) => {
+          // v8 (2026-07-08): snapshot the input reference values used for this
+          // entry so the quote builder can display them (READ-ONLY — nothing
+          // reads entry_inputs for calculation).
+          //  - preset height/depth: from component_library at save time
+          //  - user height/depth: carried on the measurement (freestyle/volume_3d)
+          let entryInputs: { height_m?: number; depth_m?: number; source?: 'preset' | 'user' } | null = null;
+          if (m.type === 'multi_lineal_lxh' && heightMm && heightM > 0) {
+            entryInputs = { height_m: heightM, source: 'preset' };
+          } else if (m.type === 'area' && libComp.measurement_type === 'volume' && depthM) {
+            entryInputs = { depth_m: depthM, source: 'preset' };
+          } else if ((m.type === 'length_x_height_freestyle' || m.type === 'multi_lineal_lxh_freestyle') && m.entryInputs?.height_m) {
+            entryInputs = { height_m: Number(m.entryInputs.height_m), source: 'user' };
+          } else if (m.type === 'volume_3d' && m.entryInputs?.depth_m) {
+            entryInputs = { depth_m: Number(m.entryInputs.depth_m), source: 'user' };
+          }
+
           // All measurements are from the current page and share the same unit.
           // (H-01 multi-page unit mixing was removed per Gerald audit 2026-05-29.)
           const mToMetricLinear = toMetricLinear;
@@ -215,7 +310,7 @@ export async function saveTakeoffMeasurements(
             metricValue,
             true,
             pitchType as any,
-            firstRoofAreaPitch,
+            groupPitch,
             effectiveWasteType as any,
             wastePercent,
             effectiveWasteFixed
@@ -224,6 +319,11 @@ export async function saveTakeoffMeasurements(
             raw_value: metricValue,
             value_after_waste: result.afterWaste,
             sort_order: index,
+            // Per-entry pitch (2026-07-08): actual pitch used for this entry so
+            // the calc audit + UI can report it faithfully per page/area.
+            pitch_degrees: groupPitch,
+            // v8: input reference snapshot (display only).
+            entry_inputs: entryInputs,
           };
         });
 
@@ -247,6 +347,9 @@ export async function saveTakeoffMeasurements(
           waste_percent: wastePercent,
           waste_fixed: wasteFixed,
           pitch_type: pitchType,
+          // Per-area pitch fix (2026-07-08): persist the pitch this component
+          // group was calculated at (RPC v7 writes it to calc_pitch_degrees).
+          calc_pitch_degrees: groupPitch,
           final_quantity: totalQuantity,
           material_cost: materialCost,
           labour_cost: labourCost,
@@ -266,6 +369,8 @@ export async function saveTakeoffMeasurements(
     measurement_unit: unit,
     canvas_points: m.points ?? null,
     is_visible: m.visible,
+    // v8: user-entered height/depth passthrough (display only).
+    entry_inputs: m.entryInputs ?? null,
     // Phase 7: page_id passed through when the caller supplies it (multi-page
     // takeoff). Omitted for single-page callers - RPC writes NULL.
     ...(m.pageId ? { page_id: m.pageId } : {}),
@@ -403,6 +508,9 @@ export interface TakeoffHydrationMeasurement {
    *  with, from quote_roof_area_entries.pitch_degrees. Null for component
    *  measurements and legacy rows with no matching entry. */
   pitch: number | null;
+  /** v8 (2026-07-08): user-entered height/depth reference values (metric)
+   *  saved with this measurement. Display-only passthrough. */
+  entryInputs: { height_m?: number | null; depth_m?: number | null } | null;
 }
 
 export interface TakeoffHydrationData {
@@ -464,7 +572,7 @@ export async function loadTakeoffHydrationData(
   // 3. Measurements for all pages
   const { data: measurements } = await supabase
     .from('quote_takeoff_measurements')
-    .select('id, component_library_id, measurement_type, measurement_value, measurement_unit, canvas_points, is_visible, page_id, quote_roof_area_id')
+    .select('id, component_library_id, measurement_type, measurement_value, measurement_unit, canvas_points, is_visible, page_id, quote_roof_area_id, entry_inputs')
     .eq('quote_id', quoteId)
     .order('created_at', { ascending: true });
 
@@ -521,6 +629,8 @@ export async function loadTakeoffHydrationData(
       pageId: m.page_id,
       quoteRoofAreaId: (m as { quote_roof_area_id?: string | null }).quote_roof_area_id ?? null,
       pitch,
+      // v8: display-only passthrough so re-save doesn't wipe user H/D values.
+      entryInputs: (m as { entry_inputs?: { height_m?: number | null; depth_m?: number | null } | null }).entry_inputs ?? null,
     };
   });
 
