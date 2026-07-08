@@ -597,6 +597,10 @@ export function TakeoffWorkstation({
           // Preserve the draw-time area stamp through redraws — dropping it
           // reverted measurements to the save-time fallback area.
           quoteRoofAreaId: m.quoteRoofAreaId,
+          // v8 fix (2026-07-08): redraw REPLACES state with reconstructCanvas
+          // output — omitting entryInputs here stripped user H/D from state on
+          // every redraw (area create/switch), so saves sent null.
+          entryInputs: m.entryInputs,
         })),
       })),
       roofAreas: roofAreas.map(ra => ({

@@ -41,4 +41,10 @@ export interface ComponentMeasurement {
   visible: boolean;
   canvasObjects?: unknown[];
   fromPageId?: string | null;
+  /** Draw-time area stamp — must survive reconstruct/redraw round-trips. */
+  quoteRoofAreaId?: string | null;
+  /** v8 (2026-07-08): user-entered H/D reference — reconstructCanvas output
+   *  REPLACES React state, so this must survive the round-trip or redraws
+   *  strip it before save (the "H/D missing after area switch" bug). */
+  entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
 }
