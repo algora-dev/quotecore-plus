@@ -145,12 +145,17 @@ export async function saveTakeoffMeasurements(
       .in('id', componentIds);
     const libById = new Map((libComps || []).map(c => [c.id, c]));
 
-    // Per-area pitch fix (2026-07-08): resolve the pitch for every component
-    // group's roof area. Resolution order:
-    //   1. Area measurement drawn in THIS save for that area (areaPitchByAreaId).
-    //   2. Stored quote_roof_area_entries.pitch_degrees for (area, current page).
-    //   3. Latest stored entry pitch for the area on any page.
-    //   4. Parent quote_roof_areas.calc_pitch_degrees.
+    // Per-area pitch fix (2026-07-08, Shaun-confirmed spec): resolve the pitch
+    // for every component group's roof area. Resolution order:
+    //   1. Area measurement drawn in THIS save for that area (areaPitchByAreaId)
+    //      — i.e. the pitch given to this area on the CURRENT plan.
+    //   2. Stored quote_roof_area_entries.pitch_degrees for (area, current page)
+    //      — pitch previously given on this plan.
+    //   3. No pitch on this plan → the FIRST plan's pitch for this area
+    //      (earliest entry with a pitch; per spec: "if there is no new pitch
+    //      value added to the new plan, use the first plan's pitch value").
+    //   4. Parent quote_roof_areas.calc_pitch_degrees (first-area-wins, same
+    //      semantics as 3 — covers legacy areas with no stored entries).
     // Falls back to firstRoofAreaPitch only for legacy area-less groups.
     const groupAreaIds = [...new Set(
       componentGroupKeys
@@ -168,20 +173,24 @@ export async function saveTakeoffMeasurements(
         .from('quote_roof_area_entries')
         .select('quote_roof_area_id, page_id, pitch_degrees, created_at')
         .in('quote_roof_area_id', unresolvedAreaIds)
-        .order('created_at', { ascending: false }) as unknown as { data: Array<{
+        .order('created_at', { ascending: true }) as unknown as { data: Array<{
           quote_roof_area_id: string;
           page_id: string | null;
           pitch_degrees: number | string | null;
           created_at: string;
         }> | null };
       for (const areaId of unresolvedAreaIds) {
+        // Rows are ordered ASCENDING (oldest first).
         const rows = (entryPitchRows ?? []).filter(r => r.quote_roof_area_id === areaId);
-        const samePage = currentPageId
-          ? rows.find(r => r.page_id === currentPageId && Number(r.pitch_degrees ?? 0) > 0)
-          : undefined;
-        const anyPage = rows.find(r => Number(r.pitch_degrees ?? 0) > 0);
+        // Current plan: most recent pitch stored for this page (last match).
+        const samePageRows = currentPageId
+          ? rows.filter(r => r.page_id === currentPageId && Number(r.pitch_degrees ?? 0) > 0)
+          : [];
+        const samePage = samePageRows.length > 0 ? samePageRows[samePageRows.length - 1] : undefined;
+        // Fallback: the FIRST plan's pitch = earliest entry with a pitch.
+        const firstPlan = rows.find(r => Number(r.pitch_degrees ?? 0) > 0);
         if (samePage) groupPitchByAreaId.set(areaId, Number(samePage.pitch_degrees));
-        else if (anyPage) groupPitchByAreaId.set(areaId, Number(anyPage.pitch_degrees));
+        else if (firstPlan) groupPitchByAreaId.set(areaId, Number(firstPlan.pitch_degrees));
       }
       const stillUnresolved = unresolvedAreaIds.filter(id => !groupPitchByAreaId.has(id));
       if (stillUnresolved.length > 0) {
