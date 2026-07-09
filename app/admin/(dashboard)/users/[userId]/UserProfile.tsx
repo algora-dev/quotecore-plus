@@ -22,6 +22,7 @@ import {
   type AttachmentRow,
 } from './actions';
 import { StorageTab } from './StorageTab';
+import { QuotesTab } from './quotes-tab/QuotesTab';
 
 const PLAN_OPTIONS = [
   { code: 'free', label: 'Free' },
@@ -125,7 +126,10 @@ export function UserProfile({ data }: { data: UserProfileData }) {
         </div>
       </div>
 
-      {/* H. Storage & Files */}
+      {/* H. Quotes — Storyline Viewer */}
+      <QuotesTab companyId={data.company.id} />
+
+      {/* I. Storage & Files */}
       <StorageSection data={data} />
     </div>
   );
