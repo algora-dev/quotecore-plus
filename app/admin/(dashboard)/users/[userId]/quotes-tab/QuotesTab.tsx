@@ -87,7 +87,7 @@ export function QuotesTab({ companyId }: { companyId: string }) {
         </div>
       </div>
 
-      {/* Results */}
+      {/* Results — scrollable to avoid pushing page when user has many quotes */}
       {loading && rows === null ? (
         <p className="text-sm text-slate-500">Loading quotes…</p>
       ) : rows !== null && rows.length === 0 ? (
@@ -95,7 +95,7 @@ export function QuotesTab({ companyId }: { companyId: string }) {
           <p className="text-sm text-slate-500">No quotes found.</p>
         </div>
       ) : rows !== null && rows.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-2 max-h-96 overflow-y-auto">
           {rows.map((q) => (
             <button
               key={q.id}
