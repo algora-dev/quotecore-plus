@@ -15,6 +15,7 @@ const PUBLIC_PATHS = [
   '/terms',        // Terms of Service (legally required to be public)
   '/docs',         // Public help library
   '/free-construction-calculator', // Free public calculator (no auth)
+  '/free-roofing-calculator',     // Free roofing calculator (no auth)
   '/free-quote-generator',        // Free AI quote generator (future)
   '/free-purchase-order-generator', // Free AI order generator (future)
   '/free-invoice-generator',       // Free AI invoice generator (future)

@@ -24,6 +24,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/terms`, lastModified: today, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE_URL}/docs`, lastModified: today, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${SITE_URL}/free-construction-calculator`, lastModified: today, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/free-roofing-calculator`, lastModified: today, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/free-quote-generator`, lastModified: today, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/free-purchase-order-generator`, lastModified: today, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/free-invoice-generator`, lastModified: today, changeFrequency: 'monthly', priority: 0.9 },

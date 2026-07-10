@@ -14,7 +14,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/docs', '/privacy', '/cookies', '/terms', '/login', '/signup', '/free-construction-calculator', '/free-quote-generator', '/free-purchase-order-generator', '/free-invoice-generator', '/free-tools'],
+        allow: ['/', '/docs', '/privacy', '/cookies', '/terms', '/login', '/signup', '/free-construction-calculator', '/free-roofing-calculator', '/free-quote-generator', '/free-purchase-order-generator', '/free-invoice-generator', '/free-tools'],
         disallow: [
           '/api/',
           '/auth/',
