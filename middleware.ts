@@ -14,6 +14,11 @@ const PUBLIC_PATHS = [
   '/cookies',      // Cookie Policy (legally required to be public)
   '/terms',        // Terms of Service (legally required to be public)
   '/docs',         // Public help library
+  '/free-construction-calculator', // Free public calculator (no auth)
+  '/free-quote-generator',        // Free AI quote generator (future)
+  '/free-purchase-order-generator', // Free AI order generator (future)
+  '/free-invoice-generator',       // Free AI invoice generator (future)
+  '/free-tools',                   // Free tools auth callback (future)
   '/admin/login',  // Admin sign-in (the rest of /admin/* is gated by
                    //  the requireAdmin() helper at the page boundary).
   '/m',            // Public recipient reply pages (Messages pipeline).

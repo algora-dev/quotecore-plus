@@ -1,10 +1,12 @@
-# Pitch Calculator — Public Lead-Gen Page
+# All-in-One Construction Calculator — Public Lead-Gen Page
 
 ## Goal
-Build the best roofing pitch calculator on the internet at `app.quote-core.com/pitch-calculator`. Free, no auth, SEO-optimized. Drives traffic, captures leads, converts to QuoteCore+ users.
+Build the best all-in-one construction calculator on the internet at `app.quote-core.com/free-construction-calculator`. Free, no auth, SEO-optimized, mobile-first. Covers pitch/angle, area², volume, rafter length, hip/valley, and material estimation. Drives traffic, captures leads, converts to QuoteCore+ users.
+
+> See also: `docs/free-tools-plan.md` — master plan for all free tools.
 
 ## Route
-`app/(public)/pitch-calculator/page.tsx` — sits in the `(public)` route group alongside docs. No auth wall.
+`app/(public)/free-construction-calculator/page.tsx` — sits in the `(public)` route group. No auth wall.
 
 ## What's Already Built (reusable)
 - `rafterPitchFactor(degrees)` — `1 / cos(degrees * RAD)`
@@ -39,6 +41,27 @@ Single page with tabbed/sectioned calculators:
 - Inputs: span, run, pitch
 - Output: hip/valley length using compound angle formula
 
+**5. Area Squared Calculator**
+- Inputs: width × length (m/ft)
+- Output: area in m² or ft² (or RS for imperial roofing)
+- Quick shapes: rectangle, triangle, trapezoid, circle
+- Add multiple shapes → running total
+
+**6. Volume Calculator**
+- Inputs: area × depth OR width × length × depth
+- Output: volume in m³ or ft³
+- Use cases: concrete pour, fill material, excavation
+- Material weight estimate (optional density input)
+
+**7. Angle/Trig Quick Calculator**
+- Right triangle solver: enter 2 sides or 1 side + 1 angle → solve all
+- Useful for: ramp angles, cut angles, diagonal measurements
+
+**8. Material Estimator (bonus)**
+- Input: area + material type (tiles, sheets, membrane rolls)
+- Output: estimated quantity needed (with waste factor)
+- Tie-in to pitch factor for sloped roofs
+
 ### Phase 2: Layout & Marketing
 - Hero section: "Free Roofing Pitch Calculator" + value prop
 - Calculator cards in a clean grid (mobile-first, stacked)
@@ -70,9 +93,10 @@ Single page with tabbed/sectioned calculators:
 - Schema.org WebApplication with name, description, applicationCategory, offers (free)
 
 ## Files to Create
-1. `app/(public)/pitch-calculator/page.tsx` — main page (server component for SEO meta)
-2. `app/(public)/pitch-calculator/PitchCalculator.tsx` — client component with all calculators
-3. `app/(public)/pitch-calculator/layout.tsx` — public layout (header with logo + signup CTA, no app nav)
+1. `app/(public)/free-construction-calculator/page.tsx` — main page (server component for SEO meta)
+2. `app/(public)/free-construction-calculator/ConstructionCalculator.tsx` — client component with all calculators
+3. `app/(public)/free-construction-calculator/layout.tsx` — public layout (header with logo + signup CTA, no app nav)
+4. `app/(public)/free-construction-calculator/components/` — individual calculator modules (PitchConverter, RafterCalculator, RoofAreaCalculator, HipValleyCalculator, AreaCalculator, VolumeCalculator, TrigCalculator, MaterialEstimator)
 
 ## Effort
-~1 day for Phase 1+2. All math is already in the engine, main work is UI + SEO.
+~1.5 days for Phase 1+2. All math is already in the engine, main work is UI + SEO + the additional calculators (area², volume, trig, material estimator).
