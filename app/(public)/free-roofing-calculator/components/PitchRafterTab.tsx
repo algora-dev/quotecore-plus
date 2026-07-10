@@ -356,8 +356,8 @@ function RafterDiagram({ degrees, span, rafterLen, unit }: { degrees: number; sp
 
 // ─── Hip/Valley 3D perspective diagram ──────────────
 // Two roof planes meeting at a hip/valley line:
-// - Two filled roof faces visible in 3D perspective
-// - They meet at the eaves (bottom) and at the peak (top)
+// - Two filled roof faces clearly visible in 3D perspective
+// - They meet at the eaves (bottom corner) and at the peak (top)
 // - Hip/valley line runs from eaves to peak (orange, bold)
 // - Steeper pitch = taller peak, lower pitch = flatter
 // - Green arrows show water flow direction down each plane
@@ -366,32 +366,31 @@ function HipValleyDiagram({ degrees, planLength, hipLen, unit }: { degrees: numb
   const deg = Math.max(0, Math.min(89, degrees));
   const rad = (deg * Math.PI) / 180;
 
-  // Scale to fit viewBox
-  const scale = 42 / Math.max(planLength, 1);
+  // Scale — use most of the viewBox width
+  const scale = 75 / Math.max(planLength, 1);
   const pl = planLength * scale;
 
   // Rise (peak height) — directly proportional to pitch
-  // steeper pitch = taller peak, lower pitch = flatter
   const rawRise = pl * Math.tan(rad);
-  const maxRise = 115;
+  const maxRise = 130;
   const rise = Math.min(rawRise, maxRise);
 
-  // Depth offset for 3D perspective
-  const depth = pl * 0.45;
+  // Depth offset for 3D perspective (how far back peak is from corner)
+  const depth = pl * 0.5;
 
-  // Layout
-  const cx = 150;
-  const cy = 185;
+  // Layout — center the diagram in the viewBox
+  const cx = 155;
+  const cy = 195; // corner Y (eaves level, near bottom)
 
-  // Key points in screen coordinates:
+  // Key points:
   // Corner (eaves meeting point, front-center, bottom)
   const corner = { x: cx, y: cy };
-  // Left eaves — extends left and slightly forward
-  const eavesL = { x: cx - pl * 0.866, y: cy + pl * 0.22 };
+  // Left eaves — extends left and slightly forward (down on screen for isometric)
+  const eavesL = { x: cx - pl * 0.75, y: cy + pl * 0.18 };
   // Right eaves — extends right and slightly forward
-  const eavesR = { x: cx + pl * 0.866, y: cy + pl * 0.22 };
-  // Peak — above and behind corner (3D perspective: up + slightly right)
-  const peak = { x: cx + depth * 0.35, y: cy - rise - depth * 0.35 };
+  const eavesR = { x: cx + pl * 0.75, y: cy + pl * 0.18 };
+  // Peak — above and behind corner (shifted up + right for 3D perspective)
+  const peak = { x: cx + depth * 0.4, y: cy - rise - depth * 0.3 };
 
   const hipAngleDeg = Math.atan(Math.tan(rad) * Math.cos(45 * RAD)) * 180 / Math.PI;
 
@@ -406,16 +405,16 @@ function HipValleyDiagram({ degrees, planLength, hipLen, unit }: { degrees: numb
     y: peak.y + (eavesL.y - peak.y) * 0.3,
   };
   const leftArrowEnd = {
-    x: peak.x + (eavesL.x - peak.x) * 0.7,
-    y: peak.y + (eavesL.y - peak.y) * 0.7,
+    x: peak.x + (eavesL.x - peak.x) * 0.72,
+    y: peak.y + (eavesL.y - peak.y) * 0.72,
   };
   const rightArrowStart = {
     x: peak.x + (eavesR.x - peak.x) * 0.3,
     y: peak.y + (eavesR.y - peak.y) * 0.3,
   };
   const rightArrowEnd = {
-    x: peak.x + (eavesR.x - peak.x) * 0.7,
-    y: peak.y + (eavesR.y - peak.y) * 0.7,
+    x: peak.x + (eavesR.x - peak.x) * 0.72,
+    y: peak.y + (eavesR.y - peak.y) * 0.72,
   };
 
   const leftPlanePts = `${corner.x},${corner.y} ${eavesL.x},${eavesL.y} ${peak.x},${peak.y}`;
@@ -423,67 +422,67 @@ function HipValleyDiagram({ degrees, planLength, hipLen, unit }: { degrees: numb
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <svg viewBox="0 0 300 230" className="w-full max-w-md">
-        {/* Eaves line (ground level) */}
+      <svg viewBox="0 0 310 250" className="w-full max-w-md">
+        {/* ─── Eaves line (ground level, left to right through corner) ─── */}
         <line x1={eavesL.x} y1={eavesL.y} x2={eavesR.x} y2={eavesR.y} stroke="#94a3b8" strokeWidth="1.5" />
 
-        {/* Right roof plane (far side, darker) */}
-        <polygon points={rightPlanePts} fill="rgba(59, 130, 246, 0.18)" stroke="#3b82f6" strokeWidth="1.5" />
+        {/* ─── Right roof plane (far side — darker fill) ─── */}
+        <polygon points={rightPlanePts} fill="rgba(59, 130, 246, 0.20)" stroke="#3b82f6" strokeWidth="1.5" />
 
-        {/* Left roof plane (near side, lighter) */}
+        {/* ─── Left roof plane (near side — lighter fill) ─── */}
         <polygon points={leftPlanePts} fill="rgba(59, 130, 246, 0.08)" stroke="#3b82f6" strokeWidth="1.5" />
 
-        {/* Hip/Valley line (orange, bold — corner to peak) */}
+        {/* ─── Hip/Valley line (orange, bold — corner to peak) ─── */}
         <line x1={corner.x} y1={corner.y} x2={peak.x} y2={peak.y} stroke="#FF6B35" strokeWidth="3.5" />
 
-        {/* Roof edges (peak to each eaves end) */}
+        {/* ─── Roof edges (peak to each eaves end) ─── */}
         <line x1={peak.x} y1={peak.y} x2={eavesL.x} y2={eavesL.y} stroke="#3b82f6" strokeWidth="2" />
         <line x1={peak.x} y1={peak.y} x2={eavesR.x} y2={eavesR.y} stroke="#3b82f6" strokeWidth="2" />
 
-        {/* Direction arrows (green — water flow down each plane) */}
+        {/* ─── Direction arrows (green — water flow down each plane) ─── */}
         <SlopeArrow start={leftArrowStart} end={leftArrowEnd} color="#10b981" />
         <SlopeArrow start={rightArrowStart} end={rightArrowEnd} color="#10b981" />
 
-        {/* Peak point */}
+        {/* ─── Peak point + label (top) ─── */}
         <circle cx={peak.x} cy={peak.y} r="4" fill="#3b82f6" />
-        <text x={peak.x + 7} y={peak.y - 5} className="fill-slate-700" style={{ fontSize: '10px', fontWeight: 600 }}>
+        <text x={peak.x + 8} y={peak.y - 6} className="fill-slate-700" style={{ fontSize: '11px', fontWeight: 600 }}>
           Peak
         </text>
 
-        {/* Corner (eaves) point */}
+        {/* ─── Eaves corner point + label (bottom) ─── */}
         <circle cx={corner.x} cy={corner.y} r="3.5" fill="#94a3b8" />
-        <text x={corner.x + 7} y={corner.y + 14} className="fill-slate-400" style={{ fontSize: '9px' }}>
+        <text x={corner.x + 8} y={corner.y + 16} className="fill-slate-400" style={{ fontSize: '10px' }}>
           Eaves
         </text>
 
-        {/* Hip/Valley length label */}
-        <text x={hipMid.x + 14} y={hipMid.y} className="fill-[#FF6B35]" style={{ fontSize: '10px', fontWeight: 600 }}>
+        {/* ─── Hip length label (along the hip line, offset right) ─── */}
+        <text x={hipMid.x + 16} y={hipMid.y + 2} className="fill-[#FF6B35]" style={{ fontSize: '11px', fontWeight: 600 }}>
           Hip: {hipLen.toFixed(2)} {unit}
         </text>
 
-        {/* Pitch label */}
-        <text x={corner.x - 8} y={corner.y - 28} textAnchor="end" className="fill-slate-600" style={{ fontSize: '10px', fontWeight: 500 }}>
+        {/* ─── Pitch label (top-left area, clear of diagram) ─── */}
+        <text x="10" y="55" className="fill-slate-600" style={{ fontSize: '11px', fontWeight: 500 }}>
           Pitch: {deg.toFixed(1)}°
         </text>
 
-        {/* Hip slope angle */}
-        <text x={corner.x - 8} y={corner.y - 16} textAnchor="end" className="fill-slate-400" style={{ fontSize: '9px' }}>
+        {/* ─── Hip slope angle (below pitch) ─── */}
+        <text x="10" y="70" className="fill-slate-400" style={{ fontSize: '10px' }}>
           Hip slope: {hipAngleDeg.toFixed(1)}°
         </text>
 
-        {/* Plan length */}
-        <text x={(corner.x + eavesR.x) / 2} y={eavesR.y + 14} textAnchor="middle" className="fill-slate-400" style={{ fontSize: '9px' }}>
+        {/* ─── Plan length (below eaves line, right side) ─── */}
+        <text x={(corner.x + eavesR.x) / 2} y={eavesR.y + 16} textAnchor="middle" className="fill-slate-400" style={{ fontSize: '10px' }}>
           Plan: {planLength.toFixed(2)} {unit}
         </text>
 
-        {/* Legend */}
-        <g transform="translate(8, 8)">
-          <line x1="0" y1="4" x2="14" y2="4" stroke="#FF6B35" strokeWidth="2.5" />
-          <text x="18" y="7" className="fill-slate-500" style={{ fontSize: '8px' }}>Hip/Valley</text>
-          <line x1="0" y1="16" x2="14" y2="16" stroke="#3b82f6" strokeWidth="2" />
-          <text x="18" y="19" className="fill-slate-500" style={{ fontSize: '8px' }}>Roof edge</text>
-          <line x1="0" y1="28" x2="14" y2="28" stroke="#10b981" strokeWidth="1.5" />
-          <text x="18" y="31" className="fill-slate-500" style={{ fontSize: '8px' }}>Slope direction</text>
+        {/* ─── Legend (bottom-left, away from diagram) ─── */}
+        <g transform="translate(10, 225)">
+          <line x1="0" y1="0" x2="16" y2="0" stroke="#FF6B35" strokeWidth="2.5" />
+          <text x="20" y="3" className="fill-slate-500" style={{ fontSize: '9px' }}>Hip/Valley</text>
+          <line x1="80" y1="0" x2="96" y2="0" stroke="#3b82f6" strokeWidth="2" />
+          <text x="100" y="3" className="fill-slate-500" style={{ fontSize: '9px' }}>Roof edge</text>
+          <line x1="160" y1="0" x2="176" y2="0" stroke="#10b981" strokeWidth="1.5" />
+          <text x="180" y="3" className="fill-slate-500" style={{ fontSize: '9px' }}>Slope direction</text>
         </g>
       </svg>
       <p className="text-xs text-slate-400">
