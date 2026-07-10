@@ -5,7 +5,7 @@ import Link from 'next/link';
 export const metadata = {
   title: 'Free Roofing Calculator — Pitch, Area, Rafter Length, Materials | QuoteCore+',
   description:
-    'Free roofing calculator. Calculate roof pitch, rafter length, roof surface area, and material quantities. No signup required. Works on mobile and desktop.',
+    'Free roofing calculator. Calculate roof pitch, rafter length, roof surface area, quantities and complex pricing. No signup required - works on mobile and desktop.',
   alternates: { canonical: 'https://quote-core.com/free-roofing-calculator' },
   openGraph: {
     title: 'Free Roofing Calculator — Pitch, Area, Rafter Length, Materials',

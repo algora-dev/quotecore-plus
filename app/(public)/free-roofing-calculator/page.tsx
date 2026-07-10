@@ -12,8 +12,8 @@ export default function Page() {
               Free Roofing Calculator
             </h1>
             <p className="mt-2 text-sm text-slate-500 max-w-xl">
-              Calculate roof pitch, rafter length, roof surface area, and material quantities.
-              No signup required — works on mobile and desktop.
+              Calculate roof pitch, rafter length, roof surface area, quantities and complex pricing.
+              No signup required - works on mobile and desktop.
             </p>
           </div>
         </div>

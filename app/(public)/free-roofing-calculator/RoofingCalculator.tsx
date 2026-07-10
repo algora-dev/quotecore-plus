@@ -7,9 +7,10 @@ import {
   areaUnit,
   volumeUnit,
 } from '../lib/calculator';
-import { PitchRafterPanel } from './components/PitchRafterPanel';
-import { RoofAreaPanel } from './components/RoofAreaPanel';
-import { MaterialPanel } from './components/MaterialPanel';
+import { RoofAreaTab } from './components/RoofAreaTab';
+import { PitchRafterTab } from './components/PitchRafterTab';
+import { DraftSmartComponentTab } from './components/DraftSmartComponentTab';
+import { AngleFinderTab } from './components/AngleFinderTab';
 
 // ─── Unit System Context ─────────────────────────────
 
@@ -29,67 +30,40 @@ export function useUnitSystem() {
   return ctx;
 }
 
-// ─── Shared State (pitch inheritance between panels) ──
+// ─── Shared pitch state (for "use area" flow) ────────
 
-interface RoofingState {
-  pitch: string;
-  span: string;
-  roofWidth: string;
-  roofLength: string;
-  pitchType: string;
-  material: string;
-  waste: string;
-  pricePerUnit: string;
-  areaOverride: string;
+interface SharedState {
+  calculatedArea: string | null;
 }
 
-const DEFAULT_STATE: RoofingState = {
-  pitch: '25',
-  span: '10',
-  roofWidth: '10',
-  roofLength: '8',
-  pitchType: 'rafter',
-  material: 'Concrete tiles',
-  waste: '10',
-  pricePerUnit: '',
-  areaOverride: '',
-};
+const SharedStateContext = createContext<{
+  shared: SharedState;
+  setShared: (s: SharedState) => void;
+} | null>(null);
 
-const STORAGE_KEY = 'qcp:roofing-calc';
+export function useSharedState() {
+  const ctx = useContext(SharedStateContext);
+  if (!ctx) throw new Error('useSharedState must be used within RoofingCalculator');
+  return ctx;
+}
+
+// ─── Tabs ────────────────────────────────────────────
+
+type TabId = 'roof-area' | 'pitch-rafter' | 'smart-component' | 'angle-finder';
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'roof-area', label: 'Roof Area' },
+  { id: 'pitch-rafter', label: 'Rafter / Hip & Valley' },
+  { id: 'smart-component', label: 'Draft Smart Component' },
+  { id: 'angle-finder', label: 'Angle Finder' },
+];
 
 // ─── Main Component ──────────────────────────────────
 
 export function RoofingCalculator() {
   const [system, setSystem] = useState<UnitSystem>('metric');
-  const [state, setState] = useState<RoofingState>(DEFAULT_STATE);
-  const [hydrated, setHydrated] = useState(false);
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setState({ ...DEFAULT_STATE, ...parsed });
-      }
-    } catch { /* ignore */ }
-    setHydrated(true);
-  }, []);
-
-  // Save to localStorage (debounced via effect)
-  useEffect(() => {
-    if (!hydrated) return;
-    const timer = setTimeout(() => {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch { /* ignore */ }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [state, hydrated]);
-
-  const update = (key: keyof RoofingState, value: string) => {
-    setState((prev) => ({ ...prev, [key]: value }));
-  };
+  const [activeTab, setActiveTab] = useState<TabId>('roof-area');
+  const [shared, setShared] = useState<SharedState>({ calculatedArea: null });
 
   const unitValue: UnitContextValue = {
     system,
@@ -101,65 +75,57 @@ export function RoofingCalculator() {
 
   return (
     <UnitContext.Provider value={unitValue}>
-      <div className="space-y-5">
-        {/* Unit toggle */}
-        <div className="flex items-center justify-end">
-          <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1">
-            <button
-              onClick={() => setSystem('metric')}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                system === 'metric' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              Metric
-            </button>
-            <button
-              onClick={() => setSystem('imperial')}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                system === 'imperial' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              Imperial
-            </button>
+      <SharedStateContext.Provider value={{ shared, setShared }}>
+        <div className="space-y-5">
+          {/* Top bar: tabs (left) + unit toggle (right) */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* Tabs */}
+            <div className="flex items-center gap-1 overflow-x-auto rounded-full border border-slate-200 bg-white p-1">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                    activeTab === tab.id
+                      ? 'bg-slate-900 text-white'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Unit toggle */}
+            <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1">
+              <button
+                onClick={() => setSystem('metric')}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                  system === 'metric' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Metric
+              </button>
+              <button
+                onClick={() => setSystem('imperial')}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                  system === 'imperial' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Imperial
+              </button>
+            </div>
+          </div>
+
+          {/* Tab content */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            {activeTab === 'roof-area' && <RoofAreaTab />}
+            {activeTab === 'pitch-rafter' && <PitchRafterTab />}
+            {activeTab === 'smart-component' && <DraftSmartComponentTab />}
+            {activeTab === 'angle-finder' && <AngleFinderTab />}
           </div>
         </div>
-
-        {/* Panel 1: Pitch & Rafter */}
-        <PitchRafterPanel
-          pitch={state.pitch}
-          span={state.span}
-          onPitchChange={(v) => update('pitch', v)}
-          onSpanChange={(v) => update('span', v)}
-        />
-
-        {/* Panel 2: Roof Area */}
-        <RoofAreaPanel
-          width={state.roofWidth}
-          length={state.roofLength}
-          pitch={state.pitch}
-          pitchType={state.pitchType as 'rafter' | 'valley_hip' | 'none'}
-          onWidthChange={(v) => update('roofWidth', v)}
-          onLengthChange={(v) => update('roofLength', v)}
-          onPitchTypeChange={(v) => update('pitchType', v)}
-          onUseArea={(area: string) => update('areaOverride', area)}
-        />
-
-        {/* Panel 3: Material Estimator */}
-        <MaterialPanel
-          material={state.material}
-          waste={state.waste}
-          pricePerUnit={state.pricePerUnit}
-          areaOverride={state.areaOverride}
-          pitch={state.pitch}
-          onMaterialChange={(v) => update('material', v)}
-          onWasteChange={(v) => update('waste', v)}
-          onPriceChange={(v) => update('pricePerUnit', v)}
-        />
-      </div>
+      </SharedStateContext.Provider>
     </UnitContext.Provider>
   );
 }
-
-// Re-export for convenience
-export { areaUnit, volumeUnit };
-export type { UnitSystem };
