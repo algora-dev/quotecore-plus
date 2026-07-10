@@ -3,12 +3,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Free Roofing Calculator — Pitch, Area, Rafter Length, Materials | QuoteCore+',
+  title: 'Roofing Calculator — Pitch, Area, Rafter Length, Materials | QuoteCore+',
   description:
     'Free roofing calculator. Calculate roof pitch, rafter length, roof surface area, quantities and complex pricing. No signup required - works on mobile and desktop.',
   alternates: { canonical: 'https://quote-core.com/free-roofing-calculator' },
   openGraph: {
-    title: 'Free Roofing Calculator — Pitch, Area, Rafter Length, Materials',
+    title: 'Roofing Calculator — Pitch, Area, Rafter Length, Materials',
     description:
       'Free roofing calculator. Calculate roof pitch, rafter length, roof surface area, and material quantities. No signup required.',
     url: 'https://quote-core.com/free-roofing-calculator',
@@ -20,7 +20,7 @@ export default function RoofingCalculatorLayout({ children }: { children: ReactN
   const webAppLd = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: 'Free Roofing Calculator',
+    name: 'Roofing Calculator',
     description:
       'Free roofing calculator. Calculate roof pitch, rafter length, roof surface area, and material quantities. No signup required.',
     applicationCategory: 'CalculatorApplication',
@@ -54,7 +54,7 @@ export default function RoofingCalculatorLayout({ children }: { children: ReactN
         name: 'How is rafter length calculated?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Rafter length equals half the span divided by the cosine of the pitch angle. For a 10m span at 30 degrees: rafter = (10 / 2) / cos(30) = 5.77m.',
+          text: 'Rafter length equals the span divided by the cosine of the pitch angle. The span is the plan-view distance from the wall to the ridge (one rafter). For a 10m span at 25 degrees: rafter = 10 / cos(25) = 11.03m.',
         },
       },
       {

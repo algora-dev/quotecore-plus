@@ -54,7 +54,7 @@ type TabId = 'roof-area' | 'pitch-rafter' | 'smart-component' | 'angle-finder';
 const TABS: { id: TabId; label: string }[] = [
   { id: 'roof-area', label: 'Roof Area' },
   { id: 'pitch-rafter', label: 'Rafter / Hip & Valley' },
-  { id: 'smart-component', label: 'Draft Smart Component' },
+  { id: 'smart-component', label: 'Draft Smart Component™' },
   { id: 'angle-finder', label: 'Angle Finder' },
 ];
 

@@ -257,7 +257,7 @@ export function PitchRafterTab() {
                   <p className="text-base font-semibold text-slate-900">{result.hipFactor.toFixed(4)}</p>
                 </div>
                 <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
-                  <p className="text-xs text-slate-500">Hip slope (°)</p>
+                  <p className="text-xs text-slate-500">Hip slope (deg)</p>
                   <p className="text-base font-semibold text-slate-900">
                     {(Math.atan(Math.tan(result.deg * RAD) * Math.cos(45 * RAD)) * 180 / Math.PI).toFixed(1)}°
                   </p>
@@ -294,134 +294,428 @@ export function PitchRafterTab() {
   );
 }
 
-// ─── Single-side rafter diagram ──────────────────────
+// ─── Rafter diagram (geometrically exact) ────────────
 
 function RafterDiagram({ degrees, span, rafterLen, unit }: { degrees: number; span: number; rafterLen: number; unit: string }) {
   const deg = Math.max(0, Math.min(89, degrees));
   const rad = (deg * Math.PI) / 180;
 
-  // Diagram dimensions — single rafter from wall (left) to ridge (right)
-  const baseLen = 180;
-  const height = Math.tan(rad) * baseLen;
-  const maxH = 100;
-  const scale = height > maxH ? maxH / height : 1;
-  const w = baseLen * scale;
-  const h = height * scale;
+  // Scale the triangle to fit the viewBox
+  const maxW = 220;
+  const maxH = 120;
+  const aspectFromPitch = Math.tan(rad); // rise / run
+  let drawW = maxW;
+  let drawH = drawW * aspectFromPitch;
+  if (drawH > maxH) {
+    drawH = maxH;
+    drawW = drawH / aspectFromPitch;
+  }
 
-  const wallX = 40;
-  const groundY = 130;
+  // Triangle corners
+  const padLeft = 40;
+  const padBottom = 45;
+  const groundY = 150;
+
+  // A = bottom-left (wall base / eaves)
+  // B = top-left (ridge / wall top)
+  // C = bottom-right (other end of span at ground)
+  const A = { x: padLeft, y: groundY };
+  const B = { x: padLeft, y: groundY - drawH };
+  const C = { x: padLeft + drawW, y: groundY };
+
+  // Angle arc at point A (between horizontal AC and hypotenuse AB going up)
+  // Wait — the rafter goes from the ridge (B) down to the eaves (C).
+  // The pitch angle is at C (between the horizontal ground CA and the rafter CB).
+  // Actually, the angle between the rafter and horizontal is the same at both ends.
+  // Let's put it at A for clarity: angle between AC (horizontal, going right) and AB (going up to ridge).
+  // No — the rafter IS the hypotenuse from B (ridge, top) to C (eaves, ground right).
+  // The pitch angle is between the rafter (BC) and the horizontal (AC).
+  // So the angle is at C, between CA (going left along ground) and CB (going up-left to ridge).
+  // Actually, the angle at C between the horizontal and the rafter line.
+  // For a right triangle with the right angle at A:
+  //   - angle at C = arctan(rise/run) = arctan(AB/AC) = pitch angle ✓
+
+  // Arc at C: from the horizontal (pointing left, toward A) sweeping up to the rafter (pointing toward B)
+  const arcR = 28;
+  // Direction from C to A: leftward (angle = PI)
+  // Direction from C to B: up-left at angle (PI - rad) from positive x-axis
+  // Arc from PI (horizontal left) to (PI - rad) (up along rafter)
+  const arcStartX = C.x - arcR;
+  const arcStartY = C.y;
+  const arcEndX = C.x - arcR * Math.cos(rad);
+  const arcEndY = C.y - arcR * Math.sin(rad);
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <svg viewBox="0 0 280 170" className="w-full max-w-sm">
-        {/* Wall (left vertical) */}
-        <line x1={wallX} y1={groundY} x2={wallX} y2={groundY - h - 10} stroke="#94a3b8" strokeWidth="2" />
-        {/* Ground */}
-        <line x1={wallX} y1={groundY} x2={wallX + w + 30} y2={groundY} stroke="#cbd5e1" strokeWidth="2" />
-        {/* Rafter (slope from top of wall to ground right) */}
-        <line x1={wallX} y1={groundY - h - 10} x2={wallX + w} y2={groundY} stroke="#FF6B35" strokeWidth="2.5" />
-        {/* Ridge point */}
-        <circle cx={wallX} cy={groundY - h - 10} r="3" fill="#3b82f6" />
-        {/* Span dimension (horizontal, full span) */}
-        <line x1={wallX} y1={groundY + 12} x2={wallX + w} y2={groundY + 12} stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="4 2" />
-        <text x={wallX + w / 2} y={groundY + 24} textAnchor="middle" className="fill-slate-400" style={{ fontSize: '10px' }}>
-          Span: {span.toFixed(2)} {unit}
-        </text>
-        {/* Rafter label (along the slope, offset above) */}
-        <text
-          x={wallX + w / 2}
-          y={groundY - h / 2 - 8}
-          textAnchor="middle"
-          className="fill-slate-600"
-          style={{ fontSize: '10px', fontWeight: 500 }}
-        >
-          Rafter: {rafterLen.toFixed(2)} {unit}
-        </text>
-        {/* Pitch angle arc — at the base of the rafter, positioned right */}
+      <svg viewBox="0 0 300 185" className="w-full max-w-md">
+        {/* Ground line */}
+        <line x1={A.x - 10} y1={groundY} x2={C.x + 20} y2={groundY} stroke="#cbd5e1" strokeWidth="2" />
+
+        {/* Wall (vertical, left side) */}
+        <line x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke="#94a3b8" strokeWidth="2.5" />
+
+        {/* Rafter (hypotenuse — from ridge B to eaves C) */}
+        <line x1={B.x} y1={B.y} x2={C.x} y2={C.y} stroke="#FF6B35" strokeWidth="3" />
+
+        {/* Right-angle marker at A (corner of wall and ground) */}
         <path
-          d={`M ${wallX + w - 30} ${groundY} A 30 30 0 0 0 ${wallX + w - 30 + 30 * Math.cos(rad)} ${groundY - 30 * Math.sin(rad)}`}
+          d={`M ${A.x + 8} ${A.y} L ${A.x + 8} ${A.y - 8} L ${A.x} ${A.y - 8}`}
+          fill="none"
+          stroke="#cbd5e1"
+          strokeWidth="1"
+        />
+
+        {/* Pitch angle arc at C (between ground and rafter) */}
+        <path
+          d={`M ${arcStartX} ${arcStartY} A ${arcR} ${arcR} 0 0 1 ${arcEndX} ${arcEndY}`}
           fill="none"
           stroke="#3b82f6"
           strokeWidth="1.5"
         />
-        <text x={wallX + w - 15} y={groundY - 20} className="fill-blue-500" style={{ fontSize: '10px', fontWeight: 500 }}>
+
+        {/* Pitch angle label — positioned along the arc */}
+        <text
+          x={C.x - arcR - 8}
+          y={C.y - arcR * 0.65}
+          textAnchor="middle"
+          className="fill-blue-500"
+          style={{ fontSize: '11px', fontWeight: 600 }}
+        >
           {deg.toFixed(1)}°
         </text>
+
+        {/* Ridge point */}
+        <circle cx={B.x} cy={B.y} r="3.5" fill="#3b82f6" />
+        <text x={B.x - 6} y={B.y - 6} textAnchor="end" className="fill-slate-600" style={{ fontSize: '9px', fontWeight: 500 }}>
+          Ridge
+        </text>
+
+        {/* Eaves point */}
+        <circle cx={C.x} cy={C.y} r="3.5" fill="#94a3b8" />
+        <text x={C.x + 6} y={C.y + 12} className="fill-slate-400" style={{ fontSize: '9px' }}>
+          Eaves
+        </text>
+
+        {/* Span dimension (bottom, below ground) */}
+        <line x1={A.x} y1={groundY + 18} x2={C.x} y2={groundY + 18} stroke="#94a3b8" strokeWidth="1" strokeDasharray="4 2" />
+        {/* End ticks */}
+        <line x1={A.x} y1={groundY + 14} x2={A.x} y2={groundY + 22} stroke="#94a3b8" strokeWidth="1" />
+        <line x1={C.x} y1={groundY + 14} x2={C.x} y2={groundY + 22} stroke="#94a3b8" strokeWidth="1" />
+        <text x={(A.x + C.x) / 2} y={groundY + 32} textAnchor="middle" className="fill-slate-500" style={{ fontSize: '10px', fontWeight: 500 }}>
+          Span: {span.toFixed(2)} {unit}
+        </text>
+
+        {/* Rise dimension (left, beside wall) */}
+        <line x1={A.x - 16} y1={A.y} x2={A.x - 16} y2={B.y} stroke="#94a3b8" strokeWidth="1" strokeDasharray="4 2" />
+        <line x1={A.x - 12} y1={A.y} x2={A.x - 20} y2={A.y} stroke="#94a3b8" strokeWidth="1" />
+        <line x1={A.x - 12} y1={B.y} x2={A.x - 20} y2={B.y} stroke="#94a3b8" strokeWidth="1" />
+        <text
+          x={A.x - 22}
+          y={(A.y + B.y) / 2}
+          textAnchor="middle"
+          className="fill-slate-500"
+          style={{ fontSize: '10px', fontWeight: 500 }}
+          transform={`rotate(-90, ${A.x - 22}, ${(A.y + B.y) / 2})`}
+        >
+          Rise: {(span * Math.tan(rad)).toFixed(2)} {unit}
+        </text>
+
+        {/* Rafter label (along the hypotenuse, offset above-right) */}
+        <text
+          x={(B.x + C.x) / 2 + 4}
+          y={(B.y + C.y) / 2 - 8}
+          textAnchor="middle"
+          className="fill-slate-700"
+          style={{ fontSize: '11px', fontWeight: 600 }}
+        >
+          Rafter: {rafterLen.toFixed(2)} {unit}
+        </text>
       </svg>
-      <p className="text-xs text-slate-400">Rafter at {deg.toFixed(1)}° pitch — span is wall to ridge</p>
+      <p className="text-xs text-slate-400">Rafter at {deg.toFixed(1)}° pitch — span is wall to ridge (one rafter)</p>
     </div>
   );
 }
 
-// ─── Hip/valley isometric diagram ────────────────────
+// ─── Hip/Valley isometric diagram ────────────────────
+// Shows a hipped roof corner in 3D isometric with:
+// - Two roof planes meeting at the hip line
+// - Direction arrows showing water flow down each plane
+// - Labels for pitch, hip length, plan length
 
 function HipValleyDiagram({ degrees, planLength, hipLen, unit }: { degrees: number; planLength: number; hipLen: number; unit: string }) {
   const deg = Math.max(0, Math.min(89, degrees));
   const rad = (deg * Math.PI) / 180;
-  const height = Math.tan(rad) * planLength * 0.7; // visual approximation
 
-  // Scale to fit
-  const scale = 60 / Math.max(planLength, 1);
+  // Isometric projection angles
+  const isoAngle = 30 * Math.PI / 180;
+  const cos30 = Math.cos(isoAngle);
+  const sin30 = Math.sin(isoAngle);
+
+  // Scale to fit viewBox
+  const scale = 55 / Math.max(planLength, 1);
   const pl = planLength * scale;
-  const vh = height * scale * 0.5;
+  const rise = pl * Math.tan(rad) * 0.6; // visual rise (compressed for isometric)
 
-  // Isometric corners — two roof planes meeting at a hip
-  const isoX = 30 * Math.PI / 180;
+  // Key points in isometric projection:
+  // We're looking at a building corner where two roof slopes meet at a hip
+  //
+  // Plan view:
+  //   Ridge ---- Wall1
+  //     |          |
+  //   Wall2 ---- Corner
+  //
+  // The hip runs from Corner to Ridge at 45° in plan
 
-  // Corner point (bottom)
-  const corner = { x: 140, y: 145 };
-  // Ridge end (top, back-right)
-  const ridge = { x: corner.x + pl * Math.cos(isoX), y: corner.y - pl * Math.sin(isoX) - vh };
-  // Left wall top
-  const left = { x: corner.x - pl * 0.5 * Math.cos(isoX), y: corner.y - pl * 0.5 * Math.sin(isoX) - vh * 0.5 };
-  // Right wall top
-  const right = { x: corner.x + pl * 0.5 * Math.cos(isoX), y: corner.y - pl * 0.5 * Math.sin(isoX) - vh * 0.5 };
+  // Corner (bottom-front)
+  const corner = { x: 150, y: 155 };
+  // Ridge (top-back, along the 45° hip in plan)
+  const ridge = {
+    x: corner.x + pl * cos30 * 0.707,  // 45° in plan → cos(45°) = 0.707
+    y: corner.y - pl * sin30 * 0.707 - rise
+  };
+  // Wall1 end (right side, where roof slope 1 meets the wall)
+  const wall1 = {
+    x: corner.x + pl * cos30,
+    y: corner.y - pl * sin30
+  };
+  // Wall2 end (left side, where roof slope 2 meets the wall)
+  const wall2 = {
+    x: corner.x - pl * cos30 * 0.5,
+    y: corner.y - pl * sin30 * 0.5 - rise * 0.5
+  };
+  // Eaves1 (right edge of roof slope 1)
+  const eaves1 = {
+    x: wall1.x,
+    y: wall1.y - rise * 0.3
+  };
+  // Eaves2 (left edge of roof slope 2)
+  const eaves2 = {
+    x: wall2.x - pl * 0.3,
+    y: wall2.y - rise * 0.2
+  };
+
+  // Hip angle (for label)
+  const hipAngleDeg = Math.atan(Math.tan(rad) * Math.cos(45 * RAD)) * 180 / Math.PI;
+
+  // Midpoint of hip line
+  const hipMid = {
+    x: (corner.x + ridge.x) / 2,
+    y: (corner.y + ridge.y) / 2
+  };
+
+  // Arrow direction down slope 1 (from ridge toward wall1, projected)
+  const slope1Dir = {
+    x: wall1.x - ridge.x,
+    y: wall1.y - ridge.y
+  };
+  const slope1Len = Math.hypot(slope1Dir.x, slope1Dir.y) || 1;
+  const slope1Mid = {
+    x: (ridge.x + wall1.x) / 2,
+    y: (ridge.y + wall1.y) / 2
+  };
+
+  // Arrow direction down slope 2 (from ridge toward wall2, projected)
+  const slope2Dir = {
+    x: wall2.x - ridge.x,
+    y: wall2.y - ridge.y
+  };
+  const slope2Len = Math.hypot(slope2Dir.x, slope2Dir.y) || 1;
+  const slope2Mid = {
+    x: (ridge.x + wall2.x) / 2,
+    y: (ridge.y + wall2.y) / 2
+  };
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <svg viewBox="0 0 280 180" className="w-full max-w-sm">
-        {/* Ground plan lines (dashed) */}
-        <line x1={corner.x} y1={corner.y} x2={ridge.x} y2={corner.y} stroke="#cbd5e1" strokeWidth="1" strokeDasharray="3 2" />
-        <text x={(corner.x + ridge.x) / 2} y={corner.y + 12} textAnchor="middle" className="fill-slate-400" style={{ fontSize: '9px' }}>
-          Plan: {planLength.toFixed(2)} {unit}
-        </text>
+      <svg viewBox="0 0 300 200" className="w-full max-w-md">
+        {/* ─── Plan view dashed lines (ground projection) ─── */}
+        {/* Corner to ridge plan (dashed) */}
+        <line
+          x1={corner.x} y1={corner.y}
+          x2={corner.x + pl * cos30 * 0.707} y2={corner.y - pl * sin30 * 0.707}
+          stroke="#cbd5e1" strokeWidth="1" strokeDasharray="3 2"
+        />
+        {/* Corner to wall1 plan */}
+        <line
+          x1={corner.x} y1={corner.y}
+          x2={wall1.x} y2={corner.y}
+          stroke="#e2e8f0" strokeWidth="1" strokeDasharray="2 2"
+        />
+        {/* Corner to wall2 plan */}
+        <line
+          x1={corner.x} y1={corner.y}
+          x2={corner.x - pl * cos30 * 0.5} y2={corner.y - pl * sin30 * 0.5}
+          stroke="#e2e8f0" strokeWidth="1" strokeDasharray="2 2"
+        />
 
-        {/* Roof plane 1 (left slope) */}
-        <line x1={corner.x} y1={corner.y} x2={ridge.x} y2={ridge.y} stroke="#3b82f6" strokeWidth="3" />
-        {/* Roof plane 2 (right slope) — meeting at the hip line */}
-        <line x1={corner.x} y1={corner.y} x2={ridge.x} y2={ridge.y} stroke="#3b82f6" strokeWidth="3" />
+        {/* ─── Roof planes (filled, semi-transparent) ─── */}
+        {/* Slope 1: ridge → wall1 → corner */}
+        <polygon
+          points={`${ridge.x},${ridge.y} ${wall1.x},${wall1.y} ${corner.x},${corner.y}`}
+          fill="rgba(59, 130, 246, 0.08)"
+          stroke="none"
+        />
+        {/* Slope 2: ridge → wall2 → corner */}
+        <polygon
+          points={`${ridge.x},${ridge.y} ${wall2.x},${wall2.y} ${corner.x},${corner.y}`}
+          fill="rgba(59, 130, 246, 0.04)"
+          stroke="none"
+        />
 
-        {/* Hip line (the blue line from corner to ridge) */}
-        <line x1={corner.x} y1={corner.y} x2={ridge.x} y2={ridge.y} stroke="#3b82f6" strokeWidth="3" />
+        {/* ─── Hip line (corner to ridge) — the main feature ─── */}
+        <line
+          x1={corner.x} y1={corner.y}
+          x2={ridge.x} y2={ridge.y}
+          stroke="#FF6B35" strokeWidth="3"
+        />
 
-        {/* Ridge point */}
-        <circle cx={ridge.x} cy={ridge.y} r="3" fill="#3b82f6" />
-        <text x={ridge.x + 5} y={ridge.y - 5} className="fill-slate-600" style={{ fontSize: '9px', fontWeight: 500 }}>
+        {/* ─── Roof edges ─── */}
+        {/* Ridge to wall1 edge */}
+        <line
+          x1={ridge.x} y1={ridge.y}
+          x2={wall1.x} y2={wall1.y}
+          stroke="#3b82f6" strokeWidth="2"
+        />
+        {/* Ridge to wall2 edge */}
+        <line
+          x1={ridge.x} y1={ridge.y}
+          x2={wall2.x} y2={wall2.y}
+          stroke="#3b82f6" strokeWidth="2"
+        />
+        {/* Corner to wall1 (eaves) */}
+        <line
+          x1={corner.x} y1={corner.y}
+          x2={wall1.x} y2={wall1.y}
+          stroke="#3b82f6" strokeWidth="2"
+        />
+        {/* Corner to wall2 (eaves) */}
+        <line
+          x1={corner.x} y1={corner.y}
+          x2={wall2.x} y2={wall2.y}
+          stroke="#3b82f6" strokeWidth="2"
+        />
+
+        {/* ─── Direction arrows (water flow down each slope) ─── */}
+        <DirectionArrow
+          startX={slope1Mid.x}
+          startY={slope1Mid.y}
+          dx={slope1Dir.x / slope1Len}
+          dy={slope1Dir.y / slope1Len}
+          length={20}
+          color="#10b981"
+        />
+        <DirectionArrow
+          startX={slope2Mid.x}
+          startY={slope2Mid.y}
+          dx={slope2Dir.x / slope2Len}
+          dy={slope2Dir.y / slope2Len}
+          length={20}
+          color="#10b981"
+        />
+
+        {/* ─── Points ─── */}
+        <circle cx={ridge.x} cy={ridge.y} r="3.5" fill="#3b82f6" />
+        <text x={ridge.x + 6} y={ridge.y - 4} className="fill-slate-700" style={{ fontSize: '9px', fontWeight: 600 }}>
           Ridge
         </text>
 
-        {/* Corner point */}
-        <circle cx={corner.x} cy={corner.y} r="3" fill="#94a3b8" />
-        <text x={corner.x - 5} y={corner.y + 14} textAnchor="end" className="fill-slate-400" style={{ fontSize: '9px' }}>
+        <circle cx={corner.x} cy={corner.y} r="3.5" fill="#94a3b8" />
+        <text x={corner.x + 6} y={corner.y + 12} className="fill-slate-400" style={{ fontSize: '9px' }}>
           Corner
         </text>
 
-        {/* Hip length label */}
+        {/* ─── Labels ─── */}
+        {/* Hip length label (along the hip line, offset) */}
         <text
-          x={(corner.x + ridge.x) / 2 + 15}
-          y={(corner.y + ridge.y) / 2}
-          className="fill-blue-500"
-          style={{ fontSize: '9px', fontWeight: 500 }}
+          x={hipMid.x + 12}
+          y={hipMid.y - 4}
+          className="fill-[#FF6B35]"
+          style={{ fontSize: '10px', fontWeight: 600 }}
         >
           Hip: {hipLen.toFixed(2)} {unit}
         </text>
 
-        {/* Pitch label */}
-        <text x={corner.x + 20} y={corner.y - 10} className="fill-slate-500" style={{ fontSize: '9px' }}>
-          {deg.toFixed(1)}°
+        {/* Pitch label (near the corner) */}
+        <text
+          x={corner.x - 30}
+          y={corner.y - 12}
+          className="fill-slate-500"
+          style={{ fontSize: '9px', fontWeight: 500 }}
+        >
+          Pitch: {deg.toFixed(1)}°
         </text>
+
+        {/* Hip slope angle */}
+        <text
+          x={corner.x - 30}
+          y={corner.y - 2}
+          className="fill-slate-400"
+          style={{ fontSize: '8px' }}
+        >
+          Hip slope: {hipAngleDeg.toFixed(1)}°
+        </text>
+
+        {/* Plan length label (along dashed ground line) */}
+        <text
+          x={corner.x + pl * cos30 * 0.35}
+          y={corner.y + 14}
+          textAnchor="middle"
+          className="fill-slate-400"
+          style={{ fontSize: '9px' }}
+        >
+          Plan: {planLength.toFixed(2)} {unit}
+        </text>
+
+        {/* Legend */}
+        <g transform="translate(8, 8)">
+          <line x1="0" y1="4" x2="14" y2="4" stroke="#FF6B35" strokeWidth="2.5" />
+          <text x="18" y="7" className="fill-slate-500" style={{ fontSize: '8px' }}>Hip/Valley</text>
+          <line x1="0" y1="16" x2="14" y2="16" stroke="#3b82f6" strokeWidth="2" />
+          <text x="18" y="19" className="fill-slate-500" style={{ fontSize: '8px' }}>Roof edge</text>
+          <line x1="0" y1="28" x2="14" y2="28" stroke="#10b981" strokeWidth="1.5" />
+          <text x="18" y="31" className="fill-slate-500" style={{ fontSize: '8px' }}>Slope direction</text>
+        </g>
       </svg>
-      <p className="text-xs text-slate-400">Hip line from corner to ridge — two roof planes meet</p>
+      <p className="text-xs text-slate-400">
+        Hip line from corner to ridge — {deg.toFixed(1)}° roof pitch, {hipAngleDeg.toFixed(1)}° hip slope
+      </p>
     </div>
+  );
+}
+
+// ─── Direction arrow helper ──────────────────────────
+
+function DirectionArrow({
+  startX,
+  startY,
+  dx,
+  dy,
+  length,
+  color,
+}: {
+  startX: number;
+  startY: number;
+  dx: number;
+  dy: number;
+  length: number;
+  color: string;
+}) {
+  const endX = startX + dx * length;
+  const endY = startY + dy * length;
+
+  // Arrowhead
+  const arrowSize = 5;
+  const angle = Math.atan2(dy, dx);
+  const a1 = angle + Math.PI * 0.85;
+  const a2 = angle - Math.PI * 0.85;
+
+  return (
+    <g>
+      <line x1={startX} y1={startY} x2={endX} y2={endY} stroke={color} strokeWidth="1.5" />
+      <polygon
+        points={`${endX},${endY} ${endX + arrowSize * Math.cos(a1)},${endY + arrowSize * Math.sin(a1)} ${endX + arrowSize * Math.cos(a2)},${endY + arrowSize * Math.sin(a2)}`}
+        fill={color}
+      />
+    </g>
   );
 }

@@ -9,7 +9,7 @@ export default function Page() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
-              Free Roofing Calculator
+              Roofing Calculator
             </h1>
             <p className="mt-2 text-sm text-slate-500 max-w-xl">
               Calculate roof pitch, rafter length, roof surface area, quantities and complex pricing.
@@ -98,7 +98,7 @@ export default function Page() {
       <section className="mt-12">
         <h2 className="text-lg font-semibold text-slate-900">Formulas used</h2>
         <div className="mt-4 space-y-2">
-          <Formula name="Rafter length" formula="rafter = (span / 2) / cos(pitch°)" />
+          <Formula name="Rafter length" formula="rafter = span / cos(pitch°)" />
           <Formula name="Rafter pitch factor" formula="factor = 1 / cos(pitch°)" />
           <Formula name="Hip/valley factor" formula="factor = sqrt((1/cos(pitch°))² + 1)" />
           <Formula name="Roof surface area" formula="area = plan_area × pitch_factor" />
@@ -120,7 +120,7 @@ export default function Page() {
           />
           <FAQ
             question="How is rafter length calculated?"
-            answer="Rafter length equals half the span divided by the cosine of the pitch angle. For a 10m span at 30 degrees: rafter = (10 / 2) / cos(30) = 5.77m."
+            answer="Rafter length equals the span divided by the cosine of the pitch angle. The span is the plan-view distance from the wall to the ridge (one rafter). For a 10m span at 25 degrees: rafter = 10 / cos(25) = 11.03m."
           />
           <FAQ
             question="What waste percentage should I add for roofing materials?"
