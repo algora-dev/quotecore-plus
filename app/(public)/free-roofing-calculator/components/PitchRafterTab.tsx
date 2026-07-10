@@ -354,139 +354,163 @@ function RafterDiagram({ degrees, span, rafterLen, unit }: { degrees: number; sp
   );
 }
 
-// ─── Hip/Valley 3D perspective diagram ──────────────
-// Two roof planes meeting at a hip/valley line:
-// - Two filled roof faces clearly visible in 3D perspective
-// - They meet at the eaves (bottom corner) and at the peak (top)
-// - Hip/valley line runs from eaves to peak (orange, bold)
-// - Steeper pitch = taller peak, lower pitch = flatter
-// - Green arrows show water flow direction down each plane
+// ─── Hip/Valley oblique roof diagram ───────────────
+// L-shaped hip-and-valley roof in oblique pictorial view:
+// - Ridge line along top, eaves along bottom with a valley notch
+// - 3 orange diagonal lines: 2 hips + 1 valley
+// - 4 direction arrows showing water flow down each roof plane
+// - "Hip" label top-left, "Valley" label bottom-right
+// - Roof height scales with pitch (steeper = taller, flatter = lower)
+// - Same topology regardless of pitch — only vertical proportions change
 
 function HipValleyDiagram({ degrees, planLength, hipLen, unit }: { degrees: number; planLength: number; hipLen: number; unit: string }) {
   const deg = Math.max(0, Math.min(89, degrees));
   const rad = (deg * Math.PI) / 180;
-
-  // Scale — use most of the viewBox width
-  const scale = 75 / Math.max(planLength, 1);
-  const pl = planLength * scale;
-
-  // Rise (peak height) — directly proportional to pitch
-  const rawRise = pl * Math.tan(rad);
-  const maxRise = 130;
-  const rise = Math.min(rawRise, maxRise);
-
-  // Depth offset for 3D perspective (how far back peak is from corner)
-  const depth = pl * 0.5;
-
-  // Layout — center the diagram in the viewBox
-  const cx = 155;
-  const cy = 195; // corner Y (eaves level, near bottom)
-
-  // Key points:
-  // Corner (eaves meeting point, front-center, bottom)
-  const corner = { x: cx, y: cy };
-  // Left eaves — extends left and slightly forward (down on screen for isometric)
-  const eavesL = { x: cx - pl * 0.75, y: cy + pl * 0.18 };
-  // Right eaves — extends right and slightly forward
-  const eavesR = { x: cx + pl * 0.75, y: cy + pl * 0.18 };
-  // Peak — above and behind corner (shifted up + right for 3D perspective)
-  const peak = { x: cx + depth * 0.4, y: cy - rise - depth * 0.3 };
-
   const hipAngleDeg = Math.atan(Math.tan(rad) * Math.cos(45 * RAD)) * 180 / Math.PI;
 
-  const hipMid = {
-    x: (corner.x + peak.x) / 2,
-    y: (corner.y + peak.y) / 2,
+  // ─── Layout constants ───
+  const VB_W = 320;
+  const VB_H = 260;
+
+  // Horizontal layout — fixed regardless of pitch
+  // The roof is an L-shape: wide on the right, narrower extension on the left
+  const ridgeY_base = 90;   // top edge baseline (will be shifted up by rise)
+  const eavesY = 200;       // bottom edge (eaves level)
+
+  // Ridge points (top edge, sloped for 3D effect)
+  // Ridge runs left-to-right with a slight downward slope for oblique perspective
+  const ridgeL  = { x: 35,  y: ridgeY_base };
+  const ridgeR  = { x: 285, y: ridgeY_base + 8 }; // slight slope for perspective
+
+  // Eaves points (bottom edge — has a notch for the valley)
+  // Left eaves, valley notch (inward), right eaves
+  const eavesL  = { x: 15,  y: eavesY };
+  const eavesVL = { x: 120, y: eavesY };   // valley left edge
+  const eavesV  = { x: 155, y: eavesY - 12 }; // valley notch (pulled up/in)
+  const eavesVR = { x: 190, y: eavesY };   // valley right edge
+  const eavesR  = { x: 300, y: eavesY };
+
+  // Hip/Valley diagonal endpoints — connect ridge to eaves
+  // Hip 1: from ridge left area down to eaves (left side)
+  const hip1Top = { x: 80,  y: ridgeY_base + 2 };
+  const hip1Bot = { x: 65,  y: eavesY };
+
+  // Hip 2: from ridge right area down to eaves (right of valley)
+  const hip2Top = { x: 200, y: ridgeY_base + 5 };
+  const hip2Bot = { x: 215, y: eavesY };
+
+  // Valley: from ridge area down to the valley notch
+  const valleyTop = { x: 155, y: ridgeY_base + 4 };
+  const valleyBot = eavesV;
+
+  // ─── Pitch-driven vertical scaling ───
+  // Height of ridge above eaves scales with pitch
+  // At 0° = nearly flat (ridge near eaves), at 45° = tall
+  const baseHeight = eavesY - ridgeY_base; // 110px
+  const pitchHeight = baseHeight * Math.tan(rad) / Math.tan(45 * RAD); // normalized 0..1 at 45°
+  const minRise = 15;  // minimum visible rise even at very low pitch
+  const maxRise = 140; // cap very steep pitches
+  const rise = Math.max(minRise, Math.min(pitchHeight * 1.8, maxRise));
+
+  // Apply rise by shifting all ridge points UP by (rise - baseHeight)
+  // but clamped so the ridge stays below the top of viewBox
+  const shift = rise - baseHeight;
+  const s = (p: { x: number; y: number }) => ({ x: p.x, y: Math.max(20, p.y - shift) });
+
+  const rL = s(ridgeL);
+  const rR = s(ridgeR);
+  const h1T = s(hip1Top);
+  const h2T = s(hip2Top);
+  const vT  = s(valleyTop);
+
+  // Midpoints for labels
+  const hip1Mid = { x: (h1T.x + hip1Bot.x) / 2, y: (h1T.y + hip1Bot.y) / 2 };
+  const valleyMid = { x: (vT.x + valleyBot.x) / 2, y: (vT.y + valleyBot.y) / 2 };
+
+  // ─── Roof outline polygon (the full L-shape perimeter) ───
+  // Goes: ridgeL → ridgeR → eavesR → eavesVR → valley → eavesVL → eavesL → back to ridgeL
+  const outlinePts = `${rL.x},${rL.y} ${rR.x},${rR.y} ${eavesR.x},${eavesR.y} ${eavesVR.x},${eavesVR.y} ${eavesV.x},${eavesV.y} ${eavesVL.x},${eavesVL.y} ${eavesL.x},${eavesL.y}`;
+
+  // ─── Roof plane fills (subtle shading to distinguish planes) ───
+  // Plane 1: left of hip1 (ridgeL → hip1Top → hip1Bot → eavesL)
+  const plane1 = `${rL.x},${rL.y} ${h1T.x},${h1T.y} ${hip1Bot.x},${hip1Bot.y} ${eavesL.x},${eavesL.y}`;
+  // Plane 2: between hip1 and valley (hip1Top → valleyTop → valleyBot → hip1Bot)
+  const plane2 = `${h1T.x},${h1T.y} ${vT.x},${vT.y} ${valleyBot.x},${valleyBot.y} ${hip1Bot.x},${hip1Bot.y}`;
+  // Plane 3: between valley and hip2 (valleyTop → hip2Top → hip2Bot → valleyBot)
+  const plane3 = `${vT.x},${vT.y} ${h2T.x},${h2T.y} ${hip2Bot.x},${hip2Bot.y} ${valleyBot.x},${valleyBot.y}`;
+  // Plane 4: right of hip2 (hip2Top → ridgeR → eavesR → hip2Bot)
+  const plane4 = `${h2T.x},${h2T.y} ${rR.x},${rR.y} ${eavesR.x},${eavesR.y} ${hip2Bot.x},${hip2Bot.y}`;
+
+  // ─── Direction arrows (water flow down each plane) ───
+  // Each arrow goes from near the ridge down to near the eaves, perpendicular-ish
+  const arrowLen = 22;
+  const makeArrow = (top: { x: number; y: number }, bot: { x: number; y: number }, t = 0.35) => {
+    const sx = top.x + (bot.x - top.x) * t;
+    const sy = top.y + (bot.y - top.y) * t;
+    const ex = top.x + (bot.x - top.x) * (t + 0.3);
+    const ey = top.y + (bot.y - top.y) * (t + 0.3);
+    return { start: { x: sx, y: sy }, end: { x: ex, y: ey } };
   };
 
-  // Direction arrows: water flows from peak down each plane toward eaves
-  const leftArrowStart = {
-    x: peak.x + (eavesL.x - peak.x) * 0.3,
-    y: peak.y + (eavesL.y - peak.y) * 0.3,
-  };
-  const leftArrowEnd = {
-    x: peak.x + (eavesL.x - peak.x) * 0.72,
-    y: peak.y + (eavesL.y - peak.y) * 0.72,
-  };
-  const rightArrowStart = {
-    x: peak.x + (eavesR.x - peak.x) * 0.3,
-    y: peak.y + (eavesR.y - peak.y) * 0.3,
-  };
-  const rightArrowEnd = {
-    x: peak.x + (eavesR.x - peak.x) * 0.72,
-    y: peak.y + (eavesR.y - peak.y) * 0.72,
-  };
-
-  const leftPlanePts = `${corner.x},${corner.y} ${eavesL.x},${eavesL.y} ${peak.x},${peak.y}`;
-  const rightPlanePts = `${corner.x},${corner.y} ${eavesR.x},${eavesR.y} ${peak.x},${peak.y}`;
+  const a1 = makeArrow(rL, eavesL, 0.3);
+  const a2 = makeArrow(h1T, hip1Bot, 0.25);
+  const a3 = makeArrow(h2T, hip2Bot, 0.25);
+  const a4 = makeArrow(rR, eavesR, 0.3);
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <svg viewBox="0 0 310 250" className="w-full max-w-md">
-        {/* ─── Eaves line (ground level, left to right through corner) ─── */}
-        <line x1={eavesL.x} y1={eavesL.y} x2={eavesR.x} y2={eavesR.y} stroke="#94a3b8" strokeWidth="1.5" />
+      <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="w-full max-w-md">
+        {/* ─── Roof plane fills (subtle shading) ─── */}
+        <polygon points={plane1} fill="rgba(59, 130, 246, 0.06)" stroke="none" />
+        <polygon points={plane2} fill="rgba(59, 130, 246, 0.12)" stroke="none" />
+        <polygon points={plane3} fill="rgba(59, 130, 246, 0.06)" stroke="none" />
+        <polygon points={plane4} fill="rgba(59, 130, 246, 0.12)" stroke="none" />
 
-        {/* ─── Right roof plane (far side — darker fill) ─── */}
-        <polygon points={rightPlanePts} fill="rgba(59, 130, 246, 0.20)" stroke="#3b82f6" strokeWidth="1.5" />
+        {/* ─── Roof outline (thick dark line) ─── */}
+        <polygon points={outlinePts} fill="none" stroke="#1e293b" strokeWidth="2" strokeLinejoin="round" />
 
-        {/* ─── Left roof plane (near side — lighter fill) ─── */}
-        <polygon points={leftPlanePts} fill="rgba(59, 130, 246, 0.08)" stroke="#3b82f6" strokeWidth="1.5" />
+        {/* ─── Hip lines (orange, bold) ─── */}
+        <line x1={h1T.x} y1={h1T.y} x2={hip1Bot.x} y2={hip1Bot.y} stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" />
+        <line x1={h2T.x} y1={h2T.y} x2={hip2Bot.x} y2={hip2Bot.y} stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" />
 
-        {/* ─── Hip/Valley line (orange, bold — corner to peak) ─── */}
-        <line x1={corner.x} y1={corner.y} x2={peak.x} y2={peak.y} stroke="#FF6B35" strokeWidth="3.5" />
+        {/* ─── Valley line (orange, bold — to the notch) ─── */}
+        <line x1={vT.x} y1={vT.y} x2={valleyBot.x} y2={valleyBot.y} stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" strokeDasharray="6 3" />
 
-        {/* ─── Roof edges (peak to each eaves end) ─── */}
-        <line x1={peak.x} y1={peak.y} x2={eavesL.x} y2={eavesL.y} stroke="#3b82f6" strokeWidth="2" />
-        <line x1={peak.x} y1={peak.y} x2={eavesR.x} y2={eavesR.y} stroke="#3b82f6" strokeWidth="2" />
+        {/* ─── Direction arrows (black — water flow down each plane) ─── */}
+        <SlopeArrow start={a1.start} end={a1.end} color="#334155" />
+        <SlopeArrow start={a2.start} end={a2.end} color="#334155" />
+        <SlopeArrow start={a3.start} end={a3.end} color="#334155" />
+        <SlopeArrow start={a4.start} end={a4.end} color="#334155" />
 
-        {/* ─── Direction arrows (green — water flow down each plane) ─── */}
-        <SlopeArrow start={leftArrowStart} end={leftArrowEnd} color="#10b981" />
-        <SlopeArrow start={rightArrowStart} end={rightArrowEnd} color="#10b981" />
+        {/* ─── Labels ─── */}
+        {/* Hip label (top-left, with small leader line to hip1) */}
+        <text x="18" y="28" className="fill-slate-700" style={{ fontSize: '12px', fontWeight: 600 }}>Hip</text>
+        <line x1="35" y1="32" x2={hip1Mid.x - 4} y2={hip1Mid.y - 8} stroke="#64748b" strokeWidth="0.8" strokeDasharray="2 2" />
 
-        {/* ─── Peak point + label (top) ─── */}
-        <circle cx={peak.x} cy={peak.y} r="4" fill="#3b82f6" />
-        <text x={peak.x + 8} y={peak.y - 6} className="fill-slate-700" style={{ fontSize: '11px', fontWeight: 600 }}>
-          Peak
+        {/* Valley label (bottom-right, with leader line) */}
+        <text x={VB_W - 60} y={VB_H - 10} className="fill-slate-700" style={{ fontSize: '12px', fontWeight: 600 }}>Valley</text>
+        <line x1={VB_W - 65} y1={VB_H - 14} x2={valleyMid.x + 6} y2={valleyMid.y + 4} stroke="#64748b" strokeWidth="0.8" strokeDasharray="2 2" />
+
+        {/* Hip length label (along hip1, offset left) */}
+        <text x={hip1Mid.x - 50} y={hip1Mid.y + 4} textAnchor="end" className="fill-[#FF6B35]" style={{ fontSize: '10px', fontWeight: 500 }}>
+          {hipLen.toFixed(2)} {unit}
         </text>
 
-        {/* ─── Eaves corner point + label (bottom) ─── */}
-        <circle cx={corner.x} cy={corner.y} r="3.5" fill="#94a3b8" />
-        <text x={corner.x + 8} y={corner.y + 16} className="fill-slate-400" style={{ fontSize: '10px' }}>
-          Eaves
-        </text>
-
-        {/* ─── Hip length label (along the hip line, offset right) ─── */}
-        <text x={hipMid.x + 16} y={hipMid.y + 2} className="fill-[#FF6B35]" style={{ fontSize: '11px', fontWeight: 600 }}>
-          Hip: {hipLen.toFixed(2)} {unit}
-        </text>
-
-        {/* ─── Pitch label (top-left area, clear of diagram) ─── */}
-        <text x="10" y="55" className="fill-slate-600" style={{ fontSize: '11px', fontWeight: 500 }}>
+        {/* Pitch label (top-right area) */}
+        <text x={VB_W - 10} y="25" textAnchor="end" className="fill-slate-600" style={{ fontSize: '11px', fontWeight: 500 }}>
           Pitch: {deg.toFixed(1)}°
         </text>
-
-        {/* ─── Hip slope angle (below pitch) ─── */}
-        <text x="10" y="70" className="fill-slate-400" style={{ fontSize: '10px' }}>
+        <text x={VB_W - 10} y="40" textAnchor="end" className="fill-slate-400" style={{ fontSize: '10px' }}>
           Hip slope: {hipAngleDeg.toFixed(1)}°
         </text>
 
-        {/* ─── Plan length (below eaves line, right side) ─── */}
-        <text x={(corner.x + eavesR.x) / 2} y={eavesR.y + 16} textAnchor="middle" className="fill-slate-400" style={{ fontSize: '10px' }}>
+        {/* Plan length (bottom-left) */}
+        <text x="12" y={VB_H - 10} className="fill-slate-400" style={{ fontSize: '10px' }}>
           Plan: {planLength.toFixed(2)} {unit}
         </text>
-
-        {/* ─── Legend (bottom-left, away from diagram) ─── */}
-        <g transform="translate(10, 225)">
-          <line x1="0" y1="0" x2="16" y2="0" stroke="#FF6B35" strokeWidth="2.5" />
-          <text x="20" y="3" className="fill-slate-500" style={{ fontSize: '9px' }}>Hip/Valley</text>
-          <line x1="80" y1="0" x2="96" y2="0" stroke="#3b82f6" strokeWidth="2" />
-          <text x="100" y="3" className="fill-slate-500" style={{ fontSize: '9px' }}>Roof edge</text>
-          <line x1="160" y1="0" x2="176" y2="0" stroke="#10b981" strokeWidth="1.5" />
-          <text x="180" y="3" className="fill-slate-500" style={{ fontSize: '9px' }}>Slope direction</text>
-        </g>
       </svg>
       <p className="text-xs text-slate-400">
-        Two roof planes meeting at hip line — {deg.toFixed(1)}° pitch, {hipAngleDeg.toFixed(1)}° hip slope
+        Hip-and-valley roof at {deg.toFixed(1)}° pitch — steeper = taller, lower = flatter
       </p>
     </div>
   );
