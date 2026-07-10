@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useUnitSystem } from '../RoofingCalculator';
 import { degreesToRatio, ratioToDegrees, rafterLength, rafterPitchFactor, hipValleyPitchFactor, hipValleyLength } from '../../lib/calculator';
+import { HipValleyHouseDiagram } from './HipValleyHouseDiagram';
 
 const RAD = Math.PI / 180;
 const COMMON_PITCHES = [10, 15, 20, 25, 30, 35, 40, 45];
@@ -279,7 +280,13 @@ export function PitchRafterTab() {
               </details>
 
               <div className="border-t border-slate-100 pt-4">
-                <HipValleyDiagram degrees={result.deg} planLength={parseFloat(planLength) || 0} hipLen={result.hipLen} unit={lengthUnit} />
+                <HipValleyHouseDiagram
+                  pitchDegrees={result.deg}
+                  hipSlopeDegrees={Math.atan(Math.tan(result.deg * RAD) * Math.cos(45 * RAD)) * 180 / Math.PI}
+                  hipValleyLength={result.hipLen}
+                  planLength={parseFloat(planLength) || 0}
+                  unit={lengthUnit as 'm' | 'ft'}
+                />
               </div>
             </>
           )}
@@ -354,203 +361,4 @@ function RafterDiagram({ degrees, span, rafterLen, unit }: { degrees: number; sp
   );
 }
 
-// ─── Hip/Valley oblique roof diagram ───────────────
-// L-shaped hip-and-valley roof in oblique pictorial view:
-// - External corner (eaves jut DOWN/OUT) = HIP endpoint
-// - Internal corner (eaves recede UP/IN) = VALLEY endpoint
-// - 3 orange lines: 2 hips (solid) + 1 valley (dashed)
-// - 4 direction arrows showing water flow down each plane
-// - Roof height scales with pitch (steeper = taller, flatter = lower)
-
-function HipValleyDiagram({ degrees, planLength, hipLen, unit }: { degrees: number; planLength: number; hipLen: number; unit: string }) {
-  const deg = Math.max(0, Math.min(89, degrees));
-  const rad = (deg * Math.PI) / 180;
-  const hipAngleDeg = Math.atan(Math.tan(rad) * Math.cos(45 * RAD)) * 180 / Math.PI;
-
-  const VB_W = 320;
-  const VB_H = 280;
-
-  // ─── Pitch-driven height ───
-  const heightRatio = Math.tan(rad) / Math.tan(45 * RAD);
-  const minH = 25;
-  const maxH = 150;
-  const roofH = Math.max(minH, Math.min(heightRatio * 160, maxH));
-
-  // ─── Layout ───
-  const eavesY = VB_H - 65;     // baseline eaves Y
-  const ridgeY = eavesY - roofH; // ridge Y (moves up with pitch)
-
-  // Ridge points (top edge — slight slope for 3D effect)
-  const ridgeL = { x: 40,  y: ridgeY };
-  const ridgeR = { x: 280, y: ridgeY + 6 };
-
-  // ─── Eaves with EXTERNAL and INTERNAL corners ───
-  // L-shape: the eaves line has:
-  //   - An external corner (juts DOWN = hip endpoint) — roof protrudes OUT
-  //   - An internal corner (recedes UP = valley endpoint) — roof goes IN
-  //
-  //  eavesL ____                      ____ eavesR
-  //                \                /
-  //                 \____ext____int/  ← external corner DOWN, internal corner UP
-  //
-  // External corner = HIP (roof folds outward, convex)
-  // Internal corner = VALLEY (roof folds inward, concave)
-
-  const extDepth = 25;  // how far the external corner juts DOWN (hip)
-  const intDepth = 25;  // how far the internal corner recedes UP (valley)
-
-  const eavesL   = { x: 20,  y: eavesY };
-  // External corner (hip 1 endpoint) — juts DOWN/OUT
-  const eavesExt = { x: 100, y: eavesY + extDepth };
-  // Internal corner (valley endpoint) — recedes UP/IN
-  const eavesInt = { x: 180, y: eavesY - intDepth };
-  const eavesR   = { x: 300, y: eavesY };
-
-  // Hip/Valley line endpoints (from ridge down to eaves corners)
-  // Hip 1 (left): from ridge to external corner
-  const hip1Top = { x: 90,  y: ridgeY + 3 };
-  const hip1Bot = eavesExt;
-
-  // Hip 2 (right): from ridge to right eaves (another external corner at the edge)
-  const hip2Top = { x: 220, y: ridgeY + 5 };
-  const hip2Bot = { x: 250, y: eavesY };
-
-  // Valley: from ridge to internal corner
-  const valleyTop = { x: 165, y: ridgeY + 4 };
-  const valleyBot = eavesInt;
-
-  // Midpoints for labels
-  const hip1Mid = { x: (hip1Top.x + hip1Bot.x) / 2, y: (hip1Top.y + hip1Bot.y) / 2 };
-  const hip2Mid = { x: (hip2Top.x + hip2Bot.x) / 2, y: (hip2Top.y + hip2Bot.y) / 2 };
-  const valleyMid = { x: (valleyTop.x + valleyBot.x) / 2, y: (valleyTop.y + valleyBot.y) / 2 };
-
-  // ─── Roof outline polygon ───
-  // Ridge L→R, right rake down, eaves R, internal corner (up), external corner (down), eaves L, left rake up
-  const outlinePts = `${ridgeL.x},${ridgeL.y} ${ridgeR.x},${ridgeR.y} ${eavesR.x},${eavesR.y} ${eavesInt.x},${eavesInt.y} ${eavesExt.x},${eavesExt.y} ${eavesL.x},${eavesL.y}`;
-
-  // ─── Roof plane fills ───
-  // Plane 1: left of hip1 (ridgeL → hip1Top → hip1Bot → eavesL)
-  const plane1 = `${ridgeL.x},${ridgeL.y} ${hip1Top.x},${hip1Top.y} ${hip1Bot.x},${hip1Bot.y} ${eavesL.x},${eavesL.y}`;
-  // Plane 2: between hip1 and valley (hip1Top → valleyTop → valleyBot → hip1Bot)
-  const plane2 = `${hip1Top.x},${hip1Top.y} ${valleyTop.x},${valleyTop.y} ${valleyBot.x},${valleyBot.y} ${hip1Bot.x},${hip1Bot.y}`;
-  // Plane 3: between valley and hip2 (valleyTop → hip2Top → hip2Bot → valleyBot)
-  const plane3 = `${valleyTop.x},${valleyTop.y} ${hip2Top.x},${hip2Top.y} ${hip2Bot.x},${hip2Bot.y} ${valleyBot.x},${valleyBot.y}`;
-  // Plane 4: right of hip2 (hip2Top → ridgeR → eavesR → hip2Bot)
-  const plane4 = `${hip2Top.x},${hip2Top.y} ${ridgeR.x},${ridgeR.y} ${eavesR.x},${eavesR.y} ${hip2Bot.x},${hip2Bot.y}`;
-
-  // ─── Direction arrows ───
-  const makeArrow = (top: { x: number; y: number }, bot: { x: number; y: number }, offset = 0.3) => {
-    const sx = top.x + (bot.x - top.x) * offset;
-    const sy = top.y + (bot.y - top.y) * offset;
-    const ex = top.x + (bot.x - top.x) * (offset + 0.28);
-    const ey = top.y + (bot.y - top.y) * (offset + 0.28);
-    return { start: { x: sx, y: sy }, end: { x: ex, y: ey } };
-  };
-
-  const a1 = makeArrow(ridgeL, eavesL, 0.25);
-  const a2 = makeArrow(hip1Top, hip1Bot, 0.2);
-  const a3 = makeArrow(hip2Top, hip2Bot, 0.2);
-  const a4 = makeArrow(ridgeR, eavesR, 0.25);
-
-  return (
-    <div className="flex flex-col items-center gap-2">
-      <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="w-full max-w-md">
-        {/* ─── Roof plane fills ─── */}
-        <polygon points={plane1} fill="rgba(59, 130, 246, 0.05)" stroke="none" />
-        <polygon points={plane2} fill="rgba(59, 130, 246, 0.14)" stroke="none" />
-        <polygon points={plane3} fill="rgba(59, 130, 246, 0.05)" stroke="none" />
-        <polygon points={plane4} fill="rgba(59, 130, 246, 0.14)" stroke="none" />
-
-        {/* ─── Roof outline ─── */}
-        <polygon points={outlinePts} fill="none" stroke="#1e293b" strokeWidth="2.5" strokeLinejoin="round" />
-
-        {/* ─── Hip lines (orange, solid) ─── */}
-        <line x1={hip1Top.x} y1={hip1Top.y} x2={hip1Bot.x} y2={hip1Bot.y} stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" />
-        <line x1={hip2Top.x} y1={hip2Top.y} x2={hip2Bot.x} y2={hip2Bot.y} stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" />
-
-        {/* ─── Valley line (orange, dashed) ─── */}
-        <line x1={valleyTop.x} y1={valleyTop.y} x2={valleyBot.x} y2={valleyBot.y} stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" strokeDasharray="7 4" />
-
-        {/* ─── Direction arrows ─── */}
-        <SlopeArrow start={a1.start} end={a1.end} color="#1e293b" />
-        <SlopeArrow start={a2.start} end={a2.end} color="#1e293b" />
-        <SlopeArrow start={a3.start} end={a3.end} color="#1e293b" />
-        <SlopeArrow start={a4.start} end={a4.end} color="#1e293b" />
-
-        {/* ─── Corner markers ─── */}
-        {/* External corner (hip) — small dot */}
-        <circle cx={eavesExt.x} cy={eavesExt.y} r="3" fill="#FF6B35" />
-        {/* Internal corner (valley) — small dot */}
-        <circle cx={eavesInt.x} cy={eavesInt.y} r="3" fill="#FF6B35" />
-
-        {/* ─── Labels ─── */}
-        {/* Hip label (top-left) with leader to hip1 */}
-        <text x="14" y="22" className="fill-slate-800" style={{ fontSize: '13px', fontWeight: 600 }}>Hip</text>
-        <line x1="30" y1="26" x2={hip1Mid.x - 5} y2={hip1Mid.y - 5} stroke="#64748b" strokeWidth="1" strokeDasharray="2 2" />
-
-        {/* Second Hip label near hip2 */}
-        <text x={hip2Mid.x + 10} y={hip2Mid.y + 4} className="fill-slate-600" style={{ fontSize: '10px', fontWeight: 500 }}>Hip</text>
-
-        {/* Valley label (bottom-right) with leader */}
-        <text x={VB_W - 65} y={VB_H - 30} className="fill-slate-800" style={{ fontSize: '13px', fontWeight: 600 }}>Valley</text>
-        <line x1={VB_W - 70} y1={VB_H - 34} x2={valleyMid.x + 6} y2={valleyMid.y + 2} stroke="#64748b" strokeWidth="1" strokeDasharray="2 2" />
-
-        {/* External corner label */}
-        <text x={eavesExt.x + 6} y={eavesExt.y + 14} className="fill-slate-400" style={{ fontSize: '9px' }}>ext corner</text>
-
-        {/* Internal corner label */}
-        <text x={eavesInt.x + 6} y={eavesInt.y - 6} className="fill-slate-400" style={{ fontSize: '9px' }}>int corner</text>
-
-        {/* Hip length label (right of hip1, well clear of lines) */}
-        <text x={hip1Mid.x + 12} y={hip1Mid.y + 14} className="fill-[#FF6B35]" style={{ fontSize: '11px', fontWeight: 600 }}>
-          {hipLen.toFixed(2)} {unit}
-        </text>
-
-        {/* Pitch label (top-right) */}
-        <text x={VB_W - 12} y="20" textAnchor="end" className="fill-slate-600" style={{ fontSize: '12px', fontWeight: 500 }}>
-          Pitch: {deg.toFixed(1)}°
-        </text>
-        <text x={VB_W - 12} y="36" textAnchor="end" className="fill-slate-400" style={{ fontSize: '10px' }}>
-          Hip slope: {hipAngleDeg.toFixed(1)}°
-        </text>
-
-        {/* Plan length (bottom-left) */}
-        <text x="14" y={VB_H - 30} className="fill-slate-400" style={{ fontSize: '10px' }}>
-          Plan: {planLength.toFixed(2)} {unit}
-        </text>
-
-        {/* ─── Legend ─── */}
-        <g transform={`translate(14, ${VB_H - 10})`}>
-          <line x1="0" y1="0" x2="18" y2="0" stroke="#FF6B35" strokeWidth="2.5" />
-          <text x="22" y="3" className="fill-slate-500" style={{ fontSize: '9px' }}>Hip (solid)</text>
-          <line x1="90" y1="0" x2="108" y2="0" stroke="#FF6B35" strokeWidth="2.5" strokeDasharray="5 3" />
-          <text x="112" y="3" className="fill-slate-500" style={{ fontSize: '9px' }}>Valley (dashed)</text>
-          <line x1="195" y1="0" x2="213" y2="0" stroke="#1e293b" strokeWidth="2" />
-          <polygon points={`213,0 209,-3 209,3`} fill="#1e293b" />
-          <text x="218" y="3" className="fill-slate-500" style={{ fontSize: '9px' }}>Water flow</text>
-        </g>
-      </svg>
-      <p className="text-xs text-slate-400">
-        Hip-and-valley roof at {deg.toFixed(1)}° pitch — external corner (hip) juts out, internal corner (valley) recedes in
-      </p>
-    </div>
-  );
-}
-
-// ─── Slope arrow helper ──────────────────────────────
-
-function SlopeArrow({ start, end, color }: { start: { x: number; y: number }; end: { x: number; y: number }; color: string }) {
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-  const ang = Math.atan2(dy, dx);
-  const s = 7;
-  return (
-    <g>
-      <line x1={start.x} y1={start.y} x2={end.x} y2={end.y} stroke={color} strokeWidth="2.5" strokeLinecap="round" />
-      <polygon
-        points={`${end.x},${end.y} ${end.x + s * Math.cos(ang + 2.6)},${end.y + s * Math.sin(ang + 2.6)} ${end.x + s * Math.cos(ang - 2.6)},${end.y + s * Math.sin(ang - 2.6)}`}
-        fill={color}
-      />
-    </g>
-  );
-}
+// Old HipValleyDiagram and SlopeArrow removed — replaced by HipValleyHouseDiagram component
