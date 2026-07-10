@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useUnitSystem } from '../RoofingCalculator';
 import { degreesToRatio, ratioToDegrees, rafterLength, rafterPitchFactor, hipValleyPitchFactor, hipValleyLength } from '../../lib/calculator';
-import { HipValleyHouseDiagram } from './HipValleyHouseDiagram';
 
 const RAD = Math.PI / 180;
 const COMMON_PITCHES = [10, 15, 20, 25, 30, 35, 40, 45];
@@ -279,15 +278,7 @@ export function PitchRafterTab() {
                 </div>
               </details>
 
-              <div className="border-t border-slate-100 pt-4">
-                <HipValleyHouseDiagram
-                  pitchDegrees={result.deg}
-                  hipSlopeDegrees={Math.atan(Math.tan(result.deg * RAD) * Math.cos(45 * RAD)) * 180 / Math.PI}
-                  hipValleyLength={result.hipLen}
-                  planLength={parseFloat(planLength) || 0}
-                  unit={lengthUnit as 'm' | 'ft'}
-                />
-              </div>
+              {/* Hip/valley diagram removed 2026-07-10 — static explainer images to be added by Shaun */}
             </>
           )}
         </div>
