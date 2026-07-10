@@ -368,146 +368,144 @@ function HipValleyDiagram({ degrees, planLength, hipLen, unit }: { degrees: numb
   const rad = (deg * Math.PI) / 180;
   const hipAngleDeg = Math.atan(Math.tan(rad) * Math.cos(45 * RAD)) * 180 / Math.PI;
 
-  // ─── Layout constants ───
   const VB_W = 320;
-  const VB_H = 260;
+  const VB_H = 270;
 
-  // Horizontal layout — fixed regardless of pitch
-  // The roof is an L-shape: wide on the right, narrower extension on the left
-  const ridgeY_base = 90;   // top edge baseline (will be shifted up by rise)
-  const eavesY = 200;       // bottom edge (eaves level)
+  // ─── Pitch-driven height ───
+  // At 0° = nearly flat, at 45° = tall, at 90° = very tall
+  // Use a smooth scaling that looks good across the range
+  const heightRatio = Math.tan(rad) / Math.tan(45 * RAD); // 0..1 at 45°
+  const minH = 25;   // minimum visible height even at very low pitch
+  const maxH = 150;  // cap for very steep pitches
+  const roofH = Math.max(minH, Math.min(heightRatio * 160, maxH));
 
-  // Ridge points (top edge, sloped for 3D effect)
-  // Ridge runs left-to-right with a slight downward slope for oblique perspective
-  const ridgeL  = { x: 35,  y: ridgeY_base };
-  const ridgeR  = { x: 285, y: ridgeY_base + 8 }; // slight slope for perspective
+  // ─── Horizontal layout (fixed regardless of pitch) ───
+  const eavesY = VB_H - 55;                    // eaves line Y
+  const ridgeY = eavesY - roofH;               // ridge line Y (moves up with pitch)
 
-  // Eaves points (bottom edge — has a notch for the valley)
-  // Left eaves, valley notch (inward), right eaves
-  const eavesL  = { x: 15,  y: eavesY };
-  const eavesVL = { x: 120, y: eavesY };   // valley left edge
-  const eavesV  = { x: 155, y: eavesY - 12 }; // valley notch (pulled up/in)
-  const eavesVR = { x: 190, y: eavesY };   // valley right edge
-  const eavesR  = { x: 300, y: eavesY };
+  // Ridge points (top edge — slight slope for oblique 3D effect)
+  const ridgeL = { x: 45,  y: ridgeY };
+  const ridgeR = { x: 275, y: ridgeY + 6 };
 
-  // Hip/Valley diagonal endpoints — connect ridge to eaves
-  // Hip 1: from ridge left area down to eaves (left side)
-  const hip1Top = { x: 80,  y: ridgeY_base + 2 };
-  const hip1Bot = { x: 65,  y: eavesY };
+  // Eaves points (bottom edge with valley notch)
+  const eavesL  = { x: 20,  y: eavesY };
+  const eavesVL = { x: 110, y: eavesY };
+  const eavesV  = { x: 145, y: eavesY - 18 };   // valley notch (pulled UP = inward)
+  const eavesVR = { x: 180, y: eavesY };
+  const eavesR  = { x: 295, y: eavesY };
 
-  // Hip 2: from ridge right area down to eaves (right of valley)
-  const hip2Top = { x: 200, y: ridgeY_base + 5 };
-  const hip2Bot = { x: 215, y: eavesY };
+  // Hip/Valley line endpoints (from ridge down to eaves)
+  // Hip 1 (left): from ridge to eaves-left
+  const hip1Top = { x: 85,  y: ridgeY + 2 };
+  const hip1Bot = { x: 60,  y: eavesY };
+
+  // Hip 2 (right): from ridge to eaves-right (right of valley)
+  const hip2Top = { x: 210, y: ridgeY + 4 };
+  const hip2Bot = { x: 235, y: eavesY };
 
   // Valley: from ridge area down to the valley notch
-  const valleyTop = { x: 155, y: ridgeY_base + 4 };
+  const valleyTop = { x: 150, y: ridgeY + 3 };
   const valleyBot = eavesV;
 
-  // ─── Pitch-driven vertical scaling ───
-  // Height of ridge above eaves scales with pitch
-  // At 0° = nearly flat (ridge near eaves), at 45° = tall
-  const baseHeight = eavesY - ridgeY_base; // 110px
-  const pitchHeight = baseHeight * Math.tan(rad) / Math.tan(45 * RAD); // normalized 0..1 at 45°
-  const minRise = 15;  // minimum visible rise even at very low pitch
-  const maxRise = 140; // cap very steep pitches
-  const rise = Math.max(minRise, Math.min(pitchHeight * 1.8, maxRise));
-
-  // Apply rise by shifting all ridge points UP by (rise - baseHeight)
-  // but clamped so the ridge stays below the top of viewBox
-  const shift = rise - baseHeight;
-  const s = (p: { x: number; y: number }) => ({ x: p.x, y: Math.max(20, p.y - shift) });
-
-  const rL = s(ridgeL);
-  const rR = s(ridgeR);
-  const h1T = s(hip1Top);
-  const h2T = s(hip2Top);
-  const vT  = s(valleyTop);
-
   // Midpoints for labels
-  const hip1Mid = { x: (h1T.x + hip1Bot.x) / 2, y: (h1T.y + hip1Bot.y) / 2 };
-  const valleyMid = { x: (vT.x + valleyBot.x) / 2, y: (vT.y + valleyBot.y) / 2 };
+  const hip1Mid = { x: (hip1Top.x + hip1Bot.x) / 2, y: (hip1Top.y + hip1Bot.y) / 2 };
+  const hip2Mid = { x: (hip2Top.x + hip2Bot.x) / 2, y: (hip2Top.y + hip2Bot.y) / 2 };
+  const valleyMid = { x: (valleyTop.x + valleyBot.x) / 2, y: (valleyTop.y + valleyBot.y) / 2 };
 
-  // ─── Roof outline polygon (the full L-shape perimeter) ───
-  // Goes: ridgeL → ridgeR → eavesR → eavesVR → valley → eavesVL → eavesL → back to ridgeL
-  const outlinePts = `${rL.x},${rL.y} ${rR.x},${rR.y} ${eavesR.x},${eavesR.y} ${eavesVR.x},${eavesVR.y} ${eavesV.x},${eavesV.y} ${eavesVL.x},${eavesVL.y} ${eavesL.x},${eavesL.y}`;
+  // ─── Roof outline polygon ───
+  // Ridge L→R, then down right rake, eaves R→VR→V→VL, left rake back up to ridge
+  const outlinePts = `${ridgeL.x},${ridgeL.y} ${ridgeR.x},${ridgeR.y} ${eavesR.x},${eavesR.y} ${eavesVR.x},${eavesVR.y} ${eavesV.x},${eavesV.y} ${eavesVL.x},${eavesVL.y} ${eavesL.x},${eavesL.y}`;
 
-  // ─── Roof plane fills (subtle shading to distinguish planes) ───
-  // Plane 1: left of hip1 (ridgeL → hip1Top → hip1Bot → eavesL)
-  const plane1 = `${rL.x},${rL.y} ${h1T.x},${h1T.y} ${hip1Bot.x},${hip1Bot.y} ${eavesL.x},${eavesL.y}`;
-  // Plane 2: between hip1 and valley (hip1Top → valleyTop → valleyBot → hip1Bot)
-  const plane2 = `${h1T.x},${h1T.y} ${vT.x},${vT.y} ${valleyBot.x},${valleyBot.y} ${hip1Bot.x},${hip1Bot.y}`;
-  // Plane 3: between valley and hip2 (valleyTop → hip2Top → hip2Bot → valleyBot)
-  const plane3 = `${vT.x},${vT.y} ${h2T.x},${h2T.y} ${hip2Bot.x},${hip2Bot.y} ${valleyBot.x},${valleyBot.y}`;
-  // Plane 4: right of hip2 (hip2Top → ridgeR → eavesR → hip2Bot)
-  const plane4 = `${h2T.x},${h2T.y} ${rR.x},${rR.y} ${eavesR.x},${eavesR.y} ${hip2Bot.x},${hip2Bot.y}`;
+  // ─── Roof plane fills ───
+  // Plane 1: left of hip1
+  const plane1 = `${ridgeL.x},${ridgeL.y} ${hip1Top.x},${hip1Top.y} ${hip1Bot.x},${hip1Bot.y} ${eavesL.x},${eavesL.y}`;
+  // Plane 2: between hip1 and valley
+  const plane2 = `${hip1Top.x},${hip1Top.y} ${valleyTop.x},${valleyTop.y} ${valleyBot.x},${valleyBot.y} ${hip1Bot.x},${hip1Bot.y}`;
+  // Plane 3: between valley and hip2
+  const plane3 = `${valleyTop.x},${valleyTop.y} ${hip2Top.x},${hip2Top.y} ${hip2Bot.x},${hip2Bot.y} ${valleyBot.x},${valleyBot.y}`;
+  // Plane 4: right of hip2
+  const plane4 = `${hip2Top.x},${hip2Top.y} ${ridgeR.x},${ridgeR.y} ${eavesR.x},${eavesR.y} ${hip2Bot.x},${hip2Bot.y}`;
 
   // ─── Direction arrows (water flow down each plane) ───
-  // Each arrow goes from near the ridge down to near the eaves, perpendicular-ish
-  const arrowLen = 22;
-  const makeArrow = (top: { x: number; y: number }, bot: { x: number; y: number }, t = 0.35) => {
-    const sx = top.x + (bot.x - top.x) * t;
-    const sy = top.y + (bot.y - top.y) * t;
-    const ex = top.x + (bot.x - top.x) * (t + 0.3);
-    const ey = top.y + (bot.y - top.y) * (t + 0.3);
+  // Bigger, more visible arrows
+  const makeArrow = (top: { x: number; y: number }, bot: { x: number; y: number }, offset = 0.35) => {
+    const sx = top.x + (bot.x - top.x) * offset;
+    const sy = top.y + (bot.y - top.y) * offset;
+    const ex = top.x + (bot.x - top.x) * (offset + 0.28);
+    const ey = top.y + (bot.y - top.y) * (offset + 0.28);
     return { start: { x: sx, y: sy }, end: { x: ex, y: ey } };
   };
 
-  const a1 = makeArrow(rL, eavesL, 0.3);
-  const a2 = makeArrow(h1T, hip1Bot, 0.25);
-  const a3 = makeArrow(h2T, hip2Bot, 0.25);
-  const a4 = makeArrow(rR, eavesR, 0.3);
+  const a1 = makeArrow(ridgeL, eavesL, 0.25);
+  const a2 = makeArrow(hip1Top, hip1Bot, 0.2);
+  const a3 = makeArrow(hip2Top, hip2Bot, 0.2);
+  const a4 = makeArrow(ridgeR, eavesR, 0.25);
 
   return (
     <div className="flex flex-col items-center gap-2">
       <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="w-full max-w-md">
-        {/* ─── Roof plane fills (subtle shading) ─── */}
-        <polygon points={plane1} fill="rgba(59, 130, 246, 0.06)" stroke="none" />
-        <polygon points={plane2} fill="rgba(59, 130, 246, 0.12)" stroke="none" />
-        <polygon points={plane3} fill="rgba(59, 130, 246, 0.06)" stroke="none" />
-        <polygon points={plane4} fill="rgba(59, 130, 246, 0.12)" stroke="none" />
+        {/* ─── Roof plane fills (alternating shading) ─── */}
+        <polygon points={plane1} fill="rgba(59, 130, 246, 0.05)" stroke="none" />
+        <polygon points={plane2} fill="rgba(59, 130, 246, 0.14)" stroke="none" />
+        <polygon points={plane3} fill="rgba(59, 130, 246, 0.05)" stroke="none" />
+        <polygon points={plane4} fill="rgba(59, 130, 246, 0.14)" stroke="none" />
 
         {/* ─── Roof outline (thick dark line) ─── */}
-        <polygon points={outlinePts} fill="none" stroke="#1e293b" strokeWidth="2" strokeLinejoin="round" />
+        <polygon points={outlinePts} fill="none" stroke="#1e293b" strokeWidth="2.5" strokeLinejoin="round" />
 
-        {/* ─── Hip lines (orange, bold) ─── */}
-        <line x1={h1T.x} y1={h1T.y} x2={hip1Bot.x} y2={hip1Bot.y} stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" />
-        <line x1={h2T.x} y1={h2T.y} x2={hip2Bot.x} y2={hip2Bot.y} stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" />
+        {/* ─── Hip lines (orange, bold, solid) ─── */}
+        <line x1={hip1Top.x} y1={hip1Top.y} x2={hip1Bot.x} y2={hip1Bot.y} stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" />
+        <line x1={hip2Top.x} y1={hip2Top.y} x2={hip2Bot.x} y2={hip2Bot.y} stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" />
 
-        {/* ─── Valley line (orange, bold — to the notch) ─── */}
-        <line x1={vT.x} y1={vT.y} x2={valleyBot.x} y2={valleyBot.y} stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" strokeDasharray="6 3" />
+        {/* ─── Valley line (orange, bold, dashed) ─── */}
+        <line x1={valleyTop.x} y1={valleyTop.y} x2={valleyBot.x} y2={valleyBot.y} stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" strokeDasharray="7 4" />
 
-        {/* ─── Direction arrows (black — water flow down each plane) ─── */}
-        <SlopeArrow start={a1.start} end={a1.end} color="#334155" />
-        <SlopeArrow start={a2.start} end={a2.end} color="#334155" />
-        <SlopeArrow start={a3.start} end={a3.end} color="#334155" />
-        <SlopeArrow start={a4.start} end={a4.end} color="#334155" />
+        {/* ─── Direction arrows (dark, bold — water flow) ─── */}
+        <SlopeArrow start={a1.start} end={a1.end} color="#1e293b" />
+        <SlopeArrow start={a2.start} end={a2.end} color="#1e293b" />
+        <SlopeArrow start={a3.start} end={a3.end} color="#1e293b" />
+        <SlopeArrow start={a4.start} end={a4.end} color="#1e293b" />
 
         {/* ─── Labels ─── */}
-        {/* Hip label (top-left, with small leader line to hip1) */}
-        <text x="18" y="28" className="fill-slate-700" style={{ fontSize: '12px', fontWeight: 600 }}>Hip</text>
-        <line x1="35" y1="32" x2={hip1Mid.x - 4} y2={hip1Mid.y - 8} stroke="#64748b" strokeWidth="0.8" strokeDasharray="2 2" />
+        {/* Hip label (top-left) with leader line to hip1 */}
+        <text x="14" y="22" className="fill-slate-800" style={{ fontSize: '13px', fontWeight: 600 }}>Hip</text>
+        <line x1="30" y1="26" x2={hip1Mid.x - 6} y2={hip1Mid.y - 6} stroke="#64748b" strokeWidth="1" strokeDasharray="2 2" />
 
-        {/* Valley label (bottom-right, with leader line) */}
-        <text x={VB_W - 60} y={VB_H - 10} className="fill-slate-700" style={{ fontSize: '12px', fontWeight: 600 }}>Valley</text>
-        <line x1={VB_W - 65} y1={VB_H - 14} x2={valleyMid.x + 6} y2={valleyMid.y + 4} stroke="#64748b" strokeWidth="0.8" strokeDasharray="2 2" />
+        {/* Second Hip indicator (small label near hip2) */}
+        <text x={hip2Mid.x + 12} y={hip2Mid.y + 4} className="fill-slate-600" style={{ fontSize: '10px', fontWeight: 500 }}>Hip</text>
 
-        {/* Hip length label (along hip1, offset left) */}
-        <text x={hip1Mid.x - 50} y={hip1Mid.y + 4} textAnchor="end" className="fill-[#FF6B35]" style={{ fontSize: '10px', fontWeight: 500 }}>
+        {/* Valley label (bottom-right) with leader line */}
+        <text x={VB_W - 65} y={VB_H - 28} className="fill-slate-800" style={{ fontSize: '13px', fontWeight: 600 }}>Valley</text>
+        <line x1={VB_W - 70} y1={VB_H - 32} x2={valleyMid.x + 8} y2={valleyMid.y + 2} stroke="#64748b" strokeWidth="1" strokeDasharray="2 2" />
+
+        {/* Hip length label (RIGHT of hip1 line, not left — fixes the "37 m" cutoff bug) */}
+        <text x={hip1Mid.x + 8} y={hip1Mid.y + 4} className="fill-[#FF6B35]" style={{ fontSize: '11px', fontWeight: 600 }}>
           {hipLen.toFixed(2)} {unit}
         </text>
 
-        {/* Pitch label (top-right area) */}
-        <text x={VB_W - 10} y="25" textAnchor="end" className="fill-slate-600" style={{ fontSize: '11px', fontWeight: 500 }}>
+        {/* Pitch label (top-right) */}
+        <text x={VB_W - 12} y="20" textAnchor="end" className="fill-slate-600" style={{ fontSize: '12px', fontWeight: 500 }}>
           Pitch: {deg.toFixed(1)}°
         </text>
-        <text x={VB_W - 10} y="40" textAnchor="end" className="fill-slate-400" style={{ fontSize: '10px' }}>
+        <text x={VB_W - 12} y="36" textAnchor="end" className="fill-slate-400" style={{ fontSize: '10px' }}>
           Hip slope: {hipAngleDeg.toFixed(1)}°
         </text>
 
         {/* Plan length (bottom-left) */}
-        <text x="12" y={VB_H - 10} className="fill-slate-400" style={{ fontSize: '10px' }}>
+        <text x="14" y={VB_H - 28} className="fill-slate-400" style={{ fontSize: '10px' }}>
           Plan: {planLength.toFixed(2)} {unit}
         </text>
+
+        {/* ─── Legend (bottom row) ─── */}
+        <g transform={`translate(14, ${VB_H - 10})`}>
+          <line x1="0" y1="0" x2="18" y2="0" stroke="#FF6B35" strokeWidth="2.5" />
+          <text x="22" y="3" className="fill-slate-500" style={{ fontSize: '9px' }}>Hip (solid)</text>
+          <line x1="90" y1="0" x2="108" y2="0" stroke="#FF6B35" strokeWidth="2.5" strokeDasharray="5 3" />
+          <text x="112" y="3" className="fill-slate-500" style={{ fontSize: '9px' }}>Valley (dashed)</text>
+          <line x1="195" y1="0" x2="213" y2="0" stroke="#1e293b" strokeWidth="2" />
+          <polygon points={`213,0 209,-3 209,3`} fill="#1e293b" />
+          <text x="218" y="3" className="fill-slate-500" style={{ fontSize: '9px' }}>Water flow</text>
+        </g>
       </svg>
       <p className="text-xs text-slate-400">
         Hip-and-valley roof at {deg.toFixed(1)}° pitch — steeper = taller, lower = flatter
@@ -522,10 +520,10 @@ function SlopeArrow({ start, end, color }: { start: { x: number; y: number }; en
   const dx = end.x - start.x;
   const dy = end.y - start.y;
   const ang = Math.atan2(dy, dx);
-  const s = 5;
+  const s = 7;
   return (
     <g>
-      <line x1={start.x} y1={start.y} x2={end.x} y2={end.y} stroke={color} strokeWidth="1.5" />
+      <line x1={start.x} y1={start.y} x2={end.x} y2={end.y} stroke={color} strokeWidth="2.5" strokeLinecap="round" />
       <polygon
         points={`${end.x},${end.y} ${end.x + s * Math.cos(ang + 2.6)},${end.y + s * Math.sin(ang + 2.6)} ${end.x + s * Math.cos(ang - 2.6)},${end.y + s * Math.sin(ang - 2.6)}`}
         fill={color}
