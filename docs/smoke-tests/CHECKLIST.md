@@ -4,6 +4,9 @@
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
 
+**I. Hip/valley house diagram redesign (new on dev, 2026-07-10, `6444e10`)**
+- [ ] `/free-roofing-calculator` → Rafter/Hip & Valley tab → Hip/Valley sub-tab → Calculate: diagram shows L-shaped house with 3 walls, solid orange hip on outer corner, dashed orange valley into the 90° internal corner; 10° looks flat, 45° looks steep, walls never move
+
 **H. Per-entry input reference display + RPC v8 (new on dev, 2026-07-08 pm)**
 - [ ] Entry rows in component phase now read `→ X - Incl waste (…)` — "(+waste)" wording is gone
 - [ ] Freestyle L×H entry (takeoff or builder): entry row shows `(H: <height>)` with the height you typed
