@@ -65,6 +65,13 @@ export function RoofingCalculator() {
   const [activeTab, setActiveTab] = useState<TabId>('roof-area');
   const [shared, setShared] = useState<SharedState>({ calculatedArea: null });
 
+  // Auto-switch to Draft Smart Component tab when area is shared
+  useEffect(() => {
+    if (shared.calculatedArea) {
+      setActiveTab('smart-component');
+    }
+  }, [shared.calculatedArea]);
+
   const unitValue: UnitContextValue = {
     system,
     toggle: () => setSystem((s) => (s === 'metric' ? 'imperial' : 'metric')),

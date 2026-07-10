@@ -27,22 +27,21 @@ export const COMMON_PITCHES = [10, 15, 20, 25, 30, 35, 40, 45];
 
 // ─── Rafter ──────────────────────────────────────────
 
-/** Calculate rafter length from span and pitch */
+/** Calculate rafter length from span (wall to ridge) and pitch */
 export function rafterLength(span: number, pitchDegrees: number): number {
   if (!span || span <= 0) return 0;
-  return (span / 2) / Math.cos((pitchDegrees || 0) * RAD);
+  return span / Math.cos((pitchDegrees || 0) * RAD);
 }
 
 // ─── Hip/Valley ──────────────────────────────────────
 
-/** Calculate hip/valley length from span, run, and pitch */
-export function hipValleyLength(span: number, run: number, pitchDegrees: number): number {
-  if (!span || span <= 0 || !run || run <= 0) return 0;
-  const halfSpan = span / 2;
+/** Calculate hip/valley length from plan length (corner to ridge diagonal) and pitch */
+export function hipValleyLength(planLength: number, pitchDegrees: number): number {
+  if (!planLength || planLength <= 0) return 0;
   const pitchRad = (pitchDegrees || 0) * RAD;
+  // Hip angle = arctan(tan(pitch) × cos(45°)) for standard 90° corners
   const hipAngleRad = Math.atan(Math.tan(pitchRad) * Math.cos(45 * RAD));
-  const diagonal = Math.sqrt(halfSpan * halfSpan + run * run);
-  return diagonal / Math.cos(hipAngleRad);
+  return planLength / Math.cos(hipAngleRad);
 }
 
 // ─── Area ────────────────────────────────────────────

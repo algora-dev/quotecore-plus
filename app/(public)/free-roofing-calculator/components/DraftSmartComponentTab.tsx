@@ -2,9 +2,48 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useUnitSystem, useSharedState } from '../RoofingCalculator';
-import type { MeasurementType, WasteType, PitchType } from '@/app/lib/types';
+import type { MeasurementType, WasteType, PitchType, PricingStrategy } from '@/app/lib/types';
 
-// ─── Types matching the app's component model ────────
+// ─── All measurement types from the app ──────────────
+
+const MEASUREMENT_TYPES: { value: MeasurementType; label: string; tooltip: string }[] = [
+  { value: 'area', label: 'Area (m²)', tooltip: 'Area measurement in square metres. Used for roofing, flooring, cladding.' },
+  { value: 'lineal', label: 'Linear: Single (m)', tooltip: 'Single linear measurement in metres. Used for gutters, flashings, trims.' },
+  { value: 'quantity', label: 'Quantity', tooltip: 'Simple count of items. No unit conversion. Used for fixings, brackets, accessories.' },
+  { value: 'fixed', label: 'Fixed', tooltip: 'Fixed quantity that does not change with measurements. Used for lump sum items.' },
+  { value: 'length_x_height', label: 'Length x Height (m²)', tooltip: 'Area calculated from a preset height multiplied by measured length. Used for walls, cladding.' },
+  { value: 'volume', label: 'Volume - Preset Depth (m³)', tooltip: 'Volume from area multiplied by a preset depth. Used for concrete slabs, fill, excavation.' },
+  { value: 'volume_3d', label: 'Volume (m³)', tooltip: 'True 3D volume from length × width × depth. Used for concrete pours, excavation, fill.' },
+  { value: 'hours_days', label: 'Hours / Days', tooltip: 'Labour time in hours or days. Used for labour-only line items.' },
+  { value: 'count', label: 'Count (each)', tooltip: 'Count of individual items. Similar to quantity but with per-each pricing.' },
+  { value: 'curved_line', label: 'Curved Line (m)', tooltip: 'Curved or non-straight linear measurement. Used for curved flashings, gutters.' },
+  { value: 'irregular_area', label: 'Irregular Area (m²)', tooltip: 'Area of irregular shapes. Measured on canvas with polygon tool.' },
+  { value: 'multi_lineal', label: 'Linear: Multi-Length (m)', tooltip: 'Multiple linear measurements of the same type. Used for multiple pipe runs, cable lengths.' },
+  { value: 'multi_lineal_lxh', label: 'Length x Height: Multi (m²)', tooltip: 'Multiple L×H area measurements. Used for multiple wall sections at different heights.' },
+  { value: 'length_x_height_freestyle', label: 'Length x Height: Custom (m²)', tooltip: 'L×H where height is entered at measurement time. Used when heights vary per section.' },
+  { value: 'multi_lineal_lxh_freestyle', label: 'L x H: Multi Custom (m²)', tooltip: 'Multiple L×H with custom heights per section. Maximum flexibility for varying wall heights.' },
+];
+
+const WASTE_TYPES: { value: WasteType; label: string; tooltip: string }[] = [
+  { value: 'none', label: 'None', tooltip: 'No waste added.' },
+  { value: 'percent', label: 'Percentage', tooltip: 'Waste as a percentage of measured quantity. Typical: 5-15% depending on material.' },
+  { value: 'fixed', label: 'Fixed (total)', tooltip: 'Fixed waste amount added once to the total. Used for offcuts.' },
+  { value: 'fixed_per_segment', label: 'Fixed (per segment)', tooltip: 'Fixed waste amount added per measurement segment. Used for per-cut waste.' },
+];
+
+const PRICING_STRATEGIES: { value: PricingStrategy; label: string; tooltip: string }[] = [
+  { value: 'per_unit', label: 'Per unit (default)', tooltip: 'Price per individual unit of measurement. Most common.' },
+  { value: 'per_pack_length', label: 'Fixed Quantity (e.g. 20m rolls)', tooltip: 'Priced per pack of fixed length. Used for cable reels, conduit, pipe.' },
+  { value: 'per_pack_area', label: 'Fixed Quantity (e.g. 50m² bundles)', tooltip: 'Priced per pack of fixed area. Used for tile bundles, sheet packs.' },
+  { value: 'per_pack_volume', label: 'Fixed Quantity (e.g. 5m³ units)', tooltip: 'Priced per pack of fixed volume. Used for concrete deliveries.' },
+];
+
+const PITCH_TYPES: { value: PitchType; label: string }[] = [
+  { value: 'rafter', label: 'Rafter Pitch' },
+  { value: 'valley_hip', label: 'Valley/Hip Pitch' },
+];
+
+// ─── Component ───────────────────────────────────────
 
 interface ComponentSpec {
   name: string;
@@ -12,27 +51,13 @@ interface ComponentSpec {
   wasteType: WasteType;
   wasteValue: string;
   pricePerUnit: string;
+  pricingStrategy: PricingStrategy;
+  packSize: string;
+  labourAmount: string;
   pitchEnabled: boolean;
   pitchType: PitchType;
   pitchDegrees: string;
 }
-
-// ─── Measurement type options (roofing-focused) ──────
-
-const MEASUREMENT_TYPES: { value: MeasurementType; label: string }[] = [
-  { value: 'area', label: 'Area (m² / ft²)' },
-  { value: 'lineal', label: 'Linear: Single (m / ft)' },
-  { value: 'quantity', label: 'Quantity' },
-  { value: 'fixed', label: 'Fixed' },
-];
-
-const WASTE_TYPES: { value: WasteType; label: string }[] = [
-  { value: 'none', label: 'None' },
-  { value: 'percent', label: 'Percentage' },
-  { value: 'fixed', label: 'Fixed (total)' },
-];
-
-// ─── Component ───────────────────────────────────────
 
 export function DraftSmartComponentTab() {
   const { areaUnit, lengthUnit, volumeUnit } = useUnitSystem();
@@ -44,6 +69,9 @@ export function DraftSmartComponentTab() {
     wasteType: 'percent',
     wasteValue: '10',
     pricePerUnit: '2.50',
+    pricingStrategy: 'per_unit',
+    packSize: '',
+    labourAmount: '',
     pitchEnabled: true,
     pitchType: 'rafter',
     pitchDegrees: '25',
@@ -55,26 +83,30 @@ export function DraftSmartComponentTab() {
   const [quantityInput, setQuantityInput] = useState('');
   const [dimA, setDimA] = useState('');
   const [dimB, setDimB] = useState('');
+  const [dimC, setDimC] = useState('');
+  const [heightInput, setHeightInput] = useState('');
   const [entryMode, setEntryMode] = useState<'direct' | 'dims'>('direct');
 
   const [result, setResult] = useState<null | {
     rawValue: number;
     wasteAmount: number;
     totalValue: number;
-    cost: number;
+    materialCost: number;
+    labourCost: number;
+    totalCost: number;
     unit: string;
   }>(null);
 
   const [showSavePopup, setShowSavePopup] = useState(false);
   const [showSyncHint, setShowSyncHint] = useState(false);
+  const [showTooltip, setShowTooltip] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Pre-fill area from shared state (from Roof Area tab)
+  // Pre-fill area from shared state
   useEffect(() => {
     if (shared.calculatedArea) {
       setAreaInput(shared.calculatedArea);
       setSpec((s) => ({ ...s, measurementType: 'area' }));
-      panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [shared.calculatedArea]);
 
@@ -89,18 +121,48 @@ export function DraftSmartComponentTab() {
 
     if (mt === 'area') {
       if (entryMode === 'dims') {
-        const a = parseFloat(dimA) || 0;
-        const b = parseFloat(dimB) || 0;
-        rawValue = a * b;
-        unit = areaUnit;
+        rawValue = (parseFloat(dimA) || 0) * (parseFloat(dimB) || 0);
       } else {
         rawValue = parseFloat(areaInput) || 0;
-        unit = areaUnit;
       }
-    } else if (mt === 'lineal') {
+      unit = areaUnit;
+    } else if (mt === 'lineal' || mt === 'curved_line' || mt === 'multi_lineal') {
       rawValue = parseFloat(linearInput) || 0;
       unit = lengthUnit;
-    } else if (mt === 'quantity' || mt === 'fixed') {
+    } else if (mt === 'length_x_height' || mt === 'length_x_height_freestyle' || mt === 'multi_lineal_lxh' || mt === 'multi_lineal_lxh_freestyle') {
+      if (entryMode === 'dims') {
+        const l = parseFloat(dimA) || 0;
+        const h = parseFloat(heightInput) || 0;
+        rawValue = l * h;
+      } else {
+        rawValue = parseFloat(areaInput) || 0;
+      }
+      unit = areaUnit;
+    } else if (mt === 'volume') {
+      if (entryMode === 'dims') {
+        const a = parseFloat(dimA) || 0;
+        const b = parseFloat(dimB) || 0;
+        const d = parseFloat(dimC) || 0;
+        rawValue = a * b * d;
+      } else {
+        rawValue = parseFloat(areaInput) || 0;
+      }
+      unit = volumeUnit;
+    } else if (mt === 'volume_3d') {
+      if (entryMode === 'dims') {
+        const l = parseFloat(dimA) || 0;
+        const w = parseFloat(dimB) || 0;
+        const d = parseFloat(dimC) || 0;
+        rawValue = l * w * d;
+      } else {
+        rawValue = parseFloat(areaInput) || 0;
+      }
+      unit = volumeUnit;
+    } else if (mt === 'hours_days') {
+      rawValue = parseFloat(quantityInput) || 0;
+      unit = 'hrs';
+    } else {
+      // quantity, fixed, count
       rawValue = parseFloat(quantityInput) || 0;
       unit = 'units';
     }
@@ -110,60 +172,116 @@ export function DraftSmartComponentTab() {
     if (spec.wasteType === 'percent') {
       const pct = parseFloat(spec.wasteValue) || 0;
       wasteAmount = rawValue * (pct / 100);
-    } else if (spec.wasteType === 'fixed') {
+    } else if (spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment') {
       wasteAmount = parseFloat(spec.wasteValue) || 0;
     }
 
     const totalValue = rawValue + wasteAmount;
     const price = parseFloat(spec.pricePerUnit) || 0;
-    const cost = totalValue * price;
 
-    setResult({ rawValue, wasteAmount, totalValue, cost, unit });
+    // Pricing strategy
+    let pricedQuantity = totalValue;
+    if (spec.pricingStrategy !== 'per_unit' && spec.pricingStrategy !== 'per_pack_coverage') {
+      const packSize = parseFloat(spec.packSize) || 1;
+      if (packSize > 0) {
+        pricedQuantity = Math.ceil(totalValue / packSize);
+      }
+    }
+
+    const materialCost = pricedQuantity * price;
+    const labourCost = parseFloat(spec.labourAmount) || 0;
+    const totalCost = materialCost + labourCost;
+
+    setResult({ rawValue, wasteAmount, totalValue, materialCost, labourCost, totalCost, unit });
   }
 
-  // Show sync hint after calculation
   useEffect(() => {
-    if (result && result.totalValue > 0) {
+    if (result && result.totalCost > 0) {
       const dismissed = sessionStorage.getItem('qcp:sync-hint-dismissed');
       if (!dismissed) {
         const timer = setTimeout(() => setShowSyncHint(true), 1500);
         return () => clearTimeout(timer);
       }
     }
-  }, [result?.totalValue]);
+  }, [result?.totalCost]);
 
   const mt = spec.measurementType;
-  const isAreaType = mt === 'area';
-  const hasDimToggle = isAreaType;
+  const isAreaType = mt === 'area' || mt === 'irregular_area';
+  const isLxhType = mt === 'length_x_height' || mt === 'length_x_height_freestyle' || mt === 'multi_lineal_lxh' || mt === 'multi_lineal_lxh_freestyle';
+  const isVolumeType = mt === 'volume' || mt === 'volume_3d';
+  const isLinearType = mt === 'lineal' || mt === 'curved_line' || mt === 'multi_lineal';
+  const isCountType = mt === 'quantity' || mt === 'fixed' || mt === 'count' || mt === 'hours_days';
+  const hasDimToggle = isAreaType || isLxhType || isVolumeType;
+  const showPackSize = spec.pricingStrategy !== 'per_unit' && spec.pricingStrategy !== 'per_pack_coverage';
+
+  function renderMeasurementInputs() {
+    if (isAreaType) {
+      return entryMode === 'dims' ? (
+        <div className="grid grid-cols-2 gap-3">
+          <Field label={`Width (${lengthUnit})`} value={dimA} onChange={setDimA} />
+          <Field label={`Length (${lengthUnit})`} value={dimB} onChange={setDimB} />
+        </div>
+      ) : (
+        <Field label={`Area (${areaUnit})`} value={areaInput} onChange={setAreaInput} placeholder="Enter area or use from roof area tab" />
+      );
+    }
+    if (isLxhType) {
+      return entryMode === 'dims' ? (
+        <div className="grid grid-cols-2 gap-3">
+          <Field label={`Length (${lengthUnit})`} value={dimA} onChange={setDimA} />
+          <Field label={`Height (${lengthUnit})`} value={heightInput} onChange={setHeightInput} />
+        </div>
+      ) : (
+        <Field label={`Area (${areaUnit})`} value={areaInput} onChange={setAreaInput} />
+      );
+    }
+    if (isVolumeType) {
+      return entryMode === 'dims' ? (
+        <div className="grid grid-cols-3 gap-3">
+          <Field label={`Length (${lengthUnit})`} value={dimA} onChange={setDimA} />
+          <Field label={`Width (${lengthUnit})`} value={dimB} onChange={setDimB} />
+          <Field label={`Depth (${lengthUnit})`} value={dimC} onChange={setDimC} />
+        </div>
+      ) : (
+        <Field label={`Volume (${volumeUnit})`} value={areaInput} onChange={setAreaInput} />
+      );
+    }
+    if (isLinearType) {
+      return <Field label={`Length (${lengthUnit})`} value={linearInput} onChange={setLinearInput} />;
+    }
+    if (isCountType) {
+      const label = mt === 'hours_days' ? 'Hours' : 'Quantity';
+      return <Field label={label} value={quantityInput} onChange={setQuantityInput} />;
+    }
+    return null;
+  }
 
   return (
     <div ref={panelRef} className="space-y-5">
       <div>
         <h2 className="text-lg font-semibold text-slate-900">Draft Smart Component</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Build a component with pricing and waste rules, then calculate cost from measurements
+          Build a component with pricing, waste, and labour rules, then calculate cost from measurements
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Left: Component spec (mirrors create component form) */}
+        {/* Left: Component spec (full form from the app) */}
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-slate-700 border-b border-slate-100 pb-2">Component spec</h3>
 
           {/* Name */}
-          <div>
-            <label className="text-sm font-medium text-slate-700">Component name</label>
+          <FormField label="Component name" tooltip="The name of this component as it appears in quotes.">
             <input
               type="text"
               value={spec.name}
               onChange={(e) => update('name', e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
             />
-          </div>
+          </FormField>
 
           {/* Measurement type */}
-          <div>
-            <label className="text-sm font-medium text-slate-700">Measurement type</label>
+          <FormField label="Measurement type" tooltip="How this component is measured. Determines what inputs are available.">
             <select
               value={spec.measurementType}
               onChange={(e) => update('measurementType', e.target.value)}
@@ -173,11 +291,55 @@ export function DraftSmartComponentTab() {
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
-          </div>
+            <p className="mt-1 text-xs text-slate-400">{MEASUREMENT_TYPES.find((t) => t.value === spec.measurementType)?.tooltip}</p>
+          </FormField>
 
-          {/* Waste type */}
-          <div>
-            <label className="text-sm font-medium text-slate-700">Waste</label>
+          {/* Pricing strategy */}
+          <FormField label="Pricing strategy" tooltip="How this component is priced. Per unit is most common.">
+            <select
+              value={spec.pricingStrategy}
+              onChange={(e) => update('pricingStrategy', e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+            >
+              {PRICING_STRATEGIES.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </FormField>
+
+          {/* Pack size (if pack-based pricing) */}
+          {showPackSize && (
+            <FormField label="Pack size" tooltip="Quantity per pack. Used to calculate number of packs needed.">
+              <input
+                type="number"
+                value={spec.packSize}
+                onChange={(e) => update('packSize', e.target.value)}
+                min={0}
+                step={0.1}
+                placeholder="e.g. 20"
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+              />
+            </FormField>
+          )}
+
+          {/* Price per unit */}
+          <FormField label="Price per unit" tooltip="Price per individual unit or per pack (depending on pricing strategy).">
+            <div className="mt-1 relative">
+              <span className="absolute left-3 top-2 text-sm text-slate-400">$</span>
+              <input
+                type="number"
+                value={spec.pricePerUnit}
+                onChange={(e) => update('pricePerUnit', e.target.value)}
+                min={0}
+                step={0.01}
+                placeholder="0.00"
+                className="w-full rounded-lg border border-slate-300 pl-7 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+              />
+            </div>
+          </FormField>
+
+          {/* Waste */}
+          <FormField label="Waste" tooltip="Additional material added to account for cuts, breakage, and offcuts.">
             <div className="mt-1 grid grid-cols-2 gap-2">
               <select
                 value={spec.wasteType}
@@ -200,36 +362,37 @@ export function DraftSmartComponentTab() {
                 />
               )}
             </div>
-          </div>
+          </FormField>
 
-          {/* Price */}
-          <div>
-            <label className="text-sm font-medium text-slate-700">Price per unit</label>
+          {/* Labour */}
+          <FormField label="Labour amount" tooltip="Fixed labour cost added to the total. For hourly labour, use Hours/Days measurement type.">
             <div className="mt-1 relative">
               <span className="absolute left-3 top-2 text-sm text-slate-400">$</span>
               <input
                 type="number"
-                value={spec.pricePerUnit}
-                onChange={(e) => update('pricePerUnit', e.target.value)}
+                value={spec.labourAmount}
+                onChange={(e) => update('labourAmount', e.target.value)}
                 min={0}
                 step={0.01}
                 placeholder="0.00"
                 className="w-full rounded-lg border border-slate-300 pl-7 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
               />
             </div>
-          </div>
+          </FormField>
 
           {/* Pitch */}
           <div className="rounded-lg bg-slate-50 border border-slate-100 p-4 space-y-3">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={spec.pitchEnabled}
-                onChange={(e) => update('pitchEnabled', e.target.checked)}
-                className="rounded border-slate-300 text-orange-500 focus:ring-orange-500"
-              />
-              <span className="text-sm font-medium text-slate-700">Apply pitch calculation</span>
-            </label>
+            <FormField label="Apply pitch calculation" tooltip="When enabled, pitch factor is applied to area measurements. Used for sloped roofs.">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={spec.pitchEnabled}
+                  onChange={(e) => update('pitchEnabled', e.target.checked)}
+                  className="rounded border-slate-300 text-orange-500 focus:ring-orange-500"
+                />
+                <span className="text-sm text-slate-600">Enable pitch</span>
+              </label>
+            </FormField>
             {spec.pitchEnabled && (
               <div className="grid grid-cols-2 gap-2">
                 <select
@@ -237,8 +400,9 @@ export function DraftSmartComponentTab() {
                   onChange={(e) => update('pitchType', e.target.value)}
                   className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                 >
-                  <option value="rafter">Rafter Pitch</option>
-                  <option value="valley_hip">Valley/Hip Pitch</option>
+                  {PITCH_TYPES.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
                 </select>
                 <input
                   type="number"
@@ -262,11 +426,11 @@ export function DraftSmartComponentTab() {
           </button>
         </div>
 
-        {/* Right: Measurement input (mirrors quote builder entry) */}
+        {/* Right: Measurement input */}
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-slate-700 border-b border-slate-100 pb-2">Measurement</h3>
 
-          {/* Entry mode toggle for area types */}
+          {/* Entry mode toggle */}
           {hasDimToggle && (
             <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 w-fit">
               <button
@@ -283,83 +447,15 @@ export function DraftSmartComponentTab() {
                   entryMode === 'dims' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
-                W × L
+                {isVolumeType ? 'L × W × D' : isLxhType ? 'L × H' : 'W × L'}
               </button>
             </div>
           )}
 
-          {/* Dynamic inputs based on measurement type */}
-          {mt === 'area' && (
-            entryMode === 'dims' ? (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Width ({lengthUnit})</label>
-                  <input
-                    type="number"
-                    value={dimA}
-                    onChange={(e) => setDimA(e.target.value)}
-                    min={0}
-                    step={0.1}
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Length ({lengthUnit})</label>
-                  <input
-                    type="number"
-                    value={dimB}
-                    onChange={(e) => setDimB(e.target.value)}
-                    min={0}
-                    step={0.1}
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div>
-                <label className="text-sm font-medium text-slate-700">Area ({areaUnit})</label>
-                <input
-                  type="number"
-                  value={areaInput}
-                  onChange={(e) => setAreaInput(e.target.value)}
-                  min={0}
-                  step={0.1}
-                  placeholder="Enter area or use from roof area tab"
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-                />
-                {shared.calculatedArea && areaInput === shared.calculatedArea && (
-                  <p className="mt-1 text-xs text-slate-400">Pre-filled from roof area calculation</p>
-                )}
-              </div>
-            )
-          )}
+          {renderMeasurementInputs()}
 
-          {mt === 'lineal' && (
-            <div>
-              <label className="text-sm font-medium text-slate-700">Length ({lengthUnit})</label>
-              <input
-                type="number"
-                value={linearInput}
-                onChange={(e) => setLinearInput(e.target.value)}
-                min={0}
-                step={0.1}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-              />
-            </div>
-          )}
-
-          {(mt === 'quantity' || mt === 'fixed') && (
-            <div>
-              <label className="text-sm font-medium text-slate-700">Quantity</label>
-              <input
-                type="number"
-                value={quantityInput}
-                onChange={(e) => setQuantityInput(e.target.value)}
-                min={0}
-                step={1}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-              />
-            </div>
+          {shared.calculatedArea && areaInput === shared.calculatedArea && (
+            <p className="text-xs text-slate-400">Pre-filled from roof area calculation</p>
           )}
 
           {/* Calculate button */}
@@ -377,11 +473,13 @@ export function DraftSmartComponentTab() {
           {result && result.totalValue > 0 && (
             <div className="space-y-3">
               <div className="rounded-xl bg-orange-50/50 border border-orange-100 p-4">
-                <p className="text-xs text-slate-500">Estimated cost</p>
-                <p className="text-2xl font-bold text-slate-900">${result.cost.toFixed(2)}</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {result.totalValue.toFixed(2)} {result.unit} × ${spec.pricePerUnit || '0'}
-                </p>
+                <p className="text-xs text-slate-500">Total cost</p>
+                <p className="text-2xl font-bold text-slate-900">${result.totalCost.toFixed(2)}</p>
+                {result.labourCost > 0 && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    Material: ${result.materialCost.toFixed(2)} + Labour: ${result.labourCost.toFixed(2)}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -416,9 +514,12 @@ export function DraftSmartComponentTab() {
                         : 'Waste = none'
                     }
                     <br />
-                    Total = {result.rawValue.toFixed(2)} + {result.wasteAmount.toFixed(2)} = <strong>{result.totalValue.toFixed(2)} {result.unit}</strong>
+                    Total = {result.totalValue.toFixed(2)} {result.unit}
                     <br />
-                    Cost = {result.totalValue.toFixed(2)} × ${spec.pricePerUnit || '0'} = <strong>${result.cost.toFixed(2)}</strong>
+                    Material = ${result.materialCost.toFixed(2)}
+                    {result.labourCost > 0 && ` + Labour = $${result.labourCost.toFixed(2)}`}
+                    <br />
+                    <strong>Total = ${result.totalCost.toFixed(2)}</strong>
                   </p>
                 </div>
               </details>
@@ -467,17 +568,11 @@ export function DraftSmartComponentTab() {
             Your calculations are saved on this device. Create an account to sync across devices.
           </p>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <a
-              href="/signup?ref=free-roofing-calculator"
-              className="text-xs font-semibold text-[#FF6B35] hover:text-[#ff5722]"
-            >
+            <a href="/signup?ref=free-roofing-calculator" className="text-xs font-semibold text-[#FF6B35] hover:text-[#ff5722]">
               Sync now
             </a>
             <button
-              onClick={() => {
-                setShowSyncHint(false);
-                sessionStorage.setItem('qcp:sync-hint-dismissed', '1');
-              }}
+              onClick={() => { setShowSyncHint(false); sessionStorage.setItem('qcp:sync-hint-dismissed', '1'); }}
               className="text-slate-400 hover:text-slate-600"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -487,6 +582,53 @@ export function DraftSmartComponentTab() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Helper components ───────────────────────────────
+
+function Field({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <div>
+      <label className="text-sm font-medium text-slate-700">{label}</label>
+      <input
+        type="number"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        min={0}
+        step={0.1}
+        placeholder={placeholder}
+        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+      />
+    </div>
+  );
+}
+
+function FormField({ label, tooltip, children }: { label: string; tooltip: string; children: React.ReactNode }) {
+  const [showTip, setShowTip] = useState(false);
+  return (
+    <div>
+      <div className="flex items-center gap-1.5">
+        <label className="text-sm font-medium text-slate-700">{label}</label>
+        <div className="relative inline-flex" onMouseEnter={() => setShowTip(true)} onMouseLeave={() => setShowTip(false)}>
+          <button
+            type="button"
+            onClick={() => setShowTip((s) => !s)}
+            className="text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+            </svg>
+          </button>
+          {showTip && (
+            <div className="absolute z-[60] left-0 top-5 w-56 bg-white border border-slate-200 rounded-xl shadow-lg p-3">
+              <p className="text-xs text-slate-600 leading-relaxed">{tooltip}</p>
+            </div>
+          )}
+        </div>
+      </div>
+      {children}
     </div>
   );
 }
