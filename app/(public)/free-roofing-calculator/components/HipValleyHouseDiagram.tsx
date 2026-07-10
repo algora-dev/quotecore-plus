@@ -1,8 +1,27 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-// ─── Types ──────────────────────────────────────────
+// ─────────────────────────────────────────────────────
+// HipValleyHouseDiagram
+//
+// 2.5D house-and-roof illustration for the Hip/Valley
+// calculator, based on Shaun's hand-drawn reference:
+// an L-shaped building (main block + projecting wing)
+// with a 90° internal corner.
+//
+//   - Exactly TWO visible roof planes:
+//       left  = main roof front plane
+//       right = wing roof plane
+//   - VALLEY (dashed orange) = the fold line between the
+//     two planes; its lower end lands EXACTLY on the
+//     internal wall corner.
+//   - HIP (solid orange) = the wing's outer front arris;
+//     its lower end lands EXACTLY on the outer front
+//     wall corner.
+//   - Wall footprint is FIXED. Only the upper roof
+//     points move vertically with pitch.
+// ─────────────────────────────────────────────────────
 
 interface Point { x: number; y: number; }
 
@@ -44,118 +63,151 @@ function lerp(start: number, end: number, t: number): number {
   return start + (end - start) * t;
 }
 
-function getHipValleyDiagramPoints(pitchDegrees: number): DiagramPoints {
-  const minPitch = 5;
-  const maxPitch = 50;
-  const clampedPitch = clamp(pitchDegrees, minPitch, maxPitch);
-  const t = (clampedPitch - minPitch) / (maxPitch - minPitch);
+function lerpPoint(a: Point, b: Point, t: number): Point {
+  return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) };
+}
 
-  const minRise = 45;
-  const maxRise = 190;
-  const roofRise = lerp(minRise, maxRise, t);
+const MIN_PITCH = 5;
+const MAX_PITCH = 50;
+const MIN_RISE = 45;
+const MAX_RISE = 190;
 
-  // ─── Fixed wall footprint (NEVER changes with pitch) ───
-  // Three visible wall faces forming an L-shaped building
-  // viewBox is 900 × 520
+function riseFromPitch(pitchDegrees: number): number {
+  const clamped = clamp(pitchDegrees, MIN_PITCH, MAX_PITCH);
+  const t = (clamped - MIN_PITCH) / (MAX_PITCH - MIN_PITCH);
+  return lerp(MIN_RISE, MAX_RISE, t);
+}
 
-  const wallTopY = 340;      // top of walls (eaves line)
-  const wallBottomY = 480;   // ground line
+// ─── Fixed footprint (NEVER moves with pitch) ───────
+//
+// viewBox 900 × 520. Eaves/wall-tops:
+//   main block front eave:  (80,330) → (400,330)
+//   internal wall corner:   (400,330)  ← valley lands here
+//   wing front eave:        (400,330) → (580,372)
+//   outer front corner:     (580,372)  ← hip lands here
 
-  // Front-left wall (wide, faces viewer-left)
-  const frontLeft: Point[] = [
-    { x: 80,  y: wallBottomY },  // bottom-left
-    { x: 80,  y: wallTopY },     // top-left (eaves)
-    { x: 340, y: wallTopY },     // top-right (meets centre wall)
-    { x: 340, y: wallBottomY },  // bottom-right
-  ];
+const EAVE_LEFT: Point = { x: 80, y: 330 };
+const INTERNAL_EAVE: Point = { x: 400, y: 330 };
+const OUTER_HIP_EAVE: Point = { x: 580, y: 372 };
 
-  // Centre/right wall (angled, faces viewer-front)
-  // This wall goes from the front-left wall's right edge inward (creating the internal corner)
-  // then out to the right
-  const centreRight: Point[] = [
-    { x: 340, y: wallBottomY },  // bottom-left (shared with frontLeft)
-    { x: 340, y: wallTopY },     // top-left (internal corner top)
-    { x: 560, y: wallTopY },     // top-right
-    { x: 560, y: wallBottomY },  // bottom-right
-  ];
+const WALL_FRONT_LEFT: Point[] = [
+  { x: 80, y: 330 },
+  { x: 400, y: 330 },
+  { x: 400, y: 440 },
+  { x: 80, y: 440 },
+];
 
-  // Far-right wall (narrow, angled away)
-  const farRight: Point[] = [
-    { x: 560, y: wallBottomY },
-    { x: 560, y: wallTopY },
-    { x: 680, y: wallTopY - 10 },  // slightly higher = receding
-    { x: 680, y: wallBottomY - 30 },
-  ];
+// Wing side wall — projects toward the viewer-right at an
+// angle, creating the 90° internal corner at x=400.
+const WALL_CENTRE_RIGHT: Point[] = [
+  { x: 400, y: 330 },
+  { x: 580, y: 372 },
+  { x: 580, y: 482 },
+  { x: 400, y: 440 },
+];
 
-  // ─── Eave points (fixed — on wall tops) ───
-  const eaveLeft     = { x: 80,  y: wallTopY };
-  const eaveRight    = { x: 680, y: wallTopY - 10 };
-  const internalEave = { x: 340, y: wallTopY };   // internal corner (valley endpoint)
-  const outerHipEave = { x: 560, y: wallTopY };   // external corner (hip endpoint)
+// Narrow wing end wall (far right).
+const WALL_FAR_RIGHT: Point[] = [
+  { x: 580, y: 372 },
+  { x: 638, y: 357 },
+  { x: 638, y: 467 },
+  { x: 580, y: 482 },
+];
 
-  // ─── Roof ridge points (move vertically with pitch) ───
-  // The ridge line sits above the walls
-  const baseRidgeY = wallTopY - roofRise;
+function pointsFromRise(roofRise: number): DiagramPoints {
+  // Upper roof points — ONLY the Y coordinate depends on pitch.
+  const upperLeft: Point = { x: 160, y: 330 - roofRise };        // main ridge, left end
+  const upperCentre: Point = { x: 470, y: 326 - roofRise };      // ridge junction (valley start)
+  const upperRight: Point = { x: 640, y: 366 - roofRise };       // wing ridge end (hip start)
 
-  // Upper points — only Y changes with pitch
-  const upperLeft   = { x: 120, y: baseRidgeY };
-  const upperCentre = { x: 400, y: baseRidgeY - 12 };  // slight peak at centre
-  const upperRight  = { x: 640, y: baseRidgeY - 4 };
+  // Left (main) roof plane: front eave → internal corner → up the
+  // valley to the ridge junction → back along the ridge.
+  const leftPlane: Point[] = [EAVE_LEFT, INTERNAL_EAVE, upperCentre, upperLeft];
 
-  // ─── Hip line: from upper roof junction down to outer hip eave corner ───
-  const hipStart = { x: 180, y: baseRidgeY + 2 };
-  const hipEnd   = outerHipEave;  // { x: 560, y: 340 }
-
-  // ─── Valley line: from upper ridge junction down to internal eave corner ───
-  const valleyStart = { x: 460, y: baseRidgeY - 2 };
-  const valleyEnd   = internalEave;  // { x: 340, y: 340 }
-
-  // ─── Roof planes ───
-  // Left plane: eaveLeft → internalEave → upperCentre → upperLeft
-  const leftPlane: Point[] = [
-    eaveLeft,
-    internalEave,
-    upperCentre,
-    upperLeft,
-  ];
-
-  // Right plane: internalEave → eaveRight → upperRight → upperCentre
-  const rightPlane: Point[] = [
-    internalEave,
-    eaveRight,
-    upperRight,
-    upperCentre,
-  ];
+  // Right (wing) roof plane: internal corner → wing eave → up the
+  // hip to the wing ridge end → back along the wing ridge.
+  const rightPlane: Point[] = [INTERNAL_EAVE, OUTER_HIP_EAVE, upperRight, upperCentre];
 
   return {
-    walls: { frontLeft, centreRight, farRight },
+    walls: {
+      frontLeft: WALL_FRONT_LEFT,
+      centreRight: WALL_CENTRE_RIGHT,
+      farRight: WALL_FAR_RIGHT,
+    },
     roof: {
       leftPlane,
       rightPlane,
       upperLeft,
       upperCentre,
       upperRight,
-      internalEave,
-      outerHipEave,
+      internalEave: INTERNAL_EAVE,
+      outerHipEave: OUTER_HIP_EAVE,
     },
-    hip: { start: hipStart, end: hipEnd },
-    valley: { start: valleyStart, end: valleyEnd },
+    // Hip = wing's outer front arris (a real plane edge).
+    hip: { start: upperRight, end: OUTER_HIP_EAVE },
+    // Valley = shared fold between the two planes (a real plane edge).
+    valley: { start: upperCentre, end: INTERNAL_EAVE },
   };
 }
 
-// ─── Slope arrow helper ─────────────────────────────
+export function getHipValleyDiagramPoints(pitchDegrees: number): DiagramPoints {
+  return pointsFromRise(riseFromPitch(pitchDegrees));
+}
 
-function SlopeArrow({ start, end, color = '#1e293b' }: { start: Point; end: Point; color?: string }) {
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-  const ang = Math.atan2(dy, dx);
+// ─── Smooth rise animation (200–250ms ease-out) ─────
+
+function useAnimatedValue(target: number, durationMs = 220): number {
+  const [value, setValue] = useState(target);
+  const valueRef = useRef(target);
+
+  useEffect(() => {
+    const from = valueRef.current;
+    if (from === target) return;
+    const startTime = performance.now();
+    let raf = 0;
+    const step = (now: number) => {
+      const t = Math.min(1, (now - startTime) / durationMs);
+      const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      const v = from + (target - from) * eased;
+      valueRef.current = v;
+      setValue(v);
+      if (t < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, durationMs]);
+
+  return value;
+}
+
+// ─── Water-flow arrow along a plane fall line ───────
+//
+// The fall line runs from a point on the ridge edge to the
+// matching point on the eave edge, so arrows stay ON the
+// plane and re-orient correctly at every pitch.
+
+function fallLineArrow(
+  ridgeA: Point, ridgeB: Point,
+  eaveA: Point, eaveB: Point,
+  across: number, from = 0.32, to = 0.64,
+): { start: Point; end: Point } {
+  const top = lerpPoint(ridgeA, ridgeB, across);
+  const bottom = lerpPoint(eaveA, eaveB, across);
+  return {
+    start: lerpPoint(top, bottom, from),
+    end: lerpPoint(top, bottom, to),
+  };
+}
+
+function SlopeArrow({ start, end }: { start: Point; end: Point }) {
+  const ang = Math.atan2(end.y - start.y, end.x - start.x);
   const s = 8;
   return (
     <g>
-      <line x1={start.x} y1={start.y} x2={end.x} y2={end.y} stroke={color} strokeWidth="2.5" strokeLinecap="round" />
+      <line x1={start.x} y1={start.y} x2={end.x} y2={end.y} stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" />
       <polygon
         points={`${end.x},${end.y} ${end.x + s * Math.cos(ang + 2.6)},${end.y + s * Math.sin(ang + 2.6)} ${end.x + s * Math.cos(ang - 2.6)},${end.y + s * Math.sin(ang - 2.6)}`}
-        fill={color}
+        fill="#1e293b"
       />
     </g>
   );
@@ -171,217 +223,128 @@ export function HipValleyHouseDiagram({
   unit,
   className,
 }: HipValleyHouseDiagramProps) {
-  const pts = useMemo(() => getHipValleyDiagramPoints(pitchDegrees), [pitchDegrees]);
+  const animatedRise = useAnimatedValue(riseFromPitch(pitchDegrees));
+  const pts = pointsFromRise(animatedRise);
 
-  const polygonStr = (points: Point[]) => points.map(p => `${p.x},${p.y}`).join(' ');
+  const poly = (points: Point[]) => points.map((p) => `${p.x},${p.y}`).join(' ');
 
-  // Water flow arrows — fixed direction (down the roof planes)
-  const arrow1 = {
-    start: { x: 150, y: pts.roof.upperLeft.y + (pts.roof.internalEave.y - pts.roof.upperLeft.y) * 0.3 },
-    end:   { x: 130, y: pts.roof.upperLeft.y + (pts.roof.internalEave.y - pts.roof.upperLeft.y) * 0.6 },
-  };
-  const arrow2 = {
-    start: { x: 280, y: pts.roof.upperCentre.y + (pts.roof.internalEave.y - pts.roof.upperCentre.y) * 0.3 },
-    end:   { x: 310, y: pts.roof.upperCentre.y + (pts.roof.internalEave.y - pts.roof.upperCentre.y) * 0.6 },
-  };
-  const arrow3 = {
-    start: { x: 520, y: pts.roof.upperRight.y + (pts.roof.internalEave.y - pts.roof.upperRight.y) * 0.3 },
-    end:   { x: 550, y: pts.roof.upperRight.y + (pts.roof.internalEave.y - pts.roof.upperRight.y) * 0.55 },
-  };
+  const { upperLeft, upperCentre, upperRight } = pts.roof;
+
+  // Single closed roof silhouette — guarantees a coherent shape.
+  const silhouette =
+    `M ${EAVE_LEFT.x},${EAVE_LEFT.y} ` +
+    `L ${upperLeft.x},${upperLeft.y} ` +
+    `L ${upperCentre.x},${upperCentre.y} ` +
+    `L ${upperRight.x},${upperRight.y} ` +
+    `L ${OUTER_HIP_EAVE.x},${OUTER_HIP_EAVE.y} ` +
+    `L ${INTERNAL_EAVE.x},${INTERNAL_EAVE.y} Z`;
+
+  // Water-flow arrows (2 on main plane, 1 on wing plane).
+  const a1 = fallLineArrow(upperLeft, upperCentre, EAVE_LEFT, INTERNAL_EAVE, 0.35);
+  const a2 = fallLineArrow(upperLeft, upperCentre, EAVE_LEFT, INTERNAL_EAVE, 0.72);
+  const a3 = fallLineArrow(upperCentre, upperRight, INTERNAL_EAVE, OUTER_HIP_EAVE, 0.5);
+
+  const hipMid = lerpPoint(pts.hip.start, pts.hip.end, 0.5);
+  const valleyMid = lerpPoint(pts.valley.start, pts.valley.end, 0.5);
 
   return (
     <div className={`flex flex-col items-center gap-2 ${className ?? ''}`}>
       <svg
         viewBox="0 0 900 520"
         className="w-full"
-        style={{ maxWidth: '820px', aspectRatio: '900 / 520', margin: '0 auto' }}
+        style={{ maxWidth: '820px', margin: '0 auto' }}
         role="img"
         aria-label={`Hip and valley roof pitch diagram at ${pitchDegrees.toFixed(1)} degrees`}
       >
         <title>Hip and valley roof pitch diagram</title>
         <desc>
-          A simplified two-plane roof over three visible wall faces, showing a hip, a valley, and water flow at a pitch of {pitchDegrees.toFixed(1)} degrees.
+          A simplified two-plane roof over three visible wall faces, showing a hip, a valley,
+          and water flow at a pitch of {pitchDegrees.toFixed(1)} degrees.
         </desc>
 
-        {/* ── Layer 1-3: Walls ── */}
-        {/* Back wall (far right — receding, subtle grey) */}
-        <polygon
-          points={polygonStr(pts.walls.farRight)}
-          fill="#f1f5f9"
-          stroke="#334155"
-          strokeWidth="3"
-          strokeLinejoin="round"
-        />
+        {/* ── 1-3. Walls (fixed footprint) ── */}
+        <polygon points={poly(pts.walls.farRight)} fill="#eef2f7" stroke="#334155" strokeWidth="3" strokeLinejoin="round" />
+        <polygon points={poly(pts.walls.centreRight)} fill="#f8fafc" stroke="#334155" strokeWidth="3" strokeLinejoin="round" />
+        <polygon points={poly(pts.walls.frontLeft)} fill="#ffffff" stroke="#334155" strokeWidth="3" strokeLinejoin="round" />
 
-        {/* Centre/right wall face */}
-        <polygon
-          points={polygonStr(pts.walls.centreRight)}
-          fill="#f8fafc"
-          stroke="#334155"
-          strokeWidth="3"
-          strokeLinejoin="round"
-        />
-
-        {/* Front-left wall face */}
-        <polygon
-          points={polygonStr(pts.walls.frontLeft)}
-          fill="#ffffff"
-          stroke="#334155"
-          strokeWidth="3"
-          strokeLinejoin="round"
-        />
-
-        {/* Wall label */}
-        <text x="200" y="510" textAnchor="middle" fill="#64748b" style={{ fontSize: '13px', fontWeight: 500 }}>
-          wall
+        {/* 90° internal corner marker (fixed) */}
+        <text x="386" y="462" textAnchor="end" fill="#64748b" style={{ fontSize: '12px', fontWeight: 500 }}>
+          90°
         </text>
-        <text x="450" y="510" textAnchor="middle" fill="#64748b" style={{ fontSize: '13px', fontWeight: 500 }}>
-          wall
-        </text>
-        <text x="620" y="510" textAnchor="middle" fill="#64748b" style={{ fontSize: '13px', fontWeight: 500 }}>
-          wall
-        </text>
+        <path d="M 400 426 L 388 429" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" fill="none" />
 
-        {/* Internal corner marker */}
-        <circle cx={pts.roof.internalEave.x} cy={pts.roof.internalEave.y} r="4" fill="#64748b" />
-        <text x={pts.roof.internalEave.x - 12} y={pts.roof.internalEave.y + 18} fill="#94a3b8" style={{ fontSize: '10px' }}>
-          int corner
-        </text>
+        {/* ── 4-5. Roof plane fills ── */}
+        <polygon points={poly(pts.roof.leftPlane)} fill="rgba(59, 130, 246, 0.06)" stroke="none" />
+        <polygon points={poly(pts.roof.rightPlane)} fill="rgba(59, 130, 246, 0.13)" stroke="none" />
 
-        {/* External corner marker */}
-        <circle cx={pts.roof.outerHipEave.x} cy={pts.roof.outerHipEave.y} r="4" fill="#64748b" />
-        <text x={pts.roof.outerHipEave.x + 8} y={pts.roof.outerHipEave.y + 18} fill="#94a3b8" style={{ fontSize: '10px' }}>
-          ext corner
-        </text>
+        {/* ── 6. Roof outline (single coherent silhouette) ── */}
+        <path d={silhouette} fill="none" stroke="#1e293b" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round" />
 
-        {/* ── Layer 4-5: Roof plane fills ── */}
-        <polygon
-          points={polygonStr(pts.roof.leftPlane)}
-          fill="rgba(59, 130, 246, 0.06)"
-          stroke="none"
-        />
-        <polygon
-          points={polygonStr(pts.roof.rightPlane)}
-          fill="rgba(59, 130, 246, 0.12)"
-          stroke="none"
-        />
-
-        {/* ── Layer 6: Roof outline ── */}
-        {/* Left roof plane outline */}
-        <polygon
-          points={polygonStr(pts.roof.leftPlane)}
-          fill="none"
-          stroke="#1e293b"
-          strokeWidth="3.5"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-        {/* Right roof plane outline */}
-        <polygon
-          points={polygonStr(pts.roof.rightPlane)}
-          fill="none"
-          stroke="#1e293b"
-          strokeWidth="3.5"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-
-        {/* Ridge line (top of roof) */}
+        {/* ── 7. Hip line (solid orange) — wing outer arris ── */}
         <line
-          x1={pts.roof.upperLeft.x}
-          y1={pts.roof.upperLeft.y}
-          x2={pts.roof.upperRight.x}
-          y2={pts.roof.upperRight.y}
-          stroke="#1e293b"
-          strokeWidth="3.5"
-          strokeLinecap="round"
+          x1={pts.hip.start.x} y1={pts.hip.start.y}
+          x2={pts.hip.end.x} y2={pts.hip.end.y}
+          stroke="#FF6B35" strokeWidth="4.5" strokeLinecap="round"
         />
 
-        {/* ── Layer 7: Hip line (solid orange) ── */}
+        {/* ── 8. Valley line (dashed orange) — fold between the two planes ── */}
         <line
-          x1={pts.hip.start.x}
-          y1={pts.hip.start.y}
-          x2={pts.hip.end.x}
-          y2={pts.hip.end.y}
-          stroke="#FF6B35"
-          strokeWidth="5"
-          strokeLinecap="round"
+          x1={pts.valley.start.x} y1={pts.valley.start.y}
+          x2={pts.valley.end.x} y2={pts.valley.end.y}
+          stroke="#FF6B35" strokeWidth="4.5" strokeLinecap="round" strokeDasharray="9 6"
         />
 
-        {/* ── Layer 8: Valley line (dashed orange) ── */}
+        {/* ── 9. Water-flow arrows ── */}
+        <SlopeArrow start={a1.start} end={a1.end} />
+        <SlopeArrow start={a2.start} end={a2.end} />
+        <SlopeArrow start={a3.start} end={a3.end} />
+
+        {/* ── 10. Labels + leader lines ── */}
+        {/* Hip — right of the building, leader to hip midpoint */}
+        <text x="700" y="310" fill="#1e293b" style={{ fontSize: '16px', fontWeight: 600 }}>Hip</text>
         <line
-          x1={pts.valley.start.x}
-          y1={pts.valley.start.y}
-          x2={pts.valley.end.x}
-          y2={pts.valley.end.y}
-          stroke="#FF6B35"
-          strokeWidth="5"
-          strokeLinecap="round"
-          strokeDasharray="10 6"
+          x1="696" y1="304"
+          x2={hipMid.x + 8} y2={hipMid.y + 2}
+          stroke="#64748b" strokeWidth="1.5" strokeDasharray="3 3"
         />
 
-        {/* ── Layer 9: Water-flow arrows ── */}
-        <SlopeArrow start={arrow1.start} end={arrow1.end} />
-        <SlopeArrow start={arrow2.start} end={arrow2.end} />
-        <SlopeArrow start={arrow3.start} end={arrow3.end} />
-
-        {/* ── Layer 10: Labels ── */}
-        {/* Hip label — top left, leader to hip line */}
-        <text x="30" y="60" fill="#1e293b" style={{ fontSize: '16px', fontWeight: 600 }}>
-          Hip
-        </text>
+        {/* Valley — on the main wall, leader up to valley midpoint */}
+        <text x="255" y="392" fill="#1e293b" style={{ fontSize: '16px', fontWeight: 600 }}>Valley</text>
         <line
-          x1="55" y1="65"
-          x2={(pts.hip.start.x + pts.hip.end.x) / 2 - 10}
-          y2={(pts.hip.start.y + pts.hip.end.y) / 2 - 5}
-          stroke="#64748b"
-          strokeWidth="1.5"
-          strokeDasharray="3 3"
+          x1="310" y1="386"
+          x2={valleyMid.x - 6} y2={valleyMid.y + 4}
+          stroke="#64748b" strokeWidth="1.5" strokeDasharray="3 3"
         />
 
-        {/* Valley label — lower right, leader to valley line */}
-        <text x={pts.valley.end.x - 70} y={pts.valley.end.y + 50} fill="#1e293b" style={{ fontSize: '16px', fontWeight: 600 }}>
-          Valley
-        </text>
-        <line
-          x1={pts.valley.end.x - 45}
-          y1={pts.valley.end.y + 45}
-          x2={(pts.valley.start.x + pts.valley.end.x) / 2 + 8}
-          y2={(pts.valley.start.y + pts.valley.end.y) / 2 + 5}
-          stroke="#64748b"
-          strokeWidth="1.5"
-          strokeDasharray="3 3"
-        />
-
-        {/* ── Layer 11: Measurement text (top-right) ── */}
-        <text x="870" y="40" textAnchor="end" fill="#3b82f6" style={{ fontSize: '15px', fontWeight: 600 }}>
+        {/* ── 11. Measurement text (top-right, fixed region) ── */}
+        <text x="870" y="42" textAnchor="end" fill="#3b82f6" style={{ fontSize: '15px', fontWeight: 600 }}>
           Pitch: {pitchDegrees.toFixed(1)}°
         </text>
-        <text x="870" y="62" textAnchor="end" fill="#64748b" style={{ fontSize: '13px', fontWeight: 500 }}>
+        <text x="870" y="64" textAnchor="end" fill="#64748b" style={{ fontSize: '13px', fontWeight: 500 }}>
           Hip slope: {hipSlopeDegrees.toFixed(1)}°
         </text>
-        <text x="870" y="82" textAnchor="end" fill="#FF6B35" style={{ fontSize: '14px', fontWeight: 600 }}>
+        <text x="870" y="86" textAnchor="end" fill="#FF6B35" style={{ fontSize: '14px', fontWeight: 600 }}>
           Hip/Valley: {hipValleyLength.toFixed(2)} {unit}
         </text>
         {planLength !== undefined && (
-          <text x="870" y="102" textAnchor="end" fill="#94a3b8" style={{ fontSize: '12px' }}>
+          <text x="870" y="106" textAnchor="end" fill="#94a3b8" style={{ fontSize: '12px' }}>
             Plan: {planLength.toFixed(2)} {unit}
           </text>
         )}
 
         {/* ── Legend (bottom-left, compact) ── */}
-        <g transform="translate(30, 470)">
+        <g transform="translate(80, 505)">
           <line x1="0" y1="0" x2="24" y2="0" stroke="#FF6B35" strokeWidth="4" strokeLinecap="round" />
           <text x="30" y="4" fill="#64748b" style={{ fontSize: '11px' }}>Hip (solid)</text>
-          <line x1="120" y1="0" x2="144" y2="0" stroke="#FF6B35" strokeWidth="4" strokeLinecap="round" strokeDasharray="7 4" />
-          <text x="150" y="4" fill="#64748b" style={{ fontSize: '11px' }}>Valley (dashed)</text>
-          <line x1="250" y1="0" x2="268" y2="0" stroke="#1e293b" strokeWidth="2.5" />
-          <polygon points="268,0 263,-3 263,3" fill="#1e293b" />
-          <text x="274" y="4" fill="#64748b" style={{ fontSize: '11px' }}>Water flow</text>
+          <line x1="115" y1="0" x2="139" y2="0" stroke="#FF6B35" strokeWidth="4" strokeLinecap="round" strokeDasharray="7 4" />
+          <text x="145" y="4" fill="#64748b" style={{ fontSize: '11px' }}>Valley (dashed)</text>
+          <line x1="248" y1="0" x2="266" y2="0" stroke="#1e293b" strokeWidth="2.5" />
+          <polygon points="266,0 261,-3 261,3" fill="#1e293b" />
+          <text x="272" y="4" fill="#64748b" style={{ fontSize: '11px' }}>Water flow</text>
         </g>
       </svg>
       <p className="text-xs text-slate-400">
-        Hip-and-valley roof at {pitchDegrees.toFixed(1)}° pitch — external corner (hip) juts out, internal corner (valley) recedes in
+        Hip-and-valley roof at {pitchDegrees.toFixed(1)}° pitch — the valley drains into the 90° internal corner; the hip sits on the outer front corner
       </p>
     </div>
   );
