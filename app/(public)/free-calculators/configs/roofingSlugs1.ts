@@ -15,6 +15,8 @@ export interface SlugDef {
   tips: [string, string][];
   formulas: [string, string][];
   faqs: [string, string][];
+  /** Tab id to show on page load. Defaults to tabs[0]. */
+  defaultTab?: string;
 }
 
 const REL: RelatedLink[] = [
@@ -33,6 +35,7 @@ export function toConfig(d: SlugDef): TradeConfig {
     metaDescription: d.mDesc,
     ogTitle: d.ogTitle,
     ogDescription: d.ogDesc,
+    defaultTab: d.defaultTab,
     content: {
       h1: d.h1,
       heroText: d.hero,
@@ -48,6 +51,7 @@ export function toConfig(d: SlugDef): TradeConfig {
 export const SLUGS_1: SlugDef[] = [
   {
     slug: 'free-roof-pitch-calculator',
+    defaultTab: 'pitch-rafter',
     name: 'Roof Pitch Calculator',
     mTitle: 'Free Roof Pitch Calculator — Degrees, Ratio & Rise/Run | QuoteCore+',
     mDesc: 'Free roof pitch calculator. Convert between degrees, rise/run ratio, and percentage. Calculate pitch from angle or measurements. No signup required.',
@@ -77,6 +81,7 @@ export const SLUGS_1: SlugDef[] = [
   },
   {
     slug: 'free-roof-pitch-converter',
+    defaultTab: 'pitch-rafter',
     name: 'Roof Pitch Converter',
     mTitle: 'Free Roof Pitch Converter — Degrees to Ratio & Percentage | QuoteCore+',
     mDesc: 'Convert roof pitch between degrees, rise/run ratio, and percentage. Free online pitch converter. No signup required.',
@@ -106,6 +111,7 @@ export const SLUGS_1: SlugDef[] = [
   },
   {
     slug: 'free-roof-area-calculator',
+    defaultTab: 'roof-area',
     name: 'Roof Area Calculator',
     mTitle: 'Free Roof Area Calculator — Plan & Surface Area from Pitch | QuoteCore+',
     mDesc: 'Free roof area calculator. Calculate actual roof surface area from plan dimensions and pitch. Includes pitch factor and waste. No signup required.',
@@ -135,6 +141,7 @@ export const SLUGS_1: SlugDef[] = [
   },
   {
     slug: 'free-rafter-length-calculator',
+    defaultTab: 'pitch-rafter',
     name: 'Rafter Length Calculator',
     mTitle: 'Free Rafter Length Calculator — Span, Pitch & Overhang | QuoteCore+',
     mDesc: 'Free rafter length calculator. Calculate rafter length from span and pitch, including overhang. Hip/valley lengths included. No signup required.',
@@ -164,6 +171,7 @@ export const SLUGS_1: SlugDef[] = [
   },
   {
     slug: 'free-rafter-length-converter',
+    defaultTab: 'pitch-rafter',
     name: 'Rafter Length Converter',
     mTitle: 'Free Rafter Length Converter — Metric & Imperial | QuoteCore+',
     mDesc: 'Free rafter length converter. Convert between metric and imperial. Calculate from span and pitch in any unit. No signup required.',
@@ -193,6 +201,7 @@ export const SLUGS_1: SlugDef[] = [
   },
   {
     slug: 'free-hip-valley-calculator',
+    defaultTab: 'pitch-rafter',
     name: 'Hip & Valley Calculator',
     mTitle: 'Free Hip & Valley Calculator — Hip Rafter Length & Angles | QuoteCore+',
     mDesc: 'Free hip and valley calculator. Calculate hip rafter length, valley length, and compound angles from pitch. No signup required.',
@@ -222,6 +231,7 @@ export const SLUGS_1: SlugDef[] = [
   },
   {
     slug: 'free-hip-valley-converter',
+    defaultTab: 'pitch-rafter',
     name: 'Hip & Valley Converter',
     mTitle: 'Free Hip & Valley Converter — Length & Angle Units | QuoteCore+',
     mDesc: 'Convert hip and valley rafter lengths and angles between metric and imperial. Free online converter. No signup required.',

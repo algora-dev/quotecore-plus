@@ -188,6 +188,8 @@ export interface TradeConfig {
   slug: string;
   /** Default currency code (see CURRENCIES); default "GBP" */
   defaultCurrency?: string;
+  /** Default tab to show on page load (by tab id). Falls back to tabs[0]. */
+  defaultTab?: string;
   /** Display name used in JSON-LD, e.g. "Roofing Calculator" */
   name: string;
   metaTitle: string;

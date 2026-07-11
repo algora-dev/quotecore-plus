@@ -3,6 +3,7 @@ import type { SlugDef } from './roofingSlugs1';
 export const SLUGS_2: SlugDef[] = [
   {
     slug: 'free-roofing-material-calculator',
+    defaultTab: 'smart-component',
     name: 'Roofing Material Calculator',
     mTitle: 'Free Roofing Material Calculator — Tiles, Sheets & Quantities | QuoteCore+',
     mDesc: 'Free roofing material calculator. Calculate tile, sheet, and shingle quantities from roof area and pitch. Includes waste allowance. No signup required.',
@@ -32,6 +33,7 @@ export const SLUGS_2: SlugDef[] = [
   },
   {
     slug: 'free-metal-roofing-calculator',
+    defaultTab: 'roof-area',
     name: 'Metal Roofing Calculator',
     mTitle: 'Free Metal Roofing Calculator — Sheets, Cost & Waste | QuoteCore+',
     mDesc: 'Free metal roofing calculator. Calculate sheet quantities, overlaps, and costs from roof dimensions. No signup required.',
@@ -61,6 +63,7 @@ export const SLUGS_2: SlugDef[] = [
   },
   {
     slug: 'free-shingle-calculator',
+    defaultTab: 'roof-area',
     name: 'Shingle Calculator',
     mTitle: 'Free Shingle Calculator — Bundles, Squares & Waste | QuoteCore+',
     mDesc: 'Free shingle calculator. Calculate shingle bundles and squares from roof area. Includes waste and starter/ridge amounts. No signup required.',
@@ -90,6 +93,7 @@ export const SLUGS_2: SlugDef[] = [
   },
   {
     slug: 'free-roof-tile-calculator',
+    defaultTab: 'roof-area',
     name: 'Roof Tile Calculator',
     mTitle: 'Free Roof Tile Calculator — Concrete & Clay Tile Quantities | QuoteCore+',
     mDesc: 'Free roof tile calculator. Calculate concrete and clay tile quantities from roof area and pitch. Includes waste and batten spacing. No signup required.',
@@ -119,6 +123,7 @@ export const SLUGS_2: SlugDef[] = [
   },
   {
     slug: 'free-flat-roof-calculator',
+    defaultTab: 'roof-area',
     name: 'Flat Roof Calculator',
     mTitle: 'Free Flat Roof Calculator — Area, Falls & Membrane | QuoteCore+',
     mDesc: 'Free flat roof calculator. Calculate flat roof area, membrane quantities, falls, and drainage. No signup required.',
@@ -148,6 +153,7 @@ export const SLUGS_2: SlugDef[] = [
   },
   {
     slug: 'free-gable-roof-calculator',
+    defaultTab: 'roof-area',
     name: 'Gable Roof Calculator',
     mTitle: 'Free Gable Roof Calculator — Area, Rafters & Materials | QuoteCore+',
     mDesc: 'Free gable roof calculator. Calculate gable roof area, rafter lengths, and material quantities from span and pitch. No signup required.',
@@ -177,6 +183,7 @@ export const SLUGS_2: SlugDef[] = [
   },
   {
     slug: 'free-hip-roof-calculator',
+    defaultTab: 'roof-area',
     name: 'Hip Roof Calculator',
     mTitle: 'Free Hip Roof Calculator — Area, Hip Rafters & Materials | QuoteCore+',
     mDesc: 'Free hip roof calculator. Calculate hip roof area, hip rafter lengths, and material quantities. No signup required.',

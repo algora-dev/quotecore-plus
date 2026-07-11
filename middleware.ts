@@ -44,6 +44,11 @@ function isAal1Allowed(pathname: string): boolean {
 }
 
 function isPublicPath(pathname: string): boolean {
+  // All /free-* paths are public (calculators, generators, hub page).
+  // This covers all current and future free tool routes without needing
+  // to update PUBLIC_PATHS each time we add a calculator or generator.
+  if (pathname.startsWith('/free-')) return true;
+
   // Match on segment boundary: either exact match or the path continues
   // with a '/'. This prevents '/m' from matching '/meadow-roofing/...' etc.
   return PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'));

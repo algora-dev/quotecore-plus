@@ -83,7 +83,7 @@ export function useSharedState() {
 export function TradeCalculator({ config }: { config: TradeConfig }) {
   const [system, setSystem] = useState<UnitSystem>('metric');
   const [currencyCode, setCurrencyCode] = useState<string>(config.defaultCurrency ?? 'GBP');
-  const [activeTab, setActiveTab] = useState<string>(config.tabs[0]?.id ?? '');
+  const [activeTab, setActiveTab] = useState<string>(config.defaultTab ?? config.tabs[0]?.id ?? '');
   const [shared, setSharedState] = useState<SharedState>({
     calculatedArea: null,
     calculatedVolume: null,

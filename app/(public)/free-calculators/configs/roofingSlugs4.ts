@@ -3,6 +3,7 @@ import type { SlugDef } from './roofingSlugs1';
 export const SLUGS_4: SlugDef[] = [
   {
     slug: 'free-guttering-calculator',
+    defaultTab: 'angle-finder',
     name: 'Guttering Calculator',
     mTitle: 'Free Guttering Calculator — Gutters, Downpipes & Fascia | QuoteCore+',
     mDesc: 'Free guttering calculator. Calculate gutter lengths, downpipe quantities, and fascia boards from roof dimensions. No signup required.',
@@ -32,6 +33,7 @@ export const SLUGS_4: SlugDef[] = [
   },
   {
     slug: 'free-roof-flashing-calculator',
+    defaultTab: 'angle-finder',
     name: 'Roof Flashing Calculator',
     mTitle: 'Free Roof Flashing Calculator — Apron, Step & Valley Flashing | QuoteCore+',
     mDesc: 'Free roof flashing calculator. Calculate apron, step, and valley flashing quantities from roof dimensions and junctions. No signup required.',
@@ -61,6 +63,7 @@ export const SLUGS_4: SlugDef[] = [
   },
   {
     slug: 'free-roof-replacement-cost-calculator',
+    defaultTab: 'smart-component',
     name: 'Roof Replacement Cost Calculator',
     mTitle: 'Free Roof Replacement Cost Calculator — Estimate Replacement | QuoteCore+',
     mDesc: 'Free roof replacement cost calculator. Estimate material, labour, and skip costs for roof replacement. No signup required.',
@@ -90,6 +93,7 @@ export const SLUGS_4: SlugDef[] = [
   },
   {
     slug: 'free-roofing-takeoff-calculator',
+    defaultTab: 'roof-area',
     name: 'Roofing Takeoff Calculator',
     mTitle: 'Free Roofing Takeoff Calculator — Materials, Areas & Lengths | QuoteCore+',
     mDesc: 'Free roofing takeoff calculator. Calculate all roofing materials — tiles, battens, membrane, flashings — from roof dimensions. No signup required.',
@@ -119,6 +123,7 @@ export const SLUGS_4: SlugDef[] = [
   },
   {
     slug: 'free-roofing-quote-calculator',
+    defaultTab: 'smart-component',
     name: 'Roofing Quote Calculator',
     mTitle: 'Free Roofing Quote Calculator — Price Jobs Accurately | QuoteCore+',
     mDesc: 'Free roofing quote calculator. Price roofing jobs from materials, labour, waste, and overhead. Includes margin and tax. No signup required.',

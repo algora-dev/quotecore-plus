@@ -3,6 +3,7 @@ import type { SlugDef } from './roofingSlugs1';
 export const SLUGS_3: SlugDef[] = [
   {
     slug: 'free-skillion-roof-calculator',
+    defaultTab: 'roof-area',
     name: 'Skillion Roof Calculator',
     mTitle: 'Free Skillion Roof Calculator — Area, Rafter & Materials | QuoteCore+',
     mDesc: 'Free skillion roof calculator. Calculate skillion (mono-pitch) roof area, rafter length, and materials. No signup required.',
@@ -32,6 +33,7 @@ export const SLUGS_3: SlugDef[] = [
   },
   {
     slug: 'free-roof-squares-calculator',
+    defaultTab: 'roof-area',
     name: 'Roof Squares Calculator',
     mTitle: 'Free Roof Squares Calculator — Convert Area to Squares | QuoteCore+',
     mDesc: 'Free roof squares calculator. Convert roof area to roofing squares (1 square = 100 sq ft). Includes waste and bundles. No signup required.',
@@ -61,6 +63,7 @@ export const SLUGS_3: SlugDef[] = [
   },
   {
     slug: 'free-roof-square-metre-calculator',
+    defaultTab: 'roof-area',
     name: 'Roof Square Metre Calculator',
     mTitle: 'Free Roof Square Metre Calculator — m² from Dimensions | QuoteCore+',
     mDesc: 'Free roof square metre calculator. Calculate roof area in m² from dimensions and pitch. Includes waste and tile quantities. No signup required.',
@@ -90,6 +93,7 @@ export const SLUGS_3: SlugDef[] = [
   },
   {
     slug: 'free-roof-square-footage-calculator',
+    defaultTab: 'roof-area',
     name: 'Roof Square Footage Calculator',
     mTitle: 'Free Roof Square Footage Calculator — sq ft from Dimensions | QuoteCore+',
     mDesc: 'Free roof square footage calculator. Calculate roof area in sq ft from house dimensions and pitch. Includes waste and squares. No signup required.',
@@ -119,6 +123,7 @@ export const SLUGS_3: SlugDef[] = [
   },
   {
     slug: 'free-roof-sheathing-calculator',
+    defaultTab: 'roof-area',
     name: 'Roof Sheathing Calculator',
     mTitle: 'Free Roof Sheathing Calculator — Plywood & OSB Sheets | QuoteCore+',
     mDesc: 'Free roof sheathing calculator. Calculate plywood and OSB sheet quantities from roof area. Includes waste and cut patterns. No signup required.',
@@ -148,6 +153,7 @@ export const SLUGS_3: SlugDef[] = [
   },
   {
     slug: 'free-roofing-waste-calculator',
+    defaultTab: 'smart-component',
     name: 'Roofing Waste Calculator',
     mTitle: 'Free Roofing Waste Calculator — Calculate Cut & Scrap Waste | QuoteCore+',
     mDesc: 'Free roofing waste calculator. Calculate cut waste, scrap, and overage for tiles, shingles, and sheets. No signup required.',
@@ -177,6 +183,7 @@ export const SLUGS_3: SlugDef[] = [
   },
   {
     slug: 'free-roof-sheet-calculator',
+    defaultTab: 'roof-area',
     name: 'Roof Sheet Calculator',
     mTitle: 'Free Roof Sheet Calculator — Corrugated & Polycarbonate Sheets | QuoteCore+',
     mDesc: 'Free roof sheet calculator. Calculate corrugated, polycarbonate, and profiled sheet quantities from roof dimensions. No signup required.',
