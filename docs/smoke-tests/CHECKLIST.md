@@ -4,6 +4,15 @@
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
 
+**L. Trade calculators — round 3 improvements (new on dev, 2026-07-11, `dc7631e`)**
+- [ ] Area tab Volume mode: W × H × D sub-toggle shows 3 inputs (Width, Height, Depth) → calculates volume automatically; Direct sub-mode still available for direct m³ entry
+- [ ] Bird's Mouth diagram at 50°: entire rafter visible, no clipping — labels for seat width, heel, notch, A/B angles, rafter depth all visible
+- [ ] Bird's Mouth results: 6 cards — Seat cut angle (to rafter edge), Plumb cut angle (to rafter edge), Heel height (vertical), Notch depth (into rafter), Maximum notch allowed (⅓ of depth), Notch check (✓ PASS green / ✗ FAIL red)
+- [ ] Bird's Mouth: "Angle measured from horizontal." helper text appears under angle input when birdsmouth sub-tab active
+- [ ] Bird's Mouth: "Seat and plumb cut angles are shown relative to the rafter edge." note appears below diagram
+- [ ] Dedicated /free-birds-mouth-calculator page loads with SEO content, tips, FAQs, 3 tabs (Bird's Mouth + Smart Component + Angle Finder)
+- [ ] Hub page (/free-calculators) shows bird's mouth card
+
 **K. Trade calculators — round 2 upgrades (new on dev, 2026-07-11, `b48b62a`)**
 - [ ] Currency dropdown next to Metric/Imperial on all 4 calculators; changing it updates £/$/€ symbols in Draft Smart Component™ prices
 - [ ] Area tab now has W×L | Area | Volume input modes; Volume mode: enter m³ → result card → "Use this volume for pricing" prefills Smart Component
