@@ -72,6 +72,7 @@ function QuoteGeneratorForm() {
   const [validDays, setValidDays] = useState('30');
   const [notes, setNotes] = useState('');
   const [footer, setFooter] = useState('');
+  const [footerItalic, setFooterItalic] = useState(false);
 
   const [lines, setLines] = useState<QuoteLine[]>(() => {
     if (areaParam) {
@@ -407,13 +408,18 @@ function QuoteGeneratorForm() {
                         />
                       </div>
                       <div className="col-span-3 sm:col-span-1">
-                        <input
-                          type="text"
+                        <select
                           value={line.unit}
                           onChange={(e) => updateLine(line.id, 'unit', e.target.value)}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-                          placeholder="Unit"
-                        />
+                        >
+                          <option value="">—</option>
+                          {MEASUREMENT_OPTIONS.map(o => (
+                            <option key={o.value} value={measurementSystem === 'metric' ? o.metric : o.imperial}>
+                              {measurementSystem === 'metric' ? o.metric : o.imperial}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div className="col-span-3 sm:col-span-2">
                         <input
@@ -485,12 +491,29 @@ function QuoteGeneratorForm() {
 
               {/* Footer */}
               <div className="rounded-xl border border-slate-200 bg-white p-5">
-                <label className="text-xs font-medium text-slate-600">Footer</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-slate-600">Footer</label>
+                  <div className="flex rounded-lg border border-slate-300 overflow-hidden">
+                    <button
+                      onClick={() => setFooterItalic(false)}
+                      className={`px-3 py-1 text-xs font-medium transition ${!footerItalic ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      Normal
+                    </button>
+                    <button
+                      onClick={() => setFooterItalic(true)}
+                      className={`px-3 py-1 text-xs font-medium transition ${footerItalic ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                      style={{ fontStyle: 'italic' }}
+                    >
+                      Italic
+                    </button>
+                  </div>
+                </div>
                 <textarea
                   value={footer}
                   onChange={(e) => setFooter(e.target.value)}
                   rows={2}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                  className={`mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none ${footerItalic ? 'italic' : ''}`}
                   placeholder="Thank you for your business. Contact us for any questions."
                 />
                 <p className="mt-1 text-xs text-slate-400">Appears at the bottom of the quote, below the notes.</p>
@@ -584,7 +607,7 @@ function QuoteGeneratorForm() {
 
               {footer && (
                 <div className="border-t border-slate-100 pt-4 mt-4">
-                  <p className="text-sm text-slate-500 whitespace-pre-wrap">{footer}</p>
+                  <p className={`text-sm text-slate-500 whitespace-pre-wrap ${footerItalic ? 'italic' : ''}`}>{footer}</p>
                 </div>
               )}
 
