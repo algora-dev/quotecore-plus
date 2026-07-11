@@ -4,6 +4,11 @@
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
 
+**M. Bird's mouth diagram — notch detail-view recompose (new on dev, 2026-07-11, `d8cd593`)**
+- [ ] Bird's Mouth diagram is now a zoomed DETAIL VIEW of the notch (not full timber): dotted L-shape large and central, orange rafter edges run off-frame
+- [ ] Labels: Seat width above the horizontal dotted line · Heel left of the vertical dotted line · Notch inside the void right of the corner · A right of the top-right cut · B below the lower-left cut — nothing overlapping any line
+- [ ] Blue arcs at BOTH cut corners; check 22.5°, 40°, and 60° pitches — text stays legible (white halo) even where an orange line passes near
+
 **L. Trade calculators — round 3 improvements (new on dev, 2026-07-11, `dc7631e`)**
 - [ ] Area tab Volume mode: W × H × D sub-toggle shows 3 inputs (Width, Height, Depth) → calculates volume automatically; Direct sub-mode still available for direct m³ entry
 - [ ] Bird's Mouth diagram at 50°: entire rafter visible, no clipping — labels for seat width, heel, notch, A/B angles, rafter depth all visible
