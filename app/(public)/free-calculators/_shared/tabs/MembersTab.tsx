@@ -42,6 +42,8 @@ export function MembersTab() {
     notchDepth: number;
     maxNotch: number;
     seat: number;
+    pass: boolean;
+    rafterDepth: number;
   }>(null);
   const [result, setResult] = useState<null | {
     rafterLen: number;
@@ -73,14 +75,17 @@ export function MembersTab() {
     const depth = parseFloat(rafterDepth) || 0;
     const heel = s * Math.tan(d * RAD);
     const notchDepth = s * Math.sin(d * RAD);
+    const maxNotch = depth / 3;
     setBmResult({
       deg: d,
       seatAngle: d,
       plumbAngle: 90 - d,
       heel,
       notchDepth,
-      maxNotch: depth / 3,
+      maxNotch,
       seat: s,
+      pass: notchDepth <= maxNotch,
+      rafterDepth: depth,
     });
   }
 
@@ -268,6 +273,11 @@ export function MembersTab() {
         )}
       </div>
 
+      {/* Helper text for birdsmouth angle */}
+      {subTab === 'birdsmouth' && (
+        <p className="text-xs text-slate-400 -mt-2">Angle measured from horizontal.</p>
+      )}
+
       <button
         onClick={subTab === 'birdsmouth' ? calculateBirdsmouth : calculate}
         className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
@@ -280,30 +290,50 @@ export function MembersTab() {
 
       {subTab === 'birdsmouth' && bmResult && (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <div className="rounded-xl bg-orange-50/50 border border-orange-100 p-4">
-              <p className="text-xs text-slate-500">Seat cut (A) — from {memberWord.toLowerCase()} edge</p>
+              <p className="text-xs text-slate-500">Seat cut angle (to rafter edge)</p>
               <p className="text-lg font-bold text-slate-900">{bmResult.seatAngle.toFixed(1)}°</p>
             </div>
             <div className="rounded-xl bg-orange-50/50 border border-orange-100 p-4">
-              <p className="text-xs text-slate-500">Plumb cut (B) — from {memberWord.toLowerCase()} edge</p>
+              <p className="text-xs text-slate-500">Plumb cut angle (to rafter edge)</p>
               <p className="text-lg font-bold text-slate-900">{bmResult.plumbAngle.toFixed(1)}°</p>
             </div>
             <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
-              <p className="text-xs text-slate-500">Heel height ({bmUnit})</p>
-              <p className="text-base font-semibold text-slate-900">{bmResult.heel.toFixed(1)}</p>
+              <p className="text-xs text-slate-500">Heel height (vertical)</p>
+              <p className="text-base font-semibold text-slate-900">{bmResult.heel.toFixed(1)} {bmUnit}</p>
             </div>
             <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
-              <p className="text-xs text-slate-500">Notch depth ({bmUnit})</p>
-              <p className="text-base font-semibold text-slate-900">{bmResult.notchDepth.toFixed(1)}</p>
+              <p className="text-xs text-slate-500">Notch depth (into rafter)</p>
+              <p className="text-base font-semibold text-slate-900">{bmResult.notchDepth.toFixed(1)} {bmUnit}</p>
+            </div>
+            <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
+              <p className="text-xs text-slate-500">Maximum notch allowed (⅓ of depth)</p>
+              <p className="text-base font-semibold text-slate-900">{bmResult.maxNotch.toFixed(1)} {bmUnit}</p>
+            </div>
+            <div className={`rounded-xl border p-4 ${
+              bmResult.pass
+                ? 'border-green-200 bg-green-50'
+                : 'border-red-200 bg-red-50'
+            }`}>
+              <p className="text-xs text-slate-500">Notch check</p>
+              <p className={`text-base font-bold ${
+                bmResult.pass ? 'text-green-700' : 'text-red-700'
+              }`}>
+                {bmResult.pass ? '✓ PASS' : '✗ FAIL'}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">
+                {bmResult.pass
+                  ? `Notch ${bmResult.notchDepth.toFixed(1)}${bmUnit} ≤ max ${bmResult.maxNotch.toFixed(1)}${bmUnit}`
+                  : `Notch ${bmResult.notchDepth.toFixed(1)}${bmUnit} > max ${bmResult.maxNotch.toFixed(1)}${bmUnit}`}
+              </p>
             </div>
           </div>
 
-          {bmResult.maxNotch > 0 && bmResult.notchDepth > bmResult.maxNotch && (
+          {!bmResult.pass && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
               <p className="text-sm text-amber-800">
-                ⚠️ Notch depth ({bmResult.notchDepth.toFixed(1)}{bmUnit}) exceeds ⅓ of the {memberWord.toLowerCase()} depth ({bmResult.maxNotch.toFixed(1)}{bmUnit} max).
-                Cutting deeper than one-third weakens the timber — reduce the seat width or use a deeper section.
+                ⚠️ Notch depth exceeds ⅓ of the {memberWord.toLowerCase()} depth. Cutting deeper than one-third weakens the timber — reduce the seat width or use a deeper section.
               </p>
             </div>
           )}
@@ -330,10 +360,17 @@ export function MembersTab() {
               pitchDegrees={bmResult.deg}
               seatAngle={bmResult.seatAngle}
               plumbAngle={bmResult.plumbAngle}
+              seatWidth={bmResult.seat}
+              heelHeight={bmResult.heel}
+              notchDepth={bmResult.notchDepth}
+              rafterDepth={bmResult.rafterDepth}
               memberWord={memberWord}
+              unit={bmUnit}
               caption={`Bird's mouth at ${bmResult.deg.toFixed(1)}° — A = horizontal seat cut, B = vertical plumb cut`}
             />
           </div>
+
+          <p className="text-xs text-slate-400">Seat and plumb cut angles are shown relative to the rafter edge.</p>
         </div>
       )}
 

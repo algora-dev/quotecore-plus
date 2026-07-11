@@ -3,6 +3,7 @@ import { roofingConfig } from './roofing';
 import { constructionConfig } from './construction';
 import { landscapingConfig } from './landscaping';
 import { concreteConfig } from './concrete';
+import { birdsmouthConfig } from './birdsmouth';
 
 /**
  * Every live trade calculator. Order = display order on the hub page.
@@ -14,6 +15,7 @@ export const TRADE_CALCULATORS: TradeConfig[] = [
   constructionConfig,
   concreteConfig,
   landscapingConfig,
+  birdsmouthConfig,
 ];
 
 /** Short blurbs for the hub page cards. */
@@ -22,4 +24,5 @@ export const HUB_BLURBS: Record<string, string> = {
   'free-construction-calculator': 'Floor and wall areas, timber and stud lengths, material quantities, and cutting angles.',
   'free-concrete-calculator': 'Slab and footing volumes with depth presets, formwork areas, falls, and ready-mix pricing.',
   'free-landscaping-calculator': 'Garden and lawn areas, turf and topsoil quantities, slopes, gradients, and falls.',
+  'free-birds-mouth-calculator': "Bird's mouth seat cut and plumb cut angles, heel height, and notch depth with ⅓-depth pass/fail check.",
 };

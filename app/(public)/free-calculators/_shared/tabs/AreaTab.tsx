@@ -7,6 +7,7 @@ import { degreesToRatio, ratioToDegrees, rafterPitchFactor } from '../../../lib/
 type PitchMode = 'degrees' | 'ratio';
 type MeasureMode = 'plan' | 'actual';
 type InputMode = 'dims' | 'direct' | 'volume';
+type VolumeMode = 'calc' | 'direct';
 
 export function AreaTab() {
   const { areaUnit, lengthUnit, volumeUnit } = useUnitSystem();
@@ -31,6 +32,10 @@ export function AreaTab() {
   const [length, setLength] = useState('8');
   const [directArea, setDirectArea] = useState('');
   const [directVolume, setDirectVolume] = useState('');
+  const [volMode, setVolMode] = useState<VolumeMode>('calc');
+  const [volW, setVolW] = useState('');
+  const [volH, setVolH] = useState('');
+  const [volD, setVolD] = useState('');
 
   const [result, setResult] = useState<null | {
     kind: 'area' | 'volume';
@@ -58,7 +63,12 @@ export function AreaTab() {
 
   function calculate() {
     if (inputMode === 'volume') {
-      const v = parseFloat(directVolume) || 0;
+      let v: number;
+      if (volMode === 'calc') {
+        v = (parseFloat(volW) || 0) * (parseFloat(volH) || 0) * (parseFloat(volD) || 0);
+      } else {
+        v = parseFloat(directVolume) || 0;
+      }
       setResult({ kind: 'volume', planArea: 0, factor: 1, actualArea: v, deg: 0, mode: 'plan' });
       return;
     }
@@ -247,18 +257,84 @@ export function AreaTab() {
       {/* Measurement inputs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {inputMode === 'volume' ? (
-          <div className="sm:col-span-1">
-            <label className="text-sm font-medium text-slate-700">Volume ({volumeUnit})</label>
-            <input
-              type="number"
-              value={directVolume}
-              onChange={(e) => setDirectVolume(e.target.value)}
-              min={0}
-              step={0.1}
-              placeholder="0.00"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-            />
-            <p className="mt-2 text-xs text-slate-400">Enter a known volume directly — it can be priced in the Draft Smart Component™ tab.</p>
+          <div className="sm:col-span-3 space-y-3">
+            <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 w-fit">
+              <button
+                onClick={() => setVolMode('calc')}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                  volMode === 'calc' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                W × H × D
+              </button>
+              <button
+                onClick={() => setVolMode('direct')}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                  volMode === 'direct' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Direct ({volumeUnit})
+              </button>
+            </div>
+            {volMode === 'calc' ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Width ({lengthUnit})</label>
+                  <input
+                    type="number"
+                    value={volW}
+                    onChange={(e) => setVolW(e.target.value)}
+                    min={0}
+                    step={0.1}
+                    placeholder="0"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Height ({lengthUnit})</label>
+                  <input
+                    type="number"
+                    value={volH}
+                    onChange={(e) => setVolH(e.target.value)}
+                    min={0}
+                    step={0.1}
+                    placeholder="0"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Depth ({lengthUnit})</label>
+                  <input
+                    type="number"
+                    value={volD}
+                    onChange={(e) => setVolD(e.target.value)}
+                    min={0}
+                    step={0.1}
+                    placeholder="0"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="sm:col-span-1">
+                <label className="text-sm font-medium text-slate-700">Volume ({volumeUnit})</label>
+                <input
+                  type="number"
+                  value={directVolume}
+                  onChange={(e) => setDirectVolume(e.target.value)}
+                  min={0}
+                  step={0.1}
+                  placeholder="0.00"
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                />
+                <p className="mt-2 text-xs text-slate-400">Enter a known volume directly — it can be priced in the Draft Smart Component™ tab.</p>
+              </div>
+            )}
+            {volMode === 'calc' && volW && volH && volD && (
+              <p className="text-xs text-slate-400">
+                Volume = {volW} × {volH} × {volD} = {((parseFloat(volW) || 0) * (parseFloat(volH) || 0) * (parseFloat(volD) || 0)).toFixed(2)} {volumeUnit}
+              </p>
+            )}
           </div>
         ) : inputMode === 'dims' ? (
           (measureMode === 'plan' || !cfg.useSlopeFactor) && (
