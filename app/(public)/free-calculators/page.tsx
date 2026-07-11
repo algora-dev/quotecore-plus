@@ -97,6 +97,24 @@ export default function Page() {
               </div>
             </div>
           </Link>
+
+          <Link
+            href="/free-purchase-order-generator"
+            prefetch={false}
+            className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
+                <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-semibold text-slate-900 text-sm">Free Purchase Order Generator</p>
+                <p className="text-xs text-slate-500 mt-0.5">Create supplier order forms from your calculations</p>
+              </div>
+            </div>
+          </Link>
         </div>
       </section>
 
