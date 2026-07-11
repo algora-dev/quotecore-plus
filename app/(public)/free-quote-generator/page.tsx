@@ -9,7 +9,7 @@ import { ImageUpload, type ParsedUploadResult } from './ImageUpload';
 import { PromptBox, type ParsedPromptResult } from './PromptBox';
 
 /**
- * Free Quote Generator — no signup required.
+ * Free Quote Generator - no signup required.
  * Pre-fills from URL params: ?area=122.1&pitch=35&ref=free-roofing-calculator
  * Generates a printable quote that can be downloaded as PDF (print-to-PDF).
  * Shows conversion popup after generation → "Turn into an order or invoice?"
@@ -27,7 +27,7 @@ type MeasurementSystem = 'metric' | 'imperial';
 type MeasurementType = 'unit' | 'length' | 'small_length' | 'area' | 'volume';
 
 const MEASUREMENT_OPTIONS: { value: MeasurementType; label: string; metric: string; imperial: string }[] = [
-  { value: 'unit', label: 'Unit', metric: 'pcs', imperial: 'pcs' },
+  { value: 'unit', label: 'Unit (pieces)', metric: 'pcs', imperial: 'pcs' },
   { value: 'length', label: 'M / Ft', metric: 'm', imperial: 'ft' },
   { value: 'small_length', label: 'mm / in', metric: 'mm', imperial: 'in' },
   { value: 'area', label: 'm² / ft²', metric: 'm²', imperial: 'ft²' },
@@ -74,12 +74,14 @@ function QuoteGeneratorForm() {
   const [notes, setNotes] = useState('');
   const [footer, setFooter] = useState('');
   const [footerItalic, setFooterItalic] = useState(false);
+  const [taxRate, setTaxRate] = useState(20);
+  const [taxName, setTaxName] = useState('Tax');
 
   const [lines, setLines] = useState<QuoteLine[]>(() => {
     if (areaParam) {
       return [{
         id: '1',
-        description: `Roofing work — ${areaParam} m²${pitchParam ? ` at ${pitchParam}° pitch` : ''}`,
+        description: `Roofing work - ${areaParam} m²${pitchParam ? ` at ${pitchParam}° pitch` : ''}`,
         qty: parseFloat(areaParam) || 0,
         unit: 'm²',
         rate: 0,
@@ -94,7 +96,7 @@ function QuoteGeneratorForm() {
   const [aiNotice, setAiNotice] = useState('');
 
   const subtotal = lines.reduce((sum, l) => sum + (l.qty * l.rate), 0);
-  const vat = subtotal * 0.2;
+  const vat = subtotal * (taxRate / 100);
   const total = subtotal + vat;
   const sym = currency.symbol;
 
@@ -198,7 +200,7 @@ function QuoteGeneratorForm() {
           <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Free Quote Generator</h1>
           <p className="mt-2 text-sm text-slate-500 max-w-xl">
             Create a professional roofing or construction quote in minutes. Upload a photo of your
-            existing quote and AI will fill in the form — or type it manually. No signup required.
+            existing quote and AI will fill in the form - or type it manually. No signup required.
           </p>
         </section>
 
@@ -235,7 +237,7 @@ function QuoteGeneratorForm() {
               {/* Settings bar */}
               <div className="rounded-xl border border-slate-200 bg-white p-5">
                 <h2 className="text-sm font-semibold text-slate-900 mb-4">Document settings</h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                   <div>
                     <label className="text-xs font-medium text-slate-600">Measurement system</label>
                     <div className="mt-1 flex rounded-lg border border-slate-300 overflow-hidden">
@@ -276,6 +278,28 @@ function QuoteGeneratorForm() {
                         <option key={c.code} value={c.code}>{c.label}</option>
                       ))}
                     </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Tax rate (%)</label>
+                    <input
+                      type="number"
+                      value={taxRate}
+                      onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                      min="0"
+                      max="100"
+                      step="0.5"
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Tax name</label>
+                    <input
+                      type="text"
+                      value={taxName}
+                      onChange={(e) => setTaxName(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                      placeholder="Tax"
+                    />
                   </div>
                 </div>
               </div>
@@ -421,7 +445,7 @@ function QuoteGeneratorForm() {
                           onChange={(e) => updateLine(line.id, 'unit', e.target.value)}
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                         >
-                          <option value="">—</option>
+                          <option value="">-</option>
                           {MEASUREMENT_OPTIONS.map(o => (
                             <option key={o.value} value={measurementSystem === 'metric' ? o.metric : o.imperial}>
                               {measurementSystem === 'metric' ? o.metric : o.imperial}
@@ -464,7 +488,7 @@ function QuoteGeneratorForm() {
                       <span className="font-medium text-slate-900">{formatMoney(subtotal, sym)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">Tax (20%)</span>
+                      <span className="text-slate-500">{taxName} ({taxRate}%)</span>
                       <span className="font-medium text-slate-900">{formatMoney(vat, sym)}</span>
                     </div>
                     <div className="flex justify-between text-base font-semibold border-t border-slate-200 pt-1.5">
@@ -541,7 +565,7 @@ function QuoteGeneratorForm() {
           </>
         ) : (
           <>
-            {/* Generated quote — printable */}
+            {/* Generated quote - printable */}
             <div className="rounded-xl border border-slate-200 bg-white p-8 print:border-0 print:p-0" id="quote-print">
               <div className="flex items-start justify-between mb-8">
                 <div>
@@ -596,7 +620,7 @@ function QuoteGeneratorForm() {
                     <span className="font-medium text-slate-900">{formatMoney(subtotal, sym)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Tax (20%)</span>
+                    <span className="text-slate-500">{taxName} ({taxRate}%)</span>
                     <span className="font-medium text-slate-900">{formatMoney(vat, sym)}</span>
                   </div>
                   <div className="flex justify-between text-base font-semibold border-t border-slate-200 pt-1.5">
@@ -621,7 +645,7 @@ function QuoteGeneratorForm() {
 
               <div className="mt-8 pt-4 border-t border-slate-100">
                 <p className="text-xs text-slate-400">
-                  Generated with QuoteCore+ Free Quote Generator — {new Date().toLocaleDateString('en-GB')}
+                  Generated with QuoteCore+ Free Quote Generator - {new Date().toLocaleDateString('en-GB')}
                 </p>
               </div>
             </div>
@@ -654,7 +678,7 @@ function QuoteGeneratorForm() {
               resultDetails={`${lines.length} line item${lines.length !== 1 ? 's' : ''} for ${clientName || 'client'}`}
               ctaText="Turn into an invoice"
               ctaHref={`/free-invoice-generator?amount=${total.toFixed(2)}&client=${encodeURIComponent(clientName)}&ref=free-quote-generator`}
-              secondaryText="Create a professional invoice and get paid faster — no signup needed"
+              secondaryText="Create a professional invoice and get paid faster - no signup needed"
             />
           </>
         )}
@@ -669,7 +693,7 @@ function QuoteGeneratorForm() {
                   Can I use this quote generator without signing up?
                 </summary>
                 <div className="px-4 pb-4">
-                  <p className="text-sm text-slate-600">Yes — this tool is completely free with no signup required. Fill in your details, generate the quote, and download it as a PDF using your browser's print function. No data is sent anywhere — everything stays in your browser.</p>
+                  <p className="text-sm text-slate-600">Yes - this tool is completely free with no signup required. Fill in your details, generate the quote, and download it as a PDF using your browser's print function. No data is sent anywhere - everything stays in your browser.</p>
                 </div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
@@ -685,7 +709,7 @@ function QuoteGeneratorForm() {
                   How do I download the quote as a PDF?
                 </summary>
                 <div className="px-4 pb-4">
-                  <p className="text-sm text-slate-600">After generating your quote, click "Download PDF". This opens your browser's print dialog — select "Save as PDF" as the destination. The quote is formatted to print cleanly on A4.</p>
+                  <p className="text-sm text-slate-600">After generating your quote, click "Download PDF". This opens your browser's print dialog - select "Save as PDF" as the destination. The quote is formatted to print cleanly on A4.</p>
                 </div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
@@ -693,7 +717,7 @@ function QuoteGeneratorForm() {
                   What's the difference between this and QuoteCore+?
                 </summary>
                 <div className="px-4 pb-4">
-                  <p className="text-sm text-slate-600">This free tool generates a one-off quote. QuoteCore+ gives you a full quoting system — saved templates, component library, takeoff measurements, client database, order and invoice management, and online quote acceptance. <Link href="/signup" className="text-[#FF6B35] font-medium">Start a free trial →</Link></p>
+                  <p className="text-sm text-slate-600">This free tool generates a one-off quote. QuoteCore+ gives you a full quoting system - saved templates, component library, takeoff measurements, client database, order and invoice management, and online quote acceptance. <Link href="/signup" className="text-[#FF6B35] font-medium">Start a free trial →</Link></p>
                 </div>
               </details>
             </div>

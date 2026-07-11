@@ -87,7 +87,7 @@ export function PromptBox({ onParsed, onError, documentType }: PromptBoxProps) {
           />
           <div className="mt-2 flex items-center justify-between">
             <p className="text-xs text-slate-400">
-              Paste your {documentType} details — AI will structure it into line items.
+              Paste your {documentType} details - AI will structure it into line items.
             </p>
             <button
               onClick={handleParse}

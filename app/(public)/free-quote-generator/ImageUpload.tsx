@@ -25,7 +25,7 @@ export interface ParsedUploadResult {
 type Status = 'idle' | 'compressing' | 'uploading' | 'parsing' | 'done' | 'error';
 
 const MAX_FILE_MB = 10;
-const MAX_DIMENSION = 2000; // px — compress large photos down
+const MAX_DIMENSION = 2000; // px - compress large photos down
 const JPEG_QUALITY = 0.8;
 
 export function ImageUpload({ onParsed, onError, documentType }: ImageUploadProps) {
@@ -35,7 +35,7 @@ export function ImageUpload({ onParsed, onError, documentType }: ImageUploadProp
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const compressImage = useCallback(async (file: File): Promise<string> => {
-    // If it's a PDF, we can't compress client-side — send as-is (base64)
+    // If it's a PDF, we can't compress client-side - send as-is (base64)
     if (file.type === 'application/pdf') {
       const arrayBuffer = await file.arrayBuffer();
       const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
