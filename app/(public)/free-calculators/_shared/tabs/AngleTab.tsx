@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useTradeConfig } from '../TradeCalculator';
+import { useTradeConfig, useUnitSystem } from '../TradeCalculator';
+import { AngleVertexDiagram } from '../AngleDiagram';
 import {
   calculateRidgeAngle,
   calculateHipValleyMultiPitch,
@@ -43,8 +44,20 @@ const TOOLTIPS: Record<string, { title: string; description: string }> = {
 
 export function AngleTab() {
   const config = useTradeConfig();
+  const { system } = useUnitSystem();
   const cfg = config.angle;
   if (!cfg) throw new Error(`Trade "${config.slug}" uses the angle tab without an angle config`);
+
+  // Terminology: metric keeps the trade word ("Pitch"), imperial swaps to a US-friendly word
+  const word = system === 'imperial' ? (cfg.angleWordImperial ?? 'Angle') : (cfg.angleWord ?? 'Pitch');
+  const prefix = cfg.inputPrefix ?? 'Roof';
+  const numbered = (n: number) => `${prefix ? `${prefix} ` : ''}${word} ${n} (°)`;
+  const singleLabel = `${prefix ? `${prefix} ` : ''}${word.toLowerCase()} (°)`;
+  const hipValleyBtn = cfg.hipValleyLabel ?? 'Hip / Valley';
+  const rafterBtn = cfg.rafterPitchLabel ?? `Rafter ${word}`;
+  const surfaceWord = prefix || 'Slope';
+  const ridgeLabel = prefix === 'Roof' ? 'Ridge' : 'Ridge / Apex';
+  const tip = (key: string) => cfg.tooltipOverrides?.[key] ?? TOOLTIPS[key].description;
 
   const [calcType, setCalcType] = useState<CalcType>('hipValley');
   const [rafterSubType, setRafterSubType] = useState<RafterSubType>('ridge');
@@ -122,7 +135,7 @@ export function AngleTab() {
               calcType === 'hipValley' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
-            Hip / Valley
+            {hipValleyBtn}
           </button>
           <button
             onClick={() => { setCalcType('rafterPitch'); setResult(null); }}
@@ -130,10 +143,10 @@ export function AngleTab() {
               calcType === 'rafterPitch' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
-            Rafter Pitch
+            {rafterBtn}
           </button>
         </div>
-        <p className="text-xs text-slate-400">{TOOLTIPS[calcType].description}</p>
+        <p className="text-xs text-slate-400">{tip(calcType)}</p>
       </div>
 
       {/* Rafter sub-type */}
@@ -142,10 +155,10 @@ export function AngleTab() {
           <label className="text-sm font-medium text-slate-700">Specific calculation</label>
           <div className="flex flex-wrap items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 w-fit">
             {([
-              { value: 'ridge', label: 'Ridge' },
-              { value: 'changeOfPitch', label: 'Change of Pitch' },
-              { value: 'upstandOntoRoof', label: 'Upstand onto Roof' },
-              { value: 'roofIntoUpstand', label: 'Roof into Upstand' },
+              { value: 'ridge', label: ridgeLabel },
+              { value: 'changeOfPitch', label: `Change of ${word}` },
+              { value: 'upstandOntoRoof', label: `Upstand onto ${surfaceWord}` },
+              { value: 'roofIntoUpstand', label: `${surfaceWord} into Upstand` },
             ] as const).map((opt) => (
               <button
                 key={opt.value}
@@ -158,7 +171,7 @@ export function AngleTab() {
               </button>
             ))}
           </div>
-          <p className="text-xs text-slate-400">{TOOLTIPS[rafterSubType].description}</p>
+          <p className="text-xs text-slate-400">{tip(rafterSubType)}</p>
         </div>
       )}
 
@@ -167,7 +180,7 @@ export function AngleTab() {
         {calcType === 'hipValley' && (
           <>
             <div>
-              <label className="text-sm font-medium text-slate-700">Roof Pitch 1 (°)</label>
+              <label className="text-sm font-medium text-slate-700">{numbered(1)}</label>
               <input
                 type="number"
                 value={pitch1}
@@ -178,7 +191,7 @@ export function AngleTab() {
             </div>
             {!sameAsPitch1 && (
               <div>
-                <label className="text-sm font-medium text-slate-700">Roof Pitch 2 (°)</label>
+                <label className="text-sm font-medium text-slate-700">{numbered(2)}</label>
                 <input
                   type="number"
                   value={pitch2}
@@ -195,7 +208,7 @@ export function AngleTab() {
                 onChange={(e) => { setSameAsPitch1(e.target.checked); setResult(null); }}
                 className="rounded border-slate-300 text-orange-500 focus:ring-orange-500"
               />
-              <span className="text-sm text-slate-600">Pitch 2 is the same as Pitch 1</span>
+              <span className="text-sm text-slate-600">{word} 2 is the same as {word} 1</span>
             </label>
             <div>
               <label className="text-sm font-medium text-slate-700">Corner angle (°)</label>
@@ -214,7 +227,7 @@ export function AngleTab() {
         {calcType === 'rafterPitch' && rafterSubType === 'ridge' && (
           <>
             <div>
-              <label className="text-sm font-medium text-slate-700">Roof Pitch 1 (°)</label>
+              <label className="text-sm font-medium text-slate-700">{numbered(1)}</label>
               <input
                 type="number"
                 value={ridgePitch1}
@@ -225,7 +238,7 @@ export function AngleTab() {
             </div>
             {!ridgeSameAsPitch1 && (
               <div>
-                <label className="text-sm font-medium text-slate-700">Roof Pitch 2 (°)</label>
+                <label className="text-sm font-medium text-slate-700">{numbered(2)}</label>
                 <input
                   type="number"
                   value={ridgePitch2}
@@ -242,7 +255,7 @@ export function AngleTab() {
                 onChange={(e) => { setRidgeSameAsPitch1(e.target.checked); setResult(null); }}
                 className="rounded border-slate-300 text-orange-500 focus:ring-orange-500"
               />
-              <span className="text-sm text-slate-600">Pitch 2 is the same as Pitch 1</span>
+              <span className="text-sm text-slate-600">{word} 2 is the same as {word} 1</span>
             </label>
           </>
         )}
@@ -250,7 +263,7 @@ export function AngleTab() {
         {calcType === 'rafterPitch' && rafterSubType === 'changeOfPitch' && (
           <>
             <div>
-              <label className="text-sm font-medium text-slate-700">Upper pitch (°)</label>
+              <label className="text-sm font-medium text-slate-700">Upper {word.toLowerCase()} (°)</label>
               <input
                 type="number"
                 value={upperPitch}
@@ -260,7 +273,7 @@ export function AngleTab() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Lower pitch (°)</label>
+              <label className="text-sm font-medium text-slate-700">Lower {word.toLowerCase()} (°)</label>
               <input
                 type="number"
                 value={lowerPitch}
@@ -274,7 +287,7 @@ export function AngleTab() {
 
         {calcType === 'rafterPitch' && (rafterSubType === 'upstandOntoRoof' || rafterSubType === 'roofIntoUpstand') && (
           <div>
-            <label className="text-sm font-medium text-slate-700">Roof pitch (°)</label>
+            <label className="text-sm font-medium text-slate-700">{singleLabel}</label>
             <input
               type="number"
               value={singlePitch}
@@ -319,6 +332,14 @@ export function AngleTab() {
                 {result.angleType}
               </span>
             </div>
+          </div>
+
+          {/* Visual */}
+          <div className="border-t border-slate-100 pt-4">
+            <AngleVertexDiagram
+              angle={result.finishedAngle}
+              caption={`Finished angle: ${result.finishedAngle}° (${result.angleType}) — bend from flat ${result.bendAngleFromFlat}°`}
+            />
           </div>
 
           {/* Expandable calculation */}

@@ -2,6 +2,7 @@ import type { TradeConfig } from '../_shared/types';
 
 export const landscapingConfig: TradeConfig = {
   slug: 'free-landscaping-calculator',
+  defaultCurrency: 'GBP',
   name: 'Landscaping Calculator',
   metaTitle: 'Free Landscaping Calculator — Turf, Topsoil & Slopes | QuoteCore+',
   metaDescription:
@@ -27,8 +28,8 @@ export const landscapingConfig: TradeConfig = {
     actualHint: 'Enter the measured ground area directly',
     actualDimsNote: 'In Actual mode, use the Area input to enter the measured ground area directly.',
     useSlopeFactor: true,
-    commonSlopes: [5, 10, 15, 20, 25, 30, 35, 45],
-    defaultSlope: '10',
+    commonSlopes: [0, 5, 10, 15, 20, 25, 30, 35, 45],
+    defaultSlope: '0',
     useForPricingLabel: 'Use this area for pricing',
   },
 
@@ -56,6 +57,18 @@ export const landscapingConfig: TradeConfig = {
   angle: {
     heading: 'Angle Finder',
     subtitle: 'Calculate meeting angles for edging, retaining junctions, and banks',
+    angleWord: 'Angle',
+    angleWordImperial: 'Angle',
+    inputPrefix: '',
+    rafterPitchLabel: 'Slope Angle',
+    tooltipOverrides: {
+      hipValley: 'Use when two sloped surfaces meet around an internal or external corner (usually a 90° corner).',
+      rafterPitch: 'Used where sloped surfaces run in the same direction — banks, ramps, and retaining junctions.',
+      ridge: 'Use where two slopes meet at a crest or apex. Formula: 180° − Angle 1 − Angle 2',
+      changeOfPitch: 'Use where one slope changes into another running in the same direction. Formula: 180° − Upper Angle + Lower Angle.',
+      upstandOntoRoof: 'Use where a junction starts on a vertical face (wall, edging) and turns down onto the slope. Formula: 90° + Angle.',
+      roofIntoUpstand: 'Use where a junction starts on the slope and turns up into a vertical face. Formula: 90° − Angle.',
+    },
   },
 
   content: {

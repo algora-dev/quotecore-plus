@@ -3,19 +3,22 @@
 import { useState } from 'react';
 import { useUnitSystem, useTradeConfig } from '../TradeCalculator';
 import { degreesToRatio, ratioToDegrees, rafterLength, rafterPitchFactor, hipValleyPitchFactor, hipValleyLength } from '../../../lib/calculator';
+import { BirdsmouthDiagram } from '../AngleDiagram';
 
 const RAD = Math.PI / 180;
 
 type PitchMode = 'degrees' | 'ratio';
-type SubTab = 'member' | 'hip-valley';
+type SubTab = 'member' | 'hip-valley' | 'birdsmouth';
 
 export function MembersTab() {
-  const { lengthUnit } = useUnitSystem();
+  const { lengthUnit, system } = useUnitSystem();
+  const bmUnit = system === 'metric' ? 'mm' : 'in';
   const config = useTradeConfig();
   const cfg = config.members;
   if (!cfg) throw new Error(`Trade "${config.slug}" uses the members tab without a members config`);
 
   const slope = cfg.slopeWord;
+  const memberWord = cfg.birdsmouthMemberWord ?? 'Rafter';
 
   const [subTab, setSubTab] = useState<SubTab>('member');
   const [mode, setMode] = useState<PitchMode>('degrees');
@@ -27,6 +30,19 @@ export function MembersTab() {
   });
   const [span, setSpan] = useState('10');
   const [planLength, setPlanLength] = useState('7');
+
+  // Bird's mouth inputs (mm metric / in imperial)
+  const [seatWidth, setSeatWidth] = useState('100');
+  const [rafterDepth, setRafterDepth] = useState('200');
+  const [bmResult, setBmResult] = useState<null | {
+    deg: number;
+    seatAngle: number;
+    plumbAngle: number;
+    heel: number;
+    notchDepth: number;
+    maxNotch: number;
+    seat: number;
+  }>(null);
   const [result, setResult] = useState<null | {
     rafterLen: number;
     ratio: { x: number; y: number };
@@ -51,6 +67,23 @@ export function MembersTab() {
     setPitchDeg(d.toFixed(1));
   }
 
+  function calculateBirdsmouth() {
+    const d = parseFloat(pitchDeg) || 0;
+    const s = parseFloat(seatWidth) || 0;
+    const depth = parseFloat(rafterDepth) || 0;
+    const heel = s * Math.tan(d * RAD);
+    const notchDepth = s * Math.sin(d * RAD);
+    setBmResult({
+      deg: d,
+      seatAngle: d,
+      plumbAngle: 90 - d,
+      heel,
+      notchDepth,
+      maxNotch: depth / 3,
+      seat: s,
+    });
+  }
+
   function calculate() {
     const d = parseFloat(pitchDeg) || 0;
     const ratio = degreesToRatio(d);
@@ -70,7 +103,7 @@ export function MembersTab() {
         <p className="mt-1 text-sm text-slate-500">{cfg.subtitle}</p>
       </div>
 
-      {cfg.showHipValley && (
+      {(cfg.showHipValley || cfg.showBirdsmouth) && (
         <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 w-fit">
           <button
             onClick={() => setSubTab('member')}
@@ -80,14 +113,26 @@ export function MembersTab() {
           >
             {cfg.memberLabel}
           </button>
-          <button
-            onClick={() => setSubTab('hip-valley')}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-              subTab === 'hip-valley' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            Hip / Valley
-          </button>
+          {cfg.showHipValley && (
+            <button
+              onClick={() => setSubTab('hip-valley')}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                subTab === 'hip-valley' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Hip / Valley
+            </button>
+          )}
+          {cfg.showBirdsmouth && (
+            <button
+              onClick={() => setSubTab('birdsmouth')}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                subTab === 'birdsmouth' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Bird&apos;s Mouth
+            </button>
+          )}
         </div>
       )}
 
@@ -165,7 +210,7 @@ export function MembersTab() {
           </div>
         )}
 
-        {subTab === 'member' ? (
+        {subTab === 'member' && (
           <div>
             <label className="text-sm font-medium text-slate-700">{cfg.spanLabel} ({lengthUnit})</label>
             <input
@@ -178,7 +223,8 @@ export function MembersTab() {
             />
             <p className="mt-2 text-xs text-slate-400">{cfg.spanHint}</p>
           </div>
-        ) : (
+        )}
+        {subTab === 'hip-valley' && (
           <div>
             <label className="text-sm font-medium text-slate-700">{cfg.hipPlanLabel ?? 'Plan length'} ({lengthUnit})</label>
             <input
@@ -192,10 +238,38 @@ export function MembersTab() {
             <p className="mt-2 text-xs text-slate-400">{cfg.hipPlanHint ?? 'Plan-view diagonal from corner to ridge'}</p>
           </div>
         )}
+        {subTab === 'birdsmouth' && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium text-slate-700">Seat width ({bmUnit})</label>
+              <input
+                type="number"
+                value={seatWidth}
+                onChange={(e) => setSeatWidth(e.target.value)}
+                min={0}
+                step={1}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+              />
+              <p className="mt-2 text-xs text-slate-400">Bearing width on the wall plate (plate width is a common choice)</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">{memberWord} depth ({bmUnit})</label>
+              <input
+                type="number"
+                value={rafterDepth}
+                onChange={(e) => setRafterDepth(e.target.value)}
+                min={0}
+                step={1}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+              />
+              <p className="mt-2 text-xs text-slate-400">Timber depth — used to check the ⅓ maximum notch rule</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <button
-        onClick={calculate}
+        onClick={subTab === 'birdsmouth' ? calculateBirdsmouth : calculate}
         className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
       >
         Calculate
@@ -204,7 +278,66 @@ export function MembersTab() {
         </svg>
       </button>
 
-      {result && (
+      {subTab === 'birdsmouth' && bmResult && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-xl bg-orange-50/50 border border-orange-100 p-4">
+              <p className="text-xs text-slate-500">Seat cut (A) — from {memberWord.toLowerCase()} edge</p>
+              <p className="text-lg font-bold text-slate-900">{bmResult.seatAngle.toFixed(1)}°</p>
+            </div>
+            <div className="rounded-xl bg-orange-50/50 border border-orange-100 p-4">
+              <p className="text-xs text-slate-500">Plumb cut (B) — from {memberWord.toLowerCase()} edge</p>
+              <p className="text-lg font-bold text-slate-900">{bmResult.plumbAngle.toFixed(1)}°</p>
+            </div>
+            <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
+              <p className="text-xs text-slate-500">Heel height ({bmUnit})</p>
+              <p className="text-base font-semibold text-slate-900">{bmResult.heel.toFixed(1)}</p>
+            </div>
+            <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
+              <p className="text-xs text-slate-500">Notch depth ({bmUnit})</p>
+              <p className="text-base font-semibold text-slate-900">{bmResult.notchDepth.toFixed(1)}</p>
+            </div>
+          </div>
+
+          {bmResult.maxNotch > 0 && bmResult.notchDepth > bmResult.maxNotch && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-sm text-amber-800">
+                ⚠️ Notch depth ({bmResult.notchDepth.toFixed(1)}{bmUnit}) exceeds ⅓ of the {memberWord.toLowerCase()} depth ({bmResult.maxNotch.toFixed(1)}{bmUnit} max).
+                Cutting deeper than one-third weakens the timber — reduce the seat width or use a deeper section.
+              </p>
+            </div>
+          )}
+
+          <details className="group">
+            <summary className="cursor-pointer text-xs font-medium text-slate-500 hover:text-[#FF6B35] transition select-none">
+              Show calculation
+            </summary>
+            <div className="mt-2 rounded-lg bg-slate-50 border border-slate-100 p-4">
+              <p className="text-xs text-slate-600 font-mono leading-relaxed">
+                Seat cut angle (A) = {slope.toLowerCase()} = {bmResult.deg}° from the {memberWord.toLowerCase()} edge
+                <br />
+                Plumb cut angle (B) = 90° − {bmResult.deg}° = {bmResult.plumbAngle.toFixed(1)}° from the {memberWord.toLowerCase()} edge
+                <br />
+                Heel height = seat × tan({bmResult.deg}°) = {bmResult.seat} × {Math.tan(bmResult.deg * RAD).toFixed(4)} = {bmResult.heel.toFixed(1)} {bmUnit}
+                <br />
+                Notch depth = seat × sin({bmResult.deg}°) = {bmResult.notchDepth.toFixed(1)} {bmUnit} (max ⅓ × depth = {bmResult.maxNotch.toFixed(1)} {bmUnit})
+              </p>
+            </div>
+          </details>
+
+          <div className="border-t border-slate-100 pt-4">
+            <BirdsmouthDiagram
+              pitchDegrees={bmResult.deg}
+              seatAngle={bmResult.seatAngle}
+              plumbAngle={bmResult.plumbAngle}
+              memberWord={memberWord}
+              caption={`Bird's mouth at ${bmResult.deg.toFixed(1)}° — A = horizontal seat cut, B = vertical plumb cut`}
+            />
+          </div>
+        </div>
+      )}
+
+      {result && subTab !== 'birdsmouth' && (
         <div className="space-y-4">
           {subTab === 'member' ? (
             <>

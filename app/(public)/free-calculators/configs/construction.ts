@@ -1,9 +1,10 @@
 import type { TradeConfig } from '../_shared/types';
 
-const COMMON_SLOPES = [5, 10, 15, 20, 25, 30, 40, 45];
+const COMMON_SLOPES = [0, 5, 10, 15, 20, 25, 30, 40, 45];
 
 export const constructionConfig: TradeConfig = {
   slug: 'free-construction-calculator',
+  defaultCurrency: 'GBP',
   name: 'Construction Calculator',
   metaTitle: 'Free Construction Calculator — Areas, Materials & Angles | QuoteCore+',
   metaDescription:
@@ -30,7 +31,7 @@ export const constructionConfig: TradeConfig = {
     actualDimsNote: 'In Actual mode, use the Area input to enter the measured surface area directly.',
     useSlopeFactor: true,
     commonSlopes: COMMON_SLOPES,
-    defaultSlope: '10',
+    defaultSlope: '0',
     useForPricingLabel: 'Use this area for pricing',
   },
 
@@ -42,7 +43,9 @@ export const constructionConfig: TradeConfig = {
     spanLabel: 'Run',
     spanHint: 'Horizontal distance the angled member covers',
     showHipValley: false,
-    commonSlopes: [15, 22.5, 30, 35, 40, 42, 45, 60],
+    showBirdsmouth: true,
+    birdsmouthMemberWord: 'Rafter',
+    commonSlopes: [0, 15, 22.5, 30, 35, 40, 42, 45, 60],
     defaultSlope: '35',
     diagramCaption: 'Angled member at {deg}° — run is the horizontal distance covered',
     diagramTopLabel: 'Top',
@@ -64,6 +67,18 @@ export const constructionConfig: TradeConfig = {
   angle: {
     heading: 'Angle Finder',
     subtitle: 'Calculate meeting angles for junctions, bends, and sloped surfaces',
+    angleWord: 'Angle',
+    angleWordImperial: 'Angle',
+    inputPrefix: '',
+    rafterPitchLabel: 'Rafter Angle',
+    tooltipOverrides: {
+      hipValley: 'Use when two sloped surfaces meet around an internal or external corner (usually a 90° corner).',
+      rafterPitch: 'Used where sloped surfaces run in the same direction. Includes Ridge/Apex, Change of Angle, Upstand onto Slope, and Slope into Upstand.',
+      ridge: 'Use where two sloped surfaces meet at a ridge or apex. Formula: 180° − Angle 1 − Angle 2',
+      changeOfPitch: 'Use where one slope changes into another running in the same direction. Formula: 180° − Upper Angle + Lower Angle.',
+      upstandOntoRoof: 'Use where a junction starts on a vertical face and turns down onto the slope. Formula: 90° + Angle.',
+      roofIntoUpstand: 'Use where a junction starts on the slope and turns up into a vertical face. Formula: 90° − Angle.',
+    },
   },
 
   content: {
@@ -95,6 +110,10 @@ export const constructionConfig: TradeConfig = {
       {
         title: 'Allow for openings before ordering',
         body: 'Deduct windows and doors from wall areas when ordering plasterboard, insulation, or cladding — but only deduct openings larger than about 0.5 m². Small openings generate offcuts you cannot reuse, so leaving them in your figure builds in a sensible margin.',
+      },
+      {
+        title: "Cutting a bird's mouth in rafters and stringers",
+        body: "A bird's mouth is the notch that lets a rafter or stair stringer sit flat on a wall plate or landing. The seat cut is horizontal and the plumb cut vertical: measured from the timber edge, the seat cut angle equals the slope angle and the plumb cut equals 90° minus the slope. Never notch deeper than one-third of the timber depth — it weakens the member.",
       },
     ],
     formulas: [

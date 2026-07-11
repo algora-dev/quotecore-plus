@@ -177,6 +177,126 @@ one config file assigned to a **base calculator** + unique wording/tips/FAQs. Ba
 | 49 | Groundworks | `/free-groundworks-calculator` | D | dig + cart-away + backfill combined |
 | 50 | Pool builders | `/free-pool-calculator` | D | excavation + shell volume, backfill |
 
+Improvements to existing names
+
+A few of your current pages may be too broad or use weaker search wording:
+
+Painting & decorating: use /free-paint-calculator as the main page. “Paint calculator” is generally the clearer direct intent.
+Carpentry & joinery: keep the hub, but add separate /free-mitre-angle-calculator, /free-stair-stringer-calculator, /free-stud-calculator and /free-timber-cut-calculator.
+Renovation/general: “renovation calculator” is ambiguous. Decide whether it calculates cost, area, or materials, and name it accordingly.
+Garden design: also too broad unless it becomes a multi-zone material planner. Consider /free-landscape-area-calculator.
+Groundworks: retain it as a hub, but standalone trench, excavation, spoil and backfill pages will target clearer intent.
+Pool: split into /free-pool-volume-calculator, /free-pool-excavation-calculator and /free-pool-water-calculator.
+Irrigation: split later into zone area, pipe sizing and sprinkler spacing.
+Plastering: consider both /free-plaster-calculator and a regionally relevant plasterboard/drywall page, but avoid duplicating identical content.
+
+Do not create 100 nearly identical pages with only a changed heading. Search engines and users will get more value from this structure:
+
+/free-roofing-calculators
+├── /free-roof-pitch-calculator
+├── /free-roof-area-calculator
+├── /free-rafter-length-calculator
+├── /free-hip-valley-calculator
+├── /free-metal-roofing-calculator
+├── /free-shingle-calculator
+└── /free-roof-tile-calculator
+
+Each page should have genuinely unique:
+
+inputs and outputs
+diagrams
+worked examples
+FAQs
+terminology
+related tools
+Draft Smart Component™ conversion
+trade-specific CTA
+
+My recommended first 20 beyond your current list
+
+Prioritise these:
+
+Concrete
+Concrete slab
+Roof pitch
+Roof area
+Rafter length
+Hip/valley
+Plywood/sheet count
+Retaining wall
+Slope/grade
+Trench
+Wall area
+Pipe fall
+Cable/voltage drop
+HVAC/BTU
+Markup
+Profit margin
+Labour charge-out rate
+Waste
+Pack quantity
+Job price
+
+Additions:
+
+51	Concrete	/free-concrete-calculator	slabs, walls, pads, columns, bags, m³/yd³
+52	Concrete slab	/free-concrete-slab-calculator	slab area × thickness, mesh, over-order
+53	Concrete bags	/free-concrete-bag-calculator	20/25/40 kg and 60/80 lb bags
+54	Concrete column/pier	/free-concrete-column-calculator	circular and rectangular piers
+55	Rebar	/free-rebar-calculator	spacing, laps, bar lengths, weight
+56	Roof pitch	/free-roof-pitch-calculator	degrees, ratio, rise/run
+57	Roof area	/free-roof-area-calculator	plan area adjusted by pitch
+58	Rafter length	/free-rafter-length-calculator	span, run, overhang, ridge allowance
+59	Hip and valley	/free-hip-valley-calculator	diagonal plan run, slope, true length
+60	Gable roof	/free-gable-roof-calculator	area, rafters, ridge, sheets
+61	Shed roof	/free-shed-roof-calculator	mono-pitch area and rafter length
+62	Plywood/sheeting	/free-plywood-calculator	sheet count, orientation, waste
+63	Timber/lumber	/free-lumber-calculator	lengths, board feet, cubic volume
+64	Board feet	/free-board-foot-calculator	strong US search intent
+65	Sheet optimiser	/free-sheet-cutting-calculator	plywood, plasterboard, panels
+66	Linear to area	/free-linear-to-square-calculator	length × product width
+67	Slope/grade	/free-slope-calculator	degrees, %, ratio, rise/run
+68	Ramp	/free-ramp-calculator	rise, run, gradient, accessibility warning
+69	Retaining wall	/free-retaining-wall-calculator	blocks, drainage gravel, backfill
+70	Drainage	/free-drainage-calculator	pipe falls, trench volume, aggregate
+71	Pipe fall	/free-pipe-slope-calculator	gradient, drop over length
+72	Trench	/free-trench-calculator	excavation, bedding, backfill, spoil
+73	Wall area	/free-wall-area-calculator	openings, multiple walls, perimeter × height
+74	Ceiling area	/free-ceiling-calculator	boards, battens, insulation, paint
+75	Room area	/free-room-area-calculator	irregular rooms and multiple zones
+
+Possible others:
+
+Cable size	/free-cable-size-calculator	current, length, voltage drop; jurisdiction disclaimer
+Voltage drop	/free-voltage-drop-calculator	AC/DC, cable length and conductor
+Conduit fill	/free-conduit-fill-calculator	cable count and conduit size
+Electrical load	/free-electrical-load-calculator	watts, amps, volts, phases
+Lighting	/free-lighting-calculator	room area, lumens, fixture count
+Pipe volume	/free-pipe-volume-calculator	diameter × length
+Pipe flow	/free-pipe-flow-calculator	diameter, velocity, flow rate
+Plumbing fall	/free-plumbing-slope-calculator	required drop over run
+Radiator sizing	/free-radiator-size-calculator	room dimensions and heat requirement
+HVAC/BTU	/free-btu-calculator	room volume, insulation and climate
+Duct sizing	/free-duct-size-calculator	airflow and duct dimensions
+Heat loss	/free-heat-loss-calculator	walls, windows, insulation and temperature
+
+NOTE: For regulated calculations, clearly say the result is an estimate and must be checked against local codes and qualified design requirements. Blocklayer similarly warns that its geometric outputs do not replace local engineering and regulatory checks.
+
+Other potential calculators purely for getting people on the page that have simple calculation methods:
+
+Markup	/free-markup-calculator	Save pricing rule as Smart Component™
+Margin	/free-profit-margin-calculator	Build reusable quote pricing
+Labour rate	/free-labour-rate-calculator	Save employee/crew rate
+Charge-out rate	/free-charge-out-rate-calculator	overhead + profit + utilisation
+Job cost	/free-job-cost-calculator	convert directly into quote
+Quote price	/free-quote-price-calculator	materials + labour + waste + margin
+GST	/free-gst-calculator	NZ/AU localisation
+VAT	/free-vat-calculator	UK localisation
+Sales tax	/free-sales-tax-calculator	US localisation
+Break-even	/free-break-even-calculator	business-focused lead
+Material waste	/free-waste-calculator	save waste rule
+Pack quantity	/free-pack-quantity-calculator	round up to purchasable packs
+
 US-audience duplicates (sod/framing/drywall/shingles/handyman) use imperial-first defaults and US
 terminology — same engine, config flag only. Beyond these 50, the same pattern extends to niche
 searches (sheetrock, pergola, retaining wall, driveway sealer) once traffic data shows demand.

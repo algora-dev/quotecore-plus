@@ -8,6 +8,24 @@
  * See docs/TRADE-CALCULATORS-PLAN.md for the SEO strategy.
  */
 
+// ─── Currency ────────────────────────────────────────
+
+export interface CurrencyDef {
+  code: string;
+  symbol: string;
+  label: string;
+}
+
+/** Currencies offered in the dropdown next to Metric/Imperial. */
+export const CURRENCIES: CurrencyDef[] = [
+  { code: 'GBP', symbol: '£', label: '£ GBP' },
+  { code: 'USD', symbol: '$', label: '$ USD' },
+  { code: 'EUR', symbol: '€', label: '€ EUR' },
+  { code: 'AUD', symbol: 'A$', label: 'A$ AUD' },
+  { code: 'NZD', symbol: 'NZ$', label: 'NZ$ NZD' },
+  { code: 'CAD', symbol: 'C$', label: 'C$ CAD' },
+];
+
 // ─── Tab registry ────────────────────────────────────
 
 export type TabKind = 'area' | 'members' | 'gradient' | 'volume' | 'smart' | 'angle';
@@ -58,6 +76,10 @@ export interface MembersTabConfig {
   showHipValley: boolean;
   hipPlanLabel?: string;
   hipPlanHint?: string;
+  /** Show the Bird's Mouth sub-tab (rafters/stair stringers) */
+  showBirdsmouth?: boolean;
+  /** What the sloped timber is called in birdsmouth copy: "rafter" | "stringer" */
+  birdsmouthMemberWord?: string;
   commonSlopes: number[];
   defaultSlope: string;
   /** Caption template under the diagram; {deg} is replaced */
@@ -106,10 +128,24 @@ export interface SmartTabConfig {
   prefillNote: string;
 }
 
-/** Angle finder tab (roof-angle solver — used where flashings/angles apply). */
+/** Angle finder tab (angle solver — used where flashings/junctions/angles apply). */
 export interface AngleTabConfig {
   heading: string;
   subtitle: string;
+  /**
+   * Word used for the slope concept in input labels, metric mode.
+   * Roofing: "Pitch" → "Roof Pitch 1". Construction: "Angle" → "Angle 1".
+   */
+  angleWord?: string;
+  /** Word swapped in when Imperial is selected (US-friendly). Default "Angle". */
+  angleWordImperial?: string;
+  /** Prefix on numbered inputs: "Roof" → "Roof Pitch 1"; omit for bare "Angle 1". */
+  inputPrefix?: string;
+  /** Label overrides for the two calc-type buttons. */
+  hipValleyLabel?: string;
+  rafterPitchLabel?: string;
+  /** Tooltip/description overrides keyed by calc type / sub-type id. */
+  tooltipOverrides?: Record<string, string>;
 }
 
 // ─── Page copy ───────────────────────────────────────
@@ -136,6 +172,8 @@ export interface TradeContent {
 export interface TradeConfig {
   /** URL slug without leading slash, e.g. "free-roofing-calculator" */
   slug: string;
+  /** Default currency code (see CURRENCIES); default "GBP" */
+  defaultCurrency?: string;
   /** Display name used in JSON-LD, e.g. "Roofing Calculator" */
   name: string;
   metaTitle: string;

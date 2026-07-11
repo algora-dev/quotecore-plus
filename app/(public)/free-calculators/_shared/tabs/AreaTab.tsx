@@ -6,10 +6,10 @@ import { degreesToRatio, ratioToDegrees, rafterPitchFactor } from '../../../lib/
 
 type PitchMode = 'degrees' | 'ratio';
 type MeasureMode = 'plan' | 'actual';
-type InputMode = 'dims' | 'direct';
+type InputMode = 'dims' | 'direct' | 'volume';
 
 export function AreaTab() {
-  const { areaUnit, lengthUnit } = useUnitSystem();
+  const { areaUnit, lengthUnit, volumeUnit } = useUnitSystem();
   const { setShared } = useSharedState();
   const config = useTradeConfig();
   const cfg = config.area;
@@ -30,8 +30,10 @@ export function AreaTab() {
   const [width, setWidth] = useState('10');
   const [length, setLength] = useState('8');
   const [directArea, setDirectArea] = useState('');
+  const [directVolume, setDirectVolume] = useState('');
 
   const [result, setResult] = useState<null | {
+    kind: 'area' | 'volume';
     planArea: number;
     factor: number;
     actualArea: number;
@@ -55,6 +57,12 @@ export function AreaTab() {
   }
 
   function calculate() {
+    if (inputMode === 'volume') {
+      const v = parseFloat(directVolume) || 0;
+      setResult({ kind: 'volume', planArea: 0, factor: 1, actualArea: v, deg: 0, mode: 'plan' });
+      return;
+    }
+
     const d = cfg!.useSlopeFactor ? parseFloat(pitchDeg) || 0 : 0;
     const factor = cfg!.useSlopeFactor ? rafterPitchFactor(d) : 1;
 
@@ -68,23 +76,26 @@ export function AreaTab() {
         planArea = parseFloat(directArea) || 0;
       }
       const actualArea = planArea * factor;
-      setResult({ planArea, factor, actualArea, deg: d, mode: 'plan' });
+      setResult({ kind: 'area', planArea, factor, actualArea, deg: d, mode: 'plan' });
     } else {
       // Actual mode — user enters the actual surface area directly
       const actualArea = parseFloat(directArea) || 0;
       const planArea = factor > 0 ? actualArea / factor : actualArea;
-      setResult({ planArea, factor, actualArea, deg: d, mode: 'actual' });
+      setResult({ kind: 'area', planArea, factor, actualArea, deg: d, mode: 'actual' });
     }
   }
 
   function useForPricing() {
-    if (result) {
+    if (!result) return;
+    if (result.kind === 'volume') {
+      setShared({ calculatedVolume: result.actualArea.toFixed(2) });
+    } else {
       setShared({ calculatedArea: result.actualArea.toFixed(2) });
     }
   }
 
-  const showModeToggle = cfg.useSlopeFactor;
-  const showPitch = cfg.useSlopeFactor && measureMode === 'plan';
+  const showModeToggle = cfg.useSlopeFactor && inputMode !== 'volume';
+  const showPitch = cfg.useSlopeFactor && measureMode === 'plan' && inputMode !== 'volume';
 
   return (
     <div className="space-y-5">
@@ -222,12 +233,34 @@ export function AreaTab() {
           >
             Area ({areaUnit})
           </button>
+          <button
+            onClick={() => setInputMode('volume')}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+              inputMode === 'volume' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Volume ({volumeUnit})
+          </button>
         </div>
       </div>
 
       {/* Measurement inputs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {inputMode === 'dims' ? (
+        {inputMode === 'volume' ? (
+          <div className="sm:col-span-1">
+            <label className="text-sm font-medium text-slate-700">Volume ({volumeUnit})</label>
+            <input
+              type="number"
+              value={directVolume}
+              onChange={(e) => setDirectVolume(e.target.value)}
+              min={0}
+              step={0.1}
+              placeholder="0.00"
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+            />
+            <p className="mt-2 text-xs text-slate-400">Enter a known volume directly — it can be priced in the Draft Smart Component™ tab.</p>
+          </div>
+        ) : inputMode === 'dims' ? (
           (measureMode === 'plan' || !cfg.useSlopeFactor) && (
             <>
               <div>
@@ -291,7 +324,28 @@ export function AreaTab() {
       </button>
 
       {/* Results */}
-      {result && (
+      {result && result.kind === 'volume' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-xl bg-orange-50/50 border border-orange-100 p-4">
+              <p className="text-xs text-slate-500">Volume</p>
+              <p className="text-2xl font-bold text-slate-900">{result.actualArea.toFixed(2)} {volumeUnit}</p>
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <button
+              onClick={useForPricing}
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[#FF6B35] hover:text-[#FF6B35]"
+            >
+              Use this volume for pricing
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+      {result && result.kind === 'area' && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {cfg.useSlopeFactor && result.mode === 'plan' && (

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useUnitSystem, useSharedState, useTradeConfig } from '../TradeCalculator';
+import { useUnitSystem, useSharedState, useTradeConfig, useCurrency } from '../TradeCalculator';
 import { signupHref } from '../types';
 import type { MeasurementType, WasteType, PitchType, PricingStrategy } from '@/app/lib/types';
 
@@ -63,6 +63,7 @@ interface ComponentSpec {
 export function SmartComponentTab() {
   const { areaUnit, lengthUnit, volumeUnit } = useUnitSystem();
   const { shared } = useSharedState();
+  const { symbol: cur } = useCurrency();
   const config = useTradeConfig();
   const cfg = config.smart;
   const signup = signupHref(config);
@@ -336,7 +337,7 @@ export function SmartComponentTab() {
           {/* Price per unit */}
           <FormField label="Price per unit" tooltip="Price per individual unit or per pack (depending on pricing strategy).">
             <div className="mt-1 relative">
-              <span className="absolute left-3 top-2 text-sm text-slate-400">$</span>
+              <span className="absolute left-3 top-2 text-sm text-slate-400">{cur}</span>
               <input
                 type="number"
                 value={spec.pricePerUnit}
@@ -378,7 +379,7 @@ export function SmartComponentTab() {
           {/* Labour */}
           <FormField label="Labour amount" tooltip="Fixed labour cost added to the total. For hourly labour, use Hours/Days measurement type.">
             <div className="mt-1 relative">
-              <span className="absolute left-3 top-2 text-sm text-slate-400">$</span>
+              <span className="absolute left-3 top-2 text-sm text-slate-400">{cur}</span>
               <input
                 type="number"
                 value={spec.labourAmount}
@@ -486,10 +487,10 @@ export function SmartComponentTab() {
             <div className="space-y-3">
               <div className="rounded-xl bg-orange-50/50 border border-orange-100 p-4">
                 <p className="text-xs text-slate-500">Total cost</p>
-                <p className="text-2xl font-bold text-slate-900">${result.totalCost.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-slate-900">{cur}{result.totalCost.toFixed(2)}</p>
                 {result.labourCost > 0 && (
                   <p className="mt-1 text-xs text-slate-500">
-                    Material: ${result.materialCost.toFixed(2)} + Labour: ${result.labourCost.toFixed(2)}
+                    Material: {cur}{result.materialCost.toFixed(2)} + Labour: {cur}{result.labourCost.toFixed(2)}
                   </p>
                 )}
               </div>
@@ -528,10 +529,10 @@ export function SmartComponentTab() {
                     <br />
                     Total = {result.totalValue.toFixed(2)} {result.unit}
                     <br />
-                    Material = ${result.materialCost.toFixed(2)}
-                    {result.labourCost > 0 && ` + Labour = $${result.labourCost.toFixed(2)}`}
+                    Material = {cur}{result.materialCost.toFixed(2)}
+                    {result.labourCost > 0 && ` + Labour = ${cur}${result.labourCost.toFixed(2)}`}
                     <br />
-                    <strong>Total = ${result.totalCost.toFixed(2)}</strong>
+                    <strong>Total = {cur}{result.totalCost.toFixed(2)}</strong>
                   </p>
                 </div>
               </details>

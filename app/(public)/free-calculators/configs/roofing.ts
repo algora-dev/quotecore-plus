@@ -4,6 +4,7 @@ const COMMON_PITCHES = [10, 15, 20, 25, 30, 35, 40, 45];
 
 export const roofingConfig: TradeConfig = {
   slug: 'free-roofing-calculator',
+  defaultCurrency: 'GBP',
   name: 'Roofing Calculator',
   metaTitle: 'Roofing Calculator — Pitch, Area, Rafter Length, Materials | QuoteCore+',
   metaDescription:
@@ -44,6 +45,8 @@ export const roofingConfig: TradeConfig = {
     showHipValley: true,
     hipPlanLabel: 'Plan length',
     hipPlanHint: 'Plan-view diagonal from corner to ridge',
+    showBirdsmouth: true,
+    birdsmouthMemberWord: 'Rafter',
     commonSlopes: COMMON_PITCHES,
     defaultSlope: '25',
     diagramCaption: 'Rafter at {deg}° pitch — span is wall to ridge (one rafter)',
