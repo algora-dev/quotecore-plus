@@ -142,10 +142,10 @@ export function BirdsmouthDiagram({
   const maxY = Math.max(...allY);
 
   // ── Scale to fit viewBox ──
-  const VB_W = 340;
-  const VB_H = 260;
-  const padX = 40;
-  const padY = 30;
+  const VB_W = 360;
+  const VB_H = 280;
+  const padX = 50;
+  const padY = 40;
   const realW = maxX - minX;
   const realH = maxY - minY;
   const scale = Math.min((VB_W - 2 * padX) / realW, (VB_H - 2 * padY) / realH);
@@ -160,8 +160,6 @@ export function BirdsmouthDiagram({
   const midSeat  = { x: (C.x + Phx) / 2, y: C.y };
   const midPlumb = { x: C.x, y: (C.y + Plow.y) / 2 };
   const midHeel  = { x: (C.x + heelTop.x) / 2, y: (C.y + heelTop.y) / 2 };
-  // Notch depth: perpendicular from Plow to C (approximate visual midpoint)
-  const midNotch = { x: (C.x + Plow.x) / 2 + 8, y: (C.y + Plow.y) / 2 };
 
   // Angle arc for seat cut (at P_high, between bottom edge and seat line)
   const arcR = 16;
@@ -200,37 +198,28 @@ export function BirdsmouthDiagram({
         <circle cx={sx(Phx)} cy={sy(Phy)} r="3" fill="#FF6B35" />
         <circle cx={sx(Plow.x)} cy={sy(Plow.y)} r="3" fill="#FF6B35" />
 
-        {/* Seat width label */}
-        <text x={sx(midSeat.x)} y={sy(midSeat.y) - 7} textAnchor="middle" className="fill-slate-600" style={{ fontSize: '10px', fontWeight: 500 }}>
-          Seat width
-        </text>
-        <text x={sx(midSeat.x)} y={sy(midSeat.y) + 4} textAnchor="middle" className="fill-slate-500" style={{ fontSize: '10px' }}>
-          {seatWidth.toFixed(0)}{unit}
+        {/* Seat width label — pinned ABOVE the seat cut line, single line */}
+        <text x={sx(midSeat.x)} y={sy(midSeat.y) - 10} textAnchor="middle" className="fill-slate-600" style={{ fontSize: '11px', fontWeight: 600 }}>
+          Seat width = {seatWidth.toFixed(0)}{unit}
         </text>
 
-        {/* Heel height label — moved left to avoid overlap */}
-        <text x={sx(midHeel.x) - 12} y={sy(midHeel.y) - 2} textAnchor="end" className="fill-slate-600" style={{ fontSize: '10px', fontWeight: 500 }}>
-          Heel
-        </text>
-        <text x={sx(midHeel.x) - 12} y={sy(midHeel.y) + 8} textAnchor="end" className="fill-slate-500" style={{ fontSize: '10px' }}>
-          {heelHeight.toFixed(0)}{unit}
+        {/* Heel height label — pinned LEFT of the heel vertical, single line */}
+        <text x={sx(midHeel.x) - 6} y={sy(midHeel.y)} textAnchor="end" className="fill-slate-600" style={{ fontSize: '11px', fontWeight: 600 }}>
+          Heel = {heelHeight.toFixed(0)}{unit}
         </text>
 
-        {/* Notch depth label — moved right to avoid overlap */}
-        <text x={sx(midNotch.x) + 22} y={sy(midNotch.y) - 2} textAnchor="start" className="fill-slate-600" style={{ fontSize: '10px', fontWeight: 500 }}>
-          Notch
-        </text>
-        <text x={sx(midNotch.x) + 22} y={sy(midNotch.y) + 8} textAnchor="start" className="fill-slate-500" style={{ fontSize: '10px' }}>
-          {notchDepth.toFixed(0)}{unit}
+        {/* Notch depth label — pinned RIGHT of the plumb cut vertical, single line */}
+        <text x={sx(midPlumb.x) + 6} y={sy(midPlumb.y)} textAnchor="start" className="fill-slate-600" style={{ fontSize: '11px', fontWeight: 600 }}>
+          Notch = {notchDepth.toFixed(0)}{unit}
         </text>
 
-        {/* Seat cut angle annotation (blue, 50% larger) */}
-        <text x={sx(Phx) + 10} y={sy(Phy) - 10} className="fill-blue-600" style={{ fontSize: '14px', fontWeight: 700 }}>
+        {/* Seat cut angle A — pinned to the RIGHT of P_high, above the seat line */}
+        <text x={sx(Phx) + 14} y={sy(Phy) - 14} className="fill-blue-600" style={{ fontSize: '14px', fontWeight: 700 }}>
           A = {seatAngle.toFixed(1)}°
         </text>
 
-        {/* Plumb cut angle annotation (blue, 50% larger) */}
-        <text x={sx(C.x) + 10} y={sy(Plow.y) + 18} className="fill-blue-600" style={{ fontSize: '14px', fontWeight: 700 }}>
+        {/* Plumb cut angle B — pinned BELOW the plumb cut, centered */}
+        <text x={sx(Plow.x) - 6} y={sy(Plow.y) + 20} textAnchor="end" className="fill-blue-600" style={{ fontSize: '14px', fontWeight: 700 }}>
           B = {plumbAngle.toFixed(1)}°
         </text>
 
@@ -239,7 +228,7 @@ export function BirdsmouthDiagram({
           {memberWord} at {pitchDegrees.toFixed(1)}°
         </text>
 
-        {/* Rafter depth label on top edge */}
+        {/* Rafter depth label — pinned to top-right, clear of other labels */}
         <text x={sx(tlEnd.x) - 4} y={sy(tlEnd.y) - 6} textAnchor="end" className="fill-slate-400" style={{ fontSize: '9px' }}>
           depth {rafterDepth.toFixed(0)}{unit}
         </text>
