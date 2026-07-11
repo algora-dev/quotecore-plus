@@ -35,14 +35,7 @@ export function ImageUpload({ onParsed, onError, documentType }: ImageUploadProp
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const compressImage = useCallback(async (file: File): Promise<string> => {
-    // If it's a PDF, we can't compress client-side - send as-is (base64)
-    if (file.type === 'application/pdf') {
-      const arrayBuffer = await file.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-      return `data:application/pdf;base64,${base64}`;
-    }
-
-    // For images, compress via canvas
+    // Compress images via canvas
     const bitmap = await createImageBitmap(file);
     const { width, height } = bitmap;
 
@@ -68,9 +61,9 @@ export function ImageUpload({ onParsed, onError, documentType }: ImageUploadProp
 
   const handleFile = useCallback(async (file: File) => {
     // Validate
-    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'application/pdf'];
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-      onError('Please upload a PNG, JPEG, WebP, or PDF file.');
+      onError('Please upload a PNG, JPEG, or WebP image.');
       return;
     }
     if (file.size > MAX_FILE_MB * 1024 * 1024) {
@@ -91,7 +84,7 @@ export function ImageUpload({ onParsed, onError, documentType }: ImageUploadProp
           type: documentType,
           mode: 'image',
           image: compressed,
-          imageMime: file.type === 'application/pdf' ? 'application/pdf' : 'image/jpeg',
+          imageMime: 'image/jpeg',
         }),
       });
 
@@ -159,7 +152,7 @@ export function ImageUpload({ onParsed, onError, documentType }: ImageUploadProp
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/png,image/jpeg,image/jpg,image/webp,application/pdf"
+            accept="image/png,image/jpeg,image/jpg,image/webp"
             capture="environment"
             onChange={onInputChange}
             className="hidden"
@@ -185,7 +178,7 @@ export function ImageUpload({ onParsed, onError, documentType }: ImageUploadProp
                 Upload a photo or screenshot of your {documentType}
               </p>
               <p className="text-xs text-slate-400">
-                PNG, JPEG, WebP or PDF · max {MAX_FILE_MB}MB
+                PNG, JPEG, or WebP · max {MAX_FILE_MB}MB
               </p>
               <p className="text-xs text-slate-400">
                 or drag and drop here
@@ -229,6 +222,9 @@ export function ImageUpload({ onParsed, onError, documentType }: ImageUploadProp
 
       <p className="mt-3 text-xs text-slate-400">
         AI scans your document and fills in the form. 5 free scans per day.
+      </p>
+      <p className="mt-1 text-xs text-slate-400">
+        Your upload is sent to our server for AI processing and is not stored after parsing.
       </p>
     </div>
   );

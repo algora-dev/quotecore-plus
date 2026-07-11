@@ -38,7 +38,7 @@ export const birdsmouthConfig: TradeConfig = {
     heading: 'Draft Smart Component',
     subtitle: 'Price up rafter timber, fixings, and labour with waste and quantity rules',
     defaultName: 'Rafter timber',
-    defaultMeasurementType: 'linear',
+    defaultMeasurementType: 'lineal',
     defaultWasteValue: '10',
     defaultPricePerUnit: '8.50',
     defaultPitchEnabled: false,

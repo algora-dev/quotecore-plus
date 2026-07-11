@@ -1,4 +1,4 @@
-import type { TradeConfig, TradeContent, RelatedLink } from '../_shared/types';
+import type { TradeConfig, RelatedLink } from '../_shared/types';
 import { roofingConfig } from './roofing';
 
 /** Compact slug definition — only the unique parts per SEO page. */

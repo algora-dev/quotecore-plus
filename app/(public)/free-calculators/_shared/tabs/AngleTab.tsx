@@ -116,7 +116,6 @@ export function AngleTab() {
     setResult(r!);
   }
 
-  const showPitch2 = calcType === 'hipValley' ? !sameAsPitch1 : (rafterSubType === 'ridge' && !ridgeSameAsPitch1);
 
   return (
     <div className="space-y-5">

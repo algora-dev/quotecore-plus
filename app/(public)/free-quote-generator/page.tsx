@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { CalcResultPopup } from '../free-calculators/_shared/CalcResultPopup';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { ImageUpload, type ParsedUploadResult } from './ImageUpload';
-import { PromptBox, type ParsedPromptResult } from './PromptBox';
+import { PromptBox } from './PromptBox';
 
 /**
  * Free Quote Generator - no signup required.
@@ -54,8 +54,8 @@ function formatMoney(amount: number, symbol: string): string {
 
 function QuoteGeneratorForm() {
   const searchParams = useSearchParams();
-  const refSlug = searchParams.get('ref');
-  const areaParam = searchParams.get('area');
+  const qtyParam = searchParams.get('qty');
+  const unitParam = searchParams.get('unit');
   const pitchParam = searchParams.get('pitch');
 
   // Settings
@@ -78,16 +78,17 @@ function QuoteGeneratorForm() {
   const [taxName, setTaxName] = useState('Tax');
 
   const [lines, setLines] = useState<QuoteLine[]>(() => {
-    if (areaParam) {
+    if (qtyParam) {
+      const unit = unitParam || 'm\u00b2';
       return [{
         id: '1',
-        description: `Roofing work - ${areaParam} m²${pitchParam ? ` at ${pitchParam}° pitch` : ''}`,
-        qty: parseFloat(areaParam) || 0,
-        unit: 'm²',
+        description: `Roofing work - ${qtyParam} ${unit}${pitchParam ? ` at ${pitchParam}\u00b0 pitch` : ''}`,
+        qty: parseFloat(qtyParam) || 0,
+        unit,
         rate: 0,
       }];
     }
-    return [{ id: '1', description: '', qty: 0, unit: 'm²', rate: 0 }];
+    return [{ id: '1', description: '', qty: 0, unit: 'm\u00b2', rate: 0 }];
   });
 
   const [generated, setGenerated] = useState(false);
@@ -693,7 +694,7 @@ function QuoteGeneratorForm() {
                   Can I use this quote generator without signing up?
                 </summary>
                 <div className="px-4 pb-4">
-                  <p className="text-sm text-slate-600">Yes - this tool is completely free with no signup required. Fill in your details, generate the quote, and download it as a PDF using your browser's print function. No data is sent anywhere - everything stays in your browser.</p>
+                  <p className="text-sm text-slate-600">Yes - this tool is completely free with no signup required. Fill in your details, generate the quote, and download it as a PDF using your browser&apos;s print function. The quote form itself runs entirely in your browser. If you use the AI document scanner (upload a photo or paste text), that content is sent to our server for AI processing and is not stored.</p>
                 </div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
@@ -709,15 +710,15 @@ function QuoteGeneratorForm() {
                   How do I download the quote as a PDF?
                 </summary>
                 <div className="px-4 pb-4">
-                  <p className="text-sm text-slate-600">After generating your quote, click "Download PDF". This opens your browser's print dialog - select "Save as PDF" as the destination. The quote is formatted to print cleanly on A4.</p>
+                  <p className="text-sm text-slate-600">After generating your quote, click &quot;Download PDF&quot;. This opens your browser&apos;s print dialog - select &quot;Save as PDF&quot; as the destination. The quote is formatted to print cleanly on A4.</p>
                 </div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">
-                  What's the difference between this and QuoteCore+?
+                  What&apos;s the difference between this and QuoteCore+?
                 </summary>
                 <div className="px-4 pb-4">
-                  <p className="text-sm text-slate-600">This free tool generates a one-off quote. QuoteCore+ gives you a full quoting system - saved templates, component library, takeoff measurements, client database, order and invoice management, and online quote acceptance. <Link href="/signup" className="text-[#FF6B35] font-medium">Start a free trial →</Link></p>
+                  <p className="text-sm text-slate-600">This free tool generates a one-off quote. QuoteCore+ gives you a full quoting system - saved templates, component library, takeoff measurements, client database, order and invoice management, and online quote acceptance. <Link href="/signup" className="text-[#FF6B35] font-medium">Start a free trial &rarr;</Link></p>
                 </div>
               </details>
             </div>

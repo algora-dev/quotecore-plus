@@ -181,6 +181,19 @@ export function SmartComponentTab() {
       unit = 'units';
     }
 
+    // Apply pitch factor to area-like measurements
+    // Pitch converts plan area to actual sloped surface area: factor = 1 / cos(degrees)
+    const isAreaLike = mt === 'area' || mt === 'irregular_area' ||
+      mt === 'length_x_height' || mt === 'length_x_height_freestyle' ||
+      mt === 'multi_lineal_lxh' || mt === 'multi_lineal_lxh_freestyle';
+    if (spec.pitchEnabled && isAreaLike) {
+      const pitchDeg = parseFloat(spec.pitchDegrees) || 0;
+      if (pitchDeg > 0 && pitchDeg < 89) {
+        const pitchFactor = 1 / Math.cos(pitchDeg * Math.PI / 180);
+        rawValue = rawValue * pitchFactor;
+      }
+    }
+
     // Apply waste
     let wasteAmount = 0;
     if (spec.wasteType === 'percent') {
@@ -533,6 +546,14 @@ export function SmartComponentTab() {
                 <div className="mt-2 rounded-lg bg-slate-50 border border-slate-100 p-4">
                   <p className="text-xs text-slate-600 font-mono leading-relaxed">
                     Raw = {result.rawValue.toFixed(2)} {result.unit}
+                    {spec.pitchEnabled && (isAreaType || isLxhType) && (() => {
+                      const pd = parseFloat(spec.pitchDegrees) || 0;
+                      if (pd > 0 && pd < 89) {
+                        const pf = 1 / Math.cos(pd * Math.PI / 180);
+                        return `\nPitch @ ${pd}\u00b0 \u2192 factor \u00d7${pf.toFixed(3)}`;
+                      }
+                      return '';
+                    })()}
                     <br />
                     {spec.wasteType === 'percent'
                       ? `Waste = ${result.rawValue.toFixed(2)} × ${spec.wasteValue}% = ${result.wasteAmount.toFixed(2)} ${result.unit}`

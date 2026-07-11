@@ -23,6 +23,7 @@ import type { MeasurementSystem } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { getUnitLabel } from '@/app/lib/measurements/displayHelpers';
 import { loadFlashingLibrary } from '../drawings/actions';
+import { loadCalcDraft, clearCalcDraft } from '@/app/(public)/free-calculators/_shared/types';
 
 /** Build the radio-button labels that decorate measurement type with the company's preferred unit. */
 // F-15: Extracted helpers + sub-components
@@ -40,6 +41,7 @@ export function ComponentList({
   flashingsFeatureEnabled,
   subscriptionActive,
   editWarningDismissed = false,
+  restoreDraftId,
 }: {
   initialComponents: ComponentLibraryRow[];
   workspaceSlug: string;
@@ -68,6 +70,8 @@ export function ComponentList({
   subscriptionActive: boolean;
   /** Per-user: true when the user has ticked "Don't show me this warning anymore". */
   editWarningDismissed?: boolean;
+  /** Draft ID from ?restore= query param — loads a saved calculator draft. */
+  restoreDraftId?: string;
 }) {
   const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);
   // Pitch is shown when the trade requires it (roofing) or opts in optionally
@@ -178,6 +182,13 @@ export function ComponentList({
   const [formHoursUnit, setFormHoursUnit] = useState<'hr' | 'day'>('hr');
   const [formWasteUnit, setFormWasteUnit] = useState<WasteUnit>('percent');
   const [formPricingStrategy, setFormPricingStrategy] = useState<PricingStrategy>('per_unit');
+
+  // Calculator draft restore (H-04): pre-fill form from a saved draft
+  const [restoredName, setRestoredName] = useState<string>('');
+  const [restoredMaterialRate, setRestoredMaterialRate] = useState<string>('');
+  const [restoredLabourRate, setRestoredLabourRate] = useState<string>('');
+  const [restoredWasteAmount, setRestoredWasteAmount] = useState<string>('');
+  const [draftConsumed, setDraftConsumed] = useState(false);
   const [formPackPrice, setFormPackPrice] = useState<string>('');
   const [formPackSize, setFormPackSize] = useState<string>('');
   const [formPackCoverageM2, setFormPackCoverageM2] = useState<string>('');
@@ -204,6 +215,49 @@ export function ComponentList({
     }
     fetchFlashings();
   }, []);
+
+  // Calculator draft restore (H-04): load draft from localStorage and pre-fill form
+  useEffect(() => {
+    if (!restoreDraftId || draftConsumed) return;
+    const draft = loadCalcDraft(restoreDraftId);
+    if (!draft) return;
+    const draftData = draft.data as {
+      spec?: {
+        name?: string;
+        measurementType?: string;
+        wasteType?: string;
+        wasteValue?: string;
+        pricePerUnit?: string;
+        labourAmount?: string;
+        pitchEnabled?: boolean;
+        pitchType?: string;
+        pitchDegrees?: string;
+        pricingStrategy?: string;
+        packSize?: string;
+      };
+      result?: { materialCost?: number; labourCost?: number };
+    };
+    const spec = draftData.spec;
+    if (!spec) return;
+    // Pre-fill form state
+    setFormMeasurementType((spec.measurementType as MeasurementType) || 'area');
+    setFormWasteType((spec.wasteType as WasteType) || 'none');
+    setFormPitchEnabled(spec.pitchEnabled ?? false);
+    if (spec.pricingStrategy) setFormPricingStrategy(spec.pricingStrategy as PricingStrategy);
+    if (spec.packSize) setFormPackSize(spec.packSize);
+    // Pre-fill text inputs via state (rendered as defaultValue only on first render)
+    setRestoredName(spec.name || '');
+    setRestoredMaterialRate(spec.pricePerUnit || '');
+    setRestoredLabourRate(spec.labourAmount || '');
+    setRestoredWasteAmount(spec.wasteValue || '');
+    // Open the form
+    setShowForm(true);
+    setDraftConsumed(true);
+    // Clear the signup cookies so the dashboard banner doesn't show again
+    document.cookie = 'qcp_signup_draft=; path=/; max-age=0';
+    document.cookie = 'qcp_signup_ref=; path=/; max-age=0';
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restoreDraftId]);
 
   let filtered = filter === 'all' ? components : components.filter((c) => c.component_type === filter);
 
@@ -430,6 +484,15 @@ export function ComponentList({
       setFormPackSize('');
       setFormPackCoverageM2('');
       setFormNotes('');
+      // Clear restored draft values
+      setRestoredName('');
+      setRestoredMaterialRate('');
+      setRestoredLabourRate('');
+      setRestoredWasteAmount('');
+      // Clear the calculator draft from localStorage after successful import
+      if (restoreDraftId) {
+        clearCalcDraft(restoreDraftId);
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to create component');
     } finally {
@@ -868,7 +931,7 @@ export function ComponentList({
             <div className="grid grid-cols-2 gap-3">
               <div data-copilot="component-name">
                 <label className="block text-xs text-slate-500 mb-1">Name</label>
-                <input name="name" required className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
+                <input name="name" required defaultValue={restoredName} className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
               </div>
               <div data-copilot="component-type">
                 <label className="block text-xs text-slate-500 mb-1">Type</label>
@@ -905,7 +968,7 @@ export function ComponentList({
               </div>
               <div data-copilot="component-labour">
                 <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(formMeasurementType)})</label>
-                <input name="default_labour_rate" type="number" step="0.01" placeholder="0" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
+                <input name="default_labour_rate" type="number" step="0.01" placeholder="0" defaultValue={restoredLabourRate} className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
               </div>
 
               {/* Item Cost pricing: single source of truth.
@@ -929,7 +992,7 @@ export function ComponentList({
               {(!genericTradesEnabled || formPricingStrategy === 'per_unit') && (
                 <div data-copilot="component-rates">
                   <label className="block text-xs text-slate-500 mb-1">Item Cost ({unitForMeasurement(formMeasurementType)})</label>
-                  <input name="default_material_rate" type="number" step="0.01" placeholder="0" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
+                  <input name="default_material_rate" type="number" step="0.01" placeholder="0" defaultValue={restoredMaterialRate} className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
                 </div>
               )}
               {genericTradesEnabled && formPricingStrategy !== 'per_unit' && (
@@ -971,7 +1034,7 @@ export function ComponentList({
               {formWasteType !== 'none' && (
                 <div data-copilot="component-waste-amount">
                   <label className="block text-xs text-slate-500 mb-1">Waste Amount {wasteAmountLabel}</label>
-                  <input name="waste_amount" type="number" step="0.01" placeholder={wasteAmountPlaceholderText} className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
+                  <input name="waste_amount" type="number" step="0.01" placeholder={wasteAmountPlaceholderText} defaultValue={restoredWasteAmount} className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
                 </div>
               )}
 

@@ -333,7 +333,7 @@ export function BattenTab() {
             ))}
           </div>
           <p className="mt-2 text-xs text-slate-400">
-            Examples only — always refer to the tile manufacturer's specification for exact batten gauge.
+            Examples only — always refer to the tile manufacturer&apos;s specification for exact batten gauge.
           </p>
         </div>
 

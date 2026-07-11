@@ -5,8 +5,12 @@ import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { BackButton } from '@/app/components/BackButton';
 
-export default async function ComponentsPage(props: {params: Promise<{workspaceSlug: string}>}) {
+export default async function ComponentsPage(props: {
+  params: Promise<{ workspaceSlug: string }>;
+  searchParams: Promise<{ restore?: string }>;
+}) {
   const { workspaceSlug } = await props.params;
+  const { restore: restoreDraftId } = await props.searchParams;
   let components;
 
   try {
@@ -53,6 +57,7 @@ export default async function ComponentsPage(props: {params: Promise<{workspaceS
         flashingsFeatureEnabled={ent.features.flashings}
         subscriptionActive={ent.isActive}
         editWarningDismissed={editWarningDismissed}
+        restoreDraftId={restoreDraftId}
       />
     </>
   );

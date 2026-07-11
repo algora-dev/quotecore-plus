@@ -190,8 +190,9 @@ export default function Page() {
           <div className="rounded-xl border border-slate-200 bg-white p-4">
             <h3 className="text-sm font-semibold text-slate-900">Free, private, no signup</h3>
             <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">
-              All calculations run in your browser — nothing is uploaded, tracked, or stored on a server.
-              Use them on-site from your phone or at the desk, as often as you like.
+              All calculator math runs in your browser — nothing is uploaded, tracked, or stored on a server.
+              The AI document scanner (quote generator) sends your uploaded image or text to our server for processing.
+              Use calculators on-site from your phone or at the desk, as often as you like.
             </p>
           </div>
         </div>

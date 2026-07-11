@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, createContext, useContext } from 'react';
 import {
   type UnitSystem,
   lengthUnit,
@@ -71,6 +71,10 @@ interface SharedState {
     resultLabel: string;
     resultDetails?: string;
     stage: 'calc-to-quote' | 'smart-to-signup';
+    /** Clean numeric value for URL params (qty for quote generator) */
+    qty?: string;
+    /** Unit label for quote generator (e.g. "m²", "m³") */
+    unit?: string;
   } | null;
 }
 
@@ -97,17 +101,15 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
     popupTrigger: null,
   });
 
-  const setShared = (patch: Partial<SharedState>) =>
+  const setShared = (patch: Partial<SharedState>) => {
     setSharedState((s) => ({ ...s, ...patch }));
-
-  const smartTabId = config.tabs.find((t) => t.kind === 'smart')?.id;
-
-  // Auto-switch to Draft Smart Component tab when a value is shared
-  useEffect(() => {
-    if ((shared.calculatedArea || shared.calculatedVolume) && smartTabId) {
+    // Auto-switch to Draft Smart Component tab when a value is shared
+    if ((patch.calculatedArea || patch.calculatedVolume) && smartTabId) {
       setActiveTab(smartTabId);
     }
-  }, [shared.calculatedArea, shared.calculatedVolume, smartTabId]);
+  };
+
+  const smartTabId = config.tabs.find((t) => t.kind === 'smart')?.id;
 
   const unitValue: UnitContextValue = {
     system,
@@ -215,7 +217,7 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
               }
               ctaHref={shared.popupTrigger?.stage === 'smart-to-signup'
                 ? `/signup?ref=${config.slug}`
-                : `/free-quote-generator?area=${encodeURIComponent(shared.popupTrigger?.resultLabel ?? '')}&ref=${config.slug}`
+                : `/free-quote-generator?qty=${encodeURIComponent(shared.popupTrigger?.qty ?? '')}&unit=${encodeURIComponent(shared.popupTrigger?.unit ?? 'm\u00b2')}&ref=${config.slug}`
               }
               secondaryText={shared.popupTrigger?.stage === 'smart-to-signup'
                 ? 'Reuse on every quote, save your pricing rules, manage jobs'

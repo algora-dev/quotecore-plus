@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -36,29 +37,40 @@ interface ParsedDocument {
   warnings: string[];
 }
 
-// ── Rate limiting (IP-based, in-memory) ────────────────
+// ── Limits ─────────────────────────────────────────────
 
-const ipHits = new Map<string, { count: number; resetAt: number }>();
+const MAX_TEXT_LENGTH = 10_000;
+const MAX_IMAGE_BASE64_BYTES = 4 * 1024 * 1024; // ~3MB actual image after base64 decode
+const MAX_CONTENT_LENGTH_BYTES = 6 * 1024 * 1024; // reject oversized POST bodies early
 const MAX_HITS_PER_DAY = 5;
+const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
-function checkRateLimit(ip: string): { ok: boolean; remaining: number } {
-  const now = Date.now();
-  const entry = ipHits.get(ip);
-  if (!entry || entry.resetAt < now) {
-    ipHits.set(ip, { count: 1, resetAt: now + 24 * 60 * 60 * 1000 });
-    return { ok: true, remaining: MAX_HITS_PER_DAY - 1 };
-  }
-  if (entry.count >= MAX_HITS_PER_DAY) {
-    return { ok: false, remaining: 0 };
-  }
-  entry.count++;
-  return { ok: true, remaining: MAX_HITS_PER_DAY - entry.count };
-}
+// ── Magic byte validation ──────────────────────────────
 
-function getClientIP(req: NextRequest): string {
-  const fwd = req.headers.get('x-forwarded-for');
-  if (fwd) return fwd.split(',')[0].trim();
-  return req.headers.get('x-real-ip') ?? 'unknown';
+const MAGIC_BYTES: { mime: string; bytes: number[] }[] = [
+  { mime: 'image/png', bytes: [0x89, 0x50, 0x4E, 0x47] },
+  { mime: 'image/jpeg', bytes: [0xFF, 0xD8, 0xFF] },
+  { mime: 'image/webp', bytes: [0x52, 0x49, 0x46, 0x46] }, // RIFF — verify WEBP tag below
+];
+
+function detectImageMime(base64Data: string): string | null {
+  try {
+    const cleanBase64 = base64Data.replace(/^data:[^;]+;base64,/, '');
+    const buffer = Buffer.from(cleanBase64.substring(0, 32), 'base64');
+
+    for (const { mime, bytes } of MAGIC_BYTES) {
+      if (bytes.every((byte, i) => buffer[i] === byte)) {
+        if (mime === 'image/webp') {
+          // RIFF container — check bytes 8-11 are "WEBP"
+          if (buffer.slice(8, 12).toString('ascii') !== 'WEBP') continue;
+        }
+        return mime;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 // ── System prompt ──────────────────────────────────────
@@ -74,7 +86,7 @@ function buildSystemPrompt(type: string): string {
 
 You will receive either:
 - A TEXT description of the document content, OR
-- An IMAGE (photo or screenshot) of a document — possibly handwritten, possibly a PDF screenshot.
+- An IMAGE (photo or screenshot) of a document — possibly handwritten.
 
 Your job: extract the structured data and return it as JSON.
 
@@ -118,6 +130,29 @@ Your job: extract the structured data and return it as JSON.
 // ── Route handler ──────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  // 1. Early size guard — reject before parsing body
+  const contentLength = parseInt(req.headers.get('content-length') || '0', 10);
+  if (contentLength > MAX_CONTENT_LENGTH_BYTES) {
+    return NextResponse.json(
+      { error: 'Request too large. Maximum file size is 4MB.' },
+      { status: 413 }
+    );
+  }
+
+  // 2. Rate limit — check BEFORE parsing body (durable, Supabase-backed)
+  const ip = getClientIP(req.headers);
+  const rateLimitKey = `free-tools-parse:${ip}`;
+  const allowed = await checkRateLimit(rateLimitKey, MAX_HITS_PER_DAY, RATE_LIMIT_WINDOW_MS, {
+    failClosed: true,
+  });
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Daily limit reached. You can scan up to 5 documents per day for free. Try again tomorrow or sign up for QuoteCore+ for unlimited access.' },
+      { status: 429 }
+    );
+  }
+
+  // 3. Parse body
   let body: ParseRequest;
   try {
     body = await req.json();
@@ -125,31 +160,46 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { type, mode, content, image, imageMime } = body;
+  const { type, mode, content, image } = body;
 
+  // 4. Validate fields
   if (!type || !['quote', 'order', 'invoice'].includes(type)) {
     return NextResponse.json({ error: 'Invalid or missing "type"' }, { status: 400 });
   }
 
-  if (mode === 'text' && !content?.trim()) {
-    return NextResponse.json({ error: 'Missing "content" for text mode' }, { status: 400 });
+  if (mode === 'text') {
+    if (!content?.trim()) {
+      return NextResponse.json({ error: 'Missing "content" for text mode' }, { status: 400 });
+    }
+    if (content.length > MAX_TEXT_LENGTH) {
+      return NextResponse.json(
+        { error: `Text too long. Maximum ${MAX_TEXT_LENGTH.toLocaleString()} characters.` },
+        { status: 413 }
+      );
+    }
+  } else if (mode === 'image') {
+    if (!image) {
+      return NextResponse.json({ error: 'Missing "image" for image mode' }, { status: 400 });
+    }
+    if (image.length > MAX_IMAGE_BASE64_BYTES) {
+      return NextResponse.json(
+        { error: 'Image too large. Maximum 4MB.' },
+        { status: 413 }
+      );
+    }
+    // Server-side magic byte validation — don't trust client-sent MIME
+    const detectedMime = detectImageMime(image);
+    if (!detectedMime) {
+      return NextResponse.json(
+        { error: 'Invalid image format. Please upload a PNG, JPEG, or WebP image.' },
+        { status: 415 }
+      );
+    }
+  } else {
+    return NextResponse.json({ error: 'Invalid or missing "mode"' }, { status: 400 });
   }
 
-  if (mode === 'image' && !image) {
-    return NextResponse.json({ error: 'Missing "image" for image mode' }, { status: 400 });
-  }
-
-  // Rate limit
-  const ip = getClientIP(req);
-  const rl = checkRateLimit(ip);
-  if (!rl.ok) {
-    return NextResponse.json(
-      { error: 'Daily limit reached. You can scan up to 5 documents per day for free. Try again tomorrow or sign up for QuoteCore+ for unlimited access.' },
-      { status: 429 }
-    );
-  }
-
-  // Build OpenAI messages
+  // 5. Build OpenAI messages
   const systemPrompt = buildSystemPrompt(type);
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
@@ -163,11 +213,17 @@ export async function POST(req: NextRequest) {
     });
   } else {
     // Image mode — build a vision message
-    // Ensure image is a proper data URL
     let imageUrl: string = image!;
     if (!imageUrl.startsWith('data:')) {
-      const mime = imageMime || 'image/jpeg';
-      imageUrl = `data:${mime};base64,${image}`;
+      // Use detected MIME, not client-provided
+      const detectedMime = detectImageMime(imageUrl)!;
+      imageUrl = `data:${detectedMime};base64,${imageUrl}`;
+    } else {
+      // Replace any client-provided MIME with detected one
+      const detectedMime = detectImageMime(imageUrl);
+      if (detectedMime) {
+        imageUrl = imageUrl.replace(/^data:[^;]+;base64,/, `data:${detectedMime};base64,`);
+      }
     }
 
     messages.push({
@@ -185,14 +241,13 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // 6. Call OpenAI
   try {
     const completion = await openai.chat.completions.create({
-      // GPT-4o-mini: cheapest vision-capable model. ~$0.15/1M input tokens.
-      // Good at OCR/text extraction from document images.
       model: 'gpt-4o-mini',
       messages,
       max_tokens: 2000,
-      temperature: 0.1, // low temp for consistent extraction
+      temperature: 0.1,
       response_format: { type: 'json_object' },
     });
 
@@ -216,10 +271,7 @@ export async function POST(req: NextRequest) {
       rate: typeof l.rate === 'number' && !isNaN(l.rate) ? l.rate : 0,
     }));
 
-    return NextResponse.json({
-      ...parsed,
-      remaining: rl.remaining,
-    });
+    return NextResponse.json(parsed);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     console.error('[parse-document] OpenAI error:', message);

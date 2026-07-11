@@ -112,6 +112,8 @@ export function AreaTab() {
           ? `Plan: ${result.planArea.toFixed(2)} ${areaUnit} × ${result.factor.toFixed(4)} pitch factor`
           : undefined,
         stage: 'calc-to-quote',
+        qty: result.actualArea.toFixed(2),
+        unit: result.kind === 'volume' ? volumeUnit : areaUnit,
       },
     });
   }

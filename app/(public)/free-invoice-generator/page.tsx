@@ -21,7 +21,6 @@ interface InvoiceLine {
 
 function InvoiceGeneratorForm() {
   const searchParams = useSearchParams();
-  const refSlug = searchParams.get('ref');
   const amountParam = searchParams.get('amount');
   const clientParam = searchParams.get('client');
 
@@ -277,7 +276,7 @@ function InvoiceGeneratorForm() {
             <div className="mt-4 space-y-2">
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Is this invoice generator really free?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes — completely free with no signup. Generate as many invoices as you need. Download as PDF using your browser's print function.</p></div>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes — completely free with no signup. Generate as many invoices as you need. Download as PDF using your browser&apos;s print function.</p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Can I turn a quote into an invoice?</summary>
@@ -285,7 +284,7 @@ function InvoiceGeneratorForm() {
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Does the invoice include VAT?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">VAT is calculated at 20% by default. You can adjust line item rates to work ex-VAT or inc-VAT as needed. If you're not VAT-registered, simply set rates to zero.</p></div>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">VAT is calculated at 20% by default. You can adjust line item rates to work ex-VAT or inc-VAT as needed. If you&apos;re not VAT-registered, simply set rates to zero.</p></div>
               </details>
             </div>
           </div>

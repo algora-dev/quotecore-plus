@@ -21,7 +21,7 @@ export function MembersTab() {
   const slope = cfg.slopeWord;
   const memberWord = cfg.birdsmouthMemberWord ?? 'Rafter';
 
-  const [subTab, setSubTab] = useState<SubTab>('member');
+  const [subTab, setSubTab] = useState<SubTab>(cfg.showBirdsmouth ? 'birdsmouth' : 'member');
   const [mode, setMode] = useState<PitchMode>('degrees');
   const [pitchDeg, setPitchDeg] = useState(cfg.defaultSlope);
   const [ratioX, setRatioX] = useState('1');
