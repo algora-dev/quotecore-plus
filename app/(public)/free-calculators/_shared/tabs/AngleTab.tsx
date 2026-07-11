@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTradeConfig } from '../TradeCalculator';
 import {
   calculateRidgeAngle,
   calculateHipValleyMultiPitch,
@@ -40,7 +41,11 @@ const TOOLTIPS: Record<string, { title: string; description: string }> = {
   },
 };
 
-export function AngleFinderTab() {
+export function AngleTab() {
+  const config = useTradeConfig();
+  const cfg = config.angle;
+  if (!cfg) throw new Error(`Trade "${config.slug}" uses the angle tab without an angle config`);
+
   const [calcType, setCalcType] = useState<CalcType>('hipValley');
   const [rafterSubType, setRafterSubType] = useState<RafterSubType>('ridge');
 
@@ -103,10 +108,8 @@ export function AngleFinderTab() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">Angle Finder</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Calculate roof angles for flashing, bends, and junctions
-        </p>
+        <h2 className="text-lg font-semibold text-slate-900">{cfg.heading}</h2>
+        <p className="mt-1 text-sm text-slate-500">{cfg.subtitle}</p>
       </div>
 
       {/* Calculator type */}

@@ -1,27 +1,32 @@
 'use client';
 
 import { useState } from 'react';
-import { useUnitSystem, useSharedState } from '../RoofingCalculator';
-import { degreesToRatio, ratioToDegrees, rafterPitchFactor } from '../../lib/calculator';
-
-const RAD = Math.PI / 180;
-const COMMON_PITCHES = [10, 15, 20, 25, 30, 35, 40, 45];
+import { useUnitSystem, useSharedState, useTradeConfig } from '../TradeCalculator';
+import { degreesToRatio, ratioToDegrees, rafterPitchFactor } from '../../../lib/calculator';
 
 type PitchMode = 'degrees' | 'ratio';
 type MeasureMode = 'plan' | 'actual';
 type InputMode = 'dims' | 'direct';
 
-export function RoofAreaTab() {
+export function AreaTab() {
   const { areaUnit, lengthUnit } = useUnitSystem();
   const { setShared } = useSharedState();
+  const config = useTradeConfig();
+  const cfg = config.area;
+  if (!cfg) throw new Error(`Trade "${config.slug}" uses the area tab without an area config`);
+
+  const slope = cfg.slopeWord;
 
   const [measureMode, setMeasureMode] = useState<MeasureMode>('plan');
   const [inputMode, setInputMode] = useState<InputMode>('dims');
   const [pitchMode, setPitchMode] = useState<PitchMode>('degrees');
 
-  const [pitchDeg, setPitchDeg] = useState('25');
+  const [pitchDeg, setPitchDeg] = useState(cfg.defaultSlope);
   const [ratioX, setRatioX] = useState('1');
-  const [ratioY, setRatioY] = useState('2.144');
+  const [ratioY, setRatioY] = useState(() => {
+    const r = degreesToRatio(parseFloat(cfg.defaultSlope) || 0);
+    return r.y ? r.y.toFixed(3) : '0';
+  });
   const [width, setWidth] = useState('10');
   const [length, setLength] = useState('8');
   const [directArea, setDirectArea] = useState('');
@@ -50,10 +55,10 @@ export function RoofAreaTab() {
   }
 
   function calculate() {
-    const d = parseFloat(pitchDeg) || 0;
-    const factor = rafterPitchFactor(d);
+    const d = cfg!.useSlopeFactor ? parseFloat(pitchDeg) || 0 : 0;
+    const factor = cfg!.useSlopeFactor ? rafterPitchFactor(d) : 1;
 
-    if (measureMode === 'plan') {
+    if (measureMode === 'plan' || !cfg!.useSlopeFactor) {
       let planArea = 0;
       if (inputMode === 'dims') {
         const w = parseFloat(width) || 0;
@@ -65,7 +70,7 @@ export function RoofAreaTab() {
       const actualArea = planArea * factor;
       setResult({ planArea, factor, actualArea, deg: d, mode: 'plan' });
     } else {
-      // Actual mode — user enters the actual roof area directly
+      // Actual mode — user enters the actual surface area directly
       const actualArea = parseFloat(directArea) || 0;
       const planArea = factor > 0 ? actualArea / factor : actualArea;
       setResult({ planArea, factor, actualArea, deg: d, mode: 'actual' });
@@ -78,46 +83,47 @@ export function RoofAreaTab() {
     }
   }
 
-  const showPitch = measureMode === 'plan';
+  const showModeToggle = cfg.useSlopeFactor;
+  const showPitch = cfg.useSlopeFactor && measureMode === 'plan';
 
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">Roof Area Calculator</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Calculate actual roof surface area from plan dimensions and pitch
-        </p>
+        <h2 className="text-lg font-semibold text-slate-900">{cfg.heading}</h2>
+        <p className="mt-1 text-sm text-slate-500">{cfg.subtitle}</p>
       </div>
 
       {/* Plan / Actual toggle */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1">
-          <button
-            onClick={() => setMeasureMode('plan')}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-              measureMode === 'plan' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            Plan
-          </button>
-          <button
-            onClick={() => setMeasureMode('actual')}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-              measureMode === 'actual' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            Actual
-          </button>
+      {showModeToggle && (
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1">
+            <button
+              onClick={() => setMeasureMode('plan')}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                measureMode === 'plan' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Plan
+            </button>
+            <button
+              onClick={() => setMeasureMode('actual')}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                measureMode === 'actual' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Actual
+            </button>
+          </div>
+          <span className="text-xs text-slate-400">
+            {measureMode === 'plan' ? cfg.planHint : cfg.actualHint}
+          </span>
         </div>
-        <span className="text-xs text-slate-400">
-          {measureMode === 'plan' ? 'Enter plan-view dimensions, pitch applied' : 'Enter actual roof area directly'}
-        </span>
-      </div>
+      )}
 
-      {/* Pitch input (only in plan mode) */}
+      {/* Slope input (only in plan mode, when factor applies) */}
       {showPitch && (
         <div className="space-y-3">
-          {/* Pitch/Ratio toggle */}
+          {/* Degrees/Ratio toggle */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1">
               <button
@@ -142,7 +148,7 @@ export function RoofAreaTab() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {pitchMode === 'degrees' ? (
               <div>
-                <label className="text-sm font-medium text-slate-700">Pitch (degrees)</label>
+                <label className="text-sm font-medium text-slate-700">{slope} (degrees)</label>
                 <input
                   type="number"
                   value={pitchDeg}
@@ -153,7 +159,7 @@ export function RoofAreaTab() {
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                 />
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  {COMMON_PITCHES.map((p) => (
+                  {cfg.commonSlopes.map((p) => (
                     <button
                       key={p}
                       onClick={() => handleDegChange(String(p))}
@@ -170,7 +176,7 @@ export function RoofAreaTab() {
               </div>
             ) : (
               <div>
-                <label className="text-sm font-medium text-slate-700">Pitch ratio (rise : run)</label>
+                <label className="text-sm font-medium text-slate-700">{slope} ratio (rise : run)</label>
                 <div className="mt-1 flex items-center gap-2">
                   <input
                     type="number"
@@ -214,7 +220,7 @@ export function RoofAreaTab() {
               inputMode === 'direct' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
-            {measureMode === 'plan' ? `Area (${areaUnit})` : `Area (${areaUnit})`}
+            Area ({areaUnit})
           </button>
         </div>
       </div>
@@ -222,7 +228,7 @@ export function RoofAreaTab() {
       {/* Measurement inputs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {inputMode === 'dims' ? (
-          measureMode === 'plan' && (
+          (measureMode === 'plan' || !cfg.useSlopeFactor) && (
             <>
               <div>
                 <label className="text-sm font-medium text-slate-700">Width ({lengthUnit})</label>
@@ -251,7 +257,9 @@ export function RoofAreaTab() {
         ) : (
           <div className="sm:col-span-1">
             <label className="text-sm font-medium text-slate-700">
-              {measureMode === 'plan' ? `Plan area (${areaUnit})` : `Actual roof area (${areaUnit})`}
+              {measureMode === 'plan' || !cfg.useSlopeFactor
+                ? `${cfg.planLabel} (${areaUnit})`
+                : `${cfg.actualLabel} (${areaUnit})`}
             </label>
             <input
               type="number"
@@ -267,8 +275,8 @@ export function RoofAreaTab() {
       </div>
 
       {/* In actual mode with dims, show a note */}
-      {measureMode === 'actual' && inputMode === 'dims' && (
-        <p className="text-xs text-slate-400">In Actual mode, use the Area input to enter the measured roof surface area directly.</p>
+      {cfg.useSlopeFactor && measureMode === 'actual' && inputMode === 'dims' && (
+        <p className="text-xs text-slate-400">{cfg.actualDimsNote}</p>
       )}
 
       {/* Calculate button */}
@@ -286,33 +294,33 @@ export function RoofAreaTab() {
       {result && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {result.mode === 'plan' && (
+            {cfg.useSlopeFactor && result.mode === 'plan' && (
               <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
-                <p className="text-xs text-slate-500">Plan area</p>
+                <p className="text-xs text-slate-500">{cfg.planLabel}</p>
                 <p className="text-lg font-semibold text-slate-900">{result.planArea.toFixed(2)} {areaUnit}</p>
               </div>
             )}
-            {result.mode === 'plan' && (
+            {cfg.useSlopeFactor && result.mode === 'plan' && (
               <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
-                <p className="text-xs text-slate-500">Pitch factor</p>
+                <p className="text-xs text-slate-500">{slope} factor</p>
                 <p className="text-lg font-semibold text-slate-900">{result.factor.toFixed(4)}</p>
                 <p className="mt-1 text-xs text-slate-400">1 / cos({result.deg}°)</p>
               </div>
             )}
-            {result.mode === 'actual' && (
+            {cfg.useSlopeFactor && result.mode === 'actual' && (
               <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
-                <p className="text-xs text-slate-500">Plan area (derived)</p>
+                <p className="text-xs text-slate-500">{cfg.planLabel} (derived)</p>
                 <p className="text-lg font-semibold text-slate-900">{result.planArea.toFixed(2)} {areaUnit}</p>
               </div>
             )}
-            {result.mode === 'actual' && (
+            {cfg.useSlopeFactor && result.mode === 'actual' && (
               <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
-                <p className="text-xs text-slate-500">Pitch factor</p>
+                <p className="text-xs text-slate-500">{slope} factor</p>
                 <p className="text-lg font-semibold text-slate-900">{result.factor.toFixed(4)}</p>
               </div>
             )}
             <div className="rounded-xl bg-orange-50/50 border border-orange-100 p-4">
-              <p className="text-xs text-slate-500">Actual roof area</p>
+              <p className="text-xs text-slate-500">{cfg.actualLabel}</p>
               <p className="text-2xl font-bold text-slate-900">{result.actualArea.toFixed(2)} {areaUnit}</p>
             </div>
           </div>
@@ -324,13 +332,17 @@ export function RoofAreaTab() {
             </summary>
             <div className="mt-2 rounded-lg bg-slate-50 border border-slate-100 p-4">
               <p className="text-xs text-slate-600 font-mono leading-relaxed">
-                {result.mode === 'plan' ? (
+                {(!cfg.useSlopeFactor
+                  ? (inputMode === 'dims'
+                      ? `${cfg.planLabel} = width × length = ${width} × ${length} = ${result.actualArea.toFixed(2)} ${areaUnit}`
+                      : `${cfg.planLabel} = ${result.actualArea.toFixed(2)} ${areaUnit} (entered directly)`)
+                  : result.mode === 'plan' ? (
                   inputMode === 'dims'
-                    ? `Plan area = width × length = ${width} × ${length} = ${result.planArea.toFixed(2)} ${areaUnit}\nPitch factor = 1 / cos(${result.deg}°) = ${result.factor.toFixed(4)}\nActual roof area = ${result.planArea.toFixed(2)} × ${result.factor.toFixed(4)} = ${result.actualArea.toFixed(2)} ${areaUnit}`
-                    : `Plan area = ${result.planArea.toFixed(2)} ${areaUnit}\nPitch factor = 1 / cos(${result.deg}°) = ${result.factor.toFixed(4)}\nActual roof area = ${result.planArea.toFixed(2)} × ${result.factor.toFixed(4)} = ${result.actualArea.toFixed(2)} ${areaUnit}`
+                    ? `${cfg.planLabel} = width × length = ${width} × ${length} = ${result.planArea.toFixed(2)} ${areaUnit}\n${slope} factor = 1 / cos(${result.deg}°) = ${result.factor.toFixed(4)}\n${cfg.actualLabel} = ${result.planArea.toFixed(2)} × ${result.factor.toFixed(4)} = ${result.actualArea.toFixed(2)} ${areaUnit}`
+                    : `${cfg.planLabel} = ${result.planArea.toFixed(2)} ${areaUnit}\n${slope} factor = 1 / cos(${result.deg}°) = ${result.factor.toFixed(4)}\n${cfg.actualLabel} = ${result.planArea.toFixed(2)} × ${result.factor.toFixed(4)} = ${result.actualArea.toFixed(2)} ${areaUnit}`
                 ) : (
-                  `Actual roof area = ${result.actualArea.toFixed(2)} ${areaUnit} (entered directly)\nPitch factor = ${result.factor.toFixed(4)}\nPlan area = ${result.actualArea.toFixed(2)} / ${result.factor.toFixed(4)} = ${result.planArea.toFixed(2)} ${areaUnit}`
-                ).split('\\n').map((line, i) => (
+                  `${cfg.actualLabel} = ${result.actualArea.toFixed(2)} ${areaUnit} (entered directly)\n${slope} factor = ${result.factor.toFixed(4)}\n${cfg.planLabel} = ${result.actualArea.toFixed(2)} / ${result.factor.toFixed(4)} = ${result.planArea.toFixed(2)} ${areaUnit}`
+                )).split('\n').map((line, i) => (
                   <span key={i}>{line}<br /></span>
                 ))}
               </p>
@@ -343,7 +355,7 @@ export function RoofAreaTab() {
               onClick={useForPricing}
               className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[#FF6B35] hover:text-[#FF6B35]"
             >
-              Use this area for pricing
+              {cfg.useForPricingLabel}
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
               </svg>

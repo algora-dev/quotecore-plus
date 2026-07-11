@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useUnitSystem, useSharedState } from '../RoofingCalculator';
+import { useUnitSystem, useSharedState, useTradeConfig } from '../TradeCalculator';
+import { signupHref } from '../types';
 import type { MeasurementType, WasteType, PitchType, PricingStrategy } from '@/app/lib/types';
 
 // ─── All measurement types from the app ──────────────
@@ -59,20 +60,23 @@ interface ComponentSpec {
   pitchDegrees: string;
 }
 
-export function DraftSmartComponentTab() {
+export function SmartComponentTab() {
   const { areaUnit, lengthUnit, volumeUnit } = useUnitSystem();
   const { shared } = useSharedState();
+  const config = useTradeConfig();
+  const cfg = config.smart;
+  const signup = signupHref(config);
 
   const [spec, setSpec] = useState<ComponentSpec>({
-    name: 'Concrete tiles',
-    measurementType: 'area',
+    name: cfg.defaultName,
+    measurementType: cfg.defaultMeasurementType as MeasurementType,
     wasteType: 'percent',
-    wasteValue: '10',
-    pricePerUnit: '2.50',
+    wasteValue: cfg.defaultWasteValue,
+    pricePerUnit: cfg.defaultPricePerUnit,
     pricingStrategy: 'per_unit',
     packSize: '',
     labourAmount: '',
-    pitchEnabled: true,
+    pitchEnabled: cfg.defaultPitchEnabled,
     pitchType: 'rafter',
     pitchDegrees: '25',
   });
@@ -99,7 +103,6 @@ export function DraftSmartComponentTab() {
 
   const [showSavePopup, setShowSavePopup] = useState(false);
   const [showSyncHint, setShowSyncHint] = useState(false);
-  const [showTooltip, setShowTooltip] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Pre-fill area from shared state
@@ -109,6 +112,15 @@ export function DraftSmartComponentTab() {
       setSpec((s) => ({ ...s, measurementType: 'area' }));
     }
   }, [shared.calculatedArea]);
+
+  // Pre-fill volume from shared state (volume tab → smart component)
+  useEffect(() => {
+    if (shared.calculatedVolume) {
+      setAreaInput(shared.calculatedVolume);
+      setEntryMode('direct');
+      setSpec((s) => ({ ...s, measurementType: 'volume_3d' }));
+    }
+  }, [shared.calculatedVolume]);
 
   const update = (key: keyof ComponentSpec, value: string | boolean) => {
     setSpec((s) => ({ ...s, [key]: value }));
@@ -203,6 +215,7 @@ export function DraftSmartComponentTab() {
         return () => clearTimeout(timer);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result?.totalCost]);
 
   const mt = spec.measurementType;
@@ -222,7 +235,7 @@ export function DraftSmartComponentTab() {
           <Field label={`Length (${lengthUnit})`} value={dimB} onChange={setDimB} />
         </div>
       ) : (
-        <Field label={`Area (${areaUnit})`} value={areaInput} onChange={setAreaInput} placeholder="Enter area or use from roof area tab" />
+        <Field label={`Area (${areaUnit})`} value={areaInput} onChange={setAreaInput} placeholder={cfg.areaPlaceholder} />
       );
     }
     if (isLxhType) {
@@ -259,10 +272,8 @@ export function DraftSmartComponentTab() {
   return (
     <div ref={panelRef} className="space-y-5">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">Draft Smart Component</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Build a component with pricing, waste, and labour rules, then calculate cost from measurements
-        </p>
+        <h2 className="text-lg font-semibold text-slate-900">{cfg.heading}</h2>
+        <p className="mt-1 text-sm text-slate-500">{cfg.subtitle}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -454,8 +465,9 @@ export function DraftSmartComponentTab() {
 
           {renderMeasurementInputs()}
 
-          {shared.calculatedArea && areaInput === shared.calculatedArea && (
-            <p className="text-xs text-slate-400">Pre-filled from roof area calculation</p>
+          {((shared.calculatedArea && areaInput === shared.calculatedArea) ||
+            (shared.calculatedVolume && areaInput === shared.calculatedVolume)) && (
+            <p className="text-xs text-slate-400">{cfg.prefillNote}</p>
           )}
 
           {/* Calculate button */}
@@ -551,7 +563,7 @@ export function DraftSmartComponentTab() {
                 Maybe later
               </button>
               <a
-                href="/signup?ref=free-roofing-calculator"
+                href={signup}
                 className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800"
               >
                 Create free account
@@ -568,7 +580,7 @@ export function DraftSmartComponentTab() {
             Your calculations are saved on this device. Create an account to sync across devices.
           </p>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <a href="/signup?ref=free-roofing-calculator" className="text-xs font-semibold text-[#FF6B35] hover:text-[#ff5722]">
+            <a href={signup} className="text-xs font-semibold text-[#FF6B35] hover:text-[#ff5722]">
               Sync now
             </a>
             <button

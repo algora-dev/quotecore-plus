@@ -1,22 +1,30 @@
 'use client';
 
 import { useState } from 'react';
-import { useUnitSystem } from '../RoofingCalculator';
-import { degreesToRatio, ratioToDegrees, rafterLength, rafterPitchFactor, hipValleyPitchFactor, hipValleyLength } from '../../lib/calculator';
+import { useUnitSystem, useTradeConfig } from '../TradeCalculator';
+import { degreesToRatio, ratioToDegrees, rafterLength, rafterPitchFactor, hipValleyPitchFactor, hipValleyLength } from '../../../lib/calculator';
 
 const RAD = Math.PI / 180;
-const COMMON_PITCHES = [10, 15, 20, 25, 30, 35, 40, 45];
 
 type PitchMode = 'degrees' | 'ratio';
-type SubTab = 'rafter' | 'hip-valley';
+type SubTab = 'member' | 'hip-valley';
 
-export function PitchRafterTab() {
+export function MembersTab() {
   const { lengthUnit } = useUnitSystem();
-  const [subTab, setSubTab] = useState<SubTab>('rafter');
+  const config = useTradeConfig();
+  const cfg = config.members;
+  if (!cfg) throw new Error(`Trade "${config.slug}" uses the members tab without a members config`);
+
+  const slope = cfg.slopeWord;
+
+  const [subTab, setSubTab] = useState<SubTab>('member');
   const [mode, setMode] = useState<PitchMode>('degrees');
-  const [pitchDeg, setPitchDeg] = useState('25');
+  const [pitchDeg, setPitchDeg] = useState(cfg.defaultSlope);
   const [ratioX, setRatioX] = useState('1');
-  const [ratioY, setRatioY] = useState('2.144');
+  const [ratioY, setRatioY] = useState(() => {
+    const r = degreesToRatio(parseFloat(cfg.defaultSlope) || 0);
+    return r.y ? r.y.toFixed(3) : '0';
+  });
   const [span, setSpan] = useState('10');
   const [planLength, setPlanLength] = useState('7');
   const [result, setResult] = useState<null | {
@@ -58,30 +66,30 @@ export function PitchRafterTab() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">Rafter / Hip & Valley</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Calculate rafter and hip/valley lengths from pitch and span
-        </p>
+        <h2 className="text-lg font-semibold text-slate-900">{cfg.heading}</h2>
+        <p className="mt-1 text-sm text-slate-500">{cfg.subtitle}</p>
       </div>
 
-      <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 w-fit">
-        <button
-          onClick={() => setSubTab('rafter')}
-          className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-            subTab === 'rafter' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          Rafter
-        </button>
-        <button
-          onClick={() => setSubTab('hip-valley')}
-          className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-            subTab === 'hip-valley' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          Hip / Valley
-        </button>
-      </div>
+      {cfg.showHipValley && (
+        <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 w-fit">
+          <button
+            onClick={() => setSubTab('member')}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+              subTab === 'member' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {cfg.memberLabel}
+          </button>
+          <button
+            onClick={() => setSubTab('hip-valley')}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+              subTab === 'hip-valley' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Hip / Valley
+          </button>
+        </div>
+      )}
 
       <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 w-fit">
         <button
@@ -105,7 +113,7 @@ export function PitchRafterTab() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {mode === 'degrees' ? (
           <div>
-            <label className="text-sm font-medium text-slate-700">Pitch (degrees)</label>
+            <label className="text-sm font-medium text-slate-700">{slope} (degrees)</label>
             <input
               type="number"
               value={pitchDeg}
@@ -116,7 +124,7 @@ export function PitchRafterTab() {
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
             />
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {COMMON_PITCHES.map((p) => (
+              {cfg.commonSlopes.map((p) => (
                 <button
                   key={p}
                   onClick={() => handleDegChange(String(p))}
@@ -133,7 +141,7 @@ export function PitchRafterTab() {
           </div>
         ) : (
           <div>
-            <label className="text-sm font-medium text-slate-700">Pitch ratio (rise : run)</label>
+            <label className="text-sm font-medium text-slate-700">{slope} ratio (rise : run)</label>
             <div className="mt-1 flex items-center gap-2">
               <input
                 type="number"
@@ -157,9 +165,9 @@ export function PitchRafterTab() {
           </div>
         )}
 
-        {subTab === 'rafter' ? (
+        {subTab === 'member' ? (
           <div>
-            <label className="text-sm font-medium text-slate-700">Span ({lengthUnit})</label>
+            <label className="text-sm font-medium text-slate-700">{cfg.spanLabel} ({lengthUnit})</label>
             <input
               type="number"
               value={span}
@@ -168,11 +176,11 @@ export function PitchRafterTab() {
               step={0.1}
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
             />
-            <p className="mt-2 text-xs text-slate-400">Plan-view distance from wall to ridge (one rafter)</p>
+            <p className="mt-2 text-xs text-slate-400">{cfg.spanHint}</p>
           </div>
         ) : (
           <div>
-            <label className="text-sm font-medium text-slate-700">Plan length ({lengthUnit})</label>
+            <label className="text-sm font-medium text-slate-700">{cfg.hipPlanLabel ?? 'Plan length'} ({lengthUnit})</label>
             <input
               type="number"
               value={planLength}
@@ -181,7 +189,7 @@ export function PitchRafterTab() {
               step={0.1}
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
             />
-            <p className="mt-2 text-xs text-slate-400">Plan-view diagonal from corner to ridge</p>
+            <p className="mt-2 text-xs text-slate-400">{cfg.hipPlanHint ?? 'Plan-view diagonal from corner to ridge'}</p>
           </div>
         )}
       </div>
@@ -198,7 +206,7 @@ export function PitchRafterTab() {
 
       {result && (
         <div className="space-y-4">
-          {subTab === 'rafter' ? (
+          {subTab === 'member' ? (
             <>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
@@ -206,15 +214,17 @@ export function PitchRafterTab() {
                   <p className="text-base font-semibold text-slate-900">{result.ratio.x}:{result.ratio.y.toFixed(3)}</p>
                 </div>
                 <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
-                  <p className="text-xs text-slate-500">Rafter factor</p>
+                  <p className="text-xs text-slate-500">{cfg.memberLabel} factor</p>
                   <p className="text-base font-semibold text-slate-900">{result.rafterFactor.toFixed(4)}</p>
                 </div>
-                <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
-                  <p className="text-xs text-slate-500">Hip/valley factor</p>
-                  <p className="text-base font-semibold text-slate-900">{result.hipFactor.toFixed(4)}</p>
-                </div>
+                {cfg.showHipValley && (
+                  <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                    <p className="text-xs text-slate-500">Hip/valley factor</p>
+                    <p className="text-base font-semibold text-slate-900">{result.hipFactor.toFixed(4)}</p>
+                  </div>
+                )}
                 <div className="rounded-xl bg-orange-50/50 border border-orange-100 p-4">
-                  <p className="text-xs text-slate-500">Rafter length ({lengthUnit})</p>
+                  <p className="text-xs text-slate-500">{cfg.memberLabel} length ({lengthUnit})</p>
                   <p className="text-lg font-bold text-slate-900">{result.rafterLen.toFixed(3)}</p>
                 </div>
               </div>
@@ -227,24 +237,34 @@ export function PitchRafterTab() {
                   <p className="text-xs text-slate-600 font-mono leading-relaxed">
                     Ratio = 1 : 1 / tan({result.deg}°) = 1 : {result.ratio.y.toFixed(3)}
                     <br />
-                    Rafter factor = 1 / cos({result.deg}°) = {result.rafterFactor.toFixed(4)}
+                    {cfg.memberLabel} factor = 1 / cos({result.deg}°) = {result.rafterFactor.toFixed(4)}
                     <br />
-                    Rafter length = span / cos({result.deg}°)
+                    {cfg.memberLabel} length = {cfg.spanLabel.toLowerCase()} / cos({result.deg}°)
                     <br />
-                    Rafter length = {span} / {Math.cos(result.deg * RAD).toFixed(4)} = <strong>{result.rafterLen.toFixed(3)} {lengthUnit}</strong>
+                    {cfg.memberLabel} length = {span} / {Math.cos(result.deg * RAD).toFixed(4)} = <strong>{result.rafterLen.toFixed(3)} {lengthUnit}</strong>
                   </p>
                 </div>
               </details>
 
               <div className="border-t border-slate-100 pt-4">
-                <RafterDiagram degrees={result.deg} span={parseFloat(span) || 0} rafterLen={result.rafterLen} unit={lengthUnit} />
+                <MemberDiagram
+                  degrees={result.deg}
+                  span={parseFloat(span) || 0}
+                  rafterLen={result.rafterLen}
+                  unit={lengthUnit}
+                  memberLabel={cfg.memberLabel}
+                  spanLabel={cfg.spanLabel}
+                  topLabel={cfg.diagramTopLabel ?? 'Top'}
+                  baseLabel={cfg.diagramBaseLabel ?? 'Base'}
+                  caption={cfg.diagramCaption.replace('{deg}', result.deg.toFixed(1))}
+                />
               </div>
             </>
           ) : (
             <>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
-                  <p className="text-xs text-slate-500">Rafter factor</p>
+                  <p className="text-xs text-slate-500">{cfg.memberLabel} factor</p>
                   <p className="text-base font-semibold text-slate-900">{result.rafterFactor.toFixed(4)}</p>
                 </div>
                 <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
@@ -287,9 +307,19 @@ export function PitchRafterTab() {
   );
 }
 
-// ─── Rafter diagram (geometrically exact) ────────────
+// ─── Member diagram (geometrically exact) ────────────
 
-function RafterDiagram({ degrees, span, rafterLen, unit }: { degrees: number; span: number; rafterLen: number; unit: string }) {
+function MemberDiagram({ degrees, span, rafterLen, unit, memberLabel, spanLabel, topLabel, baseLabel, caption }: {
+  degrees: number;
+  span: number;
+  rafterLen: number;
+  unit: string;
+  memberLabel: string;
+  spanLabel: string;
+  topLabel: string;
+  baseLabel: string;
+  caption: string;
+}) {
   const deg = Math.max(0, Math.min(89, degrees));
   const rad = (deg * Math.PI) / 180;
 
@@ -328,14 +358,14 @@ function RafterDiagram({ degrees, span, rafterLen, unit }: { degrees: number; sp
           {deg.toFixed(1)}°
         </text>
         <circle cx={B.x} cy={B.y} r="3.5" fill="#3b82f6" />
-        <text x={B.x - 6} y={B.y - 6} textAnchor="end" className="fill-slate-600" style={{ fontSize: '9px', fontWeight: 500 }}>Ridge</text>
+        <text x={B.x - 6} y={B.y - 6} textAnchor="end" className="fill-slate-600" style={{ fontSize: '9px', fontWeight: 500 }}>{topLabel}</text>
         <circle cx={C.x} cy={C.y} r="3.5" fill="#94a3b8" />
-        <text x={C.x + 6} y={C.y + 12} className="fill-slate-400" style={{ fontSize: '9px' }}>Eaves</text>
+        <text x={C.x + 6} y={C.y + 12} className="fill-slate-400" style={{ fontSize: '9px' }}>{baseLabel}</text>
         <line x1={A.x} y1={groundY + 18} x2={C.x} y2={groundY + 18} stroke="#94a3b8" strokeWidth="1" strokeDasharray="4 2" />
         <line x1={A.x} y1={groundY + 14} x2={A.x} y2={groundY + 22} stroke="#94a3b8" strokeWidth="1" />
         <line x1={C.x} y1={groundY + 14} x2={C.x} y2={groundY + 22} stroke="#94a3b8" strokeWidth="1" />
         <text x={(A.x + C.x) / 2} y={groundY + 32} textAnchor="middle" className="fill-slate-500" style={{ fontSize: '10px', fontWeight: 500 }}>
-          Span: {span.toFixed(2)} {unit}
+          {spanLabel}: {span.toFixed(2)} {unit}
         </text>
         <line x1={A.x - 16} y1={A.y} x2={A.x - 16} y2={B.y} stroke="#94a3b8" strokeWidth="1" strokeDasharray="4 2" />
         <line x1={A.x - 12} y1={A.y} x2={A.x - 20} y2={A.y} stroke="#94a3b8" strokeWidth="1" />
@@ -344,12 +374,10 @@ function RafterDiagram({ degrees, span, rafterLen, unit }: { degrees: number; sp
           Rise: {(span * Math.tan(rad)).toFixed(2)} {unit}
         </text>
         <text x={(B.x + C.x) / 2 + 4} y={(B.y + C.y) / 2 - 8} textAnchor="middle" className="fill-slate-700" style={{ fontSize: '11px', fontWeight: 600 }}>
-          Rafter: {rafterLen.toFixed(2)} {unit}
+          {memberLabel}: {rafterLen.toFixed(2)} {unit}
         </text>
       </svg>
-      <p className="text-xs text-slate-400">Rafter at {deg.toFixed(1)}° pitch — span is wall to ridge (one rafter)</p>
+      <p className="text-xs text-slate-400">{caption}</p>
     </div>
   );
 }
-
-// Old HipValleyDiagram and SlopeArrow removed — replaced by HipValleyHouseDiagram component
