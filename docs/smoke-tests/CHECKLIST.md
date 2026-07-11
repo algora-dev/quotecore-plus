@@ -9,6 +9,14 @@
 - [ ] Labels: Seat width above the horizontal dotted line · Heel left of the vertical dotted line · Notch inside the void right of the corner · A right of the top-right cut · B below the lower-left cut — nothing overlapping any line
 - [ ] Blue arcs at BOTH cut corners; check 22.5°, 40°, and 60° pitches — text stays legible (white halo) even where an orange line passes near
 
+**N. AI image upload — free quote generator (new on dev, 2026-07-11, `7427d0c`)**
+- [ ] Upload zone visible on /free-quote-generator above the form (drag-drop or click, accepts PNG/JPEG/WebP/PDF, max 10MB)
+- [ ] Upload a photo/screenshot of a quote → AI populates company name, client details, date, line items, notes — form is editable after population
+- [ ] Mobile: camera capture works (capture=environment attribute)
+- [ ] Rate limit: after 5 uploads from same IP, shows 429 error message
+- [ ] Confidence banner: shows blue info banner with AI confidence level + any warnings
+- [ ] Large image auto-compresses (2000px max, JPEG 0.8) before upload
+
 **L. Trade calculators — round 3 improvements (new on dev, 2026-07-11, `dc7631e`)**
 - [ ] Area tab Volume mode: W × H × D sub-toggle shows 3 inputs (Width, Height, Depth) → calculates volume automatically; Direct sub-mode still available for direct m³ entry
 - [ ] Bird's Mouth diagram at 50°: entire rafter visible, no clipping — labels for seat width, heel, notch, A/B angles, rafter depth all visible
