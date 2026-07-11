@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { TRADE_CALCULATORS, HUB_BLURBS } from './configs/registry';
 import { ROOFING_SLUG_CONFIGS } from './configs/roofingSlugRegistry';
+import { CONCRETE_SLUG_CONFIGS } from './configs/concreteSlugs';
+import { CONSTRUCTION_SLUG_CONFIGS } from './configs/constructionSlugs';
+import { SLOPE_SLUG_CONFIGS } from './configs/slopeSlugs';
 
 export default function Page() {
   return (
@@ -46,6 +49,60 @@ export default function Page() {
         <p className="mt-1 text-sm text-slate-500">26 free roofing-specific calculators — pitch, area, rafters, materials, flashing, guttering, and more.</p>
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {ROOFING_SLUG_CONFIGS.map((calc) => (
+            <Link
+              key={calc.slug}
+              href={`/${calc.slug}`}
+              prefetch={false}
+              className="block w-full text-left p-3 bg-white border border-slate-200 rounded-lg hover:border-[#FF6B35] hover:shadow-sm transition-all group"
+            >
+              <p className="text-sm font-medium text-slate-900 group-hover:text-[#FF6B35] transition">{calc.content.h1}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Concrete calculators */}
+      <section className="mt-12">
+        <h2 className="text-lg font-semibold text-slate-900">Concrete calculators</h2>
+        <p className="mt-1 text-sm text-slate-500">Slabs, bags, footings, rebar, and trench calculations.</p>
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {CONCRETE_SLUG_CONFIGS.map((calc) => (
+            <Link
+              key={calc.slug}
+              href={`/${calc.slug}`}
+              prefetch={false}
+              className="block w-full text-left p-3 bg-white border border-slate-200 rounded-lg hover:border-[#FF6B35] hover:shadow-sm transition-all group"
+            >
+              <p className="text-sm font-medium text-slate-900 group-hover:text-[#FF6B35] transition">{calc.content.h1}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Construction calculators */}
+      <section className="mt-12">
+        <h2 className="text-lg font-semibold text-slate-900">Construction calculators</h2>
+        <p className="mt-1 text-sm text-slate-500">Wall areas, paint, tiles, and flooring quantities.</p>
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {CONSTRUCTION_SLUG_CONFIGS.map((calc) => (
+            <Link
+              key={calc.slug}
+              href={`/${calc.slug}`}
+              prefetch={false}
+              className="block w-full text-left p-3 bg-white border border-slate-200 rounded-lg hover:border-[#FF6B35] hover:shadow-sm transition-all group"
+            >
+              <p className="text-sm font-medium text-slate-900 group-hover:text-[#FF6B35] transition">{calc.content.h1}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Slope calculators */}
+      <section className="mt-12">
+        <h2 className="text-lg font-semibold text-slate-900">Slope & drainage calculators</h2>
+        <p className="mt-1 text-sm text-slate-500">Gradient, angle, and pipe fall calculations for drainage and accessibility.</p>
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {SLOPE_SLUG_CONFIGS.map((calc) => (
             <Link
               key={calc.slug}
               href={`/${calc.slug}`}

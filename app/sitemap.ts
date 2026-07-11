@@ -1,6 +1,9 @@
 import type { MetadataRoute } from 'next';
 import { getAllSlugs } from '@/app/lib/docs/tree';
 import { ROOFING_SLUGS } from '@/app/(public)/free-calculators/configs/roofingSlugRegistry';
+import { CONCRETE_SLUGS } from '@/app/(public)/free-calculators/configs/concreteSlugs';
+import { CONSTRUCTION_SLUGS } from '@/app/(public)/free-calculators/configs/constructionSlugs';
+import { SLOPE_SLUGS } from '@/app/(public)/free-calculators/configs/slopeSlugs';
 
 /**
  * Public sitemap. Only includes pages that don't require auth, since the
@@ -32,6 +35,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/free-birds-mouth-calculator`, lastModified: today, changeFrequency: 'monthly', priority: 0.9 },
     ...ROOFING_SLUGS.map((slug) => ({
       url: `${SITE_URL}/${slug}`,
+      lastModified: today,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    })),
+    ...CONCRETE_SLUGS.map((slug) => ({
+      url: `${SITE_URL}/${slug.slug}`,
+      lastModified: today,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    })),
+    ...CONSTRUCTION_SLUGS.map((slug) => ({
+      url: `${SITE_URL}/${slug.slug}`,
+      lastModified: today,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    })),
+    ...SLOPE_SLUGS.map((slug) => ({
+      url: `${SITE_URL}/${slug.slug}`,
       lastModified: today,
       changeFrequency: 'monthly' as const,
       priority: 0.8,
