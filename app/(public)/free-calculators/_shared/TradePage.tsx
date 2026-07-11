@@ -106,10 +106,14 @@ export function TradePage({ config }: { config: TradeConfig }) {
 
 function Tip({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
-      <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">{body}</p>
-    </div>
+    <details className="rounded-xl border border-slate-200 bg-white">
+      <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">
+        {title}
+      </summary>
+      <div className="px-4 pb-4">
+        <p className="text-sm text-slate-600 leading-relaxed">{body}</p>
+      </div>
+    </details>
   );
 }
 

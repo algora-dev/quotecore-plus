@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { getAllSlugs } from '@/app/lib/docs/tree';
+import { ROOFING_SLUGS } from '@/app/(public)/free-calculators/configs/roofingSlugRegistry';
 
 /**
  * Public sitemap. Only includes pages that don't require auth, since the
@@ -29,6 +30,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/free-concrete-calculator`, lastModified: today, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/free-landscaping-calculator`, lastModified: today, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/free-birds-mouth-calculator`, lastModified: today, changeFrequency: 'monthly', priority: 0.9 },
+    ...ROOFING_SLUGS.map((slug) => ({
+      url: `${SITE_URL}/${slug}`,
+      lastModified: today,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    })),
     { url: `${SITE_URL}/free-quote-generator`, lastModified: today, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/free-purchase-order-generator`, lastModified: today, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/free-invoice-generator`, lastModified: today, changeFrequency: 'monthly', priority: 0.9 },

@@ -200,41 +200,37 @@ export function BirdsmouthDiagram({
         <circle cx={sx(Phx)} cy={sy(Phy)} r="3" fill="#FF6B35" />
         <circle cx={sx(Plow.x)} cy={sy(Plow.y)} r="3" fill="#FF6B35" />
 
-        {/* A and B labels */}
-        <text x={sx(C.x) - 10} y={sy(C.y) + 4} textAnchor="end" className="fill-slate-900" style={{ fontSize: '12px', fontWeight: 700 }}>A</text>
-        <text x={sx(C.x) + 8} y={sy(Plow.y) + 4} className="fill-slate-900" style={{ fontSize: '12px', fontWeight: 700 }}>B</text>
-
         {/* Seat width label */}
-        <text x={sx(midSeat.x)} y={sy(midSeat.y) - 7} textAnchor="middle" className="fill-slate-600" style={{ fontSize: '9px', fontWeight: 500 }}>
+        <text x={sx(midSeat.x)} y={sy(midSeat.y) - 7} textAnchor="middle" className="fill-slate-600" style={{ fontSize: '10px', fontWeight: 500 }}>
           Seat width
         </text>
-        <text x={sx(midSeat.x)} y={sy(midSeat.y) + 4} textAnchor="middle" className="fill-slate-500" style={{ fontSize: '9px' }}>
+        <text x={sx(midSeat.x)} y={sy(midSeat.y) + 4} textAnchor="middle" className="fill-slate-500" style={{ fontSize: '10px' }}>
           {seatWidth.toFixed(0)}{unit}
         </text>
 
-        {/* Heel height label */}
-        <text x={sx(midHeel.x) + 10} y={sy(midHeel.y)} textAnchor="start" className="fill-slate-600" style={{ fontSize: '9px', fontWeight: 500 }}>
+        {/* Heel height label — moved left to avoid overlap */}
+        <text x={sx(midHeel.x) - 12} y={sy(midHeel.y) - 2} textAnchor="end" className="fill-slate-600" style={{ fontSize: '10px', fontWeight: 500 }}>
           Heel
         </text>
-        <text x={sx(midHeel.x) + 10} y={sy(midHeel.y) + 10} textAnchor="start" className="fill-slate-500" style={{ fontSize: '9px' }}>
+        <text x={sx(midHeel.x) - 12} y={sy(midHeel.y) + 8} textAnchor="end" className="fill-slate-500" style={{ fontSize: '10px' }}>
           {heelHeight.toFixed(0)}{unit}
         </text>
 
-        {/* Notch depth label */}
-        <text x={sx(midNotch.x) + 6} y={sy(midNotch.y)} textAnchor="start" className="fill-slate-600" style={{ fontSize: '9px', fontWeight: 500 }}>
+        {/* Notch depth label — moved right to avoid overlap */}
+        <text x={sx(midNotch.x) + 22} y={sy(midNotch.y) - 2} textAnchor="start" className="fill-slate-600" style={{ fontSize: '10px', fontWeight: 500 }}>
           Notch
         </text>
-        <text x={sx(midNotch.x) + 6} y={sy(midNotch.y) + 10} textAnchor="start" className="fill-slate-500" style={{ fontSize: '9px' }}>
+        <text x={sx(midNotch.x) + 22} y={sy(midNotch.y) + 8} textAnchor="start" className="fill-slate-500" style={{ fontSize: '10px' }}>
           {notchDepth.toFixed(0)}{unit}
         </text>
 
-        {/* Seat cut angle annotation */}
-        <text x={sx(Phx) + 6} y={sy(Phy) - 6} className="fill-blue-600" style={{ fontSize: '9px', fontWeight: 600 }}>
+        {/* Seat cut angle annotation (blue, 50% larger) */}
+        <text x={sx(Phx) + 10} y={sy(Phy) - 10} className="fill-blue-600" style={{ fontSize: '14px', fontWeight: 700 }}>
           A = {seatAngle.toFixed(1)}°
         </text>
 
-        {/* Plumb cut angle annotation */}
-        <text x={sx(C.x) + 6} y={sy(Plow.y) + 14} className="fill-blue-600" style={{ fontSize: '9px', fontWeight: 600 }}>
+        {/* Plumb cut angle annotation (blue, 50% larger) */}
+        <text x={sx(C.x) + 10} y={sy(Plow.y) + 18} className="fill-blue-600" style={{ fontSize: '14px', fontWeight: 700 }}>
           B = {plumbAngle.toFixed(1)}°
         </text>
 
