@@ -4,6 +4,14 @@
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
 
+**K. Trade calculators — round 2 upgrades (new on dev, 2026-07-11, `b48b62a`)**
+- [ ] Currency dropdown next to Metric/Imperial on all 4 calculators; changing it updates £/$/€ symbols in Draft Smart Component™ prices
+- [ ] Area tab now has W×L | Area | Volume input modes; Volume mode: enter m³ → result card → "Use this volume for pricing" prefills Smart Component
+- [ ] Construction + landscaping: 0° quick-select chip present and is the default (ratio shows 0:0); factor = 1 at 0°
+- [ ] Bird's Mouth sub-tab (roofing + construction Members tab): 35° pitch + 100mm seat → seat cut 35°, plumb cut 55°, heel ≈70mm; warning appears when notch > ⅓ timber depth; diagram shows orange rafter + black dashed A/B cut lines
+- [ ] Angle Finder: construction/landscaping labels read "Angle 1" (not "Roof Pitch 1"); roofing metric unchanged; switching to Imperial renames Pitch→Angle on roofing
+- [ ] Every Angle Finder result now shows the two-ray vertex diagram (90° points up, 180° flat)
+
 **J. Trade calculators — engine refactor + 4 pages + hub (new on dev, 2026-07-11, `720d55b`)**
 - [ ] `/free-roofing-calculator` — looks/behaves identical to before (all 4 tabs, Use-this-area flow, save popup); related cards now show Construction + Concrete
 - [ ] `/free-construction-calculator` — new 4-tab format (Area & Materials, Timber & Stud Lengths, Draft Smart Component™, Angle Finder); stud/member wording, no hip/valley sub-tab
