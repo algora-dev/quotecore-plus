@@ -69,13 +69,13 @@ export const roofingConfig: TradeConfig = {
 
   batten: {
     heading: 'Batten Calculator',
-    subtitle: 'Calculate lineal metres of roofing battens from roof area and batten gauge',
+    subtitle: 'Calculate lineal metres of roofing battens from roof area, pitch, and batten gauge',
     gaugePresets: [
-      { label: 'Concrete tile', mm: 345 },
+      { label: 'Concrete interlocking', mm: 345 },
       { label: 'Clay pantile', mm: 345 },
-      { label: 'Plain tile', mm: 100 },
-      { label: 'Slate (500mm)', mm: 200 },
-      { label: 'Slate (600mm)', mm: 250 },
+      { label: 'Plain tile', mm: 114 },
+      { label: 'Slate 500mm', mm: 200 },
+      { label: 'Slate 600mm', mm: 255 },
     ],
     defaultGauge: '345',
     defaultWastePercent: '10',
