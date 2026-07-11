@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CalcResultPopup } from '../free-calculators/_shared/CalcResultPopup';
 import { PublicFooter } from '@/app/components/PublicFooter';
+import { ImageUpload, type ParsedUploadResult } from './ImageUpload';
 
 /**
  * Free Quote Generator — no signup required.
@@ -50,6 +51,8 @@ function QuoteGeneratorForm() {
 
   const [generated, setGenerated] = useState(false);
   const [popupTrigger, setPopupTrigger] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [aiNotice, setAiNotice] = useState('');
 
   const subtotal = lines.reduce((sum, l) => sum + (l.qty * l.rate), 0);
   const vat = subtotal * 0.2;
@@ -65,6 +68,32 @@ function QuoteGeneratorForm() {
 
   function updateLine(id: string, field: keyof QuoteLine, value: string | number) {
     setLines(lines.map(l => l.id === id ? { ...l, [field]: value } : l));
+  }
+
+  function handleParsed(data: ParsedUploadResult) {
+    if (data.companyName) setCompanyName(data.companyName);
+    if (data.clientName) setClientName(data.clientName);
+    if (data.clientEmail) setClientEmail(data.clientEmail);
+    if (data.clientAddress) setClientAddress(data.clientAddress);
+    if (data.quoteDate) setQuoteDate(data.quoteDate);
+    if (data.validDays) setValidDays(data.validDays);
+    if (data.notes) setNotes(data.notes);
+    if (data.lines && data.lines.length > 0) {
+      setLines(data.lines.map((l, i) => ({
+        id: String(Date.now() + i),
+        description: l.description,
+        qty: l.qty,
+        unit: l.unit,
+        rate: l.rate,
+      })));
+    }
+    const noticeParts: string[] = [];
+    if (data.confidence === 'medium') noticeParts.push('medium confidence');
+    if (data.confidence === 'low') noticeParts.push('low confidence');
+    if (data.warnings && data.warnings.length > 0) noticeParts.push(data.warnings.join('; '));
+    if (data.remaining <= 2) noticeParts.push(`${data.remaining} free scans left today`);
+    setAiNotice(noticeParts.length > 0 ? `AI extraction: ${noticeParts.join(' · ')}` : '');
+    setUploadError('');
   }
 
   function generateQuote() {
@@ -97,8 +126,8 @@ function QuoteGeneratorForm() {
         <section className="mb-8">
           <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Free Quote Generator</h1>
           <p className="mt-2 text-sm text-slate-500 max-w-xl">
-            Create a professional roofing or construction quote in minutes. No signup required —
-            just fill in the details and download as PDF.
+            Create a professional roofing or construction quote in minutes. Upload a photo of your
+            existing quote and AI will fill in the form — or type it manually. No signup required.
           </p>
         </section>
 
@@ -106,6 +135,25 @@ function QuoteGeneratorForm() {
           <>
             {/* Quote form */}
             <div className="space-y-6">
+              {/* AI upload */}
+              <ImageUpload
+                documentType="quote"
+                onParsed={handleParsed}
+                onError={(msg) => { setUploadError(msg); setAiNotice(''); }}
+              />
+
+              {uploadError && (
+                <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-2.5">
+                  <p className="text-sm text-red-700">{uploadError}</p>
+                </div>
+              )}
+
+              {aiNotice && (
+                <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-2.5">
+                  <p className="text-sm text-blue-700">{aiNotice}</p>
+                </div>
+              )}
+
               {/* Your details */}
               <div className="rounded-xl border border-slate-200 bg-white p-5">
                 <h2 className="text-sm font-semibold text-slate-900 mb-4">Your business</h2>
