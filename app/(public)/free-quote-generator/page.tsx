@@ -22,11 +22,47 @@ interface QuoteLine {
   rate: number;
 }
 
+type MeasurementSystem = 'metric' | 'imperial';
+type MeasurementType = 'unit' | 'length' | 'small_length' | 'area' | 'volume';
+
+const MEASUREMENT_OPTIONS: { value: MeasurementType; label: string; metric: string; imperial: string }[] = [
+  { value: 'unit', label: 'Unit', metric: 'pcs', imperial: 'pcs' },
+  { value: 'length', label: 'M / Ft', metric: 'm', imperial: 'ft' },
+  { value: 'small_length', label: 'mm / in', metric: 'mm', imperial: 'in' },
+  { value: 'area', label: 'm² / ft²', metric: 'm²', imperial: 'ft²' },
+  { value: 'volume', label: 'm³ / ft³', metric: 'm³', imperial: 'ft³' },
+];
+
+const CURRENCIES = [
+  { code: 'GBP', symbol: '£', label: 'GBP (£)' },
+  { code: 'USD', symbol: '$', label: 'USD ($)' },
+  { code: 'EUR', symbol: '€', label: 'EUR (€)' },
+  { code: 'AUD', symbol: 'A$', label: 'AUD (A$)' },
+  { code: 'CAD', symbol: 'C$', label: 'CAD (C$)' },
+  { code: 'NZD', symbol: 'NZ$', label: 'NZD (NZ$)' },
+];
+
+function unitForSystem(type: MeasurementType, system: MeasurementSystem): string {
+  const opt = MEASUREMENT_OPTIONS.find(o => o.value === type)!;
+  return system === 'metric' ? opt.metric : opt.imperial;
+}
+
+function formatMoney(amount: number, symbol: string): string {
+  return `${symbol}${amount.toFixed(2)}`;
+}
+
 function QuoteGeneratorForm() {
   const searchParams = useSearchParams();
   const refSlug = searchParams.get('ref');
   const areaParam = searchParams.get('area');
   const pitchParam = searchParams.get('pitch');
+
+  // Settings
+  const [measurementSystem, setMeasurementSystem] = useState<MeasurementSystem>('metric');
+  const [measurementType, setMeasurementType] = useState<MeasurementType>('area');
+  const [currency, setCurrency] = useState(CURRENCIES[0]);
+  const [logo, setLogo] = useState<string | null>(null);
+  const defaultUnit = unitForSystem(measurementType, measurementSystem);
 
   const [companyName, setCompanyName] = useState('');
   const [clientName, setClientName] = useState('');
@@ -35,6 +71,7 @@ function QuoteGeneratorForm() {
   const [quoteDate, setQuoteDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [validDays, setValidDays] = useState('30');
   const [notes, setNotes] = useState('');
+  const [footer, setFooter] = useState('');
 
   const [lines, setLines] = useState<QuoteLine[]>(() => {
     if (areaParam) {
@@ -57,9 +94,41 @@ function QuoteGeneratorForm() {
   const subtotal = lines.reduce((sum, l) => sum + (l.qty * l.rate), 0);
   const vat = subtotal * 0.2;
   const total = subtotal + vat;
+  const sym = currency.symbol;
 
   function addLine() {
-    setLines([...lines, { id: String(Date.now()), description: '', qty: 0, unit: 'm²', rate: 0 }]);
+    setLines([...lines, { id: String(Date.now()), description: '', qty: 0, unit: defaultUnit, rate: 0 }]);
+  }
+
+  function handleMeasurementChange(system: MeasurementSystem, type: MeasurementType) {
+    const newUnit = unitForSystem(type, system);
+    const oldUnit = unitForSystem(measurementType, measurementSystem);
+    setMeasurementSystem(system);
+    setMeasurementType(type);
+    setLines(prev => prev.map(l => l.unit === oldUnit ? { ...l, unit: newUnit } : l));
+  }
+
+  function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return;
+    if (file.size > 5 * 1024 * 1024) { setUploadError('Logo too large. Maximum 5MB.'); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 300;
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) { const r = Math.min(maxDim / w, maxDim / h); w = Math.round(w * r); h = Math.round(h * r); }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (ctx) { ctx.drawImage(img, 0, 0, w, h); setLogo(canvas.toDataURL('image/png')); }
+        else { setLogo(reader.result as string); }
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
   }
 
   function removeLine(id: string) {
@@ -83,7 +152,7 @@ function QuoteGeneratorForm() {
         id: String(Date.now() + i),
         description: l.description,
         qty: l.qty,
-        unit: l.unit,
+        unit: l.unit || defaultUnit,
         rate: l.rate,
       })));
     }
@@ -154,6 +223,54 @@ function QuoteGeneratorForm() {
                 </div>
               )}
 
+              {/* Settings bar */}
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
+                <h2 className="text-sm font-semibold text-slate-900 mb-4">Document settings</h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Measurement system</label>
+                    <div className="mt-1 flex rounded-lg border border-slate-300 overflow-hidden">
+                      <button
+                        onClick={() => handleMeasurementChange('metric', measurementType)}
+                        className={`flex-1 px-3 py-2 text-xs font-medium transition ${measurementSystem === 'metric' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                      >
+                        Metric
+                      </button>
+                      <button
+                        onClick={() => handleMeasurementChange('imperial', measurementType)}
+                        className={`flex-1 px-3 py-2 text-xs font-medium transition ${measurementSystem === 'imperial' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                      >
+                        Imperial
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Default unit type</label>
+                    <select
+                      value={measurementType}
+                      onChange={(e) => handleMeasurementChange(measurementSystem, e.target.value as MeasurementType)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                    >
+                      {MEASUREMENT_OPTIONS.map(o => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Currency</label>
+                    <select
+                      value={currency.code}
+                      onChange={(e) => setCurrency(CURRENCIES.find(c => c.code === e.target.value)!)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                    >
+                      {CURRENCIES.map(c => (
+                        <option key={c.code} value={c.code}>{c.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
               {/* Your details */}
               <div className="rounded-xl border border-slate-200 bg-white p-5">
                 <h2 className="text-sm font-semibold text-slate-900 mb-4">Your business</h2>
@@ -168,14 +285,54 @@ function QuoteGeneratorForm() {
                       placeholder="Your Company Ltd"
                     />
                   </div>
-                  <div>
-                    <label className="text-xs font-medium text-slate-600">Quote date</label>
-                    <input
-                      type="date"
-                      value={quoteDate}
-                      onChange={(e) => setQuoteDate(e.target.value)}
-                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-slate-600">Quote date</label>
+                      <input
+                        type="date"
+                        value={quoteDate}
+                        onChange={(e) => setQuoteDate(e.target.value)}
+                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-600">Valid for</label>
+                      <div className="mt-1 flex items-center gap-1">
+                        <input
+                          type="number"
+                          value={validDays}
+                          onChange={(e) => setValidDays(e.target.value)}
+                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                        />
+                        <span className="text-xs text-slate-500 whitespace-nowrap">days</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Logo upload */}
+                <div className="mt-4">
+                  <label className="text-xs font-medium text-slate-600">Business logo (optional)</label>
+                  <div className="mt-1 flex items-center gap-3">
+                    {logo ? (
+                      <div className="flex items-center gap-3">
+                        <img src={logo} alt="Logo" className="h-12 w-auto rounded border border-slate-200" />
+                        <button
+                          onClick={() => setLogo(null)}
+                          className="text-xs font-medium text-red-500 hover:text-red-600 transition"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-4 py-2 text-xs font-medium text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] transition">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Upload logo
+                        <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                      </label>
+                    )}
+                    <span className="text-xs text-slate-400">Shown in top-right of quote</span>
                   </div>
                 </div>
               </div>
@@ -269,7 +426,7 @@ function QuoteGeneratorForm() {
                         />
                       </div>
                       <div className="col-span-2 sm:col-span-1">
-                        <p className="text-sm font-semibold text-slate-700 pt-2">£{(line.qty * line.rate).toFixed(2)}</p>
+                        <p className="text-sm font-semibold text-slate-700 pt-2">{formatMoney(line.qty * line.rate, sym)}</p>
                       </div>
                       <div className="col-span-1 flex justify-end">
                         <button
@@ -290,15 +447,15 @@ function QuoteGeneratorForm() {
                   <div className="w-full sm:w-64 space-y-1.5">
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-500">Subtotal</span>
-                      <span className="font-medium text-slate-900">£{subtotal.toFixed(2)}</span>
+                      <span className="font-medium text-slate-900">{formatMoney(subtotal, sym)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">VAT (20%)</span>
-                      <span className="font-medium text-slate-900">£{vat.toFixed(2)}</span>
+                      <span className="text-slate-500">Tax (20%)</span>
+                      <span className="font-medium text-slate-900">{formatMoney(vat, sym)}</span>
                     </div>
                     <div className="flex justify-between text-base font-semibold border-t border-slate-200 pt-1.5">
                       <span className="text-slate-900">Total</span>
-                      <span className="text-slate-900">£{total.toFixed(2)}</span>
+                      <span className="text-slate-900">{formatMoney(total, sym)}</span>
                     </div>
                   </div>
                 </div>
@@ -326,6 +483,19 @@ function QuoteGeneratorForm() {
                 </div>
               </div>
 
+              {/* Footer */}
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
+                <label className="text-xs font-medium text-slate-600">Footer</label>
+                <textarea
+                  value={footer}
+                  onChange={(e) => setFooter(e.target.value)}
+                  rows={2}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                  placeholder="Thank you for your business. Contact us for any questions."
+                />
+                <p className="mt-1 text-xs text-slate-400">Appears at the bottom of the quote, below the notes.</p>
+              </div>
+
               {/* Generate */}
               <button
                 onClick={generateQuote}
@@ -347,9 +517,14 @@ function QuoteGeneratorForm() {
                   <h2 className="text-xl font-bold text-slate-900">{companyName || 'Your Company'}</h2>
                   <p className="text-sm text-slate-500 mt-1">Quote</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-slate-500">Date: {quoteDate}</p>
-                  <p className="text-sm text-slate-500">Valid for: {validDays} days</p>
+                <div className="flex items-start gap-4">
+                  {logo && (
+                    <img src={logo} alt="Company logo" className="h-16 w-auto object-contain" />
+                  )}
+                  <div className="text-right">
+                    <p className="text-sm text-slate-500">Date: {quoteDate}</p>
+                    <p className="text-sm text-slate-500">Valid for: {validDays} days</p>
+                  </div>
                 </div>
               </div>
 
@@ -376,8 +551,8 @@ function QuoteGeneratorForm() {
                       <td className="py-2 text-sm text-slate-700">{line.description}</td>
                       <td className="py-2 text-sm text-slate-700 text-right">{line.qty}</td>
                       <td className="py-2 text-sm text-slate-500 text-right">{line.unit}</td>
-                      <td className="py-2 text-sm text-slate-700 text-right">£{line.rate.toFixed(2)}</td>
-                      <td className="py-2 text-sm font-medium text-slate-900 text-right">£{(line.qty * line.rate).toFixed(2)}</td>
+                      <td className="py-2 text-sm text-slate-700 text-right">{formatMoney(line.rate, sym)}</td>
+                      <td className="py-2 text-sm font-medium text-slate-900 text-right">{formatMoney(line.qty * line.rate, sym)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -387,15 +562,15 @@ function QuoteGeneratorForm() {
                 <div className="w-64 space-y-1.5">
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Subtotal</span>
-                    <span className="font-medium text-slate-900">£{subtotal.toFixed(2)}</span>
+                    <span className="font-medium text-slate-900">{formatMoney(subtotal, sym)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">VAT (20%)</span>
-                    <span className="font-medium text-slate-900">£{vat.toFixed(2)}</span>
+                    <span className="text-slate-500">Tax (20%)</span>
+                    <span className="font-medium text-slate-900">{formatMoney(vat, sym)}</span>
                   </div>
                   <div className="flex justify-between text-base font-semibold border-t border-slate-200 pt-1.5">
                     <span className="text-slate-900">Total</span>
-                    <span className="text-slate-900">£{total.toFixed(2)}</span>
+                    <span className="text-slate-900">{formatMoney(total, sym)}</span>
                   </div>
                 </div>
               </div>
@@ -404,6 +579,12 @@ function QuoteGeneratorForm() {
                 <div className="border-t border-slate-100 pt-4">
                   <p className="text-xs font-medium text-slate-400 mb-1">Notes</p>
                   <p className="text-sm text-slate-600 whitespace-pre-wrap">{notes}</p>
+                </div>
+              )}
+
+              {footer && (
+                <div className="border-t border-slate-100 pt-4 mt-4">
+                  <p className="text-sm text-slate-500 whitespace-pre-wrap">{footer}</p>
                 </div>
               )}
 
@@ -438,7 +619,7 @@ function QuoteGeneratorForm() {
               trigger={popupTrigger}
               stage="calc-to-quote"
               slug="free-quote-generator"
-              resultLabel={`£${total.toFixed(2)} quote`}
+              resultLabel={`${formatMoney(total, sym)} quote`}
               resultDetails={`${lines.length} line item${lines.length !== 1 ? 's' : ''} for ${clientName || 'client'}`}
               ctaText="Turn into an invoice"
               ctaHref={`/free-invoice-generator?amount=${total.toFixed(2)}&client=${encodeURIComponent(clientName)}&ref=free-quote-generator`}
