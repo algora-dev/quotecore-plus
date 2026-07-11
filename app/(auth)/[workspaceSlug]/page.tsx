@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 import { WelcomeModal } from './tutorials/WelcomeModal';
@@ -32,6 +33,12 @@ export default async function WorkspaceHome({
   const firstName = user?.full_name?.split(' ')[0] || 'there';
   // Brand-new users (never dismissed) see the one-time Welcome modal.
   const showWelcome = !user?.tutorials_seen_at;
+
+  // Check for calculator draft from signup flow (H-03: signup context preservation)
+  const cookieStore = await cookies();
+  const signupDraft = cookieStore.get('qcp_signup_draft')?.value;
+  const signupRef = cookieStore.get('qcp_signup_ref')?.value;
+  const hasCalcDraft = Boolean(signupDraft && signupRef);
 
   const actions = [
     {
@@ -118,6 +125,36 @@ export default async function WorkspaceHome({
           Tutorials
         </Link>
       </div>
+
+      {/* Calculator draft restoration banner (H-03) */}
+      {hasCalcDraft && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-blue-200 bg-blue-50">
+          <div className="flex-shrink-0">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
+              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+              </svg>
+            </span>
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-blue-800">
+              Your calculator draft is ready to import
+            </p>
+            <p className="text-xs text-blue-600">
+              We saved your component from the {signupRef?.replace(/-/g, ' ').replace(/^free /, '')} — click to restore it as a Smart Component.
+            </p>
+          </div>
+          <Link
+            href={`/${workspaceSlug}/components?restore=${signupDraft}`}
+            className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+          >
+            Restore draft
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
+      )}
 
       {/* Alert banner */}
       {(unreadAlerts ?? 0) > 0 && (

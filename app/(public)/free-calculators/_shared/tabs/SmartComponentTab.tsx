@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useUnitSystem, useSharedState, useTradeConfig, useCurrency } from '../TradeCalculator';
-import { signupHref } from '../types';
+import { signupHref, saveCalcDraft } from '../types';
 import type { MeasurementType, WasteType, PitchType, PricingStrategy } from '@/app/lib/types';
 
 // ─── All measurement types from the app ──────────────
@@ -104,6 +104,7 @@ export function SmartComponentTab() {
 
   const [showSavePopup, setShowSavePopup] = useState(false);
   const [showSyncHint, setShowSyncHint] = useState(false);
+  const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Pre-fill area from shared state
@@ -431,7 +432,11 @@ export function SmartComponentTab() {
 
           {/* Save as Smart Component CTA */}
           <button
-            onClick={() => setShowSavePopup(true)}
+            onClick={() => {
+              const draftId = saveCalcDraft(config, { spec, result, areaInput, linearInput, quantityInput });
+              setSavedDraftId(draftId);
+              setShowSavePopup(false);
+            }}
             className="w-full rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-[#FF6B35] hover:text-[#FF6B35]"
           >
             Save as Smart Component
@@ -564,7 +569,7 @@ export function SmartComponentTab() {
                 Maybe later
               </button>
               <a
-                href={signup}
+                href={signupHref(config, savedDraftId ?? undefined)}
                 className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800"
               >
                 Create free account

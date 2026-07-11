@@ -210,6 +210,49 @@ export interface TradeConfig {
 }
 
 /** signup href with attribution ref for a trade */
-export function signupHref(config: Pick<TradeConfig, 'slug'>): string {
-  return `/signup?ref=${config.slug}`;
+export function signupHref(config: Pick<TradeConfig, 'slug'>, draftId?: string): string {
+  const base = `/signup?ref=${config.slug}`;
+  return draftId ? `${base}&draft=${draftId}` : base;
+}
+
+/** Save a calculator draft to localStorage and return the draft ID. */
+export function saveCalcDraft(config: Pick<TradeConfig, 'slug'>, data: unknown): string {
+  const draftId = `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  if (typeof window === 'undefined') return draftId;
+  try {
+    const key = `qcp:calc-draft:${draftId}`;
+    localStorage.setItem(key, JSON.stringify({
+      slug: config.slug,
+      data,
+      savedAt: new Date().toISOString(),
+    }));
+  } catch {
+    // localStorage may be full or unavailable — silently continue
+  }
+  return draftId;
+}
+
+/** Load and remove a calculator draft from localStorage by ID. */
+export function loadCalcDraft(draftId: string): { slug: string; data: unknown; savedAt: string } | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const key = `qcp:calc-draft:${draftId}`;
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    // Don't delete yet — let the app consume it first, then it can clean up
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/** Remove a consumed draft from localStorage. */
+export function clearCalcDraft(draftId: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(`qcp:calc-draft:${draftId}`);
+  } catch {
+    // ignore
+  }
 }
