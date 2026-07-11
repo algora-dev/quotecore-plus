@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { CalcResultPopup } from '../free-calculators/_shared/CalcResultPopup';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { ImageUpload, type ParsedUploadResult } from './ImageUpload';
+import { PromptBox, type ParsedPromptResult } from './PromptBox';
 
 /**
  * Free Quote Generator — no signup required.
@@ -223,6 +224,13 @@ function QuoteGeneratorForm() {
                   <p className="text-sm text-blue-700">{aiNotice}</p>
                 </div>
               )}
+
+              {/* Text prompt */}
+              <PromptBox
+                documentType="quote"
+                onParsed={(data) => handleParsed(data)}
+                onError={(msg) => { setUploadError(msg); setAiNotice(''); }}
+              />
 
               {/* Settings bar */}
               <div className="rounded-xl border border-slate-200 bg-white p-5">
