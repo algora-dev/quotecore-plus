@@ -15,6 +15,7 @@ import { VolumeTab } from './tabs/VolumeTab';
 import { SmartComponentTab } from './tabs/SmartComponentTab';
 import { AngleTab } from './tabs/AngleTab';
 import { BattenTab } from './tabs/BattenTab';
+import { CalcResultPopup } from './CalcResultPopup';
 
 // ─── Trade config context ────────────────────────────
 
@@ -65,6 +66,12 @@ export function useCurrency(): CurrencyContextValue {
 interface SharedState {
   calculatedArea: string | null;
   calculatedVolume: string | null;
+  /** When set, triggers the conversion popup after a calculation */
+  popupTrigger?: {
+    resultLabel: string;
+    resultDetails?: string;
+    stage: 'calc-to-quote' | 'smart-to-signup';
+  } | null;
 }
 
 const SharedStateContext = createContext<{
@@ -87,6 +94,7 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
   const [shared, setSharedState] = useState<SharedState>({
     calculatedArea: null,
     calculatedVolume: null,
+    popupTrigger: null,
   });
 
   const setShared = (patch: Partial<SharedState>) =>
@@ -193,6 +201,27 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               {active && renderTab(active.kind)}
             </div>
+
+            {/* Conversion popup */}
+            <CalcResultPopup
+              trigger={!!shared.popupTrigger}
+              stage={shared.popupTrigger?.stage ?? 'calc-to-quote'}
+              slug={config.slug}
+              resultLabel={shared.popupTrigger?.resultLabel ?? ''}
+              resultDetails={shared.popupTrigger?.resultDetails}
+              ctaText={shared.popupTrigger?.stage === 'smart-to-signup'
+                ? 'Save this component — start free trial'
+                : 'Add this to a free quote'
+              }
+              ctaHref={shared.popupTrigger?.stage === 'smart-to-signup'
+                ? `/signup?ref=${config.slug}`
+                : `/free-quote-generator?area=${encodeURIComponent(shared.popupTrigger?.resultLabel ?? '')}&ref=${config.slug}`
+              }
+              secondaryText={shared.popupTrigger?.stage === 'smart-to-signup'
+                ? 'Reuse on every quote, save your pricing rules, manage jobs'
+                : 'Turn measurements into a professional quote in 2 minutes — no signup needed'
+              }
+            />
           </div>
         </SharedStateContext.Provider>
         </CurrencyContext.Provider>

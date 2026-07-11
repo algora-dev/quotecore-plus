@@ -102,6 +102,18 @@ export function AreaTab() {
     } else {
       setShared({ calculatedArea: result.actualArea.toFixed(2) });
     }
+    // Trigger conversion popup
+    setShared({
+      popupTrigger: {
+        resultLabel: result.kind === 'volume'
+          ? `${result.actualArea.toFixed(2)} ${volumeUnit}`
+          : `${result.actualArea.toFixed(2)} ${areaUnit}`,
+        resultDetails: result.kind === 'area' && cfg?.useSlopeFactor && result.mode === 'plan'
+          ? `Plan: ${result.planArea.toFixed(2)} ${areaUnit} × ${result.factor.toFixed(4)} pitch factor`
+          : undefined,
+        stage: 'calc-to-quote',
+      },
+    });
   }
 
   const showModeToggle = cfg.useSlopeFactor && inputMode !== 'volume';

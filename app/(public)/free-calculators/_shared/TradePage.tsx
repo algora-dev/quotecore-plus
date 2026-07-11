@@ -124,6 +124,59 @@ export function TradePage({ config }: { config: TradeConfig }) {
         </div>
       </section>
 
+      {/* Worked example */}
+      {c.workedExample && (
+        <section className="mt-12">
+          <h2 className="text-lg font-semibold text-slate-900">{c.workedExample.title}</h2>
+          <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5">
+            <ol className="space-y-2">
+              {c.workedExample.steps.map((step, i) => (
+                <li key={i} className="flex gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-50 border border-orange-100 flex items-center justify-center text-xs font-bold text-[#FF6B35]">
+                    {i + 1}
+                  </span>
+                  <span className="text-sm text-slate-600 leading-relaxed pt-0.5">{step}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+      )}
+
+      {/* Assumptions & limitations */}
+      {c.assumptions && c.assumptions.length > 0 && (
+        <section className="mt-12">
+          <h2 className="text-lg font-semibold text-slate-900">Assumptions & limitations</h2>
+          <ul className="mt-4 space-y-2">
+            {c.assumptions.map((a, i) => (
+              <li key={i} className="flex gap-2 text-sm text-slate-600">
+                <svg className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
+                </svg>
+                <span>{a}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* When to ask a professional */}
+      {c.whenToAskPro && (
+        <section className="mt-8">
+          <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5">
+            <div className="flex gap-3">
+              <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <div>
+                <h3 className="text-sm font-semibold text-amber-900">When to ask a professional</h3>
+                <p className="mt-1 text-sm text-amber-800 leading-relaxed">{c.whenToAskPro}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* FAQ */}
       <section className="mt-12 mb-8">
         <h2 className="text-lg font-semibold text-slate-900">Frequently asked questions</h2>

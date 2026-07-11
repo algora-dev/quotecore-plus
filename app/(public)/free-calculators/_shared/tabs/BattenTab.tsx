@@ -123,6 +123,14 @@ export function BattenTab() {
   function useForPricing() {
     if (!result) return;
     setShared({ calculatedArea: result.totalLineal.toFixed(2) });
+    // Trigger conversion popup
+    setShared({
+      popupTrigger: {
+        resultLabel: `${result.totalLineal.toFixed(1)} ${linealUnit} of battens`,
+        resultDetails: `${result.actualArea.toFixed(2)} ${areaUnit} roof area ÷ ${result.gaugeDisplay}${isMetric ? 'mm' : 'in'} gauge + ${result.wastePct}% waste`,
+        stage: 'calc-to-quote',
+      },
+    });
   }
 
   // Preset buttons — convert mm to current unit

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useUnitSystem, useTradeConfig } from '../TradeCalculator';
+import { useUnitSystem, useSharedState, useTradeConfig } from '../TradeCalculator';
 import { degreesToRatio, ratioToDegrees, rafterLength, rafterPitchFactor, hipValleyPitchFactor, hipValleyLength } from '../../../lib/calculator';
 import { BirdsmouthDiagram } from '../AngleDiagram';
 
@@ -13,6 +13,7 @@ type SubTab = 'member' | 'hip-valley' | 'birdsmouth';
 export function MembersTab() {
   const { lengthUnit, system } = useUnitSystem();
   const bmUnit = system === 'metric' ? 'mm' : 'in';
+  const { shared: _unused, setShared } = useSharedState();
   const config = useTradeConfig();
   const cfg = config.members;
   if (!cfg) throw new Error(`Trade "${config.slug}" uses the members tab without a members config`);
@@ -99,6 +100,14 @@ export function MembersTab() {
     const rl = rafterLength(s, d);
     const hl = hipValleyLength(pl, d);
     setResult({ rafterLen: rl, ratio, rafterFactor: rf, hipFactor: hf, hipLen: hl, deg: d });
+    // Trigger conversion popup
+    setShared({
+      popupTrigger: {
+        resultLabel: `${rl.toFixed(2)} ${lengthUnit} rafter length`,
+        resultDetails: `${cfg?.showHipValley ? `Hip/valley: ${hl.toFixed(2)} ${lengthUnit} · ` : ''}Pitch: ${d}° · Factor: ${rf.toFixed(4)}`,
+        stage: 'calc-to-quote',
+      },
+    });
   }
 
   return (

@@ -62,7 +62,7 @@ interface ComponentSpec {
 
 export function SmartComponentTab() {
   const { areaUnit, lengthUnit, volumeUnit } = useUnitSystem();
-  const { shared } = useSharedState();
+  const { shared, setShared } = useSharedState();
   const { symbol: cur } = useCurrency();
   const config = useTradeConfig();
   const cfg = config.smart;
@@ -207,6 +207,15 @@ export function SmartComponentTab() {
     const totalCost = materialCost + labourCost;
 
     setResult({ rawValue, wasteAmount, totalValue, materialCost, labourCost, totalCost, unit });
+
+    // Trigger conversion popup — smart component → signup
+    setShared({
+      popupTrigger: {
+        resultLabel: `${cur}${totalCost.toFixed(2)} total cost`,
+        resultDetails: `${spec.name} — ${totalValue.toFixed(2)} ${unit} × ${cur}${price}/${unit}`,
+        stage: 'smart-to-signup',
+      },
+    });
   }
 
   useEffect(() => {

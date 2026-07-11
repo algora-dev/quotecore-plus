@@ -147,6 +147,25 @@ export const roofingConfig: TradeConfig = {
         a: 'The best free roofing calculator handles pitch, rafter lengths, hip/valley lengths, surface area, waste, and material pricing in one place — exactly what this tool does, completely free with no signup. All calculations run in your browser and no data is sent anywhere.',
       },
     ],
+    workedExample: {
+      title: 'Worked example: 10m × 8m garage roof at 35° pitch',
+      steps: [
+        'Plan area = width × length = 10m × 8m = 80 m²',
+        'Pitch factor = 1 / cos(35°) = 1 / 0.8192 = 1.2208',
+        'Actual roof area = 80 m² × 1.2208 = 97.66 m²',
+        'Rafter length = span / cos(35°) = 5m / 0.8192 = 6.10m (half the building width as span)',
+        'With 10% waste: 97.66 × 1.10 = 107.43 m² of material needed',
+        'At £2.50/m² for concrete tiles: 107.43 × £2.50 = £268.58 material cost',
+      ],
+    },
+    assumptions: [
+      'Calculations assume a single-pitch or gable roof. Complex roofs (hip, valley, dormer) require additional material for junctions.',
+      'Pitch factor uses 1/cos(θ) for rafter-type slopes. Hip/valley factors use a compound angle formula.',
+      'Waste percentages are guidelines only — always refer to manufacturer recommendations for your specific material.',
+      'Batten calculations assume a mono-pitch roof and do not include extra battens for hips, valleys, or ridge lines.',
+      'All measurements are estimates. Verify on-site before ordering materials.',
+    ],
+    whenToAskPro: 'This calculator provides estimates for planning purposes only. For structural roof design, load calculations, building regulations compliance, or roofs with complex geometry (multiple pitches, curved sections, or unusual materials), consult a qualified roofing contractor or structural engineer. Building control approval may be required for roof modifications in the UK.',
     related: [
       {
         href: '/free-construction-calculator',

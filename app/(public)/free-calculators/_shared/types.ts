@@ -177,6 +177,12 @@ export interface TradeContent {
   tips: { title: string; body: string }[];
   formulas: { name: string; formula: string }[];
   faqs: { q: string; a: string }[];
+  /** Worked example — crawlable HTML that AI systems can quote */
+  workedExample?: { title: string; steps: string[] };
+  /** Assumptions and limitations */
+  assumptions?: string[];
+  /** When to ask a professional */
+  whenToAskPro?: string;
   /** Sibling calculators + free generators. Signup card is added automatically. */
   related: RelatedLink[];
 }
