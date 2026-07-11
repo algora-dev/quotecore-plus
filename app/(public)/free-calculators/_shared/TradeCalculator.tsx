@@ -14,6 +14,7 @@ import { GradientTab } from './tabs/GradientTab';
 import { VolumeTab } from './tabs/VolumeTab';
 import { SmartComponentTab } from './tabs/SmartComponentTab';
 import { AngleTab } from './tabs/AngleTab';
+import { BattenTab } from './tabs/BattenTab';
 
 // ─── Trade config context ────────────────────────────
 
@@ -123,6 +124,7 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
       case 'volume': return <VolumeTab />;
       case 'smart': return <SmartComponentTab />;
       case 'angle': return <AngleTab />;
+      case 'batten': return <BattenTab />;
       default: return null;
     }
   }

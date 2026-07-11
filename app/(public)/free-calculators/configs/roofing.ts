@@ -16,6 +16,7 @@ export const roofingConfig: TradeConfig = {
   tabs: [
     { id: 'roof-area', label: 'Roof Area', kind: 'area' },
     { id: 'pitch-rafter', label: 'Rafter / Hip & Valley', kind: 'members' },
+    { id: 'battens', label: 'Battens', kind: 'batten' },
     { id: 'smart-component', label: 'Draft Smart Component™', kind: 'smart' },
     { id: 'angle-finder', label: 'Angle Finder', kind: 'angle' },
   ],
@@ -64,6 +65,21 @@ export const roofingConfig: TradeConfig = {
     defaultPitchEnabled: true,
     areaPlaceholder: 'Enter area or use from roof area tab',
     prefillNote: 'Pre-filled from roof area calculation',
+  },
+
+  batten: {
+    heading: 'Batten Calculator',
+    subtitle: 'Calculate lineal metres of roofing battens from roof area and batten gauge',
+    gaugePresets: [
+      { label: 'Concrete tile', mm: 345 },
+      { label: 'Clay pantile', mm: 345 },
+      { label: 'Plain tile', mm: 100 },
+      { label: 'Slate (500mm)', mm: 200 },
+      { label: 'Slate (600mm)', mm: 250 },
+    ],
+    defaultGauge: '345',
+    defaultWastePercent: '10',
+    useForPricingLabel: 'Use this length for pricing',
   },
 
   angle: {

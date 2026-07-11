@@ -28,7 +28,7 @@ export const CURRENCIES: CurrencyDef[] = [
 
 // ─── Tab registry ────────────────────────────────────
 
-export type TabKind = 'area' | 'members' | 'gradient' | 'volume' | 'smart' | 'angle';
+export type TabKind = 'area' | 'members' | 'gradient' | 'volume' | 'smart' | 'angle' | 'batten';
 
 export interface TabDef {
   id: string;
@@ -148,6 +148,20 @@ export interface AngleTabConfig {
   tooltipOverrides?: Record<string, string>;
 }
 
+/** Batten tab: lineal metres of battens from roof area + gauge. */
+export interface BattenTabConfig {
+  heading: string;
+  subtitle: string;
+  /** Preset gauge options by tile/material type */
+  gaugePresets: { label: string; mm: number }[];
+  /** Default batten gauge in mm */
+  defaultGauge: string;
+  /** Default waste % */
+  defaultWastePercent: string;
+  /** Label on the "send to smart component" button */
+  useForPricingLabel: string;
+}
+
 // ─── Page copy ───────────────────────────────────────
 
 export interface RelatedLink {
@@ -188,6 +202,7 @@ export interface TradeConfig {
   volume?: VolumeTabConfig;
   smart: SmartTabConfig;
   angle?: AngleTabConfig;
+  batten?: BattenTabConfig;
 
   content: TradeContent;
 }

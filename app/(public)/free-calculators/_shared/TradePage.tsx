@@ -27,30 +27,63 @@ export function TradePage({ config }: { config: TradeConfig }) {
       {/* Calculator */}
       <TradeCalculator config={config} />
 
-      {/* Related tools */}
+      {/* Related Free tools */}
       <section className="mt-12">
-        <h2 className="text-lg font-semibold text-slate-900">Related calculators</h2>
+        <h2 className="text-lg font-semibold text-slate-900">Related Free tools</h2>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {c.related.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              prefetch={false}
-              className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
-                  <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-900 text-sm">{link.title}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{link.desc}</p>
-                </div>
+          <Link
+            href="/free-quote-generator"
+            prefetch={false}
+            className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
+                <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
               </div>
-            </Link>
-          ))}
+              <div>
+                <p className="font-semibold text-slate-900 text-sm">Free Quote Generator</p>
+                <p className="text-xs text-slate-500 mt-0.5">Turn your measurements into a professional quote</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            href="/free-purchase-order-generator"
+            prefetch={false}
+            className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
+                <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-semibold text-slate-900 text-sm">Free Purchase Order Generator</p>
+                <p className="text-xs text-slate-500 mt-0.5">Create supplier order forms from your calculations</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            href="/free-invoice-generator"
+            prefetch={false}
+            className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
+                <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-semibold text-slate-900 text-sm">Free Invoice Generator</p>
+                <p className="text-xs text-slate-500 mt-0.5">Send professional invoices and get paid faster</p>
+              </div>
+            </div>
+          </Link>
 
           <Link
             href={signup}
