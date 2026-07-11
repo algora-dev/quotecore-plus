@@ -4,8 +4,12 @@
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
 
-**I. Hip/valley house diagram redesign (new on dev, 2026-07-10, `6444e10`)**
-- [ ] `/free-roofing-calculator` → Rafter/Hip & Valley tab → Hip/Valley sub-tab → Calculate: diagram shows L-shaped house with 3 walls, solid orange hip on outer corner, dashed orange valley into the 90° internal corner; 10° looks flat, 45° looks steep, walls never move
+**J. Trade calculators — engine refactor + 4 pages + hub (new on dev, 2026-07-11, `720d55b`)**
+- [ ] `/free-roofing-calculator` — looks/behaves identical to before (all 4 tabs, Use-this-area flow, save popup); related cards now show Construction + Concrete
+- [ ] `/free-construction-calculator` — new 4-tab format (Area & Materials, Timber & Stud Lengths, Draft Smart Component™, Angle Finder); stud/member wording, no hip/valley sub-tab
+- [ ] `/free-landscaping-calculator` — Garden & Lawn Area + Slope & Gradient tabs; 1-in-X ⇄ % ⇄ degrees conversion syncs; fall over run shows mm when small
+- [ ] `/free-concrete-calculator` — volume-first: L×W×depth with 100/150/225/300mm presets, weight card (~2.4t/m³), Use-this-volume prefills Smart Component as Volume m³
+- [ ] `/free-calculators` — hub lists all 4 calculators + quote/invoice generator cards; header/footer links work
 
 **H. Per-entry input reference display + RPC v8 (new on dev, 2026-07-08 pm)**
 - [ ] Entry rows in component phase now read `→ X - Incl waste (…)` — "(+waste)" wording is gone

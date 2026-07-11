@@ -114,6 +114,76 @@ Shared without SEO harm: the calculator engine, tab components, unit-system togg
 - Phase 1 (3 pages + hub + sitemap): **~2 days**
 - Phase 2 (4 pages): **~1.5 days**
 
+## Master slug list — 30-50+ pages (added 2026-07-11, Shaun-approved mission)
+
+Goal: every plausible "best/free <trade> calculator" search gets its own page. Each page =
+one config file assigned to a **base calculator** + unique wording/tips/FAQs. Bases:
+
+- **A — Construction base** (Area & Materials · Member Lengths · Smart Component · Angle Finder)
+- **B — Roofing base** (Roof Area · Rafter/Hip & Valley · Smart Component · Angle Finder)
+- **C — Landscaping base** (Area · Slope & Gradient · Smart Component · Angle Finder)
+- **D — Concrete base** (Volume-first · Area · Smart Component · Falls & Gradients)
+
+| # | Trade / audience | Slug | Base | Wording & SEO angle |
+|---|---|---|---|---|
+| 1 | Carpentry & joinery | `/free-carpentry-calculator` | A | mitre angles, stringers, studs; "timber cut calculator" |
+| 2 | Framing (US) | `/free-framing-calculator` | A | studs @16"/24" OC, headers; US spelling/units first |
+| 3 | Drywall (US) | `/free-drywall-calculator` | A | sheets, mud, screws; "how much drywall do I need" |
+| 4 | Plastering | `/free-plastering-calculator` | A | coverage per bag, coats, board counts |
+| 5 | Rendering | `/free-rendering-calculator` | A | render coats, sand/cement ratio, mesh |
+| 6 | Cladding | `/free-cladding-calculator` | A | wall L×H areas, battens, membrane |
+| 7 | Insulation | `/free-insulation-calculator` | A | roll/slab coverage, rafter vs stud bays |
+| 8 | Tiling | `/free-tiling-calculator` | A | tiles-per-m², adhesive, grout; 10/15% waste straight/diagonal |
+| 9 | Flooring | `/free-flooring-calculator` | A | packs from room area; "how many packs of flooring" |
+| 10 | Laminate flooring | `/free-laminate-flooring-calculator` | A | pack coverage, expansion gaps |
+| 11 | Carpet | `/free-carpet-calculator` | A | roll widths, seams, gripper |
+| 12 | Epoxy flooring | `/free-epoxy-flooring-calculator` | A | kit coverage per coat, garage floors |
+| 13 | Painting & decorating | `/free-painting-calculator` | A | walls minus openings, 12m²/L, coats |
+| 14 | Wallpaper | `/free-wallpaper-calculator` | A | rolls from wall H×perimeter, pattern repeat |
+| 15 | Bricklaying | `/free-brick-calculator` | A | 60 bricks/m², mortar volume |
+| 16 | Blockwork | `/free-block-calculator` | A | 10 blocks/m², cavity walls |
+| 17 | Stud walls | `/free-stud-wall-calculator` | A | studs/plates/noggins from wall length |
+| 18 | Staircases | `/free-staircase-calculator` | A | stringer length, rise/going, regs limits |
+| 19 | Loft conversion | `/free-loft-conversion-calculator` | A | rake areas, dwarf walls, headroom at pitch |
+| 20 | Renovation / general | `/free-renovation-calculator` | A | room-by-room areas, multi-material |
+| 21 | Handyman (US) | `/free-handyman-calculator` | A | quick areas + per-hour labour pricing |
+| 22 | Metal roofing | `/free-metal-roofing-calculator` | B | sheet coverage, laps; "metal roof cost calculator" |
+| 23 | Shingles (US) | `/free-shingle-calculator` | B | squares (100 sq ft), bundles = ⅓ square |
+| 24 | Flat roofing | `/free-flat-roofing-calculator` | B | membrane/felt rolls, minimal falls, upstands |
+| 25 | Tile roofing | `/free-roof-tile-calculator` | B | tiles/m² by format, battens, ridge |
+| 26 | Guttering & fascia | `/free-guttering-calculator` | B | eaves runs, downpipes per m² roof, fascia lengths |
+| 27 | Solar installers | `/free-solar-panel-calculator` | B | usable roof area at pitch, panel count |
+| 28 | Roof windows | `/free-skylight-calculator` | B | opening sizes vs rafter spacing, flashing angles |
+| 29 | Turf | `/free-turf-calculator` | C | rolls from lawn area; "how much turf do I need" |
+| 30 | Sod (US) | `/free-sod-calculator` | C | US wording of turf page, sq ft first |
+| 31 | Topsoil | `/free-topsoil-calculator` | C | area × depth → m³ → bulk bags |
+| 32 | Mulch | `/free-mulch-calculator` | C | 50-75mm depth, m³ → bags |
+| 33 | Gravel | `/free-gravel-calculator` | C | depth presets, tonnes via 1.8t/m³ |
+| 34 | Paving & patios | `/free-paving-calculator` | C | slab counts, laying pattern waste, falls |
+| 35 | Artificial grass | `/free-artificial-grass-calculator` | C | roll widths, joins, infill sand |
+| 36 | Decking | `/free-decking-calculator` | C | board counts, joists, posts from area |
+| 37 | Fencing | `/free-fencing-calculator` | C | panels/posts/gravel boards from run length |
+| 38 | Garden design | `/free-garden-design-calculator` | C | mixed beds/lawn/paving zones |
+| 39 | Irrigation | `/free-irrigation-calculator` | C | zone areas, pipe runs, falls |
+| 40 | Excavation | `/free-excavation-calculator` | D | dig volume, spoil bulking +25-30%, muck-away loads |
+| 41 | Foundations | `/free-foundation-calculator` | D | strip/trench/pad volumes, rebar |
+| 42 | Footings | `/free-footing-calculator` | D | trench L×W×D, 10% over-dig waste |
+| 43 | Screed | `/free-screed-calculator` | D | thin depths 50-75mm, bags vs ready-mix |
+| 44 | Asphalt / tarmac | `/free-asphalt-calculator` | D | tonnes via 2.3t/m³, compaction |
+| 45 | Driveways | `/free-driveway-calculator` | D | 150mm preset, sub-base + surface layers |
+| 46 | Sand | `/free-sand-calculator` | D | 1.6t/m³, bedding depths |
+| 47 | Aggregate / hardcore | `/free-aggregate-calculator` | D | MOT Type 1, compacted depth |
+| 48 | Cement / mortar | `/free-cement-calculator` | D | mix ratios, bags from volume |
+| 49 | Groundworks | `/free-groundworks-calculator` | D | dig + cart-away + backfill combined |
+| 50 | Pool builders | `/free-pool-calculator` | D | excavation + shell volume, backfill |
+
+US-audience duplicates (sod/framing/drywall/shingles/handyman) use imperial-first defaults and US
+terminology — same engine, config flag only. Beyond these 50, the same pattern extends to niche
+searches (sheetrock, pergola, retaining wall, driveway sealer) once traffic data shows demand.
+
+**Rollout after Phase 1:** batches of 5-8 pages, each page needing only a config + ~500 words
+unique copy (~1-2h each). Hub page and sitemap update automatically via the registry.
+
 ## Open questions for Shaun
 
 1. Approve trade list + slugs above? Any to add/drop?
