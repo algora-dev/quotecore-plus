@@ -666,12 +666,14 @@ function InvoiceGeneratorForm() {
               )}
               <div style={{ position: 'relative', zIndex: 1 }}>
               <div className="flex items-start justify-between mb-8">
-                {/* Left: Client/Bill to details top-left */}
-                <div>
+                {/* Left: Client/Bill to details top-left, aligned with From: on the right */}
+                <div className="flex flex-col" style={{ minHeight: logo ? '5rem' : 'auto' }}>
                   <p className="text-xs font-medium text-slate-400 mb-1">Bill to:</p>
                   <p className="text-sm font-semibold text-slate-900">{clientName || 'Client name'}</p>
                   {clientEmail && <p className="text-sm text-slate-500">{clientEmail}</p>}
                   {clientAddress && <p className="text-sm text-slate-500">{clientAddress}</p>}
+                  <p className="text-sm text-slate-500 mt-1">Date: {invoiceDate}</p>
+                  <p className="text-sm text-slate-500">Due: {dueDate}</p>
                 </div>
                 {/* Right: Logo top-right, From details below */}
                 <div className="text-right">
@@ -681,8 +683,6 @@ function InvoiceGeneratorForm() {
                   {companyName && <p className="text-sm text-slate-700">{companyName}</p>}
                   {fromPhone && <p className="text-sm text-slate-500">{fromPhone}</p>}
                   {fromEmail && <p className="text-sm text-slate-500">{fromEmail}</p>}
-                  <p className="text-sm text-slate-500 mt-1">Date: {invoiceDate}</p>
-                  <p className="text-sm text-slate-500">Due: {dueDate}</p>
                 </div>
               </div>
 
@@ -817,10 +817,11 @@ function InvoiceGeneratorForm() {
 
       <style jsx global>{`
         @media print {
+          @page { margin: 0; }
           body { background: white; }
           header, footer, button { display: none !important; }
           main > div > *:not(#invoice-print) { display: none !important; }
-          #invoice-print { border: none !important; padding: 0 !important; }
+          #invoice-print { border: none !important; padding: 2cm !important; }
         }
       `}</style>
     </main>

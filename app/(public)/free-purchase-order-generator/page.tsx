@@ -660,12 +660,14 @@ function POGeneratorForm() {
               )}
               <div style={{ position: 'relative', zIndex: 1 }}>
               <div className="flex items-start justify-between mb-8">
-                {/* Left: Supplier/To details top-left */}
-                <div>
+                {/* Left: Supplier/To details top-left, aligned with From: on the right */}
+                <div className="flex flex-col" style={{ minHeight: logo ? '5rem' : 'auto' }}>
                   <p className="text-xs font-medium text-slate-400 mb-1">Supplier:</p>
                   <p className="text-sm font-semibold text-slate-900">{supplierName || 'Supplier name'}</p>
                   {supplierEmail && <p className="text-sm text-slate-500">{supplierEmail}</p>}
                   {supplierAddress && <p className="text-sm text-slate-500">{supplierAddress}</p>}
+                  <p className="text-sm text-slate-500 mt-1">Date: {poDate}</p>
+                  {deliveryDate && <p className="text-sm text-slate-500">Required by: {deliveryDate}</p>}
                 </div>
                 {/* Right: Logo top-right, From details below */}
                 <div className="text-right">
@@ -675,8 +677,6 @@ function POGeneratorForm() {
                   {companyName && <p className="text-sm text-slate-700">{companyName}</p>}
                   {fromPhone && <p className="text-sm text-slate-500">{fromPhone}</p>}
                   {fromEmail && <p className="text-sm text-slate-500">{fromEmail}</p>}
-                  <p className="text-sm text-slate-500 mt-1">Date: {poDate}</p>
-                  {deliveryDate && <p className="text-sm text-slate-500">Required by: {deliveryDate}</p>}
                 </div>
               </div>
 
@@ -818,10 +818,11 @@ function POGeneratorForm() {
 
       <style jsx global>{`
         @media print {
+          @page { margin: 0; }
           body { background: white; }
           header, footer, button { display: none !important; }
           main > div > *:not(#po-print) { display: none !important; }
-          #po-print { border: none !important; padding: 0 !important; }
+          #po-print { border: none !important; padding: 2cm !important; }
         }
       `}</style>
     </main>

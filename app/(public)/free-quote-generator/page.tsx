@@ -679,12 +679,14 @@ function QuoteGeneratorForm() {
               )}
               <div style={{ position: 'relative', zIndex: 1 }}>
               <div className="flex items-start justify-between mb-8">
-                {/* Left: Client/To details top-left */}
-                <div>
+                {/* Left: Client/To details top-left, aligned with From: on the right */}
+                <div className="flex flex-col" style={{ minHeight: logo ? '5rem' : 'auto' }}>
                   <p className="text-xs font-medium text-slate-400 mb-1">Quote to:</p>
                   <p className="text-sm font-semibold text-slate-900">{clientName || 'Client name'}</p>
                   {clientEmail && <p className="text-sm text-slate-500">{clientEmail}</p>}
                   {clientAddress && <p className="text-sm text-slate-500">{clientAddress}</p>}
+                  <p className="text-sm text-slate-500 mt-1">Date: {quoteDate}</p>
+                  <p className="text-sm text-slate-500">Valid for: {validDays} days</p>
                 </div>
                 {/* Right: Logo top-right, From details below */}
                 <div className="text-right">
@@ -694,8 +696,6 @@ function QuoteGeneratorForm() {
                   {companyName && <p className="text-sm text-slate-700">{companyName}</p>}
                   {fromPhone && <p className="text-sm text-slate-500">{fromPhone}</p>}
                   {fromEmail && <p className="text-sm text-slate-500">{fromEmail}</p>}
-                  <p className="text-sm text-slate-500 mt-1">Date: {quoteDate}</p>
-                  <p className="text-sm text-slate-500">Valid for: {validDays} days</p>
                 </div>
               </div>
 
@@ -842,11 +842,12 @@ function QuoteGeneratorForm() {
 
       <style jsx global>{`
         @media print {
+          @page { margin: 0; }
           body { background: white; }
           header, footer, button { display: none !important; }
           /* Hide everything except the printable document */
           main > div > *:not(#quote-print) { display: none !important; }
-          #quote-print { border: none !important; padding: 0 !important; }
+          #quote-print { border: none !important; padding: 2cm !important; }
         }
       `}</style>
     </main>
