@@ -218,6 +218,10 @@ export function TakeoffWorkstation({
   const [showConfirmedFlash, setShowConfirmedFlash] = useState(false);
   const [showCalibrationHelp, setShowCalibrationHelp] = useState(true);
   const [showRoofAreaInstructions, setShowRoofAreaInstructions] = useState(false);
+  // Once the user dismisses the "Calibration complete" popup, never show it again
+  // for the current session. Prevents the popup re-appearing every time areaMode
+  // toggles (which happens on every component add/finish when no roof area exists).
+  const roofAreaInstructionsDismissedRef = useRef(false);
 
   // Phase 7: multi-page takeoff state.
   // P1-1b: when initialPageId is provided (new-area mode), seed pages with that page
@@ -964,6 +968,8 @@ export function TakeoffWorkstation({
     // areaMode in the deps means the cleanup cancels the pending timer the
     // moment drawing starts.
     if (areaMode) return;
+    // Once dismissed, never re-show the "Calibration complete" popup this session.
+    if (roofAreaInstructionsDismissedRef.current) return;
     if (calibrationConfirmed && calibrations.length > 0 && roofAreas.length === 0) {
       // Delay slightly to show after calibration flash
       const timer = setTimeout(() => {
@@ -4973,6 +4979,7 @@ export function TakeoffWorkstation({
                 <button
                   onClick={() => {
                     setShowRoofAreaInstructions(false);
+                    roofAreaInstructionsDismissedRef.current = true;
                     setAreaSubTool('polygon');
                     setAreaMode(true);
                     setLineMode(false);
@@ -4987,6 +4994,7 @@ export function TakeoffWorkstation({
                 <button
                   onClick={() => {
                     setShowRoofAreaInstructions(false);
+                    roofAreaInstructionsDismissedRef.current = true;
                     setAreaSubTool('rect');
                     setAreaMode(true);
                     setLineMode(false);
@@ -5000,7 +5008,10 @@ export function TakeoffWorkstation({
                 </button>
               </div>
               <button
-                onClick={() => setShowRoofAreaInstructions(false)}
+                onClick={() => {
+                  setShowRoofAreaInstructions(false);
+                  roofAreaInstructionsDismissedRef.current = true;
+                }}
                 className="py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
               >
                 Skip

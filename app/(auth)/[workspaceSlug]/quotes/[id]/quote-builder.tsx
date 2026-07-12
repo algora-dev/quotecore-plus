@@ -112,8 +112,8 @@ export function QuoteBuilder({
   const [quote, setQuote] = useState(initialQuote);
   // Phase 8: trade-aware labels + convenience flag.
   const tradeLabels = getTradeLabels((quote as { trade?: string }).trade);
-  // areaIsOptional covers both cladding and generic (anything that doesn't require pitch).
-  const quoteIsGeneric = tradeLabels.areaIsOptional;
+  // (2026-07-12) quoteIsGeneric removed: no-area component rendering now
+  // applies to ALL trades, since roofing quotes can skip area creation too.
   // Update quote state when props change (e.g., after currency change)
   useEffect(() => {
     setQuote(initialQuote);
@@ -681,11 +681,12 @@ export function QuoteBuilder({
 
       {phase === 'components' && (
         <div className="space-y-4" data-copilot="quote-components-phase">
-          {/* Phase 8: generic-trade quotes with no areas - show a flat
-              component list. For these quotes, all components live at the
-              quote level (quote_roof_area_id = NULL) rather than under an
-              area. We show ALL components here regardless of type. */}
-          {quoteIsGeneric && roofAreas.length === 0 && (
+          {/* Phase 8: quotes with no areas - show a flat component list.
+              All components live at the quote level (quote_roof_area_id = NULL)
+              rather than under an area. We show ALL components here regardless
+              of type. This applies to both generic trades and roofing quotes
+              where the user skipped area creation and went straight to components. */}
+          {roofAreas.length === 0 && (
             <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
               <h3 className="font-semibold text-slate-900">Components</h3>
               {components.filter(c => !c.quote_roof_area_id).map((comp, idx) => (
@@ -873,10 +874,11 @@ export function QuoteBuilder({
             );
           })}
 
-          {/* H-04 (Gerald round-5): generic no-area main components were
-              invisible in Review because they aren't under a roof area or
-              in extraComps (which filters by component_type='extra'). */}
-          {quoteIsGeneric && roofAreas.length === 0 && (() => {
+          {/* H-04 (Gerald round-5): no-area main components were invisible
+              in Review because they aren't under a roof area or in extraComps
+              (which filters by component_type='extra'). Applies to ALL trades
+              (2026-07-12): roofing quotes can also skip area creation. */}
+          {roofAreas.length === 0 && (() => {
             const noAreaComps = components.filter(c => !c.quote_roof_area_id);
             if (noAreaComps.length === 0) return null;
             return (
