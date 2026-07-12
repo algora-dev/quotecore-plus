@@ -1,8 +1,26 @@
 # Smoke Test Checklist
 
-## Status: `main` at `9bbb402` = `development` at `9bbb402` (synced)
+## Status: `main` at `d2b430c` = `development` at `d2b430c` (synced)
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
+
+**U. Free tools hub + print/PDF + header layout (new on main+dev, 2026-07-12, `d2b430c`)**
+- [ ] `/free-tools` page shows 4 cards (Calculators, Quotes, Ordering, Invoicing)
+- [ ] Calculators card scrolls to calculator section with industry filter + search
+- [ ] Search filters calculators by name/keyword correctly
+- [ ] Industry dropdown filters calculators by trade
+- [ ] Quote generator: Print/Download PDF shows ONLY the quote document (no hero, email capture, form, FAQ)
+- [ ] Order generator: Same print isolation
+- [ ] Invoice generator: Same print isolation
+- [ ] Print PDF has no browser headers/footers (no page title, URL, timestamp)
+- [ ] Header: Logo is highest item, To: and From: at same height below it
+- [ ] Date/validity under Quote to: section (left side)
+- [ ] Hide line prices toggle hides line item prices only
+- [ ] Hide totals toggle hides subtotal/tax/total only
+- [ ] Both toggles work in form view AND generated view
+- [ ] Quote number field (Q-001 default) shows above Quote to: in generated quote
+- [ ] PO number shows above Supplier: in generated PO
+- [ ] Invoice number shows above Bill to: in generated invoice
 
 **O. No-parent-area takeoff flow (new on main+dev, 2026-07-12, `9bbb402`)**
 - [ ] New quote → takeoff → calibrate → Skip popup → add components → save → components appear in quote builder Components tab
