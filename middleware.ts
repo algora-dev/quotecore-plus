@@ -72,6 +72,30 @@ function isStaticAsset(pathname: string): boolean {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const hostname = request.nextUrl.hostname;
+
+  // ── Domain-based routing ─────────────────────────────
+  // quote-core.com (and www) = public-facing free tools site only.
+  // app.quote-core.com (and *.vercel.app) = full application.
+  // When accessed via quote-core.com, only public routes are allowed;
+  // everything else redirects to app.quote-core.com.
+  const isPublicDomain =
+    hostname === 'quote-core.com' ||
+    hostname === 'www.quote-core.com';
+
+  if (isPublicDomain) {
+    // Allow static assets, API routes, and public paths on the public domain
+    if (isStaticAsset(pathname)) {
+      return NextResponse.next();
+    }
+    if (pathname === '/' || isPublicPath(pathname)) {
+      return NextResponse.next();
+    }
+    // Redirect everything else to the app domain
+    const appUrl = new URL(pathname, `https://app.quote-core.com`);
+    appUrl.search = request.nextUrl.search;
+    return NextResponse.redirect(appUrl, 308);
+  }
 
   // Skip static assets and API routes
   if (isStaticAsset(pathname)) {

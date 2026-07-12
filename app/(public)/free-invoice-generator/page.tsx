@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CalcResultPopup } from '../free-calculators/_shared/CalcResultPopup';
@@ -20,6 +20,7 @@ interface InvoiceLine {
   qty: number;
   unit: string;
   rate: number;
+  hidePrice: boolean;
 }
 
 type MeasurementSystem = 'metric' | 'imperial';
@@ -64,6 +65,12 @@ function InvoiceGeneratorForm() {
   const defaultUnit = unitForSystem(measurementType, measurementSystem);
 
   const [companyName, setCompanyName] = useState('');
+  const [fromName, setFromName] = useState('');
+  const [fromPhone, setFromPhone] = useState('');
+  const [fromEmail, setFromEmail] = useState('');
+  const [hideAllPrices, setHideAllPrices] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [emailSaved, setEmailSaved] = useState(false);
   const [clientName, setClientName] = useState(clientParam ?? '');
   const [clientEmail, setClientEmail] = useState('');
   const [clientAddress, setClientAddress] = useState('');
@@ -88,9 +95,10 @@ function InvoiceGeneratorForm() {
         qty: 1,
         unit: 'job',
         rate: parseFloat(amountParam) || 0,
+        hidePrice: false,
       }];
     }
-    return [{ id: '1', description: '', qty: 1, unit: 'pcs', rate: 0 }];
+    return [{ id: '1', description: '', qty: 1, unit: 'pcs', rate: 0, hidePrice: false }];
   });
 
   const [generated, setGenerated] = useState(false);
@@ -98,13 +106,18 @@ function InvoiceGeneratorForm() {
   const [uploadError, setUploadError] = useState('');
   const [aiNotice, setAiNotice] = useState('');
 
+  useEffect(() => {
+    const saved = localStorage.getItem('free-tools-email');
+    if (saved) { setUserEmail(saved); setEmailSaved(true); }
+  }, []);
+
   const subtotal = lines.reduce((sum, l) => sum + (l.qty * l.rate), 0);
   const vat = subtotal * (taxRate / 100);
   const total = subtotal + vat;
   const sym = currency.symbol;
 
   function addLine() {
-    setLines([...lines, { id: String(Date.now()), description: '', qty: 1, unit: defaultUnit, rate: 0 }]);
+    setLines([...lines, { id: String(Date.now()), description: '', qty: 1, unit: defaultUnit, rate: 0, hidePrice: false }]);
   }
 
   function handleMeasurementChange(system: MeasurementSystem, type: MeasurementType) {
@@ -142,7 +155,7 @@ function InvoiceGeneratorForm() {
     setLines(lines.filter(l => l.id !== id));
   }
 
-  function updateLine(id: string, field: keyof InvoiceLine, value: string | number) {
+  function updateLine(id: string, field: keyof InvoiceLine, value: string | number | boolean) {
     setLines(lines.map(l => l.id === id ? { ...l, [field]: value } : l));
   }
 
@@ -161,6 +174,7 @@ function InvoiceGeneratorForm() {
         qty: l.qty,
         unit: l.unit || defaultUnit,
         rate: l.rate,
+        hidePrice: false,
       })));
     }
     const noticeParts: string[] = [];
@@ -206,6 +220,27 @@ function InvoiceGeneratorForm() {
             AI will fill in the form - or paste your details, or type it manually. No signup required.
           </p>
         </section>
+
+          {/* Email capture */}
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            {!emailSaved ? (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div className="flex-1">
+                  <input type="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" placeholder="Enter your email for more free generations and no watermark" />
+                  <p className="mt-1 text-xs text-slate-400">Image upload: 3/day · Text parse: 5/day · Manual: Unlimited</p>
+                </div>
+                <button onClick={() => { if (userEmail.trim()) { localStorage.setItem('free-tools-email', userEmail.trim()); setEmailSaved(true); } }} className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition whitespace-nowrap">Save</button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-700">✓ {userEmail}</p>
+                  <p className="mt-1 text-xs text-slate-400">Image upload: 10/day · Text parse: 20/day · Manual: Unlimited</p>
+                </div>
+                <button onClick={() => setEmailSaved(false)} className="text-xs font-medium text-[#FF6B35] hover:text-orange-600 transition">Change</button>
+              </div>
+            )}
+          </div>
 
         {!generated ? (
           <>
@@ -349,6 +384,36 @@ function InvoiceGeneratorForm() {
                       className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                     />
                   </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Contact name</label>
+                    <input
+                      type="text"
+                      value={fromName}
+                      onChange={(e) => setFromName(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                      placeholder="John Smith"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Phone</label>
+                    <input
+                      type="text"
+                      value={fromPhone}
+                      onChange={(e) => setFromPhone(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                      placeholder="+44 1234 567890"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Email</label>
+                    <input
+                      type="email"
+                      value={fromEmail}
+                      onChange={(e) => setFromEmail(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                      placeholder="you@company.com"
+                    />
+                  </div>
                 </div>
                 {/* Logo upload */}
                 <div className="mt-4">
@@ -419,12 +484,18 @@ function InvoiceGeneratorForm() {
               <div className="rounded-xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-sm font-semibold text-slate-900">Line items</h2>
-                  <button
-                    onClick={addLine}
-                    className="inline-flex items-center gap-1 rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] transition"
-                  >
-                    + Add line
-                  </button>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 text-xs text-slate-600">
+                      <input type="checkbox" checked={hideAllPrices} onChange={(e) => setHideAllPrices(e.target.checked)} className="rounded border-slate-300" />
+                      Hide all prices
+                    </label>
+                    <button
+                      onClick={addLine}
+                      className="inline-flex items-center gap-1 rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] transition"
+                    >
+                      + Add line
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-3">
                   {lines.map((line) => (
@@ -461,6 +532,7 @@ function InvoiceGeneratorForm() {
                           ))}
                         </select>
                       </div>
+                      {!hideAllPrices && (
                       <div className="col-span-3 sm:col-span-2">
                         <input
                           type="number"
@@ -471,10 +543,25 @@ function InvoiceGeneratorForm() {
                           step="0.01"
                         />
                       </div>
+                      )}
+                      {!hideAllPrices && (
                       <div className="col-span-2 sm:col-span-1">
                         <p className="text-sm font-semibold text-slate-700 pt-2">{formatMoney(line.qty * line.rate, sym)}</p>
                       </div>
-                      <div className="col-span-1 flex justify-end">
+                      )}
+                      <div className="col-span-1 flex justify-end gap-1">
+                        <button onClick={() => updateLine(line.id, 'hidePrice', !line.hidePrice)} className="p-2 text-slate-400 hover:text-[#FF6B35] transition" title={line.hidePrice ? 'Show price' : 'Hide price'}>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            {line.hidePrice ? (
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            ) : (
+                              <>
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </>
+                            )}
+                          </svg>
+                        </button>
                         <button
                           onClick={() => removeLine(line.id)}
                           className="p-2 text-slate-400 hover:text-red-500 transition"
@@ -489,6 +576,7 @@ function InvoiceGeneratorForm() {
                 </div>
 
                 {/* Totals */}
+                {!hideAllPrices && (
                 <div className="mt-4 flex justify-end">
                   <div className="w-full sm:w-64 space-y-1.5">
                     <div className="flex justify-between text-sm">
@@ -505,6 +593,7 @@ function InvoiceGeneratorForm() {
                     </div>
                   </div>
                 </div>
+                )}
               </div>
 
               {/* Notes */}
@@ -564,18 +653,27 @@ function InvoiceGeneratorForm() {
         ) : (
           <>
             {/* Generated invoice - printable */}
-            <div className="rounded-xl border border-slate-200 bg-white p-8 print:border-0 print:p-0" id="invoice-print">
+            <div className="rounded-xl border border-slate-200 bg-white p-8 print:border-0 print:p-0 relative overflow-hidden" id="invoice-print">
+              {!emailSaved && (
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center" style={{ zIndex: 0 }}>
+                  <img src="/logo.png" alt="" className="w-[400px] opacity-[0.07]" style={{ transform: 'rotate(-45deg)' }} />
+                </div>
+              )}
+              <div style={{ position: 'relative', zIndex: 1 }}>
               <div className="flex items-start justify-between mb-8">
                 <div>
                   <h2 className="text-xl font-bold text-slate-900">{companyName || 'Your Company'}</h2>
                   <p className="text-sm text-slate-500 mt-1">Invoice {invoiceNumber}</p>
                 </div>
                 <div className="flex items-start gap-4">
-                  {logo && (
-                    <img src={logo} alt="Company logo" className="h-16 w-auto object-contain" />
-                  )}
+                  {logo && <img src={logo} alt="Company logo" className="h-16 w-auto object-contain" />}
                   <div className="text-right">
-                    <p className="text-sm text-slate-500">Date: {invoiceDate}</p>
+                    <p className="text-xs font-medium text-slate-400 mb-1">From:</p>
+                    {fromName && <p className="text-sm font-semibold text-slate-900">{fromName}</p>}
+                    {companyName && <p className="text-sm text-slate-700">{companyName}</p>}
+                    {fromPhone && <p className="text-sm text-slate-500">{fromPhone}</p>}
+                    {fromEmail && <p className="text-sm text-slate-500">{fromEmail}</p>}
+                    <p className="text-sm text-slate-500 mt-1">Date: {invoiceDate}</p>
                     <p className="text-sm text-slate-500">Due: {dueDate}</p>
                   </div>
                 </div>
@@ -604,13 +702,14 @@ function InvoiceGeneratorForm() {
                       <td className="py-2 text-sm text-slate-700">{line.description}</td>
                       <td className="py-2 text-sm text-slate-700 text-right">{line.qty}</td>
                       <td className="py-2 text-sm text-slate-500 text-right">{line.unit}</td>
-                      <td className="py-2 text-sm text-slate-700 text-right">{formatMoney(line.rate, sym)}</td>
-                      <td className="py-2 text-sm font-medium text-slate-900 text-right">{formatMoney(line.qty * line.rate, sym)}</td>
+                      <td className="py-2 text-sm text-slate-700 text-right">{hideAllPrices || line.hidePrice ? '—' : formatMoney(line.rate, sym)}</td>
+                      <td className="py-2 text-sm font-medium text-slate-900 text-right">{hideAllPrices || line.hidePrice ? '—' : formatMoney(line.qty * line.rate, sym)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
 
+              {!hideAllPrices && (
               <div className="flex justify-end mb-6">
                 <div className="w-64 space-y-1.5">
                   <div className="flex justify-between text-sm">
@@ -627,6 +726,7 @@ function InvoiceGeneratorForm() {
                   </div>
                 </div>
               </div>
+              )}
 
               {notes && (
                 <div className="border-t border-slate-100 pt-4">
@@ -641,10 +741,13 @@ function InvoiceGeneratorForm() {
                 </div>
               )}
 
+              {!emailSaved && (
               <div className="mt-8 pt-4 border-t border-slate-100">
                 <p className="text-xs text-slate-400">
                   Generated with QuoteCore+ Free Invoice Generator - {new Date().toLocaleDateString('en-GB')}
                 </p>
+              </div>
+              )}
               </div>
             </div>
 
@@ -676,13 +779,13 @@ function InvoiceGeneratorForm() {
               resultDetails={`${invoiceNumber} for ${clientName || 'client'}`}
               ctaText="Create a purchase order"
               ctaHref={`/free-purchase-order-generator?amount=${total.toFixed(2)}&ref=free-invoice-generator`}
-              secondaryText="Need to order materials? Generate a PO for your supplier - no signup needed"
+              secondaryText={!emailSaved ? "Enter your email on the form to remove the watermark" : "Need to order materials? Generate a PO for your supplier - no signup needed"}
             />
           </>
         )}
 
         {/* SEO content */}
-        <section className="mt-16 space-y-8">
+        <section className="mt-16 space-y-8 print:hidden">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Free invoice generator FAQ</h2>
             <div className="mt-4 space-y-2">
