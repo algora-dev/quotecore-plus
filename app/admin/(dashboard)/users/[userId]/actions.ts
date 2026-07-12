@@ -1109,7 +1109,7 @@ export async function getCompanyQuotas(companyId: string): Promise<QuotaInfo[]> 
       used: (invoiceCountRes.data as number | null) ?? 0,
       limit: p.monthly_invoice_limit ?? null,
       unit: 'invoices',
-      resettable: false,
+      resettable: true,
       key: 'invoices',
     },
     {
@@ -1117,7 +1117,7 @@ export async function getCompanyQuotas(companyId: string): Promise<QuotaInfo[]> 
       used: (orderCountRes.data as number | null) ?? 0,
       limit: p.monthly_material_order_limit ?? null,
       unit: 'orders',
-      resettable: false,
+      resettable: true,
       key: 'orders',
     },
     {
@@ -1159,13 +1159,13 @@ export async function resetMonthlyQuota(companyId: string, quotaKey: string): Pr
   const adminProfile = await requireAdmin();
   const admin = createAdminClient();
 
-  if (quotaKey === 'quotes') {
-    const periodStart = new Date(Date.UTC(
-      new Date().getUTCFullYear(),
-      new Date().getUTCMonth(),
-      1,
-    )).toISOString().slice(0, 10);
+  const periodStart = new Date(Date.UTC(
+    new Date().getUTCFullYear(),
+    new Date().getUTCMonth(),
+    1,
+  )).toISOString().slice(0, 10);
 
+  if (quotaKey === 'quotes') {
     const { error } = await admin
       .from('company_quote_usage')
       .update({ quotes_created: 0 })
@@ -1175,16 +1175,39 @@ export async function resetMonthlyQuota(companyId: string, quotaKey: string): Pr
     if (error) {
       return { ok: false, error: `Failed to reset quote quota: ${error.message}` };
     }
+  } else if (quotaKey === 'invoices' || quotaKey === 'orders') {
+    // For invoices/orders, get current count and set offset to match (effectively zeroing it)
+    const rpcName = quotaKey === 'invoices' ? 'company_invoice_count' : 'company_order_count';
+    const { data: currentCount, error: countErr } = await (admin as any)
+      .rpc(rpcName, { p_company_id: companyId });
 
-    await writeAudit(
-      admin, adminProfile,
-      'reset_monthly_quota',
-      null, null, null, companyId, null,
-      { quotaKey, periodStart },
-    );
+    if (countErr) {
+      return { ok: false, error: `Failed to get current ${quotaKey} count: ${countErr.message}` };
+    }
 
-    return { ok: true, message: 'Monthly quote quota reset to 0.' };
+    // Upsert offset record
+    const { error: offsetErr } = await admin
+      .from('company_quota_offsets')
+      .upsert({
+        company_id: companyId,
+        quota_key: quotaKey,
+        offset_value: currentCount ?? 0,
+        period_start: periodStart,
+      }, { onConflict: 'company_id,quota_key,period_start' });
+
+    if (offsetErr) {
+      return { ok: false, error: `Failed to reset ${quotaKey} quota: ${offsetErr.message}` };
+    }
+  } else {
+    return { ok: false, error: `Quota "${quotaKey}" is not resettable.` };
   }
 
-  return { ok: false, error: `Quota "${quotaKey}" is not resettable.` };
+  await writeAudit(
+    admin, adminProfile,
+    'reset_monthly_quota',
+    null, null, null, companyId, null,
+    { quotaKey, periodStart },
+  );
+
+  return { ok: true, message: `${quotaKey} quota reset to 0.` };
 }

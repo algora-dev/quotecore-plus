@@ -871,6 +871,44 @@ export type Database = {
           },
         ]
       }
+      company_quota_offsets: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          offset_value: number
+          period_start: string
+          quota_key: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          offset_value?: number
+          period_start?: string
+          quota_key: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          offset_value?: number
+          period_start?: string
+          quota_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_quota_offsets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_quote_usage: {
         Row: {
           company_id: string
