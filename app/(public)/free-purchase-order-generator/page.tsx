@@ -482,7 +482,7 @@ function POGeneratorForm() {
                     <h2 className="text-sm font-semibold text-slate-900">Line items</h2>
                     <label className="flex items-center gap-2 text-xs text-slate-600">
                       <input type="checkbox" checked={hideAllPrices} onChange={(e) => setHideAllPrices(e.target.checked)} className="rounded border-slate-300" />
-                      Hide all prices
+                      Hide line prices
                     </label>
                     <label className="flex items-center gap-2 text-xs text-slate-600">
                       <input type="checkbox" checked={hideTotals} onChange={(e) => setHideTotals(e.target.checked)} className="rounded border-slate-300" />
@@ -660,9 +660,10 @@ function POGeneratorForm() {
               )}
               <div style={{ position: 'relative', zIndex: 1 }}>
               <div className="flex items-start justify-between mb-8">
-                {/* Left: Spacer matching logo height, then Supplier: below */}
+                {/* Left: Spacer matching logo height, then PO number + Supplier: below */}
                 <div>
                   {logo && <div style={{ height: '4rem' }} />}
+                  <p className="text-sm font-semibold text-slate-900 mb-2">{poNumber}</p>
                   <p className="text-xs font-medium text-slate-400 mb-1">Supplier:</p>
                   <p className="text-sm font-semibold text-slate-900">{supplierName || 'Supplier name'}</p>
                   {supplierEmail && <p className="text-sm text-slate-500">{supplierEmail}</p>}

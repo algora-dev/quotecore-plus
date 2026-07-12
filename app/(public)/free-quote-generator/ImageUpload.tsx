@@ -13,6 +13,7 @@ export interface ParsedUploadResult {
   clientName: string;
   clientEmail: string;
   clientAddress: string;
+  quoteNumber?: string;
   quoteDate: string;
   validDays: string;
   notes: string;
