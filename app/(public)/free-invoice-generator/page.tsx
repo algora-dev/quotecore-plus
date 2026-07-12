@@ -69,6 +69,7 @@ function InvoiceGeneratorForm() {
   const [fromPhone, setFromPhone] = useState('');
   const [fromEmail, setFromEmail] = useState('');
   const [hideAllPrices, setHideAllPrices] = useState(false);
+  const [hideTotals, setHideTotals] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [emailSaved, setEmailSaved] = useState(false);
   const [clientName, setClientName] = useState(clientParam ?? '');
@@ -213,7 +214,7 @@ function InvoiceGeneratorForm() {
 
       <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Hero */}
-        <section className="mb-8">
+        <section className="mb-8 print:hidden">
           <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Free Invoice Generator</h1>
           <p className="mt-2 text-sm text-slate-500 max-w-xl">
             Create a professional invoice in minutes. Upload a photo of your existing invoice and
@@ -222,7 +223,7 @@ function InvoiceGeneratorForm() {
         </section>
 
           {/* Email capture */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 print:hidden">
             {!emailSaved ? (
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <div className="flex-1">
@@ -245,7 +246,7 @@ function InvoiceGeneratorForm() {
         {!generated ? (
           <>
             {/* Invoice form */}
-            <div className="space-y-6">
+            <div className="space-y-6 print:hidden">
               {/* AI upload */}
               <ImageUpload
                 documentType="invoice"
@@ -489,6 +490,10 @@ function InvoiceGeneratorForm() {
                       <input type="checkbox" checked={hideAllPrices} onChange={(e) => setHideAllPrices(e.target.checked)} className="rounded border-slate-300" />
                       Hide all prices
                     </label>
+                    <label className="flex items-center gap-2 text-xs text-slate-600">
+                      <input type="checkbox" checked={hideTotals} onChange={(e) => setHideTotals(e.target.checked)} className="rounded border-slate-300" />
+                      Hide totals
+                    </label>
                     <button
                       onClick={addLine}
                       className="inline-flex items-center gap-1 rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] transition"
@@ -661,29 +666,24 @@ function InvoiceGeneratorForm() {
               )}
               <div style={{ position: 'relative', zIndex: 1 }}>
               <div className="flex items-start justify-between mb-8">
+                {/* Left: Client/Bill to details top-left */}
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">{companyName || 'Your Company'}</h2>
-                  <p className="text-sm text-slate-500 mt-1">Invoice {invoiceNumber}</p>
+                  <p className="text-xs font-medium text-slate-400 mb-1">Bill to:</p>
+                  <p className="text-sm font-semibold text-slate-900">{clientName || 'Client name'}</p>
+                  {clientEmail && <p className="text-sm text-slate-500">{clientEmail}</p>}
+                  {clientAddress && <p className="text-sm text-slate-500">{clientAddress}</p>}
                 </div>
-                <div className="flex items-start gap-4">
-                  {logo && <img src={logo} alt="Company logo" className="h-16 w-auto object-contain" />}
-                  <div className="text-right">
-                    <p className="text-xs font-medium text-slate-400 mb-1">From:</p>
-                    {fromName && <p className="text-sm font-semibold text-slate-900">{fromName}</p>}
-                    {companyName && <p className="text-sm text-slate-700">{companyName}</p>}
-                    {fromPhone && <p className="text-sm text-slate-500">{fromPhone}</p>}
-                    {fromEmail && <p className="text-sm text-slate-500">{fromEmail}</p>}
-                    <p className="text-sm text-slate-500 mt-1">Date: {invoiceDate}</p>
-                    <p className="text-sm text-slate-500">Due: {dueDate}</p>
-                  </div>
+                {/* Right: Logo top-right, From details below */}
+                <div className="text-right">
+                  {logo && <img src={logo} alt="Company logo" className="h-16 w-auto object-contain ml-auto mb-2" />}
+                  <p className="text-xs font-medium text-slate-400 mb-1">From:</p>
+                  {fromName && <p className="text-sm font-semibold text-slate-900">{fromName}</p>}
+                  {companyName && <p className="text-sm text-slate-700">{companyName}</p>}
+                  {fromPhone && <p className="text-sm text-slate-500">{fromPhone}</p>}
+                  {fromEmail && <p className="text-sm text-slate-500">{fromEmail}</p>}
+                  <p className="text-sm text-slate-500 mt-1">Date: {invoiceDate}</p>
+                  <p className="text-sm text-slate-500">Due: {dueDate}</p>
                 </div>
-              </div>
-
-              <div className="mb-6">
-                <p className="text-xs font-medium text-slate-400 mb-1">Bill to:</p>
-                <p className="text-sm font-semibold text-slate-900">{clientName || 'Client name'}</p>
-                {clientEmail && <p className="text-sm text-slate-500">{clientEmail}</p>}
-                {clientAddress && <p className="text-sm text-slate-500">{clientAddress}</p>}
               </div>
 
               <table className="w-full mb-6">
@@ -709,7 +709,7 @@ function InvoiceGeneratorForm() {
                 </tbody>
               </table>
 
-              {!hideAllPrices && (
+              {!hideAllPrices && !hideTotals && (
               <div className="flex justify-end mb-6">
                 <div className="w-64 space-y-1.5">
                   <div className="flex justify-between text-sm">
@@ -819,6 +819,8 @@ function InvoiceGeneratorForm() {
         @media print {
           body { background: white; }
           header, footer, button { display: none !important; }
+          main > div > *:not(#invoice-print) { display: none !important; }
+          #invoice-print { border: none !important; padding: 0 !important; }
         }
       `}</style>
     </main>

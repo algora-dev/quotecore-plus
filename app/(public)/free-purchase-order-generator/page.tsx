@@ -80,6 +80,7 @@ function POGeneratorForm() {
   const [taxRate, setTaxRate] = useState(20);
   const [taxName, setTaxName] = useState('Tax');
   const [hideAllPrices, setHideAllPrices] = useState(false);
+  const [hideTotals, setHideTotals] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [emailSaved, setEmailSaved] = useState(false);
 
@@ -203,7 +204,7 @@ function POGeneratorForm() {
 
       <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Hero */}
-        <section className="mb-8">
+        <section className="mb-8 print:hidden">
           <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Free Purchase Order Generator</h1>
           <p className="mt-2 text-sm text-slate-500 max-w-xl">
             Create a professional purchase order for your suppliers. Upload a photo of your existing
@@ -212,7 +213,7 @@ function POGeneratorForm() {
         </section>
 
         {/* Email capture */}
-        <div className="rounded-xl border border-slate-200 bg-white p-4 mb-6">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 mb-6 print:hidden">
           {!emailSaved ? (
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <div className="flex-1">
@@ -235,7 +236,7 @@ function POGeneratorForm() {
         {!generated ? (
           <>
             {/* PO form */}
-            <div className="space-y-6">
+            <div className="space-y-6 print:hidden">
               {/* AI upload */}
               <ImageUpload
                 documentType="order"
@@ -483,6 +484,10 @@ function POGeneratorForm() {
                       <input type="checkbox" checked={hideAllPrices} onChange={(e) => setHideAllPrices(e.target.checked)} className="rounded border-slate-300" />
                       Hide all prices
                     </label>
+                    <label className="flex items-center gap-2 text-xs text-slate-600">
+                      <input type="checkbox" checked={hideTotals} onChange={(e) => setHideTotals(e.target.checked)} className="rounded border-slate-300" />
+                      Hide totals
+                    </label>
                   </div>
                   <button
                     onClick={addLine}
@@ -655,29 +660,24 @@ function POGeneratorForm() {
               )}
               <div style={{ position: 'relative', zIndex: 1 }}>
               <div className="flex items-start justify-between mb-8">
+                {/* Left: Supplier/To details top-left */}
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">{companyName || 'Your Company'}</h2>
-                  <p className="text-sm text-slate-500 mt-1">Purchase Order {poNumber}</p>
+                  <p className="text-xs font-medium text-slate-400 mb-1">Supplier:</p>
+                  <p className="text-sm font-semibold text-slate-900">{supplierName || 'Supplier name'}</p>
+                  {supplierEmail && <p className="text-sm text-slate-500">{supplierEmail}</p>}
+                  {supplierAddress && <p className="text-sm text-slate-500">{supplierAddress}</p>}
                 </div>
-                <div className="flex items-start gap-4">
-                  {logo && <img src={logo} alt="Company logo" className="h-16 w-auto object-contain" />}
-                  <div className="text-right">
-                    <p className="text-xs font-medium text-slate-400 mb-1">From:</p>
-                    {fromName && <p className="text-sm font-semibold text-slate-900">{fromName}</p>}
-                    {companyName && <p className="text-sm text-slate-700">{companyName}</p>}
-                    {fromPhone && <p className="text-sm text-slate-500">{fromPhone}</p>}
-                    {fromEmail && <p className="text-sm text-slate-500">{fromEmail}</p>}
-                    <p className="text-sm text-slate-500 mt-1">Date: {poDate}</p>
-                    {deliveryDate && <p className="text-sm text-slate-500">Required by: {deliveryDate}</p>}
-                  </div>
+                {/* Right: Logo top-right, From details below */}
+                <div className="text-right">
+                  {logo && <img src={logo} alt="Company logo" className="h-16 w-auto object-contain ml-auto mb-2" />}
+                  <p className="text-xs font-medium text-slate-400 mb-1">From:</p>
+                  {fromName && <p className="text-sm font-semibold text-slate-900">{fromName}</p>}
+                  {companyName && <p className="text-sm text-slate-700">{companyName}</p>}
+                  {fromPhone && <p className="text-sm text-slate-500">{fromPhone}</p>}
+                  {fromEmail && <p className="text-sm text-slate-500">{fromEmail}</p>}
+                  <p className="text-sm text-slate-500 mt-1">Date: {poDate}</p>
+                  {deliveryDate && <p className="text-sm text-slate-500">Required by: {deliveryDate}</p>}
                 </div>
-              </div>
-
-              <div className="mb-6">
-                <p className="text-xs font-medium text-slate-400 mb-1">Supplier:</p>
-                <p className="text-sm font-semibold text-slate-900">{supplierName || 'Supplier name'}</p>
-                {supplierEmail && <p className="text-sm text-slate-500">{supplierEmail}</p>}
-                {supplierAddress && <p className="text-sm text-slate-500">{supplierAddress}</p>}
               </div>
 
               {deliveryAddress && (
@@ -710,7 +710,7 @@ function POGeneratorForm() {
                 </tbody>
               </table>
 
-              {!hideAllPrices && (
+              {!hideAllPrices && !hideTotals && (
               <div className="flex justify-end mb-6">
                 <div className="w-64 space-y-1.5">
                   <div className="flex justify-between text-sm">
@@ -820,6 +820,8 @@ function POGeneratorForm() {
         @media print {
           body { background: white; }
           header, footer, button { display: none !important; }
+          main > div > *:not(#po-print) { display: none !important; }
+          #po-print { border: none !important; padding: 0 !important; }
         }
       `}</style>
     </main>
