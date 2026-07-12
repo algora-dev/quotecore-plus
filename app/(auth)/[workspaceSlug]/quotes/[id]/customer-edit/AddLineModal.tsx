@@ -234,8 +234,13 @@ export function AddLineModal({
                 ))}
               </select>
             </div>
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+              <p className="text-xs text-amber-800">
+                <strong>Note:</strong> Adding a component here only pulls its <strong>name</strong> into the quote line. Labor rates, material rates, and measurement breakdowns from the component library are <strong>not</strong> included — use the quote builder's Components phase for full pricing.
+              </p>
+            </div>
             <p className="text-xs text-slate-400">
-              The component name is added to the quote; set quantity and price afterwards with the pencil.
+              Set quantity and price afterwards with the pencil edit tool.
             </p>
             <div className="flex gap-3 pt-2">
               <button

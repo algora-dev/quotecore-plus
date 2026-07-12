@@ -3,7 +3,7 @@ title: Waste, material costs, and pitch
 description: How the app converts a plan measurement into the quantity you actually order.
 order: 3
 status: published
-updated: 2026-05-24
+updated: 2026-07-12
 ---
 
 # Waste, material costs, and pitch
@@ -39,6 +39,16 @@ Pack counts round up to whole packs. Waste is applied before the pack count is c
 Some measurements are taken flat from a plan view, but the real material runs along a slope or angle. The pitch multiplier scales the plan number up to the actual material length or area.
 
 Pitch can be applied to areas and to lineal lengths (excluding Lineal x Height measurements, which already account for a vertical dimension). You enter the pitch angle during the quote builder - not at the component level.
+
+### Pitch input modes
+
+Pitch fields support three input modes — toggle between them with the buttons next to the field:
+
+- **Degrees (°)** — enter the angle directly (e.g. 30°).
+- **Ratio (1:X)** — enter the run for every 1 unit of rise (e.g. 1:1.73 for 30°).
+- **Gradient (%)** — enter the slope as a percentage (e.g. 57.7% for 30°).
+
+The app converts between modes automatically, so you can switch at any time without losing the value.
 
 Pitch is only applied when the component has pitch enabled AND the quote is using a [Plan](/docs/concepts/plan-vs-actual) measurement. If the measurement is set to Actual, the pitch step is skipped because the number is already real.
 

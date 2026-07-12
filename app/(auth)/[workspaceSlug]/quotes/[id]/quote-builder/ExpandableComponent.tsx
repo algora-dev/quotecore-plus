@@ -8,6 +8,7 @@ import { formatCurrency } from '@/app/lib/currency/currencies';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, QuoteComponentEntryRow, InputMode } from '@/app/lib/types';
 import type { MeasurementSystem } from '@/app/lib/types';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
+import { PitchInput } from '@/app/components/PitchInput';
 import { CreateSmartComponentModal } from '@/app/components/CreateSmartComponentModal';
 import { formatQuantity, formatPricedQuantity } from './helpers';
 
@@ -346,23 +347,11 @@ export function ExpandableComponent({
                 Custom
               </button>
               {comp.use_custom_pitch && (
-                <input
-                  type="number"
-                  step="0.5"
-                  min={0}
-                  max={80}
-                  defaultValue={comp.custom_pitch_degrees ?? ''}
-                  onBlur={e => {
-                    const raw = Number(e.target.value);
-                    let clamped: number | null = null;
-                    if (raw > 0) {
-                      clamped = Math.min(raw, 80);
-                      if (clamped !== raw) e.target.value = String(clamped);
-                    }
-                    onUpdateSettings(comp.id, { custom_pitch_degrees: clamped });
-                  }}
-                  placeholder="°"
-                  className="w-16 px-1 py-0.5 text-xs border border-slate-300 rounded"
+                <PitchInput
+                  degrees={comp.custom_pitch_degrees}
+                  onSave={(deg) => onUpdateSettings(comp.id, { custom_pitch_degrees: deg })}
+                  compact
+                  className="inline-block"
                 />
               )}
             </div>

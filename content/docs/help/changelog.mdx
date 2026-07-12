@@ -3,12 +3,41 @@ title: Changelog
 description: What changed and when.
 order: 4
 status: published
-updated: 2026-06-25
+updated: 2026-07-12
 ---
 
 # Changelog
 
 A running log of features added and significant changes.
+
+## 2026-07-12 — Gradient pitch input, admin quota reset, component-as-custom-line note, docs update
+
+### Gradient pitch input
+
+Pitch fields across the app now support **three input modes**: degrees (°), ratio (1:X), and gradient (%). Toggle between modes with the buttons next to the pitch field — the app converts automatically.
+
+This applies to:
+- Area pitch in the quote builder and takeoff
+- Component pitch in the quote builder
+- Area name modal in takeoff
+
+Trade-specific labels have been updated: trades that previously used "Slope" or "Fall / Slope" now show "Gradient" or "Fall / Gradient" to match the new input style.
+
+### Admin quota reset
+
+Admins can now view and reset company quotas from the user profile page in the admin panel.
+
+- **Quota dashboard** shows progress bars for quotes (monthly), invoices, orders, components, flashings, catalogs, and attachments with traffic-light colour coding.
+- **Reset monthly quotes** with a required reason field — clears the company's monthly quote counter immediately.
+- Non-resettable quotas (components, flashings, etc.) show lifetime counts for reference.
+
+### Component-as-custom-line note
+
+When adding a component as a custom line in the quote editor or order editor, an info note now clarifies that the component is being added as a standalone line item — not linked to takeoff measurements. This prevents confusion when mixing measured and manually-added components.
+
+### Docs and help updates
+
+Help documentation has been updated to cover recent features including trade calculators, free tools, takeoff improvements, the unified send pipeline, and order editor fixed quantity display.
 
 ## 2026-06-25 — Flashing drawing improvements, angle calculator widget, order editor hover-highlight, dashboard alerts fix
 

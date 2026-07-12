@@ -3,7 +3,7 @@ title: Digital takeoff
 description: Upload a plan or image and measure areas, lengths, and items directly on screen.
 order: 3
 status: published
-updated: 2026-05-24
+updated: 2026-07-12
 ---
 
 # Digital takeoff
@@ -29,6 +29,19 @@ When you click the **Area** button, two sub-tools are available:
 Both tools produce the same result: a measured area stored in your calibration units (metric, imperial, or roofing squares) and attached to a roof area or component.
 
 All measurements are saved and auto-calculated to pre-populate the next phase in the quote builder.
+
+### Per-entry pitch
+
+Each area measurement can have its own pitch angle. When you measure multiple areas on the same plan, each one can have a different pitch — the app tracks pitch per measurement entry, not per area. Components inherit the pitch of the area they belong to.
+
+The pitch input supports degrees, ratio, and gradient modes (see [Waste, material costs, and pitch](/docs/concepts/waste-and-pitch)).
+
+### Canvas tools
+
+- **Undo / Redo** — step backward and forward through your drawing actions.
+- **Page-scoped drawing** — measurements and drawings are tied to the page you're on. Switching pages won't leak drawings across pages.
+- **Multi-page support** — upload multiple plans and measure on each independently. Calibrations are saved per page.
+- **Component assignment** — assign measurements to specific components as you draw. Use "+ New Area" to create roof areas without a component.
 
 ## What happens next
 

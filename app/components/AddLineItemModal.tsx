@@ -486,6 +486,11 @@ export function AddLineItemModal({
               </div>
               {selectedComponent && (
                 <div className="space-y-2">
+                  <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                    <p className="text-xs text-amber-800">
+                      <strong>Note:</strong> Only the component name and price are added here. Labor rates, material rates, and measurement breakdowns are not included — use the quote builder's Components phase for full pricing.
+                    </p>
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-medium text-slate-700 mb-1">Qty</label>

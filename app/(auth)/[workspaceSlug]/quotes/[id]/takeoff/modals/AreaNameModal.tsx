@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { PitchInput } from '@/app/components/PitchInput';
 
 export function AreaNameModal({
   isRoofing,
@@ -24,7 +25,7 @@ export function AreaNameModal({
   initialName?: string;
 }) {
   const [name, setName] = useState(initialName);
-  const [pitch, setPitch] = useState('');
+  const [pitchDegrees, setPitchDegrees] = useState<number | null>(null);
 
   // P1-1b: when initialName is pre-filled (new-page mode), name is locked -
   // only pitch is needed from the user.
@@ -38,8 +39,8 @@ export function AreaNameModal({
     } else if (isRoofing) {
       // Roof area - require pitch; name comes from pre-fill or input
       const effectiveName = nameIsLocked ? initialName : name.trim();
-      if (effectiveName && (pitch.trim() || nameIsLocked)) {
-        onSave(effectiveName, pitch.trim() ? Number(pitch) : 0);
+      if (effectiveName && (pitchDegrees != null || nameIsLocked)) {
+        onSave(effectiveName, pitchDegrees ?? 0);
       }
     } else {
       // Generic area - name only, pitch=0 (flat)
@@ -92,26 +93,17 @@ export function AreaNameModal({
               )}
               {isRoofing && (
                 <>
-                  <div>
-                    <label className="block text-sm mb-2">
-                      Roof Pitch (degrees){nameIsLocked ? ' - optional, enter 0 if flat' : <span className="text-red-400"> *</span>}
-                    </label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      min="0"
-                      max="90"
-                      value={pitch}
-                      onChange={(e) => setPitch(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded"
-                      placeholder={nameIsLocked ? 'e.g. 25 (or 0 for flat)' : 'e.g. 30'}
-                      required={!nameIsLocked}
-                      autoFocus={nameIsLocked}
-                    />
-                    <p className="text-xs text-gray-600 mt-1">
-                      Used to calculate component lengths (rafters, hips, valleys)
-                    </p>
-                  </div>
+                  <PitchInput
+                    degrees={pitchDegrees}
+                    onSave={setPitchDegrees}
+                    label="Roof Pitch"
+                    required={!nameIsLocked}
+                    autoFocus={nameIsLocked}
+                    className="block"
+                  />
+                  <p className="text-xs text-gray-600 -mt-2">
+                    Used to calculate component lengths (rafters, hips, valleys)
+                  </p>
                   <div className="p-3 bg-gray-50 border border-orange-400 rounded-lg">
                     <p className="text-xs text-gray-900 font-medium">
                       Plan Area: {calculatedArea.toFixed(2)} sq {unit} (before pitch adjustment)
@@ -142,7 +134,7 @@ export function AreaNameModal({
             <button
               type="submit"
               className="px-4 py-2 bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-              disabled={!componentName && !nameIsLocked && (!name.trim() || (isRoofing && !pitch.trim()))}
+              disabled={!componentName && !nameIsLocked && (!name.trim() || (isRoofing && pitchDegrees == null))}
             >
               {componentName ? 'Add to Component' : isRoofing ? 'Create Roof Area' : 'Create Area'}
             </button>

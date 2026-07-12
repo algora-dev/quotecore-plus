@@ -18,8 +18,11 @@ import {
   deleteAccount,
   startImpersonation,
   listAttachments,
+  getCompanyQuotas,
+  resetMonthlyQuota,
   type CouponInfo,
   type AttachmentRow,
+  type QuotaInfo,
 } from './actions';
 import { StorageTab } from './StorageTab';
 import { QuotesTab } from './quotes-tab/QuotesTab';
@@ -129,7 +132,10 @@ export function UserProfile({ data }: { data: UserProfileData }) {
       {/* H. Quotes — Storyline Viewer */}
       <QuotesTab companyId={data.company.id} />
 
-      {/* I. Storage & Files */}
+      {/* I. Quota Usage & Reset */}
+      <QuotaSection companyId={data.company.id} onAction={runAction} pending={pending} />
+
+      {/* J. Storage & Files */}
       <StorageSection data={data} />
     </div>
   );
@@ -807,6 +813,128 @@ function ImpersonateButton({
     >
       Log in as {userEmail.split('@')[0]}
     </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Quota Usage & Reset Section
+// ---------------------------------------------------------------------------
+
+function QuotaSection({
+  companyId,
+  onAction,
+  pending,
+}: {
+  companyId: string;
+  onAction: (fn: () => Promise<{ ok: true; message: string } | { ok: false; error: string }>, onSuccess?: () => void) => void;
+  pending: boolean;
+}) {
+  const [quotas, setQuotas] = useState<QuotaInfo[] | null>(null);
+  const [loading, startLoad] = useTransition();
+  const [showConfirm, setShowConfirm] = useState<string | null>(null);
+  const [reason, setReason] = useState('');
+
+  function refresh() {
+    startLoad(async () => {
+      const res = await getCompanyQuotas(companyId);
+      setQuotas(res);
+    });
+  }
+
+  useEffect(() => { refresh(); }, [companyId]);
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-slate-900">Quota Usage</h2>
+        <button
+          onClick={refresh}
+          disabled={loading}
+          className="text-xs text-slate-400 hover:text-slate-600 transition"
+        >
+          {loading ? 'Refreshing…' : 'Refresh'}
+        </button>
+      </div>
+
+      {quotas === null ? (
+        <p className="text-sm text-slate-500">Loading quotas…</p>
+      ) : (
+        <div className="space-y-2">
+          {quotas.map((q) => {
+            const pct = q.limit ? Math.min((q.used / q.limit) * 100, 100) : 0;
+            const isOver = q.limit != null && q.used >= q.limit;
+            return (
+              <div key={q.key} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-slate-700">{q.label}</span>
+                    {q.resettable && (
+                      <span className="text-[10px] text-slate-400 bg-slate-100 rounded-full px-1.5 py-0.5">monthly</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden max-w-[200px]">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          isOver ? 'bg-red-500' : pct >= 80 ? 'bg-amber-500' : 'bg-emerald-500'
+                        }`}
+                        style={{ width: `${q.limit ? pct : 0}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-slate-500">
+                      {q.used}{q.limit != null ? ` / ${q.limit}` : ''} {q.unit}
+                    </span>
+                  </div>
+                </div>
+                <div className="ml-4 shrink-0">
+                  {q.resettable ? (
+                    showConfirm === q.key ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={reason}
+                          onChange={(e) => setReason(e.target.value)}
+                          placeholder="Reason"
+                          className="w-32 rounded-lg border border-slate-300 px-2 py-1 text-xs focus:border-orange-500 focus:outline-none"
+                        />
+                        <button
+                          onClick={() => {
+                            onAction(
+                              async () => resetMonthlyQuota(companyId, q.key),
+                              () => { setShowConfirm(null); setReason(''); refresh(); },
+                            );
+                          }}
+                          disabled={pending || !reason.trim()}
+                          className="rounded-full bg-[#FF6B35] px-3 py-1 text-xs font-semibold text-white hover:bg-[#e55a2b] disabled:opacity-50"
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          onClick={() => { setShowConfirm(null); setReason(''); }}
+                          className="text-xs text-slate-400 hover:text-slate-600"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setShowConfirm(q.key)}
+                        disabled={pending}
+                        className="text-xs text-[#FF6B35] hover:underline disabled:opacity-50"
+                      >
+                        Reset
+                      </button>
+                    )
+                  ) : (
+                    <span className="text-[11px] text-slate-400">counted from records</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 

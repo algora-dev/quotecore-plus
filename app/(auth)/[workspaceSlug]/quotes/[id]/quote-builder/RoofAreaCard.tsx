@@ -6,6 +6,7 @@ import { formatArea, formatLinear } from '@/app/lib/measurements/displayHelpers'
 import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow } from '@/app/lib/types';
 import type { MeasurementSystem } from '@/app/lib/types';
 import { updateQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry } from '../../actions';
+import { PitchInput } from '@/app/components/PitchInput';
 
 export function RoofAreaCard({
   area,
@@ -114,33 +115,22 @@ export function RoofAreaCard({
           </div>
           <div>
               {areaPitchVisible && <div className="mb-2" data-copilot="quote-pitch">
-                <div className="flex items-center gap-2">
-                  <label className="text-xs text-slate-500">{areaPitchLabel}</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min={0}
-                    max={80}
-                    defaultValue={area.calc_pitch_degrees ?? ''}
-                    onBlur={e => {
-                      const raw = Number(e.target.value);
-                      let clamped: number | null = null;
-                      if (raw > 0) {
-                        clamped = Math.min(raw, 80);
-                        if (clamped !== raw) e.target.value = String(clamped);
-                      }
-                      onUpdate(area.id, {
-                        input_mode: 'calculated',
-                        calc_width_m: area.calc_width_m,
-                        calc_length_m: area.calc_length_m,
-                        calc_plan_sqm: area.calc_plan_sqm,
-                        calc_pitch_degrees: clamped,
-                      });
-                    }}
-                    className="w-20 px-2 py-1 text-xs border border-slate-300 rounded"
-                  />
-                  <span className="text-[11px] text-slate-400">max 80°</span>
-                </div>
+                <PitchInput
+                  degrees={area.calc_pitch_degrees}
+                  onSave={(deg) => {
+                    onUpdate(area.id, {
+                      input_mode: 'calculated',
+                      calc_width_m: area.calc_width_m,
+                      calc_length_m: area.calc_length_m,
+                      calc_plan_sqm: area.calc_plan_sqm,
+                      calc_pitch_degrees: deg,
+                    });
+                  }}
+                  label={areaPitchLabel}
+                  showMax
+                  compact
+                  className="block"
+                />
                 {(area.calc_pitch_degrees ?? 0) >= 60 && (
                   <p className="mt-1 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
                     High angle ({area.calc_pitch_degrees}°): calculated quantities get very large near vertical. Double-check the value is correct.

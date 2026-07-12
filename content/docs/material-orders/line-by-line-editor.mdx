@@ -3,7 +3,7 @@ title: Line-by-line order editor
 description: Add, edit, and control priced lines in a Line by Line material order.
 order: 3
 status: published
-updated: 2026-06-05
+updated: 2026-07-12
 ---
 
 # Line-by-line order editor
@@ -38,6 +38,14 @@ Each line has the following controls:
 | **Price** | Tick to show the line's price; untick to hide the price on this line only. |
 | **In total** | Tick to include this line in the order subtotal; untick to show the line but exclude it from the total. |
 | **▲ / ▼** | Move the line up or down in the list. |
+
+### Fixed-quantity components
+
+When you add a component that uses fixed-quantity pricing (per pack, per item, etc.), the line shows a single **Quantity** value with the unit of measurement — instead of expanding the full measurement breakdown. This keeps the order clean when the per-unit breakdown isn't relevant.
+
+For per-unit components (priced per m², per metre, etc.), the full measurement breakdown (lengths, areas, entries) is still shown as usual.
+
+Quantity values edited in the order editor are stored on the order line only — they never write back to the quote or component library.
 
 ## Hide all prices
 

@@ -8,6 +8,7 @@ import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea, getTakeoffSessionVersion } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
+import { PitchInput } from '@/app/components/PitchInput';
 import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
 import type { TakeoffHydrationData } from './actions';
 import { uploadCanvasImage } from './uploadCanvasImage';
@@ -357,6 +358,7 @@ export function TakeoffWorkstation({
   // Bypasses AreaNameModal entirely so the name never has to be re-typed.
   const [showPitchOnlyPrompt, setShowPitchOnlyPrompt] = useState(false);
   const [pitchOnlyInput, setPitchOnlyInput] = useState('');
+  const [pitchOnlyDegrees, setPitchOnlyDegrees] = useState<number | null>(null);
 
   // Volume (L × W × D) - depth prompt state.
   // Fires after the area polygon is closed for a volume_3d component.
@@ -5125,32 +5127,25 @@ export function TakeoffWorkstation({
               </p>
             </div>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                {tradeConfig.pitchRequired ? 'Pitch (degrees)' : 'Slope / angle (degrees)'}
-                {!tradeConfig.pitchRequired && <span className="text-slate-400 font-normal ml-1">(optional)</span>}
-              </label>
-              <input
-                type="number"
-                step="0.5"
-                min="0"
-                max="90"
-                value={pitchOnlyInput}
-                onChange={(e) => setPitchOnlyInput(e.target.value)}
-                placeholder={tradeConfig.pitchRequired ? 'e.g. 25' : 'e.g. 10 - or leave blank for flat'}
+              <PitchInput
+                degrees={pitchOnlyDegrees}
+                onSave={(deg) => setPitchOnlyDegrees(deg)}
+                label={tradeConfig.pitchRequired ? 'Pitch' : 'Slope / Angle'}
+                required={tradeConfig.pitchRequired}
                 autoFocus
-                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded text-sm"
+                className="block"
               />
             </div>
             <div className="flex gap-3">
               <button
                 onClick={() => {
                   setShowPitchOnlyPrompt(false);
-                  const pitch = pitchOnlyInput.trim() ? Number(pitchOnlyInput) : 0;
+                  const pitch = pitchOnlyDegrees ?? 0;
                   handleSaveArea(isExistingAreaMode ? existingAreaLabel : (initialPageName || 'New Area'), pitch);
                 }}
                 className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
               >
-                {pitchOnlyInput.trim() ? `Save at ${pitchOnlyInput}°` : 'Save (0° flat)'}
+                {pitchOnlyDegrees != null ? `Save at ${pitchOnlyDegrees.toFixed(1).replace(/\.0$/, '')}°` : 'Save (0° flat)'}
               </button>
               <button
                 onClick={() => {

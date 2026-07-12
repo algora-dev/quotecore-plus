@@ -1031,3 +1031,160 @@ export async function endImpersonation(): Promise<ActionResult & { redirect?: st
   // Last resort: redirect to admin login
   return { ok: true, message: 'Impersonation ended — please log back in', redirect: '/admin/login' };
 }
+
+// ---------------------------------------------------------------------------
+// Quota Usage & Reset
+// ---------------------------------------------------------------------------
+
+export interface QuotaInfo {
+  label: string;
+  used: number;
+  limit: number | null;
+  unit: string;
+  /** Whether this quota can be reset (monthly counter in a separate table). */
+  resettable: boolean;
+  /** Key used by the client to identify which quota to reset. */
+  key: string;
+}
+
+export async function getCompanyQuotas(companyId: string): Promise<QuotaInfo[]> {
+  await requireAdmin();
+  const admin = createAdminClient();
+
+  const periodStart = new Date(Date.UTC(
+    new Date().getUTCFullYear(),
+    new Date().getUTCMonth(),
+    1,
+  )).toISOString().slice(0, 10);
+
+  const [
+    usageRes,
+    effPlanRes,
+    compCountRes,
+    flashCountRes,
+    catalogCountRes,
+    attachmentCountRes,
+    invoiceCountRes,
+    orderCountRes,
+  ] = await Promise.all([
+    admin.from('company_quote_usage')
+      .select('quotes_created')
+      .eq('company_id', companyId)
+      .eq('period_start', periodStart)
+      .maybeSingle(),
+    admin.rpc('company_effective_plan_code', { p_company_id: companyId }),
+    admin.rpc('company_component_count', { p_company_id: companyId }),
+    admin.rpc('company_flashing_count', { p_company_id: companyId }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (admin as any).rpc('company_catalog_count', { p_company_id: companyId }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (admin as any).rpc('company_attachment_count', { p_company_id: companyId }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (admin as any).rpc('company_invoice_count', { p_company_id: companyId }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (admin as any).rpc('company_order_count', { p_company_id: companyId }),
+  ]);
+
+  const planCode = (effPlanRes.data as string | null) ?? 'starter';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: planRow } = await (admin as any)
+    .from('subscription_plans')
+    .select('monthly_quote_limit, component_limit, flashing_limit, catalog_limit, attachment_limit, monthly_invoice_limit, monthly_material_order_limit')
+    .eq('code', planCode)
+    .maybeSingle();
+
+  const p = planRow ?? {};
+
+  return [
+    {
+      label: 'Quotes (monthly)',
+      used: (usageRes.data?.quotes_created as number | undefined) ?? 0,
+      limit: p.monthly_quote_limit ?? 0,
+      unit: 'quotes',
+      resettable: true,
+      key: 'quotes',
+    },
+    {
+      label: 'Invoices (monthly)',
+      used: (invoiceCountRes.data as number | null) ?? 0,
+      limit: p.monthly_invoice_limit ?? null,
+      unit: 'invoices',
+      resettable: false,
+      key: 'invoices',
+    },
+    {
+      label: 'Material Orders (monthly)',
+      used: (orderCountRes.data as number | null) ?? 0,
+      limit: p.monthly_material_order_limit ?? null,
+      unit: 'orders',
+      resettable: false,
+      key: 'orders',
+    },
+    {
+      label: 'Components (lifetime)',
+      used: (compCountRes.data as number | null) ?? 0,
+      limit: p.component_limit ?? null,
+      unit: 'components',
+      resettable: false,
+      key: 'components',
+    },
+    {
+      label: 'Flashings / Drawings (lifetime)',
+      used: (flashCountRes.data as number | null) ?? 0,
+      limit: p.flashing_limit ?? null,
+      unit: 'items',
+      resettable: false,
+      key: 'flashings',
+    },
+    {
+      label: 'Catalogs (lifetime)',
+      used: (catalogCountRes.data as number | null) ?? 0,
+      limit: p.catalog_limit ?? null,
+      unit: 'catalogs',
+      resettable: false,
+      key: 'catalogs',
+    },
+    {
+      label: 'Attachments (lifetime)',
+      used: (attachmentCountRes.data as number | null) ?? 0,
+      limit: p.attachment_limit ?? null,
+      unit: 'files',
+      resettable: false,
+      key: 'attachments',
+    },
+  ];
+}
+
+export async function resetMonthlyQuota(companyId: string, quotaKey: string): Promise<ActionResult> {
+  const adminProfile = await requireAdmin();
+  const admin = createAdminClient();
+
+  if (quotaKey === 'quotes') {
+    const periodStart = new Date(Date.UTC(
+      new Date().getUTCFullYear(),
+      new Date().getUTCMonth(),
+      1,
+    )).toISOString().slice(0, 10);
+
+    const { error } = await admin
+      .from('company_quote_usage')
+      .update({ quotes_created: 0 })
+      .eq('company_id', companyId)
+      .eq('period_start', periodStart);
+
+    if (error) {
+      return { ok: false, error: `Failed to reset quote quota: ${error.message}` };
+    }
+
+    await writeAudit(
+      admin, adminProfile,
+      'reset_monthly_quota',
+      null, null, null, companyId, null,
+      { quotaKey, periodStart },
+    );
+
+    return { ok: true, message: 'Monthly quote quota reset to 0.' };
+  }
+
+  return { ok: false, error: `Quota "${quotaKey}" is not resettable.` };
+}
