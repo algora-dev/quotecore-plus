@@ -1,8 +1,41 @@
 # Smoke Test Checklist
 
-## Status: `main` at `1a80228` · `development` at `8c7826e`
+## Status: `main` at `9bbb402` = `development` at `9bbb402` (synced)
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
+
+**O. No-parent-area takeoff flow (new on main+dev, 2026-07-12, `9bbb402`)**
+- [ ] New quote → takeoff → calibrate → Skip popup → add components → save → components appear in quote builder Components tab
+- [ ] Popup does NOT re-appear after clicking Skip (even after adding/finishing multiple components)
+- [ ] Components show in Review tab with correct prices
+- [ ] Calibration applies to all components for the session
+
+**P. Admin quota reset — all monthly quotas (new on main+dev, 2026-07-12, `84ad7ec`)**
+- [ ] Admin → user profile → Reset button visible on Quotes, Invoices, AND Material Orders (not just Quotes)
+- [ ] Reset invoices → count goes to 0
+- [ ] Reset orders → count goes to 0
+- [ ] Reset reason recorded in audit log
+
+**Q. Free tools enhancements (new on main+dev, 2026-07-12, `5ee8782`)**
+- [ ] Quote/Invoice/PO generators: FAQ section excluded from PDF print
+- [ ] Diagonal QuoteCore+ watermark on generated docs (7% opacity, 45°)
+- [ ] Save email → watermark + "Generated with" footer disappear
+- [ ] "From" section shows sender name/company/phone/email in document header
+- [ ] Hide all prices checkbox + per-line eye toggle work
+- [ ] PO generator: delivery address field shows on generated PO
+- [ ] Email quota tiers display correctly (3/5/unlimited vs 10/20/unlimited)
+
+**R. Gradient pitch input (new on dev, 2026-07-12, `4ee99bc`)**
+- [ ] Non-roofing trades: pitch input shows °/1:X/% toggle
+- [ ] Trade labels updated (Slope→Gradient, Fall/Slope→Fall/Gradient)
+
+**S. Free invoice + PO generator upgrade (new on dev, 2026-07-12, `0eb502f`)**
+- [ ] Invoice generator: image upload, prompt box, settings bar, logo upload all present
+- [ ] PO generator: same features as invoice
+
+**T. Domain routing middleware (new on dev, 2026-07-12, `5ee8782`)**
+- [ ] quote-core.com serves public routes (pending Vercel domain setup by Shaun)
+- [ ] Non-public paths on quote-core.com redirect to app.quote-core.com
 
 **M. Bird's mouth diagram — notch detail-view recompose (new on dev, 2026-07-11, `d8cd593`)**
 - [ ] Bird's Mouth diagram is now a zoomed DETAIL VIEW of the notch (not full timber): dotted L-shape large and central, orange rafter edges run off-frame
