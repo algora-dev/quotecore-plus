@@ -581,7 +581,7 @@ function InvoiceGeneratorForm() {
                 </div>
 
                 {/* Totals */}
-                {!hideAllPrices && (
+                {!hideAllPrices && !hideTotals && (
                 <div className="mt-4 flex justify-end">
                   <div className="w-full sm:w-64 space-y-1.5">
                     <div className="flex justify-between text-sm">
@@ -666,8 +666,9 @@ function InvoiceGeneratorForm() {
               )}
               <div style={{ position: 'relative', zIndex: 1 }}>
               <div className="flex items-start justify-between mb-8">
-                {/* Left: Client/Bill to details top-left, aligned with From: on the right */}
-                <div className="flex flex-col" style={{ minHeight: logo ? '5rem' : 'auto' }}>
+                {/* Left: Spacer matching logo height, then Bill to: below */}
+                <div>
+                  {logo && <div style={{ height: '4rem' }} />}
                   <p className="text-xs font-medium text-slate-400 mb-1">Bill to:</p>
                   <p className="text-sm font-semibold text-slate-900">{clientName || 'Client name'}</p>
                   {clientEmail && <p className="text-sm text-slate-500">{clientEmail}</p>}
@@ -675,7 +676,7 @@ function InvoiceGeneratorForm() {
                   <p className="text-sm text-slate-500 mt-1">Date: {invoiceDate}</p>
                   <p className="text-sm text-slate-500">Due: {dueDate}</p>
                 </div>
-                {/* Right: Logo top-right, From details below */}
+                {/* Right: Logo at top (highest item), From: below */}
                 <div className="text-right">
                   {logo && <img src={logo} alt="Company logo" className="h-16 w-auto object-contain ml-auto mb-2" />}
                   <p className="text-xs font-medium text-slate-400 mb-1">From:</p>
