@@ -8,6 +8,9 @@ import { ResetButton } from '@/app/components/ResetButton';
 import { InvoicePreview } from './InvoicePreview';
 import { SendDocumentButton } from '@/app/components/send/SendDocumentButton';
 import type { EmailTemplate } from '@/app/components/send/types';
+import { AiUploadModal } from '@/app/components/ai-import/AiUploadModal';
+import { AiTextPromptModal } from '@/app/components/ai-import/AiTextPromptModal';
+import type { ParsedDocumentResult } from '@/app/components/ai-import/types';
 import { elementToPdf } from '@/app/lib/pdf/renderPreviewToPdf';
 import { AddInvoiceLineModal } from './AddInvoiceLineModal';
 import { InvoiceHeaderModal } from './InvoiceHeaderModal';
@@ -208,6 +211,8 @@ export function InvoiceEditor({
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showAddLine, setShowAddLine] = useState(false);
   const [showHeaderModal, setShowHeaderModal] = useState(false);
+  const [showAiUpload, setShowAiUpload] = useState(false);
+  const [showAiText, setShowAiText] = useState(false);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'lines' | 'details' | 'activity'>('lines');
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -280,6 +285,31 @@ export function InvoiceEditor({
 
   function addLines(newLines: EditableLine[]) {
     setLines((prev) => [...prev, ...newLines]);
+    markDirty();
+  }
+
+  // ── AI import handler ──
+  function handleAiParsed(data: ParsedDocumentResult) {
+    const newLines: EditableLine[] = data.lines.map((l, i) => ({
+      localId: `ai-${Date.now()}-${i}`,
+      line_source_type: 'custom' as const,
+      source_id: null,
+      title: l.description,
+      description: null,
+      quantity: l.qty,
+      unit: l.unit || '',
+      unit_price: l.rate,
+      line_total: l.qty * l.rate,
+      show_price: true,
+      show_quantity: true,
+      show_description: false,
+      include_in_total: true,
+      is_visible: true,
+    }));
+    setLines((prev) => [...prev, ...newLines]);
+    // Populate branding fields if AI extracted them and they're empty
+    if (data.companyName && !companyName) setCompanyName(data.companyName);
+    if (data.notes && !footerText) setFooterText(data.notes);
     markDirty();
   }
 
@@ -786,6 +816,34 @@ export function InvoiceEditor({
                   </div>
                 )}
 
+                {/* AI import buttons */}
+                {!isReadOnly && (
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAiUpload(true)}
+                      title="Upload image to auto-fill invoice lines"
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Upload Image
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowAiText(true)}
+                      title="Paste text to auto-fill invoice lines"
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Text Prompt
+                    </button>
+                  </div>
+                )}
+
                 {/* Add line button */}
                 {!isReadOnly && (
                   <button
@@ -1081,6 +1139,22 @@ export function InvoiceEditor({
         onCancel={() => setShowConfirmPaymentModal(false)}
         onConfirm={doConfirmPayment}
       />
+
+      {/* AI import modals */}
+      {showAiUpload && (
+        <AiUploadModal
+          documentType="invoice"
+          onParsed={handleAiParsed}
+          onClose={() => setShowAiUpload(false)}
+        />
+      )}
+      {showAiText && (
+        <AiTextPromptModal
+          documentType="invoice"
+          onParsed={handleAiParsed}
+          onClose={() => setShowAiText(false)}
+        />
+      )}
     </div>
   );
 }

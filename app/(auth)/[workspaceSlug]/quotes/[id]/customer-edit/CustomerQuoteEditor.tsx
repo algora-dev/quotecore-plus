@@ -23,9 +23,9 @@ import { saveQuoteTaxes, seedQuoteTaxesFromCompanyDefaults } from '@/app/lib/tax
 import { computeTaxLines } from '@/app/lib/taxes/types';
 import type { QuoteTaxRow } from '@/app/lib/taxes/types';
 import { TaxEditor, type EditableTax } from '@/app/components/TaxEditor';
-import { AiUploadModal } from './ai-import/AiUploadModal';
-import { AiTextPromptModal } from './ai-import/AiTextPromptModal';
-import type { ParsedDocumentResult } from './ai-import/types';
+import { AiUploadModal } from '@/app/components/ai-import/AiUploadModal';
+import { AiTextPromptModal } from '@/app/components/ai-import/AiTextPromptModal';
+import type { ParsedDocumentResult } from '@/app/components/ai-import/types';
 
 interface Props {
   quote: QuoteRow;

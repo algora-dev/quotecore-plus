@@ -24,6 +24,9 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
 import { AddLineItemModal, type LineItemPayload } from '@/app/components/AddLineItemModal';
+import { AiUploadModal } from '@/app/components/ai-import/AiUploadModal';
+import { AiTextPromptModal } from '@/app/components/ai-import/AiTextPromptModal';
+import type { ParsedDocumentResult } from '@/app/components/ai-import/types';
 import { LineEditForm } from '../../quotes/[id]/customer-edit/LineEditForm';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 import {
@@ -108,6 +111,8 @@ export function OrderLineByLineEditor({
     setHideTotals(initialHideTotals);
   }, [initialLines, initialFooter, initialTaxes, initialHideLinePrices, initialHideTotals]);
   const [showAddLine, setShowAddLine] = useState(false);
+  const [showAiUpload, setShowAiUpload] = useState(false);
+  const [showAiText, setShowAiText] = useState(false);
   // id of the line currently being edited in the right-hand preview (pencil).
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   // Pending remove confirmation (destructive). Mirrors CustomerQuoteEditor:
@@ -164,6 +169,30 @@ export function OrderLineByLineEditor({
         sortOrder: lines.length + i,
       })),
     ]);
+  };
+
+  // --- AI import handler --------------------------------------------------
+  const handleAiParsed = (data: ParsedDocumentResult) => {
+    commit([
+      ...lines,
+      ...data.lines.map((l, i) => ({
+        id: makeId(),
+        text: l.description,
+        quantityText: l.unit ? `${l.qty} ${l.unit}` : `${l.qty}`,
+        amount: l.qty * l.rate,
+        unitPrice: l.rate,
+        quantity: l.qty,
+        showPrice: true,
+        isVisible: true,
+        includeInTotal: true,
+        sortOrder: lines.length + i,
+      })),
+    ]);
+    // Populate footer if AI extracted notes and footer is empty
+    if (data.notes && !footer) {
+      setFooter(data.notes);
+      onFooterChange(data.notes);
+    }
   };
 
   // --- Line mutations ------------------------------------------------------
@@ -392,6 +421,32 @@ export function OrderLineByLineEditor({
                 </div>
               ))
             )}
+          </div>
+
+          {/* AI import buttons */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setShowAiUpload(true)}
+              title="Upload image to auto-fill order lines"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Upload Image
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAiText(true)}
+              title="Paste text to auto-fill order lines"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Text Prompt
+            </button>
           </div>
 
           <button
@@ -683,6 +738,22 @@ export function OrderLineByLineEditor({
           setRemoveLineId(null);
         }}
       />
+
+      {/* AI import modals */}
+      {showAiUpload && (
+        <AiUploadModal
+          documentType="order"
+          onParsed={handleAiParsed}
+          onClose={() => setShowAiUpload(false)}
+        />
+      )}
+      {showAiText && (
+        <AiTextPromptModal
+          documentType="order"
+          onParsed={handleAiParsed}
+          onClose={() => setShowAiText(false)}
+        />
+      )}
     </div>
   );
 }
