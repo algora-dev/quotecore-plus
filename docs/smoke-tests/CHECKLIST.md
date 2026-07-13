@@ -1,8 +1,39 @@
 # Smoke Test Checklist
 
-## Status: `main` at `d2b430c` = `development` at `d2b430c` (synced)
+## Status: `main` at `cdfa0ca` = `development` at `cdfa0ca` (synced)
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
+
+**V. AI image upload + text prompt in quote editor (new on main+dev, 2026-07-13, `7c0f4c8`)**
+- [ ] Customer Quote Editor shows "Upload Image" and "Text Prompt" buttons in toolbar
+- [ ] Upload Image: drag/drop or click, accepts PNG/JPEG/WebP/PDF, AI extracts line items
+- [ ] Text Prompt: paste/type text, AI structures into line items with qty/rate
+- [ ] Parsed lines appear in quote with correct quantities, rates, descriptions
+- [ ] Global material margin applied to parsed lines
+- [ ] Modals: no emojis, no em-dashes, no click-outside-to-close
+
+**W. Save to App flow - free tools (new on main+dev, 2026-07-13, `d241b90`)**
+- [ ] Free quote generator: "Save to App" button visible next to Download PDF
+- [ ] Free invoice generator: "Save to App" button visible next to Download PDF
+- [ ] Free PO generator: "Save to App" button visible next to Download PDF
+- [ ] Click Save to App with no email -> email input modal
+- [ ] Click Save to App with email not in app -> "Start free trial" modal
+- [ ] Click Save to App with email that has app account -> redirects to app
+- [ ] If quota exceeded -> "Monthly limit reached" modal
+- [ ] If duplicate document number -> "Number already exists" modal
+- [ ] Logged in to app -> dashboard detects draft -> creates entity -> redirects to editor
+- [ ] Quote: lines transferred as custom lines with correct amounts
+- [ ] Invoice: lines + taxes transferred correctly
+- [ ] PO: lines transferred as material order lines
+
+**X. Edit Header/Footer buttons + template system (new on main+dev, 2026-07-13, `af475ec` + `cdfa0ca`)**
+- [ ] "Edit Header" button visible in toolbar (not just a tiny pencil icon)
+- [ ] "Edit Footer" button visible in toolbar
+- [ ] Template dropdown always visible (shows "No templates saved" when empty)
+- [ ] EditHeaderModal: "Save as Template" button works
+- [ ] Saved template appears in dropdown for future quotes
+- [ ] Loading a template populates header fields correctly
+- [ ] Modals: no click-outside-to-close, backdrop-blur visible
 
 **U. Free tools hub + print/PDF + header layout (new on main+dev, 2026-07-12, `d2b430c`)**
 - [ ] `/free-tools` page shows 4 cards (Calculators, Quotes, Ordering, Invoicing)
