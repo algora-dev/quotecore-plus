@@ -75,8 +75,7 @@ function InvoiceGeneratorForm() {
   const [hideAllPrices, setHideAllPrices] = useState(false);
   const [hideTotals, setHideTotals] = useState(false);
   // Unified email/auth state
-  const { email: userEmail, isAuthed, emailSaved, setEmailInLocalStorage, clearLocalEmail, loadingEmail } = useFreeToolsEmail();
-  const [emailInput, setEmailInput] = useState('');
+  const { email: userEmail, isAuthed, emailSaved, setEmailInLocalStorage, clearLocalEmail, loadingEmail, openAuthModal } = useFreeToolsEmail();
   const [clientName, setClientName] = useState(clientParam ?? '');
   const [clientEmail, setClientEmail] = useState('');
   const [clientAddress, setClientAddress] = useState('');
@@ -295,9 +294,6 @@ function InvoiceGeneratorForm() {
           </Link>
           <div className="flex items-center gap-3">
             <FreeToolsAuthButton compact />
-            <Link href="/signup" className="text-xs font-medium text-[#FF6B35] hover:text-orange-600 transition-colors">
-              Get full invoicing tools →
-            </Link>
           </div>
         </div>
       </header>
@@ -324,10 +320,10 @@ function InvoiceGeneratorForm() {
           </p>
         </section>
 
-          {/* Email capture / auth status */}
+          {/* Auth status / signup prompt */}
           <div className="rounded-xl border border-slate-200 bg-white p-4 mb-6 print:hidden">
             {loadingEmail ? (
-              <div className="h-10" />
+              <div className="h-6" />
             ) : emailSaved ? (
               <div className="flex items-center justify-between">
                 <div>
@@ -338,28 +334,35 @@ function InvoiceGeneratorForm() {
                       : 'Image upload: 10/day · Text parse: 20/day · Manual: Unlimited'}
                   </p>
                 </div>
-                {!isAuthed && (
-                  <button onClick={() => clearLocalEmail()} className="text-xs font-medium text-[#FF6B35] hover:text-orange-600 transition">Change</button>
-                )}
+                <div className="flex items-center gap-3">
+                  {!isAuthed && (
+                    <button onClick={() => openAuthModal('signup')} className="text-xs font-medium text-[#FF6B35] hover:text-orange-600 transition">
+                      Create account
+                    </button>
+                  )}
+                  <button onClick={() => clearLocalEmail()} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition">Change</button>
+                </div>
               </div>
             ) : (
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <div className="flex-1">
-                  <input
-                    type="email"
-                    value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-                    placeholder="Enter your email for more free generations and no watermark"
-                  />
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-700">Sign up free to remove watermarks & get more daily generations</p>
                   <p className="mt-1 text-xs text-slate-400">Image upload: 3/day · Text parse: 5/day · Manual: Unlimited</p>
                 </div>
-                <button
-                  onClick={() => { if (emailInput.trim()) setEmailInLocalStorage(emailInput.trim()); }}
-                  className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition whitespace-nowrap"
-                >
-                  Save
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => openAuthModal('signup')}
+                    className="rounded-full bg-[#FF6B35] px-4 py-2 text-xs font-semibold text-white hover:bg-[#ff5722] transition whitespace-nowrap"
+                  >
+                    Sign up free
+                  </button>
+                  <button
+                    onClick={() => openAuthModal('signin')}
+                    className="text-xs font-medium text-slate-500 hover:text-slate-900 transition whitespace-nowrap"
+                  >
+                    Log in
+                  </button>
+                </div>
               </div>
             )}
           </div>

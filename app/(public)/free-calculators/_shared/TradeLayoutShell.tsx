@@ -79,12 +79,6 @@ export function TradeLayoutShell({ config, children }: { config: TradeConfig; ch
             >
               Free Quote Generator
             </Link>
-            <Link
-              href={signup}
-              className="rounded-full bg-[#FF6B35] px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-            >
-              Sign up
-            </Link>
           </div>
         </div>
       </header>
