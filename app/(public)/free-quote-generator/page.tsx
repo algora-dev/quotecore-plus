@@ -108,9 +108,23 @@ function QuoteGeneratorForm() {
   const [uploadError, setUploadError] = useState('');
   const [aiNotice, setAiNotice] = useState('');
 
+  // Country-to-currency mapping for IP-based default
+  const COUNTRY_CURRENCY: Record<string, string> = {
+    GB: 'GBP', US: 'USD', AU: 'AUD', CA: 'CAD', NZ: 'NZD',
+    IE: 'EUR', DE: 'EUR', FR: 'EUR', ES: 'EUR', IT: 'EUR', NL: 'EUR',
+    BE: 'EUR', AT: 'EUR', PT: 'EUR', FI: 'EUR', GR: 'EUR', LU: 'EUR',
+    SK: 'EUR', SI: 'EUR', EE: 'EUR', LV: 'EUR', LT: 'EUR', MT: 'EUR', CY: 'EUR', HR: 'EUR',
+  };
+
   useEffect(() => {
     const saved = localStorage.getItem('free-tools-email');
     if (saved) { setUserEmail(saved); setEmailSaved(true); }
+    // Set currency from visitor's country via Vercel geo header
+    fetch('/api/geo').then(r => r.json()).then(({ country }) => {
+      const code = COUNTRY_CURRENCY[country] || 'GBP';
+      const found = CURRENCIES.find(c => c.code === code);
+      if (found) setCurrency(found);
+    }).catch(() => {});
   }, []);
 
   const subtotal = lines.reduce((sum, l) => sum + (l.qty * l.rate), 0);
