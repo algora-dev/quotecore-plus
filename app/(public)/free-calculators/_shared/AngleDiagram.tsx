@@ -3,11 +3,11 @@
 /**
  * Shared SVG angle visualisers for the trade calculators.
  *
- * AngleVertexDiagram — two orange lines stemming from a centre point,
+ * AngleVertexDiagram - two orange lines stemming from a centre point,
  * symmetric about 12 o'clock (a 90° angle "points" at 12, 180° is flat).
  * The rendered angle always mirrors the user's calculated result.
  *
- * BirdsmouthDiagram — a DETAIL VIEW zoomed into the bird's mouth cut-out.
+ * BirdsmouthDiagram - a DETAIL VIEW zoomed into the bird's mouth cut-out.
  * Orange rafter edges at the input pitch frame the notch and run off-frame
  * (SVG clips them); the two black dashed cut lines are the focus:
  * A = horizontal seat cut, B = vertical plumb cut.
@@ -112,7 +112,7 @@ export function BirdsmouthDiagram({
   const blStart = { x: 0, y: 0 };
   const blEnd   = { x: L, y: L * Math.tan(p) };
 
-  // Notch geometry — P_high is on the bottom edge (upper-right notch opening)
+  // Notch geometry - P_high is on the bottom edge (upper-right notch opening)
   const Phx = L * 0.42;
   const Phy = Phx * Math.tan(p);
 
@@ -124,7 +124,7 @@ export function BirdsmouthDiagram({
   const Plow = { x: C.x, y: C.x * Math.tan(p) };
 
   // Direction and perpendicular for top edge (top edge may sit off-frame in
-  // the detail view — that is intentional)
+  // the detail view - that is intentional)
   const dirLen = Math.hypot(1, Math.tan(p));
   const dirN = { x: 1 / dirLen, y: Math.tan(p) / dirLen };
   const perp = { x: -dirN.y, y: dirN.x };
@@ -155,7 +155,7 @@ export function BirdsmouthDiagram({
   const sx = (x: number) => padL + exX + (x - minX) * scale;
   const sy = (y: number) => padT + exY + (maxY - y) * scale;
 
-  // Vertical midpoint of the plumb cut — Heel sits left of it, Notch right
+  // Vertical midpoint of the plumb cut - Heel sits left of it, Notch right
   const plumbMidY = (C.y + Plow.y) / 2;
 
   // Angle arcs (screen space). Seat arc at P_high between the seat cut and
@@ -175,17 +175,17 @@ export function BirdsmouthDiagram({
         {/* Top edge of rafter */}
         <line x1={sx(tlStart.x)} y1={sy(tlStart.y)} x2={sx(tlEnd.x)} y2={sy(tlEnd.y)} stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" />
 
-        {/* Bottom edge — two segments skipping the notch */}
+        {/* Bottom edge - two segments skipping the notch */}
         <line x1={sx(blStart.x)} y1={sy(blStart.y)} x2={sx(Plow.x)} y2={sy(Plow.y)} stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" />
         <line x1={sx(Phx)} y1={sy(Phy)} x2={sx(blEnd.x)} y2={sy(blEnd.y)} stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" />
 
-        {/* Seat cut (A) — horizontal dashed */}
+        {/* Seat cut (A) - horizontal dashed */}
         <line x1={sx(C.x)} y1={sy(C.y)} x2={sx(Phx)} y2={sy(Phy)} stroke="#0f172a" strokeWidth="2" strokeDasharray="6 4" />
 
-        {/* Plumb cut (B) — vertical dashed */}
+        {/* Plumb cut (B) - vertical dashed */}
         <line x1={sx(C.x)} y1={sy(C.y)} x2={sx(Plow.x)} y2={sy(Plow.y)} stroke="#0f172a" strokeWidth="2" strokeDasharray="6 4" />
 
-        {/* Angle arc at P_high — seat cut angle A */}
+        {/* Angle arc at P_high - seat cut angle A */}
         <path
           d={`M ${seatArcStart.x} ${seatArcStart.y} A ${arcR} ${arcR} 0 0 0 ${seatArcEnd.x} ${seatArcEnd.y}`}
           fill="none"
@@ -193,7 +193,7 @@ export function BirdsmouthDiagram({
           strokeWidth="1.5"
         />
 
-        {/* Angle arc at P_low — plumb cut angle B */}
+        {/* Angle arc at P_low - plumb cut angle B */}
         <path
           d={`M ${plumbArcStart.x} ${plumbArcStart.y} A ${arcR} ${arcR} 0 0 1 ${plumbArcEnd.x} ${plumbArcEnd.y}`}
           fill="none"
@@ -206,34 +206,34 @@ export function BirdsmouthDiagram({
         <circle cx={sx(Phx)} cy={sy(Phy)} r="3.5" fill="#FF6B35" />
         <circle cx={sx(Plow.x)} cy={sy(Plow.y)} r="3.5" fill="#FF6B35" />
 
-        {/* Seat width — ABOVE the horizontal dotted seat line, centred on it */}
+        {/* Seat width - ABOVE the horizontal dotted seat line, centred on it */}
         <text x={sx((C.x + Phx) / 2)} y={sy(C.y) - 14} textAnchor="middle" className="fill-slate-700" style={{ fontSize: '12px', fontWeight: 600, ...halo }}>
           Seat width = {seatWidth.toFixed(0)}{unit}
         </text>
 
-        {/* Heel — LEFT of the vertical dotted plumb line, vertically centred */}
+        {/* Heel - LEFT of the vertical dotted plumb line, vertically centred */}
         <text x={sx(C.x) - 12} y={sy(plumbMidY) + 4} textAnchor="end" className="fill-slate-700" style={{ fontSize: '12px', fontWeight: 600, ...halo }}>
           Heel = {heelHeight.toFixed(0)}{unit}
         </text>
 
-        {/* Notch — INSIDE the cut-out void, just right of the dotted corner */}
+        {/* Notch - INSIDE the cut-out void, just right of the dotted corner */}
         <text x={sx(C.x) + 14} y={sy(plumbMidY) + 4} textAnchor="start" className="fill-slate-700" style={{ fontSize: '12px', fontWeight: 600, ...halo }}>
           Notch = {notchDepth.toFixed(0)}{unit}
         </text>
 
-        {/* A — RIGHT of the upper seat cut opening, aligned with the cut */}
+        {/* A - RIGHT of the upper seat cut opening, aligned with the cut */}
         <text x={sx(Phx) + 14} y={sy(Phy) + 5} textAnchor="start" className="fill-blue-600" style={{ fontSize: '13px', fontWeight: 700, ...halo }}>
           A = {seatAngle.toFixed(1)}°
         </text>
 
-        {/* B — BELOW the lower plumb cut opening, aligned with the cut */}
+        {/* B - BELOW the lower plumb cut opening, aligned with the cut */}
         <text x={sx(Plow.x) + 8} y={sy(Plow.y) + 30} textAnchor="start" className="fill-blue-600" style={{ fontSize: '13px', fontWeight: 700, ...halo }}>
           B = {plumbAngle.toFixed(1)}°
         </text>
 
         {/* Pitch note top-left */}
         <text x={12} y={18} className="fill-slate-500" style={{ fontSize: '10px', fontWeight: 500, ...halo, strokeWidth: 3 }}>
-          {memberWord} at {pitchDegrees.toFixed(1)}° · depth {rafterDepth.toFixed(0)}{unit} — bird&apos;s mouth detail
+          {memberWord} at {pitchDegrees.toFixed(1)}° · depth {rafterDepth.toFixed(0)}{unit} - bird&apos;s mouth detail
         </text>
       </svg>
       {caption && <p className="text-xs text-slate-400">{caption}</p>}

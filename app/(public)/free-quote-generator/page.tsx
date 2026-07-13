@@ -732,8 +732,8 @@ function QuoteGeneratorForm() {
                       <td className="py-2 text-sm text-slate-700">{line.description}</td>
                       <td className="py-2 text-sm text-slate-700 text-right">{line.qty}</td>
                       <td className="py-2 text-sm text-slate-500 text-right">{line.unit}</td>
-                      <td className="py-2 text-sm text-slate-700 text-right">{hideAllPrices || line.hidePrice ? '—' : formatMoney(line.rate, sym)}</td>
-                      <td className="py-2 text-sm font-medium text-slate-900 text-right">{hideAllPrices || line.hidePrice ? '—' : formatMoney(line.qty * line.rate, sym)}</td>
+                      <td className="py-2 text-sm text-slate-700 text-right">{hideAllPrices || line.hidePrice ? '-' : formatMoney(line.rate, sym)}</td>
+                      <td className="py-2 text-sm font-medium text-slate-900 text-right">{hideAllPrices || line.hidePrice ? '-' : formatMoney(line.qty * line.rate, sym)}</td>
                     </tr>
                   ))}
                 </tbody>

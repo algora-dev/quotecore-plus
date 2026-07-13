@@ -4,10 +4,10 @@ export const concreteConfig: TradeConfig = {
   slug: 'free-concrete-calculator',
   defaultCurrency: 'GBP',
   name: 'Concrete Calculator',
-  metaTitle: 'Free Concrete Calculator — Slabs, Footings & Volumes | QuoteCore+',
+  metaTitle: 'Free Concrete Calculator - Slabs, Footings & Volumes | QuoteCore+',
   metaDescription:
     'Free concrete calculator. Work out slab and footing volumes in m³ with depth presets, formwork areas, drainage falls, and ready-mix pricing. No signup required.',
-  ogTitle: 'Free Concrete Calculator — Slabs, Footings & Volumes',
+  ogTitle: 'Free Concrete Calculator - Slabs, Footings & Volumes',
   ogDescription:
     'Free concrete calculator. Slab and footing volumes, formwork areas, falls and gradients, and ready-mix quantities. No signup required.',
 
@@ -22,10 +22,10 @@ export const concreteConfig: TradeConfig = {
     heading: 'Slab & Footing Volume',
     subtitle: 'Calculate concrete volume from length × width × depth, with slab depth presets',
     depthPresets: [
-      { label: '100mm — patio/shed', mm: 100 },
-      { label: '150mm — driveway', mm: 150 },
-      { label: '225mm — footing', mm: 225 },
-      { label: '300mm — heavy duty', mm: 300 },
+      { label: '100mm - patio/shed', mm: 100 },
+      { label: '150mm - driveway', mm: 150 },
+      { label: '225mm - footing', mm: 225 },
+      { label: '300mm - heavy duty', mm: 300 },
     ],
     densityKgPerM3: 2400,
     densityLabel: 'wet concrete',
@@ -50,7 +50,7 @@ export const concreteConfig: TradeConfig = {
 
   gradient: {
     heading: 'Falls & Gradients',
-    subtitle: 'Work out drainage falls — convert 1-in-X, percent and degrees, and get the fall over a run',
+    subtitle: 'Work out drainage falls - convert 1-in-X, percent and degrees, and get the fall over a run',
     commonRatios: [40, 60, 80, 100, 150],
     runLabel: 'Run length',
     runHint: 'Horizontal distance of the slab or drainage run',
@@ -77,15 +77,15 @@ export const concreteConfig: TradeConfig = {
     tips: [
       {
         title: 'Always order slightly more than the calculated volume',
-        body: 'Sub-bases are never perfectly level, and a slab poured 10mm deeper than planned across 30 m² swallows an extra 0.3 m³. Add 5% waste for slabs on a well-prepared base and up to 10% for trench footings in uneven ground. Running out mid-pour creates a cold joint — the most expensive mistake in concreting.',
+        body: 'Sub-bases are never perfectly level, and a slab poured 10mm deeper than planned across 30 m² swallows an extra 0.3 m³. Add 5% waste for slabs on a well-prepared base and up to 10% for trench footings in uneven ground. Running out mid-pour creates a cold joint - the most expensive mistake in concreting.',
       },
       {
         title: 'Choosing the right slab depth',
-        body: 'Common depths: 100mm for patios, paths, and shed bases; 150mm for driveways and single garages; 225mm for strip footings and slabs taking heavier loads; 300mm+ for heavy-duty or reinforced bases. When in doubt, go deeper — the extra concrete is cheap compared to a failed slab.',
+        body: 'Common depths: 100mm for patios, paths, and shed bases; 150mm for driveways and single garages; 225mm for strip footings and slabs taking heavier loads; 300mm+ for heavy-duty or reinforced bases. When in doubt, go deeper - the extra concrete is cheap compared to a failed slab.',
       },
       {
         title: 'Converting volume to ready-mix loads or bags',
-        body: 'Ready-mix trucks typically carry 6-8 m³, with part-load fees below about 4 m³. For small jobs, bagged mix works: one 25kg bag yields roughly 0.011 m³, so 1 m³ needs about 90 bags — beyond 0.5 m³, ready-mix is nearly always cheaper and far less work.',
+        body: 'Ready-mix trucks typically carry 6-8 m³, with part-load fees below about 4 m³. For small jobs, bagged mix works: one 25kg bag yields roughly 0.011 m³, so 1 m³ needs about 90 bags - beyond 0.5 m³, ready-mix is nearly always cheaper and far less work.',
       },
       {
         title: 'Drainage falls on external slabs',
@@ -97,20 +97,20 @@ export const concreteConfig: TradeConfig = {
       },
       {
         title: 'Concrete weight matters for access and barrows',
-        body: 'Wet concrete weighs about 2,400 kg per cubic metre. A modest 2 m³ slab is nearly 5 tonnes of material — check whether the truck can discharge directly, or budget realistic time for barrowing. One builder barrow holds roughly 60 litres, so 1 m³ is about 17 loaded barrow runs.',
+        body: 'Wet concrete weighs about 2,400 kg per cubic metre. A modest 2 m³ slab is nearly 5 tonnes of material - check whether the truck can discharge directly, or budget realistic time for barrowing. One builder barrow holds roughly 60 litres, so 1 m³ is about 17 loaded barrow runs.',
       },
     ],
     formulas: [
       { name: 'Slab volume', formula: 'volume = length × width × depth' },
       { name: 'Volume with waste', formula: 'order_volume = volume × (1 + waste%)' },
       { name: 'Concrete weight', formula: 'weight = volume × 2400 kg/m³' },
-      { name: 'Fall over a run', formula: 'fall = run × tan(gradient°)  —  1 in X = (1/X) × 100%' },
+      { name: 'Fall over a run', formula: 'fall = run × tan(gradient°)  -  1 in X = (1/X) × 100%' },
       { name: 'Bags per m³', formula: 'bags ≈ volume / 0.011 (25kg bags)' },
     ],
     faqs: [
       {
         q: 'How much concrete do I need for a slab?',
-        a: 'Multiply length × width × depth in metres. A 4m × 3m patio at 100mm deep is 4 × 3 × 0.1 = 1.2 m³. Add 5% for uneven sub-base and order 1.26 m³ — call it 1.3 m³. The Slab & Footing Volume tab does this with one tap on the depth presets.',
+        a: 'Multiply length × width × depth in metres. A 4m × 3m patio at 100mm deep is 4 × 3 × 0.1 = 1.2 m³. Add 5% for uneven sub-base and order 1.26 m³ - call it 1.3 m³. The Slab & Footing Volume tab does this with one tap on the depth presets.',
       },
       {
         q: 'How many cubic metres of concrete in a foundation trench?',
@@ -122,11 +122,11 @@ export const concreteConfig: TradeConfig = {
       },
       {
         q: 'How much does a cubic metre of concrete weigh?',
-        a: 'About 2,400 kg wet — nearly two and a half tonnes per cubic metre. This calculator shows the total weight of your pour so you can plan access, barrowing, and whether the ground or structure can take the load.',
+        a: 'About 2,400 kg wet - nearly two and a half tonnes per cubic metre. This calculator shows the total weight of your pour so you can plan access, barrowing, and whether the ground or structure can take the load.',
       },
       {
         q: 'What is the best free concrete calculator?',
-        a: 'The best free concrete calculator gives you slab and footing volumes with depth presets, waste allowance, weight, drainage falls, and ready-mix pricing in one tool — exactly what this calculator does. It is completely free, browser-based, and needs no signup.',
+        a: 'The best free concrete calculator gives you slab and footing volumes with depth presets, waste allowance, weight, drainage falls, and ready-mix pricing in one tool - exactly what this calculator does. It is completely free, browser-based, and needs no signup.',
       },
     ],
     related: [

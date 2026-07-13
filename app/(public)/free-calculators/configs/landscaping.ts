@@ -4,10 +4,10 @@ export const landscapingConfig: TradeConfig = {
   slug: 'free-landscaping-calculator',
   defaultCurrency: 'GBP',
   name: 'Landscaping Calculator',
-  metaTitle: 'Free Landscaping Calculator — Turf, Topsoil & Slopes | QuoteCore+',
+  metaTitle: 'Free Landscaping Calculator - Turf, Topsoil & Slopes | QuoteCore+',
   metaDescription:
     'Free landscaping calculator. Work out garden and lawn areas, turf and topsoil quantities, slopes and gradients, and material pricing. No signup required.',
-  ogTitle: 'Free Landscaping Calculator — Turf, Topsoil & Slopes',
+  ogTitle: 'Free Landscaping Calculator - Turf, Topsoil & Slopes',
   ogDescription:
     'Free landscaping calculator. Garden and lawn areas, turf and topsoil quantities, slopes, gradients and falls. No signup required.',
 
@@ -38,7 +38,7 @@ export const landscapingConfig: TradeConfig = {
     subtitle: 'Convert between 1-in-X, percent and degrees, and work out the fall over a run',
     commonRatios: [10, 20, 40, 60, 80, 100],
     runLabel: 'Run length',
-    runHint: 'Horizontal distance the slope covers — a path, drain run, or bank',
+    runHint: 'Horizontal distance the slope covers - a path, drain run, or bank',
     fallWord: 'fall',
   },
 
@@ -63,7 +63,7 @@ export const landscapingConfig: TradeConfig = {
     rafterPitchLabel: 'Slope Angle',
     tooltipOverrides: {
       hipValley: 'Use when two sloped surfaces meet around an internal or external corner (usually a 90° corner).',
-      rafterPitch: 'Used where sloped surfaces run in the same direction — banks, ramps, and retaining junctions.',
+      rafterPitch: 'Used where sloped surfaces run in the same direction - banks, ramps, and retaining junctions.',
       ridge: 'Use where two slopes meet at a crest or apex. Formula: 180° − Angle 1 − Angle 2',
       changeOfPitch: 'Use where one slope changes into another running in the same direction. Formula: 180° − Upper Angle + Lower Angle.',
       upstandOntoRoof: 'Use where a junction starts on a vertical face (wall, edging) and turns down onto the slope. Formula: 90° + Angle.',
@@ -79,7 +79,7 @@ export const landscapingConfig: TradeConfig = {
     tips: [
       {
         title: 'How much turf do I need?',
-        body: 'Measure the lawn area in square metres, then add 5% waste for straight-edged lawns or 10% for curved borders and island beds — curves force more offcuts. Standard turf rolls cover 1 m² each, so a 48 m² lawn with curves needs roughly 53 rolls. Lay within 24 hours of delivery.',
+        body: 'Measure the lawn area in square metres, then add 5% waste for straight-edged lawns or 10% for curved borders and island beds - curves force more offcuts. Standard turf rolls cover 1 m² each, so a 48 m² lawn with curves needs roughly 53 rolls. Lay within 24 hours of delivery.',
       },
       {
         title: 'Topsoil quantities are volumes, not areas',
@@ -87,7 +87,7 @@ export const landscapingConfig: TradeConfig = {
       },
       {
         title: 'Understanding 1-in-X falls',
-        body: 'A 1-in-80 fall drops 1 unit vertically for every 80 units of horizontal run — that is 12.5mm per metre. Patios need at least 1-in-80 away from the house; paths are comfortable up to about 1-in-20; anything steeper than 1-in-12 becomes hard work with a wheelbarrow and may need steps.',
+        body: 'A 1-in-80 fall drops 1 unit vertically for every 80 units of horizontal run - that is 12.5mm per metre. Patios need at least 1-in-80 away from the house; paths are comfortable up to about 1-in-20; anything steeper than 1-in-12 becomes hard work with a wheelbarrow and may need steps.',
       },
       {
         title: 'Sloped banks hold more ground than the plan shows',
@@ -99,7 +99,7 @@ export const landscapingConfig: TradeConfig = {
       },
       {
         title: 'Mulch and bark coverage',
-        body: 'Mulch is spread at 50-75mm depth to suppress weeds effectively. One cubic metre covers about 13-20 m² depending on depth. Multiply your bed area by depth in metres to get volume, and round up — thin mulch is a false economy because weeds break through within a season.',
+        body: 'Mulch is spread at 50-75mm depth to suppress weeds effectively. One cubic metre covers about 13-20 m² depending on depth. Multiply your bed area by depth in metres to get volume, and round up - thin mulch is a false economy because weeds break through within a season.',
       },
     ],
     formulas: [
@@ -121,15 +121,15 @@ export const landscapingConfig: TradeConfig = {
       },
       {
         q: 'What is a 1-in-80 fall?',
-        a: 'A 1-in-80 fall means the surface drops 1 unit for every 80 units of horizontal distance — 12.5mm per metre. It is the standard minimum fall for patios so water drains away from the house. Use the Slope & Gradient tab to convert between 1-in-X, percent, and degrees.',
+        a: 'A 1-in-80 fall means the surface drops 1 unit for every 80 units of horizontal distance - 12.5mm per metre. It is the standard minimum fall for patios so water drains away from the house. Use the Slope & Gradient tab to convert between 1-in-X, percent, and degrees.',
       },
       {
         q: 'How much gravel do I need for a path?',
-        a: 'Multiply the path area by a 50mm depth (0.05m) to get volume in cubic metres, then add 10% for settlement. A 15 m² path needs about 0.83 m³ — roughly one bulk bag. Use a compacted sub-base beneath for a path that lasts.',
+        a: 'Multiply the path area by a 50mm depth (0.05m) to get volume in cubic metres, then add 10% for settlement. A 15 m² path needs about 0.83 m³ - roughly one bulk bag. Use a compacted sub-base beneath for a path that lasts.',
       },
       {
         q: 'What is the best free landscaping calculator?',
-        a: 'The best free landscaping calculator handles lawn and plot areas, sloped banks, gradients and falls, volumes for topsoil and mulch, and material pricing in one place — exactly what this tool does, free and with no signup. Everything runs in your browser.',
+        a: 'The best free landscaping calculator handles lawn and plot areas, sloped banks, gradients and falls, volumes for topsoil and mulch, and material pricing in one place - exactly what this tool does, free and with no signup. Everything runs in your browser.',
       },
     ],
     related: [

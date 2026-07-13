@@ -6,10 +6,10 @@ export const constructionConfig: TradeConfig = {
   slug: 'free-construction-calculator',
   defaultCurrency: 'GBP',
   name: 'Construction Calculator',
-  metaTitle: 'Free Construction Calculator — Areas, Materials & Angles | QuoteCore+',
+  metaTitle: 'Free Construction Calculator - Areas, Materials & Angles | QuoteCore+',
   metaDescription:
     'Free construction calculator for builders. Work out floor and wall areas, timber and stud lengths, material quantities with waste, and cutting angles. No signup required.',
-  ogTitle: 'Free Construction Calculator — Areas, Materials & Angles',
+  ogTitle: 'Free Construction Calculator - Areas, Materials & Angles',
   ogDescription:
     'Free construction calculator. Floor and wall areas, timber and stud lengths, material quantities and cutting angles for builders. No signup required.',
 
@@ -37,7 +37,7 @@ export const constructionConfig: TradeConfig = {
 
   members: {
     heading: 'Timber & Stud Lengths',
-    subtitle: 'Calculate angled member lengths — rake studs, stringers, and braces — from angle and run',
+    subtitle: 'Calculate angled member lengths - rake studs, stringers, and braces - from angle and run',
     slopeWord: 'Angle',
     memberLabel: 'Member',
     spanLabel: 'Run',
@@ -47,7 +47,7 @@ export const constructionConfig: TradeConfig = {
     birdsmouthMemberWord: 'Rafter',
     commonSlopes: [0, 15, 22.5, 30, 35, 40, 42, 45, 60],
     defaultSlope: '35',
-    diagramCaption: 'Angled member at {deg}° — run is the horizontal distance covered',
+    diagramCaption: 'Angled member at {deg}° - run is the horizontal distance covered',
     diagramTopLabel: 'Top',
     diagramBaseLabel: 'Base',
   },
@@ -101,19 +101,19 @@ export const constructionConfig: TradeConfig = {
       },
       {
         title: 'Why sloped surfaces need a slope factor',
-        body: 'A raked ceiling, staircase soffit, or sloped roof deck covers more surface than its footprint. The slope factor (1 / cos(angle)) converts plan area to true surface area. At 30 degrees, 50 m² of plan becomes 57.7 m² of actual surface — order for the true area, not the footprint.',
+        body: 'A raked ceiling, staircase soffit, or sloped roof deck covers more surface than its footprint. The slope factor (1 / cos(angle)) converts plan area to true surface area. At 30 degrees, 50 m² of plan becomes 57.7 m² of actual surface - order for the true area, not the footprint.',
       },
       {
         title: 'Calculating stringers and rake members',
-        body: 'Any angled member — a stair stringer, rake stud, or brace — is the hypotenuse of a right triangle. Divide the horizontal run by the cosine of the angle to get the member length. A staircase with a 2.7m run at 42 degrees needs stringers of 2.7 / cos(42°) = 3.63m before allowing for cuts.',
+        body: 'Any angled member - a stair stringer, rake stud, or brace - is the hypotenuse of a right triangle. Divide the horizontal run by the cosine of the angle to get the member length. A staircase with a 2.7m run at 42 degrees needs stringers of 2.7 / cos(42°) = 3.63m before allowing for cuts.',
       },
       {
         title: 'Allow for openings before ordering',
-        body: 'Deduct windows and doors from wall areas when ordering plasterboard, insulation, or cladding — but only deduct openings larger than about 0.5 m². Small openings generate offcuts you cannot reuse, so leaving them in your figure builds in a sensible margin.',
+        body: 'Deduct windows and doors from wall areas when ordering plasterboard, insulation, or cladding - but only deduct openings larger than about 0.5 m². Small openings generate offcuts you cannot reuse, so leaving them in your figure builds in a sensible margin.',
       },
       {
         title: "Cutting a bird's mouth in rafters and stringers",
-        body: "A bird's mouth is the notch that lets a rafter or stair stringer sit flat on a wall plate or landing. The seat cut is horizontal and the plumb cut vertical: measured from the timber edge, the seat cut angle equals the slope angle and the plumb cut equals 90° minus the slope. Never notch deeper than one-third of the timber depth — it weakens the member.",
+        body: "A bird's mouth is the notch that lets a rafter or stair stringer sit flat on a wall plate or landing. The seat cut is horizontal and the plumb cut vertical: measured from the timber edge, the seat cut angle equals the slope angle and the plumb cut equals 90° minus the slope. Never notch deeper than one-third of the timber depth - it weakens the member.",
       },
     ],
     formulas: [
@@ -126,7 +126,7 @@ export const constructionConfig: TradeConfig = {
     faqs: [
       {
         q: 'How do I calculate building material quantities?',
-        a: 'Measure the area to cover (width × length for floors, length × height for walls), add a waste percentage appropriate to the material (typically 5-15%), then divide by the coverage of one unit. For example, 40 m² of wall with 10% waste needs 44 m² of plasterboard — about 15.3 standard 2.88 m² sheets, so order 16.',
+        a: 'Measure the area to cover (width × length for floors, length × height for walls), add a waste percentage appropriate to the material (typically 5-15%), then divide by the coverage of one unit. For example, 40 m² of wall with 10% waste needs 44 m² of plasterboard - about 15.3 standard 2.88 m² sheets, so order 16.',
       },
       {
         q: 'What waste percentage should I add for timber?',
@@ -142,7 +142,7 @@ export const constructionConfig: TradeConfig = {
       },
       {
         q: 'What is the best free construction calculator?',
-        a: 'The best free construction calculator covers areas, sloped surfaces, angled member lengths, material quantities with waste, and pricing in one tool — which is exactly what this calculator does. It is completely free, runs in your browser, and requires no signup.',
+        a: 'The best free construction calculator covers areas, sloped surfaces, angled member lengths, material quantities with waste, and pricing in one tool - which is exactly what this calculator does. It is completely free, runs in your browser, and requires no signup.',
       },
     ],
     related: [

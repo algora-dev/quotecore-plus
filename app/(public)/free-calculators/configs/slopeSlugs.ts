@@ -57,7 +57,7 @@ export const SLOPE_SLUGS: SlopeSlugDef[] = [
   {
     slug: 'free-slope-calculator',
     name: 'Slope Calculator',
-    mTitle: 'Free Slope Calculator — Gradient, Angle & Ratio | QuoteCore+',
+    mTitle: 'Free Slope Calculator - Gradient, Angle & Ratio | QuoteCore+',
     mDesc: 'Calculate slope, gradient, and angle for landscaping, drainage, and construction. Convert between degrees, percentage, and ratio. No signup.',
     ogTitle: 'Free Slope Calculator',
     ogDesc: 'Calculate slope gradient, angle, and ratio for any project. Free, no signup.',
@@ -69,7 +69,7 @@ export const SLOPE_SLUGS: SlopeSlugDef[] = [
       ['Minimum gradients for drainage', 'Surface water drainage requires a minimum 1:100 (1%) fall. Soakaways and French drains: 1:80 minimum. Sewer connections: 1:40 to 1:80 depending on pipe size. Patio drainage: 1:60 to 1:80. Always check building regulations.'],
       ['Ramp gradients for accessibility', 'UK Building Regulations Part M: maximum 1:12 for ramps up to 5m. For 5-10m: maximum 1:15. Over 10m: maximum 1:20. Landings required every 5m of ramp run at 1:15 or steeper.'],
       ['Converting between slope formats', 'Percentage = (rise / run) × 100. Degrees = arctan(rise / run). Ratio = 1 : (run / rise). A 1:20 slope = 5% = 2.86°. A 1:12 ramp = 8.33% = 4.76°. A 45° slope = 100% = 1:1.'],
-      ['Measuring slope on-site', 'Use a spirit level and a straight edge (1m or 2m). Measure the gap under the level at one end — that\'s the rise over the length of the level. For a 1m level with a 20mm gap: slope = 20mm/1000mm = 1:50 = 2%.'],
+      ['Measuring slope on-site', 'Use a spirit level and a straight edge (1m or 2m). Measure the gap under the level at one end - that\'s the rise over the length of the level. For a 1m level with a 20mm gap: slope = 20mm/1000mm = 1:50 = 2%.'],
     ],
     formulas: [
       ['Slope percentage', 'slope% = (rise / run) × 100'],
@@ -102,7 +102,7 @@ export const SLOPE_SLUGS: SlopeSlugDef[] = [
   {
     slug: 'free-pipe-slope-calculator',
     name: 'Pipe Slope Calculator',
-    mTitle: 'Free Pipe Slope Calculator — Drainage Fall & Gradient | QuoteCore+',
+    mTitle: 'Free Pipe Slope Calculator - Drainage Fall & Gradient | QuoteCore+',
     mDesc: 'Calculate pipe slope, fall, and gradient for drainage systems. Enter pipe length and required fall for instant results. No signup required.',
     ogTitle: 'Free Pipe Slope Calculator',
     ogDesc: 'Calculate drainage pipe slope, fall, and gradient. Free, no signup.',
@@ -123,7 +123,7 @@ export const SLOPE_SLUGS: SlopeSlugDef[] = [
       ['Angle', 'angle = arctan(fall / pipe_length)'],
     ],
     faqs: [
-      ['What is the minimum slope for a 100mm drainage pipe?', 'UK Building Regulations: 1:40 (2.5%) for 100mm foul drains, 1:80 (1.25%) for 100mm surface water. Check local water authority for specific requirements — some require steeper gradients.'],
+      ['What is the minimum slope for a 100mm drainage pipe?', 'UK Building Regulations: 1:40 (2.5%) for 100mm foul drains, 1:80 (1.25%) for 100mm surface water. Check local water authority for specific requirements - some require steeper gradients.'],
       ['How much fall do I need on a 15m drain at 1:40?', 'Fall = 15 × (1/40) = 0.375m = 375mm. The inlet needs to be 375mm higher than the outlet. At 1:80 (surface water): 15 × (1/80) = 187.5mm fall.'],
       ['What happens if a drain slope is too steep?', 'If the gradient exceeds about 1:10 (10%), liquids flow too fast and leave solids behind, causing blockages. The ideal range is 1:40 to 1:80 for most domestic drains. For steep sites, use drop chambers to maintain proper gradient between sections.'],
       ['Can I use this for sewer lateral calculations?', 'Yes, but sewer connections must comply with local water authority specifications. Typical lateral gradients are 1:40 to 1:80 for 100-150mm pipes. Always get water company approval before connecting to a public sewer.'],

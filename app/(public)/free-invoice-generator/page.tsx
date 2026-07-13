@@ -705,8 +705,8 @@ function InvoiceGeneratorForm() {
                       <td className="py-2 text-sm text-slate-700">{line.description}</td>
                       <td className="py-2 text-sm text-slate-700 text-right">{line.qty}</td>
                       <td className="py-2 text-sm text-slate-500 text-right">{line.unit}</td>
-                      <td className="py-2 text-sm text-slate-700 text-right">{hideAllPrices || line.hidePrice ? '—' : formatMoney(line.rate, sym)}</td>
-                      <td className="py-2 text-sm font-medium text-slate-900 text-right">{hideAllPrices || line.hidePrice ? '—' : formatMoney(line.qty * line.rate, sym)}</td>
+                      <td className="py-2 text-sm text-slate-700 text-right">{hideAllPrices || line.hidePrice ? '-' : formatMoney(line.rate, sym)}</td>
+                      <td className="py-2 text-sm font-medium text-slate-900 text-right">{hideAllPrices || line.hidePrice ? '-' : formatMoney(line.qty * line.rate, sym)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -816,11 +816,11 @@ function InvoiceGeneratorForm() {
             <div className="mt-4 space-y-2">
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Is this invoice generator really free?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes — completely free with no signup. Generate as many invoices as you need. Download as PDF using your browser&apos;s print function. You can also upload a photo of an existing invoice and our AI will extract the details automatically, or paste your invoice text and let AI fill in the form.</p></div>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes - completely free with no signup. Generate as many invoices as you need. Download as PDF using your browser&apos;s print function. You can also upload a photo of an existing invoice and our AI will extract the details automatically, or paste your invoice text and let AI fill in the form.</p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Can I upload a photo of my invoice and have AI fill it in?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. Click the upload area to upload a photo or screenshot of an existing invoice. Our AI will extract the company name, client details, line items, dates, and amounts — then fill in the form for you to review and edit before generating. You get 5 free scans per day.</p></div>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. Click the upload area to upload a photo or screenshot of an existing invoice. Our AI will extract the company name, client details, line items, dates, and amounts - then fill in the form for you to review and edit before generating. You get 5 free scans per day.</p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Can I turn a quote into an invoice?</summary>

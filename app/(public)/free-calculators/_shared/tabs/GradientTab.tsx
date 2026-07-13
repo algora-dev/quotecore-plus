@@ -199,7 +199,7 @@ export function GradientTab() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
               <p className="text-xs text-slate-500">Gradient</p>
-              <p className="text-base font-semibold text-slate-900">1 in {result.ratioX || '—'}</p>
+              <p className="text-base font-semibold text-slate-900">1 in {result.ratioX || '-'}</p>
               <p className="mt-1 text-xs text-slate-400">{result.percent}% · {result.deg}°</p>
             </div>
             <div className="rounded-xl bg-orange-50/50 border border-orange-100 p-4">

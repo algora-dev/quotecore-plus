@@ -1,5 +1,5 @@
 /**
- * TradeConfig — the single config object that drives every trade calculator page.
+ * TradeConfig - the single config object that drives every trade calculator page.
  *
  * One shared engine (`TradeCalculator.tsx` + `_shared/tabs/*`), N trade pages.
  * Each trade page is: a config (this shape) + unique SEO copy. Adding a new
@@ -128,7 +128,7 @@ export interface SmartTabConfig {
   prefillNote: string;
 }
 
-/** Angle finder tab (angle solver — used where flashings/junctions/angles apply). */
+/** Angle finder tab (angle solver - used where flashings/junctions/angles apply). */
 export interface AngleTabConfig {
   heading: string;
   subtitle: string;
@@ -177,7 +177,7 @@ export interface TradeContent {
   tips: { title: string; body: string }[];
   formulas: { name: string; formula: string }[];
   faqs: { q: string; a: string }[];
-  /** Worked example — crawlable HTML that AI systems can quote */
+  /** Worked example - crawlable HTML that AI systems can quote */
   workedExample?: { title: string; steps: string[] };
   /** Assumptions and limitations */
   assumptions?: string[];
@@ -233,7 +233,7 @@ export function saveCalcDraft(config: Pick<TradeConfig, 'slug'>, data: unknown):
       savedAt: new Date().toISOString(),
     }));
   } catch {
-    // localStorage may be full or unavailable — silently continue
+    // localStorage may be full or unavailable - silently continue
   }
   return draftId;
 }
@@ -246,7 +246,7 @@ export function loadCalcDraft(draftId: string): { slug: string; data: unknown; s
     const raw = localStorage.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    // Don't delete yet — let the app consume it first, then it can clean up
+    // Don't delete yet - let the app consume it first, then it can clean up
     return parsed;
   } catch {
     return null;

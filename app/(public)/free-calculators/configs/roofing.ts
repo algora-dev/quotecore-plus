@@ -6,10 +6,10 @@ export const roofingConfig: TradeConfig = {
   slug: 'free-roofing-calculator',
   defaultCurrency: 'GBP',
   name: 'Roofing Calculator',
-  metaTitle: 'Roofing Calculator — Pitch, Area, Rafter Length, Materials | QuoteCore+',
+  metaTitle: 'Roofing Calculator - Pitch, Area, Rafter Length, Materials | QuoteCore+',
   metaDescription:
     'Free roofing calculator. Calculate roof pitch, rafter length, roof surface area, quantities and complex pricing. No signup required - works on mobile and desktop.',
-  ogTitle: 'Roofing Calculator — Pitch, Area, Rafter Length, Materials',
+  ogTitle: 'Roofing Calculator - Pitch, Area, Rafter Length, Materials',
   ogDescription:
     'Free roofing calculator. Calculate roof pitch, rafter length, roof surface area, and material quantities. No signup required.',
 
@@ -50,7 +50,7 @@ export const roofingConfig: TradeConfig = {
     birdsmouthMemberWord: 'Rafter',
     commonSlopes: COMMON_PITCHES,
     defaultSlope: '25',
-    diagramCaption: 'Rafter at {deg}° pitch — span is wall to ridge (one rafter)',
+    diagramCaption: 'Rafter at {deg}° pitch - span is wall to ridge (one rafter)',
     diagramTopLabel: 'Ridge',
     diagramBaseLabel: 'Eaves',
   },
@@ -99,7 +99,7 @@ export const roofingConfig: TradeConfig = {
       },
       {
         title: 'When to use rafter vs hip/valley pitch factors',
-        body: 'Use the rafter pitch factor for simple gable or lean-to roofs where the slope runs in one direction. Use the hip/valley factor for hipped roofs where the slope changes direction — this includes the compound angle that increases the actual surface area.',
+        body: 'Use the rafter pitch factor for simple gable or lean-to roofs where the slope runs in one direction. Use the hip/valley factor for hipped roofs where the slope changes direction - this includes the compound angle that increases the actual surface area.',
       },
       {
         title: 'Common waste percentages by material',
@@ -144,7 +144,7 @@ export const roofingConfig: TradeConfig = {
       },
       {
         q: 'What is the best free roofing calculator?',
-        a: 'The best free roofing calculator handles pitch, rafter lengths, hip/valley lengths, surface area, waste, and material pricing in one place — exactly what this tool does, completely free with no signup. All calculations run in your browser and no data is sent anywhere.',
+        a: 'The best free roofing calculator handles pitch, rafter lengths, hip/valley lengths, surface area, waste, and material pricing in one place - exactly what this tool does, completely free with no signup. All calculations run in your browser and no data is sent anywhere.',
       },
     ],
     workedExample: {
@@ -161,7 +161,7 @@ export const roofingConfig: TradeConfig = {
     assumptions: [
       'Calculations assume a single-pitch or gable roof. Complex roofs (hip, valley, dormer) require additional material for junctions.',
       'Pitch factor uses 1/cos(θ) for rafter-type slopes. Hip/valley factors use a compound angle formula.',
-      'Waste percentages are guidelines only — always refer to manufacturer recommendations for your specific material.',
+      'Waste percentages are guidelines only - always refer to manufacturer recommendations for your specific material.',
       'Batten calculations assume a mono-pitch roof and do not include extra battens for hips, valleys, or ridge lines.',
       'All measurements are estimates. Verify on-site before ordering materials.',
     ],

@@ -88,7 +88,7 @@ export function AreaTab() {
       const actualArea = planArea * factor;
       setResult({ kind: 'area', planArea, factor, actualArea, deg: d, mode: 'plan' });
     } else {
-      // Actual mode — user enters the actual surface area directly
+      // Actual mode - user enters the actual surface area directly
       const actualArea = parseFloat(directArea) || 0;
       const planArea = factor > 0 ? actualArea / factor : actualArea;
       setResult({ kind: 'area', planArea, factor, actualArea, deg: d, mode: 'actual' });
@@ -341,7 +341,7 @@ export function AreaTab() {
                   placeholder="0.00"
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                 />
-                <p className="mt-2 text-xs text-slate-400">Enter a known volume directly — it can be priced in the Draft Smart Component™ tab.</p>
+                <p className="mt-2 text-xs text-slate-400">Enter a known volume directly - it can be priced in the Draft Smart Component™ tab.</p>
               </div>
             )}
             {volMode === 'calc' && volW && volH && volD && (

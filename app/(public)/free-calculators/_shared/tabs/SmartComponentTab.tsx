@@ -221,11 +221,11 @@ export function SmartComponentTab() {
 
     setResult({ rawValue, wasteAmount, totalValue, materialCost, labourCost, totalCost, unit });
 
-    // Trigger conversion popup — smart component → signup
+    // Trigger conversion popup - smart component → signup
     setShared({
       popupTrigger: {
         resultLabel: `${cur}${totalCost.toFixed(2)} total cost`,
-        resultDetails: `${spec.name} — ${totalValue.toFixed(2)} ${unit} × ${cur}${price}/${unit}`,
+        resultDetails: `${spec.name} - ${totalValue.toFixed(2)} ${unit} × ${cur}${price}/${unit}`,
         stage: 'smart-to-signup',
       },
     });
@@ -589,7 +589,7 @@ export function SmartComponentTab() {
             <h3 className="text-lg font-semibold text-slate-900">Save as Smart Component</h3>
             <p className="mt-2 text-sm text-slate-500">
               Create a free QuoteCore+ account to save and reuse this component across quotes. Smart Components
-              store materials, waste, pricing, and pitch — ready to drop into any quote.
+              store materials, waste, pricing, and pitch - ready to drop into any quote.
             </p>
             <div className="mt-5 flex gap-3 justify-end">
               <button

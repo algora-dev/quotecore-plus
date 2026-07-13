@@ -212,7 +212,7 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
               resultLabel={shared.popupTrigger?.resultLabel ?? ''}
               resultDetails={shared.popupTrigger?.resultDetails}
               ctaText={shared.popupTrigger?.stage === 'smart-to-signup'
-                ? 'Save this component — start free trial'
+                ? 'Save this component - start free trial'
                 : 'Add this to a free quote'
               }
               ctaHref={shared.popupTrigger?.stage === 'smart-to-signup'
@@ -221,7 +221,7 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
               }
               secondaryText={shared.popupTrigger?.stage === 'smart-to-signup'
                 ? 'Reuse on every quote, save your pricing rules, manage jobs'
-                : 'Turn measurements into a professional quote in 2 minutes — no signup needed'
+                : 'Turn measurements into a professional quote in 2 minutes - no signup needed'
               }
             />
           </div>

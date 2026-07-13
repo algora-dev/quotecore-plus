@@ -706,8 +706,8 @@ function POGeneratorForm() {
                       <td className="py-2 text-sm text-slate-700">{line.description}</td>
                       <td className="py-2 text-sm text-slate-700 text-right">{line.qty}</td>
                       <td className="py-2 text-sm text-slate-500 text-right">{line.unit}</td>
-                      <td className="py-2 text-sm text-slate-700 text-right">{hideAllPrices || line.hidePrice ? '—' : formatMoney(line.rate, sym)}</td>
-                      <td className="py-2 text-sm font-medium text-slate-900 text-right">{hideAllPrices || line.hidePrice ? '—' : formatMoney(line.qty * line.rate, sym)}</td>
+                      <td className="py-2 text-sm text-slate-700 text-right">{hideAllPrices || line.hidePrice ? '-' : formatMoney(line.rate, sym)}</td>
+                      <td className="py-2 text-sm font-medium text-slate-900 text-right">{hideAllPrices || line.hidePrice ? '-' : formatMoney(line.qty * line.rate, sym)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -815,19 +815,19 @@ function POGeneratorForm() {
             <div className="mt-4 space-y-2">
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Is this PO generator free?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes — completely free with no signup. Generate as many purchase orders as you need and download as PDF. You can also upload a photo of an existing PO and our AI will extract the details automatically, or paste your order text and let AI fill in the form.</p></div>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes - completely free with no signup. Generate as many purchase orders as you need and download as PDF. You can also upload a photo of an existing PO and our AI will extract the details automatically, or paste your order text and let AI fill in the form.</p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Can I upload a photo of my purchase order and have AI fill it in?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. Click the upload area to upload a photo or screenshot of an existing purchase order. Our AI will extract the supplier details, line items, quantities, and rates — then fill in the form for you to review and edit before generating. You get 5 free scans per day.</p></div>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. Click the upload area to upload a photo or screenshot of an existing purchase order. Our AI will extract the supplier details, line items, quantities, and rates - then fill in the form for you to review and edit before generating. You get 5 free scans per day.</p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Why use a purchase order?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">A purchase order (PO) is a formal document sent to a supplier requesting materials or services at agreed prices. It protects both parties — the supplier knows exactly what to deliver, and you have a written record of the order for your accounts.</p></div>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">A purchase order (PO) is a formal document sent to a supplier requesting materials or services at agreed prices. It protects both parties - the supplier knows exactly what to deliver, and you have a written record of the order for your accounts.</p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Can I manage suppliers in QuoteCore+?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. QuoteCore+ includes a full supplier database, reusable line items, and order tracking — so you can raise POs from your saved materials list in seconds. <Link href="/signup" className="text-[#FF6B35] font-medium">Start a free trial →</Link></p></div>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. QuoteCore+ includes a full supplier database, reusable line items, and order tracking - so you can raise POs from your saved materials list in seconds. <Link href="/signup" className="text-[#FF6B35] font-medium">Start a free trial →</Link></p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Can I use different currencies?</summary>

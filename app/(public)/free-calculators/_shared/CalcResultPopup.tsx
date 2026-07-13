@@ -25,11 +25,11 @@ interface CalcResultPopupProps {
   ctaHref: string;
   /** Secondary description text */
   secondaryText?: string;
-  /** Funnel stage — controls dismissal key prefix */
+  /** Funnel stage - controls dismissal key prefix */
   stage: PopupStage;
   /** Slug for dismissal uniqueness, e.g. "free-roofing-calculator" */
   slug: string;
-  /** Trigger — when true, starts the delay timer to show the popup */
+  /** Trigger - when true, starts the delay timer to show the popup */
   trigger: boolean;
 }
 
@@ -73,7 +73,7 @@ export function CalcResultPopup({
         className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 animate-[fadeInUp_0.3s_ease-out]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Result — the headline */}
+        {/* Result - the headline */}
         <div className="text-center mb-5">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-orange-50 border border-orange-100 px-3 py-1 mb-3">
             <svg className="w-3.5 h-3.5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor">

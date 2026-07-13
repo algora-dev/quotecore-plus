@@ -92,7 +92,7 @@ export function TradeLayoutShell({ config, children }: { config: TradeConfig; ch
         <div className="mx-auto w-full max-w-5xl px-4 py-8 lg:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-slate-500">
-              QuoteCore+ — quoting and job management for trade businesses.
+              QuoteCore+ - quoting and job management for trade businesses.
             </p>
             <div className="flex items-center gap-4">
               <Link href="/free-calculators" prefetch={false} className="text-xs font-medium text-slate-600 hover:text-slate-900">

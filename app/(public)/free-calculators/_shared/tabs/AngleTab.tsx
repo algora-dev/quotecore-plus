@@ -68,7 +68,7 @@ export function AngleTab() {
   const [sameAsPitch1, setSameAsPitch1] = useState(true);
   const [cornerAngle, setCornerAngle] = useState('90');
 
-  // Rafter Pitch — Ridge
+  // Rafter Pitch - Ridge
   const [ridgePitch1, setRidgePitch1] = useState('25');
   const [ridgePitch2, setRidgePitch2] = useState('25');
   const [ridgeSameAsPitch1, setRidgeSameAsPitch1] = useState(true);
@@ -337,7 +337,7 @@ export function AngleTab() {
           <div className="border-t border-slate-100 pt-4">
             <AngleVertexDiagram
               angle={result.finishedAngle}
-              caption={`Finished angle: ${result.finishedAngle}° (${result.angleType}) — bend from flat ${result.bendAngleFromFlat}°`}
+              caption={`Finished angle: ${result.finishedAngle}° (${result.angleType}) - bend from flat ${result.bendAngleFromFlat}°`}
             />
           </div>
 

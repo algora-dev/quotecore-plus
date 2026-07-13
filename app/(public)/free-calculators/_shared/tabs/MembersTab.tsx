@@ -276,7 +276,7 @@ export function MembersTab() {
                 step={1}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
               />
-              <p className="mt-2 text-xs text-slate-400">Timber depth — used to check the ⅓ maximum notch rule</p>
+              <p className="mt-2 text-xs text-slate-400">Timber depth - used to check the ⅓ maximum notch rule</p>
             </div>
           </div>
         )}
@@ -329,7 +329,7 @@ export function MembersTab() {
               <p className={`text-base font-bold ${
                 bmResult.pass ? 'text-green-700' : 'text-red-700'
               }`}>
-                {bmResult.pass ? '✓ PASS' : '✗ FAIL'}
+                {bmResult.pass ? 'PASS' : 'FAIL'}
               </p>
               <p className="mt-1 text-xs text-slate-400">
                 {bmResult.pass
@@ -342,7 +342,7 @@ export function MembersTab() {
           {!bmResult.pass && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
               <p className="text-sm text-amber-800">
-                ⚠️ Notch depth exceeds ⅓ of the {memberWord.toLowerCase()} depth. Cutting deeper than one-third weakens the timber — reduce the seat width or use a deeper section.
+                Notch depth exceeds 1/3 of the {memberWord.toLowerCase()} depth. Cutting deeper than one-third weakens the timber - reduce the seat width or use a deeper section.
               </p>
             </div>
           )}
@@ -375,7 +375,7 @@ export function MembersTab() {
               rafterDepth={bmResult.rafterDepth}
               memberWord={memberWord}
               unit={bmUnit}
-              caption={`Bird's mouth at ${bmResult.deg.toFixed(1)}° — A = horizontal seat cut, B = vertical plumb cut`}
+              caption={`Bird's mouth at ${bmResult.deg.toFixed(1)}° - A = horizontal seat cut, B = vertical plumb cut`}
             />
           </div>
 
@@ -477,7 +477,7 @@ export function MembersTab() {
                 </div>
               </details>
 
-              {/* Hip/valley diagram removed 2026-07-10 — static explainer images to be added by Shaun */}
+              {/* Hip/valley diagram removed 2026-07-10 - static explainer images to be added by Shaun */}
             </>
           )}
         </div>

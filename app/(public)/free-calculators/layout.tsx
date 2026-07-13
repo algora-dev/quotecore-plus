@@ -5,12 +5,12 @@ import Link from 'next/link';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata = {
-  title: 'Free Trade Calculators — Roofing, Construction, Concrete & More | QuoteCore+',
+  title: 'Free Trade Calculators - Roofing, Construction, Concrete & More | QuoteCore+',
   description:
     'Free online calculators for trades: roofing, construction, concrete, and landscaping. Areas, volumes, angles, material quantities and pricing. No signup required.',
   alternates: { canonical: `${SITE_URL}/free-calculators` },
   openGraph: {
-    title: 'Free Trade Calculators — Roofing, Construction, Concrete & More',
+    title: 'Free Trade Calculators - Roofing, Construction, Concrete & More',
     description:
       'Free online calculators for trades. Areas, volumes, angles, material quantities and pricing. No signup required.',
     url: `${SITE_URL}/free-calculators`,
@@ -52,7 +52,7 @@ export default function FreeCalculatorsLayout({ children }: { children: ReactNod
         <div className="mx-auto w-full max-w-5xl px-4 py-8 lg:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-slate-500">
-              QuoteCore+ — quoting and job management for trade businesses.
+              QuoteCore+ - quoting and job management for trade businesses.
             </p>
             <div className="flex items-center gap-4">
               <Link href="/free-quote-generator" prefetch={false} className="text-xs font-medium text-slate-600 hover:text-slate-900">

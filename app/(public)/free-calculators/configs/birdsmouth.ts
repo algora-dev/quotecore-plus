@@ -4,10 +4,10 @@ export const birdsmouthConfig: TradeConfig = {
   slug: 'free-birds-mouth-calculator',
   defaultCurrency: 'GBP',
   name: "Bird's Mouth Calculator",
-  metaTitle: "Free Bird's Mouth Calculator — Rafter & Stringer Seat Cuts | QuoteCore+",
+  metaTitle: "Free Bird's Mouth Calculator - Rafter & Stringer Seat Cuts | QuoteCore+",
   metaDescription:
     "Free bird's mouth calculator. Work out seat cut and plumb cut angles, heel height, and notch depth for rafters and stair stringers. Includes the ⅓-depth structural check.",
-  ogTitle: "Free Bird's Mouth Calculator — Rafter & Stringer Seat Cuts",
+  ogTitle: "Free Bird's Mouth Calculator - Rafter & Stringer Seat Cuts",
   ogDescription:
     "Free bird's mouth calculator. Seat cut and plumb cut angles, heel height, notch depth, and ⅓-depth pass/fail check for rafters and stair stringers.",
 
@@ -29,7 +29,7 @@ export const birdsmouthConfig: TradeConfig = {
     birdsmouthMemberWord: 'Rafter',
     commonSlopes: [15, 22.5, 30, 35, 40, 42, 45, 50, 60],
     defaultSlope: '35',
-    diagramCaption: 'Rafter at {deg}° — run is the horizontal distance covered',
+    diagramCaption: 'Rafter at {deg}° - run is the horizontal distance covered',
     diagramTopLabel: 'Top',
     diagramBaseLabel: 'Base',
   },
@@ -83,15 +83,15 @@ export const birdsmouthConfig: TradeConfig = {
       },
       {
         title: 'Heel height and why it matters',
-        body: "The heel is the vertical distance from the top of the seat cut to the top edge of the rafter. It determines how much insulation can fit above the wall plate and whether the rafter has enough material remaining to carry load. A small heel means the rafter is severely weakened at the bird's mouth — the ⅓-depth rule exists to protect the heel.",
+        body: "The heel is the vertical distance from the top of the seat cut to the top edge of the rafter. It determines how much insulation can fit above the wall plate and whether the rafter has enough material remaining to carry load. A small heel means the rafter is severely weakened at the bird's mouth - the ⅓-depth rule exists to protect the heel.",
       },
       {
         title: 'Bird\'s mouth on stair stringers',
-        body: "Stair stringers use the same principle: the seat cut rests on the landing or floor, the plumb cut butts against the header. The pitch is set by the rise and going of the stairs — UK building regs typically cap stair pitch at 42° for domestic stairs. The ⅓-depth rule applies equally to stringers; an over-cut stringer will crack under load.",
+        body: "Stair stringers use the same principle: the seat cut rests on the landing or floor, the plumb cut butts against the header. The pitch is set by the rise and going of the stairs - UK building regs typically cap stair pitch at 42° for domestic stairs. The ⅓-depth rule applies equally to stringers; an over-cut stringer will crack under load.",
       },
       {
         title: 'Choosing the seat width',
-        body: "The seat width should match the wall plate width so the rafter bears fully on the timber below — commonly 75mm or 100mm in the UK. A wider seat gives more bearing area but increases the notch depth. If the notch exceeds ⅓ of the rafter depth at your chosen seat width, move to a deeper rafter rather than reducing the bearing.",
+        body: "The seat width should match the wall plate width so the rafter bears fully on the timber below - commonly 75mm or 100mm in the UK. A wider seat gives more bearing area but increases the notch depth. If the notch exceeds ⅓ of the rafter depth at your chosen seat width, move to a deeper rafter rather than reducing the bearing.",
       },
     ],
     formulas: [
@@ -109,7 +109,7 @@ export const birdsmouthConfig: TradeConfig = {
       },
       {
         q: "What is the maximum depth of a bird's mouth notch?",
-        a: "The notch must not exceed one-third of the rafter depth. For a 200mm rafter, the maximum notch is 66.7mm. If your calculated notch is deeper, reduce the seat width or use a deeper rafter. Cutting deeper weakens the heel — the remaining timber above the seat that carries the bending load.",
+        a: "The notch must not exceed one-third of the rafter depth. For a 200mm rafter, the maximum notch is 66.7mm. If your calculated notch is deeper, reduce the seat width or use a deeper rafter. Cutting deeper weakens the heel - the remaining timber above the seat that carries the bending load.",
       },
       {
         q: "What angle is the plumb cut on a bird's mouth?",
@@ -117,11 +117,11 @@ export const birdsmouthConfig: TradeConfig = {
       },
       {
         q: "Does the bird's mouth calculator work for stair stringers?",
-        a: "Yes. Stair stringers use the same geometry — a seat cut that rests on the landing and a plumb cut that butts the header. Enter the stair pitch (typically up to 42° for domestic stairs) and the stringer depth. The ⅓-depth rule applies the same way.",
+        a: "Yes. Stair stringers use the same geometry - a seat cut that rests on the landing and a plumb cut that butts the header. Enter the stair pitch (typically up to 42° for domestic stairs) and the stringer depth. The ⅓-depth rule applies the same way.",
       },
       {
         q: "What is the best free bird's mouth calculator?",
-        a: "The best free bird's mouth calculator shows seat cut and plumb cut angles, heel height, notch depth, and a pass/fail check against the ⅓-depth rule — with a clear diagram labelling every measurement. This calculator does all of that, free and with no signup.",
+        a: "The best free bird's mouth calculator shows seat cut and plumb cut angles, heel height, notch depth, and a pass/fail check against the ⅓-depth rule - with a clear diagram labelling every measurement. This calculator does all of that, free and with no signup.",
       },
     ],
     related: [

@@ -133,7 +133,7 @@ export function BattenTab() {
     });
   }
 
-  // Preset buttons — convert mm to current unit
+  // Preset buttons - convert mm to current unit
   const presets = cfg.gaugePresets.map((p) => ({
     label: p.label,
     value: isMetric ? String(p.mm) : (p.mm / 25.4).toFixed(1),
@@ -153,7 +153,7 @@ export function BattenTab() {
         <div className="rounded-lg bg-orange-50/50 border border-orange-100 p-3">
           <p className="text-xs text-slate-600">
             <span className="font-medium text-[#FF6B35]">From previous tab:</span>{' '}
-            {shared.calculatedArea} {areaUnit} roof area — already filled in below.
+            {shared.calculatedArea} {areaUnit} roof area - already filled in below.
           </p>
         </div>
       )}
@@ -221,7 +221,7 @@ export function BattenTab() {
               placeholder="0.00"
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
             />
-            <p className="mt-1 text-xs text-slate-400">Enter the plan (footprint) area — pitch is applied below.</p>
+            <p className="mt-1 text-xs text-slate-400">Enter the plan (footprint) area - pitch is applied below.</p>
           </div>
         )}
 
@@ -333,7 +333,7 @@ export function BattenTab() {
             ))}
           </div>
           <p className="mt-2 text-xs text-slate-400">
-            Examples only — always refer to the tile manufacturer&apos;s specification for exact batten gauge.
+            Examples only - always refer to the tile manufacturer&apos;s specification for exact batten gauge.
           </p>
         </div>
 
@@ -398,7 +398,7 @@ export function BattenTab() {
             </div>
             <div className="rounded-lg bg-white border border-slate-100 p-3">
               <p className="text-xs text-slate-400">Batten rows (approx, mono pitch)</p>
-              <p className="text-sm font-semibold text-slate-700">{result.approxRows || '—'}</p>
+              <p className="text-sm font-semibold text-slate-700">{result.approxRows || '-'}</p>
             </div>
           </div>
 
