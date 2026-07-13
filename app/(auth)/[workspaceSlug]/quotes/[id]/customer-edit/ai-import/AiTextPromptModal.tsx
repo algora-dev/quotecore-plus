@@ -70,7 +70,7 @@ export function AiTextPromptModal({ documentType, onParsed, onClose }: AiTextPro
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
       <div
         className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-lg mx-4 p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
@@ -140,7 +140,7 @@ export function AiTextPromptModal({ documentType, onParsed, onClose }: AiTextPro
 
             {/* Privacy note */}
             <p className="text-xs text-slate-400">
-              🔒 Your text is sent to our server for AI processing and is <strong>not stored</strong> after parsing.
+              Your text is sent to our server for AI processing and is <strong>not stored</strong> after parsing.
             </p>
           </>
         )}

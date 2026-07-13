@@ -110,7 +110,7 @@ export function AiUploadModal({ documentType, onParsed, onClose }: AiUploadModal
   const isLoading = status === 'compressing' || status === 'parsing';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
       <div
         className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-lg mx-4 p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
@@ -129,7 +129,7 @@ export function AiUploadModal({ documentType, onParsed, onClose }: AiUploadModal
         <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
           <p className="text-xs text-blue-700 leading-relaxed">
             Upload a photo or screenshot of an existing quote, invoice, or handwritten notes.
-            AI will read the document and pre-populate your quote lines in our professional format —
+            AI will read the document and pre-populate your quote lines in our professional format,
             saving you time manually transferring details.
           </p>
           <p className="text-xs text-blue-600 mt-2">
@@ -210,7 +210,7 @@ export function AiUploadModal({ documentType, onParsed, onClose }: AiUploadModal
 
         {/* Privacy note */}
         <p className="text-xs text-slate-400">
-          🔒 Your upload is sent to our server for AI processing and is <strong>not stored</strong> after parsing.
+          Your upload is sent to our server for AI processing and is <strong>not stored</strong> after parsing.
           It does not count against your storage limits.
         </p>
 
