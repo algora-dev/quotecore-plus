@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
 
 /**
  * Shared "Save to App" button for free tools.
@@ -56,18 +57,20 @@ type ModalState =
   | { type: 'need_email' }
   | { type: 'no_app_account'; email: string }
   | { type: 'quota_exceeded'; planCode?: string; used?: number; limit?: number }
+  | { type: 'subscription_inactive'; planCode?: string }
   | { type: 'duplicate_number'; number: string }
   | { type: 'error'; message: string };
 
 export function SaveToAppButton({ documentType, documentData, userEmail }: SaveToAppButtonProps) {
   const [modal, setModal] = useState<ModalState>({ type: 'none' });
+  const { user: authUser } = useFreeToolsAuth();
 
   const handleSaveToApp = useCallback(async () => {
     setModal({ type: 'loading' });
 
     try {
-      // 1. Check if we have an email
-      let email = userEmail || '';
+      // 1. Resolve email: auth user email > prop > localStorage
+      let email = authUser?.email || userEmail || '';
       if (!email) {
         // Try localStorage (free tools store email there)
         try {
@@ -107,6 +110,8 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
             used: result.details?.used,
             limit: result.details?.limit,
           });
+        } else if (result.reason === 'subscription_inactive') {
+          setModal({ type: 'subscription_inactive', planCode: result.details?.planCode });
         } else if (result.reason === 'duplicate_number') {
           setModal({
             type: 'duplicate_number',
@@ -141,7 +146,7 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
       const message = err instanceof Error ? err.message : 'Unknown error';
       setModal({ type: 'error', message });
     }
-  }, [documentType, documentData, userEmail]);
+  }, [documentType, documentData, userEmail, authUser]);
 
   const closeModal = () => setModal({ type: 'none' });
 
@@ -166,6 +171,8 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
           setModal({ type: 'no_app_account', email });
         } else if (result.reason === 'quota_exceeded') {
           setModal({ type: 'quota_exceeded', planCode: result.details?.planCode, used: result.details?.used, limit: result.details?.limit });
+        } else if (result.reason === 'subscription_inactive') {
+          setModal({ type: 'subscription_inactive', planCode: result.details?.planCode });
         } else if (result.reason === 'duplicate_number') {
           setModal({ type: 'duplicate_number', number: result.details?.duplicateNumber || documentData.documentNumber });
         } else {
@@ -352,6 +359,40 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
             >
               Got it
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Subscription inactive modal */}
+      {modal.type === 'subscription_inactive' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">Subscription inactive</h2>
+              <button onClick={closeModal} className="p-1 text-slate-400 hover:text-slate-600 transition">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-sm text-slate-600">
+              Your QuoteCore+ subscription{modal.planCode ? ` (${modal.planCode})` : ''} is no longer active.
+              Reactivate your subscription to save this {documentType} to your account and access all features.
+            </p>
+            <div className="flex flex-col gap-2">
+              <a
+                href="/account/billing"
+                className="w-full text-center px-5 py-2.5 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all"
+              >
+                Reactivate subscription
+              </a>
+              <button
+                onClick={closeModal}
+                className="w-full text-center px-5 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

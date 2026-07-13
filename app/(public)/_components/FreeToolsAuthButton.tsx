@@ -20,7 +20,7 @@ export function FreeToolsAuthButton({ compact = false }: { compact?: boolean }) 
         <span className="text-xs text-slate-500 hidden sm:inline max-w-[120px] truncate">{user.email}</span>
         <button
           onClick={signOut}
-          className="text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+          className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-400 hover:text-slate-900 transition-colors"
         >
           Log out
         </button>

@@ -159,6 +159,8 @@ async function createQuoteFromDraft(
     customerName: data.clientName || 'Unknown',
     jobName: '',
     entryMode: 'blank',
+    trade: 'generic',
+    componentCollectionId: null,
     cqCompanyName: data.companyName || null,
     cqCompanyPhone: data.fromPhone || null,
     cqCompanyEmail: data.fromEmail || null,

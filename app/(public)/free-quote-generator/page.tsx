@@ -10,6 +10,7 @@ import { PromptBox } from './PromptBox';
 import { SaveToAppButton, type FreeDocumentData } from '../shared/SaveToAppButton';
 import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
 import { FreeToolsAuthButton } from '../_components/FreeToolsAuthButton';
+import { useFreeToolsEmail } from '../_components/useFreeToolsEmail';
 
 /**
  * Free Quote Generator - no signup required.
@@ -24,7 +25,7 @@ interface QuoteLine {
   qty: number;
   unit: string;
   rate: number;
-  hidePrice: boolean;
+  lineHidden: boolean;
 }
 
 type MeasurementSystem = 'metric' | 'imperial';
@@ -64,7 +65,7 @@ function QuoteGeneratorForm() {
 
   // Settings
   const [measurementSystem, setMeasurementSystem] = useState<MeasurementSystem>('metric');
-  const [measurementType, setMeasurementType] = useState<MeasurementType>('area');
+  const [measurementType, setMeasurementType] = useState<MeasurementType>('unit');
   const [currency, setCurrency] = useState(CURRENCIES[0]);
   const [logo, setLogo] = useState<string | null>(null);
   const defaultUnit = unitForSystem(measurementType, measurementSystem);
@@ -95,20 +96,22 @@ function QuoteGeneratorForm() {
         qty: parseFloat(qtyParam) || 0,
         unit,
         rate: 0,
-        hidePrice: false,
+        lineHidden: false,
       }];
     }
-    return [{ id: '1', description: '', qty: 0, unit: 'm\u00b2', rate: 0, hidePrice: false }];
+    return [{ id: '1', description: '', qty: 0, unit: 'pcs', rate: 0, lineHidden: false }];
   });
 
   const [hideAllPrices, setHideAllPrices] = useState(false);
   const [hideTotals, setHideTotals] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
-  const [emailSaved, setEmailSaved] = useState(false);
   const [generated, setGenerated] = useState(false);
   const [popupTrigger, setPopupTrigger] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [aiNotice, setAiNotice] = useState('');
+
+  // Unified email/auth state
+  const { email: userEmail, isAuthed, emailSaved, setEmailInLocalStorage, clearLocalEmail, loadingEmail } = useFreeToolsEmail();
+  const [emailInput, setEmailInput] = useState('');
 
   // Country-to-currency mapping for IP-based default
   const COUNTRY_CURRENCY: Record<string, string> = {
@@ -119,8 +122,6 @@ function QuoteGeneratorForm() {
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem('free-tools-email');
-    if (saved) { setUserEmail(saved); setEmailSaved(true); }
     // Set currency from visitor's country via Vercel geo header
     fetch('/api/geo').then(r => r.json()).then(({ country }) => {
       const code = COUNTRY_CURRENCY[country] || 'GBP';
@@ -129,13 +130,79 @@ function QuoteGeneratorForm() {
     }).catch(() => {});
   }, []);
 
+  // Session persistence - save form state to sessionStorage
+  const SESSION_KEY = 'qcp:free-quote-session';
+  useEffect(() => {
+    const saved = sessionStorage.getItem(SESSION_KEY);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data.measurementSystem) setMeasurementSystem(data.measurementSystem);
+        if (data.measurementType) setMeasurementType(data.measurementType);
+        if (data.currencyCode) setCurrency(CURRENCIES.find(c => c.code === data.currencyCode) || CURRENCIES[0]);
+        if (data.logo) setLogo(data.logo);
+        if (data.companyName !== undefined) setCompanyName(data.companyName);
+        if (data.fromName !== undefined) setFromName(data.fromName);
+        if (data.fromPhone !== undefined) setFromPhone(data.fromPhone);
+        if (data.fromEmail !== undefined) setFromEmail(data.fromEmail);
+        if (data.clientName !== undefined) setClientName(data.clientName);
+        if (data.clientEmail !== undefined) setClientEmail(data.clientEmail);
+        if (data.clientAddress !== undefined) setClientAddress(data.clientAddress);
+        if (data.quoteDate) setQuoteDate(data.quoteDate);
+        if (data.quoteNumber) setQuoteNumber(data.quoteNumber);
+        if (data.validDays) setValidDays(data.validDays);
+        if (data.notes !== undefined) setNotes(data.notes);
+        if (data.footer !== undefined) setFooter(data.footer);
+        if (data.footerItalic !== undefined) setFooterItalic(data.footerItalic);
+        if (data.taxEnabled !== undefined) setTaxEnabled(data.taxEnabled);
+        if (data.taxRate !== undefined) setTaxRate(data.taxRate);
+        if (data.taxName !== undefined) setTaxName(data.taxName);
+        if (data.hideAllPrices !== undefined) setHideAllPrices(data.hideAllPrices);
+        if (data.hideTotals !== undefined) setHideTotals(data.hideTotals);
+        if (data.lines) setLines(data.lines);
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+          measurementSystem, measurementType, currencyCode: currency.code, logo,
+          companyName, fromName, fromPhone, fromEmail, clientName, clientEmail, clientAddress,
+          quoteDate, quoteNumber, validDays, notes, footer, footerItalic,
+          taxEnabled, taxRate, taxName, hideAllPrices, hideTotals, lines,
+        }));
+      } catch {}
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [measurementSystem, measurementType, currency, logo, companyName, fromName, fromPhone, fromEmail, clientName, clientEmail, clientAddress, quoteDate, quoteNumber, validDays, notes, footer, footerItalic, taxEnabled, taxRate, taxName, hideAllPrices, hideTotals, lines]);
+
+  function resetForm() {
+    if (!confirm('Reset all fields? This will clear everything and cannot be undone.')) return;
+    sessionStorage.removeItem(SESSION_KEY);
+    setMeasurementSystem('metric');
+    setMeasurementType('unit');
+    setCurrency(CURRENCIES[0]);
+    setLogo(null);
+    setCompanyName(''); setFromName(''); setFromPhone(''); setFromEmail('');
+    setClientName(''); setClientEmail(''); setClientAddress('');
+    setQuoteDate(new Date().toISOString().slice(0, 10));
+    setQuoteNumber('Q-001'); setValidDays('30');
+    setNotes(''); setFooter(''); setFooterItalic(false);
+    setTaxEnabled(true); setTaxRate(20); setTaxName('Tax');
+    setHideAllPrices(false); setHideTotals(false);
+    setLines([{ id: '1', description: '', qty: 0, unit: 'pcs', rate: 0, lineHidden: false }]);
+    setGenerated(false); setPopupTrigger(false);
+  }
+
   const subtotal = lines.reduce((sum, l) => sum + (l.qty * l.rate), 0);
   const vat = taxEnabled ? subtotal * (taxRate / 100) : 0;
   const total = subtotal + vat;
   const sym = currency.symbol;
 
   function addLine() {
-    setLines([...lines, { id: String(Date.now()), description: '', qty: 0, unit: defaultUnit, rate: 0, hidePrice: false }]);
+    setLines([...lines, { id: String(Date.now()), description: '', qty: 0, unit: defaultUnit, rate: 0, lineHidden: false }]);
   }
 
   function handleMeasurementChange(system: MeasurementSystem, type: MeasurementType) {
@@ -193,7 +260,7 @@ function QuoteGeneratorForm() {
         qty: l.qty,
         unit: l.unit || defaultUnit,
         rate: l.rate,
-        hidePrice: false,
+        lineHidden: false,
       })));
     }
     const noticeParts: string[] = [];
@@ -256,39 +323,42 @@ function QuoteGeneratorForm() {
           </p>
         </section>
 
-        {/* Email capture */}
+        {/* Email capture / auth status */}
         <div className="rounded-xl border border-slate-200 bg-white p-4 mb-6 print:hidden">
-          {!emailSaved ? (
+          {loadingEmail ? (
+            <div className="h-10" />
+          ) : emailSaved ? (
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-700">✓ {userEmail}</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  {isAuthed
+                    ? 'Logged in · Image upload: 10/day · Text parse: 20/day · Manual: Unlimited'
+                    : 'Image upload: 10/day · Text parse: 20/day · Manual: Unlimited'}
+                </p>
+              </div>
+              {!isAuthed && (
+                <button onClick={() => clearLocalEmail()} className="text-xs font-medium text-[#FF6B35] hover:text-orange-600 transition">Change</button>
+              )}
+            </div>
+          ) : (
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <div className="flex-1">
                 <input
                   type="email"
-                  value={userEmail}
-                  onChange={(e) => setUserEmail(e.target.value)}
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                   placeholder="Enter your email for more free generations and no watermark"
                 />
                 <p className="mt-1 text-xs text-slate-400">Image upload: 3/day · Text parse: 5/day · Manual: Unlimited</p>
               </div>
               <button
-                onClick={() => {
-                  if (userEmail.trim()) {
-                    localStorage.setItem('free-tools-email', userEmail.trim());
-                    setEmailSaved(true);
-                  }
-                }}
+                onClick={() => { if (emailInput.trim()) setEmailInLocalStorage(emailInput.trim()); }}
                 className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition whitespace-nowrap"
               >
                 Save
               </button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-700">✓ {userEmail}</p>
-                <p className="mt-1 text-xs text-slate-400">Image upload: 10/day · Text parse: 20/day · Manual: Unlimited</p>
-              </div>
-              <button onClick={() => setEmailSaved(false)} className="text-xs font-medium text-[#FF6B35] hover:text-orange-600 transition">Change</button>
             </div>
           )}
         </div>
@@ -322,6 +392,19 @@ function QuoteGeneratorForm() {
                 onParsed={(data) => handleParsed(data)}
                 onError={(msg) => { setUploadError(msg); setAiNotice(''); }}
               />
+
+              {/* Reset button */}
+              <div className="flex justify-end">
+                <button
+                  onClick={resetForm}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-4 py-2 text-xs font-medium text-slate-500 hover:border-red-300 hover:text-red-500 transition"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Reset all
+                </button>
+              </div>
 
               {/* Settings bar */}
               <div className="rounded-xl border border-slate-200 bg-white p-5">
@@ -573,7 +656,7 @@ function QuoteGeneratorForm() {
                 </div>
                 <div className="space-y-3">
                   {lines.map((line) => (
-                    <div key={line.id} className="grid grid-cols-12 gap-2 items-start">
+                    <div key={line.id} className={`grid grid-cols-12 gap-2 items-start ${line.lineHidden ? 'opacity-40' : ''}`}>
                       <div className="col-span-12 sm:col-span-5">
                         <input
                           type="text"
@@ -620,9 +703,9 @@ function QuoteGeneratorForm() {
                       )}
                       {!hideAllPrices && <p className="text-sm font-semibold text-slate-700 pt-2 col-span-2 sm:col-span-1">{formatMoney(line.qty * line.rate, sym)}</p>}
                       <div className="col-span-1 flex justify-end gap-1">
-                        <button onClick={() => updateLine(line.id, 'hidePrice', !line.hidePrice)} className="p-2 text-slate-400 hover:text-[#FF6B35] transition" title={line.hidePrice ? 'Show price' : 'Hide price'}>
+                        <button onClick={() => updateLine(line.id, 'lineHidden', !line.lineHidden)} className="p-2 text-slate-400 hover:text-[#FF6B35] transition" title={line.lineHidden ? 'Show line in quote' : 'Hide line in quote (price still counts in total)'}>
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            {line.hidePrice ? (
+                            {line.lineHidden ? (
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                             ) : (
                               <>
@@ -645,8 +728,8 @@ function QuoteGeneratorForm() {
                   ))}
                 </div>
 
-                {/* Totals */}
-                {(!hideAllPrices && !hideTotals) && (
+                {/* Totals - always shown unless hideTotals is checked */}
+                {!hideTotals && (
                 <div className="mt-4 flex justify-end">
                   <div className="w-full sm:w-64 space-y-1.5">
                     <div className="flex justify-between text-sm">
@@ -766,19 +849,19 @@ function QuoteGeneratorForm() {
                   </tr>
                 </thead>
                 <tbody>
-                  {lines.filter(l => l.description).map((line) => (
+                  {lines.filter(l => l.description && !l.lineHidden).map((line) => (
                     <tr key={line.id} className="border-b border-slate-100">
                       <td className="py-2 text-sm text-slate-700">{line.description}</td>
                       <td className="py-2 text-sm text-slate-700 text-right">{line.qty}</td>
                       <td className="py-2 text-sm text-slate-500 text-right">{line.unit}</td>
-                      <td className="py-2 text-sm text-slate-700 text-right">{hideAllPrices || line.hidePrice ? '-' : formatMoney(line.rate, sym)}</td>
-                      <td className="py-2 text-sm font-medium text-slate-900 text-right">{hideAllPrices || line.hidePrice ? '-' : formatMoney(line.qty * line.rate, sym)}</td>
+                      <td className="py-2 text-sm text-slate-700 text-right">{hideAllPrices ? '-' : formatMoney(line.rate, sym)}</td>
+                      <td className="py-2 text-sm font-medium text-slate-900 text-right">{hideAllPrices ? '-' : formatMoney(line.qty * line.rate, sym)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
 
-              {!hideAllPrices && !hideTotals && (
+              {!hideTotals && (
                 <div className="flex justify-end mb-6">
                   <div className="w-64 space-y-1.5">
                     <div className="flex justify-between text-sm">
@@ -853,7 +936,7 @@ function QuoteGeneratorForm() {
                   taxRate,
                   taxName,
                   taxEnabled,
-                  lines: lines.map(l => ({ description: l.description, qty: l.qty, unit: l.unit, rate: l.rate })),
+                  lines: lines.filter(l => !l.lineHidden).map(l => ({ description: l.description, qty: l.qty, unit: l.unit, rate: l.rate })),
                 } as FreeDocumentData}
                 userEmail={userEmail}
               />
@@ -913,7 +996,15 @@ function QuoteGeneratorForm() {
                   What&apos;s the difference between this and QuoteCore+?
                 </summary>
                 <div className="px-4 pb-4">
-                  <p className="text-sm text-slate-600">This free tool generates a one-off quote. QuoteCore+ gives you a full quoting system - saved templates, component library, takeoff measurements, client database, order and invoice management, and online quote acceptance. <Link href="/signup" className="text-[#FF6B35] font-medium">Start a free trial &rarr;</Link></p>
+                  <p className="text-sm text-slate-600">This free tool generates a one-off quote. QuoteCore+ gives you a complete quoting and business management platform in one place - track and store all your quotes, send automatic follow-ups to clients, and auto-update quote statuses. You get Smart Components&#8482; for fast reusable line items, an advanced digital takeoff and measuring feature that works for all industries (roofing, construction, concrete, landscaping and more), client database, order and invoice management, and online quote acceptance. <Link href="/signup" className="text-[#FF6B35] font-medium">Start a free trial &rarr;</Link></p>
+                </div>
+              </details>
+              <details className="rounded-xl border border-slate-200 bg-white">
+                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">
+                  How do I remove the watermark and create more free quotes?
+                </summary>
+                <div className="px-4 pb-4">
+                  <p className="text-sm text-slate-600">Sign up at the top of the page to gain more free quotes and remove the watermark, or sign up to the full QuoteCore+ app for higher limits and loads of extra features with a free trial.</p>
                 </div>
               </details>
             </div>
