@@ -2,29 +2,30 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createCustomerQuoteTemplate } from './actions';
+import { updateCustomerQuoteTemplate } from './actions';
 import { createClient } from '@/app/lib/supabase/client';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
+import type { CustomerQuoteTemplateRow } from '@/app/lib/types';
 
 interface Props {
   workspaceSlug: string;
-  templateName: string;
-  /** When true the company is over storage - block logo upload. */
+  template: CustomerQuoteTemplateRow;
   isOverStorage?: boolean;
 }
 
-export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: Props) {
+export function TemplateEditor({ workspaceSlug, template, isOverStorage }: Props) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [storageBlocked, setStorageBlocked] = useState(false);
 
-  // Company details (always start blank)
-  const [companyName, setCompanyName] = useState('');
-  const [companyAddress, setCompanyAddress] = useState('');
-  const [companyPhone, setCompanyPhone] = useState('');
-  const [companyEmail, setCompanyEmail] = useState('');
-  const [footerText, setFooterText] = useState('');
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [templateName, setTemplateName] = useState(template.name);
+  const [nameError, setNameError] = useState('');
+  const [companyName, setCompanyName] = useState(template.company_name || '');
+  const [companyAddress, setCompanyAddress] = useState(template.company_address || '');
+  const [companyPhone, setCompanyPhone] = useState(template.company_phone || '');
+  const [companyEmail, setCompanyEmail] = useState(template.company_email || '');
+  const [footerText, setFooterText] = useState(template.footer_text || '');
+  const [logoUrl, setLogoUrl] = useState<string | null>(template.company_logo_url);
   const [uploading, setUploading] = useState(false);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,13 +33,11 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file size (2MB max)
     if (file.size > 2 * 1024 * 1024) {
       alert('File too large. Maximum size is 2MB.');
       return;
     }
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       alert('Please upload an image file.');
       return;
@@ -47,20 +46,15 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
     setUploading(true);
     try {
       const supabase = createClient();
-      
-      // Use a temporary filename (will be renamed after template creation if needed)
-      const fileName = `temp-${Date.now()}.${file.name.split('.').pop()}`;
+      const fileName = `template-${template.id}-${Date.now()}.${file.name.split('.').pop()}`;
       const storagePath = fileName;
-      
+
       const { error: uploadError } = await supabase.storage
         .from('company-logos')
         .upload(storagePath, file, { upsert: true });
 
-      if (uploadError) {
-        throw new Error(uploadError.message);
-      }
+      if (uploadError) throw new Error(uploadError.message);
 
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('company-logos')
         .getPublicUrl(storagePath);
@@ -78,9 +72,15 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
   };
 
   const handleSave = async () => {
+    if (!templateName.trim()) {
+      setNameError('Template name is required');
+      return;
+    }
+
     setSaving(true);
+    setNameError('');
     try {
-      const _templateId = await createCustomerQuoteTemplate({
+      await updateCustomerQuoteTemplate(template.id, {
         name: templateName,
         companyName,
         companyAddress,
@@ -92,7 +92,12 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
 
       router.push(`/${workspaceSlug}/customer-quote-templates`);
     } catch (error) {
-      alert('Failed to create template: ' + (error as Error).message);
+      const msg = (error as Error).message;
+      if (msg.includes('already exists')) {
+        setNameError('A template with this name already exists');
+      } else {
+        alert('Failed to update template: ' + msg);
+      }
       setSaving(false);
     }
   };
@@ -108,14 +113,33 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
             href={`/${workspaceSlug}/customer-quote-templates`}
             className="text-sm text-slate-500 hover:text-slate-700"
           >
-            ← Back
+            ← Back to Templates
           </Link>
-          <h1 className="text-2xl font-semibold text-slate-900 mt-2">
-            {templateName}
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Build your customer quote template
-          </p>
+          <h1 className="text-2xl font-semibold text-slate-900 mt-2">Edit Template</h1>
+        </div>
+
+        {/* Template Name */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Template Name <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            value={templateName}
+            onChange={(e) => {
+              setTemplateName(e.target.value);
+              setNameError('');
+            }}
+            placeholder="e.g. Standard Roofing Quote"
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+              nameError
+                ? 'border-red-400 focus:ring-red-500'
+                : 'border-slate-300 focus:ring-orange-500'
+            }`}
+          />
+          {nameError && (
+            <p className="mt-1.5 text-xs text-red-500">{nameError}</p>
+          )}
         </div>
 
         {/* Company Details Section */}
@@ -184,7 +208,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Company Logo
             </label>
-            
+
             {!logoUrl ? (
               <div className="space-y-2">
                 <label
@@ -215,9 +239,9 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
               <div className="space-y-3">
                 <div className="border border-slate-200 rounded-lg p-4 bg-white">
                   <div className="flex items-center gap-4">
-                    <img 
-                      src={logoUrl} 
-                      alt="Company Logo" 
+                    <img
+                      src={logoUrl}
+                      alt="Company Logo"
                       className="h-16 w-auto object-contain"
                     />
                     <button
@@ -253,7 +277,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
         {/* Preview */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
           <h2 className="text-lg font-semibold text-slate-900">Preview</h2>
-          
+
           <div className="p-6 bg-slate-50 space-y-4">
             {/* Header */}
             <div className="flex justify-between items-start border-b pb-4">
@@ -267,7 +291,11 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
               </div>
               <div className="text-right text-sm text-slate-700">
                 {logoUrl && (
-                  <img src={logoUrl} alt="Company Logo" className="h-16 w-auto object-contain mb-3 ml-auto" />
+                  <img
+                    src={logoUrl}
+                    alt="Company Logo"
+                    className="h-16 w-auto object-contain mb-3 ml-auto"
+                  />
                 )}
                 <p className="font-semibold">{companyName || 'Your Company Name'}</p>
                 <p>{companyAddress || '123 Main Street, City'}</p>
@@ -323,10 +351,10 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
           </Link>
           <button
             onClick={handleSave}
-            disabled={saving || !companyName.trim()}
-            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowe transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            disabled={saving || !templateName.trim()}
+            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
-            {saving ? 'Saving...' : 'Save Template'}
+            {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>

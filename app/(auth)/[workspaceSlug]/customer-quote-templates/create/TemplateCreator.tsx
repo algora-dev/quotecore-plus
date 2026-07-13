@@ -16,12 +16,25 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
   const [mode, setMode] = useState<CreationMode>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [templateName, setTemplateName] = useState('');
+  const [nameError, setNameError] = useState('');
+
+  const existingNames = existingTemplates.map(t => t.name.toLowerCase());
+  const isDuplicate = templateName.trim().length > 0 && existingNames.includes(templateName.trim().toLowerCase());
+
+  const handleNameChange = (value: string) => {
+    setTemplateName(value);
+    if (value.trim().length > 0 && existingNames.includes(value.trim().toLowerCase())) {
+      setNameError('A template with this name already exists');
+    } else {
+      setNameError('');
+    }
+  };
 
   const handleContinue = () => {
-    if (!mode) return;
+    if (!mode || !templateName.trim() || isDuplicate) return;
 
     if (mode === 'scratch') {
-      router.push(`/${workspaceSlug}/customer-quote-templates/create/build?name=${encodeURIComponent(templateName)}`);
+      router.push(`/${workspaceSlug}/customer-quote-templates/create/build?name=${encodeURIComponent(templateName.trim())}`);
     }
   };
 
@@ -45,15 +58,22 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
         {/* Template Name */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <label className="block text-sm font-medium text-slate-700 mb-2">
-            Template Name
+            Template Name <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={templateName}
-            onChange={(e) => setTemplateName(e.target.value)}
+            onChange={(e) => handleNameChange(e.target.value)}
             placeholder="e.g. Standard Roofing Quote"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+              nameError
+                ? 'border-red-400 focus:ring-red-500'
+                : 'border-slate-300 focus:ring-orange-500'
+            }`}
           />
+          {nameError && (
+            <p className="mt-1.5 text-xs text-red-500">{nameError}</p>
+          )}
         </div>
 
         {/* Creation Options */}
@@ -151,7 +171,7 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
           </Link>
           <button
             onClick={handleContinue}
-            disabled={!mode || !templateName.trim()}
+            disabled={!mode || !templateName.trim() || isDuplicate}
             className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowe transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Continue
