@@ -11,8 +11,8 @@ export function EditFooterModal({ footerText, onSave, onCancel }: Props) {
   const [text, setText] = useState(footerText);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xl p-6 w-full max-w-2xl">
         <h2 className="text-xl font-semibold text-slate-900 mb-4">Edit Footer / Terms & Conditions</h2>
 
         <textarea

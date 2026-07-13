@@ -7,6 +7,7 @@ import { CalcResultPopup } from '../free-calculators/_shared/CalcResultPopup';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { ImageUpload, type ParsedUploadResult } from '../free-quote-generator/ImageUpload';
 import { PromptBox } from '../free-quote-generator/PromptBox';
+import { SaveToAppButton, type FreeDocumentData } from '../shared/SaveToAppButton';
 
 /**
  * Free Invoice Generator - no signup required.
@@ -764,6 +765,28 @@ function InvoiceGeneratorForm() {
                 </svg>
                 Download PDF
               </button>
+              <SaveToAppButton
+                documentType="invoice"
+                documentData={{
+                  companyName,
+                  fromName,
+                  fromPhone,
+                  fromEmail,
+                  clientName,
+                  clientEmail,
+                  clientAddress,
+                  documentNumber: invoiceNumber,
+                  documentDate: invoiceDate,
+                  notes,
+                  footer,
+                  logo,
+                  currency: currency.code,
+                  taxRate,
+                  taxName,
+                  lines: lines.map(l => ({ description: l.description, qty: l.qty, unit: l.unit, rate: l.rate })),
+                } as FreeDocumentData}
+                userEmail={userEmail}
+              />
               <button
                 onClick={resetInvoice}
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"

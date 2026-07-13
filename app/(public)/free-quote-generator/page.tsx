@@ -7,6 +7,7 @@ import { CalcResultPopup } from '../free-calculators/_shared/CalcResultPopup';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { ImageUpload, type ParsedUploadResult } from './ImageUpload';
 import { PromptBox } from './PromptBox';
+import { SaveToAppButton, type FreeDocumentData } from '../shared/SaveToAppButton';
 
 /**
  * Free Quote Generator - no signup required.
@@ -791,6 +792,29 @@ function QuoteGeneratorForm() {
                 </svg>
                 Download PDF
               </button>
+              <SaveToAppButton
+                documentType="quote"
+                documentData={{
+                  companyName,
+                  fromName,
+                  fromPhone,
+                  fromEmail,
+                  clientName,
+                  clientEmail,
+                  clientAddress,
+                  documentNumber: quoteNumber,
+                  documentDate: quoteDate,
+                  validDays,
+                  notes,
+                  footer,
+                  logo,
+                  currency: currency.code,
+                  taxRate,
+                  taxName,
+                  lines: lines.map(l => ({ description: l.description, qty: l.qty, unit: l.unit, rate: l.rate })),
+                } as FreeDocumentData}
+                userEmail={userEmail}
+              />
               <button
                 onClick={resetQuote}
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"

@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
+import { Suspense } from 'react';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 import { WelcomeModal } from './tutorials/WelcomeModal';
+import { DocDraftRestorer } from './DocDraftRestorer';
 
 export default async function WorkspaceHome({
   params,
@@ -16,7 +18,7 @@ export default async function WorkspaceHome({
 
   // Load bell-visible alert count (same lifecycle as the bell icon:
   // bell_cleared_at IS NULL). This keeps the dashboard banner in sync with
-  // the bell — clearing alerts from the bell also clears the banner.
+  // the bell - clearing alerts from the bell also clears the banner.
   const { count: unreadAlerts } = await supabase
     .from('alerts')
     .select('id', { count: 'exact', head: true })
@@ -73,8 +75,8 @@ export default async function WorkspaceHome({
       ),
     },
     {
-      title: 'Smart Components™',
-      description: 'Build and manage Smart Components™ for your quotes',
+      title: 'Smart ComponentsTM',
+      description: 'Build and manage Smart ComponentsTM for your quotes',
       href: `/${workspaceSlug}/components`,
       icon: (
         <svg className="w-6 h-6 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,7 +143,7 @@ export default async function WorkspaceHome({
               Your calculator draft is ready to import
             </p>
             <p className="text-xs text-blue-600">
-              We saved your component from the {signupRef?.replace(/-/g, ' ').replace(/^free /, '')} — click to restore it as a Smart Component.
+              We saved your component from the {signupRef?.replace(/-/g, ' ').replace(/^free /, '')} - click to restore it as a Smart Component.
             </p>
           </div>
           <Link
@@ -155,6 +157,11 @@ export default async function WorkspaceHome({
           </Link>
         </div>
       )}
+
+      {/* Free document draft restoration (from free tools Save to App flow) */}
+      <Suspense fallback={null}>
+        <DocDraftRestorer workspaceSlug={workspaceSlug} />
+      </Suspense>
 
       {/* Alert banner */}
       {(unreadAlerts ?? 0) > 0 && (
