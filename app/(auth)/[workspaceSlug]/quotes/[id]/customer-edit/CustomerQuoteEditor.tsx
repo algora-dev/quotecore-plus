@@ -23,6 +23,9 @@ import { saveQuoteTaxes, seedQuoteTaxesFromCompanyDefaults } from '@/app/lib/tax
 import { computeTaxLines } from '@/app/lib/taxes/types';
 import type { QuoteTaxRow } from '@/app/lib/taxes/types';
 import { TaxEditor, type EditableTax } from '@/app/components/TaxEditor';
+import { AiUploadModal } from './ai-import/AiUploadModal';
+import { AiTextPromptModal } from './ai-import/AiTextPromptModal';
+import type { ParsedDocumentResult } from './ai-import/types';
 
 interface Props {
   quote: QuoteRow;
@@ -154,6 +157,9 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
 
   // Unified "Add new line" modal (Custom line / Add a component / Search catalog).
   const [showAddLine, setShowAddLine] = useState(false);
+  // AI import modals — image upload and text prompt
+  const [showAiUpload, setShowAiUpload] = useState(false);
+  const [showAiText, setShowAiText] = useState(false);
   const [showEditHeader, setShowEditHeader] = useState(false);
   const [showEditFooter, setShowEditFooter] = useState(false);
   // Declutter: collapse the left controls so the preview fills the space.
@@ -462,6 +468,46 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       };
     });
     setLines(prev => [...prev, ...newLines]);
+    setIsDirty(true);
+  }
+
+  /**
+   * AI Import handler — converts parsed document lines into QuoteLine[] and
+   * appends them to the editor. Also updates branding fields if the AI
+   * extracted company/client info.
+   */
+  function handleAiParsed(data: ParsedDocumentResult) {
+    const matMargin = globalMarginPercent;
+    const newLines: QuoteLine[] = data.lines.map((l, i) => {
+      const baseCost = l.qty * l.rate;
+      const marginedAmount = Math.round(baseCost * (1 + matMargin / 100) * 100) / 100;
+      const marginedUnitPrice = l.qty > 0
+        ? Math.round((l.rate * (1 + matMargin / 100)) * 100) / 100
+        : l.rate;
+      const unitLabel = l.unit ? ` @ ${formatCurrency(l.rate, currency)}/${l.unit}` : '';
+      return {
+        id: `ai-${Date.now()}-${i}`,
+        type: 'custom' as const,
+        text: l.description,
+        quantityText: l.qty !== 1 || l.unit ? `${l.qty}${l.unit ? ' ' + l.unit : ''}` : null,
+        amount: marginedAmount,
+        unitPrice: marginedUnitPrice,
+        qty: l.qty,
+        showPrice: true,
+        showUnits: true,
+        isVisible: true,
+        includeInTotal: true,
+        sortOrder: lines.length + i,
+        baseMaterialCost: baseCost,
+      };
+    });
+    setLines(prev => [...prev, ...newLines]);
+    // Update branding fields if the AI extracted them
+    if (data.companyName && !companyName) setCompanyName(data.companyName);
+    if (data.clientName && !quote.customer_name) {
+      // Can't directly update quote fields from here, but we can at least populate branding
+    }
+    if (data.notes && !footerText) setFooterText(data.notes);
     setIsDirty(true);
   }
 
@@ -825,6 +871,29 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 ))}
               </select>
             )}
+            {/* AI import buttons — image upload + text prompt */}
+            <button
+              type="button"
+              onClick={() => setShowAiUpload(true)}
+              title="Upload image or pdf to transfer into a quote"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Upload Image
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAiText(true)}
+              title="Write or copy and paste quote details"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Text Prompt
+            </button>
             <div className="text-sm text-slate-500">
               {saving ? 'Saving...' : lastSaved ? `Last saved ${lastSaved.toLocaleTimeString()}` : 'Not saved yet'}
               {isDirty && !saving && ' (unsaved changes)'}
@@ -1521,6 +1590,22 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           router.push(`/${workspaceSlug}/quotes/${quote.id}/summary`);
         }}
       />
+
+      {/* AI import modals */}
+      {showAiUpload && (
+        <AiUploadModal
+          documentType="quote"
+          onParsed={handleAiParsed}
+          onClose={() => setShowAiUpload(false)}
+        />
+      )}
+      {showAiText && (
+        <AiTextPromptModal
+          documentType="quote"
+          onParsed={handleAiParsed}
+          onClose={() => setShowAiText(false)}
+        />
+      )}
     </div>
   );
 }
