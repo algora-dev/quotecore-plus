@@ -80,6 +80,7 @@ function QuoteGeneratorForm() {
   const [notes, setNotes] = useState('');
   const [footer, setFooter] = useState('');
   const [footerItalic, setFooterItalic] = useState(false);
+  const [taxEnabled, setTaxEnabled] = useState(true);
   const [taxRate, setTaxRate] = useState(20);
   const [taxName, setTaxName] = useState('Tax');
 
@@ -113,7 +114,7 @@ function QuoteGeneratorForm() {
   }, []);
 
   const subtotal = lines.reduce((sum, l) => sum + (l.qty * l.rate), 0);
-  const vat = subtotal * (taxRate / 100);
+  const vat = taxEnabled ? subtotal * (taxRate / 100) : 0;
   const total = subtotal + vat;
   const sym = currency.symbol;
 
@@ -319,7 +320,7 @@ function QuoteGeneratorForm() {
                       className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                     >
                       {MEASUREMENT_OPTIONS.map(o => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
+                        <option key={o.value} value={o.value}>{measurementSystem === 'metric' ? o.metric : o.imperial}</option>
                       ))}
                     </select>
                   </div>
@@ -345,28 +346,42 @@ function QuoteGeneratorForm() {
                       placeholder="Q-001"
                     />
                   </div>
-                  <div>
-                    <label className="text-xs font-medium text-slate-600">Tax rate (%)</label>
+                  <div className="sm:col-span-2 flex items-center gap-2 pt-1">
                     <input
-                      type="number"
-                      value={taxRate}
-                      onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                      min="0"
-                      max="100"
-                      step="0.5"
-                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                      type="checkbox"
+                      id="taxEnabled"
+                      checked={taxEnabled}
+                      onChange={(e) => setTaxEnabled(e.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300 text-[#FF6B35] focus:ring-[#FF6B35]"
                     />
+                    <label htmlFor="taxEnabled" className="text-xs font-medium text-slate-600">Include tax</label>
                   </div>
-                  <div>
-                    <label className="text-xs font-medium text-slate-600">Tax name</label>
-                    <input
-                      type="text"
-                      value={taxName}
-                      onChange={(e) => setTaxName(e.target.value)}
-                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-                      placeholder="Tax"
-                    />
-                  </div>
+                  {taxEnabled && (
+                    <>
+                      <div>
+                        <label className="text-xs font-medium text-slate-600">Tax rate (%)</label>
+                        <input
+                          type="number"
+                          value={taxRate}
+                          onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                          min="0"
+                          max="100"
+                          step="0.5"
+                          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-600">Tax name</label>
+                        <input
+                          type="text"
+                          value={taxName}
+                          onChange={(e) => setTaxName(e.target.value)}
+                          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                          placeholder="Tax"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -606,10 +621,12 @@ function QuoteGeneratorForm() {
                       <span className="text-slate-500">Subtotal</span>
                       <span className="font-medium text-slate-900">{formatMoney(subtotal, sym)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">{taxName} ({taxRate}%)</span>
-                      <span className="font-medium text-slate-900">{formatMoney(vat, sym)}</span>
-                    </div>
+                    {taxEnabled && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-500">{taxName} ({taxRate}%)</span>
+                        <span className="font-medium text-slate-900">{formatMoney(vat, sym)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-base font-semibold border-t border-slate-200 pt-1.5">
                       <span className="text-slate-900">Total</span>
                       <span className="text-slate-900">{formatMoney(total, sym)}</span>
@@ -629,16 +646,6 @@ function QuoteGeneratorForm() {
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                   placeholder="Payment terms, validity, scope notes..."
                 />
-                <div className="mt-3 flex items-center gap-2">
-                  <label className="text-xs font-medium text-slate-600">Quote valid for</label>
-                  <input
-                    type="number"
-                    value={validDays}
-                    onChange={(e) => setValidDays(e.target.value)}
-                    className="w-16 rounded-lg border border-slate-300 px-2 py-1 text-sm focus:border-orange-500 focus:outline-none"
-                  />
-                  <span className="text-xs text-slate-500">days</span>
-                </div>
               </div>
 
               {/* Footer */}
@@ -746,10 +753,12 @@ function QuoteGeneratorForm() {
                       <span className="text-slate-500">Subtotal</span>
                       <span className="font-medium text-slate-900">{formatMoney(subtotal, sym)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">{taxName} ({taxRate}%)</span>
-                      <span className="font-medium text-slate-900">{formatMoney(vat, sym)}</span>
-                    </div>
+                    {taxEnabled && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-500">{taxName} ({taxRate}%)</span>
+                        <span className="font-medium text-slate-900">{formatMoney(vat, sym)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-base font-semibold border-t border-slate-200 pt-1.5">
                       <span className="text-slate-900">Total</span>
                       <span className="text-slate-900">{formatMoney(total, sym)}</span>
@@ -811,6 +820,7 @@ function QuoteGeneratorForm() {
                   currency: currency.code,
                   taxRate,
                   taxName,
+                  taxEnabled,
                   lines: lines.map(l => ({ description: l.description, qty: l.qty, unit: l.unit, rate: l.rate })),
                 } as FreeDocumentData}
                 userEmail={userEmail}

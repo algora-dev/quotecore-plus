@@ -86,6 +86,7 @@ function InvoiceGeneratorForm() {
   const [notes, setNotes] = useState('');
   const [footer, setFooter] = useState('');
   const [footerItalic, setFooterItalic] = useState(false);
+  const [taxEnabled, setTaxEnabled] = useState(true);
   const [taxRate, setTaxRate] = useState(20);
   const [taxName, setTaxName] = useState('Tax');
 
@@ -114,7 +115,7 @@ function InvoiceGeneratorForm() {
   }, []);
 
   const subtotal = lines.reduce((sum, l) => sum + (l.qty * l.rate), 0);
-  const vat = subtotal * (taxRate / 100);
+  const vat = taxEnabled ? subtotal * (taxRate / 100) : 0;
   const total = subtotal + vat;
   const sym = currency.symbol;
 
@@ -303,7 +304,7 @@ function InvoiceGeneratorForm() {
                       className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                     >
                       {MEASUREMENT_OPTIONS.map(o => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
+                        <option key={o.value} value={o.value}>{measurementSystem === 'metric' ? o.metric : o.imperial}</option>
                       ))}
                     </select>
                   </div>
@@ -319,28 +320,42 @@ function InvoiceGeneratorForm() {
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label className="text-xs font-medium text-slate-600">Tax rate (%)</label>
+                  <div className="sm:col-span-2 flex items-center gap-2 pt-1">
                     <input
-                      type="number"
-                      value={taxRate}
-                      onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                      min="0"
-                      max="100"
-                      step="0.5"
-                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                      type="checkbox"
+                      id="taxEnabled"
+                      checked={taxEnabled}
+                      onChange={(e) => setTaxEnabled(e.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300 text-[#FF6B35] focus:ring-[#FF6B35]"
                     />
+                    <label htmlFor="taxEnabled" className="text-xs font-medium text-slate-600">Include tax</label>
                   </div>
-                  <div>
-                    <label className="text-xs font-medium text-slate-600">Tax name</label>
-                    <input
-                      type="text"
-                      value={taxName}
-                      onChange={(e) => setTaxName(e.target.value)}
-                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-                      placeholder="Tax"
-                    />
-                  </div>
+                  {taxEnabled && (
+                    <>
+                      <div>
+                        <label className="text-xs font-medium text-slate-600">Tax rate (%)</label>
+                        <input
+                          type="number"
+                          value={taxRate}
+                          onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                          min="0"
+                          max="100"
+                          step="0.5"
+                          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-600">Tax name</label>
+                        <input
+                          type="text"
+                          value={taxName}
+                          onChange={(e) => setTaxName(e.target.value)}
+                          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                          placeholder="Tax"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -589,10 +604,12 @@ function InvoiceGeneratorForm() {
                       <span className="text-slate-500">Subtotal</span>
                       <span className="font-medium text-slate-900">{formatMoney(subtotal, sym)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">{taxName} ({taxRate}%)</span>
-                      <span className="font-medium text-slate-900">{formatMoney(vat, sym)}</span>
-                    </div>
+                    {taxEnabled && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-500">{taxName} ({taxRate}%)</span>
+                        <span className="font-medium text-slate-900">{formatMoney(vat, sym)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-base font-semibold border-t border-slate-200 pt-1.5">
                       <span className="text-slate-900">Total due</span>
                       <span className="text-slate-900">{formatMoney(total, sym)}</span>
@@ -719,10 +736,12 @@ function InvoiceGeneratorForm() {
                     <span className="text-slate-500">Subtotal</span>
                     <span className="font-medium text-slate-900">{formatMoney(subtotal, sym)}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">{taxName} ({taxRate}%)</span>
-                    <span className="font-medium text-slate-900">{formatMoney(vat, sym)}</span>
-                  </div>
+                  {taxEnabled && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">{taxName} ({taxRate}%)</span>
+                      <span className="font-medium text-slate-900">{formatMoney(vat, sym)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-base font-semibold border-t border-slate-200 pt-1.5">
                     <span className="text-slate-900">Total due</span>
                     <span className="text-slate-900">{formatMoney(total, sym)}</span>
@@ -828,7 +847,7 @@ function InvoiceGeneratorForm() {
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Does the invoice include VAT?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Tax is calculated at 20% by default, but you can change the rate and name in the document settings. You can adjust line item rates to work ex-VAT or inc-VAT as needed. If you&apos;re not VAT-registered, simply set the tax rate to zero.</p></div>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Tax is calculated at 20% by default. Toggle the "Include tax" checkbox in document settings to show or hide tax entirely. You can change the rate and name when enabled. Adjust line item rates to work ex-VAT or inc-VAT as needed.</p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Can I use different currencies?</summary>
