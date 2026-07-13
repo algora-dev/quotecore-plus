@@ -1,8 +1,36 @@
 # Smoke Test Checklist
 
-## Status: `main` at `cdfa0ca` = `development` at `cdfa0ca` (synced)
+## Status: `main` at `fe48254` = `development` at `fe48254` (synced)
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
+
+**Y. Customer quote template system fixes (new on main+dev, 2026-07-13, `aa2e629`)**
+- [ ] Create Template page shows TemplateCreator with name input (not a redirect)
+- [ ] Template name is required — Continue button disabled until filled
+- [ ] Duplicate name shows error and blocks Continue
+- [ ] Saved template appears in templates list with correct name
+- [ ] View button opens preview page (not 404)
+- [ ] Edit button opens edit page (not 404)
+- [ ] Edit page allows changing name, company details, logo, footer
+- [ ] Logo appears above company name on RIGHT side in preview
+- [ ] Template appears in quote editor template dropdown
+
+**Z. AI image upload + text prompt in invoice + order editors (new on main+dev, 2026-07-13, `db07bfe`)**
+- [ ] Invoice editor: Upload Image and Text Prompt buttons visible above Add Line Item
+- [ ] Invoice editor: Upload image → AI extracts lines → populate invoice with qty/unit/rate
+- [ ] Invoice editor: Text prompt → paste text → AI structures into lines
+- [ ] Invoice editor: AI auto-fills company name + footer if empty
+- [ ] Order editor (line-by-line): Upload Image and Text Prompt buttons visible above Add New Line
+- [ ] Order editor: Upload image → AI extracts lines → populate order
+- [ ] Order editor: Text prompt → paste text → AI structures into lines
+- [ ] Order editor: AI auto-fills footer if empty
+- [ ] Modal text says "Invoice" / "Order" (not "Quote")
+
+**AA. Edit Header/Footer cleanup (new on main+dev, 2026-07-13, `fe48254`)**
+- [ ] Edit Header and Edit Footer buttons REMOVED from quote editor toolbar
+- [ ] Edit Footer modal (from preview screen): textarea has square rounded corners (rounded-lg)
+- [ ] Edit Header modal: all inputs have square rounded corners (rounded-lg)
+- [ ] Buttons in modals still rounded-full (Cancel, Save, Save as Template)
 
 **V. AI image upload + text prompt in quote editor (new on main+dev, 2026-07-13, `7c0f4c8`)**
 - [ ] Customer Quote Editor shows "Upload Image" and "Text Prompt" buttons in toolbar
@@ -27,13 +55,12 @@
 - [ ] PO: lines transferred as material order lines
 
 **X. Edit Header/Footer buttons + template system (new on main+dev, 2026-07-13, `af475ec` + `cdfa0ca`)**
-- [ ] "Edit Header" button visible in toolbar (not just a tiny pencil icon)
-- [ ] "Edit Footer" button visible in toolbar
 - [ ] Template dropdown always visible (shows "No templates saved" when empty)
 - [ ] EditHeaderModal: "Save as Template" button works
 - [ ] Saved template appears in dropdown for future quotes
 - [ ] Loading a template populates header fields correctly
 - [ ] Modals: no click-outside-to-close, backdrop-blur visible
+- [ ] NOTE: Edit Header/Footer toolbar buttons have been REMOVED (see item AA)
 
 **U. Free tools hub + print/PDF + header layout (new on main+dev, 2026-07-12, `d2b430c`)**
 - [ ] `/free-tools` page shows 4 cards (Calculators, Quotes, Ordering, Invoicing)
