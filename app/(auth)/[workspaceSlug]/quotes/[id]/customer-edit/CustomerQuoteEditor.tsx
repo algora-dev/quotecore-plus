@@ -870,30 +870,6 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                   </option>
                 ))}
               </select>
-            {/* Edit Header button */}
-            <button
-              type="button"
-              onClick={() => setShowEditHeader(true)}
-              title="Edit company name, logo, and header details"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h18M3 12h18M3 17h18" />
-              </svg>
-              Edit Header
-            </button>
-            {/* Edit Footer button */}
-            <button
-              type="button"
-              onClick={() => setShowEditFooter(true)}
-              title="Edit footer text and notes"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-              </svg>
-              Edit Footer
-            </button>
             {/* AI import buttons — image upload + text prompt */}
             <button
               type="button"
