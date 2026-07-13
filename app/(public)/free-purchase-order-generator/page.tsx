@@ -8,6 +8,8 @@ import { PublicFooter } from '@/app/components/PublicFooter';
 import { ImageUpload, type ParsedUploadResult } from '../free-quote-generator/ImageUpload';
 import { PromptBox } from '../free-quote-generator/PromptBox';
 import { SaveToAppButton, type FreeDocumentData } from '../shared/SaveToAppButton';
+import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
+import { FreeToolsAuthButton } from '../_components/FreeToolsAuthButton';
 
 /**
  * Free Purchase Order Generator - no signup required.
@@ -204,18 +206,34 @@ function POGeneratorForm() {
   }
 
   return (
+    <FreeToolsAuthProvider>
     <main className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">
-          <Link href="/free-calculators" className="flex items-center gap-2">
+          <Link href="/free-tools" className="flex items-center gap-2">
             <img src="/logo.png" alt="QuoteCore+" className="h-8" />
           </Link>
-          <Link href="/signup" className="text-xs font-medium text-[#FF6B35] hover:text-orange-600 transition-colors">
-            Get full order tools →
-          </Link>
+          <div className="flex items-center gap-3">
+            <FreeToolsAuthButton compact />
+            <Link href="/signup" className="text-xs font-medium text-[#FF6B35] hover:text-orange-600 transition-colors">
+              Get full order tools →
+            </Link>
+          </div>
         </div>
       </header>
+
+      {/* Breadcrumb */}
+      <div className="border-b border-slate-100 bg-white">
+        <div className="mx-auto max-w-4xl px-4 py-2">
+          <Link href="/free-tools" prefetch={false} className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-[#FF6B35] transition-colors">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Free Tools
+          </Link>
+        </div>
+      </div>
 
       <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Hero */}
@@ -881,6 +899,7 @@ function POGeneratorForm() {
         }
       `}</style>
     </main>
+    </FreeToolsAuthProvider>
   );
 }
 

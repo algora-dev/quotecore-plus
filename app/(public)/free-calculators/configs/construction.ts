@@ -16,6 +16,7 @@ export const constructionConfig: TradeConfig = {
   tabs: [
     { id: 'area-materials', label: 'Area & Materials', kind: 'area' },
     { id: 'timber-lengths', label: 'Timber & Stud Lengths', kind: 'members' },
+    { id: 'battens', label: 'Battens', kind: 'batten' },
     { id: 'smart-component', label: 'Draft Smart Component™', kind: 'smart' },
     { id: 'angle-finder', label: 'Angle Finder', kind: 'angle' },
   ],
@@ -50,6 +51,21 @@ export const constructionConfig: TradeConfig = {
     diagramCaption: 'Angled member at {deg}° - run is the horizontal distance covered',
     diagramTopLabel: 'Top',
     diagramBaseLabel: 'Base',
+  },
+
+  batten: {
+    heading: 'Batten Calculator',
+    subtitle: 'Calculate lineal metres of battens from wall or floor area and batten spacing',
+    gaugePresets: [
+      { label: 'Plasterboard (600mm centres)', mm: 600 },
+      { label: 'Cladding (600mm centres)', mm: 600 },
+      { label: 'Tile battens (150mm gauge)', mm: 150 },
+      { label: 'Tile battens (100mm gauge)', mm: 100 },
+      { label: 'Render mesh (200mm)', mm: 200 },
+    ],
+    defaultGauge: '600',
+    defaultWastePercent: '10',
+    useForPricingLabel: 'Use this length for pricing',
   },
 
   smart: {
@@ -98,6 +114,10 @@ export const constructionConfig: TradeConfig = {
       {
         title: 'Working out stud wall materials',
         body: 'For a standard stud wall at 400mm centres: divide the wall length in mm by 400 and add one for the end stud. Add top and bottom plates (2 × wall length), noggins at mid-height (roughly one wall length), and 10% waste. A 4.8m wall needs about 13 studs plus 14.4m of plate and noggin timber.',
+      },
+      {
+        title: 'Calculating batten quantities for drylining and cladding',
+        body: 'Battens run at fixed centres across the wall or floor. Total lineal metres = surface area ÷ batten gauge (in metres). A 20 m² wall with 600mm batten centres needs 20 ÷ 0.6 = 33.3m of battens, plus 10% waste = 36.6m. Always round up to the next standard length when ordering.',
       },
       {
         title: 'Why sloped surfaces need a slope factor',

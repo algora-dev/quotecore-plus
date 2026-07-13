@@ -3,6 +3,8 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { PublicFooter } from '@/app/components/PublicFooter';
+import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
+import { FreeToolsAuthButton } from '../_components/FreeToolsAuthButton';
 
 interface CalcEntry {
   slug: string;
@@ -146,6 +148,7 @@ export default function FreeToolsPage() {
       : CALCULATORS;
 
   return (
+    <FreeToolsAuthProvider>
     <main className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white">
@@ -153,9 +156,12 @@ export default function FreeToolsPage() {
           <Link href="/free-calculators" className="flex items-center gap-2">
             <img src="/logo.png" alt="QuoteCore+" className="h-8" />
           </Link>
-          <Link href="/signup" className="text-xs font-medium text-[#FF6B35] hover:text-orange-600 transition-colors">
-            Get full quoting tools
-          </Link>
+          <div className="flex items-center gap-3">
+            <FreeToolsAuthButton />
+            <Link href="/signup" className="text-xs font-medium text-[#FF6B35] hover:text-orange-600 transition-colors">
+              Get full quoting tools
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -281,5 +287,6 @@ export default function FreeToolsPage() {
       </div>
       <PublicFooter />
     </main>
+    </FreeToolsAuthProvider>
   );
 }
