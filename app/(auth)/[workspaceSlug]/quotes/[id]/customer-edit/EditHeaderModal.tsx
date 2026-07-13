@@ -15,14 +15,29 @@ interface Props {
     companyLogoUrl: string;
   }) => void;
   onCancel: () => void;
+  onSaveAsTemplate?: (data: {
+    companyName: string;
+    companyAddress: string;
+    companyPhone: string;
+    companyEmail: string;
+    companyLogoUrl: string;
+  }) => void;
 }
 
-export function EditHeaderModal({ companyName, companyAddress, companyPhone, companyEmail, companyLogoUrl, onSave, onCancel }: Props) {
+export function EditHeaderModal({ companyName, companyAddress, companyPhone, companyEmail, companyLogoUrl, onSave, onCancel, onSaveAsTemplate }: Props) {
   const [name, setName] = useState(companyName);
   const [address, setAddress] = useState(companyAddress);
   const [phone, setPhone] = useState(companyPhone);
   const [email, setEmail] = useState(companyEmail);
   const [logoUrl, setLogoUrl] = useState(companyLogoUrl);
+
+  const currentData = {
+    companyName: name,
+    companyAddress: address,
+    companyPhone: phone,
+    companyEmail: email,
+    companyLogoUrl: logoUrl,
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
@@ -87,17 +102,23 @@ export function EditHeaderModal({ companyName, companyAddress, companyPhone, com
         </div>
 
         <div className="flex gap-3 justify-end mt-6">
+          {onSaveAsTemplate && (
+            <button
+              onClick={() => onSaveAsTemplate(currentData)}
+              className="px-4 py-2 text-sm font-medium border border-slate-300 text-slate-700 rounded-full hover:bg-slate-50"
+            >
+              Save as Template
+            </button>
+          )}
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50"
+            className="px-4 py-2 text-sm font-medium border border-slate-300 text-slate-700 rounded-full hover:bg-slate-50"
           >
             Cancel
           </button>
           <button
-            onClick={() => {
-              onSave({ companyName: name, companyAddress: address, companyPhone: phone, companyEmail: email, companyLogoUrl: logoUrl });
-            }}
-            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-80 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            onClick={() => onSave(currentData)}
+            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Save
           </button>

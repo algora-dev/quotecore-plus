@@ -852,8 +852,8 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             </h1>
           </div>
           <div className="flex items-center gap-4">
-            {templates.length > 0 && (
-              <select
+            {/* Header template dropdown - always visible */}
+            <select
                 onChange={(e) => {
                   if (e.target.value) {
                     applyTemplate(e.target.value);
@@ -861,16 +861,15 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                   }
                 }}
                 data-copilot="cl-template-dropdown"
-                className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                className="px-3 py-1.5 text-xs border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 bg-white"
               >
-                <option value="">Load Template...</option>
+                <option value="">{templates.length > 0 ? 'Load Template...' : 'No templates saved'}</option>
                 {templates.map((template) => (
                   <option key={template.id} value={template.id}>
                     {template.name}
                   </option>
                 ))}
               </select>
-            )}
             {/* Edit Header button */}
             <button
               type="button"
@@ -1557,6 +1556,24 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             setShowEditHeader(false);
           }}
           onCancel={() => setShowEditHeader(false)}
+          onSaveAsTemplate={async (data) => {
+            const name = prompt('Template name:', `${data.companyName || 'My Company'} - Branding Template`);
+            if (!name) return;
+            try {
+              await createCustomerQuoteTemplate({
+                name,
+                companyName: data.companyName,
+                companyAddress: data.companyAddress,
+                companyPhone: data.companyPhone,
+                companyEmail: data.companyEmail,
+                footerText,
+                companyLogoUrl: data.companyLogoUrl || null,
+              });
+              alert(`Template "${name}" saved successfully!`);
+            } catch (error) {
+              alert('Failed to save template: ' + (error as Error).message);
+            }
+          }}
         />
       )}
 
