@@ -344,7 +344,7 @@ export function useSendDocument(props: SendDocumentProps) {
         const result = await sendDocumentMessage({
           entityKind: props.entityKind,
           entityId: props.entityId,
-          templateId: selectedTemplateId || null,
+          templateId: selectedTemplateId && selectedTemplateId !== '__default__' ? selectedTemplateId : null,
           subject: emailSubject,
           body: emailBody,
           recipientEmail: recipientEmail.trim(),
