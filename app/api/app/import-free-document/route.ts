@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
       const result = await createOrderFromDraft(admin, companyId, documentData);
       return NextResponse.json({
         success: true,
-        redirectUrl: `/${slug}/material-orders/${result.orderId}`,
+        redirectUrl: `/${slug}/material-orders/${result.orderId}/preview`,
       });
     } else if (documentType === 'invoice') {
       const result = await createInvoiceFromDraft(admin, companyId, documentData);
@@ -230,21 +230,26 @@ async function createOrderFromDraft(
   // Check order slot
   await requireOrderSlot(companyId);
 
-  // Build line_by_line_data structure
+  // Build line_by_line_data structure matching LineByLineItem schema
+  // (see app/(auth)/[workspaceSlug]/material-orders/lineByLine.ts)
   const lineByLineData = {
     lines: data.lines.map((l, i) => ({
       id: `line-${i}`,
-      componentName: l.description,
-      quantity: l.qty,
-      unit: l.unit || 'pcs',
+      text: l.description,
+      quantityText: l.qty !== 1 || l.unit ? `${l.qty}${l.unit ? ' ' + l.unit : ''}` : null,
+      amount: l.qty * l.rate,
       unitPrice: l.rate,
-      lineTotal: l.qty * l.rate,
-      showComponentName: true,
-      showMeasurements: false,
-      notes: '',
+      quantity: l.qty,
+      showPrice: true,
+      isVisible: true,
+      includeInTotal: true,
+      sortOrder: i,
     })),
     footer: data.footer || '',
-    taxes: data.taxRate ? [{ name: data.taxName || 'Tax', rate: data.taxRate }] : [],
+    taxes: data.taxRate ? [{ id: 'tax-1', sourceTaxId: null, name: data.taxName || 'Tax', ratePercent: data.taxRate }] : [],
+    hideLinePrices: false,
+    hideTotals: false,
+    showQuantityColumn: true,
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
