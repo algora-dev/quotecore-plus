@@ -272,7 +272,9 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
           <div className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">Get QuoteCore+</h2>
+              <h2 className="text-lg font-semibold text-slate-900">
+                {authUser ? 'Complete your sign up' : 'Get QuoteCore+'}
+              </h2>
               <button onClick={closeModal} className="p-1 text-slate-400 hover:text-slate-600 transition">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -280,16 +282,26 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
               </button>
             </div>
             <p className="text-sm text-slate-600">
-              Your email <strong>{modal.email}</strong> doesn't have a QuoteCore+ account yet.
-              Sign up to save this {documentType} to your account, where you can edit it, send it
-              to customers, and manage your business.
+              {authUser ? (
+                <>
+                  You&apos;re signed in as <strong>{modal.email}</strong> but haven&apos;t set up
+                  your QuoteCore+ workspace yet. Complete your sign up to save this {documentType}
+                  to your account, where you can edit it, send it to customers, and manage your business.
+                </>
+              ) : (
+                <>
+                  Your email <strong>{modal.email}</strong> doesn&apos;t have a QuoteCore+ account yet.
+                  Sign up to save this {documentType} to your account, where you can edit it, send it
+                  to customers, and manage your business.
+                </>
+              )}
             </p>
             <div className="flex flex-col gap-2">
               <button
                 type="button"
                 onClick={() => {
                   // Save draft to localStorage BEFORE redirecting so it
-                  // survives the signup/login → onboarding → dashboard flow.
+                  // survives the signup/onboarding → dashboard flow.
                   const draftId = `doc-draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
                   const draftPayload = {
                     documentType,
@@ -303,20 +315,23 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
                     // the URL param is lost during redirect chains.
                     document.cookie = `qcp_doc_draft=${draftId}; path=/; max-age=${60*60*24*7}; SameSite=Lax`;
                   } catch {}
-                  // If the user is already authenticated (T2 — logged into
-                  // free tools via Google/email), their Supabase auth user
-                  // already exists. Send them to /login (not /signup) so they
-                  // don't hit the "email already exists" error.
-                  // T1 (anonymous) users go to /signup.
                   if (authUser) {
-                    window.location.href = `/login?redirect=/api/app/import-free-document?draft=${draftId}`;
+                    // T2: User is authenticated (free tools session) but has
+                    // no company. Send them directly to the import endpoint —
+                    // it will detect they have no company and redirect to
+                    // /onboarding. After onboarding, they land on the
+                    // dashboard where DocDraftRestorer picks up the draft via
+                    // the cookie. This avoids the login page entirely (they
+                    // may not have a password — magic-link signup).
+                    window.location.href = `/api/app/import-free-document?draft=${draftId}`;
                   } else {
+                    // T1: Anonymous user — send to signup.
                     window.location.href = `/signup?ref=free-${documentType}-generator&draft=${draftId}`;
                   }
                 }}
                 className="w-full text-center px-5 py-2.5 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition-all"
               >
-                {authUser ? 'Continue to login' : 'Start free trial'}
+                {authUser ? 'Complete sign up' : 'Start free trial'}
               </button>
               <button
                 onClick={closeModal}

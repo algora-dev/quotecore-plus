@@ -182,8 +182,10 @@ function LoginForm() {
               {error && <p className="text-red-600 text-sm text-center">{error}</p>}
 
               {/* Passwordless login — for accounts created via free tools
-                  email-link (no password yet) or anyone who prefers a link. */}
-              <MagicLinkOption />
+                  email-link (no password yet) or anyone who prefers a link.
+                  More prominent when user is coming from a redirect (free tools
+                  Save to App flow) since they may not have a password. */}
+              <MagicLinkOption prominent={!!redirectParam} />
             </div>
           </form>
         </div>
@@ -205,7 +207,7 @@ function LoginForm() {
  * form. Reads the email from the form above (same page) via the DOM to
  * avoid duplicating state; falls back to prompting if empty.
  */
-function MagicLinkOption() {
+function MagicLinkOption({ prominent = false }: { prominent?: boolean }) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
@@ -232,6 +234,38 @@ function MagicLinkOption() {
       setStatus('error');
       setMessage('Could not send the link. Please try again.');
     }
+  }
+
+  // When prominent (user coming from free tools redirect), show as a
+  // full-width bordered box instead of a small text link so users who
+  // signed up via magic link actually see the option.
+  if (prominent) {
+    return (
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-center">
+        {status === 'sent' ? (
+          <p className="text-sm text-blue-800 font-medium">
+            ✓ Check your inbox for a login link.
+          </p>
+        ) : (
+          <>
+            <p className="text-xs text-blue-700 mb-2">
+              Signed up without a password? Get a login link instead.
+            </p>
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={status === 'sending'}
+              className="text-sm font-semibold text-blue-900 hover:text-blue-700 underline underline-offset-2 transition-colors disabled:opacity-50"
+            >
+              {status === 'sending' ? 'Sending link…' : 'Email me a login link'}
+            </button>
+          </>
+        )}
+        {status === 'error' && (
+          <p className="mt-1 text-xs text-red-600">{message}</p>
+        )}
+      </div>
+    );
   }
 
   return (
