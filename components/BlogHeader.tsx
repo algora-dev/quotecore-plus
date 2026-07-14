@@ -23,8 +23,8 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
   const contactButton =
     `${headerButton} pill-shimmer border border-zinc-300 bg-white font-medium text-zinc-900 shadow-[0_6px_24px_rgba(255,255,255,0.18)_inset,0_10px_30px_rgba(0,0,0,0.04)] backdrop-blur-3xl hover:border-[#FF6B35]/40`;
 
-  const backButton =
-    `${headerButton} pill-shimmer border border-zinc-300 bg-white font-medium text-zinc-900 shadow-[0_6px_24px_rgba(255,255,255,0.18)_inset,0_10px_30px_rgba(0,0,0,0.04)] backdrop-blur-3xl hover:border-[#FF6B35]/40`;
+  const freeToolsButton =
+    `${headerButton} bg-black font-semibold text-white shadow-[0_14px_34px_rgba(0,0,0,0.18)] hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.4)]`;
 
   const trialButton =
     `${headerButton} bg-[#FF6B35] font-semibold text-white shadow-[0_14px_34px_rgba(255,107,53,0.22)] hover:bg-[#e85d2b]`;
@@ -42,16 +42,18 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
         <div className="flex items-center gap-3">
           <div className="hidden items-center gap-3 md:flex">
             {backLabel && (
-              <a href={backHref} className={backButton}>
+              <a href={backHref} className={contactButton}>
                 {backLabel}
               </a>
             )}
             <a
-              href="/contact"
-              className={contactButton}
-              onClick={() => trackEvent("contact_click", { location: "nav" })}
+              href="/free-tools"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={freeToolsButton}
+              onClick={() => trackEvent("free_tools_click", { location: "nav" })}
             >
-              Contact us
+              Free Tools
             </a>
             <a
               href="/free-trial"
