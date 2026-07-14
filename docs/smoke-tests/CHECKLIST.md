@@ -1,8 +1,17 @@
 # Smoke Test Checklist
 
-## Status: `main` at `fe48254` = `development` at `fe48254` (synced)
+## Status: `main` at `13776b8` = `development` at `13776b8` (synced, 2026-07-14)
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
+
+**AC. Save to App flow — watermark + draft persistence + import fixes (dev `13776b8` → main, 2026-07-14)**
+- [ ] Free quote generator: T2/T3 logged-in users see NO watermark (anonymous T1 still sees it)
+- [ ] Free invoice generator: same watermark behaviour
+- [ ] Free PO generator: same watermark behaviour
+- [ ] Save quote to App: T2 user (no app account) → draft saved → redirected to login → onboarding → dashboard → quote restored
+- [ ] Save invoice to App: invoice created with correct columns + line items + taxes
+- [ ] Save order to App: order created with line_by_line_data in correct format → redirects to /material-orders/[orderId]/preview → line items visible
+- [ ] Save quote to App: T3 user (has app account) → draft saved → redirects to app → quote created in editor
 
 **AB. Unified auth — free tools + app share one login (dev `991f9a3`, 2026-07-14)**
 - [ ] Free tools: Google sign-in works and returns to the free tool page (now via MAIN Supabase project)
