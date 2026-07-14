@@ -11,6 +11,7 @@ import { SaveToAppButton, type FreeDocumentData } from '../shared/SaveToAppButto
 import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
 import { FreeToolsAuthButton } from '../_components/FreeToolsAuthButton';
 import { useFreeToolsEmail } from '../_components/useFreeToolsEmail';
+import { FreeToolsSignupBanner } from '../_components/FreeToolsSignupBanner';
 
 /**
  * Free Quote Generator - no signup required.
@@ -319,39 +320,8 @@ function QuoteGeneratorForm() {
           </p>
         </section>
 
-        {/* Auth status / signup prompt */}
         {/* Signup notification banner — always shows content, never blank */}
-        <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 mb-6 print:hidden">
-          {!loadingEmail && isAuthed ? (
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-700">✓ {userEmail}</p>
-                <p className="mt-1 text-xs text-slate-500">{limitsLine}</p>
-              </div>
-              <button onClick={() => clearLocalEmail()} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition">Log out</button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-sm text-slate-700">
-                Sign up with 1 click for higher daily limits and watermark removal for all tools
-              </p>
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  onClick={() => openAuthModal('signup')}
-                  className="rounded-full bg-[#FF6B35] px-4 py-2 text-xs font-semibold text-white hover:bg-[#ff5722] transition whitespace-nowrap"
-                >
-                  Sign up free
-                </button>
-                <button
-                  onClick={() => openAuthModal('signin')}
-                  className="text-xs font-medium text-slate-500 hover:text-slate-900 transition whitespace-nowrap"
-                >
-                  Log in
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        <FreeToolsSignupBanner />
 
         {!generated ? (
           <>
