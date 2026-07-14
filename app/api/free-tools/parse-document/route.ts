@@ -5,7 +5,7 @@ import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || 'placeholder' });
 
 // ── Types ──────────────────────────────────────────────
 
