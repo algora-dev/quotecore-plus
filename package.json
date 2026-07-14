@@ -9,11 +9,16 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@mdx-js/loader": "^3.1.1",
     "@mdx-js/mdx": "^3.1.1",
+    "@mdx-js/react": "^3.1.1",
+    "@next/mdx": "^16.2.10",
     "@supabase/ssr": "0.9.0",
     "@supabase/supabase-js": "2.100.1",
+    "@tailwindcss/typography": "^0.5.20",
     "@types/jszip": "^3.4.0",
     "@types/papaparse": "^5.5.2",
+    "@vercel/analytics": "^2.0.1",
     "bcryptjs": "^3.0.3",
     "fabric": "^7.3.1",
     "gray-matter": "^4.0.3",

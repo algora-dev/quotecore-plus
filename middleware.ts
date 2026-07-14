@@ -12,8 +12,17 @@ const PUBLIC_PATHS = [
   '/onboarding',   // New user onboarding
   '/privacy',      // Privacy Policy (legally required to be public)
   '/cookies',      // Cookie Policy (legally required to be public)
+  '/cookie-policy', // Cookie policy (marketing variant)
   '/terms',        // Terms of Service (legally required to be public)
   '/docs',         // Public help library
+  '/about',        // Marketing pages
+  '/services',
+  '/contact',
+  '/blog',
+  '/coffee-terms',
+  '/free-trial',
+  '/construction-quoting-software',
+  '/roofing-quoting-software',
   '/free-construction-calculator', // Free public calculator (no auth)
   '/free-roofing-calculator',     // Free roofing calculator (no auth)
   '/free-quote-generator',        // Free AI quote generator (future)
@@ -81,7 +90,9 @@ export async function middleware(request: NextRequest) {
   // everything else redirects to app.quote-core.com.
   const isPublicDomain =
     hostname === 'quote-core.com' ||
-    hostname === 'www.quote-core.com';
+    hostname === 'www.quote-core.com' ||
+    hostname === 'quote-core.co.nz' ||
+    hostname === 'www.quote-core.co.nz';
 
   if (isPublicDomain) {
     // Allow static assets, API routes, and public paths on the public domain

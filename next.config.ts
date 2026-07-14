@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import createMDX from "@next/mdx";
 
 /**
  * Supabase host for the project. Allowed in img-src/connect-src so authed
@@ -42,6 +43,7 @@ const DOCS_CSP = [
 ].join('; ');
 
 const nextConfig: NextConfig = {
+  pageExtensions: ["ts", "tsx", "md", "mdx"],
   // No serverExternalPackages needed for fabric.js
   images: {
     remotePatterns: [
@@ -96,4 +98,9 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Wrap with MDX support for blog .mdx files
+const withMDX = createMDX({
+  extension: /\.mdx?$/,
+});
+
+export default withMDX(nextConfig);

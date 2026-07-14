@@ -1,7 +1,24 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { headers } from 'next/headers';
+import MarketingHome from './(marketing)/home/page';
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  const headersList = await headers();
+  const host = headersList.get('host') || '';
+  const isMarketingDomain =
+    host === 'quote-core.com' ||
+    host === 'www.quote-core.com' ||
+    host === 'www.quote-core.co.nz' ||
+    host === 'quote-core.co.nz';
+
+  if (isMarketingDomain) {
+    return <MarketingHome />;
+  }
+
+  // App landing page (app.quote-core.com)
   return (
     <div className="flex flex-col flex-1 items-center justify-center min-h-screen bg-slate-50">
       <main className="flex flex-col items-center gap-8 py-20 px-6 text-center">
