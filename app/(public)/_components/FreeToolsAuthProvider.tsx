@@ -20,6 +20,7 @@ interface FreeToolsAuthState {
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
   signUpWithEmail: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation: boolean }>;
+  signInWithMagicLink: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   // Modal control — any component can open the auth modal
   isAuthModalOpen: boolean;
@@ -35,6 +36,7 @@ const FreeToolsAuthContext = createContext<FreeToolsAuthState>({
   signInWithGoogle: async () => {},
   signInWithEmail: async () => ({ error: null }),
   signUpWithEmail: async () => ({ error: null, needsConfirmation: false }),
+  signInWithMagicLink: async () => ({ error: null }),
   signOut: async () => {},
   isAuthModalOpen: false,
   openAuthModal: () => {},
@@ -114,6 +116,22 @@ export function FreeToolsAuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  /**
+   * Passwordless email auth (magic link). Works for BOTH signup and login:
+   * shouldCreateUser=true means a brand-new email gets an account created
+   * automatically. The link in the email logs them straight in and returns
+   * them to the page they started on. They can set a password later during
+   * app onboarding (set-password gate) if they ever enter the full app.
+   */
+  const signInWithMagicLink = async (email: string) => {
+    const redirectTo = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : undefined;
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: redirectTo, shouldCreateUser: true },
+    });
+    return { error: error?.message ?? null };
+  };
+
   const signInWithEmail = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error) setIsAuthModalOpen(false);
@@ -154,6 +172,7 @@ export function FreeToolsAuthProvider({ children }: { children: ReactNode }) {
         signInWithGoogle,
         signInWithEmail,
         signUpWithEmail,
+        signInWithMagicLink,
         signOut,
         isAuthModalOpen,
         openAuthModal,
@@ -169,6 +188,7 @@ export function FreeToolsAuthProvider({ children }: { children: ReactNode }) {
           signInWithGoogle={signInWithGoogle}
           signInWithEmail={signInWithEmail}
           signUpWithEmail={signUpWithEmail}
+          signInWithMagicLink={signInWithMagicLink}
         />
       )}
     </FreeToolsAuthContext.Provider>
@@ -183,6 +203,7 @@ function FreeToolsAuthModal({
   signInWithGoogle,
   signInWithEmail,
   signUpWithEmail,
+  signInWithMagicLink,
 }: {
   mode: 'signup' | 'signin';
   onClose: () => void;
@@ -190,11 +211,13 @@ function FreeToolsAuthModal({
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
   signUpWithEmail: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation: boolean }>;
+  signInWithMagicLink: (email: string) => Promise<{ error: string | null }>;
 }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [busy, setBusy] = useState(false);
 
   return (
     <div
@@ -241,23 +264,43 @@ function FreeToolsAuthModal({
           <div className="h-px flex-1 bg-slate-200" />
         </div>
 
-        {/* Email form */}
+        {/* Email form — password optional. Blank password = magic link
+            (passwordless): we email a login link that both creates the
+            account (if new) and signs them in. With a password we use the
+            classic signup/login flow. */}
         <form
           onSubmit={async (e) => {
             e.preventDefault();
+            if (busy) return;
             setError('');
             setSuccess('');
-            if (mode === 'signup') {
-              const { error, needsConfirmation } = await signUpWithEmail(email, password);
-              if (error) setError(error);
-              else if (needsConfirmation) {
-                setSuccess('Check your email - click the confirmation link to activate your account.');
-                setEmail('');
-                setPassword('');
+            setBusy(true);
+            try {
+              if (!password) {
+                const { error } = await signInWithMagicLink(email);
+                if (error) setError(error);
+                else {
+                  setSuccess(
+                    mode === 'signup'
+                      ? 'Check your email — click the link to activate your account and log in. No password needed.'
+                      : 'Check your email — click the link to log in.'
+                  );
+                  setEmail('');
+                }
+              } else if (mode === 'signup') {
+                const { error, needsConfirmation } = await signUpWithEmail(email, password);
+                if (error) setError(error);
+                else if (needsConfirmation) {
+                  setSuccess('Check your email - click the confirmation link to activate your account.');
+                  setEmail('');
+                  setPassword('');
+                }
+              } else {
+                const { error } = await signInWithEmail(email, password);
+                if (error) setError(error);
               }
-            } else {
-              const { error } = await signInWithEmail(email, password);
-              if (error) setError(error);
+            } finally {
+              setBusy(false);
             }
           }}
           className="space-y-3"
@@ -274,18 +317,21 @@ function FreeToolsAuthModal({
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            required
+            placeholder="Password (optional — leave blank for an email link)"
             minLength={6}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#FF6B35] focus:outline-none"
           />
+          <p className="text-[11px] text-slate-400">
+            No password? We'll email you a secure login link instead.
+          </p>
           {error && <p className="text-xs text-red-600">{error}</p>}
           {success && <p className="text-xs text-green-600">{success}</p>}
           <button
             type="submit"
-            className="w-full rounded-full bg-[#FF6B35] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#ff5722] transition-colors"
+            disabled={busy}
+            className="w-full rounded-full bg-[#FF6B35] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#ff5722] transition-colors disabled:opacity-60"
           >
-            {mode === 'signup' ? 'Create account' : 'Log in'}
+            {busy ? 'Working…' : mode === 'signup' ? 'Create account' : 'Log in'}
           </button>
         </form>
 

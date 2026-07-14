@@ -9,9 +9,11 @@ import { CURRENCY_GROUPS } from '@/app/lib/currency/currencies';
 interface Props {
   defaultName: string;
   defaultEmail: string;
+  /** Show the create-password step for passwordless (magic-link) signups */
+  needsPassword?: boolean;
 }
 
-export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
+export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword = false }: Props) {
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -22,6 +24,9 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
   // Step 1 fields
   const [companyName, setCompanyName] = useState('');
   const [fullName, setFullName] = useState(defaultName);
+  // Set-password gate (only rendered when needsPassword)
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   // Step 2 fields
   const [currency, setCurrency] = useState('NZD');
@@ -33,6 +38,16 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
     if (!companyName.trim() || !fullName.trim()) {
       setError('Company name and your name are required');
       return;
+    }
+    if (needsPassword) {
+      if (newPassword.length < 8) {
+        setError('Password must be at least 8 characters');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setError('Passwords do not match');
+        return;
+      }
     }
     setError(null);
     setStep(2);
@@ -50,6 +65,9 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
     formData.set('measurement', measurement);
     formData.set('defaultTrade', defaultTrade);
     formData.set('skipRedirect', 'true');
+    if (needsPassword && newPassword) {
+      formData.set('newPassword', newPassword);
+    }
 
     startTransition(async () => {
       try {
@@ -124,6 +142,37 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail }: Props) {
               placeholder="John Smith"
             />
           </label>
+
+          {needsPassword && (
+            <div className="grid gap-4 rounded-lg border border-orange-200 bg-orange-50/50 p-4">
+              <p className="text-xs text-slate-600">
+                You signed up with an email link — create a password now so you
+                can log in to the app with email + password from here on.
+              </p>
+              <label className="block">
+                <span className="block text-sm font-medium text-slate-700 mb-1">Create a password</span>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  placeholder="At least 8 characters"
+                  minLength={8}
+                />
+              </label>
+              <label className="block">
+                <span className="block text-sm font-medium text-slate-700 mb-1">Confirm password</span>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  placeholder="Repeat password"
+                  minLength={8}
+                />
+              </label>
+            </div>
+          )}
 
           {error && <p className="text-red-600 text-sm text-center">{error}</p>}
 

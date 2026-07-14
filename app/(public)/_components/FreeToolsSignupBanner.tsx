@@ -12,7 +12,7 @@ import { useFreeToolsEmail } from './useFreeToolsEmail';
  * - Loading: shows the signup CTA (never blank)
  */
 export function FreeToolsSignupBanner() {
-  const { email, isAuthed, clearLocalEmail, loadingEmail, openAuthModal, limitsLine } = useFreeToolsEmail();
+  const { email, isAuthed, clearLocalEmail, loadingEmail, openAuthModal, limitsLine, signOut } = useFreeToolsEmail();
 
   if (!loadingEmail && isAuthed) {
     return (
@@ -22,7 +22,10 @@ export function FreeToolsSignupBanner() {
             <p className="text-sm text-slate-700">✓ {email}</p>
             <p className="mt-1 text-xs text-slate-500">{limitsLine}</p>
           </div>
-          <button onClick={clearLocalEmail} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition">
+          <button
+            onClick={() => { void signOut(); clearLocalEmail(); }}
+            className="text-xs font-medium text-slate-400 hover:text-slate-600 transition"
+          >
             Log out
           </button>
         </div>

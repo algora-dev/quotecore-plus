@@ -4586,6 +4586,7 @@ export type Database = {
         Args: { p_company_id: string; p_delta_bytes: number }
         Returns: undefined
       }
+      auth_user_has_password: { Args: { uid: string }; Returns: boolean }
       check_storage_quota: {
         Args: { p_company_id: string; p_file_size: number }
         Returns: boolean

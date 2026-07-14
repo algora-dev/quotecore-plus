@@ -4,7 +4,7 @@
 import { useState, useTransition, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { loginAction, resendConfirmationAction, type LoginResult } from './actions';
+import { loginAction, resendConfirmationAction, sendLoginLinkAction, type LoginResult } from './actions';
 import { GoogleSignInButton } from '@/app/components/auth/GoogleSignInButton';
 import { TroubleSigningInPanel } from './TroubleSigningInPanel';
 import { PublicFooter } from '@/app/components/PublicFooter';
@@ -176,6 +176,10 @@ function LoginForm() {
               </button>
 
               {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+
+              {/* Passwordless login — for accounts created via free tools
+                  email-link (no password yet) or anyone who prefers a link. */}
+              <MagicLinkOption />
             </div>
           </form>
         </div>
@@ -189,5 +193,56 @@ function LoginForm() {
       </div>
       <PublicFooter />
     </main>
+  );
+}
+
+/**
+ * "Email me a login link" — inline passwordless option under the login
+ * form. Reads the email from the form above (same page) via the DOM to
+ * avoid duplicating state; falls back to prompting if empty.
+ */
+function MagicLinkOption() {
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [message, setMessage] = useState('');
+
+  async function handleSend() {
+    const emailInput = document.querySelector<HTMLInputElement>('input[name="email"]');
+    const email = emailInput?.value?.trim() ?? '';
+    if (!email) {
+      setStatus('error');
+      setMessage('Enter your email above first, then click this again.');
+      return;
+    }
+    setStatus('sending');
+    setMessage('');
+    try {
+      const result = await sendLoginLinkAction(email);
+      if (result.ok) {
+        setStatus('sent');
+        setMessage('If that email has an account, a login link is on its way. Check your inbox.');
+      } else {
+        setStatus('error');
+        setMessage(result.error || 'Could not send the link. Please try again.');
+      }
+    } catch {
+      setStatus('error');
+      setMessage('Could not send the link. Please try again.');
+    }
+  }
+
+  return (
+    <div className="text-center">
+      <button
+        type="button"
+        onClick={handleSend}
+        disabled={status === 'sending'}
+        className="text-sm text-slate-500 hover:text-slate-900 underline underline-offset-2 transition-colors disabled:opacity-50"
+      >
+        {status === 'sending' ? 'Sending link…' : 'No password? Email me a login link'}
+      </button>
+      {message && (
+        <p className={`mt-2 text-xs ${status === 'sent' ? 'text-emerald-600' : 'text-red-600'}`}>{message}</p>
+      )}
+    </div>
   );
 }

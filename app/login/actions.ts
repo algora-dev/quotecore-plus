@@ -101,6 +101,51 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
 }
 
 /**
+ * Send a magic login link (passwordless). Used by users who created their
+ * account via free tools without a password — and anyone who prefers a
+ * link. shouldCreateUser=false: login page never creates accounts.
+ */
+export async function sendLoginLinkAction(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) {
+    return { ok: false, error: 'Email is required.' };
+  }
+
+  // Rate limit like resend-confirmation: failClosed to prevent email-bombing.
+  const h = await headers();
+  const ip = getClientIP(h);
+  const ipAllowed = await checkRateLimit(`magiclink-ip:${ip}`, 5, 60 * 60 * 1000, { failClosed: true });
+  if (!ipAllowed) {
+    return { ok: false, error: 'Too many requests. Please try again later.' };
+  }
+  const emailAllowed = await checkRateLimit(`magiclink-email:${normalizedEmail}`, 3, 60 * 60 * 1000, { failClosed: true });
+  if (!emailAllowed) {
+    return { ok: false, error: 'Too many login links sent. Please try again in an hour.' };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.signInWithOtp({
+    email: normalizedEmail,
+    options: {
+      shouldCreateUser: false,
+      // The link lands on /auth/callback which routes to workspace or
+      // onboarding depending on whether they have a company yet.
+    },
+  });
+
+  if (error) {
+    // Don't leak whether the email exists — generic success message either way
+    // for "Signups not allowed for otp" (= unknown email with shouldCreateUser false).
+    const msg = error.message.toLowerCase();
+    if (msg.includes('signups not allowed')) {
+      return { ok: true };
+    }
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true };
+}
+/**
  * Resend the email confirmation link for a user who hasn't confirmed yet.
  * Uses Supabase's resend endpoint, which sends a fresh confirmation email
  * with a secure link to /auth/callback.

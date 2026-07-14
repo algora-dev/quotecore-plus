@@ -20,6 +20,32 @@ export default async function OnboardingPage() {
     redirect('/login?redirect=/onboarding');
   }
 
+  // ── SET-PASSWORD GATE (unified auth) ───────────────────────
+  // Users who signed up via free tools with a magic link (passwordless
+  // email) have an 'email' identity but no password. When they first
+  // enter the app we ask them to create one during onboarding so the
+  // normal email+password login works for them afterwards. OAuth-only
+  // users (Google) are skipped — they log in with Google, no password
+  // needed.
+  let needsPassword = false;
+  try {
+    const hasEmailIdentity = (authUser.identities ?? []).some(
+      (i) => i.provider === 'email'
+    );
+    if (hasEmailIdentity) {
+      const admin = createAdminClient();
+      const { data: hasPw } = await admin.rpc('auth_user_has_password', {
+        uid: authUser.id,
+      });
+      needsPassword = hasPw === false;
+    }
+  } catch {
+    // Non-fatal: if the check fails, don't block onboarding — they can
+    // set a password later via the reset-password flow.
+    needsPassword = false;
+  }
+  // ── END SET-PASSWORD GATE ────────────────────────────────
+
   // Check if user has a profile in users table
   const { data: profile } = await supabase
     .from('users')
@@ -98,6 +124,7 @@ export default async function OnboardingPage() {
             <GoogleOnboardingForm 
               defaultName={authUser.user_metadata?.full_name || authUser.user_metadata?.name || ''}
               defaultEmail={authUser.email || ''}
+              needsPassword={needsPassword}
             />
           </div>
         </div>
@@ -115,7 +142,7 @@ export default async function OnboardingPage() {
               <h1 className="text-2xl font-bold text-slate-900">Set Up Your Company</h1>
               <p className="text-slate-600 text-sm">We need a company name to get you started.</p>
             </div>
-            <GoogleOnboardingForm defaultName="" defaultEmail={authUser.email || ''} />
+            <GoogleOnboardingForm defaultName="" defaultEmail={authUser.email || ''} needsPassword={needsPassword} />
           </div>
         </div>
       </div>

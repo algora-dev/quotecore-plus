@@ -100,14 +100,34 @@ export async function completeGoogleOnboarding(formData: FormData) {
       ? rawMeasurement
       : 'imperial_rs';
   const defaultTrade = String(formData.get('defaultTrade') || 'roofing').trim();
+  // Optional: set-password gate for passwordless (magic-link) signups.
+  // Users who created their account via free tools email-link have no
+  // password; the onboarding form collects one so they can use normal
+  // email+password login for the app from now on.
+  const newPassword = String(formData.get('newPassword') || '');
 
   if (!companyName || !fullName) {
     throw new Error('Company name and your name are required.');
   }
 
+  if (newPassword && newPassword.length < 8) {
+    throw new Error('Password must be at least 8 characters.');
+  }
+
   const _supabase = await createSupabaseServerClient();
   const authUser = await requireUser();
   const supabaseAdmin = createAdminClient();
+
+  // Set the password FIRST (independent of company creation) so a failure
+  // later can't leave them passwordless after they typed one in.
+  if (newPassword) {
+    const { error: pwError } = await supabaseAdmin.auth.admin.updateUserById(authUser.id, {
+      password: newPassword,
+    });
+    if (pwError) {
+      throw new Error(`Could not set password: ${pwError.message}`);
+    }
+  }
 
   // ── DATA-LOSS GUARD ──────────────────────────────────────────────
   // If the user already has a profile with a company_id, do NOT create a
