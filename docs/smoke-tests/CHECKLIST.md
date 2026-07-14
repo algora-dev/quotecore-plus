@@ -4,6 +4,14 @@
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
 
+**AA. Free tools auth fix + 3-tier quotas (dev `5dee9f7`, 2026-07-14; prod rebuilt with env vars)**
+- [ ] Dev: /free-quote-generator auth card shows Sign up free / Log in buttons (no blank white box)
+- [ ] Dev: header Sign up button opens auth modal; Google sign-in goes to Google (NOT placeholder.supabase.co)
+- [ ] Dev: Google sign-in completes and returns to the free tool page, email shown in header
+- [ ] Dev: email signup sends confirmation email; link confirms and logs in
+- [ ] Dev: logged-in card shows tier limits (10 img / 20 text; app-account email shows 25/50 + App account badge)
+- [ ] www.quote-core.com: /free-tools Google sign-in works (no redirect to app login page)
+
 **Y. Customer quote template system fixes (new on main+dev, 2026-07-13, `aa2e629`)**
 - [ ] Create Template page shows TemplateCreator with name input (not a redirect)
 - [ ] Template name is required — Continue button disabled until filled
