@@ -132,13 +132,13 @@ export async function POST(req: NextRequest) {
       const result = await createOrderFromDraft(admin, companyId, documentData);
       return NextResponse.json({
         success: true,
-        redirectUrl: `/${slug}/material-orders/${result.orderId}/edit`,
+        redirectUrl: `/${slug}/material-orders/${result.orderId}`,
       });
     } else if (documentType === 'invoice') {
       const result = await createInvoiceFromDraft(admin, companyId, documentData);
       return NextResponse.json({
         success: true,
-        redirectUrl: `/${slug}/invoices/${result.invoiceId}/edit`,
+        redirectUrl: `/${slug}/invoices/${result.invoiceId}`,
       });
     }
     return NextResponse.json({ error: 'Invalid document type' }, { status: 400 });
