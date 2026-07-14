@@ -65,20 +65,6 @@ export function TradeLayoutShell({ config, children }: { config: TradeConfig; ch
           </Link>
           <div className="flex items-center gap-3">
             <FreeToolsAuthButton />
-            <Link
-              href="/free-tools"
-              prefetch={false}
-              className="hidden text-sm font-semibold text-slate-700 hover:text-slate-900 sm:inline"
-            >
-              Free Tools
-            </Link>
-            <Link
-              href="/free-quote-generator"
-              prefetch={false}
-              className="hidden text-sm font-semibold text-slate-700 hover:text-slate-900 sm:inline"
-            >
-              Free Quote Generator
-            </Link>
           </div>
         </div>
       </header>

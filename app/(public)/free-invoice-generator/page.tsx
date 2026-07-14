@@ -321,29 +321,21 @@ function InvoiceGeneratorForm() {
         </section>
 
           {/* Auth status / signup prompt */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4 mb-6 print:hidden">
-            {/* Signup prompt shows while auth resolves — never a blank box */}
-            {!loadingEmail && emailSaved ? (
+          {/* Signup notification banner — always shows content, never blank */}
+          <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 mb-6 print:hidden">
+            {!loadingEmail && isAuthed ? (
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-slate-700">✓ {userEmail}</p>
-                  <p className="mt-1 text-xs text-slate-400">{limitsLine}</p>
+                  <p className="mt-1 text-xs text-slate-500">{limitsLine}</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  {!isAuthed && (
-                    <button onClick={() => openAuthModal('signup')} className="text-xs font-medium text-[#FF6B35] hover:text-orange-600 transition">
-                      Create account
-                    </button>
-                  )}
-                  <button onClick={() => clearLocalEmail()} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition">Change</button>
-                </div>
+                <button onClick={() => clearLocalEmail()} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition">Log out</button>
               </div>
             ) : (
               <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-700">Sign up free to remove watermarks & get more daily generations</p>
-                  <p className="mt-1 text-xs text-slate-400">Image upload: 3/day · Text parse: 5/day · Manual: Unlimited</p>
-                </div>
+                <p className="text-sm text-slate-700">
+                  Sign up with 1 click for higher daily limits and watermark removal for all tools
+                </p>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={() => openAuthModal('signup')}
