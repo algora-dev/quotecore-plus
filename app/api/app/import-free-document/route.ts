@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
-import { createQuoteAtomic } from '@/app/lib/billing/quote-creation';
+import { createQuoteAtomic, resolveQuoteCreationDefaults } from '@/app/lib/billing/quote-creation';
 import { requireInvoiceFeature } from '@/app/lib/billing/entitlements';
 import { requireOrderSlot } from '@/app/lib/billing/entitlements';
 import type { Json } from '@/app/lib/supabase/database.types';
@@ -154,13 +154,17 @@ async function createQuoteFromDraft(
   userId: string,
   data: DocDraftData['documentData']
 ): Promise<{ quoteId: string }> {
+  // Resolve the company's default component collection (required when
+  // GENERIC_TRADES_V1_ENABLED is on).
+  const { trade, componentCollectionId } = await resolveQuoteCreationDefaults(companyId);
+
   // Use the atomic create RPC (handles billing checks + insert)
   const quoteId = await createQuoteAtomic(companyId, userId, {
     customerName: data.clientName || 'Unknown',
     jobName: '',
     entryMode: 'blank',
-    trade: 'generic',
-    componentCollectionId: null,
+    trade,
+    componentCollectionId,
     cqCompanyName: data.companyName || null,
     cqCompanyPhone: data.fromPhone || null,
     cqCompanyEmail: data.fromEmail || null,
