@@ -4,6 +4,17 @@
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
 
+**AB. Unified auth — free tools + app share one login (dev `991f9a3`, 2026-07-14)**
+- [ ] Free tools: Google sign-in works and returns to the free tool page (now via MAIN Supabase project)
+- [ ] Free tools: email + password signup sends confirmation; link returns to tool page logged in
+- [ ] Free tools: email with BLANK password sends magic link; link logs in (passwordless)
+- [ ] Free tools banner: logged-in app user (secarter23) shows "App account" + 25/50 limits (tier 3)
+- [ ] Free tools banner: fresh signup shows "Logged in" 10/20 limits (tier 2)
+- [ ] App login: passwordless user -> "No password? Email me a login link" sends link, logs in, lands on /onboarding
+- [ ] Onboarding: passwordless email user sees "Create a password" fields in step 1; sets password + company; can then log in with email+password
+- [ ] App login/signup unchanged for existing users (secarter23 normal login still works)
+- [ ] Existing free-tools Google user davydonothing@gmail.com: Google sign-in on free tools works (identity auto-links to pre-created main-project user)
+
 **AA. Free tools auth fix + 3-tier quotas (dev `5dee9f7`, 2026-07-14; prod rebuilt with env vars)**
 - [ ] Dev: /free-quote-generator auth card shows Sign up free / Log in buttons (no blank white box)
 - [ ] Dev: header Sign up button opens auth modal; Google sign-in goes to Google (NOT placeholder.supabase.co)
