@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { sendDocumentMessage } from '@/app/lib/send-document/orchestrator';
 import { scheduleDocumentFollowUp } from '@/app/lib/send-document/followups';
 import { generateAcceptanceToken } from '@/app/(auth)/[workspaceSlug]/quotes/actions';
+import { generateOrderSupplierToken } from '@/app/(auth)/[workspaceSlug]/material-orders/[orderId]/preview/supplier-link-actions';
 import { useSendTestTip } from './sendTestTip';
 import type { SendDocumentProps, EmailTemplate } from './types';
 import { ENTITY_CONFIG } from './entityConfig';
@@ -120,7 +121,12 @@ export function useSendDocument(props: SendDocumentProps) {
       return;
     }
     if (config.tokenStrategy === 'idempotent-generate') {
-      // Orders: token should already be in props.existingToken (server-side).
+      // Orders: mint token server-side if none exists yet (same as quotes below).
+      setTokenLoading(true);
+      generateOrderSupplierToken(props.entityId, 90)
+        .then((t) => setToken(t))
+        .catch((err) => setSendError(err instanceof Error ? err.message : 'Failed to generate link.'))
+        .finally(() => setTokenLoading(false));
       return;
     }
     // Expiring-commit (quote): fetch a token for display without committing expiry/job_status.
