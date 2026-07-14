@@ -49,7 +49,9 @@ type InvoiceRow = {
 const INVOICE_SENT_BASELINE = new Set(['sent', 'viewed']);
 function invoiceRecipientStatus(inv: InvoiceRow): RecipientStatus {
   if (inv.status === 'disputed' || inv.disputed_at) return 'action_required';
-  if ((inv.viewed_at || inv.status === 'viewed') && INVOICE_SENT_BASELINE.has(inv.status)) return 'read';
+  // When status is already 'viewed', the lifecycle dropdown shows "Viewed" — no need for a duplicate badge.
+  if (inv.status === 'viewed') return null;
+  if (inv.viewed_at && INVOICE_SENT_BASELINE.has(inv.status)) return 'viewed';
   return null;
 }
 

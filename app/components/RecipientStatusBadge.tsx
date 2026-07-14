@@ -8,7 +8,7 @@
  * owner can still drive their own lifecycle status:
  *   - 'action_required'  -> "Action Required" (dispute opened OR change
  *      requested from an order/quote). Highest priority.
- *   - 'read'             -> "Read" (recipient opened the public link).
+ *   - 'viewed'           -> "Viewed" (recipient opened the public link).
  *
  * `null` renders nothing (keeps untouched rows visually clean).
  *
@@ -17,16 +17,16 @@
  * Needed").
  */
 
-export type RecipientStatus = 'action_required' | 'read' | null;
+export type RecipientStatus = 'action_required' | 'viewed' | null;
 
-const CONFIG: Record<'action_required' | 'read', { label: string; cls: string; dot: string }> = {
+const CONFIG: Record<'action_required' | 'viewed', { label: string; cls: string; dot: string }> = {
   action_required: {
     label: 'Action Required',
     cls: 'bg-amber-50 text-amber-700 border-amber-300',
     dot: 'bg-amber-500',
   },
-  read: {
-    label: 'Read',
+  viewed: {
+    label: 'Viewed',
     cls: 'bg-blue-50 text-blue-700 border-blue-200',
     dot: 'bg-blue-500',
   },

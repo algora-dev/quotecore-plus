@@ -31,7 +31,7 @@ const MAX_BULK_SELECTION = 25;
 const ORDER_SENT_BASELINE = new Set(['ready']);
 function orderRecipientStatus(order: MaterialOrderRow): RecipientStatus {
   if (order.changes_requested_at || order.info_requested_at) return 'action_required';
-  if (order.viewed_at && ORDER_SENT_BASELINE.has(order.status)) return 'read';
+  if (order.viewed_at && ORDER_SENT_BASELINE.has(order.status)) return 'viewed';
   return null;
 }
 

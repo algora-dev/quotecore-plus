@@ -429,16 +429,6 @@ export function SendDocumentModal(props: SendDocumentProps & { hook: Hook }) {
           </div>
         )}
 
-        {mode !== 'choose' && (
-          <div className="flex justify-end">
-            <button
-              onClick={() => setOpen(false)}
-              className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
-            >
-              Close
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

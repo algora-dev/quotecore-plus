@@ -25,7 +25,7 @@ const NOTIFICATION_MATRIX: {
       { key: 'quote_accepted', label: 'Accepted' },
       { key: 'quote_declined', label: 'Declined' },
       { key: 'revision_requested', label: 'Request Info' },
-      { key: 'quote_viewed', label: 'Read' },
+      { key: 'quote_viewed', label: 'Viewed' },
       { key: 'quote_expired', label: 'Expired' },
     ],
   },
@@ -36,7 +36,7 @@ const NOTIFICATION_MATRIX: {
       { key: 'order_accepted', label: 'Accepted' },
       { key: 'order_declined', label: 'Declined' },
       { key: 'order_info_requested', label: 'Info Requested' },
-      { key: 'order_viewed', label: 'Read' },
+      { key: 'order_viewed', label: 'Viewed' },
     ],
   },
   {
@@ -45,7 +45,7 @@ const NOTIFICATION_MATRIX: {
     events: [
       { key: 'invoice_payment_reported', label: 'Payment Made' },
       { key: 'invoice_disputed', label: 'Dispute Opened' },
-      { key: 'invoice_viewed', label: 'Read' },
+      { key: 'invoice_viewed', label: 'Viewed' },
     ],
   },
 ];

@@ -45,7 +45,7 @@ type Quote = {
 const QUOTE_SENT_BASELINE = new Set(['unsent', 'sent']);
 function quoteRecipientStatus(q: Quote): RecipientStatus {
   if (q.has_pending_revision) return 'action_required';
-  if (q.viewed_at && QUOTE_SENT_BASELINE.has(q.job_status ?? 'unsent')) return 'read';
+  if (q.viewed_at && QUOTE_SENT_BASELINE.has(q.job_status ?? 'unsent')) return 'viewed';
   return null;
 }
 
