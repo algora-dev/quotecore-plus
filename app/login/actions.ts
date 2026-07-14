@@ -15,6 +15,7 @@ export type LoginResult =
 export async function loginAction(formData: FormData): Promise<LoginResult> {
   const email = String(formData.get('email') || '').trim().toLowerCase();
   const password = String(formData.get('password') || '');
+  const redirectPath = String(formData.get('redirect') || '').trim();
 
   if (!email || !password) {
     return { ok: false, code: 'OTHER', message: 'Email and password are required.' };
@@ -97,6 +98,11 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
     redirect('/onboarding');
   }
 
+  // If a specific redirect was requested (e.g. from free tools Save to App),
+  // send them there after login. Otherwise go to their workspace.
+  if (redirectPath && redirectPath.startsWith('/')) {
+    redirect(redirectPath);
+  }
   redirect(`/${company?.slug || 'workspace'}`);
 }
 

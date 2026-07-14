@@ -25,6 +25,7 @@ function LoginForm() {
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const searchParams = useSearchParams();
   const signupPending = searchParams.get('signup') === 'pending';
+  const redirectParam = searchParams.get('redirect');
 
   async function handleResend() {
     if (!pendingEmail) return;
@@ -109,6 +110,9 @@ function LoginForm() {
               setPendingEmail(null);
               setResendStatus('idle');
               const formData = new FormData(e.currentTarget);
+              if (redirectParam) {
+                formData.set('redirect', redirectParam);
+              }
 
               startTransition(async () => {
                 try {

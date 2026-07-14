@@ -285,12 +285,39 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
               to customers, and manage your business.
             </p>
             <div className="flex flex-col gap-2">
-              <a
-                href={`/signup?ref=free-${documentType}-generator`}
+              <button
+                type="button"
+                onClick={() => {
+                  // Save draft to localStorage BEFORE redirecting so it
+                  // survives the signup/login → onboarding → dashboard flow.
+                  const draftId = `doc-draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+                  const draftPayload = {
+                    documentType,
+                    documentData,
+                    email: modal.email,
+                    savedAt: new Date().toISOString(),
+                  };
+                  try {
+                    localStorage.setItem(`qcp:doc-draft:${draftId}`, JSON.stringify(draftPayload));
+                    // Cookie so DocDraftRestorer can find the draft even if
+                    // the URL param is lost during redirect chains.
+                    document.cookie = `qcp_doc_draft=${draftId}; path=/; max-age=${60*60*24*7}; SameSite=Lax`;
+                  } catch {}
+                  // If the user is already authenticated (T2 — logged into
+                  // free tools via Google/email), their Supabase auth user
+                  // already exists. Send them to /login (not /signup) so they
+                  // don't hit the "email already exists" error.
+                  // T1 (anonymous) users go to /signup.
+                  if (authUser) {
+                    window.location.href = `/login?redirect=/api/app/import-free-document?draft=${draftId}`;
+                  } else {
+                    window.location.href = `/signup?ref=free-${documentType}-generator&draft=${draftId}`;
+                  }
+                }}
                 className="w-full text-center px-5 py-2.5 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition-all"
               >
-                Start free trial
-              </a>
+                {authUser ? 'Continue to login' : 'Start free trial'}
+              </button>
               <button
                 onClick={closeModal}
                 className="w-full text-center px-5 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition"

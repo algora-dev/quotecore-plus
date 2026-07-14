@@ -769,7 +769,7 @@ function InvoiceGeneratorForm() {
           <>
             {/* Generated invoice - printable */}
             <div className="rounded-xl border border-slate-200 bg-white p-8 print:border-0 print:p-0 relative overflow-hidden" id="invoice-print">
-              {!emailSaved && (
+              {!isAuthed && (
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center" style={{ zIndex: 0 }}>
                   <img src="/logo.png" alt="" className="w-[400px] opacity-[0.07]" style={{ transform: 'rotate(-45deg)' }} />
                 </div>
@@ -855,7 +855,7 @@ function InvoiceGeneratorForm() {
                 </div>
               )}
 
-              {!emailSaved && (
+              {!isAuthed && (
               <div className="mt-8 pt-4 border-t border-slate-100">
                 <p className="text-xs text-slate-400">
                   Generated with QuoteCore+ Free Invoice Generator - {new Date().toLocaleDateString('en-GB')}
@@ -915,7 +915,7 @@ function InvoiceGeneratorForm() {
               resultDetails={`${invoiceNumber} for ${clientName || 'client'}`}
               ctaText="Create a purchase order"
               ctaHref={`/free-purchase-order-generator?amount=${total.toFixed(2)}&ref=free-invoice-generator`}
-              secondaryText={!emailSaved ? "Enter your email on the form to remove the watermark" : "Need to order materials? Generate a PO for your supplier - no signup needed"}
+              secondaryText={!isAuthed ? "Enter your email on the form to remove the watermark" : "Need to order materials? Generate a PO for your supplier - no signup needed"}
             />
           </>
         )}

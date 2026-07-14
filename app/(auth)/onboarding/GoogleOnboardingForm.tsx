@@ -90,7 +90,12 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
       setError('Workspace slug missing. Please refresh and complete onboarding again.');
       return;
     }
-    router.push(`/${savedSlug}?copilot=on`);
+    // Check for a pending free-tools draft to restore
+    const draftMatch = document.cookie.match(/qcp_doc_draft=([^;]+)/);
+    const draftId = draftMatch ? decodeURIComponent(draftMatch[1]) : null;
+    const params = new URLSearchParams({ copilot: 'on' });
+    if (draftId) params.set('restore_doc', draftId);
+    router.push(`/${savedSlug}?${params.toString()}`);
   }
 
   return (

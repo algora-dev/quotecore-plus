@@ -765,7 +765,7 @@ function POGeneratorForm() {
           <>
             {/* Generated PO - printable */}
             <div className="rounded-xl border border-slate-200 bg-white p-8 print:border-0 print:p-0 relative overflow-hidden" id="po-print">
-              {!emailSaved && (
+              {!isAuthed && (
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center" style={{ zIndex: 0 }}>
                   <img src="/logo.png" alt="" className="w-[400px] opacity-[0.07]" style={{ transform: 'rotate(-45deg)' }} />
                 </div>
@@ -858,7 +858,7 @@ function POGeneratorForm() {
                 </div>
               )}
 
-              {!emailSaved && (
+              {!isAuthed && (
               <div className="mt-8 pt-4 border-t border-slate-100">
                 <p className="text-xs text-slate-400">
                   Generated with QuoteCore+ Free PO Generator - {new Date().toLocaleDateString('en-GB')}
@@ -916,7 +916,7 @@ function POGeneratorForm() {
               resultDetails={`${poNumber} to ${supplierName || 'supplier'}`}
               ctaText="Create an invoice"
               ctaHref={`/free-invoice-generator?amount=${total.toFixed(2)}&ref=free-purchase-order-generator`}
-              secondaryText={!emailSaved ? "Enter your email on the form to remove the watermark" : "Need to invoice your client? Generate an invoice from this order - no signup needed"}
+              secondaryText={!isAuthed ? "Enter your email on the form to remove the watermark" : "Need to invoice your client? Generate an invoice from this order - no signup needed"}
             />
           </>
         )}

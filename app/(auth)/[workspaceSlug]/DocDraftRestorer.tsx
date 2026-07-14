@@ -14,9 +14,22 @@ export function DocDraftRestorer({ workspaceSlug }: { workspaceSlug: string }) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const draftId = searchParams.get('restore_doc');
+  const urlDraftId = searchParams.get('restore_doc');
 
   useEffect(() => {
+    // Check URL param first, then fall back to the qcp_doc_draft cookie
+    // (set by SaveToAppButton when redirecting to signup). This ensures
+    // the draft is restored even if the URL param was lost during
+    // signup → email confirmation → onboarding → dashboard navigation.
+    let draftId = urlDraftId;
+    if (!draftId) {
+      const match = document.cookie.match(/qcp_doc_draft=([^;]+)/);
+      if (match) {
+        draftId = decodeURIComponent(match[1]);
+        // Clean up the cookie so it doesn't trigger on every dashboard visit
+        document.cookie = 'qcp_doc_draft=; path=/; max-age=0';
+      }
+    }
     if (!draftId) return;
 
     setStatus('loading');
@@ -63,9 +76,10 @@ export function DocDraftRestorer({ workspaceSlug }: { workspaceSlug: string }) {
       setStatus('error');
       setErrorMessage('Failed to read draft data.');
     }
-  }, [draftId, router, workspaceSlug]);
+  }, [urlDraftId, router, workspaceSlug]);
 
-  if (!draftId) return null;
+  // Show the restorer UI when we have a URL param OR a cookie-triggered draft
+  if (!urlDraftId && status === 'idle') return null;
 
   if (status === 'loading') {
     return (
@@ -76,7 +90,7 @@ export function DocDraftRestorer({ workspaceSlug }: { workspaceSlug: string }) {
         </svg>
         <div>
           <p className="text-sm font-medium text-blue-800">Importing your document...</p>
-          <p className="text-xs text-blue-600">Creating your {draftId ? 'document' : 'document'} in the app.</p>
+          <p className="text-xs text-blue-600">Creating your document in the app.</p>
         </div>
       </div>
     );

@@ -41,7 +41,12 @@ export function OnboardingForm({
     startTransition(async () => {
       try {
         await completeOnboarding(companyId, { currency, language, measurement, defaultTrade });
-        router.push(`/${slug}?copilot=on`);
+        // Check for a pending free-tools draft to restore
+        const draftMatch = document.cookie.match(/qcp_doc_draft=([^;]+)/);
+        const draftId = draftMatch ? decodeURIComponent(draftMatch[1]) : null;
+        const params = new URLSearchParams({ copilot: 'on' });
+        if (draftId) params.set('restore_doc', draftId);
+        router.push(`/${slug}?${params.toString()}`);
       } catch (err) {
         console.error('Failed to complete onboarding:', err);
         router.push(`/${slug}`);
