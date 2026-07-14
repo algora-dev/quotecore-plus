@@ -94,7 +94,14 @@ export async function GET(request: Request) {
               console.error(
                 `[auth/callback] ORPHAN RECOVERY: restored profile for user ${user.id} (email: ${userEmail}) to company ${orphanedQuote.company_id}`,
               );
-              return NextResponse.redirect(`${origin}/${orphanedCompany.slug || 'workspace'}`);
+              const draftCookie = request.headers.get('cookie') || '';
+              const draftMatch = draftCookie.match(/qcp_doc_draft=([^;]+)/);
+              const draftId = draftMatch ? decodeURIComponent(draftMatch[1]) : null;
+              const slug = orphanedCompany.slug || 'workspace';
+              const dashUrl = draftId
+                ? `${origin}/${slug}?restore_doc=${draftId}`
+                : `${origin}/${slug}`;
+              return NextResponse.redirect(dashUrl);
             }
           }
         }
@@ -186,8 +193,18 @@ export async function GET(request: Request) {
           // users who already have a profile (e.g. logins after the initial
           // setup was completed). Sending here would cause duplicate emails.
 
-          return NextResponse.redirect(`${origin}/${company?.slug || 'workspace'}`);
-        } else {
+          // Preserve free-tools draft: if the user was sent through a
+          // re-login (e.g. session expired after onboarding), the
+          // qcp_doc_draft cookie survives. Pass it through as a URL param
+          // so DocDraftRestorer picks it up on the dashboard.
+          const draftCookie = request.headers.get('cookie') || '';
+          const draftMatch = draftCookie.match(/qcp_doc_draft=([^;]+)/);
+          const draftId = draftMatch ? decodeURIComponent(draftMatch[1]) : null;
+          const slug = company?.slug || 'workspace';
+          const dashUrl = draftId
+            ? `${origin}/${slug}?restore_doc=${draftId}`
+            : `${origin}/${slug}`;
+          return NextResponse.redirect(dashUrl);
           // No profile or no company - redirect to onboarding
           return NextResponse.redirect(`${origin}/onboarding`);
         }

@@ -95,7 +95,12 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
     const draftId = draftMatch ? decodeURIComponent(draftMatch[1]) : null;
     const params = new URLSearchParams({ copilot: 'on' });
     if (draftId) params.set('restore_doc', draftId);
-    router.push(`/${savedSlug}?${params.toString()}`);
+    // Use full-page navigation (not router.push) so middleware runs fresh
+    // and can refresh the session if the JWT expired during onboarding.
+    // The FreeToolsAuthProvider that managed the session is no longer
+    // mounted on the onboarding page, so the client-side Supabase client
+    // can't auto-refresh — the server-side middleware refresh is needed.
+    window.location.href = `/${savedSlug}?${params.toString()}`;
   }
 
   return (
