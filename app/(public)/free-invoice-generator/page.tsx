@@ -285,7 +285,6 @@ function InvoiceGeneratorForm() {
   }
 
   return (
-    <FreeToolsAuthProvider>
     <main className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white">
@@ -969,14 +968,15 @@ function InvoiceGeneratorForm() {
         }
       `}</style>
     </main>
-    </FreeToolsAuthProvider>
   );
 }
 
 export default function FreeInvoiceGeneratorPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
-      <InvoiceGeneratorForm />
+      <FreeToolsAuthProvider>
+        <InvoiceGeneratorForm />
+      </FreeToolsAuthProvider>
     </Suspense>
   );
 }

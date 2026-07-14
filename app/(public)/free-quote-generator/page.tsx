@@ -284,7 +284,6 @@ function QuoteGeneratorForm() {
   }
 
   return (
-    <FreeToolsAuthProvider>
     <main className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white">
@@ -984,14 +983,15 @@ function QuoteGeneratorForm() {
         }
       `}</style>
     </main>
-    </FreeToolsAuthProvider>
   );
 }
 
 export default function FreeQuoteGeneratorPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
-      <QuoteGeneratorForm />
+      <FreeToolsAuthProvider>
+        <QuoteGeneratorForm />
+      </FreeToolsAuthProvider>
     </Suspense>
   );
 }

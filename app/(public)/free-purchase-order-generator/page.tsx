@@ -277,7 +277,6 @@ function POGeneratorForm() {
   }
 
   return (
-    <FreeToolsAuthProvider>
     <main className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white">
@@ -966,14 +965,15 @@ function POGeneratorForm() {
         }
       `}</style>
     </main>
-    </FreeToolsAuthProvider>
   );
 }
 
 export default function FreePOGeneratorPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
-      <POGeneratorForm />
+      <FreeToolsAuthProvider>
+        <POGeneratorForm />
+      </FreeToolsAuthProvider>
     </Suspense>
   );
 }
