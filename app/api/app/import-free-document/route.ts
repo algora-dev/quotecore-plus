@@ -188,6 +188,9 @@ async function createQuoteFromDraft(
       include_in_total: true,
       quantity: l.qty,
       unit_price: l.rate,
+      // Store base unit cost so the margin system can calculate accurately
+      // after reload (same pattern as AddLineModal / LineEditForm).
+      base_unit_cost: l.rate,
       quantity_text: l.qty !== 1 || l.unit ? `${l.qty}${l.unit ? ' ' + l.unit : ''}` : null,
     }));
 

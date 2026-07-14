@@ -816,9 +816,26 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   // Uses per-line override when set (lineMarginPercent / lineLaborMarginPercent),
   // falling back to the global slider value — so pencil-edited lines contribute
   // their actual margin rather than the global rate.
-  const materialMarginTotal = lines
-    .filter(l => l.type === 'component' && l.baseMaterialCost !== undefined)
-    .reduce((sum, l) => sum + (l.baseMaterialCost! * (l.lineMarginPercent ?? globalMarginPercent) / 100), 0);
+  // Margin display amounts for the preview breakdown rows.
+  // Includes BOTH component lines (with explicit baseMaterialCost) AND
+  // custom lines. For custom lines with a stored baseMaterialCost, use it
+  // directly. For custom lines without one (e.g. free-tool imports),
+  // derive the margin from the current amount using the proportional
+  // method so the display reflects what the user actually sees.
+  const materialMarginTotal = lines.reduce((sum, l) => {
+    const marginPct = l.lineMarginPercent ?? globalMarginPercent;
+    if (marginPct <= 0) return sum;
+    // Component lines & custom lines with stored base cost
+    if (l.baseMaterialCost !== undefined) {
+      return sum + (l.baseMaterialCost! * marginPct / 100);
+    }
+    // Custom lines without base cost: proportional method
+    if (l.type === 'custom') {
+      const base = l.amount / (1 + marginPct / 100);
+      return sum + (l.amount - base);
+    }
+    return sum;
+  }, 0);
   const labourMarginTotal = lines
     .filter(l => l.type === 'component' && l.baseLabourCost !== undefined)
     .reduce((sum, l) => sum + (l.baseLabourCost! * (l.lineLaborMarginPercent ?? globalLaborMarginPercent) / 100), 0);
