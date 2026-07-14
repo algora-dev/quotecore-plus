@@ -40,6 +40,18 @@ export default async function ResourcesHubPage({
 
   const cards = [
     {
+      title: 'Calculators',
+      description: 'Free roofing, construction, concrete and landscaping calculators',
+      href: '/free-tools',
+      external: true,
+      copilot: 'resources-card-calculators',
+      icon: (
+        <svg className="w-6 h-6 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 14h.01M9 11h.01M12 11h.01M15 11h.01M12 3v18M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+      ),
+    },
+    {
       title: 'Smart Components™',
       description: 'Add and manage your Smart Components™ for faster, accurate quoting',
       href: `${base}/components`,
@@ -160,11 +172,17 @@ export default async function ResourcesHubPage({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {cards.map((card) => (
+        {cards.map((card) => {
+          const isExternal = 'external' in card && card.external;
+          const linkProps = isExternal
+            ? { target: '_blank', rel: 'noopener noreferrer' }
+            : {};
+          return (
           <Link
             key={card.title}
             href={card.href}
             data-copilot={card.copilot}
+            {...linkProps}
             className="block p-5 bg-white border border-slate-200 rounded-xl hover:border-orange-200 hover:bg-orange-50/30 hover:shadow-[0_0_12px_rgba(255,107,53,0.08)] hover:scale-[1.02] transition-all group"
           >
             <div className="flex items-start gap-4">
@@ -172,12 +190,20 @@ export default async function ResourcesHubPage({
                 {card.icon}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-slate-900">{card.title}</h3>
+                <div className="flex items-center gap-1.5">
+                  <h3 className="font-semibold text-slate-900">{card.title}</h3>
+                  {isExternal && (
+                    <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  )}
+                </div>
                 <p className="text-sm text-slate-500 mt-0.5">{card.description}</p>
               </div>
             </div>
           </Link>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

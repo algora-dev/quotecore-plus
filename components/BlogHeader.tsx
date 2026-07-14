@@ -8,6 +8,7 @@ const navItems = [
   { label: "How it works", href: "/#how-it-works" },
   { label: "Services", href: "/services" },
   { label: "Pricing", href: "/#pricing" },
+  { label: "Free Tools", href: "/free-tools" },
   { label: "Blog", href: "/blog" },
   { label: "Contact us", href: "/contact" },
   { label: "Free trial", href: "/free-trial" },
