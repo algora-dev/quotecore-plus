@@ -110,7 +110,7 @@ function QuoteGeneratorForm() {
   const [aiNotice, setAiNotice] = useState('');
 
   // Unified email/auth state
-  const { email: userEmail, isAuthed, emailSaved, setEmailInLocalStorage, clearLocalEmail, loadingEmail, openAuthModal } = useFreeToolsEmail();
+  const { email: userEmail, isAuthed, emailSaved, clearLocalEmail, loadingEmail, openAuthModal, limitsLine } = useFreeToolsEmail();
 
   // Country-to-currency mapping for IP-based default
   const COUNTRY_CURRENCY: Record<string, string> = {
@@ -321,17 +321,14 @@ function QuoteGeneratorForm() {
 
         {/* Auth status / signup prompt */}
         <div className="rounded-xl border border-slate-200 bg-white p-4 mb-6 print:hidden">
-          {loadingEmail ? (
-            <div className="h-6" />
-          ) : emailSaved ? (
+          {/* While auth is resolving we show the signup prompt (never a blank
+              box). Logged-in users may see a brief flash before their email
+              appears — that's preferable to an empty card. */}
+          {!loadingEmail && emailSaved ? (
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-700">✓ {userEmail}</p>
-                <p className="mt-1 text-xs text-slate-400">
-                  {isAuthed
-                    ? 'Logged in · Image upload: 10/day · Text parse: 20/day · Manual: Unlimited'
-                    : 'Image upload: 10/day · Text parse: 20/day · Manual: Unlimited'}
-                </p>
+                <p className="mt-1 text-xs text-slate-400">{limitsLine}</p>
               </div>
               <div className="flex items-center gap-3">
                 {!isAuthed && (

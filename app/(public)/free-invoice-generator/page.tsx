@@ -75,7 +75,7 @@ function InvoiceGeneratorForm() {
   const [hideAllPrices, setHideAllPrices] = useState(false);
   const [hideTotals, setHideTotals] = useState(false);
   // Unified email/auth state
-  const { email: userEmail, isAuthed, emailSaved, setEmailInLocalStorage, clearLocalEmail, loadingEmail, openAuthModal } = useFreeToolsEmail();
+  const { email: userEmail, isAuthed, emailSaved, clearLocalEmail, loadingEmail, openAuthModal, limitsLine } = useFreeToolsEmail();
   const [clientName, setClientName] = useState(clientParam ?? '');
   const [clientEmail, setClientEmail] = useState('');
   const [clientAddress, setClientAddress] = useState('');
@@ -322,17 +322,12 @@ function InvoiceGeneratorForm() {
 
           {/* Auth status / signup prompt */}
           <div className="rounded-xl border border-slate-200 bg-white p-4 mb-6 print:hidden">
-            {loadingEmail ? (
-              <div className="h-6" />
-            ) : emailSaved ? (
+            {/* Signup prompt shows while auth resolves — never a blank box */}
+            {!loadingEmail && emailSaved ? (
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-slate-700">✓ {userEmail}</p>
-                  <p className="mt-1 text-xs text-slate-400">
-                    {isAuthed
-                      ? 'Logged in · Image upload: 10/day · Text parse: 20/day · Manual: Unlimited'
-                      : 'Image upload: 10/day · Text parse: 20/day · Manual: Unlimited'}
-                  </p>
+                  <p className="mt-1 text-xs text-slate-400">{limitsLine}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   {!isAuthed && (

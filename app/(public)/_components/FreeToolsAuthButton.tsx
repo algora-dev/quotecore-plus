@@ -3,13 +3,24 @@
 import { useFreeToolsAuth } from './FreeToolsAuthProvider';
 
 export function FreeToolsAuthButton({ compact = false }: { compact?: boolean }) {
-  const { user, loading, signOut, openAuthModal } = useFreeToolsAuth();
+  const { user, loading, signOut, openAuthModal, tierInfo } = useFreeToolsAuth();
 
-  if (loading) return null;
+  if (loading) {
+    // Skeleton placeholder — never render an empty header slot
+    return (
+      <div className="flex items-center gap-2" aria-hidden="true">
+        <div className="h-7 w-14 rounded-full bg-slate-100 animate-pulse" />
+        <div className="h-7 w-20 rounded-full bg-slate-100 animate-pulse" />
+      </div>
+    );
+  }
 
   if (user) {
     return (
       <div className="flex items-center gap-2">
+        {tierInfo?.hasAppAccount && (
+          <span className="hidden sm:inline rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-[#FF6B35]">App account</span>
+        )}
         <span className="text-xs text-slate-500 hidden sm:inline max-w-[120px] truncate">{user.email}</span>
         <button
           onClick={signOut}

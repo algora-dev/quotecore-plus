@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
 
 interface PromptBoxProps {
   onParsed: (data: ParsedPromptResult) => void;
@@ -23,6 +24,7 @@ export interface ParsedPromptResult {
 }
 
 export function PromptBox({ onParsed, onError, documentType }: PromptBoxProps) {
+  const { accessToken } = useFreeToolsAuth();
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -33,7 +35,10 @@ export function PromptBox({ onParsed, onError, documentType }: PromptBoxProps) {
     try {
       const res = await fetch('/api/free-tools/parse-document', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
         body: JSON.stringify({
           type: documentType,
           mode: 'text',

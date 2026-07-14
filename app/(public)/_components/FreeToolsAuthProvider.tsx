@@ -4,9 +4,19 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { User } from '@supabase/supabase-js';
 import { createFreeToolsClient } from '@/app/lib/supabase/free-client';
 
+export interface FreeToolsTierInfo {
+  tier: 1 | 2 | 3;
+  hasAppAccount: boolean;
+  limits: { imagePerDay: number; textPerDay: number; label: string };
+}
+
 interface FreeToolsAuthState {
   user: User | null;
   loading: boolean;
+  /** Free-tools Supabase access token — sent to parse APIs for tiered limits */
+  accessToken: string | null;
+  /** Resolved tier info (null until fetched) */
+  tierInfo: FreeToolsTierInfo | null;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
   signUpWithEmail: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation: boolean }>;
@@ -20,6 +30,8 @@ interface FreeToolsAuthState {
 const FreeToolsAuthContext = createContext<FreeToolsAuthState>({
   user: null,
   loading: true,
+  accessToken: null,
+  tierInfo: null,
   signInWithGoogle: async () => {},
   signInWithEmail: async () => ({ error: null }),
   signUpWithEmail: async () => ({ error: null, needsConfirmation: false }),
@@ -32,23 +44,67 @@ const FreeToolsAuthContext = createContext<FreeToolsAuthState>({
 export function FreeToolsAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [tierInfo, setTierInfo] = useState<FreeToolsTierInfo | null>(null);
   const [supabase] = useState(() => createFreeToolsClient());
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'signup' | 'signin'>('signup');
 
   useEffect(() => {
+    let cancelled = false;
+
+    // Hard timeout: if getSession() hangs (e.g. env vars missing at build
+    // time → placeholder Supabase URL), render the unauthed UI instead of
+    // an invisible loading state forever.
+    const timeout = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 5000);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (cancelled) return;
       setUser(session?.user ?? null);
+      setAccessToken(session?.access_token ?? null);
       setLoading(false);
+      clearTimeout(timeout);
+    }).catch(() => {
+      if (cancelled) return;
+      setLoading(false);
+      clearTimeout(timeout);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (cancelled) return;
       setUser(session?.user ?? null);
+      setAccessToken(session?.access_token ?? null);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, [supabase]);
+
+  // Fetch tier info whenever the access token changes (login/logout/refresh)
+  useEffect(() => {
+    let cancelled = false;
+    if (!accessToken) {
+      setTierInfo(null);
+      return;
+    }
+    fetch('/api/free-tools/account-status', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.tier) {
+          setTierInfo({ tier: data.tier, hasAppAccount: data.hasAppAccount, limits: data.limits });
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [accessToken]);
 
   const signInWithGoogle = async () => {
     const redirectTo = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : undefined;
@@ -93,6 +149,8 @@ export function FreeToolsAuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         loading,
+        accessToken,
+        tierInfo,
         signInWithGoogle,
         signInWithEmail,
         signUpWithEmail,

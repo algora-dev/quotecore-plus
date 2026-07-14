@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
+import { resolveFreeToolsTier } from '@/app/lib/free-tools/resolveTier';
+import { parseRateLimitKey, RATE_LIMIT_WINDOW_MS } from '@/app/lib/free-tools/tiers';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -42,8 +44,6 @@ interface ParsedDocument {
 const MAX_TEXT_LENGTH = 10_000;
 const MAX_IMAGE_BASE64_BYTES = 4 * 1024 * 1024; // ~3MB actual image after base64 decode
 const MAX_CONTENT_LENGTH_BYTES = 6 * 1024 * 1024; // reject oversized POST bodies early
-const MAX_HITS_PER_DAY = 5;
-const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 // ── Magic byte validation ──────────────────────────────
 
@@ -139,18 +139,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 2. Rate limit — check BEFORE parsing body (durable, Supabase-backed)
+  // 2. Resolve caller tier from optional free-tools auth token.
+  //    Tier 1 = anonymous (IP-keyed limits), tier 2 = free-tools account,
+  //    tier 3 = free-tools account with a QuoteCore+ app account.
+  const resolved = await resolveFreeToolsTier(req.headers.get('authorization'));
   const ip = getClientIP(req.headers);
-  const rateLimitKey = `free-tools-parse:${ip}`;
-  const allowed = await checkRateLimit(rateLimitKey, MAX_HITS_PER_DAY, RATE_LIMIT_WINDOW_MS, {
-    failClosed: true,
-  });
-  if (!allowed) {
-    return NextResponse.json(
-      { error: 'Daily limit reached. You can scan up to 5 documents per day for free. Try again tomorrow or sign up for QuoteCore+ for unlimited access.' },
-      { status: 429 }
-    );
-  }
 
   // 3. Parse body
   let body: ParseRequest;
@@ -167,6 +160,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid or missing "type"' }, { status: 400 });
   }
 
+  if (mode !== 'text' && mode !== 'image') {
+    return NextResponse.json({ error: 'Invalid or missing "mode"' }, { status: 400 });
+  }
+
+  // 5. Rate limit — per-mode, per-tier (durable, Supabase-backed).
+  //    Authed users are keyed by user id so limits follow the account,
+  //    not the network. Anonymous users are keyed by IP.
+  const maxPerDay = mode === 'image' ? resolved.limits.imagePerDay : resolved.limits.textPerDay;
+  const rateLimitKey = parseRateLimitKey(
+    mode,
+    resolved.userId ? { userId: resolved.userId } : { ip }
+  );
+  const allowed = await checkRateLimit(rateLimitKey, maxPerDay, RATE_LIMIT_WINDOW_MS, {
+    failClosed: true,
+  });
+  if (!allowed) {
+    const upgradeHint =
+      resolved.tier === 1
+        ? ' Sign up free at the top of the page for higher daily limits.'
+        : resolved.tier === 2
+          ? ' QuoteCore+ app accounts get higher daily limits — start a free trial.'
+          : ' Try again tomorrow.';
+    return NextResponse.json(
+      {
+        error: `Daily limit reached (${maxPerDay} ${mode} ${mode === 'image' ? 'scans' : 'parses'}/day).${upgradeHint}`,
+        tier: resolved.tier,
+      },
+      { status: 429 }
+    );
+  }
+
   if (mode === 'text') {
     if (!content?.trim()) {
       return NextResponse.json({ error: 'Missing "content" for text mode' }, { status: 400 });
@@ -177,7 +201,7 @@ export async function POST(req: NextRequest) {
         { status: 413 }
       );
     }
-  } else if (mode === 'image') {
+  } else {
     if (!image) {
       return NextResponse.json({ error: 'Missing "image" for image mode' }, { status: 400 });
     }
@@ -195,11 +219,9 @@ export async function POST(req: NextRequest) {
         { status: 415 }
       );
     }
-  } else {
-    return NextResponse.json({ error: 'Invalid or missing "mode"' }, { status: 400 });
   }
 
-  // 5. Build OpenAI messages
+  // 6. Build OpenAI messages
   const systemPrompt = buildSystemPrompt(type);
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
@@ -241,7 +263,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // 6. Call OpenAI
+  // 7. Call OpenAI
   try {
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -271,7 +293,7 @@ export async function POST(req: NextRequest) {
       rate: typeof l.rate === 'number' && !isNaN(l.rate) ? l.rate : 0,
     }));
 
-    return NextResponse.json(parsed);
+    return NextResponse.json({ ...parsed, tier: resolved.tier });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     console.error('[parse-document] OpenAI error:', message);

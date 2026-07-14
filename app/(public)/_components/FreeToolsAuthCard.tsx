@@ -9,7 +9,7 @@ import { useFreeToolsEmail } from './useFreeToolsEmail';
  * - No loading state — always shows content immediately.
  */
 export function FreeToolsAuthCard() {
-  const { email, isAuthed, signOut, openAuthModal } = useFreeToolsEmail();
+  const { email, isAuthed, signOut, openAuthModal, limitsLine } = useFreeToolsEmail();
 
   if (isAuthed && email) {
     return (
@@ -17,9 +17,7 @@ export function FreeToolsAuthCard() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-slate-700">✓ {email}</p>
-            <p className="mt-1 text-xs text-slate-400">
-              Logged in · Image upload: 10/day · Text parse: 20/day · Manual: Unlimited
-            </p>
+            <p className="mt-1 text-xs text-slate-400">{limitsLine}</p>
           </div>
           <button
             onClick={signOut}

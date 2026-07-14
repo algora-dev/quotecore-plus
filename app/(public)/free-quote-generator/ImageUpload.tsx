@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
 
 interface ImageUploadProps {
   onParsed: (data: ParsedUploadResult) => void;
@@ -30,6 +31,7 @@ const MAX_DIMENSION = 2000; // px - compress large photos down
 const JPEG_QUALITY = 0.8;
 
 export function ImageUpload({ onParsed, onError, documentType }: ImageUploadProps) {
+  const { accessToken } = useFreeToolsAuth();
   const [status, setStatus] = useState<Status>('idle');
   const [preview, setPreview] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -80,7 +82,10 @@ export function ImageUpload({ onParsed, onError, documentType }: ImageUploadProp
       setStatus('parsing');
       const res = await fetch('/api/free-tools/parse-document', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
         body: JSON.stringify({
           type: documentType,
           mode: 'image',
@@ -102,7 +107,7 @@ export function ImageUpload({ onParsed, onError, documentType }: ImageUploadProp
       setStatus('error');
       onError(message);
     }
-  }, [compressImage, documentType, onParsed, onError]);
+  }, [compressImage, documentType, onParsed, onError, accessToken]);
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
