@@ -265,7 +265,7 @@ async function createOrderFromDraft(
       logo_url: data.logo || null,
       layout_mode: 'line_by_line',
       line_by_line_data: lineByLineData as unknown as Json,
-      status: 'draft',
+      status: 'ready',
     })
     .select('id')
     .single();
@@ -303,7 +303,7 @@ async function createInvoiceFromDraft(
       notes: data.notes || '',
       currency: data.currency,
       status: 'draft',
-      source_type: 'manual',
+      source_type: 'blank',
       payment_reference: '',
       subtotal: 0,
       tax_total: 0,
