@@ -143,7 +143,7 @@ export default function RoofingQuotingSoftwarePage() {
         {/* Cross-trade notice */}
         <div className="border-b border-zinc-200 bg-zinc-50 px-6 py-3 text-center text-sm text-zinc-600">
           QuoteCore+ also works across cladding, flooring, fencing, landscaping, and other construction trades.{" "}
-          <a href="/construction-quoting-software" className="font-medium text-[#FF6B35] hover:underline">
+          <a href="/construction-quoting-software" className="font-medium text-[#D45A28] hover:underline">
             See the full construction quoting software page
           </a>
         </div>
@@ -161,7 +161,7 @@ export default function RoofingQuotingSoftwarePage() {
             </p>
 
             <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-left">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-[#FF6B35]">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-[#D45A28]">
                 Quick answer
               </p>
               <p className="text-sm leading-6 text-zinc-600">
@@ -175,7 +175,7 @@ export default function RoofingQuotingSoftwarePage() {
             <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <a
                 href="/free-trial"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#FF6B35] px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-[#e85d2b]"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#E85D2B] px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-[#D45A28]"
               >
                 Start your free 14-day trial
               </a>
@@ -229,7 +229,7 @@ export default function RoofingQuotingSoftwarePage() {
 
         {/* Smart Components™ */}
         <section id="smart-components" className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D45A28]">
             Smart Components™
           </p>
           <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">
@@ -257,7 +257,7 @@ export default function RoofingQuotingSoftwarePage() {
               "Materials and pricing logic",
             ].map((item) => (
               <li key={item} className="flex items-start gap-3 text-zinc-700">
-                <span className="mt-1 shrink-0 font-bold text-[#FF6B35]">✓</span>
+                <span className="mt-1 shrink-0 font-bold text-[#D45A28]">✓</span>
                 {item}
               </li>
             ))}
@@ -381,7 +381,7 @@ export default function RoofingQuotingSoftwarePage() {
 
           <a
             href="/free-trial"
-            className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-[#FF6B35] px-10 py-3 text-base font-semibold text-white transition-colors hover:bg-[#e85d2b]"
+            className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-[#E85D2B] px-10 py-3 text-base font-semibold text-white transition-colors hover:bg-[#D45A28]"
           >
             Start your free 14-day trial
           </a>

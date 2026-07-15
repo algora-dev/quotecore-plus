@@ -392,7 +392,7 @@ export default function HomePage() {
   ];
 
   const primaryButton =
-    "inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-5 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-[#e85d2b]";
+    "inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-5 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-[#D45A28]";
 
   const shimmerButton =
     "pill-shimmer inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-300 bg-white px-5 py-2.5 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40";
@@ -423,7 +423,7 @@ export default function HomePage() {
             <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-10 xl:gap-12">
               {/* Left: text */}
               <div className="relative z-20 flex-1 text-center lg:flex-[1.12] lg:text-left">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">Each feature built from real experience</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D45A28]">Each feature built from real experience</p>
                 <h1 className="mt-6 text-4xl font-semibold tracking-tight text-zinc-950 sm:text-5xl lg:text-6xl">
                   Build your business once. Quote it forever.
                 </h1>
@@ -439,7 +439,7 @@ export default function HomePage() {
                   Build your pricing, products, services and processes once, then reuse them across every quote, job and invoice - saving time, reducing mistakes and creating a faster, more consistent workflow.
                 </p>
                 <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
-                  <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#e85d2b]" onClick={() => trackEvent("free_trial_click", { location: "hero" })}>
+                  <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#E85D2B] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#D45A28]" onClick={() => trackEvent("free_trial_click", { location: "hero" })}>
                     Start free trial
                   </a>
                   <a href="https://calendly.com/quote-core-info/15-minute-meeting" target="_blank" rel="noopener noreferrer" className="pill-shimmer inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-300 bg-white px-7 py-2.5 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40" onClick={() => trackEvent("book_call_click", { location: "hero" })}>
@@ -576,14 +576,14 @@ export default function HomePage() {
           <div className="relative overflow-hidden rounded-[2rem] bg-zinc-950 px-6 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.15)] sm:px-10 sm:py-14">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,107,53,0.12),transparent_55%)]" />
             <div className="relative">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">The platform</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D45A28]">The platform</p>
               <h2 className="mt-3 max-w-2xl text-3xl font-semibold text-white sm:text-4xl">Built for the way your business works.</h2>
               <p className="mt-3 max-w-2xl text-lg font-semibold text-white">Because no two businesses work the same.</p>
               <p className="mt-4 max-w-4xl text-base leading-7 text-zinc-200 sm:text-lg sm:leading-8">
                 Every business has its own way of pricing, measuring and delivering work. QuoteCore+ captures that knowledge using Smart Components™, creating a reusable digital workflow that&apos;s built around your business. Whether you&apos;re quoting products, services or complete projects, every future quote, job and invoice becomes faster, easier and more consistent.
               </p>
               <div className="mt-5 rounded-xl border border-white/10 bg-white/5 px-5 py-3 sm:mt-6 sm:py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#FF6B35] mb-2">Who&apos;s it for?</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#D45A28] mb-2">Who&apos;s it for?</p>
                 <p className="text-base leading-7 text-zinc-200">QuoteCore+ is built for any business that needs to quote, manage work and get paid. From roofers and builders to electricians, landscapers, manufacturers and service businesses, Smart Components™ adapt to the way you already work - giving you one connected workflow from your first quote to your final invoice.</p>
               </div>
             </div>
@@ -607,7 +607,7 @@ export default function HomePage() {
               {/* Left: text content */}
               <div className="flex-1">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500"><span className="brand-wordmark">QuoteCore<span className="brand-plus">+</span></span> remembers how you work.</p>
-                <h2 className="mt-3 text-3xl font-semibold sm:text-4xl text-[#FF6B35]">Introducing Smart Components™</h2>
+                <h2 className="mt-3 text-3xl font-semibold sm:text-4xl text-[#D45A28]">Introducing Smart Components™</h2>
                 <p className="mt-4 text-base font-medium leading-7 text-zinc-700 sm:text-lg">Smart Components aren&apos;t templates.</p>
                 <p className="mt-4 text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">
                   They aren&apos;t products. They aren&apos;t quote libraries.
@@ -630,14 +630,14 @@ export default function HomePage() {
                     "Custom Rules",
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-3 leading-6 text-zinc-700">
-                      <span className="shrink-0 text-[#FF6B35] font-bold leading-none">✓</span>
+                      <span className="shrink-0 text-[#D45A28] font-bold leading-none">✓</span>
                       {item}
                     </li>
                   ))}
                 </ul>
                 <p className="mt-8 text-base font-semibold leading-7 text-zinc-950 sm:text-lg">Build it once. Quote it forever.</p>
                 <div className="mt-8 flex flex-wrap gap-4">
-                  <a href="/free-trial" className="inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#e85d2b]">Start free trial</a>
+                  <a href="/free-trial" className="inline-flex items-center justify-center rounded-full bg-[#E85D2B] px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#D45A28]">Start free trial</a>
                   <a href="https://calendly.com/quote-core-info/15-minute-meeting" target="_blank" rel="noopener noreferrer" className="pill-shimmer inline-flex items-center justify-center rounded-full border border-zinc-300 bg-white px-7 py-3 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40">Book a call</a>
                 </div>
               </div>
@@ -710,7 +710,7 @@ export default function HomePage() {
                       <div
                         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ${
                           i === activeStep
-                            ? "bg-[#FF6B35] text-white shadow-[0_10px_24px_rgba(255,107,53,0.32)]"
+                            ? "bg-[#E85D2B] text-white shadow-[0_10px_24px_rgba(255,107,53,0.32)]"
                             : "bg-zinc-100 text-zinc-500"
                         }`}
                       >
@@ -766,7 +766,7 @@ export default function HomePage() {
         <section id="tutorials" className="overflow-hidden bg-white pb-16">
           <div className="mx-auto w-full max-w-7xl px-6 lg:px-8">
             <div className="mb-10 max-w-2xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">Tutorials</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D45A28]">Tutorials</p>
               <h2 className="mt-4 text-3xl font-semibold tracking-tight text-zinc-950 sm:text-4xl">
                 Watch <span className="brand-wordmark">QuoteCore<span className="brand-plus">+</span></span> in action
               </h2>
@@ -904,10 +904,10 @@ export default function HomePage() {
             <div className="relative overflow-hidden rounded-[2rem] border border-[#FF6B35]/20 bg-[radial-gradient(circle_at_18%_20%,rgba(255,107,53,0.10),transparent_34%),linear-gradient(135deg,#fff_0%,#fff7f3_48%,#fff_100%)] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-8 lg:p-10">
               <div className="grid items-center gap-10 lg:grid-cols-[0.92fr_1.08fr]">
                 <div className="relative z-10">
-                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">Estimating Services</p>
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D45A28]">Estimating Services</p>
                   <h2 className="mt-4 max-w-xl text-3xl font-semibold leading-tight text-zinc-950 sm:text-4xl">
                     You build the business.
-                    <span className="block text-[#FF6B35]">We&apos;ll build the quote.</span>
+                    <span className="block text-[#D45A28]">We&apos;ll build the quote.</span>
                   </h2>
                   <div className="mt-4 h-0.5 w-16 rounded-full bg-[#FF6B35]" />
                   <p className="mt-6 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg">
@@ -924,7 +924,7 @@ export default function HomePage() {
                         "Ongoing estimating support",
                       ].map((item) => (
                         <li key={item} className="flex items-center gap-3 whitespace-nowrap leading-6">
-                          <span className="shrink-0 font-bold leading-none text-[#FF6B35]">✓</span>
+                          <span className="shrink-0 font-bold leading-none text-[#D45A28]">✓</span>
                           {item}
                         </li>
                       ))}
@@ -932,7 +932,7 @@ export default function HomePage() {
                   </div>
                   <a
                     href="/services"
-                    className="mt-8 inline-flex min-h-11 items-center justify-center gap-3 rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(255,107,53,0.24)] transition-colors hover:bg-[#e85d2b]"
+                    className="mt-8 inline-flex min-h-11 items-center justify-center gap-3 rounded-full bg-[#E85D2B] px-7 py-2.5 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(255,107,53,0.24)] transition-colors hover:bg-[#D45A28]"
                     onClick={() => trackEvent("services_click", { location: "home_services" })}
                   >
                     Find out more
@@ -988,7 +988,7 @@ export default function HomePage() {
                     <img loading="lazy" decoding="async" width={56} height={56} src="/shaun-smiling.jpg" alt="" className="h-14 w-14 rounded-full object-cover border-2 border-[#FF6B35]/20 shrink-0" />
                     <div>
                       <p className="font-semibold text-zinc-950">Shaun</p>
-                      <p className="text-sm text-[#FF6B35]">Founder, <span className="brand-wordmark">QuoteCore<span className="brand-plus">+</span></span></p>
+                      <p className="text-sm text-[#D45A28]">Founder, <span className="brand-wordmark">QuoteCore<span className="brand-plus">+</span></span></p>
                     </div>
                   </div>
                   <p className="text-xl font-semibold text-zinc-950">Meet Shaun</p>
@@ -1020,7 +1020,7 @@ export default function HomePage() {
           <div className="min-w-0 flex-1 sm:flex-none">
             <p className="mb-3 text-sm text-zinc-500 sm:mb-2">Book a 15-minute call with Shaun</p>
             <div className="grid max-w-xs grid-cols-1 gap-2 sm:flex sm:max-w-none sm:gap-3">
-              <a href="https://calendly.com/quote-core-info/15-minute-meeting" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-3 text-base font-semibold text-white transition-colors hover:bg-[#e85d2b] sm:min-h-11 sm:px-8" onClick={() => trackEvent("book_call_click", { location: "mid" })}>Book a Call</a>
+              <a href="https://calendly.com/quote-core-info/15-minute-meeting" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#E85D2B] px-7 py-3 text-base font-semibold text-white transition-colors hover:bg-[#D45A28] sm:min-h-11 sm:px-8" onClick={() => trackEvent("book_call_click", { location: "mid" })}>Book a Call</a>
               <a href="/free-trial" className="pill-shimmer inline-flex min-h-12 items-center justify-center rounded-full border border-zinc-300 bg-white px-7 py-3 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40 sm:min-h-11 sm:px-8" onClick={() => trackEvent("free_trial_click", { location: "mid" })}>Start free trial</a>
             </div>
           </div>
@@ -1041,7 +1041,7 @@ export default function HomePage() {
                     </p>
                     <a
                       href="/contact"
-                      className="mt-auto inline-flex min-h-12 w-fit translate-y-4 items-center justify-center gap-3 rounded-full border border-white/20 bg-[#FF6B35] px-8 py-2.5 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(255,107,53,0.35)] transition-colors hover:bg-[#ff5a1f] sm:text-base"
+                      className="mt-auto inline-flex min-h-12 w-fit translate-y-4 items-center justify-center gap-3 rounded-full border border-white/20 bg-[#E85D2B] px-8 py-2.5 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(255,107,53,0.35)] transition-colors hover:bg-[#ff5a1f] sm:text-base"
                     >
                       Share your idea
                       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1105,7 +1105,7 @@ export default function HomePage() {
                         <TestimonialStars rating={t.rating ?? 5} />
                         <p className="flex-1 text-base leading-relaxed text-zinc-600">{carouselMounted ? <>&ldquo;{t.quote}&rdquo;</> : null}</p>
                         <div className="mt-8 flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FF6B35] text-xs font-semibold text-white">{carouselMounted ? t.initials : null}</div>
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#D45A28] text-xs font-semibold text-white">{carouselMounted ? t.initials : null}</div>
                           <div>
                             <p className="text-sm font-semibold text-zinc-950">{carouselMounted ? t.name : null}</p>
                             {carouselMounted && t.business ? <p className="text-xs text-zinc-500">{t.business}</p> : null}
@@ -1145,7 +1145,7 @@ export default function HomePage() {
                         <TestimonialStars rating={t.rating ?? 5} />
                         <p className="flex-1 text-base leading-relaxed text-zinc-600">{carouselMounted ? <>&ldquo;{t.quote}&rdquo;</> : null}</p>
                         <div className="mt-8 flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FF6B35] text-xs font-semibold text-white">{carouselMounted ? t.initials : null}</div>
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#D45A28] text-xs font-semibold text-white">{carouselMounted ? t.initials : null}</div>
                           <div>
                             <p className="text-sm font-semibold text-zinc-950">{carouselMounted ? t.name : null}</p>
                             {carouselMounted && t.business ? <p className="text-xs text-zinc-500">{t.business}</p> : null}
@@ -1252,7 +1252,7 @@ export default function HomePage() {
                           href="/free-trial"
                           className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
                             plan.featured
-                              ? "bg-[#FF6B35] text-white hover:bg-[#e85d2b]"
+                              ? "bg-[#E85D2B] text-white hover:bg-[#D45A28]"
                               : "border border-white/20 text-white hover:bg-white/10"
                           }`}
                           onClick={() => trackEvent("free_trial_click", { location: "pricing" })}
@@ -1296,16 +1296,16 @@ export default function HomePage() {
 
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
             <div className="relative mx-auto max-w-5xl text-center">
-              <div className="pointer-events-none absolute -left-10 top-14 hidden text-[11rem] font-semibold leading-none text-[#FF6B35]/5 lg:block" aria-hidden="true">&ldquo;</div>
-              <div className="pointer-events-none absolute -right-8 top-32 hidden text-[11rem] font-semibold leading-none text-[#FF6B35]/5 lg:block" aria-hidden="true">&rdquo;</div>
+              <div className="pointer-events-none absolute -left-10 top-14 hidden text-[11rem] font-semibold leading-none text-[#D45A28]/5 lg:block" aria-hidden="true">&ldquo;</div>
+              <div className="pointer-events-none absolute -right-8 top-32 hidden text-[11rem] font-semibold leading-none text-[#D45A28]/5 lg:block" aria-hidden="true">&rdquo;</div>
 
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">Our philosophy</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D45A28]">Our philosophy</p>
               <blockquote className="mx-auto mt-5 max-w-4xl">
                 <p className="text-2xl font-semibold leading-snug text-zinc-950 sm:text-3xl">
                   Most top software says: &lsquo;Here&rsquo;s our system - make your business fit around it.&rsquo;
                 </p>
                 <div className="mx-auto my-6 h-0.5 w-12 bg-[#FF6B35]" aria-hidden="true" />
-                <p className="text-3xl font-semibold leading-tight text-[#FF6B35] sm:text-4xl">
+                <p className="text-3xl font-semibold leading-tight text-[#D45A28] sm:text-4xl">
                   We say: &lsquo;Smart Components™ provide a flexible system - make it work for your business.&rsquo;
                 </p>
               </blockquote>
@@ -1314,7 +1314,7 @@ export default function HomePage() {
             <div className="mt-12 overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.10)]">
               <div className="grid lg:grid-cols-[1fr_0.95fr]">
                 <div className="flex flex-col justify-center px-8 py-10 sm:px-12 lg:px-20">
-                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">Built for growing businesses</p>
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D45A28]">Built for growing businesses</p>
                   <h2 className="mt-5 text-4xl font-semibold leading-tight tracking-tight text-zinc-950 sm:text-5xl">
                     Quote. Manage. Grow.
                   </h2>
@@ -1325,7 +1325,7 @@ export default function HomePage() {
                   <div className="mt-7 flex flex-col gap-4 sm:flex-row">
                     <a
                       href="/free-trial"
-                      className="inline-flex min-h-14 items-center justify-center gap-3 rounded-full bg-[#FF6B35] px-9 text-base font-semibold text-white transition-colors hover:bg-[#e85d2b]"
+                      className="inline-flex min-h-14 items-center justify-center gap-3 rounded-full bg-[#FF6B35] px-9 text-base font-semibold text-white transition-colors hover:bg-[#D45A28]"
                       onClick={() => trackEvent("free_trial_click", { location: "bottom" })}
                     >
                       Start free trial
@@ -1506,8 +1506,8 @@ function ServicesPlanGraphic() {
   return (
     <div className="relative mx-auto hidden min-h-[320px] w-full max-w-[620px] items-center justify-center md:flex sm:min-h-[360px]">
       <div className="absolute inset-0 rounded-[2rem] bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]" />
-      <div className="absolute right-8 top-6 hidden text-[11px] font-semibold text-[#FF6B35] sm:block">9.15m</div>
-      <div className="absolute left-10 top-24 hidden -rotate-90 text-[11px] font-semibold text-[#FF6B35] sm:block">6.1m</div>
+      <div className="absolute right-8 top-6 hidden text-[11px] font-semibold text-[#D45A28] sm:block">9.15m</div>
+      <div className="absolute left-10 top-24 hidden -rotate-90 text-[11px] font-semibold text-[#D45A28] sm:block">6.1m</div>
       <div className="absolute left-[17%] top-[13%] hidden h-px w-[48%] bg-[#FF6B35]/65 sm:block before:absolute before:left-0 before:top-1/2 before:h-3 before:w-px before:-translate-y-1/2 before:bg-[#FF6B35] after:absolute after:right-0 after:top-1/2 after:h-3 after:w-px after:-translate-y-1/2 after:bg-[#FF6B35]" />
       <div className="absolute left-[16%] top-[25%] hidden h-[44%] w-px bg-[#FF6B35]/65 sm:block before:absolute before:left-1/2 before:top-0 before:h-px before:w-3 before:-translate-x-1/2 before:bg-[#FF6B35] after:absolute after:bottom-0 after:left-1/2 after:h-px after:w-3 after:-translate-x-1/2 after:bg-[#FF6B35]" />
 
@@ -1536,7 +1536,7 @@ function ServicesPlanGraphic() {
           </div>
           <div className="flex items-center justify-between gap-4">
             <span className="font-semibold text-zinc-950">Total</span>
-            <span className="font-semibold text-[#FF6B35]">$12,486</span>
+            <span className="font-semibold text-[#D45A28]">$12,486</span>
           </div>
         </div>
       </div>
@@ -1621,7 +1621,7 @@ function HeroFloatingIcon({type}: {type: "measure" | "quote" | "order"}) {
 
 function TestimonialStars({rating}: {rating: number}) {
   return (
-    <div className="mb-5 flex gap-1" aria-label={`${rating} out of 5 stars`}>
+    <div className="mb-5 flex gap-1" role="img" aria-label={`${rating} out of 5 stars`}>
       {[0, 1, 2, 3, 4].map((index) => {
         const fillPercent = Math.max(0, Math.min(1, rating - index)) * 100;
 
@@ -1688,7 +1688,7 @@ function ShaunQuoteBubble() {
     >
       <div className="relative rounded-2xl rounded-bl-sm bg-white px-5 py-5 shadow-[0_8px_32px_rgba(0,0,0,0.14)] border border-zinc-100 animate-[floatBubble_6s_ease-in-out_infinite]">
         <p className="text-lg font-semibold leading-snug text-zinc-800">&ldquo;Software should adapt to your business. Not the other way around.&rdquo;</p>
-        <p className="mt-3 text-base font-semibold text-[#FF6B35]">- Shaun, founder</p>
+        <p className="mt-3 text-base font-semibold text-[#D45A28]">- Shaun, founder</p>
         <span className="absolute -bottom-2.5 left-5 h-0 w-0 border-l-[10px] border-r-[10px] border-t-[10px] border-l-transparent border-r-transparent border-t-white" />
       </div>
     </div>
