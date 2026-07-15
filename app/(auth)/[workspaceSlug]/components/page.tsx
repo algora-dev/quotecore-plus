@@ -7,10 +7,10 @@ import { BackButton } from '@/app/components/BackButton';
 
 export default async function ComponentsPage(props: {
   params: Promise<{ workspaceSlug: string }>;
-  searchParams: Promise<{ restore?: string }>;
+  searchParams: Promise<{ restore?: string; created?: string }>;
 }) {
   const { workspaceSlug } = await props.params;
-  const { restore: restoreDraftId } = await props.searchParams;
+  const { restore: restoreDraftId, created: createdComponentId } = await props.searchParams;
   let components;
 
   try {
@@ -58,6 +58,7 @@ export default async function ComponentsPage(props: {
         subscriptionActive={ent.isActive}
         editWarningDismissed={editWarningDismissed}
         restoreDraftId={restoreDraftId}
+        highlightComponentId={createdComponentId}
       />
     </>
   );

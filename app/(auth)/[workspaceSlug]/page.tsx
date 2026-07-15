@@ -40,7 +40,9 @@ export default async function WorkspaceHome({
   const cookieStore = await cookies();
   const signupDraft = cookieStore.get('qcp_signup_draft')?.value;
   const signupRef = cookieStore.get('qcp_signup_ref')?.value;
-  const hasCalcDraft = Boolean(signupDraft && signupRef);
+  // Ref cookie is optional — the T2 path (restore-calc-draft → onboarding)
+  // only sets the draft cookie. The draft id alone is enough to import.
+  const hasCalcDraft = Boolean(signupDraft);
 
   const actions = [
     {
@@ -140,21 +142,21 @@ export default async function WorkspaceHome({
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-blue-800">
-              Your calculator draft is ready to import
+              Your Smart Component is ready to add
             </p>
             <p className="text-xs text-blue-600">
-              We saved your component from the {signupRef?.replace(/-/g, ' ').replace(/^free /, '')} - click to restore it as a Smart Component.
+              We saved your component from the {signupRef ? signupRef.replace(/-/g, ' ').replace(/^free /, '') : 'free calculator'} - click to add it to your workspace.
             </p>
           </div>
-          <Link
-            href={`/${workspaceSlug}/components?restore=${signupDraft}`}
+          <a
+            href={`/api/app/restore-calc-draft?draft=${encodeURIComponent(signupDraft!)}`}
             className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
           >
-            Restore draft
+            Add to my components
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-          </Link>
+          </a>
         </div>
       )}
 

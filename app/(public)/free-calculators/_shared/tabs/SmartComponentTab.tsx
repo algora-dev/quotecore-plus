@@ -113,6 +113,32 @@ export function SmartComponentTab() {
   const [saving, setSaving] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // Tier-aware save handler — used by the main "Save as Smart Component"
+  // button AND the conversion popup CTA (via popupTrigger.onCta):
+  //   T1 (anon):        persist draft → signup funnel with the draft id.
+  //   T2/T3 (signed in): persist draft → /api/app/restore-calc-draft, which
+  //     CREATES the component server-side (T3) or routes through onboarding
+  //     first (T2). No pre-filled form — the component lands in the library.
+  const saveComponent = async (opts?: { viaPopup?: boolean }) => {
+    setSaving(true);
+    try {
+      const draftId = await saveCalcDraft(config, { spec, result, areaInput, linearInput, quantityInput });
+      setSavedDraftId(draftId);
+      if (user) {
+        window.location.href = `${getAppOrigin()}/api/app/restore-calc-draft?draft=${draftId}`;
+        return; // keep `saving` true while navigating
+      }
+      if (opts?.viaPopup) {
+        // Popup CTA (anon): go straight to signup with the draft attached.
+        window.location.href = signupHref(config, draftId);
+        return;
+      }
+      setShowSavePopup(true);
+    } finally {
+      if (!user) setSaving(false);
+    }
+  };
+
   // Pre-fill area from shared state
   useEffect(() => {
     if (shared.calculatedArea) {
@@ -227,17 +253,17 @@ export function SmartComponentTab() {
 
     setResult({ rawValue, wasteAmount, totalValue, materialCost, labourCost, totalCost, unit });
 
-    // Trigger conversion popup - smart component → signup (anon users only;
-    // signed-in users get the direct save-to-workspace path instead)
-    if (!user) {
-      setShared({
-        popupTrigger: {
-          resultLabel: `${cur}${totalCost.toFixed(2)} total cost`,
-          resultDetails: `${spec.name} - ${totalValue.toFixed(2)} ${unit} × ${cur}${price}/${unit}`,
-          stage: 'smart-to-signup',
-        },
-      });
-    }
+    // Trigger the conversion popup for every tier — copy and action are
+    // tier-aware (TradeCalculator computes the copy; onCta runs the same
+    // save path as the main button).
+    setShared({
+      popupTrigger: {
+        resultLabel: `${cur}${totalCost.toFixed(2)} total cost`,
+        resultDetails: `${spec.name} - ${totalValue.toFixed(2)} ${unit} × ${cur}${price}/${unit}`,
+        stage: 'smart-to-signup',
+        onCta: () => saveComponent({ viaPopup: true }),
+      },
+    });
   }
 
   useEffect(() => {
@@ -464,25 +490,7 @@ export function SmartComponentTab() {
           {/* Save as Smart Component CTA */}
           <button
             disabled={saving}
-            onClick={async () => {
-              setSaving(true);
-              try {
-                // Async: persists the draft server-side so it survives the
-                // marketing → app domain hop (see saveCalcDraft).
-                const draftId = await saveCalcDraft(config, { spec, result, areaInput, linearInput, quantityInput });
-                setSavedDraftId(draftId);
-                if (user) {
-                  // Signed in — hand off straight into the workspace. The
-                  // app-domain route resolves the slug and opens the
-                  // components page with the draft pre-filled.
-                  window.location.href = `${getAppOrigin()}/api/app/restore-calc-draft?draft=${draftId}`;
-                  return; // keep `saving` true while navigating
-                }
-                setShowSavePopup(true);
-              } finally {
-                if (!user) setSaving(false);
-              }
-            }}
+            onClick={() => saveComponent()}
             className="w-full rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-[#FF6B35] hover:text-[#FF6B35] disabled:opacity-50"
           >
             {saving ? (user ? 'Saving to your workspace...' : 'Saving...') : 'Save as Smart Component'}
@@ -612,8 +620,9 @@ export function SmartComponentTab() {
           <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
             <h3 className="text-lg font-semibold text-slate-900">Save as Smart Component</h3>
             <p className="mt-2 text-sm text-slate-500">
-              Create a free QuoteCore+ account to save and reuse this component across quotes. Smart Components
-              store materials, waste, pricing, and pitch - ready to drop into any quote.
+              Your component is saved. Create a free QuoteCore+ account and it will be added to
+              your workspace automatically - materials, waste, pricing, and pitch included,
+              ready to use in any quote.
             </p>
             <div className="mt-5 flex gap-3 justify-end">
               <button

@@ -42,6 +42,7 @@ export function ComponentList({
   subscriptionActive,
   editWarningDismissed = false,
   restoreDraftId,
+  highlightComponentId,
 }: {
   initialComponents: ComponentLibraryRow[];
   workspaceSlug: string;
@@ -72,6 +73,9 @@ export function ComponentList({
   editWarningDismissed?: boolean;
   /** Draft ID from ?restore= query param — loads a saved calculator draft. */
   restoreDraftId?: string;
+  /** Component ID from ?created= — scrolls to + highlights a component just
+   *  created from a free-calculator draft (restore-calc-draft route). */
+  highlightComponentId?: string;
 }) {
   const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);
   // Pitch is shown when the trade requires it (roofing) or opts in optionally
@@ -189,6 +193,8 @@ export function ComponentList({
   const [restoredLabourRate, setRestoredLabourRate] = useState<string>('');
   const [restoredWasteAmount, setRestoredWasteAmount] = useState<string>('');
   const [draftConsumed, setDraftConsumed] = useState(false);
+  // ?created= highlight: glow the freshly created component, then fade.
+  const [highlightId, setHighlightId] = useState<string | null>(highlightComponentId ?? null);
   const [formPackPrice, setFormPackPrice] = useState<string>('');
   const [formPackSize, setFormPackSize] = useState<string>('');
   const [formPackCoverageM2, setFormPackCoverageM2] = useState<string>('');
@@ -202,6 +208,24 @@ export function ComponentList({
       setFormPricingStrategy('per_unit');
     }
   }, [formMeasurementType, formPricingStrategy]);
+
+  // ?created= highlight: scroll the new component into view, clear the
+  // glow after a few seconds, and clean up any leftover signup cookies.
+  useEffect(() => {
+    if (!highlightId) return;
+    const el = document.getElementById(`component-row-${highlightId}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    for (const name of ['qcp_signup_draft', 'qcp_signup_ref']) {
+      document.cookie = `${name}=; path=/; max-age=0`;
+      const h = window.location.hostname.toLowerCase();
+      if (h === 'quote-core.com' || h.endsWith('.quote-core.com')) {
+        document.cookie = `${name}=; path=/; max-age=0; domain=.quote-core.com`;
+      }
+    }
+    const timer = setTimeout(() => setHighlightId(null), 5000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load flashings on mount
   useEffect(() => {
@@ -1424,10 +1448,15 @@ export function ComponentList({
                 </form>
               </div>
             ) : (
-              <div 
+              <div
+                id={`component-row-${comp.id}`}
                 onClick={() => startEdit(comp)}
                 title="Click to view component"
-                className="flex items-center gap-3 px-4 py-3 border border-slate-200 rounded-xl bg-white cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
+                className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${
+                  highlightId === comp.id
+                    ? 'border-orange-300 bg-orange-50 shadow-[0_0_12px_rgba(255,107,53,0.25)]'
+                    : 'border-slate-200 bg-white'
+                }`}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">

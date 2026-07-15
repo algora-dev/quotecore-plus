@@ -16,6 +16,7 @@ import { SmartComponentTab } from './tabs/SmartComponentTab';
 import { AngleTab } from './tabs/AngleTab';
 import { BattenTab } from './tabs/BattenTab';
 import { CalcResultPopup } from './CalcResultPopup';
+import { useFreeToolsAuth } from '../../_components/FreeToolsAuthProvider';
 
 // ─── Trade config context ────────────────────────────
 
@@ -75,6 +76,10 @@ interface SharedState {
     qty?: string;
     /** Unit label for quote generator (e.g. "m²", "m³") */
     unit?: string;
+    /** Optional CTA action (smart-to-signup): tier-aware save handler
+     *  provided by SmartComponentTab. When set, the popup CTA runs it
+     *  instead of navigating to a URL. */
+    onCta?: () => void | Promise<void>;
   } | null;
 }
 
@@ -92,6 +97,10 @@ export function useSharedState() {
 // ─── Main Component ──────────────────────────────────
 
 export function TradeCalculator({ config }: { config: TradeConfig }) {
+  // Tier-aware popup copy: T1 anon / T2 signed-in-no-workspace / T3 full
+  // account. Falls back to the anon copy when no provider is mounted
+  // (context default: user=null).
+  const { user: authUser, tierInfo } = useFreeToolsAuth();
   const [system, setSystem] = useState<UnitSystem>('metric');
   const [currencyCode, setCurrencyCode] = useState<string>(config.defaultCurrency ?? 'GBP');
   const [activeTab, setActiveTab] = useState<string>(config.defaultTab ?? config.tabs[0]?.id ?? '');
@@ -204,15 +213,23 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
               {active && renderTab(active.kind)}
             </div>
 
-            {/* Conversion popup */}
+            {/* Conversion popup. Smart-component stage is tier-aware:
+                T1 anon → signup funnel · T2 signed-in-no-workspace →
+                onboarding · T3 → direct save to workspace. The action
+                itself (onCta) is provided by SmartComponentTab. */}
             <CalcResultPopup
               trigger={!!shared.popupTrigger}
               stage={shared.popupTrigger?.stage ?? 'calc-to-quote'}
               slug={config.slug}
               resultLabel={shared.popupTrigger?.resultLabel ?? ''}
               resultDetails={shared.popupTrigger?.resultDetails}
+              onCta={shared.popupTrigger?.onCta}
               ctaText={shared.popupTrigger?.stage === 'smart-to-signup'
-                ? 'Save this component - start free trial'
+                ? (!authUser
+                    ? 'Start free trial to save this component'
+                    : tierInfo?.tier === 3
+                      ? 'Save this component to your workspace'
+                      : 'Complete your sign up to save this component')
                 : 'Add this to a free quote'
               }
               ctaHref={shared.popupTrigger?.stage === 'smart-to-signup'
@@ -220,7 +237,11 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
                 : `/free-quote-generator?qty=${encodeURIComponent(shared.popupTrigger?.qty ?? '')}&unit=${encodeURIComponent(shared.popupTrigger?.unit ?? 'm\u00b2')}&ref=${config.slug}`
               }
               secondaryText={shared.popupTrigger?.stage === 'smart-to-signup'
-                ? 'Reuse on every quote, save your pricing rules, manage jobs'
+                ? (!authUser
+                    ? 'Reuse it on every quote - materials, waste, pricing and pitch included'
+                    : tierInfo?.tier === 3
+                      ? 'It will be added to your Smart Components, ready to use in any quote'
+                      : 'Finish setting up your workspace and this component will be added for you')
                 : 'Turn measurements into a professional quote in 2 minutes - no signup needed'
               }
             />

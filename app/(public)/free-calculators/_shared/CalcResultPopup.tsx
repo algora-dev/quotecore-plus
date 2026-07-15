@@ -21,8 +21,11 @@ interface CalcResultPopupProps {
   resultDetails?: string;
   /** Primary CTA text */
   ctaText: string;
-  /** Primary CTA URL */
+  /** Primary CTA URL (used when no onCta action is provided) */
   ctaHref: string;
+  /** Optional CTA action — when set, the CTA runs this instead of
+   *  navigating to ctaHref (e.g. tier-aware smart-component save). */
+  onCta?: () => void | Promise<void>;
   /** Secondary description text */
   secondaryText?: string;
   /** Funnel stage - controls dismissal key prefix */
@@ -38,12 +41,14 @@ export function CalcResultPopup({
   resultDetails,
   ctaText,
   ctaHref,
+  onCta,
   secondaryText,
   stage,
   slug,
   trigger,
 }: CalcResultPopupProps) {
   const [visible, setVisible] = useState(false);
+  const [busy, setBusy] = useState(false);
   const storageKey = `qcp:popup:${stage}:${slug}`;
 
   const dismiss = useCallback(() => {
@@ -88,12 +93,30 @@ export function CalcResultPopup({
         </div>
 
         {/* CTA */}
-        <a
-          href={ctaHref}
-          className="block w-full text-center px-5 py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] transition-all"
-        >
-          {ctaText}
-        </a>
+        {onCta ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await onCta();
+              } finally {
+                setBusy(false);
+              }
+            }}
+            className="block w-full text-center px-5 py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] transition-all disabled:opacity-60"
+          >
+            {busy ? 'Saving...' : ctaText}
+          </button>
+        ) : (
+          <a
+            href={ctaHref}
+            className="block w-full text-center px-5 py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] transition-all"
+          >
+            {ctaText}
+          </a>
+        )}
 
         {/* Secondary text */}
         {secondaryText && (
