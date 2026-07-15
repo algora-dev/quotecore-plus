@@ -6,6 +6,7 @@ import CookieConsent from "@/components/CookieConsent";
 import QuoteCorePlusStyler from "@/components/QuoteCorePlusStyler";
 import SiteAssistant from "@/components/SiteAssistant";
 import { buildBreadcrumbSchema, buildSoftwareApplicationSchema, organizationId, siteUrl, websiteId } from "@/lib/schema";
+import { robotsDirective } from "@/app/lib/seo";
 
 export const metadata: Metadata = {
   title: "QuoteCore+ | Quoting Software for Contractors & Trade Businesses",
@@ -22,6 +23,7 @@ export const metadata: Metadata = {
     siteName: "QuoteCore+",
     type: "website",
   },
+  robots: robotsDirective(),
 };
 
 const combinedSchema = {

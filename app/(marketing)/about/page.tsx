@@ -5,6 +5,14 @@ import SiteFooter from "@/components/SiteFooter";
 export const metadata: Metadata = {
   title: "About QuoteCore+ | Construction Quoting Software Built From the Industry",
   description: "QuoteCore+ was built by an ex-roofer who spent 12 years quoting jobs the hard way. Meet Shaun and the story behind the software.",
+  alternates: { canonical: "https://quote-core.com/about" },
+  openGraph: {
+    title: "About QuoteCore+ | Construction Quoting Software Built From the Industry",
+    description: "QuoteCore+ was built by an ex-roofer who spent 12 years quoting jobs the hard way.",
+    url: "https://quote-core.com/about",
+    siteName: "QuoteCore+",
+    type: "website",
+  },
 };
 
 export default function AboutPage() {

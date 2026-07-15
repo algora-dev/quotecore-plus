@@ -1,29 +1,67 @@
 import type { MetadataRoute } from 'next';
 
 /**
- * robots.txt - allow indexing of public marketing/docs/legal pages, block
- * everything behind auth or auto-generated workspace URLs. Sitemap points
- * to `/sitemap.xml` (served by `app/sitemap.ts`).
+ * robots.txt for https://quote-core.com.
+ *
+ * Production: allows crawling of all public pages.
+ * Preview/staging: blocks all crawling (noindex everything).
+ *
+ * Sitemap points to the global sitemap only.
+ * The NZ site (quote-core.co.nz) has its own robots.txt + sitemap.
  */
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
   'https://quote-core.com';
 
+const isProduction = process.env.VERCEL_ENV === 'production' || !process.env.VERCEL_ENV;
+
 export default function robots(): MetadataRoute.Robots {
+  // Preview/staging: block everything
+  if (!isProduction) {
+    return {
+      rules: { userAgent: '*', disallow: '/' },
+      sitemap: `${SITE_URL}/sitemap.xml`,
+    };
+  }
+
+  // Production: allow public pages, block private/app routes
   return {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/docs', '/privacy', '/cookies', '/terms', '/login', '/signup', '/free-construction-calculator', '/free-roofing-calculator', '/free-quote-generator', '/free-purchase-order-generator', '/free-invoice-generator', '/free-tools'],
+        allow: [
+          '/',
+          '/blog',
+          '/docs',
+          '/free-calculators',
+          '/free-roofing-calculator',
+          '/free-construction-calculator',
+          '/free-concrete-calculator',
+          '/free-landscaping-calculator',
+          '/free-birds-mouth-calculator',
+          '/free-quote-generator',
+          '/free-invoice-generator',
+          '/free-purchase-order-generator',
+          '/roofing-quoting-software',
+          '/construction-quoting-software',
+          '/services',
+          '/about',
+          '/contact',
+          '/free-trial',
+          '/privacy',
+          '/cookies',
+          '/terms',
+        ],
         disallow: [
           '/api/',
           '/auth/',
           '/onboarding',
           '/2fa',
-          '/accept/',          // signed acceptance links, never indexable
+          '/accept/',
           '/admin',
-          // Workspace-scoped authed routes - anything that looks like /<slug>/...
-          // is gated by middleware; we mirror that in robots to keep crawlers off.
+          '/login',
+          '/signup',
+          // Workspace-scoped authed routes — gated by middleware
           '/*/quotes',
           '/*/customers',
           '/*/settings',
@@ -31,6 +69,12 @@ export default function robots(): MetadataRoute.Robots {
           '/*/templates',
           '/*/material-orders',
           '/*/jobs',
+          '/*/components',
+          '/*/drawings',
+          '/*/catalogs',
+          '/*/attachments',
+          '/*/inbox',
+          '/*/account',
         ],
       },
     ],
