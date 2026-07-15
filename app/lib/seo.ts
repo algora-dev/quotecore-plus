@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { SITE_URL } from '@/lib/seo/site-url';
 
 /**
  * Centralised SEO utilities for the QuoteCore+ public site.
@@ -7,9 +8,7 @@ import type { Metadata } from 'next';
  * The NZ site (quotecore-nz repo) has its own lib/seo.ts.
  */
 
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
-  'https://quote-core.com';
+export { SITE_URL };
 
 export const ORG_NAME = 'QuoteCore+';
 export const ORG_LEGAL_NAME = 'T3 Play Limited';
@@ -180,6 +179,7 @@ export function blogPostingSchema({
       '@type': 'Person',
       name: authorName,
       jobTitle: authorRole,
+      url: `${SITE_URL}/about`,
     },
     publisher: {
       '@type': 'Organization',

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CookieBanner } from "./components/CookieBanner";
 import { PillShimmerScript } from "./components/PillShimmerScript";
+import { SITE_URL } from "@/lib/seo/site-url";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,10 +21,6 @@ const geistMono = Geist_Mono({
  * domains). Same env var feeds robots.ts and sitemap.ts so everything stays
  * consistent across the three SEO surfaces.
  */
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
-  'https://quote-core.com';
-
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {

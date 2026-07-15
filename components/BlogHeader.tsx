@@ -19,7 +19,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
   const [menuOpen, setMenuOpen] = useState(false);
 
   const headerButton =
-    "inline-flex h-11 min-w-[138px] items-center justify-center rounded-full px-5 text-sm transition-colors duration-200";
+    "inline-flex h-12 min-w-[138px] items-center justify-center rounded-full px-5 text-sm transition-colors duration-200";
 
   const contactButton =
     `${headerButton} pill-shimmer border border-zinc-300 bg-white font-medium text-zinc-900 shadow-[0_6px_24px_rgba(255,255,255,0.18)_inset,0_10px_30px_rgba(0,0,0,0.04)] backdrop-blur-3xl hover:border-[#FF6B35]/40`;
@@ -37,7 +37,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
     <header className="sticky top-0 z-50 border-b border-white/60 bg-white/72 shadow-[0_8px_30px_rgba(255,255,255,0.25)_inset,0_12px_40px_rgba(0,0,0,0.05)] backdrop-blur-[24px]">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
         <a href="/" className="flex items-center gap-3" aria-label="QuoteCore+ home">
-          <img src="/MainQCP.png" alt="QuoteCore+" className="h-10 w-auto sm:h-11" />
+          <img src="/MainQCP.png" alt="QuoteCore+" width={160} height={44} loading="eager" decoding="async" className="h-10 w-auto sm:h-11" />
         </a>
 
         <div className="flex items-center gap-3">
@@ -88,7 +88,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
       {menuOpen && (
         <div className="bg-white shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
           <div className="mx-auto max-w-7xl px-6 pb-4 pt-5 lg:px-8">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">Navigate</p>
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Navigate</p>
             <div className="flex flex-col">
               {navItems.map((item) => (
                 <a

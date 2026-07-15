@@ -45,6 +45,26 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    // Lazy-load the story video: only play when scrolled into view
+    const video = videoRef.current;
+    if (!video) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            video.play().catch(() => {/* autoplay may be blocked */});
+          } else {
+            video.pause();
+          }
+        });
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     const PAUSE_MS = 3000;
     const ROLL_MS = 800;
     let rafId: number;
@@ -262,6 +282,8 @@ export default function HomePage() {
           <div className="relative z-10 flex items-center justify-center">
             <img
               key={currentImage.src}
+              loading="lazy"
+              decoding="async"
               src={currentImage.src}
               alt={currentImage.label}
               className="block h-auto max-w-full rounded-xl shadow-[0_24px_70px_rgba(15,23,42,0.16)] sm:rounded-[1.5rem]"
@@ -483,11 +505,10 @@ export default function HomePage() {
                 <video
                   ref={videoRef}
                   className="block w-full aspect-video"
-                  autoPlay
                   muted
                   loop
                   playsInline
-                  preload="auto"
+                  preload="metadata"
                   onTimeUpdate={handleVideoTimeUpdate}
                 >
                   <source src="/kids-horizontal.mp4" type="video/mp4" />
@@ -623,6 +644,10 @@ export default function HomePage() {
                     style={{ zIndex: 1 }}
                   >
                     <img
+                      loading="lazy"
+                      decoding="async"
+                      width={1200}
+                      height={750}
                       src="/smart-components-laptop-1.png"
                       alt="Smart Components - component list"
                       className="w-full h-auto"
@@ -634,6 +659,10 @@ export default function HomePage() {
                     style={{ zIndex: 2 }}
                   >
                     <img
+                      loading="lazy"
+                      decoding="async"
+                      width={1200}
+                      height={750}
                       src="/smart-components-laptop-2.png"
                       alt="Smart Components - component editor"
                       className="w-full h-auto"
@@ -691,7 +720,7 @@ export default function HomePage() {
                               {item.options.map((option) => (
                                 <div key={option.title} className="flex items-center gap-4 rounded-2xl border border-zinc-100 bg-white px-4 py-3 shadow-[0_8px_22px_rgba(15,23,42,0.07)]">
                                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FF6B35]/10 text-[#FF6B35]" aria-hidden="true">
-                                    <img src={option.icon} alt="" className="h-6 w-6 object-contain" />
+                                    <img src={option.icon} alt="" loading="lazy" decoding="async" width={24} height={24} className="h-6 w-6 object-contain" />
                                   </span>
                                   <div className="min-w-0 flex-1">
                                     <p className="text-base font-semibold text-zinc-950">{option.title}</p>
@@ -769,6 +798,8 @@ export default function HomePage() {
                     >
                       <div className="overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50">
                         <img
+                          loading="lazy"
+                          decoding="async"
                           src={tutorial.image}
                           alt={tutorial.title}
                           className="aspect-video h-auto w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
@@ -805,6 +836,8 @@ export default function HomePage() {
               >
                 <div className="overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50">
                   <img
+                    loading="lazy"
+                    decoding="async"
                     src={tutorials[activeTutorial]?.image ?? tutorials[0].image}
                     alt={tutorials[activeTutorial]?.title ?? tutorials[0].title}
                     className="aspect-video h-auto w-full object-cover"
@@ -946,7 +979,7 @@ export default function HomePage() {
               <div className="grid lg:grid-cols-2">
                 <div className="flex flex-col justify-center p-10">
                   <div className="mb-6 flex items-center gap-4">
-                    <img src="/shaun-smiling.jpg" alt="Shaun" className="h-14 w-14 rounded-full object-cover border-2 border-[#FF6B35]/20 shrink-0" />
+                    <img loading="lazy" decoding="async" width={56} height={56} src="/shaun-smiling.jpg" alt="Shaun" className="h-14 w-14 rounded-full object-cover border-2 border-[#FF6B35]/20 shrink-0" />
                     <div>
                       <p className="font-semibold text-zinc-950">Shaun</p>
                       <p className="text-sm text-[#FF6B35]">Founder, <span className="brand-wordmark">QuoteCore<span className="brand-plus">+</span></span></p>
@@ -965,7 +998,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="relative hidden overflow-hidden rounded-r-[2rem] lg:block" style={{minHeight: "400px"}}>
-                  <img src="/shaun.jpg" alt="Shaun, founder of QuoteCore+" className="h-full w-full object-cover object-left" />
+                  <img loading="lazy" decoding="async" width={600} height={400} src="/shaun.jpg" alt="Shaun, founder of QuoteCore+" className="h-full w-full object-cover object-left" />
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
                     <p className="font-semibold text-white">Shaun</p>
                     <p className="text-sm text-white/70">Founder, <span className="brand-wordmark">QuoteCore<span className="brand-plus">+</span></span></p>
@@ -977,7 +1010,7 @@ export default function HomePage() {
         </section>
 
         <div className="flex items-center justify-center gap-4 bg-zinc-200 px-6 py-6 sm:gap-6 sm:py-7">
-          <img src="/shaun-smiling.jpg" alt="Shaun" className="h-20 w-20 rounded-full object-cover border-2 border-[#FF6B35]/50 shrink-0 sm:h-24 sm:w-24" />
+          <img loading="lazy" decoding="async" width={80} height={80} src="/shaun-smiling.jpg" alt="Shaun" className="h-20 w-20 rounded-full object-cover border-2 border-[#FF6B35]/50 shrink-0 sm:h-24 sm:w-24" />
           <div className="min-w-0 flex-1 sm:flex-none">
             <p className="mb-3 text-sm text-zinc-500 sm:mb-2">Book a 15-minute call with Shaun</p>
             <div className="grid max-w-xs grid-cols-1 gap-2 sm:flex sm:max-w-none sm:gap-3">
@@ -1310,6 +1343,10 @@ export default function HomePage() {
                   <div className="absolute -right-20 bottom-0 h-64 w-96 rotate-[-12deg] rounded-[50%] bg-white/35 blur-xl" aria-hidden="true" />
                   <div className="relative flex h-full items-center justify-center">
                     <img
+                      loading="lazy"
+                      decoding="async"
+                      width={576}
+                      height={360}
                       src="/resource-library-preview.png"
                       alt="QuoteCore resource library screen"
                       className="w-full max-w-xl rounded-xl border border-zinc-100 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.16)]"
@@ -1355,7 +1392,7 @@ export default function HomePage() {
             </div>
             {/* Image */}
             <div className="flex-1 flex items-start justify-center px-4 pb-8">
-              <img src="/QuoteExample.png" alt="Example Quote" className="w-full max-w-3xl rounded-[1.5rem] shadow-2xl" />
+              <img loading="lazy" decoding="async" width={768} height={500} src="/QuoteExample.png" alt="Example Quote" className="w-full max-w-3xl rounded-[1.5rem] shadow-2xl" />
             </div>
           </div>
         </div>
@@ -1468,6 +1505,10 @@ function ServicesPlanGraphic() {
 
       <div className="relative w-[82%] max-w-[430px] rotate-[-4deg] overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/75 p-4 opacity-85 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur">
         <img
+          loading="lazy"
+          decoding="async"
+          width={1200}
+          height={800}
           src="/services-roof-plan.png"
           alt="Roof plan measurement example"
           className="h-auto w-full"

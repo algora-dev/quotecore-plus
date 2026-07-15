@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { SITE_URL } from '@/lib/seo/site-url';
 
 /**
  * robots.txt for https://quote-core.com.
@@ -9,9 +10,6 @@ import type { MetadataRoute } from 'next';
  * Sitemap points to the global sitemap only.
  * The NZ site (quote-core.co.nz) has its own robots.txt + sitemap.
  */
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
-  'https://quote-core.com';
 
 const isProduction = process.env.VERCEL_ENV === 'production' || !process.env.VERCEL_ENV;
 
@@ -49,7 +47,7 @@ export default function robots(): MetadataRoute.Robots {
           '/contact',
           '/free-trial',
           '/privacy',
-          '/cookies',
+          '/cookie-policy',
           '/terms',
         ],
         disallow: [

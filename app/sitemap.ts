@@ -5,6 +5,7 @@ import { CONCRETE_SLUGS } from '@/app/(public)/free-calculators/configs/concrete
 import { CONSTRUCTION_SLUGS } from '@/app/(public)/free-calculators/configs/constructionSlugs';
 import { SLOPE_SLUGS } from '@/app/(public)/free-calculators/configs/slopeSlugs';
 import { BLOG_POSTS } from '@/app/lib/blog-posts';
+import { SITE_URL } from '@/lib/seo/site-url';
 
 /**
  * Public sitemap for https://quote-core.com.
@@ -17,9 +18,6 @@ import { BLOG_POSTS } from '@/app/lib/blog-posts';
  * Blog posts come from the shared `BLOG_POSTS` array in `app/lib/blog-posts.ts`
  * which is also used by the blog page itself — single source of truth.
  */
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
-  'https://quote-core.com';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -34,7 +32,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/contact`, lastModified: now, changeFrequency: 'yearly', priority: 0.5 },
     { url: `${SITE_URL}/free-trial`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/privacy`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${SITE_URL}/cookies`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${SITE_URL}/cookie-policy`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE_URL}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     // Docs
     { url: `${SITE_URL}/docs`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
