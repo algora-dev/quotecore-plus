@@ -10,6 +10,7 @@ import { CURRENCY_KEY } from "@/lib/consent";
 import { homepageFaqs } from "@/lib/faqs";
 import { pricingPlans } from "@/lib/pricing";
 import { buildBreadcrumbSchema, buildFaqSchema, siteUrl } from "@/lib/schema";
+import { buildSoftwareApplicationSchema } from "@/lib/schema";
 
 export default function HomePage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -383,6 +384,11 @@ export default function HomePage() {
         id="home-breadcrumb-schema"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(buildBreadcrumbSchema([{ name: "Home", url: `${siteUrl}/` }])) }}
+      />
+      <Script
+        id="home-software-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", ...buildSoftwareApplicationSchema() }) }}
       />
       <main className="min-h-screen bg-white text-zinc-950">
         <BlogHeader />

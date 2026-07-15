@@ -202,6 +202,20 @@ export function getAllSlugs(): string[] {
   return out;
 }
 
+/** Like getAllSlugs but excludes coming-soon pages — for sitemaps. */
+export function getPublishedSlugs(): string[] {
+  const tree = getDocTree();
+  const out: string[] = [];
+  if (tree.root) out.push('');
+  for (const section of tree.sections) {
+    for (const p of section.pages) {
+      if (p.frontmatter.status === 'coming-soon') continue;
+      out.push(p.slug);
+    }
+  }
+  return out;
+}
+
 /**
  * Lightweight search index. Built once, queried client-side via a JSON
  * payload. Keep this small - we only ship title + description + slug + section.

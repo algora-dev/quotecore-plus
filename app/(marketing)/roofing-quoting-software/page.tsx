@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { buildSoftwareApplicationSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title: "Roofing Quoting Software for Contractors | QuoteCore+",
@@ -125,12 +126,16 @@ const faqs = [
 export default function RoofingQuotingSoftwarePage() {
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
-      />
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
+    />
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", ...buildSoftwareApplicationSchema() }) }}
+    />
 
-      <main className="min-h-screen bg-white text-zinc-950">
+    <main className="min-h-screen bg-white text-zinc-950">
         <BlogHeader />
 
         {/* Cross-trade notice */}

@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { loadDoc, buildToc } from '@/app/lib/docs/loader';
 import { getAllSlugs, getDocTree } from '@/app/lib/docs/tree';
 import { DocsToc } from '@/app/components/docs/DocsToc';
+import { canonicalUrl } from '@/app/lib/seo';
 
 interface Props {
   params: Promise<{ slug?: string[] }>;
@@ -22,9 +23,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const slugStr = (slug ?? []).join('/');
   const doc = await loadDoc(slugStr);
   if (!doc) return { title: 'Not found - QuoteCore+ docs' };
+  const path = slugStr ? `/docs/${slugStr}` : '/docs';
   return {
     title: `${doc.frontmatter.title} - QuoteCore+ docs`,
     description: doc.frontmatter.description,
+    alternates: { canonical: canonicalUrl(path) },
   };
 }
 
