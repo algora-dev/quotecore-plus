@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useUnitSystem, useSharedState, useTradeConfig, useCurrency } from '../TradeCalculator';
 import { signupHref, saveCalcDraft } from '../types';
+import { useFreeToolsAuth } from '../../../_components/FreeToolsAuthProvider';
+import { getAppOrigin } from '../../../shared/appOrigin';
 import type { MeasurementType, WasteType, PitchType, PricingStrategy } from '@/app/lib/types';
 
 // ─── All measurement types from the app ──────────────
@@ -67,6 +69,9 @@ export function SmartComponentTab() {
   const config = useTradeConfig();
   const cfg = config.smart;
   const signup = signupHref(config);
+  // Signed-in free-tools users (unified auth) skip the signup funnel and
+  // hand off straight into their workspace via /api/app/restore-calc-draft.
+  const { user } = useFreeToolsAuth();
 
   const [spec, setSpec] = useState<ComponentSpec>({
     name: cfg.defaultName,
@@ -105,6 +110,7 @@ export function SmartComponentTab() {
   const [showSavePopup, setShowSavePopup] = useState(false);
   const [showSyncHint, setShowSyncHint] = useState(false);
   const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Pre-fill area from shared state
@@ -221,18 +227,21 @@ export function SmartComponentTab() {
 
     setResult({ rawValue, wasteAmount, totalValue, materialCost, labourCost, totalCost, unit });
 
-    // Trigger conversion popup - smart component → signup
-    setShared({
-      popupTrigger: {
-        resultLabel: `${cur}${totalCost.toFixed(2)} total cost`,
-        resultDetails: `${spec.name} - ${totalValue.toFixed(2)} ${unit} × ${cur}${price}/${unit}`,
-        stage: 'smart-to-signup',
-      },
-    });
+    // Trigger conversion popup - smart component → signup (anon users only;
+    // signed-in users get the direct save-to-workspace path instead)
+    if (!user) {
+      setShared({
+        popupTrigger: {
+          resultLabel: `${cur}${totalCost.toFixed(2)} total cost`,
+          resultDetails: `${spec.name} - ${totalValue.toFixed(2)} ${unit} × ${cur}${price}/${unit}`,
+          stage: 'smart-to-signup',
+        },
+      });
+    }
   }
 
   useEffect(() => {
-    if (result && result.totalCost > 0) {
+    if (result && result.totalCost > 0 && !user) {
       const dismissed = sessionStorage.getItem('qcp:sync-hint-dismissed');
       if (!dismissed) {
         const timer = setTimeout(() => setShowSyncHint(true), 1500);
@@ -454,16 +463,29 @@ export function SmartComponentTab() {
 
           {/* Save as Smart Component CTA */}
           <button
+            disabled={saving}
             onClick={async () => {
-              // Async: persists the draft server-side so it survives the
-              // marketing → app domain hop (see saveCalcDraft).
-              const draftId = await saveCalcDraft(config, { spec, result, areaInput, linearInput, quantityInput });
-              setSavedDraftId(draftId);
-              setShowSavePopup(false);
+              setSaving(true);
+              try {
+                // Async: persists the draft server-side so it survives the
+                // marketing → app domain hop (see saveCalcDraft).
+                const draftId = await saveCalcDraft(config, { spec, result, areaInput, linearInput, quantityInput });
+                setSavedDraftId(draftId);
+                if (user) {
+                  // Signed in — hand off straight into the workspace. The
+                  // app-domain route resolves the slug and opens the
+                  // components page with the draft pre-filled.
+                  window.location.href = `${getAppOrigin()}/api/app/restore-calc-draft?draft=${draftId}`;
+                  return; // keep `saving` true while navigating
+                }
+                setShowSavePopup(true);
+              } finally {
+                if (!user) setSaving(false);
+              }
             }}
-            className="w-full rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-[#FF6B35] hover:text-[#FF6B35]"
+            className="w-full rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-[#FF6B35] hover:text-[#FF6B35] disabled:opacity-50"
           >
-            Save as Smart Component
+            {saving ? (user ? 'Saving to your workspace...' : 'Saving...') : 'Save as Smart Component'}
           </button>
         </div>
 
