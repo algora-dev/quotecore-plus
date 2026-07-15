@@ -4,6 +4,19 @@
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
 
+**AD. Signup emails + smart component server-side create + modal copy (dev `c57541c`, 2026-07-15)**
+- [ ] Email signup (new address): confirmation email arrives IMMEDIATELY (no Resend click needed)
+- [ ] Email signup: welcome email arrives only AFTER onboarding completes (not at confirm-link click)
+- [ ] Re-running onboarding does not send a second welcome email
+- [ ] Google signup welcome email unchanged (still after onboarding)
+- [ ] T3 signed-in on free calculator: Save as Smart Component → lands on Components page, component EXISTS + highlighted (no form)
+- [ ] T3: conversion popup after Calculate shows "Save this component to your workspace"; CTA creates directly
+- [ ] T1 anon: Calculate → popup "Start free trial to save this component" → signup → confirm → onboarding → dashboard blue banner "Add to my components" → click CREATES the component (no pre-filled form)
+- [ ] T2 signed-in-no-workspace: save → onboarding → dashboard banner → click creates component
+- [ ] Component field mapping correct: name, measurement type, waste (% and fixed), price (per-unit vs pack), labour, pitch type
+- [ ] Component limit reached: save falls back to pre-filled Add Component form (upgrade modal on submit)
+- [ ] Save to App modals: no fused words (e.g. "gmail.comdoesn't"), quota modal punctuation correct
+
 **AC. Save to App flow — watermark + draft persistence + import fixes (dev `13776b8` → main, 2026-07-14)**
 - [ ] Free quote generator: T2/T3 logged-in users see NO watermark (anonymous T1 still sees it)
 - [ ] Free invoice generator: same watermark behaviour
