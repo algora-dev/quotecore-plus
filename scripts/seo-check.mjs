@@ -72,6 +72,9 @@ function checkSitemapNoAppUrls() {
   if (!existsSync(sitemapFile)) return;
   const content = readFileSync(sitemapFile, 'utf-8');
   const codeOnly = content.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+  if (!codeOnly.includes('{ url: SITE_URL,')) {
+    errors.push('Homepage sitemap URL must use slashless SITE_URL to match the rendered canonical');
+  }
   if (codeOnly.includes('app.quote-core.com')) {
     errors.push('Sitemap contains app.quote-core.com URLs — should only contain quote-core.com URLs');
   }
