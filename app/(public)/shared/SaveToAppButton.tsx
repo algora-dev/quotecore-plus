@@ -234,7 +234,7 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
       {/* Loading modal */}
       {modal.type === 'loading' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
             <div className="flex flex-col items-center gap-3">
               <svg className="w-8 h-8 animate-spin text-[#FF6B35]" fill="none" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
@@ -249,7 +249,7 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
       {/* Need email modal */}
       {modal.type === 'need_email' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">Enter your email</h2>
               <button onClick={closeModal} className="p-1 text-slate-400 hover:text-slate-600 transition">
@@ -260,7 +260,7 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
             </div>
             <p className="text-sm text-slate-600">
               Enter your email to save this {documentType} to your QuoteCore+ account.
-              If you don't have an account yet, we'll help you sign up.
+              If you don&apos;t have an account yet, we&apos;ll help you sign up.
             </p>
             <input
               type="email"
@@ -297,7 +297,7 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
       {/* No app account modal */}
       {modal.type === 'no_app_account' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">
                 {authUser ? 'Complete your sign up' : 'Get QuoteCore+'}
@@ -318,9 +318,10 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
                 </>
               ) : (
                 <>
-                  Your email <strong>{modal.email}</strong> doesn&apos;t have a QuoteCore+
-                  account yet. Sign up to save this {documentType} to your account,
-                  where you can edit it, send it to customers, and manage your business.
+                  Your email <strong>{modal.email}</strong>{' '}
+                  doesn&apos;t have a QuoteCore+ account yet. Sign up to save this{' '}
+                  {documentType} to your account, where you can edit it, send it to
+                  customers, and manage your business.
                 </>
               )}
             </p>
@@ -370,7 +371,7 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
       {/* Quota exceeded modal */}
       {modal.type === 'quota_exceeded' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">Monthly limit reached</h2>
               <button onClick={closeModal} className="p-1 text-slate-400 hover:text-slate-600 transition">
@@ -380,9 +381,11 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
               </button>
             </div>
             <p className="text-sm text-slate-600">
-              You've used all {modal.limit} {documentType}s on your {modal.planCode || 'current'} plan this month.
-              {modal.used !== undefined && ` (${modal.used}/${modal.limit} used)`}
-              Upgrade your subscription to create more {documentType}s, or wait until your quota resets next month.
+              You&apos;ve used all {modal.limit} {documentType}s on your{' '}
+              {modal.planCode || 'current'} plan this month
+              {modal.used !== undefined ? ` (${modal.used}/${modal.limit} used)` : ''}.{' '}
+              Upgrade your subscription to create more {documentType}s, or wait until
+              your quota resets next month.
             </p>
             <div className="flex flex-col gap-2">
               <a
@@ -405,7 +408,7 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
       {/* Duplicate number modal */}
       {modal.type === 'duplicate_number' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">Number already exists</h2>
               <button onClick={closeModal} className="p-1 text-slate-400 hover:text-slate-600 transition">
@@ -415,8 +418,9 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
               </button>
             </div>
             <p className="text-sm text-slate-600">
-              The number <strong>{modal.number}</strong> already exists in your account.
-              Change the {documentType} number on your free document and try again.
+              The number <strong>{modal.number}</strong>{' '}
+              already exists in your account. Change the {documentType} number on
+              your free document and try again.
             </p>
             <button
               onClick={closeModal}
@@ -431,7 +435,7 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
       {/* Subscription inactive modal */}
       {modal.type === 'subscription_inactive' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">Subscription inactive</h2>
               <button onClick={closeModal} className="p-1 text-slate-400 hover:text-slate-600 transition">
@@ -465,7 +469,7 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
       {/* Error modal */}
       {modal.type === 'error' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">Something went wrong</h2>
               <button onClick={closeModal} className="p-1 text-slate-400 hover:text-slate-600 transition">
