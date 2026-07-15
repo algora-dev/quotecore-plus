@@ -136,7 +136,7 @@ export default function FreeTrialPage() {
         <section className="relative overflow-hidden bg-[linear-gradient(180deg,#fff_0%,#fff7f2_52%,#fff_100%)]">
           <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-6 py-12 lg:grid-cols-[1fr_0.68fr] lg:px-8 lg:py-16 xl:grid-cols-[0.98fr_0.58fr_0.95fr] xl:gap-8">
             <div className="xl:pt-6">
-              <p className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#FF6B35] shadow-sm">
+              <p className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#BD4A1A] shadow-sm">
                 <span className="text-base leading-none">*</span>
                 14-day free trial
               </p>
@@ -173,7 +173,7 @@ export default function FreeTrialPage() {
                       index > 0 ? "border-l border-zinc-200" : "",
                     ].join(" ")}
                   >
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FF6B35]/10 text-[#FF6B35]">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FF6B35]/10 text-[#BD4A1A]">
                       <TrialBenefitIcon type={icon} />
                     </span>
                     <span className="mt-4">

@@ -41,7 +41,7 @@ function FaqItem({ question, answer, index }: Faq & { index: number }) {
         className="flex w-full items-center justify-between gap-4 text-left"
       >
         <span className="flex min-w-0 items-center gap-4">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FF6B35]/10 text-[#FF6B35]">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FF6B35]/10 text-[#BD4A1A]">
             {iconSrc ? (
               <img src={iconSrc} alt="" className="h-6 w-6 object-contain" aria-hidden="true" />
             ) : (

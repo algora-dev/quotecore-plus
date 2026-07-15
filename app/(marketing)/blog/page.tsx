@@ -148,7 +148,7 @@ export default function BlogIndexPage() {
                 href={page.href}
                 className="block rounded-[1.75rem] border border-zinc-200 bg-white p-7 shadow-sm transition-shadow hover:shadow-md"
               >
-                <p className="text-xs font-medium text-[#FF6B35]">Guide</p>
+                <p className="text-xs font-medium text-[#BD4A1A]">Guide</p>
                 <h2 className="mt-2 text-xl font-semibold text-zinc-950">{page.title}</h2>
                 <p className="mt-2 text-sm text-zinc-500">{page.description}</p>
               </a>

@@ -125,7 +125,7 @@ function StepIcon({ type }: { type: string }) {
 function CheckItem({ children, light = false }: { children: React.ReactNode; light?: boolean }) {
   return (
     <li className={`flex items-start gap-3 ${light ? "text-zinc-700" : "text-white"}`}>
-      <span className="mt-1 flex h-5 w-5 flex-none items-center justify-center rounded-full border border-[#FF6B35] text-[#FF6B35]">
+      <span className="mt-1 flex h-5 w-5 flex-none items-center justify-center rounded-full border border-[#FF6B35] text-[#BD4A1A]">
         <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M3.5 8.2l2.7 2.7 6-6" />
         </svg>
@@ -154,13 +154,13 @@ export default function ServicesPage() {
         <div className="mx-auto w-full max-w-7xl px-6 lg:px-8">
           <div className="grid items-center gap-10 lg:grid-cols-[0.78fr_1.22fr]">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#FF6B35]">Services</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#BD4A1A]">Services</p>
               <h1 className="mt-6 text-4xl font-semibold tracking-tight text-zinc-950 sm:text-5xl lg:text-6xl">
                 Your plans.
                 <br />
                 Our takeoff.
                 <br />
-                <span className="text-[#FF6B35]">Your quote.</span>
+                <span className="text-[#BD4A1A]">Your quote.</span>
               </h1>
               <p className="mt-6 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg">
                 We take care of the measuring and quote build so you can focus on running your business and closing more jobs.
@@ -171,7 +171,7 @@ export default function ServicesPage() {
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <a
                   href="/contact"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white shadow-[0_14px_35px_rgba(255,107,53,0.22)] transition-colors hover:bg-[#e85d2b] sm:w-44"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#BD4A1A] px-7 py-2.5 text-sm font-semibold text-white shadow-[0_14px_35px_rgba(255,107,53,0.22)] transition-colors hover:bg-[#A03E15] sm:w-44"
                 >
                   Get in touch
                 </a>
@@ -210,7 +210,7 @@ export default function ServicesPage() {
                     </svg>
                   </div>
                 ) : null}
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#FFF0EA] text-[#FF6B35]">
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#FFF0EA] text-[#BD4A1A]">
                   {step.image ? (
                     <img src={step.image} alt="" className="h-10 w-10 object-contain" aria-hidden="true" />
                   ) : (
@@ -247,7 +247,7 @@ export default function ServicesPage() {
 
           <div className="mt-8 rounded-2xl border border-[#FF6B35]/25 bg-[linear-gradient(135deg,#fff_0%,#fff8f4_100%)] px-4 py-6 sm:p-6 lg:p-8">
             <div className="grid items-center gap-6 lg:grid-cols-[auto_1fr_auto]">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-[#FF6B35]/25 bg-white text-[#FF6B35]">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-[#FF6B35]/25 bg-white text-[#BD4A1A]">
                 <StepIcon type="send" />
               </div>
               <div>
@@ -259,7 +259,7 @@ export default function ServicesPage() {
               <div className="flex w-full flex-col gap-4 sm:flex-row lg:min-w-[430px] lg:w-auto">
                 <a
                   href="/contact"
-                  className="inline-flex min-h-11 w-full flex-1 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold leading-none text-white shadow-[0_14px_35px_rgba(255,107,53,0.22)] transition-colors hover:bg-[#e85d2b] sm:min-h-14 sm:px-8 sm:py-3 sm:text-base"
+                  className="inline-flex min-h-11 w-full flex-1 items-center justify-center rounded-full bg-[#BD4A1A] px-7 py-2.5 text-sm font-semibold leading-none text-white shadow-[0_14px_35px_rgba(255,107,53,0.22)] transition-colors hover:bg-[#A03E15] sm:min-h-14 sm:px-8 sm:py-3 sm:text-base"
                 >
                   Get in touch
                 </a>

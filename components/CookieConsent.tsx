@@ -128,7 +128,7 @@ export default function CookieConsent() {
               <button
                 type="button"
                 onClick={() => apply(true, true)}
-                className="rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#e85d2b]"
+                className="rounded-full bg-[#BD4A1A] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#A03E15]"
               >
                 Accept all
               </button>
@@ -225,7 +225,7 @@ export default function CookieConsent() {
               <button
                 type="button"
                 onClick={() => apply(analyticsChecked, marketingChecked)}
-                className="rounded-full bg-[#FF6B35] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#e85d2b]"
+                className="rounded-full bg-[#BD4A1A] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#A03E15]"
               >
                 Save choices
               </button>

@@ -725,7 +725,7 @@ export default function HomePage() {
                             <div className="mt-5 space-y-3">
                               {item.options.map((option) => (
                                 <div key={option.title} className="flex items-center gap-4 rounded-2xl border border-zinc-100 bg-white px-4 py-3 shadow-[0_8px_22px_rgba(15,23,42,0.07)]">
-                                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FF6B35]/10 text-[#FF6B35]" aria-hidden="true">
+                                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FF6B35]/10 text-[#BD4A1A]" aria-hidden="true">
                                     <img src={option.icon} alt="" loading="lazy" decoding="async" width={24} height={24} className="h-6 w-6 object-contain" />
                                   </span>
                                   <div className="min-w-0 flex-1">
@@ -741,7 +741,7 @@ export default function HomePage() {
                         )}
                       </div>
                       {i !== activeStep && (
-                        <svg viewBox="0 0 24 24" className="mt-3 h-5 w-5 shrink-0 text-zinc-500 transition-transform group-hover:translate-x-1 group-hover:text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" className="mt-3 h-5 w-5 shrink-0 text-zinc-500 transition-transform group-hover:translate-x-1 group-hover:text-[#BD4A1A]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                           <path d="M9 18l6-6-6-6" />
                         </svg>
                       )}
@@ -823,7 +823,7 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={showNextTutorial}
-                  className="absolute -right-4 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white text-[#FF6B35] shadow-[0_14px_40px_rgba(15,23,42,0.10)] transition-colors hover:bg-zinc-50 lg:flex"
+                  className="absolute -right-4 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white text-[#BD4A1A] shadow-[0_14px_40px_rgba(15,23,42,0.10)] transition-colors hover:bg-zinc-50 lg:flex"
                   aria-label="Next tutorial"
                 >
                   <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1236,7 +1236,7 @@ export default function HomePage() {
                       <ul className="mt-6 flex-1 space-y-2">
                         {plan.features.map((f) => (
                           <li key={f} className="flex items-center gap-2 text-sm">
-                            <svg className="h-4 w-4 shrink-0 text-[#FF6B35]" viewBox="0 0 20 20" fill="currentColor">
+                            <svg className="h-4 w-4 shrink-0 text-[#BD4A1A]" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                             <span className={plan.featured ? "text-zinc-300" : "text-zinc-500"}>{f}</span>
@@ -1325,7 +1325,7 @@ export default function HomePage() {
                   <div className="mt-7 flex flex-col gap-4 sm:flex-row">
                     <a
                       href="/free-trial"
-                      className="inline-flex min-h-14 items-center justify-center gap-3 rounded-full bg-[#FF6B35] px-9 text-base font-semibold text-white transition-colors hover:bg-[#A03E15]"
+                      className="inline-flex min-h-14 items-center justify-center gap-3 rounded-full bg-[#BD4A1A] px-9 text-base font-semibold text-white transition-colors hover:bg-[#A03E15]"
                       onClick={() => trackEvent("free_trial_click", { location: "bottom" })}
                     >
                       Start free trial
@@ -1572,7 +1572,7 @@ function HeroFloatingCard({
           style={{"--hero-card-float-delay": floatDelay} as React.CSSProperties}
         >
           <div className="flex items-start gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FF6B35]/10 text-[#FF6B35]">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FF6B35]/10 text-[#BD4A1A]">
               <HeroFloatingIcon type={icon} />
             </span>
             <span className="min-w-0">
@@ -1630,7 +1630,7 @@ function TestimonialStars({rating}: {rating: number}) {
             <svg className="absolute inset-0 h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
             </svg>
-            <span className="absolute inset-0 overflow-hidden text-[#FF6B35]" style={{width: `${fillPercent}%`}}>
+            <span className="absolute inset-0 overflow-hidden text-[#BD4A1A]" style={{width: `${fillPercent}%`}}>
               <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
               </svg>

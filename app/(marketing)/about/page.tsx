@@ -26,7 +26,7 @@ export default function AboutPage() {
         <section className="relative overflow-hidden pb-12 pt-16">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.08),transparent_40%)]" />
           <div className="relative mx-auto max-w-3xl px-6 lg:px-8">
-            <p className="text-sm font-medium text-[#FF6B35]">About QuoteCore+</p>
+            <p className="text-sm font-medium text-[#BD4A1A]">About QuoteCore+</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
               He spent 12 years quoting roofs the hard way. Then he built QuoteCore+.
             </h1>
@@ -42,7 +42,7 @@ export default function AboutPage() {
             <div>
               <p className="text-xl font-semibold">Shaun</p>
               <p className="text-sm text-zinc-500">Founder, QuoteCore+</p>
-              <p className="mt-1 text-sm font-medium text-[#FF6B35]">12 years on the tools</p>
+              <p className="mt-1 text-sm font-medium text-[#BD4A1A]">12 years on the tools</p>
             </div>
           </div>
 
@@ -51,10 +51,10 @@ export default function AboutPage() {
 
             {/* Stop 1 */}
             <div className="relative pl-12">
-              <div className="absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#FF6B35] text-xs font-bold text-white shadow-[0_0_0_4px_rgba(255,107,53,0.15)]">1</div>
+              <div className="absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#BD4A1A] text-xs font-bold text-white shadow-[0_0_0_4px_rgba(255,107,53,0.15)]">1</div>
               <div className="absolute bottom-0 left-4 top-9 w-px bg-zinc-200" />
               <div className="pb-14">
-                <p className="text-xs font-semibold uppercase tracking-widest text-[#FF6B35]">Age 21 - 33</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-[#BD4A1A]">Age 21 - 33</p>
                 <h3 className="mt-2 text-xl font-semibold">12 years on the roof</h3>
                 <div className="mt-4 space-y-4 leading-8 text-zinc-600">
                   <p>For twelve years, he was on the tools. Multiple quotes a day, some days. Each one the same process: measure on site, bring the numbers home, work out the pricing, write it up, file it, send it. Then hope the client hadn't already gone with someone else.</p>
@@ -67,10 +67,10 @@ export default function AboutPage() {
 
             {/* Stop 2 */}
             <div className="relative pl-12">
-              <div className="absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#FF6B35] text-xs font-bold text-white shadow-[0_0_0_4px_rgba(255,107,53,0.15)]">2</div>
+              <div className="absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#BD4A1A] text-xs font-bold text-white shadow-[0_0_0_4px_rgba(255,107,53,0.15)]">2</div>
               <div className="absolute bottom-0 left-4 top-9 w-px bg-zinc-200" />
               <div className="pb-14">
-                <p className="text-xs font-semibold uppercase tracking-widest text-[#FF6B35]">The gap in the market</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-[#BD4A1A]">The gap in the market</p>
                 <h3 className="mt-2 text-xl font-semibold">The software that didn't exist</h3>
                 <div className="mt-4 space-y-4 leading-8 text-zinc-600">
                   <p>The tools available were either generic - built for "trades" and completely misunderstanding how a roofer actually prices a job - or so complex they needed a trained estimator to operate them.</p>
@@ -82,9 +82,9 @@ export default function AboutPage() {
 
             {/* Stop 3 */}
             <div className="relative pl-12">
-              <div className="absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#FF6B35] text-xs font-bold text-white shadow-[0_0_0_4px_rgba(255,107,53,0.15)]">3</div>
+              <div className="absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#BD4A1A] text-xs font-bold text-white shadow-[0_0_0_4px_rgba(255,107,53,0.15)]">3</div>
               <div className="pb-6">
-                <p className="text-xs font-semibold uppercase tracking-widest text-[#FF6B35]">Why it matters</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-[#BD4A1A]">Why it matters</p>
                 <h3 className="mt-2 text-xl font-semibold">Built from the inside out</h3>
                 <div className="mt-4 space-y-4 leading-8 text-zinc-600">
                   <p>QuoteCore+ isn't built by developers who interviewed a few roofers. It's built by someone who lived the problem for over a decade. Every feature exists because someone who spent twelve years roofing decided it should.</p>
@@ -103,7 +103,7 @@ export default function AboutPage() {
             <p className="mt-2 text-zinc-500">Two weeks free. No card required. Start quoting in minutes.</p>
             <a
               href="/free-trial"
-              className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-[#FF6B35] px-10 py-3 text-base font-semibold text-white transition-colors hover:bg-[#e85d2b]"
+              className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-[#BD4A1A] px-10 py-3 text-base font-semibold text-white transition-colors hover:bg-[#A03E15]"
             >
               Start your free trial
             </a>

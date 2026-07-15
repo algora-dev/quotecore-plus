@@ -31,7 +31,7 @@ export default function Post() {
           <a
             href="/qc-checklist.pdf"
             download="QuoteCore-Checklist.pdf"
-            className="inline-flex items-center gap-2 rounded-full bg-[#FF6B35] px-6 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90 no-underline"
+            className="inline-flex items-center gap-2 rounded-full bg-[#BD4A1A] px-6 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90 no-underline"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -68,7 +68,7 @@ export default function Post() {
         />
       </div>
       <p>Getting quotes out faster solves one part of the problem - if you want the broader picture on growing a contracting business without spending money on ads first, <a href="/blog/how-to-get-more-work-as-a-contractor">here are the basics worth fixing</a>.</p>
-      <p><a href="/free-trial" className="text-[#FF6B35] font-medium hover:underline">Start your free 14-day trial</a> - no card required.</p>
+      <p><a href="/free-trial" className="text-[#BD4A1A] font-medium hover:underline">Start your free 14-day trial</a> - no card required.</p>
     </div>
   );
 }

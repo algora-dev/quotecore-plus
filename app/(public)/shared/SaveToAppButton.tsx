@@ -223,7 +223,7 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
       <button
         type="button"
         onClick={handleSaveToApp}
-        className="inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+        className="inline-flex items-center gap-1.5 rounded-full bg-[#BD4A1A] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
@@ -236,7 +236,7 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
             <div className="flex flex-col items-center gap-3">
-              <svg className="w-8 h-8 animate-spin text-[#FF6B35]" fill="none" viewBox="0 0 24 24">
+              <svg className="w-8 h-8 animate-spin text-[#BD4A1A]" fill="none" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
                 <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
@@ -390,7 +390,7 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
             <div className="flex flex-col gap-2">
               <a
                 href="/account/billing"
-                className="w-full text-center px-5 py-2.5 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all"
+                className="w-full text-center px-5 py-2.5 text-sm font-semibold rounded-full bg-[#BD4A1A] text-white hover:bg-[#ff5722] transition-all"
               >
                 Upgrade plan
               </a>
@@ -451,7 +451,7 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
             <div className="flex flex-col gap-2">
               <a
                 href="/account/billing"
-                className="w-full text-center px-5 py-2.5 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all"
+                className="w-full text-center px-5 py-2.5 text-sm font-semibold rounded-full bg-[#BD4A1A] text-white hover:bg-[#ff5722] transition-all"
               >
                 Reactivate subscription
               </a>

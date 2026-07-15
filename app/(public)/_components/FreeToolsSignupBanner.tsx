@@ -42,7 +42,7 @@ export function FreeToolsSignupBanner() {
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => openAuthModal('signup')}
-            className="rounded-full bg-[#FF6B35] px-4 py-2 text-xs font-semibold text-white hover:bg-[#ff5722] transition whitespace-nowrap"
+            className="rounded-full bg-[#BD4A1A] px-4 py-2 text-xs font-semibold text-white hover:bg-[#ff5722] transition whitespace-nowrap"
           >
             Sign up free
           </button>
