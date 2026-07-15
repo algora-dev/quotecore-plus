@@ -296,7 +296,7 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={showPreviousStepImage}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 transition-colors hover:bg-zinc-200"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 transition-colors hover:bg-zinc-200"
                 aria-label="Previous screenshot"
               >
                 <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -322,7 +322,7 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={showNextStepImage}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 text-white transition-colors hover:bg-zinc-700"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-800 text-white transition-colors hover:bg-zinc-700"
                 aria-label="Next screenshot"
               >
                 <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -483,7 +483,7 @@ export default function HomePage() {
                   style={{display: "block"}}
                 >
                   <source src="/qc-hero-laptop.mp4" type="video/mp4" />
-                  <track kind="descriptions" srcLang="en" label="Product demo video" />
+                  <track kind="captions" srcLang="en" label="Product demo video" />
                 </video>
               </div>
             </div>
@@ -515,7 +515,7 @@ export default function HomePage() {
                   onTimeUpdate={handleVideoTimeUpdate}
                 >
                   <source src="/kids-horizontal.mp4" type="video/mp4" />
-                  <track kind="descriptions" srcLang="en" label="Brand story video" />
+                  <track kind="captions" srcLang="en" label="Brand story video" />
                 </video>
                 {/* Progress bar - shows on hover */}
                 <div
@@ -876,7 +876,7 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={showPreviousTutorial}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-800 shadow-sm"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-800 shadow-sm"
                 aria-label="Previous tutorial"
               >
                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -886,7 +886,7 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={showNextTutorial}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-white shadow-sm"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-900 text-white shadow-sm"
                 aria-label="Next tutorial"
               >
                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1002,7 +1002,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="relative hidden overflow-hidden rounded-r-[2rem] lg:block" style={{minHeight: "400px"}}>
-                  <img loading="lazy" decoding="async" width={600} height={400} src="/shaun.jpg" alt="Shaun, founder of QuoteCore+" className="h-full w-full object-cover object-left" />
+                  <img loading="lazy" decoding="async" width={600} height={400} src="/shaun.jpg" alt="" className="h-full w-full object-cover object-left" />
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
                     <p className="font-semibold text-white">Shaun</p>
                     <p className="text-sm text-white/70">Founder, <span className="brand-wordmark">QuoteCore<span className="brand-plus">+</span></span></p>
@@ -1106,7 +1106,7 @@ export default function HomePage() {
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FF6B35] text-xs font-semibold text-white">{carouselMounted ? t.initials : null}</div>
                           <div>
                             <p className="text-sm font-semibold text-zinc-950">{carouselMounted ? t.name : null}</p>
-                            {carouselMounted && t.business ? <p className="text-xs text-zinc-400">{t.business}</p> : null}
+                            {carouselMounted && t.business ? <p className="text-xs text-zinc-500">{t.business}</p> : null}
                           </div>
                         </div>
                       </div>
@@ -1138,7 +1138,7 @@ export default function HomePage() {
                 >
                   {[...testimonials, ...testimonials].map((t, idx) => (
                   // eslint-disable-next-line jsx-a11y/no-redundant-roles
-                    <div key={idx} className="w-1/3 shrink-0 px-3" aria-hidden="true" tabIndex={-1}>
+                    <div key={idx} className="w-1/3 shrink-0 px-3" aria-hidden="true">
                       <div className="flex h-full flex-col rounded-[2rem] bg-white p-8 shadow-sm">
                         <TestimonialStars rating={t.rating ?? 5} />
                         <p className="flex-1 text-base leading-relaxed text-zinc-600">{carouselMounted ? <>&ldquo;{t.quote}&rdquo;</> : null}</p>
@@ -1146,7 +1146,7 @@ export default function HomePage() {
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FF6B35] text-xs font-semibold text-white">{carouselMounted ? t.initials : null}</div>
                           <div>
                             <p className="text-sm font-semibold text-zinc-950">{carouselMounted ? t.name : null}</p>
-                            {carouselMounted && t.business ? <p className="text-xs text-zinc-400">{t.business}</p> : null}
+                            {carouselMounted && t.business ? <p className="text-xs text-zinc-500">{t.business}</p> : null}
                           </div>
                         </div>
                       </div>
@@ -1218,18 +1218,18 @@ export default function HomePage() {
                           {currency === "GBP" ? plan.gbp : plan.usd}
                           {!plan.isFree && !plan.comingSoon && (
                             <span className={`ml-1 align-baseline text-sm font-medium ${
-                              plan.featured ? "text-zinc-200" : "text-zinc-400"
+                              plan.featured ? "text-zinc-200" : "text-zinc-500"
                             }`}>/mo</span>
                           )}
                         </p>
                         {!plan.isFree && !plan.comingSoon && plan.originalUsd && (
-                          <p className={`text-sm ${plan.featured ? "text-zinc-400" : "text-zinc-500"}`}>
+                          <p className={`text-sm ${plan.featured ? "text-zinc-300" : "text-zinc-500"}`}>
                             Regular price <s>{currency === "GBP" ? plan.originalGbp : plan.originalUsd}/mo</s>
                           </p>
                         )}
                       </div>
                       <p className={`mt-3 text-sm ${
-                        plan.featured ? "text-zinc-400" : "text-zinc-500"
+                        plan.featured ? "text-zinc-300" : "text-zinc-500"
                       }`}>{plan.subtitle}</p>
                       <ul className="mt-6 flex-1 space-y-2">
                         {plan.features.map((f) => (
@@ -1237,7 +1237,7 @@ export default function HomePage() {
                             <svg className="h-4 w-4 shrink-0 text-[#FF6B35]" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
-                            <span className={plan.featured ? "text-zinc-600" : "text-zinc-400"}>{f}</span>
+                            <span className={plan.featured ? "text-zinc-300" : "text-zinc-500"}>{f}</span>
                           </li>
                         ))}
                       </ul>
@@ -1390,7 +1390,7 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={() => setQuoteModalOpen(false)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg text-zinc-600 hover:text-zinc-950 transition-colors"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-lg text-zinc-600 hover:text-zinc-950 transition-colors"
                 aria-label="Close"
               >
                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
