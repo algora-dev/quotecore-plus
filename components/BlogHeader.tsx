@@ -10,6 +10,7 @@ const navItems = [
   { label: "Pricing", href: "/#pricing" },
   { label: "Free Tools", href: "/free-tools" },
   { label: "Blog", href: "/blog" },
+  { label: "Documentation", href: "https://app.quote-core.com/docs", external: true },
   { label: "Contact us", href: "/contact" },
   { label: "Free trial", href: "/free-trial" },
 ];
@@ -95,11 +96,18 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
                   href={item.href}
                   className="flex items-center justify-between border-b border-zinc-100 py-3.5 text-base font-medium text-zinc-800 transition-colors hover:text-[#FF6B35]"
                   onClick={() => setMenuOpen(false)}
+                  {...("external" in item && item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                 >
                   {item.label}
-                  <svg className="h-4 w-4 text-zinc-300" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                  </svg>
+                  {"external" in item && item.external ? (
+                    <svg className="h-4 w-4 text-zinc-300" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                      <path d="M11 3h6v6M17 3l-7 7M14 11v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1h6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  ) : (
+                    <svg className="h-4 w-4 text-zinc-300" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
                 </a>
               ))}
             </div>
