@@ -3,12 +3,46 @@ title: Changelog
 description: What changed and when.
 order: 4
 status: published
-updated: 2026-07-12
+updated: 2026-07-15
 ---
 
 # Changelog
 
 A running log of features added and significant changes.
+
+## 2026-07-15 — Free tools unified auth, save-to-app, server-side drafts
+
+### Unified authentication for free tools
+
+Free tools now authenticate against the main QuoteCore+ Supabase project. This means:
+
+- **One account everywhere** — the same login works for the app and all free tools.
+- **Cookie-backed sessions** — sign in once, stay signed in across quote-core.com and app.quote-core.com.
+- **Magic link sign-up** — no password needed to get started. Set a password later during onboarding.
+- **Google OAuth** — sign up or log in with Google on free tools.
+
+The separate free-tools Supabase project has been retired.
+
+### Save to App flow
+
+Free tool users can now save their quotes, invoices, and purchase orders directly into their QuoteCore+ workspace:
+
+- **Save to App button** on all three document generators.
+- Checks subscription status, quotas, and duplicate document numbers before importing.
+- Creates a full editable entity (quote, invoice, or material order) in the workspace.
+- Redirects to the app editor with the document ready to go.
+
+### Server-side draft persistence
+
+Smart Component drafts from the calculators are now saved server-side instead of in browser localStorage. This fixes cross-origin issues between quote-core.com and app.quote-core.com — drafts created on the marketing site are immediately available on the app dashboard.
+
+### Smart Component → Component Library
+
+Smart Component specs from the free calculators can be added directly to your component library with one click from the dashboard. The conversion maps waste routing, pack pricing, pitch type, and component slot requirements automatically.
+
+### Email sign-up fix
+
+Fixed an issue where email sign-up did not send a confirmation email. The `resend` flow now fires correctly after account creation. Welcome emails fire at onboarding completion (not at sign-up) for both email and Google OAuth paths.
 
 ## 2026-07-12 — Gradient pitch input, admin quota reset, component-as-custom-line note, docs update
 
