@@ -310,12 +310,14 @@ export default function HomePage() {
                     type="button"
                     key={image.src}
                     onClick={() => setActiveImageIndex(index)}
-                    className={`h-2 w-2 rounded-full transition-colors ${
-                      index === activeImageIndex ? "bg-[#FF6B35]" : "bg-zinc-600 hover:bg-zinc-400"
-                    }`}
+                    className="flex h-11 w-11 items-center justify-center rounded-full"
                     aria-label={`Show ${image.label}`}
                     aria-current={index === activeImageIndex ? "true" : undefined}
-                  />
+                  >
+                    <span className={`h-2 w-2 rounded-full transition-colors ${
+                      index === activeImageIndex ? "bg-[#FF6B35]" : "bg-zinc-600 hover:bg-zinc-400"
+                    }`} />
+                  </button>
                 ))}
               </div>
 
@@ -1138,7 +1140,7 @@ export default function HomePage() {
                 >
                   {[...testimonials, ...testimonials].map((t, idx) => (
                   // eslint-disable-next-line jsx-a11y/no-redundant-roles
-                    <div key={idx} className="w-1/3 shrink-0 px-3" aria-hidden="true">
+                    <div key={idx} className="w-1/3 shrink-0 px-3">
                       <div className="flex h-full flex-col rounded-[2rem] bg-white p-8 shadow-sm">
                         <TestimonialStars rating={t.rating ?? 5} />
                         <p className="flex-1 text-base leading-relaxed text-zinc-600">{carouselMounted ? <>&ldquo;{t.quote}&rdquo;</> : null}</p>

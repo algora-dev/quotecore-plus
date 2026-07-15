@@ -74,7 +74,7 @@ export default function CoffeePopup() {
           <div className="relative hidden sm:block w-56 flex-shrink-0 bg-[#fdf6ee]">
             <img
               src="/shaun-smiling.jpg"
-              alt="Shaun, Founder of QuoteCore+"
+              alt=""
               className="h-full w-full object-cover object-top"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#fdf6ee]/40 to-transparent" />
@@ -84,7 +84,7 @@ export default function CoffeePopup() {
           <button
             type="button"
             onClick={dismiss}
-            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-zinc-500 shadow-sm transition-colors hover:bg-white"
+            className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/80 text-zinc-500 shadow-sm transition-colors hover:bg-white"
             aria-label="Close"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
