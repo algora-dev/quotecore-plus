@@ -23,7 +23,16 @@ export async function completeOnboarding(companyId: string, data: OnboardingData
   }
 
   const supabase = await createSupabaseServerClient();
-  
+
+  // Snapshot pre-update state: the welcome email below must only fire on
+  // the FIRST onboarding completion (re-running onboarding must not
+  // re-send it), and we need the slug for the email's dashboard links.
+  const { data: companyBefore } = await supabase
+    .from('companies')
+    .select('slug, onboarding_completed_at')
+    .eq('id', companyId)
+    .maybeSingle();
+
   console.log('[completeOnboarding] Updating company:', {
     companyId,
     currency: data.currency,
@@ -78,6 +87,34 @@ export async function completeOnboarding(companyId: string, data: OnboardingData
     }
   } catch (err) {
     console.error('[completeOnboarding] seeding threw (non-fatal):', err);
+  }
+
+  // Welcome email — email-signup flow. Sent HERE (onboarding complete,
+  // user about to land on the dashboard), not at email confirmation.
+  // Matches the Google path's timing (completeGoogleOnboarding sends its
+  // own). First completion only; best-effort, never blocks onboarding.
+  if (!companyBefore?.onboarding_completed_at) {
+    try {
+      if (profile.email) {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.quote-core.com';
+        const { renderWelcomeEmail } = await import('@/app/lib/email/templates/welcome');
+        const { sendEmail } = await import('@/app/lib/email/send');
+        const { html, text, subject } = renderWelcomeEmail({
+          fullName: profile.full_name || '',
+          workspaceSlug: companyBefore?.slug || 'workspace',
+          appUrl,
+        });
+        await sendEmail({
+          to: profile.email,
+          subject,
+          html,
+          text,
+          tags: [{ name: 'type', value: 'welcome' }],
+        });
+      }
+    } catch (err) {
+      console.error('[completeOnboarding] Welcome email failed (non-fatal):', err);
+    }
   }
 
   console.log('[completeOnboarding] Success! Onboarding completed.');

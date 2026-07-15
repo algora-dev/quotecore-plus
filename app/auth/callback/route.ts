@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { syncEmailChangeFromAuth } from '@/app/(auth)/[workspaceSlug]/settings/email-change-actions';
-import { sendEmail } from '@/app/lib/email/send';
-import { renderWelcomeEmail } from '@/app/lib/email/templates/welcome';
 import { ensureCompanyHasCollection } from '@/app/lib/data/ensure-company-has-collection';
 
 export async function GET(request: Request) {
@@ -150,23 +148,11 @@ export async function GET(request: Request) {
                 console.error('[auth/callback] ensureCompanyHasCollection failed (non-fatal):', err);
               }
 
-              // Send welcome email (single "Confirm Email" CTA).
-              try {
-                const { html, text, subject } = renderWelcomeEmail({
-                  fullName,
-                  workspaceSlug: company.slug || 'workspace',
-                  appUrl: origin,
-                });
-                await sendEmail({
-                  to: user.email || '',
-                  subject,
-                  html,
-                  text,
-                  tags: [{ name: 'type', value: 'welcome' }],
-                });
-              } catch (err) {
-                console.error('[auth/callback] Welcome email failed (non-fatal):', err);
-              }
+              // NOTE: the welcome email is NOT sent here. Sending it at
+              // confirmation time meant it arrived before the user had even
+              // completed onboarding. It now goes out when onboarding
+              // completes (completeOnboarding in onboarding/actions.ts) —
+              // the same timing the Google path already uses.
 
               // Redirect to onboarding so the user sets trade/preferences.
               return NextResponse.redirect(`${origin}/onboarding`);

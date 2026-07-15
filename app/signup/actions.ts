@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
+import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import type { Database } from '@/app/lib/supabase/database.types';
 
 type SignupInput = {
@@ -96,8 +97,25 @@ export async function signupWithCompany(input: SignupInput) {
     return { ok: false, error: msg };
   }
 
-  // Supabase sends a confirmation email with a secure link to /auth/callback.
-  // The user must click it before they can sign in. Company/profile are
-  // created in the callback after confirmation.
+  // Send the confirmation email explicitly. `auth.admin.createUser` NEVER
+  // sends emails (by design — it's the admin API), so we fire the same
+  // resend endpoint the "Resend confirmation" button uses. The user must
+  // click the link before they can sign in; company/profile are created in
+  // /auth/callback after confirmation.
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { error: sendError } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+    });
+    if (sendError) {
+      // Non-fatal: the account exists; the login page's "Resend
+      // confirmation" button is the recovery path.
+      console.error('[signupWithCompany] confirmation email send failed:', sendError.message);
+    }
+  } catch (err) {
+    console.error('[signupWithCompany] confirmation email send threw:', err);
+  }
+
   redirect('/login?signup=pending');
 }
