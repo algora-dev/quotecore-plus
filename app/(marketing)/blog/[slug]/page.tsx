@@ -146,16 +146,7 @@ export default async function BlogPostPage({ params }: Props) {
               className="h-9 w-9 rounded-full object-cover border border-zinc-200 shrink-0"
             />
             <p className="text-sm text-zinc-500">
-              {slug === 'built-by-a-roofer' ? (
-                <>
-                  By <span className="font-medium text-zinc-700">Shaun</span>, Product Direction at
-                  QuoteCore+.
-                </>
-              ) : (
-                <>
-                  By the <span className="font-medium text-zinc-700">QuoteCore+ team</span>.
-                </>
-              )}
+              By <span className="font-medium text-zinc-700">Shaun</span>, Founder of QuoteCore+.
             </p>
           </div>
 

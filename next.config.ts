@@ -54,6 +54,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      // Old cookie page -> canonical /cookie-policy
+      { source: '/cookies', destination: '/cookie-policy', permanent: true },
+    ];
+  },
   async headers() {
     const baseSecurityHeaders = [
       { key: 'X-Frame-Options', value: 'DENY' },
