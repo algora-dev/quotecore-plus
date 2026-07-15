@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import { LegalPageShell } from '@/app/components/LegalPageShell';
+import { hreflangLanguages } from '@/lib/seo/hreflang';
 
 export const metadata = {
   title: 'Privacy Policy - QuoteCore+',
   description: 'How QuoteCore+ collects, uses, and protects your personal data.',
+  alternates: { canonical: 'https://quote-core.com/privacy', languages: hreflangLanguages('/privacy') },
 };
 
 const TOC = [

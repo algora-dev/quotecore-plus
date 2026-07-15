@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
   title: "About QuoteCore+ | Construction Quoting Software Built From the Industry",
   description: "QuoteCore+ was built by an ex-roofer who spent 12 years quoting jobs the hard way. Meet Shaun and the story behind the software.",
-  alternates: { canonical: "https://quote-core.com/about" },
+  alternates: { canonical: "https://quote-core.com/about", languages: hreflangLanguages("/about") },
   openGraph: {
     title: "About QuoteCore+ | Construction Quoting Software Built From the Industry",
     description: "QuoteCore+ was built by an ex-roofer who spent 12 years quoting jobs the hard way.",

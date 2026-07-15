@@ -3,12 +3,14 @@ import OpenCookiePrefButton from "@/components/OpenCookiePrefButton";
 import ManageCookiesButton from "@/components/ManageCookiesButton";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
   title: "Cookie Policy | QuoteCore+",
   description: "How QuoteCore+ uses cookies and similar technologies on our website.",
   alternates: {
     canonical: "https://quote-core.com/cookie-policy",
+    languages: hreflangLanguages("/cookie-policy"),
   },
 };
 

@@ -117,33 +117,108 @@ function checkLayoutExports() {
   });
 }
 
-// ── Check 6: Hreflang reciprocity ──────────────────────────────────────────
+// ── Check 6: Hreflang — page-level only, no site-wide layout emission ──────
 function checkHreflangReciprocity() {
-  // Global site (marketing layout) should declare en-NZ pointing to NZ
+  // Helper file must exist
+  const hreflangHelper = join(ROOT, 'lib', 'seo', 'hreflang.ts');
+  if (!existsSync(hreflangHelper)) {
+    errors.push('Missing app/lib/seo/hreflang.ts helper — page-level hreflang cannot work without it');
+  }
+
+  // Layouts must NOT emit site-wide hreflang languages
   const marketingLayout = join(APP_DIR, '(marketing)', 'layout.tsx');
   if (existsSync(marketingLayout)) {
     const content = readFileSync(marketingLayout, 'utf-8');
-    if (!content.includes('en-NZ')) {
-      errors.push('Global site (marketing layout) missing en-NZ hreflang alternate pointing to NZ site');
-    }
-    if (!content.includes('x-default')) {
-      errors.push('Global site (marketing layout) missing x-default hreflang');
-    }
-    if (!content.includes('quote-core.co.nz')) {
-      errors.push('Global site (marketing layout) missing NZ site URL in hreflang');
+    const alternatesMatch = content.match(/alternates:\s*\{[^}]*\}/s);
+    if (alternatesMatch && alternatesMatch[0].includes('languages')) {
+      errors.push('Marketing layout emits site-wide hreflang languages — must be page-level only to avoid pointing unrelated pages to NZ homepage');
     }
   }
 
   // Check NZ site if it exists in sibling repo
-  const nzLayout = join(ROOT, '..', 'quotecore-nz', 'app', 'layout.tsx');
+  const nzRoot = join(ROOT, '..', 'quotecore-nz');
+  const nzLayout = join(nzRoot, 'app', 'layout.tsx');
+  const nzHreflangHelper = join(nzRoot, 'lib', 'hreflang.ts');
   if (existsSync(nzLayout)) {
     const content = readFileSync(nzLayout, 'utf-8');
-    if (!content.includes('quote-core.com')) {
-      warnings.push('NZ site layout does not reference global site (quote-core.com) in hreflang');
+    const alternatesMatch = content.match(/alternates:\s*\{[^}]*\}/s);
+    if (alternatesMatch && alternatesMatch[0].includes('languages')) {
+      errors.push('NZ root layout emits site-wide hreflang languages — must be page-level only');
     }
-    if (!content.includes('x-default')) {
-      warnings.push('NZ site layout missing x-default hreflang');
+    if (!existsSync(nzHreflangHelper)) {
+      warnings.push('NZ site missing lib/hreflang.ts helper');
     }
+  }
+
+  // Verify shared-equivalent pages import and use the hreflang helper
+  const sharedPaths = [
+    'about', 'services', 'roofing-quoting-software',
+    'construction-quoting-software', 'free-trial',
+    'coffee-terms', 'cookie-policy', 'privacy', 'terms',
+  ];
+  for (const path of sharedPaths) {
+    // Global site
+    const globalPage = join(APP_DIR, '(marketing)', path, 'page.tsx');
+    const globalAlt = join(APP_DIR, path, 'page.tsx');
+    const globalFile = existsSync(globalPage) ? globalPage : (existsSync(globalAlt) ? globalAlt : null);
+    if (globalFile) {
+      const content = readFileSync(globalFile, 'utf-8');
+      if (!content.includes('hreflangLanguages')) {
+        warnings.push(`Global page ${path} missing hreflangLanguages import — should have hreflang if it has a regional equivalent`);
+      }
+    }
+    // Also check for a layout.tsx in the same dir (for client-component pages)
+    if (globalFile) {
+      const layoutFile = join(globalFile, '..', 'layout.tsx');
+      if (existsSync(layoutFile)) {
+        const layoutContent = readFileSync(layoutFile, 'utf-8');
+        if (!layoutContent.includes('hreflangLanguages')) {
+          warnings.push(`Global layout for ${path} missing hreflangLanguages — client component pages need a layout with hreflang`);
+        }
+      }
+    }
+  }
+
+  // Check home pages (client components with layout.tsx for hreflang)
+  const globalHomeLayout = join(APP_DIR, '(marketing)', 'home', 'layout.tsx');
+  if (existsSync(globalHomeLayout)) {
+    const content = readFileSync(globalHomeLayout, 'utf-8');
+    if (!content.includes('hreflangLanguages')) {
+      errors.push('Global home layout missing hreflangLanguages — homepage must have hreflang');
+    }
+  } else {
+    warnings.push('Global site missing app/(marketing)/home/layout.tsx for homepage hreflang');
+  }
+
+  const globalContactLayout = join(APP_DIR, '(marketing)', 'contact', 'layout.tsx');
+  if (existsSync(globalContactLayout)) {
+    const content = readFileSync(globalContactLayout, 'utf-8');
+    if (!content.includes('hreflangLanguages')) {
+      errors.push('Global contact layout missing hreflangLanguages — contact page must have hreflang');
+    }
+  } else {
+    warnings.push('Global site missing app/(marketing)/contact/layout.tsx for contact hreflang');
+  }
+
+  // NZ site checks
+  const nzHomeLayout = join(nzRoot, 'app', '(home)', 'layout.tsx');
+  if (existsSync(nzHomeLayout)) {
+    const content = readFileSync(nzHomeLayout, 'utf-8');
+    if (!content.includes('hreflangLanguages')) {
+      errors.push('NZ home layout missing hreflangLanguages — homepage must have hreflang');
+    }
+  } else {
+    warnings.push('NZ site missing app/(home)/layout.tsx for homepage hreflang');
+  }
+
+  const nzContactLayout = join(nzRoot, 'app', 'contact', 'layout.tsx');
+  if (existsSync(nzContactLayout)) {
+    const content = readFileSync(nzContactLayout, 'utf-8');
+    if (!content.includes('hreflangLanguages')) {
+      errors.push('NZ contact layout missing hreflangLanguages — contact page must have hreflang');
+    }
+  } else {
+    warnings.push('NZ site missing app/contact/layout.tsx for contact hreflang');
   }
 }
 

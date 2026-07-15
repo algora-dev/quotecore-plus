@@ -15,12 +15,6 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://quote-core.com"),
   alternates: {
     canonical: "https://quote-core.com/",
-    languages: {
-      "en-US": "https://quote-core.com/",
-      "en-GB": "https://quote-core.com/",
-      "en-NZ": "https://www.quote-core.co.nz/",
-      "x-default": "https://quote-core.com/",
-    },
   },
   openGraph: {
     title: "QuoteCore+ | Quoting Software for Contractors",
