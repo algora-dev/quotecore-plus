@@ -268,8 +268,7 @@ export default function HomePage() {
           </div>
 
           {hasMultipleStepImages && (
-            <div className="absolute bottom-0 left-1/2 z-20 flex -translate-x-1/2 items-center justify-center gap-2">
-              <div className="flex items-center justify-center gap-2 rounded-full bg-white/90 px-3 py-2 shadow-[0_12px_35px_rgba(15,23,42,0.12)] backdrop-blur">
+            <div className="absolute bottom-0 left-1/2 z-20 flex -translate-x-1/2 items-center justify-center gap-2 rounded-full bg-white/90 px-3 py-2 shadow-[0_12px_35px_rgba(15,23,42,0.12)] backdrop-blur">
               <button
                 type="button"
                 onClick={showPreviousStepImage}
@@ -306,18 +305,6 @@ export default function HomePage() {
                   <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
-              </div>
-              <a
-                href="https://app.quote-core.com/docs"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-full bg-[#d7ff00] px-4 py-2 text-sm font-semibold text-zinc-900 shadow-[0_12px_35px_rgba(15,23,42,0.12)] transition-colors hover:bg-[#c4e600]"
-              >
-                Docs
-                <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <path d="M11 3h6v6M17 3l-7 7M14 11v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1h6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </a>
             </div>
           )}
         </div>
