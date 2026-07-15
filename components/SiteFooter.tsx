@@ -18,6 +18,8 @@ export default function SiteFooter() {
         {" · "}
         <a href="/blog" className="hover:text-zinc-800">Blog</a>
         {" · "}
+        <a href="https://app.quote-core.com/docs" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-800">Documentation</a>
+        {" · "}
         <a href="/contact" className="hover:text-zinc-800">Contact</a>
         {" · "}
         <a href="/free-trial" className="hover:text-zinc-800">Free Trial</a>
@@ -35,7 +37,7 @@ export default function SiteFooter() {
         </span>
       </p>
       <p className="mt-1">
-        Built by <a href="https://t3labs.tech" className="hover:text-zinc-800">T3 Labs</a>
+        Built by <a href="https://t3labs.tech" className="font-semibold text-[#d7ff00] hover:text-[#c4e600]">T3 Labs</a>
       </p>
       <SocialIcons />
     </footer>
