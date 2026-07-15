@@ -143,9 +143,24 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  let { data: { user } } = await supabase.auth.getUser();
 
-  // No user — redirect to login
+  // If getUser() returned null but auth cookies exist, the JWT likely
+  // expired while the user was on a page without a client-side Supabase
+  // client (e.g. /onboarding after Google OAuth from free tools). The
+  // server client has autoRefreshToken: false, so it won't auto-refresh.
+  // Try an explicit refreshSession() — if the refresh token is still
+  // valid, this mintes a new access token and updates the cookies on the
+  // response. Only redirect to login if the refresh also fails.
+  if (!user) {
+    const hasAuthCookies = request.cookies.getAll().some(c => c.name.startsWith('sb-'));
+    if (hasAuthCookies) {
+      const { data: refreshData } = await supabase.auth.refreshSession();
+      user = refreshData.user ?? null;
+    }
+  }
+
+  // No user (and refresh failed) — redirect to login
   if (!user) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';

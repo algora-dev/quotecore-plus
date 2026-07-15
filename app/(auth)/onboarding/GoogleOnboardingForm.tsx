@@ -85,21 +85,35 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
     });
   }
 
-  function handleFinish() {
+  async function handleFinish() {
     if (!savedSlug) {
       setError('Workspace slug missing. Please refresh and complete onboarding again.');
       return;
     }
+
+    // Refresh the session before navigating. The JWT may have expired
+    // during onboarding (especially for Google OAuth users whose session
+    // was established on a free-tools page 30+ minutes ago). The
+    // middleware's server client has autoRefreshToken: false, so it
+    // can't refresh — we need a client-side refresh to mint fresh cookies.
+    try {
+      const { createBrowserClient } = await import('@supabase/ssr');
+      const browserClient = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      );
+      await browserClient.auth.refreshSession();
+    } catch {
+      // Non-fatal: if refresh fails, middleware will also attempt a
+      // refresh. If that also fails, user lands on login (acceptable).
+    }
+
     // Check for a pending free-tools draft to restore
     const draftMatch = document.cookie.match(/qcp_doc_draft=([^;]+)/);
     const draftId = draftMatch ? decodeURIComponent(draftMatch[1]) : null;
     const params = new URLSearchParams({ copilot: 'on' });
     if (draftId) params.set('restore_doc', draftId);
-    // Use full-page navigation (not router.push) so middleware runs fresh
-    // and can refresh the session if the JWT expired during onboarding.
-    // The FreeToolsAuthProvider that managed the session is no longer
-    // mounted on the onboarding page, so the client-side Supabase client
-    // can't auto-refresh — the server-side middleware refresh is needed.
+    // Full-page navigation so middleware runs with the refreshed cookies.
     window.location.href = `/${savedSlug}?${params.toString()}`;
   }
 
