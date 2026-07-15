@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { buildSoftwareApplicationSchema } from "@/lib/schema";
+import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
   title: "Roofing Quoting Software for Contractors | QuoteCore+",
@@ -8,6 +10,7 @@ export const metadata: Metadata = {
     "QuoteCore+ helps roofing contractors measure jobs, build professional quotes, order materials, manage work, invoice clients and get paid - all in one connected workflow.",
   alternates: {
     canonical: "https://quote-core.com/roofing-quoting-software",
+    languages: hreflangLanguages("/roofing-quoting-software"),
   },
 };
 
@@ -125,12 +128,16 @@ const faqs = [
 export default function RoofingQuotingSoftwarePage() {
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
-      />
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
+    />
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", ...buildSoftwareApplicationSchema() }) }}
+    />
 
-      <main className="min-h-screen bg-white text-zinc-950">
+    <main className="min-h-screen bg-white text-zinc-950">
         <BlogHeader />
 
         {/* Cross-trade notice */}

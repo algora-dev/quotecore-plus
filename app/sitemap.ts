@@ -1,9 +1,10 @@
 import type { MetadataRoute } from 'next';
-import { getAllSlugs } from '@/app/lib/docs/tree';
+import { getPublishedSlugs } from '@/app/lib/docs/tree';
 import { ROOFING_SLUGS } from '@/app/(public)/free-calculators/configs/roofingSlugRegistry';
 import { CONCRETE_SLUGS } from '@/app/(public)/free-calculators/configs/concreteSlugs';
 import { CONSTRUCTION_SLUGS } from '@/app/(public)/free-calculators/configs/constructionSlugs';
 import { SLOPE_SLUGS } from '@/app/(public)/free-calculators/configs/slopeSlugs';
+import { BLOG_POSTS } from '@/app/lib/blog-posts';
 
 /**
  * Public sitemap for https://quote-core.com.
@@ -13,22 +14,12 @@ import { SLOPE_SLUGS } from '@/app/(public)/free-calculators/configs/slopeSlugs'
  *
  * Doc pages are pulled from the same tree used to render `/docs`, so a new
  * doc lands in the sitemap automatically the next time the site builds.
+ * Blog posts come from the shared `BLOG_POSTS` array in `app/lib/blog-posts.ts`
+ * which is also used by the blog page itself — single source of truth.
  */
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
   'https://quote-core.com';
-
-// Blog post slugs — kept in sync with app/(marketing)/blog/[slug]/page.tsx
-const BLOG_POSTS = [
-  { slug: 'best-roofing-quoting-software-uk-2026', lastmod: '2026-06-15' },
-  { slug: 'how-to-get-more-work-as-a-contractor', lastmod: '2026-06-13' },
-  { slug: 'construction-quote-speed-checklist', lastmod: '2026-06-05' },
-  { slug: 'quotecore-plus-reviews', lastmod: '2026-05-27' },
-  { slug: 'quotecore-plus-vs-quotesmith', lastmod: '2026-05-23' },
-  { slug: 'roofing-quoting-software-vs-spreadsheets', lastmod: '2026-05-11' },
-  { slug: 'roofing-quoting-software-uk', lastmod: '2026-05-06' },
-  { slug: 'built-by-a-roofer', lastmod: '2026-05-06' },
-];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -61,10 +52,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/free-invoice-generator`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
   ];
 
-  // Blog posts
+  // Blog posts (from shared source)
   const blogEntries: MetadataRoute.Sitemap = BLOG_POSTS.map((post) => ({
     url: `${SITE_URL}/blog/${post.slug}`,
-    lastModified: new Date(post.lastmod),
+    lastModified: new Date(post.lastModified),
     changeFrequency: 'monthly',
     priority: 0.7,
   }));
@@ -97,8 +88,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   ];
 
-  // Doc pages
-  const docEntries: MetadataRoute.Sitemap = getAllSlugs()
+  // Doc pages (excluding coming-soon)
+  const docEntries: MetadataRoute.Sitemap = getPublishedSlugs()
     .filter((s) => s !== '')
     .map((slug) => ({
       url: `${SITE_URL}/docs/${slug}`,

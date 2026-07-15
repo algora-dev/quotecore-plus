@@ -1,9 +1,32 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { headers } from 'next/headers';
+import type { Metadata } from 'next';
 import MarketingHome from './(marketing)/home/page';
+import { hreflangLanguages } from '@/lib/seo/hreflang';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const headersList = await headers();
+  const host = headersList.get('host') || '';
+  const isMarketingDomain =
+    host === 'quote-core.com' ||
+    host === 'www.quote-core.com' ||
+    host === 'www.quote-core.co.nz' ||
+    host === 'quote-core.co.nz';
+
+  if (isMarketingDomain) {
+    return {
+      alternates: {
+        canonical: 'https://quote-core.com/',
+        languages: hreflangLanguages('/'),
+      },
+    };
+  }
+
+  return {};
+}
 
 export default async function Home() {
   const headersList = await headers();

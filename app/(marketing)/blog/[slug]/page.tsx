@@ -8,77 +8,25 @@ import {
   blogPostingSchema,
   SITE_URL,
 } from '@/app/lib/seo';
+import { BLOG_POST_MAP } from '@/app/lib/blog-posts';
 
-const posts: Record<string, {
-  title: string;
-  description: string;
-  date: string;
-  modified?: string;
-  content: () => Promise<{ default: React.ComponentType }>;
-}> = {
-  'quotecore-plus-reviews': {
-    title: 'QuoteCore+ Reviews: Is It Legit and Who Is It For?',
-    description:
-      'Wondering if QuoteCore+ is legit? Here\u2019s what the platform does, who it is for, how the free trial works, and how it helps construction businesses manage the workflow from quote to material orders, job management and invoicing.',
-    date: '2026-05-27',
-    content: () => import('./content/quotecore-plus-reviews'),
-  },
-  'quotecore-plus-vs-quotesmith': {
-    title: 'QuoteCore+ vs QuoteSmith: Proposal Writer or Full Quote Workflow?',
-    description:
-      'QuoteSmith and QuoteCore+ both help trades create better quotes, but they solve different problems. One focuses on proposal writing, the other on the workflow from measurement to quote, material orders, job management and invoicing.',
-    date: '2026-05-23',
-    content: () => import('./content/quotecore-plus-vs-quotesmith'),
-  },
-  'roofing-quoting-software-uk': {
-    title: 'How UK Roofing Contractors Are Getting Quotes Out Faster',
-    description:
-      'Many UK roofing businesses lose time after the site visit, when notes, photos, pricing and material details have to be pulled together manually. Here\u2019s how a better quote workflow helps.',
-    date: '2026-05-06',
-    content: () => import('./content/roofing-quoting-software-uk'),
-  },
-  'roofing-quoting-software-vs-spreadsheets': {
-    title: 'Roofing Quoting Software vs Spreadsheets: What Actually Saves Time?',
-    description:
-      'Spreadsheets can work for roofing quotes, but they start to slow businesses down when measurements, pricing, approvals, material orders, job details and invoicing need to stay connected.',
-    date: '2026-05-11',
-    content: () => import('./content/roofing-quoting-software-vs-spreadsheets'),
-  },
-  'built-by-a-roofer': {
-    title: 'Built From Roofing Experience: The Story Behind QuoteCore+',
-    description:
-      'QuoteCore+ was shaped by real roofing and construction experience, with Shaun leading the product direction around the quoting and job workflow problems trades businesses deal with every day.',
-    date: '2026-05-06',
-    content: () => import('./content/built-by-a-roofer'),
-  },
-  'construction-quote-speed-checklist': {
-    title: 'The Construction Quote Speed Checklist',
-    description:
-      'A practical checklist for construction businesses that want to send quotes faster without rushing the numbers or losing track of job details.',
-    date: '2026-06-05',
-    content: () => import('./content/construction-quote-speed-checklist'),
-  },
-  'how-to-get-more-work-as-a-contractor': {
-    title: 'How to Get More Work as a Contractor: 7 Things to Fix Before You Spend Money on Ads',
-    description:
-      'Most contractors don\u2019t struggle because they\u2019re bad at the work - they struggle because getting work is left to chance. Here are 7 things to fix first, plus a free weekly checklist.',
-    date: '2026-06-13',
-    content: () => import('./content/how-to-get-more-work-as-a-contractor'),
-  },
-  'best-roofing-quoting-software-uk-2026': {
-    title: 'Best Roofing Quoting Software UK (2026): Compared for Contractors',
-    description:
-      'Comparing the best roofing quoting software available to UK contractors in 2026. Honest breakdown of QuoteCore+, Sleepless Tradesman, Tradify, Jobber, Powered Now, Fergus, and EasyEstimate - with a comparison table and recommendations by business type.',
-    date: '2026-06-15',
-    content: () => import('./content/best-roofing-quoting-software-uk-2026'),
-  },
+// Content imports — keep inline (page-specific dynamic imports)
+const contentLoaders: Record<string, () => Promise<{ default: React.ComponentType }>> = {
+  'quotecore-plus-reviews': () => import('./content/quotecore-plus-reviews'),
+  'quotecore-plus-vs-quotesmith': () => import('./content/quotecore-plus-vs-quotesmith'),
+  'roofing-quoting-software-uk': () => import('./content/roofing-quoting-software-uk'),
+  'roofing-quoting-software-vs-spreadsheets': () => import('./content/roofing-quoting-software-vs-spreadsheets'),
+  'built-by-a-roofer': () => import('./content/built-by-a-roofer'),
+  'construction-quote-speed-checklist': () => import('./content/construction-quote-speed-checklist'),
+  'how-to-get-more-work-as-a-contractor': () => import('./content/how-to-get-more-work-as-a-contractor'),
+  'best-roofing-quoting-software-uk-2026': () => import('./content/best-roofing-quoting-software-uk-2026'),
 };
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = posts[slug];
+  const post = BLOG_POST_MAP.get(slug);
   if (!post) return {};
 
   return buildPageMetadata({
@@ -90,15 +38,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export async function generateStaticParams() {
-  return Object.keys(posts).map((slug) => ({ slug }));
+  return Array.from(BLOG_POST_MAP.keys()).map((slug) => ({ slug }));
 }
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
-  const post = posts[slug];
+  const post = BLOG_POST_MAP.get(slug);
   if (!post) notFound();
 
-  const { default: Content } = await post.content();
+  const contentLoader = contentLoaders[slug];
+  if (!contentLoader) notFound();
+  const { default: Content } = await contentLoader();
 
   const faqSchema = slug === 'best-roofing-quoting-software-uk-2026' ? {
     '@context': 'https://schema.org',
@@ -150,7 +100,7 @@ export default async function BlogPostPage({ params }: Props) {
         description: post.description,
         slug,
         datePublished: post.date,
-        dateModified: post.modified || post.date,
+        dateModified: post.lastModified || post.date,
       }),
       breadcrumbSchema([
         { name: 'Home', path: '/' },

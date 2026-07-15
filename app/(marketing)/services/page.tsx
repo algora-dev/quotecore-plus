@@ -3,12 +3,13 @@ import Script from "next/script";
 import ServicesHeader from "@/components/ServicesHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { buildBreadcrumbSchema, siteUrl } from "@/lib/schema";
+import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
   title: "Done-for-you roofing quote service | QuoteCore+",
   description:
     "Send QuoteCore+ your plans, scope, photos and pricing. We measure the job, build the quote, and you stay in control of final approval.",
-  alternates: { canonical: "https://quote-core.com/services" },
+  alternates: { canonical: "https://quote-core.com/services", languages: hreflangLanguages("/services") },
   openGraph: {
     title: "Done-for-you roofing quote service | QuoteCore+",
     description:

@@ -5,12 +5,15 @@ import FreeTrialFaqPanel from "./FreeTrialFaqPanel";
 import SiteFooter from "@/components/SiteFooter";
 import BlogHeader from "@/components/BlogHeader";
 import { buildBreadcrumbSchema, buildFaqSchema, siteUrl } from "@/lib/schema";
+import { buildSoftwareApplicationSchema } from "@/lib/schema";
+import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
   title: "Free 14-Day Trial - No Card Required | QuoteCore+",
   description: "Try QuoteCore+ free for 14 days. Measure jobs, build professional quotes, track acceptances, and manage materials orders. No credit card needed.",
   alternates: {
     canonical: "https://quote-core.com/free-trial",
+    languages: hreflangLanguages("/free-trial"),
   },
 };
 
@@ -121,6 +124,11 @@ export default function FreeTrialPage() {
             { name: "Free Trial", url: `${siteUrl}/free-trial` },
           ])),
         }}
+      />
+      <Script
+        id="free-trial-software-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", ...buildSoftwareApplicationSchema() }) }}
       />
       <main className="min-h-screen bg-white text-zinc-950">
         <BlogHeader backLabel="Back to homepage" backHref="/" />

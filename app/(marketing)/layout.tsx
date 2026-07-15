@@ -54,10 +54,15 @@ const combinedSchema = {
       url: `${siteUrl}/`,
       publisher: { "@id": organizationId },
     },
-    buildSoftwareApplicationSchema(),
-    buildBreadcrumbSchema([{ name: "Home", url: `${siteUrl}/` }], false),
   ],
 };
+
+// SoftwareApplication + Breadcrumb("Home") schema — only appropriate on
+// product/conversion pages, not on legal/contact/about. Pages that need
+// it can import and render the <Script> themselves (see homepage,
+// /roofing-quoting-software, /construction-quoting-software, /free-trial).
+export { buildSoftwareApplicationSchema, buildBreadcrumbSchema };
+export const orgSiteGraphSchema = combinedSchema;
 
 export default function MarketingLayout({
   children,
