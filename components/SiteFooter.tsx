@@ -3,7 +3,7 @@ import SocialIcons from "@/components/SocialIcons";
 export default function SiteFooter() {
   return (
     <footer className="border-t border-zinc-200 py-10 text-center text-sm text-zinc-500">
-      <p className="mb-4 text-xs text-zinc-400">
+      <p className="mb-4 text-xs text-zinc-600">
         <span className="brand-wordmark">
           QuoteCore<span className="brand-plus">+</span>
         </span>{" "}

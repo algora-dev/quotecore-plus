@@ -453,7 +453,7 @@ export default function HomePage() {
                     How it works
                   </a>
                 </div>
-                <p className="mt-3 text-sm text-zinc-500">All features for 14 days, no card required, risk free</p>
+                <p className="mt-3 text-sm text-zinc-600">All features for 14 days, no card required, risk free</p>
               </div>
               {/* Right: laptop video - bg matches section so edges blend */}
               <div className="relative z-10 flex flex-1 items-end justify-center overflow-visible lg:-ml-12 lg:flex-[0.96] lg:justify-end xl:flex-[1.08]">
@@ -1018,7 +1018,7 @@ export default function HomePage() {
         <div className="flex items-center justify-center gap-4 bg-zinc-200 px-6 py-6 sm:gap-6 sm:py-7">
           <img loading="lazy" decoding="async" width={80} height={80} src="/shaun-smiling.jpg" alt="" className="h-20 w-20 rounded-full object-cover border-2 border-[#FF6B35]/50 shrink-0 sm:h-24 sm:w-24" />
           <div className="min-w-0 flex-1 sm:flex-none">
-            <p className="mb-3 text-sm text-zinc-500 sm:mb-2">Book a 15-minute call with Shaun</p>
+            <p className="mb-3 text-sm text-zinc-600 sm:mb-2">Book a 15-minute call with Shaun</p>
             <div className="grid max-w-xs grid-cols-1 gap-2 sm:flex sm:max-w-none sm:gap-3">
               <a href="https://calendly.com/quote-core-info/15-minute-meeting" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#BD4A1A] px-7 py-3 text-base font-semibold text-white transition-colors hover:bg-[#A03E15] sm:min-h-11 sm:px-8" onClick={() => trackEvent("book_call_click", { location: "mid" })}>Book a Call</a>
               <a href="/free-trial" className="pill-shimmer inline-flex min-h-12 items-center justify-center rounded-full border border-zinc-300 bg-white px-7 py-3 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40 sm:min-h-11 sm:px-8" onClick={() => trackEvent("free_trial_click", { location: "mid" })}>Start free trial</a>
@@ -1244,7 +1244,7 @@ export default function HomePage() {
                         ))}
                       </ul>
                       {plan.comingSoon ? (
-                        <span className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-600 text-sm text-zinc-500">
+                        <span className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-600 text-sm text-zinc-600">
                           Coming soon
                         </span>
                       ) : (
@@ -1264,7 +1264,7 @@ export default function HomePage() {
                   ))}
                 </div>
 
-                <p className="mt-8 text-center text-sm text-zinc-500">
+                <p className="mt-8 text-center text-sm text-zinc-600">
                   VAT calculated at checkout where applicable.
                 </p>
                 <p className="mt-3 text-center text-sm text-zinc-200">
@@ -1344,7 +1344,7 @@ export default function HomePage() {
                       Book a Call
                     </a>
                   </div>
-                  <p className="mt-5 text-sm text-zinc-500">No card required. 14 days free.</p>
+                  <p className="mt-5 text-sm text-zinc-600">No card required. 14 days free.</p>
                 </div>
 
                 <div className="relative min-h-[240px] overflow-hidden bg-[radial-gradient(circle_at_85%_24%,rgba(255,255,255,0.18),transparent_28%),linear-gradient(160deg,#ff965a_0%,#ff6b35_45%,#ff4f25_100%)] p-6 sm:min-h-[360px] sm:p-12">
