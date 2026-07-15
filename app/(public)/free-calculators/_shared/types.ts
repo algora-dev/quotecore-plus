@@ -215,30 +215,68 @@ export interface TradeConfig {
   content: TradeContent;
 }
 
-/** signup href with attribution ref for a trade */
+/** The app origin for cross-domain handoffs. Free tools live on
+ *  quote-core.com; signup/dashboard live on app.quote-core.com. Relative
+ *  URLs would bounce through the public-domain redirect and lose state. */
+function appOrigin(): string {
+  if (typeof window === 'undefined') return '';
+  const h = window.location.hostname.toLowerCase();
+  if (
+    h === 'quote-core.com' ||
+    h === 'www.quote-core.com' ||
+    h === 'quote-core.co.nz' ||
+    h === 'www.quote-core.co.nz'
+  ) {
+    return 'https://app.quote-core.com';
+  }
+  return '';
+}
+
+/** signup href with attribution ref for a trade (absolute app-domain URL
+ *  on production so the draft/session survive the marketing → app hop) */
 export function signupHref(config: Pick<TradeConfig, 'slug'>, draftId?: string): string {
-  const base = `/signup?ref=${config.slug}`;
+  const base = `${appOrigin()}/signup?ref=${config.slug}`;
   return draftId ? `${base}&draft=${draftId}` : base;
 }
 
-/** Save a calculator draft to localStorage and return the draft ID. */
-export function saveCalcDraft(config: Pick<TradeConfig, 'slug'>, data: unknown): string {
-  const draftId = `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+/**
+ * Save a calculator draft and return the draft ID.
+ *
+ * The draft is persisted SERVER-SIDE (source of truth — survives the
+ * quote-core.com → app.quote-core.com origin change where localStorage
+ * does not) with localStorage kept as a same-origin fast path. Falls back
+ * to a local-only ID if the API call fails.
+ */
+export async function saveCalcDraft(config: Pick<TradeConfig, 'slug'>, data: unknown): Promise<string> {
+  let draftId = `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   if (typeof window === 'undefined') return draftId;
+  const payload = {
+    slug: config.slug,
+    data,
+    savedAt: new Date().toISOString(),
+  };
   try {
-    const key = `qcp:calc-draft:${draftId}`;
-    localStorage.setItem(key, JSON.stringify({
-      slug: config.slug,
-      data,
-      savedAt: new Date().toISOString(),
-    }));
+    const res = await fetch('/api/free-tools/drafts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ draftType: 'smart_component', payload }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json?.id) draftId = json.id;
+    }
+  } catch {
+    // Server persist failed — same-origin localStorage fallback still works.
+  }
+  try {
+    localStorage.setItem(`qcp:calc-draft:${draftId}`, JSON.stringify(payload));
   } catch {
     // localStorage may be full or unavailable - silently continue
   }
   return draftId;
 }
 
-/** Load and remove a calculator draft from localStorage by ID. */
+/** Load a calculator draft from localStorage by ID (same-origin fast path). */
 export function loadCalcDraft(draftId: string): { slug: string; data: unknown; savedAt: string } | null {
   if (typeof window === 'undefined') return null;
   try {
@@ -253,11 +291,38 @@ export function loadCalcDraft(draftId: string): { slug: string; data: unknown; s
   }
 }
 
-/** Remove a consumed draft from localStorage. */
+/**
+ * Load a calculator draft with server fallback. Use this in the app —
+ * drafts created on the marketing domain are NOT in the app origin's
+ * localStorage; the server copy is fetched by ID instead.
+ */
+export async function loadCalcDraftAsync(
+  draftId: string,
+): Promise<{ slug: string; data: unknown; savedAt: string } | null> {
+  const local = loadCalcDraft(draftId);
+  if (local) return local;
+  try {
+    const res = await fetch(`/api/free-tools/drafts/${draftId}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json?.draftType !== 'smart_component' || !json.payload) return null;
+    return json.payload as { slug: string; data: unknown; savedAt: string };
+  } catch {
+    return null;
+  }
+}
+
+/** Remove a consumed draft (localStorage + mark the server copy consumed). */
 export function clearCalcDraft(draftId: string): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.removeItem(`qcp:calc-draft:${draftId}`);
+  } catch {
+    // ignore
+  }
+  // Best-effort server-side consumption (no-op for local-only draft ids).
+  try {
+    fetch(`/api/free-tools/drafts/${draftId}`, { method: 'DELETE' }).catch(() => {});
   } catch {
     // ignore
   }

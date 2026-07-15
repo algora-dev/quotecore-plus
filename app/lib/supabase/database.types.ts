@@ -1577,6 +1577,36 @@ export type Database = {
           },
         ]
       }
+      free_document_drafts: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          draft_type: string
+          email: string | null
+          expires_at: string
+          id: string
+          payload: Json
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          draft_type?: string
+          email?: string | null
+          expires_at?: string
+          id?: string
+          payload: Json
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          draft_type?: string
+          email?: string | null
+          expires_at?: string
+          id?: string
+          payload?: Json
+        }
+        Relationships: []
+      }
       growth_briefs: {
         Row: {
           date: string

@@ -1,5 +1,6 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { authCookieOptions } from './cookie-config';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { cache } from 'react';
 import type { Database } from './database.types';
@@ -26,10 +27,23 @@ export type TablesUpdate<T extends keyof Database['public']['Tables']> =
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
 
+  // Cross-subdomain auth cookies: derive the Domain attribute from the
+  // request host so sessions minted here (OAuth code exchange, refresh)
+  // are valid on all quote-core.com subdomains. See cookie-config.ts.
+  let host: string | null = null;
+  try {
+    const headerStore = await headers();
+    host = headerStore.get('host');
+  } catch {
+    // headers() unavailable in some contexts (e.g. during static
+    // generation) — fall back to host-only cookies.
+  }
+
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions: authCookieOptions(host),
       cookies: {
         get(name: string) {
           return cookieStore.get(name)?.value;

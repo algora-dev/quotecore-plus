@@ -1,9 +1,10 @@
 
 'use client';
 
-import { useState, useTransition, Suspense } from 'react';
+import { useState, useTransition, Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { setHandoffCookie } from '@/app/(public)/shared/appOrigin';
 import { signupWithCompany } from './actions';
 import { GoogleSignInButton } from '@/app/components/auth/GoogleSignInButton';
 import { PublicFooter } from '@/app/components/PublicFooter';
@@ -45,6 +46,15 @@ function SignupForm() {
   const searchParams = useSearchParams();
   const refSlug = searchParams.get('ref');
   const draftId = searchParams.get('draft');
+
+  // Persist draft context in cookies IMMEDIATELY (not just on email-form
+  // submit) so the Google OAuth path inherits it too — the OAuth redirect
+  // leaves this page before any submit handler runs. Cross-subdomain
+  // cookies so the context survives the marketing ↔ app domain hops.
+  useEffect(() => {
+    if (refSlug) setHandoffCookie('qcp_signup_ref', refSlug);
+    if (draftId) setHandoffCookie('qcp_signup_draft', draftId);
+  }, [refSlug, draftId]);
 
   // Contextual message based on where they came from
   const refLabel = refSlug === 'free-roofing-calculator' ? 'Roofing Calculator'
@@ -108,14 +118,8 @@ function SignupForm() {
               const password = String(form.get('password') || '');
 
               startTransition(async () => {
-                // Persist draft context in cookies so it survives email confirmation
-                if (refSlug) {
-                  document.cookie = `qcp_signup_ref=${refSlug}; path=/; max-age=${60*60*24*7}; SameSite=Lax`;
-                }
-                if (draftId) {
-                  document.cookie = `qcp_signup_draft=${draftId}; path=/; max-age=${60*60*24*7}; SameSite=Lax`;
-                }
-
+                // Draft context cookies already set by the useEffect above
+                // (works for both the email form AND the Google button).
                 const result = await signupWithCompany({
                   companyName,
                   fullName,

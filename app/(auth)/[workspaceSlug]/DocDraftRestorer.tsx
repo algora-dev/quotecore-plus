@@ -4,10 +4,25 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 /**
- * Detects ?restore_doc=<id> on the dashboard, reads the matching draft
- * from localStorage, and calls the import API to create the entity.
- * Shows a loading state while processing and error states if needed.
+ * Detects ?restore_doc=<id> (or the qcp_doc_draft cookie) on the
+ * dashboard, loads the matching draft and calls the import API to create
+ * the entity.
+ *
+ * Draft sources, in order:
+ *   1. localStorage (same-origin fast path)
+ *   2. GET /api/free-tools/drafts/<id> — the server-side copy. This is
+ *      what makes the free-tools → app journey survive the
+ *      quote-core.com → app.quote-core.com origin change (localStorage
+ *      does not cross origins).
  */
+function clearDraftCookie() {
+  document.cookie = 'qcp_doc_draft=; path=/; max-age=0';
+  const h = window.location.hostname.toLowerCase();
+  if (h === 'quote-core.com' || h.endsWith('.quote-core.com')) {
+    document.cookie = 'qcp_doc_draft=; path=/; max-age=0; domain=.quote-core.com';
+  }
+}
+
 export function DocDraftRestorer({ workspaceSlug }: { workspaceSlug: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -21,61 +36,71 @@ export function DocDraftRestorer({ workspaceSlug }: { workspaceSlug: string }) {
     // (set by SaveToAppButton when redirecting to signup). This ensures
     // the draft is restored even if the URL param was lost during
     // signup → email confirmation → onboarding → dashboard navigation.
+    // NOTE: the cookie is only cleared AFTER a successful import — an
+    // earlier version cleared it on read, so a failed first attempt
+    // destroyed the pointer and the draft was unrecoverable.
     let draftId = urlDraftId;
     if (!draftId) {
       const match = document.cookie.match(/qcp_doc_draft=([^;]+)/);
-      if (match) {
-        draftId = decodeURIComponent(match[1]);
-        // Clean up the cookie so it doesn't trigger on every dashboard visit
-        document.cookie = 'qcp_doc_draft=; path=/; max-age=0';
-      }
+      if (match) draftId = decodeURIComponent(match[1]);
     }
     if (!draftId) return;
+    const id = draftId;
 
     setStatus('loading');
-    const key = `qcp:doc-draft:${draftId}`;
+    const key = `qcp:doc-draft:${id}`;
 
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) {
-        setStatus('error');
-        setErrorMessage('Draft not found. It may have expired.');
-        return;
-      }
+    (async () => {
+      try {
+        // 1. Same-origin fast path
+        let draftData: unknown = null;
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw) draftData = JSON.parse(raw);
+        } catch {}
 
-      const draftData = JSON.parse(raw);
-
-      // Call the import API
-      fetch('/api/app/import-free-document', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftId, draftData }),
-      })
-        .then(async (res) => {
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({ error: 'Import failed' }));
-            throw new Error(err.error || 'Import failed');
+        // 2. Server-side copy (cross-origin journeys land here)
+        if (!draftData) {
+          const res = await fetch(`/api/free-tools/drafts/${id}`);
+          if (res.ok) {
+            const json = await res.json();
+            if (json?.draftType === 'document') draftData = json.payload;
           }
-          return res.json();
-        })
-        .then((result) => {
-          // Clean up localStorage
-          try { localStorage.removeItem(key); } catch {}
-          // Redirect to the editor
-          if (result.redirectUrl) {
-            router.push(result.redirectUrl);
-          } else {
-            router.push(`/${workspaceSlug}`);
-          }
-        })
-        .catch((err) => {
+        }
+
+        if (!draftData) {
           setStatus('error');
-          setErrorMessage(err.message || 'Failed to import document');
+          setErrorMessage('Draft not found. It may have expired.');
+          clearDraftCookie();
+          return;
+        }
+
+        const res = await fetch('/api/app/import-free-document', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId: id, draftData }),
         });
-    } catch {
-      setStatus('error');
-      setErrorMessage('Failed to read draft data.');
-    }
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'Import failed' }));
+          throw new Error(err.error || 'Import failed');
+        }
+        const result = await res.json();
+
+        // Success — clean up all draft pointers
+        try { localStorage.removeItem(key); } catch {}
+        clearDraftCookie();
+        fetch(`/api/free-tools/drafts/${id}`, { method: 'DELETE' }).catch(() => {});
+
+        if (result.redirectUrl) {
+          router.push(result.redirectUrl);
+        } else {
+          router.push(`/${workspaceSlug}`);
+        }
+      } catch (err) {
+        setStatus('error');
+        setErrorMessage(err instanceof Error ? err.message : 'Failed to import document');
+      }
+    })();
   }, [urlDraftId, router, workspaceSlug]);
 
   // Show the restorer UI when we have a URL param OR a cookie-triggered draft

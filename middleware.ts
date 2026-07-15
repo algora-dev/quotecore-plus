@@ -1,5 +1,32 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import {
+  AUTH_COOKIE_NAME,
+  authCookieOptions,
+  legacyAuthCookiePrefix,
+} from '@/app/lib/supabase/cookie-config';
+
+// Canonical host for the public marketing site + free tools. Matches the
+// existing sitemap/robots canonical (apex, not www) so we don't churn
+// Google's index. www + .co.nz + app free-tool URLs 308 here.
+const CANONICAL_PUBLIC_ORIGIN = 'https://quote-core.com';
+
+/**
+ * Expire legacy default-named Supabase cookies (sb-<ref>-auth-token*).
+ * We migrated to a new cookie name + `.quote-core.com` domain (see
+ * cookie-config.ts); stale host-only cookies under the old name would
+ * otherwise linger for 400 days.
+ */
+function expireLegacyAuthCookies(request: NextRequest, response: NextResponse) {
+  const legacyPrefix = legacyAuthCookiePrefix();
+  if (!legacyPrefix) return response;
+  for (const cookie of request.cookies.getAll()) {
+    if (cookie.name.startsWith(legacyPrefix)) {
+      response.cookies.set({ name: cookie.name, value: '', path: '/', maxAge: 0 });
+    }
+  }
+  return response;
+}
 
 // Public paths that don't require authentication
 const PUBLIC_PATHS = [
@@ -83,6 +110,27 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostname = request.nextUrl.hostname;
 
+  // ── Free-tools host canonicalisation (2026-07-15) ──────
+  // Free tools live ONLY on quote-core.com (the canonical marketing host,
+  // matching sitemap/robots). Duplicate copies on www, .co.nz and
+  // app.quote-core.com are permanently redirected there — consolidates
+  // SEO signals onto one host and gives the save-to-app flow a single,
+  // predictable handoff path. vercel.app previews / localhost are exempt
+  // so dev testing keeps working single-host.
+  if (hostname === 'www.quote-core.com' && !pathname.startsWith('/api')) {
+    const url = new URL(pathname + (request.nextUrl.search || ''), CANONICAL_PUBLIC_ORIGIN);
+    return NextResponse.redirect(url, 308);
+  }
+  if (
+    (hostname === 'quote-core.co.nz' ||
+      hostname === 'www.quote-core.co.nz' ||
+      hostname === 'app.quote-core.com') &&
+    pathname.startsWith('/free-')
+  ) {
+    const url = new URL(pathname + (request.nextUrl.search || ''), CANONICAL_PUBLIC_ORIGIN);
+    return NextResponse.redirect(url, 308);
+  }
+
   // ── Domain-based routing ─────────────────────────────
   // quote-core.com (and www) = public-facing free tools site only.
   // app.quote-core.com (and *.vercel.app) = full application.
@@ -98,6 +146,19 @@ export async function middleware(request: NextRequest) {
     // Allow static assets, API routes, and public paths on the public domain
     if (isStaticAsset(pathname)) {
       return NextResponse.next();
+    }
+    // Auth journey paths ALWAYS run on the app domain (2026-07-15).
+    // Previously /login, /signup, /onboarding and /auth/* rendered on the
+    // marketing domain too (they're in PUBLIC_PATHS), so a free-tools user
+    // could complete the ENTIRE signup + onboarding on quote-core.com and
+    // only hit app.quote-core.com at the final dashboard hop — where their
+    // host-only session cookies didn't follow. Forcing these paths onto
+    // the app domain keeps the whole auth journey on one origin.
+    const AUTH_JOURNEY_PATHS = ['/login', '/signup', '/onboarding', '/2fa', '/auth'];
+    if (AUTH_JOURNEY_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))) {
+      const appUrl = new URL(pathname, `https://app.quote-core.com`);
+      appUrl.search = request.nextUrl.search;
+      return NextResponse.redirect(appUrl, 308);
     }
     if (pathname === '/' || isPublicPath(pathname)) {
       return NextResponse.next();
@@ -125,6 +186,9 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // Cross-subdomain auth cookies (see cookie-config.ts): sessions
+      // refreshed here must stay valid on all quote-core.com subdomains.
+      cookieOptions: authCookieOptions(hostname),
       cookies: {
         get(name: string) {
           return request.cookies.get(name)?.value;
@@ -153,7 +217,9 @@ export async function middleware(request: NextRequest) {
   // valid, this mintes a new access token and updates the cookies on the
   // response. Only redirect to login if the refresh also fails.
   if (!user) {
-    const hasAuthCookies = request.cookies.getAll().some(c => c.name.startsWith('sb-'));
+    const hasAuthCookies = request.cookies
+      .getAll()
+      .some(c => c.name.startsWith(AUTH_COOKIE_NAME));
     if (hasAuthCookies) {
       const { data: refreshData } = await supabase.auth.refreshSession();
       user = refreshData.user ?? null;
@@ -165,7 +231,7 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(url);
+    return expireLegacyAuthCookies(request, NextResponse.redirect(url));
   }
 
   // 2FA gate. getAuthenticatorAssuranceLevel() is a local JWT decode, not a
@@ -203,7 +269,7 @@ export async function middleware(request: NextRequest) {
 
   // User exists (and 2FA, if applicable, has been satisfied). Page-level checks
   // continue to handle company context.
-  return response;
+  return expireLegacyAuthCookies(request, response);
 }
 
 export const config = {

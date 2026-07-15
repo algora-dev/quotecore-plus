@@ -21,8 +21,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticEntries: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}/`, lastModified: today, changeFrequency: 'weekly', priority: 1.0 },
-    { url: `${SITE_URL}/login`, lastModified: today, changeFrequency: 'monthly', priority: 0.4 },
-    { url: `${SITE_URL}/signup`, lastModified: today, changeFrequency: 'monthly', priority: 0.6 },
+    // Auth pages live on the app subdomain (marketing-domain copies 308 there).
+    { url: `https://app.quote-core.com/login`, lastModified: today, changeFrequency: 'monthly', priority: 0.4 },
+    { url: `https://app.quote-core.com/signup`, lastModified: today, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${SITE_URL}/privacy`, lastModified: today, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE_URL}/cookies`, lastModified: today, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE_URL}/terms`, lastModified: today, changeFrequency: 'yearly', priority: 0.3 },

@@ -39,7 +39,9 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
       setError('Company name and your name are required');
       return;
     }
-    if (needsPassword) {
+    // Password is OPTIONAL — users can keep signing in with Google or an
+    // email link. Only validate when they chose to type one.
+    if (needsPassword && newPassword) {
       if (newPassword.length < 8) {
         setError('Password must be at least 8 characters');
         return;
@@ -97,11 +99,8 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
     // middleware's server client has autoRefreshToken: false, so it
     // can't refresh — we need a client-side refresh to mint fresh cookies.
     try {
-      const { createBrowserClient } = await import('@supabase/ssr');
-      const browserClient = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      );
+      const { createClient } = await import('@/app/lib/supabase/client');
+      const browserClient = createClient();
       await browserClient.auth.refreshSession();
     } catch {
       // Non-fatal: if refresh fails, middleware will also attempt a
@@ -170,11 +169,12 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
           {needsPassword && (
             <div className="grid gap-4 rounded-lg border border-orange-200 bg-orange-50/50 p-4">
               <p className="text-xs text-slate-600">
-                You signed up with an email link — create a password now so you
-                can log in to the app with email + password from here on.
+                <span className="font-semibold text-slate-800">Optional:</span>{' '}
+                set a password so you can also log in with email + password.
+                Leave blank to keep signing in the way you just did.
               </p>
               <label className="block">
-                <span className="block text-sm font-medium text-slate-700 mb-1">Create a password</span>
+                <span className="block text-sm font-medium text-slate-700 mb-1">Password <span className="font-normal text-slate-400">(optional)</span></span>
                 <input
                   type="password"
                   value={newPassword}
@@ -184,17 +184,19 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
                   minLength={8}
                 />
               </label>
-              <label className="block">
-                <span className="block text-sm font-medium text-slate-700 mb-1">Confirm password</span>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
-                  placeholder="Repeat password"
-                  minLength={8}
-                />
-              </label>
+              {newPassword && (
+                <label className="block">
+                  <span className="block text-sm font-medium text-slate-700 mb-1">Confirm password</span>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                    placeholder="Repeat password"
+                    minLength={8}
+                  />
+                </label>
+              )}
             </div>
           )}
 

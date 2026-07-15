@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient } from '@/app/lib/supabase/client';
 
 export function GoogleSignInButton() {
   const [loading, setLoading] = useState(false);
@@ -8,10 +8,9 @@ export function GoogleSignInButton() {
   async function handleGoogleSignIn() {
     setLoading(true);
     try {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
+      // Shared factory — applies the cross-subdomain cookieOptions
+      // (see cookie-config.ts). Never use raw createBrowserClient here.
+      const supabase = createClient();
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

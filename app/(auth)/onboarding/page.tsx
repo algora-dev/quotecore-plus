@@ -27,18 +27,17 @@ export default async function OnboardingPage() {
   // normal email+password login works for them afterwards. OAuth-only
   // users (Google) are skipped — they log in with Google, no password
   // needed.
+  // (2026-07-15) Offered to ANY user without a password — Google
+  // OAuth-only signups AND magic-link email signups — as an OPTIONAL
+  // field on onboarding step 1. Never required; hidden when a password
+  // already exists.
   let needsPassword = false;
   try {
-    const hasEmailIdentity = (authUser.identities ?? []).some(
-      (i) => i.provider === 'email'
-    );
-    if (hasEmailIdentity) {
-      const admin = createAdminClient();
-      const { data: hasPw } = await admin.rpc('auth_user_has_password', {
-        uid: authUser.id,
-      });
-      needsPassword = hasPw === false;
-    }
+    const admin = createAdminClient();
+    const { data: hasPw } = await admin.rpc('auth_user_has_password', {
+      uid: authUser.id,
+    });
+    needsPassword = hasPw === false;
   } catch {
     // Non-fatal: if the check fails, don't block onboarding — they can
     // set a password later via the reset-password flow.

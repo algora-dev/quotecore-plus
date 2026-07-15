@@ -318,7 +318,7 @@ export async function completeGoogleOnboarding(formData: FormData) {
   // Send welcome email (Google signups don't go through email confirmation,
   // so we send it here after onboarding completes). Best-effort: never blocks.
   try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://quotecore-plus-main.vercel.app';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.quote-core.com';
     const { renderWelcomeEmail } = await import('@/app/lib/email/templates/welcome');
     const { sendEmail } = await import('@/app/lib/email/send');
     const { html, text, subject } = renderWelcomeEmail({

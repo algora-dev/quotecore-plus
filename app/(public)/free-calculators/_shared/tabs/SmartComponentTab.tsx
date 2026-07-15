@@ -454,8 +454,10 @@ export function SmartComponentTab() {
 
           {/* Save as Smart Component CTA */}
           <button
-            onClick={() => {
-              const draftId = saveCalcDraft(config, { spec, result, areaInput, linearInput, quantityInput });
+            onClick={async () => {
+              // Async: persists the draft server-side so it survives the
+              // marketing → app domain hop (see saveCalcDraft).
+              const draftId = await saveCalcDraft(config, { spec, result, areaInput, linearInput, quantityInput });
               setSavedDraftId(draftId);
               setShowSavePopup(false);
             }}

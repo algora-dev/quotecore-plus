@@ -205,9 +205,14 @@ export async function GET(request: Request) {
             ? `${origin}/${slug}?restore_doc=${draftId}`
             : `${origin}/${slug}`;
           return NextResponse.redirect(dashUrl);
-          // No profile or no company - redirect to onboarding
-          return NextResponse.redirect(`${origin}/onboarding`);
         }
+
+        // No profile or no company - redirect to onboarding.
+        // CRITICAL: this must stay OUTSIDE the profile?.company_id block.
+        // A bad refactor (bc6f9af) left it unreachable inside the block,
+        // which sent every brand-new Google user to /login?error=auth_failed
+        // instead of onboarding — the "forced to log in again" bug.
+        return NextResponse.redirect(`${origin}/onboarding`);
       }
     }
   }

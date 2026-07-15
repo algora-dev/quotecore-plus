@@ -23,7 +23,7 @@ import type { MeasurementSystem } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { getUnitLabel } from '@/app/lib/measurements/displayHelpers';
 import { loadFlashingLibrary } from '../drawings/actions';
-import { loadCalcDraft, clearCalcDraft } from '@/app/(public)/free-calculators/_shared/types';
+import { loadCalcDraftAsync, clearCalcDraft } from '@/app/(public)/free-calculators/_shared/types';
 
 /** Build the radio-button labels that decorate measurement type with the company's preferred unit. */
 // F-15: Extracted helpers + sub-components
@@ -216,11 +216,15 @@ export function ComponentList({
     fetchFlashings();
   }, []);
 
-  // Calculator draft restore (H-04): load draft from localStorage and pre-fill form
+  // Calculator draft restore (H-04): load draft (localStorage fast path,
+  // then the server copy — drafts created on the marketing domain are not
+  // in this origin's localStorage) and pre-fill the form.
   useEffect(() => {
     if (!restoreDraftId || draftConsumed) return;
-    const draft = loadCalcDraft(restoreDraftId);
-    if (!draft) return;
+    let cancelled = false;
+    (async () => {
+    const draft = await loadCalcDraftAsync(restoreDraftId);
+    if (!draft || cancelled) return;
     const draftData = draft.data as {
       spec?: {
         name?: string;
@@ -254,8 +258,16 @@ export function ComponentList({
     setShowForm(true);
     setDraftConsumed(true);
     // Clear the signup cookies so the dashboard banner doesn't show again
-    document.cookie = 'qcp_signup_draft=; path=/; max-age=0';
-    document.cookie = 'qcp_signup_ref=; path=/; max-age=0';
+    // (both host-only and cross-subdomain variants).
+    for (const name of ['qcp_signup_draft', 'qcp_signup_ref']) {
+      document.cookie = `${name}=; path=/; max-age=0`;
+      const h = window.location.hostname.toLowerCase();
+      if (h === 'quote-core.com' || h.endsWith('.quote-core.com')) {
+        document.cookie = `${name}=; path=/; max-age=0; domain=.quote-core.com`;
+      }
+    }
+    })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restoreDraftId]);
 

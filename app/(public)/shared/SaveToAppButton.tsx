@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
+import { getAppOrigin, setHandoffCookie } from './appOrigin';
 
 /**
  * Shared "Save to App" button for free tools.
@@ -60,6 +61,40 @@ type ModalState =
   | { type: 'subscription_inactive'; planCode?: string }
   | { type: 'duplicate_number'; number: string }
   | { type: 'error'; message: string };
+
+/**
+ * Persist the draft SERVER-SIDE and return its id. localStorage + cookie
+ * are written as same-origin fast paths, but the server copy is the source
+ * of truth — it survives the marketing → app domain hop (different origin,
+ * different localStorage). Falls back to a local-only id if the API fails.
+ */
+async function persistDraft(draftData: Record<string, unknown>): Promise<string> {
+  let draftId = `doc-draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  try {
+    const res = await fetch('/api/free-tools/drafts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        draftType: 'document',
+        payload: draftData,
+        email: (draftData as { email?: string }).email,
+      }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json?.id) draftId = json.id;
+    }
+  } catch {
+    // Server persist failed — same-origin localStorage fallback still works.
+  }
+  try {
+    localStorage.setItem(`qcp:doc-draft:${draftId}`, JSON.stringify(draftData));
+  } catch {}
+  // Cross-subdomain cookie so the dashboard finds the draft even if the
+  // URL param is lost somewhere in the signup/onboarding redirect chain.
+  setHandoffCookie('qcp_doc_draft', draftId);
+  return draftId;
+}
 
 export function SaveToAppButton({ documentType, documentData, userEmail }: SaveToAppButtonProps) {
   const [modal, setModal] = useState<ModalState>({ type: 'none' });
@@ -123,8 +158,9 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
         return;
       }
 
-      // 3. Eligible - save draft to localStorage and redirect
-      const draftId = `doc-draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      // 3. Eligible - persist draft (server-side) and redirect to the APP
+      // domain explicitly. Relative URLs would stay on the marketing host
+      // and lose the draft/session when middleware bounces to the app.
       const draftData = {
         documentType,
         documentData,
@@ -132,16 +168,8 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
         workspaceSlug: result.workspaceSlug,
         savedAt: new Date().toISOString(),
       };
-
-      try {
-        localStorage.setItem(`qcp:doc-draft:${draftId}`, JSON.stringify(draftData));
-      } catch {
-        // localStorage may be full
-      }
-
-      // Redirect to app import endpoint - user will need to be logged in
-      const importUrl = `/api/app/import-free-document?draft=${draftId}`;
-      window.location.href = importUrl;
+      const draftId = await persistDraft(draftData);
+      window.location.href = `${getAppOrigin()}/api/app/import-free-document?draft=${draftId}`;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       setModal({ type: 'error', message });
@@ -181,11 +209,10 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
         return;
       }
 
-      // Eligible - save draft and redirect
-      const draftId = `doc-draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      // Eligible - persist draft (server-side) and redirect to the app domain
       const draftData = { documentType, documentData, email, workspaceSlug: result.workspaceSlug, savedAt: new Date().toISOString() };
-      try { localStorage.setItem(`qcp:doc-draft:${draftId}`, JSON.stringify(draftData)); } catch {}
-      window.location.href = `/api/app/import-free-document?draft=${draftId}`;
+      const draftId = await persistDraft(draftData);
+      window.location.href = `${getAppOrigin()}/api/app/import-free-document?draft=${draftId}`;
     } catch (err: unknown) {
       setModal({ type: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
     }
@@ -300,34 +327,29 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
             <div className="flex flex-col gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  // Save draft to localStorage BEFORE redirecting so it
-                  // survives the signup/onboarding → dashboard flow.
-                  const draftId = `doc-draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+                onClick={async () => {
+                  // Persist the draft SERVER-SIDE before redirecting so it
+                  // survives the marketing → app domain hop (localStorage
+                  // does not cross origins — this was the draft-loss bug).
                   const draftPayload = {
                     documentType,
                     documentData,
                     email: modal.email,
                     savedAt: new Date().toISOString(),
                   };
-                  try {
-                    localStorage.setItem(`qcp:doc-draft:${draftId}`, JSON.stringify(draftPayload));
-                    // Cookie so DocDraftRestorer can find the draft even if
-                    // the URL param is lost during redirect chains.
-                    document.cookie = `qcp_doc_draft=${draftId}; path=/; max-age=${60*60*24*7}; SameSite=Lax`;
-                  } catch {}
+                  const draftId = await persistDraft(draftPayload);
                   if (authUser) {
-                    // T2: User is authenticated (free tools session) but has
-                    // no company. Send them directly to the import endpoint —
-                    // it will detect they have no company and redirect to
-                    // /onboarding. After onboarding, they land on the
-                    // dashboard where DocDraftRestorer picks up the draft via
-                    // the cookie. This avoids the login page entirely (they
-                    // may not have a password — magic-link signup).
-                    window.location.href = `/api/app/import-free-document?draft=${draftId}`;
+                    // T2: User is authenticated (shared .quote-core.com
+                    // session) but has no company. Send them to the app's
+                    // import endpoint — it detects the missing company and
+                    // redirects to /onboarding. After onboarding they land
+                    // on the dashboard where DocDraftRestorer restores the
+                    // draft via URL param / cookie / server fetch.
+                    window.location.href = `${getAppOrigin()}/api/app/import-free-document?draft=${draftId}`;
                   } else {
-                    // T1: Anonymous user — send to signup.
-                    window.location.href = `/signup?ref=free-${documentType}-generator&draft=${draftId}`;
+                    // T1: Anonymous user — send to the app-domain signup
+                    // (step 1 of the core signup flow).
+                    window.location.href = `${getAppOrigin()}/signup?ref=free-${documentType}-generator&draft=${draftId}`;
                   }
                 }}
                 className="w-full text-center px-5 py-2.5 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition-all"

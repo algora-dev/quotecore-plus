@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr';
+import { authCookieOptions } from './cookie-config';
 
 /**
  * Browser-side Supabase client for free tools pages.
@@ -22,6 +23,9 @@ import { createBrowserClient } from '@supabase/ssr';
 export function createFreeToolsClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const cookieOptions = authCookieOptions(
+    typeof window !== 'undefined' ? window.location.hostname : undefined,
+  );
   if (!url || !key) {
     if (typeof window !== 'undefined') {
       console.error(
@@ -29,7 +33,9 @@ export function createFreeToolsClient() {
         'Add NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY to the Vercel project and redeploy.'
       );
     }
-    return createBrowserClient('https://placeholder.supabase.co', 'placeholder-anon-key');
+    return createBrowserClient('https://placeholder.supabase.co', 'placeholder-anon-key', { cookieOptions });
   }
-  return createBrowserClient(url, key);
+  // Cross-subdomain cookieOptions: a free-tools login on quote-core.com
+  // must be valid on app.quote-core.com (see cookie-config.ts).
+  return createBrowserClient(url, key, { cookieOptions });
 }
