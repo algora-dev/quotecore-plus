@@ -392,7 +392,7 @@ export default function HomePage() {
   ];
 
   const primaryButton =
-    "inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-5 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-[#A03E15]";
+    "inline-flex min-h-11 items-center justify-center rounded-full bg-[#BD4A1A] px-5 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-[#A03E15]";
 
   const shimmerButton =
     "pill-shimmer inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-300 bg-white px-5 py-2.5 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40";
@@ -711,7 +711,7 @@ export default function HomePage() {
                         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ${
                           i === activeStep
                             ? "bg-[#BD4A1A] text-white shadow-[0_10px_24px_rgba(255,107,53,0.32)]"
-                            : "bg-zinc-100 text-zinc-500"
+                            : "bg-zinc-100 text-zinc-600"
                         }`}
                       >
                         {item.number}
