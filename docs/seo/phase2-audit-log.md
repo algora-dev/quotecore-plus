@@ -331,9 +331,11 @@ Crawled all 125 URLs from the production sitemap. Each URL was checked for:
 - No redirect (final URL matches sitemap URL)
 - Self-referencing canonical tag
 
-**Result: 124/125 PASS**
+**Result: 125/125 PASS** ✅
 
-The single non-critical failure is the homepage (`/`), where the canonical is `https://quote-core.com` (no trailing slash) vs the sitemap URL `https://quote-core.com/` (with trailing slash). These are functionally equivalent — browsers and Google treat them as the same URL.
+The homepage sitemap canonical format fix (commit `b841dc9`, merged to main `81c27f8` on 2026-07-15) resolved the trailing-slash mismatch. All 125 URLs now return HTTP 200, no redirects, and self-referencing canonicals.
+
+**Final crawl:** 2026-07-15 19:45 GMT — 125/125 PASS on production `quote-core.com`.
 
 ---
 
@@ -347,7 +349,7 @@ The single non-critical failure is the homepage (`/`), where the canonical is `h
 | Canonical URLs | PASS | All self-referencing, correct domains |
 | Redirects (www/http) | PASS | All return 308 |
 | Sitemaps accessible | PASS | Global: 125 URLs (now quote-core.com), NZ: 12 URLs |
-| Sitemap URL crawl | 124/125 PASS | All URLs return 200, no redirects, self-canonical |
+| Sitemap URL crawl | 125/125 PASS | All URLs return 200, no redirects, self-canonical |
 | Robots.txt accessible | PASS | Both HTTP 200, correct Host/Sitemap URLs |
 | x-default correctness | PASS | Points to quote-core.com only |
 | Legal-page hreflang equivalence | PASS | Privacy, terms, cookie-policy all genuinely equivalent |
