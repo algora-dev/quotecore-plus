@@ -247,93 +247,131 @@ HTTP 200 ✅
 ## Test 10: Lighthouse Audit (production `quote-core.com/`)
 
 **Tool:** Google PageSpeed Insights (`pagespeed.web.dev`)
-**Date:** 2026-07-15 16:57 GMT
 
-### Mobile (Emulated Moto G Power, Slow 4G)
+### Before (2026-07-15 16:57 GMT)
 
-| Category | Score | Result |
-|----------|-------|--------|
-| Performance | 74 | ⚠️ Needs improvement |
-| Accessibility | 88 | ⚠️ Minor issues |
-| Best Practices | 100 | ✅ PASS |
-| SEO | 100 | ✅ PASS |
+| Category | Mobile | Desktop |
+|----------|--------|---------|
+| Performance | 74 ⚠️ | 97 ✅ |
+| Accessibility | 88 ⚠️ | 88 ⚠️ |
+| Best Practices | 100 ✅ | 100 ✅ |
+| SEO | 100 ✅ | 100 ✅ |
 
-**Performance metrics:**
-- First Contentful Paint: 1.2s
-- Largest Contentful Paint: 8.1s ⚠️
-- Total Blocking Time: 0ms ✅
-- Cumulative Layout Shift: 0 ✅
-- Speed Index: 3.8s
+**Mobile metrics (before):** FCP 1.2s · LCP 8.1s · TBT 0ms · CLS 0 · SI 3.8s
 
-**Performance insights:**
-- Render-blocking requests (est. 540ms savings)
-- Image delivery (est. 658 KiB savings) — logo optimization opportunity
-- Legacy JavaScript (est. 15 KiB savings)
+### After (2026-07-15 17:23 GMT)
 
-**Accessibility issues (88):**
-- `[aria-hidden="true"]` elements contain focusable descendants
-- Background/foreground color contrast ratio insufficient
-- Touch targets do not have sufficient size/spacing
-- Image elements do not have `[alt]` attributes that are redundant text
+| Category | Mobile | Desktop | Target | Met? |
+|----------|--------|---------|--------|------|
+| Performance | 89 ✅ | 99 ✅ | >85 mobile, >90 desktop | ✅ |
+| Accessibility | 88 ⚠️ | 88 ⚠️ | >95 | ❌ |
+| Best Practices | 100 ✅ | 100 ✅ | 100 | ✅ |
+| SEO | 100 ✅ | 100 ✅ | 100 | ✅ |
 
-### Desktop (Emulated Desktop, Custom throttling)
+**Mobile metrics (after):** FCP 1.2s · LCP 3.7s ✅ · TBT 0ms · CLS 0 · SI 2.7s
+**Desktop metrics (after):** FCP 0.3s · LCP 0.8s · TBT 0ms · CLS 0 · SI 0.9s
 
-| Category | Score | Result |
-|----------|-------|--------|
-| Performance | 97 | ✅ PASS |
-| Accessibility | 88 | ⚠️ Minor issues (same as mobile) |
-| Best Practices | 100 | ✅ PASS |
-| SEO | 100 | ✅ PASS |
+### Before/After Comparison
 
-**Performance metrics:**
-- First Contentful Paint: 0.3s ✅
-- Largest Contentful Paint: 1.2s ✅
-- Total Blocking Time: 20ms ✅
-- Cumulative Layout Shift: 0 ✅
-- Speed Index: 0.9s ✅
+| Metric | Before (Mobile) | After (Mobile) | Improvement |
+|--------|----------------|---------------|-------------|
+| Performance score | 74 | 89 | +15 points |
+| LCP | 8.1s | 3.7s | -4.4s (54% faster) |
+| Speed Index | 3.8s | 2.7s | -1.1s |
+| FCP | 1.2s | 1.2s | No change |
+| TBT | 0ms | 0ms | Already good |
+| CLS | 0 | 0 | Already good |
+| Image delivery savings | 658 KiB | 113 KiB | 83% reduction |
 
-**Key takeaway:** Desktop is excellent (97 performance, 100 SEO). Mobile performance (74) is the main improvement area — LCP at 8.1s is the bottleneck, driven by image delivery and render-blocking resources.
+### What was done (Phase 2 cleanup pass)
+
+**Sitemap/robots fix:**
+- Fixed `NEXT_PUBLIC_SITE_URL` env var issue — sitemap and robots.txt were serving `app.quote-core.com` URLs instead of `quote-core.com`
+- Created `lib/seo/site-url.ts` that hardcodes `quote-core.com` in production regardless of env var
+- Updated sitemap.ts, robots.ts, layout.tsx, and app/lib/seo.ts to use shared helper
+- Removed old `/cookies` page, added 301 redirect to `/cookie-policy`, fixed sitemap entry
+
+**Image optimization:**
+- Compressed 7 images (1,572KB → 397KB, 74.8% reduction)
+- Added `loading="lazy"`, `decoding="async"`, and explicit `width`/`height` to all below-the-fold `<img>` tags
+- Added `loading="eager"` + dimensions to above-the-fold logo image
+
+**Video optimization:**
+- Lazy-loaded 44MB `kids-horizontal.mp4` via IntersectionObserver (was `autoPlay` + `preload="auto"`)
+- Changed to `preload="metadata"` — video only loads when scrolled into view
+
+**Blog post author:**
+- All blog posts now consistently show "By Shaun, Founder of QuoteCore+" (was inconsistent)
+- Added `author.url` to `blogPostingSchema` structured data
+- Did NOT add `aggregateRating` (no real customer review data to back it)
+
+**Accessibility fixes applied:**
+- Header nav buttons: `h-11` → `h-12` (48px WCAG touch target minimum)
+- Nav label contrast: `text-zinc-400` → `text-zinc-500`
+
+### Remaining accessibility issues (88 → target 95+)
+
+The following issues remain and require further work:
+1. `[aria-hidden="true"]` elements contain focusable descendants — likely from decorative carousels or floating elements that wrap interactive content
+2. Background/foreground color contrast — additional elements beyond the nav label need contrast fixes
+3. Touch target spacing — some interactive elements still have insufficient spacing
+4. `<video>` elements missing `<track>` captions — both hero and story videos need caption tracks
+5. Image alt text redundancy — some alt attributes duplicate nearby text content
+
+---
+
+---
+
+## Test 11: Sitemap URL Crawl (production `quote-core.com`)
+
+**Date:** 2026-07-15
+
+Crawled all 125 URLs from the production sitemap. Each URL was checked for:
+- HTTP 200 response
+- No redirect (final URL matches sitemap URL)
+- Self-referencing canonical tag
+
+**Result: 124/125 PASS**
+
+The single non-critical failure is the homepage (`/`), where the canonical is `https://quote-core.com` (no trailing slash) vs the sitemap URL `https://quote-core.com/` (with trailing slash). These are functionally equivalent — browsers and Google treat them as the same URL.
 
 ---
 
 ## Summary
 
-| Test | Global (production) | NZ (production) | Notes |
-|------|---------------------|-----------------|-------|
-| Equivalent pages have hreflang | 11/11 PASS | 11/11 PASS | All 4 tags correct on every page |
-| Non-equivalent pages have NO hreflang | PASS | PASS | Blog, docs, free tools, pricing all clean |
-| Reciprocity | PASS | PASS | Both sites reference each other with matching paths |
-| Canonical URLs | PASS | PASS | All self-referencing, correct domains |
-| Redirects (www/http) | PASS | PASS | All return 308 |
-| Sitemaps accessible | PASS | PASS | Global: 125 URLs, NZ: 12 URLs |
-| Robots.txt accessible | PASS | PASS | Both HTTP 200 |
-| x-default correctness | PASS | PASS | Points to quote-core.com only |
-| Google Rich Results | PASS | N/A (not yet crawled) | 2-3 valid items per page, non-critical issues only |
-| Lighthouse SEO (mobile) | 100 | — | Perfect SEO score |
-| Lighthouse SEO (desktop) | 100 | — | Perfect SEO score |
-| Lighthouse Performance (mobile) | 74 | — | LCP 8.1s — image optimization needed |
-| Lighthouse Performance (desktop) | 97 | — | Excellent |
-| Lighthouse Best Practices | 100 | — | Perfect |
-| Lighthouse Accessibility | 88 | — | ARIA + contrast issues to address |
+| Test | Result | Notes |
+|------|--------|-------|
+| Equivalent pages have hreflang | 11/11 PASS | All 4 tags correct on every page, both sites |
+| Non-equivalent pages have NO hreflang | PASS | Blog, docs, free tools, pricing all clean |
+| Reciprocity | PASS | Both sites reference each other with matching paths |
+| Canonical URLs | PASS | All self-referencing, correct domains |
+| Redirects (www/http) | PASS | All return 308 |
+| Sitemaps accessible | PASS | Global: 125 URLs (now quote-core.com), NZ: 12 URLs |
+| Sitemap URL crawl | 124/125 PASS | All URLs return 200, no redirects, self-canonical |
+| Robots.txt accessible | PASS | Both HTTP 200, correct Host/Sitemap URLs |
+| x-default correctness | PASS | Points to quote-core.com only |
+| Legal-page hreflang equivalence | PASS | Privacy, terms, cookie-policy all genuinely equivalent |
+| Google Rich Results | PASS | 2-3 valid items per page, non-critical issues only |
+| Blog post author | PASS | Visible byline + structured data on all posts |
+| No aggregateRating | PASS | Not added (no real review data) |
+| Lighthouse SEO (mobile/desktop) | 100/100 | Perfect |
+| Lighthouse Best Practices | 100/100 | Perfect |
+| Lighthouse Performance (mobile) | 89 (was 74) | ✅ Target >85 met. LCP 3.7s (was 8.1s) |
+| Lighthouse Performance (desktop) | 99 (was 97) | ✅ Target >90 met |
+| Lighthouse Accessibility | 88 | ❌ Target >95 not met — 5 remaining issues |
 
-### Recommendations for Phase 3
+### Remaining work for Phase 3
 
-1. **Mobile performance:** Optimize LCP (8.1s → target <2.5s). Key actions:
-   - Optimize hero/logo image delivery (658 KiB potential savings)
-   - Defer or inline render-blocking CSS/JS (540ms potential savings)
-   - Set explicit width/height on image elements
-2. **Accessibility (88→100):**
+1. **Accessibility (88→95+):**
    - Fix `[aria-hidden="true"]` containing focusable descendants
-   - Improve color contrast ratios
-   - Ensure touch targets have sufficient size/spacing
-3. **Structured data enhancement:**
-   - Add `aggregateRating` to SoftwareApplication schema (enables star ratings in search results)
-   - Add `author` to Article schema on blog posts
-4. **NZ site indexing:** Submit NZ site to Google Search Console for faster crawl/indexing
+   - Fix remaining color contrast issues
+   - Fix remaining touch target spacing
+   - Add `<track>` captions to videos
+   - Fix redundant alt text
+2. **Mobile LCP (3.7s → <2.5s):** Further reduce render-blocking CSS, consider inlining critical CSS
+3. **NZ site indexing:** Submit to Google Search Console for faster crawl/indexing
 
 ---
-
-## Files Changed (Phase 2 hreflang fix)
 
 ### Global site (`quotecore-plus`)
 | File | Change |
@@ -382,4 +420,7 @@ HTTP 200 ✅
 | quotecore-plus | `7d725c2` | fix(seo): add generateMetadata to root page.tsx for homepage hreflang |
 | quotecore-plus | `8568133` | Merge development → main (Phase 1 + Phase 2 SEO changes to production) |
 | quotecore-plus | `59a50aa` | docs(seo): add Phase 2 live production audit log |
+| quotecore-plus | `2f6bd60` | docs(seo): update Phase 2 audit log with production verification + Rich Results + Lighthouse results |
+| quotecore-plus | `1dd3d79` | perf(seo): fix sitemap domain, compress images, lazy-load video, fix accessibility |
+| quotecore-plus | `b53a80c` | Merge development → main (Phase 2 cleanup + performance pass to production) |
 | quotecore-nz | `3bb04b1` | fix(seo): page-level hreflang only — no site-wide layout emission |
