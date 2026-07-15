@@ -128,11 +128,24 @@
 
 ---
 
-## After Scores (Lighthouse — pending Vercel deploy verification)
+## After Scores (Lighthouse — verified 2026-07-15 20:01 GMT)
 
-Target: Accessibility 95+, Mobile Performance 90+
+| Category | Mobile | Desktop | Target | Met? |
+|----------|--------|---------|--------|------|
+| Performance | **98** | — | >90 mobile | ✅ |
+| Accessibility | **100** | — | >95 | ✅ |
+| Best Practices | **100** | — | 100 | ✅ |
+| SEO | **100** | — | 100 | ✅ |
 
-> After scores will be filled once Vercel preview build completes and Lighthouse is run against the deployed changes.
+**Mobile metrics (after):** FCP 1.1s · LCP 2.3s · TBT 20ms · CLS 0 · SI 2.2s
+
+**Improvement:**
+- Performance: 89 → 98 (+9 points)
+- Accessibility: 88 → 100 (+12 points)
+- LCP: 3.7s → 2.3s (38% faster)
+- SI: 2.7s → 2.2s
+
+No automated accessibility violations detected. 10 manual check items remain (standard Lighthouse manual review checklist — not failures).
 
 ---
 
