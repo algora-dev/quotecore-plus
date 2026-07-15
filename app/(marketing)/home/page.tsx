@@ -483,7 +483,7 @@ export default function HomePage() {
                   style={{display: "block"}}
                 >
                   <source src="/qc-hero-laptop.mp4" type="video/mp4" />
-                  <track kind="captions" srcLang="en" label="Product demo video" />
+                  <track kind="captions" srcLang="en" label="Product demo video" src="/captions/hero-demo.vtt" />
                 </video>
               </div>
             </div>
@@ -515,7 +515,7 @@ export default function HomePage() {
                   onTimeUpdate={handleVideoTimeUpdate}
                 >
                   <source src="/kids-horizontal.mp4" type="video/mp4" />
-                  <track kind="captions" srcLang="en" label="Brand story video" />
+                  <track kind="captions" srcLang="en" label="Brand story video" src="/captions/brand-story.vtt" />
                 </video>
                 {/* Progress bar - shows on hover */}
                 <div
