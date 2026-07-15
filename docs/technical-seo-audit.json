@@ -1,0 +1,131 @@
+{
+  "audit_date": "2026-07-15",
+  "auditor": "Gavin (AI agent)",
+  "scope": "Public-facing SEO across quote-core.com and www.quote-core.co.nz",
+  "domains": {
+    "global": {
+      "canonical_host": "quote-core.com",
+      "redirects": [
+        { "from": "www.quote-core.com", "to": "quote-core.com", "type": "308" },
+        { "from": "quote-core.co.nz", "to": "www.quote-core.co.nz", "type": "308" }
+      ],
+      "app_subdomain": "app.quote-core.com",
+      "sitemap_url": "https://quote-core.com/sitemap.xml",
+      "robots_url": "https://quote-core.com/robots.txt"
+    },
+    "nz": {
+      "canonical_host": "www.quote-core.co.nz",
+      "sitemap_url": "https://www.quote-core.co.nz/sitemap.xml",
+      "robots_url": "https://www.quote-core.co.nz/robots.txt"
+    }
+  },
+  "global_routes": [
+    { "url": "https://quote-core.com/", "status": "200", "canonical": "https://quote-core.com/", "robots": "index,follow", "title_source": "marketing_layout", "sitemap": true, "structured_data": ["Organization", "WebSite", "SoftwareApplication", "BreadcrumbList"], "classification": "homepage" },
+    { "url": "https://quote-core.com/blog", "status": "200", "canonical": "https://quote-core.com/blog", "robots": "index,follow", "title_source": "page_metadata", "sitemap": true, "structured_data": [], "classification": "blog_index" },
+    { "url": "https://quote-core.com/blog/best-roofing-quoting-software-uk-2026", "status": "200", "canonical": "https://quote-core.com/blog/best-roofing-quoting-software-uk-2026", "robots": "index,follow", "title_source": "generateMetadata", "sitemap": true, "structured_data": ["BlogPosting", "BreadcrumbList", "FAQPage"], "classification": "blog_post" },
+    { "url": "https://quote-core.com/blog/how-to-get-more-work-as-a-contractor", "status": "200", "canonical": "https://quote-core.com/blog/how-to-get-more-work-as-a-contractor", "robots": "index,follow", "title_source": "generateMetadata", "sitemap": true, "structured_data": ["BlogPosting", "BreadcrumbList"], "classification": "blog_post" },
+    { "url": "https://quote-core.com/blog/construction-quote-speed-checklist", "status": "200", "canonical": "https://quote-core.com/blog/construction-quote-speed-checklist", "robots": "index,follow", "title_source": "generateMetadata", "sitemap": true, "structured_data": ["BlogPosting", "BreadcrumbList"], "classification": "blog_post" },
+    { "url": "https://quote-core.com/blog/quotecore-plus-reviews", "status": "200", "canonical": "https://quote-core.com/blog/quotecore-plus-reviews", "robots": "index,follow", "title_source": "generateMetadata", "sitemap": true, "structured_data": ["BlogPosting", "BreadcrumbList"], "classification": "blog_post" },
+    { "url": "https://quote-core.com/blog/quotecore-plus-vs-quotesmith", "status": "200", "canonical": "https://quote-core.com/blog/quotecore-plus-vs-quotesmith", "robots": "index,follow", "title_source": "generateMetadata", "sitemap": true, "structured_data": ["BlogPosting", "BreadcrumbList"], "classification": "blog_post" },
+    { "url": "https://quote-core.com/blog/roofing-quoting-software-vs-spreadsheets", "status": "200", "canonical": "https://quote-core.com/blog/roofing-quoting-software-vs-spreadsheets", "robots": "index,follow", "title_source": "generateMetadata", "sitemap": true, "structured_data": ["BlogPosting", "BreadcrumbList"], "classification": "blog_post" },
+    { "url": "https://quote-core.com/blog/roofing-quoting-software-uk", "status": "200", "canonical": "https://quote-core.com/blog/roofing-quoting-software-uk", "robots": "index,follow", "title_source": "generateMetadata", "sitemap": true, "structured_data": ["BlogPosting", "BreadcrumbList"], "classification": "blog_post" },
+    { "url": "https://quote-core.com/blog/built-by-a-roofer", "status": "200", "canonical": "https://quote-core.com/blog/built-by-a-roofer", "robots": "index,follow", "title_source": "generateMetadata", "sitemap": true, "structured_data": ["BlogPosting", "BreadcrumbList"], "classification": "blog_post" },
+    { "url": "https://quote-core.com/roofing-quoting-software", "status": "200", "canonical": "inherited", "robots": "index,follow", "title_source": "page_metadata", "sitemap": true, "structured_data": ["Organization", "WebSite", "SoftwareApplication", "BreadcrumbList"], "classification": "product_page" },
+    { "url": "https://quote-core.com/construction-quoting-software", "status": "200", "canonical": "inherited", "robots": "index,follow", "title_source": "page_metadata", "sitemap": true, "structured_data": ["Organization", "WebSite", "SoftwareApplication", "BreadcrumbList"], "classification": "product_page" },
+    { "url": "https://quote-core.com/services", "status": "200", "canonical": "https://quote-core.com/services", "robots": "index,follow", "title_source": "page_metadata", "sitemap": true, "structured_data": ["Organization", "WebSite", "SoftwareApplication", "BreadcrumbList"], "classification": "static_page" },
+    { "url": "https://quote-core.com/about", "status": "200", "canonical": "https://quote-core.com/about", "robots": "index,follow", "title_source": "page_metadata", "sitemap": true, "structured_data": ["Organization", "WebSite", "SoftwareApplication", "BreadcrumbList"], "classification": "static_page" },
+    { "url": "https://quote-core.com/contact", "status": "200", "canonical": "https://quote-core.com/contact", "robots": "index,follow", "title_source": "layout_metadata", "sitemap": true, "structured_data": ["Organization", "WebSite", "SoftwareApplication", "BreadcrumbList"], "classification": "static_page" },
+    { "url": "https://quote-core.com/free-trial", "status": "200", "canonical": "https://quote-core.com/free-trial", "robots": "index,follow", "title_source": "page_metadata", "sitemap": true, "structured_data": ["Organization", "WebSite", "SoftwareApplication", "BreadcrumbList"], "classification": "conversion_page" },
+    { "url": "https://quote-core.com/privacy", "status": "200", "canonical": "inherited", "robots": "index,follow", "title_source": "root_layout", "sitemap": true, "structured_data": [], "classification": "legal_page" },
+    { "url": "https://quote-core.com/cookies", "status": "200", "canonical": "inherited", "robots": "index,follow", "title_source": "root_layout", "sitemap": true, "structured_data": [], "classification": "legal_page" },
+    { "url": "https://quote-core.com/terms", "status": "200", "canonical": "inherited", "robots": "index,follow", "title_source": "root_layout", "sitemap": true, "structured_data": [], "classification": "legal_page" },
+    { "url": "https://quote-core.com/docs", "status": "200", "canonical": "inherited", "robots": "index,follow", "title_source": "docs_layout", "sitemap": true, "structured_data": [], "classification": "docs_index" },
+    { "url": "https://quote-core.com/docs/[slug]", "status": "200", "canonical": "inherited", "robots": "index,follow", "title_source": "docs_layout", "sitemap": true, "structured_data": [], "classification": "docs_page" },
+    { "url": "https://quote-core.com/free-calculators", "status": "200", "canonical": "https://quote-core.com/free-calculators", "robots": "index,follow", "title_source": "layout_metadata", "sitemap": true, "structured_data": [], "classification": "tools_hub" },
+    { "url": "https://quote-core.com/free-roofing-calculator", "status": "200", "canonical": "https://quote-core.com/free-roofing-calculator", "robots": "index,follow", "title_source": "buildTradeMetadata", "sitemap": true, "structured_data": ["WebApplication", "FAQPage"], "classification": "free_tool" },
+    { "url": "https://quote-core.com/free-construction-calculator", "status": "200", "canonical": "https://quote-core.com/free-construction-calculator", "robots": "index,follow", "title_source": "buildTradeMetadata", "sitemap": true, "structured_data": ["WebApplication", "FAQPage"], "classification": "free_tool" },
+    { "url": "https://quote-core.com/free-concrete-calculator", "status": "200", "canonical": "https://quote-core.com/free-concrete-calculator", "robots": "index,follow", "title_source": "buildTradeMetadata", "sitemap": true, "structured_data": ["WebApplication", "FAQPage"], "classification": "free_tool" },
+    { "url": "https://quote-core.com/free-landscaping-calculator", "status": "200", "canonical": "https://quote-core.com/free-landscaping-calculator", "robots": "index,follow", "title_source": "buildTradeMetadata", "sitemap": true, "structured_data": ["WebApplication", "FAQPage"], "classification": "free_tool" },
+    { "url": "https://quote-core.com/free-birds-mouth-calculator", "status": "200", "canonical": "https://quote-core.com/free-birds-mouth-calculator", "robots": "index,follow", "title_source": "buildTradeMetadata", "sitemap": true, "structured_data": ["WebApplication", "FAQPage"], "classification": "free_tool" },
+    { "url": "https://quote-core.com/free-quote-generator", "status": "200", "canonical": "https://quote-core.com/free-quote-generator", "robots": "index,follow", "title_source": "layout_metadata", "sitemap": true, "structured_data": [], "classification": "free_tool" },
+    { "url": "https://quote-core.com/free-invoice-generator", "status": "200", "canonical": "https://quote-core.com/free-invoice-generator", "robots": "index,follow", "title_source": "layout_metadata", "sitemap": true, "structured_data": [], "classification": "free_tool" },
+    { "url": "https://quote-core.com/free-purchase-order-generator", "status": "200", "canonical": "https://quote-core.com/free-purchase-order-generator", "robots": "index,follow", "title_source": "layout_metadata", "sitemap": true, "structured_data": [], "classification": "free_tool" },
+    { "url": "https://quote-core.com/[seo-slug-pages]", "status": "200", "canonical": "per-slug-config", "robots": "index,follow", "title_source": "buildTradeMetadata", "sitemap": true, "structured_data": ["WebApplication", "FAQPage"], "classification": "seo_slug_page" },
+    { "url": "https://quote-core.com/login", "status": "200", "canonical": "none", "robots": "noindex", "title_source": "root_layout", "sitemap": false, "structured_data": [], "classification": "auth_page" },
+    { "url": "https://quote-core.com/signup", "status": "200", "canonical": "none", "robots": "noindex", "title_source": "root_layout", "sitemap": false, "structured_data": [], "classification": "auth_page" },
+    { "url": "https://app.quote-core.com/*", "status": "200", "canonical": "none", "robots": "noindex", "title_source": "n/a", "sitemap": false, "structured_data": [], "classification": "app_authenticated" }
+  ],
+  "nz_routes": [
+    { "url": "https://www.quote-core.co.nz/", "status": "200", "canonical": "https://www.quote-core.co.nz/", "robots": "index,follow", "sitemap": true, "classification": "homepage" },
+    { "url": "https://www.quote-core.co.nz/about", "status": "200", "canonical": "inherited", "robots": "index,follow", "sitemap": true, "classification": "static_page" },
+    { "url": "https://www.quote-core.co.nz/construction-quoting-software", "status": "200", "canonical": "inherited", "robots": "index,follow", "sitemap": true, "classification": "product_page" },
+    { "url": "https://www.quote-core.co.nz/contact", "status": "200", "canonical": "inherited", "robots": "index,follow", "sitemap": true, "classification": "static_page" },
+    { "url": "https://www.quote-core.co.nz/free-trial", "status": "200", "canonical": "inherited", "robots": "index,follow", "sitemap": true, "classification": "conversion_page" },
+    { "url": "https://www.quote-core.co.nz/pricing", "status": "200", "canonical": "inherited", "robots": "index,follow", "sitemap": true, "classification": "pricing_page" },
+    { "url": "https://www.quote-core.co.nz/privacy", "status": "200", "canonical": "inherited", "robots": "index,follow", "sitemap": true, "classification": "legal_page" },
+    { "url": "https://www.quote-core.co.nz/roofing-quoting-software", "status": "200", "canonical": "inherited", "robots": "index,follow", "sitemap": true, "classification": "product_page" },
+    { "url": "https://www.quote-core.co.nz/services", "status": "200", "canonical": "inherited", "robots": "index,follow", "sitemap": true, "classification": "static_page" },
+    { "url": "https://www.quote-core.co.nz/terms", "status": "200", "canonical": "inherited", "robots": "index,follow", "sitemap": true, "classification": "legal_page" },
+    { "url": "https://www.quote-core.co.nz/cookie-policy", "status": "200", "canonical": "inherited", "robots": "index,follow", "sitemap": true, "classification": "legal_page" },
+    { "url": "https://www.quote-core.co.nz/coffee-terms", "status": "200", "canonical": "inherited", "robots": "index,follow", "sitemap": true, "classification": "legal_page" }
+  ],
+  "issues_found": [
+    {
+      "severity": "high",
+      "description": "Representative page testing (Lighthouse, Rich Results Test, URL Inspection) has not been performed against a live production deploy",
+      "route": "all",
+      "status": "pending_deploy"
+    },
+    {
+      "severity": "medium",
+      "description": "Blog post sitemap requires manual sync between BLOG_POSTS array in sitemap.ts and posts object in blog/[slug]/page.tsx",
+      "route": "/blog/[slug]",
+      "status": "open"
+    },
+    {
+      "severity": "medium",
+      "description": "No automated SEO validation script in CI/build pipeline — canonicals, metadata, or structured data errors could ship without detection",
+      "route": "all",
+      "status": "open"
+    },
+    {
+      "severity": "low",
+      "description": "Homepage is a client component ('use client') — SSR'd by Next.js so content is in initial HTML, but server component would be preferable",
+      "route": "/",
+      "status": "acceptable"
+    },
+    {
+      "severity": "low",
+      "description": "NZ sub-pages inherit canonical from root layout — should verify per-page canonicals are set for all NZ routes",
+      "route": "www.quote-core.co.nz/*",
+      "status": "needs_verification"
+    },
+    {
+      "severity": "low",
+      "description": "One 'coming-soon' doc page is included in sitemap because getAllSlugs() does not filter by frontmatter status",
+      "route": "/docs/[slug]",
+      "status": "open"
+    }
+  ],
+  "sitemap_summary": {
+    "global": {
+      "total_urls": 166,
+      "breakdown": {
+        "static_pages": 22,
+        "blog_posts": 8,
+        "seo_slug_pages": 37,
+        "doc_pages": 99
+      }
+    },
+    "nz": {
+      "total_urls": 12,
+      "breakdown": {
+        "static_pages": 12
+      }
+    }
+  },
+  "structured_data_summary": {
+    "global": ["Organization", "WebSite", "SoftwareApplication", "BreadcrumbList", "BlogPosting", "FAQPage", "WebApplication"],
+    "nz": ["Organization", "WebSite", "SoftwareApplication"]
+  }
+}
