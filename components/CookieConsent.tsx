@@ -176,7 +176,7 @@ export default function CookieConsent() {
                   role="switch"
                   aria-checked={analyticsChecked}
                   onClick={() => setAnalyticsChecked((p) => !p)}
-                  className={`mt-1 shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                  className={`mt-1 shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2 ${
                     analyticsChecked ? "bg-[#FF6B35]" : "bg-zinc-300"
                   }`}
                 >
@@ -201,7 +201,7 @@ export default function CookieConsent() {
                   role="switch"
                   aria-checked={marketingChecked}
                   onClick={() => setMarketingChecked((p) => !p)}
-                  className={`mt-1 shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                  className={`mt-1 shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2 ${
                     marketingChecked ? "bg-[#FF6B35]" : "bg-zinc-300"
                   }`}
                 >

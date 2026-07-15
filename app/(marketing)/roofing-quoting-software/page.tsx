@@ -181,7 +181,7 @@ export default function RoofingQuotingSoftwarePage() {
               </a>
             </div>
 
-            <p className="mt-3 text-sm text-zinc-400">No credit card required.</p>
+            <p className="mt-3 text-sm text-zinc-500">No credit card required.</p>
           </div>
         </section>
 
@@ -386,7 +386,7 @@ export default function RoofingQuotingSoftwarePage() {
             Start your free 14-day trial
           </a>
 
-          <p className="mt-4 text-sm text-zinc-400">No card required. 14 days free.</p>
+          <p className="mt-4 text-sm text-zinc-500">No card required. 14 days free.</p>
         </section>
 
         <SiteFooter />
