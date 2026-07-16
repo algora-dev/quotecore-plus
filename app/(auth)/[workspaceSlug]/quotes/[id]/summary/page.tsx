@@ -534,7 +534,7 @@ export default async function QuoteSummaryPage({
             <div key={area.id}>
               <h3 className="font-semibold text-slate-900 mb-4">{area.label} - {formatArea(area.computed_sqm ?? 0, quote.measurement_system)} <span className="text-slate-400 font-normal text-sm">(Actual area)</span></h3>
               {areaComps.length > 0 ? (
-                <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                <div className="overflow-x-auto scrollbar-thin -mx-4 px-4 md:mx-0 md:px-0">
                 <table className="w-full text-sm min-w-[480px]">
                   <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-300">
                     <th className="pb-2 font-medium whitespace-nowrap">Component</th><th className="pb-2 text-right font-medium whitespace-nowrap">Entries</th><th className="pb-2 text-right font-medium whitespace-nowrap">Total Qty <em className="font-normal text-slate-400">(Incl Waste)</em></th>
@@ -577,7 +577,7 @@ export default async function QuoteSummaryPage({
         {extraComps.length > 0 && (
           <div>
             <h3 className="font-semibold text-slate-900 mb-4">{extrasHeading}</h3>
-            <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+            <div className="overflow-x-auto scrollbar-thin -mx-4 px-4 md:mx-0 md:px-0">
             <table className="w-full text-sm min-w-[480px]">
               <thead><tr className="text-left text-xs text-slate-500 border-b border-slate-300">
                 <th className="pb-2 font-medium whitespace-nowrap">{isGenericNoArea ? 'Item' : 'Extra'}</th><th className="pb-2 text-right font-medium whitespace-nowrap">Entries</th><th className="pb-2 text-right font-medium whitespace-nowrap">Total Qty <em className="font-normal text-slate-400">(Incl Waste)</em></th>

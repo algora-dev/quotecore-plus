@@ -834,7 +834,7 @@ export function QuoteBuilder({
                   {area.label} - {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
                 </h3>
                {areaComps.length > 0 ? (
-                  <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                  <div className="overflow-x-auto scrollbar-thin -mx-4 px-4 md:mx-0 md:px-0">
                   <table className="w-full text-sm min-w-[480px]">
                     <thead>
                       <tr className="text-left text-xs text-slate-500 border-b">
@@ -886,7 +886,7 @@ export function QuoteBuilder({
             return (
              <div className="rounded-xl border border-slate-200 bg-white p-4">
                <h3 className="font-semibold text-slate-900 mb-2">Quote items</h3>
-                <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                <div className="overflow-x-auto scrollbar-thin -mx-4 px-4 md:mx-0 md:px-0">
                 <table className="w-full text-sm min-w-[480px]">
                  <thead>
                    <tr className="text-left text-xs text-slate-500 border-b">
@@ -919,7 +919,7 @@ export function QuoteBuilder({
           {extraComps.length > 0 && (
            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
              <h3 className="font-semibold text-slate-900 mb-2">Extras</h3>
-              <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+              <div className="overflow-x-auto scrollbar-thin -mx-4 px-4 md:mx-0 md:px-0">
               <table className="w-full text-sm min-w-[480px]">
                <thead>
                  <tr className="text-left text-xs text-slate-500 border-b">
