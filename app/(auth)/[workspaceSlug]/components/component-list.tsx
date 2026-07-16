@@ -720,8 +720,8 @@ export function ComponentList({
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Smart Components™</h1>
-        <p className="text-sm text-slate-500 mt-1">Manage your Smart Components™ and extras for quotes.</p>
+        <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Smart Components™</h1>
+        <p className="text-xs md:text-sm text-slate-500 mt-1">Manage your Smart Components™ and extras for quotes.</p>
       </div>
       
 

@@ -32,17 +32,17 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-copilot="mo-action-cards">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4" data-copilot="mo-action-cards">
         {/* Create Custom Order */}
         <button
           type="button"
           onClick={() => setPickerFor('custom')}
           data-copilot="mo-custom-order"
-          className="block w-full text-left p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
+          className="block w-full text-left p-4 md:p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
         >
-          <div className="flex items-start gap-4">
+          <div className="flex items-start gap-3 md:gap-4">
             <div className="p-3 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
               <svg className="w-6 h-6 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -60,9 +60,9 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
           type="button"
           onClick={() => setPickerFor('from-quote')}
           data-copilot="mo-order-from-quote"
-          className="block w-full text-left p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
+          className="block w-full text-left p-4 md:p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
         >
-          <div className="flex items-start gap-4">
+          <div className="flex items-start gap-3 md:gap-4">
             <div className="p-3 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
               <svg className="w-6 h-6 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -78,9 +78,9 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
         {/* Order Templates - managed in Resource Library */}
         <button
           onClick={() => router.push(`/${workspaceSlug}/resources?tab=order`)}
-          className="block w-full p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group text-left"
+          className="block w-full p-4 md:p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group text-left"
         >
-          <div className="flex items-start gap-4">
+          <div className="flex items-start gap-3 md:gap-4">
             <div className="p-3 rounded-full bg-slate-100 group-hover:bg-slate-200 transition-colors">
               <svg className="w-6 h-6 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
@@ -102,7 +102,7 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
       )}
 
       {/* Recent Orders Section */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
+      <div className="bg-white border border-slate-200 rounded-xl p-3 md:p-6">
         <h2 className="font-semibold text-slate-900 mb-4">Recent Orders</h2>
         <OrderList orders={recentOrders} workspaceSlug={workspaceSlug} />
       </div>

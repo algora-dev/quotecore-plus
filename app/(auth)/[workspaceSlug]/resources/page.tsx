@@ -153,16 +153,16 @@ export default async function ResourcesHubPage({
   ];
 
   return (
-    <section className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Resource Library</h1>
-          <p className="text-sm text-slate-500 mt-1">Everything you use to build quotes and orders, in one place.</p>
+    <section className="space-y-4 md:space-y-6 px-3 md:px-0">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Resource Library</h1>
+          <p className="text-xs md:text-sm text-slate-500 mt-1">Everything you use to build quotes and orders, in one place.</p>
         </div>
         <Link
           href={`${base}/tutorials`}
           data-copilot="resources-tutorials-link"
-          className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full bg-black px-3 md:px-4 py-2 text-xs md:text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] min-h-[44px]"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -183,7 +183,7 @@ export default async function ResourcesHubPage({
             href={card.href}
             data-copilot={card.copilot}
             {...linkProps}
-            className="block p-5 bg-white border border-slate-200 rounded-xl hover:border-orange-200 hover:bg-orange-50/30 hover:shadow-[0_0_12px_rgba(255,107,53,0.08)] hover:scale-[1.02] transition-all group"
+            className="block p-4 md:p-5 bg-white border border-slate-200 rounded-xl hover:border-orange-200 hover:bg-orange-50/30 hover:shadow-[0_0_12px_rgba(255,107,53,0.08)] hover:scale-[1.02] transition-all group"
           >
             <div className="flex items-start gap-4">
               <div className="p-3 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors flex-shrink-0">

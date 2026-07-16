@@ -404,7 +404,7 @@ export function BillingPanel(props: BillingPanelProps) {
       )}
 
       {/* Current plan card */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 md:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Current plan</p>
@@ -457,7 +457,7 @@ export function BillingPanel(props: BillingPanelProps) {
               onClick={onManage}
               disabled={pending}
               title="Cancel, swap plan, update card, or view invoices"
-              className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 min-h-[44px]"
             >
               Manage subscription
             </button>
@@ -499,7 +499,7 @@ export function BillingPanel(props: BillingPanelProps) {
       </div>
 
       {/* Plan grid */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 md:p-6">
         <h3 className="text-base font-semibold text-slate-900">Plans</h3>
         <p className="text-sm text-slate-500 mt-1">
           Click a plan to learn more. Trial is non-paid and runs for 14 days.
@@ -543,7 +543,7 @@ export function BillingPanel(props: BillingPanelProps) {
             return (
               <li
                 key={plan.code}
-                className={`rounded-lg border p-4 flex flex-col justify-between ${
+                className={`rounded-lg border p-3 md:p-4 flex flex-col justify-between ${
                   plan.comingSoon
                     ? 'border-slate-200 bg-slate-50'
                     : isCurrent
@@ -686,7 +686,7 @@ export function BillingPanel(props: BillingPanelProps) {
                 type="button"
                 onClick={() => setChangeTarget(null)}
                 disabled={pending}
-                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 min-h-[44px]"
               >
                 Cancel
               </button>

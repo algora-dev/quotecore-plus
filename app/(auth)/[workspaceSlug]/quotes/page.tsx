@@ -67,11 +67,11 @@ export default async function QuotesPage({
   const atLimit = used >= limit;
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-4 md:space-y-5 px-3 md:px-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Quotes</h1>
-          <p className="text-sm text-slate-500 mt-1">Create and manage all your quotes.</p>
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Quotes</h1>
+          <p className="text-xs md:text-sm text-slate-500 mt-1">Create and manage all your quotes.</p>
         </div>
 
         {showCounter && (

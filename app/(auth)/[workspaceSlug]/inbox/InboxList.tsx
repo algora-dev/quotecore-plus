@@ -432,12 +432,12 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
           })}
         </div>
       ) : (
-    <div className="flex gap-5">
+    <div className="flex flex-col md:flex-row gap-4 md:gap-5">
       {/* LEFT PANEL - folders */}
-      <aside className="w-44 flex-shrink-0">
+      <aside className="w-full md:w-44 flex-shrink-0">
         {/* The guide highlight targets this <nav> (only the 3 folder buttons),
             not the <aside> - the aside stretches to the full list height. */}
-        <nav className="space-y-1 self-start" data-assistant-id="inbox-folders" data-copilot="inbox-folders">
+        <nav className="flex md:flex-col gap-1 md:space-y-1 self-start overflow-x-auto md:overflow-visible -mx-3 md:mx-0 px-3 md:px-0 pb-2 md:pb-0" data-assistant-id="inbox-folders" data-copilot="inbox-folders">
           {FOLDERS.map((f) => (
             <button
               key={f.key}
@@ -447,7 +447,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                 setSelected(new Set());
               }}
               data-assistant-id={`inbox-folder-${f.key}`}
-              className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-sm font-medium transition whitespace-nowrap md:whitespace-normal ${
+              className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 md:py-2 text-sm font-medium transition whitespace-nowrap md:whitespace-normal min-h-[44px] md:min-h-0 ${
                 folder === f.key
                   ? 'border-slate-900 bg-slate-900 text-white'
                   : 'border-slate-200 bg-white text-slate-700 hover:border-orange-200 hover:bg-orange-50/40'
