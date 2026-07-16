@@ -595,7 +595,7 @@ export function OrderLineByLineEditor({
       {/* RIGHT: live preview (mirrors OrderBody line-by-line table) - expands
           to fill the remaining body width up to the header's right frame edge. */}
       <div className="w-full lg:flex-1 lg:min-w-0 lg:sticky lg:top-4 h-fit">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-2 md:p-5 space-y-4">
           <div className="flex items-baseline justify-between gap-3 flex-wrap">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Preview</p>
             <p className="text-xs text-slate-400 italic">

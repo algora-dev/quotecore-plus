@@ -695,7 +695,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   // components editor uses. Components editor calls this with no arg (false).
   function renderOrderHeader(rounded = false) {
     return (
-      <div className={rounded ? 'flex-shrink-0 px-4 md:px-6 pt-4' : 'flex-shrink-0'}>
+      <div className={rounded ? 'flex-shrink-0 px-2 md:px-6 pt-3 md:pt-4' : 'flex-shrink-0'}>
         {headerExpanded ? (
           <div
             className={
@@ -705,7 +705,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
             }
           >
             {/* Template Selector */}
-            <div className="px-6 py-3 border-b border-slate-100 bg-slate-50" data-copilot="mo-template">
+            <div className="px-2 md:px-6 py-2 md:py-3 border-b border-slate-100 bg-slate-50" data-copilot="mo-template">
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Use Template (Optional)
               </label>
@@ -778,8 +778,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           <div
             className={
               rounded
-                ? 'bg-white border border-slate-200 rounded-xl shadow-sm px-6 py-3 flex items-center justify-between'
-                : 'bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between'
+                ? 'bg-white border border-slate-200 rounded-xl shadow-sm px-2 md:px-6 py-2 md:py-3 flex items-center justify-between'
+                : 'bg-white border-b border-slate-200 px-2 md:px-6 py-2 md:py-3 flex items-center justify-between'
             }
           >
             <div className="text-sm text-slate-600">
@@ -877,9 +877,9 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   return (
     <>
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-    <div className="flex flex-col h-screen bg-slate-50">
+    <div className="flex flex-col min-h-screen bg-slate-50">
       {/* Back Button */}
-      <div className="px-6 pt-4">
+      <div className="px-2 md:px-6 pt-3 md:pt-4">
         <BackButton />
       </div>
       
@@ -887,19 +887,19 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
       {renderOrderHeader()}
 
       {/* Main Content Area - Sidebar + Order Form */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-visible lg:overflow-hidden">
         {/* LEFT SIDEBAR - Order Components Control Panel (collapsible). Width
             animates to 0 on collapse; the flex-1 order-form pane auto-fills.
             Sidebar stays mounted (no state loss) - only its width/opacity
             transition. */}
         <div
           className={`bg-white border-r border-slate-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${
-            componentsPanelCollapsed ? 'w-0 opacity-0 pointer-events-none border-r-0' : 'w-80 opacity-100'
+            componentsPanelCollapsed ? 'w-0 opacity-0 pointer-events-none border-r-0' : 'w-full lg:w-80 opacity-100'
           }`}
           data-copilot="mo-sidebar"
           aria-hidden={componentsPanelCollapsed}
         >
-          <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+          <div className="px-2 md:px-4 py-2 md:py-3 border-b border-slate-200 bg-slate-50">
             <div className="flex items-center justify-between gap-2">
               <h3 className="font-semibold text-slate-900 text-sm">Order Components</h3>
               <CollapseButton
@@ -1081,9 +1081,9 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
         </div>
 
         {/* RIGHT - Order Form Display */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
+        <div className="flex-1 flex flex-col overflow-visible lg:overflow-hidden bg-slate-50">
           {/* Toolbar */}
-          <div className="px-6 py-3 bg-white border-b border-slate-200 flex items-center justify-between">
+          <div className="px-2 md:px-6 py-2 md:py-3 bg-white border-b border-slate-200 flex items-center justify-between">
             <div className="flex items-baseline gap-3 flex-wrap">
               <h3 className="font-semibold text-slate-900">Order Form</h3>
               <p className="text-xs text-slate-400 italic">
@@ -1119,13 +1119,13 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           </div>
 
           {/* Order Form Content - A4 Preview */}
-          <div className="flex-1 overflow-y-auto p-6 bg-slate-100">
+          <div className="flex-1 overflow-y-auto p-2 md:p-6 bg-slate-100">
             <div className="max-w-[210mm] mx-auto bg-white shadow-lg" style={{ minHeight: '297mm' }}>
-              <div className="p-8">
+              <div className="p-4 md:p-8">
                 {/* Order Header */}
-                <div className="mb-6 pb-6 border-b-2 border-slate-300">
+                <div className="mb-4 md:mb-6 pb-4 md:pb-6 border-b-2 border-slate-300">
                   {/* 3-Column Header Layout */}
-                  <div className="grid grid-cols-3 gap-8">
+                  <div className="grid grid-cols-3 gap-2 md:gap-8">
                     {/* Column 1: TO section (left-aligned) */}
                     <div className="space-y-1">
                       <p className="text-xs font-semibold text-slate-500 uppercase">To:</p>
