@@ -1,0 +1,199 @@
+{
+  "route": "quotes",
+  "routeTemplate": "/[workspaceSlug]/quotes",
+  "requestedViewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "captureReadyMs": 3274,
+  "actualViewport": {
+    "width": 1440,
+    "height": 900,
+    "documentClientWidth": 1440,
+    "documentClientHeight": 900
+  },
+  "documentSize": {
+    "width": 1440,
+    "height": 900
+  },
+  "horizontalOverflow": false,
+  "overflowElementCount": 0,
+  "overflowElements": [],
+  "interactiveTargetCount": 18,
+  "smallTargetCount": 17,
+  "smallTargets": [
+    {
+      "tag": "a",
+      "text": "",
+      "width": 155,
+      "height": 36,
+      "left": 168,
+      "right": 323
+    },
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 929,
+      "right": 965
+    },
+    {
+      "tag": "a",
+      "text": "Open your message center",
+      "width": 36,
+      "height": 36,
+      "left": 977,
+      "right": 1013
+    },
+    {
+      "tag": "button",
+      "text": "Open help",
+      "width": 64,
+      "height": 25,
+      "left": 1025,
+      "right": 1089
+    },
+    {
+      "tag": "a",
+      "text": "Account",
+      "width": 84,
+      "height": 32,
+      "left": 1101,
+      "right": 1185
+    },
+    {
+      "tag": "button",
+      "text": "Logout",
+      "width": 75,
+      "height": 32,
+      "left": 1197,
+      "right": 1272
+    },
+    {
+      "tag": "a",
+      "text": "Quotes",
+      "width": 73,
+      "height": 32,
+      "left": 168,
+      "right": 241
+    },
+    {
+      "tag": "a",
+      "text": "Orders",
+      "width": 71,
+      "height": 32,
+      "left": 249,
+      "right": 320
+    },
+    {
+      "tag": "a",
+      "text": "Invoices",
+      "width": 79,
+      "height": 32,
+      "left": 328,
+      "right": 407
+    },
+    {
+      "tag": "a",
+      "text": "Resources",
+      "width": 95,
+      "height": 32,
+      "left": 415,
+      "right": 510
+    },
+    {
+      "tag": "button",
+      "text": "Confirmed (0)",
+      "width": 118,
+      "height": 32,
+      "left": 172,
+      "right": 290
+    },
+    {
+      "tag": "button",
+      "text": "Drafts (1)",
+      "width": 90,
+      "height": 32,
+      "left": 294,
+      "right": 384
+    },
+    {
+      "tag": "a",
+      "text": "Click to create a new quote",
+      "width": 135,
+      "height": 36,
+      "left": 982,
+      "right": 1117
+    },
+    {
+      "tag": "a",
+      "text": "Resource Library",
+      "width": 147,
+      "height": 36,
+      "left": 1125,
+      "right": 1272
+    },
+    {
+      "tag": "button",
+      "text": "All",
+      "width": 39,
+      "height": 25,
+      "left": 168,
+      "right": 207
+    },
+    {
+      "tag": "input",
+      "text": "",
+      "width": 384,
+      "height": 37,
+      "left": 168,
+      "right": 552
+    },
+    {
+      "tag": "select",
+      "text": "Newest firstOldest firstRecently active",
+      "width": 141,
+      "height": 34,
+      "left": 564,
+      "right": 705
+    }
+  ],
+  "unlabeledFormControlCount": 1,
+  "unlabeledFormControls": [
+    {
+      "tag": "select",
+      "text": "Newest firstOldest firstRecently active",
+      "width": 141,
+      "height": 34,
+      "left": 564,
+      "right": 705
+    }
+  ],
+  "unnamedInteractiveCount": 2,
+  "unnamedInteractive": [
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 929,
+      "right": 965
+    },
+    {
+      "tag": "input",
+      "text": "",
+      "width": 384,
+      "height": 37,
+      "left": 168,
+      "right": 552
+    }
+  ],
+  "navigationTiming": {
+    "durationMs": 2011,
+    "domContentLoadedMs": 2011,
+    "loadMs": 2011,
+    "transferSizeBytes": 7328,
+    "decodedBodySizeBytes": 29313
+  }
+}

@@ -1,0 +1,231 @@
+{
+  "route": "quote-builder",
+  "routeTemplate": "/[workspaceSlug]/quotes/[id]",
+  "requestedViewport": {
+    "width": 390,
+    "height": 844
+  },
+  "captureReadyMs": 3237,
+  "actualViewport": {
+    "width": 390,
+    "height": 844,
+    "documentClientWidth": 375,
+    "documentClientHeight": 829
+  },
+  "documentSize": {
+    "width": 515,
+    "height": 900
+  },
+  "horizontalOverflow": true,
+  "overflowElementCount": 4,
+  "overflowElements": [
+    {
+      "tag": "div",
+      "text": "Currency:NZD AUD - Australian DollarUSD - US DollarCAD - Canadian DollarSGD - Singapore Do",
+      "width": 339,
+      "height": 34,
+      "left": 176,
+      "right": 515
+    },
+    {
+      "tag": "div",
+      "text": "Currency:NZD AUD - Australian DollarUSD - US DollarCAD - Canadian DollarSGD - Singapore Do",
+      "width": 283,
+      "height": 34,
+      "left": 176,
+      "right": 459
+    },
+    {
+      "tag": "select",
+      "text": "⚠️ Changes display symbol only - prices are NOT converted",
+      "width": 214,
+      "height": 34,
+      "left": 245,
+      "right": 459
+    },
+    {
+      "tag": "span",
+      "text": "draft",
+      "width": 44,
+      "height": 20,
+      "left": 471,
+      "right": 515
+    }
+  ],
+  "interactiveTargetCount": 24,
+  "smallTargetCount": 17,
+  "smallTargets": [
+    {
+      "tag": "a",
+      "text": "",
+      "width": 14,
+      "height": 36,
+      "left": 24,
+      "right": 38
+    },
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 38,
+      "right": 74
+    },
+    {
+      "tag": "a",
+      "text": "Open your message center",
+      "width": 36,
+      "height": 36,
+      "left": 86,
+      "right": 122
+    },
+    {
+      "tag": "button",
+      "text": "Open help",
+      "width": 33,
+      "height": 25,
+      "left": 134,
+      "right": 167
+    },
+    {
+      "tag": "a",
+      "text": "Account",
+      "width": 84,
+      "height": 32,
+      "left": 179,
+      "right": 263
+    },
+    {
+      "tag": "button",
+      "text": "Logout",
+      "width": 75,
+      "height": 32,
+      "left": 275,
+      "right": 351
+    },
+    {
+      "tag": "a",
+      "text": "Quotes",
+      "width": 73,
+      "height": 32,
+      "left": 24,
+      "right": 97
+    },
+    {
+      "tag": "a",
+      "text": "Orders",
+      "width": 71,
+      "height": 32,
+      "left": 105,
+      "right": 176
+    },
+    {
+      "tag": "a",
+      "text": "Invoices",
+      "width": 79,
+      "height": 32,
+      "left": 184,
+      "right": 263
+    },
+    {
+      "tag": "a",
+      "text": "Resources",
+      "width": 95,
+      "height": 32,
+      "left": 24,
+      "right": 119
+    },
+    {
+      "tag": "a",
+      "text": "← Quotes",
+      "width": 63,
+      "height": 15,
+      "left": 24,
+      "right": 87
+    },
+    {
+      "tag": "button",
+      "text": "Edit client and job reference",
+      "width": 28,
+      "height": 28,
+      "left": 148,
+      "right": 176
+    },
+    {
+      "tag": "select",
+      "text": "⚠️ Changes display symbol only - prices are NOT converted",
+      "width": 214,
+      "height": 34,
+      "left": 245,
+      "right": 459
+    },
+    {
+      "tag": "button",
+      "text": "Plans and files",
+      "width": 311,
+      "height": 16,
+      "left": 40,
+      "right": 351
+    },
+    {
+      "tag": "button",
+      "text": "Edit",
+      "width": 38,
+      "height": 25,
+      "left": 265,
+      "right": 303
+    },
+    {
+      "tag": "button",
+      "text": "",
+      "width": 23,
+      "height": 28,
+      "left": 311,
+      "right": 334
+    },
+    {
+      "tag": "button",
+      "text": "Next: Components →",
+      "width": 166,
+      "height": 36,
+      "left": 185,
+      "right": 351
+    }
+  ],
+  "unlabeledFormControlCount": 0,
+  "unlabeledFormControls": [],
+  "unnamedInteractiveCount": 3,
+  "unnamedInteractive": [
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 38,
+      "right": 74
+    },
+    {
+      "tag": "button",
+      "text": "",
+      "width": 23,
+      "height": 28,
+      "left": 311,
+      "right": 334
+    },
+    {
+      "tag": "input",
+      "text": "",
+      "width": 202,
+      "height": 56,
+      "left": 24,
+      "right": 226
+    }
+  ],
+  "navigationTiming": {
+    "durationMs": 1951,
+    "domContentLoadedMs": 1951,
+    "loadMs": 1951,
+    "transferSizeBytes": 9612,
+    "decodedBodySizeBytes": 41565
+  }
+}

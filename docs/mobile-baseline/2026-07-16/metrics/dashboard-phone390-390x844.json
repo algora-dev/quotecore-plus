@@ -1,0 +1,134 @@
+{
+  "route": "dashboard",
+  "routeTemplate": "/[workspaceSlug]",
+  "requestedViewport": {
+    "width": 390,
+    "height": 844
+  },
+  "captureReadyMs": 7868,
+  "actualViewport": {
+    "width": 390,
+    "height": 844,
+    "documentClientWidth": 375,
+    "documentClientHeight": 844
+  },
+  "documentSize": {
+    "width": 375,
+    "height": 1051
+  },
+  "horizontalOverflow": false,
+  "overflowElementCount": 0,
+  "overflowElements": [],
+  "interactiveTargetCount": 17,
+  "smallTargetCount": 11,
+  "smallTargets": [
+    {
+      "tag": "a",
+      "text": "",
+      "width": 14,
+      "height": 36,
+      "left": 24,
+      "right": 38
+    },
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 38,
+      "right": 74
+    },
+    {
+      "tag": "a",
+      "text": "Open your message center",
+      "width": 36,
+      "height": 36,
+      "left": 86,
+      "right": 122
+    },
+    {
+      "tag": "button",
+      "text": "Open help",
+      "width": 33,
+      "height": 25,
+      "left": 134,
+      "right": 167
+    },
+    {
+      "tag": "a",
+      "text": "Account",
+      "width": 84,
+      "height": 32,
+      "left": 179,
+      "right": 263
+    },
+    {
+      "tag": "button",
+      "text": "Logout",
+      "width": 75,
+      "height": 32,
+      "left": 275,
+      "right": 351
+    },
+    {
+      "tag": "a",
+      "text": "Quotes",
+      "width": 73,
+      "height": 32,
+      "left": 24,
+      "right": 97
+    },
+    {
+      "tag": "a",
+      "text": "Orders",
+      "width": 71,
+      "height": 32,
+      "left": 105,
+      "right": 176
+    },
+    {
+      "tag": "a",
+      "text": "Invoices",
+      "width": 79,
+      "height": 32,
+      "left": 184,
+      "right": 263
+    },
+    {
+      "tag": "a",
+      "text": "Resources",
+      "width": 95,
+      "height": 32,
+      "left": 24,
+      "right": 119
+    },
+    {
+      "tag": "a",
+      "text": "Tutorials",
+      "width": 112,
+      "height": 36,
+      "left": 239,
+      "right": 351
+    }
+  ],
+  "unlabeledFormControlCount": 0,
+  "unlabeledFormControls": [],
+  "unnamedInteractiveCount": 1,
+  "unnamedInteractive": [
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 38,
+      "right": 74
+    }
+  ],
+  "navigationTiming": {
+    "durationMs": 6600,
+    "domContentLoadedMs": 6600,
+    "loadMs": 6600,
+    "transferSizeBytes": 7753,
+    "decodedBodySizeBytes": 38877
+  }
+}

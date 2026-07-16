@@ -1,0 +1,166 @@
+{
+  "route": "invoices",
+  "routeTemplate": "/[workspaceSlug]/invoices",
+  "requestedViewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "captureReadyMs": 2560,
+  "actualViewport": {
+    "width": 1440,
+    "height": 900,
+    "documentClientWidth": 1440,
+    "documentClientHeight": 900
+  },
+  "documentSize": {
+    "width": 1440,
+    "height": 900
+  },
+  "horizontalOverflow": false,
+  "overflowElementCount": 0,
+  "overflowElements": [],
+  "interactiveTargetCount": 15,
+  "smallTargetCount": 14,
+  "smallTargets": [
+    {
+      "tag": "a",
+      "text": "",
+      "width": 155,
+      "height": 36,
+      "left": 168,
+      "right": 323
+    },
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 929,
+      "right": 965
+    },
+    {
+      "tag": "a",
+      "text": "Open your message center",
+      "width": 36,
+      "height": 36,
+      "left": 977,
+      "right": 1013
+    },
+    {
+      "tag": "button",
+      "text": "Open help",
+      "width": 64,
+      "height": 25,
+      "left": 1025,
+      "right": 1089
+    },
+    {
+      "tag": "a",
+      "text": "Account",
+      "width": 84,
+      "height": 32,
+      "left": 1101,
+      "right": 1185
+    },
+    {
+      "tag": "button",
+      "text": "Logout",
+      "width": 75,
+      "height": 32,
+      "left": 1197,
+      "right": 1272
+    },
+    {
+      "tag": "a",
+      "text": "Quotes",
+      "width": 73,
+      "height": 32,
+      "left": 168,
+      "right": 241
+    },
+    {
+      "tag": "a",
+      "text": "Orders",
+      "width": 71,
+      "height": 32,
+      "left": 249,
+      "right": 320
+    },
+    {
+      "tag": "a",
+      "text": "Invoices",
+      "width": 79,
+      "height": 32,
+      "left": 328,
+      "right": 407
+    },
+    {
+      "tag": "a",
+      "text": "Resources",
+      "width": 95,
+      "height": 32,
+      "left": 415,
+      "right": 510
+    },
+    {
+      "tag": "input",
+      "text": "",
+      "width": 384,
+      "height": 37,
+      "left": 168,
+      "right": 552
+    },
+    {
+      "tag": "button",
+      "text": "New Invoice",
+      "width": 143,
+      "height": 36,
+      "left": 1129,
+      "right": 1272
+    },
+    {
+      "tag": "button",
+      "text": "All",
+      "width": 39,
+      "height": 25,
+      "left": 168,
+      "right": 207
+    },
+    {
+      "tag": "button",
+      "text": "New Invoice",
+      "width": 143,
+      "height": 36,
+      "left": 649,
+      "right": 791
+    }
+  ],
+  "unlabeledFormControlCount": 0,
+  "unlabeledFormControls": [],
+  "unnamedInteractiveCount": 2,
+  "unnamedInteractive": [
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 929,
+      "right": 965
+    },
+    {
+      "tag": "input",
+      "text": "",
+      "width": 384,
+      "height": 37,
+      "left": 168,
+      "right": 552
+    }
+  ],
+  "navigationTiming": {
+    "durationMs": 1303,
+    "domContentLoadedMs": 1303,
+    "loadMs": 1303,
+    "transferSizeBytes": 6533,
+    "decodedBodySizeBytes": 26777
+  }
+}

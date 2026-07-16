@@ -1,0 +1,222 @@
+{
+  "route": "quote-builder",
+  "routeTemplate": "/[workspaceSlug]/quotes/[id]",
+  "requestedViewport": {
+    "width": 768,
+    "height": 1024
+  },
+  "captureReadyMs": 2782,
+  "actualViewport": {
+    "width": 768,
+    "height": 1024,
+    "documentClientWidth": 768,
+    "documentClientHeight": 1024
+  },
+  "documentSize": {
+    "width": 768,
+    "height": 1024
+  },
+  "horizontalOverflow": false,
+  "overflowElementCount": 0,
+  "overflowElements": [],
+  "interactiveTargetCount": 24,
+  "smallTargetCount": 23,
+  "smallTargets": [
+    {
+      "tag": "a",
+      "text": "",
+      "width": 155,
+      "height": 36,
+      "left": 24,
+      "right": 179
+    },
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 401,
+      "right": 437
+    },
+    {
+      "tag": "a",
+      "text": "Open your message center",
+      "width": 36,
+      "height": 36,
+      "left": 449,
+      "right": 485
+    },
+    {
+      "tag": "button",
+      "text": "Open help",
+      "width": 64,
+      "height": 25,
+      "left": 497,
+      "right": 561
+    },
+    {
+      "tag": "a",
+      "text": "Account",
+      "width": 84,
+      "height": 32,
+      "left": 573,
+      "right": 657
+    },
+    {
+      "tag": "button",
+      "text": "Logout",
+      "width": 75,
+      "height": 32,
+      "left": 669,
+      "right": 744
+    },
+    {
+      "tag": "a",
+      "text": "Quotes",
+      "width": 73,
+      "height": 32,
+      "left": 24,
+      "right": 97
+    },
+    {
+      "tag": "a",
+      "text": "Orders",
+      "width": 71,
+      "height": 32,
+      "left": 105,
+      "right": 176
+    },
+    {
+      "tag": "a",
+      "text": "Invoices",
+      "width": 79,
+      "height": 32,
+      "left": 184,
+      "right": 263
+    },
+    {
+      "tag": "a",
+      "text": "Resources",
+      "width": 95,
+      "height": 32,
+      "left": 271,
+      "right": 366
+    },
+    {
+      "tag": "a",
+      "text": "← Quotes",
+      "width": 63,
+      "height": 15,
+      "left": 24,
+      "right": 87
+    },
+    {
+      "tag": "button",
+      "text": "Edit client and job reference",
+      "width": 28,
+      "height": 28,
+      "left": 362,
+      "right": 390
+    },
+    {
+      "tag": "select",
+      "text": "⚠️ Changes display symbol only - prices are NOT converted",
+      "width": 214,
+      "height": 34,
+      "left": 474,
+      "right": 688
+    },
+    {
+      "tag": "button",
+      "text": "Plans and files",
+      "width": 704,
+      "height": 16,
+      "left": 40,
+      "right": 744
+    },
+    {
+      "tag": "button",
+      "text": "1. Roof Areas",
+      "width": 175,
+      "height": 36,
+      "left": 28,
+      "right": 203
+    },
+    {
+      "tag": "button",
+      "text": "2. Components",
+      "width": 175,
+      "height": 36,
+      "left": 207,
+      "right": 382
+    },
+    {
+      "tag": "button",
+      "text": "3. Extras",
+      "width": 175,
+      "height": 36,
+      "left": 386,
+      "right": 561
+    },
+    {
+      "tag": "button",
+      "text": "4. Review",
+      "width": 175,
+      "height": 36,
+      "left": 565,
+      "right": 740
+    },
+    {
+      "tag": "button",
+      "text": "Edit",
+      "width": 38,
+      "height": 25,
+      "left": 653,
+      "right": 691
+    },
+    {
+      "tag": "button",
+      "text": "",
+      "width": 28,
+      "height": 28,
+      "left": 699,
+      "right": 727
+    }
+  ],
+  "unlabeledFormControlCount": 0,
+  "unlabeledFormControls": [],
+  "unnamedInteractiveCount": 3,
+  "unnamedInteractive": [
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 401,
+      "right": 437
+    },
+    {
+      "tag": "button",
+      "text": "",
+      "width": 28,
+      "height": 28,
+      "left": 699,
+      "right": 727
+    },
+    {
+      "tag": "input",
+      "text": "",
+      "width": 589,
+      "height": 37,
+      "left": 24,
+      "right": 613
+    }
+  ],
+  "navigationTiming": {
+    "durationMs": 1467,
+    "domContentLoadedMs": 1447,
+    "loadMs": 1467,
+    "transferSizeBytes": 9521,
+    "decodedBodySizeBytes": 41565
+  }
+}

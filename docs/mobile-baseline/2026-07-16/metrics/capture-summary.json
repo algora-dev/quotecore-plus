@@ -1,0 +1,487 @@
+{
+  "capturedAt": "2026-07-16T09:36:42.085Z",
+  "environment": "Dev Vercel preview",
+  "browser": "Chromium via CDP desktop emulation",
+  "summary": [
+    {
+      "fileBase": "dashboard-phone320-320x568",
+      "route": "dashboard",
+      "viewport": "phone320",
+      "width": 320,
+      "height": 568,
+      "captureReadyMs": 2703,
+      "horizontalOverflow": true,
+      "overflowElementCount": 3,
+      "smallTargetCount": 10,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 1,
+      "navigationTiming": {
+        "durationMs": 1445,
+        "domContentLoadedMs": 1367,
+        "loadMs": 1445,
+        "transferSizeBytes": 7495,
+        "decodedBodySizeBytes": 38877
+      }
+    },
+    {
+      "fileBase": "dashboard-desktop-1440x900",
+      "route": "dashboard",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 900,
+      "captureReadyMs": 2612,
+      "horizontalOverflow": false,
+      "overflowElementCount": 0,
+      "smallTargetCount": 11,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 1,
+      "navigationTiming": {
+        "durationMs": 1301,
+        "domContentLoadedMs": 1279,
+        "loadMs": 1301,
+        "transferSizeBytes": 7495,
+        "decodedBodySizeBytes": 38877
+      }
+    },
+    {
+      "fileBase": "quotes-phone320-320x568",
+      "route": "quotes",
+      "viewport": "phone320",
+      "width": 320,
+      "height": 568,
+      "captureReadyMs": 3139,
+      "horizontalOverflow": true,
+      "overflowElementCount": 5,
+      "smallTargetCount": 12,
+      "unlabeledFormControlCount": 1,
+      "unnamedInteractiveCount": 2,
+      "navigationTiming": {
+        "durationMs": 1833,
+        "domContentLoadedMs": 1814,
+        "loadMs": 1833,
+        "transferSizeBytes": 7140,
+        "decodedBodySizeBytes": 29313
+      }
+    },
+    {
+      "fileBase": "quotes-desktop-1440x900",
+      "route": "quotes",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 900,
+      "captureReadyMs": 3274,
+      "horizontalOverflow": false,
+      "overflowElementCount": 0,
+      "smallTargetCount": 17,
+      "unlabeledFormControlCount": 1,
+      "unnamedInteractiveCount": 2,
+      "navigationTiming": {
+        "durationMs": 2011,
+        "domContentLoadedMs": 2011,
+        "loadMs": 2011,
+        "transferSizeBytes": 7328,
+        "decodedBodySizeBytes": 29313
+      }
+    },
+    {
+      "fileBase": "orders-phone320-320x568",
+      "route": "orders",
+      "viewport": "phone320",
+      "width": 320,
+      "height": 568,
+      "captureReadyMs": 2858,
+      "horizontalOverflow": true,
+      "overflowElementCount": 3,
+      "smallTargetCount": 9,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 1,
+      "navigationTiming": {
+        "durationMs": 1540,
+        "domContentLoadedMs": 1525,
+        "loadMs": 1540,
+        "transferSizeBytes": 6607,
+        "decodedBodySizeBytes": 27522
+      }
+    },
+    {
+      "fileBase": "orders-desktop-1440x900",
+      "route": "orders",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 900,
+      "captureReadyMs": 2618,
+      "horizontalOverflow": false,
+      "overflowElementCount": 0,
+      "smallTargetCount": 10,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 1,
+      "navigationTiming": {
+        "durationMs": 1345,
+        "domContentLoadedMs": 1344,
+        "loadMs": 1345,
+        "transferSizeBytes": 6719,
+        "decodedBodySizeBytes": 27522
+      }
+    },
+    {
+      "fileBase": "invoices-phone320-320x568",
+      "route": "invoices",
+      "viewport": "phone320",
+      "width": 320,
+      "height": 568,
+      "captureReadyMs": 3063,
+      "horizontalOverflow": true,
+      "overflowElementCount": 3,
+      "smallTargetCount": 13,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 2,
+      "navigationTiming": {
+        "durationMs": 1794,
+        "domContentLoadedMs": 1626,
+        "loadMs": 1794,
+        "transferSizeBytes": 6512,
+        "decodedBodySizeBytes": 26777
+      }
+    },
+    {
+      "fileBase": "invoices-desktop-1440x900",
+      "route": "invoices",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 900,
+      "captureReadyMs": 2560,
+      "horizontalOverflow": false,
+      "overflowElementCount": 0,
+      "smallTargetCount": 14,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 2,
+      "navigationTiming": {
+        "durationMs": 1303,
+        "domContentLoadedMs": 1303,
+        "loadMs": 1303,
+        "transferSizeBytes": 6533,
+        "decodedBodySizeBytes": 26777
+      }
+    },
+    {
+      "fileBase": "inbox-phone320-320x568",
+      "route": "inbox",
+      "viewport": "phone320",
+      "width": 320,
+      "height": 568,
+      "captureReadyMs": 3030,
+      "horizontalOverflow": true,
+      "overflowElementCount": 7,
+      "smallTargetCount": 20,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 2,
+      "navigationTiming": {
+        "durationMs": 1773,
+        "domContentLoadedMs": 1773,
+        "loadMs": 1773,
+        "transferSizeBytes": 6877,
+        "decodedBodySizeBytes": 28631
+      }
+    },
+    {
+      "fileBase": "inbox-desktop-1440x900",
+      "route": "inbox",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 900,
+      "captureReadyMs": 3051,
+      "horizontalOverflow": false,
+      "overflowElementCount": 0,
+      "smallTargetCount": 21,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 2,
+      "navigationTiming": {
+        "durationMs": 1782,
+        "domContentLoadedMs": 1782,
+        "loadMs": 1782,
+        "transferSizeBytes": 6809,
+        "decodedBodySizeBytes": 28631
+      }
+    },
+    {
+      "fileBase": "components-phone320-320x568",
+      "route": "components",
+      "viewport": "phone320",
+      "width": 320,
+      "height": 568,
+      "captureReadyMs": 2629,
+      "horizontalOverflow": true,
+      "overflowElementCount": 7,
+      "smallTargetCount": 36,
+      "unlabeledFormControlCount": 1,
+      "unnamedInteractiveCount": 2,
+      "navigationTiming": {
+        "durationMs": 1362,
+        "domContentLoadedMs": 1362,
+        "loadMs": 1362,
+        "transferSizeBytes": 8744,
+        "decodedBodySizeBytes": 50267
+      }
+    },
+    {
+      "fileBase": "components-desktop-1440x900",
+      "route": "components",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 900,
+      "captureReadyMs": 2704,
+      "horizontalOverflow": false,
+      "overflowElementCount": 0,
+      "smallTargetCount": 39,
+      "unlabeledFormControlCount": 1,
+      "unnamedInteractiveCount": 2,
+      "navigationTiming": {
+        "durationMs": 1445,
+        "domContentLoadedMs": 1445,
+        "loadMs": 1445,
+        "transferSizeBytes": 8611,
+        "decodedBodySizeBytes": 50267
+      }
+    },
+    {
+      "fileBase": "quote-builder-phone320-320x568",
+      "route": "quote-builder",
+      "viewport": "phone320",
+      "width": 320,
+      "height": 568,
+      "captureReadyMs": 3274,
+      "horizontalOverflow": true,
+      "overflowElementCount": 8,
+      "smallTargetCount": 16,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 3,
+      "navigationTiming": {
+        "durationMs": 2015,
+        "domContentLoadedMs": 2014,
+        "loadMs": 2015,
+        "transferSizeBytes": 9623,
+        "decodedBodySizeBytes": 41565
+      }
+    },
+    {
+      "fileBase": "quote-builder-desktop-1440x900",
+      "route": "quote-builder",
+      "viewport": "desktop",
+      "width": 1440,
+      "height": 900,
+      "captureReadyMs": 2982,
+      "horizontalOverflow": false,
+      "overflowElementCount": 0,
+      "smallTargetCount": 23,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 3,
+      "navigationTiming": {
+        "durationMs": 1714,
+        "domContentLoadedMs": 1714,
+        "loadMs": 1714,
+        "transferSizeBytes": 9671,
+        "decodedBodySizeBytes": 41565
+      }
+    },
+    {
+      "fileBase": "dashboard-phone375-375x667",
+      "route": "dashboard",
+      "viewport": "phone375",
+      "width": 375,
+      "height": 667,
+      "captureReadyMs": 2551,
+      "horizontalOverflow": false,
+      "overflowElementCount": 0,
+      "smallTargetCount": 10,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 1,
+      "navigationTiming": {
+        "durationMs": 1287,
+        "domContentLoadedMs": 1287,
+        "loadMs": 1287,
+        "transferSizeBytes": 7694,
+        "decodedBodySizeBytes": 38877
+      }
+    },
+    {
+      "fileBase": "dashboard-phone390-390x844",
+      "route": "dashboard",
+      "viewport": "phone390",
+      "width": 390,
+      "height": 844,
+      "captureReadyMs": 7868,
+      "horizontalOverflow": false,
+      "overflowElementCount": 0,
+      "smallTargetCount": 11,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 1,
+      "navigationTiming": {
+        "durationMs": 6600,
+        "domContentLoadedMs": 6600,
+        "loadMs": 6600,
+        "transferSizeBytes": 7753,
+        "decodedBodySizeBytes": 38877
+      }
+    },
+    {
+      "fileBase": "dashboard-phoneLandscape-844x390",
+      "route": "dashboard",
+      "viewport": "phoneLandscape",
+      "width": 844,
+      "height": 390,
+      "captureReadyMs": 2707,
+      "horizontalOverflow": false,
+      "overflowElementCount": 0,
+      "smallTargetCount": 11,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 1,
+      "navigationTiming": {
+        "durationMs": 1447,
+        "domContentLoadedMs": 1447,
+        "loadMs": 1447,
+        "transferSizeBytes": 7640,
+        "decodedBodySizeBytes": 38877
+      }
+    },
+    {
+      "fileBase": "dashboard-tabletPortrait-768x1024",
+      "route": "dashboard",
+      "viewport": "tabletPortrait",
+      "width": 768,
+      "height": 1024,
+      "captureReadyMs": 2775,
+      "horizontalOverflow": false,
+      "overflowElementCount": 0,
+      "smallTargetCount": 11,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 1,
+      "navigationTiming": {
+        "durationMs": 1505,
+        "domContentLoadedMs": 1505,
+        "loadMs": 1505,
+        "transferSizeBytes": 7671,
+        "decodedBodySizeBytes": 38877
+      }
+    },
+    {
+      "fileBase": "dashboard-tabletLandscape-1024x768",
+      "route": "dashboard",
+      "viewport": "tabletLandscape",
+      "width": 1024,
+      "height": 768,
+      "captureReadyMs": 2547,
+      "horizontalOverflow": false,
+      "overflowElementCount": 0,
+      "smallTargetCount": 11,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 1,
+      "navigationTiming": {
+        "durationMs": 1277,
+        "domContentLoadedMs": 1277,
+        "loadMs": 1277,
+        "transferSizeBytes": 7637,
+        "decodedBodySizeBytes": 38877
+      }
+    },
+    {
+      "fileBase": "quote-builder-phone375-375x667",
+      "route": "quote-builder",
+      "viewport": "phone375",
+      "width": 375,
+      "height": 667,
+      "captureReadyMs": 2914,
+      "horizontalOverflow": true,
+      "overflowElementCount": 4,
+      "smallTargetCount": 16,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 3,
+      "navigationTiming": {
+        "durationMs": 1683,
+        "domContentLoadedMs": 1656,
+        "loadMs": 1683,
+        "transferSizeBytes": 9511,
+        "decodedBodySizeBytes": 41565
+      }
+    },
+    {
+      "fileBase": "quote-builder-phone390-390x844",
+      "route": "quote-builder",
+      "viewport": "phone390",
+      "width": 390,
+      "height": 844,
+      "captureReadyMs": 3237,
+      "horizontalOverflow": true,
+      "overflowElementCount": 4,
+      "smallTargetCount": 17,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 3,
+      "navigationTiming": {
+        "durationMs": 1951,
+        "domContentLoadedMs": 1951,
+        "loadMs": 1951,
+        "transferSizeBytes": 9612,
+        "decodedBodySizeBytes": 41565
+      }
+    },
+    {
+      "fileBase": "quote-builder-phoneLandscape-844x390",
+      "route": "quote-builder",
+      "viewport": "phoneLandscape",
+      "width": 844,
+      "height": 390,
+      "captureReadyMs": 2848,
+      "horizontalOverflow": false,
+      "overflowElementCount": 0,
+      "smallTargetCount": 23,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 3,
+      "navigationTiming": {
+        "durationMs": 1584,
+        "domContentLoadedMs": 1584,
+        "loadMs": 1584,
+        "transferSizeBytes": 9760,
+        "decodedBodySizeBytes": 41565
+      }
+    },
+    {
+      "fileBase": "quote-builder-tabletPortrait-768x1024",
+      "route": "quote-builder",
+      "viewport": "tabletPortrait",
+      "width": 768,
+      "height": 1024,
+      "captureReadyMs": 2782,
+      "horizontalOverflow": false,
+      "overflowElementCount": 0,
+      "smallTargetCount": 23,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 3,
+      "navigationTiming": {
+        "durationMs": 1467,
+        "domContentLoadedMs": 1447,
+        "loadMs": 1467,
+        "transferSizeBytes": 9521,
+        "decodedBodySizeBytes": 41565
+      }
+    },
+    {
+      "fileBase": "quote-builder-tabletLandscape-1024x768",
+      "route": "quote-builder",
+      "viewport": "tabletLandscape",
+      "width": 1024,
+      "height": 768,
+      "captureReadyMs": 2875,
+      "horizontalOverflow": false,
+      "overflowElementCount": 0,
+      "smallTargetCount": 23,
+      "unlabeledFormControlCount": 0,
+      "unnamedInteractiveCount": 3,
+      "navigationTiming": {
+        "durationMs": 1621,
+        "domContentLoadedMs": 1547,
+        "loadMs": 1621,
+        "transferSizeBytes": 9579,
+        "decodedBodySizeBytes": 41565
+      }
+    }
+  ]
+}

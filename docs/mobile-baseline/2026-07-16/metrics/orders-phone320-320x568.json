@@ -1,0 +1,143 @@
+{
+  "route": "orders",
+  "routeTemplate": "/[workspaceSlug]/material-orders",
+  "requestedViewport": {
+    "width": 320,
+    "height": 568
+  },
+  "captureReadyMs": 2858,
+  "actualViewport": {
+    "width": 320,
+    "height": 568,
+    "documentClientWidth": 305,
+    "documentClientHeight": 553
+  },
+  "documentSize": {
+    "width": 337,
+    "height": 971
+  },
+  "horizontalOverflow": true,
+  "overflowElementCount": 3,
+  "overflowElements": [
+    {
+      "tag": "div",
+      "text": "HelpAccountLogout",
+      "width": 313,
+      "height": 36,
+      "left": 24,
+      "right": 337
+    },
+    {
+      "tag": "form",
+      "text": "Logout",
+      "width": 75,
+      "height": 32,
+      "left": 261,
+      "right": 337
+    },
+    {
+      "tag": "button",
+      "text": "Logout",
+      "width": 75,
+      "height": 32,
+      "left": 261,
+      "right": 337
+    }
+  ],
+  "interactiveTargetCount": 13,
+  "smallTargetCount": 9,
+  "smallTargets": [
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 24,
+      "right": 60
+    },
+    {
+      "tag": "a",
+      "text": "Open your message center",
+      "width": 36,
+      "height": 36,
+      "left": 72,
+      "right": 108
+    },
+    {
+      "tag": "button",
+      "text": "Open help",
+      "width": 33,
+      "height": 25,
+      "left": 120,
+      "right": 153
+    },
+    {
+      "tag": "a",
+      "text": "Account",
+      "width": 84,
+      "height": 32,
+      "left": 165,
+      "right": 249
+    },
+    {
+      "tag": "button",
+      "text": "Logout",
+      "width": 75,
+      "height": 32,
+      "left": 261,
+      "right": 337
+    },
+    {
+      "tag": "a",
+      "text": "Quotes",
+      "width": 73,
+      "height": 32,
+      "left": 24,
+      "right": 97
+    },
+    {
+      "tag": "a",
+      "text": "Orders",
+      "width": 71,
+      "height": 32,
+      "left": 105,
+      "right": 176
+    },
+    {
+      "tag": "a",
+      "text": "Invoices",
+      "width": 79,
+      "height": 32,
+      "left": 184,
+      "right": 263
+    },
+    {
+      "tag": "a",
+      "text": "Resources",
+      "width": 95,
+      "height": 32,
+      "left": 24,
+      "right": 119
+    }
+  ],
+  "unlabeledFormControlCount": 0,
+  "unlabeledFormControls": [],
+  "unnamedInteractiveCount": 1,
+  "unnamedInteractive": [
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 24,
+      "right": 60
+    }
+  ],
+  "navigationTiming": {
+    "durationMs": 1540,
+    "domContentLoadedMs": 1525,
+    "loadMs": 1540,
+    "transferSizeBytes": 6607,
+    "decodedBodySizeBytes": 27522
+  }
+}

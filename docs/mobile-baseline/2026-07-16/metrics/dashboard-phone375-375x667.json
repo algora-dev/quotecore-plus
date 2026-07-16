@@ -1,0 +1,126 @@
+{
+  "route": "dashboard",
+  "routeTemplate": "/[workspaceSlug]",
+  "requestedViewport": {
+    "width": 375,
+    "height": 667
+  },
+  "captureReadyMs": 2551,
+  "actualViewport": {
+    "width": 375,
+    "height": 667,
+    "documentClientWidth": 360,
+    "documentClientHeight": 667
+  },
+  "documentSize": {
+    "width": 360,
+    "height": 1051
+  },
+  "horizontalOverflow": false,
+  "overflowElementCount": 0,
+  "overflowElements": [],
+  "interactiveTargetCount": 16,
+  "smallTargetCount": 10,
+  "smallTargets": [
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 24,
+      "right": 60
+    },
+    {
+      "tag": "a",
+      "text": "Open your message center",
+      "width": 36,
+      "height": 36,
+      "left": 72,
+      "right": 108
+    },
+    {
+      "tag": "button",
+      "text": "Open help",
+      "width": 33,
+      "height": 25,
+      "left": 120,
+      "right": 153
+    },
+    {
+      "tag": "a",
+      "text": "Account",
+      "width": 84,
+      "height": 32,
+      "left": 165,
+      "right": 249
+    },
+    {
+      "tag": "button",
+      "text": "Logout",
+      "width": 75,
+      "height": 32,
+      "left": 261,
+      "right": 337
+    },
+    {
+      "tag": "a",
+      "text": "Quotes",
+      "width": 73,
+      "height": 32,
+      "left": 24,
+      "right": 97
+    },
+    {
+      "tag": "a",
+      "text": "Orders",
+      "width": 71,
+      "height": 32,
+      "left": 105,
+      "right": 176
+    },
+    {
+      "tag": "a",
+      "text": "Invoices",
+      "width": 79,
+      "height": 32,
+      "left": 184,
+      "right": 263
+    },
+    {
+      "tag": "a",
+      "text": "Resources",
+      "width": 95,
+      "height": 32,
+      "left": 24,
+      "right": 119
+    },
+    {
+      "tag": "a",
+      "text": "Tutorials",
+      "width": 112,
+      "height": 36,
+      "left": 224,
+      "right": 336
+    }
+  ],
+  "unlabeledFormControlCount": 0,
+  "unlabeledFormControls": [],
+  "unnamedInteractiveCount": 1,
+  "unnamedInteractive": [
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 24,
+      "right": 60
+    }
+  ],
+  "navigationTiming": {
+    "durationMs": 1287,
+    "domContentLoadedMs": 1287,
+    "loadMs": 1287,
+    "transferSizeBytes": 7694,
+    "decodedBodySizeBytes": 38877
+  }
+}

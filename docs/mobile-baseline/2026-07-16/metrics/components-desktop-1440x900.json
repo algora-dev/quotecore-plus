@@ -1,0 +1,223 @@
+{
+  "route": "components",
+  "routeTemplate": "/[workspaceSlug]/components",
+  "requestedViewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "captureReadyMs": 2704,
+  "actualViewport": {
+    "width": 1440,
+    "height": 900,
+    "documentClientWidth": 1425,
+    "documentClientHeight": 900
+  },
+  "documentSize": {
+    "width": 1425,
+    "height": 1150
+  },
+  "horizontalOverflow": false,
+  "overflowElementCount": 0,
+  "overflowElements": [],
+  "interactiveTargetCount": 40,
+  "smallTargetCount": 39,
+  "smallTargets": [
+    {
+      "tag": "a",
+      "text": "",
+      "width": 155,
+      "height": 36,
+      "left": 160,
+      "right": 315
+    },
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 921,
+      "right": 957
+    },
+    {
+      "tag": "a",
+      "text": "Open your message center",
+      "width": 36,
+      "height": 36,
+      "left": 969,
+      "right": 1005
+    },
+    {
+      "tag": "button",
+      "text": "Open help",
+      "width": 64,
+      "height": 25,
+      "left": 1017,
+      "right": 1081
+    },
+    {
+      "tag": "a",
+      "text": "Account",
+      "width": 84,
+      "height": 32,
+      "left": 1093,
+      "right": 1177
+    },
+    {
+      "tag": "button",
+      "text": "Logout",
+      "width": 75,
+      "height": 32,
+      "left": 1189,
+      "right": 1264
+    },
+    {
+      "tag": "a",
+      "text": "Quotes",
+      "width": 73,
+      "height": 32,
+      "left": 160,
+      "right": 233
+    },
+    {
+      "tag": "a",
+      "text": "Orders",
+      "width": 71,
+      "height": 32,
+      "left": 241,
+      "right": 312
+    },
+    {
+      "tag": "a",
+      "text": "Invoices",
+      "width": 79,
+      "height": 32,
+      "left": 320,
+      "right": 400
+    },
+    {
+      "tag": "a",
+      "text": "Resources",
+      "width": 95,
+      "height": 32,
+      "left": 408,
+      "right": 503
+    },
+    {
+      "tag": "button",
+      "text": "Back",
+      "width": 51,
+      "height": 20,
+      "left": 160,
+      "right": 211
+    },
+    {
+      "tag": "button",
+      "text": "All",
+      "width": 48,
+      "height": 32,
+      "left": 164,
+      "right": 212
+    },
+    {
+      "tag": "button",
+      "text": "Main",
+      "width": 62,
+      "height": 32,
+      "left": 216,
+      "right": 278
+    },
+    {
+      "tag": "button",
+      "text": "Extras",
+      "width": 72,
+      "height": 32,
+      "left": 282,
+      "right": 354
+    },
+    {
+      "tag": "button",
+      "text": "+ Add Smart Component™8/10",
+      "width": 241,
+      "height": 36,
+      "left": 918,
+      "right": 1159
+    },
+    {
+      "tag": "a",
+      "text": "Flashings",
+      "width": 97,
+      "height": 36,
+      "left": 1167,
+      "right": 1264
+    },
+    {
+      "tag": "button",
+      "text": "All Types",
+      "width": 74,
+      "height": 25,
+      "left": 160,
+      "right": 234
+    },
+    {
+      "tag": "button",
+      "text": "Area",
+      "width": 51,
+      "height": 25,
+      "left": 238,
+      "right": 289
+    },
+    {
+      "tag": "button",
+      "text": "Linear",
+      "width": 59,
+      "height": 25,
+      "left": 293,
+      "right": 352
+    },
+    {
+      "tag": "button",
+      "text": "Rafter Pitch",
+      "width": 88,
+      "height": 25,
+      "left": 356,
+      "right": 444
+    }
+  ],
+  "unlabeledFormControlCount": 1,
+  "unlabeledFormControls": [
+    {
+      "tag": "select",
+      "text": "All LibrariesMy Components (bootstrap)",
+      "width": 219,
+      "height": 34,
+      "left": 160,
+      "right": 380
+    }
+  ],
+  "unnamedInteractiveCount": 2,
+  "unnamedInteractive": [
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 921,
+      "right": 957
+    },
+    {
+      "tag": "input",
+      "text": "",
+      "width": 384,
+      "height": 37,
+      "left": 392,
+      "right": 776
+    }
+  ],
+  "navigationTiming": {
+    "durationMs": 1445,
+    "domContentLoadedMs": 1445,
+    "loadMs": 1445,
+    "transferSizeBytes": 8611,
+    "decodedBodySizeBytes": 50267
+  }
+}

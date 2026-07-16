@@ -1,0 +1,214 @@
+{
+  "route": "inbox",
+  "routeTemplate": "/[workspaceSlug]/inbox",
+  "requestedViewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "captureReadyMs": 3051,
+  "actualViewport": {
+    "width": 1440,
+    "height": 900,
+    "documentClientWidth": 1440,
+    "documentClientHeight": 900
+  },
+  "documentSize": {
+    "width": 1440,
+    "height": 900
+  },
+  "horizontalOverflow": false,
+  "overflowElementCount": 0,
+  "overflowElements": [],
+  "interactiveTargetCount": 22,
+  "smallTargetCount": 21,
+  "smallTargets": [
+    {
+      "tag": "a",
+      "text": "",
+      "width": 155,
+      "height": 36,
+      "left": 168,
+      "right": 323
+    },
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 929,
+      "right": 965
+    },
+    {
+      "tag": "a",
+      "text": "Open your message center",
+      "width": 36,
+      "height": 36,
+      "left": 977,
+      "right": 1013
+    },
+    {
+      "tag": "button",
+      "text": "Open help",
+      "width": 64,
+      "height": 25,
+      "left": 1025,
+      "right": 1089
+    },
+    {
+      "tag": "a",
+      "text": "Account",
+      "width": 84,
+      "height": 32,
+      "left": 1101,
+      "right": 1185
+    },
+    {
+      "tag": "button",
+      "text": "Logout",
+      "width": 75,
+      "height": 32,
+      "left": 1197,
+      "right": 1272
+    },
+    {
+      "tag": "a",
+      "text": "Quotes",
+      "width": 73,
+      "height": 32,
+      "left": 168,
+      "right": 241
+    },
+    {
+      "tag": "a",
+      "text": "Orders",
+      "width": 71,
+      "height": 32,
+      "left": 249,
+      "right": 320
+    },
+    {
+      "tag": "a",
+      "text": "Invoices",
+      "width": 79,
+      "height": 32,
+      "left": 328,
+      "right": 407
+    },
+    {
+      "tag": "a",
+      "text": "Resources",
+      "width": 95,
+      "height": 32,
+      "left": 415,
+      "right": 510
+    },
+    {
+      "tag": "button",
+      "text": "Inbox",
+      "width": 66,
+      "height": 32,
+      "left": 228,
+      "right": 294
+    },
+    {
+      "tag": "button",
+      "text": "Settings",
+      "width": 83,
+      "height": 32,
+      "left": 298,
+      "right": 381
+    },
+    {
+      "tag": "button",
+      "text": "Active0",
+      "width": 176,
+      "height": 37,
+      "left": 224,
+      "right": 400
+    },
+    {
+      "tag": "button",
+      "text": "To-Do0",
+      "width": 176,
+      "height": 37,
+      "left": 224,
+      "right": 400
+    },
+    {
+      "tag": "button",
+      "text": "Archived0",
+      "width": 176,
+      "height": 37,
+      "left": 224,
+      "right": 400
+    },
+    {
+      "tag": "input",
+      "text": "",
+      "width": 410,
+      "height": 33,
+      "left": 420,
+      "right": 830
+    },
+    {
+      "tag": "button",
+      "text": "All types",
+      "width": 71,
+      "height": 25,
+      "left": 838,
+      "right": 909
+    },
+    {
+      "tag": "button",
+      "text": "Quotes",
+      "width": 64,
+      "height": 25,
+      "left": 917,
+      "right": 981
+    },
+    {
+      "tag": "button",
+      "text": "Orders",
+      "width": 62,
+      "height": 25,
+      "left": 989,
+      "right": 1051
+    },
+    {
+      "tag": "button",
+      "text": "Invoices",
+      "width": 69,
+      "height": 25,
+      "left": 1059,
+      "right": 1128
+    }
+  ],
+  "unlabeledFormControlCount": 0,
+  "unlabeledFormControls": [],
+  "unnamedInteractiveCount": 2,
+  "unnamedInteractive": [
+    {
+      "tag": "button",
+      "text": "",
+      "width": 36,
+      "height": 36,
+      "left": 929,
+      "right": 965
+    },
+    {
+      "tag": "input",
+      "text": "",
+      "width": 410,
+      "height": 33,
+      "left": 420,
+      "right": 830
+    }
+  ],
+  "navigationTiming": {
+    "durationMs": 1782,
+    "domContentLoadedMs": 1782,
+    "loadMs": 1782,
+    "transferSizeBytes": 6809,
+    "decodedBodySizeBytes": 28631
+  }
+}
